@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Button, FormControl, FormGroup, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import { Button, Form, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
@@ -12,8 +12,6 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
@@ -224,41 +222,43 @@ const DetailSearch = () => {
             <Tooltip id={option.column}>{option.info}</Tooltip>
           }
         >
-          <span className="glyphicon glyphicon-info-sign search-info-button" />
+          <i className="fa fa-info-circle search-info-button" aria-hidden="true" />
         </OverlayTrigger>
       );
     }
 
     return (
-      <ControlLabel>{option.label}{infoButton}</ControlLabel>
+      <Form.Label>{option.label}{infoButton}</Form.Label>
     );
   }
 
   const textInput = (option, type, selectedValue, column, keyLabel) => {
     let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`} validationState={validationState}>
+      <Form.Group key={`${column}-${keyLabel}-${type}`}>
         {labelWithInfo(option)}
-        <FormControl
+        <Form.Control
           id={`input_${column}`}
           type="text"
           key={`${column}-${keyLabel}`}
           value={selectedValue ? selectedValue[column].value : ''}
           onChange={handleFieldChanged(option, column, type)}
+          className={validationState}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
   const checkboxInput = (option, type, selectedValue, column, keyLabel) => {
     return (
-      <Checkbox
+      <Form.Check
         key={`${column}-${keyLabel}`}
+        type="checkbox"
+        id={`checkbox-${column}-${keyLabel}`}
         checked={selectedValue ? selectedValue[column].value : false}
         onChange={handleFieldChanged(option, column, type)}
-      >
-        {option.label}
-      </Checkbox>
+        label={option.label}
+      />
     );
   }
 
@@ -309,7 +309,7 @@ const DetailSearch = () => {
   const selectInput = (option, type, selectedValue, columnName, keyLabel) => {
     let options = optionsForSelect(option);
     return (
-      <FormGroup key={`${columnName}-${keyLabel}-${type}`}>
+      <Form.Group key={`${columnName}-${keyLabel}-${type}`}>
         {labelWithInfo(option)}
         <Select
           name={columnName}
@@ -318,7 +318,7 @@ const DetailSearch = () => {
           onChange={handleFieldChanged(option, columnName, type)}
           value={selectedValue ? options.filter((f) => { return f.value == selectedValue[columnName].value }) : ''}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -337,7 +337,7 @@ const DetailSearch = () => {
     let options = solventOptions;
     options.unshift({ label: '', value: '' });
     return (
-      <FormGroup key={`${columnName}-${keyLabel}-${type}`}>
+      <Form.Group key={`${columnName}-${keyLabel}-${type}`}>
         {labelWithInfo(option)}
         <Select
           name={columnName}
@@ -346,7 +346,7 @@ const DetailSearch = () => {
           onChange={handleFieldChanged(option, columnName, type)}
           value={selectedValue ? solventOptions.filter((f) => { return f.label == selectedValue[columnName].value }) : ''}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -357,10 +357,11 @@ const DetailSearch = () => {
   const rxnoChmosInput = (option, type, selectedValue, column) => {
     let options = type == 'chmos' ? chmos : rxnos;
     return (
-      <FormGroup key={`${option.column}-${option.label}-${type}`}>
+      <Form.Group key={`${option.column}-${option.label}-${type}`}>
         {labelWithInfo(option)}
         <TreeSelect
           key={option.column}
+          showSearch={true}
           value={selectedValue ? selectedValue[column].value : ''}
           treeData={options}
           placeholder="Select type"
@@ -369,7 +370,7 @@ const DetailSearch = () => {
           onChange={handleFieldChanged(option, column, type)}
           filterTreeNode={filterTreeNode}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -377,30 +378,29 @@ const DetailSearch = () => {
     let column = option.column || option.field;
     let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`} validationState={validationState}>
+      <Form.Group key={`${column}-${keyLabel}-${type}`}>
         {labelWithInfo(option)}
         <InputGroup>
-          <FormControl
+          <Form.Control
             id={`input_${column}`}
             type="text"
             key={`${column}-${keyLabel}`}
             value={selectedValue ? selectedValue[column].value : ''}
             onChange={handleFieldChanged(option, column, type)}
+            className={validationState}
           />
           <InputGroup.Text>{option.addon}</InputGroup.Text>
         </InputGroup>
-      </FormGroup>
+      </Form.Group>
     );
   }
 
   const ButtonOrAddOn = (units, value, column, option, subFieldId) => {
     if (units.length > 1) {
       return (
-        <InputGroup.Button>
-          <Button key={units} variant="success"
-            dangerouslySetInnerHTML={{ __html: value }}
-            onClick={changeUnit(units, value, column, option, subFieldId)} />
-        </InputGroup.Button>
+        <Button key={units} variant="success"
+          dangerouslySetInnerHTML={{ __html: value }}
+          onClick={changeUnit(units, value, column, option, subFieldId)} />
       );
     } else {
       return (
@@ -414,19 +414,20 @@ const DetailSearch = () => {
     let value = selectedValue ? selectedValue[column].unit : units[0].label;
     let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`} validationState={validationState}>
+      <Form.Group key={`${column}-${keyLabel}-${type}`}>
         {labelWithInfo(option)}
         <InputGroup>
-          <FormControl
+          <Form.Control
             id={`input_${column}`}
             type="text"
             key={`${column}-${keyLabel}`}
             value={selectedValue ? selectedValue[column].value : ''}
             onChange={handleFieldChanged(option, column, type)}
+            className={validationState}
           />
           {ButtonOrAddOn(units, value, column, option, '')}
         </InputGroup>
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -434,13 +435,12 @@ const DetailSearch = () => {
     let subFields = [];
     option.sub_fields.map((field) => {
       if (field.type == 'label') {
-        subFields.push(<span key={field.id} className="form-control g_input_group_label">{field.value}</span>);
+        subFields.push(<InputGroup.Text key={field.id}>{field.value}</InputGroup.Text>);
       }
       if (field.type == 'text') {
         let subValue = selectedValue && selectedValue[column].sub_values[0][field.id] !== undefined ? selectedValue[column].sub_values[0][field.id] : '';
         subFields.push(
-          <FormControl
-            className="g_input_group" 
+          <Form.Control
             key={field.id}
             type={field.type}
             name={field.id}
@@ -452,12 +452,12 @@ const DetailSearch = () => {
     });
 
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`}>
+      <Form.Group key={`${column}-${keyLabel}-${type}`} className="sub-group-with-addon-2col">
         {labelWithInfo(option)}
-        <InputGroup style={{ display: 'flex' }}>
+        <InputGroup>
           {subFields}
         </InputGroup>
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -477,24 +477,26 @@ const DetailSearch = () => {
 
       if (field.type == 'text') {
         formElement = (
-          <FormControl
+          <Form.Control
             id={field.id}
             type="text"
             key={field.id}
             value={selectedFieldValue}
             onChange={handleTableFieldChanged(field.id, option, column, type)}
+            className={validationState}
           />
         );
       }
       if (field.type == 'system-defined') {
         formElement = (
           <InputGroup>
-            <FormControl
+            <Form.Control
               id={field.id}
               type="text"
               key={field.id}
               value={selectedFieldValue}
               onChange={handleTableFieldChanged(field.id, option, column, type)}
+              className={validationState}
             />
             {ButtonOrAddOn(units, selectedUnitValue, column, option, field.id)}
           </InputGroup>
@@ -502,10 +504,10 @@ const DetailSearch = () => {
       }
       if (formElement) {
         subFields.push(
-          <FormGroup key={`${column}-${keyLabel}-${type}-${field.id}`} validationState={validationState}>
-            <ControlLabel>{field.col_name}</ControlLabel>
+          <Form.Group key={`${column}-${keyLabel}-${type}-${field.id}`}>
+            <Form.Label>{field.col_name}</Form.Label>
             {formElement}
-          </FormGroup>
+          </Form.Group>
         );
       }
     });
@@ -519,32 +521,32 @@ const DetailSearch = () => {
       let subValue = selectedValue && selectedValue[column].sub_values[0][field.key] !== undefined ? selectedValue[column].sub_values[0][field.key] : '';
       let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
       subFields.push(
-        <FormGroup
+        <Form.Group
           key={`${column}-${keyLabel}-${field.key}`}
           className={`subfields-with-addon-left-${option.sub_fields.length}`}
-          validationState={validationState}
         >
           <InputGroup>
             <InputGroup.Text>{field.addon}</InputGroup.Text>
-            <FormControl
+            <Form.Control
               id={`input_${column}_${field.key}`}
               type="text"
               key={`${column}-${keyLabel}-${field.key}`}
               value={subValue}
               onChange={handleSubFieldChanged(field.key, option, column, type)}
+              className={validationState}
             />
           </InputGroup>
-        </FormGroup>
+        </Form.Group>
       );
     });
 
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`} className="sub-group-with-addon-2col">
+      <Form.Group key={`${column}-${keyLabel}-${type}`} className="sub-group-with-addon-2col">
         {labelWithInfo(option)}
-        <FormGroup className="grouped-sub-fields">
+        <Form.Group className="grouped-sub-fields">
           {subFields}
-        </FormGroup>
-      </FormGroup>
+        </Form.Group>
+      </Form.Group>
     );
   }
 
@@ -771,7 +773,10 @@ const DetailSearch = () => {
         fields.push(componentHeadline(option.label, 'headline', 'detail-search-headline'));
         break;
       case 'hr':
-        fields.push(<hr className='generic-spacer' key={`spacer-${i}`} />);
+        fields.push(<hr className='content-spacer' key={`spacer-${i}`} />);
+        break;
+      default:
+        fields.push(textInput(option, 'text', selectedValue, column, keyLabel));
         break;
     }
     return fields;
@@ -791,7 +796,7 @@ const DetailSearch = () => {
         if (field.label) {
           fields.push(componentHeadline(field.label, i, 'detail-search-headline'));
         } else if (i != 0 && field.value[0].type !== 'table') {
-          fields.push(<hr className='generic-spacer' key={`spacer-${i}`} />);
+          fields.push(<hr className='content-spacer' key={`spacer-${i}`} />);
         }
 
         field.value.map((option) => {
@@ -805,7 +810,7 @@ const DetailSearch = () => {
   }
 
   const handleSelectTab = (e) => {
-    searchStore.changeActiveTabKey(e);
+    searchStore.changeActiveTabKey(e * 1);
   }
 
   const addTabToTabFields = (title, value, i, tabFields) => {
@@ -815,7 +820,9 @@ const DetailSearch = () => {
         title={title}
         key={`tab-${title.toLowerCase().replace(' ', '-')}-${i}`}
       >
-        {mapOptions(value, [])}
+        <Form className="detail-search-form" noValidate>
+          {mapOptions(value, [])}
+        </Form>
       </Tab>
     );
     return tabFields;
@@ -833,18 +840,20 @@ const DetailSearch = () => {
     return (
       <Tabs
         activeKey={searchStore.activeTabKey}
-        animation={false}
+        transition={false}
         onSelect={handleSelectTab}
-        id="detail-search-form-element-tabs"
+        id="detail-search-element-tabs"
+        className="detail-search-element-tabs"
         key="form-element-tabs"
+        navbar={false}
       >
         {tabFields}
-      </Tabs >
+      </Tabs>
     );
   }
 
   return (
-    <div className='detail-search'>
+    <div className='detail-search-content'>
       {FormElementTabs()}
     </div>
   );

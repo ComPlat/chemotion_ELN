@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { FormControl } from 'react-bootstrap'
+import { Form } from 'react-bootstrap'
 import Select from 'react-select3';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -13,6 +13,7 @@ const PublicationSearchRow = ({ idx }) => {
   let selection = searchStore.publicationSearchValues[idx];
   let mapperOptions = mapperFields;
   let fieldOptions = PublicationFieldData.references;
+  let linkSelectSpacer = selection.link == '' ? '' : 'visible';
 
   const logicalOperators = [
     { value: "AND", label: "AND" },
@@ -55,7 +56,7 @@ const PublicationSearchRow = ({ idx }) => {
   }
 
   const defaultValueField = (
-    <FormControl
+    <Form.Control
       type="text"
       value={selection.value}
       componentClass="textarea"
@@ -84,12 +85,10 @@ const PublicationSearchRow = ({ idx }) => {
     );
   }
 
-  let display = selection.link == '' ? 'none' : 'table';
-
   return (
-    <div className="adv-search-row">
-      <div className="link-select" style={{ flex: "0 0 127px" }}>
-        <div style={{ display: display, width: '100%' }}>
+    <div className="advanced-search-row">
+      <div className="link-select">
+        <div className={`link-select-spacer ${linkSelectSpacer}`}>
           <Select
             options={logicalOperators}
             value={logicalOperators.filter(({ value }) => value == selection.link)}
