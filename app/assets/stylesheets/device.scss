@@ -3,52 +3,6 @@
   overflow-y: scroll;
 }
 
-.devices-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.devices-panel-header span {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.device-table-header {
-  background-color: #ddd;
-}
-
-.devices-button-group {
-  margin-right: 7px;
-}
-
-.btn.devices-button-group-clear, b.devices-button-group-clear {
-  margin-right: 7px;
-  color: #5fa95f;
-}
-.btn.devices-button-group-clear {
-  color: #d9534f;
-}
-
-.device-users-headline {
-  font-weight: bold;
-  margin-top: 5px;
-  margin-bottom: 5px;
-}
-
-.device-users, table.table.device-users-table {
-  background-color: #f5f5f5;
-}
-
-.table > tbody > tr > td.device-users {
-  border-top: none;
-}
-
-hr.device-tablecell-hr {
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-
 .device-alert, .device-list-config {
   white-space: pre-line;
 }
