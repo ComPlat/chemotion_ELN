@@ -1,6 +1,6 @@
 import React from 'react';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
-import CheckBoxs from 'src/components/common/CheckBoxs';
+import CheckBoxList from 'src/components/common/CheckBoxList';
 import Panel from 'src/components/legacyBootstrap/Panel'
 
 const toggleSplSettings = (text, checked) => {
@@ -29,7 +29,7 @@ const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
         </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
-        <CheckBoxs
+        <CheckBoxList
           items={splSettings}
           toggleCheckbox={toggleSplSettings}
           toggleCheckAll={toggleSplSettingsAll}
@@ -44,7 +44,7 @@ const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
         </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
-        <CheckBoxs
+        <CheckBoxList
           items={rxnSettings}
           checkedAll={checkedAllRxnSettings}
           toggleCheckbox={toggleRxnSettings}
@@ -72,7 +72,7 @@ const suiSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
         </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
-        <CheckBoxs
+        <CheckBoxList
           items={siRxnSettings}
           checkedAll={checkedAllSiRxnSettings}
           toggleCheckbox={toggleSiRxnSettings}
