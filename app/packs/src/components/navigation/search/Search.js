@@ -8,9 +8,7 @@ import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class Search extends React.Component {
   static contextType = StoreContext;
@@ -69,7 +67,7 @@ export default class Search extends React.Component {
     const elements = [
       'All',
       'Samples', 'Reactions',
-      'Wellplates', 'Screens','Cell lines'
+      'Wellplates', 'Screens', 'Cell lines'
     ];
 
     const menu = elements.map(element => (
@@ -82,37 +80,21 @@ export default class Search extends React.Component {
   }
 
   render() {
-    const { profile } = UserStore.getState();
-    const { customClass } = (profile && profile.data) || {};
-
     const buttonAfter = (
       <>
-        <Button variant={customClass ? null : 'info'} className={customClass} id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
+        <Button variant="info" id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
           <i className="fa fa-search" />
         </Button>
-        <Button variant={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
+        <Button variant="danger" onClick={this.handleClearSearchSelection}>
           <i className="fa fa-times" />
         </Button>
       </>
     );
 
-    const inputAttributes = {
-      placeholder: 'IUPAC, InChI, SMILES, RInChI...',
-      style: { minWidth: 200, maxWidth: 300 }
-    };
-
-    const suggestionsAttributes = {
-      style: {
-        marginTop: 15,
-        width: 398,
-        maxHeight: 400
-      }
-    };
-
     const searchIcon = (elementType) => {
       if (elementType === 'all') return 'All';
       if (['samples', 'reactions', 'screens', 'wellplates'].includes(elementType.toLowerCase())) return (<i className={`icon-${elementType.toLowerCase().slice(0, -1)}`} />);
-      if(elementType == 'cell lines'){
+      if (elementType == 'cell lines') {
         return (<i className={`icon-cell_line`} />);
       }
       if (this.state.genericEl) return (<i className={this.state.genericEl.icon_name} />);
@@ -122,7 +104,6 @@ export default class Search extends React.Component {
     const innerDropdown = (
       <DropdownButton
         variant="light"
-        className={customClass}
         id="search-inner-dropdown"
         title={searchIcon(this.state.elementType)}
       >
@@ -131,14 +112,10 @@ export default class Search extends React.Component {
     );
 
     return (
-      <div className="chemotion-search">
-        <div className="search-modal-draw">
-          <SearchModal />
-        </div>
-        <div className="search-autocomplete">
+      <>
+        <SearchModal />
+        <div>
           <AutoCompleteInput
-            inputAttributes={inputAttributes}
-            suggestionsAttributes={suggestionsAttributes}
             suggestions={input => this.search(input)}
             ref={(input) => { this.autoComplete = input; }}
             onSelectionChange={selection => this.handleSelectionChange(selection)}
@@ -146,7 +123,7 @@ export default class Search extends React.Component {
             buttonAfter={buttonAfter}
           />
         </div>
-      </div>
+      </>
     );
   }
 }

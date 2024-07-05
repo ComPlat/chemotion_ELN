@@ -1,5 +1,6 @@
-import React from 'react';
-import { Alert } from 'react-bootstrap';
+import React, { useContext } from 'react';
+import { Alert, AccordionContext, useAccordionButton, ButtonToolbar, Button } from 'react-bootstrap';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const togglePanel = (store) => () => {
   if (store.searchResultsCount > 0) {
@@ -54,6 +55,7 @@ const handleSearch = (store, uiState) => {
 
   if (filters.length > 0 && store.errorMessages.length == 1) {
     store.showSearchResults();
+    store.enableAccordionToggle();
     store.removeErrorMessage(message);
 
     const selection = {
@@ -95,10 +97,14 @@ const searchValuesBySubFields = (val, table) => {
         value = subContent;
         label = label === '' ? sub.col_name : label;
       }
-      searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, match, value, unit].join(" "));
+      searchValues.push(
+        [val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, match, value, unit].join(" ")
+      );
     } else if (val.sub_values[0][sub.key]) {
       value = val.sub_values[0][sub.key];
-      searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${sub.label.toLowerCase()}`, val.match, value, unit].join(" "));
+      searchValues.push(
+        [val.link, table, `${val.field.label.toLowerCase()}: ${sub.label.toLowerCase()}`, val.match, value, unit].join(" ")
+      );
     }
   });
   return searchValues;
@@ -127,6 +133,42 @@ const searchValuesByFilters = (store) => {
   store.changeSearchValues(searchValues);
 }
 
+const AccordeonHeaderButtonForSearchForm = ({ title, eventKey, disabled, callback }) => {
+  const { activeEventKey } = useContext(AccordionContext);
+  const isCurrentEventKey = activeEventKey === eventKey;
+  const activeClass = isCurrentEventKey ? 'active' : 'collapsed';
+
+  const decoratedOnClick = useAccordionButton(eventKey, () => callback && callback(eventKey));
+
+  return (
+    <button
+      type="button"
+      className={`accordion-button ${activeClass}`}
+      onClick={decoratedOnClick}
+      disabled={disabled}
+    >
+      {title}
+    </button>
+  );
+}
+
+const SearchButtonToolbar = ({ store }) => {
+  return (
+    <ButtonToolbar className="advanced-search-buttons">
+      <Button variant="warning" id="advanced-cancel-button" onClick={() => store.handleCancel()}>
+        Cancel
+      </Button>
+      <Button variant="info" onClick={() => handleClear(store)}>
+        Reset
+      </Button>
+      <Button variant="primary" id="advanced-search-button"
+        onClick={() => handleSearch(store, UIStore.getState())}>
+        Search
+      </Button>
+    </ButtonToolbar>
+  );
+}
+
 const panelVariables = (store) => {
   let variables = [
     {
@@ -134,8 +176,6 @@ const panelVariables = (store) => {
       invisibleClassName: (store.search_result_panel_visible ? '' : ' inactive'),
       inactiveSearchClass: (!store.searchVisible ? 'inactive' : ''),
       inactiveResultClass: (!store.searchResultVisible ? 'inactive' : ''),
-      searchIcon: `fa fa-chevron-${store.search_icon} icon-right`,
-      resultIcon: `fa fa-chevron-${store.result_icon} icon-right`,
       searchTitle: (store.searchVisible ? 'Search' : 'Refine search'),
       resultTitle: (store.searchResultVisible ? 'Result' : 'Back to result'),
     }
@@ -143,4 +183,7 @@ const panelVariables = (store) => {
   return variables[0];
 }
 
-export { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables }
+export {
+  togglePanel, handleClear, showErrorMessage, handleSearch,
+  AccordeonHeaderButtonForSearchForm, SearchButtonToolbar, panelVariables
+}

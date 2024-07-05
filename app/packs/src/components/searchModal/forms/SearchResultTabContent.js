@@ -10,6 +10,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const searchStore = useContext(StoreContext).search;
   let currentPage = searchStore.tabCurrentPage.length >= 1 ? searchStore.tab_current_page[list.index] : undefined;
   let currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
+  const activeTabPane = list.index === searchStore.search_result_active_tab_key ? true : false;
 
   useEffect(() => {
     if (currentPage === undefined) {
@@ -94,11 +95,9 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     }
 
     return (
-      <div className="search-result-pagination">
-        <Pagination>
-          {items}
-        </Pagination>
-      </div>
+      <Pagination className="search-result-pagination">
+        {items}
+      </Pagination>
     );
   }
 
@@ -195,7 +194,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   }
 
   return (
-    <Tab.Pane eventKey={list.index} key={`${list.key}_tabPanel`}>
+    <Tab.Pane eventKey={list.index} active={activeTabPane} key={`${list.key}_tabPanel`}>
       <div className="search-result-tab-content-container">
         {tabContentList()}
       </div>
