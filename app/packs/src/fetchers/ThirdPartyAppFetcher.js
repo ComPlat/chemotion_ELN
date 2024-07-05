@@ -14,7 +14,7 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static createOrUpdateThirdPartyApp(id, name, url) {
+  static createOrUpdateThirdPartyApp(id, name, url, file_types) {
     const idPath = id ? `/${id}` : '';
     return fetch(`${TPA_ENDPOINT_ADMIN}${idPath}`, {
       credentials: 'same-origin',
@@ -23,7 +23,7 @@ export default class ThirdPartyAppFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, url })
+      body: JSON.stringify({ name, url, file_types })
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
@@ -39,7 +39,6 @@ export default class ThirdPartyAppFetcher {
   }
 
   static fetchAttachmentToken(attID, appID) {
-    console.log(attID, appID)
     const queryParams = new URLSearchParams({ attID, appID }).toString();
     const url = `${TPA_ENDPOINT}/token?${queryParams}`;
     return fetch(url, {
