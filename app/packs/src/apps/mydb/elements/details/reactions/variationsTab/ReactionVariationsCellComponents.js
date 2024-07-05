@@ -13,6 +13,7 @@ import {
   updateNonReferenceMaterialOnMassChange,
   getReferenceMaterial, getMolFromGram, getGramFromMol
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
+import { parseNumericString } from 'src/utilities/MathUtils';
 
 function RowToolsCellRenderer({
   data: variationsRow, context
@@ -46,7 +47,7 @@ function EquivalentFormatter({ value: cellData }) {
 }
 
 function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue }) {
-  let equivalent = Number(newValue);
+  let equivalent = parseNumericString(newValue);
   if (equivalent < 0) {
     equivalent = 0;
   }
@@ -77,7 +78,7 @@ function PropertyParser({
   oldValue: cellData, newValue, colDef
 }) {
   const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
-  let value = Number(newValue);
+  let value = parseNumericString(newValue);
   if (entry !== 'temperature' && value < 0) {
     value = 0;
   }
@@ -100,7 +101,7 @@ function MaterialParser({
   const { field } = colDef;
   const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
   const columnGroup = field.split('.')[0];
-  let value = convertUnit(Number(newValue), displayUnit, cellData[entry].unit);
+  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
   if (value < 0) {
     value = 0;
   }

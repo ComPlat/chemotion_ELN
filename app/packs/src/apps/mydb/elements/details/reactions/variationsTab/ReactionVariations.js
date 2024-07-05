@@ -9,7 +9,6 @@ import {
 import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
-import { parseNumericString } from 'src/utilities/MathUtils';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType,
   temperatureUnits, durationUnits, getStandardUnit, materialTypes, updateColumnDefinitions,

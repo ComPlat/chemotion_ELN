@@ -98,13 +98,13 @@ describe('ReactionVariationsMaterials', () => {
     const updatedReactant = EquivalentParser({
       data: variationsRow,
       oldValue: reactant,
-      newValue: reactant.aux.equivalent * 0.42
+      newValue: Number(reactant.aux.equivalent * 0.42).toString()
     });
     expect(reactant.mass.value).toBeGreaterThan(updatedReactant.mass.value);
     expect(EquivalentParser({
       data: variationsRow,
       oldValue: reactant,
-      newValue: -42
+      newValue: Number(-42).toString()
     }).mass.value).toBe(0);
   });
   it('removes obsolete materials from column definitions', async () => {
