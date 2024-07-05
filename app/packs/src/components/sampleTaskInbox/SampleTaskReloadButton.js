@@ -7,10 +7,10 @@ const SampleTaskReloadButton = ({}) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
 
   return (
-    <Glyphicon
-      size="sm"
+    <i
+      className="fa fa-refresh"
+      aria-hidden="true"
       style={{ cursor: 'Pointer' }}
-      glyph="refresh"
       title="Reload sample tasks"
       onClick={sampleTasksStore.load}
     />

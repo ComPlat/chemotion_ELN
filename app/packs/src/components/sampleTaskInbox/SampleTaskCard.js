@@ -1,11 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { useDrop } from 'react-dnd';
-import { Button } from 'react-bootstrap';
+import { Button, Card } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { ConfirmModal } from 'src/components/common/ConfirmModal';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const SampleTaskCard = ({ sampleTask }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
@@ -155,35 +154,39 @@ const SampleTaskCard = ({ sampleTask }) => {
         <p>Deletion of a Scan Task cannot be undone. Please check carefully</p>
         <p>The task is missing the following to be completed:</p>
         <ul>
-          {sampleTaskStillOpenReasons().map((reason) => (<li>{reason}</li>))}
+          {
+            sampleTaskStillOpenReasons().map((reason, index) => (
+              <li key={`missingStepsForSampleTask_${sampleTask.id}_${index}`}>
+                {reason}
+              </li>
+            ))
+          }
         </ul>
       </div>
     );
   }
 
   return (
-    <Panel variant="info">
-      <Panel.Heading>
+    <Card className="w-100">
+      <Card.Header>
         {panelHeading()}
         {deleteButton()}
-      </Panel.Heading>
-      <Panel.Body>
-        <div className="row">
-          <div className="col-sm-6">
-            {contentForSample(sampleTask, dropRef)}
-          </div>
-          <div className="col-sm-6">
-            {contentForSampleTask(sampleTask)}
-          </div>
+      </Card.Header>
+      <Card.Body className="d-flex">
+        <div className="w-50">
+          {contentForSample(sampleTask, dropRef)}
         </div>
-      </Panel.Body>
+        <div className="w-50">
+          {contentForSampleTask(sampleTask)}
+        </div>
+      </Card.Body>
       <ConfirmModal
         showModal={showDeletionConfirmationDialog}
         title="Are you sure?"
         content={deletionConfirmationContent()}
         onClick={deleteSampleTask}
       />
-    </Panel>
+    </Card>
   )
 }
 export default SampleTaskCard;
