@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import {
-  FormControl, FormGroup, Form, InputGroup, Tooltip, OverlayTrigger, Button
-} from 'react-bootstrap';
+import { Form, InputGroup, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
 import Select from 'react-select3';
 import Clipboard from 'clipboard';
 import { startsWith, endsWith } from 'lodash';
@@ -9,8 +7,6 @@ import { startsWith, endsWith } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DeviceDataCollectorTab = () => {
   const devicesStore = useContext(StoreContext).devices;
@@ -82,23 +78,21 @@ const DeviceDataCollectorTab = () => {
           {
             localCollectorValues.map((c, i) => (
               <div key={`list-collector-${i}`}>
-                <FormGroup size="sm">
+                <Form.Group size="sm">
                   <InputGroup>
-                    <InputGroup.Button>
-                      <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                        <Button size="sm" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
-                          <i className="fa fa-clipboard" />
-                        </Button>
-                      </OverlayTrigger>
-                    </InputGroup.Button>
-                    <FormControl
+                    <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
+                      <Button size="sm" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`}>
+                        <i className="fa fa-clipboard" />
+                      </Button>
+                    </OverlayTrigger>
+                    <Form.Control
                       id={`copy-input-${i}`}
                       type="text"
                       value={c.path}
                       readOnly
                     />
                   </InputGroup>
-                </FormGroup>
+                </Form.Group>
               </div>
             ))
           }
@@ -109,61 +103,61 @@ const DeviceDataCollectorTab = () => {
 
   return (
     <Form className="form-with-columns">
-      <FormGroup validationState={device.valid_datacollector_method} className="col-full">
-        <ControlLabel>Watch method *</ControlLabel>
+      <Form.Group validationState={device.valid_datacollector_method} className="col-full">
+        <Form.Label>Watch method *</Form.Label>
         <Select
           isClearable
           value={methodValue}
           options={methodOptions}
           onChange={(event) => onChange('datacollector_method', event)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup validationState={device.valid_datacollector_user} className="col-half">
-        <ControlLabel>User *</ControlLabel>
-        <FormControl
+      <Form.Group validationState={device.valid_datacollector_user} className="col-half">
+        <Form.Label>User *</Form.Label>
+        <Form.Control
           type="text"
           value={userValue}
           onChange={(event) => onChange('datacollector_user', event.target.value)}
           placeholder="e.g. User"
           readOnly={endsWith(methodValueCheck, 'local')}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup validationState={device.valid_datacollector_host} className="col-half">
-        <ControlLabel>Host *</ControlLabel>
-        <FormControl
+      <Form.Group validationState={device.valid_datacollector_host} className="col-half">
+        <Form.Label>Host *</Form.Label>
+        <Form.Control
           type="text"
           value={hostValue}
           onChange={(event) => onChange('datacollector_host', event.target.value)}
           placeholder="e.g. remote.address or localhost:2222"
           readOnly={endsWith(methodValueCheck, 'local')}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>SFTP authentication with</ControlLabel>
+      <Form.Group className="col-half">
+        <Form.Label>SFTP authentication with</Form.Label>
         <Select
           value={authenticationValue}
           options={authenticationOptions}
           onChange={(event) => onChange('datacollector_authentication', event)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup validationState={device.valid_datacollector_key_name} className="col-half">
-        <ControlLabel>Key file</ControlLabel>
-        <FormControl
+      <Form.Group validationState={device.valid_datacollector_key_name} className="col-half">
+        <Form.Label>Key file</Form.Label>
+        <Form.Control
           type="text"
           value={keyFileValue}
           onChange={(event) => onChange('datacollector_key_name', event.target.value)}
           placeholder="e.g. /home/user/.ssh/rsa/eln-privatekey.pem"
           readOnly={endsWith(methodValueCheck, 'local') || readonlyKeyName}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup validationState={device.valid_datacollector_dir} className="col-full">
-        <ControlLabel>Watch directory *</ControlLabel>
-        <FormControl
+      <Form.Group validationState={device.valid_datacollector_dir} className="col-full">
+        <Form.Label>Watch directory *</Form.Label>
+        <Form.Control
           type="text"
           value={dirValue}
           onChange={(event) => onChange('datacollector_dir', event.target.value)}
@@ -181,24 +175,25 @@ const DeviceDataCollectorTab = () => {
           )}
         >
           <div>
-            <Checkbox
+            <Form.Check
+              type="checkbox"
               checked={userLevelSelected}
               onChange={(event) => onChange('datacollector_user_level_selected', event.target.checked)}
             >
               Enable user level data collection&nbsp;
               <span className="fa fa-info-circle" aria-hidden="true" />
-            </Checkbox>
+            </Form.Check>
           </div>
         </OverlayTrigger>
 
         {
           endsWith(methodValueCheck, 'local') ? <ListLocalCollector /> : null
         }
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-full">
-        <ControlLabel>Number of files</ControlLabel>
-        <FormControl
+      <Form.Group className="col-full">
+        <Form.Label>Number of files</Form.Label>
+        <Form.Control
           type="number"
           value={numberOfFilesValue}
           onChange={(event) => onChange('datacollector_number_of_files', event.target.value)}
@@ -207,7 +202,7 @@ const DeviceDataCollectorTab = () => {
           readOnly={startsWith(methodValueCheck, 'file')}
         />
         <span className="fa fa-info-circle" aria-hidden="true">&nbsp;Folderwatcher: set to 0 for a varying number of files</span>
-      </FormGroup>
+      </Form.Group>
     </Form>
   );
 }

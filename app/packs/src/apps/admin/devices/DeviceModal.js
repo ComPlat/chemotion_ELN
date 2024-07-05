@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { Modal, Button, ButtonToolbar, Alert, Tabs, Tab } from 'react-bootstrap';
+import React, { useContext, useState } from 'react';
+import { Modal, Button, ButtonToolbar, Alert, Tabs, Tab, Stack } from 'react-bootstrap';
 import Draggable from "react-draggable";
 import DevicePropertiesTab from './DevicePropertiesTab';
 import DeviceUserGroupsTab from './DeviceUserGroupsTab';
@@ -16,6 +16,7 @@ const DeviceModal = () => {
   const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
   let device = devicesStore.device;
   const disableTab = devicesStore.create_or_update == 'update' ? false : true;
+  const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
 
   const errorMessage = devicesStore.error_message + deviceMetadataStore.error_message;
   const successMessage = devicesStore.success_message + deviceMetadataStore.success_message;
@@ -179,93 +180,109 @@ const DeviceModal = () => {
     }
   }
 
+  const handleDrag = (e, ui) => {
+    const { x, y } = deltaPosition;
+    setDeltaPosition({
+      x: x + ui.deltaX,
+      y: y + ui.deltaY,
+    });
+  }
+
   return (
-    <Draggable handle=".handle">
-      <Modal
-        centered
-        show={devicesStore.deviceModalVisible}
-        onHide={() => handleCancel()}
-        backdrop={false}
-        dialogas="draggable-modal"
-      >
-        <Modal.Header className="handle" closeButton>
-          <div className="col-md-11 col-sm-11">
-            <Modal.Title>
-              <i className="fa fa-arrows move" />
-              {modalTitle()}
-            </Modal.Title>
-          </div>
-          <div className="col-md-1 col-sm-1">
-            <i
-              className="fa fa-window-minimize window-minimize"
-              onClick={() => devicesStore.toggleModalMinimized()} />
-          </div>
-        </Modal.Header>
-        <Modal.Body>
-          <div className={`draggable-modal-form-container${minimizedClass}`}>
-            <div className="draggable-modal-form-fields">
-              {showMessage()}
-              <div className={`draggable-modal-scrollable-content ${withAlertClass}`}>
-                <Tabs
-                  activeKey={devicesStore.active_tab_key}
-                  animation={false}
-                  onSelect={handleSelectTab}
-                  id="device-form-tabs"
-                  key="form-tabs"
-                >
-                  <Tab
-                    eventKey={1}
-                    title="Properties"
-                    key="tab-properties-1"
+    <Draggable handle=".modal-header" onDrag={handleDrag}>
+      <div>
+        <Modal
+          show={devicesStore.deviceModalVisible}
+          onHide={() => handleCancel()}
+          backdrop={false}
+          keyboard={false}
+          className={`draggable-modal-dialog${minimizedClass}`}
+          size="xxxl"
+          dialogClassName="draggable-modal"
+          contentClassName={`draggable-modal-content${minimizedClass}`}
+          style={{
+            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
+          }}
+        >
+          <Modal.Header closeButton>
+            <Stack direction="horizontal" className="draggable-modal-stack justify-content-between" gap={3}>
+              <Modal.Title className="draggable-modal-stack-title">
+                <i className="fa fa-arrows move" />
+                {modalTitle()}
+              </Modal.Title>
+              <Button className="ms-auto ms-lg-5 pt-2 align-self-start bg-transparent border-0">
+                <i
+                  className="fa fa-window-minimize window-minimize"
+                  onClick={() => devicesStore.toggleModalMinimized()} />
+              </Button>
+            </Stack>
+          </Modal.Header>
+          <Modal.Body>
+            <div className={`draggable-modal-form-container${minimizedClass}`}>
+              <div className="draggable-modal-form-fields">
+                {showMessage()}
+                <div className={`draggable-modal-scrollable-content ${withAlertClass}`}>
+                  <Tabs
+                    activeKey={devicesStore.active_tab_key}
+                    animation={false}
+                    onSelect={handleSelectTab}
+                    id="device-form-tabs"
+                    key="form-tabs"
                   >
-                    <DevicePropertiesTab />
-                  </Tab>
-                  <Tab
-                    eventKey={2}
-                    title="Users & Groups"
-                    key="tab-user-group-2"
-                    disabled={disableTab}
-                  >
-                    <DeviceUserGroupsTab />
-                  </Tab>
-                  <Tab
-                    eventKey={3}
-                    title="Data Collector"
-                    key="tab-data-collector-3"
-                    disabled={disableTab}
-                  >
-                    <DeviceDataCollectorTab />
-                  </Tab>
-                  <Tab
-                    eventKey={4}
-                    title="NoVNC Settings"
-                    key="tab-novnc-settings-4"
-                    disabled={disableTab}
-                  >
-                    <DeviceNovncTab />
-                  </Tab>
-                  <Tab
-                    eventKey={5}
-                    title="Metadata"
-                    key="tab-metadata-5"
-                    disabled={disableTab}
-                  >
-                    <DeviceMetadataTab />
-                  </Tab>
-                </Tabs>
+                    <Tab
+                      eventKey={1}
+                      title="Properties"
+                      key="tab-properties-1"
+                    >
+                      <DevicePropertiesTab />
+                    </Tab>
+                    <Tab
+                      eventKey={2}
+                      title="Users & Groups"
+                      key="tab-user-group-2"
+                      disabled={disableTab}
+                    >
+                      <DeviceUserGroupsTab />
+                    </Tab>
+                    <Tab
+                      eventKey={3}
+                      title="Data Collector"
+                      key="tab-data-collector-3"
+                      disabled={disableTab}
+                    >
+                      <DeviceDataCollectorTab />
+                    </Tab>
+                    <Tab
+                      eventKey={4}
+                      title="NoVNC Settings"
+                      key="tab-novnc-settings-4"
+                      disabled={disableTab}
+                    >
+                      <DeviceNovncTab />
+                    </Tab>
+                    <Tab
+                      eventKey={5}
+                      title="Metadata"
+                      key="tab-metadata-5"
+                      disabled={disableTab}
+                    >
+                      <DeviceMetadataTab />
+                    </Tab>
+                  </Tabs>
+                </div>
+                <ButtonToolbar className={`draggable-modal-form-buttons ${buttonsWithAlertClass}`}>
+                  <Button variant="warning" onClick={() => handleCancel()}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" onClick={saveDeviceOrRelation} >
+                    Save
+                  </Button>
+                </ButtonToolbar>
               </div>
-              <ButtonToolbar className={`draggable-modal-form-buttons ${buttonsWithAlertClass}`}>
-                <Button variant="warning" onClick={() => handleCancel()}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onClick={saveDeviceOrRelation} >
-                  Save
-                </Button>
-              </ButtonToolbar>
             </div>
-          </div>
-        </Modal.Body>
-      </Modal>
+          </Modal.Body>
+        </Modal>
+      </div>
     </Draggable>
   );
 }

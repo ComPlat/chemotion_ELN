@@ -1,9 +1,8 @@
 import React, { useContext } from 'react';
-import { FormControl, FormGroup, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceNovncTab = () => {
   const devicesStore = useContext(StoreContext).devices;
@@ -46,27 +45,27 @@ const DeviceNovncTab = () => {
 
   return (
     <Form className="form-with-columns">
-      <FormGroup validationState={device.valid_novnc_target} className="col-half">
-        <ControlLabel>Target *</ControlLabel>
-        <FormControl
+      <Form.Group validationState={device.valid_novnc_target} className="col-half">
+        <Form.Label>Target *</Form.Label>
+        <Form.Control
           type="text"
           value={device.novnc_target ? device.novnc_target : ''}
           onChange={(event) => onChange('novnc_target', event.target.value)}
           placeholder="e.g. ws://localhost:8092/websockify"
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>Websockify Token</ControlLabel>
-        <FormControl
+      <Form.Group className="col-half">
+        <Form.Label>Websockify Token</Form.Label>
+        <Form.Control
           type="text"
           value={device.novnc_token ? device.novnc_token : ''}
           onChange={(event) => onChange('novnc_token', event.target.value)}
           placeholder="e.g. 000001"
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-full">
+      <Form.Group className="col-full">
         <span className="fa fa-info-circle" aria-hidden="true">&nbsp;
           <b>Current Target</b>&nbsp;
           <RenderStoredTarget />
@@ -78,17 +77,17 @@ const DeviceNovncTab = () => {
         </span>
         <hr />
         <h4>RFB Credentials</h4>
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>Password</ControlLabel>
-        <FormControl
+      <Form.Group className="col-half">
+        <Form.Label>Password</Form.Label>
+        <Form.Control
           type="text"
           value={passwordValue}
           onChange={(event) => onChange('novnc_password', event.target.value)}
           placeholder="Password"
         />
-      </FormGroup>
+      </Form.Group>
     </Form>
   );
 }
