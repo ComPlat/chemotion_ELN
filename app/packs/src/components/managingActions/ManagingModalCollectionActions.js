@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import Select from 'react-select'
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
@@ -18,7 +19,7 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   onSelectChange(e) {
-    const selected = e.target && e.target.value;
+    const selected = e && e.value;
     this.setState((previousProps, previousState) => {
       return { ...previousState, selected: selected }
     });
@@ -73,7 +74,6 @@ export default class ManagingModalCollectionActions extends React.Component {
       const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
       const className = leaf.first ? "separator" : "";
       return {
-        key: leaf.id,
         value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
         label: indent + leaf.label,
         className: className
@@ -120,17 +120,12 @@ export default class ManagingModalCollectionActions extends React.Component {
       <Form>
         <Form.Group className="mb-3">
           <Form.Label>Select a Collection</Form.Label>
-          <Form.Select
+          <Select
+            options={options}
             value={selected}
             onChange={this.onSelectChange}
             className="select-assign-collection"
-          >
-            {
-              options.map((o) => (
-                <option key={o.key} value={o.value} className={o.className}>{o.label}</option>
-              ))
-            }
-          </Form.Select>
+          />
         </Form.Group>
 
         <Form.Group className="mb-3">
