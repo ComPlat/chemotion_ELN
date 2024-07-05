@@ -5,5 +5,6 @@ module Entities
     expose :ip_address
     expose :name
     expose :password
+    expose :file_type
   end
 end
