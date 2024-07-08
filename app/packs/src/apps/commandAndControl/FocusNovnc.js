@@ -9,6 +9,7 @@ export default class FocusNovnc extends React.Component {
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
     this.handleCursor = this.handleCursor.bind(this);
+    this.handleForceScreenResizing = this.handleForceScreenResizing.bind(this);
   }
 
   handleFocus() {
@@ -23,8 +24,12 @@ export default class FocusNovnc extends React.Component {
     this.props.handleCursor();
   }
 
+  handleForceScreenResizing() {
+    this.props.handleForceScreenResizing();
+  }
+
   render() {
-    const { connected, isNotFocused, forceCursor } = this.props;
+    const { connected, isNotFocused, forceCursor, isForcedScreenResizing } = this.props;
     const focusedColor = 'btn btn-xs btn-success m-4';
     const blurredColor = 'btn btn-xs btn-danger m-4';
     const normalColor = 'btn btn-xs m-2';
@@ -43,6 +48,16 @@ export default class FocusNovnc extends React.Component {
         disabled={!isNotFocused || !connected}
         onClick={this.handleFocus}
       > {isNotFocused ? 'Focus' : 'Focused'}
+      </Button>
+    );
+    const ScreenResizingBtn = () => (
+      <Button
+        className={(!isForcedScreenResizing || !connected) ? normalColor : focusedColor}
+        disabled={!connected}
+        onClick={this.handleForceScreenResizing}
+        title="force screen resizing"
+      >
+        {isForcedScreenResizing ? 'Unforce Screen Resizing' : 'Force Screen Resizing'}
       </Button>
     );
     const UsersConnected = () => (
@@ -75,6 +90,7 @@ export default class FocusNovnc extends React.Component {
         </Button>
 
         {connected ? <UsersConnected /> : null}
+        <ScreenResizingBtn />
       </ButtonToolbar>
 
     );
@@ -85,9 +101,11 @@ FocusNovnc.propTypes = {
   watching: PropTypes.number.isRequired,
   using: PropTypes.number.isRequired,
   isNotFocused: PropTypes.bool.isRequired,
+  isForcedScreenResizing: PropTypes.bool.isRequired,
   connected: PropTypes.bool.isRequired,
   forceCursor: PropTypes.bool.isRequired,
   handleBlur: PropTypes.func.isRequired,
   handleFocus: PropTypes.func.isRequired,
   handleCursor: PropTypes.func.isRequired,
+  handleForceScreenResizing: PropTypes.func.isRequired,
 };
