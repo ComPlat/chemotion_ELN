@@ -18,7 +18,6 @@ export default class DictionaryCuration extends Component  {
             file: null,
             customSearch: "",
             establishedSearch :"",
-            affixFile: "",
             affObject : null,
             establishedDictionaryText :"",
             customDictionaryText: ""
@@ -50,11 +49,10 @@ export default class DictionaryCuration extends Component  {
         .then ((res)=> res.text())
         .then((text) => {
           affixText = text;
-          this.setState({affixFile : affixText}, () =>{
           var affObject = this.convertAffxStrtoObj(affixText)
-          this.setState({affObject: affObject})
-          });
-        })
+          this.setState({affObject: affObject},()=>this.applyAffix())
+    });
+        
         // .then(()=>{this.applyAffix()})
     }
 
@@ -117,12 +115,9 @@ export default class DictionaryCuration extends Component  {
           affix = affix.split("")
           var newDictArray = [word]
           newDictArray = newDictArray.concat(this.workWithaffObject(word,affix, this.state.affObject))
-          // console.log(newDictArray)
-
           dictionaryArray[dictionaryArray.indexOf(entry)] = newDictArray
         }
         else{
-          // console.log(entry)
         }
       }
       dictionaryArray = dictionaryArray.flat()
@@ -174,11 +169,7 @@ export default class DictionaryCuration extends Component  {
       for (var countValue of count){
         newDictString = newDictString + dictionaryArray[countValue] + "\n"
       }
-      if(valueState == "established")  {
-        this.setState({establishedValue: newDictString})}
-      if(valueState == "custom") {
-        this.setState({customValue: newDictString})
-      }
+      this.setState({[valueState]: newDictString})
     }
 
     saveFile(){
@@ -212,7 +203,7 @@ export default class DictionaryCuration extends Component  {
         this.setState({ file: null });
     }
 
-    convertDictionaryToArray(custom,established){
+    checkCustomVsEstablished(custom,established){
       var customArray = custom.split("\n")
       var establishedArray = established.split("\n")
       var newCustomArray = customArray.filter(val => !establishedArray.includes(val));
@@ -224,8 +215,9 @@ export default class DictionaryCuration extends Component  {
 
     creatDictionaryFromString(){
       var input = 'The Tetrarchy was the administrative division of the Roman Empire instituted by Roman emperor Diocletian in 293 AD, marking the end of the Crisis of the Third Century and the recovery of the Roman Empire. The first phase, sometimes referred to as the Diarchy ("the rule of two"), involved the designation of the general Maximian as co-emperor firstly as Caesar (junior emperor) in 285, followed by his promotion to Augustus in 286. Diocletian took care of matters in the Eastern regions of the Empire while Maximian similarly took charge of the Western regions. In 293, feeling more focus was needed on both civic and military problems, Diocletian, with Maximian\'s consent, expanded the imperial college by appointing two Caesars (one responsible to each Augustus) Galerius and Constantius Chlorus. '
+      // input = input.replaceAll(/\d/g, "")
       input = input.replaceAll(" ", "\n")
-      input = input.replaceAll(/[\.\,\?\!\(\) \"]/g, "")
+      input = input.replaceAll(/[\.\,\?\!\(\) \"\d]/g, "")
       input = input.toLowerCase()
       console.log(input)
     }
@@ -262,9 +254,10 @@ export default class DictionaryCuration extends Component  {
     render() {
         return(
         <div>
+            {/* {this.applyAffix()} */}
             {this.fileDisplay()}
             {this.dropzoneOrfilePreview()}
-            <Button onClick={()=> this.convertDictionaryToArray(this.state.customValue,this.state.establishedDictionaryText)}>Check Custom Dictionary</Button>
+            <Button onClick={()=> this.checkCustomVsEstablished(this.state.customValue,this.state.establishedDictionaryText)}>Check Custom Dictionary</Button>
             <Button onClick={()=> this.saveFile()}>Save dictionary</Button>
             <Button onClick={()=> this.applyAffix()}>load affix</Button>
             <Button onClick={()=> this.creatDictionaryFromString()}>Create dictionary</Button>
@@ -279,14 +272,19 @@ export default class DictionaryCuration extends Component  {
                               placeholder="Enter Search"
                               onChange={this.handleChangeCustomSearch}/>
                           </Col>
-                          <Col lg={5}> <Button onClick={()=> this.handleSearchSubmit(this.state.customDictionaryText,this.state.customSearch,"custom")}>Submit</Button></Col>
+                          <Col lg={5}> 
+                            <Button onClick={()=> 
+                              this.handleSearchSubmit(this.state.customDictionaryText,this.state.customSearch,"customValue")}>
+                              Submit
+                            </Button>
+                          </Col>
                         </Row>
                       </ControlLabel>
                       <FormControl
-                          componentClass="textarea"
-                          value={this.state.customValue}
-                          onChange={this.handleChangeCustom}
-                          style={{width: 500, height: 600}}
+                        componentClass="textarea"
+                        value={this.state.customValue}
+                        onChange={this.handleChangeCustom}
+                        style={{width: 500, height: 600}}
                       />
                       <FormControl.Feedback />
                   </FormGroup>
@@ -302,7 +300,13 @@ export default class DictionaryCuration extends Component  {
                               placeholder="Enter Search"
                               onChange={this.handleChangeEstablishedSearch}/>
                           </Col>
-                          <Col lg={5}> <Button onClick={()=> this.handleSearchSubmit(this.state.establishedDictionaryText,this.state.establishedSearch,"established")}>Submit</Button></Col>
+                          <Col lg={5}> 
+                            <Button onClick={()=> 
+                              this.handleSearchSubmit
+                              (this.state.establishedDictionaryText,this.state.establishedSearch,"establishedValue")}>
+                              Submit
+                            </Button>
+                          </Col>
                         </Row>
                         </ControlLabel>
                       <FormControl
