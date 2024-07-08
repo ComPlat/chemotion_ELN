@@ -1,8 +1,11 @@
 import expect from 'expect';
 import {
-  convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow
+  convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-import { setUpReaction } from 'helper/reactionVariationsHelpers';
+import {
+  getReactionMaterials, getMaterialColumnGroupChild
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
+import { setUpReaction, getColumnGroupChild } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {
   it('converts units', () => {
@@ -55,7 +58,7 @@ describe('ReactionVariationsUtils', () => {
     const updatedRow = updateVariationsRow(
       row,
       `startingMaterials.${referenceMaterialID}`,
-      { ...referenceMaterial, value: referenceMaterial.value * 10 },
+      { ...referenceMaterial, mass: { ...referenceMaterial.mass, value: referenceMaterial.mass.value * 10 } },
       reaction.hasPolymers()
     );
     expect(Object.values(row.reactants)[0].aux.equivalent).toBeGreaterThan(
@@ -64,5 +67,22 @@ describe('ReactionVariationsUtils', () => {
     expect(Object.values(row.products)[0].aux.yield).toBeGreaterThan(
       Object.values(updatedRow.products)[0].aux.yield
     );
+  });
+  it('updates the definition of a column', async () => {
+    const reaction = await setUpReaction();
+    const reactionMaterials = getReactionMaterials(reaction);
+    const field = `startingMaterials.${reactionMaterials.startingMaterials[0].id}`;
+    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
+      groupId: materialType,
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null))
+    }));
+    expect(getColumnGroupChild(columnDefinitions, 'startingMaterials', field).cellDataType).toBe('material');
+    const updatedColumnDefinitions = updateColumnDefinitions(
+      columnDefinitions,
+      field,
+      'cellDataType',
+      'equivalent'
+    );
+    expect(getColumnGroupChild(updatedColumnDefinitions, 'startingMaterials', field).cellDataType).toBe('equivalent');
   });
 });

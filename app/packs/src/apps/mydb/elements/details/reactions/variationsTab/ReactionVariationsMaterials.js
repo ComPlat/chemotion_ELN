@@ -3,7 +3,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { cloneDeep } from 'lodash';
 import {
-  convertUnit, materialTypes, massUnits, volumeUnits
+  convertUnit, materialTypes, volumeUnits, massUnits, amountUnits, getStandardUnit,
+  getCellDataType
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function getMolFromGram(gram, material) {
@@ -34,14 +35,14 @@ function getReferenceMaterial(variationsRow) {
 }
 
 function computeEquivalent(material, referenceMaterial) {
-  return getMolFromGram(convertUnit(material.value, material.unit, 'g'), material)
-  / getMolFromGram(convertUnit(referenceMaterial.value, referenceMaterial.unit, 'g'), referenceMaterial);
+  return getMolFromGram(material.mass.value, material)
+  / getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
 }
 
 function computePercentYield(material, referenceMaterial, reactionHasPolymers) {
   const stoichiometryCoefficient = (material.aux.coefficient ?? 1.0)
     / (referenceMaterial.aux.coefficient ?? 1.0);
-  const equivalent = computeEquivalent(material, referenceMaterial, 'products')
+  const equivalent = computeEquivalent(material, referenceMaterial)
     / stoichiometryCoefficient;
   return reactionHasPolymers ? (equivalent * 100)
     : ((equivalent <= 1 ? equivalent : 1) * 100);
@@ -83,11 +84,13 @@ function updateEquivalents(variationsRow) {
   return updatedVariationsRow;
 }
 
-function getMaterialData(material, materialType) {
+function getMaterialData(material) {
   const materialCopy = cloneDeep(material);
-  const unit = materialType === 'solvents' ? volumeUnits[0] : massUnits[0];
-  let value = materialType === 'solvents' ? (materialCopy.amount_l ?? null) : (materialCopy.amount_g ?? null);
-  value = materialType === 'solvents' ? convertUnit(value, 'l', unit) : convertUnit(value, 'g', unit);
+
+  const mass = { value: materialCopy.amount_g ?? null, unit: getStandardUnit('mass') };
+  const amount = { value: material.amount_mol ?? null, unit: getStandardUnit('amount') };
+  const volume = { value: materialCopy.amount_l ?? null, unit: getStandardUnit('volume') };
+
   const aux = {
     coefficient: materialCopy.coefficient ?? null,
     isReference: materialCopy.reference ?? false,
@@ -99,7 +102,10 @@ function getMaterialData(material, materialType) {
     yield: null,
     equivalent: null
   };
-  return { value, unit, aux };
+
+  return {
+    volume, mass, amount, aux
+  };
 }
 
 function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
@@ -122,7 +128,7 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
     Object.keys(materialTypes).forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         if (!(material.id in row[materialType])) {
-          row[materialType][material.id] = getMaterialData(material, materialType);
+          row[materialType][material.id] = getMaterialData(material);
         }
       });
     });
@@ -133,8 +139,8 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
 function MaterialOverlay({
   value: cellData, colDef
 }) {
-  const { aux = null, value, unit: standardUnit } = cellData;
-  const { _variationsUnit: displayUnit } = colDef;
+  const { aux = null } = cellData;
+  const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
 
   return (
     <div
@@ -146,15 +152,18 @@ function MaterialOverlay({
         borderRadius: '4px',
       }}
     >
-      <p>
-        <span>
-          {Number(convertUnit(value, standardUnit, displayUnit)).toPrecision(4)}
-          {' '}
-          [
-          {displayUnit}
-          ]
-        </span>
-      </p>
+      {entry !== 'equivalent' && (
+        <p>
+          <span>
+            {Number(convertUnit(cellData[entry].value, cellData[entry].unit, displayUnit)).toPrecision(4)}
+            {' '}
+            [
+            {displayUnit}
+            ]
+          </span>
+        </p>
+      )}
+
       {aux?.isReference ? (
         <p>
           <span>Reference</span>
@@ -212,41 +221,19 @@ MaterialOverlay.propTypes = {
   colDef: PropTypes.instanceOf(AgGridReact.colDef).isRequired,
 };
 
-function EquivalentFormatter({ value: cellData }) {
-  const { equivalent } = cellData.aux;
-
-  return `${Number(equivalent).toPrecision(4)}`;
-}
-
-function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue }) {
-  let equivalent = Number(newValue);
-  if (equivalent < 0) {
-    equivalent = 0;
-  }
-  // Adapt mass to updated equivalent.
-  const referenceMaterial = getReferenceMaterial(variationsRow);
-  const referenceMol = getMolFromGram(
-    convertUnit(referenceMaterial.value, referenceMaterial.unit, 'g'),
-    referenceMaterial
-  );
-  const value = Number(convertUnit(getGramFromMol(referenceMol * equivalent, cellData), 'g', cellData.unit));
-
-  return { ...cellData, value, aux: { ...cellData.aux, equivalent } };
-}
-
 function getMaterialColumnGroupChild(material, materialType, headerComponent) {
   const materialCopy = cloneDeep(material);
-  let entries = [null];
+  let entries = {};
   if (materialType === 'solvents') {
-    entries = ['volume'];
+    entries = { volume: volumeUnits };
   }
   if (materialType === 'products') {
-    entries = ['mass'];
+    entries = { mass: massUnits };
   }
   if (['startingMaterials', 'reactants'].includes(materialType)) {
-    entries = ['mass'];
+    entries = { mass: massUnits, amount: amountUnits };
     if (!materialCopy.reference ?? false) {
-      entries.push('equivalent');
+      entries.equivalent = [];
     }
   }
   const names = [`ID: ${materialCopy.id.toString()}`];
@@ -255,14 +242,15 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent) {
       names.push(materialCopy[name]);
     }
   });
+  const entry = materialType === 'solvents' ? 'volume' : 'mass';
   return {
     field: `${materialType}.${materialCopy.id}`, // Must be unique.
     tooltipField: `${materialType}.${materialCopy.id}`,
     tooltipComponent: MaterialOverlay,
-    _variationsUnit: materialTypes[materialType].units[0],
+    currentEntryWithDisplayUnit: { entry, displayUnit: getStandardUnit(entry) },
+    cellDataType: getCellDataType(entry),
     headerComponent,
     headerComponentParams: {
-      units: materialTypes[materialType].units,
       names,
       entries
     },
@@ -310,17 +298,25 @@ function updateNonReferenceMaterialOnMassChange(variationsRow, material, materia
   };
 }
 
+function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) {
+  let updatedRow = cloneDeep(row);
+  updatedRow = updateEquivalents(updatedRow);
+  updatedRow = updateYields(updatedRow, reactionHasPolymers);
+
+  return updatedRow;
+}
+
 export {
   MaterialOverlay,
-  EquivalentFormatter,
-  EquivalentParser,
   getMaterialColumnGroupChild,
   getReactionMaterials,
   getMaterialData,
   updateColumnDefinitionsMaterials,
   updateNonReferenceMaterialOnMassChange,
-  updateYields,
-  updateEquivalents,
+  updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
+  getReferenceMaterial,
+  getMolFromGram,
+  getGramFromMol,
 };

@@ -21,4 +21,23 @@ async function setUpReaction() {
   return reaction;
 }
 
-export { setUpMaterial, setUpReaction };
+function getColumnGroupChild(columnDefinitions, groupID, fieldID) {
+  const columnGroup = columnDefinitions.find((group) => group.groupId === groupID);
+  const columnDefinition = columnGroup.children.find((child) => child.field === fieldID);
+
+  return columnDefinition;
+}
+
+function getColumnDefinitionsMaterialIDs(columnDefinitions, materialType) {
+  return columnDefinitions.find(
+    (columnDefinition) => columnDefinition.groupId === materialType
+  ).children.map(
+    // E.g., extract "foo" from "reactants.foo", or "bar" from "startingMaterials.bar",
+    // "foo" and "bar" being the material IDs.
+    (child) => child.field.replace(`${materialType}.`, '')
+  );
+}
+
+export {
+  setUpMaterial, setUpReaction, getColumnGroupChild, getColumnDefinitionsMaterialIDs
+};
