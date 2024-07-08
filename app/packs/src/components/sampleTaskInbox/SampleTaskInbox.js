@@ -1,17 +1,17 @@
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Draggable from 'react-draggable';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
 import SampleTaskReloadButton from 'src/components/sampleTaskInbox/SampleTaskReloadButton';
-import { Button } from 'react-bootstrap';
+import { Button, Card, Col, Container, Modal, Row } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const SampleTaskInbox = ({}) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
+  const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
 
   const getSampleFromItem = (item, itemType) => {
     if (itemType === 'sample') {
@@ -66,7 +66,7 @@ const SampleTaskInbox = ({}) => {
     );
   }
 
-  const sampleDropzone = (dropRef, text) => {
+  const sampleDropzone = (dropRef, text, subtext) => {
     const style = {
       padding: 10,
       borderStyle: 'dashed',
@@ -77,62 +77,64 @@ const SampleTaskInbox = ({}) => {
     };
 
     return (
-      <Panel>
-        <Panel.Footer>
+      <Card>
+        <Card.Footer>
           <div style={style} ref={dropRef}>
             {text}
+            <br />
+            {subtext}
           </div>
-        </Panel.Footer>
-      </Panel>
+        </Card.Footer>
+      </Card>
     );
   };
 
-  let display_value = sampleTasksStore.inboxVisible ? 'block' : 'none';
+  const handleDrag = (e, ui) => {
+    const { x, y } = deltaPosition;
+    setDeltaPosition({
+      x: x + ui.deltaX,
+      y: y + ui.deltaY,
+    });
+  }
 
   return (
-    <Draggable
-      handle=".handle"
-      bounds="body"
-    >
-      <Panel
-        variant="primary"
-        className="sampleTaskInbox small-col col-md-6"
-        style={{
-          zIndex: 10, position: 'absolute', top: '70px', left: '10px', display: display_value,
-          maxHeight: '80%'
-        }}
-      >
-        <Panel.Heading className="handle">
-          <div className="row">
-            <div className="col-md-1">
+    <Draggable handle=".modal-header" onDrag={handleDrag}>
+      <div>
+        <Modal
+          show={sampleTasksStore.inboxVisible}
+          onHide={sampleTasksStore.hideSampleTaskInbox}
+          backdrop={false}
+          keyboard={false}
+          centered
+          size="xl"
+          className="draggable-modal-dialog"
+          dialogClassName="draggable-modal"
+          scrollable={true}
+          style={{
+            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
+          }}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title className="handle draggable-modal-stack-title">
               <SampleTaskReloadButton />
-            </div>
-            <div className="col-md-10">{openSampleTaskCount()} open SampleTasks</div>
-            <div className="col-md-1">
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={sampleTasksStore.hideSampleTaskInbox}
-              >
-                <i className="fa fa-times" />
-              </Button>
-            </div>
-          </div>
-        </Panel.Heading>
-        <Panel.Body>
-          <div className="row sampleTaskCreationDropzones">
-            <div className="col-sm-6">
-              {sampleDropzone(singleScanDropRef, 'Single Scan (weighing only compound)')}
-            </div>
-            <div className="col-sm-6">
-              {sampleDropzone(doubleScanDropRef, 'Double Scan (weighing vessel and vessel+compound to calculate difference')}
-            </div>
-          </div>
-          <div className="openSampleTasks" style={{ maxHeight: '500px', overflow: 'scroll' }}>
+              {openSampleTaskCount()} open SampleTasks
+            </Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
             {openSampleTasks()}
-          </div>
-        </Panel.Body>
-      </Panel>
+          </Modal.Body>
+
+          <Modal.Footer className="openSampleTasks">
+            <Col>
+              {sampleDropzone(singleScanDropRef, 'Drop Sample to create a Single Scan Task', '(weighing only compound)')}
+            </Col>
+            <Col>
+              {sampleDropzone(doubleScanDropRef, 'Drop Sample to create a Double Scan Task', '(weighing vessel and vessel+compound to calculate difference)')}
+            </Col>
+          </Modal.Footer>
+        </Modal>
+      </div>
     </Draggable>
   );
 }
