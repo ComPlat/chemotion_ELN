@@ -148,13 +148,13 @@ describe Chemotion::ThirdPartyAppAPI do
     end
 
     describe 'GET /GetByIDThirdPartyApp' do
-      let(:params1) do # rubocop:disable RSpec/IndexedLet
+      let(:params1) do
         {
           id: tpas[0],
         }
       end
 
-      let(:params3) do # rubocop:disable RSpec/IndexedLet
+      let(:params3) do
         {
           id: tpas[2],
         }
@@ -238,63 +238,16 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get a file from the ELN' do
+  describe "/api/v1/public/third_party_apps/{token}" do
     let(:user) { create(:person) }
     let!(:attachment) do
       create(
         :attachment,
-        storage: 'tmp', key: '8580a8d0-4b83-11e7-afc4-85a98b9d0194',
-        filename: 'upload.jpg',
-        file_path: Rails.root.join('spec/fixtures/upload.csv'),
-        created_by: user.id, created_for: user.id
-      )
-    end
-    let(:params_token) do
-      {
-        attID: attachment.id,
-        userID: user.id,
-        nameThirdPartyApp: 'fakeDownload',
-      }
-    end
-
-    it 'download a file' do
-      payload = { attID: params_token[:attID], userID: params_token[:userID],
-                  nameThirdPartyApp: params_token[:nameThirdPartyApp] }
-      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}/#{params_token[:nameThirdPartyApp]}"
-      secret = Rails.application.secrets.secret_key_base
-      token = JWT.encode(payload, secret, 'HS256')
-      token_class = CachedTokenThirdPartyApp.new(token, 0, 'fakeDownload')
-      Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
-      params = { token: token }
-      file = File.open('spec/fixtures/upload.csv')
-      file_content = file.read
-      file.close
-      get '/api/v1/public_third_party_app/download', params: params
-      res = response.body
-      expect(res).to eq(file_content)
-    end
-
-    it 'download a file with an invalid token (not in cache)' do
-      payload_invalid = { attID: params_token[:attID], userID: params_token[:userID],
-                          nameThirdPartyApp: 'Invalid' }
-      secret_invalid = Rails.application.secrets.secret_key_base
-      token_invalid = JWT.encode(payload_invalid, secret_invalid, 'HS256')
-      params_invalid = { token: token_invalid }
-      get '/api/v1/public_third_party_app/download', params: params_invalid
-      res_invalid = response.body
-      expect(res_invalid).to eq('{"error":"Invalid token"}')
-    end
-  end
-
-  describe 'upload a file to the ELN' do
-    let(:user) { create(:person) }
-    let!(:attachment) do
-      create(
-        :attachment,
-        storage: 'tmp', key: '8580a8d0-4b83-11e7-afc4-85a98b9d0194',
-        filename: 'upload.jpg',
-        file_path: Rails.root.join('spec/fixtures/upload.csv'),
-        created_by: user.id, created_for: user.id
+        :with_image,
+        storage: 'tmp',
+        key: '8580a8d0-4b83-11e7-afc4-85a98b9d0194',
+        created_by: user.id,
+        created_for: user.id,
       )
     end
     let(:params_token) do
@@ -305,19 +258,57 @@ describe Chemotion::ThirdPartyAppAPI do
       }
     end
 
-    it 'upload a file' do
-      payload = { attID: params_token[:attID], userID: params_token[:userID],
-                  nameThirdPartyApp: params_token[:nameThirdPartyApp] }
-      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}/#{params_token[:nameThirdPartyApp]}"
-      secret = Rails.application.secrets.secret_key_base
-      token = JWT.encode(payload, secret, 'HS256')
-      token_class = CachedTokenThirdPartyApp.new(token, 0, 'fakeUpload')
-      Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
-      file_path = 'spec/fixtures/upload.csv'
-      file = Rack::Test::UploadedFile.new(file_path, 'spec/fixtures/upload2.csv')
-      params = { token: token, attachmentName: 'NewName', file: file, fileType: '.csv' }
-      post '/api/v1/public_third_party_app/upload', params: params
-      expect(response.body).to include('File uploaded successfully')
+    let(:payload) do
+      { attID: params_token[:attID],
+        userID: params_token[:userID],
+        nameThirdPartyApp: params_token[:nameThirdPartyApp],
+        appID: third_party_app.id }
+    end
+
+    let(:third_party_app) { create(:third_party_app) }
+    let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
+    let(:cache_key) { "#{attachment.id}/#{user.id}/#{third_party_app.id}" }
+    let(:secret) { Rails.application.secrets.secret_key_base }
+    let(:token) { JWT.encode(payload, secret, 'HS256') }
+    let(:allowed_uploads) { 1 }
+    let(:file_produced_by_3pa) do
+      file_path = 'spec/fixtures/upload.jpg'
+      Rack::Test::UploadedFile.new(file_path, 'spec/fixtures/upload.jpg')
+    end
+    let(:params) { { token: token, attachmentName: 'attachment_of_3pa', file: file_produced_by_3pa, fileType: '.csv' } }
+
+    context 'User is allowed to upload file' do
+      before do
+        cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+        post "/api/v1/public/third_party_apps/#{token}", params: params
+      end
+
+      it 'upload a file' do
+        expect(response.body).to include('File uploaded successfully')
+      end
+
+      it 'status code is 201' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'thumbnail was generated' do
+        expect(Attachment.find_by(filename: 'attachment_of_3pa').thumb).to be true
+      end
+    end
+
+    context 'User is not allowed to upload file' do
+      context 'amount of uploads exceeded' do
+        let(:allowed_uploads) { -1 }
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
+      end
     end
   end
 end
