@@ -125,17 +125,13 @@ const SampleTaskInbox = ({}) => {
             {openSampleTasks()}
           </Modal.Body>
 
-          <Modal.Footer className="flex-column openSampleTasks">
-            <Container>
-              <Row className="sampleTaskCreationDropzones">
-                <Col>
-                  {sampleDropzone(singleScanDropRef, 'Drop Sample to create a Single Scan Task', '(weighing only compound)')}
-                </Col>
-                <Col>
-                  {sampleDropzone(doubleScanDropRef, 'Drop Sample to create a Double Scan Task', '(weighing vessel and vessel+compound to calculate difference)')}
-                </Col>
-              </Row>
-            </Container>
+          <Modal.Footer className="openSampleTasks">
+            <Col>
+              {sampleDropzone(singleScanDropRef, 'Drop Sample to create a Single Scan Task', '(weighing only compound)')}
+            </Col>
+            <Col>
+              {sampleDropzone(doubleScanDropRef, 'Drop Sample to create a Double Scan Task', '(weighing vessel and vessel+compound to calculate difference)')}
+            </Col>
           </Modal.Footer>
         </Modal>
       </div>

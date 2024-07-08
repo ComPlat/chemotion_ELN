@@ -167,22 +167,20 @@ const SampleTaskCard = ({ sampleTask }) => {
   }
 
   return (
-    <Card className="w-100">
+    <Card className="w-100 mt-3">
       <Card.Header>
         {panelHeading()}
         {deleteButton()}
       </Card.Header>
       <Card.Body>
-        <Container>
-          <Row className="gx-5">
-            <Col>
-              {contentForSample(sampleTask, dropRef)}
-            </Col>
-            <Col>
-              {contentForSampleTask(sampleTask)}
-            </Col>
-          </Row>
-        </Container>
+        <Row className="gx-5">
+          <Col>
+            {contentForSample(sampleTask, dropRef)}
+          </Col>
+          <Col>
+            {contentForSampleTask(sampleTask)}
+          </Col>
+        </Row>
       </Card.Body>
       <ConfirmModal
         showModal={showDeletionConfirmationDialog}
