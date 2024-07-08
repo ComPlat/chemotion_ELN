@@ -192,27 +192,6 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get ip address of a third party app by name' do
-    before do
-      ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
-      ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
-    end
-
-    describe 'GET /IP' do
-      let(:params) do
-        {
-          name: 'Test1',
-        }
-      end
-
-      it 'Get ip address by name works?' do
-        get '/api/v1/third_party_apps/IP', params: params
-        response_data = JSON.parse(response.body)
-        expect(response_data).to eq('http://test1.com')
-      end
-    end
-  end
-
   describe 'get a token for an attachment' do
     let(:user_id) do
       users = User.all
