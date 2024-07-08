@@ -113,7 +113,6 @@ class CnC extends React.Component {
   handleScreenSizeChanging() {
     // If there is no RFB instance or screen resizing is not forced, return early
     if (!this.state.rfb || !this.state.isForcedScreenResizing) { return; }
-    console.log("screen size changing");
     const tempRFB = this.state.rfb;
     // Toggle the `scaleViewport` property of the RFB instance
     tempRFB.scaleViewport = false;
