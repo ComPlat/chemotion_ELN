@@ -1,6 +1,6 @@
 import React, { Component, useEffect} from 'react';
 import { Grid, Row, Col, Nav, NavItem , Button, Form, FormGroup,ControlLabel,FormControl,HelpBlock} from 'react-bootstrap';
-import { a } from 'react-dom-factories';
+import { a, search } from 'react-dom-factories';
 import Dropzone from 'react-dropzone';
 
 
@@ -19,7 +19,9 @@ export default class DictionaryCuration extends Component  {
             customSearch: "",
             establishedSearch :"",
             affixFile: "",
-            affObject : null
+            affObject : null,
+            establishedDictionaryText :"",
+            customDictionaryText: ""
         }}
 
     componentDidMount(){
@@ -30,14 +32,18 @@ export default class DictionaryCuration extends Component  {
         .then ((res)=> res.text())
         .then((text) => {
           customDictionaryText = text;
-          this.setState({customValue : customDictionaryText}, () =>{
+          this.setState({customValue : customDictionaryText,
+            customDictionaryText : customDictionaryText
+          }, () =>{
           });
         })
       fetch("/typojs/en_US/en_US.dic")
         .then ((res)=> res.text())
         .then((text) => {
           establishedDictionaryText = text;
-          this.setState({establishedValue : establishedDictionaryText}, () =>{
+          this.setState({establishedValue : establishedDictionaryText,
+            establishedDictionaryText : establishedDictionaryText
+          }, () =>{
           });
         })
       fetch("/typojs/en_US/en_US.aff")
@@ -122,7 +128,9 @@ export default class DictionaryCuration extends Component  {
       dictionaryArray = dictionaryArray.flat()
       console.log("affix applied")
       dictionaryString = dictionaryArray.join("\n")
-      this.setState({establishedValue: dictionaryString})
+      this.setState({establishedDictionaryText: dictionaryString,
+        establishedValue: dictionaryString
+      })
     }
 
     workWithaffObject (word, inputAff, affixObject){
@@ -150,8 +158,27 @@ export default class DictionaryCuration extends Component  {
         }
       }
     }
-      // console.log(newWordArray)
       return (newWordArray)
+    }
+
+    handleSearchSubmit(DictionaryText,search,valueState){
+      var dictionaryArray = DictionaryText.split("\n")
+      var searchTerm = search
+      var count = []
+      var newDictString =""
+      for (var dictEntry of dictionaryArray){
+        if (dictEntry.includes(searchTerm)){
+          count.push(dictionaryArray.indexOf(dictEntry))
+        }
+      }
+      for (var countValue of count){
+        newDictString = newDictString + dictionaryArray[countValue] + "\n"
+      }
+      if(valueState == "established")  {
+        this.setState({establishedValue: newDictString})}
+      if(valueState == "custom") {
+        this.setState({customValue: newDictString})
+      }
     }
 
     saveFile(){
@@ -237,7 +264,7 @@ export default class DictionaryCuration extends Component  {
         <div>
             {this.fileDisplay()}
             {this.dropzoneOrfilePreview()}
-            <Button onClick={()=> this.convertDictionaryToArray(this.state.customValue,this.state.establishedValue)}>Check Custom Dictionary</Button>
+            <Button onClick={()=> this.convertDictionaryToArray(this.state.customValue,this.state.establishedDictionaryText)}>Check Custom Dictionary</Button>
             <Button onClick={()=> this.saveFile()}>Save dictionary</Button>
             <Button onClick={()=> this.applyAffix()}>load affix</Button>
             <Button onClick={()=> this.creatDictionaryFromString()}>Create dictionary</Button>
@@ -252,7 +279,7 @@ export default class DictionaryCuration extends Component  {
                               placeholder="Enter Search"
                               onChange={this.handleChangeCustomSearch}/>
                           </Col>
-                          <Col lg={5}> <Button>Submit</Button></Col>
+                          <Col lg={5}> <Button onClick={()=> this.handleSearchSubmit(this.state.customDictionaryText,this.state.customSearch,"custom")}>Submit</Button></Col>
                         </Row>
                       </ControlLabel>
                       <FormControl
@@ -275,7 +302,7 @@ export default class DictionaryCuration extends Component  {
                               placeholder="Enter Search"
                               onChange={this.handleChangeEstablishedSearch}/>
                           </Col>
-                          <Col lg={5}> <Button>Submit</Button></Col>
+                          <Col lg={5}> <Button onClick={()=> this.handleSearchSubmit(this.state.establishedDictionaryText,this.state.establishedSearch,"established")}>Submit</Button></Col>
                         </Row>
                         </ControlLabel>
                       <FormControl
