@@ -17,8 +17,9 @@ import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  getMaterialColumnGroupChild, updateColumnDefinitionsMaterials, getReactionMaterials,
-  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
+  getMaterialColumnGroupChild, updateColumnDefinitionsMaterials,
+  getReactionMaterials, getReactionMaterialsIDs,
+  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -290,7 +291,12 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }, [reactionVariations]);
 
   const updatedReactionMaterials = getReactionMaterials(reaction);
-  if (!isEqual(reactionMaterials, updatedReactionMaterials)) {
+  if (
+    !isEqual(
+      getReactionMaterialsIDs(reactionMaterials),
+      getReactionMaterialsIDs(updatedReactionMaterials)
+    )
+  ) {
     /*
     Keep set of materials up-to-date.
     Materials could have been added or removed in the "Scheme" tab.
