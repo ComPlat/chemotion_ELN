@@ -9,30 +9,30 @@ describe Chemotion::ThirdPartyAppAPI do
     allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin1) # rubocop:disable RSpec/AnyInstance
   end
 
-  describe 'List all third party apps API' do
-    describe 'GET /third_party_apps/all' do
+  describe 'GET /third_party_apps/all' do
+    let!(:first_3PA) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
+    let!(:second_3PA) { create(:third_party_app, url: 'http://test2.com', name: 'Test2-app') }
+
+    context 'when two apps are available' do
       before do
-        ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
-        ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test2')
+        get '/api/v1/third_party_apps'
       end
 
       it 'status of get request 200?' do
-        get '/api/v1//third_party_apps/all'
         expect(response).to have_http_status(:ok)
       end
 
       it 'returns all thirdPartyApps?' do
-        get '/api/v1//third_party_apps/all'
         response_data = JSON.parse(response.body)
         expect(response_data.length).to eq(2)
       end
 
       it 'entry of apps correct?' do
-        get '/api/v1//third_party_apps/all'
         response_data = JSON.parse(response.body)
-        arr = [response_data[0]['name'], response_data[1]['name'],
-               response_data[0]['IPAddress'], response_data[1]['IPAddress']]
-        expect(arr).to eq(['Test1', 'Test2', 'http://test.com', 'http://test.com'])
+        expect(response_data.first['name']).to eq 'Test1-app'
+        expect(response_data.second['name']).to eq 'Test2-app'
+        expect(response_data.first['url']).to eq 'http://test1.com'
+        expect(response_data.second['url']).to eq 'http://test2.com'
       end
     end
   end
@@ -217,7 +217,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe "/api/v1/public/third_party_apps/{token}" do
+  describe '/api/v1/public/third_party_apps/{token}' do
     let(:user) { create(:person) }
     let!(:attachment) do
       create(
