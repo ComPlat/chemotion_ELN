@@ -275,6 +275,7 @@ export default class CreateButton extends React.Component {
             onClick={() => this.createElementOfType(el.name)}
           >
             Create
+            {' '}
             {el.label}
           </Dropdown.Item>
         ))}
