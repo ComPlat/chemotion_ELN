@@ -134,10 +134,10 @@ export default class CollectionTabs extends React.Component {
     }
 
     return (
-      <div className="d-flex mb-2">
+      <div className="d-flex mb-2 bg-dark-subtle">
         <div className="align-self-center ms-3">{node.label}</div>
         <Button
-          className="ms-2"
+          className="ms-auto"
           size="sm"
           variant="primary"
           onClick={() => this.onClickCollection(node)}

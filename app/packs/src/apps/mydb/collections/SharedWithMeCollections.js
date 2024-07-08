@@ -53,40 +53,6 @@ export default class SharedWithMeCollections extends React.Component {
     this.setState({ show: !this.state.show });
   }
 
-  actions(node) {
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        delete collection: <br /> {node.label} ?<br />
-        <ButtonGroup>
-          <Button variant="danger" size="sm" onClick={() => CollectionActions.rejectShared({ id: node.id })}>
-          Yes
-          </Button>
-          <Button variant="warning" size="sm" onClick={this.handleClick}>
-          No
-          </Button>
-        </ButtonGroup>
-      </Popover>
-    );
-
-    if (typeof (node.shared_to) === 'undefined' || !node.shared_to) {
-      return (
-        <ButtonGroup className="ms-2">
-          <OverlayTrigger
-            animation
-            placement="bottom"
-            root
-            trigger="focus"
-            overlay={popover}
-          >
-            <Button size="sm" variant="danger">
-              <i className="fa fa-trash-o" />
-            </Button>
-          </OverlayTrigger>
-        </ButtonGroup>
-      )
-    }
-  }
-
   renderNode(node) {
     if (node.is_locked) {
       return (
@@ -98,12 +64,41 @@ export default class SharedWithMeCollections extends React.Component {
         </h5>
       );
     } else {
+      const shouldRenderActions = typeof (node.shared_to) === 'undefined' || !node.shared_to
+      const popover = (
+        <Popover id="popover-positioned-scrolling-left">
+          delete collection: <br /> {node.label} ?<br />
+          <ButtonGroup>
+            <Button variant="danger" size="sm" onClick={() => CollectionActions.rejectShared({ id: node.id })}>
+            Yes
+            </Button>
+            <Button variant="warning" size="sm" onClick={this.handleClick}>
+            No
+            </Button>
+          </ButtonGroup>
+        </Popover>
+      );
+
       return (
-        <div className="d-flex mb-2">
+        <div className="d-flex bg-dark-subtle mb-2">
           <div className="align-self-center ms-3">
             {node.label}
           </div>
-          {this.actions(node)}
+          {shouldRenderActions && (
+            <ButtonGroup className="ms-auto">
+              <OverlayTrigger
+                animation
+                placement="bottom"
+                root
+                trigger="focus"
+                overlay={popover}
+              >
+                <Button size="sm" variant="danger">
+                  <i className="fa fa-trash-o" />
+                </Button>
+              </OverlayTrigger>
+            </ButtonGroup>
+          )}
         </div>
       );
     }
