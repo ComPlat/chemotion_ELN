@@ -74,9 +74,8 @@ module Chemotion
           created_by: @attachment.created_by,
           created_for: @attachment.created_for,
           filename: params[:attachmentName].presence&.strip || "#{@app.name[0, 20]}-#{params[:file][:filename]}",
+          file_path: params[:file][:tempfile].path
         )
-        new_attachment.save
-        new_attachment.attachment_attacher.attach params[:file][:tempfile].to_io
         new_attachment.save
         { message: 'File uploaded successfully' }
       end
