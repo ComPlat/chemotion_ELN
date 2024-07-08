@@ -101,6 +101,7 @@ export default class ReactionDetails extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const reactionFromNextProps = nextProps.reaction;
+    const reactionFromNextState = nextState.reaction;
     const nextActiveTab = nextState.activeTab;
     const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
@@ -114,6 +115,7 @@ export default class ReactionDetails extends Component {
       !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
       nextActiveTab !== activeTab || nextVisible !== visible ||
       nextActiveAnalysisTab !== activeAnalysisTab
+      || reactionFromNextState !== reactionFromCurrentState
     );
   }
 
