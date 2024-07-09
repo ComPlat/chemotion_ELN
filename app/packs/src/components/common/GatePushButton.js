@@ -12,56 +12,55 @@ class GatePushButton extends React.Component {
     this.buttonRef = React.createRef();
 
     this.hideOverlay = this.hideOverlay.bind(this);
-    this.transmitting = this.transmitting.bind(this);
+    this.transmit = this.transmit.bind(this);
   }
 
   hideOverlay() {
     this.setState({ showOverlay: false });
   }
 
-  transmitting(method = 'GET') {
+  async transmit(method = 'GET') {
     this.hideOverlay();
 
     const { collectionId } = this.props;
-    return fetch(`/api/v1/gate/transmitting/${collectionId}`, {
+    const resp = await fetch(`/api/v1/gate/transmitting/${collectionId}`, {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       method,
-    })
-      .then(resp =>
-        resp.json().then(data => ({
-          status: resp.status,
-          ok: resp.ok,
-          error: data && data.error,
-          target: data && data.target,
-        }))
-      )
-      .then(response => {
-        const newState = {
-          showOverlay: true,
-          status: 'redirect',
-          target: response.target
-        };
-        if (response.status === 404) {
-          newState.message =
-            'The access token is not set. Retrieve one now on chemotion.net?';
-        } else if (response.status === 401) {
-          if (response.error && response.error.match(/expired/)) {
-            newState.message =
-              'The access token has expired. Renew it now on chemotion.net?';
-          } else {
-            newState.message = `The access token is misconfigured ('${response.error}'). Renew it now on chemotion.net?`;
-          }
-        } else if (!response.ok) {
-          newState.status = 'unavailable';
-        } else {
-          newState.status = 'confirm';
-        }
-        this.setState(newState);
-      });
+    });
+    const data = await resp.json();
+
+    const response = {
+      status: resp.status,
+      ok: resp.ok,
+      error: data && data.error,
+      target: data && data.target,
+    };
+
+    const newState = {
+      showOverlay: true,
+      status: 'redirect',
+      target: response.target
+    };
+
+    if (response.status === 404) {
+      newState.message = 'The access token is not set. Retrieve one now on chemotion.net?';
+    } else if (response.status === 401) {
+      if (response.error && response.error.match(/expired/)) {
+        newState.message = 'The access token has expired. Renew it now on chemotion.net?';
+      } else {
+        newState.message = `The access token is misconfigured ('${response.error}'). Renew it now on chemotion.net?`;
+      }
+    } else if (!response.ok) {
+      newState.status = 'unavailable';
+    } else {
+      newState.status = 'confirm';
+    }
+
+    this.setState(newState);
   }
 
   tooltipContent() {
@@ -75,7 +74,7 @@ class GatePushButton extends React.Component {
             <Button
               variant="danger"
               size="sm"
-              onClick={() => this.transmitting('POST')}
+              onClick={() => this.transmit('POST')}
             >
               Yes
             </Button>
@@ -146,7 +145,7 @@ class GatePushButton extends React.Component {
         <Button
           variant="success"
           size="sm"
-          onClick={() => this.transmitting()}
+          onClick={() => this.transmit()}
           ref={this.buttonRef}
         >
           <i className="fa fa-cloud" />
