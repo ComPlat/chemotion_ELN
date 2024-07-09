@@ -66,16 +66,33 @@ export default class SharedWithMeCollections extends React.Component {
     } else {
       const shouldRenderActions = typeof (node.shared_to) === 'undefined' || !node.shared_to
       const popover = (
-        <Popover id="popover-positioned-scrolling-left">
-          delete collection: <br /> {node.label} ?<br />
-          <ButtonGroup>
-            <Button variant="danger" size="sm" onClick={() => CollectionActions.rejectShared({ id: node.id })}>
-            Yes
-            </Button>
-            <Button variant="warning" size="sm" onClick={this.handleClick}>
-            No
-            </Button>
-          </ButtonGroup>
+        <Popover>
+          <Popover.Body>
+            <div>Delete collection?</div>
+            <div>
+              &quot;
+              {node.label}
+              &quot;
+            </div>
+            <div>
+              <ButtonGroup>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => CollectionActions.rejectShared({ id: node.id })}
+                >
+                  Yes
+                </Button>
+                <Button
+                  variant="warning"
+                  size="sm"
+                  onClick={this.handleClick}
+                >
+                  No
+                </Button>
+              </ButtonGroup>
+            </div>
+          </Popover.Body>
         </Popover>
       );
 

@@ -66,16 +66,33 @@ export default class SyncWithMeCollections extends React.Component {
     } else {
       const shouldRenderActions = typeof (node.user) !== 'undefined' && node.user.type === 'Person'
       const popover = (
-        <Popover id="popover-positioned-scrolling-left">
-          delete collection: <br /> {node.label} ?<br />
-          <ButtonGroup>
-            <Button variant="danger" size="sm" onClick={() => CollectionActions.rejectSync({ id: node.id, is_syncd: true })}>
-            Yes
-            </Button>
-            <Button variant="warning" size="sm" onClick={this.handleClick} >
-            No
-            </Button>
-          </ButtonGroup>
+        <Popover>
+          <Popover.Body>
+            <div>Delete collection?</div>
+            <div>
+              &quot;
+              {node.label}
+              &quot;
+            </div>
+            <div>
+              <ButtonGroup>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => CollectionActions.rejectSync({ id: node.id, is_syncd: true })}
+                >
+                  Yes
+                </Button>
+                <Button
+                  variant="warning"
+                  size="sm"
+                  onClick={this.handleClick}
+                >
+                  No
+                </Button>
+              </ButtonGroup>
+            </div>
+          </Popover.Body>
         </Popover>
       );
 
