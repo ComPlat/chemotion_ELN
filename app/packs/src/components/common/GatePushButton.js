@@ -1,19 +1,23 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { ButtonGroup, Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
 
-class GatePushBtn extends React.Component {
+class GatePushButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+
+    this.transmitting = this.transmitting.bind(this);
   }
 
-  transmitting(e, collection_id, method = 'GET') {
+  transmitting(method = 'GET') {
     if (this.ovltg) {
       this.ovltg.hide();
     }
     this.setState(() => ({}));
-    // eslint-disable-next-line camelcase
-    return fetch(`/api/v1/gate/transmitting/${collection_id}`, {
+
+    const { collectionId } = this.props;
+    return fetch(`/api/v1/gate/transmitting/${collectionId}`, {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
@@ -61,9 +65,7 @@ class GatePushBtn extends React.Component {
             <Button
               variant="danger"
               size="sm"
-              onClick={e =>
-                this.transmitting(e, this.props.collection_id, 'POST')
-              }
+              onClick={() => this.transmitting('POST')}
             >
               Yes
             </Button>
@@ -101,7 +103,7 @@ class GatePushBtn extends React.Component {
             <Button
               variant="danger"
               size="sm"
-              onClick={e => {
+              onClick={() => {
                 this.ovltg.hide();
                 window.location.assign(
                   `${target}pages/tokens?origin=${encodeURI(
@@ -143,7 +145,7 @@ class GatePushBtn extends React.Component {
           <Button
             variant="success"
             size="sm"
-            onClick={e => this.transmitting(e, this.props.collection_id)}
+            onClick={() => this.transmitting()}
           >
             <i className="fa fa-cloud" />
           </Button>
@@ -153,4 +155,8 @@ class GatePushBtn extends React.Component {
   }
 }
 
-export default GatePushBtn;
+GatePushButton.propTypes = {
+  collectionId: PropTypes.number.isRequired,
+};
+
+export default GatePushButton;
