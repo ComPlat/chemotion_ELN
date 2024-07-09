@@ -9,6 +9,7 @@
 #
 # Indexes
 #
+#  index_collections_research_plans_on_collection_id         (collection_id)
 #  index_collections_research_plans_on_rplan_id_and_coll_id  (research_plan_id,collection_id) UNIQUE
 #
 
