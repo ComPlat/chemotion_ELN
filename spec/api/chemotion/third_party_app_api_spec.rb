@@ -50,7 +50,6 @@ describe Chemotion::ThirdPartyAppAPI do
       end
 
       it 'Number of third party apps correct?' do
-        binding.pry
         expect(ThirdPartyApp.count).to eq(1)
       end
 
@@ -90,24 +89,20 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'delete_third_party_app API' do
-    let(:tpa_id) do
-      ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
-      tpas = ThirdPartyApp.all
-      tpa = tpas[0]
-      tpa.id
-    end
+  describe 'DELETE /api/v1/third_party_apps/admin/{id}' do
+    let(:tpa) { create(:third_party_app) }
 
-    describe 'POST /delete_third_party_app' do
-      let(:params) do
-        {
-          id: tpa_id,
-        }
+    context 'when app is deletable' do
+      before do
+        delete "/api/v1/third_party_apps/admin/#{tpa.id}"
       end
 
-      it 'Can third party app be deleted?' do
-        post '/api/v1/third_party_apps_administration/delete_third_party_app', params: params
+      it 'App is deleted' do
         expect(ThirdPartyApp.count).to eq(0)
+      end
+
+      it 'Status code is 201' do
+        expect(response).to have_http_status :created
       end
     end
   end
