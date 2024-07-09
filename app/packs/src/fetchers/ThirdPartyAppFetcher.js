@@ -38,13 +38,14 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchAttachmentToken(attID, appID) {
-    const queryParams = new URLSearchParams({ attID, appID }).toString();
+  static fetchAttachmentToken(researchPlanID, attID, appID) {
+    console.log({ researchPlanID });
+    const queryParams = new URLSearchParams({ researchPlanID, attID, appID }).toString();
     const url = `${TPA_ENDPOINT}/token?${queryParams}`;
     return fetch(url, {
       credentials: 'same-origin'
     }).then(response => response.json())
-  
+
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }

@@ -48,13 +48,13 @@ export const attachmentThumbnail = (attachment) => (
           src: attachment.preview,
         }}
         popObject={
-        attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
-          ? {
-            src: `/api/v1/attachments/${attachment.id}/annotated_image`,
-          }
-          : {
-            src: attachment.preview,
-          }
+          attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
+            ? {
+              src: `/api/v1/attachments/${attachment.id}/annotated_image`,
+            }
+            : {
+              src: attachment.preview,
+            }
         }
         disableClick
       />
@@ -316,7 +316,7 @@ export const sortingAndFilteringUI = (
   </div>
 );
 
-export const thirdPartyAppButton = (attachment, options) => (
+export const thirdPartyAppButton = (researchPlanId, attachment, options) => (
   <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
       <i className="fa  fa-external-link " aria-hidden="true" />
@@ -326,9 +326,9 @@ export const thirdPartyAppButton = (attachment, options) => (
         <MenuItem
           key={uuid.v4()}
           eventKey={option.id}
-          onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+          onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(researchPlanId, attachment.id, option.id)
             .then((result) => window.open(result, '_blank'))}
-          // disabled={!isImageFile(attachment.filename) || attachment.isNew}
+        // disabled={!isImageFile(attachment.filename) || attachment.isNew}
         >
           {option.name}
         </MenuItem>

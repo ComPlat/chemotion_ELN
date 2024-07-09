@@ -247,13 +247,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {attachments.length > 0
-        && sortingAndFilteringUI( 
-          sortDirection,
-          this.handleSortChange,
-          this.toggleSortDirection,
-          this.handleFilterChange,
-          true
-        )}
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                true
+              )}
           </div>
         </div>
         {filteredAttachments.length === 0 ? (
@@ -298,6 +298,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                   <>
                     {downloadButton(attachment)}
                     {thirdPartyAppButton(
+                      this.props.researchPlan.id,
                       attachment,
                       this.thirdPartyApps,
                     )}
@@ -306,9 +307,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
                       extension,
                       attachmentEditor,
                       attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                          < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                      < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                       !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                          || attachment.is_new || this.documentType(attachment.filename) === null,
+                      || attachment.is_new || this.documentType(attachment.filename) === null,
                       this.handleEdit
                     )}
                     {annotateButton(attachment, this)}
@@ -392,5 +393,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => { }
+  onAttachmentImportComplete: () => {}
 };

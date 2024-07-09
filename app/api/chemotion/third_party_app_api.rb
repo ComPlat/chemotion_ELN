@@ -23,7 +23,9 @@ module Chemotion
 
       # desc: define the cache key based on the attachment/user/app ids
       def cache_key
-        @cache_key ||= "#{@attachment&.id}/#{@user&.id}/#{@app&.id}"
+        puts "#{@user&.id}/#{@researchPlan&.id}/#{@app&.id}/#{@attachment&.id}"
+        10.times{puts "here/n"}
+        @cache_key ||= "#{@user&.id}/#{@reseachPlan&.id}/#{@app&.id}/#{@attachment&.id}"
       end
 
       # desc: prepare the token payload from the params
@@ -32,6 +34,7 @@ module Chemotion
           'appID' => params[:appID],
           'userID' => current_user.id,
           'attID' => params[:attID],
+          'researchPlanID' => params[:researchPlanID]
         }
       end
 
@@ -41,6 +44,7 @@ module Chemotion
         @attachment = Attachment.find(payload['attID']&.to_i)
         @user = User.find(payload['userID']&.to_i)
         @app = ThirdPartyApp.find(payload['appID']&.to_i)
+        @researchPlan = ResearchPlan.find(payload['researchPlanID']&.to_i)
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end
@@ -176,6 +180,7 @@ module Chemotion
       params do
         requires :attID, type: Integer, desc: 'Attachment ID'
         requires :appID, type: Integer, desc: 'id of the third party app'
+        requires :researchPlanID, type: Integer, desc: 'research plan id'
       end
 
       get 'token' do
