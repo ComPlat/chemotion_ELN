@@ -70,7 +70,7 @@ class GatePushButton extends React.Component {
       content = (
         <div>
           Mirror Sample and Reaction data to your chemotion.net account ?
-          <ButtonGroup>
+          <ButtonGroup className="ms-1">
             <Button
               variant="danger"
               size="sm"
@@ -91,9 +91,8 @@ class GatePushButton extends React.Component {
     } else if (status === 'unavailable') {
       content = (
         <div>
-          Sorry, it seems chemotion-repository.net can not be reached at the
-          moment
-          <ButtonGroup>
+          Sorry, it seems chemotion-repository.net can not be reached at the moment
+          <ButtonGroup className="ms-1">
             <Button
               variant="warning"
               size="sm"
@@ -107,8 +106,8 @@ class GatePushButton extends React.Component {
     } else if (status === 'redirect') {
       content = (
         <div>
-          {message} &nbsp;
-          <ButtonGroup>
+          {message}
+          <ButtonGroup className="ms-1">
             <Button
               variant="danger"
               size="sm"
