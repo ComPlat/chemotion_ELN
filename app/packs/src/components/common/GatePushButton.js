@@ -1,20 +1,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { ButtonGroup, Button, Tooltip, Overlay } from 'react-bootstrap';
 
 class GatePushButton extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      showOverlay: false,
+    };
 
+    this.buttonRef = React.createRef();
+
+    this.hideOverlay = this.hideOverlay.bind(this);
     this.transmitting = this.transmitting.bind(this);
   }
 
+  hideOverlay() {
+    this.setState({ showOverlay: false });
+  }
+
   transmitting(method = 'GET') {
-    if (this.ovltg) {
-      this.ovltg.hide();
-    }
-    this.setState(() => ({}));
+    this.hideOverlay();
 
     const { collectionId } = this.props;
     return fetch(`/api/v1/gate/transmitting/${collectionId}`, {
@@ -34,7 +40,11 @@ class GatePushButton extends React.Component {
         }))
       )
       .then(response => {
-        const newState = { status: 'redirect', target: response.target };
+        const newState = {
+          showOverlay: true,
+          status: 'redirect',
+          target: response.target
+        };
         if (response.status === 404) {
           newState.message =
             'The access token is not set. Retrieve one now on chemotion.net?';
@@ -50,7 +60,7 @@ class GatePushButton extends React.Component {
         } else {
           newState.status = 'confirm';
         }
-        this.setState(() => newState);
+        this.setState(newState);
       });
   }
 
@@ -72,7 +82,7 @@ class GatePushButton extends React.Component {
             <Button
               variant="warning"
               size="sm"
-              onClick={() => this.ovltg.hide()}
+              onClick={this.hideOverlay}
             >
               No
             </Button>
@@ -88,7 +98,7 @@ class GatePushButton extends React.Component {
             <Button
               variant="warning"
               size="sm"
-              onClick={() => this.ovltg.hide()}
+              onClick={this.hideOverlay}
             >
               OK
             </Button>
@@ -104,7 +114,7 @@ class GatePushButton extends React.Component {
               variant="danger"
               size="sm"
               onClick={() => {
-                this.ovltg.hide();
+                this.hideOverlay();
                 window.location.assign(
                   `${target}pages/tokens?origin=${encodeURI(
                     window.location.origin
@@ -118,39 +128,38 @@ class GatePushButton extends React.Component {
             <Button
               variant="warning"
               size="sm"
-              onClick={() => this.ovltg.hide()}
+              onClick={this.hideOverlay}
             >
               No
             </Button>
           </ButtonGroup>
         </div>
       );
-    } else if (this.ovlg) {
-      this.ovltg.hide();
     }
     return <Tooltip id="chemotion-net-gate">{content}</Tooltip>;
   }
 
   render() {
+    const { showOverlay } = this.state;
     return (
-      <ButtonGroup>
-        <OverlayTrigger
-          trigger="click"
-          overlay={this.tooltipContent()}
-          placement="bottom"
-          ref={ov => {
-            this.ovltg = ov;
-          }}
+      <>
+        <Button
+          variant="success"
+          size="sm"
+          onClick={() => this.transmitting()}
+          ref={this.buttonRef}
         >
-          <Button
-            variant="success"
-            size="sm"
-            onClick={() => this.transmitting()}
-          >
-            <i className="fa fa-cloud" />
-          </Button>
-        </OverlayTrigger>
-      </ButtonGroup>
+          <i className="fa fa-cloud" />
+        </Button>
+
+        <Overlay
+          show={showOverlay}
+          placement="bottom"
+          target={this.buttonRef}
+        >
+          {this.tooltipContent()}
+        </Overlay>
+      </>
     );
   }
 }
