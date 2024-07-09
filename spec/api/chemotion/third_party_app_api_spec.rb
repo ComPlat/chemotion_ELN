@@ -59,55 +59,31 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'update_third_party_app API' do
-    let(:tpa_id) do
-      ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
-      tpas = ThirdPartyApp.all
-      tpa = tpas[0]
-      tpa.id
+  describe 'POST /api/v1/third_party_apps/admin/{id}' do
+    let(:tpa) { create(:third_party_app) }
+
+    context 'when update is possible' do
+      before do
+        put "/api/v1/third_party_apps/admin/#{tpa.id}", params: { url: 'changedUrl', name: 'changedName' }
+      end
+
+      it 'status code is 201' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'Properties of app were updated' do
+        expect(tpa.reload.name).to eq 'changedName'
+        expect(tpa.reload.url).to eq 'changedUrl'
+      end
     end
 
-    describe 'POST /update_third_party_app' do
-      let(:params_all) do
-        {
-          id: tpa_id,
-          IPAddress: '127.0.0.1',
-          name: 'Example App',
-        }
+    context 'when update is not possible' do
+      before do
+        put '/api/v1/third_party_apps/admin/-1', params: { url: 'changedUrl', name: 'changedName' }
       end
 
-      let(:params_name) do
-        {
-          id: tpa_id,
-          IPAddress: 'http://test.com',
-          name: 'Example App',
-        }
-      end
-
-      let(:params_ip) do
-        {
-          id: tpa_id,
-          IPAddress: '127.0.0.1',
-          name: 'Test1',
-        }
-      end
-
-      it 'Change of ip address & name successfull?' do
-        post '/api/v1/third_party_apps_administration/update_third_party_app', params: params_all
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params_all[:IPAddress], params_all[:name]])
-      end
-
-      it 'Change of name successfull?' do
-        post '/api/v1/third_party_apps_administration/update_third_party_app', params: params_name
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params_name[:IPAddress], params_name[:name]])
-      end
-
-      it 'Change of ip address successfull?' do
-        post '/api/v1/third_party_apps_administration/update_third_party_app', params: params_ip
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params_ip[:IPAddress], params_ip[:name]])
+      it 'status code is 404' do
+        expect(response).to have_http_status :not_found
       end
     end
   end
