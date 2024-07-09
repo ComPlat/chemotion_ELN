@@ -107,22 +107,6 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get names of all third party apps' do
-    before do
-      ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
-      ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
-    end
-
-    describe 'GET /api/v1/names/all' do
-      it 'Get all names' do
-        get '/api/v1/names/all'
-        response_data = JSON.parse(response.body)
-        res = [response_data[0], response_data[1]]
-        expect(res).to eq(%w[Test1 Test2])
-      end
-    end
-  end
-
   describe 'GET v1/third_party_apps/{id}' do
     let(:response_data) { JSON.parse(response.body) }
     let!(:first_3PA) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
