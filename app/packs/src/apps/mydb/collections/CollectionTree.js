@@ -34,6 +34,7 @@ export default class CollectionTree extends React.Component {
     };
 
     this.onChange = this.onChange.bind(this);
+    this.handleCollectionManagementToggle = this.handleCollectionManagementToggle.bind(this);
   }
 
   componentDidMount() {
@@ -250,10 +251,14 @@ export default class CollectionTree extends React.Component {
       <div className="collection-tree">
         <div className="tree-view">
           <div className="take-ownership-btn">
-            <Button id="collection-management-button" size="xsm" variant="danger"
+            <Button
+              id="collection-management-button"
+              size="xsm"
+              variant="danger"
               title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
-              onClick={() => this.handleCollectionManagementToggle()}>
-              <i className="fa fa-cog"></i>
+              onClick={this.handleCollectionManagementToggle}
+            >
+              <i className="fa fa-cog" />
             </Button>
           </div>
           <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>

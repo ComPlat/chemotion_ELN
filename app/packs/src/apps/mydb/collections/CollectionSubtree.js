@@ -25,6 +25,7 @@ export default class CollectionSubtree extends React.Component {
     this.onChange = this.onChange.bind(this)
     this.toggleExpansion = this.toggleExpansion.bind(this)
     this.handleClick = this.handleClick.bind(this)
+    this.handleTakeOwnership = this.handleTakeOwnership.bind(this)
   }
 
 
@@ -97,8 +98,9 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleTakeOwnership() {
-    const isSync = !!this.state.root.sharer;
-    CollectionActions.takeOwnership({ id: this.state.root.id, isSync });
+    const { root: { sharer, id } } = this.state;
+    const isSync = !!sharer;
+    CollectionActions.takeOwnership({ id, isSync });
   }
 
   handleClick(e) {
@@ -181,7 +183,7 @@ export default class CollectionSubtree extends React.Component {
           {this.canTakeOwnership() && (
             <i
               className="fa fa-exchange"
-              onClick={e => this.handleTakeOwnership(e)}
+              onClick={this.handleTakeOwnership}
             />
           )}
           {(sharedUsers && sharedUsers.length > 0) && (
