@@ -34,6 +34,7 @@ export default class CollectionTree extends React.Component {
     };
 
     this.onChange = this.onChange.bind(this);
+    this.handleCollectionManagementToggle = this.handleCollectionManagementToggle.bind(this);
   }
 
   componentDidMount() {
@@ -97,8 +98,7 @@ export default class CollectionTree extends React.Component {
     let subTreeLabels = (
       <div className="tree-view">
         <div
-          className="title"
-          style={{ backgroundColor: 'white' }}
+          className="title bg-white"
           onClick={() => this.handleSectionToggle('sharedToCollectionVisible')}
         >
           <i className="fa fa-share-alt share-icon" />&nbsp;&nbsp;
@@ -131,8 +131,7 @@ export default class CollectionTree extends React.Component {
       <div className="tree-view">
         <div
           id="shared-home-link"
-          className="title"
-          style={{ backgroundColor: 'white' }}
+          className="title bg-white"
           onClick={() => this.handleSectionToggle('sharedWithCollectionVisible')}
         >
           <i className="fa fa-share-alt share-icon" />
@@ -167,8 +166,7 @@ export default class CollectionTree extends React.Component {
       <div className="tree-view">
         <div
           id="synchron-home-link"
-          className="title"
-          style={{ backgroundColor: 'white' }}
+          className="title bg-white"
           onClick={() => this.handleSectionToggle('syncCollectionVisible')}
         >
           <i className="fa fa-share-alt" />&nbsp;&nbsp;
@@ -201,30 +199,16 @@ export default class CollectionTree extends React.Component {
   }
 
   subtrees(roots, label, isRemote, visible = true) {
-
-    const subtrees = roots && roots.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} isRemote={isRemote} />
-    });
-
-    let subtreesVisible = visible ? "" : "none"
     return (
       <div>
         {label}
-        <div style={{ display: subtreesVisible }}>
-          {subtrees}
-        </div>
-      </div>
-    )
-  }
-
-  collectionManagementButton() {
-    return (
-      <div className="take-ownership-btn">
-        <Button id="collection-management-button" size="xsm" variant="danger"
-          title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
-          onClick={() => this.handleCollectionManagementToggle()}>
-          <i className="fa fa-cog"></i>
-        </Button>
+        {visible && (
+          <div>
+            {roots && roots.map((root) => (
+              <CollectionSubtree root={root} key={`collection-${root.id}`} isRemote={isRemote} />
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -263,26 +247,36 @@ export default class CollectionTree extends React.Component {
   render() {
     const { ownCollectionVisible } = this.state;
 
-    const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
-
     return (
-      <div className='collection-tree'>
+      <div className="collection-tree">
         <div className="tree-view">
-          {this.collectionManagementButton()}
+          <div className="take-ownership-btn">
+            <Button
+              id="collection-management-button"
+              size="xsm"
+              variant="danger"
+              title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
+              onClick={this.handleCollectionManagementToggle}
+            >
+              <i className="fa fa-cog" />
+            </Button>
+          </div>
           <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
             <div
-              className="title"
-              style={{ backgroundColor: 'white' }}
+              className="title bg-white"
               onClick={() => this.handleSectionToggle('ownCollectionVisible')}
             >
-              <i className="fa fa-list" /> &nbsp;&nbsp; Collections
+              <i className="fa fa-list me-2" />
+              Collections
             </div>
           </OverlayTrigger>
         </div>
-        <div className="tree-wrapper" style={{ display: ownCollectionDisplay }}>
-          {this.lockedSubtrees()}
-          {this.unsharedSubtrees()}
-        </div>
+        {ownCollectionVisible && (
+          <div className="tree-wrapper">
+            {this.lockedSubtrees()}
+            {this.unsharedSubtrees()}
+          </div>
+        )}
         <div className="tree-wrapper">
           {this.sharedSubtrees()}
         </div>
