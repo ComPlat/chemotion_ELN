@@ -10,11 +10,13 @@
 #  material_details :string
 #  material_type    :string
 #  vessel_type      :string
-#  volume_amount    :integer
+#  volume_amount    :float
 #  volume_unit      :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  deleted_at       :datetime
+#  weight_amount    :float
+#  weight_unit      :string
 #
 # Indexes
 #
