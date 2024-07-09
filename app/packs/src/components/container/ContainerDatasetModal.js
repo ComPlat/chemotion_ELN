@@ -1,9 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Modal, ButtonGroup, OverlayTrigger, Tooltip, Button,
-} from 'react-bootstrap';
+import { Modal, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
 
 export default class ContainerDatasetModal extends Component {
@@ -67,15 +65,11 @@ export default class ContainerDatasetModal extends Component {
     const AttachmentsButton = (
       <Button
         variant={mode === 'attachments' ? 'info' : 'light'}
-        style={{
-          pointerEvents: 'none',
-          backgroundColor: mode !== 'attachments' ? '#E8E8E8' : undefined,
-          width: '120px'
-        }}
+        style={{ backgroundColor: mode !== 'attachments' ? '#E8E8E8' : undefined, }}
         onClick={() => this.handleSwitchMode('attachments')}
       >
-        Attachments&nbsp;&nbsp;
-        <i className="fa fa-paperclip" aria-hidden="true" />
+        Attachments
+        <i className="fa fa-paperclip ms-1" aria-hidden="true" />
       </Button>
     );
 
@@ -83,14 +77,10 @@ export default class ContainerDatasetModal extends Component {
       <Button
         variant={mode === 'metadata' ? 'info' : 'light'}
         onClick={() => this.handleSwitchMode('metadata')}
-        style={{
-          pointerEvents: 'none',
-          backgroundColor: mode !== 'metadata' ? '#E8E8E8' : undefined,
-          width: '120px'
-        }}
+        style={{ backgroundColor: mode !== 'metadata' ? '#E8E8E8' : undefined }}
       >
-        Metadata&nbsp;&nbsp;
-        <i className="fa fa-address-card" aria-hidden="true" />
+        Metadata
+        <i className="fa fa-address-card ms-1" aria-hidden="true" />
 
       </Button>
     );
@@ -109,10 +99,10 @@ export default class ContainerDatasetModal extends Component {
         onKeyPress={() => {}}
       >
         <OverlayTrigger placement="top" overlay={mode === 'metadata' ? attachmentTooltip : metadataTooltip}>
-          <ButtonGroup>
+          <div className=' d-flex'>
             {AttachmentsButton}
             {MetadataButton}
-          </ButtonGroup>
+          </div>
         </OverlayTrigger>
       </div>
     );
@@ -122,14 +112,13 @@ export default class ContainerDatasetModal extends Component {
         <Modal
           centered
           show={show}
-          size="lg"
-          dialogClassName="attachment-modal"
+          size="xl"
           onHide={() => (disabled ? onHide() : this.handleModalClose())}
         >
-          <Modal.Header style={{ flexShrink: 0 }}>
-            <Modal.Title>
+          <Modal.Header>
+            <Modal.Title className='d-flex justify-content-between align-items-center w-100'>
               {this.state.isNameEditing ? (
-                <div className="attachment-name-input-div">
+                <div className="d-flex flex-grow-1 align-items-center">
                   <input
                     type="text"
                     value={this.state.localName}
@@ -140,44 +129,29 @@ export default class ContainerDatasetModal extends Component {
                         this.toggleNameEditing();
                       }
                     }}
-                    onChange={(e) => { this.handleNameChange(e.target.value); }}
-                    className="attachment-name-input"
-                  />
+                    onChange={(e) => { this.handleNameChange(e.target.value); }} />
                 </div>
               ) : (
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'
-                }}
-                >
-                  <div className="attachment-name-input-div" style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '15px' }}>{this.state.localName}</span>
+                  <div className='d-flex flex-grow-1'>
+                    <span className='me-3'>{this.state.localName}</span>
                     {!readOnly && (
-                    <i
-                      className="fa fa-pencil"
-                      aria-hidden="true"
-                      onClick={this.toggleNameEditing}
-                      style={{ fontSize: '.8em', color: '#0275d8' }}
-                      role="button"
-                    />
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {mode === 'attachments' && instrumentIsEmpty && (
-                    <div style={{ marginRight: '15px', display: 'flex', alignItems: 'center' }}>
                       <i
-                        className="fa fa-exclamation-triangle"
-                        style={{ color: 'red', fontSize: '1em', marginRight: '5px' }}
+                        className="fa fa-pencil text-primary"
+                        aria-hidden="true"
+                        onClick={this.toggleNameEditing}
+                        role="button"
                       />
-                      <span style={{
-                        color: 'red', fontSize: '0.8em', fontWeight: 'bold', flexShrink: 0
-                      }}
-                      >
-                        Instrument missing, switch to Metadata.
-                      </span>
-                    </div>
-
                     )}
-                    {btnMode}
+                    <div className="d-flex align-items-center ms-auto">
+                      {mode === 'attachments' && instrumentIsEmpty && (
+                        <div className="d-flex align-items-center text-danger me-3">
+                          <i className="fa fa-exclamation-triangle me-1" />
+                          <span className="fw-bold">
+                            Instrument missing, switch to Metadata.
+                          </span>
+                        </div>
+                    )}
+                      {btnMode}
                   </div>
                 </div>
               )}
@@ -195,35 +169,25 @@ export default class ContainerDatasetModal extends Component {
               mode={mode}
             />
           </Modal.Body>
-          <Modal.Footer style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, width: '100%'
-          }}
+          <Modal.Footer className="d-flex justify-content-between align-items-center modal-footer border-0"
           >
             <div>
-              <small style={{ alignSelf: 'center' }}>
+              <small >
                 Changes are kept for this session. Remember to save the element itself to persist changes.
               </small>
             </div>
-            <div style={{ alignSelf: 'right', marginLeft: 'auto' }}>
-              {/* <Button
-                style={{ marginRight: '10px' }}
-                onClick={this.handleModalClose}
-              >
-                Discard Changes
-              </Button> */}
               <Button
                 variant="primary"
-                style={{ alignSelf: 'center', marginLeft: 'auto' }}
+              className='align-self-center ms-auto'
                 onClick={this.handleSave}
               >
                 Keep Changes
-              </Button>
-            </div>
+            </Button>
           </Modal.Footer>
         </Modal>
       );
     }
-    return <div />;
+    return null;
   }
 }
 

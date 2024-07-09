@@ -166,9 +166,10 @@ export default class ReactionDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className="upper-btn">
+      <div className='d-flex justify-content-end align-items-center gap-2'>
+        <div className='d-flex flex-row-reverse'>
         <Button
-          size="sm"
+            size="xsm"
           variant="danger"
           disabled={readOnly}
           onClick={() => this.handleOnClickRemove(container)}
@@ -190,6 +191,7 @@ export default class ReactionDetailsContainers extends Component {
           reaction={reaction}
           analysisID={container.id}
         />
+        </div>
       </div>
     );
   };
@@ -215,7 +217,6 @@ export default class ReactionDetailsContainers extends Component {
             size="sm"
             variant="success"
             onClick={this.handleAdd}
-
           >
             Add analysis
           </Button>
@@ -256,8 +257,11 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div className="analysis-header order" style={{ width: '100%' }}>
-          <div className="preview">
+        <div
+          className="d-flex w-100 mb-0"
+          style={{ backgroundColor: '#ececec' }}
+        >
+          <div className="d-inline-block align-top p-4">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -271,16 +275,16 @@ export default class ReactionDetailsContainers extends Component {
               }}
             />
           </div>
-          <div className="abstract">
+          <div className="d-inline-block align-top">
             {
               this.headerBtnGroup(container, reaction, readOnly)
             }
-            <div className="lower-text">
-              <div className="main-title">{container.name}</div>
-              <div className="sub-title">Type: {kind}</div>
-              <div className="sub-title">Status: {status} {nmrMsg(reaction, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
-              <div className="desc sub-title">
-                <span style={{ float: 'left', marginRight: '5px' }}>
+            <div className="mt-3">
+              <div className="fs-4 fw-bold ms-2 text-truncate">{container.name}</div>
+              <div className="fs-5 ms-2 mt-2">Type: {kind}</div>
+              <div className="fs-5 ms-2 mt-2">Status: {status} {nmrMsg(reaction, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
+              <div className="fs-5 ms-2 mt-2 d-flex p-0">
+                <span className="me-2">
                   Content:
                 </span>
                 <QuillViewer value={contentOneLine} />
@@ -300,7 +304,7 @@ export default class ReactionDetailsContainers extends Component {
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
-        <div style={{ width: '100%' }}>
+        <div className='d-flex w-100 mb-0 grey-bg'>
           <strike>
             {container.name}
             {titleKind}
@@ -322,19 +326,19 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1">
+            <div className="mb-2 me-1 d-flex flex-row-reverse">
               {this.addButton()}
             </div>
             <Accordion id="reaction-analyses-panel" defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
               {analyses_container[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
-                    <Card
+                    <Accordion.Item
                       eventKey={key}
                       key={`reaction_container_deleted_${container.id}`}
                     >
-                      <Card.Header>{containerHeaderDeleted(container)}</Card.Header>
-                    </Card>
+                      <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
+                    </Accordion.Item>
                   );
                 }
 
@@ -343,13 +347,11 @@ export default class ReactionDetailsContainers extends Component {
                     ref={(element) => { this.containerRefs[key] = element; }}
                     key={`reaction_container_${container.id}`}
                   >
-                    <Card eventKey={key}>
-                      <Card.Header>
-                        <Card.Title toggle>
+                    <Accordion.Item eventKey={key}>
+                      <Accordion.Header>
                           {containerHeader(container)}
-                        </Card.Title>
-                      </Card.Header>
-                      <Card.Body collapsible="true">
+                      </Accordion.Header>
+                      <Accordion.Body>
                         <ContainerComponent
                           disabled={readOnly}
                           readOnly={readOnly}
@@ -367,8 +369,8 @@ export default class ReactionDetailsContainers extends Component {
                           handleSampleChanged={this.handleSpChange}
                           handleSubmit={this.props.handleSubmit}
                         />
-                      </Card.Body>
-                    </Card>
+                      </Accordion.Body>
+                    </Accordion.Item>
                   </div>
                 );
               })}

@@ -2,11 +2,7 @@
 import React, { Component } from 'react';
 import { Map } from 'immutable';
 import PropTypes from 'prop-types';
-import {
-  Col,
-  FormControl,
-  FormGroup
-} from 'react-bootstrap';
+import { Col, Form, Row } from 'react-bootstrap';
 import Select from 'react-select';
 
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
@@ -19,7 +15,6 @@ import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
 import AnalysisEditor from 'src/components/container/AnalysisEditor';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ContainerComponent extends Component {
   constructor(props) {
@@ -165,10 +160,11 @@ export default class ContainerComponent extends Component {
 
     return (
       <div>
-        <Col md={8}>
+        <Row>
+          <Col md={8} className='mb-2'>
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label>Name</label>
-          <FormControl
+            <Form.Label>Name</Form.Label>
+            < Form.Control
             type="text"
             label="Name"
             value={container.name}
@@ -177,10 +173,10 @@ export default class ContainerComponent extends Component {
             disabled={readOnly || disabled}
           />
         </Col>
-        <Col md={4}>
+          <Col md={4} className='mb-2'>
           <div style={{ marginBottom: 11 }}>
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label>Status</label>
+              <Form.Label>Status</Form.Label>
             <Select
               name="status"
               multi={false}
@@ -191,10 +187,11 @@ export default class ContainerComponent extends Component {
               onChange={this.handleInputChange.bind(this, 'status')}
             />
           </div>
-        </Col>
-        <Col md={12}>
-          <div style={{ marginBottom: 11 }}>
-            <ControlLabel>{this.props.analysisMethodTitle}</ControlLabel>
+          </Col>
+        </Row>
+        <Col md={12} className='mb-2'>
+          <div className='mb-3'>
+            < Form.Label>{this.props.analysisMethodTitle}</Form.Label>
             <OlsTreeSelect
               selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
@@ -203,26 +200,27 @@ export default class ContainerComponent extends Component {
             />
           </div>
         </Col>
-        <Col md={12}>
-          <FormGroup>
-            <ControlLabel>Content</ControlLabel>
+        <Col md={12} className='mb-2'>
+          < Form.Group>
+            < Form.Label>Content</Form.Label>
             {quill}
-          </FormGroup>
-          <FormGroup>
-            <ControlLabel>Description</ControlLabel>
-            <FormControl
-              componentClass="textarea"
+          </Form.Group>
+          <Form.Group className='my-3'>
+            <Form.Label>Description</Form.Label>
+            < Form.Control
+              as="textarea"
+              rows={2}
               label="Description"
               value={container.description || ''}
               disabled={readOnly || disabled}
               // eslint-disable-next-line react/jsx-no-bind
               onChange={this.handleInputChange.bind(this, 'description')}
             />
-          </FormGroup>
+          </Form.Group>
         </Col>
-        <Col md={12}>
+        <Col md={12} >
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label>Datasets</label>
+          <Form.Label>Datasets</Form.Label>
           <ContainerDatasets
             container={container}
             readOnly={readOnly}
