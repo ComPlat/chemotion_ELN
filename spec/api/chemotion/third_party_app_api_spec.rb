@@ -134,48 +134,6 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get_by_id a third party app' do
-    before do
-      ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
-      ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
-      ThirdPartyApp.create(IPAddress: 'http://test3.com', name: 'Test3')
-      ThirdPartyApp.create(IPAddress: 'http://test4.com', name: 'Test4')
-    end
-
-    let(:tpas) do
-      tpas = ThirdPartyApp.all
-      tpas.pluck(:id)
-    end
-
-    describe 'GET /GetByIDThirdPartyApp' do
-      let(:params1) do
-        {
-          id: tpas[0],
-        }
-      end
-
-      let(:params3) do
-        {
-          id: tpas[2],
-        }
-      end
-
-      it 'Is access by ID 1 of third party apps successfull?' do
-        get '/api/v1/third_party_apps/get_by_id', params: params1
-        response_data = JSON.parse(response.body)
-        res = [response_data['name'], response_data['IPAddress']]
-        expect(res).to eq(['Test1', 'http://test1.com'])
-      end
-
-      it 'Is access by ID 3 of third party apps successfull?' do
-        get '/api/v1/third_party_apps/get_by_id', params: params3
-        response_data = JSON.parse(response.body)
-        res = [response_data['name'], response_data['IPAddress']]
-        expect(res).to eq(['Test3', 'http://test3.com'])
-      end
-    end
-  end
-
   describe 'get names of all third party apps' do
     before do
       ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
@@ -188,6 +146,37 @@ describe Chemotion::ThirdPartyAppAPI do
         response_data = JSON.parse(response.body)
         res = [response_data[0], response_data[1]]
         expect(res).to eq(%w[Test1 Test2])
+      end
+    end
+  end
+
+  describe 'GET v1/third_party_apps/{id}' do
+    let(:response_data) { JSON.parse(response.body) }
+    let!(:first_3PA) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
+    let(:id) { first_3PA.id }
+
+    context 'when 3PA is available' do
+      before do
+        get "/api/v1/third_party_apps/#{id}"
+      end
+
+      it 'Response code is 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'Response has correct name and url' do
+        expect(response_data['name']).to eq 'Test1-app'
+        expect(response_data['url']).to eq 'http://test1.com'
+      end
+    end
+
+    context 'when 3PA is not available' do
+      before do
+        get '/api/v1/third_party_apps/-1'
+      end
+
+      it 'Response code is 404' do
+        expect(response).to have_http_status :not_found
       end
     end
   end
