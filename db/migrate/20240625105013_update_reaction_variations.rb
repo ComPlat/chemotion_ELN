@@ -13,7 +13,7 @@ class UpdateReactionVariations < ActiveRecord::Migration[6.1]
             next unless material['value'] && material['unit']
   
             # Restructure `mass` entry.
-            material['mass'] = { 'value' => material['value'] / 1000, 'unit' => 'g' } # Standard unit was mg, convert to g.
+            material['mass'] = { 'value' => material['value'].to_f / 1000, 'unit' => 'g' } # Standard unit was mg, convert to g.
             material.delete('value')
             material.delete('unit')
 
@@ -40,7 +40,7 @@ class UpdateReactionVariations < ActiveRecord::Migration[6.1]
         variation[key].each do |_, material|
           next unless material['mass'] && material['amount'] && material['volume']
 
-          material['value'] = material['mass']['value'].to_f * 1000 # Standard unit was g, convert to mg.
+          material['value'] = material['mass']['value']&.to_f * 1000 # Standard unit was g, convert to mg.
           material['unit'] = 'mg'
           material.delete('mass')
 
