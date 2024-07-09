@@ -45,7 +45,7 @@ export default class ThirdPartyApp extends React.Component {
     ThirdPartyAppFetcher.createOrUpdateThirdPartyApp(null, name, url, fileTypes)
       .then((result) => {
         if (result.error) {
-          this.setState({messageNewThirdPartyAppModal: result.error});
+          this.setState({ messageNewThirdPartyAppModal: result.error });
           return false;
         }
         this.thirdPartyApps();
@@ -79,7 +79,7 @@ export default class ThirdPartyApp extends React.Component {
     )
       .then((result) => {
         if (result.error) {
-          this.setState({messageNewThirdPartyAppModal: result.error});
+          this.setState({ messageNewThirdPartyAppModal: result.error });
           return false;
         }
         this.thirdPartyApps();
@@ -98,7 +98,7 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   showEditThirdPartyAppModal(key) {
-    const {thirdPartyApps} = this.state;
+    const { thirdPartyApps } = this.state;
     // select app by key from thirdPartyApps
     const app = thirdPartyApps.find((tpa) => tpa.id === key);
     this.setState({
@@ -137,7 +137,7 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   checkInput(name, ip, fileTypes) {
-    const {thirdPartyApps, currentID} = this.state;
+    const { thirdPartyApps, currentID } = this.state;
     let appId = 0;
     if (name.length < 1) {
       this.setState({
@@ -161,14 +161,14 @@ export default class ThirdPartyApp extends React.Component {
       return false;
     }
     // check if name is already used
-    if (thirdPartyApps.find((tpa) => {appId = tpa.id; return currentID !== tpa.id && tpa.name === name;})) {
+    if (thirdPartyApps.find((tpa) => { appId = tpa.id; return currentID !== tpa.id && tpa.name === name; })) {
       this.setState({
         errorMessage: `Name is already used by app with id: ${appId}`
       });
       return false;
     }
     // check if url is already used
-    if (thirdPartyApps.find((tpa) => {appId = tpa.id; return currentID !== tpa.id && tpa.url === ip;})) {
+    if (thirdPartyApps.find((tpa) => { appId = tpa.id; return currentID !== tpa.id && tpa.url === ip; })) {
       this.setState({
         errorMessage: `URL already used by app with id: ${appId}`
       });
@@ -178,7 +178,7 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   renderDeleteThirdPartyAppModal() {
-    const {showMsgModalDelete, currentName, currentID} = this.state;
+    const { showMsgModalDelete, currentName, currentID } = this.state;
     return (
       <Modal
         show={showMsgModalDelete}
@@ -187,7 +187,7 @@ export default class ThirdPartyApp extends React.Component {
         <Modal.Header closeButton>
           <Modal.Title>Delete third party app</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{overflow: 'auto'}}>
+        <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
             <p>
               <strong>
@@ -215,7 +215,7 @@ export default class ThirdPartyApp extends React.Component {
     const handleEdit = () => {
       const url = urlRef.value?.trim();
       const name = nameRef.value?.trim();
-      const fileTypes = this.state.currentFileTypes.trim()
+      const fileTypes = this.state.currentFileTypes.trim();
 
       if (this.checkInput(name, url, fileTypes)) {
         this.edit(name, url, fileTypes)
@@ -229,7 +229,7 @@ export default class ThirdPartyApp extends React.Component {
 
     const handleNameChange = (event) => {
       // if current errorMessage start with Name, clear it
-      const newState = {currentName: event.target.value};
+      const newState = { currentName: event.target.value };
       if (this.state.errorMessage.startsWith('Name')) {
         newState.errorMessage = '';
       }
@@ -237,7 +237,7 @@ export default class ThirdPartyApp extends React.Component {
     };
 
     const handleIPChange = (event) => {
-      const newState = {currentIP: event.target.value};
+      const newState = { currentIP: event.target.value };
       if (this.state.errorMessage.startsWith('URL')) {
         newState.errorMessage = '';
       }
@@ -246,7 +246,7 @@ export default class ThirdPartyApp extends React.Component {
 
     const handleFileTypesChange = (event) => {
       const newFileTypes = event.target.value;
-      const newState = {currentFileTypes: newFileTypes};
+      const newState = { currentFileTypes: newFileTypes };
       if (this.state.errorMessage && this.state.errorMessage.startsWith('FileTypes')) {
         newState.errorMessage = '';
       }
@@ -261,7 +261,7 @@ export default class ThirdPartyApp extends React.Component {
         <Modal.Header closeButton>
           <Modal.Title>Edit third party app</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{overflow: 'auto'}}>
+        <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
             <FormGroup controlId="formControlName">
               <Col componentClass={ControlLabel} sm={3}>
@@ -273,7 +273,7 @@ export default class ThirdPartyApp extends React.Component {
                   name="Name"
                   value={this.state.currentName}
                   onChange={handleNameChange}
-                  inputRef={(ref) => {nameRef = ref;}}
+                  inputRef={(ref) => { nameRef = ref; }}
                 />
               </Col>
             </FormGroup>
@@ -283,7 +283,7 @@ export default class ThirdPartyApp extends React.Component {
                 IP address:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="IP address" value={this.state.currentIP} onChange={handleIPChange} inputRef={(ref) => {urlRef = ref;}} />
+                <FormControl type="text" name="IP address" value={this.state.currentIP} onChange={handleIPChange} inputRef={(ref) => { urlRef = ref; }} />
               </Col>
             </FormGroup>
 
@@ -292,7 +292,7 @@ export default class ThirdPartyApp extends React.Component {
                 File types:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="File types" value={this.state.currentFileTypes} onChange={handleFileTypesChange} inputRef={(ref) => {fileTypesRef = ref;}} />
+                <FormControl type="text" name="File types" value={this.state.currentFileTypes} onChange={handleFileTypesChange} inputRef={(ref) => { fileTypesRef = ref; }} />
               </Col>
             </FormGroup>
 
@@ -322,7 +322,7 @@ export default class ThirdPartyApp extends React.Component {
     const handleCreate = () => {
       const url = urlRef.value;
       const name = nameRef.value;
-      const fileTypes = fileTypesRef.value.trim()
+      const fileTypes = fileTypesRef.value.trim();
       if (this.checkInput(name, url, fileTypes)) {
         this.newApp(name, url, fileTypes);
         this.closeNewThirdPartyAppModal();
@@ -337,7 +337,7 @@ export default class ThirdPartyApp extends React.Component {
         <Modal.Header closeButton>
           <Modal.Title>Create new third party app</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{overflow: 'auto'}}>
+        <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
 
             <FormGroup controlId="formControlName">
@@ -345,7 +345,7 @@ export default class ThirdPartyApp extends React.Component {
                 Name:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="Name" inputRef={(ref) => {nameRef = ref;}} />
+                <FormControl type="text" name="Name" inputRef={(ref) => { nameRef = ref; }} />
               </Col>
             </FormGroup>
 
@@ -354,7 +354,7 @@ export default class ThirdPartyApp extends React.Component {
                 IP address:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="IP address" inputRef={(ref) => {urlRef = ref;}} />
+                <FormControl type="text" name="IP address" inputRef={(ref) => { urlRef = ref; }} />
               </Col>
             </FormGroup>
 
@@ -363,7 +363,7 @@ export default class ThirdPartyApp extends React.Component {
                 File types:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="File types" inputRef={(ref) => {fileTypesRef = ref;}} />
+                <FormControl type="text" name="File types" inputRef={(ref) => { fileTypesRef = ref; }} />
               </Col>
             </FormGroup>
 
