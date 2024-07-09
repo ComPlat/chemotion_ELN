@@ -31,7 +31,7 @@ export default class CollectionTabs extends React.Component {
       tree: {
         label: 'My Collections',
         id: -1,
-        children: [{}]
+        children: []
       },
     };
     this.tabRef = [];
@@ -40,6 +40,9 @@ export default class CollectionTabs extends React.Component {
     this.onClickCollection = this.onClickCollection.bind(this);
     this.clickedOnBack = this.clickedOnBack.bind(this);
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
+
+    this.handleChange = this.handleChange.bind(this);
+    this.renderNode = this.renderNode.bind(this);
   }
 
   componentDidMount() {
@@ -55,13 +58,11 @@ export default class CollectionTabs extends React.Component {
   }
 
   onStoreChange(state) {
-    const children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
-
+    const { tree } = this.state;
     this.setState({
       tree: {
-        label: 'My Collections',
-        id: -1,
-        children
+        ...tree,
+        children: state.unsharedRoots,
       }
     });
   }
@@ -107,7 +108,7 @@ export default class CollectionTabs extends React.Component {
   handleSave(showModal) {
     const cCol = this.state.currentCollection;
     let layoutSegments = {};
-    elements.map((_e, index) => {
+    elements.forEach((_e, index) => {
       const layout = filterTabLayout(this.tabRef[index].state);
       layoutSegments = { ...layoutSegments, [elements[index].name]: layout };
     });
@@ -125,55 +126,26 @@ export default class CollectionTabs extends React.Component {
     this.handleModalOptions(this.state.showModal);
   }
 
-  label(node) {
-    if (node.label === 'My Collections') {
-      return (
-        <Form.Control 
-        value ="My Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
-    }
-    return (
-      <Form.Control className="collection-label" type="text" value={node.label || ''} disabled />
-    );
-  }
-
-  isActive(node) {
-    return node === this.state.active ? 'node is-active' : 'node';
-  }
-
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
-      if (node.is_locked || node.id < 1) {
-        return (
-          <span className={this.isActive(node)}>
-            {this.label(node)}
-          </span>
-        );
-      } else {
-        return (
-          <tr>
-            <td colSpan='6'>
-              <span className={this.isActive(node)}>
-                {this.label(node)}
-              </span>
-            </td>
-            <td colSpan='6'>
-              <Button
-                className='collection-tab-edit-btn'
-                size='sm'
-                variant='primary'
-                onClick={this.onClickCollection.bind(this, node)}
-                title='Click to edit collection tab sorting'
-              >
-                <i className='fa fa-pencil'/>
-              </Button>
-            </td>
-          </tr>
-        );
-      }
+    if (node.is_locked || node.id < 1) {
+      return (
+        <div className="ms-3 mb-2">{node.label}</div>
+      );
     }
+
+    return (
+      <div className="d-flex align-items-center justify-content-between mb-2 bg-dark-subtle">
+        <div className="ms-3">{node.label}</div>
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={() => this.onClickCollection(node)}
+          title="Click to edit collection tab sorting"
+        >
+          <i className="fa fa-pencil" />
+        </Button>
+      </div>
+    );
   }
 
   render() {
@@ -189,18 +161,25 @@ export default class CollectionTabs extends React.Component {
           paddingLeft={30}
           tree={tree}
           isElementDetails
-          onChange={this.handleChange.bind(this)}
-          renderNode={this.renderNode.bind(this)}
+          onChange={this.handleChange}
+          renderNode={this.renderNode}
         />
-        <Modal centered className="collection-tab-modal" animation show={showModal} onHide={() => this.handleModalOptions(showModal)}>
+
+        <Modal
+          size="lg"
+          centered
+          animation
+          show={showModal}
+          onHide={() => this.handleModalOptions(showModal)}
+        >
           <Modal.Header closeButton>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
-          <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px', overflow: 'auto' }} className="collection-tab-modal-body">
+          <Modal.Body>
             {layouts.map((lay, index) => {
               const callbackRef = (node) => this.tabRef[index] = node;
               return (
-                <div style={{ textAlign: 'left' }}>
+                <div key={elements[index].name}>
                   <Col md={6}>
                     <p className="collection-tag-element">{elements[index].label}</p>
                   </Col>
@@ -218,9 +197,9 @@ export default class CollectionTabs extends React.Component {
               );
             })}
           </Modal.Body>
-          <Modal.Footer style={{ textAlign: 'left' }}>
-            <div className="alert alert-info" role="alert" style={{ width: 'fit-content' }}>
-              <p style={{ fontSize: '13px' }}>
+          <Modal.Footer>
+            <div className="alert alert-info" role="alert">
+              <p>
                 For the selected collection you can adjust the visibility of segment tabs and their order for each of the above items.
                 Drag and drop to select the order of segment tab layout.
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
