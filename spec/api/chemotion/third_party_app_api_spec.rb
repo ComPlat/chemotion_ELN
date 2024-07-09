@@ -37,24 +37,26 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'new_third_party_app API' do
-    describe 'POST /new_third_party_app' do
-      let(:params) do
-        {
-          IPAddress: 'http://127.0.0.1',
-          name: 'Example App',
-        }
+  describe 'POST /api/v1/third_party_apps/admin' do
+    let(:params) { { url: 'exampleUrl', name: 'exampleApp' } }
+
+    before do
+      post '/api/v1/third_party_apps/admin', params: params
+    end
+
+    context 'when parameter are valid' do
+      it 'Status code is 201' do
+        expect(response).to have_http_status :created
       end
 
       it 'Number of third party apps correct?' do
-        post '/api/v1/third_party_apps_administration/new_third_party_app', params: params
+        binding.pry
         expect(ThirdPartyApp.count).to eq(1)
       end
 
-      it 'Entries of new third party app correct?' do
-        post '/api/v1/third_party_apps_administration/new_third_party_app', params: params
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params[:IPAddress], params[:name]])
+      it 'Created app has correct properties' do
+        expect(ThirdPartyApp.first.name).to eq 'exampleApp'
+        expect(ThirdPartyApp.first.url).to eq 'exampleUrl'
       end
     end
   end
