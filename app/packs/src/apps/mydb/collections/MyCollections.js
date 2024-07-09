@@ -116,19 +116,24 @@ export default class MyCollections extends React.Component {
     if (node.id == -1) {
       const { isChange } = this.state;
       return (
-        <div className="ms-auto">
-          {isChange && <Button
-          id="save-collections-button"
-          size="sm"
-          variant="warning"
-          onMouseDown={(e)=>{e.stopPropagation();}}
-          onClick={this.bulkUpdate}> Save </Button>}
+        <div>
+          {isChange && (
+            <Button
+              id="save-collections-button"
+              size="sm"
+              variant="warning"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={this.bulkUpdate}
+            >
+              Save
+            </Button>
+          )}
           {this.addCollectionButton(node)}
         </div>
       )
     } else {
       return (
-        <ButtonGroup className="ms-auto">
+        <ButtonGroup>
           <Button
             id="sync-users-btn"
             size="sm"
@@ -164,14 +169,14 @@ export default class MyCollections extends React.Component {
         {syncUsers.map((collection) => (
           <div
             key={collection.id}
-            className="ms-4 mt-2 d-flex"
+            className="ms-4 mt-2 d-flex justify-content-between"
           >
             <span className="d-flex gap-2 align-items-baseline">
               <UserInfoIcon type={collection.type} />
               {collection.name}
               <PermissionIcons pl={collection.permission_level} />
             </span>
-            <ButtonGroup className="ms-auto">
+            <ButtonGroup>
               <Button
                 size="sm"
                 variant="primary"
@@ -332,7 +337,7 @@ export default class MyCollections extends React.Component {
     return (
       <div className="mb-2">
         <div
-          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex`}
+          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex justify-content-between`}
           onClick={() => this.onClickNode(node)}
         >
           {this.label(node)}

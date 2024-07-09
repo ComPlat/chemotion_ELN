@@ -80,12 +80,12 @@ export default class SyncWithMeCollections extends React.Component {
       );
 
       return (
-        <div className="d-flex bg-dark-subtle mb-2">
-          <div className="align-self-center ms-3">
+        <div className="d-flex align-items-center justify-content-between bg-dark-subtle mb-2">
+          <div className="ms-3">
             {node.label}
           </div>
           {shouldRenderActions && (
-            <ButtonGroup className="ms-auto">
+            <ButtonGroup>
               <OverlayTrigger
                 animation
                 placement="bottom"

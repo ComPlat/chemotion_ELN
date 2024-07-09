@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, FormControl, Modal } from 'react-bootstrap';
+import { Button, ButtonGroup, Form, Modal } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -70,24 +70,6 @@ export default class MySharedCollections extends React.Component {
     return node.children && node.children.length > 0
   }
 
-  label(node) {
-    if (node.is_locked) {
-      return (
-        <h5 onMouseDown={(e) => e.stopPropagation()}>{node.label}</h5>
-      )
-    } else {
-      return (
-        <FormControl
-          className="ms-3 w-75"
-          size="sm"
-          type="text"
-          value={node.label || ''}
-          onChange={(e) => { this.handleLabelChange(e, node) }}
-        />
-      )
-    }
-  }
-
   handleLabelChange(e, node) {
     node.label = e.target.value;
     this.setState({
@@ -108,27 +90,6 @@ export default class MySharedCollections extends React.Component {
     }
 
     CollectionActions.bulkUpdateUnsharedCollections(params);
-  }
-
-  actions(node) {
-    return (
-      <ButtonGroup className="ms-auto">
-        <Button
-          size="sm"
-          variant="primary"
-          onClick={() => this.editShare(node)}
-        >
-          <i className="fa fa-share-alt" />
-        </Button>
-        <Button
-          size="sm"
-          variant="danger"
-          onClick={() => this.deleteCollection(node)}
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-      </ButtonGroup>
-    )
   }
 
   editShare(node) {
@@ -214,17 +175,38 @@ export default class MySharedCollections extends React.Component {
     if (node.is_locked) {
       return (
         <div className="ms-3">
-          {this.label(node)}
+          <h5 onMouseDown={(e) => e.stopPropagation()}>{node.label}</h5>
         </div>
       );
     } else {
       return (
         <div
-          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex mb-2`}
+          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex justify-content-between mb-2`}
           onClick={() => this.onClickNode(node)}
         >
-          {this.label(node)}
-          {this.actions(node)}
+          <Form.Control
+            className="ms-3 w-75"
+            size="sm"
+            type="text"
+            value={node.label || ''}
+            onChange={(e) => { this.handleLabelChange(e, node) }}
+          />
+          <ButtonGroup>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => this.editShare(node)}
+            >
+              <i className="fa fa-share-alt" />
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => this.deleteCollection(node)}
+            >
+              <i className="fa fa-trash-o" />
+            </Button>
+          </ButtonGroup>
         </div>
       );
     }
@@ -248,15 +230,14 @@ export default class MySharedCollections extends React.Component {
 
     return (
       <div>
-        <div className="d-flex">
+        <div className="d-flex justify-content-between">
           <h4>My Shared Collections</h4>
           <Button
-            className="ms-auto"
             size="sm"
             variant="warning"
             onClick={this.bulkUpdate}
             onMouseDown={(e) => e.stopPropagation()}
-            >
+          >
             Update
           </Button>
         </div>
