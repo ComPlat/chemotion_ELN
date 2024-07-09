@@ -138,28 +138,30 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get a token for an attachment' do
-    let(:user_id) do
-      users = User.all
-      users[0].id
+  describe 'GET /api/v1/third_party_apps/token' do
+    let(:tpa) { create(:third_party_app) }
+    let(:attachment) { create(:attachment) }
+    let(:token) do
+      parts = CGI.unescape(JSON.parse(response.body))
+      parts.split('/').last
     end
 
-    let(:params) do
-      {
-        attID: 1,
-        userID: user_id,
-        nameThirdPartyApp: 'fakeName',
-      }
-    end
+    let(:payload) { JsonWebToken.decode(token) }
 
-    describe 'GET /Token' do
-      it 'Get attachment token?' do
-        get '/api/v1/third_party_apps/Token', params: params
-        token = JSON.parse(response.body)
-        payload = JWT.decode(token, Rails.application.secrets.secret_key_base)
-        res = [payload[0]['attID'], payload[0]['userID']]
-        expect(res).to eq(['1', user_id.to_s])
+    context 'when attachment is accessable and 3pa exists' do
+      before do
+        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
       end
+
+      it 'Payload of token is correct' do
+        expect(payload['attID']).to eq attachment.id
+        expect(payload['userID']).to eq admin1.id
+        expect(payload['appID']).to eq tpa.id
+      end
+    end
+
+    context 'when attachment is not accessable and 3pa exists' do
+      pending 'This is the next issue'
     end
   end
 
