@@ -31,19 +31,14 @@ export default class ElementsTableSettings extends React.Component {
     this.onChangeUI = this.onChangeUI.bind(this);
   }
 
-  // to force popups to stay anchored to button
-  resize = () => this.forceUpdate()
-
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
     UIStore.listen(this.onChangeUI);
-    window.addEventListener('resize', this.resize);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     UIStore.unlisten(this.onChangeUI);
-    window.removeEventListener('resize', this.resize);
   }
 
   onChangeUI(state) {
