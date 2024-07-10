@@ -80,7 +80,7 @@ export default class ContainerDatasetModal extends Component {
         style={{ backgroundColor: mode !== 'metadata' ? '#E8E8E8' : undefined }}
       >
         Metadata
-        <i className="fa fa-address-card ms-1" aria-hidden="true" />
+        <i className="fa fa-address-card ms-1 border-0" aria-hidden="true" />
 
       </Button>
     );
@@ -96,10 +96,10 @@ export default class ContainerDatasetModal extends Component {
             this.handleSwitchMode('attachments');
           }
         }}
-        onKeyPress={() => {}}
+        onKeyPress={() => { }}
       >
         <OverlayTrigger placement="top" overlay={mode === 'metadata' ? attachmentTooltip : metadataTooltip}>
-          <div className=' d-flex'>
+          <div className=' d-inline-block'>
             {AttachmentsButton}
             {MetadataButton}
           </div>
@@ -133,10 +133,10 @@ export default class ContainerDatasetModal extends Component {
                 </div>
               ) : (
                   <div className='d-flex flex-grow-1'>
-                    <span className='me-3'>{this.state.localName}</span>
+                    <span className='me-2'>{this.state.localName}</span>
                     {!readOnly && (
                       <i
-                        className="fa fa-pencil text-primary"
+                        className="fa fa-pencil text-primary mt-1"
                         aria-hidden="true"
                         onClick={this.toggleNameEditing}
                         role="button"
@@ -169,19 +169,20 @@ export default class ContainerDatasetModal extends Component {
               mode={mode}
             />
           </Modal.Body>
-          <Modal.Footer className="d-flex justify-content-between align-items-center modal-footer border-0"
+          <Modal.Footer
+            className="d-flex justify-content-between align-items-center modal-footer border-0"
           >
             <div>
               <small >
                 Changes are kept for this session. Remember to save the element itself to persist changes.
               </small>
             </div>
-              <Button
-                variant="primary"
+            <Button
+              variant="primary"
               className='align-self-center ms-auto'
-                onClick={this.handleSave}
-              >
-                Keep Changes
+              onClick={this.handleSave}
+            >
+              Keep Changes
             </Button>
           </Modal.Footer>
         </Modal>

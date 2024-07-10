@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonToolbar, OverlayTrigger, Tooltip
+  Button, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import ColoredOverlay from 'src/components/common/ColoredOverlay';
-import InboxActions from 'src/stores/alt/actions/InboxActions';
 import { targetContainerDataField } from 'src/utilities/DndConst';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { absOlsTermId } from 'chem-generic-ui';
@@ -72,7 +71,7 @@ class ContainerDatasetField extends Component {
         <a onClick={() => handleModalOpen(datasetContainer)} role="button">
           {datasetContainer.name || 'new'}
         </a>
-        <ButtonToolbar className="pull-right">
+        <div className="pull-right">
           {gdsDownload}
           <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
             <Button size="sm" variant="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
@@ -80,7 +79,7 @@ class ContainerDatasetField extends Component {
             </Button>
           </OverlayTrigger>
           {this.removeButton(datasetContainer)}
-        </ButtonToolbar>
+        </div>
         {isOver && canDrop && ColoredOverlay({color: 'green'})}
       </div>
     );
