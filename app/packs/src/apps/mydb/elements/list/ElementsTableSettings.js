@@ -1,6 +1,5 @@
 import React from 'react';
 import { Popover, Button, Form, OverlayTrigger } from 'react-bootstrap';
-import _ from 'lodash';
 
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 
@@ -129,7 +128,7 @@ export default class ElementsTableSettings extends React.Component {
     });
 
     const userProfile = UserStore.getState().profile;
-    _.set(userProfile, 'data.layout', layout);
+    userProfile.data.layout = layout;
     UserActions.updateUserProfile(userProfile);
   }
 
