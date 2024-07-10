@@ -131,10 +131,10 @@ module Chemotion
 
         desc 'create new third party app entry'
         params do
-          requires :file_types, type: String, desc: 'String of file types connected with ,'
           requires :url, type: String, allow_blank: false, desc: 'The url in order to redirect to the app.'
           requires :name, type: String, allow_blank: false,
                           desc: 'name of third party app. User will chose correct app based on names.'
+          optional :file_types, type: String, desc: 'comma separated mime-types'
         end
 
         rescue_from ActiveRecord::RecordInvalid do |e|
@@ -149,9 +149,9 @@ module Chemotion
         route_param :id, type: Integer, desc: '3rd party app id' do
           desc 'update a third party app entry'
           params do
-            requires :file_types, type: String, desc: 'String of file types connected with ,'
             optional :url, type: String, allow_blank: false, desc: 'The url where the 3rd party app lives.'
             optional :name, type: String, allow_blank: false, desc: 'Name of third party app.'
+            optional :file_types, type: String, desc: 'comma separated mime-types'
           end
 
           put do
