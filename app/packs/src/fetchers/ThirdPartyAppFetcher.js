@@ -49,4 +49,16 @@ export default class ThirdPartyAppFetcher {
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static fetchCollectionAttachmentTokens(collection_id) {
+    const queryParams = new URLSearchParams({ collection_id });
+    const url = `${TPA_ENDPOINT}/collection_research_plans_tpa_tokens?${queryParams}`;
+    console.log(url);
+    return fetch(url, {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }

@@ -37,7 +37,7 @@ module Chemotion
           # All collection of current_user
           ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
         end.order("created_at DESC")
-
+        
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
@@ -57,7 +57,8 @@ module Chemotion
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
           )
         end
-
+        
+   
         { research_plans: research_plans }
       end
 

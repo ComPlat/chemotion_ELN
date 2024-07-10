@@ -23,9 +23,9 @@ module Chemotion
 
       # desc: define the cache key based on the attachment/user/app ids
       def cache_key
-        puts "#{@user&.id}/#{@researchPlan&.id}/#{@app&.id}/#{@attachment&.id}"
-        10.times{puts "here/n"}
-        @cache_key ||= "#{@user&.id}/#{@reseachPlan&.id}/#{@app&.id}/#{@attachment&.id}"
+        @cache_key_user_rsearchPlan ||= "#{@user&.id}/#{@researchPlan&.id}"
+        @cache_key_attachment_app ||= "#{@app&.id}/#{@attachment&.id}"
+        [@cache_key_user_rsearchPlan, @cache_key_attachment_app]
       end
 
       # desc: prepare the token payload from the params
@@ -51,6 +51,8 @@ module Chemotion
 
       # desc: decrement the counters / check if token permission is expired
       def update_cache(key)
+        puts key, "KKKKEEEEE"
+        3.times{puts "CHECK\n"}
         return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
 
         # TODO: expire token when both counters reach 0
@@ -84,15 +86,27 @@ module Chemotion
         new_attachment.save
         { message: 'File uploaded successfully' }
       end
+      
+      def encode_and_cache_token_user_researchPlan
+        current_state = cache.read(cache_key[0])
+        new_state = if current_state
+          idx = current_state.index(cache_key[1])
+          idx.nil? ? current_state.push(cache_key[1]) : current_state
+        else
+          [cache_key[1]]
+        end
+        cache.write(cache_key[0], new_state)
+      end
 
-      def encode_and_cache_token(payload = @payload)
+      def encode_and_cache_token_attachment_app(payload = @payload)
         @token = JsonWebToken.encode(payload, expiry_time)
         cache.write(
-          cache_key,
+          cache_key[1],
           { token: @token, download: 3, upload: 10 },
           expires_at: expiry_time,
         )
       end
+
     end
 
     # desc: public endpoint for third party apps to {down,up}load files
@@ -186,10 +200,30 @@ module Chemotion
       get 'token' do
         prepare_payload
         parse_payload
-        encode_and_cache_token
+        encode_and_cache_token_user_researchPlan
+        encode_and_cache_token_attachment_app
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
         "#{@app.url}?url=#{url}"
+      end
+
+      desc 'list of TPA token in a collection'
+      params do
+        requires :collection_id, type: Integer, desc: 'Collection id'
+      end
+
+      get 'collection_research_plans_tpa_tokens' do
+        research_plans = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(params[:collection_id]).research_plans
+
+        token_list = []
+        research_plans.each do |research_plan|
+          cache_user_researchid_keys ||= cache.read("#{current_user.id}/#{research_plan.id}")
+          cache_user_researchid_keys.each do |token_key|
+            token_list.push({"#{current_user.id}/#{research_plan.id}/#{token_key}":cache.read(token_key)})
+          end
+        end
+
+        {research_plans: research_plans, token_list: token_list}
       end
 
       route_param :id, type: Integer, desc: '3rd party app id' do
