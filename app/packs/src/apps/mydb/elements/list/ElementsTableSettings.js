@@ -15,8 +15,6 @@ export default class ElementsTableSettings extends React.Component {
     super(props);
 
     this.state = {
-      visible: props.visible,
-      hidden: props.hidden,
       currentType: '',
       showSampleExternalLabel: false,
       showSampleShortLabel: false,
@@ -92,14 +90,6 @@ export default class ElementsTableSettings extends React.Component {
     }
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      visible: nextProps.visible,
-      hidden: nextProps.hidden
-    });
-  }
-
   handleToggleScheme() {
     const { tableSchemePreviews } = this.state;
     this.setState({ tableSchemePreviews: !tableSchemePreviews });
@@ -149,9 +139,13 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   render() {
+    const { visible, hidden } = this.props;
     const {
-      visible, hidden, currentType,
-      tableSchemePreviews, showSampleExternalLabel, showSampleShortLabel, showSampleName,
+      currentType,
+      tableSchemePreviews,
+      showSampleExternalLabel,
+      showSampleShortLabel,
+      showSampleName,
     } = this.state;
 
     const showSettings = (currentType == "sample" || currentType == "reaction")
