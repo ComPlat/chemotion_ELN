@@ -5,6 +5,7 @@ TPA_EXPIRATION = 48.hours
 module Chemotion
   # Publish-Subscription MessageAPI
   class ThirdPartyAppAPI < Grape::API
+    helpers AttachmentHelpers
     helpers do
       # desc: expiry time for the token and the cached upload/download counters
       def expiry_time
@@ -60,6 +61,8 @@ module Chemotion
       # desc: return file for download to third party app
       def download_third_party_app
         update_cache(:download)
+        return error!('No read access to attachment', 403) unless has_read_access(attachment, @current_user)
+
         content_type 'application/octet-stream'
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         env['api.format'] = :binary
@@ -69,12 +72,14 @@ module Chemotion
       # desc: upload file from the third party app
       def upload_third_party_app
         update_cache(:upload)
+        return error!('No write access to attachment', 403) unless has_write_access(@attachment, @current_user)
+
         new_attachment = Attachment.new(
           attachable: @attachment.attachable,
           created_by: @attachment.created_by,
           created_for: @attachment.created_for,
           filename: params[:attachmentName].presence&.strip || "#{@app.name[0, 20]}-#{params[:file][:filename]}",
-          file_path: params[:file][:tempfile].path
+          file_path: params[:file][:tempfile].path,
         )
         new_attachment.save
         { message: 'File uploaded successfully' }
@@ -181,6 +186,9 @@ module Chemotion
         prepare_payload
         parse_payload
         encode_and_cache_token
+        attachment = Attachments.find(params['attID'])
+        return error!('No read access to attachment', 403) unless has_read_access(attachment, @current_user)
+
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
         "#{@app.url}?url=#{url}"
