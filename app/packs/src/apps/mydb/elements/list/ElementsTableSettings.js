@@ -9,7 +9,6 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 export default class ElementsTableSettings extends React.Component {
   constructor(props) {
@@ -74,19 +73,17 @@ export default class ElementsTableSettings extends React.Component {
   onToggleTabLayoutContainer(show) {
     if (!show) {
       this.updateLayout();
-  
+
       if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
         const show_previews = UIStore.getState().showPreviews;
         const cur_previews = this.state.tableSchemePreviews;
         if (cur_previews != show_previews) {
           UIActions.toggleShowPreviews(cur_previews);
-  
         }
-  
       }
-  
+
       const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-  
+
       UserActions.updateUserProfile({
         show_external_name: showSampleExternalLabel,
         show_sample_short_label: showSampleShortLabel,
@@ -175,13 +172,13 @@ export default class ElementsTableSettings extends React.Component {
             label="Show sample external name on title"
           />
           <Form.Check
-            type="checkbox"  
+            type="checkbox"
             onChange={this.handleToggleSampleShortLabel}
             checked={showSampleShortLabel}
             label="Show sample short label"
           />
           <Form.Check
-            type="checkbox"  
+            type="checkbox"
             onChange={this.handleToggleSampleName}
             checked={showSampleName}
             label="Show sample name"
