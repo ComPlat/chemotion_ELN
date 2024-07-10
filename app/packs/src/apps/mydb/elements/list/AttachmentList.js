@@ -202,7 +202,6 @@ export const importButton = (
   attachment,
   showImportConfirm,
   importDisabled,
-  importButtonRefs,
   showImportConfirmFunction,
   hideImportConfirmFunction,
   confirmAttachmentImportFunction
@@ -237,6 +236,7 @@ export const importButton = (
     </Tooltip>
   );
 
+  const buttonRef = React.createRef();
   return (
     <div>
       <OverlayTrigger placement="top" overlay={importTooltip}>
@@ -246,8 +246,7 @@ export const importButton = (
             size="sm"
             variant="success"
             disabled={importDisabled || extension !== 'xlsx'}
-            // eslint-disable-next-line no-param-reassign
-            ref={(ref) => { importButtonRefs[attachment.id] = ref; }}
+            ref={buttonRef}
             className={`attachment-button-size ${importDisabled
               || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
             onClick={() => showImportConfirmFunction(attachment.id)}
@@ -261,7 +260,7 @@ export const importButton = (
         placement="bottom"
         rootClose
         onHide={() => hideImportConfirmFunction(attachment.id)}
-        target={importButtonRefs[attachment.id]}
+        target={buttonRef}
       >
         {confirmTooltip}
       </Overlay>
