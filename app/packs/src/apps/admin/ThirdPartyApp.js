@@ -59,7 +59,7 @@ export default class ThirdPartyApp extends React.Component {
       this.state.currentID,
       name,
       url,
-       fileTypes
+      fileTypes
     )
       .then((result) => {
         if (result.error) {
@@ -136,7 +136,7 @@ export default class ThirdPartyApp extends React.Component {
     });
   }
 
-  checkInput(name, ip,fileTypes) {
+  checkInput(name, ip, fileTypes) {
     const { thirdPartyApps, currentID } = this.state;
     let appId = 0;
     if (name.length < 1) {
@@ -215,10 +215,10 @@ export default class ThirdPartyApp extends React.Component {
     const handleEdit = () => {
       const url = urlRef.value?.trim();
       const name = nameRef.value?.trim();
-      const fileTypes = this.state.currentFileTypes.split(',').map(type => type.trim());
+      const fileTypes = this.state.currentFileTypes.trim();
 
-      if (this.checkInput(name, url,fileTypes )) {
-        this.edit(name, url,fileTypes )
+      if (this.checkInput(name, url, fileTypes)) {
+        this.edit(name, url, fileTypes)
           .then(() => {
             this.closeEditThirdPartyAppModal();
             this.thirdPartyApps();
@@ -231,7 +231,7 @@ export default class ThirdPartyApp extends React.Component {
       // if current errorMessage start with Name, clear it
       const newState = { currentName: event.target.value };
       if (this.state.errorMessage.startsWith('Name')) {
-	newState.errorMessage = '';
+        newState.errorMessage = '';
       }
       this.setState(newState);
     };
@@ -239,7 +239,7 @@ export default class ThirdPartyApp extends React.Component {
     const handleIPChange = (event) => {
       const newState = { currentIP: event.target.value };
       if (this.state.errorMessage.startsWith('URL')) {
-	newState.errorMessage = '';
+        newState.errorMessage = '';
       }
       this.setState(newState);
     };
@@ -322,7 +322,7 @@ export default class ThirdPartyApp extends React.Component {
     const handleCreate = () => {
       const url = urlRef.value;
       const name = nameRef.value;
-      const fileTypes = fileTypesRef.value.split(',').map(type => type.trim());
+      const fileTypes = fileTypesRef.value.trim();
       if (this.checkInput(name, url, fileTypes)) {
         this.newApp(name, url, fileTypes);
         this.closeNewThirdPartyAppModal();
@@ -363,7 +363,7 @@ export default class ThirdPartyApp extends React.Component {
                 File types:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="File types" inputRef={(ref) => { fileTypesRef= ref; }} />
+                <FormControl type="text" name="File types" inputRef={(ref) => { fileTypesRef = ref; }} />
               </Col>
             </FormGroup>
 
@@ -438,7 +438,7 @@ export default class ThirdPartyApp extends React.Component {
 
                 <td>{entry.name}</td>
                 <td>{entry.url}</td>
-                <td>{entry.file_types.join(', ')}</td>
+                <td>{entry.file_types}</td>
                 <td>{entry.id}</td>
               </tr>
             ))}
