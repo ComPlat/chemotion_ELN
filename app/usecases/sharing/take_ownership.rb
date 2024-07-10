@@ -21,7 +21,7 @@ module Usecases
         cols = Collection.where([' id = ? or ancestry = ?  or ancestry like ? or ancestry like ? or ancestry like ? ',
                                  col_id, col_id.to_s, "%/#{col_id}", "#{col_id}/%", "%/#{col_id}/%"])
         cols.update_all(user_id: new_owner_id)
-        acl.update(user_id: previous_owner_id, permission_level: 2)
+        acl.update(user_id: previous_owner_id, permission_level: 4)
 
         user = User.find_by(id: new_owner_id)
         Message.create_msg_notification(
