@@ -9,7 +9,7 @@ module Chemotion
       desc "Return all collections for the current user"
       get do
         collections = Collection.owned_by(current_user.id).includes(collection_acls: :user)
-        shared = Collection.shared_with(current_user.id).includes(:user)
+        shared = Collection.shared_with(user_ids).includes(:user)
 
         {
           collections: Entities::CollectionOwnedEntity.represent(collections),
