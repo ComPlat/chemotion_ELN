@@ -143,39 +143,6 @@ export default class ElementsTableSettings extends React.Component {
       showSampleName,
     } = this.state;
 
-    const showSettings = (currentType == "sample" || currentType == "reaction")
-
-    const sampleSettings = (
-      <>
-        <Form>
-          <Form.Check
-            type="checkbox"
-            onChange={this.handleToggleScheme}
-            checked={tableSchemePreviews}
-            label="Show schemes images"
-          />
-          <Form.Check
-            type="checkbox"
-            onChange={this.handleToggleSampleExt}
-            checked={showSampleExternalLabel}
-            label="Show sample external name on title"
-          />
-          <Form.Check
-            type="checkbox"
-            onChange={this.handleToggleSampleShortLabel}
-            checked={showSampleShortLabel}
-            label="Show sample short label"
-          />
-          <Form.Check
-            type="checkbox"
-            onChange={this.handleToggleSampleName}
-            checked={showSampleName}
-            label="Show sample name"
-          />
-        </Form>
-      </>
-    )
-
     const tabLayoutContainerElement = (
       <TabLayoutContainer
         visible={visible}
@@ -184,6 +151,7 @@ export default class ElementsTableSettings extends React.Component {
       />
     );
 
+    const showSettings = (currentType == "sample" || currentType == "reaction");
     const popoverSettings = (
       <Popover
         className="scrollable-popover w-auto mw-100"
@@ -195,16 +163,41 @@ export default class ElementsTableSettings extends React.Component {
         <Popover.Body>
           {tabLayoutContainerElement}
         </Popover.Body>
-        {(showSettings || true) &&
+        {showSettings && (
           <>
             <Popover.Header>Settings</Popover.Header>
             <Popover.Body>
-              {sampleSettings}
+              <Form>
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleScheme}
+                  checked={tableSchemePreviews}
+                  label="Show schemes images"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleExt}
+                  checked={showSampleExternalLabel}
+                  label="Show sample external name on title"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleShortLabel}
+                  checked={showSampleShortLabel}
+                  label="Show sample short label"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleName}
+                  checked={showSampleName}
+                  label="Show sample name"
+                />
+              </Form>
             </Popover.Body>
           </>
-        }
+        )}
       </Popover>
-    )
+    );
 
     return (
       <OverlayTrigger
@@ -212,11 +205,12 @@ export default class ElementsTableSettings extends React.Component {
         placement="bottom"
         overlay={popoverSettings}
         onToggle={this.onToggleTabLayoutContainer}
+        rootClose
       >
         <Button
           size="xsm"
           variant="light"
-          className='m-2'
+          className="m-2"
         >
           <i className="fa fa-sliders" />
         </Button>
