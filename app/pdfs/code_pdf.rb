@@ -8,39 +8,67 @@ require 'barby/outputter/svg_outputter'
 require "prawn/measurement_extensions"
 
 class CodePdf < Prawn::Document
-  def initialize(elements, size, type)
+  def initialize(elements, size, type, pdfType)
     super(
-      page_size: page_size(size),
+      page_size: page_size(size, pdfType),
       margin: [0, 0, 0, 0]
     )
 
+    # Iterate over each element in the array
+    # and create a new page for each element,
+    # except for the first one
     elements.each_with_index do |element, i|
       start_new_page unless i.zero?
 
+      # Generate the text to be displayed on the PDF based on
+      # the type of the element and its label
       text = if type == 'sample' || type == 'reaction'
                "#{type.capitalize}: #{element.short_label}\n#{element.name}"
              else
                "#{type.capitalize} ID: #{element.id}\n#{element.name}"
              end
 
-      qr_code_label(element, size, type, text)
-      qr_code(element, size)
-      bar_code_label(element, size, type, text)
-      bar_code(element, size)
-      data_matrix_label(element, size, type, text)
-      data_matrix(element, size)
+      # Depending on the pdfType, generate the corresponding
+      # label and the corresponding code
+      case pdfType
+      when 'qr_code'
+        # Generate the label for the QR code
+        qr_code_label(element, size, type, text)
+        # Generate the QR code itself
+        qr_code(element, size)
+      when 'bar_code'
+        # Generate the label for the barcode
+        bar_code_label(element, size, type, text)
+        # Generate the barcode itself
+        bar_code(element, size)
+      when 'data_matrix'
+        # Generate the label for the data matrix
+        data_matrix_label(element, size, type, text)
+        # Generate the data matrix itself
+        data_matrix(element, size)
+      end
+
+      # Draw the bounds of the current page
       stroke_bounds
     end
   end
 
   private
 
-  def page_size(size)
+  def page_size(size, pdfType)
     case size
     when "small"
-      [25.4.mm, 37.mm]
+      if pdfType == 'bar_code'
+        [25.4.mm, 22.mm]
+      else
+        [25.4.mm, 10.mm]
+      end
     when "big"
-      [36.mm, 50.mm]
+      if pdfType == 'bar_code'
+        [36.mm, 25.mm]
+      else
+        [36.mm, 15.mm]
+      end
     else
       [25.4.mm, 37.mm]
     end
@@ -50,11 +78,11 @@ class CodePdf < Prawn::Document
   def qr_code_label_options(size)
     case size
     when 'small'
-      {at: [6.mm + 8, self.bounds.top - 3], size: 5}
+      {at: [6.mm + 8, self.bounds.top - 5], size: 5}
     when 'big'
-      {at: [10.mm + 8, self.bounds.top - 3], size: 5}
+      {at: [10.mm + 8, self.bounds.top - 5], size: 6}
     else
-      {at: [6.mm + 8, self.bounds.top - 3], size: 5}
+      {at: [6.mm + 8, self.bounds.top - 5], size: 5}
     end
   end
 
@@ -65,11 +93,11 @@ class CodePdf < Prawn::Document
   def qr_code_options(size)
     case size
     when "small"
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 3]}
+      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
     when "big"
-      {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.top - 3]}
+      {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.top - 5]}
     else
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 3]}
+      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
     end
   end
 
@@ -84,18 +112,18 @@ class CodePdf < Prawn::Document
     case size
     when 'small'
       {
-        text: {at: [6.mm + 8, 19.mm], size: 5, width: 20.mm, height: 5.4.mm},
-        code: {at: [9.mm, self.bounds.bottom + 2.mm], size: 5}
+        text: {at: [1.mm + 2, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm},
+        code: {at: [7.mm, self.bounds.top - 18.mm - 1 ], size: 5}
       }
     when 'big'
       {
-        text: {at: [10.mm + 8, 19.mm], size: 5, width: 20.mm, height: 5.4.mm},
-        code: {at: [15.mm, self.bounds.bottom + 2.mm], size: 5}
+        text: {at: [1.mm + 2, self.bounds.top - 5], size: 6, width: 20.mm, height: 5.4.mm},
+        code: {at: [13.mm, self.bounds.top - 20.mm], size: 6}
       }
     else
       {
-        text: {at: [6.mm + 8, 19.mm], size: 5, width: 20.mm, height: 5.4.mm},
-        code: {at: [9.mm, self.bounds.bottom + 2.mm], size: 5}
+        text: {at: [1.mm + 2, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm},
+        code: {at: [7.mm, self.bounds.top - 18.mm - 1 ], size: 5}
       }
     end
   end
@@ -108,11 +136,11 @@ class CodePdf < Prawn::Document
   def bar_code_options(size)
     case size
     when 'small'
-      {height: 5.mm, width: 22.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 14.5.mm]}
+      {height: 5.mm, width: 22.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.top - 18]}
     when 'big'
-      {height: 3.3.mm, width: 33.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 14.5.mm]}
+      {height: 3.3.mm, width: 33.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.top - 20]}
     else
-      {height: 5.mm, width: 22.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 14.5.mm]}
+      {height: 5.mm, width: 22.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.top - 18]}
     end
   end
 
@@ -126,15 +154,15 @@ class CodePdf < Prawn::Document
     case size
     when 'small'
       {
-        text: { at: [6.mm + 8, 26.mm], size: 5, width: 20.mm, height: 5.4.mm }
+        text: { at: [6.mm + 8, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm }
       }
     when 'big'
       {
-        text: { at: [10.mm + 8, 32.mm], size: 5, width: 20.mm, height: 5.4.mm }
+        text: { at: [10.mm + 8, self.bounds.top - 5], size: 6, width: 20.mm, height: 5.4.mm }
       }
     else
       {
-        text: { at: [6.mm + 8, 26.mm], size: 5, width: 20.mm, height: 5.4.mm }
+        text: { at: [6.mm + 8, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm }
       }
     end
   end
@@ -145,12 +173,12 @@ class CodePdf < Prawn::Document
 
   def data_matrix_options(size)
     case size
-    when 'small'
-      { height: 6.mm, width: 6.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 26.mm] }
-    when 'big'
-      { height: 10.mm, width: 10.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 32.mm] }
+    when "small"
+      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
+    when "big"
+      {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.top - 5]}
     else
-      { height: 6.mm, width: 6.mm, margin: 0, xdim: 0.12.mm, at: [1.5.mm, 26.mm] }
+      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
     end
   end
 

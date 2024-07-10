@@ -54,6 +54,7 @@ module Chemotion
           #TODO check coerce with  type Array[Integer] not working with before do
           requires :ids, type: Array#, coerce_with: ->(val) { val.split(/,/).map(&:to_i) }
           requires :size, type: String, values: ["small", "big"]
+          requires :pdfType, type: String
         end
 
         before do
@@ -74,7 +75,7 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePdf.new(elements, params[:size], params[:element_type]).render
+          body CodePdf.new(elements, params[:size], params[:element_type], params[:pdfType]).render
         end
       end
 
