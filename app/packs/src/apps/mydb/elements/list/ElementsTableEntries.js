@@ -9,7 +9,6 @@ import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -212,10 +211,8 @@ export default class ElementsTableEntries extends Component {
   }
 
   isElementChecked(element) {
-    const { ui } = this.props;
-    const { checkedIds, uncheckedIds, checkedAll } = ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
+    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
   isElementSelected(element) {

@@ -7,7 +7,6 @@ import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Aviator from 'aviator';
 import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemText';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -42,9 +41,8 @@ export default class CellLineItemEntry extends Component {
 
   // eslint-disable-next-line class-methods-use-this
   isElementChecked(element) {
-    const { checkedIds, uncheckedIds, checkedAll } = UIStore.getState().cell_line;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+    const { checkedIds = [], uncheckedIds = [], checkedAll } = UIStore.getState().cell_line;
+    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
   render() {

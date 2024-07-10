@@ -4,7 +4,6 @@ import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -251,10 +250,8 @@ export default class ElementsTableGroupedEntries extends Component {
   }
 
   isElementChecked(element) {
-    const { ui } = this.props;
-    const { checkedIds, uncheckedIds, checkedAll } = ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
+    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
   isElementSelected(element) {

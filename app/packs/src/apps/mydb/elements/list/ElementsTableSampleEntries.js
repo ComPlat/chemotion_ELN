@@ -12,7 +12,6 @@ import GenericElementLabels from 'src/apps/mydb/elements/labels/GenericElementLa
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -304,9 +303,8 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   isElementChecked(element) {
-    const { checkedIds, uncheckedIds, checkedAll } = this.props.ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
+    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
   isElementSelected(element) {
