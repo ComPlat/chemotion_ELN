@@ -206,7 +206,7 @@ export default class ReactionDetails extends Component {
           onClick={() => this.handleProductClick(product)}
           role="button"
           title="Open sample window">
-          <i className="icon-sample" />&nbsp;{product.title()}
+          <i className="icon-sample me-1" />{product.title()}
         </span>
       </span>
     )
@@ -237,11 +237,11 @@ export default class ReactionDetails extends Component {
         </Tab>
       );
     });
-    const reactionTab = <span>Analysis:&nbsp;<i className="icon-reaction" />&nbsp;{reaction.short_label}</span>;
+    const reactionTab = <span>Analysis:<i className="icon-reaction mx-1" />{reaction.short_label}</span>;
     return (
       <Tabs
         id="data-detail-tab"
-        style={{ marginTop: '10px' }}
+        className='mt-0 mb-2'
         unmountOnExit
         activeKey={activeAnalysisTab}
         onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
