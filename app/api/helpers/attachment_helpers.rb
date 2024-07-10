@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 module AttachmentHelpers
-    extend Grape::API::Helpers
+  extend Grape::API::Helpers
 
+  def has_read_access(_attachment_id, _user)
+    false
+  end
 
-    def has_read_access(attachment_id,user)
-        return false
-    end
-    def has_write_access(attachment_id,user)
-        return false
-    end
+  def has_write_access(_attachment_id, _user)
+    false
+  end
 end

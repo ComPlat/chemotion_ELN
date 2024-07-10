@@ -38,7 +38,7 @@ describe Chemotion::ThirdPartyAppAPI do
   end
 
   describe 'POST /api/v1/third_party_apps/admin' do
-    let(:params) { { url: 'exampleUrl', name: 'exampleApp' } }
+    let(:params) { { url: 'exampleUrl', name: 'exampleApp', file_types: 'csv' } }
 
     before do
       post '/api/v1/third_party_apps/admin', params: params
@@ -56,6 +56,7 @@ describe Chemotion::ThirdPartyAppAPI do
       it 'Created app has correct properties' do
         expect(ThirdPartyApp.first.name).to eq 'exampleApp'
         expect(ThirdPartyApp.first.url).to eq 'exampleUrl'
+        expect(ThirdPartyApp.first.file_types).to eq 'csv'
       end
     end
   end

@@ -138,7 +138,7 @@ module Chemotion
           requires :url, type: String, allow_blank: false, desc: 'The url in order to redirect to the app.'
           requires :name, type: String, allow_blank: false,
                           desc: 'name of third party app. User will chose correct app based on names.'
-          optional :file_types, type: String, desc: 'comma separated mime-types'
+          requires :file_types, type: String, desc: 'comma separated mime-types'
         end
 
         rescue_from ActiveRecord::RecordInvalid do |e|
@@ -146,6 +146,7 @@ module Chemotion
         end
 
         post do
+          
           ThirdPartyApp.create!(declared(params))
           status 201
         end
