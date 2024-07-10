@@ -141,7 +141,9 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'GET /api/v1/third_party_apps/token' do
     let(:tpa) { create(:third_party_app) }
-    let(:attachment) { create(:attachment) }
+    let(:collection) {create(:collection, user:admin1)}
+    let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection],attachments:[attachment])}
+    let(:attachment) { create(:attachment,created_for:admin1.id) }
     let(:token) do
       parts = CGI.unescape(JSON.parse(response.body))
       parts.split('/').last
