@@ -30,16 +30,13 @@ export default class CurationModal extends Component {
         descriptionObject : {}
     }}
 
-
     handlePromptDismiss() {
       this.setState({ showPrompt: false });
     }
 
-  
     handlePromptShow() {
       this.setState({ showPrompt: true });
     }
-
 
     handleDictionaryLang(){
       (this.state.dictionaryLanguage === "US")
@@ -47,7 +44,6 @@ export default class CurationModal extends Component {
         : this.setState({dictionaryLanguage: "US"})
       this.spellCheck(this.state.desc)
     }
-
 
     convertStringToObject(input_string){
       var word_with_subscript = input_string.match(/\b[a-z]\w*\d[a-z]*/gi);
@@ -114,7 +110,6 @@ export default class CurationModal extends Component {
     handleClose() {
       this.setState({ show: false });
     }
-
 
     handleShow() {
       this.setState({ show: true });
@@ -190,9 +185,10 @@ export default class CurationModal extends Component {
             var spell_checked_word = true
           }
           else
-            {if(/[a-z]*-[a-z]*/){}
+            {if(/[a-z]*\-[a-z]*/.test(word_array[i])){console.log("help" +word_array[i])}
             else{
-              var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);}
+              var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
+           }
             }}
         else
           {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
