@@ -6,9 +6,11 @@ require 'rubygems'
 require 'semacode'
 require 'barby/outputter/svg_outputter'
 require "prawn/measurement_extensions"
+require 'open-uri'
+require 'net/http'
 
 class CodePdf < Prawn::Document
-  def initialize(elements, size, type, pdfType)
+  def initialize(elements, size, type, pdfType, displaySample, image = nil)
     super(
       page_size: page_size(size, pdfType),
       margin: [0, 0, 0, 0]
@@ -47,7 +49,18 @@ class CodePdf < Prawn::Document
         # Generate the data matrix itself
         data_matrix(element, size)
       end
-
+      if displaySample
+        if image
+          image_url = URI.parse(image)
+          response = Net::HTTP.get_response(image_url)
+          if response.is_a?(Net::HTTPSuccess)
+            image_data = response.body
+          image image_data, width: 150, height: 150
+          else
+            puts "Failed to fetch the image data"
+          end
+        end
+      end 
       # Draw the bounds of the current page
       stroke_bounds
     end

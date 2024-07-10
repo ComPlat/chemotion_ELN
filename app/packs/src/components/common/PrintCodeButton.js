@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Tooltip, OverlayTrigger, Button, Modal, Checkbox, Radio
+  Tooltip, OverlayTrigger, Button, Modal, Radio, Checkbox
 } from 'react-bootstrap';
 import Utils from 'src/utilities/Functions';
 
@@ -13,19 +13,44 @@ export default function PrintCodeButton({ element }) {
   const [preview, setPreview] = useState(null);
   const [pdfType, setPdfType] = useState('qr_code');
   const [url, setUrl] = useState(null);
+  const [displaySample, setDisplaySample] = useState(false);
+  const [sampleImage, setSampleImage] = useState(null);
 
   // Builds the URL for fetching the PDF.
   const buildURL = () => {
     const size = isSmall ? 'small' : 'big';
-    const newUrl = `/api/v1/code_logs/print_codes?element_type=${element.type}&ids[]=${element.id}&size=${size}&pdfType=${pdfType}`;
+    const newUrl = `/api/v1/code_logs/print_codes?element_type=${element.type}&ids[]=${element.id}&size=${size}&pdfType=${pdfType}&displaySample=${displaySample}`;
     setUrl(newUrl);
+  };
+
+
+  const fetchSampleImage = async (imageUrl) => {
+    fetch(imageUrl)
+      .then((response) => response.blob())
+      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
+      .then((result) => {
+        if (result.data != null) {
+          setSampleImage(result.data);
+        }
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   };
 
   // Fetches the PDF for the element.
   const fetchPrintCodes = async () => {
+    if (element.type === 'sample') {
+      const imageUrl = `/images/samples/${element.sample_svg_file}`;
+      fetchSampleImage(imageUrl);
+    }
+
+    const formData = new FormData();
+    formData.append('image', sampleImage);
     fetch(url, {
       credentials: 'same-origin',
-      method: 'GET',
+      method: 'POST',
+      body: formData
     })
       .then((response) => response.blob())
       .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
@@ -54,7 +79,7 @@ export default function PrintCodeButton({ element }) {
   // Build the URL when the state of the PDF params changes
   useEffect(() => {
     buildURL();
-  }, [isSmall, pdfType]);
+  }, [isSmall, pdfType, displaySample]);
 
   // Fetch the new PDF when the URL changes
   useEffect(() => {
@@ -76,6 +101,12 @@ export default function PrintCodeButton({ element }) {
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Bar code</span>
       <Radio inline checked={pdfType === 'data_matrix'} onClick={() => setPdfType('data_matrix')} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Data Matrix</span>
+      {element.type === 'sample' && (
+        <>
+          <Checkbox inline checked={displaySample} onClick={() => setDisplaySample(!displaySample)} />
+          <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Sample</span>
+        </>
+      )}
     </div>
   );
 
@@ -142,7 +173,8 @@ export default function PrintCodeButton({ element }) {
             }}
             >
               {preview && (
-                <embed src={`${preview}#view=FitV`} style={{ width: '100%', height: '100%' }} />)}
+                <embed src={`${preview}#view=FitV`} style={{ width: '100%', height: '100%' }} />
+              )}
             </div>
           </div>
         </Modal.Body>

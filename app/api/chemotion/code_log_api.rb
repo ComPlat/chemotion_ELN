@@ -55,6 +55,7 @@ module Chemotion
           requires :ids, type: Array#, coerce_with: ->(val) { val.split(/,/).map(&:to_i) }
           requires :size, type: String, values: ["small", "big"]
           requires :pdfType, type: String
+          requires :displaySample, type: Boolean
         end
 
         before do
@@ -75,7 +76,19 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePdf.new(elements, params[:size], params[:element_type], params[:pdfType]).render
+          body CodePdf.new(elements, params[:size], params[:element_type], params[:pdfType], params[:displaySample]).render
+        end
+
+        post do
+          #TODO vide supra
+          ids = params[:ids][0] && params[:ids][0].split(/,/).map(&:to_i)
+          elements = params[:element_type].classify.constantize.where(id: ids)
+
+          content_type('application/pdf')
+          header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
+          env["api.format"] = :binary
+
+          body CodePdf.new(elements, params[:size], params[:element_type], params[:pdfType], params[:displaySample], params[:image]).render
         end
       end
 
