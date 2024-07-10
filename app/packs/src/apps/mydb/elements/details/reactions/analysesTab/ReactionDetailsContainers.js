@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, Card, Accordion
-} from 'react-bootstrap';
+import { Button, Accordion } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -380,15 +378,17 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div className="mb-2 noAnalyses-warning">
-          There are currently no Analyses.
-          {this.addButton()}
+        <div className="d-flex align-items-center mb-2 mt-4 mx-3">
+          <span className='ms-3'> There are currently no Analyses. </span>
+          <div className="ms-auto">
+            {this.addButton()}
+          </div>
         </div>
       );
     }
 
     return (
-      <div className="noAnalyses-warning">
+      <div className="m-4">
         There are currently no Analyses.
       </div>
     );
