@@ -1,47 +1,38 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import { Form } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 
 export default class ElementCheckbox extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      checked: false,
-      element: props.element
-    }
-  }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { element, checked } = nextProps;
-    this.setState({
-      element,
-      checked
-    });
-  }
-
-  updateCheckedStatus(element, state) {
-    let checked = this.isChecked(element, state);
-    this.setState({checked: checked});
+    this.toggleCheckbox = this.toggleCheckbox.bind(this);
   }
 
   toggleCheckbox() {
-    let newChecked = !this.props.checked;
+    const { checked, element } = this.props;
 
-    if(newChecked) {
-      UIActions.checkElement(this.state.element);
+    if (!checked) {
+      UIActions.checkElement(element);
     } else {
-      UIActions.uncheckElement(this.state.element);
+      UIActions.uncheckElement(element);
     }
   }
 
   render() {
+    const { checked } = this.props;
     return (
-      <input
-        type="checkbox"
-        onChange={this.toggleCheckbox.bind(this)}
-        checked={this.props.checked}
+      <Form.Check
+        onChange={this.toggleCheckbox}
+        checked={checked}
         className="element-checkbox"
       />
     );
   }
 }
+
+ElementCheckbox.propTypes = {
+  element: PropTypes.any.isRequired,
+  checked: PropTypes.bool.isRequired,
+};
