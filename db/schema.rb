@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_04_24_120634) do
+ActiveRecord::Schema.define(version: 2024_07_05_112834) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -920,6 +920,7 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
+    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
@@ -1319,6 +1320,15 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
+  end
+
+  create_table "third_party_apps", force: :cascade do |t|
+    t.string "url"
+    t.string "name", limit: 100, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "file_types", limit: 100
+    t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
