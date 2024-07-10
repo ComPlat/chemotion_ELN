@@ -3,6 +3,7 @@
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
@@ -20,7 +21,8 @@ import {
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
-  attachmentThumbnail
+  attachmentThumbnail,
+  thirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
@@ -28,6 +30,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
+    const { thirdPartyApps } = UIStore.getState() || [];
+    this.thirdPartyApps = thirdPartyApps;
 
     this.state = {
       attachmentEditor: false,
@@ -41,7 +45,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
-
     this.handleEdit = this.handleEdit.bind(this);
     this.onImport = this.onImport.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
@@ -244,7 +247,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {attachments.length > 0
-        && sortingAndFilteringUI(
+        && sortingAndFilteringUI( 
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
@@ -294,6 +297,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
+                    {thirdPartyAppButton(
+                      attachment,
+                      this.thirdPartyApps,
+                    )}
                     {editButton(
                       attachment,
                       extension,

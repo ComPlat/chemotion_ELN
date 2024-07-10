@@ -9,7 +9,12 @@ const CommentManagementServices = {
 // path of the chemspectra data type file
 const SPECTRA_DATA_TYPE = '/data_type.json';
 
+const ThirdPartyAppServices = {
+  TPA_ENDPOINT: '/api/v1/third_party_apps',
+};
+
 export {
   CommentManagementServices,
   SPECTRA_DATA_TYPE,
+  ThirdPartyAppServices,
 };
