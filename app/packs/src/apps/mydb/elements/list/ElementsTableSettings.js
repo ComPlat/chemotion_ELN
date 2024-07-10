@@ -221,22 +221,20 @@ export default class ElementsTableSettings extends React.Component {
     )
 
     return (
-      <div className="position-absolute top-0 end-0">
-        <OverlayTrigger
-          trigger="click"
-          placement="bottom"
-          overlay={popoverSettings}
-          onToggle={this.onToggleTabLayoutContainer}
+      <OverlayTrigger
+        trigger="click"
+        placement="bottom"
+        overlay={popoverSettings}
+        onToggle={this.onToggleTabLayoutContainer}
+      >
+        <Button
+          size="xsm"
+          variant="light"
+          className='m-2'
         >
-          <Button
-            size="xsm"
-            variant="light"
-            className='m-2'
-          >
-            <i className="fa fa-sliders" />
-          </Button>
-        </OverlayTrigger>
-      </div>
+          <i className="fa fa-sliders" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 }

@@ -268,10 +268,12 @@ export default class ElementsList extends React.Component {
           >
             {tabItems}
           </Tabs>
-          <ElementsTableSettings
-            visible={visible}
-            hidden={hidden}
-          />
+          <div className="position-absolute top-0 end-0">
+            <ElementsTableSettings
+              visible={visible}
+              hidden={hidden}
+            />
+          </div>
         </div>
       </>
     );
