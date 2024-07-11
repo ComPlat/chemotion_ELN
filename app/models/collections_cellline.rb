@@ -9,6 +9,12 @@
 #  cellline_sample_id :integer
 #  deleted_at         :datetime
 #
+# Indexes
+#
+#  index_collections_celllines_on_cellsample_id_and_coll_id  (cellline_sample_id,collection_id) UNIQUE
+#  index_collections_celllines_on_collection_id              (collection_id)
+#  index_collections_celllines_on_deleted_at                 (deleted_at)
+#
 class CollectionsCellline < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection

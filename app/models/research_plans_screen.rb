@@ -2,8 +2,8 @@
 #
 # Table name: research_plans_screens
 #
-#  screen_id        :integer
-#  research_plan_id :integer
+#  screen_id        :bigint           not null
+#  research_plan_id :bigint           not null
 #  id               :bigint           not null, primary key
 #  created_at       :datetime
 #  updated_at       :datetime
