@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, InputGroup, FormGroup, Tooltip, OverlayTrigger
+  Pagination, Form, InputGroup, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -297,25 +297,23 @@ export default class ElementsTable extends React.Component {
     }, 900);
   }
 
-  numberOfResultsInput() {
+  renderNumberOfResultsInput() {
     const { ui } = this.state;
     return (
-      <Form horizontal className="list-show-count col-1">
-        <FormGroup>
-          <InputGroup>
-            <InputGroup.Text>Show</InputGroup.Text>
-            <Form.Control
-              type="text"
-              onChange={(event) => this.handleNumberOfResultsChange(event)}
-              value={ui.number_of_results ? ui.number_of_results : 0}
-            />
-          </InputGroup>
-        </FormGroup>
+      <Form className="w-25 ms-1">
+        <InputGroup>
+          <InputGroup.Text>Show</InputGroup.Text>
+          <Form.Control
+            type="text"
+            onChange={(event) => this.handleNumberOfResultsChange(event)}
+            value={ui.number_of_results ?? 0}
+          />
+        </InputGroup>
       </Form>
     );
   }
 
-  pagination() {
+  renderPagination() {
     const { page, pages } = this.state;
     const items = [];
     const minPage = Math.max(page - 2, 1);
@@ -340,20 +338,16 @@ export default class ElementsTable extends React.Component {
     if (pages > maxPage) {
       items.push(<Pagination.Ellipsis key="Ell" />);
     }
-    if (page === pages) {
+    if (page !== pages) {
       items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page + 1)} />);
     }
     items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
 
-    return (
-      <div className="list-pagination">
-        {(pages > 1) &&
-          <Pagination>
-            {items}
-          </Pagination>
-        }
-      </div>
-    )
+    return pages > 1 && (
+      <Pagination>
+        {items}
+      </Pagination>
+    );
   }
 
   renderSamplesHeader = () => {
@@ -386,7 +380,7 @@ export default class ElementsTable extends React.Component {
         >
           <button
             type="button"
-            style={{ border: 'none' }}
+            className="border-0"
             onClick={this.toggleProductOnly}
             role="button"
           >
@@ -657,16 +651,13 @@ export default class ElementsTable extends React.Component {
           type={type}
         />
       );
-    } else if (type === 'cell_line'){
+    } else if (type === 'cell_line') {
       elementsTableEntries = (
-        <CellLineContainer 
-        cellLineGroups={CellLineGroup.buildFromElements(elements)}
-      />
+        <CellLineContainer
+          cellLineGroups={CellLineGroup.buildFromElements(elements)}
+        />
       );
-    }
-    
-    
-    else {
+    } else {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}
@@ -689,9 +680,9 @@ export default class ElementsTable extends React.Component {
       <div className="list-container">
         {this.renderHeader()}
         {this.renderEntries()}
-        <div className="d-flex justify-content-between">
-          {this.pagination()}
-          {this.numberOfResultsInput()}
+        <div className="d-flex flex-row-reverse justify-content-between">
+          {this.renderNumberOfResultsInput()}
+          {this.renderPagination()}
         </div>
       </div>
     );

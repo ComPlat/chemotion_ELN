@@ -27,7 +27,6 @@ import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
     super(props);
-    this.importButtonRefs = [];
 
     this.state = {
       attachmentEditor: false,
@@ -309,7 +308,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
                       attachment,
                       this.state.showImportConfirm,
                       this.props.researchPlan.changed,
-                      this.importButtonRefs,
                       this.showImportConfirm,
                       this.hideImportConfirm,
                       this.confirmAttachmentImport
