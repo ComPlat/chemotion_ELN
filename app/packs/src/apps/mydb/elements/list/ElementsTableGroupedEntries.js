@@ -52,32 +52,6 @@ const dragColumn = (element, showDragColumn) => {
 
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
 
-const svgPreview = (showPreviews, group, element) => {
-  if (showPreviews) {
-    return (
-      <div style={{ float: 'left' }}>
-        <SvgWithPopover
-          hasPop
-          previewObject={{
-            txtOnly: '',
-            isSVG: true,
-            className: 'reaction-header',
-            src: element.svgPath
-          }}
-          popObject={{
-            title: group,
-            src: element.svgPath,
-            height: '26vh',
-            width: '52vw',
-          }}
-        />
-      </div>
-    );
-  }
-
-  return null;
-};
-
 function ReactionsHeader({
   group, element, show, showDragColumn, onClick
 }) {
@@ -88,11 +62,27 @@ function ReactionsHeader({
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      <td colSpan="2" style={{ position: 'relative' }}>
-        {svgPreview(showPreviews, group, element)}
-        <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
+      <td colSpan="2" className="position-relative">
+        {showPreviews && (
+          <SvgWithPopover
+            hasPop
+            previewObject={{
+              txtOnly: '',
+              isSVG: true,
+              className: 'reaction-header',
+              src: element.svgPath
+            }}
+            popObject={{
+              title: group,
+              src: element.svgPath,
+              height: '26vh',
+              width: '52vw',
+            }}
+          />
+        )}
+        <div className="position-absolute top-0 end-0 mt-2 me-2">
           <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-            <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
+            <span style={{ color: '#337ab7' }}>
               <ChevronIcon direction={show ? 'down' : 'right'} />
             </span>
           </OverlayTrigger>
@@ -114,23 +104,19 @@ ReactionsHeader.propTypes = {
 function GenericElementsHeader({
   group, element, show, showDragColumn, onClick
 }) {
-  const showIndicator = (show) ? 'fa-chevron-down' : 'fa-chevron-right';
-
   return (
     <tr
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      <td colSpan="2" style={{ position: 'relative' }}>
-        <div style={{ float: 'left' }}>
-          <div className="preview-table">
-            {group}
-          </div>
+      <td colSpan="2" className="position-relative">
+        <div className="preview-table">
+          {group}
         </div>
-        <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
+        <div className="position-absolute top-0 end-0 mt-2 me-2">
           <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-            <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-              <i className={`fa ${showIndicator}`} />
+            <span style={{ color: '#337ab7' }}>
+              <ChevronIcon direction={show ? 'down' : 'right'} />
             </span>
           </OverlayTrigger>
         </div>
@@ -329,7 +315,7 @@ export default class ElementsTableGroupedEntries extends Component {
             style={{ cursor: 'pointer' }}
             onClick={() => this.showDetails(element.id)}
           >
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="d-flex gap-2">
               <SvgWithPopover
                 hasPop
                 previewObject={{
@@ -344,7 +330,7 @@ export default class ElementsTableGroupedEntries extends Component {
                   width: '52vw'
                 }}
               />
-              <div style={{ alignItems: 'center', display: 'flex', gap: 5 }}>
+              <div className="d-flex gap-1 align-items-center">
                 {reactionStatus(element)}
                 {reactionRole(element)}
               </div>
@@ -384,7 +370,7 @@ export default class ElementsTableGroupedEntries extends Component {
             style={{ cursor: 'pointer' }}
             onClick={() => this.showDetails(element.id)}
           >
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="d-flex gap-2">
               <div className="preview-table">
                 {element.title()}
               </div>
