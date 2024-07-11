@@ -224,7 +224,7 @@ export default class CreateButton extends React.Component {
   createBtn(type) {
     let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
     if (!constEls.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
       const genericEl = (genericEls && genericEls.find(el => el.name == type)) || {};
       iconClass = `${genericEl.icon_name}`;
@@ -274,9 +274,7 @@ export default class CreateButton extends React.Component {
             id={`create-${el.name}-button`}
             onClick={() => this.createElementOfType(el.name)}
           >
-            Create
-            {' '}
-            {el.label}
+            {`Create ${el.label}`}
           </Dropdown.Item>
         ))}
         <Dropdown.Divider />
