@@ -13,13 +13,9 @@ module Usecases
         cell_line_material = find_cellline_material || create_cellline_material
         cell_line_sample = create_cellline_sample(cell_line_material)
 
-        CollectionsCellline.create(
-          collection: Collection.find(@params[:collection_id]),
-          cellline_sample_id: cell_line_sample.id,
-        )
-        CollectionsCellline.create(
-          collection: all_collection_of_current_user,
-          cellline_sample_id: cell_line_sample.id,
+        CollectionsCellline.create_in_collection(
+          cell_line_sample.id,
+          [@params[:collection_id], all_collection_of_current_user.id],
         )
 
         @current_user.increment_counter('celllines') # rubocop: disable Rails/SkipsModelValidations

@@ -18,17 +18,18 @@ module Chemotion
     resource :literatures do
       after_validation do
         unless %r{doi/metadata|ui_state|collection}.match?(request.url)
-          if params[:element_type] == 'cell_line'
-            cell_line_sample = CelllineSample.find(params[:element_id])
-            @element = CelllineMaterial.find(cell_line_sample.cellline_material_id)
-            @element_policy = ElementPolicy.new(current_user, cell_line_sample)
-            @element_klass = 'CelllineMaterial'
-            params[:element_id] = @element.id
-          else
-            @element_klass = params[:element_type].classify
-            @element = @element_klass.constantize.find_by(id: params[:element_id])
-            @element_policy = ElementPolicy.new(current_user, @element)
-          end
+          klass = API::ELEMENT_CLASS[params[:element_type]]
+          element = klass.find_by(id: params[:element_id])
+          @element_policy = ElementPolicy.new(current_user, element)
+
+          #################################
+          # Special case for CelllineSample: litt is associated to Cell-line Material
+          # TODO: check what prevent associating to CelllineSample directly or if both are needed
+          # or delegate methods to CelllineSample
+          @element_klass = klass == CelllineSample ? CelllineMaterial.name : klass.name
+          @element       = klass == CelllineSample ? element.cellline_material : element
+          params[:element_id] = @element.id
+          #################################
 
           allowed = if /get/i.match?(request.env['REQUEST_METHOD'])
                       @element_policy.read?
@@ -42,7 +43,7 @@ module Chemotion
       desc 'Update type of literals by element'
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
+        requires :element_type, type: String, values: API::ELEMENT_CLASS.keys
         requires :id, type: Integer
         requires :litype, type: String, values: %w[citedOwn citedRef referTo literatureOfSource additionalLiterature]
       end
