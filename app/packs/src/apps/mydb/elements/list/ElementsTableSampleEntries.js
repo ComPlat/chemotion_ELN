@@ -93,7 +93,7 @@ TopSecretIcon.propTypes = {
 
 function XvialIcon({ label }) {
   return (label || '').match(/^X\d+.*/) ? (
-    <i className="icon-xvial px-1 fs-5"/>
+    <i className="icon-xvial px-1 fs-5" />
   ) : null;
 }
 
@@ -143,10 +143,10 @@ function MoleculeHeader({
         ? (<td colSpan="3" style={{ position: 'relative ' }}><div><h4>(No-structure sample)</h4></div></td>)
         : (
           <td colSpan="2">
-            <div className='d-flex align-items-start gap-1'>
+            <div className="d-flex align-items-start gap-1">
               {showPreviews && svgPreview(sample)}
-              <h4 className='flex-grow-1'><SampleName sample={sample} /></h4>
-              <div className='d-flex align-items-center gap-1'>
+              <h4 className="flex-grow-1"><SampleName sample={sample} /></h4>
+              <div className="d-flex align-items-center gap-1">
                 {sample.molecule.chem_repo && sample.molecule.chem_repo.id && <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />}
                 <PubchemLabels element={sample} />
                 <ComputedPropLabel cprops={sample.molecule_computed_props} />
@@ -167,7 +167,7 @@ function MoleculeHeader({
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       displayedMoleculeGroup: [],
       moleculeGroupsShown: [],
@@ -222,6 +222,7 @@ export default class ElementsTableSampleEntries extends Component {
     const {
       collapseAll, showDragColumn, moleculeSort, currentElement, elements, ui
     } = this.props;
+    const { keyboardIndex, keyboardSeletectedElementId } = this.state;
     const { checkedAll, checkedIds, uncheckedIds } = ui;
     const nextUi = nextProps.ui;
     return collapseAll !== nextProps.collapseAll // Bool
@@ -232,8 +233,8 @@ export default class ElementsTableSampleEntries extends Component {
       || checkedAll !== nextUi.checkedAll // Bool
       || checkedIds !== nextUi.checkedIds // Immutable List
       || uncheckedIds !== nextUi.uncheckedIds // Immutable List
-      || this.state.keyboardIndex !== nextState.keyboardIndex // int
-      || this.state.keyboardSeletectedElementId !== nextState.keyboardSeletectedElementId; // int
+      || keyboardIndex !== nextState.keyboardIndex // int
+      || keyboardSeletectedElementId !== nextState.keyboardSeletectedElementId; // int
   }
 
   componentWillUnmount() {
@@ -313,19 +314,19 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderSamples(samples, index) {
-    const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
+    const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
     const { showDragColumn } = this.props;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
-    const sampleRows = samples.slice(0, numSamples).map((sample, ind) => {
+    const sampleRows = samples.slice(0, numSamples).map((sample) => {
       const selected = this.isElementSelected(sample);
       const style = (selected || keyboardSeletectedElementId === sample.id) ? {
         color: '#fff', background: '#337ab7'
       } : {};
 
       return (
-        <tr key={ind} style={style}>
+        <tr key={sample.id} style={style}>
           <td width="30px">
             <ElementCheckbox
               element={sample}
@@ -335,12 +336,12 @@ export default class ElementsTableSampleEntries extends Component {
           </td>
           <td
             style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-            onClick={showDetails.bind(this, sample.id)}
+            onClick={() => showDetails(sample.id)}
           >
-            <div className='d-flex justify-content-between'>
+            <div className="d-flex justify-content-between">
               {sample.title(selected)}
 
-              <div className='d-flex align-items-center gap-1'>
+              <div className="d-flex align-items-center gap-1">
                 <CommentIcon commentCount={sample.comment_count} />
                 <ShowUserLabels element={sample} />
                 <XvialIcon label={sample.external_label} />
@@ -354,7 +355,7 @@ export default class ElementsTableSampleEntries extends Component {
               </div>
             </div>
           </td>
-          {dragColumn(sample, showDragColumn, DragDropItemTypes.SAMPLE, this.state.targetType)}
+          {dragColumn(sample, showDragColumn, DragDropItemTypes.SAMPLE, targetType)}
         </tr>
       );
     });
