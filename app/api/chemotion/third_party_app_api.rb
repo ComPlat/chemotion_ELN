@@ -107,6 +107,29 @@ module Chemotion
         )
       end
 
+      def find_and_update_key_with_request_type(first_level_key, second_level_key, request_type)
+        if(request_type === 'revoke')
+          
+          10.times{puts "here/n"}
+
+          # delete second level key
+          cache.delete(second_level_key)
+
+          # update first level key: remove item from an array!
+          second_level_key_list = cache.read(first_level_key);
+          previous_length = second_level_key_list.length
+          second_level_key_list = second_level_key_list.select{ |item| item != second_level_key}
+          cache.write(first_level_key, second_level_key_list)
+
+          return previous_length < cache.read(first_level_key).length
+          # revoke access: delete token! 
+        elsif(request_type === 'upload')
+          # decreament upload count    
+        elsif(request_type === 'dowload')
+          # decreament download count
+        end
+      end
+
     end
 
     # desc: public endpoint for third party apps to {down,up}load files
@@ -224,6 +247,23 @@ module Chemotion
         end
 
         {research_plans: research_plans, token_list: token_list}
+      end
+
+      desc 'Revok an attachment token'
+      params do
+        requires :key, type: String, desc: 'unique key for each token sent with get request'
+        requires :action_type, type: String, desc: 'unique key for each token sent with get request', values: ['revoke', 'upload', 'download']
+      end
+
+      put 'update_attachment_token_with_type' do
+        splits = params[:key].split('/')
+        first_level_key = "#{splits[0]}/#{splits[1]}"
+        second_level_key = "#{splits[2]}/#{splits[3]}"
+
+        status = find_and_update_key_with_request_type(first_level_key, second_level_key, params[:action_type])
+        puts values
+        {status: status}
+
       end
 
       route_param :id, type: Integer, desc: '3rd party app id' do

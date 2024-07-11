@@ -39,7 +39,6 @@ export default class ThirdPartyAppFetcher {
   }
 
   static fetchAttachmentToken(researchPlanID, attID, appID) {
-    console.log({ researchPlanID });
     const queryParams = new URLSearchParams({ researchPlanID, attID, appID }).toString();
     const url = `${TPA_ENDPOINT}/token?${queryParams}`;
     return fetch(url, {
@@ -58,6 +57,22 @@ export default class ThirdPartyAppFetcher {
     }).then(response => response.json())
 
       .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static update_attachment_token_with_action_type(key, action_type) {
+    const queryParams = new URLSearchParams({ key });
+    const url = `${TPA_ENDPOINT}/update_attachment_token_with_type?${queryParams}`;
+    return fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action_type: action_type
+      })
+    }).then(response => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

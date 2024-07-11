@@ -1521,8 +1521,8 @@ class ElementStore {
   // -- TPA --
   async handleTpaAttachmentTokensByCollectionId() {
     const { currentCollection } = UIStore.getState();
-    const { token_list } = await ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(currentCollection.id);
-    this.state.attachmentTokens = token_list;
+    const response = await ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(currentCollection.id);
+    this.state.attachmentTokens = response?.token_list;
   }
 
   // End of DetailStore

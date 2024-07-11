@@ -23,6 +23,7 @@ import Select from 'react-select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
+import ThirdPartyAppFetcher from '../../../../fetchers/ThirdPartyAppFetcher';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -251,6 +252,21 @@ export default class ElementsTable extends React.Component {
     );
   };
 
+  handleRevokeAttachmentToken = (key) => {
+    const action_type = "revoke";
+    ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, action_type)
+      .then(res => {
+        console.log(res);
+        // remove item from array list!
+      })
+      .catch((err) => {
+        alert("Revoking token failed! check console to verify!");
+        console.log(err.message);
+      })
+      ;
+    return;
+  };
+
   collapseButton = () => {
     const { collapseAll } = this.state;
     const collapseIcon = collapseAll ? 'chevron-right' : 'chevron-down';
@@ -290,10 +306,14 @@ export default class ElementsTable extends React.Component {
                   attachmentTokens.map((item, idx) => {
                     const key = Object.keys(item);
                     return (
-                      <div>
-                        <div>{key}</div>
-                        <Button className='btn btn-primary'>Revoke</Button>
-                      </div>);
+                      <Row style={{ marginBottom: 10 }}>
+                        <Col xs={9}>
+                          <div>ID:{key} (replace with: Reseach plan name, attachment name, app name)</div>
+                        </Col>
+                        <Col xs={3}>
+                          <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key)}>Revoke</Button>
+                        </Col>
+                      </Row>);
                   })
                 }
               </div>
@@ -607,6 +627,7 @@ export default class ElementsTable extends React.Component {
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
     const { showAttachmentTokenModal } = this.state;
+    const { attachmentTokens } = ElementStore.getState();
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -648,15 +669,19 @@ export default class ElementsTable extends React.Component {
             flexWrap: 'wrap'
           }}
         >
-          <OverlayTrigger placement="top" overlay={attachmentToolTip}>
-            <button
-              type="button"
-              style={{ border: 'none' }}
-              onClick={this.toggleAttachmentTokens}
-            >
-              {attachmentTokenIcon}
-            </button>
-          </OverlayTrigger>
+          {
+            attachmentTokens?.length > 0 &&
+            <OverlayTrigger placement="top" overlay={attachmentToolTip}>
+              <button
+                disabled={!attachmentTokens?.length}
+                type="button"
+                style={{ border: 'none' }}
+                onClick={this.toggleAttachmentTokens}
+              >
+                {attachmentTokenIcon}
+              </button>
+            </OverlayTrigger>
+          }
 
 
           <OverlayTrigger placement="top" overlay={filterTooltip}>
@@ -760,6 +785,7 @@ export default class ElementsTable extends React.Component {
       </div>
     );
   }
+
 
   render() {
     return (
