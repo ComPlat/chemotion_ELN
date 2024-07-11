@@ -55,9 +55,12 @@ export default class FocusNovnc extends React.Component {
         className={(!isForcedScreenResizing || !connected) ? normalColor : focusedColor}
         disabled={!connected}
         onClick={this.handleForceScreenResizing}
-        title="force screen resizing"
+        title="Fit width screen"
+        style={{margin : '0 5px 0 5px'}}
       >
-        {isForcedScreenResizing ? 'Unfit Screen Width' : 'Fit Screen Width'}
+      <i className="fa fa-desktop" aria-hidden="true" style={{marginRight: '2px'}}/>
+      <i className="fa fa-arrows-alt" aria-hidden="true" />
+
       </Button>
     );
     const UsersConnected = () => (
@@ -83,10 +86,8 @@ export default class FocusNovnc extends React.Component {
           onClick={this.handleCursor}
           title="force mouse cursor"
         >
-          <span className="fa-stack ">
-            <i className="fa fa-desktop" aria-hidden="true" />
-            <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
-          </span>
+          <i className="fa fa-desktop" aria-hidden="true" />
+          <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
         </Button>
 
         {connected ? <UsersConnected /> : null}
