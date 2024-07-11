@@ -120,8 +120,7 @@ module Chemotion
           previous_length = second_level_key_list.length
           second_level_key_list = second_level_key_list.select{ |item| item != second_level_key}
           cache.write(first_level_key, second_level_key_list)
-
-          return previous_length < cache.read(first_level_key).length
+          return previous_length > cache.read(first_level_key).length
           # revoke access: delete token! 
         elsif(request_type === 'upload')
           # decreament upload count    
@@ -261,7 +260,6 @@ module Chemotion
         second_level_key = "#{splits[2]}/#{splits[3]}"
 
         status = find_and_update_key_with_request_type(first_level_key, second_level_key, params[:action_type])
-        puts values
         {status: status}
 
       end

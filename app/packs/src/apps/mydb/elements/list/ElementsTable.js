@@ -43,7 +43,8 @@ export default class ElementsTable extends React.Component {
       elementsGroup: 'none',
       elementsSort: true,
       sortDirection: 'DESC',
-      showAttachmentTokenModal: false
+      showAttachmentTokenModal: false,
+      attachmentTokens: []
     };
 
     this.onChange = this.onChange.bind(this);
@@ -150,6 +151,8 @@ export default class ElementsTable extends React.Component {
     const nextState = { page, pages, currentElement };
     if (elementsDidChange) { nextState.elements = elements; }
     if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
+    this.setState({ attachmentTokens: ElementStore.getState().attachmentTokens });
+
   }
 
   setFromDate(date) {
@@ -179,6 +182,8 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.sortDirection = filters[type]?.direction || 'DESC';
     }
+
+
   };
 
   changeCollapse = (collapseAll) => {
@@ -252,19 +257,26 @@ export default class ElementsTable extends React.Component {
     );
   };
 
-  handleRevokeAttachmentToken = (key) => {
-    const action_type = "revoke";
-    ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, action_type)
+  handleRevokeAttachmentToken = (key, idx) => {
+    const { attachmentTokens } = this.state;
+
+
+    ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, "revoke")
       .then(res => {
-        console.log(res);
-        // remove item from array list!
+        if (res.status) {
+          let alias = attachmentTokens;
+          alias = alias.filter((i, index) => {
+            if (index !== idx) return i;
+          });
+          console.log({ alias });
+          this.setState({ attachmentTokens: [...alias] });
+        }
       })
       .catch((err) => {
         alert("Revoking token failed! check console to verify!");
         console.log(err.message);
       })
       ;
-    return;
   };
 
   collapseButton = () => {
@@ -287,10 +299,10 @@ export default class ElementsTable extends React.Component {
   };
 
   attachmentTokenModal = () => {
-    const { showAttachmentTokenModal } = this.state;
-    const { attachmentTokens } = ElementStore.getState();
+    const { showAttachmentTokenModal, attachmentTokens } = this.state;
+    console.log(attachmentTokens);
     return (
-      <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
+      <Modal show={showAttachmentTokenModal && attachmentTokens?.length} onHide={this.toggleAttachmentTokens}>
         <Modal.Header closeButton />
         <Modal.Body>
           <Panel>
@@ -311,7 +323,7 @@ export default class ElementsTable extends React.Component {
                           <div>ID:{key} (replace with: Reseach plan name, attachment name, app name)</div>
                         </Col>
                         <Col xs={3}>
-                          <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key)}>Revoke</Button>
+                          <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key, idx)}>Revoke</Button>
                         </Col>
                       </Row>);
                   })
@@ -331,7 +343,6 @@ export default class ElementsTable extends React.Component {
   };
 
   toggleAttachmentTokens = () => {
-    // change show modal 
     this.setState((prevState) => ({
       showAttachmentTokenModal: !prevState.showAttachmentTokenModal
     }));
