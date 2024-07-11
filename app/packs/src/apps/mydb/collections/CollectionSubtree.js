@@ -7,7 +7,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
-import GatePushBtn from 'src/components/common/GatePushBtn';
+import GatePushButton from 'src/components/common/GatePushButton';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
 
 export default class CollectionSubtree extends React.Component {
@@ -178,7 +178,7 @@ export default class CollectionSubtree extends React.Component {
           className={`title ${selected ? 'selected' : ''} d-flex align-items-baseline`}
           onClick={this.handleClick}
         >
-          {showGatePushButton && (<GatePushBtn collection_id={root.id} />)}
+          {showGatePushButton && (<GatePushButton collectionId={root.id} />)}
           <span className="me-auto">{label}</span>
           {this.canTakeOwnership() && (
             <i
