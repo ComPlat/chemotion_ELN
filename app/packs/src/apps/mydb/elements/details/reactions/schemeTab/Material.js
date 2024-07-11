@@ -494,7 +494,7 @@ class Material extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td>
+        <td style={{ width: '22%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
 
