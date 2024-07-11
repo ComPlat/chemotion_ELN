@@ -61,7 +61,7 @@ export default class ElementResearchPlanLabels extends React.Component {
     );
 
     return (
-      <div style={{display: "inline-block"}} onClick={this.preventOnClick}>
+      <div style={{ display: "inline-block" }} onClick={this.preventOnClick}>
         <OverlayTrigger
           trigger="click"
           rootClose
@@ -71,7 +71,7 @@ export default class ElementResearchPlanLabels extends React.Component {
           <span className="collection-label" >
             <Label>
               <i className="fa fa-file-text-o" />
-                {" " + research_plans.length}
+              {" " + research_plans.length}
             </Label>
           </span>
         </OverlayTrigger>

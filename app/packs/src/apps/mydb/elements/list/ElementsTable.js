@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger
+  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger, Modal, Panel, Button
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -42,6 +42,7 @@ export default class ElementsTable extends React.Component {
       elementsGroup: 'none',
       elementsSort: true,
       sortDirection: 'DESC',
+      showAttachmentTokenModal: false
     };
 
     this.onChange = this.onChange.bind(this);
@@ -269,6 +270,53 @@ export default class ElementsTable extends React.Component {
     );
   };
 
+  attachmentTokenModal = () => {
+    const { showAttachmentTokenModal } = this.state;
+    const { attachmentTokens } = ElementStore.getState();
+    return (
+      <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
+        <Modal.Header closeButton />
+        <Modal.Body>
+          <Panel>
+            <Panel.Heading>
+              <Panel.Title>
+                List of Attachment Token:
+              </Panel.Title>
+            </Panel.Heading>
+            <Panel.Body>
+              <div>
+
+                {
+                  attachmentTokens.map((item, idx) => {
+                    const key = Object.keys(item);
+                    return (
+                      <div>
+                        <div>{key}</div>
+                        <Button className='btn btn-primary'>Revoke</Button>
+                      </div>);
+                  })
+                }
+              </div>
+
+            </Panel.Body>
+          </Panel>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={this.toggleAttachmentTokens}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  toggleAttachmentTokens = () => {
+    // change show modal 
+    this.setState((prevState) => ({
+      showAttachmentTokenModal: !prevState.showAttachmentTokenModal
+    }));
+  };
+
   changeDateFilter() {
     let { filterCreatedAt } = this.state;
     filterCreatedAt = !filterCreatedAt;
@@ -359,7 +407,7 @@ export default class ElementsTable extends React.Component {
           {items}
         </Pagination>
       </div>
-    )
+    );
   }
 
   renderSamplesHeader = () => {
@@ -558,6 +606,7 @@ export default class ElementsTable extends React.Component {
     const { filterCreatedAt, ui } = this.state;
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
+    const { showAttachmentTokenModal } = this.state;
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -575,6 +624,11 @@ export default class ElementsTable extends React.Component {
 
     const filterTooltip = <Tooltip id="date_tooltip">{filterTitle}</Tooltip>;
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
+
+
+    const attachmentTokensToolTip = "Click to view/revoke all avaialable attachment tokens in this research plan.";
+    const attachmentTokenIcon = <i className={`fa fa-key`} />;
+    const attachmentToolTip = <Tooltip id="attachment_tokens_tooltip">{attachmentTokensToolTip}</Tooltip>;
 
     return (
       <div className="table-header">
@@ -594,6 +648,17 @@ export default class ElementsTable extends React.Component {
             flexWrap: 'wrap'
           }}
         >
+          <OverlayTrigger placement="top" overlay={attachmentToolTip}>
+            <button
+              type="button"
+              style={{ border: 'none' }}
+              onClick={this.toggleAttachmentTokens}
+            >
+              {attachmentTokenIcon}
+            </button>
+          </OverlayTrigger>
+
+
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
               type="button"
@@ -624,6 +689,7 @@ export default class ElementsTable extends React.Component {
             />
           </div>
           {typeSpecificHeader}
+          {showAttachmentTokenModal && this.attachmentTokenModal()}
         </div>
       </div>
     );
@@ -668,15 +734,15 @@ export default class ElementsTable extends React.Component {
           type={type}
         />
       );
-    } else if (type === 'cell_line'){
+    } else if (type === 'cell_line') {
       elementsTableEntries = (
-        <CellLineContainer 
-        cellLineGroups={CellLineGroup.buildFromElements(elements)}
-      />
+        <CellLineContainer
+          cellLineGroups={CellLineGroup.buildFromElements(elements)}
+        />
       );
     }
-    
-    
+
+
     else {
       elementsTableEntries = (
         <ElementsTableEntries

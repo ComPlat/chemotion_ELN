@@ -30,6 +30,7 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
@@ -182,7 +183,7 @@ class ElementStore {
         ElementActions.tryFetchWellplateById,
         ElementActions.tryFetchGenericElById
       ],
-      handleFetchCellLineById:ElementActions.tryFetchCellLineElById,
+      handleFetchCellLineById: ElementActions.tryFetchCellLineElById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -269,61 +270,62 @@ class ElementStore {
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
+      handleTpaAttachmentTokensByCollectionId: ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId
     });
   }
 
   handleFetchAllDevices(devices) {
-    this.state.elements['devices'].devices = devices
+    this.state.elements['devices'].devices = devices;
   }
 
   handleFetchDeviceById(device) {
-    this.state.currentElement = device
+    this.state.currentElement = device;
   }
 
   findDeviceIndexById(deviceId) {
-    const { devices } = this.state.elements['devices']
-    return devices.findIndex((e) => e.id === deviceId)
+    const { devices } = this.state.elements['devices'];
+    return devices.findIndex((e) => e.id === deviceId);
   }
 
   handleSaveDevice(device) {
-    const { devices } = this.state.elements['devices']
-    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum)
+    const { devices } = this.state.elements['devices'];
+    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum);
     if (deviceKey === -1) {
-      this.state.elements['devices'].devices.push(device)
+      this.state.elements['devices'].devices.push(device);
     } else {
-      this.state.elements['devices'].devices[deviceKey] = device
+      this.state.elements['devices'].devices[deviceKey] = device;
     }
   }
 
   handleToggleDeviceType({ device, type }) {
     if (device.types.includes(type)) {
-      device.types = device.types.filter((e) => e !== type)
+      device.types = device.types.filter((e) => e !== type);
     } else {
-      device.types.push(type)
+      device.types.push(type);
     }
-    const deviceKey = this.findDeviceIndexById(device.id)
-    this.state.elements['devices'].devices[deviceKey] = device
+    const deviceKey = this.findDeviceIndexById(device.id);
+    this.state.elements['devices'].devices[deviceKey] = device;
   }
 
   handleCreateDevice() {
-    const { devices } = this.state.elements['devices']
-    const newDevice = Device.buildEmpty()
-    const newKey = devices.length
-    this.state.elements['devices'].activeAccordionDevice = newKey
-    this.state.elements['devices'].devices.push(newDevice)
+    const { devices } = this.state.elements['devices'];
+    const newDevice = Device.buildEmpty();
+    const newKey = devices.length;
+    this.state.elements['devices'].activeAccordionDevice = newKey;
+    this.state.elements['devices'].devices.push(newDevice);
   }
 
   handleDeleteDevice(device) {
-    const { devices, activeAccordionDevice } = this.state.elements['devices']
-    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
+    const { devices, activeAccordionDevice } = this.state.elements['devices'];
+    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id);
   }
 
   handleAddSampleToDevice({ sample, device, options = { save: false } }) {
-    const deviceSample = DeviceSample.buildEmpty(device.id, sample)
-    device.samples.push(deviceSample)
+    const deviceSample = DeviceSample.buildEmpty(device.id, sample);
+    device.samples.push(deviceSample);
     if (options.save) {
-      ElementActions.saveDevice(device)
-      ElementActions.fetchDeviceById.defer(device.id)
+      ElementActions.saveDevice(device);
+      ElementActions.fetchDeviceById.defer(device.id);
     }
   }
 
@@ -335,82 +337,82 @@ class ElementStore {
     switch (kind) {
       case chmoConversions.nmr_1h.termId:
         // add sample to device
-        const deviceSample = DeviceSample.buildEmpty(device.id, { id: sample.id, short_label: sample.short_label })
-        deviceSample.types = [chmoConversions.nmr_1h.value]
-        device.samples.push(deviceSample)
+        const deviceSample = DeviceSample.buildEmpty(device.id, { id: sample.id, short_label: sample.short_label });
+        deviceSample.types = [chmoConversions.nmr_1h.value];
+        device.samples.push(deviceSample);
         DeviceFetcher.update(device)
           .then(device => {
-            const savedDeviceSample = last(device.samples)
+            const savedDeviceSample = last(device.samples);
             // add sampleAnalysis to experiments
-            let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === chmoConversions.nmr_1h.value)
+            let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === chmoConversions.nmr_1h.value);
             if (!deviceAnalysis) {
-              deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, chmoConversions.nmr_1h.value)
+              deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, chmoConversions.nmr_1h.value);
             }
-            const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id)
-            deviceAnalysis.experiments.push(newExperiment)
-            ElementActions.saveDeviceAnalysis.defer(deviceAnalysis)
-          })
-        break
+            const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id);
+            deviceAnalysis.experiments.push(newExperiment);
+            ElementActions.saveDeviceAnalysis.defer(deviceAnalysis);
+          });
+        break;
     }
   }
 
   handleToggleTypeOfDeviceSample({ device, sample, type }) {
-    const sampleKey = device.samples.findIndex(s => s.id === sample.id)
+    const sampleKey = device.samples.findIndex(s => s.id === sample.id);
     if (sample.types.includes(type)) {
-      sample.types = sample.types.filter(t => t !== type)
+      sample.types = sample.types.filter(t => t !== type);
     } else {
-      sample.types.push(type)
+      sample.types.push(type);
     }
-    device.samples[sampleKey] = sample
+    device.samples[sampleKey] = sample;
   }
 
   handleOpenDeviceAnalysis({ device, type }) {
     switch (type) {
       case "NMR":
         const { currentCollection, isSync } = UIStore.getState();
-        const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR")
+        const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR");
 
         // update Device in case of sample was added by dnd and device was not saved
-        device.updateChecksum()
-        ElementActions.saveDevice(device)
+        device.updateChecksum();
+        ElementActions.saveDevice(device);
 
         if (deviceAnalysis) {
           Aviator.navigate(isSync
             ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
             : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-          )
+          );
         } else {
           Aviator.navigate(isSync
             ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
             : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-          )
+          );
         }
-        break
+        break;
     }
   }
 
   handleRemoveSampleFromDevice({ sample, device }) {
-    device.samples = device.samples.filter((e) => e.id !== sample.id)
-    const deviceKey = this.findDeviceIndexById(device.id)
-    this.state.elements['devices'].devices[deviceKey] = device
+    device.samples = device.samples.filter((e) => e.id !== sample.id);
+    const deviceKey = this.findDeviceIndexById(device.id);
+    this.state.elements['devices'].devices[deviceKey] = device;
   }
 
   handleChangeDeviceProp({ device, prop, value }) {
-    device[prop] = value
-    const deviceKey = this.findDeviceIndexById(device.id)
-    this.state.elements['devices'].devices[deviceKey] = device
+    device[prop] = value;
+    const deviceKey = this.findDeviceIndexById(device.id);
+    this.state.elements['devices'].devices[deviceKey] = device;
   }
 
   handleChangeActiveAccordionDevice(key) {
-    this.state.elements['devices'].activeAccordionDevice = key
+    this.state.elements['devices'].activeAccordionDevice = key;
   }
 
   handleChangeSelectedDeviceId(deviceId) {
-    this.state.elements['devices'].selectedDeviceId = deviceId
+    this.state.elements['devices'].selectedDeviceId = deviceId;
   }
 
   handleSetSelectedDeviceId(deviceId) {
-    this.state.elements['devices'].selectedDeviceId = deviceId
+    this.state.elements['devices'].selectedDeviceId = deviceId;
   }
 
   handleSetRefreshCoefficient(obj) {
@@ -425,14 +427,14 @@ class ElementStore {
           let analysis = Container.buildAnalysis(chmoConversions.others.value);
           switch (type) {
             case chmoConversions.nmr_1h.termId:
-              analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value)
-              break
+              analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value);
+              break;
           }
-          sample.addAnalysis(analysis)
-          SamplesFetcher.update(sample)
-          resolve(analysis)
-        })
-    })
+          sample.addAnalysis(analysis);
+          SamplesFetcher.update(sample);
+          resolve(analysis);
+        });
+    });
   }
 
   createAnalysisExperiment(deviceSample, deviceAnalysis) {
@@ -444,66 +446,66 @@ class ElementStore {
             deviceSample.shortLabel,
             sampleAnalysis.id,
             deviceSample.id
-          )
-          resolve(experiment)
-        })
-    })
+          );
+          resolve(experiment);
+        });
+    });
   }
 
   handleCreateDeviceAnalysis({ device, analysisType }) {
-    const analysis = DeviceAnalysis.buildEmpty(device.id, analysisType)
-    const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysisType))
-    const promises = samplesOfAnalysisType.map(s => this.createAnalysisExperiment(s, analysis))
+    const analysis = DeviceAnalysis.buildEmpty(device.id, analysisType);
+    const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysisType));
+    const promises = samplesOfAnalysisType.map(s => this.createAnalysisExperiment(s, analysis));
     Promise.all(promises)
       .then(experiments => {
-        experiments.map(experiment => analysis.experiments.push(experiment))
-        ElementActions.saveDeviceAnalysis(analysis)
-      })
+        experiments.map(experiment => analysis.experiments.push(experiment));
+        ElementActions.saveDeviceAnalysis(analysis);
+      });
   }
 
   handleFetchDeviceAnalysisById({ analysis, device }) {
-    const { experiments } = analysis
-    const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysis.analysisType))
-    const samplesWithoutOld = slice(samplesOfAnalysisType, experiments.length)
-    const promises = samplesWithoutOld.map(s => this.createAnalysisExperiment(s, analysis))
+    const { experiments } = analysis;
+    const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysis.analysisType));
+    const samplesWithoutOld = slice(samplesOfAnalysisType, experiments.length);
+    const promises = samplesWithoutOld.map(s => this.createAnalysisExperiment(s, analysis));
     Promise.all(promises)
       .then(experiments => {
-        experiments.map(experiment => analysis.experiments.push(experiment))
-        ElementActions.saveDeviceAnalysis(analysis)
-      })
+        experiments.map(experiment => analysis.experiments.push(experiment));
+        ElementActions.saveDeviceAnalysis(analysis);
+      });
   }
 
   handleSaveDeviceAnalysis(analysis) {
     const { currentCollection, isSync } = UIStore.getState();
-    this.state.currentElement = analysis
+    this.state.currentElement = analysis;
 
     Aviator.navigate(isSync
       ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
       : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-    )
+    );
   }
 
   handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {
-    const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id)
-    analysis.experiments[experimentKey][prop] = value
-    this.state.currentElement = analysis
+    const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id);
+    analysis.experiments[experimentKey][prop] = value;
+    this.state.currentElement = analysis;
   }
 
   handleDeleteAnalysisExperiment({ device, analysis, experiment }) {
-    const sample = device.samples.find(s => s.id === experiment.deviceSampleId)
-    const sampleKey = device.samples.findIndex(s => s.id === experiment.deviceSampleId)
-    device.samples[sampleKey].types = sample.types.filter(t => t !== analysis.analysisType)
-    ElementActions.saveDevice(device)
-    ElementActions.fetchDeviceAnalysisById.defer(analysis.id)
+    const sample = device.samples.find(s => s.id === experiment.deviceSampleId);
+    const sampleKey = device.samples.findIndex(s => s.id === experiment.deviceSampleId);
+    device.samples[sampleKey].types = sample.types.filter(t => t !== analysis.analysisType);
+    ElementActions.saveDevice(device);
+    ElementActions.fetchDeviceAnalysisById.defer(analysis.id);
   }
 
   handleDuplicateAnalysisExperiment({ device, analysis, experiment }) {
-    const sample = device.samples.find(s => s.id === experiment.deviceSampleId)
-    const newSample = DeviceSample.buildEmpty(analysis.deviceId, { id: sample.sampleId, short_label: sample.shortLabel })
-    newSample.types = [analysis.analysisType]
-    device.samples.push(newSample)
-    ElementActions.saveDevice(device)
-    ElementActions.fetchDeviceAnalysisById.defer(analysis.id)
+    const sample = device.samples.find(s => s.id === experiment.deviceSampleId);
+    const newSample = DeviceSample.buildEmpty(analysis.deviceId, { id: sample.sampleId, short_label: sample.shortLabel });
+    newSample.types = [analysis.analysisType];
+    device.samples.push(newSample);
+    ElementActions.saveDevice(device);
+    ElementActions.fetchDeviceAnalysisById.defer(analysis.id);
   }
 
   // SEARCH
@@ -579,7 +581,7 @@ class ElementStore {
     // CollectionActions.fetchUnsharedCollectionRoots();
     // UIActions.clearSearchSelection.defer()
     UIActions.uncheckWholeSelection.defer();
-    this.waitFor(UIStore.dispatchToken)
+    this.waitFor(UIStore.dispatchToken);
 
     this.fetchElementsByCollectionIdandLayout();
   }
@@ -594,7 +596,7 @@ class ElementStore {
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-        
+
         if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
@@ -653,7 +655,9 @@ class ElementStore {
 
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
+    this.handleTpaAttachmentTokensByCollectionId();
   }
+
   handlefetchCellLinesByCollectionId(result) {
     this.state.elements.cell_lines = result;
   }
@@ -779,13 +783,13 @@ class ElementStore {
    * @param {Object} params = { reaction, materialGroup }
    */
   handleAddSampleToMaterialGroup(params) {
-    const { materialGroup } = params
-    let { reaction } = params
+    const { materialGroup } = params;
+    let { reaction } = params;
 
-    let sample = Sample.buildEmpty(reaction.collection_id)
-    sample.molfile = sample.molfile || ''
-    sample.molecule = sample.molecule == undefined ? sample : sample.molecule
-    sample.sample_svg_file = sample.sample_svg_file
+    let sample = Sample.buildEmpty(reaction.collection_id);
+    sample.molfile = sample.molfile || '';
+    sample.molecule = sample.molecule == undefined ? sample : sample.molecule;
+    sample.sample_svg_file = sample.sample_svg_file;
     sample.belongTo = reaction;
     sample.matGroup = materialGroup;
     reaction.changed = true;
@@ -831,7 +835,7 @@ class ElementStore {
         custom_data_keys: data.custom_data_keys,
         mapped_keys: data.mapped_keys,
         collection_id: data.collection_id,
-      })
+      });
     } else {
       this.handleRefreshElements('sample');
     }
@@ -952,21 +956,21 @@ class ElementStore {
     return this.state.elements.reactions.elements.map(reaction => {
       return reaction.id === newReaction.id
         ? newReaction
-        : reaction
+        : reaction;
     });
   }
 
   handleTryFetchById(result) {
     if (result.hasOwnProperty("error")) {
-      this.state.elementWarning = true
+      this.state.elementWarning = true;
     } else {
       this.changeCurrentElement(result);
       // this.state.currentElement = result
-      this.navigateToNewElement(result)
+      this.navigateToNewElement(result);
     }
   }
 
-  handleFetchCellLineById(result){
+  handleFetchCellLineById(result) {
     this.changeCurrentElement(result);
   }
 
@@ -976,7 +980,7 @@ class ElementStore {
   }
 
   handleCloseWarning() {
-    this.state.elementWarning = false
+    this.state.elementWarning = false;
   }
 
 
@@ -1010,7 +1014,7 @@ class ElementStore {
 
   handleOpenReactionDetails(reaction) {
     this.changeCurrentElement(reaction);
-    this.handleRefreshElements('sample')
+    this.handleRefreshElements('sample');
   }
 
   // -- Reactions Literatures --
@@ -1119,10 +1123,10 @@ class ElementStore {
       result.messages.sort((a, b) => (a.id - b.id));
       const messages = result.messages;
       if (messages && messages.length > 0) {
-        const lastMsg = messages[0]
-        this.setState({ spectraMsg: lastMsg })
+        const lastMsg = messages[0];
+        this.setState({ spectraMsg: lastMsg });
       }
-    })
+    });
   }
 
   handleRefreshElementsForSearchById(type, uiState, currentSearchByID) {
@@ -1140,7 +1144,7 @@ class ElementStore {
         from_date: fromDate,
         to_date: toDate,
         product_only: productOnly,
-      }
+      };
     }
 
     const selection = {
@@ -1213,11 +1217,11 @@ class ElementStore {
   }
 
   handleConfirmDelete(confirm) {
-    const deleteEl = this.state.deletingElement
+    const deleteEl = this.state.deletingElement;
     if (confirm) {
-      this.deleteCurrentElement(deleteEl)
+      this.deleteCurrentElement(deleteEl);
     }
-    this.setState({ deletingElement: null })
+    this.setState({ deletingElement: null });
   }
 
   handleChangeCurrentElement({ oriEl, nextEl }) {
@@ -1233,7 +1237,7 @@ class ElementStore {
       this.state.selecteds = this.updateElement(nextEl, index);
     }
 
-    return true
+    return true;
   }
 
   changeCurrentElement(nextEl) {
@@ -1255,9 +1259,9 @@ class ElementStore {
 
   handleGetMoleculeCas(updatedSample) {
     const selecteds = this.state.selecteds;
-    const index = this.elementIndex(selecteds, updatedSample)
-    const newSelecteds = this.updateElement(updatedSample, index)
-    this.setState({ selecteds: newSelecteds })
+    const index = this.elementIndex(selecteds, updatedSample);
+    const newSelecteds = this.updateElement(updatedSample, index);
+    this.setState({ selecteds: newSelecteds });
   }
 
   UpdateMolecule(updatedSample) {
@@ -1412,8 +1416,8 @@ class ElementStore {
   }
 
   addElement(addEl) {
-    const selecteds = this.state.selecteds
-    return [...selecteds, addEl]
+    const selecteds = this.state.selecteds;
+    return [...selecteds, addEl];
   }
 
   updateElement(updateEl, index) {
@@ -1440,7 +1444,7 @@ class ElementStore {
   }
 
   resetCurrentElement(newKey, newSelecteds) {
-    const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey]
+    const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey];
 
     if (newSelecteds.length === 0) {
       this.changeCurrentElement(null);
@@ -1448,20 +1452,20 @@ class ElementStore {
       this.changeCurrentElement(newCurrentElement);
     }
 
-    UrlSilentNavigation(newCurrentElement)
-    return true
+    UrlSilentNavigation(newCurrentElement);
+    return true;
   }
 
   deleteCurrentElement(deleteEl) {
-    const newSelecteds = this.deleteElement(deleteEl)
-    let left = this.state.activeKey - 1
+    const newSelecteds = this.deleteElement(deleteEl);
+    let left = this.state.activeKey - 1;
     if (left < 0) left = 0;
     this.setState({ selecteds: newSelecteds });
     this.resetCurrentElement(left, newSelecteds);
   }
 
   isDeletable(deleteEl) {
-    return deleteEl && deleteEl.isPendingToSave ? false : true
+    return deleteEl && deleteEl.isPendingToSave ? false : true;
   }
 
   handleDeletingElements(response) {
@@ -1514,18 +1518,25 @@ class ElementStore {
     this.handleRefreshElements('sample');
   }
 
+  // -- TPA --
+  async handleTpaAttachmentTokensByCollectionId() {
+    const { currentCollection } = UIStore.getState();
+    const { token_list } = await ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(currentCollection.id);
+    this.state.attachmentTokens = token_list;
+  }
+
   // End of DetailStore
   /////////////////////
 
   // -- Private Note --
   handleCreatePrivateNote(note) {
-    this.state.currentElement.private_note = note
-    this.changeCurrentElement(this.state.currentElement)
+    this.state.currentElement.private_note = note;
+    this.changeCurrentElement(this.state.currentElement);
   }
 
   handleUpdatePrivateNote(note) {
-    this.state.currentElement.private_note = note
-    this.changeCurrentElement(this.state.currentElement)
+    this.state.currentElement.private_note = note;
+    this.changeCurrentElement(this.state.currentElement);
   }
 
   // -- Metadata --

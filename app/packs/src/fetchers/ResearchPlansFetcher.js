@@ -28,11 +28,7 @@ export default class ResearchPlansFetcher {
   }
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    // TODO: hadi keep it at the right place
-    const list = ThirdPartyAppFetcher.fetchCollectionAttachmentTokens(id).then(res => console.log({ res })).then(err => console.log({ err }));
-    console.log({ list });
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'research_plans', ResearchPlan);
-
   }
 
   static create(researchPlan) {

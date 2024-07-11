@@ -25,6 +25,7 @@ import {
   thirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
+import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
 
 export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
@@ -58,6 +59,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
+    const { attachmentTokens } = ElementStore.getState();
+    console.log(attachmentTokens);
   }
 
   componentDidUpdate(prevProps) {

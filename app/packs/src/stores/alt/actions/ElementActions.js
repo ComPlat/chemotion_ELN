@@ -18,8 +18,9 @@ import SearchFetcher from 'src/fetchers/SearchFetcher';
 import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
+import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
@@ -44,12 +45,12 @@ import _ from 'lodash';
 const handleFetch = (dispatch, fetch) => {
   return fetch()
     .then((result) => {
-      dispatch(result)
+      dispatch(result);
     })
     .catch((errorMessage) => {
-      console.log(errorMessage)
-    })
-}
+      console.log(errorMessage);
+    });
+};
 
 class ElementActions {
   exportElement(element, klass, exportFormat) {
@@ -64,27 +65,27 @@ class ElementActions {
   }
   // -- Devices --
   fetchAllDevices() {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll())
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll());
   }
 
   fetchDeviceById(deviceId) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId));
   }
 
   createDevice() {
-    return null
+    return null;
   }
 
   changeActiveAccordionDevice(key) {
-    return (dispatch) => dispatch(key)
+    return (dispatch) => dispatch(key);
   }
 
   changeSelectedDeviceId(device) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.changeSelectedDevice(device))
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.changeSelectedDevice(device));
   }
 
   setSelectedDeviceId(deviceId) {
-    return (dispatch) => dispatch(deviceId)
+    return (dispatch) => dispatch(deviceId);
   }
 
   setRefreshCoefficient(id, coefficient, rId) {
@@ -93,42 +94,42 @@ class ElementActions {
   }
 
   toggleDeviceType(device, type) {
-    return (dispatch) => dispatch({ device, type })
+    return (dispatch) => dispatch({ device, type });
   }
 
   saveDevice(device) {
     if (device.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.create(device))
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.create(device));
     } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.update(device))
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.update(device));
     }
   }
 
   deleteDevice(device) {
     if (!device.isNew) {
-      DeviceFetcher.delete(device)
+      DeviceFetcher.delete(device);
     }
-    return (dispatch) => dispatch(device)
+    return (dispatch) => dispatch(device);
   }
 
   addSampleToDevice(sample, device, options) {
-    return (dispatch) => dispatch({ sample, device, options })
+    return (dispatch) => dispatch({ sample, device, options });
   }
 
   addSampleWithAnalysisToDevice(sample, analysis, device) {
-    return (dispatch) => dispatch({ sample, analysis, device })
+    return (dispatch) => dispatch({ sample, analysis, device });
   }
 
   removeSampleFromDevice(sample, device) {
-    return (dispatch) => dispatch({ sample, device })
+    return (dispatch) => dispatch({ sample, device });
   }
 
   toggleTypeOfDeviceSample(device, sample, type) {
-    return (dispatch) => dispatch({ device, sample, type })
+    return (dispatch) => dispatch({ device, sample, type });
   }
 
   changeDeviceProp(device, prop, value) {
-    return (dispatch) => dispatch({ device, prop, value })
+    return (dispatch) => dispatch({ device, prop, value });
   }
 
   fetchDeviceAnalysisById(analysisId) {
@@ -137,21 +138,21 @@ class ElementActions {
         .then(analysis => {
           DeviceFetcher.fetchById(analysis.deviceId)
             .then(device => {
-              dispatch({ analysis, device })
-            })
-        })
-    }
+              dispatch({ analysis, device });
+            });
+        });
+    };
   }
 
   openDeviceAnalysis(device, type) {
-    return (dispatch) => dispatch({ device, type })
+    return (dispatch) => dispatch({ device, type });
   }
 
   saveDeviceAnalysis(analysis) {
     if (analysis.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis));
     } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis));
     }
   }
 
@@ -159,38 +160,38 @@ class ElementActions {
     return (dispatch) => {
       DeviceFetcher.fetchById(deviceId)
         .then((device) => {
-          dispatch({ device, analysisType })
-        })
-    }
+          dispatch({ device, analysisType });
+        });
+    };
   }
 
   generateExperimentConfig(experiment) {
     return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment))
+      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment));
   }
 
   duplicateAnalysisExperiment(analysis, experiment) {
     return (dispatch) =>
       DeviceFetcher.fetchById(analysis.deviceId)
         .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
+          dispatch({ device, analysis, experiment });
+        });
   }
 
   changeAnalysisExperimentProp(analysis, experiment, prop, value) {
-    return (dispatch) => dispatch({ analysis, experiment, prop, value })
+    return (dispatch) => dispatch({ analysis, experiment, prop, value });
   }
 
   deleteAnalysisExperiment(analysis, experiment) {
     return (dispatch) =>
       DeviceFetcher.fetchById(analysis.deviceId)
         .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
+          dispatch({ device, analysis, experiment });
+        });
   }
 
   showDeviceControl() {
-    return DeviceControl.buildEmpty()
+    return DeviceControl.buildEmpty();
   }
 
   // -- Search --
@@ -232,7 +233,7 @@ class ElementActions {
   dispatchSearchResult(result) {
     return (dispatch) => {
       dispatch(result);
-    }
+    };
   }
 
   // -- Generic --
@@ -280,13 +281,13 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.split(ui_state, name)
         .then((result) => {
-          dispatch({ui_state: ui_state, name: name});
+          dispatch({ ui_state: ui_state, name: name });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
     };
   }
-  
+
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
     moleculeSort = false) {
     return (dispatch) => {
@@ -343,6 +344,7 @@ class ElementActions {
         });
     };
   }
+
   fetchCellLinesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
       CellLinesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
@@ -371,7 +373,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView });
         });
     };
   }
@@ -380,7 +382,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(sample)
         .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup })
+          dispatch({ newSample, reaction, materialGroup });
         });
     };
   }
@@ -429,7 +431,7 @@ class ElementActions {
         .then((newSample) => {
           reaction.updateMaterial(newSample);
           reaction.changed = true;
-          dispatch({ reaction, sample: newSample, closeView })
+          dispatch({ reaction, sample: newSample, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -440,7 +442,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -448,7 +450,7 @@ class ElementActions {
   }
 
   generateEmptySample(collection_id) {
-    return Sample.buildEmpty(collection_id)
+    return Sample.buildEmpty(collection_id);
   }
 
   tryFetchCellLineElById(cellLineId) {
@@ -462,10 +464,10 @@ class ElementActions {
     };
   }
 
-  createCellLine(params){
+  createCellLine(params) {
     return (dispatch) => {
       const { currentUser } = UserStore.getState();
-      CellLinesFetcher.create(params,currentUser)
+      CellLinesFetcher.create(params, currentUser)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -474,12 +476,12 @@ class ElementActions {
     };
   }
 
-  generateEmptyCellLine(collectionId,template){
+  generateEmptyCellLine(collectionId, template) {
     const { currentUser } = UserStore.getState();
-    if (!currentUser) {return }
+    if (!currentUser) { return; }
 
-    const cellLineSample= CellLine.buildEmpty(collectionId,`${currentUser.initials}-C${currentUser.cell_lines_count}`);
-    if(template){
+    const cellLineSample = CellLine.buildEmpty(collectionId, `${currentUser.initials}-C${currentUser.cell_lines_count}`);
+    if (template) {
       cellLineSample.copyMaterialFrom(template);
     }
     return cellLineSample;
@@ -514,8 +516,8 @@ class ElementActions {
           dispatch(params);
         }).catch((errorMessage) => {
           console.log(errorMessage);
-        })
-    }
+        });
+    };
   }
 
   importSamplesFromFile(params) {
@@ -570,43 +572,43 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.fetchById(id)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
-          console.log(errorMessage)
-        })
-    }
+          console.log(errorMessage);
+        });
+    };
   }
 
   tryFetchWellplateById(id) {
     return (dispatch) => {
       WellplatesFetcher.fetchById(id)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
-          console.log(errorMessage)
-        })
-    }
+          console.log(errorMessage);
+        });
+    };
   }
 
   tryFetchGenericElById(id) {
     return (dispatch) => {
       GenericElsFetcher.fetchById(id)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
-          console.log(errorMessage)
-        })
-    }
+          console.log(errorMessage);
+        });
+    };
   }
   closeWarning() {
-    return null
+    return null;
   }
 
   createReaction(params) {
     return (dispatch) => {
       ReactionsFetcher.create(params)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         });
     };
   }
@@ -615,7 +617,7 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -623,7 +625,7 @@ class ElementActions {
   }
 
   generateEmptyReaction(collection_id) {
-    return Reaction.buildEmpty(collection_id)
+    return Reaction.buildEmpty(collection_id);
   }
 
   copyReactionFromId(id) {
@@ -654,15 +656,15 @@ class ElementActions {
         .then((result) => {
           dispatch({ research_plan: result, colId: colId });
         }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
     };
   }
 
   copyElement(element, colId) {
     return (
       { element: element, colId: colId }
-    )
+    );
   }
 
   openReactionDetails(reaction) {
@@ -686,7 +688,7 @@ class ElementActions {
 
     // wellplateCount correction
     if (wellplateCount > Math.ceil(samples.length / 96)) {
-      wellplateCount = Math.ceil(samples.length / 96)
+      wellplateCount = Math.ceil(samples.length / 96);
     }
 
     // build wellplate objects from samples
@@ -750,7 +752,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(sample)
         .then((newSample) => {
-          dispatch(wellplate)
+          dispatch(wellplate);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -845,15 +847,15 @@ class ElementActions {
     };
   }
 
-  updateCellLine(params){
-      return (dispatch) => {
-        CellLinesFetcher.update(params)
-          .then((result) => {
-            dispatch(result);
-          }).catch((errorMessage) => {
-            console.log(errorMessage);
-          });
-      };
+  updateCellLine(params) {
+    return (dispatch) => {
+      CellLinesFetcher.update(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
   updateResearchPlan(params) {
@@ -930,7 +932,7 @@ class ElementActions {
 
   // -- Report --
   showReportContainer() {
-    return Report.buildEmpty()
+    return Report.buildEmpty();
   }
 
   showFormatContainer() {
@@ -965,7 +967,7 @@ class ElementActions {
       dispatch(options);
       UIActions.uncheckWholeSelection();
       UserActions.fetchCurrentUser();
-    }
+    };
   }
 
   removeElements() {
@@ -1052,22 +1054,24 @@ class ElementActions {
   createPrivateNote(params) {
     return (dispatch) => {
       PrivateNoteFetcher.create(params).then((result) => {
-        dispatch(result)
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      })
+      });
     };
   }
 
   updatePrivateNote(note) {
     return (dispatch) => {
       PrivateNoteFetcher.update(note).then((result) => {
-        dispatch(result)
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      })
+      });
     };
   }
+
+
 }
 
 export default alt.createActions(ElementActions);
