@@ -12,7 +12,6 @@ import GenericElementLabels from 'src/apps/mydb/elements/labels/GenericElementLa
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -61,20 +60,15 @@ const isCurrEleDropType = (sourceType, targetType) => {
   return sourceType && targetType && targets[sourceType].includes(targetType);
 };
 
-const dragColumn = (element, showDragColumn, sourceType, targetType) => {
-  if (showDragColumn) {
-    return (
-      <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
-        <ElementContainer
-          key={element.id}
-          sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
-          element={element}
-        />
-      </td>
-    );
-  }
-  return null;
-};
+const dragColumn = (element, sourceType, targetType) => (
+  <td className="text-center align-middle">
+    <ElementContainer
+      key={element.id}
+      sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
+      element={element}
+    />
+  </td>
+);
 
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
@@ -94,7 +88,7 @@ TopSecretIcon.propTypes = {
 
 function XvialIcon({ label }) {
   return (label || '').match(/^X\d+.*/) ? (
-    <i className="icon-xvial px-1 fs-5"/>
+    <i className="icon-xvial px-1 fs-5" />
   ) : null;
 }
 
@@ -135,19 +129,29 @@ function MoleculeHeader({
   sample, show, showDragColumn, onClick, targetType
 }) {
   const { collId, showPreviews } = UIStore.getState();
+  const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
+
   return (
     <tr
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null
-        ? (<td colSpan="3" style={{ position: 'relative ' }}><div><h4>(No-structure sample)</h4></div></td>)
+      {isNoStructureSample
+        ? (
+          <td colSpan="3" className="position-relative">
+            <div>
+              <h4>
+                (No-structure sample)
+              </h4>
+            </div>
+          </td>
+        )
         : (
           <td colSpan="2">
-            <div className='d-flex align-items-start gap-1'>
+            <div className="d-flex align-items-start gap-1">
               {showPreviews && svgPreview(sample)}
-              <h4 className='flex-grow-1'><SampleName sample={sample} /></h4>
-              <div className='d-flex align-items-center gap-1'>
+              <h4 className="flex-grow-1"><SampleName sample={sample} /></h4>
+              <div className="d-flex align-items-center gap-1">
                 {sample.molecule.chem_repo && sample.molecule.chem_repo.id && <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />}
                 <PubchemLabels element={sample} />
                 <ComputedPropLabel cprops={sample.molecule_computed_props} />
@@ -160,15 +164,16 @@ function MoleculeHeader({
             </div>
           </td>
         )}
-      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null
-        ? null : dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
+      {!isNoStructureSample
+          && showDragColumn
+          && dragColumn(sample, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
 }
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       displayedMoleculeGroup: [],
       moleculeGroupsShown: [],
@@ -223,6 +228,7 @@ export default class ElementsTableSampleEntries extends Component {
     const {
       collapseAll, showDragColumn, moleculeSort, currentElement, elements, ui
     } = this.props;
+    const { keyboardIndex, keyboardSeletectedElementId } = this.state;
     const { checkedAll, checkedIds, uncheckedIds } = ui;
     const nextUi = nextProps.ui;
     return collapseAll !== nextProps.collapseAll // Bool
@@ -233,8 +239,8 @@ export default class ElementsTableSampleEntries extends Component {
       || checkedAll !== nextUi.checkedAll // Bool
       || checkedIds !== nextUi.checkedIds // Immutable List
       || uncheckedIds !== nextUi.uncheckedIds // Immutable List
-      || this.state.keyboardIndex !== nextState.keyboardIndex // int
-      || this.state.keyboardSeletectedElementId !== nextState.keyboardSeletectedElementId; // int
+      || keyboardIndex !== nextState.keyboardIndex // int
+      || keyboardSeletectedElementId !== nextState.keyboardSeletectedElementId; // int
   }
 
   componentWillUnmount() {
@@ -304,9 +310,8 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   isElementChecked(element) {
-    const { checkedIds, uncheckedIds, checkedAll } = this.props.ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
+    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
   isElementSelected(element) {
@@ -315,19 +320,19 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderSamples(samples, index) {
-    const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
+    const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
     const { showDragColumn } = this.props;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
-    const sampleRows = samples.slice(0, numSamples).map((sample, ind) => {
+    const sampleRows = samples.slice(0, numSamples).map((sample) => {
       const selected = this.isElementSelected(sample);
       const style = (selected || keyboardSeletectedElementId === sample.id) ? {
         color: '#fff', background: '#337ab7'
       } : {};
 
       return (
-        <tr key={ind} style={style}>
+        <tr key={sample.id} style={style}>
           <td width="30px">
             <ElementCheckbox
               element={sample}
@@ -337,12 +342,12 @@ export default class ElementsTableSampleEntries extends Component {
           </td>
           <td
             style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-            onClick={showDetails.bind(this, sample.id)}
+            onClick={() => showDetails(sample.id)}
           >
-            <div className='d-flex justify-content-between'>
+            <div className="d-flex justify-content-between">
               {sample.title(selected)}
 
-              <div className='d-flex align-items-center gap-1'>
+              <div className="d-flex align-items-center gap-1">
                 <CommentIcon commentCount={sample.comment_count} />
                 <ShowUserLabels element={sample} />
                 <XvialIcon label={sample.external_label} />
@@ -356,7 +361,7 @@ export default class ElementsTableSampleEntries extends Component {
               </div>
             </div>
           </td>
-          {dragColumn(sample, showDragColumn, DragDropItemTypes.SAMPLE, this.state.targetType)}
+          {showDragColumn && dragColumn(sample, DragDropItemTypes.SAMPLE, targetType)}
         </tr>
       );
     });

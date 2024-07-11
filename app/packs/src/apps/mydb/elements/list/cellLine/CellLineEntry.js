@@ -20,10 +20,6 @@ export default class CellLineEntry extends Component {
     };
   }
 
-  componentDidMount() {
-    UIStore.getState();
-  }
-
   getBorderStyle() {
     const { showEntries } = this.state;
     return showEntries
@@ -47,12 +43,9 @@ export default class CellLineEntry extends Component {
         key={firstCellLineItem.cellLineName}
         className="cell-line-group-header-name"
       >
-        {firstCellLineItem.cellLineName}
-        {' '}
-        -
-        {' '}
-        {firstCellLineItem.source}
-      </div>];
+        {`${firstCellLineItem.cellLineName} - ${firstCellLineItem.source}`}
+      </div>
+    ];
   }
 
   renderArrow() {
@@ -61,7 +54,6 @@ export default class CellLineEntry extends Component {
       <div key="arrow" className="cell-line-group-arrow floating-right">
         <ChevronIcon direction={showEntries ? 'down' : 'right'} />
       </div>
-
     );
   }
 
@@ -83,7 +75,15 @@ export default class CellLineEntry extends Component {
     const { detailedInformation } = this.state;
     const buttonActive = detailedInformation ? 'detailed-info-on' : 'detailed-info-off';
     return (
-      <OverlayTrigger key="detailedInfoButton" placement="top" overlay={<Tooltip id="detailed-info-button">Show detailed information about the material</Tooltip>}>
+      <OverlayTrigger
+        key="detailedInfoButton"
+        placement="top"
+        overlay={(
+          <Tooltip id="detailed-info-button">
+            Show detailed information about the material
+          </Tooltip>
+        )}
+      >
         <Button
           className={buttonActive}
           size="sm"
@@ -102,10 +102,18 @@ export default class CellLineEntry extends Component {
     const { cellLineItems } = this.props;
     const { currentCollection, isSync } = UIStore.getState();
     if (currentCollection.label === 'All') { return null; }
-    if (currentCollection.is_sync_to_me && currentCollection.permission_level==0){return null;}
-    
+    if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) { return null; }
+
     return (
-      <OverlayTrigger key="subSampleButton" placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
+      <OverlayTrigger
+        key="subSampleButton"
+        placement="top"
+        overlay={(
+          <Tooltip id="detailed-info-button">
+            Create sample of cell line material
+          </Tooltip>
+        )}
+      >
         <Button
           className="quick-sample"
           size="sm"
