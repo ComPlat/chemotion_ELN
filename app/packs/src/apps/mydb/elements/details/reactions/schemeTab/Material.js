@@ -78,12 +78,11 @@ const matTagCollect = (connect, monitor) => ({
 const notApplicableInput = () => (
   <td>
     <Form.Control
-      bsClass="bs-form--compact form-control"
       size="sm"
-      style={{ textAlign: 'center' }}
       type="text"
       value="n/a"
       disabled
+      className='text-align-center'
     />
   </td>
 );
@@ -411,7 +410,7 @@ class Material extends Component {
 
     const grm = gUnit ? `${gUnit}g, ` : '';
     const vol = lUnit ? `${lUnit}L, ` : '';
-    const solVol = vol.substr(0, vol.length - 2);
+    const solVol = vol.slice(0, -2);
     const mol = molUnit ? `${molUnit}mol, ` : '';
     const mlt = m.molarity_value === 0.0 ?
       '' : `${validDigit(m.molarity_value, 3)}${m.molarity_unit}, `;
@@ -628,7 +627,7 @@ class Material extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td>
+        <td style={{ width: '22%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
         <td>
@@ -650,7 +649,6 @@ class Material extends Component {
               placement="top"
               overlay={<Tooltip id="molecular-weight-info">{material.amount_g} g - {mw} g/mol</Tooltip>}
             >
-              <div>
                 <Form.Control
                   disabled={!permitOn(reaction)}
                   type="text"
@@ -658,24 +656,20 @@ class Material extends Component {
                   value={material.external_label}
                   placeholder={material.molecule.iupac_name}
                   onChange={event => this.handleExternalLabelChange(event)}
-                />
-              </div>
+              />
             </OverlayTrigger>
-            <InputGroup.Button>
-              <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
+            <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
                 <Button
                   disabled={!permitOn(reaction)}
                   active
                   onClick={e => this.handleExternalLabelCompleted(e)}
                   size="sm"
                 ><i className="fa fa-refresh" /></Button>
-              </OverlayTrigger>
-            </InputGroup.Button>
+            </OverlayTrigger>
           </InputGroup>
         </td>
 
         {this.materialVolume(material)}
-
         <td>
           <Form.Control
             type="text"
@@ -684,7 +678,6 @@ class Material extends Component {
             disabled
           />
         </td>
-
         <td>
           <Button
             disabled={!permitOn(reaction)}
@@ -785,13 +778,13 @@ class Material extends Component {
 
     return (
       <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)} >
-        <div style={{ display: 'inline-block', maxWidth: '100%' }}>
+        <div className='d-inline-block' style={{ maxWidth: '100%' }}>
           <div className="inline-inside">
             <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
               <Button variant="primary" size="sm" onClick={addToDesc} disabled={!permitOn(reaction)}>
                 {serialCode}
               </Button>
-            </OverlayTrigger>&nbsp;
+            </OverlayTrigger>
             {materialName}
           </div>
           <span style={iupacStyle}>
