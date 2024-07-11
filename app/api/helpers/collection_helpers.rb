@@ -59,21 +59,21 @@ module CollectionHelpers
     c_id = prms[:collection_id]
     if !prms[:newCollection].blank?
       c = Collection.create(
-        user_id: current_user.id, label: prms[:newCollection]
+        user_id: current_user.id, label: prms[:newCollection],
       )
     elsif prms[:is_sync_to_me]
       c = Collection.joins(:sync_collections_users).where(
         'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and (sync_collections_users.permission_level = 1 or sync_collections_users.permission_level >= ?)',
         c_id,
         user_ids,
-        pl
+        pl,
       ).first
-    elsif
+    else
       c = Collection.where(id: c_id).where(
         'shared_by_id = ? OR (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?))',
         current_user.id,
         user_ids,
-        pl
+        pl,
       ).first
     end
     c&.id
@@ -134,17 +134,6 @@ module CollectionHelpers
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
     @dl_cl = @dl[:celllinesample_detail_level]
-  end
-
-  def create_classes_of_element(element)
-    if element == 'cell_line'
-      element_klass = CelllineSample
-      collections_element_klass = CollectionsCellline
-    else
-      collections_element_klass = "collections_#{element}".classify.constantize
-      element_klass = element.classify.constantize
-    end
-    [element_klass, collections_element_klass]
   end
 end
 # rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
