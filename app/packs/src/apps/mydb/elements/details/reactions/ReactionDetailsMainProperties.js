@@ -7,7 +7,6 @@ import {
   Tooltip,
   InputGroup,
   Row,
-  Container,
   Form
 } from 'react-bootstrap';
 import Select from 'react-select';

@@ -146,7 +146,6 @@ export default class ReactionDetailsProperties extends Component {
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('rf_value')}
                 placeholder="Rf-Value..."
                 onChange={event => this.props.onInputChange('rfValue', event)}
-                // className='me-5'
               />
             </Form.Group>
           </Col>

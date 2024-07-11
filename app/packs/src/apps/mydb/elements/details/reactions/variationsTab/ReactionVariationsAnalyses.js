@@ -140,7 +140,7 @@ function AnalysesCellEditor({
               onChange={() => onChange(analysis.id)}
               label={analysis.name}
               checked={selectedAnalysisIDs.includes(analysis.id)}
-              style={{ marginRight: '10px' }}
+              className='me-2'
             />
             <Button size="sm" variant='light' onClick={() => navigateToAnalysis(analysis.id)}>
               <i className="fa fa-external-link" />

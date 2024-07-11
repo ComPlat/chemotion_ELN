@@ -4,16 +4,6 @@ import { Form } from 'react-bootstrap';
 
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
-const source = {
-  beginDrag(props) {
-    return props;
-  }
-};
-
-const collect = (connect, monitor) => ({
-  connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging()
-});
 
 export default class MaterialCalculations extends Component {
 
