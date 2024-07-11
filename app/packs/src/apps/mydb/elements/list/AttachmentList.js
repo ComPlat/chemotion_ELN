@@ -142,29 +142,35 @@ export const downloadButton = (attachment) => (
 
 export const removeButton = (attachment, onDelete, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
-    <Button
-      size="sm"
-      variant="danger"
-      className="attachment-button-size"
-      onClick={() => onDelete(attachment)}
-      disabled={readOnly}
-    >
-      <i className="fa fa-trash-o" aria-hidden="true" />
-    </Button>
+    {/* add span because disabled buttons cannot trigger tooltip overlay */}
+    <span>
+      <Button
+        size="sm"
+        variant="danger"
+        className="attachment-button-size"
+        onClick={() => onDelete(attachment)}
+        disabled={readOnly}
+      >
+        <i className="fa fa-trash-o" aria-hidden="true" />
+      </Button>
+    </span>
   </OverlayTrigger>
 );
 
 export const moveBackButton = (attachment, onBack, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="back_tooltip">Move attachment back to inbox</Tooltip>}>
-    <Button
-      size="sm"
-      variant="danger"
-      className="attachment-button-size"
-      onClick={() => onBack(attachment)}
-      disabled={readOnly}
-    >
-      <i className="fa fa-backward" aria-hidden="true" />
-    </Button>
+    {/* add span because disabled buttons cannot trigger tooltip overlay */}
+    <span>
+      <Button
+        size="sm"
+        variant="danger"
+        className="attachment-button-size"
+        onClick={() => onBack(attachment)}
+        disabled={readOnly}
+      >
+        <i className="fa fa-backward" aria-hidden="true" />
+      </Button>
+    </span>
   </OverlayTrigger>
 
 );
@@ -203,15 +209,18 @@ export const editButton = (
   );
   return (
     <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
-      <Button
-        className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
-        size="sm"
-        variant="success"
-        disabled={editDisable}
-        onClick={() => handleEdit(attachment)}
-      >
-        <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-      </Button>
+      {/* add span because disabled buttons cannot trigger tooltip overlay */}
+      <span>
+        <Button
+          className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
+          size="sm"
+          variant="success"
+          disabled={editDisable}
+          onClick={() => handleEdit(attachment)}
+        >
+          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+        </Button>
+      </span>
     </OverlayTrigger>
   );
 };
