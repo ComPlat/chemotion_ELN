@@ -51,14 +51,7 @@ class CodePdf < Prawn::Document
       end
       if displaySample
         if image
-          image_url = URI.parse(image)
-          response = Net::HTTP.get_response(image_url)
-          if response.is_a?(Net::HTTPSuccess)
-            image_data = response.body
-          image image_data, width: 150, height: 150
-          else
-            puts "Failed to fetch the image data"
-          end
+          displaySample(image)
         end
       end 
       # Draw the bounds of the current page
@@ -84,6 +77,13 @@ class CodePdf < Prawn::Document
       end
     else
       [25.4.mm, 37.mm]
+    end
+  end
+
+  # display image
+  def displaySample(sampleUrl)
+    if sampleUrl
+      svg open(sampleUrl), width: 10, height: 10
     end
   end
 

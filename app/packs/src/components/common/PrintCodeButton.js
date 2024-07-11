@@ -14,7 +14,6 @@ export default function PrintCodeButton({ element }) {
   const [pdfType, setPdfType] = useState('qr_code');
   const [url, setUrl] = useState(null);
   const [displaySample, setDisplaySample] = useState(false);
-  const [sampleImage, setSampleImage] = useState(null);
 
   // Builds the URL for fetching the PDF.
   const buildURL = () => {
@@ -23,35 +22,49 @@ export default function PrintCodeButton({ element }) {
     setUrl(newUrl);
   };
 
-
-  const fetchSampleImage = async (imageUrl) => {
-    fetch(imageUrl)
-      .then((response) => response.blob())
-      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .then((result) => {
-        if (result.data != null) {
-          setSampleImage(result.data);
-        }
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+  // Request options for fetching the PDF.
+  let requestOptions = {
+    credentials: 'same-origin',
+    method: 'GET',
   };
+
+  // Form data for the request.
+  const formData = new FormData();
+
+  // Fetches the sample image and appends it to the form data.
+  async function fetchSampleImage(imageUrl) {
+    return (
+      fetch(imageUrl)
+        .then((result) => {
+          // Append the image to the form data.
+          formData.append('image', result.url);
+          // Set the request options for the POST request.
+          requestOptions = {
+            credentials: 'same-origin',
+            method: 'POST',
+            body: formData
+          };
+          return result.url ? result.url : null})
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        }));
+  }
 
   // Fetches the PDF for the element.
   const fetchPrintCodes = async () => {
-    if (element.type === 'sample') {
-      const imageUrl = `/images/samples/${element.sample_svg_file}`;
-      fetchSampleImage(imageUrl);
+    if (element.type === 'sample' && displaySample) {
+      // Fetch the sample image and append it to the form data.
+      await fetchSampleImage(`/images/samples/${element.sample_svg_file}`);
+    } else {
+      // Set the request options for the GET request.
+      requestOptions = {
+        credentials: 'same-origin',
+        method: 'GET',
+      };
     }
 
-    const formData = new FormData();
-    formData.append('image', sampleImage);
-    fetch(url, {
-      credentials: 'same-origin',
-      method: 'POST',
-      body: formData
-    })
+    // Fetch the PDF and set the preview.
+    fetch(url, requestOptions)
       .then((response) => response.blob())
       .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
       .then((result) => {
@@ -84,7 +97,7 @@ export default function PrintCodeButton({ element }) {
   // Fetch the new PDF when the URL changes
   useEffect(() => {
     fetchPrintCodes();
-  }, [url]);
+  }, [url, displaySample]);
 
   // Set the tooltip text for the button
   const tooltipText = 'Print bar/qr-code Label';
@@ -95,15 +108,15 @@ export default function PrintCodeButton({ element }) {
       display: 'flex', flexDirection: 'column', marginLeft: '20px', width: '50%'
     }}
     >
-      <Radio inline checked={pdfType === 'qr_code'} onClick={() => setPdfType('qr_code')} />
+      <Radio inline defaultChecked name="PdfType" onClick={() => setPdfType('qr_code')} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print QR code</span>
-      <Radio inline checked={pdfType === 'bar_code'} onClick={() => setPdfType('bar_code')} />
+      <Radio inline name="PdfType" onClick={() => setPdfType('bar_code')} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Bar code</span>
-      <Radio inline checked={pdfType === 'data_matrix'} onClick={() => setPdfType('data_matrix')} />
+      <Radio inline name="PdfType" onClick={() => setPdfType('data_matrix')} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Data Matrix</span>
       {element.type === 'sample' && (
         <>
-          <Checkbox inline checked={displaySample} onClick={() => setDisplaySample(!displaySample)} />
+          <Checkbox inline onClick={() => setDisplaySample(!displaySample)} />
           <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Sample</span>
         </>
       )}
@@ -116,9 +129,9 @@ export default function PrintCodeButton({ element }) {
       display: 'flex', flexDirection: 'column', marginLeft: '20px', width: '50%'
     }}
     >
-      <Radio inline checked={isSmall} onClick={() => setIsSmall(true)} />
+      <Radio inline name="PdfSize" onClick={() => setIsSmall(true)} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Small format</span>
-      <Radio inline checked={!isSmall} onClick={() => setIsSmall(false)} />
+      <Radio inline name="PdfSize" onClick={() => setIsSmall(false)} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Large format</span>
     </div>
   );
@@ -183,7 +196,7 @@ export default function PrintCodeButton({ element }) {
           <Button
             id="submit-copy-element-btn"
             bsStyle="success"
-            onClick={() => Utils.downloadFile({ contents: url, name: 'print_codes.pdf' })}
+            onClick={() => Utils.downloadFile({ contents: preview, name: 'print_codes.pdf' })}
             className="pull-left"
           >
             Print
