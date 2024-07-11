@@ -103,6 +103,13 @@ class CnC extends React.Component {
     this.state.rfb.focus();
     this.clearTimers(); // Clear the auto blur and auto disconnect timers
     this.setState({ rfb: tempRFB, isNotFocused: false, showDeviceList: false });
+
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (this.state.isForcedScreenResizing) {
+      setTimeout(() => {
+        this.handleScreenSizeChanging();
+      }, 1);
+    }
   }
 
   /**
@@ -147,10 +154,17 @@ class CnC extends React.Component {
     tempRFB.viewOnly = true;
     // Toggle the device list when the screen is blurred
     // This provides a way to hide the device list when the user is not focused on the screen
-    this.toggleDeviceList();
+    //this.toggleDeviceList();
     this.clearTimers();
     const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
-    this.setState({ rfb: tempRFB, isNotFocused: true, autoDisconnect: disconnectTime });
+    this.setState({ rfb: tempRFB, isNotFocused: true, showDeviceList: true, autoDisconnect: disconnectTime });
+    
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (this.state.isForcedScreenResizing) {
+      setTimeout(() => {
+        this.handleScreenSizeChanging();
+      }, 1);
+    }
   }
 
   handleCursor() {
@@ -239,10 +253,10 @@ class CnC extends React.Component {
     const { showDeviceList } = this.state;
     const { isNotFocused } = this.state;
 
-    // If the device is currently in focus, we want to toggle the isNotFocused state
+    // If the device is currently in focus, we want to call handleBlur
     // so that the device is blurred when the device list is toggled.
     if (!this.state.isNotFocused) {
-      this.setState({ isNotFocused: !isNotFocused });
+      this.handleBlur();
     }
     this.setState({
       showDeviceList: !showDeviceList,

@@ -57,7 +57,7 @@ export default class FocusNovnc extends React.Component {
         onClick={this.handleForceScreenResizing}
         title="force screen resizing"
       >
-        {isForcedScreenResizing ? 'Unforce Screen Resizing' : 'Force Screen Resizing'}
+        {isForcedScreenResizing ? 'Unfit Screen Width' : 'Fit Screen Width'}
       </Button>
     );
     const UsersConnected = () => (
