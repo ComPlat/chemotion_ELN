@@ -1,6 +1,5 @@
 import React from 'react';
 import { Popover, Button, Form, OverlayTrigger } from 'react-bootstrap';
-import _ from 'lodash';
 
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 
@@ -9,15 +8,12 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 export default class ElementsTableSettings extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      visible: props.visible,
-      hidden: props.hidden,
       currentType: '',
       showSampleExternalLabel: false,
       showSampleShortLabel: false,
@@ -34,19 +30,14 @@ export default class ElementsTableSettings extends React.Component {
     this.onChangeUI = this.onChangeUI.bind(this);
   }
 
-  // to force popups to stay anchored to button
-  resize = () => this.forceUpdate()
-
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
     UIStore.listen(this.onChangeUI);
-    window.addEventListener('resize', this.resize);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     UIStore.unlisten(this.onChangeUI);
-    window.removeEventListener('resize', this.resize);
   }
 
   onChangeUI(state) {
@@ -74,33 +65,23 @@ export default class ElementsTableSettings extends React.Component {
   onToggleTabLayoutContainer(show) {
     if (!show) {
       this.updateLayout();
-  
+
       if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
         const show_previews = UIStore.getState().showPreviews;
         const cur_previews = this.state.tableSchemePreviews;
         if (cur_previews != show_previews) {
           UIActions.toggleShowPreviews(cur_previews);
-  
         }
-  
       }
-  
+
       const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-  
+
       UserActions.updateUserProfile({
         show_external_name: showSampleExternalLabel,
         show_sample_short_label: showSampleShortLabel,
         show_sample_name: showSampleName
       });
     }
-  }
-
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      visible: nextProps.visible,
-      hidden: nextProps.hidden
-    });
   }
 
   handleToggleScheme() {
@@ -147,48 +128,19 @@ export default class ElementsTableSettings extends React.Component {
     });
 
     const userProfile = UserStore.getState().profile;
-    _.set(userProfile, 'data.layout', layout);
+    userProfile.data.layout = layout;
     UserActions.updateUserProfile(userProfile);
   }
 
   render() {
+    const { visible, hidden } = this.props;
     const {
-      visible, hidden, currentType,
-      tableSchemePreviews, showSampleExternalLabel, showSampleShortLabel, showSampleName,
+      currentType,
+      tableSchemePreviews,
+      showSampleExternalLabel,
+      showSampleShortLabel,
+      showSampleName,
     } = this.state;
-
-    const showSettings = (currentType == "sample" || currentType == "reaction")
-
-    const sampleSettings = (
-      <>
-        <Form>
-          <Form.Check
-            type="checkbox"
-            onChange={this.handleToggleScheme}
-            checked={tableSchemePreviews}
-            label="Show schemes images"
-          />
-          <Form.Check
-            type="checkbox"
-            onChange={this.handleToggleSampleExt}
-            checked={showSampleExternalLabel}
-            label="Show sample external name on title"
-          />
-          <Form.Check
-            type="checkbox"  
-            onChange={this.handleToggleSampleShortLabel}
-            checked={showSampleShortLabel}
-            label="Show sample short label"
-          />
-          <Form.Check
-            type="checkbox"  
-            onChange={this.handleToggleSampleName}
-            checked={showSampleName}
-            label="Show sample name"
-          />
-        </Form>
-      </>
-    )
 
     const tabLayoutContainerElement = (
       <TabLayoutContainer
@@ -198,6 +150,7 @@ export default class ElementsTableSettings extends React.Component {
       />
     );
 
+    const showSettings = (currentType == "sample" || currentType == "reaction");
     const popoverSettings = (
       <Popover
         className="scrollable-popover w-auto mw-100"
@@ -209,34 +162,58 @@ export default class ElementsTableSettings extends React.Component {
         <Popover.Body>
           {tabLayoutContainerElement}
         </Popover.Body>
-        {(showSettings || true) &&
+        {showSettings && (
           <>
             <Popover.Header>Settings</Popover.Header>
             <Popover.Body>
-              {sampleSettings}
+              <Form>
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleScheme}
+                  checked={tableSchemePreviews}
+                  label="Show schemes images"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleExt}
+                  checked={showSampleExternalLabel}
+                  label="Show sample external name on title"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleShortLabel}
+                  checked={showSampleShortLabel}
+                  label="Show sample short label"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleName}
+                  checked={showSampleName}
+                  label="Show sample name"
+                />
+              </Form>
             </Popover.Body>
           </>
-        }
+        )}
       </Popover>
-    )
+    );
 
     return (
-      <div className="position-absolute top-0 end-0">
-        <OverlayTrigger
-          trigger="click"
-          placement="bottom"
-          overlay={popoverSettings}
-          onToggle={this.onToggleTabLayoutContainer}
+      <OverlayTrigger
+        trigger="click"
+        placement="bottom"
+        overlay={popoverSettings}
+        onToggle={this.onToggleTabLayoutContainer}
+        rootClose
+      >
+        <Button
+          size="xsm"
+          variant="light"
+          className="m-2"
         >
-          <Button
-            size="xsm"
-            variant="light"
-            className='m-2'
-          >
-            <i className="fa fa-sliders" />
-          </Button>
-        </OverlayTrigger>
-      </div>
+          <i className="fa fa-sliders" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 }

@@ -8,8 +8,6 @@ import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -50,7 +48,7 @@ export const attachmentThumbnail = (attachment) => (
         popObject={
         attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
           ? {
-            fetchNeeded:true,
+            fetchNeeded: true,
             src: `/api/v1/attachments/${attachment.id}/annotated_image`,
           }
           : {
@@ -101,45 +99,51 @@ export const downloadButton = (attachment) => (
       <i className="fa fa-download" aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
-      <MenuItem eventKey="1" onClick={() => handleDownloadOriginal(attachment)}>
+      <Dropdown.Item eventKey="1" onClick={() => handleDownloadOriginal(attachment)}>
         Download Original
-      </MenuItem>
-      <MenuItem
+      </Dropdown.Item>
+      <Dropdown.Item
         eventKey="2"
         onClick={() => handleDownloadAnnotated(attachment)}
         disabled={!isImageFile(attachment.filename) || attachment.isNew}
       >
         Download Annotated
-      </MenuItem>
+      </Dropdown.Item>
     </Dropdown.Menu>
   </Dropdown>
 );
 
 export const removeButton = (attachment, onDelete, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
-    <Button
-      size="sm"
-      variant="danger"
-      className="attachment-button-size"
-      onClick={() => onDelete(attachment)}
-      disabled={readOnly}
-    >
-      <i className="fa fa-trash-o" aria-hidden="true" />
-    </Button>
+    {/* add span because disabled buttons cannot trigger tooltip overlay */}
+    <span>
+      <Button
+        size="sm"
+        variant="danger"
+        className="attachment-button-size"
+        onClick={() => onDelete(attachment)}
+        disabled={readOnly}
+      >
+        <i className="fa fa-trash-o" aria-hidden="true" />
+      </Button>
+    </span>
   </OverlayTrigger>
 );
 
 export const moveBackButton = (attachment, onBack, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="back_tooltip">Move attachment back to inbox</Tooltip>}>
-    <Button
-      size="sm"
-      variant="danger"
-      className="attachment-button-size"
-      onClick={() => onBack(attachment)}
-      disabled={readOnly}
-    >
-      <i className="fa fa-backward" aria-hidden="true" />
-    </Button>
+    {/* add span because disabled buttons cannot trigger tooltip overlay */}
+    <span>
+      <Button
+        size="sm"
+        variant="danger"
+        className="attachment-button-size"
+        onClick={() => onBack(attachment)}
+        disabled={readOnly}
+      >
+        <i className="fa fa-backward" aria-hidden="true" />
+      </Button>
+    </span>
   </OverlayTrigger>
 
 );
@@ -178,15 +182,18 @@ export const editButton = (
   );
   return (
     <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
-      <Button
-        className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
-        size="sm"
-        variant="success"
-        disabled={editDisable}
-        onClick={() => handleEdit(attachment)}
-      >
-        <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-      </Button>
+      {/* add span because disabled buttons cannot trigger tooltip overlay */}
+      <span>
+        <Button
+          className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
+          size="sm"
+          variant="success"
+          disabled={editDisable}
+          onClick={() => handleEdit(attachment)}
+        >
+          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+        </Button>
+      </span>
     </OverlayTrigger>
   );
 };
@@ -195,7 +202,6 @@ export const importButton = (
   attachment,
   showImportConfirm,
   importDisabled,
-  importButtonRefs,
   showImportConfirmFunction,
   hideImportConfirmFunction,
   confirmAttachmentImportFunction
@@ -230,30 +236,31 @@ export const importButton = (
     </Tooltip>
   );
 
+  const buttonRef = React.createRef();
   return (
     <div>
       <OverlayTrigger placement="top" overlay={importTooltip}>
-        <div style={{ float: 'right' }}>
+        {/* add span because disabled buttons cannot trigger tooltip overlay */}
+        <span>
           <Button
             size="sm"
             variant="success"
             disabled={importDisabled || extension !== 'xlsx'}
-            // eslint-disable-next-line no-param-reassign
-            ref={(ref) => { importButtonRefs[attachment.id] = ref; }}
+            ref={buttonRef}
             className={`attachment-button-size ${importDisabled
               || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
             onClick={() => showImportConfirmFunction(attachment.id)}
           >
-            <Glyphicon glyph="import" />
+            <i className="fa fa-plus-circle" />
           </Button>
-        </div>
+        </span>
       </OverlayTrigger>
       <Overlay
         show={show}
         placement="bottom"
         rootClose
         onHide={() => hideImportConfirmFunction(attachment.id)}
-        target={importButtonRefs[attachment.id]}
+        target={buttonRef}
       >
         {confirmTooltip}
       </Overlay>

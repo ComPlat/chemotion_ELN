@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Tabs, Tab, Tooltip, Alert, Button } from 'react-bootstrap';
+import { Tabs, Tab, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -66,7 +66,6 @@ export default class ElementsList extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
-    this.initState = this.initState.bind(this);
     this.handleTabSelect = this.handleTabSelect.bind(this);
   }
 
@@ -75,21 +74,9 @@ export default class ElementsList extends React.Component {
     UserStore.listen(this.onChangeUser);
     UIStore.listen(this.onChangeUI);
 
-    this.initState();
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    const { overview, showReport } = this.props;
-    const {
-      visible, hidden, currentTab, totalElements
-    } = this.state;
-
-    return nextProps.overview !== overview
-      || nextProps.showReport !== showReport
-      || nextProps.totalElements !== totalElements
-      || nextState.visible !== visible
-      || nextState.hidden !== hidden
-      || nextState.currentTab !== currentTab;
+    this.onChange(ElementStore.getState());
+    this.onChangeUser(UserStore.getState());
+    this.onChangeUI(UIStore.getState());
   }
 
   componentWillUnmount() {
@@ -110,8 +97,8 @@ export default class ElementsList extends React.Component {
   }
 
   onChangeUser(state) {
-    let visible = '';
-    let hidden = '';
+    let visible = Immutable.List();
+    let hidden = Immutable.List();
     let currentTabIndex = 0;
 
     const { currentType } = state;
@@ -197,52 +184,35 @@ export default class ElementsList extends React.Component {
     KeyboardActions.contextChange(type);
   }
 
-  initState() {
-    this.onChange(ElementStore.getState());
-  }
-
   render() {
     const {
-      visible, hidden, currentTab, totalCheckedElements
+      visible, hidden, totalCheckedElements, totalElements
     } = this.state;
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
     const { overview, showReport } = this.props;
-    const elementState = this.state;
 
-    let removeSearchResultAlert = '';
-    if (UIStore.getState().currentSearchByID) {
-      removeSearchResultAlert = (
-        <Button
-          variant="info"
-          onClick={() => this.handleRemoveSearchResult(this.context.search)}
-          className="w-100 p-3 mb-3 text-start fs-5"
-        >
-          Remove search result
-        </Button>
-      );
-    }
-
-    const tabItems = [];
-    for (let i = 0; i < visible.size; i += 1) {
-      const value = visible.get(i);
-
+    const constEls = Immutable.Set([
+      'sample',
+      'reaction',
+      'screen',
+      'wellplate',
+      'research_plan',
+      'cell_line'
+    ]);
+    const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;
       let ttl = (
-        <Tooltip
-          id="_tooltip_history"
-          className="left_tooltip"
-        >
+        <Tooltip>
           {value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()))}
         </Tooltip>
       );
-      let genericEl = null;
 
-      if (!constEls.includes(value)) {
+      let genericEl = null;
+      if (!constEls.has(value)) {
         const { genericEls } = this.state;
         genericEl = (genericEls && genericEls.find((el) => el.name === value)) || {};
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
         ttl = (
-          <Tooltip id="_tooltip_history" className="left_tooltip">
+          <Tooltip>
             {genericEl.label}
             <br />
             {genericEl.desc}
@@ -251,14 +221,24 @@ export default class ElementsList extends React.Component {
       }
 
       const title = (
-        <>
-          <i className={"me-1 " + iconClass} />
-          {elementState.totalElements && elementState.totalElements[`${value}s`]}
-          ({totalCheckedElements[value] || 0})
-        </>
-      )
-      const tabItem = (
-        <Tab eventKey={i} title={title} className={`elements-list-tab-${value}s`} key={title + '_' + i}>
+        <OverlayTrigger
+          overlay={ttl}
+          placement="top"
+        >
+          <span>
+            <i className={`me-1 ${iconClass}`} />
+            {`${totalElements[`${value}s`] || 0} (${totalCheckedElements[value] || 0})`}
+          </span>
+        </OverlayTrigger>
+      );
+
+      return (
+        <Tab
+          key={value}
+          eventKey={i}
+          title={title}
+          className={`elements-list-tab-${value}s`}
+        >
           <ElementsTable
             overview={overview}
             showReport={showReport}
@@ -267,12 +247,19 @@ export default class ElementsList extends React.Component {
           />
         </Tab>
       );
-      tabItems.push(tabItem);
-    }
+    });
 
     return (
       <>
-        {removeSearchResultAlert}
+        {UIStore.getState().currentSearchByID && (
+          <Button
+            variant="info"
+            onClick={() => this.handleRemoveSearchResult(this.context.search)}
+            className="w-100 p-3 mb-3 text-start fs-5"
+          >
+            Remove search result
+          </Button>
+        )}
         <div className="position-relative">
           <Tabs
             id="tabList"
@@ -281,10 +268,12 @@ export default class ElementsList extends React.Component {
           >
             {tabItems}
           </Tabs>
-          <ElementsTableSettings
-            visible={visible}
-            hidden={hidden}
-          />
+          <div className="position-absolute top-0 end-0">
+            <ElementsTableSettings
+              visible={visible}
+              hidden={hidden}
+            />
+          </div>
         </div>
       </>
     );
