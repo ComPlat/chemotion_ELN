@@ -164,8 +164,7 @@ export default class ReactionDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className='d-flex justify-content-end align-items-center gap-2'>
-        <div className='d-flex flex-row-reverse'>
+      <>
         <Button
             size="xsm"
           variant="danger"
@@ -189,8 +188,7 @@ export default class ReactionDetailsContainers extends Component {
           reaction={reaction}
           analysisID={container.id}
         />
-        </div>
-      </div>
+      </>
     );
   };
 
@@ -259,7 +257,7 @@ export default class ReactionDetailsContainers extends Component {
           className="d-flex w-100 mb-0"
           style={{ backgroundColor: '#ececec' }}
         >
-          <div className="d-inline-block align-top p-4">
+          <div>
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -273,11 +271,8 @@ export default class ReactionDetailsContainers extends Component {
               }}
             />
           </div>
-          <div className="d-inline-block align-top">
-            {
-              this.headerBtnGroup(container, reaction, readOnly)
-            }
-            <div className="mt-3">
+
+          <div className="d-flex flex-column justify-content-start ms-3 my-3 flex-grow-1">
               <div className="fs-4 fw-bold ms-2 text-truncate">{container.name}</div>
               <div className="fs-5 ms-2 mt-2">Type: {kind}</div>
               <div className="fs-5 ms-2 mt-2">Status: {status} {nmrMsg(reaction, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
@@ -286,10 +281,18 @@ export default class ReactionDetailsContainers extends Component {
                   Content:
                 </span>
                 <QuillViewer value={contentOneLine} />
-              </div>
-
             </div>
           </div>
+          <div className="ml-auto">
+            <div className='d-flex'>
+              {
+                this.headerBtnGroup(container, reaction, readOnly)
+              }
+            </div>
+
+          </div>
+
+
         </div>
       )
     };
@@ -378,9 +381,9 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div className="d-flex align-items-center mb-2 mt-4 mx-3">
+        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
           <span className='ms-3'> There are currently no Analyses. </span>
-          <div className="ms-auto">
+          <div>
             {this.addButton()}
           </div>
         </div>
