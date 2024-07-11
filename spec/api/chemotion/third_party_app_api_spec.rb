@@ -142,8 +142,8 @@ describe Chemotion::ThirdPartyAppAPI do
   describe 'GET /api/v1/third_party_apps/token' do
     let(:tpa) { create(:third_party_app) }
     let(:collection) {create(:collection, user:admin1)}
-    let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection],attachments:[attachment])}
     let(:attachment) { create(:attachment,created_for:admin1.id) }
+    
     let(:token) do
       parts = CGI.unescape(JSON.parse(response.body))
       parts.split('/').last
@@ -151,7 +151,31 @@ describe Chemotion::ThirdPartyAppAPI do
 
     let(:payload) { JsonWebToken.decode(token) }
 
-    context 'when attachment is accessable and 3pa exists' do
+    context 'when attachment is directly linked and readable and 3pa exists' do
+      let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection],attachments:[attachment])}
+    
+
+      before do
+        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+      end
+
+      it 'Payload of token is correct' do
+        expect(payload['attID']).to eq attachment.id
+        expect(payload['userID']).to eq admin1.id
+        expect(payload['appID']).to eq tpa.id
+      end
+    end
+
+    context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
+      let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection], container:root_container)}
+      let(:root_container) {create(:container, :with_jpg_in_dataset)}
+      let(:attachment) do
+         attachment = root_container.children.first.children.first.children.first.attachments.first 
+         attachment.created_for=admin1.id
+         attachment.save
+         attachment
+        end
+
       before do
         get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
       end

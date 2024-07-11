@@ -3,7 +3,7 @@
 module AttachmentHelpers
   extend Grape::API::Helpers
 
-  def read_access?(attachment, user)
+  def read_access?(attachment, _user)
     is_owner = attachment.container_id.nil? && attachment.created_for == current_user.id
     return true if is_owner
 
@@ -15,11 +15,10 @@ module AttachmentHelpers
     return false if element.is_a?(Container)
     return true if element.is_a?(User) && (element == current_user)
 
-    return
-    (
-      ElementPolicy.new(current_user, element).read? &&
-    ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-    )
+    read_access_on_element = ElementPolicy.new(current_user, element).read?
+    read_access_on_dataset = ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+
+    read_access_on_element && read_access_on_dataset
   end
 
   def write_access?(_attachment, _user)
