@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
 import {
-  Tooltip, OverlayTrigger, Table
+  Tooltip, OverlayTrigger, Table, Badge
 } from 'react-bootstrap';
 import classnames from 'classnames';
 
@@ -21,7 +21,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import Label from 'src/components/legacyBootstrap/Label'
 
 export function reactionRole(element) {
   let tooltip = null;
@@ -58,7 +57,7 @@ export function reactionRole(element) {
 function reactionVariations(element) {
   if (element.type === 'reaction' && element.variations && element.variations.length) {
     return (
-      <Label variant="info">{`${element.variations.length} variation(s)`}</Label>
+      <Badge bg="info">{`${element.variations.length} variation(s)`}</Badge>
     );
   }
   return null;
@@ -375,7 +374,7 @@ export default class ElementsTableEntries extends Component {
                   onClick={() => showDetails(element)}
                   style={{ cursor: 'pointer' }}
                   width={element.type === 'research_plan' ? '280px' : 'unset'}
-                  data-cy={"researchPLanItem-"+ element.id}
+                  data-cy={`researchPLanItem-${element.id}`}
                 >
                   <div>
                     <SvgWithPopover
