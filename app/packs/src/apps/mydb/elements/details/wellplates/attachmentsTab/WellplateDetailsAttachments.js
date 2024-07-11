@@ -49,7 +49,6 @@ export class WellplateDetailsAttachments extends Component {
 
   constructor(props) {
     super(props);
-    this.importButtonRefs = [];
     const {
       onImport
     } = props;
@@ -359,7 +358,6 @@ export class WellplateDetailsAttachments extends Component {
                       attachment,
                       this.state.showImportConfirm,
                       this.props.wellplate.changed,
-                      this.importButtonRefs,
                       this.showImportConfirm,
                       this.hideImportConfirm,
                       this.confirmAttachmentImport

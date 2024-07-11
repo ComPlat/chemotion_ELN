@@ -34,7 +34,6 @@ class ResearchPlanDetailsAttachments extends Component {
 
   constructor(props) {
     super(props);
-    this.importButtonRefs = [];
     const { thirdPartyApps } = UIStore.getState() || [];
     this.thirdPartyApps = thirdPartyApps;
 
@@ -244,7 +243,7 @@ class ResearchPlanDetailsAttachments extends Component {
     const { researchPlan } = this.props;
 
     //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
-    
+
     let combinedAttachments = filteredAttachments;
     if(this.context.attachmentNotificationStore ){
       combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"ResearchPlan",researchPlan);
@@ -252,7 +251,7 @@ class ResearchPlanDetailsAttachments extends Component {
 
     const { onUndoDelete, attachments } = this.props;
     const thirdPartyApps = this.thirdPartyApps;
-    
+
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
@@ -328,7 +327,6 @@ class ResearchPlanDetailsAttachments extends Component {
                       attachment,
                       this.state.showImportConfirm,
                       this.props.researchPlan.changed,
-                      this.importButtonRefs,
                       this.showImportConfirm,
                       this.hideImportConfirm,
                       this.confirmAttachmentImport
