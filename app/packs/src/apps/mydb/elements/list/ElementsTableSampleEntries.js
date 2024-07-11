@@ -60,20 +60,15 @@ const isCurrEleDropType = (sourceType, targetType) => {
   return sourceType && targetType && targets[sourceType].includes(targetType);
 };
 
-const dragColumn = (element, showDragColumn, sourceType, targetType) => {
-  if (showDragColumn) {
-    return (
-      <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
-        <ElementContainer
-          key={element.id}
-          sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
-          element={element}
-        />
-      </td>
-    );
-  }
-  return null;
-};
+const dragColumn = (element, sourceType, targetType) => (
+  <td className="text-center align-middle">
+    <ElementContainer
+      key={element.id}
+      sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
+      element={element}
+    />
+  </td>
+);
 
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
@@ -134,13 +129,23 @@ function MoleculeHeader({
   sample, show, showDragColumn, onClick, targetType
 }) {
   const { collId, showPreviews } = UIStore.getState();
+  const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
+
   return (
     <tr
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null
-        ? (<td colSpan="3" style={{ position: 'relative ' }}><div><h4>(No-structure sample)</h4></div></td>)
+      {isNoStructureSample
+        ? (
+          <td colSpan="3" className="position-relative">
+            <div>
+              <h4>
+                (No-structure sample)
+              </h4>
+            </div>
+          </td>
+        )
         : (
           <td colSpan="2">
             <div className="d-flex align-items-start gap-1">
@@ -159,8 +164,9 @@ function MoleculeHeader({
             </div>
           </td>
         )}
-      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null
-        ? null : dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
+      {!isNoStructureSample
+          && showDragColumn
+          && dragColumn(sample, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
 }
@@ -355,7 +361,7 @@ export default class ElementsTableSampleEntries extends Component {
               </div>
             </div>
           </td>
-          {dragColumn(sample, showDragColumn, DragDropItemTypes.SAMPLE, targetType)}
+          {showDragColumn && dragColumn(sample, DragDropItemTypes.SAMPLE, targetType)}
         </tr>
       );
     });

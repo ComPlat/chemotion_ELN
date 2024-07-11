@@ -38,17 +38,11 @@ const dragHandle = (element) => {
   );
 };
 
-const dragColumn = (element, showDragColumn) => {
-  if (showDragColumn) {
-    return (
-      <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
-        {dragHandle(element)}
-      </td>
-    );
-  }
-
-  return <td style={{ display: 'none' }} />;
-};
+const dragColumn = (element) => (
+  <td className="text-center align-middle">
+    {dragHandle(element)}
+  </td>
+);
 
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
 
@@ -88,7 +82,7 @@ function ReactionsHeader({
           </OverlayTrigger>
         </div>
       </td>
-      {dragColumn(element, showDragColumn)}
+      {showDragColumn && dragColumn(element)}
     </tr>
   );
 }
@@ -121,7 +115,7 @@ function GenericElementsHeader({
           </OverlayTrigger>
         </div>
       </td>
-      {dragColumn(element, showDragColumn)}
+      {showDragColumn && dragColumn(element)}
     </tr>
   );
 }
@@ -338,7 +332,7 @@ export default class ElementsTableGroupedEntries extends Component {
               <ElementCollectionLabels element={element} key={element.id} />
             </div>
           </td>
-          {dragColumn(element, showDragColumn)}
+          {showDragColumn && dragColumn(element)}
         </tr>
       );
     });
@@ -377,7 +371,7 @@ export default class ElementsTableGroupedEntries extends Component {
               <ElementCollectionLabels element={element} key={element.id} />
             </div>
           </td>
-          {dragColumn(element, showDragColumn)}
+          {showDragColumn && dragColumn(element)}
         </tr>
       );
     });

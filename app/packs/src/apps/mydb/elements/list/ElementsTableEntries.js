@@ -328,20 +328,8 @@ export default class ElementsTableEntries extends Component {
     );
   }
 
-  dragColumn(element) {
-    const { showDragColumn } = this.props;
-    if (showDragColumn) {
-      return (
-        <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
-          {this.dragHandle(element)}
-        </td>
-      );
-    }
-    return <td style={{ display: 'none' }} />;
-  }
-
   render() {
-    const { elements } = this.props;
+    const { elements, showDragColumn } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -405,7 +393,11 @@ export default class ElementsTableEntries extends Component {
                   </div>
                 </td>
                 {this.previewColumn(element)}
-                {this.dragColumn(element)}
+                {showDragColumn && (
+                  <td className="text-center align-middle">
+                    {this.dragHandle(element)}
+                  </td>
+                )}
               </tr>
             );
           })}
