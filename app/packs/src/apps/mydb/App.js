@@ -117,7 +117,7 @@ class App extends Component {
     const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
     return (
       <Container fluid>
-        <Row className="top-0 z-index-5 bg-light">
+        <Row className="top-0 bg-light" style={{ zIndex: 5 }}>
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
         </Row>
