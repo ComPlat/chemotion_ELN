@@ -6,7 +6,6 @@ import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Aviator from 'aviator';
-import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemText';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -48,36 +47,41 @@ export default class CellLineItemEntry extends Component {
   render() {
     const { cellLineItem } = this.props;
     const { currentElement } = ElementStore.getState();
-    let backgroundColor="white-background"
-    if(currentElement) { 
-     backgroundColor=currentElement!==null&&currentElement.id==cellLineItem.id?"blue-background":"white-background";
-    }
+    const backgroundColorClass = currentElement?.id === cellLineItem.id ? 'blue-background' : 'white-background';
+
     return (
       <div className="group-entry">
         <Table className="elements" hover>
           <tbody>
-            <tr className={backgroundColor+" top-border"}>
+            <tr className={`${backgroundColorClass} top-border`}>
               <td className="select-checkBox">
                 <ElementCheckbox
                   element={cellLineItem}
                   checked={this.isElementChecked(cellLineItem)}
                 />
               </td>
-              <td 
+              <td
                 className="short_label"
-                onClick={() => { this.showDetails(); }}>
+                onClick={this.showDetails}
+              >
                 {cellLineItem.short_label}
               </td>
-
-              <CellLineItemText
-                cellLineItem={cellLineItem}
-                showDetails={this.showDetails}
-              />
-               <td >
+              <td
+                className="item-text"
+                onClick={this.showDetails}
+              >
+                <div>
+                  <div className="item-properties floating">
+                    <div className="starting floating item-property-value">
+                      {cellLineItem.itemName}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
                 <ElementCollectionLabels element={cellLineItem} />
               </td>
               <td className="arrow">
-               
                 <ElementContainer
                   sourceType={DragDropItemTypes.CELL_LINE}
                   element={cellLineItem}
