@@ -259,18 +259,13 @@ export default class ElementsTable extends React.Component {
 
   handleRevokeAttachmentToken = (key, idx) => {
     const { attachmentTokens } = this.state;
-
-
     ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, "revoke")
       .then(res => {
-        if (res.status) {
-          let alias = attachmentTokens;
-          alias = alias.filter((i, index) => {
-            if (index !== idx) return i;
-          });
-          console.log({ alias });
-          this.setState({ attachmentTokens: [...alias] });
-        }
+        let alias = attachmentTokens;
+        alias = alias.filter((i, index) => {
+          if (index !== idx) return i;
+        });
+        this.setState({ attachmentTokens: [...alias] });
       })
       .catch((err) => {
         alert("Revoking token failed! check console to verify!");
@@ -300,9 +295,8 @@ export default class ElementsTable extends React.Component {
 
   attachmentTokenModal = () => {
     const { showAttachmentTokenModal, attachmentTokens } = this.state;
-    console.log(attachmentTokens);
     return (
-      <Modal show={showAttachmentTokenModal && attachmentTokens?.length} onHide={this.toggleAttachmentTokens}>
+      <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
         <Modal.Header closeButton />
         <Modal.Body>
           <Panel>
@@ -315,7 +309,7 @@ export default class ElementsTable extends React.Component {
               <div>
 
                 {
-                  attachmentTokens.map((item, idx) => {
+                  attachmentTokens.length > 0 ? attachmentTokens.map((item, idx) => {
                     const key = Object.keys(item);
                     return (
                       <Row style={{ marginBottom: 10 }}>
@@ -326,7 +320,7 @@ export default class ElementsTable extends React.Component {
                           <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key, idx)}>Revoke</Button>
                         </Col>
                       </Row>);
-                  })
+                  }) : <p>No attachment tokens avaialable</p>
                 }
               </div>
 
@@ -634,11 +628,9 @@ export default class ElementsTable extends React.Component {
   };
 
   renderHeader = () => {
-    const { filterCreatedAt, ui } = this.state;
+    const { filterCreatedAt, ui, attachmentTokens } = this.state;
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
-    const { showAttachmentTokenModal } = this.state;
-    const { attachmentTokens } = ElementStore.getState();
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -681,7 +673,7 @@ export default class ElementsTable extends React.Component {
           }}
         >
           {
-            attachmentTokens?.length > 0 &&
+            attachmentTokens.length > 0 &&
             <OverlayTrigger placement="top" overlay={attachmentToolTip}>
               <button
                 disabled={!attachmentTokens?.length}
@@ -725,7 +717,7 @@ export default class ElementsTable extends React.Component {
             />
           </div>
           {typeSpecificHeader}
-          {showAttachmentTokenModal && this.attachmentTokenModal()}
+          {this.attachmentTokenModal()}
         </div>
       </div>
     );
