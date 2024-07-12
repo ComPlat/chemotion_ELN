@@ -655,8 +655,8 @@ class ElementStore {
 
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
-    const { currentCollection } = UIStore.getState();
-    ElementActions.fetchAttachmentTokens(currentCollection.id);
+    const uistoreContainer = UIStore.getState();
+    ElementActions.fetchAttachmentTokens(uistoreContainer.currentCollection.id);
   }
 
   handlefetchCellLinesByCollectionId(result) {
@@ -1520,8 +1520,8 @@ class ElementStore {
   }
 
   // -- TPA --
-  async handleTpaAttachmentTokensByCollectionId({ token_list }) {
-    this.state.attachmentTokens = token_list;
+  async handleTpaAttachmentTokensByCollectionId(result) {
+    this.state.attachmentTokens = result?.token_list || [];
   }
 
   // End of DetailStore

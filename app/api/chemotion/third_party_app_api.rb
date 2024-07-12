@@ -110,8 +110,6 @@ module Chemotion
       def find_and_update_key_with_request_type(first_level_key, second_level_key, request_type)
         if(request_type === 'revoke')
           
-          10.times{puts "here/n"}
-
           # delete second level key
           cache.delete(second_level_key)
 
@@ -236,12 +234,22 @@ module Chemotion
 
       get 'collection_research_plans_tpa_tokens' do
         research_plans = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(params[:collection_id]).research_plans
-
         token_list = []
         research_plans.each do |research_plan|
-          cache_user_researchid_keys ||= cache.read("#{current_user.id}/#{research_plan.id}")
-          cache_user_researchid_keys.each do |token_key|
-            token_list.push({"#{current_user.id}/#{research_plan.id}/#{token_key}":cache.read(token_key)})
+          cache_user_researchid_keys = cache.read("#{current_user.id}/#{research_plan.id}")
+          puts cache_user_researchid_keys, "valye"
+          if cache_user_researchid_keys != nil
+            cache_user_researchid_keys.each do |token_key|
+              splits = token_key.split("/")
+              app = ThirdPartyApp.find(splits[0])
+              attachment = Attachment.find(splits[1])
+              token_list.push({
+                "#{current_user.id}/#{research_plan.id}/#{token_key}":cache.read(token_key),
+                alias_researchPlan: "#{research_plan.name}",
+                alias_app_id: "#{app.name}",
+                alias_attachment_id: "#{attachment.filename}"
+              })
+            end
           end
         end
 

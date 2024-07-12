@@ -257,9 +257,9 @@ export default class ElementsTable extends React.Component {
     );
   };
 
-  handleRevokeAttachmentToken = (key, idx) => {
+  handleRevokeAttachmentToken = (key, idx, action_type) => {
     const { attachmentTokens } = this.state;
-    ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, "revoke")
+    ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, action_type)
       .then(res => {
         let alias = attachmentTokens;
         alias = alias.filter((i, index) => {
@@ -311,13 +311,28 @@ export default class ElementsTable extends React.Component {
                 {
                   attachmentTokens?.length > 0 ? attachmentTokens.map((item, idx) => {
                     const key = Object.keys(item);
+                    const value = item[key[0]];
                     return (
                       <Row style={{ marginBottom: 10 }}>
-                        <Col xs={9}>
-                          <div>ID:{key} (replace with: Reseach plan name, attachment name, app name)</div>
+                        <Col xs={7}>
+                          <div>Research Plan: {item?.alias_researchPlan} </div>
+                          <div>Attachment: {item?.alias_attachment_id} </div>
+                          <div>App: {item?.alias_app_id} </div>
+                          <div>Upload: {value?.download} </div>
+                          <div>Upload: {value?.upload} </div>
                         </Col>
-                        <Col xs={3}>
-                          <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key, idx)}>Revoke</Button>
+                        <Col xs={5}>
+                          <Button className='btn btn-danger' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'revoke')}>
+                            <i class="fa fa-trash"></i>
+                          </Button>
+
+                          <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'upload')}>
+                            <i class="fa-solid fa-upload"></i>
+                          </Button>
+
+                          <Button className='btn btn-success' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'download')}>
+                            <i class="fa fa-download"></i>
+                          </Button>
                         </Col>
                       </Row>);
                   }) : <p>No attachment tokens avaialable</p>
@@ -628,9 +643,10 @@ export default class ElementsTable extends React.Component {
   };
 
   renderHeader = () => {
-    const { filterCreatedAt, ui, attachmentTokens } = this.state;
+    const { filterCreatedAt, ui, attachmentTokens, currentElement } = this.state;
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
+    const { currentTab } = UserStore.getState();
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -674,6 +690,7 @@ export default class ElementsTable extends React.Component {
         >
           {
             attachmentTokens?.length > 0 &&
+            currentTab == 1 &&
             <OverlayTrigger placement="top" overlay={attachmentToolTip}>
               <button
                 disabled={!attachmentTokens?.length}

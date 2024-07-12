@@ -61,7 +61,7 @@ export default class ThirdPartyAppFetcher {
   }
 
   static update_attachment_token_with_action_type(key, action_type) {
-    const queryParams = new URLSearchParams({ key });
+    const queryParams = new URLSearchParams({ key: key[0] });
     const url = `${TPA_ENDPOINT}/update_attachment_token_with_type?${queryParams}`;
     return fetch(url, {
       method: 'PUT',

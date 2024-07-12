@@ -204,7 +204,6 @@ export default class ElementsList extends React.Component {
     // TODO sollte in tab action handler
     const uiState = UIStore.getState();
     const type = this.state.visible.get(tab);
-
     if (!uiState[type] || !uiState[type].page) { return; }
 
     const { page } = uiState[type];
