@@ -781,7 +781,7 @@ class Material extends Component {
         <div className='d-inline-block' style={{ maxWidth: '100%' }}>
           <div className="inline-inside">
             <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-              <Button variant="primary" size="sm" onClick={addToDesc} disabled={!permitOn(reaction)}>
+              <Button variant="primary" size="sm" className='me-1' onClick={addToDesc} disabled={!permitOn(reaction)}>
                 {serialCode}
               </Button>
             </OverlayTrigger>

@@ -272,7 +272,7 @@ export default class ReactionDetailsContainers extends Component {
           </div>
 
           <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
-            <div className="fs-4 fw-bold ms-2 w-50 text-truncate text-decoration-underline">{container.name}</div>
+            <div className="fs-4 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
               <div className="fs-5 ms-2 mt-2">Type: {kind}</div>
               <div className="fs-5 ms-2 mt-2">Status: {status} {nmrMsg(reaction, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
               <div className="fs-5 ms-2 mt-2 d-flex p-0">
