@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/LetSetup,RSpec/MultipleExpectations,RSpec/NestedGroups,RSpec/MultipleMemoizedHelpers
+
 require 'rails_helper'
 describe Chemotion::ThirdPartyAppAPI do
   include_context 'api request authorization context'
@@ -10,8 +12,8 @@ describe Chemotion::ThirdPartyAppAPI do
   end
 
   describe 'GET /third_party_apps/all' do
-    let!(:first_3PA) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
-    let!(:second_3PA) { create(:third_party_app, url: 'http://test2.com', name: 'Test2-app') }
+    let!(:first_3pa) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
+    let!(:second_3pa) { create(:third_party_app, url: 'http://test2.com', name: 'Test2-app') }
 
     context 'when two apps are available' do
       before do
@@ -110,7 +112,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'GET v1/third_party_apps/{id}' do
     let(:response_data) { JSON.parse(response.body) }
-    let!(:first_3PA) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
+    let!(:first_3pa) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
     let(:id) { first_3PA.id }
 
     context 'when 3PA is available' do
@@ -150,48 +152,87 @@ describe Chemotion::ThirdPartyAppAPI do
 
     let(:payload) { JsonWebToken.decode(token) }
 
-    context 'when attachment is directly linked and readable and 3pa exists' do
-      let!(:research_plan) do
-        create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
-      end
-      let(:attachment) { create(:attachment, created_for: admin1.id) }
+    context 'when user is allowed to read attachment' do
+      context 'when attachment is directly linked and readable and 3pa exists' do
+        let!(:research_plan) do
+          create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
+        end
+        let(:attachment) { create(:attachment, created_for: admin1.id) }
 
-      before do
-        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
+
+        it 'Payload of token is correct' do
+          expect(payload['attID']).to eq attachment.id
+          expect(payload['userID']).to eq admin1.id
+          expect(payload['appID']).to eq tpa.id
+        end
       end
 
-      it 'Payload of token is correct' do
-        expect(payload['attID']).to eq attachment.id
-        expect(payload['userID']).to eq admin1.id
-        expect(payload['appID']).to eq tpa.id
+      context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
+        let!(:research_plan) do
+          create(:research_plan, creator: admin1, collections: [collection], container: root_container)
+        end
+        let(:root_container) { create(:container, :with_jpg_in_dataset) }
+        let(:attachment) do
+          attachment = root_container.children.first.children.first.children.first.attachments.first
+          attachment.created_for = admin1.id
+          attachment.save
+          attachment
+        end
+
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
+
+        it 'Payload of token is correct' do
+          expect(payload['attID']).to eq attachment.id
+          expect(payload['userID']).to eq admin1.id
+          expect(payload['appID']).to eq tpa.id
+        end
       end
     end
 
-    context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
-      let!(:research_plan) do
-        create(:research_plan, creator: admin1, collections: [collection], container: root_container)
-      end
-      let(:root_container) { create(:container, :with_jpg_in_dataset) }
-      let(:attachment) do
-        attachment = root_container.children.first.children.first.children.first.attachments.first
-        attachment.created_for = admin1.id
-        attachment.save
-        attachment
+    context 'when user is not allowed to read attachment' do
+      let(:other_user) { create(:user) }
+
+      context 'when attachment is directly linked and readable and 3pa exists' do
+        let!(:research_plan) do
+          create(:research_plan, creator: other_user, collections: [collection], attachments: [attachment])
+        end
+        let(:attachment) { create(:attachment, created_for: other_user.id) }
+
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
       end
 
-      before do
-        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
-      end
+      context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
+        let(:collection) { create(:collection) }
+        let!(:research_plan) do
+          create(:research_plan, creator: other_user, collections: [collection], container: root_container)
+        end
+        let(:root_container) { create(:container, :with_jpg_in_dataset) }
+        let(:attachment) do
+          attachment = root_container.children.first.children.first.children.first.attachments.first
+          attachment.created_for = other_user.id
+          attachment.save
+          attachment
+        end
 
-      it 'Payload of token is correct' do
-        expect(payload['attID']).to eq attachment.id
-        expect(payload['userID']).to eq admin1.id
-        expect(payload['appID']).to eq tpa.id
-      end
-    end
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
 
-    context 'when attachment is not accessable and 3pa exists' do
-      pending 'This is the next issue'
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
+      end
     end
   end
 
@@ -322,10 +363,8 @@ describe Chemotion::ThirdPartyAppAPI do
           expect(response).to have_http_status :forbidden
         end
       end
-    end
 
-    context 'User is not allowed to upload file' do
-      context 'amount of uploads exceeded' do
+      context 'when amount of uploads exceeded' do
         let(:allowed_uploads) { -1 }
 
         before do
@@ -340,3 +379,4 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 end
+# rubocop:enable RSpec/LetSetup,RSpec/MultipleExpectations,RSpec/NestedGroups,RSpec/MultipleMemoizedHelpers
