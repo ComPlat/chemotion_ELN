@@ -28,6 +28,23 @@ export default function PrintCodeButton({ element }) {
     method: 'GET',
   };
 
+  function initParam() {
+    switch (pdfType) {
+      case 'qr_code':
+        document.getElementById('qr_code').checked = true;
+        break;
+      case 'bar_code':
+        document.getElementById('bar_code').checked = true;
+        break;
+      case 'data_matrix':
+        document.getElementById('data_matrix').checked = true;
+        break;
+      default:
+        document.getElementById('qr_code').checked = true;
+        break;
+    }
+  }
+
   // Form data for the request.
   const formData = new FormData();
 
@@ -99,6 +116,10 @@ export default function PrintCodeButton({ element }) {
     fetchPrintCodes();
   }, [url, displaySample]);
 
+  useEffect(() => {
+    //initParam();
+  }, []);
+
   // Set the tooltip text for the button
   const tooltipText = 'Print bar/qr-code Label';
 
@@ -108,11 +129,11 @@ export default function PrintCodeButton({ element }) {
       display: 'flex', flexDirection: 'column', marginLeft: '20px', width: '50%'
     }}
     >
-      <Radio inline defaultChecked name="PdfType" onClick={() => setPdfType('qr_code')} />
+      <Radio inline checked={pdfType === 'qr_code'} id="qr_code" name="PdfType" onClick={() => setPdfType('qr_code')} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print QR code</span>
-      <Radio inline name="PdfType" onClick={() => setPdfType('bar_code')} />
+      <Radio inline checked={pdfType === 'bar_code'} id="bar_code" name="PdfType" onClick={() => setPdfType('bar_code')} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Bar code</span>
-      <Radio inline name="PdfType" onClick={() => setPdfType('data_matrix')} />
+      <Radio inline checked={pdfType === 'data_matrix'} id="data_matrix" name="PdfType" onClick={() => setPdfType('data_matrix')} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Print Data Matrix</span>
       {element.type === 'sample' && (
         <>
@@ -129,9 +150,9 @@ export default function PrintCodeButton({ element }) {
       display: 'flex', flexDirection: 'column', marginLeft: '20px', width: '50%'
     }}
     >
-      <Radio inline name="PdfSize" onClick={() => setIsSmall(true)} />
+      <Radio inline checked={isSmall} name="PdfSize" onClick={() => setIsSmall(true)} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Small format</span>
-      <Radio inline name="PdfSize" onClick={() => setIsSmall(false)} />
+      <Radio inline checked={!isSmall} name="PdfSize" onClick={() => setIsSmall(false)} />
       <span style={{ marginLeft: '15px', marginBottom: '10px' }}>Large format</span>
     </div>
   );

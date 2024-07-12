@@ -67,13 +67,13 @@ class CodePdf < Prawn::Document
       if pdfType == 'bar_code'
         [25.4.mm, 22.mm]
       else
-        [25.4.mm, 10.mm]
+        [25.4.mm, 20.mm]
       end
     when "big"
       if pdfType == 'bar_code'
         [36.mm, 25.mm]
       else
-        [36.mm, 15.mm]
+        [36.mm, 28.mm]
       end
     else
       [25.4.mm, 37.mm]
@@ -83,7 +83,7 @@ class CodePdf < Prawn::Document
   # display image
   def displaySample(sampleUrl)
     if sampleUrl
-      svg open(sampleUrl), width: 10, height: 10
+      svg open(sampleUrl), { at: [22, self.bounds.top - 4], width: 40, height: 40 }
     end
   end
 
@@ -91,11 +91,11 @@ class CodePdf < Prawn::Document
   def qr_code_label_options(size)
     case size
     when 'small'
-      {at: [6.mm + 8, self.bounds.top - 5], size: 5}
+      {at: [6.mm + 8, self.bounds.bottom + 25], size: 5}
     when 'big'
-      {at: [10.mm + 8, self.bounds.top - 5], size: 6}
+      {at: [10.mm + 8, self.bounds.bottom + 25], size: 6}
     else
-      {at: [6.mm + 8, self.bounds.top - 5], size: 5}
+      {at: [6.mm + 8, self.bounds.bottom + 25], size: 5}
     end
   end
 
@@ -106,11 +106,11 @@ class CodePdf < Prawn::Document
   def qr_code_options(size)
     case size
     when "small"
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
+      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.bottom + 25]}
     when "big"
-      {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.top - 5]}
+      {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.bottom + 35]}
     else
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
+      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.bottom + 25]}
     end
   end
 
