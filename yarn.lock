@@ -3852,12 +3852,24 @@ adler-32@~1.3.0:
   dependencies:
     printj "~1.2.2"
 
+ag-charts-types@10.0.1:
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/ag-charts-types/-/ag-charts-types-10.0.1.tgz#8b65ec22dc8d2e4d7f4dba5f8aba0a788215652d"
+  integrity sha512-o8aXJfO5lsLGu4jE/2MiTogLCfdJ8UCmrWNPb+AWU0YutCrBHO0uWbSuqzabZxZ4WHxwwRtTllZMT6WqTdz+qg==
+
 ag-grid-community@^28.2.1:
   version "28.2.1"
   resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-28.2.1.tgz#50778cb2254ee79497222781909d8364007dd91e"
   integrity sha512-DMZh/xD/FqYP17qJ1M92PolTYe+hrKuEaf+A4h13O6qn2x/xZQrTRGW5DgnQLR/uLMe1XXZQPKR3UKgAlKo69A==
 
-ag-grid-community@^31.0.0, ag-grid-community@~31.0.3:
+ag-grid-community@^32.0.1:
+  version "32.0.1"
+  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-32.0.1.tgz#3cec7cb49eb7d0fb15ab3f1586475228e1a5bd34"
+  integrity sha512-/eimCgJqMeyFxpJMTQuCtedKzk+BIInqhRdKdoQG8MD3yjrs/AWQFAcT6MP0T64CuNd85mxwB2t+3Ggb+S8hdA==
+  dependencies:
+    ag-charts-types "10.0.1"
+
+ag-grid-community@~31.0.3:
   version "31.0.3"
   resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-31.0.3.tgz#80870881a3be03aa5df890b4a70409ef5d781e7f"
   integrity sha512-k81YmLaOQOab9BavYD+Pw2smZSl6TXOJqj9hRuf70XQl3EknOHCGcra7joJxZRJLMKE/HdR+u33TNyX4TCuWfg==
