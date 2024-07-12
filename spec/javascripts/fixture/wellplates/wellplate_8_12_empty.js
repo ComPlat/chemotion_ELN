@@ -7,7 +7,8 @@ const wellplate8x12EmptyJson = {
   width: 12,
   type: 'wellplate',
   description: 'A test description for 8x12 plate',
-  wells: []
+  wells: [],
+  is_new: true
 };
 
 export default wellplate8x12EmptyJson;

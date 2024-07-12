@@ -12,7 +12,7 @@ describe('Wellplate', async () => {
   sampleMock.buildChild = () => ({ wasCopied: 'yes' });
 
   describe('constructor()', async () => {
-    context('when input is valid and has dimesion 2x3 and has no samples in wells', async () => {
+    context('when input is valid and has dimension 2x3 and has no samples in wells', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
 
       it('created a wellplate of size 2 x 3', async () => {
@@ -176,7 +176,7 @@ describe('Wellplate', async () => {
       const wellplateSerialized = wellplate.serialize();
       it('properties of wellplate correct serialized', async () => {
         expect(wellplateSerialized.id).toEqual(1);
-        expect(wellplateSerialized.is_new).toEqual(false);
+        expect(wellplateSerialized.is_new).toEqual(true);
         expect(wellplateSerialized.name).toEqual('Testwellplate 2x3');
         expect(wellplateSerialized.size).toEqual(6);
         expect(wellplateSerialized.description).toEqual('A test description for 2x3 plate');
