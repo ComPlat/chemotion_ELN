@@ -24,16 +24,16 @@ module Chemotion
         error!('401 Unauthorized import from current collection', 401) unless from_collection
         to_collection_id = fetch_collection_id_for_assign(params, 4)
         error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
-        if !params[:user_ids].blank?
+        if params[:user_ids].blank?
+          create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
+          # create_generic_elements(params, from_collection, to_collection_id)
+        else
           params[:user_ids].each do |user|
             create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
             # create_generic_elements(params, from_collection, to_collection_id)
-            to_collection_id = to_collection_id ? to_collection_id : from_collection&.id
-            create_acl_collection(user[:value], to_collection_id, params, from_collection&.label)
+            to_collection_id ||= from_collection&.id
+            create_acl_collection(user[:value], to_collection_id, params)
           end
-        else
-          create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
-          # create_generic_elements(params, from_collection, to_collection_id)
         end
 
         status 204
@@ -72,11 +72,10 @@ module Chemotion
         delete do
           collection_acl = CollectionAcl.includes(:collection).find_by(id: params[:id])
           error!('404 Share collection id not found', 404) unless collection_acl
-          unless user_ids.include?(user_ids) || user_ids.include?(collection_acl.collection.user_id)
+          unless (collection_acl.user_id == current_user.id) || (collection_acl.collection.user_id == current_user.id)
             error!('401 Unauthorized delete share collection', 401)
           end
           collection_acl.destroy!
-          status 204
         end
       end
 

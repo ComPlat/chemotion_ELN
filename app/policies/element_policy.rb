@@ -15,25 +15,27 @@ class ElementPolicy
   # 2. there exists a shared collection, containing the sample, which he owns and where the user has
   # the required permission_level
   def read?
-    maximum_permission_level(user_collections, acl_collections) >= 0
+    user_is_owner(user_collections) || maximum_permission_level(user_collections, acl_collections) >= 0
   end
 
   def update?
-    maximum_permission_level(user_collections, acl_collections) >= 1
+    user_is_owner(user_collections) || maximum_permission_level(user_collections, acl_collections) >= 1
   end
 
   def copy?
-    maximum_element_permission_level(user_collections) >= 1 || maximum_element_permission_level(acl_collections) >= 1
+    user_is_owner(user_collections) ||
+      maximum_element_permission_level(user_collections) >= 1 ||
+      maximum_element_permission_level(acl_collections) >= 1
   end
 
   def share?
     return true unless record
 
-    maximum_permission_level(user_collections, acl_collections) >= 2
+    user_is_owner(user_collections) || maximum_permission_level(user_collections, acl_collections) >= 2
   end
 
   def destroy?
-    maximum_permission_level(user_collections, acl_collections) >= 3
+    user_is_owner(user_collections) || maximum_permission_level(user_collections, acl_collections) >= 3
   end
 
   def scope
@@ -54,6 +56,10 @@ class ElementPolicy
   end
 
   private
+
+  def user_is_owner(user_collections)
+    user_collections.pluck(:user_id).include?(user.id)
+  end
 
   def maximum_permission_level(collections, collection_acl)
     (collections.pluck(:permission_level) + collection_acl.pluck(:permission_level)).max || -1

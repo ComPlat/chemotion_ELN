@@ -53,7 +53,7 @@ module Taggable
   def collection_id
     klass = "collections_#{self.class.name.underscore.pluralize}"
     return unless respond_to?(klass)
-    send(klass).pluck(:id)
+    send(klass).pluck(:collection_id)
   end
 
   def grouped_analyses

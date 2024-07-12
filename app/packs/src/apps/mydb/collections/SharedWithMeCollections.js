@@ -3,6 +3,7 @@ import Tree from 'react-ui-tree';
 import { Button, ButtonGroup, FormControl, OverlayTrigger, Popover } from 'react-bootstrap';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class SharedWithMeCollections extends React.Component {
   constructor(props) {
@@ -44,10 +45,10 @@ export default class SharedWithMeCollections extends React.Component {
   label(node) {
     if(node.label == "Shared with me Collections") {
       return (
-        <FormControl 
-        value ="Synchronized with me Collections" 
-        type="text" 
-        className="root-label" 
+        <FormControl
+        value ="Shared with me Collections"
+        type="text"
+        className="root-label"
         disabled/>);
     } else {
       return (
@@ -79,7 +80,10 @@ export default class SharedWithMeCollections extends React.Component {
     );
 
     if (!node.is_locked && node.label !== 'Shared with me Collections') {
-      if (typeof (node.shared_to) === 'undefined' || !node.shared_to) {
+      const { currentUser } = UserStore.getState();
+      const aclUserIds = node.collection_acls.map((acl) => acl.user_id);
+
+      if (aclUserIds.includes(currentUser.id)) {
         return (
           <ButtonGroup className="actions">
             <OverlayTrigger
