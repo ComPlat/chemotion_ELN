@@ -13,7 +13,7 @@ module CollectionHelpers
     collection_id = collection.id
     collection_permission_level =
       CollectionAcl.find_by(collection_id: collection_id, user_id: current_user.id)&.permission_level
-    permission_level && collection_permission_level > permission_level
+    permission_level && collection_permission_level >= permission_level
   end
   # return the collection if current_user is associated to it (owned) or if acl exists
   # return nil if no association
