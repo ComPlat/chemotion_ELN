@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
 module AttachmentHelpers
   extend Grape::API::Helpers
 
@@ -43,3 +45,4 @@ module AttachmentHelpers
     update_access_on_element && read_access_on_dataset
   end
 end
+# rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

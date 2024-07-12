@@ -59,7 +59,6 @@ module Chemotion
         end
 
         post do
-
           ThirdPartyApp.create!(declared(params))
           status 201
         end
