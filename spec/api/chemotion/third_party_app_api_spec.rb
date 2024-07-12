@@ -141,7 +141,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'GET /api/v1/third_party_apps/token' do
     let(:tpa) { create(:third_party_app) }
-    let(:collection) {create(:collection, user:admin1)}
+    let(:collection) { create(:collection, user: admin1) }
 
     let(:token) do
       parts = CGI.unescape(JSON.parse(response.body))
@@ -151,7 +151,9 @@ describe Chemotion::ThirdPartyAppAPI do
     let(:payload) { JsonWebToken.decode(token) }
 
     context 'when attachment is directly linked and readable and 3pa exists' do
-      let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection],attachments:[attachment])}
+      let!(:research_plan) do
+        create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
+      end
       let(:attachment) { create(:attachment, created_for: admin1.id) }
 
       before do
@@ -166,14 +168,16 @@ describe Chemotion::ThirdPartyAppAPI do
     end
 
     context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
-      let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection], container:root_container)}
-      let(:root_container) {create(:container, :with_jpg_in_dataset)}
+      let!(:research_plan) do
+        create(:research_plan, creator: admin1, collections: [collection], container: root_container)
+      end
+      let(:root_container) { create(:container, :with_jpg_in_dataset) }
       let(:attachment) do
-         attachment = root_container.children.first.children.first.children.first.attachments.first
-         attachment.created_for=admin1.id
-         attachment.save
-         attachment
-        end
+        attachment = root_container.children.first.children.first.children.first.attachments.first
+        attachment.created_for = admin1.id
+        attachment.save
+        attachment
+      end
 
       before do
         get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
@@ -193,16 +197,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'POST /api/v1/public/third_party_apps/{token}' do
     let(:user) { create(:person) }
-    let!(:attachment) do
-      create(
-        :attachment,
-        :with_image,
-        storage: 'tmp',
-        key: '8580a8d0-4b83-11e7-afc4-85a98b9d0194',
-        created_by: user.id,
-        created_for: user.id,
-      )
-    end
+    let!(:attachment){create(:attachment,:with_image,storage: 'tmp',created_by: user.id,created_for: user.id)}
     let(:params_token) do
       {
         attID: attachment.id,
@@ -229,25 +224,55 @@ describe Chemotion::ThirdPartyAppAPI do
       Rack::Test::UploadedFile.new(file_path, 'spec/fixtures/upload.jpg')
     end
     let(:params) { { token: token, attachmentName: 'attachment_of_3pa', file: file_produced_by_3pa, fileType: '.csv' } }
-    let(:collection) {create(:collection, user:admin1)}
-    let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection],attachments:[attachment])}
+    let(:collection) { create(:collection, user: user) }
+    
 
-    context 'User is allowed to upload file' do
-      before do
-        cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
-        post "/api/v1/public/third_party_apps/#{token}", params: params
+    context 'when user is allowed to upload file' do
+      context 'when attachment is directly linked to researchplan' do
+        let!(:research_plan) {create(:research_plan, creator: user, collections: [collection], attachments: [attachment])}
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'upload a file' do
+          expect(response.body).to include('File uploaded successfully')
+        end
+
+        it 'status code is 201' do
+          expect(response).to have_http_status :created
+        end
+
+        it 'thumbnail was generated' do
+          expect(Attachment.find_by(filename: 'attachment_of_3pa').thumb).to be true
+        end
       end
 
-      it 'upload a file' do
-        expect(response.body).to include('File uploaded successfully')
-      end
+      context 'when attachment is in a dataset of the researchplan' do
+        let!(:research_plan) {create(:research_plan, creator: user, collections: [collection],container: root_container)}
+        let(:root_container) do 
+          container = create(:container, :with_jpg_in_dataset) 
+          container.children.first.children.first.children.first.attachments.drop(1)
+          container.children.first.children.first.children.first.attachments.push(attachment)
+          container
+        end
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
 
-      it 'status code is 201' do
-        expect(response).to have_http_status :created
-      end
+        it 'upload a file' do
+          expect(response.body).to include('File uploaded successfully')
+        end
 
-      it 'thumbnail was generated' do
-        expect(Attachment.find_by(filename: 'attachment_of_3pa').thumb).to be true
+        it 'status code is 201' do
+          expect(response).to have_http_status :created
+        end
+
+        it 'thumbnail was generated' do
+          expect(Attachment.find_by(filename: 'attachment_of_3pa').thumb).to be true
+        end
       end
     end
 

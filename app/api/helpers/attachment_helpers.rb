@@ -26,7 +26,7 @@ module AttachmentHelpers
     return true unless pre_check == 'to_be_determined'
 
     read_access_on_element = ElementPolicy.new(user, element).read?
-    read_access_on_dataset = ElementPermissionProxy.new(user, element, user_ids).read_dataset?
+    read_access_on_dataset = ElementPermissionProxy.new(user, element, [user.id]).read_dataset?
 
     read_access_on_element && read_access_on_dataset
   end
@@ -37,9 +37,9 @@ module AttachmentHelpers
     return false if pre_check == 'not_allowed'
     return true unless pre_check == 'to_be_determined'
 
-    write_access_on_element = ElementPolicy.new(user, element).write?
-    write_access_on_dataset = ElementPermissionProxy.new(user, element, user_ids).write_dataset?
+    update_access_on_element = ElementPolicy.new(user, element).update?
+    read_access_on_dataset = ElementPermissionProxy.new(user, element, [user.id]).read_dataset?
 
-    write_access_on_element && write_access_on_dataset
+    update_access_on_element && read_access_on_dataset
   end
 end
