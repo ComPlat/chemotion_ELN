@@ -69,7 +69,7 @@ export default function SpectraEditorButton({
         ) : (
           <Button
             variant="warning"
-            size="sm"
+              size="xsm"
             onClick={confirmRegenerate}
             disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
           >

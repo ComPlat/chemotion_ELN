@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Tooltip, OverlayTrigger, ButtonGroup, Dropdown, Button } from 'react-bootstrap';
 
 import Utils from 'src/utilities/Functions';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const PrintCodeButton = ({
   element,
@@ -44,7 +43,6 @@ const PrintCodeButton = ({
           disabled={element.isNew}
           onClick={() => Utils.downloadFile({ contents: menuItems[0].contents })}
           size="xxsm"
-          className='me-1'
           >
             <i className="fa fa-barcode fa-lg" />
         </Button>

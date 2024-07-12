@@ -164,9 +164,9 @@ export default class ReactionDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <>
+      <div className='d-flex justify-content-between align-items-center flex-row-reverse w-100 mb-0' >
         <Button
-            size="xsm"
+          size="xsm"
           variant="danger"
           disabled={readOnly}
           onClick={() => this.handleOnClickRemove(container)}
@@ -188,7 +188,7 @@ export default class ReactionDetailsContainers extends Component {
           reaction={reaction}
           analysisID={container.id}
         />
-      </>
+      </div>
     );
   };
 
@@ -220,8 +220,7 @@ export default class ReactionDetailsContainers extends Component {
 
       );
     }
-
-    return (<span />);
+    return null;
   }
 
   render() {
@@ -254,10 +253,10 @@ export default class ReactionDetailsContainers extends Component {
 
       return (
         <div
-          className="d-flex w-100 mb-0"
+          className="d-flex w-100 mb-0 h-25"
           style={{ backgroundColor: '#ececec' }}
         >
-          <div>
+          <div className='p-3'>
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -272,27 +271,24 @@ export default class ReactionDetailsContainers extends Component {
             />
           </div>
 
-          <div className="d-flex flex-column justify-content-start ms-3 my-3 flex-grow-1">
-              <div className="fs-4 fw-bold ms-2 text-truncate">{container.name}</div>
+          <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
+            <div className="fs-4 fw-bold ms-2 w-50 text-truncate text-decoration-underline">{container.name}</div>
               <div className="fs-5 ms-2 mt-2">Type: {kind}</div>
               <div className="fs-5 ms-2 mt-2">Status: {status} {nmrMsg(reaction, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
               <div className="fs-5 ms-2 mt-2 d-flex p-0">
                 <span className="me-2">
-                  Content:
-                </span>
-                <QuillViewer value={contentOneLine} />
+                Content:
+                <QuillViewer value={contentOneLine} className='overflow-wrap' />
+              </span>
             </div>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto mt-3 d-flex align-items-start justify-content-end w-100 me-2">
             <div className='d-flex'>
               {
                 this.headerBtnGroup(container, reaction, readOnly)
               }
             </div>
-
           </div>
-
-
         </div>
       )
     };
@@ -330,7 +326,7 @@ export default class ReactionDetailsContainers extends Component {
             <div className="mb-2 me-1 d-flex flex-row-reverse">
               {this.addButton()}
             </div>
-            <Accordion id="reaction-analyses-panel" defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
+            <Accordion id="reaction-analyses-panel" activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
               {analyses_container[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
