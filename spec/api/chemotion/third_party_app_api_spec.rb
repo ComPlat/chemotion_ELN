@@ -197,7 +197,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'POST /api/v1/public/third_party_apps/{token}' do
     let(:user) { create(:person) }
-    let!(:attachment){create(:attachment,:with_image,storage: 'tmp',created_by: user.id,created_for: user.id)}
+    let!(:attachment) { create(:attachment, :with_image, storage: 'tmp', created_by: user.id, created_for: user.id) }
     let(:params_token) do
       {
         attID: attachment.id,
@@ -225,11 +225,12 @@ describe Chemotion::ThirdPartyAppAPI do
     end
     let(:params) { { token: token, attachmentName: 'attachment_of_3pa', file: file_produced_by_3pa, fileType: '.csv' } }
     let(:collection) { create(:collection, user: user) }
-    
 
     context 'when user is allowed to upload file' do
       context 'when attachment is directly linked to researchplan' do
-        let!(:research_plan) {create(:research_plan, creator: user, collections: [collection], attachments: [attachment])}
+        let!(:research_plan) do
+          create(:research_plan, creator: user, collections: [collection], attachments: [attachment])
+        end
 
         before do
           cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
@@ -250,13 +251,16 @@ describe Chemotion::ThirdPartyAppAPI do
       end
 
       context 'when attachment is in a dataset of the researchplan' do
-        let!(:research_plan) {create(:research_plan, creator: user, collections: [collection],container: root_container)}
-        let(:root_container) do 
-          container = create(:container, :with_jpg_in_dataset) 
+        let!(:research_plan) do
+          create(:research_plan, creator: user, collections: [collection], container: root_container)
+        end
+        let(:root_container) do
+          container = create(:container, :with_jpg_in_dataset)
           container.children.first.children.first.children.first.attachments.drop(1)
           container.children.first.children.first.children.first.attachments.push(attachment)
           container
         end
+
         before do
           cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
           post "/api/v1/public/third_party_apps/#{token}", params: params
@@ -272,6 +276,50 @@ describe Chemotion::ThirdPartyAppAPI do
 
         it 'thumbnail was generated' do
           expect(Attachment.find_by(filename: 'attachment_of_3pa').thumb).to be true
+        end
+      end
+    end
+
+    context 'when user is not allowed to upload file' do
+      let(:other_user) { create(:person) }
+      let(:attachment) do
+        create(:attachment, :with_image, storage: 'tmp', created_by: other_user.id, created_for: other_user.id)
+      end
+
+      context 'when attachment is directly linked to researchplan' do
+        let!(:research_plan) do
+          create(:research_plan, creator: other_user, collections: [collection], attachments: [attachment])
+        end
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
+      end
+
+      context 'when attachment is in a dataset of the researchplan' do
+        let(:collection) { create(:collection) }
+        let!(:research_plan) do
+          create(:research_plan, creator: other_user, collections: [collection], container: root_container)
+        end
+        let(:root_container) do
+          container = create(:container, :with_jpg_in_dataset)
+          container.children.first.children.first.children.first.attachments.drop(1)
+          container.children.first.children.first.children.first.attachments.push(attachment)
+          container
+        end
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
         end
       end
     end
