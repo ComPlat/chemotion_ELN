@@ -139,11 +139,10 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'GET /api/v1/third_party_apps/token' do
+  describe 'GET /api/v1/third_party_apps/{token}' do
     let(:tpa) { create(:third_party_app) }
     let(:collection) {create(:collection, user:admin1)}
-    let(:attachment) { create(:attachment,created_for:admin1.id) }
-    
+
     let(:token) do
       parts = CGI.unescape(JSON.parse(response.body))
       parts.split('/').last
@@ -153,7 +152,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
     context 'when attachment is directly linked and readable and 3pa exists' do
       let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection],attachments:[attachment])}
-    
+      let(:attachment) { create(:attachment, created_for: admin1.id) }
 
       before do
         get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
@@ -170,7 +169,7 @@ describe Chemotion::ThirdPartyAppAPI do
       let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection], container:root_container)}
       let(:root_container) {create(:container, :with_jpg_in_dataset)}
       let(:attachment) do
-         attachment = root_container.children.first.children.first.children.first.attachments.first 
+         attachment = root_container.children.first.children.first.children.first.attachments.first
          attachment.created_for=admin1.id
          attachment.save
          attachment
@@ -192,7 +191,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe '/api/v1/public/third_party_apps/{token}' do
+  describe 'POST /api/v1/public/third_party_apps/{token}' do
     let(:user) { create(:person) }
     let!(:attachment) do
       create(
@@ -230,6 +229,8 @@ describe Chemotion::ThirdPartyAppAPI do
       Rack::Test::UploadedFile.new(file_path, 'spec/fixtures/upload.jpg')
     end
     let(:params) { { token: token, attachmentName: 'attachment_of_3pa', file: file_produced_by_3pa, fileType: '.csv' } }
+    let(:collection) {create(:collection, user:admin1)}
+    let!(:research_plan) {create(:research_plan, creator:admin1, collections:[collection],attachments:[attachment])}
 
     context 'User is allowed to upload file' do
       before do

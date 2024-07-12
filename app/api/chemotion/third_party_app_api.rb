@@ -61,7 +61,7 @@ module Chemotion
       # desc: return file for download to third party app
       def download_third_party_app
         update_cache(:download)
-        return error!('No read access to attachment', 403) unless read_access(attachment, @current_user)
+        return error!('No read access to attachment', 403) unless read_access?(attachment, @current_user)
 
         content_type 'application/octet-stream'
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
@@ -72,7 +72,9 @@ module Chemotion
       # desc: upload file from the third party app
       def upload_third_party_app
         update_cache(:upload)
-        return error!('No write access to attachment', 403) unless write_access?(@attachment, @current_user)
+        decoded_token = JsonWebToken.decode(params['token'])
+        user_id = decoded_token[:userID]
+        return error!('No write access to attachment', 403) unless write_access?(@attachment, User.find(user_id))
 
         new_attachment = Attachment.new(
           attachable: @attachment.attachable,
@@ -146,7 +148,7 @@ module Chemotion
         end
 
         post do
-          
+
           ThirdPartyApp.create!(declared(params))
           status 201
         end
@@ -188,7 +190,7 @@ module Chemotion
         parse_payload
         encode_and_cache_token
         attachment = Attachment.find(params['attID'])
-        
+
         return error!('No read access to attachment', 403) unless read_access?(attachment, @current_user)
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint

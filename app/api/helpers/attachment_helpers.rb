@@ -3,25 +3,43 @@
 module AttachmentHelpers
   extend Grape::API::Helpers
 
-  def read_access?(attachment, _user)
-    is_owner = attachment.container_id.nil? && attachment.created_for == current_user.id
-    return true if is_owner
+  def common_access_check(attachment, user)
+    element = attachment.container&.root&.containable
+    is_owner = attachment.container_id.nil? && attachment.created_for == user.id
 
-    element = @attachment.container&.root&.containable
-    return false unless element
+    return 'is_owner' if is_owner
 
-    return false unless attachment.attachable
+    return 'not_allowed' unless element
 
-    return false if element.is_a?(Container)
-    return true if element.is_a?(User) && (element == current_user)
+    return 'not_allowed' unless attachment.attachable
 
-    read_access_on_element = ElementPolicy.new(current_user, element).read?
-    read_access_on_dataset = ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+    return 'not_allowed' if element.is_a?(Container)
+    return 'allowed' if element.is_a?(User) && (element == user)
+
+    'to_be_determined'
+  end
+
+  def read_access?(attachment, user)
+    element = attachment.container&.root&.containable
+    pre_check = common_access_check(attachment, user)
+    return false if pre_check == 'not_allowed'
+    return true unless pre_check == 'to_be_determined'
+
+    read_access_on_element = ElementPolicy.new(user, element).read?
+    read_access_on_dataset = ElementPermissionProxy.new(user, element, user_ids).read_dataset?
 
     read_access_on_element && read_access_on_dataset
   end
 
-  def write_access?(_attachment, _user)
-    false
+  def write_access?(attachment, user)
+    element = attachment.container&.root&.containable
+    pre_check = common_access_check(attachment, user)
+    return false if pre_check == 'not_allowed'
+    return true unless pre_check == 'to_be_determined'
+
+    write_access_on_element = ElementPolicy.new(user, element).write?
+    write_access_on_dataset = ElementPermissionProxy.new(user, element, user_ids).write_dataset?
+
+    write_access_on_element && write_access_on_dataset
   end
 end
