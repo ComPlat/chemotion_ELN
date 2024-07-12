@@ -30,6 +30,9 @@ export default class ReactionDetailsMainProperties extends Component {
     };
     this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this);
     this.updateTemperature = this.updateTemperature.bind(this);
+    this.reactionVesselSize = this.reactionVesselSize.bind(this);
+    this.updateVesselSize = this.updateVesselSize.bind(this);
+    this.changeVesselSizeUnit = this.changeVesselSizeUnit.bind(this);
     this.temperatureUnit = props.reaction.temperature.valueUnit;
   }
 
@@ -58,6 +61,51 @@ export default class ReactionDetailsMainProperties extends Component {
     const index = Reaction.temperature_unit.indexOf(this.temperatureUnit);
     const unit = Reaction.temperature_unit[(index + 1) % 3];
     this.props.onInputChange('temperatureUnit', unit);
+  }
+
+  updateVesselSize(e) {
+    const { onInputChange } = this.props;
+    const { value } = e.target;
+    onInputChange('vesselSizeAmount', value);
+  }
+
+  changeVesselSizeUnit() {
+    const { onInputChange, reaction } = this.props;
+    if (reaction.vessel_size.unit === 'ml') {
+      onInputChange('vesselSizeUnit', 'l');
+    } else if (reaction.vessel_size.unit === 'l') {
+      onInputChange('vesselSizeUnit', 'ml');
+    }
+  }
+
+  reactionVesselSize() {
+    const { reaction } = this.props;
+    return (
+      <Col md={2}>
+        <InputGroup style={{ paddingTop: '2px', paddingLeft: '6px', paddingRight: '45px' }}>
+          <ControlLabel>Vessel size</ControlLabel>
+          <FormGroup style={{ display: 'flex' }}>
+            <FormControl
+              id="reactionVesselSize"
+              name="reaction_vessel_size"
+              type="text"
+              value={reaction.vessel_size?.amount || ''}
+              disabled={false}
+              onChange={(event) => this.updateVesselSize(event)}
+            />
+            <InputGroup.Button>
+              <Button
+                disabled={false}
+                bsStyle="success"
+                onClick={() => this.changeVesselSizeUnit()}
+              >
+                {reaction.vessel_size?.unit || 'ml'}
+              </Button>
+            </InputGroup.Button>
+          </FormGroup>
+        </InputGroup>
+      </Col>
+    );
   }
 
   render() {
@@ -94,7 +142,7 @@ export default class ReactionDetailsMainProperties extends Component {
     return (
       <Grid fluid style={{ paddingLeft: 'unset' }}>
         <Row>
-          <Col md={6}>
+          <Col md={4}>
             <FormGroup>
               <ControlLabel>Name</ControlLabel>
               <FormControl
@@ -108,6 +156,7 @@ export default class ReactionDetailsMainProperties extends Component {
               />
             </FormGroup>
           </Col>
+          {this.reactionVesselSize()}
           <Col md={3}>
             <FormGroup>
               <ControlLabel>Status</ControlLabel>
