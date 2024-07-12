@@ -309,7 +309,7 @@ export default class ElementsTable extends React.Component {
               <div>
 
                 {
-                  attachmentTokens.length > 0 ? attachmentTokens.map((item, idx) => {
+                  attachmentTokens?.length > 0 ? attachmentTokens.map((item, idx) => {
                     const key = Object.keys(item);
                     return (
                       <Row style={{ marginBottom: 10 }}>
@@ -673,7 +673,7 @@ export default class ElementsTable extends React.Component {
           }}
         >
           {
-            attachmentTokens.length > 0 &&
+            attachmentTokens?.length > 0 &&
             <OverlayTrigger placement="top" overlay={attachmentToolTip}>
               <button
                 disabled={!attachmentTokens?.length}

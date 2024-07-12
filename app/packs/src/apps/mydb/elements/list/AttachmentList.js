@@ -10,6 +10,8 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -316,23 +318,34 @@ export const sortingAndFilteringUI = (
   </div>
 );
 
-export const thirdPartyAppButton = (researchPlanId, attachment, options) => (
-  <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
-    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
-      <i className="fa  fa-external-link " aria-hidden="true" />
-    </Dropdown.Toggle>
-    <Dropdown.Menu>
-      {options.map((option) => (
-        <MenuItem
-          key={uuid.v4()}
-          eventKey={option.id}
-          onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(researchPlanId, attachment.id, option.id)
-            .then((result) => window.open(result, '_blank'))}
-        // disabled={!isImageFile(attachment.filename) || attachment.isNew}
-        >
-          {option.name}
-        </MenuItem>
-      ))}
-    </Dropdown.Menu>
-  </Dropdown>
-);
+export const thirdPartyAppButton = (researchPlanId, attachment, options) => {
+
+  const handleFetchAttachToken = (option) => {
+    const { currentCollection } = UIStore.getState();
+    ThirdPartyAppFetcher.fetchAttachmentToken(researchPlanId, attachment.id, option.id)
+      .then((result) => {
+        ElementActions.fetchAttachmentTokens(currentCollection.id);
+        window.open(result, '_blank');
+      });
+    // disabled={!isImageFile(attachment.filename) || attachment.isNew}
+  };
+
+  return (
+    <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
+      <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+        <i className="fa  fa-external-link " aria-hidden="true" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        {options.map((option) => (
+          <MenuItem
+            key={uuid.v4()}
+            eventKey={option.id}
+            onClick={() => handleFetchAttachToken(option)}
+          >
+            {option.name}
+          </MenuItem>
+        ))}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+};

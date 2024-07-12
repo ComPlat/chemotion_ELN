@@ -270,7 +270,7 @@ class ElementStore {
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
-      handleTpaAttachmentTokensByCollectionId: ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId
+      handleTpaAttachmentTokensByCollectionId: ElementActions.fetchAttachmentTokens
     });
   }
 
@@ -655,7 +655,8 @@ class ElementStore {
 
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
-    this.handleTpaAttachmentTokensByCollectionId();
+    const { currentCollection } = UIStore.getState();
+    ElementActions.fetchAttachmentTokens(currentCollection.id);
   }
 
   handlefetchCellLinesByCollectionId(result) {
@@ -1519,10 +1520,8 @@ class ElementStore {
   }
 
   // -- TPA --
-  async handleTpaAttachmentTokensByCollectionId() {
-    const { currentCollection } = UIStore.getState();
-    const response = await ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(currentCollection.id);
-    this.state.attachmentTokens = response?.token_list;
+  async handleTpaAttachmentTokensByCollectionId({ token_list }) {
+    this.state.attachmentTokens = token_list;
   }
 
   // End of DetailStore

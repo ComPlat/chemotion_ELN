@@ -1071,6 +1071,15 @@ class ElementActions {
     };
   }
 
+  fetchAttachmentTokens(collection_id) {
+    return (dispatch) => {
+      ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(collection_id).then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
 
 }
 
