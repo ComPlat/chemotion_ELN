@@ -261,8 +261,6 @@ class CnC extends React.Component {
     }
     this.setState({
       showDeviceList: !showDeviceList,
-      indicatorClassName: showDeviceList ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left',
-      mainContentClassName: showDeviceList ? 'small-col full-main' : 'small-col main-content'
     });
   }
 
