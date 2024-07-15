@@ -13,7 +13,7 @@ module Entities
           EQUIPMENT: {},
         }.deep_stringify_keys
 
-        def self.additional_information
+        def additional_information
           {
             TEMPERATURE: additional_information_temperature,
             PH: additional_information_ph,
@@ -22,7 +22,7 @@ module Entities
           }
         end
 
-        def self.additional_information_temperature
+        def additional_information_temperature
           [
             { value: 'UNSPECIFIED', label: 'Unspecified' },
             { value: 'CUSTOM', label: 'Custom' },
@@ -41,7 +41,7 @@ module Entities
           ]
         end
 
-        def self.additional_information_ph
+        def additional_information_ph
           [
             { value: 'PH_ELECTRODE', label: 'pH Electrode' },
             { value: 'PH_STRIPE', label: 'pH Stripe' },
@@ -49,7 +49,7 @@ module Entities
           ]
         end
 
-        def self.additional_information_irradiation
+        def additional_information_irradiation
           [
             { value: 'UNSPECIFIED', label: 'Unspecified' },
             { value: 'LED', label: 'LED' },

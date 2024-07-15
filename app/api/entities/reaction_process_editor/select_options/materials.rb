@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class Materials < Base
-        def self.all_for(reaction_process)
+        def all_for(reaction_process)
           # We assemble the material options as required in the Frontend.
           # It's a hodgepodge of samples of different origin merged assigned to certain keys, where the differing
           # materials also have differing attributes to cope with.
@@ -23,7 +23,8 @@ module Entities
             MEDIUM: samples_info_options(Medium::MediumSample.all, 'MEDIUM'),
             SAMPLE: samples_info_options(samples, 'SAMPLE'),
             SOLVENT: samples_info_options(solvents,
-                                          'SOLVENT') + samples_info_options(diverse_solvents, 'DIVERSE_SOLVENT'),
+                                          'SOLVENT') + samples_info_options(diverse_solvents,
+                                                                            'DIVERSE_SOLVENT'),
           }
         end
       end

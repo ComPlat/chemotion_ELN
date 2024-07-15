@@ -52,21 +52,21 @@ module ReactionProcessEditor
     end
 
     def added_materials(material_type)
-      material_ids = reaction_process.reaction_process_steps.where('position <= ?',
-                                                                   position).map do |process_step|
-        process_step.added_material_ids(material_type)
-      end.flatten.uniq
+      # material_ids = reaction_process.reaction_process_steps.where(position: ..position).map do |process_step|
+      #   process_step.added_material_ids(material_type)
+      # end.flatten.uniq
 
       case material_type
       when 'ADDITIVE'
-        Medium::Additive.find material_ids
+        Medium::Additive.find added_material_ids(material_type)
       when 'DIVERSE_SOLVENT'
-        Medium::DiverseSolvent.find material_ids
+        Medium::DiverseSolvent.find added_material_ids(material_type)
       when 'MEDIUM'
-        Medium::MediumSample.find material_ids
+        Medium::Medium.find added_material_ids(material_type)
       when 'SOLVENT'
-        Sample.find material_ids
+        Sample.find added_material_ids(material_type)
       else
+        Medium::Medium.find added_material_ids(material_type)
         []
       end
     end
