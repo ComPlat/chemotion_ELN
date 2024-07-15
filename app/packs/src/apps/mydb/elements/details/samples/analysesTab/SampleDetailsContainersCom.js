@@ -226,6 +226,7 @@ function RndEdit({
                   container={container}
                   disabled={isDisabled}
                   onChange={handleChange}
+                  elementID={sample.id}
                 />
               </Panel.Body>
             </Panel>

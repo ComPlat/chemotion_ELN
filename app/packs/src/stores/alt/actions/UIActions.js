@@ -145,6 +145,10 @@ class UIActions {
 
   rerenderGenericWorkflow(params) { return params; }
   showGenericWorkflowModal(show) { return show; }
+
+  saveAttachmentDataset(elementID, templateType, datasetID) {
+    return { elementID: elementID, elementType: templateType, datasetID: datasetID};
+  }
 }
 
 export default alt.createActions(UIActions);

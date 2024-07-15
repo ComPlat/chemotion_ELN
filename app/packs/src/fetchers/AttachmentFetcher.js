@@ -290,7 +290,7 @@ export default class AttachmentFetcher {
   }
 
   static async uploadFile(file) {
-    LoadingActions.startLoadingWithProgress(file.name);
+    LoadingActions.startLoadingWithProgress.defer(file.name);
     const chunkSize = 100 * 1024 * 1024;
     const chunksCount = file.size % chunkSize === 0
       ? file.size / chunkSize

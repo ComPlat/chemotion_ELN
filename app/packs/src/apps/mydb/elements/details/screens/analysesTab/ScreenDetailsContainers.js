@@ -131,6 +131,7 @@ export default class ScreenDetailsContainers extends Component {
                           readOnly={readOnly}
                           container={container}
                           onChange={container => this.handleChange(container)}
+                          elementID={screen.id}
                         />
                       </Panel.Body>
                     </Panel>

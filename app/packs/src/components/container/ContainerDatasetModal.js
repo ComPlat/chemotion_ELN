@@ -5,6 +5,8 @@ import {
   Modal, ButtonGroup, OverlayTrigger, Tooltip, Button,
 } from 'react-bootstrap';
 import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import LoadingStore from 'src/stores/alt/stores/LoadingStore';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -21,23 +23,56 @@ export default class ContainerDatasetModal extends Component {
     this.handleSave = this.handleSave.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
+    this.handleSaveWithoutClose = this.handleSaveWithoutClose.bind(this);
+    this.onLoadingStoreChange = this.onLoadingStoreChange.bind(this);
+  }
+
+  componentDidMount() {
+    LoadingStore.listen(this.onLoadingStoreChange);
+  }
+
+  componentWillUnmount() {
+    LoadingStore.unlisten(this.onLoadingStoreChange);
+  }
+
+  onLoadingStoreChange(state) {
+    const { loading } = state;
+    if (!loading) {
+      UIActions.saveAttachmentDataset.defer('', false, '');
+    }
   }
 
   handleModalClose(event) {
     if (event && event.type === 'keydown' && event.key === 'Escape') {
       this.handleSave();
     } else {
-      this.props.onHide();
+      if (confirm('Changes are kept for this session. Remember to save the element itself to persist changes.')) {
+        this.props.onHide();
+      }
     }
   }
 
   handleSave() {
-    this.datasetInput.current.handleSave();
+    if (confirm('Changes are kept for this session. Remember to save the element itself to persist changes.')) {
+      this.datasetInput.current.handleSave();
+      this.props.onChange({
+        ...this.props.datasetContainer,
+        ...this.datasetInput.current.state.datasetContainer,
+        name: this.state.localName
+      });
+    }
+  }
+
+  handleSaveWithoutClose() {
     this.props.onChange({
       ...this.props.datasetContainer,
       ...this.datasetInput.current.state.datasetContainer,
       name: this.state.localName
     });
+
+    const { elementID, templateType } = this.props;
+    const datasetID = this.datasetInput.current.state.datasetContainer.id;
+    UIActions.saveAttachmentDataset(elementID, templateType, datasetID);
   }
 
   handleNameChange(newName) {
@@ -198,11 +233,11 @@ export default class ContainerDatasetModal extends Component {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, width: '100%'
           }}
           >
-            <div>
+            {/* <div>
               <small style={{ alignSelf: 'center' }}>
                 Changes are kept for this session. Remember to save the element itself to persist changes.
               </small>
-            </div>
+            </div> */}
             <div style={{ alignSelf: 'right', marginLeft: 'auto' }}>
               {/* <Button
                 style={{ marginRight: '10px' }}
@@ -213,9 +248,16 @@ export default class ContainerDatasetModal extends Component {
               <Button
                 bsStyle="primary"
                 style={{ alignSelf: 'center', marginLeft: 'auto' }}
+                onClick={this.handleSaveWithoutClose}
+              >
+                Save
+              </Button>
+              <Button
+                bsStyle="danger"
+                style={{ alignSelf: 'center', marginLeft: '10px' }}
                 onClick={this.handleSave}
               >
-                Keep Changes
+                Close
               </Button>
             </div>
           </Modal.Footer>
@@ -239,10 +281,14 @@ ContainerDatasetModal.propTypes = {
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string,
+  elementID: PropTypes.string,
+  templateType: PropTypes.string,
 };
 
 ContainerDatasetModal.defaultProps = {
   readOnly: false,
   disabled: false,
   kind: null,
+  elementID: '',
+  templateType: '',
 };
