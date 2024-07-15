@@ -270,7 +270,7 @@ class ElementStore {
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
-      handleTpaAttachmentTokensByCollectionId: ElementActions.fetchAttachmentTokens
+      handleTpaAttachmentTokensByCollectionId: ElementActions.fetchCollectionAttachmentTokens
     });
   }
 
@@ -656,7 +656,9 @@ class ElementStore {
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
     const uistoreContainer = UIStore.getState();
-    ElementActions.fetchAttachmentTokens(uistoreContainer.currentCollection.id);
+    const { currentElement } = ElementStore.getState();
+
+    ElementActions.fetchCollectionAttachmentTokens(uistoreContainer.currentCollection.id, currentElement?.id);
   }
 
   handlefetchCellLinesByCollectionId(result) {

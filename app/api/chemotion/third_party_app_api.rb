@@ -24,7 +24,7 @@ module Chemotion
       # desc: define the cache key based on the attachment/user/app ids
       def cache_key
         @cache_key_user_rsearchPlan ||= "#{@user&.id}/#{@collection&.id}/#{@type}"
-        @cache_key_attachment_app ||= "#{@app&.id}/#{@attachment&.id}"
+        @cache_key_attachment_app ||= "#{@elementID}/#{@app&.id}/#{@attachment&.id}"
         [@cache_key_user_rsearchPlan, @cache_key_attachment_app]
       end
 
@@ -35,7 +35,8 @@ module Chemotion
           'userID' => current_user.id,
           'attID' => params[:attID],
           'collectionID' => params[:collectionID],
-          'type' => params[:type]
+          'type' => params[:type],
+          'elementID' => params[:elementID]
         }
       end
 
@@ -47,6 +48,8 @@ module Chemotion
         @app = ThirdPartyApp.find(payload['appID']&.to_i)
         @collection = Collection.find(payload['collectionID']&.to_i)
         @type = payload['type']
+        @elementID = payload['elementID']
+        
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end
@@ -93,7 +96,7 @@ module Chemotion
         { message: 'File uploaded successfully' }
       end
       
-      def encode_and_cache_token_user_researchPlan_with_type
+      def encode_and_cache_token_user_collection_with_type
         current_state = cache.read(cache_key[0])
         new_state = if current_state
           idx = current_state.index(cache_key[1])
@@ -224,13 +227,14 @@ module Chemotion
         requires :attID, type: Integer, desc: 'Attachment ID'
         requires :appID, type: Integer, desc: 'id of the third party app'
         requires :collectionID, type: Integer, desc: 'collection id'
+        requires :elementID, type: Integer, desc: 'Selected element'
         requires :type, type: String, desc: 'Current active tab type'
       end
 
       get 'token' do
         prepare_payload
         parse_payload
-        encode_and_cache_token_user_researchPlan_with_type
+        encode_and_cache_token_user_collection_with_type
         encode_and_cache_token_attachment_app
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
@@ -241,6 +245,7 @@ module Chemotion
       params do
         requires :collection_id, type: Integer, desc: 'Collection id'
         requires :type, type: String, desc: 'Current active tab type'
+        requires :elementID, type: String, desc: 'Current active tab type'
       end
 
       get 'collection_tpa_tokens' do
@@ -249,11 +254,13 @@ module Chemotion
         if cache_user_researchid_keys != nil
           cache_user_researchid_keys.each do |token_key|
             splits = token_key.split("/")
-            app = ThirdPartyApp.find(splits[0])
-            attachment = Attachment.find(splits[1])
+            app = ThirdPartyApp.find(splits[1]) rescue nil
+            attachment = Attachment.find(splits[2]) rescue nil
+            next unless app && attachment
+            element_details = ResearchPlan.find(params[:elementID])
             token_list.push({
               "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}":cache.read(token_key),
-              alias_researchPlan: "replace issue",
+              alias_element: element_details.name,
               alias_app_id: "#{app.name}",
               alias_attachment_id: "#{attachment.filename}"
             })
@@ -272,7 +279,7 @@ module Chemotion
       put 'update_attachment_token_with_type' do
         splits = params[:key].split('/')
         first_level_key = "#{splits[0]}/#{splits[1]}/#{splits[2]}"
-        second_level_key = "#{splits[3]}/#{splits[4]}"
+        second_level_key = "#{splits[3]}/#{splits[4]}/#{splits[5]}"
 
         status = find_and_update_key_with_request_type(first_level_key, second_level_key, params[:action_type])
         {status: status}

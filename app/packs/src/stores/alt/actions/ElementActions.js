@@ -39,6 +39,8 @@ import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import ElementStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 import _ from 'lodash';
 
@@ -1071,9 +1073,10 @@ class ElementActions {
     };
   }
 
-  fetchAttachmentTokens(collection_id) {
+  fetchCollectionAttachmentTokens(collection_id, elementID) {
+    const { currentType } = ElementStore.getState();
     return (dispatch) => {
-      ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(collection_id).then((result) => {
+      ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(collection_id, currentType, elementID).then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);

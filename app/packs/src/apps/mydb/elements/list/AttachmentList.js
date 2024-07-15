@@ -12,6 +12,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -322,9 +323,11 @@ export const thirdPartyAppButton = (attachment, options) => {
 
   const handleFetchAttachToken = (option) => {
     const { currentCollection } = UIStore.getState();
-    ThirdPartyAppFetcher.fetchAttachmentToken(currentCollection?.id, attachment.id, option.id)
+    const { currentElement } = ElementStore.getState();
+    ThirdPartyAppFetcher.fetchAttachmentToken(currentCollection?.id, attachment.id, option.id, currentElement?.id)
       .then((result) => {
-        ElementActions.fetchAttachmentTokens(currentCollection?.id);
+        console.log(currentElement);
+        ElementActions.fetchCollectionAttachmentTokens(currentCollection?.id, currentElement?.id);
         window.open(result, '_blank');
       });
     // disabled={!isImageFile(attachment.filename) || attachment.isNew}

@@ -297,6 +297,7 @@ export default class ElementsTable extends React.Component {
 
   attachmentTokenModal = () => {
     const { showAttachmentTokenModal, attachmentTokens } = this.state;
+    // const { selecteds } = ElementStore.getState();
     return (
       <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
         <Modal.Header closeButton />
@@ -316,24 +317,17 @@ export default class ElementsTable extends React.Component {
                     const value = item[key[0]];
                     return (
                       <Row style={{ marginBottom: 10 }}>
-                        <Col xs={7}>
-                          <div>Research Plan: {item?.alias_researchPlan} </div>
+                        <Col xs={10}>
+
+                          <div>Element: {item?.alias_element} </div>
                           <div>Attachment: {item?.alias_attachment_id} </div>
                           <div>App: {item?.alias_app_id} </div>
                           <div>Download: {value?.download} </div>
                           <div>Upload: {value?.upload} </div>
                         </Col>
-                        <Col xs={5}>
+                        <Col xs={2}>
                           <Button className='btn btn-danger' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'revoke')}>
                             <i class="fa fa-trash"></i>
-                          </Button>
-
-                          <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'upload')}>
-                            <i class="fa fa-upload"></i>
-                          </Button>
-
-                          <Button className='btn btn-success' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'download')}>
-                            <i class="fa fa-download"></i>
                           </Button>
                         </Col>
                       </Row>);
@@ -649,7 +643,6 @@ export default class ElementsTable extends React.Component {
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
     const { currentType } = UserStore.getState();
-    console.log(currentType);
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -751,7 +744,7 @@ export default class ElementsTable extends React.Component {
       moleculeSort,
       elementsGroup,
     } = this.state;
-
+    console.log(currentElement);
     const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
 

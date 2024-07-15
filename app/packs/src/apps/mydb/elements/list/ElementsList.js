@@ -192,7 +192,8 @@ export default class ElementsList extends React.Component {
 
     // tpa token call
     const uistoreContainer = UIStore.getState();
-    ElementActions.fetchAttachmentTokens(uistoreContainer?.currentCollection?.id);
+    const { currentElement } = ElementStore.getState();
+    ElementActions.fetchCollectionAttachmentTokens(uistoreContainer?.currentCollection?.id, currentElement?.id);
   }
 
   handleRemoveSearchResult(searchStore) {
