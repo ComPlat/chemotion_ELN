@@ -4,16 +4,16 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class Custom < Base
-        def self.addition_speed_types
+        def addition_speed_types
           titlecase_options_for(OrdKit::ReactionInput::AdditionSpeed::AdditionSpeedType.constants)
         end
 
-        def self.automation_modes
+        def automation_modes
           [{ value: 'MANUAL', label: 'Manual' },
            { value: 'AUTOMATED', label: 'Automated' }]
         end
 
-        def self.motion_types
+        def motion_types
           [{ value: 'UNSPECIFIED', label: 'Motion Unspecified' },
            { value: 'CUSTOM', label: 'Motion Custom' },
            { value: 'NONE', label: 'Motion None' },
@@ -25,7 +25,7 @@ module Entities
            { value: 'OTHER', label: 'Motion' }]
         end
 
-        def self.analysis_types
+        def analysis_types
           [{ value: 'TLC', label: 'Thin Layer Chromatography (TLC)' },
            { value: 'GC', label: 'Gas Chromatography (GC)' },
            { value: 'HPLC', label: 'High Performance Liquid Chromatography (HPLC)' },

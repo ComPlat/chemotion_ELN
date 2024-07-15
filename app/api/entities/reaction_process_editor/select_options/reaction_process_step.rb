@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class ReactionProcessStep < Base
-        def self.all(reaction_process_step)
+        def all(reaction_process_step)
           {
             added_materials: added_materials(reaction_process_step),
             removable_materials: removable_materials(reaction_process_step),
@@ -15,38 +15,72 @@ module Entities
           }
         end
 
-        def self.added_materials(reaction_process_step)
+        # def added_materials(material_type)
+        #   material_ids = reaction_process.reaction_process_steps.where(position: ..position).map do |process_step|
+        #     process_step.added_material_ids(material_type)
+        #   end.flatten.uniq
+        # end
+
+        # def added_material_ids(material_type)
+        #   activities_adding_sample_acting_as(material_type).map { |activity| activity.workup['sample_id'] }
+        # end
+
+        # def activities_adding_sample_acting_as(material_type)
+        #   activities_adding_sample.select { |activity| activity.workup['acts_as'] == material_type }
+        # end
+
+        # def activities_adding_sample
+        #   @activities_adding_sample ||= reaction_process_activities.select do |activity|
+        #     activity.activity_name == 'ADD'
+        #   end
+        # end
+
+        def added_materials(reaction_process_step)
           add_activity_names = ['ADD']
           # For the ProcessStepHeader in the UI, in order of actions.
           reaction_process_step.reaction_process_activities.order(:position).filter_map do |action|
             if add_activity_names.include?(action.activity_name)
-              added_material_option = sample_info_option(action.sample || action.medium, action.workup['acts_as'])
+              added_material_option = sample_info_option(action.sample || action.medium,
+                                                         action.workup['acts_as'])
               added_material_option.merge(amount: action.workup['target_amount'])
             end
           end.uniq
         end
 
-        def self.removable_materials(reaction_process_step)
-          # For UI selects to REMOVE only previously added materials, scoped to acts_as.
+        # TODO: Rewrite scoped to Remove origin type
+        def removable_materials(reaction_process_step)
+          current_solvents = added_samples_acting_as(reaction_process_step, 'SOLVENT') +
+                             added_samples_acting_as(reaction_process_step, 'MEDIUM') +
+                             added_samples_acting_as(reaction_process_step, 'ADDITIVE') +
+                             added_samples_acting_as(reaction_process_step, 'DIVERSE_SOLVENT')
+
           {
-            SOLVENT: added_samples_acting_as(reaction_process_step, 'SOLVENT'),
-            MEDIUM: added_samples_acting_as(reaction_process_step, 'MEDIUM'),
-            ADDITIVE: added_samples_acting_as(reaction_process_step, 'ADDITIVE'),
-            DIVERSE_SOLVENT: added_samples_acting_as(reaction_process_step, 'DIVERSE_SOLVENT'),
+            FROM_REACTION: current_solvents,
+            FROM_STEP: current_solvents,
+            FROM_SAMPLE: current_solvents,
+            STEPWISE: current_solvents,
+            FROM_METHOD: current_solvents,
           }
+          # For UI selects to REMOVE only previously added materials, scoped to acts_as.
+          # {
+          #   SOLVENT: added_samples_acting_as(reaction_process_step, 'SOLVENT'),
+          #   MEDIUM: added_samples_acting_as(reaction_process_step, 'MEDIUM'),
+          #   ADDITIVE: added_samples_acting_as(reaction_process_step, 'ADDITIVE'),
+          #   DIVERSE_SOLVENT: added_samples_acting_as(reaction_process_step, 'DIVERSE_SOLVENT'),
+          # }
         end
 
-        def self.added_samples_acting_as(reaction_process_step, acts_as)
+        def added_samples_acting_as(reaction_process_step, acts_as)
           reaction_process_step.added_materials(acts_as).map do |sample|
-            sample_info_option(sample, acts_as)
+            sample_minimal_option(sample, acts_as)
           end
         end
 
-        def self.mounted_equipment(reaction_process_step)
+        def mounted_equipment(reaction_process_step)
           titlecase_options_for(reaction_process_step.mounted_equipment)
         end
 
-        def self.transferable_samples(reaction_process_step)
+        def transferable_samples(reaction_process_step)
           Sample.where(id: transferable_sample_ids(reaction_process_step))
                 .includes(%i[molecule molecule_name residues])
                 .map do |sample|
@@ -54,7 +88,7 @@ module Entities
           end
         end
 
-        def self.transfer_targets(reaction_process_step)
+        def transfer_targets(reaction_process_step)
           reaction_process_step.siblings.map do |process_step|
             { value: process_step.id,
               label: process_step.label,
@@ -62,11 +96,11 @@ module Entities
           end
         end
 
-        def self.transferable_sample_ids(reaction_process_step)
+        def transferable_sample_ids(reaction_process_step)
           reaction_process_step.reaction_process.saved_sample_ids
         end
 
-        def self.save_sample_origins(reaction_process_step)
+        def save_sample_origins(reaction_process_step)
           reaction_process_step
             .reaction_process_activities
             .where(activity_name: 'PURIFY')
@@ -83,7 +117,7 @@ module Entities
           end
         end
 
-        def self.option_for_purify_step(purify_step, purification, position)
+        def option_for_purify_step(purify_step, purification, position)
           solvents = purify_step['solvents'] || []
 
           solvent_labels = solvents&.pluck('label')&.join(', ')

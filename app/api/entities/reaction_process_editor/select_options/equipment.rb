@@ -10,11 +10,11 @@ module Entities
         #
         # We define this backend as some of it is retrieved directly from ORD constants which are unknown in RPE UI.
 
-        def self.all
+        def all
           titlecase_options_for(OrdKit::Equipment::EquipmentType.constants)
         end
 
-        def self.per_activity_type
+        def per_activity_type
           {
             ADD: all,
             SAVE: [],
@@ -32,32 +32,32 @@ module Entities
           }.deep_stringify_keys
         end
 
-        def self.temperature_equipment
+        def temperature_equipment
           titlecase_options_for(%w[HEATING_MANTLE BLOW_DRYER OIL_BATH ICE_BATH ALUMINIUM_BLOCK WATER_BATH
                                    SAND_BATH])
         end
 
-        def self.pressure_adjustment
+        def pressure_adjustment
           titlecase_options_for(%w[REACTOR])
         end
 
-        def self.ph_adjust_equipment
+        def ph_adjust_equipment
           titlecase_options_for(%w[PIPET])
         end
 
-        def self.motion_equipment
+        def motion_equipment
           titlecase_options_for(%w[STIRRER SHAKER HEATING_SHAKER TUBE BALL_MILLING])
         end
 
-        def self.irradiation_equipment
+        def irradiation_equipment
           titlecase_options_for(%w[ULTRA_SOUND_BATH UV_LAMP LED])
         end
 
-        def self.remove_equipment
+        def remove_equipment
           titlecase_options_for(%w[PUMP TUBE COIL])
         end
 
-        def self.purify_equipment
+        def purify_equipment
           titlecase_options_for(%w[FILTER SEPARATION_FILTER EXTRACTOR SPE_COLUMN FSPE_COLUMN
                                    FLASH_COLUMN DISTILLATION_APPARATUS SEPARATION_FUNNEL BUCHNER_FUNNEL])
         end

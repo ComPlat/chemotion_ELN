@@ -4,26 +4,26 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class Samples < Base
-        def self.remove_sample_types
+        def remove_sample_types
           [{ value: 'MEDIUM', label: 'Medium' },
            { value: 'ADDITIVE', label: 'Solvent (Evaporate)' },
            { value: 'DIVERSE_SOLVENT', label: 'Diverse Solvent' }]
         end
 
-        def self.save_sample_origin_types
+        def save_sample_origin_types
           [{ value: 'ALL', label: 'All' },
            { value: 'SPLIT', label: 'Split' },
            { value: 'PURIFICATION', label: 'Purification' }]
         end
 
-        def self.save_sample_types
+        def save_sample_types
           [{ value: 'PURE', label: 'Pure' },
            { value: 'CRUDE', label: 'Crude' },
            { value: 'MIXTURE', label: 'Mixture' },
            { value: 'INTERMEDIATE', label: 'Intermediate' }]
         end
 
-        def self.preparation_types
+        def preparation_types
           [
             { value: 'DISSOLVED', label: 'Dissolved' },
             { value: 'HOMOGENIZED', label: 'Homogenized' },
