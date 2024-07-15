@@ -261,11 +261,13 @@ export default class ElementsTable extends React.Component {
     const { attachmentTokens } = this.state;
     ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, action_type)
       .then(res => {
-        let alias = attachmentTokens;
-        alias = alias.filter((i, index) => {
-          if (index !== idx) return i;
-        });
-        this.setState({ attachmentTokens: [...alias] });
+        if (action_type == 'revoke') {
+          let alias = attachmentTokens;
+          alias = alias.filter((i, index) => {
+            if (index !== idx) return i;
+          });
+          this.setState({ attachmentTokens: [...alias] });
+        }
       })
       .catch((err) => {
         alert("Revoking token failed! check console to verify!");
@@ -318,7 +320,7 @@ export default class ElementsTable extends React.Component {
                           <div>Research Plan: {item?.alias_researchPlan} </div>
                           <div>Attachment: {item?.alias_attachment_id} </div>
                           <div>App: {item?.alias_app_id} </div>
-                          <div>Upload: {value?.download} </div>
+                          <div>Download: {value?.download} </div>
                           <div>Upload: {value?.upload} </div>
                         </Col>
                         <Col xs={5}>
@@ -327,7 +329,7 @@ export default class ElementsTable extends React.Component {
                           </Button>
 
                           <Button className='btn btn-primary' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'upload')}>
-                            <i class="fa-solid fa-upload"></i>
+                            <i class="fa fa-upload"></i>
                           </Button>
 
                           <Button className='btn btn-success' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'download')}>
@@ -646,7 +648,8 @@ export default class ElementsTable extends React.Component {
     const { filterCreatedAt, ui, attachmentTokens, currentElement } = this.state;
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
-    const { currentTab } = UserStore.getState();
+    const { currentType } = UserStore.getState();
+    console.log(currentType);
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -690,7 +693,7 @@ export default class ElementsTable extends React.Component {
         >
           {
             attachmentTokens?.length > 0 &&
-            currentTab == 1 &&
+            currentType == 'research_plan' &&
             <OverlayTrigger placement="top" overlay={attachmentToolTip}>
               <button
                 disabled={!attachmentTokens?.length}

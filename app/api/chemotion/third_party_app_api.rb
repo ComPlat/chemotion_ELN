@@ -23,7 +23,7 @@ module Chemotion
 
       # desc: define the cache key based on the attachment/user/app ids
       def cache_key
-        @cache_key_user_rsearchPlan ||= "#{@user&.id}/#{@researchPlan&.id}"
+        @cache_key_user_rsearchPlan ||= "#{@user&.id}/#{@collection&.id}/#{@type}"
         @cache_key_attachment_app ||= "#{@app&.id}/#{@attachment&.id}"
         [@cache_key_user_rsearchPlan, @cache_key_attachment_app]
       end
@@ -34,7 +34,8 @@ module Chemotion
           'appID' => params[:appID],
           'userID' => current_user.id,
           'attID' => params[:attID],
-          'researchPlanID' => params[:researchPlanID]
+          'collectionID' => params[:collectionID],
+          'type' => params[:type]
         }
       end
 
@@ -44,15 +45,16 @@ module Chemotion
         @attachment = Attachment.find(payload['attID']&.to_i)
         @user = User.find(payload['userID']&.to_i)
         @app = ThirdPartyApp.find(payload['appID']&.to_i)
-        @researchPlan = ResearchPlan.find(payload['researchPlanID']&.to_i)
+        @collection = Collection.find(payload['collectionID']&.to_i)
+        @type = payload['type']
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end
 
       # desc: decrement the counters / check if token permission is expired
       def update_cache(key)
-        puts key, "KKKKEEEEE"
-        3.times{puts "CHECK\n"}
+        puts cached_token
+        10.times{}
         return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
 
         # TODO: expire token when both counters reach 0
@@ -61,6 +63,7 @@ module Chemotion
 
         cached_token[key] -= 1
         cache.write(cache_key, cached_token)
+        puts cached_token
       end
 
       # desc: return file for download to third party app
@@ -87,7 +90,7 @@ module Chemotion
         { message: 'File uploaded successfully' }
       end
       
-      def encode_and_cache_token_user_researchPlan
+      def encode_and_cache_token_user_researchPlan_with_type
         current_state = cache.read(cache_key[0])
         new_state = if current_state
           idx = current_state.index(cache_key[1])
@@ -108,21 +111,24 @@ module Chemotion
       end
 
       def find_and_update_key_with_request_type(first_level_key, second_level_key, request_type)
-        if(request_type === 'revoke')
-          
-          # delete second level key
-          cache.delete(second_level_key)
-
           # update first level key: remove item from an array!
           second_level_key_list = cache.read(first_level_key);
           previous_length = second_level_key_list.length
+
+        if(request_type === 'revoke')
+          # delete second level key
+          cache.delete(second_level_key)
           second_level_key_list = second_level_key_list.select{ |item| item != second_level_key}
           cache.write(first_level_key, second_level_key_list)
           return previous_length > cache.read(first_level_key).length
           # revoke access: delete token! 
         elsif(request_type === 'upload')
+          update_cache(:upload)
+          return "upload"
           # decreament upload count    
-        elsif(request_type === 'dowload')
+        elsif(request_type === 'download')
+          update_cache(:download)
+          return "download"
           # decreament download count
         end
       end
@@ -138,6 +144,7 @@ module Chemotion
           end
           desc 'download file to 3rd party app'
           get '/', requirements: { token: /.*/ } do
+            puts JsonWebToken.decode(params[:token]), "------"
             download_third_party_app
           end
 
@@ -214,13 +221,14 @@ module Chemotion
       params do
         requires :attID, type: Integer, desc: 'Attachment ID'
         requires :appID, type: Integer, desc: 'id of the third party app'
-        requires :researchPlanID, type: Integer, desc: 'research plan id'
+        requires :collectionID, type: Integer, desc: 'collection id'
+        requires :type, type: String, desc: 'Current active tab type'
       end
 
       get 'token' do
         prepare_payload
         parse_payload
-        encode_and_cache_token_user_researchPlan
+        encode_and_cache_token_user_researchPlan_with_type
         encode_and_cache_token_attachment_app
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
@@ -230,30 +238,27 @@ module Chemotion
       desc 'list of TPA token in a collection'
       params do
         requires :collection_id, type: Integer, desc: 'Collection id'
+        requires :type, type: String, desc: 'Current active tab type'
       end
 
-      get 'collection_research_plans_tpa_tokens' do
-        research_plans = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(params[:collection_id]).research_plans
+      get 'collection_tpa_tokens' do
         token_list = []
-        research_plans.each do |research_plan|
-          cache_user_researchid_keys = cache.read("#{current_user.id}/#{research_plan.id}")
-          puts cache_user_researchid_keys, "valye"
-          if cache_user_researchid_keys != nil
-            cache_user_researchid_keys.each do |token_key|
-              splits = token_key.split("/")
-              app = ThirdPartyApp.find(splits[0])
-              attachment = Attachment.find(splits[1])
-              token_list.push({
-                "#{current_user.id}/#{research_plan.id}/#{token_key}":cache.read(token_key),
-                alias_researchPlan: "#{research_plan.name}",
-                alias_app_id: "#{app.name}",
-                alias_attachment_id: "#{attachment.filename}"
-              })
-            end
+        cache_user_researchid_keys = cache.read("#{current_user.id}/#{params[:collection_id]}/#{params[:type]}")
+        if cache_user_researchid_keys != nil
+          cache_user_researchid_keys.each do |token_key|
+            splits = token_key.split("/")
+            app = ThirdPartyApp.find(splits[0])
+            attachment = Attachment.find(splits[1])
+            token_list.push({
+              "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}":cache.read(token_key),
+              alias_researchPlan: "replace issue",
+              alias_app_id: "#{app.name}",
+              alias_attachment_id: "#{attachment.filename}"
+            })
           end
         end
 
-        {research_plans: research_plans, token_list: token_list}
+        { token_list: token_list}
       end
 
       desc 'Revok an attachment token'
