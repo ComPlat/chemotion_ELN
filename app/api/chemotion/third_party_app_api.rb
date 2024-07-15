@@ -58,17 +58,15 @@ module Chemotion
       def update_cache(key, token)
         parse_payload(token)
         cached_token
-        return error!('Invalid token', 403) if cached_token.nil?  
 
         # TODO: expire token when both counters reach 0
         # IDEA: split counters into two caches?
-        @cached_token[:download].negative? 
-
-        if (@cached_token[:download] < 1 && @cached_token[:upload] < 1)
+        5.times{puts 'here/n'}
+        if (cached_token.nil? || @cached_token[:download] < 1 && @cached_token[:upload] < 1)
           cache.delete(cache_key[1]);
-          return error!("Token #{key} permission expired", 403) 
-        elsif (@cached_token[:download] < 1 || @cached_token[:upload] < 1)
-          return error!("Token #{key} permission expired", 403) 
+          return error!('Invalid token', 403)
+        elsif (@cached_token[key] < 1)
+          return error!("Token #{key} permission expired", 403)   
         else
           @cached_token[key] -= 1
           cache.write(cache_key[1], @cached_token)
@@ -260,8 +258,8 @@ module Chemotion
             splits = token_key.split("/")
             app = ThirdPartyApp.find(splits[1]) rescue nil
             attachment = Attachment.find(splits[2]) rescue nil
-            next unless app && attachment
-            element_details = ResearchPlan.find(params[:elementID])
+            element_details = ResearchPlan.find(params[:elementID]) rescue nil
+            next unless app && attachment && element_details && cache.read(token_key)
             token_list.push({
               "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}":cache.read(token_key),
               alias_element: element_details.name,
