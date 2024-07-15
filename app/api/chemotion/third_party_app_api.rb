@@ -62,8 +62,12 @@ module Chemotion
 
         # TODO: expire token when both counters reach 0
         # IDEA: split counters into two caches?
-        if (@cached_token[:download].negative? && @cached_token[:upload])
+        @cached_token[:download].negative? 
+
+        if (@cached_token[:download] < 1 && @cached_token[:upload] < 1)
           cache.delete(cache_key[1]);
+          return error!("Token #{key} permission expired", 403) 
+        elsif (@cached_token[:download] < 1 || @cached_token[:upload] < 1)
           return error!("Token #{key} permission expired", 403) 
         else
           @cached_token[key] -= 1
