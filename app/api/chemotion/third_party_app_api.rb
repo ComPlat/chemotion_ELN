@@ -18,7 +18,7 @@ module Chemotion
 
       # desc: fetch the token and download/upload counters from the cache
       def cached_token
-        @cached_token ||= cache.read(cache_key)
+        @cached_token ||= cache.read(cache_key[1])
       end
 
       # desc: define the cache key based on the attachment/user/app ids
@@ -52,23 +52,26 @@ module Chemotion
       end
 
       # desc: decrement the counters / check if token permission is expired
-      def update_cache(key)
-        puts cached_token
-        10.times{}
-        return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
+      def update_cache(key, token)
+        parse_payload(token)
+        cached_token
+        return error!('Invalid token', 403) if cached_token.nil?  
 
         # TODO: expire token when both counters reach 0
         # IDEA: split counters into two caches?
-        return error!("Token #{key} permission expired", 403) if cached_token[key].negative?
+        if (@cached_token[:download].negative? && @cached_token[:upload])
+          cache.delete(cache_key[1]);
+          return error!("Token #{key} permission expired", 403) 
+        else
+          @cached_token[key] -= 1
+          cache.write(cache_key[1], @cached_token)
+        end
 
-        cached_token[key] -= 1
-        cache.write(cache_key, cached_token)
-        puts cached_token
       end
 
       # desc: return file for download to third party app
-      def download_third_party_app
-        update_cache(:download)
+      def download_third_party_app(token)
+        update_cache(:download, token)
         content_type 'application/octet-stream'
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         env['api.format'] = :binary
@@ -76,8 +79,8 @@ module Chemotion
       end
 
       # desc: upload file from the third party app
-      def upload_third_party_app
-        update_cache(:upload)
+      def upload_third_party_app(token)
+        update_cache(:upload, token)
         new_attachment = Attachment.new(
           attachable: @attachment.attachable,
           created_by: @attachment.created_by,
@@ -123,11 +126,11 @@ module Chemotion
           return previous_length > cache.read(first_level_key).length
           # revoke access: delete token! 
         elsif(request_type === 'upload')
-          update_cache(:upload)
+          # update_cache(:upload)
           return "upload"
           # decreament upload count    
         elsif(request_type === 'download')
-          update_cache(:download)
+          # update_cache(:download)
           return "download"
           # decreament download count
         end
@@ -144,8 +147,7 @@ module Chemotion
           end
           desc 'download file to 3rd party app'
           get '/', requirements: { token: /.*/ } do
-            puts JsonWebToken.decode(params[:token]), "------"
-            download_third_party_app
+            download_third_party_app(JsonWebToken.decode(params[:token]))
           end
 
           desc 'Upload file from 3rd party app'
@@ -154,7 +156,7 @@ module Chemotion
             optional :attachmentName, type: String, desc: 'Name of the file'
           end
           post '/' do
-            upload_third_party_app
+            upload_third_party_app(JsonWebToken.decode(params[:token]))
           end
         end
       end
@@ -264,7 +266,7 @@ module Chemotion
       desc 'Revok an attachment token'
       params do
         requires :key, type: String, desc: 'unique key for each token sent with get request'
-        requires :action_type, type: String, desc: 'unique key for each token sent with get request', values: ['revoke', 'upload', 'download']
+        requires :action_type, type: String, desc: 'unique key for each token sent with get request', values: ['revoke'] # 'upload', 'download'
       end
 
       put 'update_attachment_token_with_type' do
