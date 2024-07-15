@@ -9,6 +9,7 @@ export default class FocusNovnc extends React.Component {
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
     this.handleCursor = this.handleCursor.bind(this);
+    this.handleForceScreenResizing = this.handleForceScreenResizing.bind(this);
   }
 
   handleFocus() {
@@ -23,8 +24,12 @@ export default class FocusNovnc extends React.Component {
     this.props.handleCursor();
   }
 
+  handleForceScreenResizing() {
+    this.props.handleForceScreenResizing();
+  }
+
   render() {
-    const { connected, isNotFocused, forceCursor } = this.props;
+    const { connected, isNotFocused, forceCursor, isForcedScreenResizing } = this.props;
     const focusedColor = 'btn btn-xs btn-success m-4';
     const blurredColor = 'btn btn-xs btn-danger m-4';
     const normalColor = 'btn btn-xs m-2';
@@ -43,6 +48,19 @@ export default class FocusNovnc extends React.Component {
         disabled={!isNotFocused || !connected}
         onClick={this.handleFocus}
       > {isNotFocused ? 'Focus' : 'Focused'}
+      </Button>
+    );
+    const ScreenResizingBtn = () => (
+      <Button
+        className={(!isForcedScreenResizing || !connected) ? normalColor : focusedColor}
+        disabled={!connected}
+        onClick={this.handleForceScreenResizing}
+        title="Fit width screen"
+        style={{margin : '0 5px 0 5px'}}
+      >
+      <i className="fa fa-desktop" aria-hidden="true" style={{marginRight: '2px'}}/>
+      <i className="fa fa-arrows-alt" aria-hidden="true" />
+
       </Button>
     );
     const UsersConnected = () => (
@@ -68,13 +86,12 @@ export default class FocusNovnc extends React.Component {
           onClick={this.handleCursor}
           title="force mouse cursor"
         >
-          <span className="fa-stack ">
-            <i className="fa fa-desktop" aria-hidden="true" />
-            <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
-          </span>
+          <i className="fa fa-desktop" aria-hidden="true" />
+          <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
         </Button>
 
         {connected ? <UsersConnected /> : null}
+        <ScreenResizingBtn />
       </ButtonToolbar>
 
     );
@@ -85,9 +102,11 @@ FocusNovnc.propTypes = {
   watching: PropTypes.number.isRequired,
   using: PropTypes.number.isRequired,
   isNotFocused: PropTypes.bool.isRequired,
+  isForcedScreenResizing: PropTypes.bool.isRequired,
   connected: PropTypes.bool.isRequired,
   forceCursor: PropTypes.bool.isRequired,
   handleBlur: PropTypes.func.isRequired,
   handleFocus: PropTypes.func.isRequired,
   handleCursor: PropTypes.func.isRequired,
+  handleForceScreenResizing: PropTypes.func.isRequired,
 };

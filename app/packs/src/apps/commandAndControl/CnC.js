@@ -27,6 +27,7 @@ class CnC extends React.Component {
       connected: false,
       rfb: null,
       isNotFocused: true,
+      isForcedScreenResizing: false,
       show: false,
       watching: 0,
       using: 0,
@@ -37,14 +38,14 @@ class CnC extends React.Component {
     };
     this.UserStoreChange = this.UserStoreChange.bind(this);
     this.toggleDeviceList = this.toggleDeviceList.bind(this);
-
     this.connect = this.connect.bind(this);
     this.connected = this.connected.bind(this);
     this.disconnected = this.disconnected.bind(this);
     this.autoDisconnect = this.autoDisconnect.bind(this);
-
+    this.handleScreenSizeChanging = this.handleScreenSizeChanging.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.handleForceScreenResizing = this.handleForceScreenResizing.bind(this);
     this.handleCursor = this.handleCursor.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
@@ -56,18 +57,24 @@ class CnC extends React.Component {
   componentDidMount() {
     DeviceStore.listen(this.UserStoreChange);
     DeviceActions.fetchNoVNCDevices();
+    // Listen for window resize event and handle it accordingly
+    window.addEventListener("resize", this.handleScreenSizeChanging);
   }
 
   shouldComponentUpdate(nextState) {
     return this.state.connected !== nextState.connected
       || this.state.rfb !== nextState.rfb
       || this.state.selected.id !== nextState.selected.id
-      || this.state.isNotFocused !== nextState.isNotFocused;
+      || this.state.isNotFocused !== nextState.isNotFocused
+      || this.state.isForcedScreenResizing !== nextState.isForcedScreenResizing;
   }
 
   componentWillUnmount() {
     DeviceStore.unlisten(this.UserStoreChange);
     this.disconnect();
+
+    // Remove event listener for window resize
+    window.removeEventListener("resize", this.handleScreenSizeChanging);
   }
 
   UserStoreChange(UserStoreState) {
@@ -91,17 +98,73 @@ class CnC extends React.Component {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = false;
+  
+    // Focuses the RFB instance
+    this.state.rfb.focus();
+    this.clearTimers(); // Clear the auto blur and auto disconnect timers
+    this.setState({ rfb: tempRFB, isNotFocused: false, showDeviceList: false });
+
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (this.state.isForcedScreenResizing) {
+      setTimeout(() => {
+        this.handleScreenSizeChanging();
+      }, 1);
+    }
+  }
+
+  /**
+   * Handles the event when the screen size is changing.
+   * If screen resizing is forced, toggles the `scaleViewport` property of the RFB instance.
+   * This is done by setting it to false and then back to true, which triggers a resize.
+   */
+  handleScreenSizeChanging() {
+    // If there is no RFB instance or screen resizing is not forced, return early
+    if (!this.state.rfb || !this.state.isForcedScreenResizing) { return; }
+    const tempRFB = this.state.rfb;
+    // Toggle the `scaleViewport` property of the RFB instance
+    tempRFB.scaleViewport = false;
+    tempRFB.scaleViewport = true;
+
+    this.setState({ rfb: tempRFB });
+  }
+
+  /*
+   * Toggles the `scaleViewport` property of the RFB instance and updates the state accordingly.
+   * Also clears the auto blur and auto disconnect timers and updates the state accordingly.
+   */
+  handleForceScreenResizing() {
+    // If there is no RFB instance, return early
+    if (!this.state.rfb) { return; }
+    // Create a copy of the current RFB instance
+    const tempRFB = this.state.rfb;
+    // Toggle the `scaleViewport` property of the RFB instance
+    tempRFB.scaleViewport = !this.state.isForcedScreenResizing;
+    // Clear the auto blur and auto disconnect timers
     this.clearTimers();
-    this.setState({ rfb: tempRFB, isNotFocused: false });
+    // Update the state with the new RFB instance and toggled `isForcedScreenResizing` property
+    this.setState({
+      rfb: tempRFB,
+      isForcedScreenResizing: !this.state.isForcedScreenResizing 
+    });
   }
 
   handleBlur() {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = true;
+    // Toggle the device list when the screen is blurred
+    // This provides a way to hide the device list when the user is not focused on the screen
+    //this.toggleDeviceList();
     this.clearTimers();
     const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
-    this.setState({ rfb: tempRFB, isNotFocused: true, autoDisconnect: disconnectTime });
+    this.setState({ rfb: tempRFB, isNotFocused: true, showDeviceList: true, autoDisconnect: disconnectTime });
+    
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (this.state.isForcedScreenResizing) {
+      setTimeout(() => {
+        this.handleScreenSizeChanging();
+      }, 1);
+    }
   }
 
   handleCursor() {
@@ -137,12 +200,16 @@ class CnC extends React.Component {
     rfb.viewOnly = true;
     rfb.reconnect = true;
     rfb.show_dot = true;
+    // Prevent the viewport from jumping to the clicked position when in focus mode on the device remote display
+    rfb.focusOnClick = false;
+
     rfb.addEventListener('connect', () => this.connected());
     rfb.addEventListener('disconnect', () => this.disconnected());
     this.setState((prevState) => ({
       ...prevState,
       rfb,
       isNotFocused: true,
+      isForcedScreenResizing: false,
       connections: setInterval(this.fetchConnections, TIME_CONN)
     }));
   }
@@ -184,6 +251,13 @@ class CnC extends React.Component {
 
   toggleDeviceList() {
     const { showDeviceList } = this.state;
+    const { isNotFocused } = this.state;
+
+    // If the device is currently in focus, we want to call handleBlur
+    // so that the device is blurred when the device list is toggled.
+    if (!this.state.isNotFocused) {
+      this.handleBlur();
+    }
     this.setState({
       showDeviceList: !showDeviceList,
       indicatorClassName: showDeviceList ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left',
@@ -246,7 +320,7 @@ class CnC extends React.Component {
   render() {
     const {
       devices, selected, showDeviceList,
-      isNotFocused, connected, watching, using, forceCursor
+      isNotFocused, isForcedScreenResizing, connected, watching, using, forceCursor
     } = this.state;
 
     return (
@@ -256,19 +330,21 @@ class CnC extends React.Component {
             <Navigation toggleDeviceList={this.toggleDeviceList} />
           </Row>
           <Row className="card-content container-fluid">
-            {showDeviceList ? this.tree(devices, selected.id) : null}
+            {showDeviceList && isNotFocused ? this.tree(devices, selected.id) : null}
             <Col className="small-col main-content">
               <FocusNovnc
                 isNotFocused={isNotFocused}
+                isForcedScreenResizing={isForcedScreenResizing}
                 handleFocus={this.handleFocus}
                 handleBlur={this.handleBlur}
+                handleForceScreenResizing={this.handleForceScreenResizing}
                 connected={connected}
                 watching={watching}
                 using={using}
                 forceCursor={forceCursor}
                 handleCursor={this.handleCursor}
               />
-              <div
+              <div 
                 className={forceCursor ? 'force-mouse-pointer' : ''}
                 ref={(ref) => { this.canvas = ref; }}
                 onMouseEnter={this.handleMouseEnter}
