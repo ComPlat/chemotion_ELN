@@ -59,9 +59,6 @@ module Chemotion
         parse_payload(token)
         cached_token
 
-        # TODO: expire token when both counters reach 0
-        # IDEA: split counters into two caches?
-        5.times{puts 'here/n'}
         if (cached_token.nil? || @cached_token[:download] < 1 && @cached_token[:upload] < 1)
           cache.delete(cache_key[1]);
           return error!('Invalid token', 403)
@@ -71,7 +68,6 @@ module Chemotion
           @cached_token[key] -= 1
           cache.write(cache_key[1], @cached_token)
         end
-
       end
 
       # desc: return file for download to third party app
@@ -98,6 +94,7 @@ module Chemotion
         { message: 'File uploaded successfully' }
       end
       
+      # store token values if updated
       def encode_and_cache_token_user_collection_with_type
         current_state = cache.read(cache_key[0])
         new_state = if current_state
@@ -109,6 +106,7 @@ module Chemotion
         cache.write(cache_key[0], new_state)
       end
 
+      # store token against cache key
       def encode_and_cache_token_attachment_app(payload = @payload)
         @token = JsonWebToken.encode(payload, expiry_time)
         cache.write(
@@ -118,6 +116,7 @@ module Chemotion
         )
       end
 
+      # update values through keys in cache for cache 1 and cache 2
       def find_and_update_key_with_request_type(first_level_key, second_level_key, request_type)
           # update first level key: remove item from an array!
           second_level_key_list = cache.read(first_level_key);
@@ -129,15 +128,6 @@ module Chemotion
           second_level_key_list = second_level_key_list.select{ |item| item != second_level_key}
           cache.write(first_level_key, second_level_key_list)
           return previous_length > cache.read(first_level_key).length
-          # revoke access: delete token! 
-        elsif(request_type === 'upload')
-          # update_cache(:upload)
-          return "upload"
-          # decreament upload count    
-        elsif(request_type === 'download')
-          # update_cache(:download)
-          return "download"
-          # decreament download count
         end
       end
 
@@ -253,29 +243,32 @@ module Chemotion
       get 'collection_tpa_tokens' do
         token_list = []
         cache_user_researchid_keys = cache.read("#{current_user.id}/#{params[:collection_id]}/#{params[:type]}")
-        if cache_user_researchid_keys != nil
+        if cache_user_researchid_keys
           cache_user_researchid_keys.each do |token_key|
             splits = token_key.split("/")
-            app = ThirdPartyApp.find(splits[1]) rescue nil
-            attachment = Attachment.find(splits[2]) rescue nil
-            element_details = ResearchPlan.find(params[:elementID]) rescue nil
-            next unless app && attachment && element_details && cache.read(token_key)
+        
+            element_details = ResearchPlan.find_by(id: splits[0])
+            app = ThirdPartyApp.find_by(id: splits[1])
+            attachment = Attachment.find_by(id: splits[2])
+            cached_value = cache.read(token_key)
+        
+            next unless app && attachment && element_details && cached_value
+        
             token_list.push({
-              "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}":cache.read(token_key),
+              "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}": cached_value,
               alias_element: element_details.name,
-              alias_app_id: "#{app.name}",
-              alias_attachment_id: "#{attachment.filename}"
+              alias_app_id: app.name,
+              alias_attachment_id: attachment.filename
             })
           end
         end
-
         { token_list: token_list}
       end
 
       desc 'Revok an attachment token'
       params do
         requires :key, type: String, desc: 'unique key for each token sent with get request'
-        requires :action_type, type: String, desc: 'unique key for each token sent with get request', values: ['revoke'] # 'upload', 'download'
+        requires :action_type, type: String, desc: 'unique key for each token sent with get request', values: ['revoke']
       end
 
       put 'update_attachment_token_with_type' do
