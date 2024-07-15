@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CellLine from 'src/models/cellLine/CellLine'
+import CellLine from 'src/models/cellLine/CellLine';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class BaseFetcher {
@@ -66,7 +66,6 @@ export default class BaseFetcher {
     let filters;
     let reaction;
     let sortColumn;
-
     switch (type) {
       case 'samples':
         addQuery = `&product_only=${queryParams.productOnly || false}`

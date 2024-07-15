@@ -301,7 +301,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
                   <>
                     {downloadButton(attachment)}
                     {thirdPartyAppButton(
-                      this.props.researchPlan.id,
                       attachment,
                       this.thirdPartyApps,
                     )}

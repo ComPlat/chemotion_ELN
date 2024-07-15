@@ -693,7 +693,6 @@ export default class ElementsTable extends React.Component {
         >
           {
             attachmentTokens?.length > 0 &&
-            currentType == 'research_plan' &&
             <OverlayTrigger placement="top" overlay={attachmentToolTip}>
               <button
                 disabled={!attachmentTokens?.length}

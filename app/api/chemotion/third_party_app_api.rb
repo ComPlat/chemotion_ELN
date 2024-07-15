@@ -269,8 +269,8 @@ module Chemotion
 
       put 'update_attachment_token_with_type' do
         splits = params[:key].split('/')
-        first_level_key = "#{splits[0]}/#{splits[1]}"
-        second_level_key = "#{splits[2]}/#{splits[3]}"
+        first_level_key = "#{splits[0]}/#{splits[1]}/#{splits[2]}"
+        second_level_key = "#{splits[3]}/#{splits[4]}"
 
         status = find_and_update_key_with_request_type(first_level_key, second_level_key, params[:action_type])
         {status: status}

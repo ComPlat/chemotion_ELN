@@ -318,13 +318,13 @@ export const sortingAndFilteringUI = (
   </div>
 );
 
-export const thirdPartyAppButton = (researchPlanId, attachment, options) => {
+export const thirdPartyAppButton = (attachment, options) => {
 
   const handleFetchAttachToken = (option) => {
     const { currentCollection } = UIStore.getState();
     ThirdPartyAppFetcher.fetchAttachmentToken(currentCollection.id, attachment.id, option.id)
       .then((result) => {
-        // ElementActions.fetchAttachmentTokens(currentCollection.id);
+        ElementActions.fetchAttachmentTokens(currentCollection.id);
         window.open(result, '_blank');
       });
     // disabled={!isImageFile(attachment.filename) || attachment.isNew}
