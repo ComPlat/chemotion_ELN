@@ -113,6 +113,8 @@ export default class ElementsList extends React.Component {
     UIActions.setPagination({ type, page });
 
     KeyboardActions.contextChange(type);
+
+
   }
 
   onChange(state) {
@@ -187,6 +189,10 @@ export default class ElementsList extends React.Component {
     // could not use shouldComponentUpdate because state.totalCheckedElements
     // has already changed independently of setstate
     if (forceUpdate) { this.forceUpdate(); }
+
+    // tpa token call
+    const uistoreContainer = UIStore.getState();
+    ElementActions.fetchAttachmentTokens(uistoreContainer?.currentCollection?.id);
   }
 
   handleRemoveSearchResult(searchStore) {
