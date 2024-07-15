@@ -261,13 +261,11 @@ export default class ElementsTable extends React.Component {
     const { attachmentTokens } = this.state;
     ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, action_type)
       .then(res => {
-        if (action_type == 'revoke') {
-          let alias = attachmentTokens;
-          alias = alias.filter((i, index) => {
-            if (index !== idx) return i;
-          });
-          this.setState({ attachmentTokens: [...alias] });
-        }
+        let alias = attachmentTokens;
+        alias = alias.filter((i, index) => {
+          if (index !== idx) return i;
+        });
+        this.setState({ attachmentTokens: [...alias] });
       })
       .catch((err) => {
         alert("Revoking token failed! check console to verify!");
@@ -744,7 +742,6 @@ export default class ElementsTable extends React.Component {
       moleculeSort,
       elementsGroup,
     } = this.state;
-    console.log(currentElement);
     const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
 

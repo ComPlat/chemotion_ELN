@@ -22,8 +22,8 @@ import {
   sortingAndFilteringUI,
   formatFileSize,
   attachmentThumbnail,
-  thirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
+import ThirdPartyAppButton from 'src/apps/mydb/elements/list/ThirdPartyAppButton';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
 
@@ -300,10 +300,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
-                    {thirdPartyAppButton(
-                      attachment,
-                      this.thirdPartyApps,
-                    )}
+
+                    <ThirdPartyAppButton
+                      attachment={attachment}
+                      options={this.thirdPartyApps}
+                    />
                     {editButton(
                       attachment,
                       extension,

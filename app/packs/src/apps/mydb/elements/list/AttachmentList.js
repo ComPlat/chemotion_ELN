@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
 } from 'react-bootstrap';
@@ -318,37 +318,3 @@ export const sortingAndFilteringUI = (
     </div>
   </div>
 );
-
-export const thirdPartyAppButton = (attachment, options) => {
-
-  const handleFetchAttachToken = (option) => {
-    const { currentCollection } = UIStore.getState();
-    const { currentElement } = ElementStore.getState();
-    ThirdPartyAppFetcher.fetchAttachmentToken(currentCollection?.id, attachment.id, option.id, currentElement?.id)
-      .then((result) => {
-        console.log(currentElement);
-        ElementActions.fetchCollectionAttachmentTokens(currentCollection?.id, currentElement?.id);
-        window.open(result, '_blank');
-      });
-    // disabled={!isImageFile(attachment.filename) || attachment.isNew}
-  };
-
-  return (
-    <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
-      <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
-        <i className="fa  fa-external-link " aria-hidden="true" />
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        {options.map((option) => (
-          <MenuItem
-            key={uuid.v4()}
-            eventKey={option.id}
-            onClick={() => handleFetchAttachToken(option)}
-          >
-            {option.name}
-          </MenuItem>
-        ))}
-      </Dropdown.Menu>
-    </Dropdown>
-  );
-};
