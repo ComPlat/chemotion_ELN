@@ -20,8 +20,8 @@ module ReactionProcessEditor
         global: SELECT_OPTIONS::Conditions::GLOBAL_DEFAULTS,
         user: current_user.reaction_process_defaults&.default_conditions.to_h,
         select_options: {
-          activity_type_equipment: SELECT_OPTIONS::Equipment.per_activity_type,
-          condition_additional_information: SELECT_OPTIONS::Conditions.additional_information,
+          activity_type_equipment: SELECT_OPTIONS::Equipment.instance.per_activity_type,
+          condition_additional_information: SELECT_OPTIONS::Conditions.instance.additional_information,
         },
       }.deep_stringify_keys }
     end
