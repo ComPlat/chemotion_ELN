@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar } from 'react-bootstrap';
+import { Navbar } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -38,9 +38,11 @@ export default class Navigation extends React.Component {
     this.props.toggleDeviceList();
   }
 
-  navHeader() {
+  render() {
+    const { currentUser } = this.state;
+
     return (
-      <Navbar.Header className="collec-tree">
+      <Navbar>
         <Navbar.Text>
           <i
             className="fa fa-list"
@@ -48,27 +50,15 @@ export default class Navigation extends React.Component {
             role='button'
           />
         </Navbar.Text>
-        <Navbar.Text />
         <NavHead />
-      </Navbar.Header>
-    );
-  }
-
-  render() {
-    const { modalProps } = this.state;
-
-    return this.state.currentUser ? (
-      <div>
-        {this.navHeader()}
-        <UserAuth />
-        <div style={{ clear: 'both' }} />
-      </div>
-    ) : (
-      <div className="navbar-custom" >
-        {this.navHeader()}
-        <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
-        <div style={{ clear: 'both' }} />
-      </div>
+        <div className="ms-auto">
+          {
+            currentUser
+              ? <UserAuth />
+              : <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
+          }
+        </div>
+      </Navbar>
     );
   }
 }

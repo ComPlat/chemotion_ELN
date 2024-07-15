@@ -1,6 +1,6 @@
 import React from 'react';
 import RFB from '@novnc/novnc/lib/rfb';
-import { Row, Col } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 import { uniq } from 'lodash';
 
 import DeviceActions from 'src/stores/alt/actions/UserActions';
@@ -9,7 +9,6 @@ import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
 import Navigation from 'src/apps/commandAndControl/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { ConnectedBtn, DisconnectedBtn } from 'src/apps/commandAndControl/NovncStatus';
-import Grid from 'src/components/legacyBootstrap/Grid'
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;
@@ -99,7 +98,7 @@ class CnC extends React.Component {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = false;
-  
+
     // Focuses the RFB instance
     this.state.rfb.focus();
     this.clearTimers(); // Clear the auto blur and auto disconnect timers
@@ -145,7 +144,7 @@ class CnC extends React.Component {
     // Update the state with the new RFB instance and toggled `isForcedScreenResizing` property
     this.setState({
       rfb: tempRFB,
-      isForcedScreenResizing: !this.state.isForcedScreenResizing 
+      isForcedScreenResizing: !this.state.isForcedScreenResizing
     });
   }
 
@@ -159,7 +158,7 @@ class CnC extends React.Component {
     this.clearTimers();
     const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
     this.setState({ rfb: tempRFB, isNotFocused: true, showDeviceList: true, autoDisconnect: disconnectTime });
-    
+
     // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
     if (this.state.isForcedScreenResizing) {
       setTimeout(() => {
@@ -290,8 +289,7 @@ class CnC extends React.Component {
         <div className="tree-view">
           <div className="title" style={{ backgroundColor: 'white' }}>
             <i className="fa fa-list" />
-            {' '}
-&nbsp;&nbsp; Devices
+            <span className="ms-2">Devices</span>
           </div>
         </div>
         <div className="tree-wrapper">
@@ -308,8 +306,11 @@ class CnC extends React.Component {
 
               >
                 {device.name}
-                {selectedId === device.id && this.state.connected ? <ConnectedBtn /> : null}
-                {selectedId === device.id && !this.state.connected ? <DisconnectedBtn /> : null}
+                {selectedId === device.id && (
+                  this.state.connected
+                    ? <ConnectedBtn />
+                    : <DisconnectedBtn />
+                )}
               </div>
             </div>
           ))}
@@ -325,36 +326,34 @@ class CnC extends React.Component {
     } = this.state;
 
     return (
-      <div>
-        <Grid fluid>
-          <Row className="card-navigation">
-            <Navigation toggleDeviceList={this.toggleDeviceList} />
-          </Row>
-          <Row className="card-content container-fluid">
-            {showDeviceList && isNotFocused ? this.tree(devices, selected.id) : null}
-            <Col className="small-col main-content">
-              <FocusNovnc
-                isNotFocused={isNotFocused}
-                isForcedScreenResizing={isForcedScreenResizing}
-                handleFocus={this.handleFocus}
-                handleBlur={this.handleBlur}
-                handleForceScreenResizing={this.handleForceScreenResizing}
-                connected={connected}
-                watching={watching}
-                using={using}
-                forceCursor={forceCursor}
-                handleCursor={this.handleCursor}
-              />
-              <div 
-                className={forceCursor ? 'force-mouse-pointer' : ''}
-                ref={(ref) => { this.canvas = ref; }}
-                onMouseEnter={this.handleMouseEnter}
-                onMouseLeave={this.handleMouseLeave}
-              />
-            </Col>
-          </Row>
-        </Grid>
-      </div>
+      <Container>
+        <Row className="card-navigation">
+          <Navigation toggleDeviceList={this.toggleDeviceList} />
+        </Row>
+        <Row className="card-content container-fluid">
+          {showDeviceList && isNotFocused ? this.tree(devices, selected.id) : null}
+          <Col className="small-col main-content">
+            <FocusNovnc
+              isNotFocused={isNotFocused}
+              isForcedScreenResizing={isForcedScreenResizing}
+              handleFocus={this.handleFocus}
+              handleBlur={this.handleBlur}
+              handleForceScreenResizing={this.handleForceScreenResizing}
+              connected={connected}
+              watching={watching}
+              using={using}
+              forceCursor={forceCursor}
+              handleCursor={this.handleCursor}
+            />
+            <div
+              className={forceCursor ? 'force-mouse-pointer' : ''}
+              ref={(ref) => { this.canvas = ref; }}
+              onMouseEnter={this.handleMouseEnter}
+              onMouseLeave={this.handleMouseLeave}
+            />
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }
