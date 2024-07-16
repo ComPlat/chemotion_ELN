@@ -99,9 +99,7 @@ module Chemotion
         prepare_payload
         parse_payload
         encode_and_cache_token
-        attachment = Attachment.find(params['attID'])
-
-        return error!('No read access to attachment', 403) unless read_access?(attachment, @current_user)
+        return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
