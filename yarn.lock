@@ -12326,13 +12326,6 @@ react-transition-group@^4.4.0, react-transition-group@^4.4.5:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-react-treeview@0.4.7:
-  version "0.4.7"
-  resolved "https://registry.npmjs.org/react-treeview/-/react-treeview-0.4.7.tgz"
-  integrity sha1-9kfgT3BJbrEfsJEsNRh+gOtg1Fg=
-  dependencies:
-    prop-types "^15.5.8"
-
 react-ui-tree@3.1.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/react-ui-tree/-/react-ui-tree-3.1.0.tgz"
