@@ -25,7 +25,7 @@ const ThirdPartyAppButton = ({ attachment, options }) => {
   const tpaTokenExists = (attachment_id, tpa) => {
     const { attachmentTokens, currentElement } = ElementStore.getState();
     let status = false;
-    attachmentTokens.map((item) => {
+    attachmentTokens?.map((item) => {
       const keySplit = Object.keys(item)[0].split("/");
       const attachment_id_match = keySplit[5] == attachment_id;
       const selected_element = keySplit[3] == currentElement.id;

@@ -266,6 +266,9 @@ export default class ElementsTable extends React.Component {
           if (index !== idx) return i;
         });
         this.setState({ attachmentTokens: [...alias] });
+        // tpa token call
+        const uistoreContainer = UIStore.getState();
+        ElementActions.fetchCollectionAttachmentTokens(uistoreContainer?.currentCollection?.id);
       })
       .catch((err) => {
         alert("Revoking token failed! check console to verify!");

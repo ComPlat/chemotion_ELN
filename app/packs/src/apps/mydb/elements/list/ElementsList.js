@@ -189,11 +189,6 @@ export default class ElementsList extends React.Component {
     // could not use shouldComponentUpdate because state.totalCheckedElements
     // has already changed independently of setstate
     if (forceUpdate) { this.forceUpdate(); }
-
-    // tpa token call
-    const uistoreContainer = UIStore.getState();
-    const { currentElement } = ElementStore.getState();
-    ElementActions.fetchCollectionAttachmentTokens(uistoreContainer?.currentCollection?.id, currentElement?.id);
   }
 
   handleRemoveSearchResult(searchStore) {
