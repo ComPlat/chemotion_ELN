@@ -113,7 +113,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     let columnDefs = gridApi.getColumnDefs();
     columnDefs.push(this.buildColumn(columnName));
-    gridApi.setColumnDefs(columnDefs);
+    gridApi.setGridOption('columnDefs', columnDefs);
     field.value.columns = gridApi.getColumnDefs();
     field.value.columnStates = gridApi.getColumnState();
 
@@ -127,7 +127,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     let columnDefs = gridApi.getColumnDefs();
     let columnChange = columnDefs.find(o => o.colId === colId);
     columnChange.headerName = columnName;
-    gridApi.setColumnDefs(columnDefs);
+    gridApi.setGridOption('columnDefs', columnDefs);
     field.value.columns = gridApi.getColumnDefs();
     field.value.columnStates = gridApi.getColumnState();
 
@@ -308,7 +308,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         return value.colId !== columnClicked;
       });
 
-      gridApi.setColumnDefs(columnDefs);
+      gridApi.setGridOption('columnDefs', columnDefs);
       field.value.columns = gridApi.getColumnDefs();
       field.value.columnStates = gridApi.getColumnState();
 

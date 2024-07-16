@@ -6,8 +6,8 @@ import 'whatwg-fetch';
 
 import AbbreviationManagement from 'src/apps/chemscanner/components/AbbreviationManagement';
 
-function RemoveRowBtn({ onClick, node }) {
-  const col = node.columnApi.getColumn('abb');
+function RemoveRowBtn({ onClick, node, api }) {
+  const col = api.getColumn('abb');
   const { headerName } = col.colDef;
   const newAbb = headerName === 'Abbreviation';
 
@@ -25,6 +25,7 @@ function RemoveRowBtn({ onClick, node }) {
 RemoveRowBtn.propTypes = {
   onClick: PropTypes.func.isRequired,
   node: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
+  api: PropTypes.object.isRequired // eslint-disable-line react/forbid-prop-types
 };
 
 export default class AbbreviationManagementContainer extends React.Component {
