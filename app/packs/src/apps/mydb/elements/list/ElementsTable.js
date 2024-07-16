@@ -298,7 +298,7 @@ export default class ElementsTable extends React.Component {
 
   attachmentTokenModal = () => {
     const { showAttachmentTokenModal, attachmentTokens } = this.state;
-    // const { selecteds } = ElementStore.getState();
+    const { currentElement } = ElementStore.getState();
     return (
       <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
         <Modal.Header closeButton />
@@ -316,7 +316,9 @@ export default class ElementsTable extends React.Component {
                   attachmentTokens?.length > 0 ? attachmentTokens.map((item, idx) => {
                     const key = Object.keys(item);
                     const value = item[key[0]];
-                    return (
+                    const key_split = key[0].split("/");
+
+                    return currentElement.id == key_split[3] && (
                       <Row style={{ marginBottom: 10 }}>
                         <Col xs={10}>
 

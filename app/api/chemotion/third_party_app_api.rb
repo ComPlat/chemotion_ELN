@@ -237,7 +237,6 @@ module Chemotion
       params do
         requires :collection_id, type: Integer, desc: 'Collection id'
         requires :type, type: String, desc: 'Current active tab type'
-        requires :elementID, type: String, desc: 'Current active tab type'
       end
 
       get 'collection_tpa_tokens' do
@@ -253,7 +252,6 @@ module Chemotion
             cached_value = cache.read(token_key)
         
             next unless app && attachment && element_details && cached_value
-        
             token_list.push({
               "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}": cached_value,
               alias_element: element_details.name,
