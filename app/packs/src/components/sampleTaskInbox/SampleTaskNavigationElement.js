@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { observer } from 'mobx-react';
-import { Button } from 'react-bootstrap';
+import { Button, Badge } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const SampleTaskNavigationElement = ({}) => {
@@ -16,32 +16,21 @@ const SampleTaskNavigationElement = ({}) => {
 
   return (
     <Button
-      id="inbox-button"
       title={title}
       variant="light"
       size="xs"
       onClick={sampleTasksStore.showSampleTaskInbox}
-      style={{
-        width: '40px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
+      className="position-relative"
     >
       <i className="fa fa-image" />
       {sampleTasksStore.openSampleTaskCount > 0 && (
-        <span
-          className="badge badge-pill"
-          style={{
-            top: '25px',
-            left: '25px',
-            fontSize: '8px',
-            position: 'absolute',
-            display: 'flex',
-          }}
+        <Badge
+          pill
+          bg="secondary"
+          className="position-absolute top-100 start-100 translate-middle"
         >
           {sampleTasksStore.openSampleTaskCount}
-        </span>
+        </Badge>
       )}
     </Button>
   );
