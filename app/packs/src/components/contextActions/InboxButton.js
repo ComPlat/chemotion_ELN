@@ -44,7 +44,6 @@ export default class InboxButton extends React.Component {
 
     return (
       <Button
-        id="inbox-button"
         variant={btnStyle}
         onClick={InboxActions.toggleInboxModal}
         className="position-relative"
