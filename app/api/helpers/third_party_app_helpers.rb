@@ -57,7 +57,7 @@ module ThirdPartyAppHelpers
   # desc: return file for download to third party app
   def download_third_party_app
     update_cache(:download)
-    return error!('No read access to attachment', 403) unless read_access?(attachment, user_from_token)
+    return error!('No read access to attachment', 403) unless read_access?(attachment, @user)
 
     content_type 'application/octet-stream'
     header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
@@ -68,8 +68,7 @@ module ThirdPartyAppHelpers
   # desc: upload file from the third party app
   def upload_third_party_app
     update_cache(:upload)
-
-    return error!('No write access to attachment', 403) unless write_access?(@attachment, user_from_token)
+    return error!('No write access to attachment', 403) unless write_access?(@attachment, @user)
 
     new_attachment = Attachment.new(
       attachable: @attachment.attachable,
@@ -89,11 +88,5 @@ module ThirdPartyAppHelpers
       { token: @token, download: 3, upload: 10 },
       expires_at: expiry_time,
     )
-  end
-
-  def user_from_token
-    decoded_token = JsonWebToken.decode(params['token'])
-    user_id = decoded_token[:userID]
-    User.find(user_id)
   end
 end
