@@ -8,21 +8,38 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
-const { currentCollection } = UIStore.getState();
-const { currentElement } = ElementStore.getState();
 
-const ThirdPartyAppButton = ({ attachment, options, attachmentsData }) => {
-  const fetchListOfTokens = async () => {
-    await ElementActions.fetchCollectionAttachmentTokens(currentCollection?.id, currentElement?.id);
-  };
+const ThirdPartyAppButton = ({ attachment, options }) => {
 
   const handleFetchAttachToken = (option) => {
-    ThirdPartyAppFetcher.fetchAttachmentToken(currentCollection?.id, attachment.id, option.id, currentElement?.id)
+    const { currentElement } = ElementStore.getState();
+    const { currentCollection } = UIStore.getState();
+    ThirdPartyAppFetcher.fetchAttachmentToken(currentCollection?.id, attachment.id, option.id, currentElement.id)
       .then((result) => {
-        fetchListOfTokens();
+        ElementActions.fetchCollectionAttachmentTokens(currentCollection?.id, currentElement.id);
         window.open(result, '_blank');
       });
     // disabled={!isImageFile(attachment.filename) || attachment.isNew}
+  };
+
+  const tpaTokenExists = (attachment_id, tpa) => {
+    const { attachmentTokens, currentElement } = ElementStore.getState();
+    let status = false;
+    attachmentTokens.map((item) => {
+      const keySplit = Object.keys(item)[0].split("/");
+      const attachment_id_match = keySplit[5] == attachment_id;
+      const selected_element = keySplit[3] == currentElement.id;
+      const tpa_name = item.alias_app_id == tpa.name;
+
+      if (selected_element) {
+        if (tpa_name) {
+          if (attachment_id_match) {
+            status = true;
+          }
+        }
+      };
+    });
+    return status;
   };
 
   return (
@@ -32,13 +49,21 @@ const ThirdPartyAppButton = ({ attachment, options, attachmentsData }) => {
       </Dropdown.Toggle>
       <Dropdown.Menu>
         {options.map((option) => {
+          const status = tpaTokenExists(attachment.id, option);
           return (
             < MenuItem
               key={uuid.v4()}
               eventKey={option.id}
               onClick={() => handleFetchAttachToken(option)}
             >
-              {option.name}
+              <div style={{ display: 'flex' }}>
+                <div style={{ width: '90%' }}>{option.name}</div>
+                <div >
+                  {status && <i className="fa fa-key" />}
+
+                </div>
+              </div>
+
             </MenuItem>
           );
         })}

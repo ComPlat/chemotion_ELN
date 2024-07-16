@@ -656,9 +656,7 @@ class ElementStore {
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
     const uistoreContainer = UIStore.getState();
-    const { currentElement } = ElementStore.getState();
-
-    ElementActions.fetchCollectionAttachmentTokens(uistoreContainer.currentCollection.id, currentElement?.id);
+    ElementActions.fetchCollectionAttachmentTokens(uistoreContainer.currentCollection.id);
   }
 
   handlefetchCellLinesByCollectionId(result) {

@@ -52,8 +52,8 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchCollectionAttachmentTokensByCollectionId(collection_id, currentType, currentElement) {
-    const queryParams = new URLSearchParams({ collection_id, type: currentType, elementID: currentElement });
+  static fetchCollectionAttachmentTokensByCollectionId(collection_id, currentType, elementID) {
+    const queryParams = new URLSearchParams({ collection_id, type: currentType, elementID });
     const url = `${TPA_ENDPOINT}/collection_tpa_tokens?${queryParams}`;
     return fetch(url, {
       credentials: 'same-origin'

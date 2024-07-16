@@ -59,8 +59,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
-    const { attachmentTokens } = ElementStore.getState();
-    console.log(attachmentTokens);
   }
 
   componentDidUpdate(prevProps) {
