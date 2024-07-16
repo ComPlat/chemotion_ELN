@@ -37,10 +37,8 @@ import DeviceControl from 'src/models/DeviceControl';
 import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
-import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
 import _ from 'lodash';
 
@@ -1074,7 +1072,7 @@ class ElementActions {
   }
 
   fetchCollectionAttachmentTokens(collection_id, elementID) {
-    const { currentType } = ElementStore.getState();
+    const { currentType, } = ElementStore.getState();
     return (dispatch) => {
       ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(collection_id, currentType, elementID).then((result) => {
         dispatch(result);

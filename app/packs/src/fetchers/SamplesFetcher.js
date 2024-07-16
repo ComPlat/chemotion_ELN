@@ -52,6 +52,7 @@ export default class SamplesFetcher {
   static fetchByCollectionId(id, queryParams = {}, isSync = false, moleculeSort = false) {
     const updatedQueryParams = { ...queryParams, moleculeSort };
     return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, isSync, 'samples', Sample);
+
   }
 
   static findByShortLabel(shortLabel) {
@@ -78,8 +79,8 @@ export default class SamplesFetcher {
       .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
         .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
 
     if (files.length > 0) {
       const tasks = [];
@@ -103,8 +104,8 @@ export default class SamplesFetcher {
     }).then((response) => response.json())
       .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
     if (files.length > 0) {
       const tasks = [];
       files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file)));

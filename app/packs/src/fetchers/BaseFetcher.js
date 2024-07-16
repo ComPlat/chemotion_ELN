@@ -120,6 +120,8 @@ export default class BaseFetcher {
         perPage: parseInt(response.headers.get('X-Per-Page'), 10)
       }))
     )).catch((errorMessage) => { console.log(errorMessage); });
+
+
   }
 
   static getAttachments(container, attachments = []) {

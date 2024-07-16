@@ -6,7 +6,6 @@ import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
-import ThirdPartyAppFetcher from './ThirdPartyAppFetcher';
 
 export default class ResearchPlansFetcher {
   static fetchById(id) {

@@ -34,7 +34,8 @@ const collectionShow = (e) => {
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
         collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me });
+        isSync: !!collection.is_sync_to_me
+      });
     } else {
       if (currentSearchByID) {
         UIActions.clearSearchById();
@@ -43,7 +44,7 @@ const collectionShow = (e) => {
     }
 
     // if (!e.params['sampleID'] && !e.params['reactionID'] &&
-        // !e.params['wellplateID'] && !e.params['screenID']) {
+    // !e.params['wellplateID'] && !e.params['screenID']) {
     UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
@@ -79,7 +80,8 @@ const scollectionShow = (e) => {
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
         collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me });
+        isSync: !!collection.is_sync_to_me
+      });
     } else {
       UIActions.selectSyncCollection(collection);
       if (currentSearchByID) {
@@ -123,16 +125,16 @@ const sampleShowOrNew = (e) => {
   // UIActions.selectTab(1);
 };
 
-const cellLineShowOrNew = (e) => { 
-  if(e.params.new_cellLine||(e.params.new_cellLine===undefined&&e.params.cell_lineID==="new")){
-     ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
-  }else{
-    if(e.params.cellLineID){
-     e.params.cellLineId=e.params.cellLineID
+const cellLineShowOrNew = (e) => {
+  if (e.params.new_cellLine || (e.params.new_cellLine === undefined && e.params.cell_lineID === "new")) {
+    ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
+  } else {
+    if (e.params.cellLineID) {
+      e.params.cellLineId = e.params.cellLineID;
     }
-     ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
+    ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
   }
-}
+};
 
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
@@ -229,16 +231,16 @@ const researchPlanShowOrNew = (e) => {
 
 const metadataShowOrNew = (e) => {
   const { collectionID } = e.params;
-  const { selecteds, activeKey } = ElementStore.getState()
+  const { selecteds, activeKey } = ElementStore.getState();
 
   // check if the metadata detail tab is alredy open
-  const index = selecteds.findIndex(el => el.collection_id == collectionID)
+  const index = selecteds.findIndex(el => el.collection_id == collectionID);
   if (index < 0) {
     // not found, fetch the metadata from the server
     ElementActions.fetchMetadata(collectionID);
   } else if (index != activeKey) {
     // not active, activate tab
-    DetailActions.select(index)
+    DetailActions.select(index);
   }
 };
 
@@ -247,7 +249,7 @@ const genericElShowOrNew = (e, type) => {
   let itype = '';
   if (typeof type === 'undefined' || typeof type === 'object' || type == null || type == '') {
     const keystr = e.params && Object.keys(e.params).filter(k => k != 'collectionID' && k.includes('ID'));
-    itype = keystr && keystr[0] && keystr[0].slice(0,-2);
+    itype = keystr && keystr[0] && keystr[0].slice(0, -2);
   } else {
     itype = type;
   }
@@ -258,14 +260,14 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
-    
+
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };
 
 const elementShowOrNew = (e) => {
   const type = e.type;
-  switch(type) {
+  switch (type) {
     case 'sample':
       sampleShowOrNew(e);
       break;

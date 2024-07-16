@@ -77,6 +77,8 @@ export default class ElementsList extends React.Component {
 
     this.initState();
 
+
+
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -217,6 +219,7 @@ export default class ElementsList extends React.Component {
 
   initState() {
     this.onChange(ElementStore.getState());
+
   }
 
   render() {

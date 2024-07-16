@@ -30,7 +30,6 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
-import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
@@ -647,6 +646,10 @@ class ElementStore {
 
   handleFetchWellplatesByCollectionId(result) {
     this.state.elements.wellplates = result;
+    this.state.attachmentTokens = [];
+    // call tpa
+    const { currentCollection } = UIStore.getState();
+    ElementActions.fetchCollectionAttachmentTokens(currentCollection.id, this.state?.currentElement?.id);
   }
 
   handleFetchScreensByCollectionId(result) {
@@ -655,8 +658,10 @@ class ElementStore {
 
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
-    const uistoreContainer = UIStore.getState();
-    ElementActions.fetchCollectionAttachmentTokens(uistoreContainer.currentCollection.id);
+    this.state.attachmentTokens = [];
+    // call tpa
+    const { currentCollection } = UIStore.getState();
+    ElementActions.fetchCollectionAttachmentTokens(currentCollection.id, this.state?.currentElement?.id);
   }
 
   handlefetchCellLinesByCollectionId(result) {
