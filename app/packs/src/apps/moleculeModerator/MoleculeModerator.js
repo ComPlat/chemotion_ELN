@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { Navbar, FormGroup, FormControl, Button } from 'react-bootstrap';
+import {
+  Container, Row, Col, Navbar, Nav, Form, Button
+} from 'react-bootstrap';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import LoadingModal from 'src/components/common/LoadingModal';
@@ -7,23 +9,6 @@ import MoleculeModeratorComponent from 'src/apps/moleculeModerator/MoleculeModer
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import Notifications from 'src/components/Notifications';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-
-const pageNav = (
-  <Navbar fixedTop>
-    <Navbar.Header>
-      <Navbar.Brand>
-        <a href="/">Home</a>
-      </Navbar.Brand>
-      <Navbar.Toggle />
-    </Navbar.Header>
-    <Navbar.Collapse>
-      <Navbar.Text>
-        Molecule Moderator
-      </Navbar.Text>
-    </Navbar.Collapse>
-  </Navbar>
-);
 
 const pageNotify = (title, level, message) => {
   const notification = {
@@ -120,37 +105,54 @@ class MoleculeModerator extends Component {
   }
 
   render() {
-    const { searchTerm } = this.state;
+    const { molecule, showStructureEditor, searchTerm } = this.state;
+
     const formSearch = (
-      <form>
-        <FormGroup controlId="frmCtrlInChiKey">
-          <ControlLabel>InChiKey</ControlLabel>
-          <FormControl type="text" placeholder="Enter text" value={searchTerm} onChange={this.handleSearchTermChange} />
-        </FormGroup>
-        <Button onClick={this.handleSearch}>Search&nbsp;<i className="fa fa-search" aria-hidden="true" /></Button>
-      </form>
+      <Form>
+        <Form.Group controlId="frmCtrlInChiKey">
+          <Form.Label>InChiKey</Form.Label>
+          <Form.Control
+            className="mb-2"
+            type="text"
+            placeholder="Enter text"
+            value={searchTerm}
+            onChange={this.handleSearchTermChange}
+          />
+        </Form.Group>
+        <Button onClick={this.handleSearch}>
+          Search
+          <i className="fa fa-search ms-1" aria-hidden="true" />
+        </Button>
+      </Form>
     );
 
-    const pageComponent = this.state.molecule ?
-      (<MoleculeModeratorComponent
-        molecule={this.state.molecule}
-        showStructureEditor={this.state.showStructureEditor}
-        handleEditorSave={this.handleEditorSave}
-        handleEditor={this.handleEditor}
-        onSave={this.onSave}
-      />) : <div />;
-
     return (
-      <div>
-        {pageNav}
-        <div className="container" style={{ marginTop: '60px' }}>
-          {formSearch}
-          <hr />
-        </div>
-        {pageComponent}
+      <>
+        <Navbar className="navbar-custom px-4">
+          <Nav className="container-md justify-content-start">
+            <Navbar.Brand>
+              Molecule Moderator
+            </Navbar.Brand>
+            <Nav.Link href="/">Home</Nav.Link>
+          </Nav>
+        </Navbar>
+        <Container className="py-2">
+          <Row className="mb-4">{formSearch}</Row>
+          {molecule && (
+            <Row>
+              <MoleculeModeratorComponent
+                molecule={molecule}
+                showStructureEditor={showStructureEditor}
+                handleEditorSave={this.handleEditorSave}
+                handleEditor={this.handleEditor}
+                onSave={this.onSave}
+              />
+            </Row>
+          )}
+        </Container>
         <Notifications />
         <LoadingModal />
-      </div>
+      </>
     );
   }
 }
