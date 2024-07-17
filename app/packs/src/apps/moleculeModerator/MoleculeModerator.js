@@ -101,12 +101,12 @@ class MoleculeModerator extends Component {
       });
   }
 
-  handleEditorSave(molfile, svg_file = null, config = null) {
+  handleEditorSave(molfile, svgFile = null, config = null) {
     const { molecule } = this.state;
     molecule.molfile = molfile;
     const smiles = config ? config.smiles : null;
     const isChemdraw = !!smiles;
-    MoleculesFetcher.renewSVGFile(molecule.id, svg_file, isChemdraw).then((json) => {
+    MoleculesFetcher.renewSVGFile(molecule.id, svgFile, isChemdraw).then((json) => {
       molecule.molecule_svg_file = json.svg_path;
       this.setState({ molecule, showStructureEditor: false });
     });

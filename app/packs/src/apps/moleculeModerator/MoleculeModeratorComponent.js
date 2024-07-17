@@ -93,8 +93,8 @@ export default class MoleculeModeratorComponent extends Component {
     this.props.handleEditor(false);
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null) {
-    this.props.handleEditorSave(molfile, svg_file, config);
+  handleStructureEditorSave(molfile, svgFile = null, config = null) {
+    this.props.handleEditorSave(molfile, svgFile, config);
   }
 
   handleSave() {
