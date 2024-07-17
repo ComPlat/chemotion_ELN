@@ -109,7 +109,6 @@ export default class ElementsList extends React.Component {
     if (!uiState[type] || !uiState[type].page) { return; }
 
     const { page } = uiState[type];
-
     UIActions.setPagination({ type, page });
 
     KeyboardActions.contextChange(type);
@@ -208,14 +207,14 @@ export default class ElementsList extends React.Component {
     if (!uiState[type] || !uiState[type].page) { return; }
 
     const { page } = uiState[type];
-
     UIActions.setPagination({ type, page });
-
     KeyboardActions.contextChange(type);
+
   }
 
   initState() {
     this.onChange(ElementStore.getState());
+
   }
 
   render() {

@@ -111,7 +111,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       e.stopPropagation();
       SpectraActions.ToggleModalNMRDisplayer();
       SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
-    }
+    };
 
     const { chmos } = UserStore.getState();
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;

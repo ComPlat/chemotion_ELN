@@ -51,7 +51,7 @@ export default class PrivateNoteElement extends React.Component {
     if (!element || !note) {
       return;
     }
-    this.setState({ isSaving: true })
+    this.setState({ isSaving: true });
     if (!note.created_at) {
       const params = {
         content: note.content, noteable_id: element.id,
@@ -61,14 +61,14 @@ export default class PrivateNoteElement extends React.Component {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({ isSaving: false })
+        this.setState({ isSaving: false });
       });
     } else {
       PrivateNoteFetcher.update(note).then((newNote) => {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({ isSaving: false })
+        this.setState({ isSaving: false });
       });
     }
   }
@@ -89,7 +89,7 @@ export default class PrivateNoteElement extends React.Component {
             placement="top"
             overlay={
               <Tooltip id="private-note">Only you can see this note</Tooltip>
-          }
+            }
           >
             <ControlLabel>
               Private Note
@@ -112,7 +112,7 @@ export default class PrivateNoteElement extends React.Component {
           />
         </FormGroup>
       </div>
-    )
+    );
   }
 }
 

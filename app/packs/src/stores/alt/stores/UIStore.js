@@ -156,11 +156,11 @@ class UIStore {
   }
 
   handleShowDeviceManagement() {
-    this.state.showDeviceManagement = true
+    this.state.showDeviceManagement = true;
   }
 
   handleCloseDeviceManagement() {
-    this.state.showDeviceManagement = false
+    this.state.showDeviceManagement = false;
   }
 
   handleShowElements() {
@@ -168,8 +168,8 @@ class UIStore {
   }
 
   handleSelectTab(params = {}) {
-    let type = params.type || "sample"
-    let tabKey = params.tabKey || 0
+    let type = params.type || "sample";
+    let tabKey = params.tabKey || 0;
     this.state[type].activeTab = tabKey;
   }
 
@@ -191,10 +191,10 @@ class UIStore {
 
     if (range == 'all') {
       if (this.state.currentSearchSelection && elements[type + "s"].ids) {
-        let ids = elements[type + "s"].ids
-        this.state[type].checkedAll = false
-        this.state[type].checkedIds = List(ids)
-        this.state[type].uncheckedIds = List()
+        let ids = elements[type + "s"].ids;
+        this.state[type].checkedAll = false;
+        this.state[type].checkedIds = List(ids);
+        this.state[type].uncheckedIds = List();
       } else {
         this.state[type].checkedAll = true;
         this.state[type].checkedIds = List();
@@ -203,13 +203,13 @@ class UIStore {
     } else if (range == 'current') {
       let curPageIds = elements[type + "s"].elements.reduce(
         function (a, b) { return a.concat(b); }, []
-      ).map((e) => { return e.id });
+      ).map((e) => { return e.id; });
       this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = List();
-      let checked = this.state[type].checkedIds
+      let checked = this.state[type].checkedIds;
       // Remove duplicates, conserve sorting
       if (checked.size > 0) {
-        let checkedMap = checked.reduce(function (mp, e) { mp[e] = 1; return mp }, {})
+        let checkedMap = checked.reduce(function (mp, e) { mp[e] = 1; return mp; }, {});
         for (var i = 0; i < curPageIds.length; i++) {
           if (!checkedMap[curPageIds[i]]) {
             checked = checked.push(curPageIds[i]);
@@ -220,7 +220,7 @@ class UIStore {
         this.state[type].checkedIds = List(curPageIds);
       }
     } else {
-      this.handleUncheckAllElements(params)
+      this.handleUncheckAllElements(params);
     }
   }
 
@@ -230,7 +230,7 @@ class UIStore {
   }
 
   handleToggleAdvancedSearch(show) {
-    if (show == null) show = !this.state.showAdvancedSearch
+    if (show == null) show = !this.state.showAdvancedSearch;
     this.state.showAdvancedSearch = show;
   }
 
@@ -393,7 +393,7 @@ class UIStore {
 
     Object.keys(state.currentSearchByID).forEach((key) => {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
-        if (productOnly && key != 'samples') { return }
+        if (productOnly && key != 'samples') { return; }
         let filterParams = {};
         const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
         let modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
@@ -404,7 +404,7 @@ class UIStore {
             from_date: fromDate,
             to_date: toDate,
             product_only: productOnly,
-          }
+          };
         }
 
         const with_filter = Object.keys(filterParams).length >= 1 ? true : false;
@@ -435,7 +435,7 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    this.handleSelectCollection(collection)
+    this.handleSelectCollection(collection);
   }
 
   // FIXME this method is also defined in ElementStore
@@ -470,18 +470,18 @@ class UIStore {
     this.state.number_of_results = value;
   }
   handleShowModalChange(params) {
-    this.state.showModal = params.show ? true : false
-    this.state.modalParams = params
+    this.state.showModal = params.show ? true : false;
+    this.state.modalParams = params;
   }
 
   handleHideModal() {
-    this.state.showModal = false
+    this.state.showModal = false;
     this.state.modalParams = {
       show: false,
       title: "",
       component: "",
       action: null
-    }
+    };
   }
 
   handleSetFilterCreatedAt(filterCreatedAt) {

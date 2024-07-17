@@ -66,24 +66,24 @@ export default class CollectionTree extends React.Component {
   }
 
   removeOrphanRoots(roots) {
-    let newRoots = []
+    let newRoots = [];
     roots.forEach((root) => {
-      if (root.children.length > 0) newRoots.push(root)
-    })
+      if (root.children.length > 0) newRoots.push(root);
+    });
 
     return newRoots;
   }
 
   unsharedSubtrees() {
     let roots = this.state.unsharedRoots;
-    roots = roots.filter(function (item) { return !item.isNew })
+    roots = roots.filter(function (item) { return !item.isNew; });
 
     return this.subtrees(roots, null, false);
   }
 
   sharedSubtrees() {
-    let { sharedRoots, sharedToCollectionVisible } = this.state
-    sharedRoots = this.removeOrphanRoots(sharedRoots)
+    let { sharedRoots, sharedToCollectionVisible } = this.state;
+    sharedRoots = this.removeOrphanRoots(sharedRoots);
 
     let labelledRoots = sharedRoots.map(e => {
       return update(e, {
@@ -91,8 +91,8 @@ export default class CollectionTree extends React.Component {
           $set:
             <span>{this.labelRoot('shared_to', e)}</span>
         }
-      })
-    })
+      });
+    });
 
     let subTreeLabels = (
       <div className="tree-view">
@@ -105,14 +105,14 @@ export default class CollectionTree extends React.Component {
           My shared collections
         </div>
       </div>
-    )
+    );
     return this.subtrees(labelledRoots, subTreeLabels,
-      false, sharedToCollectionVisible)
+      false, sharedToCollectionVisible);
   }
 
   remoteSubtrees() {
-    let { remoteRoots, sharedWithCollectionVisible } = this.state
-    remoteRoots = this.removeOrphanRoots(remoteRoots)
+    let { remoteRoots, sharedWithCollectionVisible } = this.state;
+    remoteRoots = this.removeOrphanRoots(remoteRoots);
 
     let labelledRoots = remoteRoots.map(e => {
       return update(e, {
@@ -124,8 +124,8 @@ export default class CollectionTree extends React.Component {
               {this.labelRoot('shared_to', e)}
             </span>
         }
-      })
-    })
+      });
+    });
 
     let subTreeLabels = (
       <div className="tree-view">
@@ -140,15 +140,15 @@ export default class CollectionTree extends React.Component {
           Shared with me &nbsp;
         </div>
       </div>
-    )
+    );
 
     return this.subtrees(labelledRoots, subTreeLabels,
-      false, sharedWithCollectionVisible)
+      false, sharedWithCollectionVisible);
   }
 
   remoteSyncInSubtrees() {
-    let { syncInRoots, syncCollectionVisible } = this.state
-    syncInRoots = this.removeOrphanRoots(syncInRoots)
+    let { syncInRoots, syncCollectionVisible } = this.state;
+    syncInRoots = this.removeOrphanRoots(syncInRoots);
 
     let labelledRoots = syncInRoots.map(e => {
       return update(e, {
@@ -160,8 +160,8 @@ export default class CollectionTree extends React.Component {
               {this.labelRoot('shared_to', e)}
             </span>
         }
-      })
-    })
+      });
+    });
 
     let subTreeLabels = (
       <div className="tree-view">
@@ -175,16 +175,16 @@ export default class CollectionTree extends React.Component {
           Synchronized with me &nbsp;
         </div>
       </div>
-    )
+    );
 
     return this.subtrees(labelledRoots, subTreeLabels,
-      false, syncCollectionVisible)
+      false, syncCollectionVisible);
   }
 
 
   labelRoot(sharedToOrBy, rootCollection) {
-    let shared = rootCollection[sharedToOrBy]
-    if (!shared) return <span />
+    let shared = rootCollection[sharedToOrBy];
+    if (!shared) return <span />;
 
     return (
       <OverlayTrigger placement="bottom" overlay={UserInfos({ users: [shared] })}>
@@ -193,20 +193,20 @@ export default class CollectionTree extends React.Component {
           &nbsp; {shared.initials}
         </span>
       </OverlayTrigger>
-    )
+    );
   }
 
   convertToSlug(name) {
-    return name.toLowerCase()
+    return name.toLowerCase();
   }
 
   subtrees(roots, label, isRemote, visible = true) {
 
     const subtrees = roots && roots.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} isRemote={isRemote} />
+      return <CollectionSubtree root={root} key={index} isRemote={isRemote} />;
     });
 
-    let subtreesVisible = visible ? "" : "none"
+    let subtreesVisible = visible ? "" : "none";
     return (
       <div>
         {label}
@@ -214,7 +214,7 @@ export default class CollectionTree extends React.Component {
           {subtrees}
         </div>
       </div>
-    )
+    );
   }
 
   collectionManagementButton() {
@@ -226,7 +226,7 @@ export default class CollectionTree extends React.Component {
           <i className="fa fa-cog"></i>
         </Button>
       </div>
-    )
+    );
   }
 
   handleCollectionManagementToggle() {
