@@ -113,7 +113,7 @@ describe Chemotion::ThirdPartyAppAPI do
   describe 'GET v1/third_party_apps/{id}' do
     let(:response_data) { JSON.parse(response.body) }
     let!(:first_3pa) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
-    let(:id) { first_3PA.id }
+    let(:id) { first_3pa.id }
 
     context 'when 3PA is available' do
       before do
