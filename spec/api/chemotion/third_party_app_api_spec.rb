@@ -378,5 +378,50 @@ describe Chemotion::ThirdPartyAppAPI do
       end
     end
   end
+
+  describe 'GET /api/v1/public/third_party_apps/{token}' do
+    let(:token) do
+      parts = CGI.unescape(JSON.parse(response.body))
+      parts.split('/').last
+    end
+
+    let(:tpa) { create((:third_party_app)) }
+
+    let!(:research_plan) do
+      create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
+    end
+    let(:attachment) { create(:attachment, created_for: admin1.id) }
+
+    let(:attachment_size) { attachment.attachment_data['metadata']['size'] }
+    let(:collection) { create(:collection, user: admin1) }
+
+    context 'when user is allowed to upload attachment' do
+      before do
+        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        get "/api/v1/public/third_party_apps/#{token}"
+      end
+
+      it 'status of get request 200?' do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'recieved attachment size is correct' do
+        expect(response.header['Content-Length'].to_i).to be attachment_size
+      end
+    end
+
+    context 'when user is not allowed to upload attachment' do
+      before do
+        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        research_plan.collections = []
+        research_plan.save
+        get "/api/v1/public/third_party_apps/#{token}"
+      end
+
+      it 'status of get request 403?' do
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
 end
 # rubocop:enable RSpec/LetSetup,RSpec/MultipleExpectations,RSpec/NestedGroups,RSpec/MultipleMemoizedHelpers
