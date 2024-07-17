@@ -324,11 +324,11 @@ class CnC extends React.Component {
     } = this.state;
 
     return (
-      <Container>
+      <Container fluid>
         <Row className="card-navigation">
           <Navigation toggleDeviceList={this.toggleDeviceList} />
         </Row>
-        <Row className="card-content container-fluid">
+        <Row className="card-content container-fluid pt-3">
           {showDeviceList && isNotFocused ? this.tree(devices, selected.id) : null}
           <Col className="small-col main-content">
             <FocusNovnc
