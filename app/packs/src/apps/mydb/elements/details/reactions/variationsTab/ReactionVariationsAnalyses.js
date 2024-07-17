@@ -21,6 +21,7 @@ function updateAnalyses(variations, allReactionAnalyses) {
   const analysesIDs = allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((child) => child.id);
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
+    // eslint-disable-next-line no-param-reassign
     row.analyses = row.analyses.filter((id) => analysesIDs.includes(id));
   });
 
@@ -132,22 +133,22 @@ function AnalysesCellEditor({
 
   const analysesSelection = (
     <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-      < Form.Group>
+      <Form.Group>
         {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => (
           <div key={analysis.id} style={{ display: 'flex', alignItems: 'center' }}>
             <Form.Check
-              type='checkbox'
+              type="checkbox"
               onChange={() => onChange(analysis.id)}
               label={analysis.name}
               checked={selectedAnalysisIDs.includes(analysis.id)}
-              className='me-2'
+              className="me-2"
             />
-            <Button size="sm" variant='light' onClick={() => navigateToAnalysis(analysis.id)}>
+            <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
               <i className="fa fa-external-link" />
             </Button>
           </div>
         ))}
-      </ Form.Group>
+      </Form.Group>
     </div>
   );
 

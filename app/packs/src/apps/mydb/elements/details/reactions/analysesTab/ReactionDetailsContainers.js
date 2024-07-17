@@ -1,3 +1,5 @@
+/* eslint-disable react/forbid-prop-types */
+/* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Accordion } from 'react-bootstrap';
@@ -19,6 +21,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+// eslint-disable-next-line max-len
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 
 const nmrMsg = (reaction, container) => {
@@ -30,10 +33,26 @@ const nmrMsg = (reaction, container) => {
 
   if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
     const msg = hNmrCount(nmrStr);
-    return (<div style={{ display: 'inline', color: 'black' }}>&nbsp;(<sup>1</sup>H: {msg})</div>);
-  } else if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
+    return (
+      <div style={{ display: 'inline', color: 'black' }}>
+        (
+        <sup>1</sup>
+        H:{msg}
+        )
+      </div>
+    );
+  } if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
     const msg = cNmrCount(nmrStr);
-    return (<div style={{ display: 'inline', color: 'black' }}>&nbsp;(<sup>13</sup>C: {msg})</div>);
+    return (
+      <div className="d-inline-block ms-1" style={{ color: 'black' }}>
+        (
+        <sup>
+          13
+        </sup>
+        C: {msg}
+        )
+      </div>
+    );
   }
 };
 
@@ -88,7 +107,6 @@ export default class ReactionDetailsContainers extends Component {
 
   handleChange(container) {
     const { reaction } = this.state;
-
     this.props.parent.handleReactionChange(reaction);
   }
 
@@ -158,13 +176,13 @@ export default class ReactionDetailsContainers extends Component {
       e.stopPropagation();
       SpectraActions.ToggleModalNMRDisplayer();
       SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
-    }
+    };
 
     const { chmos } = UserStore.getState();
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className='d-flex justify-content-between align-items-center flex-row-reverse w-100 mb-0' >
+      <div className="d-flex justify-content-between align-items-center flex-row-reverse w-100 mb-0">
         <Button
           size="xsm"
           variant="danger"
@@ -208,7 +226,7 @@ export default class ReactionDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <div className='mt-2'>
+        <div className="mt-2">
           <Button
             size="sm"
             variant="success"
@@ -256,7 +274,7 @@ export default class ReactionDetailsContainers extends Component {
           className="d-flex w-100 mb-0 h-25"
           style={{ backgroundColor: '#ececec' }}
         >
-          <div className='p-3'>
+          <div className="p-3">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -273,24 +291,29 @@ export default class ReactionDetailsContainers extends Component {
 
           <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
             <div className="fs-4 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
-              <div className="fs-5 ms-2 mt-2">Type: {kind}</div>
-              <div className="fs-5 ms-2 mt-2">Status: {status} {nmrMsg(reaction, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
-              <div className="fs-5 ms-2 mt-2 d-flex p-0">
-                <span className="me-2">
+            <div className="fs-5 ms-2 mt-2">Type: {kind}</div>
+            <div className="fs-5 ms-2 mt-2">
+              Status:
+              {status} {nmrMsg(reaction, container)}
+              <span className="me-5" />
+              {insText}
+            </div>
+            <div className="fs-5 ms-2 mt-2 d-flex p-0">
+              <span className="me-2">
                 Content:
-                <QuillViewer value={contentOneLine} className='overflow-wrap' />
+                <QuillViewer value={contentOneLine} className="overflow-wrap" />
               </span>
             </div>
           </div>
           <div className="ml-auto mt-3 d-flex align-items-start justify-content-end w-100 me-2">
-            <div className='d-flex'>
+            <div className="d-flex">
               {
                 this.headerBtnGroup(container, reaction, readOnly)
               }
             </div>
           </div>
         </div>
-      )
+      );
     };
 
     const containerHeaderDeleted = (container) => {
@@ -301,18 +324,21 @@ export default class ReactionDetailsContainers extends Component {
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
-        <div className='d-flex w-100 mb-0 grey-bg'>
+        <div className="d-flex w-100 mb-0 grey-bg">
           <strike>
             {container.name}
             {titleKind}
             {titleStatus}
           </strike>
-          <Button className="pull-right" size="sm" variant="danger"
+          <Button
+            className="pull-right"
+            size="sm"
+            variant="danger"
             onClick={() => this.handleUndo(container)}>
-            <i className="fa fa-undo"></i>
+            <i className="fa fa-undo" />
           </Button>
         </div>
-      )
+      );
     };
 
     if (reaction.container != null && reaction.container.children) {
@@ -378,7 +404,7 @@ export default class ReactionDetailsContainers extends Component {
 
       return (
         <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
-          <span className='ms-3'> There are currently no Analyses. </span>
+          <span className="ms-3"> There are currently no Analyses. </span>
           <div>
             {this.addButton()}
           </div>

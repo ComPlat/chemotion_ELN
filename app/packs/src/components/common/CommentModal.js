@@ -24,6 +24,7 @@ export default class CommentModal extends Component {
   constructor(props) {
     super(props);
     this.modalRef = React.createRef();
+    this.commentInputRef = React.createRef();
     const commentState = CommentStore.getState();
     this.state = {
       commentBody: '',
@@ -137,7 +138,7 @@ export default class CommentModal extends Component {
       commentObj: comment,
       isEditing: true
     });
-    this.commentInput.focus();
+    this.commentInputRef.current.focus();
   };
 
   scrollToTop = () => {
@@ -166,20 +167,20 @@ export default class CommentModal extends Component {
     if (sectionComments?.length > 0) {
       return sectionComments.map((comment) => (
         <tr key={comment.id}>
-          <td className='w-20'>
+          <td className="w-20">
             <span className="text-info">
               {formatDate(comment.created_at)}
             </span>
           </td>
-          <td className='w-35'>{comment.content}</td>
-          <td className='w-15'>{comment.submitter}</td>
-          <td className='w-15'>
-            <div className='d-inline-block'>
+          <td className="w-35">{comment.content}</td>
+          <td className="w-15">{comment.submitter}</td>
+          <td className="w-15">
+            <div className="d-inline-block">
               <Button
                 disabled={this.disableEditComment(comment)}
                 onClick={() => this.markCommentResolved(comment)}
-                size='sm'
-                className='me-1'
+                size="sm"
+                className="me-1"
               >
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
@@ -192,7 +193,7 @@ export default class CommentModal extends Component {
                       variant="primary"
                       onClick={() => this.editComment(comment)}
                       disabled={this.disableEditComment(comment)}
-                      className='me-1'
+                      className="me-1"
                     >
                       <i className="fa fa-edit" />
                     </Button>
@@ -210,7 +211,7 @@ export default class CommentModal extends Component {
               }
             </div>
           </td>
-          <td className='w-15'>{comment.resolver_name}</td>
+          <td className="w-15">{comment.resolver_name}</td>
         </tr>
       ));
     }
@@ -228,7 +229,6 @@ export default class CommentModal extends Component {
       section
     } = this.state;
     const allComments = getAllComments(comments, section);
-    const collapseIcon = commentsCollapseAll ? 'chevron-up' : 'chevron-down';
 
     return (
       <Draggable enableUserSelectHack={false}>
@@ -250,13 +250,13 @@ export default class CommentModal extends Component {
               <div className="table-responsive">
                 <Table striped bordered hover>
                   <thead>
-                  <tr>
-                      <th className=''>Date</th>
-                      <th className='w-35'>Comment</th>
-                      <th className='w-15'>From User</th>
-                      <th className='w-17'>Actions</th>
-                      <th className='w-17'>Resolved By</th>
-                  </tr>
+                    <tr>
+                      <th>Date</th>
+                      <th className="w-35">Comment</th>
+                      <th className="w-15">From User</th>
+                      <th className="w-17">Actions</th>
+                      <th className="w-17">Resolved By</th>
+                    </tr>
                   </thead>
                   <tbody>{this.renderCommentTable()}</tbody>
                 </Table>
@@ -267,7 +267,7 @@ export default class CommentModal extends Component {
                   ? (
                     <Button onClick={this.toggleCollapse} id="detailsBtn">
                       <span>Details </span>
-                      <i class="fa-solid fa-angle-down"></i>
+                      <i className="fa-solid fa-angle-down" />
                     </Button>
                   )
                   : null
@@ -295,21 +295,17 @@ export default class CommentModal extends Component {
               rows={5}
               autoFocus
               value={commentBody}
-              // ref={(input) => { this.nameInput = input; }}
-              ref={(m) => {
-                this.commentInput = m;
-              }}
+              ref={this.commentInputRef}
               onChange={this.handleInputChange}
             />
 
-
           </Modal.Body>
-          <Modal.Footer className='modal-footer border-0'>
-            <div className='d-inline-block'>
+          <Modal.Footer className="modal-footer border-0">
+            <div className="d-inline-block">
               <Button
-                variant='secondary'
+                variant="secondary"
                 onClick={() => CommentActions.toggleCommentModal(false)}
-                className='me-1'
+                className="me-1"
               >
                 Close
               </Button>
@@ -335,5 +331,6 @@ export default class CommentModal extends Component {
 }
 
 CommentModal.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   element: PropTypes.object.isRequired,
 };
