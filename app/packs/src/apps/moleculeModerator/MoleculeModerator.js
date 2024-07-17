@@ -42,14 +42,20 @@ class MoleculeModerator extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      searchTerm: '',
       molecule: null,
       showStructureEditor: false,
-      msg: { show: false, level: null, message: null },
+      msg: {
+        show: false,
+        level: null,
+        message: null
+      },
     };
 
     this.handleEditor = this.handleEditor.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
     this.handleEditorSave = this.handleEditorSave.bind(this);
+    this.handleSearchTermChange = this.handleSearchTermChange.bind(this);
     this.onSave = this.onSave.bind(this);
   }
 
@@ -76,8 +82,8 @@ class MoleculeModerator extends Component {
 
   handleSearch() {
     LoadingActions.start();
-    const { msg } = this.state;
-    MoleculesFetcher.getByInChiKey(this.refInChiKey.value.trim())
+    const { msg, searchTerm } = this.state;
+    MoleculesFetcher.getByInChiKey(searchTerm)
       .then((result) => {
         msg.show = true;
         msg.level = result ? 'info' : 'error';
@@ -106,12 +112,20 @@ class MoleculeModerator extends Component {
     });
   }
 
+  handleSearchTermChange(e) {
+    this.setState((state) => ({
+      ...state,
+      searchTerm: e.target.value.trim(),
+    }));
+  }
+
   render() {
+    const { searchTerm } = this.state;
     const formSearch = (
       <form>
         <FormGroup controlId="frmCtrlInChiKey">
           <ControlLabel>InChiKey</ControlLabel>
-          <FormControl type="text" placeholder="Enter text" inputRef={(ref) => { this.refInChiKey = ref; }} />
+          <FormControl type="text" placeholder="Enter text" value={searchTerm} onChange={this.handleSearchTermChange} />
         </FormGroup>
         <Button onClick={this.handleSearch}>Search&nbsp;<i className="fa fa-search" aria-hidden="true" /></Button>
       </form>
