@@ -5,20 +5,17 @@ require 'barby/barcode/data_matrix'
 require 'rubygems'
 require 'semacode'
 require 'barby/outputter/svg_outputter'
-require "prawn/measurement_extensions"
+require 'prawn/measurement_extensions'
 require 'open-uri'
 require 'net/http'
 
 class CodePdf < Prawn::Document
-  def initialize(elements, size, type, pdfType, displaySample, image = nil)
+  def initialize(elements, size, type, pdf_type, display_sample, image = nil)
     super(
-      page_size: page_size(size, pdfType),
+      page_size: page_size(size, pdf_type, display_sample),
       margin: [0, 0, 0, 0]
     )
 
-    # Iterate over each element in the array
-    # and create a new page for each element,
-    # except for the first one
     elements.each_with_index do |element, i|
       start_new_page unless i.zero?
 
@@ -30,30 +27,27 @@ class CodePdf < Prawn::Document
                "#{type.capitalize} ID: #{element.id}\n#{element.name}"
              end
 
-      # Depending on the pdfType, generate the corresponding
+      # Depending on the pdf_type, generate the corresponding
       # label and the corresponding code
-      case pdfType
+      case pdf_type
       when 'qr_code'
         # Generate the label for the QR code
-        qr_code_label(element, size, type, text)
+        qr_code_label(size, text)
         # Generate the QR code itself
         qr_code(element, size)
       when 'bar_code'
         # Generate the label for the barcode
-        bar_code_label(element, size, type, text)
+        bar_code_label(element, size, text)
         # Generate the barcode itself
         bar_code(element, size)
       when 'data_matrix'
         # Generate the label for the data matrix
-        data_matrix_label(element, size, type, text)
+        data_matrix_label(size, text)
         # Generate the data matrix itself
         data_matrix(element, size)
       end
-      if displaySample
-        if image
-          displaySample(image)
-        end
-      end 
+      # Draw the sample if necessary
+      svg open(image), sample_option(size) if display_sample && image
       # Draw the bounds of the current page
       stroke_bounds
     end
@@ -61,56 +55,60 @@ class CodePdf < Prawn::Document
 
   private
 
-  def page_size(size, pdfType)
-    case size
-    when "small"
-      if pdfType == 'bar_code'
-        [25.4.mm, 22.mm]
+  # Generate the size of the page
+  def page_size(size, pdf_type, display_sample)
+    if display_sample
+      if pdf_type == 'bar_code'
+        case size
+        when 'small' then [25.4.mm, 30.mm]
+        when 'big' then [36.mm, 40.mm]
+        end
       else
-        [25.4.mm, 20.mm]
+        case size
+        when 'small' then [25.4.mm, 20.mm]
+        when 'big' then [36.mm, 28.mm]
+        end
       end
-    when "big"
-      if pdfType == 'bar_code'
-        [36.mm, 25.mm]
-      else
-        [36.mm, 28.mm]
+    elsif pdf_type == 'bar_code'
+      case size
+      when 'small' then [25.4.mm, 21.mm]
+      when 'big' then [36.mm, 25.mm]
       end
     else
-      [25.4.mm, 37.mm]
+      case size
+      when 'small' then [25.4.mm, 10.mm]
+      when 'big' then [36.mm, 14.mm]
+      end
     end
   end
 
-  # display image
-  def displaySample(sampleUrl)
-    if sampleUrl
-      svg open(sampleUrl), { at: [22, self.bounds.top - 4], width: 40, height: 40 }
+  def sample_option(size)
+    if size == 'small'
+      { at: [22, self.bounds.top - 4], width: 40, height: 40 }
+    else
+      { at: [30, self.bounds.top - 4], width: 60, height: 60 }
     end
   end
 
-  # qr code and options
   def qr_code_label_options(size)
     case size
     when 'small'
-      {at: [6.mm + 8, self.bounds.bottom + 25], size: 5}
+      { at: [6.mm + 8, self.bounds.bottom + 23], size: 5, overflow: :shrink_to_fit }
     when 'big'
-      {at: [10.mm + 8, self.bounds.bottom + 25], size: 6}
-    else
-      {at: [6.mm + 8, self.bounds.bottom + 25], size: 5}
+      { at: [10.mm + 8, self.bounds.bottom + 35], size: 7, overflow: :shrink_to_fit }
     end
   end
 
-  def qr_code_label(element, size, type, text)
+  def qr_code_label(size, text)
     text_box text, qr_code_label_options(size)
   end
 
   def qr_code_options(size)
     case size
-    when "small"
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.bottom + 25]}
-    when "big"
-      {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.bottom + 35]}
-    else
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.bottom + 25]}
+    when 'small'
+      { height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.bottom + 23] }
+    when 'big'
+      { height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.bottom + 35] }
     end
   end
 
@@ -120,28 +118,22 @@ class CodePdf < Prawn::Document
     svg outputter.to_svg(qr_code_options(size)), qr_code_options(size)
   end
 
-  # barcode and options
   def bar_code_label_options(size)
     case size
     when 'small'
       {
-        text: {at: [1.mm + 2, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm},
-        code: {at: [7.mm, self.bounds.top - 18.mm - 1 ], size: 5}
+        text: { at: [1.mm + 2, self.bounds.bottom + 52], size: 4, width: 20.mm, height: 5.4.mm },
+        code: { at: [7.mm, self.bounds.bottom + 8 ], size: 4 },
       }
     when 'big'
       {
-        text: {at: [1.mm + 2, self.bounds.top - 5], size: 6, width: 20.mm, height: 5.4.mm},
-        code: {at: [13.mm, self.bounds.top - 20.mm], size: 6}
-      }
-    else
-      {
-        text: {at: [1.mm + 2, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm},
-        code: {at: [7.mm, self.bounds.top - 18.mm - 1 ], size: 5}
+        text: { at: [1.mm + 2, self.bounds.bottom + 65], size: 6, width: 30.mm, height: 5.4.mm },
+        code: { at: [13.mm, self.bounds.bottom + 10], size: 6 },
       }
     end
   end
 
-  def bar_code_label(element, size, type, text)
+  def bar_code_label(element, size, text)
     text_box text, bar_code_label_options(size)[:text]
     text_box element.code_log.value_sm, bar_code_label_options(size)[:code]
   end
@@ -149,11 +141,9 @@ class CodePdf < Prawn::Document
   def bar_code_options(size)
     case size
     when 'small'
-      {height: 5.mm, width: 22.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.top - 18]}
+      { height: 5.mm, width: 22.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.bottom + 40] }
     when 'big'
-      {height: 3.3.mm, width: 33.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.top - 20]}
-    else
-      {height: 5.mm, width: 22.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.top - 18]}
+      { height: 3.3.mm, width: 33.mm, margin: 0, xdim: 0.12.mm, at: [4, self.bounds.bottom + 45] }
     end
   end
 
@@ -162,36 +152,25 @@ class CodePdf < Prawn::Document
     svg outputter.to_svg(bar_code_options(size)), bar_code_options(size)
   end
 
-  # data matrix and options
   def data_matrix_label_options(size)
     case size
     when 'small'
-      {
-        text: { at: [6.mm + 8, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm }
-      }
+      { text: { at: [6.mm + 8, self.bounds.bottom + 23], size: 5, overflow: :shrink_to_fit } }
     when 'big'
-      {
-        text: { at: [10.mm + 8, self.bounds.top - 5], size: 6, width: 20.mm, height: 5.4.mm }
-      }
-    else
-      {
-        text: { at: [6.mm + 8, self.bounds.top - 5], size: 5, width: 20.mm, height: 5.4.mm }
-      }
+      { text: { at: [10.mm + 8, self.bounds.bottom + 35], size: 7, overflow: :shrink_to_fit } }
     end
   end
 
-  def data_matrix_label(element, size, type, text)
+  def data_matrix_label(size, text)
     text_box text, data_matrix_label_options(size)[:text]
   end
 
   def data_matrix_options(size)
     case size
-    when "small"
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
-    when "big"
-      {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.top - 5]}
-    else
-      {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 5]}
+    when 'small'
+      { height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.bottom + 23] }
+    when 'big'
+      { height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.bottom + 35] }
     end
   end
 
@@ -204,3 +183,4 @@ class CodePdf < Prawn::Document
     Barby::SvgOutputter.new(code)
   end
 end
+
