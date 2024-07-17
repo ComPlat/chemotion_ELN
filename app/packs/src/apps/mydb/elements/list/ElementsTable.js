@@ -182,8 +182,6 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.sortDirection = filters[type]?.direction || 'DESC';
     }
-
-
   };
 
   changeCollapse = (collapseAll) => {
@@ -306,38 +304,33 @@ export default class ElementsTable extends React.Component {
           <Panel>
             <Panel.Heading>
               <Panel.Title>
-                List of Attachment Token:
+                List of Attachment Tokens for element {currentElement.name}:
               </Panel.Title>
             </Panel.Heading>
             <Panel.Body>
-              <div>
+              {
+                attachmentTokens?.length > 0 ? attachmentTokens.map((item, idx) => {
+                  const key = Object.keys(item);
+                  const value = item[key[0]];
+                  const key_split = key[0].split("/");
 
-                {
-                  attachmentTokens?.length > 0 ? attachmentTokens.map((item, idx) => {
-                    const key = Object.keys(item);
-                    const value = item[key[0]];
-                    const key_split = key[0].split("/");
-
-                    return currentElement.id == key_split[3] && (
-                      <Row style={{ marginBottom: 10 }}>
-                        <Col xs={10}>
-
-                          <div>Element: {item?.alias_element} </div>
-                          <div>Attachment: {item?.alias_attachment_id} </div>
-                          <div>App: {item?.alias_app_id} </div>
-                          <div>Download: {value?.download} </div>
-                          <div>Upload: {value?.upload} </div>
-                        </Col>
-                        <Col xs={2}>
-                          <Button className='btn btn-danger' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'revoke')}>
-                            <i class="fa fa-trash"></i>
-                          </Button>
-                        </Col>
-                      </Row>);
-                  }) : <p>No attachment tokens avaialable</p>
-                }
-              </div>
-
+                  return currentElement.id == key_split[3] && (
+                    <Row style={{ marginBottom: 10 }}>
+                      <Col xs={10}>
+                        {/* <div>Element: {item?.alias_element} </div> */}
+                        <div>Attachment: {item?.alias_attachment_id} </div>
+                        <div>App: {item?.alias_app_id} </div>
+                        <div>Download: {value?.download} </div>
+                        <div>Upload: {value?.upload} </div>
+                      </Col>
+                      <Col xs={2}>
+                        <Button className='btn btn-danger' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'revoke')}>
+                          <i class="fa fa-trash"></i>
+                        </Button>
+                      </Col>
+                    </Row>);
+                }) : <p>No attachment tokens avaialable</p>
+              }
             </Panel.Body>
           </Panel>
         </Modal.Body>
@@ -700,8 +693,6 @@ export default class ElementsTable extends React.Component {
               </button>
             </OverlayTrigger>
           }
-
-
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
               type="button"

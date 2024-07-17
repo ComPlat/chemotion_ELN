@@ -47,7 +47,6 @@ export default class ThirdPartyAppFetcher {
     return fetch(url, {
       credentials: 'same-origin'
     }).then(response => response.json())
-
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
@@ -58,7 +57,6 @@ export default class ThirdPartyAppFetcher {
     return fetch(url, {
       credentials: 'same-origin'
     }).then(response => response.json())
-
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }

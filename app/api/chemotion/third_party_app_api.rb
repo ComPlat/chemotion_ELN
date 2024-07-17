@@ -252,6 +252,7 @@ module Chemotion
             cached_value = cache.read(token_key)
         
             next unless app && attachment && element_details && cached_value
+
             token_list.push({
               "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}": cached_value,
               alias_element: element_details.name,
@@ -276,7 +277,6 @@ module Chemotion
 
         status = find_and_update_key_with_request_type(first_level_key, second_level_key, params[:action_type])
         {status: status}
-
       end
 
       route_param :id, type: Integer, desc: '3rd party app id' do

@@ -647,7 +647,6 @@ class ElementStore {
   handleFetchWellplatesByCollectionId(result) {
     this.state.elements.wellplates = result;
     this.state.attachmentTokens = [];
-    // call tpa
     const { currentCollection } = UIStore.getState();
     ElementActions.fetchCollectionAttachmentTokens(currentCollection.id, this.state?.currentElement?.id);
   }
@@ -659,7 +658,6 @@ class ElementStore {
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
     this.state.attachmentTokens = [];
-    // call tpa
     const { currentCollection } = UIStore.getState();
     ElementActions.fetchCollectionAttachmentTokens(currentCollection.id, this.state?.currentElement?.id);
   }
@@ -1528,6 +1526,7 @@ class ElementStore {
   async handleTpaAttachmentTokensByCollectionId(result) {
     this.state.attachmentTokens = result?.token_list || [];
   }
+  /////////////////////
 
   // End of DetailStore
   /////////////////////

@@ -76,9 +76,6 @@ export default class ElementsList extends React.Component {
     UIStore.listen(this.onChangeUI);
 
     this.initState();
-
-
-
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -103,6 +100,7 @@ export default class ElementsList extends React.Component {
 
   handleTabSelect(tab) {
     UserActions.selectTab(tab);
+
     // TODO sollte in tab action handler
     const uiState = UIStore.getState();
     const { visible } = this.state;
@@ -111,12 +109,9 @@ export default class ElementsList extends React.Component {
     if (!uiState[type] || !uiState[type].page) { return; }
 
     const { page } = uiState[type];
-
     UIActions.setPagination({ type, page });
 
     KeyboardActions.contextChange(type);
-
-
   }
 
   onChange(state) {

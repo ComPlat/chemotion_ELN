@@ -52,7 +52,6 @@ export default class SamplesFetcher {
   static fetchByCollectionId(id, queryParams = {}, isSync = false, moleculeSort = false) {
     const updatedQueryParams = { ...queryParams, moleculeSort };
     return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, isSync, 'samples', Sample);
-
   }
 
   static findByShortLabel(shortLabel) {

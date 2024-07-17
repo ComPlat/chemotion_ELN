@@ -260,7 +260,6 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
-
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };
