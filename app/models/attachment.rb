@@ -58,6 +58,9 @@ class Attachment < ApplicationRecord
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
+  # rubocop:disable Rails/InverseOf
+  belongs_to :recipient, class_name: 'User', foreign_key: 'created_for', primary_key: 'id', optional: true
+  # rubocop:enable Rails/InverseOf
 
   scope :where_research_plan, lambda { |c_id|
     where(attachable_id: c_id, attachable_type: 'ResearchPlan')
@@ -129,6 +132,26 @@ class Attachment < ApplicationRecord
 
     store.regenerate_thumbnail
     update_column('thumb', thumb) if thumb_changed? # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  # @desc return the associated element {instance of ResearchPlan, Sample,.. or User , or nil}
+  # @return [ApplicationRecord, nil] the associated element through direct attachable association
+  #   or indirectly through the containers association (Attachment -> Container -> {Element|User})
+  #   or the `recipient` associated with the created_for attribute
+  # @example
+  #  "Attachment.new( attachable: ResearchPlan.last).root_element == ResearchPlan.last" #=> "true"
+  #  "Attachment.new( attachable: Sample.last.analyses.first.children.first).root_element == Sample.last" #=> "true"
+  #  "Attachment.new( created_for: User.last.id).root_element == User.last" #=> "true"
+  #  "Attachment.new.root_element" #=> "nil"
+  def root_element
+    case attachable_type
+    when 'Sample', 'Reaction', 'ResearchPlan', 'Wellplate', 'Screen', 'CelllineSample' # *Model::ELEMENTS
+      attachable
+    when 'Container'
+      attachable&.root_element
+    else
+      recipient
+    end
   end
 
   def for_research_plan?
