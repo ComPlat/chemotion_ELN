@@ -195,7 +195,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
 
     context 'when user is not allowed to read attachment' do
-      let(:other_user) { create(:user) }
+      let(:other_user) { create(:user, collections: [collection]) }
 
       context 'when attachment is directly linked and readable and 3pa exists' do
         let!(:research_plan) do
@@ -322,14 +322,14 @@ describe Chemotion::ThirdPartyAppAPI do
     end
 
     context 'when user is not allowed to upload file' do
-      let(:other_user) { create(:person) }
+      let(:inaccessible_collection) { create(:collection) }
       let(:attachment) do
-        create(:attachment, :with_image, storage: 'tmp', created_by: other_user.id, created_for: other_user.id)
+        create(:attachment, :with_image, storage: 'tmp', created_by: user.id, created_for: user.id)
       end
 
       context 'when attachment is directly linked to researchplan' do
         let!(:research_plan) do
-          create(:research_plan, creator: other_user, collections: [collection], attachments: [attachment])
+          create(:research_plan, creator: admin1, collections: [inaccessible_collection], attachments: [attachment])
         end
 
         before do
@@ -345,7 +345,7 @@ describe Chemotion::ThirdPartyAppAPI do
       context 'when attachment is in a dataset of the researchplan' do
         let(:collection) { create(:collection) }
         let!(:research_plan) do
-          create(:research_plan, creator: other_user, collections: [collection], container: root_container)
+          create(:research_plan, creator: admin1, collections: [collection], container: root_container)
         end
         let(:root_container) do
           container = create(:container, :with_jpg_in_dataset)
