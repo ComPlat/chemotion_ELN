@@ -215,6 +215,8 @@ class ElementStore {
 
       // FIXME ElementStore listens to UIActions?
       handleUnselectCurrentElement: UIActions.deselectAllElements,
+      handleUnselectCurrentAttachmentTokens: UIActions.deSelectAttachmentTokens,
+
       handleSetPagination: UIActions.setPagination,
 
       handleRefreshElements: ElementActions.refreshElements,
@@ -1066,6 +1068,10 @@ class ElementStore {
 
   handleUnselectCurrentElement() {
     this.state.currentElement = null;
+  }
+
+  handleUnselectCurrentAttachmentTokens() {
+    this.state.attachmentTokens = [];
   }
 
   handleSetPagination(pagination) {

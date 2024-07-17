@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -169,6 +170,8 @@ export default class CollectionSubtree extends React.Component {
     collectionID = this.state.root.id;
     const collShow = this.props.root.sharer ? scollectionShow : collectionShow;
     collShow({ params: { collectionID } });
+    UIActions.deselectAllElements();
+    UIActions.deSelectAttachmentTokens();
   }
 
   urlForCurrentElement() {

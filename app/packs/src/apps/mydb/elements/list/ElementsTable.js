@@ -44,7 +44,8 @@ export default class ElementsTable extends React.Component {
       elementsSort: true,
       sortDirection: 'DESC',
       showAttachmentTokenModal: false,
-      attachmentTokens: []
+      attachmentTokens: [],
+      showEmpty: false
     };
 
     this.onChange = this.onChange.bind(this);
@@ -84,6 +85,7 @@ export default class ElementsTable extends React.Component {
       });
     }
   }
+
   handleScrollToElement = () => {
     if (this.elementRef.current) {
       this.elementRef.current.scrollTo({ top: 0, left: 0, behavior: "smooth", });
@@ -152,7 +154,6 @@ export default class ElementsTable extends React.Component {
     if (elementsDidChange) { nextState.elements = elements; }
     if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
     this.setState({ attachmentTokens: ElementStore.getState().attachmentTokens });
-
   }
 
   setFromDate(date) {
@@ -295,7 +296,7 @@ export default class ElementsTable extends React.Component {
   };
 
   attachmentTokenModal = () => {
-    const { showAttachmentTokenModal, attachmentTokens } = this.state;
+    const { showAttachmentTokenModal, attachmentTokens, showEmpty } = this.state;
     const { currentElement } = ElementStore.getState();
     return (
       <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
@@ -304,20 +305,19 @@ export default class ElementsTable extends React.Component {
           <Panel>
             <Panel.Heading>
               <Panel.Title>
-                List of Attachment Tokens for element {currentElement.name}:
+                List of Attachment Tokens for element {currentElement?.name}:
               </Panel.Title>
             </Panel.Heading>
             <Panel.Body>
               {
-                attachmentTokens?.length > 0 ? attachmentTokens.map((item, idx) => {
+                attachmentTokens?.map((item, idx) => {
                   const key = Object.keys(item);
                   const value = item[key[0]];
                   const key_split = key[0].split("/");
-
-                  return currentElement.id == key_split[3] && (
+                  return currentElement?.id == key_split[3] && (
                     <Row style={{ marginBottom: 10 }}>
                       <Col xs={10}>
-                        {/* <div>Element: {item?.alias_element} </div> */}
+                        <div>Element: {item?.alias_element} </div>
                         <div>Attachment: {item?.alias_attachment_id} </div>
                         <div>App: {item?.alias_app_id} </div>
                         <div>Download: {value?.download} </div>
@@ -329,7 +329,7 @@ export default class ElementsTable extends React.Component {
                         </Button>
                       </Col>
                     </Row>);
-                }) : <p>No attachment tokens avaialable</p>
+                })
               }
             </Panel.Body>
           </Panel>
@@ -635,10 +635,10 @@ export default class ElementsTable extends React.Component {
   };
 
   renderHeader = () => {
-    const { filterCreatedAt, ui, attachmentTokens, currentElement } = this.state;
+    const { filterCreatedAt, ui, attachmentTokens } = this.state;
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
-    const { currentType } = UserStore.getState();
+    const { currentElement } = ElementStore.getState();
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -659,8 +659,10 @@ export default class ElementsTable extends React.Component {
 
 
     const attachmentTokensToolTip = "Click to view/revoke all avaialable attachment tokens in this research plan.";
+    const attachTokensUnselectedToopTip = "Please select an element to view attachment tokens.";
     const attachmentTokenIcon = <i className={`fa fa-key`} />;
     const attachmentToolTip = <Tooltip id="attachment_tokens_tooltip">{attachmentTokensToolTip}</Tooltip>;
+    const disabledAttachmentToolTip = <Tooltip id="attachment_tokens_tooltip">{attachTokensUnselectedToopTip}</Tooltip>;
 
     return (
       <div className="table-header">
@@ -681,10 +683,10 @@ export default class ElementsTable extends React.Component {
           }}
         >
           {
-            attachmentTokens?.length > 0 &&
-            <OverlayTrigger placement="top" overlay={attachmentToolTip}>
+            // currentElement?.type == 'research_plan' &&
+            <OverlayTrigger placement="top" overlay={!currentElement ? disabledAttachmentToolTip : attachmentToolTip}>
               <button
-                disabled={!attachmentTokens?.length}
+                disabled={!currentElement && !attachmentTokens?.length}
                 type="button"
                 style={{ border: 'none' }}
                 onClick={this.toggleAttachmentTokens}
