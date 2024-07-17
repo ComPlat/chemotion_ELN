@@ -55,7 +55,8 @@ module ThirdPartyAppHelpers
   end
 
   # desc: return file for download to third party app
-  def download_third_party_app
+      
+  def download_attachment_to_third_party_app
     update_cache(:download)
     return error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
 
@@ -66,7 +67,7 @@ module ThirdPartyAppHelpers
   end
 
   # desc: upload file from the third party app
-  def upload_third_party_app
+  def upload_attachment_from_third_party_app
     update_cache(:upload)
     return error!('No write access to attachment', 403) unless write_access?(@attachment, @user)
 

@@ -17,7 +17,7 @@ module Chemotion
           end
           desc 'download file to 3rd party app'
           get '/', requirements: { token: /.*/ } do
-            download_third_party_app
+            download_attachment_to_third_party_app
           end
 
           desc 'Upload file from 3rd party app'
@@ -26,7 +26,7 @@ module Chemotion
             optional :attachmentName, type: String, desc: 'Name of the file'
           end
           post '/' do
-            upload_third_party_app
+            upload_attachment_from_third_party_app
           end
         end
       end
