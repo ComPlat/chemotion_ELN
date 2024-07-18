@@ -425,7 +425,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}
           domLayout="autoHeight"
-          reactiveCustomComponents
           popupParent={document.getElementById('reaction-detail-tab') || null}
           context={{
             copyRow,

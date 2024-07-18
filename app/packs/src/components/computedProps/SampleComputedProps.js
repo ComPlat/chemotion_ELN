@@ -16,7 +16,7 @@ export default class SampleComputedProps extends React.Component {
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
-    if (this.gridApi) this.gridApi.setRowData(nextProps.cprops);
+    if (this.gridApi) this.gridApi.setGridOption('rowData', nextProps.cprops);
   }
 
   onGridReady(params) {

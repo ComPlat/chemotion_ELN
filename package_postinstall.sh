@@ -6,7 +6,6 @@ set -euo pipefail
 
 ## ag-grid css
 src5=$(node -e 'console.log(require.resolve("ag-grid-community/styles/ag-grid.css"))')
-src6=$(node -e 'console.log(require.resolve("ag-grid-community/styles/ag-grid-no-native-widgets.css"))')
 
 
 YEL='\033[0;33m'
@@ -19,7 +18,6 @@ yellow() {
 
 yellow "$src5"
 sed -i "s~height: min~height: Min~" $src5
-sed -i "s~height: min~height: Min~" $src6
 yellow "Done fixing css."
 
 
