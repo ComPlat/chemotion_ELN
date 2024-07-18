@@ -576,7 +576,7 @@ export default class ReactionDetails extends Component {
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
 
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
-
+    
     return (
       <Panel className="eln-panel-detail"
         bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>

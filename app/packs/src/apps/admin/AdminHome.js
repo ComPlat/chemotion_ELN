@@ -71,6 +71,8 @@ class AdminHome extends React.Component {
       return this.renderCurateDictionary();
     } else if (pageIndex === 15) {
       return this.renderThirdPartyApp();
+    } else if (pageIndex === 16) {
+      return this.renderCurateDictionary();
     }
     return (<div />);
   }
@@ -98,6 +100,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
             <NavItem eventKey={16}>Curate Custom Dictionary </NavItem>
             <NavItem eventKey={15}>Third Party Apps </NavItem>
+            <NavItem eventKey={16}>Curate Custom Dictionary </NavItem>
           </Nav>
         </Col>
       </div>
