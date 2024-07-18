@@ -100,20 +100,22 @@ export default class ReactionDetails extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const nextReaction = nextProps.reaction;
+    const reactionFromNextProps = nextProps.reaction;
+    const reactionFromNextState = nextState.reaction;
     const nextActiveTab = nextState.activeTab;
     const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
     const {
-      reaction, activeTab, visible, activeAnalysisTab
+      reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
     } = this.state;
     return (
-      nextReaction.id !== reaction.id ||
-      nextReaction.updated_at !== reaction.updated_at ||
-      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
-      !!nextReaction.changed || !!nextReaction.editedSample ||
+      reactionFromNextProps.id !== reactionFromCurrentState.id ||
+      reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
+      reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
+      !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
       nextActiveTab !== activeTab || nextVisible !== visible ||
       nextActiveAnalysisTab !== activeAnalysisTab
+      || reactionFromNextState !== reactionFromCurrentState
     );
   }
 
