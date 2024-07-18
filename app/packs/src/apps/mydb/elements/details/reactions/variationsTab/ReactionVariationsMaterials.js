@@ -57,10 +57,7 @@ function getReactionMaterials(reaction) {
 }
 
 function getReactionMaterialsIDs(reactionMaterials) {
-  return Object.entries(reactionMaterials).reduce((checksumsByMaterialType, [materialType, materials]) => {
-    checksumsByMaterialType[materialType] = materials.map((material) => material.id);
-    return checksumsByMaterialType;
-  }, {});
+  return Object.values(reactionMaterials).flat().map((material) => material.id);
 }
 
 function updateYields(variationsRow, reactionHasPolymers) {
