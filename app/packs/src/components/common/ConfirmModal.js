@@ -20,4 +20,4 @@ function ConfirmModal({ showModal, title, content, onClick, dialogClassName }) {
   );
 }
 
-export { ConfirmModal };
+export default ConfirmModal;

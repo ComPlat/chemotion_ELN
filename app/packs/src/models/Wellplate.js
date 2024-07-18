@@ -65,7 +65,7 @@ export default class Wellplate extends Element {
   }
 
   get wells() {
-    return this._wells;
+    return this._wells || [];
   }
 
   set wells(wells) {

@@ -1,63 +1,28 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
 import WellContainer from 'src/apps/mydb/elements/details/wellplates/designerTab/WellContainer';
 import WellplateLabels from 'src/apps/mydb/elements/details/wellplates/designerTab/WellplateLabels';
-import WellOverlay from 'src/apps/mydb/elements/details/wellplates/designerTab/WellOverlay';
+import WellDetails from 'src/apps/mydb/elements/details/wellplates/designerTab/WellDetails';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import WellplateModel from 'src/models/Wellplate';
 
-export default class Wellplate extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showOverlay: false,
-      overlayTarget: {},
-      overlayWell: {},
-      overlayPlacement: 'right',
-      selectedColor: null
-    };
-  }
+const Wellplate = ({ wellplate, handleWellsChange }) => {
+  const [selectedWell, setSelectedWell] = useState(null)
+  const [selectedColor, setSelectedColor] = useState(null)
+  const wellSize = 60
 
-  componentDidMount() {
-    window.addEventListener('scroll', this.onScroll.bind(this));
-    document.getElementsByClassName('panel-body')[0].addEventListener('scroll', this.onScroll.bind(this));
-  }
-
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { show } = nextProps;
-    if (!show) {
-      this.hideOverlay();
-    }
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('scroll', this.onScroll.bind(this));
-    document.getElementsByClassName('panel-body')[0].removeEventListener('scroll', this.onScroll.bind(this));
-  }
-
-  onScroll() {
-    const { showOverlay, overlayTarget, overlayWell } = this.state;
-    if (showOverlay) {
-      this.hideOverlay();
-      setTimeout(() => {
-        this.showOverlay(overlayTarget, overlayWell);
-      }, 700);
-    }
-  }
-
-  swapWells(firstWell, secondWell) {
-    const { handleWellsChange, wells } = this.props;
+  const swapWells = (firstWell, secondWell) => {
+    const wells = wellplate.wells
     const firstWellId = wells.indexOf(firstWell);
     const secondWellId = wells.indexOf(secondWell);
-    const temp = wells[firstWellId].sample;
+    const sample = wells[firstWellId].sample;
     wells[firstWellId].sample = wells[secondWellId].sample;
-    wells[secondWellId].sample = temp;
+    wells[secondWellId].sample = sample;
     handleWellsChange(wells);
   }
 
-  dropSample(droppedSample, well) {
-    const { handleWellsChange, wells } = this.props;
+  const dropSample = (droppedSample, well) => {
+    const wells = wellplate.wells
     const wellId = wells.indexOf(well);
     const sample = droppedSample.buildChild();
     wells[wellId] = {
@@ -67,141 +32,77 @@ export default class Wellplate extends Component {
     handleWellsChange(wells);
   }
 
-  removeSampleFromWell(well) {
-    const { handleWellsChange, wells } = this.props;
-    const wellId = wells.indexOf(well);
-    wells[wellId] = {
-      ...well,
-      sample: null
-    };
+  const hideDetails = () => {
+    setSelectedWell(null);
+  }
+
+  const isWellActive = (well) => {
+    if (selectedWell == null) return false
+
+    return selectedWell.id === well.id;
+  }
+
+  const updateSelectedWell = (updatedWell) => {
+    const wells = wellplate.wells
+    const wellIndex = wells.findIndex(well => well.id == updatedWell.id)
+    if (wellIndex == -1) return;
+
+    wells[wellIndex] = updatedWell
     handleWellsChange(wells);
-    this.hideOverlay();
   }
 
-  hideOverlay() {
-    this.setState({
-      showOverlay: false,
-      selectedColor: null
-    });
-  }
-
-  showOverlay(key, well) {
-    const { cols } = this.props;
-    const isWellInUpperHalf = Math.ceil(cols / 2) > key % cols;
-    const placement = (isWellInUpperHalf) ? 'right' : 'left';
-    this.setState({
-      showOverlay: true,
-      overlayTarget: key,
-      overlayWell: well,
-      overlayPlacement: placement
-    });
-  }
-
-  setWellLabel(target) {
-    const { overlayWell } = this.state;
-    WellplatesFetcher.updateWellLabel({
-      id: overlayWell.id,
-      label: target.map(t => t.label).toString()
-    }).then((result) => {
-      overlayWell.label = result.label;
-      this.setState({ overlayWell });
-    });
-  }
-
-  toggleOverlay(key, well) {
-    const { showOverlay, overlayWell } = this.state;
-    if (showOverlay && overlayWell === well) {
-      this.hideOverlay();
-    } else {
-      this.showOverlay(key, well);
-    }
-  }
-
-  isWellActive(well) {
-    const { showOverlay, overlayWell } = this.state;
-    return (showOverlay && overlayWell === well);
-  }
-
-  saveColorCode() {
-    const { overlayWell, selectedColor } = this.state;
-    WellplatesFetcher.updateWellColorCode({
-      id: overlayWell.id,
-      color_code: selectedColor,
-    }).then((result) => {
-      overlayWell.color_code = result.color_code;
-      this.setState({ overlayWell });
-    });
-  }
-
-  setColorPicker(color) {
-    this.setState({ selectedColor: color.hex });
-  }
-
-  render() {
-    const { wells, readoutTitles, size, cols, width, handleWellsChange } = this.props;
-    const { showOverlay, overlayTarget, overlayWell, overlayPlacement, selectedColor } = this.state;
-    const style = {
-      width: (cols + 1) * width,
-      height: ((size / cols) + 1) * width
-    };
-    const containerStyle = {
-      width,
-      height: width,
-      fontSize: 8
-    };
-
-    return (
-      <div style={style}>
-        <WellplateLabels
-          size={size}
-          cols={cols}
-          width={width}
-          type="horizontal"
+  const style = {
+    width: (wellplate.width + 1) * wellSize,
+    height: ((wellplate.size / wellplate.width) + 1) * wellSize
+  };
+  const containerStyle = {
+    width: wellSize,
+    height: wellSize,
+    fontSize: 8
+  };
+  return (
+    <div style={style}>
+      <WellplateLabels
+        size={wellplate.size}
+        cols={wellplate.width}
+        width={wellSize}
+        type="horizontal"
+      />
+      <WellplateLabels
+        size={wellplate.size}
+        cols={wellplate.width}
+        width={wellSize}
+        type="vertical"
+      />
+      {wellplate.wells.map((well, key) => (
+        <div
+          key={`well_${well.id}`}
+          onClick={event => setSelectedWell(well)}
+        >
+          <WellContainer
+            well={well}
+            style={containerStyle}
+            swapWells={swapWells}
+            dropSample={dropSample}
+            active={isWellActive(well)}
+          />
+        </div>
+      ))}
+      {selectedWell &&
+        <WellDetails
+          well={selectedWell}
+          readoutTitles={wellplate.readout_titles}
+          handleClose={hideDetails}
+          onChange={updateSelectedWell}
         />
-        <WellplateLabels
-          size={size}
-          cols={cols}
-          width={width}
-          type="vertical"
-        />
-        {wells.map((well, key) => (
-          <div
-            key={key}
-            ref={key}
-            onClick={event => this.toggleOverlay(key, well)}
-          >
-            <WellContainer
-              well={well}
-              style={containerStyle}
-              swapWells={(firstWell, secondWell) => this.swapWells(firstWell, secondWell)}
-              dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
-              active={this.isWellActive(well)}
-              hideOverlay={() => this.hideOverlay()}
-            />
-          </div>
-        ))}
-        <WellOverlay
-          show={showOverlay}
-          well={overlayWell}
-          readoutTitles={readoutTitles}
-          selectedColor={selectedColor}
-          placement={overlayPlacement}
-          target={() => ReactDOM.findDOMNode(this.refs[overlayTarget]).children[0]}
-          handleClose={() => this.hideOverlay()}
-          removeSampleFromWell={well => this.removeSampleFromWell(well)}
-          handleColorPicker={value => this.setColorPicker(value)}
-          saveColorCode={() => this.saveColorCode()}
-          handleWellLabel={value => this.setWellLabel(value)}
-        />
-      </div>
-    );
-  }
+      }
+    </div>
+  );
 }
 
 Wellplate.propTypes = {
-  show: PropTypes.bool.isRequired,
-  size: PropTypes.number.isRequired,
-  width: PropTypes.number.isRequired,
-  cols: PropTypes.number.isRequired,
+  wellplate: PropTypes.instanceOf(WellplateModel),
   handleWellsChange: PropTypes.func.isRequired
 };
+
+export default Wellplate;

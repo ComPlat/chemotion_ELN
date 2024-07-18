@@ -3,7 +3,8 @@ import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
-  ListGroup, ListGroupItem, ButtonToolbar, Button,
+  Card,
+  ListGroup, ListGroupItem, Button,
   Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
@@ -38,7 +39,6 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
-import Panel from 'src/components/legacyBootstrap/Panel'
 import Well from 'src/components/legacyBootstrap/Well'
 
 export default class WellplateDetails extends Component {
@@ -245,62 +245,42 @@ export default class WellplateDetails extends Component {
     const datetp = formatTimeStampsOfElement(wellplate || {});
 
     return (
-      <div>
+      <div className="d-flex justify-content-between">
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
           <span>
             <i className="icon-wellplate" />
-            &nbsp;&nbsp;
-            <span>{wellplate.name}</span>
-            &nbsp;&nbsp;
+            <span className="mx-2">{wellplate.name}</span>
           </span>
         </OverlayTrigger>
-        <ElementCollectionLabels element={wellplate} placement="right" />
-        <HeaderCommentSection element={wellplate} />
-        <ConfirmClose el={wellplate} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => this.handleSubmit()}
-            style={{ display: saveBtnDisplay }}
-          >
-            <i className="fa fa-floppy-o " />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-          <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        <PrintCodeButton element={wellplate} />
+        <div class="d-flex justify-content-end gap-2">
+          <ElementCollectionLabels element={wellplate} placement="right" />
+          <HeaderCommentSection element={wellplate} />
+          <ConfirmClose el={wellplate} />
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
+            <Button
+              variant="warning"
+              size="sm"
+              onClick={() => this.handleSubmit()}
+              style={{ display: saveBtnDisplay }}
+            >
+              <i className="fa fa-floppy-o " />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
+            <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          <PrintCodeButton element={wellplate} />
+        </div>
       </div>
     );
   }
 
-  renderAttachmentsTab(wellplate) { /* eslint-disable react/jsx-no-bind */
-    return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <WellplateDetailsAttachments
-            wellplate={wellplate}
-            attachments={wellplate.attachments}
-            onDrop={this.handleAttachmentDrop.bind(this)}
-            onDelete={this.handleAttachmentDelete.bind(this)}
-            onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            onDownload={this.handleAttachmentDownload.bind(this)}
-            onImport={this.handleAttachmentImport.bind(this)}
-            onEdit={this.handleAttachmentEdit.bind(this)}
-            readOnly={false}
-          />
-        </ListGroupItem>
-      </ListGroup>
-    );
-  } /* eslint-enable */
 
   render() {
-    const {
-      wellplate, showWellplate, visible
-    } = this.state;
+    const { wellplate, showWellplate, visible } = this.state;
+    console.debug('Wellplate:', wellplate)
     const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
     const exportButton = (wellplate && wellplate.isNew)
@@ -314,13 +294,8 @@ export default class WellplateDetails extends Component {
           }
           <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
             <Wellplate
-              show={showWellplate}
-              size={wellplate.size}
-              readoutTitles={readoutTitles}
-              wells={wellplate.wells}
-              handleWellsChange={(w) => this.handleWellsChange(w)}
-              cols={wellplate.width}
-              width={60}
+              wellplate={wellplate}
+              handleWellsChange={(wells) => this.handleWellsChange(wells)}
             />
           </Well>
         </Tab>
@@ -371,7 +346,21 @@ export default class WellplateDetails extends Component {
       ),
       attachments: (
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${wellplate.id}`}>
-          {this.renderAttachmentsTab(wellplate)}
+          <ListGroup fill="true">
+            <ListGroupItem>
+              <WellplateDetailsAttachments
+                wellplate={wellplate}
+                attachments={wellplate.attachments}
+                onDrop={this.handleAttachmentDrop.bind(this)}
+                onDelete={this.handleAttachmentDelete.bind(this)}
+                onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+                onDownload={this.handleAttachmentDownload.bind(this)}
+                onImport={this.handleAttachmentImport.bind(this)}
+                onEdit={this.handleAttachmentEdit.bind(this)}
+                readOnly={false}
+              />
+            </ListGroupItem>
+          </ListGroup>
         </Tab>
       ),
 
@@ -390,9 +379,9 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
-        <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
-        <Panel.Body>
+      <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
+        <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
+        <Card.Body>
           <ElementDetailSortTab
             type="wellplate"
             availableTabs={Object.keys(tabContentsMap)}
@@ -402,7 +391,7 @@ export default class WellplateDetails extends Component {
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             {tabContents}
           </Tabs>
-          <ButtonToolbar>
+          <div className='d-flex gap-1'>
             <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
             {
               wellplate.changed ? (
@@ -419,10 +408,10 @@ export default class WellplateDetails extends Component {
             >
               Print Wells
             </Button>
-          </ButtonToolbar>
+          </div>
           <CommentModal element={wellplate} />
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   }
 }

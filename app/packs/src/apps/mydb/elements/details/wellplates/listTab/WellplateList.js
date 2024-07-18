@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Table, FormControl } from 'react-bootstrap';
+import { Table, Form } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 export default class WellplateList extends Component {
@@ -13,14 +13,12 @@ export default class WellplateList extends Component {
   }
 
   renderReadoutHeaders() {
-    const { readoutTitles } = this.props;
     return (
-      readoutTitles && readoutTitles.map((title) => {
-        const key = title.id;
+      this.props.readoutTitles && this.props.readoutTitles.map((title, index) => {
         return (
           [
-            <th key={`v_${key}`} width="15%">{title} Value</th>,
-            <th key={`u_${key}`} width="10%">{title} Unit</th>
+            <th key={`readout_${index}_value_header`} width="15%">{title} Value</th>,
+            <th key={`readout_${index}_unit_header`} width="10%">{title} Unit</th>
           ]
         );
       })
@@ -28,32 +26,23 @@ export default class WellplateList extends Component {
   }
 
   renderReadoutFields(well) {
-    const { readouts } = well;
-    const inputContainerStyle = {
-      padding: 0
-    };
-    const inputFieldStyle = {
-      resize: 'none',
-      height: 66
-    };
     return (
-      readouts && readouts.map((readout, index) => {
-        const key = readout.id;
+      well.readouts && well.readouts.map((readout, index) => {
         return (
           [
-            <td key={`v_${key}`} style={inputContainerStyle}>
-              <FormControl
+            <td key={`well_${well.id}_readout_${index}_value`} style={{ padding: 0 }}>
+              <Form.Control
                 componentClass="textarea"
-                style={inputFieldStyle}
+                style={{ resize: 'none', height: 66 }}
                 value={readout.value || ''}
                 onChange={event => this.handleReadoutOfWellChange(event, well, index, 'value')}
                 className="no-margin"
               />
             </td>,
-            <td key={`u_${key}`} style={inputContainerStyle}>
-              <FormControl
+            <td key={`well_${well.id}_readout_${index}_unit`} style={{ padding: 0 }}>
+              <Form.Control
                 componentClass="textarea"
-                style={inputFieldStyle}
+                style={{ resize: 'none', height: 66 }}
                 value={readout.unit || ''}
                 onChange={event => this.handleReadoutOfWellChange(event, well, index, 'unit')}
                 className="no-margin"
@@ -68,7 +57,7 @@ export default class WellplateList extends Component {
   render() {
     const { wells } = this.props;
     return (
-      <Table bordered hover condensed>
+      <Table bordered hover responsive>
         <thead>
           <tr>
             <th width="3%">#</th>
@@ -85,9 +74,6 @@ export default class WellplateList extends Component {
           {wells.map((well, key) => {
             const id = key + 1;
             const { sample, position } = well;
-            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-            const positionY = alphabet[position.y - 1];
-            const positions = positionY + position.x;
             let svgPath = '';
             let sampleName = '';
             let externalLabel = '';
@@ -114,14 +100,14 @@ export default class WellplateList extends Component {
             return (
               <tr key={key}>
                 <td>{id}</td>
-                <td>{positions}</td>
+                <td>{well.alphanumericPosition}</td>
                 <td>{svgNode}</td>
                 <td>{sampleName}</td>
                 <td>{externalLabel}</td>
                 <td>{sum_formular}</td>
                 {this.renderReadoutFields(well)}
                 <td style={inputContainerStyle}>
-                  <FormControl
+                  <Form.Control
                     componentClass="textarea"
                     style={style}
                     value={importedReadout || ''}

@@ -1,0 +1,195 @@
+import React from 'react';
+import {
+  Button,
+  ButtonGroup,
+  Col,
+  Form,
+  InputGroup,
+  Modal,
+  Row
+} from 'react-bootstrap';
+import SVG from 'react-inlinesvg';
+import PropTypes from 'prop-types';
+import Select from 'react-select';
+import { CirclePicker } from 'react-color';
+import { wellplateShowSample } from 'src/utilities/routesUtils';
+import Aviator from 'aviator';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+
+const navigateToSample = (sample) => {
+  const { params, uri } = Aviator.getCurrentRequest();
+  Aviator.navigate(`${uri}/sample/${sample.id}`, { silent: true });
+  wellplateShowSample({ params: { ...params, sampleID: sample.id } });
+};
+
+const sampleName = (sample) => {
+  if (sample == null) return 'No Sample selected';
+
+  const { name, external_label, short_label } = sample;
+  const sampleNameLabel = `${name || ''} ${external_label || ''} ${short_label || ''}`;
+  if (sample.isNew) {
+    return sampleNameLabel;
+  }
+  return (
+    <a onClick={() => navigateToSample(sample)} role="button">
+      {sampleNameLabel}
+    </a>
+  );
+}
+
+const sampleVisualisation = (well, onChange) => {
+  const { sample } = well;
+  let svg = null;
+  let removeButton = null;
+  const removeSampleFromWell = () => {
+    well.sample = null
+    onChange(well)
+  }
+
+  const svgContainerStyle = {
+    borderRadius: '50%',
+    height: 190,
+    width: 190,
+    border: '6px solid lightgray',
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    lineHeight: 2
+  };
+  if (sample) {
+    svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
+    removeButton = (
+      <Button className="pull-right" size="sm" variant="danger" onClick={removeSampleFromWell}>
+        <i className="fa fa-trash-o" />
+      </Button>
+    );
+  }
+  return (
+    <div>
+      <div style={svgContainerStyle}>
+        {svg}
+      </div>
+      <div className="wellplate-overlay">
+        {sampleName(sample)}
+        <br />
+        {sample?.molecule?.iupac_name || ''}
+        <br />
+      </div>
+      <div>
+        {removeButton}
+      </div>
+    </div>
+  );
+};
+
+const readoutSection = (readouts, readoutTitles) => {
+  if (!readouts || readouts.every(readout => readout.unit == '' && readout.value == '')) return null;
+
+  const readoutListItems = readouts.map((readout, index) => {
+    return (
+      <li key={`readout_${index}`}>
+        <strong>{readoutTitles[index]}:</strong>
+        {readout.value}
+      </li>
+    )
+  })
+
+  return (
+    <div>
+      <h2>Readouts</h2>
+      <ul>
+        {readoutListItems}
+      </ul>
+    </div>
+  )
+}
+
+const labelSelection = (well, onChange) => {
+  const wellLabels = well.label ? well.label.split(',') : [];
+  const labelsIncludesMolecularStructure = wellLabels.some(item => item === 'Molecular structure')
+  const labelsIncludeNonMolecularStructure = wellLabels.some(item => item !== 'Molecular structure')
+
+  const labels = [
+    { label: 'Name', value: 'Name', disabled: labelsIncludesMolecularStructure },
+    { label: 'External label', value: 'External label', disabled: labelsIncludesMolecularStructure },
+    { label: 'Molecular structure', value: 'Molecular structure', disabled: labelsIncludeNonMolecularStructure }
+  ];
+
+  return (
+    <Select
+      className="well-overlay-select"
+      id="label"
+      name="label"
+      multi
+      options={labels}
+      value={well.label}
+      onChange={selectedOptions => {
+        const newLabel = selectedOptions.map(option => option.label).toString()
+        well.label = newLabel
+        onChange(well)
+      }}
+    />
+  )
+}
+
+const colorPicker = (well, onChange) => {
+  const { sample, readouts } = well;
+
+  return (
+    <div>
+      <Form.Group as={Row} controlId="formColorSelectorDisplay">
+        <Form.Label column sm={3}>Select Color</Form.Label>
+        <Col sm={9}>
+          <InputGroup>
+            <InputGroup.Text style={{backgroundColor: well.color_code}} />
+            <Form.Control
+              className="input-sm"
+              type="text"
+              readOnly
+              value={well.color_code}
+            />
+          </InputGroup>
+        </Col>
+      </Form.Group>
+      <Form.Group controlId="formHorizontalPicker" style={{ marginTop: '60px' }}>
+        <CirclePicker
+          circleSize={17}
+          width="100%"
+          onChangeComplete={(color) => {
+            well.color_code = color.hex;
+            onChange(well)
+          }}
+        />
+      </Form.Group>
+    </div>
+  );
+};
+
+const WellDetails = ({ well, readoutTitles, handleClose, onChange}) => {
+  return (
+    <Modal
+      animation
+      centered
+      show={() => { well != null }}
+      onHide={handleClose}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Well Details for Well {well.alphanumericPosition}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {sampleVisualisation(well, onChange)}
+        {labelSelection(well, onChange)}
+        {readoutSection(well.readouts, readoutTitles)}
+        {colorPicker(well, onChange)}
+      </Modal.Body>
+    </Modal>
+  );
+}
+
+WellDetails.propTypes = {
+  well: PropTypes.object.isRequired,
+  readoutTitles: PropTypes.array.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
+export default WellDetails;

@@ -18,4 +18,12 @@ export default class Well extends Element {
   get sample() {
     return this._sample;
   }
+
+  get alphanumericPosition() {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const positionY = alphabet[this.position.y - 1];
+    const position = positionY + this.position.x;
+
+    return position
+  }
 }

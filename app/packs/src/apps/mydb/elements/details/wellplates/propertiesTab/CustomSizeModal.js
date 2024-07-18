@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Button, Modal, FormGroup, FormControl, Col, Row
+  Button, Modal, Form, Col, Row
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
@@ -73,16 +73,16 @@ export default class CustomSizeModal extends Component {
       : null;
     return (
       <div className="floating-left">
-        <FormGroup>
-          <ControlLabel>{label}</ControlLabel>
-          <FormControl
+        <Form.Group>
+          <Form.Label>{label}</Form.Label>
+          <Form.Control
             type="text"
             value={value}
             className={invalidStyleClass}
             onChange={(event) => this.updateDimension(propertyName, event.target.value)}
           />
           {errorMessage}
-        </FormGroup>
+        </Form.Group>
       </div>
     );
   }
@@ -90,10 +90,10 @@ export default class CustomSizeModal extends Component {
   renderSize() {
     const { height, width } = this.state;
     return (
-      <FormGroup>
-        <ControlLabel>Size</ControlLabel>
-        <FormControl.Static>{height * width}</FormControl.Static>
-      </FormGroup>
+      <Form.Group>
+        <Form.Label>Size</Form.Label>
+        <Form.Control type="text" disabled value={height * width} />
+      </Form.Group>
     );
   }
 
@@ -121,7 +121,7 @@ export default class CustomSizeModal extends Component {
             </Col>
           </Row>
           <Row>
-            <Col xs={1} xsOffset={10}>
+            <Col xs={{span: 1, offset: 10}}>
               {this.renderApplyButton()}
             </Col>
           </Row>

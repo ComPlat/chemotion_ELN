@@ -35,8 +35,10 @@ module Usecases
             readouts: well[:readouts],
             additive: well[:additive],
             position_x: well[:position][:x],
-            position_y: well[:position][:y]
-          }
+            position_y: well[:position][:y],
+            label: well[:label],
+            color_code: well[:color_code]
+          }.compact
 
           if well[:is_new]
             wellplate.wells.create(well_attributes)
