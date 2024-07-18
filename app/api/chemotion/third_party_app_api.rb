@@ -5,90 +5,8 @@ TPA_EXPIRATION = 48.hours
 module Chemotion
   # Publish-Subscription MessageAPI
   class ThirdPartyAppAPI < Grape::API
-    helpers do
-      # desc: expiry time for the token and the cached upload/download counters
-      def expiry_time
-        @expiry_time ||= TPA_EXPIRATION.from_now
-      end
-
-      # desc: instantiate local file cache for TPA
-      def cache
-        @cache ||= ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: TPA_EXPIRATION)
-      end
-
-      # desc: fetch the token and download/upload counters from the cache
-      def cached_token
-        @cached_token ||= cache.read(cache_key)
-      end
-
-      # desc: define the cache key based on the attachment/user/app ids
-      def cache_key
-        @cache_key ||= "#{@attachment&.id}/#{@user&.id}/#{@app&.id}"
-      end
-
-      # desc: prepare the token payload from the params
-      def prepare_payload
-        @payload = {
-          'appID' => params[:appID],
-          'userID' => current_user.id,
-          'attID' => params[:attID],
-        }
-      end
-
-      # desc: find records from the payload
-      def parse_payload(payload = @payload)
-        # TODO: implement attachment authorization
-        @attachment = Attachment.find(payload['attID']&.to_i)
-        @user = User.find(payload['userID']&.to_i)
-        @app = ThirdPartyApp.find(payload['appID']&.to_i)
-      rescue ActiveRecord::RecordNotFound
-        error!('Record not found', 404)
-      end
-
-      # desc: decrement the counters / check if token permission is expired
-      def update_cache(key)
-        return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
-
-        # TODO: expire token when both counters reach 0
-        # IDEA: split counters into two caches?
-        return error!("Token #{key} permission expired", 403) if cached_token[key].negative?
-
-        cached_token[key] -= 1
-        cache.write(cache_key, cached_token)
-      end
-
-      # desc: return file for download to third party app
-      def download_third_party_app
-        update_cache(:download)
-        content_type 'application/octet-stream'
-        header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
-        env['api.format'] = :binary
-        @attachment.read_file
-      end
-
-      # desc: upload file from the third party app
-      def upload_third_party_app
-        update_cache(:upload)
-        new_attachment = Attachment.new(
-          attachable: @attachment.attachable,
-          created_by: @attachment.created_by,
-          created_for: @attachment.created_for,
-          filename: params[:attachmentName].presence&.strip || "#{@app.name[0, 20]}-#{params[:file][:filename]}",
-          file_path: params[:file][:tempfile].path
-        )
-        new_attachment.save
-        { message: 'File uploaded successfully' }
-      end
-
-      def encode_and_cache_token(payload = @payload)
-        @token = JsonWebToken.encode(payload, expiry_time)
-        cache.write(
-          cache_key,
-          { token: @token, download: 3, upload: 10 },
-          expires_at: expiry_time,
-        )
-      end
-    end
+    helpers AttachmentHelpers
+    helpers ThirdPartyAppHelpers
 
     # desc: public endpoint for third party apps to {down,up}load files
     namespace :public do
@@ -99,7 +17,7 @@ module Chemotion
           end
           desc 'download file to 3rd party app'
           get '/', requirements: { token: /.*/ } do
-            download_third_party_app
+            download_attachment_to_third_party_app
           end
 
           desc 'Upload file from 3rd party app'
@@ -108,7 +26,7 @@ module Chemotion
             optional :attachmentName, type: String, desc: 'Name of the file'
           end
           post '/' do
-            upload_third_party_app
+            upload_attachment_from_third_party_app
           end
         end
       end
@@ -133,7 +51,7 @@ module Chemotion
           requires :url, type: String, allow_blank: false, desc: 'The url in order to redirect to the app.'
           requires :name, type: String, allow_blank: false,
                           desc: 'name of third party app. User will chose correct app based on names.'
-          optional :file_types, type: String, desc: 'comma separated mime-types'
+          requires :file_types, type: String, desc: 'comma separated mime-types'
         end
 
         rescue_from ActiveRecord::RecordInvalid do |e|
@@ -181,6 +99,8 @@ module Chemotion
         prepare_payload
         parse_payload
         encode_and_cache_token
+        return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
+
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
         "#{@app.url}?url=#{url}"

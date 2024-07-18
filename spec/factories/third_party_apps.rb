@@ -7,5 +7,6 @@ FactoryBot.define do
     name { "myName #{id}" }
     created_at { Date.new }
     updated_at { Date.new }
+    file_types { 'csv' }
   end
 end
