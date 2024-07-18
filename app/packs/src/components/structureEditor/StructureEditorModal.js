@@ -7,7 +7,9 @@ import {
   Modal,
   Panel,
   FormGroup,
-  ControlLabel
+  ControlLabel,
+  OverlayTrigger,
+  Tooltip
 } from 'react-bootstrap';
 import Select from 'react-select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -19,6 +21,7 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
+import uuid from 'uuid';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -144,10 +147,33 @@ function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
     <FormGroup>
-      <div className="col-lg-2 col-md-2">
-        <ControlLabel>Structure Editor</ControlLabel>
-      </div>
-      <div className="col-lg-6 col-md-8">
+      <ControlLabel>Structure Editor</ControlLabel>
+      <Select
+        className="status-select"
+        name="editor selection"
+        clearable={false}
+        options={options}
+        onChange={fnChange}
+        value={value}
+      />
+    </FormGroup>
+  );
+}
+
+function CommonTemplatesList(props) {
+  const { options, fnChange, value } = props;
+  const toolTip = `
+  Select a template to use. After selecting a template:
+  1- Click on the canvas./n
+  2- Pres CTRL+v inside the canvas.
+  `;
+  return (
+    <OverlayTrigger
+      key={uuid.v4()}
+      placement="top"
+      overlay={<Tooltip id={`CT_tooptip_${toolTip}`}>{toolTip}</Tooltip>}>
+      <FormGroup >
+        <ControlLabel>Common Templates:</ControlLabel>
         <Select
           className="status-select"
           name="editor selection"
@@ -156,12 +182,10 @@ function EditorList(props) {
           onChange={fnChange}
           value={value}
         />
-      </div>
-      <div className="col-lg-4 col-md-2"> </div>
-    </FormGroup>
+      </FormGroup>
+    </OverlayTrigger>
   );
 }
-
 EditorList.propTypes = {
   value: PropTypes.string.isRequired,
   fnChange: PropTypes.func.isRequired,
@@ -352,13 +376,22 @@ export default class StructureEditorModal extends React.Component {
           onHide={this.handleCancelBtn.bind(this)}
         >
           <Modal.Header closeButton>
-            <Modal.Title>
-              <EditorList
-                value={editor.id}
-                fnChange={this.handleEditorSelection}
-                options={editorOptions}
-              />
-            </Modal.Title>
+            <div style={{ display: 'flex' }}>
+              <div style={{ flex: 3 }} >
+                <EditorList
+                  value={editor.id}
+                  fnChange={this.handleEditorSelection}
+                  options={editorOptions}
+                />
+              </div>
+              <div style={{ flex: 1.5, margin: "0 10px" }} >
+                <CommonTemplatesList
+                  value={editor.id}
+                  fnChange={this.handleEditorSelection}
+                  options={editorOptions}
+                />
+              </div>
+            </div>
           </Modal.Header>
           <Modal.Body>
             <WarningBox
@@ -381,8 +414,8 @@ export default class StructureEditorModal extends React.Component {
               </ButtonToolbar>
             </div>
           </Modal.Body>
-        </Modal>
-      </div>
+        </Modal >
+      </div >
     );
   }
 }
