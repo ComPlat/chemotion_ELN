@@ -56,6 +56,7 @@ export default class ReactionDetailsScheme extends Component {
     this.switchEquiv = this.switchEquiv.bind(this);
     this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
+    this.handleDescChange = this.handleDescChange.bind(this)
   }
 
   componentDidMount() {
@@ -115,6 +116,7 @@ export default class ReactionDetailsScheme extends Component {
   onChangeRole(e) {
     const { onInputChange } = this.props;
     const value = e && e.value;
+
     onInputChange('role', value);
   }
 
@@ -238,6 +240,13 @@ export default class ReactionDetailsScheme extends Component {
     this.setState({
       reactionDescTemplate: state.reactionDescription.toJS()
     });
+  }
+
+  handleDescChange(description){
+    const { reaction } = this.state
+    console.log(this.props)
+    reaction.description = description
+    this.setState({reaction :reaction})
   }
 
   handleMaterialsChange(changeEvent) {
@@ -967,8 +976,11 @@ export default class ReactionDetailsScheme extends Component {
             <Row>
               <Col md={12}>
                 <FormGroup>
-                  <ControlLabel>Description</ControlLabel>
-                  <div className="quill-resize">
+                <div class="parent">
+                  <div class="child inline-block-child"><ControlLabel>Description</ControlLabel></div> 
+                   
+                </div>
+                <div className="quill-resize">
                     {
                       permitOn(reaction) ?
                         <ReactionDescriptionEditor
@@ -978,6 +990,7 @@ export default class ReactionDetailsScheme extends Component {
                           value={reaction.description}
                           updateTextTemplates={this.updateTextTemplates}
                           onChange={event => this.props.onInputChange('description', event)}
+                          // acOnChange = {this.handleDescChange}
                         /> : <QuillViewer value={reaction.description} />
                     }
                   </div>

@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component} from 'react';
+import PropTypes, { array } from 'prop-types';
 import {
   Panel, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, OverlayTrigger, Tooltip
+  Tabs, Tab, OverlayTrigger, Tooltip, Alert
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -44,6 +44,8 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+
+
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -173,11 +175,11 @@ export default class ReactionDetails extends Component {
     } else {
       value = event.target.value;
     }
-
+    // console.log(event.ops[0])
     const { reaction } = this.state;
-
     const { newReaction, options } = setReactionByType(reaction, type, value);
     this.handleReactionChange(newReaction, options);
+    console.log( event)
   }
 
   handleProductClick(product) {
@@ -329,6 +331,8 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
+      
+      
         {copyBtn}
         <OverlayTrigger
           placement="bottom"
@@ -510,12 +514,12 @@ export default class ReactionDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
-
+    // console.log(reaction.description.ops[0]["insert"]);
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
 
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
-
+    
     return (
       <Panel className="eln-panel-detail"
         bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
@@ -528,6 +532,7 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
+          
           {this.state.sfn ? <ScifinderSearch el={reaction} /> : null}
           <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
             {tabContents}

@@ -15,6 +15,8 @@ import BaseToolbar from 'src/components/reactQuill/BaseToolbar';
 import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
 
+import CurationModal from "src/apps/mydb/elements/details/reactions/CurationModal.js";
+
 const toolbarOptions = [
   'bold', 'italic', 'underline',
   'header', 'script',
@@ -96,7 +98,7 @@ export default class ReactionDescriptionEditor extends React.Component {
   }
 
   onChangeContent(quillEditor) {
-    const { onChange } = this.props;
+    const { onChange } = this.props;   
 
     if (onChange) {
       onChange(quillEditor.getContents());
@@ -120,7 +122,6 @@ export default class ReactionDescriptionEditor extends React.Component {
     if (this.reactQuillRef.current == null) {
       return;
     }
-
     this.onChangeContent(editor);
   }
 
@@ -199,12 +200,16 @@ export default class ReactionDescriptionEditor extends React.Component {
           overlay={templateCreatorPopover}
           onHide={this.onCloseTemplateCreator}
         >
-          <span className="ql-formats">
             <button>
               <span className="fa fa-cog" />
             </button>
-          </span>
         </OverlayTrigger>
+        <div class="child inline-block-child">
+          <CurationModal 
+                description= {this.props.value.ops} 
+                onChange = {( event) => this.props.onChange( event)}
+                />
+        </div>  
       </DynamicToolbarEditor>
     );
   }
