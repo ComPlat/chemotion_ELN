@@ -12,6 +12,7 @@ import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateCont
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
+import DictionaryCuration from 'src/apps/admin/AutomaticCuration'
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
@@ -65,6 +66,8 @@ class AdminHome extends React.Component {
       return this.renderDelayedJobs();
     } else if (pageIndex === 14) {
       return this.renderChemSpectraLayouts();
+    } else if (pageIndex === 15) {
+      return this.renderCurateDictionary();
     }
     return (<div />);
   }
@@ -90,6 +93,7 @@ class AdminHome extends React.Component {
             {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
             <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
+            <NavItem eventKey={15}>Curate Custom Dictionary </NavItem>
           </Nav>
         </Col>
       </div>
@@ -194,6 +198,16 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
+  renderCurateDictionary(){
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <DictionaryCuration />
+      </Col>
+    );
+  }
+  
 
   render() {
     return (
