@@ -2,6 +2,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import UsersFetcher from '../../fetchers/UsersFetcher';
 
 function KetcherEditor(props) {
   const iframRef = useRef();
@@ -21,8 +22,7 @@ function KetcherEditor(props) {
   const handleStorageChange = (event) => {
     if (event.key === 'ketcher-opts') {
       console.log('Storage key changed:', event.newValue);
-      // Add your custom logic here
-      // api call to store data
+      UsersFetcher.updateUserKetcher2Options(event.newValue);
     }
   };
 

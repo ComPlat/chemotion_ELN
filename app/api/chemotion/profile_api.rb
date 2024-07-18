@@ -136,6 +136,23 @@ module Chemotion
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)
       end
+
+      desc 'draft: get user profile editor ketcher 2 setting options'
+      get "editors/ketcher2-options" do
+        data = 
+        { "resetToSelect": 'paste', "rotationStep": 15, "showValenceWarnings": true, "atomColoring": false, "showStereoFlags": true, "stereoLabelStyle": "Iupac", "colorOfAbsoluteCenters": "#FF4545", "colorOfAndCenters": "#FFAD31", "colorOfOrCenters": "#228b22", "colorStereogenicCenters": "LabelsOnly", "autoFadeOfStereoLabels": true, "absFlagLabel": "ABS", "andFlagLabel": "AND Enantiomer", "mixedFlagLabel": "Mixed", "ignoreChiralFlag": false, "orFlagLabel": "OR Enantiomer", "font": "30px Georgia", "fontsz": 13, "fontszsub": 13, "carbonExplicitly": false, "showCharge": true, "showValence": false, "showHydrogenLabels": "Terminal and Hetero", "aromaticCircle": true, "doubleBondWidth": 6, "bondThickness": 2, "stereoBondWidth": 6, "dearomatize-on-load": false, "smart-layout": true, "ignore-stereochemistry-errors": true, "mass-skip-error-on-pseudoatoms": false, "gross-formula-add-rsites": true, "gross-formula-add-isotopes": true, "showAtomIds": false, "showBondIds": false, "showHalfBondIds": false, "showLoopIds": false, "miewMode": "LN", "miewTheme": "light", "miewAtomLabel": "bright", "init": true }
+        data
+      end
+
+      desc 'draft: update user profile editor ketcher 2 setting options'
+      params do
+        requires :data, type: String, desc: "data structure for ketcher options"
+      end
+      put "editors/ketcher2-options" do
+        puts current_user.id
+        {data: JSON.parse(params[:data])}
+      end
+
     end
   end
 end

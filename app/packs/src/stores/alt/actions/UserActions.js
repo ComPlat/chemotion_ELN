@@ -170,8 +170,13 @@ class UserActions {
   }
 
   fetchKetcher2Options() {
-    return () => {
+    return (_) => {
       UsersFetcher.fetchUserKetcher2Options()
+        .then((result) => {
+          if (result) {
+            localStorage.setItem('ketcher-opts', JSON.stringify(result));
+          }
+        })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
