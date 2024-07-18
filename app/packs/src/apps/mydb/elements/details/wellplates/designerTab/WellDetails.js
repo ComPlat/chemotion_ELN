@@ -53,7 +53,8 @@ const sampleVisualisation = (well, onChange) => {
     border: '6px solid lightgray',
     textAlign: 'center',
     verticalAlign: 'middle',
-    lineHeight: 2
+    lineHeight: 2,
+    margin: '0 auto'
   };
   if (sample) {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
@@ -64,20 +65,17 @@ const sampleVisualisation = (well, onChange) => {
     );
   }
   return (
-    <div>
+    <>
+      {removeButton}
       <div style={svgContainerStyle}>
         {svg}
       </div>
-      <div className="wellplate-overlay">
+      <p className="wellplate-overlay text-center">
         {sampleName(sample)}
         <br />
         {sample?.molecule?.iupac_name || ''}
-        <br />
-      </div>
-      <div>
-        {removeButton}
-      </div>
-    </div>
+      </p>
+    </>
   );
 };
 
@@ -94,7 +92,7 @@ const readoutSection = (readouts, readoutTitles) => {
   })
 
   return (
-    <div>
+    <div class="mt-3">
       <h2>Readouts</h2>
       <ul>
         {readoutListItems}
@@ -115,19 +113,22 @@ const labelSelection = (well, onChange) => {
   ];
 
   return (
-    <Select
-      className="well-overlay-select"
-      id="label"
-      name="label"
-      multi
-      options={labels}
-      value={well.label}
-      onChange={selectedOptions => {
-        const newLabel = selectedOptions.map(option => option.label).toString()
-        well.label = newLabel
-        onChange(well)
-      }}
-    />
+    <div class="mt-3">
+      <h2>Select label type</h2>
+      <Select
+        className="well-overlay-select"
+        id="label"
+        name="label"
+        multi
+        options={labels}
+        value={well.label}
+        onChange={selectedOptions => {
+          const newLabel = selectedOptions.map(option => option.label).toString()
+          well.label = newLabel
+          onChange(well)
+        }}
+      />
+    </div>
   )
 }
 
@@ -135,22 +136,20 @@ const colorPicker = (well, onChange) => {
   const { sample, readouts } = well;
 
   return (
-    <div>
+    <div class="mt-3">
       <Form.Group as={Row} controlId="formColorSelectorDisplay">
-        <Form.Label column sm={3}>Select Color</Form.Label>
-        <Col sm={9}>
-          <InputGroup>
-            <InputGroup.Text style={{backgroundColor: well.color_code}} />
-            <Form.Control
-              className="input-sm"
-              type="text"
-              readOnly
-              value={well.color_code}
-            />
-          </InputGroup>
-        </Col>
+        <Form.Label as="h2">Select Color</Form.Label>
+        <InputGroup>
+          <InputGroup.Text style={{backgroundColor: well.color_code}} />
+          <Form.Control
+            className="input-sm"
+            type="text"
+            readOnly
+            value={well.color_code}
+          />
+        </InputGroup>
       </Form.Group>
-      <Form.Group controlId="formHorizontalPicker" style={{ marginTop: '60px' }}>
+      <Form.Group controlId="formHorizontalPicker" class="my-3">
         <CirclePicker
           circleSize={17}
           width="100%"
