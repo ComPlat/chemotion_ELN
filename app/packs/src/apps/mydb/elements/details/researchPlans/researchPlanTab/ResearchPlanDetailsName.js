@@ -2,9 +2,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormControl, FormGroup, Row, Col, OverlayTrigger, Tooltip, Button
+  Form, Row, Col, OverlayTrigger, Tooltip, Button
 } from 'react-bootstrap';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ResearchPlanDetailsName extends Component {
   renderCopyToMetadataButton() {
@@ -18,21 +17,12 @@ export default class ResearchPlanDetailsName extends Component {
       >
         <Button
           id="copyMetadataButton"
-          title=""
           className="fa fa-laptop pull-right"
           variant="info"
-          size="sm"
-          style={{
-            width: '20px',
-            height: '20px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+          size="xsm"
           onClick={() => onCopyToMetadata(null, 'name')}
           disabled={isNew}
         />
-
       </OverlayTrigger>
     );
   }
@@ -43,27 +33,25 @@ export default class ResearchPlanDetailsName extends Component {
     } = this.props;
     if (edit) {
       return (
-        <div className="research-plan-name">
-          <Row>
-            <Col lg={8}>
-              <FormGroup>
-                <ControlLabel>Name</ControlLabel>
-                { this.renderCopyToMetadataButton() }
-                <FormControl
-                  type="text"
-                  value={value || ''}
-                  onChange={(event) => onChange(event.target.value)}
-                  disabled={disabled}
-                  name="research_plan_name"
-                />
-              </FormGroup>
-            </Col>
-          </Row>
-        </div>
+        <Row>
+          <Col sm={8}>
+            <Form.Group>
+              <Form.Label>Name</Form.Label>
+              {this.renderCopyToMetadataButton()}
+              <Form.Control
+                type="text"
+                value={value || ''}
+                onChange={(event) => onChange(event.target.value)}
+                disabled={disabled}
+                name="research_plan_name"
+              />
+            </Form.Group>
+          </Col>
+        </Row>
       );
     }
     return (
-      <div className="research-plan-name static">
+      <div className="my-3">
         <h1>{value}</h1>
       </div>
     );
