@@ -60,7 +60,6 @@ class API < Grape::API
     def public_request?
       request.path.start_with?(
         '/api/v1/public/',
-        '/api/v1/chemscanner/',
         '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
@@ -177,7 +176,6 @@ class API < Grape::API
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
   mount Chemotion::ElementAPI
-  mount Chemotion::ChemScannerAPI
   mount Chemotion::ChemSpectraAPI
   mount Chemotion::InstrumentAPI
   mount Chemotion::MessageAPI
