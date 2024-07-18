@@ -130,6 +130,8 @@ export default class Wellplate extends Element {
   }
 
   #initEmptyWells() {
+    if (!this.isNew) return
+    
     this.wells = Array(this.size).fill({});
     this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));
     this._checksum = this.checksum();
