@@ -17,8 +17,9 @@ import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  getMaterialColumnGroupChild, updateColumnDefinitionsMaterials, getReactionMaterials,
-  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
+  getMaterialColumnGroupChild, updateColumnDefinitionsMaterials,
+  getReactionMaterials, getReactionMaterialsIDs,
+  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -170,7 +171,7 @@ MenuHeader.propTypes = {
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
-  const [reactionVariations, setReactionVariations] = useState(reaction.variations);
+  const [reactionVariations, _setReactionVariations] = useState(reaction.variations);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [columnDefinitions, setColumnDefinitions] = useState([
@@ -280,23 +281,25 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     autoHeaderHeight: true,
   }), []);
 
-  useEffect(() => {
-    /*
-    Push changes to parent component. Treat parent component as external system,
-    since it's not obvious when and how state is mutated in the parent component.
-    */
-    reaction.variations = reactionVariations;
+  const setReactionVariations = (updatedReactionVariations) => {
+    // Set updated state here and in parent component.
+    _setReactionVariations(updatedReactionVariations);
+    reaction.variations = updatedReactionVariations;
     onReactionChange(reaction);
-  }, [reactionVariations]);
+  };
 
-  if (!isEqual(reactionMaterials, getReactionMaterials(reaction))) {
+  const updatedReactionMaterials = getReactionMaterials(reaction);
+  if (
+    !isEqual(
+      getReactionMaterialsIDs(reactionMaterials),
+      getReactionMaterialsIDs(updatedReactionMaterials)
+    )
+  ) {
     /*
     Keep set of materials up-to-date.
     Materials could have been added or removed in the "Scheme" tab.
     These changes need to be reflected in the variations.
     */
-    const updatedReactionMaterials = getReactionMaterials(reaction);
-
     const updatedColumnDefinitions = updateColumnDefinitionsMaterials(
       columnDefinitions,
       updatedReactionMaterials,
