@@ -242,4 +242,23 @@ export default class UsersFetcher {
     });
     return promise;
   }
+
+  static fetchUserKetcher2Options() {
+    // const promise = fetch('/api/v1/users/scifinder', {
+    //   credentials: 'same-origin',
+    //   headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+    // }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    //   console.log(errorMessage);
+    // });
+
+    const faker_data = { "resetToSelect": 'paste', "rotationStep": 15, "showValenceWarnings": true, "atomColoring": false, "showStereoFlags": true, "stereoLabelStyle": "Iupac", "colorOfAbsoluteCenters": "#FF4545", "colorOfAndCenters": "#FFAD31", "colorOfOrCenters": "#228b22", "colorStereogenicCenters": "LabelsOnly", "autoFadeOfStereoLabels": true, "absFlagLabel": "ABS", "andFlagLabel": "AND Enantiomer", "mixedFlagLabel": "Mixed", "ignoreChiralFlag": false, "orFlagLabel": "OR Enantiomer", "font": "30px Georgia", "fontsz": 13, "fontszsub": 13, "carbonExplicitly": false, "showCharge": true, "showValence": false, "showHydrogenLabels": "Terminal and Hetero", "aromaticCircle": true, "doubleBondWidth": 6, "bondThickness": 2, "stereoBondWidth": 6, "dearomatize-on-load": false, "smart-layout": true, "ignore-stereochemistry-errors": true, "mass-skip-error-on-pseudoatoms": false, "gross-formula-add-rsites": true, "gross-formula-add-isotopes": true, "showAtomIds": false, "showBondIds": false, "showHalfBondIds": false, "showLoopIds": false, "miewMode": "LN", "miewTheme": "light", "miewAtomLabel": "bright", "init": true };
+    return new Promise((resolve, reject) => {
+      resolve(faker_data);
+    }).then(res => {
+      if (res) {
+        localStorage.setItem('ketcher-opts', JSON.stringify(res));
+      }
+    })
+      .catch(err => console.log(err.message));
+  }
 }

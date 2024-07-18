@@ -158,7 +158,7 @@ class UserActions {
       }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    }
+    };
   }
 
   fetchOmniauthProviders() {
@@ -166,7 +166,14 @@ class UserActions {
       UsersFetcher.fetchOmniauthProviders()
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
-    }
+    };
+  }
+
+  fetchKetcher2Options() {
+    return () => {
+      UsersFetcher.fetchUserKetcher2Options()
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 }
 
