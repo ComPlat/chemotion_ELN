@@ -21,6 +21,7 @@ export default class MoleculeModeratorComponent extends Component {
     this.confirmDelete = this.confirmDelete.bind(this);
     this.handleShowModal = this.handleShowModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
+    this.handleMolNameChange = this.handleMolNameChange.bind(this);
     this.onSaveName = this.onSaveName.bind(this);
     this.onAddName = this.onAddName.bind(this);
   }
@@ -51,20 +52,17 @@ export default class MoleculeModeratorComponent extends Component {
     const { molecule } = this.props;
     const { molNames, molName, isNew } = this.state;
 
-    const name = this.m_name.value.trim();
-    if (name == '') {
+    if (molName.name === '') {
       // eslint-disable-next-line no-alert
       alert('Please input name!');
       return false;
     }
 
-    molName.name = name;
-
     const params = {
       id: molecule.id,
       name_id: molName.id,
       description: molName.description,
-      name
+      name: molName.name,
     };
 
     MoleculesFetcher.saveMoleculeName(params).then((result) => {
@@ -104,6 +102,19 @@ export default class MoleculeModeratorComponent extends Component {
       show: true,
       isNew,
       molName: nameObj
+    });
+  }
+
+  handleMolNameChange(e) {
+    this.setState((state) => {
+      const { molName } = state;
+      return {
+        ...state,
+        molName: {
+          ...molName,
+          name: e.target.value.trim()
+        }
+      };
     });
   }
 
@@ -192,7 +203,7 @@ export default class MoleculeModeratorComponent extends Component {
             <Form.Group className="mb-3" controlId="formControlName">
               <InputGroup>
                 <InputGroup.Text>Molecule name</InputGroup.Text>
-                <Form.Control type="text" defaultValue={molName.name} inputRef={(ref) => { this.m_name = ref; }} />
+                <Form.Control type="text" value={molName.name} onChange={this.handleMolNameChange} />
               </InputGroup>
             </Form.Group>
           </Form>
