@@ -6,7 +6,8 @@ const wellplate2x3EmptyJson = {
   type: 'wellplate',
   description: 'A test description for 2x3 plate',
   name: 'Testwellplate 2x3',
-  wells: []
+  wells: [],
+  is_new: true
 };
 
 export default wellplate2x3EmptyJson;

@@ -19,11 +19,9 @@ RSpec.describe CollectionsCellline do
   let(:collection_target_id) { c2.id }
   let(:sample) { create(:cellline_sample, collections: [c1]) }
 
-  context 'when target collection is valid and has not yet the cell line' do
-    before do
-      execute
-    end
+  before { execute }
 
+  context 'when target collection is valid and has not yet the cell line' do
     it 'cell line is now connected to new collection' do
       expect(described_class.find_by(
                collection_id: collection_target_id,
@@ -40,22 +38,16 @@ RSpec.describe CollectionsCellline do
   end
 
   context 'when target collection is not available' do
-    let(:collection_target_id) { -1 }
+    let(:collection_target_id) { 1_234_567_890 }
 
-    it 'raise collection not found error' do
-      expect do
-        execute
-      end.to raise_error(RuntimeError)
+    it 'skips creating the record' do
+      expect(described_class.find_by(collection_id: collection_target_id)).to be_nil
     end
   end
 
   context 'when target collection is valid and but cell line is already in it' do
     let(:c2) { create(:collection) }
     let(:sample) { create(:cellline_sample, collections: [c1, c2]) }
-
-    before do
-      execute
-    end
 
     it 'cell line exists once in the target collection' do
       expect(described_class.where(

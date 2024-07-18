@@ -204,30 +204,71 @@ export default class Reaction extends Element {
     [
       {
         "id": <number>,
+        "notes": <string>,
         "properties": {
-            "temperature": {"value": <number>, "unit": <string>},
-            "duration": {"value": <number>, "unit": <string>}
+          "temperature": {"value": <number>, "unit": <string>},
+          "duration": {"value": <number>, "unit": <string>}
         },
         "analyses": [<id>, <id>, ...],
         "startingMaterials": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
         "reactants": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
         "products": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
         "solvents": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
       },
       {
@@ -240,6 +281,9 @@ export default class Reaction extends Element {
     Units are to be treated as immutable. Units and corresponding values
     are changed (not mutated in the present data-structure!) only for display or export
     (i.e., at the boundaries of the application).
+    This is why there's a `standard` unit and a `display` unit.
+    The `standard` (available as `unit` attribute of each entry) is immutable,
+    whereas the value that corresponds to `display` is computed ad hoc at the boundaries.
     See https://softwareengineering.stackexchange.com/a/391480.
     */
     if (!Array.isArray(variations)) {

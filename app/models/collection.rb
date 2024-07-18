@@ -6,32 +6,39 @@
 #
 # Table name: collections
 #
-#  id                        :integer          not null, primary key
-#  user_id                   :integer          not null
-#  ancestry                  :string
-#  label                     :text             not null
-#  shared_by_id              :integer
-#  is_shared                 :boolean          default(FALSE)
-#  permission_level          :integer          default(0)
-#  sample_detail_level       :integer          default(10)
-#  reaction_detail_level     :integer          default(10)
-#  wellplate_detail_level    :integer          default(10)
-#  created_at                :datetime         not null
-#  updated_at                :datetime         not null
-#  position                  :integer
-#  screen_detail_level       :integer          default(10)
-#  is_locked                 :boolean          default(FALSE)
-#  deleted_at                :datetime
-#  is_synchronized           :boolean          default(FALSE), not null
-#  researchplan_detail_level :integer          default(10)
-#  element_detail_level      :integer          default(10)
-#  tabs_segment              :jsonb
+#  id                          :integer          not null, primary key
+#  user_id                     :integer          not null
+#  ancestry                    :string
+#  label                       :text             not null
+#  shared_by_id                :integer
+#  is_shared                   :boolean          default(FALSE)
+#  permission_level            :integer          default(0)
+#  sample_detail_level         :integer          default(10)
+#  reaction_detail_level       :integer          default(10)
+#  wellplate_detail_level      :integer          default(10)
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  position                    :integer
+#  screen_detail_level         :integer          default(10)
+#  is_locked                   :boolean          default(FALSE)
+#  deleted_at                  :datetime
+#  is_synchronized             :boolean          default(FALSE), not null
+#  researchplan_detail_level   :integer          default(10)
+#  element_detail_level        :integer          default(10)
+#  tabs_segment                :jsonb
+#  celllinesample_detail_level :integer          default(10)
+#  inventory_id                :bigint
 #
 # Indexes
 #
-#  index_collections_on_ancestry    (ancestry)
-#  index_collections_on_deleted_at  (deleted_at)
-#  index_collections_on_user_id     (user_id)
+#  index_collections_on_ancestry      (ancestry)
+#  index_collections_on_deleted_at    (deleted_at)
+#  index_collections_on_inventory_id  (inventory_id)
+#  index_collections_on_user_id       (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (inventory_id => inventories.id)
 #
 
 class Collection < ApplicationRecord
@@ -98,7 +105,7 @@ class Collection < ApplicationRecord
 
   def self.filter_collection_attributes(user_id, collection_attributes)
     c_ids = collection_attributes.filter_map { |ca| (!ca['isNew'] && ca['id'].to_i) || nil }
-    filtered_cids = Collection.where(id: c_ids).filter_map do |c|
+    filtered_cids = Collection.where(id: c_ids, is_locked: false).filter_map do |c|
       if (c.user_id == user_id && !c.is_shared) ||
          (c.is_shared && (c.shared_by_id == user_id || (c.user_id == user_id && c.permission_level == 10)))
         c.id
@@ -126,15 +133,15 @@ class Collection < ApplicationRecord
     return unless collection_attributes && user_id.is_a?(Integer)
 
     filter_collection_attributes(user_id, collection_attributes).each do |attr|
-      parent = Collection.find(attr['id'])
+      parent = Collection.find_by(id: attr['id'])
+      next if parent.nil?
 
       # collection is a new root collection
       parent.update(parent: nil) unless grand_parent
 
       if attr['children']
         filter_collection_attributes(user_id, attr['children']).each do |attr_child|
-          child = Collection.find(attr_child['id'])
-          child.update(parent: parent)
+          Collection.find_by(id: attr_child['id'])&.update(parent: parent)
         end
       end
 
@@ -144,7 +151,7 @@ class Collection < ApplicationRecord
 
   def self.delete_set(user_id, deleted_ids)
     (
-      Collection.where(id: deleted_ids, user_id: user_id) |
+      Collection.where(id: deleted_ids, user_id: user_id, is_shared: false, is_locked: false) |
       Collection.where(id: deleted_ids, shared_by_id: user_id)
     ).each(&:destroy)
   end

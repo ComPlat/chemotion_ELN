@@ -4,29 +4,30 @@
 #
 # Table name: devices
 #
-#  id                            :bigint           not null, primary key
-#  name                          :string
-#  name_abbreviation             :string
-#  first_name                    :string
-#  last_name                     :string
-#  email                         :string
-#  serial_number                 :string
-#  verification_status           :string           default("none")
-#  account_active                :boolean          default(FALSE)
-#  visibility                    :boolean          default(FALSE)
-#  deleted_at                    :datetime
-#  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
-#  datacollector_method          :string
-#  datacollector_dir             :string
-#  datacollector_host            :string
-#  datacollector_user            :string
-#  datacollector_authentication  :string
-#  datacollector_number_of_files :string
-#  datacollector_key_name        :string
-#  novnc_token                   :string
-#  novnc_target                  :string
-#  novnc_password                :string
+#  id                                :bigint           not null, primary key
+#  name                              :string
+#  name_abbreviation                 :string
+#  first_name                        :string
+#  last_name                         :string
+#  email                             :string
+#  serial_number                     :string
+#  verification_status               :string           default("none")
+#  account_active                    :boolean          default(FALSE)
+#  visibility                        :boolean          default(FALSE)
+#  deleted_at                        :datetime
+#  created_at                        :datetime         not null
+#  updated_at                        :datetime         not null
+#  datacollector_method              :string
+#  datacollector_dir                 :string
+#  datacollector_host                :string
+#  datacollector_user                :string
+#  datacollector_authentication      :string
+#  datacollector_number_of_files     :string
+#  datacollector_key_name            :string
+#  datacollector_user_level_selected :boolean          default(FALSE)
+#  novnc_token                       :string
+#  novnc_target                      :string
+#  novnc_password                    :string
 #
 # Indexes
 #

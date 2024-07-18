@@ -11,6 +11,7 @@ function KetcherEditor(props) {
     molfile ||
     '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
+
   const loadContent = (event) => {
     if (event.data.eventType === 'init') {
       editor.structureDef.editor.setMolecule(initMol);

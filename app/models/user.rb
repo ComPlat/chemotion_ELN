@@ -128,8 +128,7 @@ class User < ApplicationRecord
   before_create :set_account_active, if: proc { |user| %w[Person].include?(user.type) }
 
   after_create :create_chemotion_public_collection
-  after_create :create_all_collection, :has_profile
-  after_create :new_user_text_template
+  after_create :create_all_collection
   after_create :update_matrix
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
   before_destroy :delete_data
@@ -269,31 +268,8 @@ class User < ApplicationRecord
     counters[key]
   end
 
-  def has_profile
-    create_profile unless profile
-    return unless type == 'Person'
-
-    profile = self.profile
-    data = profile.data || {}
-    file = Rails.root.join('db', 'chmo.default.profile.json')
-    result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.file?(file)
-    return if result.nil? || result['ols_terms'].nil?
-
-    data['chmo'] = result['ols_terms']
-    data['is_templates_moderator'] = false
-    data['molecule_editor'] = false
-    data['converter_admin'] = false
-    if data['layout'].nil?
-      data.merge!(layout: {
-                    'sample' => 1,
-                    'reaction' => 2,
-                    'wellplate' => 3,
-                    'screen' => 4,
-                    'research_plan' => 5,
-                    'cell_line' => -1000,
-                  })
-    end
-    self.profile.update_columns(data: data)
+  def profile
+    super || create_profile
   end
 
   has_many :users_groups, dependent: :destroy
@@ -392,14 +368,8 @@ class User < ApplicationRecord
     log_error 'Error on update_matrix'
   end
 
-  def create_text_template
-    API::TEXT_TEMPLATE.each do |type|
-      klass = type.to_s.constantize
-      template = klass.new
-      template.user_id = id
-      template.data = klass.default_templates
-      template.save!
-    end
+  def text_templates
+    super.presence || TextTemplate.create_default_text_templates_for_user(id)
   end
 
   def self.from_omniauth(provider, uid, email, first_name, last_name)
@@ -444,10 +414,6 @@ class User < ApplicationRecord
 
   def create_all_collection
     Collection.create(user: self, label: 'All', is_locked: true, position: 0)
-  end
-
-  def new_user_text_template
-    create_text_template
   end
 
   def create_chemotion_public_collection

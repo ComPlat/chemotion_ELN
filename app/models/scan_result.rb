@@ -7,8 +7,8 @@
 #  id                :bigint           not null, primary key
 #  measurement_value :float            not null
 #  measurement_unit  :string           default("g"), not null
-#  note              :string
-#  position          :string           default("0"), not null
+#  title             :string
+#  position          :integer          default(0), not null
 #  sample_task_id    :bigint
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null

@@ -2,7 +2,8 @@
 
 ## Latest
 
-
+* Bug fixes
+  * fix YAML key in structure_editors.yml.example file ([#1929](https://github.com/ComPlat/chemotion_ELN/issues/1929))
 
 ## [v1.9.3]
 > (2024-05-13)

@@ -6,13 +6,25 @@ import {
 import Wellplate from '../../../../../app/packs/src/models/Wellplate';
 import wellplate2x3EmptyJson from '../../../fixture/wellplates/wellplate_2_3_empty';
 import wellplate8x12EmptyJson from '../../../fixture/wellplates/wellplate_8_12_empty';
+import wellplate2x2fromServer from '../../../fixture/wellplates/wellplate_2_2_from_server';
 
 describe('Wellplate', async () => {
   const sampleMock = {};
   sampleMock.buildChild = () => ({ wasCopied: 'yes' });
 
   describe('constructor()', async () => {
-    context('when input is valid and has dimesion 2x3 and has no samples in wells', async () => {
+    context('when file was fetched from server', async () => {
+      const wellplate = new Wellplate(wellplate2x2fromServer);
+
+      it('created a wellplate of size 2 x 3', async () => {
+        expect(wellplate.size).toEqual(4);
+        expect(wellplate.height).toEqual(2);
+        expect(wellplate.width).toEqual(2);
+        expect(wellplate.wells.length).toEqual(4);
+      });
+    });
+
+    context('when input is valid and has dimension 2x3 and has no samples in wells', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
 
       it('created a wellplate of size 2 x 3', async () => {
@@ -176,7 +188,7 @@ describe('Wellplate', async () => {
       const wellplateSerialized = wellplate.serialize();
       it('properties of wellplate correct serialized', async () => {
         expect(wellplateSerialized.id).toEqual(1);
-        expect(wellplateSerialized.is_new).toEqual(false);
+        expect(wellplateSerialized.is_new).toEqual(true);
         expect(wellplateSerialized.name).toEqual('Testwellplate 2x3');
         expect(wellplateSerialized.size).toEqual(6);
         expect(wellplateSerialized.description).toEqual('A test description for 2x3 plate');
