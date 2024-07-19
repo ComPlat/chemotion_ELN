@@ -80,18 +80,17 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
 
   renderEdit() {
     const { field } = this.state;
+    let className;
     let svgPath;
     if (field.value.svg_file) {
+      className = 'svg-container';
       svgPath = `/images/research_plans/${field.value.svg_file}`;
     } else {
+      className = 'svg-container-empty';
       svgPath = '/images/wild_card/no_image_180.svg';
     }
     return (
-      <div
-        className="border-info border-lg text-center h-100 w-100"
-        style={{ border: 'thick solid transparent' }}
-        onClick={this.showStructureEditor.bind(this)}
-      >
+      <div className={`${className} text-center`} onClick={this.showStructureEditor.bind(this)}>
         <i className="fa fa-pencil fa-lg pull-right" />
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
         {this.renderStructureEditorModal(field)}
