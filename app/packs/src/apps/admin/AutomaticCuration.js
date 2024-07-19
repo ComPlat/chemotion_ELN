@@ -39,7 +39,6 @@ export default class DictionaryCuration extends Component  {
         },()=>this.applyAffix());   
     }
     convertAffxStrtoObj(affixStr){
-      console.log(affixStr)
       var affixArray =affixStr.split("\n")
       var iArray = []
       var affixObject = {}
@@ -215,11 +214,10 @@ export default class DictionaryCuration extends Component  {
       }
 
     fileDisplay(){
-        let dictionary_variable = "test"
-        if (this.state.file === null){
-            dictionary_variable = "this.state.file"}
-        else(this.state.file.text()
-        .then((text) => this.setState({value :text})))}
+      if (this.state.file !== null){
+        this.state.file.text().then((text) =>{  this.setState({customValue :text});console.log(`text ${text}`)})
+      }
+    }
     
     render() {
         return(
