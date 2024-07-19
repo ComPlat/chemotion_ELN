@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Modal, Table, Form
+  Button, Modal, Table, Form, ButtonToolbar
 } from 'react-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
@@ -167,51 +167,48 @@ export default class CommentModal extends Component {
     if (sectionComments?.length > 0) {
       return sectionComments.map((comment) => (
         <tr key={comment.id}>
-          <td className="w-20">
+          <td>
             <span className="text-info">
               {formatDate(comment.created_at)}
             </span>
           </td>
-          <td className="w-35">{comment.content}</td>
-          <td className="w-15">{comment.submitter}</td>
-          <td className="w-15">
-            <div className="d-inline-block">
+          <td>{comment.content}</td>
+          <td>{comment.submitter}</td>
+          <td>
+            <ButtonToolbar>
               <Button
                 disabled={this.disableEditComment(comment)}
                 onClick={() => this.markCommentResolved(comment)}
-                size="sm"
-                className="me-1"
+                variant="light"
               >
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
               {
                 this.commentByCurrentUser(comment, currentUser)
-                  ? (
+                  && (
                     <Button
                       id="editCommentBtn"
-                      size="sm"
+                      size="xsm"
                       variant="primary"
                       onClick={() => this.editComment(comment)}
                       disabled={this.disableEditComment(comment)}
-                      className="me-1"
                     >
                       <i className="fa fa-edit" />
                     </Button>
                   )
-                  : null
               }
               {
                 this.commentByCurrentUser(comment, currentUser)
-                  ? (
+                  && (
                     <DeleteComment
                       comment={comment}
                       onDelete={() => this.deleteComment(comment)}
                     />
-                  ) : null
+                  )
               }
-            </div>
+            </ButtonToolbar>
           </td>
-          <td className="w-15">{comment.resolver_name}</td>
+          <td>{comment.resolver_name}</td>
         </tr>
       ));
     }
@@ -234,7 +231,6 @@ export default class CommentModal extends Component {
       <Draggable enableUserSelectHack={false}>
         <Modal
           centered
-          dialogClassName="comment-modal"
           show={showCommentModal}
           onHide={() => CommentActions.toggleCommentModal(false)}
           size="xl"
@@ -252,10 +248,10 @@ export default class CommentModal extends Component {
                   <thead>
                     <tr>
                       <th>Date</th>
-                      <th className="w-35">Comment</th>
-                      <th className="w-15">From User</th>
-                      <th className="w-17">Actions</th>
-                      <th className="w-17">Resolved By</th>
+                      <th>Comment</th>
+                      <th>From User</th>
+                      <th>Actions</th>
+                      <th>Resolved By</th>
                     </tr>
                   </thead>
                   <tbody>{this.renderCommentTable()}</tbody>
@@ -264,18 +260,17 @@ export default class CommentModal extends Component {
 
               {
                 allComments?.length > 0
-                  ? (
-                    <Button onClick={this.toggleCollapse} id="detailsBtn">
-                      <span>Details </span>
-                      <i className="fa-solid fa-angle-down" />
-                    </Button>
-                  )
-                  : null
+                && (
+                  <Button variant="light" onClick={this.toggleCollapse} id="detailsBtn">
+                    <span>Details </span>
+                    <i className="fa fa-solid fa-angle-down fw-bold text-primary" />
+                  </Button>
+                )
               }
 
               {
                 commentsCollapseAll && allComments?.length > 0
-                  ? (
+                  && (
                     <CommentDetails
                       section={section}
                       element={element}
@@ -286,10 +281,8 @@ export default class CommentModal extends Component {
                       deleteComment={this.deleteComment}
                     />
                   )
-                  : null
               }
             </div>
-
             <Form.Control
               as="textarea"
               rows={5}
@@ -301,11 +294,10 @@ export default class CommentModal extends Component {
 
           </Modal.Body>
           <Modal.Footer className="modal-footer border-0">
-            <div className="d-inline-block">
+            <ButtonToolbar className="gap-2">
               <Button
                 variant="secondary"
                 onClick={() => CommentActions.toggleCommentModal(false)}
-                className="me-1"
               >
                 Close
               </Button>
@@ -322,7 +314,7 @@ export default class CommentModal extends Component {
               >
                 {isEditing ? 'Update' : 'Save'}
               </Button>
-            </div>
+            </ButtonToolbar>
           </Modal.Footer>
         </Modal>
       </Draggable>

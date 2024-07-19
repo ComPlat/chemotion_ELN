@@ -35,9 +35,8 @@ export default class DeleteComment extends Component {
         <Button
           id="deleteCommentBtn"
           variant="danger"
-          size="sm"
+          size="xsm"
           onClick={() => this.handleModalShow(true)}
-          className='me-1'
         >
           <i className="fa fa-trash-o" />
         </Button>
