@@ -15,7 +15,7 @@ import BaseToolbar from 'src/components/reactQuill/BaseToolbar';
 import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
 
-import CurationModal from "src/apps/mydb/elements/details/reactions/CurationModal.js";
+import CurationModal from "src/components/CurationModal.js";
 
 const toolbarOptions = [
   'bold', 'italic', 'underline',

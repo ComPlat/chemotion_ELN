@@ -15,7 +15,7 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import CurationModal from "src/apps/mydb/elements/details/reactions/CurationModal.js";
+import CurationModal from "src/components/CurationModal.js";
 
 
 export default class SampleForm extends React.Component {
