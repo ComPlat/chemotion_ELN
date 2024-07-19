@@ -36,7 +36,7 @@ export default class ResearchPlanDetailsName extends Component {
         <Row>
           <Col sm={8}>
             <Form.Group>
-              <Form.Label>Name</Form.Label>
+              <Form.Label className="fw-bold">Name</Form.Label>
               {this.renderCopyToMetadataButton()}
               <Form.Control
                 type="text"
