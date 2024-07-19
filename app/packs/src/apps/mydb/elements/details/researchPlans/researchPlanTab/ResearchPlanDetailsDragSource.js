@@ -26,7 +26,7 @@ class ResearchPlanDetailsDragSource extends Component {
   render() {
     const { connectDragSource, index } = this.props;
 
-    return connectDragSource(<span className="fa fa-lg fa-arrows text-info drag-source" />);
+    return connectDragSource(<span className="fa fa-lg fa-arrows text-info drag-source pull-right me-1 mt-1" />);
   }
 }
 
