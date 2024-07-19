@@ -24,52 +24,22 @@ export default class DictionaryCuration extends Component  {
             customDictionaryText: ""
         }}
 
-    componentDidMount(){
-      var customDictionaryText = ""
-      var establishedDictionaryText = ""
-      var affixText =""
-      fetch("/typojs/custom/custom.dic")
-        .then ((res)=> res.text())
-        .then((text) => {
-          customDictionaryText = text;
-          this.setState({customValue : customDictionaryText,
-            customDictionaryText : customDictionaryText
-          }, () =>{
-          });
-        })
-      // fetch("/typojs/en_US/en_US.dic")
-      //   .then ((res)=> res.text())
-      //   .then((text) => {
-        establishedDictionaryText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.dic")
-          this.setState({establishedValue : establishedDictionaryText,
-            establishedDictionaryText : establishedDictionaryText
-          });
-        
-      fetch("/typojs/en_US/en_US.aff")
-        .then ((res)=> res.text())
-        .then((text) => {
-          affixText = text;
-          var affObject = this.convertAffxStrtoObj(affixText)
-          this.setState({affObject: affObject},()=>this.applyAffix())
-    });
-        
-        // .then(()=>{this.applyAffix()})
+    async componentDidMount(){
+      const customDictionaryText = AutomticCurationFetcher.dictionaryFetch("custom", "custom.dic")
+      const establishedDictionaryText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.dic")
+      const affixText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.aff")
+      const [new_customDictionaryText, new_establishedDictionaryText, new_affixText ] = await Promise.all([customDictionaryText,establishedDictionaryText,affixText])
+      var affObject = this.convertAffxStrtoObj(new_affixText)
+      this.setState({
+        establishedValue : new_establishedDictionaryText,
+        establishedDictionaryText : new_establishedDictionaryText,
+        customValue : new_customDictionaryText,
+        customDictionaryText : new_customDictionaryText,
+        affObject: affObject
+        },()=>this.applyAffix());   
     }
-
-    // useEffect(() => {
-    //   // here I am guaranteed to get the updated counter
-    //   // since I waited for it to change.
-    //   console.log(counter);
-    //   // here we added counter to the dependency array to
-    //   // listen for changes to that state variable.
-    // }, [counter])
-
-    // componentDidUpdate(prevState) {
-    //   if(this.state.affObject !== prevState ){
-    //   this.applyAffix()}
-    // }
-
     convertAffxStrtoObj(affixStr){
+      console.log(affixStr)
       var affixArray =affixStr.split("\n")
       var iArray = []
       var affixObject = {}

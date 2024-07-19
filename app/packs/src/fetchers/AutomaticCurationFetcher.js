@@ -10,11 +10,9 @@ export default class AutomticCurationFetcher {
     static saveFetch(new_dictionary){
         fetch(`http://localhost:3000/api/v1/dictionary/save?new_dic=${new_dictionary}`)
     }
-    static dictionaryFetch(dictionary_lang, dictionary_affix){
-        fetch(`/typojs/${dictionary_lang}/${dictionary_affix}`)
-        .then ((res)=> res.text())
-        .then((text) => {
-          return text})
+    static async dictionaryFetch(dictionary_lang, dictionary_affix){
+        const res = await fetch(`/typojs/${dictionary_lang}/${dictionary_affix}`)
+        return res.text()
     }
 
 }
