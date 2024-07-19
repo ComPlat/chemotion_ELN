@@ -9,7 +9,10 @@ import {
   FormGroup,
   ControlLabel,
   OverlayTrigger,
-  Tooltip
+  Tooltip,
+  Dropdown,
+  DropdownButton,
+  MenuItem
 } from 'react-bootstrap';
 import Select from 'react-select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -164,7 +167,7 @@ function CommonTemplatesList(props) {
   const { options, fnChange, value } = props;
   const toolTip = `
   Select a template to use. After selecting a template:
-  1- Click on the canvas./n
+  1- Click on the canvas.
   2- Pres CTRL+v inside the canvas.
   `;
   return (
@@ -186,6 +189,77 @@ function CommonTemplatesList(props) {
     </OverlayTrigger>
   );
 }
+
+function SurfaceChemistryList(props) {
+  const { fnChange, value } = props;
+  const options = [{
+    value: "value 1",
+    sub_options: [
+      {
+        value: "value 1-1"
+      },
+      {
+        value: "value 1-2"
+      }
+    ]
+  },
+  {
+    value: "value 2",
+    sub_options: [
+      {
+        value: "value 2-1"
+      },
+      {
+        value: "value 2-2"
+      }
+    ]
+  }
+
+  ];
+  return (
+    <FormGroup>
+      <ControlLabel>Shapes:</ControlLabel>
+      <div>
+        <Dropdown>
+          <Dropdown.Toggle variant="success" id="dropdown-basic" style={{ width: '100%' }} >
+            Shapes
+          </Dropdown.Toggle>
+          <Dropdown.Menu
+            style={{
+              width: '100%', padding: '5px 10px', backgroundColor: '#fff', border: 0
+            }}
+          >
+            {
+              options.map((item, idx) => {
+                const { value, sub_options } = item;
+                return (
+                  <DropdownButton
+                    id="dropdown-button-dark-example2"
+                    variant="secondary"
+                    title={value}
+                    className="mt-2"
+                    data-bs-theme="dark"
+                    style={{ width: '140px', margin: '5px 0', backgroundColor: '#fff', border: 0 }}
+                  >
+                    {
+                      sub_options.map((sub_option) => {
+                        return (
+                          <MenuItem >{sub_option.value}</MenuItem>
+                        );
+                      })
+                    }
+                  </DropdownButton>
+                );
+              })
+            }
+          </Dropdown.Menu>
+        </Dropdown>
+      </div>
+
+    </FormGroup >
+  );
+}
+
 EditorList.propTypes = {
   value: PropTypes.string.isRequired,
   fnChange: PropTypes.func.isRequired,
@@ -384,13 +458,21 @@ export default class StructureEditorModal extends React.Component {
                   options={editorOptions}
                 />
               </div>
-              <div style={{ flex: 1.5, margin: "0 10px" }} >
+              <div style={{ flex: 1, margin: "0 10px" }} >
                 <CommonTemplatesList
                   value={editor.id}
                   fnChange={this.handleEditorSelection}
                   options={editorOptions}
                 />
               </div>
+              <div style={{ flex: 0.5, margin: "0 10px" }} >
+                <SurfaceChemistryList
+                  value={editor.id}
+                  fnChange={this.handleEditorSelection}
+                  options={editorOptions}
+                />
+              </div>
+
             </div>
           </Modal.Header>
           <Modal.Body>
