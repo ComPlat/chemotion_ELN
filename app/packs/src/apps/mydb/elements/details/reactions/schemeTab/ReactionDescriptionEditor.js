@@ -16,6 +16,7 @@ import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplate
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
 import CurationModal from "src/components/CurationModal.js";
 
+import CurationModal from "src/components/CurationModal.js";
 
 const toolbarOptions = [
   'bold', 'italic', 'underline',
