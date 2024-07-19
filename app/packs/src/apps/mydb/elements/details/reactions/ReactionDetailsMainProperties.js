@@ -70,30 +70,30 @@ export default class ReactionDetailsMainProperties extends Component {
     let TempChartRow = <span />;
     if (showTemperatureChart) {
       TempChartRow = (
-        <Col md={12}>
-          <div className='w-75 float-start mt-4'>
+        <Row className="mt-4">
+          <Col>
             <LineChartContainer
               data={temperature}
               xAxis="Time"
               yAxis={tempUnitLabel}
             />
-          </div>
-          <div className='w-25 float-start mt-4'>
+          </Col>
+          <Col>
             <EditableTable
               temperature={temperature}
               updateTemperature={this.updateTemperature}
             />
-          </div>
-        </Col>
+          </Col>
+        </Row>
       );
     }
 
     return (
       <>
-        <Row className=' ms-1 me-3'>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label className='fs-5'>Name</Form.Label>
+        <Row className=" ms-1 me-3">
+          <Col sm={6}>
+            <Form.Group className="my-2">
+              <Form.Label className="fs-5">Name</Form.Label>
               <Form.Control
                 id={uuid.v4()}
                 name="reaction_name"
@@ -101,13 +101,14 @@ export default class ReactionDetailsMainProperties extends Component {
                 value={reaction.name || ''}
                 placeholder="Name..."
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
-                onChange={event => onInputChange('name', event)}
+                onChange={(event) => onInputChange('name', event)}
+                className="py-2"
               />
             </Form.Group>
           </Col>
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label className='fs-5'>Status</Form.Label>
+          <Col sm={3}>
+            <Form.Group className="my-2">
+              <Form.Label className="fs-5">Status</Form.Label>
               <Select
                 className="status-select reaction-status-change"
                 name="status"
@@ -125,9 +126,9 @@ export default class ReactionDetailsMainProperties extends Component {
               />
             </Form.Group>
           </Col>
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label className='fs-5'>Temperature</Form.Label>
+          <Col sm={3}>
+            <Form.Group className="my-2">
+              <Form.Label className="fs-5">Temperature</Form.Label>
               <InputGroup>
                 <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
                   <Button
@@ -135,7 +136,7 @@ export default class ReactionDetailsMainProperties extends Component {
                     active
                     className="clipboardBtn"
                     onClick={this.toggleTemperatureChart}
-                    variant='secondary'
+                    variant="secondary"
                   >
                     <i className="fa fa-area-chart" />
                   </Button>
@@ -145,7 +146,7 @@ export default class ReactionDetailsMainProperties extends Component {
                   value={temperatureDisplay || ''}
                   disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
                   placeholder="Temperature..."
-                  onChange={event => onInputChange('temperature', event)}
+                  onChange={(event) => onInputChange('temperature', event)}
                 />
                 <Button
                   disabled={!permitOn(reaction)}

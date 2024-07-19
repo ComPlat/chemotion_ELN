@@ -121,8 +121,8 @@ export default class ReactionDetailsDuration extends Component {
         </Col>
         <Col md={3} sm={6}>
           <Form.Group>
-            <Form.Label></Form.Label>
-            <InputGroup className='mt-2'>
+            <Form.Label />
+            <InputGroup className="mt-2">
               <Form.Control
                 disabled={!permitOn(reaction)}
                 type="text"

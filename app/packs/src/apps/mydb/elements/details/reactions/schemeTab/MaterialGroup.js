@@ -275,7 +275,7 @@ function SolventsMaterialGroup({
   }), defaultMultiSolventsSmilesOptions);
 
   return (
-    <Table className="w-100">
+    <Table borderless className="w-100">
       <thead>
         <tr>
           <th>{addSampleButton}</th>
