@@ -1,7 +1,13 @@
+/* eslint-disable react/forbid-prop-types */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable react/jsx-no-bind */
+/* eslint-disable max-len */
 /* eslint-disable react/prefer-stateless-function */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonGroup, Row, Col, Tooltip, OverlayTrigger, DropdownButton } from 'react-bootstrap';
+import {
+  Form, Button, ButtonGroup, Row, Col, Tooltip, OverlayTrigger, Dropdown
+} from 'react-bootstrap';
 import ResearchPlanDetailsDragSource from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsDragSource';
 import ResearchPlanDetailsDropTarget from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsDropTarget';
 import ResearchPlanDetailsFieldRichText from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldRichText';
@@ -10,8 +16,6 @@ import ResearchPlanDetailsFieldImage from 'src/apps/mydb/elements/details/resear
 import ResearchPlanDetailsFieldTable from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldReaction';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -25,32 +29,34 @@ export default class ResearchPlanDetailsField extends Component {
     switch (field.type) {
       case 'richtext':
         label = field?.title;
-        component =
-          (<ResearchPlanDetailsFieldRichText
+        component = (
+          <ResearchPlanDetailsFieldRichText
             key={field.id}
             field={field}
             index={index}
             disabled={disabled}
             onChange={onChange.bind(this)}
             edit={edit}
-          />);
+          />
+        );
         break;
       case 'ketcher':
         label = 'Ketcher schema';
-        component =
-          (<ResearchPlanDetailsFieldKetcher
+        component = (
+          <ResearchPlanDetailsFieldKetcher
             key={field.id}
             field={field}
             index={index}
             disabled={disabled}
             onChange={onChange.bind(this)}
             edit={edit}
-          />);
+          />
+        );
         break;
       case 'image':
         label = 'Image';
-        component =
-          (<ResearchPlanDetailsFieldImage
+        component = (
+          <ResearchPlanDetailsFieldImage
             attachments={this.props.attachments}
             key={field.id}
             field={field}
@@ -58,7 +64,9 @@ export default class ResearchPlanDetailsField extends Component {
             disabled={disabled}
             onChange={onChange.bind(this)}
             researchPlan={this.props.researchPlan}
-            edit={edit}/>);
+            edit={edit}
+          />
+        );
         break;
       case 'table':
         field.value.columns.forEach((item) => {
@@ -66,8 +74,8 @@ export default class ResearchPlanDetailsField extends Component {
           return item;
         });
         label = 'Table';
-        component =
-          (<ResearchPlanDetailsFieldTable
+        component = (
+          <ResearchPlanDetailsFieldTable
             key={field.id}
             field={field}
             index={index}
@@ -77,41 +85,44 @@ export default class ResearchPlanDetailsField extends Component {
             update={update}
             edit={edit}
             tableIndex={tableIndex}
-          />);
+          />
+        );
         break;
       case 'sample':
         label = 'Sample';
-        component =
-          (<ResearchPlanDetailsFieldSample
+        component = (
+          <ResearchPlanDetailsFieldSample
             key={field.id}
             field={field}
             index={index}
             disabled={disabled}
             onChange={onChange.bind(this)}
             edit={edit}
-          />);
+          />
+        );
         break;
       case 'reaction':
         label = 'Reaction';
-        component =
-          (<ResearchPlanDetailsFieldReaction
+        component = (
+          <ResearchPlanDetailsFieldReaction
             key={field.id}
             field={field}
             index={index}
             disabled={disabled}
             onChange={onChange.bind(this)}
             edit={edit}
-          />);
+          />
+        );
         break;
       default:
         label = '';
-        component = <div />;
+        component = null;
     }
 
-    let dropTarget;
     let fieldHeader;
     let copyToMetadataButton = '';
-    let className = 'research-plan-field';
+    let dropTarget;
+
     if (edit) {
       dropTarget = (
         <Col md={12}>
@@ -127,53 +138,59 @@ export default class ResearchPlanDetailsField extends Component {
             overlay={<Tooltip id="metadataTooltip">{metadataTooltipText}</Tooltip>}
           >
             <ButtonGroup className="pull-right">
-              <DropdownButton
-                id="copyMetadataButton"
-                title=""
-                className="fa fa-laptop"
-                variant="info"
-                size="sm"
-                pullRight
-                disabled={isNew}
-              >
-                <li role="presentation" className="">Copy to Metadata field:</li>
-                <li role="separator" className="divider" />
-                {
-                  copyableFields.map(element => (
-                    <MenuItem
-                      key={element.fieldName}
-                      onClick={() => onCopyToMetadata(field.id, element.fieldName)}
-                    >
-                      {element.title}
-                    </MenuItem>
-                  ))
-                }
-              </DropdownButton>
+              <Dropdown as={ButtonGroup}>
+                <Dropdown.Toggle
+                  id="copyMetadataButton"
+                  title=""
+                  className="fa fa-laptop"
+                  variant="info"
+                  size="sm"
+                  disabled={isNew}
+                />
+                <Dropdown.Menu>
+                  <Dropdown.Header>Copy to Metadata field:</Dropdown.Header>
+                  <Dropdown.Divider />
+                  {
+                    copyableFields.map((element) => (
+                      <Dropdown.Item
+                        key={element.fieldName}
+                        onClick={() => onCopyToMetadata(field.id, element.fieldName)}
+                      >
+                        {element.title}
+                      </Dropdown.Item>
+                    ))
+                  }
+                </Dropdown.Menu>
+              </Dropdown>
             </ButtonGroup>
           </OverlayTrigger>
         );
       }
 
       fieldHeader = (
-        <div className="research-plan-field-header">
+        <div className="mt-3">
           {/* TODO: make label editable */}
-          <ControlLabel>{label}</ControlLabel>
-          <Button className="pull-right" variant="danger" size="sm" onClick={() => onDelete(field.id,this.props.attachments )} data-cy="researchplan-item-delete">
+          <Form.Label className="fw-bold">{label}</Form.Label>
+          <Button
+            className="pull-right"
+            variant="danger"
+            size="xsm"
+            onClick={() => onDelete(field.id, this.props.attachments)}
+            data-cy="researchplan-item-delete"
+          >
             <i className="fa fa-times" />
           </Button>
           {copyToMetadataButton}
           <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)} />
         </div>
       );
-    } else {
-      className += ' static';
     }
 
     return (
       <Row>
         {dropTarget}
-        <Col md={12}>
-          <div className={className}>
+        <Col sm={12}>
+          <div className={`${!edit ? 'mb-5' : null}`}>
             {fieldHeader}
             {component}
           </div>
