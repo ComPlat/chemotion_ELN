@@ -2,6 +2,7 @@ import React, { Component, useEffect} from 'react';
 import { Grid, Row, Col, Nav, NavItem , Button, Form, FormGroup,ControlLabel,FormControl,HelpBlock} from 'react-bootstrap';
 import { a, search } from 'react-dom-factories';
 import Dropzone from 'react-dropzone';
+import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
 
 
 export default class DictionaryCuration extends Component  {
@@ -36,15 +37,14 @@ export default class DictionaryCuration extends Component  {
           }, () =>{
           });
         })
-      fetch("/typojs/en_US/en_US.dic")
-        .then ((res)=> res.text())
-        .then((text) => {
-          establishedDictionaryText = text;
+      // fetch("/typojs/en_US/en_US.dic")
+      //   .then ((res)=> res.text())
+      //   .then((text) => {
+        establishedDictionaryText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.dic")
           this.setState({establishedValue : establishedDictionaryText,
             establishedDictionaryText : establishedDictionaryText
-          }, () =>{
           });
-        })
+        
       fetch("/typojs/en_US/en_US.aff")
         .then ((res)=> res.text())
         .then((text) => {
@@ -176,7 +176,7 @@ export default class DictionaryCuration extends Component  {
       var new_dic = this.state.customValue
       new_dic = encodeURIComponent(new_dic)
       console.log(new_dic)
-      fetch("http://localhost:3000/api/v1/dictionary/save?new_dic=" + new_dic)
+      AutomticCurationFetcher.saveFetch(new_dic)
     }
 
     handleChangeCustom(e) {

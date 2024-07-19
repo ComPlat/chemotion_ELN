@@ -2,6 +2,7 @@ import { reaction } from 'mobx';
 import React, { Component , useState} from 'react';
 import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row} from 'react-bootstrap';
 import PropTypes, { array } from 'prop-types';
+import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
 
 
 export default class CurationModal extends Component {
@@ -312,7 +313,7 @@ export default class CurationModal extends Component {
                 <div className='float' style={{padding: 5}}>
                   {this.state.correctWord} added To dictionary </div>
                   <ButtonToolbar>
-                    <Button onClick={()=> {fetch("http://localhost:3000/api/v1/dictionary/remove?old_word=".concat(this.state.mispelledWords[this.state.suggestionIndex])) ;this.handlePromptDismiss()}}>Remove last entry</Button>
+                    <Button onClick={()=> {AutomticCurationFetcher.removeFetch(this.state.mispelledWords[this.state.suggestionIndex]) ;this.handlePromptDismiss()}}>Remove last entry</Button>
                     <Button onClick={()=>{this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);this.handlePromptDismiss()}}>Next</Button>
                   </ButtonToolbar>
           </div>
@@ -358,7 +359,7 @@ export default class CurationModal extends Component {
             <Button 
             bsStyle="success" 
             onClick= {() => { 
-            fetch("http://localhost:3000/api/v1/dictionary/amend?new_word=".concat(this.state.correctWord)); this.handlePromptShow()
+            AutomticCurationFetcher.amendFetch(this.state.correctWord); this.handlePromptShow()
          // this.change_misspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
             }}>
                 add to dictionary {state}
@@ -383,7 +384,7 @@ export default class CurationModal extends Component {
             <Modal.Body>
               <Panel>
                 <Panel.Heading>
-                  <Row> <Button onClick={()=> {fetch("http://localhost:3000/api/v1/dictionary/amend?new_word=".concat(this.state.mispelledWords[this.state.suggestionIndex]));this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add selected misspelled words</Button></Row>
+                  <Row> <Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add selected misspelled words</Button></Row>
                   <Row style={{padding: 5}}>
                     {/* <Col md={4}> Or enter a new word:</Col> */}
                     <Col md={3} > <input onChange={this.handleSuggestChange}/></Col>
