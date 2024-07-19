@@ -190,6 +190,10 @@ function CommonTemplatesList(props) {
   );
 }
 
+function ShapesDropDownItem({ onClick, value }) {
+  return <MenuItem onClick={() => onClick(value)}>{value}</MenuItem>;
+}
+
 function SurfaceChemistryList(props) {
   const { fnChange, value } = props;
   const options = [{
@@ -234,17 +238,16 @@ function SurfaceChemistryList(props) {
                 const { value, sub_options } = item;
                 return (
                   <DropdownButton
+                    key={idx}
                     id="dropdown-button-dark-example2"
                     variant="secondary"
                     title={value}
-                    className="mt-2"
-                    data-bs-theme="dark"
                     style={{ width: '140px', margin: '5px 0', backgroundColor: '#fff', border: 0 }}
                   >
                     {
                       sub_options.map((sub_option) => {
                         return (
-                          <MenuItem >{sub_option.value}</MenuItem>
+                          <ShapesDropDownItem onClick={(item) => alert(item)} value={sub_option.value} />
                         );
                       })
                     }
