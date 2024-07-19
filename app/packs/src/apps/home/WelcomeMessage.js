@@ -1,18 +1,5 @@
 import React, { Component } from 'react';
 import ReactMarkdown from 'react-markdown';
-import Jumbotron from 'src/components/legacyBootstrap/Jumbotron'
-
-function Message(props) {
-  const { post } = props;
-  if (post != null && post !== undefined) {
-    return (
-      <Jumbotron>
-        <ReactMarkdown children={post} />
-      </Jumbotron>
-    );
-  }
-  return null;
-}
 
 class WelcomeMessage extends Component {
   constructor(props) {
@@ -22,22 +9,28 @@ class WelcomeMessage extends Component {
     };
   }
 
-  componentDidMount() {
-    fetch(`welcome-message.md?${Date.now()}`) // Prevent caching
-      .then((res) => {
-        if (res.ok) {
-          return res.text();
-        }
-        return null;
-      }).then((post) => this.setState((state) => ({ ...state, post })))
-      .catch((errorMessage) => { console.error(errorMessage); });
+  async componentDidMount() {
+    try {
+      const res = await fetch(`welcome-message.md?${Date.now()}`); // Prevent caching
+      if (!res.ok) return null;
+
+      const post = await res.text();
+      this.setState({ post });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   render() {
     const { post } = this.state;
-    return (
-      <Message post={post} />
+    return post && (
+      <div className="bg-light p-5 m-3">
+        <ReactMarkdown>
+          {post}
+        </ReactMarkdown>
+      </div>
     );
   }
 }
+
 export default WelcomeMessage;
