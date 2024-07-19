@@ -31,7 +31,7 @@ export default class DeleteComment extends Component {
     const { showConfirmModal } = this.state;
 
     return (
-      <span>
+      <>
         <Button
           id="deleteCommentBtn"
           variant="danger"
@@ -54,7 +54,7 @@ export default class DeleteComment extends Component {
             <Button variant="danger" onClick={this.handleDelete} className="pull-left">Delete</Button>
           </Modal.Footer>
         </Modal>
-      </span>
+      </>
     );
   }
 }
