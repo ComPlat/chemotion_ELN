@@ -97,18 +97,21 @@ export default class Navigation extends React.Component {
   }
 
   navHeader() {
+    const { isHidden } = this.props;
+
     return (
       <React.Fragment>
-        <Navbar.Text>
-          <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-            <i
-              className="fa fa-list"
-              style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}
-              onClick={this.toggleCollectionTree}
-              role='button'
-            />
-          </OverlayTrigger>
-        </Navbar.Text>
+        {!isHidden && (
+          <Navbar.Text>
+            <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
+              <i
+                className="fa fa-list"
+                onClick={this.toggleCollectionTree}
+                role='button'
+              />
+            </OverlayTrigger>
+          </Navbar.Text>
+        )}
         <NavHead />
       </React.Fragment>
     )
