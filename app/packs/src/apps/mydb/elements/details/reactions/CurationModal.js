@@ -282,13 +282,18 @@ export default class CurationModal extends Component {
 
     cleanData(description){
       if (description !== undefined){
+        if(typeof description === "string"){
+          return description
+        }
+        else{
         const array_input = Object.values(description);
         let array_output =[];
         array_input.forEach((element) => {
             array_output = array_output.concat(element.insert);
         });
+      
         const str_out = (array_output.join(""));
-        return str_out;}
+        return str_out;}}
     }
 
     render() {

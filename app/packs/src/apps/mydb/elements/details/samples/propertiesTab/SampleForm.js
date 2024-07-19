@@ -21,6 +21,8 @@ import CurationModal from "src/components/CurationModal.js";
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
+import CurationModal from "src/apps/mydb/elements/details/reactions/CurationModal.js";
+
 
 export default class SampleForm extends React.Component {
   constructor(props) {
