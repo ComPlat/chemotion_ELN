@@ -15,6 +15,8 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import CurationModal from "src/apps/mydb/elements/details/reactions/CurationModal.js";
+
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -598,6 +600,10 @@ export default class SampleForm extends React.Component {
     return (
       <FormGroup>
         <ControlLabel>Description</ControlLabel>
+        <CurationModal 
+                description= {sample.description || ''} 
+                onChange = {(e) => this.handleFieldChanged('description', e.target.value)}
+                />
         <FormControl
           componentClass="textarea"
           ref={(input) => { this.descriptionInput = input; }}
