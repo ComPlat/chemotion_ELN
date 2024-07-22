@@ -82,6 +82,7 @@ const shapes_list = {
 function SurfaceChemistryList(props) {
   const [showSurfaceChemModal, setShowSurfaceChemModal] = useState(false);
   const { onSelectShape, selectedShape } = props;
+  console.log(selectedShape);
 
   const toolTip = `Select a template and Pres CTRL + v inside the canvas.`;
 
@@ -99,7 +100,7 @@ function SurfaceChemistryList(props) {
         className='ketcher-select-common-template'
         onClick={() => setShowSurfaceChemModal(true)}
       >
-        {selectedShape ? selectedShape?.name : 'Select shape'}
+        {selectedShape ? selectedShape?.Filling : 'Select shape'}
         <div className='select-template-badge'>
           <i className="fa fa-caret-down" />
         </div>
