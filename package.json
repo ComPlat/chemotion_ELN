@@ -47,6 +47,7 @@
     "js-yaml": "^3.13.1",
     "jsdom": "^22.1.0",
     "lodash": "^4.17.20",
+    "mime-types": "^2.1.35",
     "mobx": "^6.6.0",
     "mobx-react": "^7.5.0",
     "mobx-state-tree": "^5.1.5",

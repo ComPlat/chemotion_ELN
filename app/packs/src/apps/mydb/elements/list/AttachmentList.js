@@ -3,13 +3,17 @@ import {
   Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import { values } from 'lodash';
+import { partial, values } from 'lodash';
 import uuid from 'uuid';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import { at } from 'lodash';
+import "mime-types" 
+
+
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -317,23 +321,59 @@ export const sortingAndFilteringUI = (
   </div>
 );
 
-export const thirdPartyAppButton = (attachment, options) => (
+
+
+export const thirdPartyAppButton = (attachment, options) => {
+  const mime = require('mime-types');
+  // var partialReactfrag = <MenuItem> None available </MenuItem> ;
+  var numOfTPA = 0
+ 
+  var mainReactfrag = 
   <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
       <i className="fa  fa-external-link " aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
-      {options.map((option) => (
-        <MenuItem
-          key={uuid.v4()}
-          eventKey={option.id}
-          onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
-            .then((result) => window.open(result, '_blank'))}
-          // disabled={!isImageFile(attachment.filename) || attachment.isNew}
-        >
-          {option.name}
-        </MenuItem>
-      ))}
+      {options.map((option) => {
+        var partialReactfrag = <></> ;
+        option.fileTypes = option.fileTypes.replace(" ","")
+        var optionFileArray = []
+        if (option.fileTypes.includes(",")){
+          optionFileArray = option.fileTypes.split(",")
+        }
+        else(optionFileArray[0] = option.fileTypes)
+        for(let optionFileType of optionFileArray){
+          if (mime.lookup(optionFileType) == (attachment.content_type)){
+            numOfTPA = numOfTPA + 1
+            partialReactfrag =  
+              <MenuItem
+                key={uuid.v4()}
+                eventKey={option.id}
+                onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+                .then((result) => window.open(result, '_blank'))}
+                // disabled={!isImageFile(attachment.filename) || attachment.isNew}
+              >
+                {option.name}
+              </MenuItem>
+              }
+          }
+        return (partialReactfrag)
+      })}
     </Dropdown.Menu>
-  </Dropdown>
-);
+  </Dropdown>;
+
+  var typeArray = []
+  console.log(mainReactfrag.props.children[1].props.children )
+  for (var count = 0 ; count < mainReactfrag.props.children[1].props.children.length; count++ ){
+    typeArray.push(typeof mainReactfrag.props.children[1].props.children[count].type)}
+  if(!typeArray.includes("function")){
+    mainReactfrag = <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
+    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+      <i className="fa  fa-external-link " aria-hidden="true" />
+    </Dropdown.Toggle>
+    <Dropdown.Menu> <MenuItem>None Available</MenuItem></Dropdown.Menu>
+  </Dropdown>;
+  }
+  return mainReactfrag
+};
+ 
