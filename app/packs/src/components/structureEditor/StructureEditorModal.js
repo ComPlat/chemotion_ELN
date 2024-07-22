@@ -1,5 +1,5 @@
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -153,13 +153,12 @@ function TemplateItem(props) {
   let iconPath = "/images/ketcherails/icons/small/";
   if (item?.icon) iconPath += item.icon.split("/")[3];
 
-  return <MenuItem onClick={() => onClickItem(item)}>
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <img src={iconPath} height={30} />
-      <h4 style={{ marginLeft: 15 }}> {item?.name} </h4>
-    </div>
-  </MenuItem>;
+  return <div className="ketcher-template-item" onClick={() => onClickItem(item)}>
+    <img src={iconPath} height={80} />
+    <h4 style={{ marginLeft: 15 }}> {item?.name} </h4>
+  </div>;
 }
+
 
 function EditorList(props) {
   const { options, fnChange, value } = props;
@@ -178,33 +177,73 @@ function EditorList(props) {
   );
 }
 
+function copyContentToClipboard(content) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(content).then(() => {
+      alert('Please click on canvas and press CTRL+V to use the template.');
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+    });
+  }
+}
+
 function CommonTemplatesList(props) {
-  const { options, value, onClickHandle } = props;
+  const [commonTemplateModal, setCommonTemplateModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  let { options, value, onClickHandle } = props;
+
   const toolTip = `
   Select a template to use.After selecting a template:
     1 - Click on the canvas.
   2 - Pres CTRL + v inside the canvas.
   `;
 
+  const onSelectItem = (item) => {
+    setSelectedItem(item);
+    copyContentToClipboard(item?.molfile);
+    setCommonTemplateModal(false);
+  };
+
   return (
     <div>
       <ControlLabel>Common Templates:</ControlLabel>
-      <br />
-      <DropdownButton
-        key={uuid()}
-        id="dropdown-button-dark-example2"
-        variant="secondary"
-        title={value || "Select template"}
+      <div
+        className='ketcher-select-common-template'
+        onClick={() => setCommonTemplateModal(true)}
       >
-        {
-          options.map((item, idx) => {
-            return (
-              <TemplateItem key={idx} onClickItem={(item) => onClickHandle(item)} item={item} />
-            );
-          })
-        }
-      </DropdownButton>
-    </div>
+        <div >
+          Select Template
+        </div>
+        <div className='select-template-badge'>
+          <i className="fa fa-caret-down" />
+        </div>
+      </div>
+
+
+
+      <Modal show={commonTemplateModal} onHide={() => setCommonTemplateModal(false)}>
+        <Modal.Header closeButton />
+        <Modal.Body>
+          <Panel>
+            <Panel.Heading>
+              <Panel.Title>
+                Common Template list:
+              </Panel.Title>
+            </Panel.Heading>
+            <Panel.Body>
+              {options.map((item, idx) => {
+                return <TemplateItem key={idx} item={item} onClickItem={(item) => onSelectItem(item)} />;
+              })}
+            </Panel.Body>
+          </Panel>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setCommonTemplateModal(false)}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div >
   );
 }
 
@@ -430,18 +469,7 @@ export default class StructureEditorModal extends React.Component {
 
   async fetchCommonTemplates() {
     const list = await CommonTemplatesFetcher.fetchCommonTemplates();
-    console.log(list);
     this.setState({ commonTemplatesList: list?.templates });
-  }
-
-  copyContentToClipboard(content) {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(content).then(() => {
-        alert('Please click on canvas and press CTRL+V to use the template.');
-      }).catch(err => {
-        console.error('Failed to copy text: ', err);
-      });
-    }
   }
 
   render() {
