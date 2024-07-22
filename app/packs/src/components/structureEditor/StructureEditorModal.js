@@ -25,6 +25,8 @@ import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 import uuid from 'uuid';
+import CommonTemplatesFetcher from '../../fetchers/CommonTemplateFetcher';
+import { option } from 'react-dom-factories';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -146,6 +148,19 @@ Editor.propTypes = {
   fnCb: PropTypes.func.isRequired,
 };
 
+function TemplateItem(props) {
+  const { item, onClickItem } = props;
+  let iconPath = "/images/ketcherails/icons/small/";
+  if (item?.icon) iconPath += item.icon.split("/")[3];
+
+  return <MenuItem onClick={() => onClickItem(item)}>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <img src={iconPath} height={30} />
+      <h4 style={{ marginLeft: 15 }}> {item?.name} </h4>
+    </div>
+  </MenuItem>;
+}
+
 function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
@@ -164,29 +179,32 @@ function EditorList(props) {
 }
 
 function CommonTemplatesList(props) {
-  const { options, fnChange, value } = props;
+  const { options, value, onClickHandle } = props;
   const toolTip = `
-  Select a template to use. After selecting a template:
-  1- Click on the canvas.
-  2- Pres CTRL+v inside the canvas.
+  Select a template to use.After selecting a template:
+    1 - Click on the canvas.
+  2 - Pres CTRL + v inside the canvas.
   `;
+
   return (
-    <OverlayTrigger
-      key={uuid.v4()}
-      placement="top"
-      overlay={<Tooltip id={`CT_tooptip_${toolTip}`}>{toolTip}</Tooltip>}>
-      <FormGroup >
-        <ControlLabel>Common Templates:</ControlLabel>
-        <Select
-          className="status-select"
-          name="editor selection"
-          clearable={false}
-          options={options}
-          onChange={fnChange}
-          value={value}
-        />
-      </FormGroup>
-    </OverlayTrigger>
+    <div>
+      <ControlLabel>Common Templates:</ControlLabel>
+      <br />
+      <DropdownButton
+        key={uuid()}
+        id="dropdown-button-dark-example2"
+        variant="secondary"
+        title={value || "Select template"}
+      >
+        {
+          options.map((item, idx) => {
+            return (
+              <TemplateItem key={idx} onClickItem={(item) => onClickHandle(item)} item={item} />
+            );
+          })
+        }
+      </DropdownButton>
+    </div>
   );
 }
 
@@ -195,7 +213,6 @@ function ShapesDropDownItem({ onClick, value }) {
 }
 
 function SurfaceChemistryList(props) {
-  const { fnChange, value } = props;
   const options = [{
     value: "value 1",
     sub_options: [
@@ -314,6 +331,9 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
+      commonTemplatesList: [],
+      selectShape: null,
+      selectedCommonTemplate: null
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -323,6 +343,7 @@ export default class StructureEditorModal extends React.Component {
 
   componentDidMount() {
     this.resetEditor(this.editors);
+    this.fetchCommonTemplates();
   }
 
   componentDidUpdate(prevProps) {
@@ -407,11 +428,27 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
+  async fetchCommonTemplates() {
+    const list = await CommonTemplatesFetcher.fetchCommonTemplates();
+    console.log(list);
+    this.setState({ commonTemplatesList: list?.templates });
+  }
+
+  copyContentToClipboard(content) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(content).then(() => {
+        alert('Please click on canvas and press CTRL+V to use the template.');
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+  }
+
   render() {
     const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
     const { cancelBtnText, submitBtnText } = this.props;
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const { editor, showWarning, molfile } = this.state;
+    const { editor, showWarning, molfile, selectedCommonTemplate } = this.state;
     const iframeHeight = showWarning ? '0px' : '730px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
     const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
@@ -443,6 +480,7 @@ export default class StructureEditorModal extends React.Component {
       name: this.editors[e].label,
       label: this.editors[e].label,
     }));
+
     return (
       <div>
         <Modal
@@ -463,17 +501,16 @@ export default class StructureEditorModal extends React.Component {
               </div>
               <div style={{ flex: 1, margin: "0 10px" }} >
                 <CommonTemplatesList
-                  value={editor.id}
-                  fnChange={this.handleEditorSelection}
-                  options={editorOptions}
+                  options={this.state.commonTemplatesList}
+                  value={selectedCommonTemplate?.name}
+                  onClickHandle={value => {
+                    this.setState({ selectedCommonTemplate: value });
+                    this.copyContentToClipboard(value?.molfile);
+                  }}
                 />
               </div>
               <div style={{ flex: 0.5, margin: "0 10px" }} >
-                <SurfaceChemistryList
-                  value={editor.id}
-                  fnChange={this.handleEditorSelection}
-                  options={editorOptions}
-                />
+                {/* <SurfaceChemistryList /> */}
               </div>
 
             </div>
@@ -525,4 +562,4 @@ StructureEditorModal.defaultProps = {
   onSave: () => {},
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
-};
+};;
