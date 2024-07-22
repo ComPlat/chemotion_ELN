@@ -187,16 +187,10 @@ function copyContentToClipboard(content) {
   }
 }
 
-function CommonTemplatesList(props) {
+function CommonTemplatesList({ options }) {
   const [commonTemplateModal, setCommonTemplateModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  let { options, value, onClickHandle } = props;
-
-  const toolTip = `
-  Select a template to use.After selecting a template:
-    1 - Click on the canvas.
-  2 - Pres CTRL + v inside the canvas.
-  `;
+  const toolTip = `Select a template and Pres CTRL + v inside the canvas.`;
 
   const onSelectItem = (item) => {
     setSelectedItem(item);
@@ -206,20 +200,23 @@ function CommonTemplatesList(props) {
 
   return (
     <div>
-      <ControlLabel>Common Templates:</ControlLabel>
+      <div className='common-template-header'>
+        <div style={{ width: '95%' }}>
+          <ControlLabel>Common Templates:</ControlLabel>
+        </div>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="commontemplates">{toolTip}</Tooltip>}>
+          <i className="fa fa-info" />
+        </OverlayTrigger>
+      </div>
       <div
         className='ketcher-select-common-template'
         onClick={() => setCommonTemplateModal(true)}
       >
-        <div >
-          Select Template
-        </div>
+        {selectedItem ? selectedItem.name : 'Select Template'}
         <div className='select-template-badge'>
           <i className="fa fa-caret-down" />
         </div>
       </div>
-
-
 
       <Modal show={commonTemplateModal} onHide={() => setCommonTemplateModal(false)}>
         <Modal.Header closeButton />
@@ -237,11 +234,11 @@ function CommonTemplatesList(props) {
             </Panel.Body>
           </Panel>
         </Modal.Body>
-        <Modal.Footer>
+        {/* <Modal.Footer>
           <Button variant="secondary" onClick={() => setCommonTemplateModal(false)}>
             Cancel
           </Button>
-        </Modal.Footer>
+        </Modal.Footer> */}
       </Modal>
     </div >
   );

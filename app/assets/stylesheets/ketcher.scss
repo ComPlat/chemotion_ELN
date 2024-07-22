@@ -22,11 +22,15 @@
   width: 100%;
   padding: 5px 5px;
   position: relative;
-
 }
 
 .select-template-badge {
   position: absolute;
   right: 10px;
   top: 5px;
+}
+
+.common-template-header {
+  display: flex;
+  align-items: center;
 }
