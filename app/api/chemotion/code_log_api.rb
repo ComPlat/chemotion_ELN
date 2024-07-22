@@ -53,8 +53,7 @@ module Chemotion
           requires :element_type, type: String, values: ['sample', 'reaction', 'wellplate', 'screen']
           #TODO check coerce with  type Array[Integer] not working with before do
           requires :ids, type: Array#, coerce_with: ->(val) { val.split(/,/).map(&:to_i) }
-          requires :size, type: String, values: ["small", "big"]
-          requires :pdfType, type: String
+          requires :width, type: Integer
           requires :displaySample, type: Boolean
         end
 
@@ -76,7 +75,7 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePdf.new(elements, params[:size], params[:element_type], params[:pdfType], params[:displaySample]).render
+          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name]).render
         end
 
         post do
@@ -88,7 +87,7 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePdf.new(elements, params[:size], params[:element_type], params[:pdfType], params[:displaySample], params[:image]).render
+          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name], params[:image]).render
         end
       end
 
@@ -99,7 +98,6 @@ module Chemotion
           requires :element_type, type: String, values: ['sample', 'reaction', 'wellplate', 'screen']
           requires :id, type: Integer, desc: "Element id"
           requires :analyses_ids, type: Array[Integer]
-          # requires :type, type: String
           requires :size, type: String, values: ["small", "big"]
         end
 
