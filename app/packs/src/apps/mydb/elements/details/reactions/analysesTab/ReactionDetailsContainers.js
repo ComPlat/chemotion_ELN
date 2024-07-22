@@ -34,7 +34,7 @@ const nmrMsg = (reaction, container) => {
   if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
     const msg = hNmrCount(nmrStr);
     return (
-      <div style={{ display: 'inline', color: 'black' }}>
+      <div className="d-inline text-dark">
         (
         <sup>1</sup>
         H:{msg}
@@ -44,7 +44,7 @@ const nmrMsg = (reaction, container) => {
   } if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
     const msg = cNmrCount(nmrStr);
     return (
-      <div className="d-inline-block ms-1" style={{ color: 'black' }}>
+      <div className="d-inline-block ms-1 text-dark">
         (
         <sup>
           13
@@ -271,8 +271,7 @@ export default class ReactionDetailsContainers extends Component {
 
       return (
         <div
-          className="d-flex w-100 mb-0 h-25"
-          style={{ backgroundColor: '#ececec' }}
+          className="d-flex w-100 mb-0 h-25 light-grey-bg"
         >
           <div className="p-3">
             <ImageModal
@@ -324,19 +323,19 @@ export default class ReactionDetailsContainers extends Component {
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
-        <div className="d-flex w-100 mb-0 grey-bg">
-          <strike>
+        <div className="d-flex w-100 mb-0 light-grey-bg align-items-center">
+          <strike className="flex-grow-1">
             {container.name}
             {titleKind}
-            {titleStatus}
+            {titleStatus}            
           </strike>
           <Button
-            className="pull-right"
-            size="sm"
-            variant="danger"
-            onClick={() => this.handleUndo(container)}>
-            <i className="fa fa-undo" />
-          </Button>
+            className="ml-auto"
+              size="sm"
+              variant="danger"
+              onClick={() => this.handleUndo(container)}>
+              <i className="fa fa-undo" />
+            </Button>
         </div>
       );
     };
