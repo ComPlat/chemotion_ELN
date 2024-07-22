@@ -4,7 +4,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroupItem, Button, Tabs, Tab, OverlayTrigger, Tooltip, Card
+  ListGroupItem, Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -279,18 +279,18 @@ export default class ReactionDetails extends Component {
     const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
-    const copyBtn = (reaction.can_copy === true && !reaction.isNew) ? (
+    const copyBtn = (reaction.can_copy === true && !reaction.isNew) && (
       <CopyElementModal
         element={reaction}
         defCol={defCol}
       />
-    ) : null;
+    );
 
-    const colLabel = reaction.isNew ? null : (
+    const colLabel = !reaction.isNew && (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
-    const rsPlanLabel = (reaction.isNew || _.isEmpty(reaction.research_plans)) ? null : (
+    const rsPlanLabel = !(reaction.isNew || _.isEmpty(reaction.research_plans)) && (
       <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
     );
 
@@ -309,67 +309,19 @@ export default class ReactionDetails extends Component {
           <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
           <HeaderCommentSection element={reaction} />
         </div>
-        <div className="d-flex align-items-center gap-2">
-          <div className="d-flex flex-row-reverse">
-            <ConfirmClose el={reaction} />
-            {reaction.changed
-              && (
-              <>
-                <OverlayTrigger
-                  placement="bottom"
-                  overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}
-                >
-                  <Button
-                    variant="warning"
-                    size="xsm"
-                    onClick={() => this.handleSubmit(true)}
-                    disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
-                    className="me-1"
-                    style={{ display: hasChanged }}
-                  >
-                    <i className="fa fa-floppy-o" />
-                    <i className="fa fa-times" />
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger
-                  placement="bottom"
-                  overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}
-                >
-                  <Button
-                    variant="warning"
-                    size="xsm"
-                    onClick={() => this.handleSubmit()}
-                    disabled={!permitOn(reaction) || !this.reactionIsValid()}
-                    className="mx-1"
-                    style={{ display: hasChanged }}
-                  >
-                    <i className="fa fa-floppy-o " />
-                  </Button>
-                </OverlayTrigger>
-              </>
-              )}
-            {copyBtn}
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-            >
-              <Button
-                variant="info"
-                size="xsm"
-                // eslint-disable-next-line react/destructuring-assignment
-                onClick={() => this.props.toggleFullScreen()}
-                className="mx-1"
-              >
-                <i className="fa fa-expand" />
-              </Button>
-            </OverlayTrigger>
+        <div className="d-flex align-items-center gap-1">
+          <ButtonToolbar className="gap-1 justify-content-end">
+            <PrintCodeButton element={reaction} />
+            {!reaction.isNew
+              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />
+            }
             <OverlayTrigger
               placement="bottom"
               overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
             >
               <Button
                 variant="success"
-                size="xsm"
+                size="xxsm"
                 disabled={reaction.changed || reaction.isNew}
                 title={(reaction.changed || reaction.isNew)
                   ? 'Report can be generated after reaction is saved.'
@@ -378,16 +330,60 @@ export default class ReactionDetails extends Component {
                   contents: `/api/v1/reports/docx?id=${reaction.id}`,
                   name: reaction.name
                 })}
-                className="ms-1"
               >
                 <i className="fa fa-cogs" />
               </Button>
             </OverlayTrigger>
-            {reaction.isNew
-              ? null
-              : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
-            <PrintCodeButton element={reaction} />
-          </div>
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+            >
+              <Button
+                variant="info"
+                size="xxsm"
+                // eslint-disable-next-line react/destructuring-assignment
+                onClick={() => this.props.toggleFullScreen()}
+              >
+                <i className="fa fa-expand" />
+              </Button>
+            </OverlayTrigger>
+            {reaction.changed
+              && (
+                <>
+                  <OverlayTrigger
+                    placement="bottom"
+                    overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}
+                  >
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      onClick={() => this.handleSubmit(true)}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
+                      style={{ display: hasChanged }}
+                    >
+                      <i className="fa fa-floppy-o me-1" />
+                      <i className="fa fa-times" />
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger
+                    placement="bottom"
+                    overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}
+                  >
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      onClick={() => this.handleSubmit()}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid()}
+                      style={{ display: hasChanged }}
+                    >
+                      <i className="fa fa-floppy-o " />
+                    </Button>
+                  </OverlayTrigger>
+                </>
+              )}
+            {copyBtn}
+            <ConfirmClose el={reaction} />
+          </ButtonToolbar>
         </div>
       </div>
     );
@@ -504,7 +500,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsLiteratures
             element={reaction}
-            literatures={reaction.isNew === true ? reaction.literatures : null}
+            literatures={reaction.isNew && reaction.literatures}
             onElementChange={(r) => this.handleReactionChange(r)}
           />
         </Tab>
@@ -556,7 +552,7 @@ export default class ReactionDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Card>
+      <Card className="eln-panel-detail">
         <Card.Header className={` p-2 text-bg-${reaction.isPendingToSave ? 'light' : 'primary'}`}>
           {this.reactionHeader(reaction)}
         </Card.Header>
