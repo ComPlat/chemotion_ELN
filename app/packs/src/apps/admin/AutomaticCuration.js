@@ -43,8 +43,10 @@ export default class DictionaryCuration extends Component  {
         customDictionaryText : new_customDictionaryText,
         affObject: affObject,
         loading : true
-        },
-        ()=>{this.applyAffix(); console.log(`aff done: ${Date.now() - initTime}`)});   
+        }
+        ,()=>{this.applyAffix(); console.log(`aff done: ${Date.now() - initTime}`)}
+      ); 
+        this.fileDisplay()  
     }
     convertAffxStrtoObj(affixStr){
       var affixArray =affixStr.split("\n")
@@ -240,13 +242,11 @@ export default class DictionaryCuration extends Component  {
     render() {
         return(
         <div>
-            {/* {this.applyAffix()} */}
-            {this.fileDisplay()}
             {this.dropzoneOrfilePreview()}
             <Button onClick={()=> this.checkCustomVsEstablished(this.state.customValue,this.state.establishedDictionaryText)}>Check Custom Dictionary</Button>
             <Button onClick={()=> this.saveFile()}>Save dictionary</Button>
-            <Button onClick={()=> this.applyAffix()}>load affix</Button>
-            <Button onClick={()=> this.creatDictionaryFromString()}>Create dictionary</Button>
+            {/* <Button onClick={()=> this.applyAffix()}>load affix</Button> */}
+            {/* <Button onClick={()=> this.creatDictionaryFromString()}>Create dictionary</Button> */}
             <Row>
               <Col lg={6}>
                   <FormGroup controlId="customDictionary">
