@@ -21,22 +21,30 @@ export default class DictionaryCuration extends Component  {
             establishedSearch :"",
             affObject : null,
             establishedDictionaryText :"",
-            customDictionaryText: ""
+            customDictionaryText: "",
+            loading :false
         }}
-
+    
     async componentDidMount(){
+      var initTime = new Date();
+      console.log(`start: ${initTime}`)
       const customDictionaryText = AutomticCurationFetcher.dictionaryFetch("custom", "custom.dic")
       const establishedDictionaryText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.dic")
       const affixText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.aff")
+
       const [new_customDictionaryText, new_establishedDictionaryText, new_affixText ] = await Promise.all([customDictionaryText,establishedDictionaryText,affixText])
+      console.log(`fetch done: ${Date.now() - initTime}`)
       var affObject = this.convertAffxStrtoObj(new_affixText)
+      console.log(`aff converted done: ${Date.now() - initTime}`)
       this.setState({
         establishedValue : new_establishedDictionaryText,
         establishedDictionaryText : new_establishedDictionaryText,
         customValue : new_customDictionaryText,
         customDictionaryText : new_customDictionaryText,
-        affObject: affObject
-        },()=>this.applyAffix());   
+        affObject: affObject,
+        loading : true
+        },
+        ()=>{this.applyAffix(); console.log(`aff done: ${Date.now() - initTime}`)});   
     }
     convertAffxStrtoObj(affixStr){
       var affixArray =affixStr.split("\n")
@@ -74,6 +82,7 @@ export default class DictionaryCuration extends Component  {
     applyAffix(){
       var dictionaryString = this.state.establishedValue
       var dictionaryArray = dictionaryString.split("\n")
+      var objectsToLoad = dictionaryArray.length
       for(var entry of dictionaryArray){
         entry = entry.replace("!","")
         // console.log(entry)
@@ -92,16 +101,14 @@ export default class DictionaryCuration extends Component  {
       dictionaryArray = dictionaryArray.flat()
       console.log("affix applied")
       dictionaryString = dictionaryArray.join("\n")
-      this.setState({establishedDictionaryText: dictionaryString,
-        establishedValue: dictionaryString
+      this.setState({
+        establishedDictionaryText: dictionaryString,
+        establishedValue: dictionaryString,
+        loading : false
       })
     }
 
     workWithaffObject (word, inputAff, affixObject){
-    // var word = "leach"
-    // var inputAff = ["S","D","G"]
-    // var affixObject = this.state.affObject
-
     var newWordArray = []
     for(var indvidualAff of inputAff){
       var sOrP = affixObject[indvidualAff][1]
@@ -215,8 +222,19 @@ export default class DictionaryCuration extends Component  {
 
     fileDisplay(){
       if (this.state.file !== null){
-        this.state.file.text().then((text) =>{  this.setState({customValue :text});console.log(`text ${text}`)})
+        this.state.file.text().then((text) =>this.setState({customValue :text}))
       }
+    }
+
+    loading(){
+      if (this.state.loading == true){
+      return (
+        <div>
+        affix loading
+        </div>)}
+      else
+      return (<></>)
+      
     }
     
     render() {
