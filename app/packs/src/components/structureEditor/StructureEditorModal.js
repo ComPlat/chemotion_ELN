@@ -10,10 +10,9 @@ import {
   ControlLabel,
   OverlayTrigger,
   Tooltip,
-  Dropdown,
-  DropdownButton,
-  MenuItem
+  Image,
 } from 'react-bootstrap';
+import { Accordion, AccordionItem } from '@szhsin/react-accordion';
 import Select from 'react-select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -26,7 +25,7 @@ import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 import uuid from 'uuid';
 import CommonTemplatesFetcher from '../../fetchers/CommonTemplateFetcher';
-import { option } from 'react-dom-factories';
+import { div, option } from 'react-dom-factories';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -180,7 +179,7 @@ function EditorList(props) {
 function copyContentToClipboard(content) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(content).then(() => {
-      alert('Please click on canvas and press CTRL+V to use the template.');
+      // alert('Please click on canvas and press CTRL+V to use the template.');
     }).catch(err => {
       console.error('Failed to copy text: ', err);
     });
@@ -244,73 +243,155 @@ function CommonTemplatesList({ options }) {
   );
 }
 
-function ShapesDropDownItem({ onClick, value }) {
-  return <MenuItem onClick={() => onClick(value)}>{value}</MenuItem>;
+
+function SurfaceChemistryItemThumbnail({ item, icon, title, onClickHandle }) {
+  return (
+    <div className='suraface-chem-shape' onClick={() => onClickHandle(item)}>
+      <div className='surface-thumbnail-container'>
+        <Image src={"data:image/svg+xml;base64," + icon} thumbnail height={30} width={80} />
+      </div>
+      <h4>{title}</h4>
+    </div>
+  );
 }
-
 function SurfaceChemistryList(props) {
-  const options = [{
-    value: "value 1",
-    sub_options: [
-      {
-        value: "value 1-1"
-      },
-      {
-        value: "value 1-2"
-      }
-    ]
-  },
-  {
-    value: "value 2",
-    sub_options: [
-      {
-        value: "value 2-1"
-      },
-      {
-        value: "value 2-2"
-      }
-    ]
-  }
+  const [showSurfaceChemModal, setShowSurfaceChemModal] = useState(false);
+  const [selectedShape, setSelectedShape] = useState(null);
 
-  ];
+  const shapes_list = {
+    "Active Phase": {
+      "Round Mono": {
+        "Filling": "solid",
+        "Color": "Variations of Blue",
+        "icon": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNDAiIHJ4PSI1IiByeT0iNSIgZmlsbD0iIzQ0NzJjNCIgLz48L3N2Zz4=",
+        ket: 'blah blah'
+      },
+      "Round Multi": {
+        "Filling": "hatched",
+        "Color": "Variations of Blue",
+        "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+DQogIDxjaXJjbGUgcj0iNzUiIGN4PSI4MCIgY3k9IjgwIiBzdHJva2U9IiNiYThjMDAiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0iIzQ0NzJjNCIgLz4NCjwvc3ZnPg==",
+        ket: 'blah blah'
+      },
+      "Round Promotors": {
+        "Filling": "solid, smaller size",
+        "Color": "Variations of Red",
+        "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+DQogIDxjaXJjbGUgcj0iNzUiIGN4PSI4MCIgY3k9IjgwIiBzdHJva2U9IiNiYThjMDAiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0iIzQ0NzJjNCIgLz4NCjwvc3ZnPg==",
+        ket: 'blah blah'
+      },
+      "Round Full Coating": {
+        "Filling": "selection of colors",
+        "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+DQogIDxjaXJjbGUgcj0iNzUiIGN4PSI4MCIgY3k9IjgwIiBzdHJva2U9IiNiYThjMDAiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0iIzQ0NzJjNCIgLz4NCjwvc3ZnPg==",
+        ket: 'blah blah'
+      }
+    },
+    "Support": {
+      "Rectangle Support": {
+        "Filling": "Solid",
+        "Color": "Variations of Yellow",
+        "icon": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNDAiIHJ4PSI1IiByeT0iNSIgZmlsbD0iIzQ0NzJjNCIgLz48L3N2Zz4="
+      },
+      "Rectangle Phase separated Supports": {
+        "Filling": "solid, divided",
+        "Color": "Variations of Yellow",
+        "icon": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNDAiIGZpbGw9InJnYigxNTUsIDE5MiwwKSIgc3Ryb2tlPSJyZ2IoMTg2LDE0MCwwKSIgc3Ryb2tlLXdpZHRoPSIzIiAvPjwvc3ZnPg==",
+        ket: 'blah blah'
+      },
+      "Rectangle Mixed Supports": {
+        "Filling": "hatched",
+        "Color": "Variations of Yellow",
+        "icon": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNDAiIGZpbGw9InJnYigxNTUsIDE1NSwwKSIgc3Ryb2tlPSJyZ2IoMTg2LDE0MCwwKSIgc3Ryb2tlLXdpZHRoPSIzIiAvPjwvc3ZnPg==",
+        ket: 'blah blah'
+      }
+    },
+    "Layer Rectangle with round edges": {
+      "Catalyst": {
+        "Color": "selection of colors",
+        "icon": "PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3Lnd3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjI1IiBjeT0iMjUiIHI9IjI1IiBmaWxsPSIjZWQ3ZDMxIiBzdHJva2U9IiNhYzViMjMiIHN0cm9rZS13aWR0aD0iMyIgLz48L3N2Zz4=",
+        ket: 'blah blah'
+      }
+    },
+    "Body": {
+      "Rectangle Solid": {
+        "Filling": "Solid",
+        "Color": "Variations of Grey",
+        "icon": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNDAiIHJ4PSI1IiByeT0iNSIgZmlsbD0iI2ZmZiIgIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIiAvPjwvc3ZnPg==",
+        ket: 'blah blah'
+      },
+      "Rectangle Porous": {
+        "Filling": "hatched",
+        "Color": "Variations of Grey",
+        "icon": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNDAiIGZpbGw9InJnYigxNTUsIDE1NSwwKSIgc3Ryb2tlPSJyZ2IoMTg2LDE0MCwwKSIgc3Ryb2tlLXdpZHRoPSIzIiAvPjwvc3ZnPg==",
+        ket: 'blah blah'
+      }
+    }
+  };
+  const toolTip = `Select a template and Pres CTRL + v inside the canvas.`;
+
   return (
     <FormGroup>
-      <ControlLabel>Shapes:</ControlLabel>
-      <div>
-        <Dropdown>
-          <Dropdown.Toggle variant="success" id="dropdown-basic" style={{ width: '100%' }} >
-            Shapes
-          </Dropdown.Toggle>
-          <Dropdown.Menu
-            style={{
-              width: '100%', padding: '5px 10px', backgroundColor: '#fff', border: 0
-            }}
-          >
-            {
-              options.map((item, idx) => {
-                const { value, sub_options } = item;
-                return (
-                  <DropdownButton
-                    key={idx}
-                    id="dropdown-button-dark-example2"
-                    variant="secondary"
-                    title={value}
-                    style={{ width: '140px', margin: '5px 0', backgroundColor: '#fff', border: 0 }}
-                  >
-                    {
-                      sub_options.map((sub_option) => {
-                        return (
-                          <ShapesDropDownItem onClick={(item) => alert(item)} value={sub_option.value} />
-                        );
-                      })
-                    }
-                  </DropdownButton>
-                );
-              })
-            }
-          </Dropdown.Menu>
-        </Dropdown>
+      <div className='common-template-header'>
+        <div style={{ width: '95%' }}>
+          <ControlLabel>Shapes:</ControlLabel>
+        </div>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="commontemplates">{toolTip}</Tooltip>}>
+          <i className="fa fa-info" />
+        </OverlayTrigger>
       </div>
+      <div
+        className='ketcher-select-common-template'
+        onClick={() => setShowSurfaceChemModal(true)}
+      >
+        {selectedShape ? selectedShape?.name : 'Select shape'}
+        <div className='select-template-badge'>
+          <i className="fa fa-caret-down" />
+        </div>
+      </div>
+      <div>
+        <Modal show={showSurfaceChemModal} onHide={() => setShowSurfaceChemModal(false)}>
+          <Modal.Header closeButton />
+          <Modal.Body>
+            <Panel>
+              <Panel.Heading>
+                <Panel.Title>
+                  Surface Chemistry shapes:
+                </Panel.Title>
+              </Panel.Heading>
+              <Panel.Body>
+                {
+                  Object.keys(shapes_list).map((item, idx) => {
+                    return (
+                      <Accordion>
+                        <div style={{ position: 'relative' }} className={"surface-chem-accordian-heading"}>
+                          <AccordionItem header={item}  >
+                            <div className={"shapes-accordionItem"}>
+                              {
+                                Object.keys(shapes_list[item]).map((sub_item, sub_idx) => {
+                                  const obj = shapes_list[item][sub_item];
+                                  return (
+                                    <SurfaceChemistryItemThumbnail
+                                      icon={obj.icon} title={`${item} ${obj.Filling}`}
+                                      onClickHandle={() => {
+                                        setShowSurfaceChemModal(false);
+                                        copyContentToClipboard(obj.ket);
+                                      }}
+                                    />
+                                  );
+                                })
+                              }
+                            </div>
+
+                          </AccordionItem>
+                        </div>
+                      </Accordion>
+                    );
+                  })
+                }
+              </Panel.Body>
+            </Panel>
+          </Modal.Body>
+        </Modal>
+      </div>
+
 
     </FormGroup >
   );
@@ -535,7 +616,7 @@ export default class StructureEditorModal extends React.Component {
                 />
               </div>
               <div style={{ flex: 0.5, margin: "0 10px" }} >
-                {/* <SurfaceChemistryList /> */}
+                <SurfaceChemistryList />
               </div>
 
             </div>
