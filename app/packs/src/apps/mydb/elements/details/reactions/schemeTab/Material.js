@@ -778,7 +778,7 @@ class Material extends Component {
 
     return (
       <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)} >
-        <div className='d-inline-block' style={{ maxWidth: '100%' }}>
+        <div className='d-inline-block mw-100'>
           <div className="inline-inside">
             <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
               <Button variant="primary" size="sm" className='me-1' onClick={addToDesc} disabled={!permitOn(reaction)}>

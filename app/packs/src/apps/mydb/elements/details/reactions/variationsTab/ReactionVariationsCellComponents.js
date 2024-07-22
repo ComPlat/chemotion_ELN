@@ -22,7 +22,6 @@ function RowToolsCellRenderer({
   return (
     <div>
       <Badge bg='secondary' className='me-2'>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
-      {' '}
       <ButtonGroup>
         <Button size="xsm" variant="success" onClick={() => copyRow(variationsRow)}>
           <i className="fa fa-clone" />

@@ -16,7 +16,7 @@ class ContainerDatasetField extends Component {
     if (!readOnly) {
       return (
         <Button
-          size="sm"
+          size="xsm"
           variant="danger"
           onClick={() => handleRemove(datasetContainer)}
           disabled={disabled}
@@ -64,17 +64,18 @@ class ContainerDatasetField extends Component {
         </OverlayTrigger>
       );
     return connectDropTarget(
-      <div>
+      <div className="d-flex justify-content-between">
         {datasetContainer.dataset && datasetContainer.dataset.klass_ols !== absOlsTermId(kind)
           ? <GenericDSMisType /> : null}
         {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <a onClick={() => handleModalOpen(datasetContainer)} role="button">
           {datasetContainer.name || 'new'}
         </a>
-        <div className="pull-right">
+        <div className="ml-auto"
+        >
           {gdsDownload}
           <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
-            <Button size="sm" variant="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
+            <Button size="xsm" variant="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
               <i className="fa fa-download" />
             </Button>
           </OverlayTrigger>

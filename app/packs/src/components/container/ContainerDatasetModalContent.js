@@ -2,7 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Form, ListGroup, ListGroupItem, Button, Overlay } from 'react-bootstrap';
+import { Form, ListGroup, ListGroupItem, Button, Overlay, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -504,7 +504,8 @@ export default class ContainerDatasetModalContent extends Component {
               <i className="fa fa-undo" aria-hidden="true" />
             </Button>
           ) : (
-            <>
+              <>
+            <ButtonToolbar className="gap-1">
               {downloadButton(attachment)}
               {editButton(
                 attachment,
@@ -518,9 +519,11 @@ export default class ContainerDatasetModalContent extends Component {
               )}
               {annotateButton(attachment, this)}
               {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
-                <span className='me-2'>{''}</span>
-              {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
-            </>
+                </ButtonToolbar>
+                <div className="ms-2">
+                  {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
+                </div>
+              </>
           )}
         </div>
         {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
