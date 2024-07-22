@@ -320,18 +320,13 @@ export const sortingAndFilteringUI = (
   </div>
 );
 
-const checkMime = (attachment,option) => {
-    {const mime = require('mime-types')};
-       if (mime.lookup(option.fileTypes) == (attachment.content_type)){
 
-       }
-
-}
 
 export const thirdPartyAppButton = (attachment, options) => {
   const mime = require('mime-types');
+  var partialReactfrag = <MenuItem> None available </MenuItem> ;
+ 
   return(
-
   <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
       <i className="fa  fa-external-link " aria-hidden="true" />
@@ -339,22 +334,29 @@ export const thirdPartyAppButton = (attachment, options) => {
     <Dropdown.Menu>
       {options.map((option) => {
         {/* console.log(`${option.fileTypes} ${attachment.content_type}`) */}
-        {/* console.log(mime.lookup(option.fileTypes)) */}
-        if (mime.lookup(option.fileTypes) == (attachment.content_type)){
-          return(
-        <MenuItem
-          key={uuid.v4()}
-          eventKey={option.id}
-          onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
-            .then((result) => window.open(result, '_blank'))}
-          // disabled={!isImageFile(attachment.filename) || attachment.isNew}
-        >
-        {/* {console.log(`${attachment.content_type}`)} */}
-          {option.name}
-          </MenuItem>)
-          }
-
-      else{ return( <MenuItem>none available</MenuItem>) }})}
+        option.fileTypes = option.fileTypes.replace(" ","")
+        var optionFileArray = []
+        if (option.fileTypes.includes(",")){
+          optionFileArray = option.fileTypes.split(",")
+        }
+        for(let optionFileType of optionFileArray){
+       
+          if (mime.lookup(optionFileType) == (attachment.content_type)){
+            partialReactfrag =  <MenuItem
+              key={uuid.v4()}
+              eventKey={option.id}
+              onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+                .then((result) => window.open(result, '_blank'))}
+        // disabled={!isImageFile(attachment.filename) || attachment.isNew}
+      >
+      {option.name}
+      </MenuItem>
+      
+  }
+        }
+  return partialReactfrag
+      })}
     </Dropdown.Menu>
-  </Dropdown>)
+  </Dropdown>);
+  // return mainReactFrag
 };
