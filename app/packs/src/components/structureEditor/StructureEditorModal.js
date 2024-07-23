@@ -392,8 +392,7 @@ export default class StructureEditorModal extends React.Component {
               </div>
               <div style={{ flex: 0.5, margin: "0 10px" }} >
                 <SurfaceChemistryList selectedShape={this.state.selectedShape} onSelectShape={(item) => {
-                  copyContentToClipboard(item);
-                  console.log(item);
+                  copyContentToClipboard({ root: item.root });
                   this.setState({ selectedShape: item });
                 }} />
               </div>
