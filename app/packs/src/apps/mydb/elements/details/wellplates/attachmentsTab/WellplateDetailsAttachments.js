@@ -2,6 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
@@ -20,7 +21,8 @@ import {
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
-  attachmentThumbnail
+  attachmentThumbnail,
+  thirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
@@ -47,6 +49,8 @@ export default class WellplateDetailsAttachments extends Component {
     const {
       onImport
     } = props;
+    const { thirdPartyApps } = UIStore.getState() || [];
+    this.thirdPartyApps = thirdPartyApps;
 
     this.state = {
       onImport,
@@ -329,6 +333,10 @@ export default class WellplateDetailsAttachments extends Component {
                   </Button>
                 ) : (
                   <>
+                  {thirdPartyAppButton(
+                      attachment,
+                      this.thirdPartyApps,
+                    )}
                     {downloadButton(attachment)}
                     {editButton(
                       attachment,
