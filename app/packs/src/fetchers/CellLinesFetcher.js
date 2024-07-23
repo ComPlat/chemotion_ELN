@@ -1,43 +1,20 @@
 import CellLine from 'src/models/cellLine/CellLine';
+import Container from 'src/models/Container';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 import {
-  extractApiParameter
-
+  extractApiParameter,
+  successfullyCreatedParameter,
+  successfullyCopiedParameter,
+  successfullyUpdatedParameter,
+  successfullySplittedParameter,
+  errorMessageParameter
 } from 'src/utilities/CellLineUtils';
 
-const successfullyCreatedParameter = {
-  title: 'Element created',
-  message: 'Cell line sample successfully added',
-  level: 'info',
-  dismissible: 'button',
-  autoDismiss: 10,
-  position: 'tr'
-};
-
-const successfullyUpdatedParameter = {
-  title: 'Element updated',
-  message: 'Cell line sample successfully updated',
-  level: 'info',
-  dismissible: 'button',
-  autoDismiss: 10,
-  position: 'tr'
-};
-
-const errorMessageParameter = {
-  title: 'Error',
-  message: 'Unfortunately, the last action failed. Please try again or contact your admin.',
-  level: 'error',
-  dismissible: 'button',
-  autoDismiss: 30,
-  position: 'tr'
-};
-
 export default class CellLinesFetcher {
-
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
   }
@@ -59,7 +36,7 @@ export default class CellLinesFetcher {
     return promise;
   }
 
-  static create(cellLine,user) {
+  static create(cellLine, user) {
     const params = extractApiParameter(cellLine);
 
     const promise = CellLinesFetcher.uploadAttachments(cellLine)
@@ -78,7 +55,7 @@ export default class CellLinesFetcher {
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
       .then((cellLineItem) => {
         NotificationActions.add(successfullyCreatedParameter);
-        user.cell_lines_count = user.cell_lines_count +1;
+        user.cell_lines_count += 1;
         return cellLineItem;
       })
       .catch((errorMessage) => {
@@ -125,6 +102,29 @@ export default class CellLinesFetcher {
     }).then((response) => response.json());
   }
 
+  static copyCellLine(cellLineId, collectionId) {
+    const params = {
+      id: cellLineId,
+      collection_id: collectionId,
+      container: Container.init()
+    };
+
+    return fetch('/api/v1/cell_lines/copy/', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify(params)
+    }).then((response) => response.json())
+
+      .then((json) => {
+        NotificationActions.add(successfullyCopiedParameter);
+        return CellLine.createFromRestResponse(collectionId, json);
+      });
+  }
+
   static update(cellLineItem) {
     const params = extractApiParameter(cellLineItem);
     const promise = CellLinesFetcher.uploadAttachments(cellLineItem)
@@ -138,8 +138,8 @@ export default class CellLinesFetcher {
         body: JSON.stringify(params)
       }))
       .then((response) => response.json())
-      .then(() => {BaseFetcher.updateAnnotationsInContainer(cellLineItem)})
-      .then(()=> CellLinesFetcher.fetchById(cellLineItem.id))
+      .then(() => { BaseFetcher.updateAnnotationsInContainer(cellLineItem); })
+      .then(() => CellLinesFetcher.fetchById(cellLineItem.id))
       .then((loadedCellLineSample) => {
         NotificationActions.add(successfullyUpdatedParameter);
         return loadedCellLineSample;
@@ -150,5 +150,26 @@ export default class CellLinesFetcher {
         return cellLineItem;
       });
     return promise;
+  }
+
+  // Here better as parameter list of ids
+  static splitAsSubCellLines(ids, collectionId) {
+    const promises = [];
+
+    ids.forEach((id) => {
+      const params = { id, collection_id: collectionId };
+      promises.push(fetch('/api/v1/cell_lines/split', {
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify(params)
+      }));
+    });
+
+    return Promise.all(promises)
+      .then(() => { NotificationActions.add(successfullySplittedParameter); });
   }
 }
