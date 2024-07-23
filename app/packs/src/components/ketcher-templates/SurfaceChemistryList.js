@@ -10,6 +10,44 @@ import {
 } from 'react-bootstrap';
 import { Accordion, AccordionItem } from '@szhsin/react-accordion';
 
+const basicShapeKetcherFormat = {
+  "root": {
+    "nodes": [
+      {
+        "type": "rasterImage",
+        "center": {
+          "x": 58.7833333333333,
+          "y": -142.38015873015874,
+          "z": 0
+        },
+        "data": {
+          "bitmap": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPg0KPHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4NCjxwYXRoIGQ9Ik03LjUgMTFWMTNNMTMuNSA4VjE2TTEwLjUgMTBWMTRNMTYuNSAxMC41VjEzLjVNMjEgMTJDMjEgMTYuOTcwNiAxNi45NzA2IDIxIDEyIDIxQzcuMDI5NDQgMjEgMyAxNi45NzA2IDMgMTJDMyA3LjAyOTQ0IDcuMDI5NDQgMyAxMiAzQzE2Ljk3MDYgMyAyMSA3LjAyOTQ0IDIxIDEyWiIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPg0KPC9zdmc+",
+          "halfSize": {
+            "x": 58.7833333333333,
+            "y": -142.38015873015874,
+            "z": 0
+          },
+          "position": [
+            {
+              "x": -52.2166666666667,
+              "y": -89.00515873015873,
+              "z": 0
+            }
+
+          ]
+        }
+      }
+
+    ],
+    "connections": [
+
+    ],
+    "templates": [
+
+    ]
+  }
+};
+
 
 const shapes_list = {
   "Active Phase": {
@@ -82,9 +120,8 @@ const shapes_list = {
 function SurfaceChemistryList(props) {
   const [showSurfaceChemModal, setShowSurfaceChemModal] = useState(false);
   const { onSelectShape, selectedShape } = props;
-  console.log(selectedShape);
 
-  const toolTip = `Select a template and Pres CTRL + v inside the canvas.`;
+  const toolTip = `Select a template and Press CTRL + v inside the canvas.`;
 
   return (
     <FormGroup>
@@ -130,7 +167,11 @@ function SurfaceChemistryList(props) {
                                     <SurfaceChemistryItemThumbnail
                                       icon={obj.icon} title={`${item} ${obj.Filling}`}
                                       onClickHandle={() => {
-                                        onSelectShape(obj);
+                                        basicShapeKetcherFormat.root.nodes[0].data.bitmap = "data:image/svg+xml;base64," + obj.icon;
+                                        onSelectShape({
+                                          ...basicShapeKetcherFormat,
+                                          // ...obj,
+                                        });
                                         setShowSurfaceChemModal(false);
                                       }}
                                     />

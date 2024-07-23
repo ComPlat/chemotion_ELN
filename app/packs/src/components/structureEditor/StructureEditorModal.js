@@ -163,7 +163,7 @@ function EditorList(props) {
 
 function copyContentToClipboard(content) {
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(content).then(() => {
+    navigator.clipboard.writeText(JSON.stringify(content)).then(() => {
       // alert('Please click on canvas and press CTRL+V to use the template.');
     }).catch(err => {
       console.error('Failed to copy text: ', err);
@@ -392,7 +392,8 @@ export default class StructureEditorModal extends React.Component {
               </div>
               <div style={{ flex: 0.5, margin: "0 10px" }} >
                 <SurfaceChemistryList selectedShape={this.state.selectedShape} onSelectShape={(item) => {
-                  copyContentToClipboard(item.ket);
+                  copyContentToClipboard(item);
+                  console.log(item);
                   this.setState({ selectedShape: item });
                 }} />
               </div>

@@ -9,7 +9,7 @@ import {
 
 function CommonTemplatesList({ options, onClickHandle, selectedItem }) {
   const [commonTemplateModal, setCommonTemplateModal] = useState(false);
-  const toolTip = `Select a template and Pres CTRL + v inside the canvas.`;
+  const toolTip = `Select a template and Press CTRL + v inside the canvas.`;
 
   const onSelectItem = (item) => {
     onClickHandle(item);
