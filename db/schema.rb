@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_06_17_110459) do
+ActiveRecord::Schema.define(version: 2024_07_23_151011) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -204,6 +204,9 @@ ActiveRecord::Schema.define(version: 2024_06_17_110459) do
     t.integer "collection_id"
     t.integer "cellline_sample_id"
     t.datetime "deleted_at"
+    t.index ["cellline_sample_id", "collection_id"], name: "index_collections_celllines_on_cellsample_id_and_coll_id", unique: true
+    t.index ["collection_id"], name: "index_collections_celllines_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_celllines_on_deleted_at"
   end
 
   create_table "collections_elements", id: :serial, force: :cascade do |t|
@@ -230,6 +233,7 @@ ActiveRecord::Schema.define(version: 2024_06_17_110459) do
     t.integer "collection_id"
     t.integer "research_plan_id"
     t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_research_plans_on_collection_id"
     t.index ["research_plan_id", "collection_id"], name: "index_collections_research_plans_on_rplan_id_and_coll_id", unique: true
   end
 
@@ -635,6 +639,60 @@ ActiveRecord::Schema.define(version: 2024_06_17_110459) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
+  end
+
+  create_table "ketcher2_settings", force: :cascade do |t|
+    t.string "resetToSelect"
+    t.integer "rotationStep"
+    t.boolean "showValenceWarnings"
+    t.boolean "atomColoring"
+    t.boolean "showStereoFlags"
+    t.string "stereoLabelStyle"
+    t.string "colorOfAbsoluteCenters"
+    t.string "colorOfAndCenters"
+    t.string "colorOfOrCenters"
+    t.string "string"
+    t.string "colorStereogenicCenters"
+    t.boolean "autoFadeOfStereoLabels"
+    t.string "absFlagLabel"
+    t.string "andFlagLabel"
+    t.string "mixedFlagLabel"
+    t.boolean "ignoreChiralFlag"
+    t.string "orFlagLabel"
+    t.string "font"
+    t.integer "fontsz"
+    t.integer "fontszsub"
+    t.boolean "carbonExplicitly"
+    t.boolean "showCharge"
+    t.boolean "showValence"
+    t.string "showHydrogenLabels"
+    t.boolean "aromaticCircle"
+    t.integer "doubleBondWidth"
+    t.integer "bondThickness"
+    t.integer "stereoBondWidth"
+    t.boolean "dearomatize_on_load"
+    t.boolean "smart_layout"
+    t.boolean "ignore_stereochemistry_errors"
+    t.boolean "mass_skip_error_on_pseudoatoms"
+    t.boolean "gross_formula_add_rsites"
+    t.boolean "gross_formula_add_isotopes"
+    t.boolean "showAtomIds"
+    t.boolean "showBondIds"
+    t.boolean "showHalfBondIds"
+    t.boolean "showLoopIds"
+    t.string "miewMode"
+    t.string "miewTheme"
+    t.string "miewAtomLabel"
+    t.boolean "init"
+    t.integer "user_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "ketcher_settings", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
@@ -1320,6 +1378,15 @@ ActiveRecord::Schema.define(version: 2024_06_17_110459) do
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
+  end
+
+  create_table "third_party_apps", force: :cascade do |t|
+    t.string "url"
+    t.string "name", limit: 100, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "file_types", limit: 100
+    t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|

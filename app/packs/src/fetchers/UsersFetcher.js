@@ -304,4 +304,37 @@ export default class UsersFetcher {
       });
     return promise;
   }
+
+  static fetchUserKetcher2Options() {
+    const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+    }).then(response => response.json()).then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static updateUserKetcher2Options(data) {
+    data = JSON.parse(data);
+    const newSource = {};
+    Object.keys(data).map((item) => {
+      newSource[item.replaceAll("-", "_")] = data[item];
+    });
+    const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        data: JSON.stringify(newSource)
+      })
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }

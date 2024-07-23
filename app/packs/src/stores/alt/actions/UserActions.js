@@ -68,10 +68,10 @@ class UserActions {
       data: { authenticity_token: DocumentHelper.getMetaContent("csrf-token") }
     })
       .then(response => {
-      if (response.status == 204) {
-        location = '/home';
-      }
-    });
+        if (response.status == 204) {
+          location = '/home';
+        }
+      });
   }
 
   fetchProfile() {
@@ -167,9 +167,9 @@ class UserActions {
         cache: 'no-store',
         headers: { 'cache-control': 'no-cache' }
       }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    }
+        console.log(errorMessage);
+      });
+    };
   }
 
   fetchOmniauthProviders() {
@@ -177,7 +177,22 @@ class UserActions {
       UsersFetcher.fetchOmniauthProviders()
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
-    }
+    };
+  }
+  fetchKetcher2Options() {
+    return (_) => {
+      UsersFetcher.fetchUserKetcher2Options()
+        .then((result) => {
+          if (result) {
+            const newSource = {};
+            Object.keys(result).map((item) => {
+              newSource[item.replaceAll("_", "-")] = result[item];
+            });
+            localStorage.setItem('ketcher-opts', JSON.stringify(newSource));
+          }
+        })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 }
 

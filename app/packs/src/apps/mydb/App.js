@@ -38,7 +38,7 @@ class App extends Component {
     UserActions.fetchOlsChmo();
     UserActions.fetchOlsBao();
     UserActions.fetchProfile();
-    UserActions.setUsertemplates()
+    UserActions.setUsertemplates();
     UserActions.fetchUserLabels();
     UserActions.fetchGenericEls();
     UserActions.fetchSegmentKlasses();
@@ -46,6 +46,7 @@ class App extends Component {
     UserActions.fetchUnitsSystem();
     UserActions.fetchEditors();
     UIActions.initialize.defer();
+    UserActions.fetchKetcher2Options();
     document.addEventListener('keydown', this.documentKeyDown);
 
     this.patchExternalLibraries();

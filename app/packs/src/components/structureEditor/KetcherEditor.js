@@ -2,6 +2,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import UsersFetcher from '../../fetchers/UsersFetcher';
 
 function KetcherEditor(props) {
   const { editor, iH, iS, molfile } = props;
@@ -16,6 +17,14 @@ function KetcherEditor(props) {
       editor.structureDef.editor.setMolecule(initMol);
     }
   };
+
+  const handleStorageChange = (event) => {
+    if (event.key === 'ketcher-opts') {
+      console.log('Storage key changed:', event.newValue);
+      UsersFetcher.updateUserKetcher2Options(event.newValue);
+    }
+  };
+
 
   const injectGlobalValues = (iframe) => {
     // TODO:H set production url
@@ -35,8 +44,11 @@ function KetcherEditor(props) {
       injectGlobalValues(iframe);
     }
     window.addEventListener('message', loadContent);
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       window.removeEventListener('message', loadContent);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
