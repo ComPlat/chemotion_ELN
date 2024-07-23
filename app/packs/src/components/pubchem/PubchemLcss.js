@@ -36,26 +36,23 @@ const PubchemLcss = ({
   if (imgs.length < 5) {
     imgWH = 70 * (3 / 4);
   }
-  const signs = imgs.map((img, idx) => <PubchemSigns key={`pubchem_sign_${idx + 1}`} objPath={img.src} objTitle={img.title} objWidth={imgWH} objHeight={imgWH} />);
-
+  
   return (
     <div>
-      <Row>
-        <Col md={12}>
-          {signs}
-        </Col>
-      </Row>
-      <Row>
-        <Col md={12}>
-          <Button style={{ border: 'none' }} size="sm" onClick={() => { window.open(`${sourceRoot}/compound/${cid}#datasheet=lcss&section=Top`, '_blank'); }}>
-            <img src="/images/wild_card/pubchem.svg" style={{ height: '1.5vh' }} alt="" />&nbsp;
-            <i className="lcss-link">
-              Source: European Chemicals Agency (ECHA)<br />
-              Read more about Safety Summary from PubChem
-            </i>
-          </Button>
-        </Col>
-      </Row>
+      {imgs.map((img, idx) => (
+        <PubchemSigns
+            key={`pubchem_sign_${idx + 1}`}
+            objPath={img.src}
+            objTitle={img.title}
+            objWidth={imgWH}
+            objHeight={imgWH}
+          />
+      ))}
+      <Button size="sm" variant="light" className="my-2" onClick={() => { window.open(`${sourceRoot}/compound/${cid}#datasheet=lcss&section=Top`, '_blank'); }}>
+        <img src="/images/wild_card/pubchem.svg" style={{ height: '1.5vh' }} alt="" className='me-1'/>
+        <span>Source: European Chemicals Agency (ECHA)<br />
+        Read more about Safety Summary from PubChem</span>
+      </Button>
     </div>
   );
 };
