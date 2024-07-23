@@ -76,9 +76,7 @@ function ReactionsHeader({
         )}
         <div className="position-absolute top-0 end-0 mt-2 me-2">
           <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-            <span style={{ color: '#337ab7' }}>
-              <ChevronIcon direction={show ? 'down' : 'right'} />
-            </span>
+            <ChevronIcon direction={show ? 'down' : 'right'} color="primary"/>
           </OverlayTrigger>
         </div>
       </td>

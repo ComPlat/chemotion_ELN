@@ -1,3 +1,6 @@
+@import "bootstrap/functions";
+@import "bootstrap/variables";
+
 .tree-wrapper {
   display: block;
   position: relative;
@@ -8,7 +11,7 @@
 }
 
 .title {
-  background: #eee;
+  background: $gray-200;
   font-size: 14px;
   padding: 7px;
   margin-bottom: 1px;
@@ -26,8 +29,8 @@
 }
 
 .selected {
-  background: #337ab7;
-  color: #fff;
+  background: $primary;
+  color: $white;
 }
 
 .take-ownership-btn {

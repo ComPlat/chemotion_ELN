@@ -43,7 +43,7 @@ export default class AdminNavigation extends React.Component {
   render() {
     const { currentUser } = this.state;
     return (
-      <Navbar bg="grey" expand="lg" className="navbar-custom py-4" >
+      <Navbar bg="grey" expand="lg" className="bg-gray-200 py-4" >
         <Container fluid>
           <Navbar.Brand className="d-flex align-items-center">
             <Button variant="light" className="me-2 p-0 border-0 bg-transparent" onClick={this.toggleTree} aria-label="Toggle Tree">

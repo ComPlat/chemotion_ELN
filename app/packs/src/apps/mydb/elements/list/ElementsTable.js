@@ -258,11 +258,8 @@ export default class ElementsTable extends React.Component {
       <ChevronIcon
         direction={collapseAll ? 'right' : 'down'}
         onClick={() => this.changeCollapse(collapseAll)}
-        style={{
-          fontSize: '20px',
-          color: '#337ab7',
-          top: 0
-        }}
+        color="primary"
+        className="fs-5"
         role="button"
       />
     );
