@@ -70,7 +70,7 @@ RSpec.describe Chemotion::Jcamp do
         double(:response, code: 200, body: ''), # rubocop:disable RSpec/VerifiedDoubles
       )
 
-      result = described_class.combine([file_path, file_path], 1, ['file_1', 'file_2'])
+      result = described_class.combine([file_path, file_path], 1, ['file_1', 'file_2'], {})
 
       expect(result).not_to be_nil
     end
