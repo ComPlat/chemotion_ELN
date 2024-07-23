@@ -1,17 +1,27 @@
 import { types } from 'mobx-state-tree';
 
 
+const messageModel = types.model({
+  id: types.integer,
+ message_id:types.integer,
+ subject: types.string,
+ channel_type:types.integer,
+ sender_id:types.integer,
+ sender_name:types.string,
+ reciever_id:types.integer,
+ is_ack:types.integer,
+ created_at:types.string,
+ updated_at:types.string})
 
 export const AttachmentNotificationStore = types
- .model({ name: 'default User',})
+ .model({messages:types.array(messageModel)})
  .views((self) => ({
-    test() {
-        return "Hello "+self.name;
+    messageAmount() {
+        return "Messages "+self.messages.length
       }
    }))
  .actions((self) =>({
-
-    testState(newName) {
-        self.name = newName+"   "+new Date();
+    addMessage(newMessage) {
+        self.messages.push(newMessage)
       }
  }))
