@@ -62,13 +62,12 @@ class SampleDetailsComponentsDnd extends React.Component {
       isOver,
       canDrop,
       connectDropTarget,
-      lockAmountColumn,
-      lockAmountColumnSolids,
-      switchAmount,
       materialGroup,
       showModalWithMaterial,
       activeTab,
-      handleTabSelect
+      handleTabSelect,
+      enableComponentLabel,
+      enableComponentPurity,
     } = this.props;
     const style = {
       padding: '0px 0px',
@@ -92,12 +91,11 @@ class SampleDetailsComponentsDnd extends React.Component {
           isOver={isOver}
           canDrop={canDrop}
           materialGroup={materialGroup}
-          lockAmountColumn={lockAmountColumn}
-          lockAmountColumnSolids={lockAmountColumnSolids}
-          switchAmount={switchAmount}
           showModalWithMaterial={showModalWithMaterial}
           activeTab={activeTab}
           handleTabSelect={handleTabSelect}
+          enableComponentLabel={enableComponentLabel}
+          enableComponentPurity={enableComponentPurity}
         />
       </div>
     );
@@ -121,4 +119,6 @@ SampleDetailsComponentsDnd.propTypes = {
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired,
+  enableComponentLabel: PropTypes.bool.isRequired,
+  enableComponentPurity: PropTypes.bool.isRequired,
 };

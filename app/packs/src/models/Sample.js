@@ -6,6 +6,7 @@ import _ from 'lodash';
 import Element from 'src/models/Element';
 import Molecule from 'src/models/Molecule';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
@@ -249,6 +250,7 @@ export default class Sample extends Element {
     newSample.contains_residues = sample.contains_residues;
     newSample.filterResidueData(true);
     newSample.density = sample.density;
+    newSample.starting_molarity_value = sample.molarity_value;
     newSample.metrics = sample.metrics;
     newSample.molfile = sample.molfile || '';
     return newSample;
@@ -267,6 +269,7 @@ export default class Sample extends Element {
     const splitSample = this.clone();
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
+    splitSample.starting_molarity_value = this.molarity_value;
 
     if (this.name) { splitSample.name = this.name; }
     if (this.external_label) { splitSample.external_label = this.external_label; }
@@ -502,7 +505,7 @@ export default class Sample extends Element {
 
   set molarity_value(molarity_value) {
     this._molarity_value = molarity_value;
-    this.concn = molarity_value
+    this.concn = molarity_value;
   }
 
   get molarity_unit() {
@@ -557,14 +560,63 @@ export default class Sample extends Element {
   }
 
   setAmount(amount) {
-    const prevTotalVolume = this.amount_l;
     if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
     }
+
+    const totalVolume = this.amount_l;
+
     if (this.sample_type === 'Mixture' && this.components) {
-      this.updateMixtureComponentVolume(prevTotalVolume);
+      this.updateMixtureComponentVolume(totalVolume);
     }
+  }
+
+  updateTotalVolume(amount, totalConcentration, lockedConcentration) {
+    if (!lockedConcentration || !amount || totalConcentration === 0 || Number.isNaN(totalConcentration)) {
+      return;
+    }
+    // totalVolume = amount_mol / final concentration of the component
+    const totalVolume = (amount ?? 0) / totalConcentration;
+
+    this.amount_value = totalVolume;
+    this.updateMixtureComponentVolume(totalVolume);
+  }
+
+  calculateRequiredTotalVolume() {
+    const referenceComponent = this.reference_component;
+    if (!referenceComponent) return 0;
+
+    const {
+      purity = 1.0,
+      starting_molarity_value,
+      amount_l,
+      amount_mol,
+      concn,
+      density,
+      molecule_molecular_weight,
+      material_group,
+    } = referenceComponent;
+
+    if (!concn || concn <= 0) {
+      return 0;
+    }
+
+    let requiredTotalVolume = 0;
+
+    if (material_group === 'liquid') {
+      if (starting_molarity_value && starting_molarity_value > 0) {
+        // Case 1: If stock concentration is given
+        requiredTotalVolume = (starting_molarity_value * (amount_l ?? 0) * purity) / concn;
+      } else if (density && density > 0) {
+        // Case 2: If density is given
+        requiredTotalVolume = (density * (amount_l ?? 0) * purity) / (molecule_molecular_weight * concn);
+      }
+    } else if (material_group === 'solid') {
+      requiredTotalVolume = (amount_mol ?? 0) / concn;
+    }
+
+    return requiredTotalVolume;
   }
 
   setUnitMetrics(unit, metricPrefix) {
@@ -973,7 +1025,7 @@ export default class Sample extends Element {
   }
 
   set sample_details(sample_details) {
-    this._sample_details = sample_details
+    this._sample_details = sample_details;
   }
 
   get sample_details() {
@@ -985,12 +1037,12 @@ export default class Sample extends Element {
   }
 
   get total_molecular_weight() {
-    if (!this.sample_details) { return null }
+    if (!this.sample_details) { return null; }
     return this.sample_details.total_molecular_weight;
   }
 
   get reference_component() {
-    if (!this.components || this.components.length < 1) { return null }
+    if (!this.components || this.components.length < 1) { return null; }
     return this.components.find(
       (component) => component.reference === true
     );
@@ -1001,8 +1053,9 @@ export default class Sample extends Element {
       return this.sample_details.reference_molecular_weight;
     }
 
-    if (!this.reference_component) { return null}
-    return this.reference_component.molecule.molecular_weight
+    if (!this.reference_component) { return null; }
+
+    return this.reference_component.molecule.molecular_weight;
   }
 
   set reference_molecular_weight(reference_molecular_weight) {
@@ -1010,15 +1063,15 @@ export default class Sample extends Element {
   }
 
   get reference_molarity_value() {
-    if (!this.reference_component) { return null}
+    if (!this.reference_component) { return null; }
 
-    return this.reference_component.molarity_value
+    return this.reference_component.molarity_value;
   }
 
   get reference_molarity_unit() {
-    if (!this.reference_component) { return null}
+    if (!this.reference_component) { return null; }
 
-    return this.reference_component.molarity_unit
+    return this.reference_component.molarity_unit;
   }
 
   serializeMaterial() {
@@ -1030,14 +1083,13 @@ export default class Sample extends Element {
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
       coefficient: this.coefficient,
-      components: this.components && this.components.length > 0 
-      ? this.components.map(s => s.serializeComponent()) 
-      : []
+      components: this.components && this.components.length > 0
+        ? this.components.map((s) => s.serializeComponent())
+        : []
     };
     _.merge(params, extra_params);
     return params;
   }
-
 
   // Container & Analyses routines
   addAnalysis(analysis) {
@@ -1128,12 +1180,12 @@ export default class Sample extends Element {
     if (filteredIndex >= 0) {
       tmpSolvents[filteredIndex] = solventToUpdate;
 
-      if (tmpSolvents.length > 1 && tmpSolvents.every(solv => solv.amount_l)) {
+      if (tmpSolvents.length > 1 && tmpSolvents.every((solv) => solv.amount_l)) {
         const totalVolume = tmpSolvents.reduce((acc, solv) => acc + solv.amount_l, 0);
-        const minRatio = Math.min(...tmpSolvents.map(solv => solv.amount_l / totalVolume));
+        const minRatio = Math.min(...tmpSolvents.map((solv) => solv.amount_l / totalVolume));
         const scale = 1 / minRatio;
 
-        tmpSolvents.forEach(solv => {
+        tmpSolvents.forEach((solv) => {
           solv.ratio = Number((solv.amount_l / totalVolume) * scale).toFixed(1);
         });
       }
@@ -1147,15 +1199,16 @@ export default class Sample extends Element {
 
   initialComponents(components) {
     this.components = components.sort((a, b) => a.position - b.position);
+    this._checksum = this.checksum();
   }
 
-  async addMixtureComponent(newComponent) { 
+  async addMixtureComponent(newComponent) {
     const tmpComponents = [...(this.components || [])];
-    const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
+    const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey
-                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound) 
+                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
 
-    if (!newComponent.material_group){
+    if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';
     }
 
@@ -1163,13 +1216,13 @@ export default class Sample extends Element {
       newComponent.purity = 1;
     }
 
-    if (isNew){
+    if (isNew) {
       tmpComponents.push(newComponent);
       this.components = tmpComponents;
-      this.setComponentPositions()
+      this.setComponentPositions();
 
       if (!this.molecule_cano_smiles
-        || !this.molecule_cano_smiles.split('.').some(smiles => smiles === newComponent.molecule_cano_smiles)) {
+        || !this.molecule_cano_smiles.split('.').some((smiles) => smiles === newComponent.molecule_cano_smiles)) {
         const newSmiles = this.molecule_cano_smiles ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}` : newComponent.molecule_cano_smiles;
 
         const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
@@ -1178,7 +1231,7 @@ export default class Sample extends Element {
       }
     }
   }
- 
+
   async deleteMixtureComponent(componentToDelete) {
     const tmpComponents = [...(this.components || [])];
     const filteredComponents = tmpComponents.filter(
@@ -1194,51 +1247,38 @@ export default class Sample extends Element {
 
     const smilesToRemove = componentToDelete.molecule_cano_smiles;
     const newSmiles = this.molecule_cano_smiles
-    .split('.')
-    .filter(smiles => smiles !== smilesToRemove && !smilesToRemove.split('.').includes(smiles))
-    .join('.');
+      .split('.')
+      .filter((smiles) => smiles !== smilesToRemove && !smilesToRemove.split('.').includes(smiles))
+      .join('.');
 
-    if (newSmiles !== this.molecule_cano_smiles ){
-      const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
+    if (newSmiles !== this.molecule_cano_smiles) {
+      const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
       this.molecule = result;
-      this.molfile = result.molfile; 
+      this.molfile = result.molfile;
     }
-    this.setComponentPositions()
-  } 
+    this.setComponentPositions();
+  }
 
-
-  updateMixtureComponentVolume(prevTotalVolume) {
+  // callback function for handleTotalVolumeChangeforMixtures
+  // Case 2: Total volume updated; Total Conc. is locked
+  // Case 3: Total volume updated; Total Conc. is not locked
+  updateMixtureComponentVolume(totalVolume) {
     if (this.components.length < 1) {
       return;
     }
-    const totalVolume = this.amount_l;
-  
-    this.components.forEach((component) => {
-      const purity = component.purity || 1.0;
-      if (component.material_group === 'liquid') {
-        if (component.concn > 0 && component.starting_molarity_value > 0) {
-          component.amount_l = component.concn * totalVolume / component.starting_molarity_value;
-        } else if (component.density && component.density > 0) {
-          component.amount_l = component.amount_l * (totalVolume / prevTotalVolume);
-        }
-      } else if (component.material_group === 'solid') {
-        if (component.concn > 0) {
-          component.amount_mol = component.concn * totalVolume;
-          component.amount_g = component.molecule_molecular_weight * component.amount_mol;
-        }
-      }
 
-      component.amount_mol = totalVolume * component.molarity_value * purity;
+    this.components.forEach((component) => {
+      component.handleTotalVolumeChanges(totalVolume);
     });
   }
 
   setReferenceComponent(componentIndex) {
-    this.components[componentIndex].equivalent = 1
-    this.components[componentIndex].reference = true
+    this.components[componentIndex].equivalent = 1;
+    this.components[componentIndex].reference = true;
 
     this.components.forEach((component, index) => {
       if (index !== componentIndex) {
-          component.reference = false;
+        component.reference = false;
       }
     });
 
@@ -1247,14 +1287,14 @@ export default class Sample extends Element {
     }
     this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
 
-    this.updateMixtureComponentEquivalent()
+    this.updateMixtureComponentEquivalent();
   }
 
   updateMixtureComponentEquivalent() {
-    let referenceIndex = this.components.findIndex(component => component.reference);
+    let referenceIndex = this.components.findIndex((component) => component.reference);
 
     if (referenceIndex === -1) {
-      referenceIndex = this.components.findIndex(component => component.position === 0);
+      referenceIndex = this.components.findIndex((component) => component.position === 0);
       if (referenceIndex !== -1) {
         this.setReferenceComponent(referenceIndex);
       }
@@ -1262,40 +1302,40 @@ export default class Sample extends Element {
 
     const referenceMol = this.components[referenceIndex].amount_mol;
 
+    // Update equivalent values based on the reference component
     for (let i = 0; i < this.components.length; i++) {
-        if (i === referenceIndex) continue;
-        this.components[i].equivalent = this.components[i].amount_mol / referenceMol;
+      if (i === referenceIndex) continue;
+      this.components[i].equivalent = this.components[i].amount_mol / referenceMol;
     }
 
     this.updateMixtureMolecularWeight();
   }
 
   updateMixtureMolecularWeight() {
-    if (this.components && this.components.length <= 1) { return };
+    if (this.components && this.components.length <= 1) { return; }
 
-    const totalAmount = this.components.reduce((acc, component) => acc + component.amount_mol, 0);
-    let totalMolecularWeight = 0;
+    // Calculate the total amount_mol across components
+    const totalAmount = this.components.reduce((acc, component) => acc + (component.amount_mol || 0), 0);
 
-    if (!this.sample_details) {
-      this.sample_details = {};
-    }
+    this.sample_details = this.sample_details || {};
 
     if (totalAmount === 0) {
       this.sample_details.total_molecular_weight = 0;
       return;
     }
 
-    for (let i = 0; i < this.components.length; i++) {
-      const moleFraction = this.components[i].amount_mol / totalAmount
-      totalMolecularWeight += this.components[i].molecule.molecular_weight * moleFraction;
-    }
+    // Calculate the weighted molecular weight
+    const totalMolecularWeight = this.components.reduce((acc, component) => {
+      const moleFraction = (component.amount_mol || 0) / totalAmount;
+      return acc + (component.molecule.molecular_weight * moleFraction);
+    }, 0);
 
-    this.sample_details.total_molecular_weight = totalMolecularWeight
+    this.sample_details.total_molecular_weight = totalMolecularWeight;
   }
 
   moveMaterial(srcMat, srcGroup, tagMat, tagGroup) {
-    const srcIndex = this.components.findIndex(mat => mat === srcMat);
-    const tagIndex = this.components.findIndex(mat => mat === tagMat);
+    const srcIndex = this.components.findIndex((mat) => mat === srcMat);
+    const tagIndex = this.components.findIndex((mat) => mat === tagMat);
 
     if (srcIndex === tagIndex) {
       return;
@@ -1304,66 +1344,60 @@ export default class Sample extends Element {
     this.components[srcIndex].material_group = tagGroup;
 
     if (!tagMat && srcMat !== tagGroup) {
-      return this.setComponentPositions()
+      return this.setComponentPositions();
     }
 
     const movedMat = this.components.splice(srcIndex, 1)[0];
     this.components.splice(tagIndex, 0, movedMat);
-    this.setComponentPositions()
+    this.setComponentPositions();
   }
 
   async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
-    const srcIndex = this.components.findIndex(mat => mat === srcMat);
-    const tagIndex = this.components.findIndex(mat => mat === tagMat);
-  
+    const srcIndex = this.components.findIndex((mat) => mat === srcMat);
+    const tagIndex = this.components.findIndex((mat) => mat === tagMat);
+
     if (srcIndex === -1 || tagIndex === -1) {
       console.error('Source or target material not found in components.');
       return;
     }
     const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
-  
+
     try {
       const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
       const newComponent = Sample.buildNew(newMolecule, this.collection_id);
       newComponent.material_group = tagGroup;
 
-      await this.deleteMixtureComponent(tagMat)
-      await this.deleteMixtureComponent(srcMat)
+      await this.deleteMixtureComponent(tagMat);
+      await this.deleteMixtureComponent(srcMat);
       await this.addMixtureComponent(newComponent);
-  
     } catch (error) {
       console.error('Error merging components:', error);
     }
   }
-  
+
   setComponentPositions() {
     this.components.forEach((mat, index) => {
       mat.position = index;
     });
-  }  
+  }
 
   splitSmilesToMolecule(mixtureSmiles, editor) {
-    const promises = mixtureSmiles.map(smiles => {
-      return MoleculesFetcher.fetchBySmi(smiles, null, null, editor);
-    });
-    
+    const promises = mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor));
+
     return Promise.all(promises)
-      .then(mixtureMolecules => {
-        return this.mixtureMoleculeToSubsample(mixtureMolecules);
-      })
-      .catch(errorMessage => {
+      .then((mixtureMolecules) => this.mixtureMoleculeToSubsample(mixtureMolecules))
+      .catch((errorMessage) => {
         console.log(errorMessage);
         return [];
       });
   }
 
-  mixtureMoleculeToSubsample(mixtureMolecules){
-    mixtureMolecules.map(async molecule => {
+  mixtureMoleculeToSubsample(mixtureMolecules) {
+    mixtureMolecules.map(async (molecule) => {
       const newSample = Sample.buildNew(molecule, this.collection_id);
       await this.addMixtureComponent(newSample);
     });
   }
-
 }
 
 Sample.counter = 0;
