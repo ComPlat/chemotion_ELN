@@ -1,10 +1,12 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
 import React, { Component } from 'react';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { Button } from 'react-bootstrap';
@@ -26,7 +28,9 @@ import {
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
-export default class ResearchPlanDetailsAttachments extends Component {
+class ResearchPlanDetailsAttachments extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
@@ -239,7 +243,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { onUndoDelete, attachments } = this.props;
 
     return (
-      <div className="attachment-main-container">
+      <div className="attachment-main-container"><button onClick={()=>{ this.context.attachmentNotificationStore.testState('Fabian')}}/>
+        {this.context.attachmentNotificationStore.test()}
         {this.renderImageEditModal()}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: '1', alignSelf: 'center' }}>
@@ -389,6 +394,8 @@ ResearchPlanDetailsAttachments.propTypes = {
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
 };
+
+export default observer(ResearchPlanDetailsAttachments);
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
