@@ -128,7 +128,7 @@ class MoleculeModerator extends Component {
 
     return (
       <>
-        <Navbar className="navbar-custom px-4">
+        <Navbar className="bg-gray-200 px-4">
           <Nav className="container-md justify-content-start">
             <Navbar.Brand>
               Molecule Moderator

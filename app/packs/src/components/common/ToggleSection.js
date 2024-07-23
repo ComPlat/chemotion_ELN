@@ -9,9 +9,7 @@ import ChevronIcon from 'src/components/common/ChevronIcon';
 const ToggleSection = ({ show }) => (
   <div style={{ float: 'right' }}>
     <OverlayTrigger placement="bottom" overlay={<Tooltip id="toggle_section">Toggle Section</Tooltip>}>
-      <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-        <ChevronIcon direction={show ? 'down' : 'right'} />
-      </span>
+      <ChevronIcon direction={show ? 'down' : 'right'} color="primary"/>
     </OverlayTrigger>
   </div>
 );

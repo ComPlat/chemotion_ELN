@@ -1,3 +1,7 @@
+@import "bootstrap/functions";
+@import "bootstrap/variables";
+@import "bootstrap/mixins";
+
 $font-size-root: 14px;
 $font-size-base: 1rem;
 $h1-font-size: $font-size-base * 2;
@@ -13,6 +17,22 @@ $enable-negative-margins: true;
 $table-bg: transparent;
 
 $modal-xxxl: 90vw;
+
+$gray-tones: (
+  "gray-100": $gray-100,
+  "gray-200": $gray-200,
+  "gray-300": $gray-300,
+  "gray-400": $gray-400,
+  "gray-500": $gray-500,
+  "gray-600": $gray-600,
+  "gray-700": $gray-700,
+  "gray-800": $gray-800,
+  "gray-900": $gray-900,
+);
+
+// Merge the maps
+$theme-colors: map-merge($theme-colors, $gray-tones);
+
 
 @import "bootstrap";
 

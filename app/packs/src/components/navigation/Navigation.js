@@ -133,7 +133,7 @@ export default class Navigation extends React.Component {
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (
-      <Navbar className='navbar-custom justify-content-between px-4'>
+      <Navbar className='bg-gray-200 justify-content-between px-4'>
         {this.navHeader()}
         {!this.props.isHidden &&
           <Nav navbar className='navbar-form gap-2'>
