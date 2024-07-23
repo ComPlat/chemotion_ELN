@@ -163,7 +163,8 @@ function EditorList(props) {
 
 function copyContentToClipboard(content) {
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(JSON.stringify(content)).then(() => {
+    if (typeof content == 'object') content = JSON.stringify(content);
+    navigator.clipboard.writeText(content).then(() => {
       // alert('Please click on canvas and press CTRL+V to use the template.');
     }).catch(err => {
       console.error('Failed to copy text: ', err);
