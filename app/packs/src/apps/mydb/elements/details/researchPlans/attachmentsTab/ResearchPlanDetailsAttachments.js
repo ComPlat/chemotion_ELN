@@ -237,6 +237,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
     const { onUndoDelete, attachments } = this.props;
+    const thirdPartyApps = this.thirdPartyApps;
 
     return (
       <div className="attachment-main-container">
@@ -247,7 +248,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {attachments.length > 0
-        && sortingAndFilteringUI( 
+        && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
@@ -297,9 +298,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
-                    {thirdPartyAppButton(
+                    {thirdPartyApps.length > 0 && thirdPartyAppButton(
                       attachment,
-                      this.thirdPartyApps,
+                      thirdPartyApps,
                     )}
                     {editButton(
                       attachment,
