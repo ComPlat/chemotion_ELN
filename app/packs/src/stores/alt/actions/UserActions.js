@@ -174,7 +174,11 @@ class UserActions {
       UsersFetcher.fetchUserKetcher2Options()
         .then((result) => {
           if (result) {
-            localStorage.setItem('ketcher-opts', JSON.stringify(result));
+            const newSource = {};
+            Object.keys(result).map((item) => {
+              newSource[item.replaceAll("_", "-")] = result[item];
+            });
+            localStorage.setItem('ketcher-opts', JSON.stringify(newSource));
           }
         })
         .catch((errorMessage) => { console.log(errorMessage); });

@@ -139,9 +139,7 @@ module Chemotion
 
       desc 'draft: get user profile editor ketcher 2 setting options'
       get "editors/ketcher2-options" do
-        data = 
-        { "resetToSelect": 'paste', "rotationStep": 15, "showValenceWarnings": true, "atomColoring": false, "showStereoFlags": true, "stereoLabelStyle": "Iupac", "colorOfAbsoluteCenters": "#FF4545", "colorOfAndCenters": "#FFAD31", "colorOfOrCenters": "#228b22", "colorStereogenicCenters": "LabelsOnly", "autoFadeOfStereoLabels": true, "absFlagLabel": "ABS", "andFlagLabel": "AND Enantiomer", "mixedFlagLabel": "Mixed", "ignoreChiralFlag": false, "orFlagLabel": "OR Enantiomer", "font": "30px Georgia", "fontsz": 13, "fontszsub": 13, "carbonExplicitly": false, "showCharge": true, "showValence": false, "showHydrogenLabels": "Terminal and Hetero", "aromaticCircle": true, "doubleBondWidth": 6, "bondThickness": 2, "stereoBondWidth": 6, "dearomatize-on-load": false, "smart-layout": true, "ignore-stereochemistry-errors": true, "mass-skip-error-on-pseudoatoms": false, "gross-formula-add-rsites": true, "gross-formula-add-isotopes": true, "showAtomIds": false, "showBondIds": false, "showHalfBondIds": false, "showLoopIds": false, "miewMode": "LN", "miewTheme": "light", "miewAtomLabel": "bright", "init": true }
-        data
+        Ketcher2Setting.find_by(user_id: current_user.id)
       end
 
       desc 'draft: update user profile editor ketcher 2 setting options'
@@ -149,8 +147,10 @@ module Chemotion
         requires :data, type: String, desc: "data structure for ketcher options"
       end
       put "editors/ketcher2-options" do
-        puts current_user.id
-        {data: JSON.parse(params[:data])}
+        ketcher_values = Ketcher2Setting.where(user_id: current_user.id).delete_all;
+        data = JSON.parse(params[:data])
+        new_settings = Ketcher2Setting.create({ user_id: current_user.id }.merge(data))
+        {data: new_settings}
       end
 
     end
