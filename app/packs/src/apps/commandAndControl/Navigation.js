@@ -64,7 +64,7 @@ export default class Navigation extends React.Component {
         <div style={{ clear: 'both' }} />
       </div>
     ) : (
-      <div className="navbar-custom" >
+      <div className="bg-gray-200" >
         {this.navHeader()}
         <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
         <div style={{ clear: 'both' }} />

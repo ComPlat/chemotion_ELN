@@ -156,9 +156,7 @@ function MoleculeHeader({
                 <PubchemLabels element={sample} />
                 <ComputedPropLabel cprops={sample.molecule_computed_props} />
                 <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-                  <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-                    <ChevronIcon direction={show ? 'down' : 'right'} />
-                  </span>
+                  <ChevronIcon direction={show ? 'down' : 'right'} color="primary"/>
                 </OverlayTrigger>
               </div>
             </div>
@@ -327,13 +325,11 @@ export default class ElementsTableSampleEntries extends Component {
 
     const sampleRows = samples.slice(0, numSamples).map((sample) => {
       const selected = this.isElementSelected(sample);
-      const style = (selected || keyboardSeletectedElementId === sample.id) ? {
-        color: '#fff', background: '#337ab7'
-      } : {};
+      const applyHighlight = selected || keyboardSeletectedElementId === sample.id
 
       return (
-        <tr key={sample.id} style={style}>
-          <td width="30px">
+        <tr key={sample.id} className={applyHighlight && 'bg-primary'}>
+          <td width="30px" className={applyHighlight && 'text-white'}>
             <ElementCheckbox
               element={sample}
               key={sample.id}

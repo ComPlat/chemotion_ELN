@@ -1293,7 +1293,7 @@ export default class UserManagement extends React.Component {
     }));
 
     const tcolumn = (
-      <thead className="custom-light-grey-bg position-sticky top-0" style={{ zIndex: 1 }} >
+      <thead className="bg-gray-200 position-sticky top-0" style={{ zIndex: 1 }} >
         <tr className="align-middle fs-4 py-3">
           <th className="col-auto fs-4 py-3">#</th>
           <th className="col-2 col-md-3 fs-4 py-3">Actions</th>

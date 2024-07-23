@@ -52,14 +52,6 @@ label.required:after {
   content: " *";
 }
 
-.navbar-custom {
-  border-radius: 0;
-  background-color: #EFEFEF;
-
-  a.dropdown-toggle:hover {
-    color: black;
-  }
-}
 .custom-modal {
   width: 100%;
 }
@@ -67,20 +59,13 @@ label.required:after {
 .modal-container {
   position: relative;
 }
+
 .modal-container .modal, .modal-container .modal-backdrop {
   position: absolute;
 }
 
 .drop-zone-style {
   border: 3px dashed lightgray;
-}
-
-.grey-bg{
-  background-color: #ddd;
-}
-
-.custom-light-grey-bg {
-  background-color: #eee;
 }
 
 #app {
@@ -126,16 +111,10 @@ label.required:after {
   max-height: calc(100vh - 320px);
 }
 
-.btn-unified {
-  color: #fff;
-  background-color: #777777;
-  border-color: #555555;
-
-}
-.dropdown > .btn-unified ~ .btn {
-  color: #fff;
-  background-color: #777777;
-  border-color: #555555;
+.btn-unified, .dropdown > .btn-unified ~ .btn {
+  color: $white;
+  background-color: $gray-600;
+  border-color: $gray-700;
 }
 
 @media screen and (min-width: 1367px) {
@@ -152,7 +131,7 @@ label.required:after {
 
 span.pseudo-link {
   cursor:pointer;
-  color: #337ab7;
+  color: $link-color;
 }
 
 span.pseudo-link:hover {
@@ -235,7 +214,7 @@ $font-icons-research_plan: "\f0f6";
 
   ::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
-  border: solid #fff;
+  border: solid $white;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -253,7 +232,7 @@ $font-icons-research_plan: "\f0f6";
   }
 
   ::-webkit-scrollbar-track-piece {
-  background-color: #fff;
+  background-color: $white;
   }
 
   ::-webkit-scrollbar-corner {
@@ -261,12 +240,12 @@ $font-icons-research_plan: "\f0f6";
   }
 
   ::-webkit-scrollbar-thumb {
-  background-color: #ADADAD;
+  background-color: $gray-500;
   -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,0.10),inset 0 -1px 0 rgba(0,0,0,0.07);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-  background-color: #999;
+  background-color: $gray-600;
   }
 }
 

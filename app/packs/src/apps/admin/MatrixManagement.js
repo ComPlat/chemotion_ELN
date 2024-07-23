@@ -203,7 +203,7 @@ export default class MatrixManagement extends React.Component {
       <div>
           <Table responsive condensed hover>
             <thead className='fs-4'>
-            <tr className='grey-bg'>
+            <tr className='bg-gray-300'>
                 <th>#</th>
                 <th>Actions</th>
                 <th>ID</th>
