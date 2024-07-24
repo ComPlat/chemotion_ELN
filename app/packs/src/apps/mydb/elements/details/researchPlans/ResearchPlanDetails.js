@@ -617,7 +617,7 @@ export default class ResearchPlanDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Card>
+      <Card className="eln-panel-detail">
         {this.renderPanelHeading(researchPlan)}
         <Card.Body>
           <ElementDetailSortTab
