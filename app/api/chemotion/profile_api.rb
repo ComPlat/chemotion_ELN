@@ -65,20 +65,20 @@ module Chemotion
           data[dt] = sorted_layout
         end
 
-        if profile && profile.user_templates 
-            profile.user_templates.each do |x|
-              if(x)
-                file_path = Rails.root.join('uploads', Rails.env, x) 
-                # TODO:H how file will be uploaded to cloud storage
+        if profile && profile.user_templates
+          profile.user_templates.each do |x|
+            next unless x
 
-                if File.exist?(file_path)
-                  content = File.read(file_path)
-                  content = JSON(content)
-                  content['props']['path'] = x
-                  templates_list.push(content);
-                end
-            end
-            end
+            file_path = Rails.root.join('uploads', Rails.env, x)
+            # TODO: H how file will be uploaded to cloud storage
+
+            next unless File.exist?(file_path)
+
+            content = File.read(file_path)
+            content = JSON(content)
+            content['props']['path'] = x
+            templates_list.push(content)
+          end
         end
 
         {
@@ -155,26 +155,21 @@ module Chemotion
           new_profile) || error!('profile update failed', 500)
       end
 
-    
       desc 'post user template'
       params do
         requires :content, type: String, desc: 'ketcher file content'
       end
-      # TODO:H current_user validation??
+      # TODO: H current_user validation??
       post do
-      file_path = Rails.root.join('uploads', Rails.env, 'template.txt')
-      begin
-        if (!File.exist?(file_path))
-          File.new(file_path, 'w')
-        end
+        file_path = Rails.root.join('uploads', Rails.env, 'template.txt')
+        begin
+          File.new(file_path, 'w') unless File.exist?(file_path)
 
-        # overwrite a file in tmp
-        File.open(file_path, 'w') do |file|
-          file.write(params[:content])
-        end
+          # overwrite a file in tmp
+          File.write(file_path, params[:content])
 
-        # upload the file to storage
-        templateAttachment = Attachment.new(
+          # upload the file to storage
+          templateAttachment = Attachment.new(
             bucket: 1,
             filename: Time.now.to_s + 'template.txt',
             key: 'user_template',
@@ -190,52 +185,49 @@ module Chemotion
           ensure
             File.delete(file_path) if File.exist?(file_path)
           end
-          {template_details: templateAttachment}
-      rescue Errno::EACCES
-        error!('Save files error!', 500)
+          { template_details: templateAttachment }
+        rescue Errno::EACCES
+          error!('Save files error!', 500)
+        end
+      end
+
+      desc 'delete user template'
+      params do
+        requires :path, type: String, desc: 'file path of user template'
+      end
+      delete do
+        user_templates = current_user.profile.user_templates
+        user_templates.delete(params[:path])
+
+        # remove file from store
+        file_path = Rails.root.join('uploads', Rails.env, params[:path])
+        File.delete(file_path) if File.exist?(file_path)
+
+        # update profile
+        new_profile = {
+          user_templates: user_templates,
+        }
+        (current_user.profile.update!(**new_profile) &&
+        new_profile) || error!('profile update failed', 500)
+
+        { status: true }
+      end
+
+      desc 'get user profile editor ketcher 2 setting options'
+      get 'editors/ketcher2-options' do
+        Ketcher2Setting.find_by(user_id: current_user.id)
+      end
+
+      desc 'update user profile editor ketcher 2 setting options'
+      params do
+        requires :data, type: String, desc: 'data structure for ketcher options'
+      end
+      put 'editors/ketcher2-options' do
+        data = JSON.parse(params[:data])
+        new_settings = Ketcher2Setting.create({ user_id: current_user.id }.merge(data))
+        { data: new_settings }
       end
     end
-
-    desc 'delete user template'
-    params do
-      requires :path, type: String, desc: 'file path of user template'
-    end
-    delete do
-      user_templates = current_user.profile.user_templates;
-      user_templates.delete(params[:path]);
-
-      # remove file from store
-      file_path = Rails.root.join("uploads", Rails.env, params[:path]);
-      File.delete(file_path) if File.exist?(file_path)
-
-      # update profile
-      new_profile = {
-        user_templates: user_templates,
-      }
-      (current_user.profile.update!(**new_profile) &&
-      new_profile) || error!('profile update failed', 500)
-
-      {status: true}
-    end
-
-    
-    desc 'get user profile editor ketcher 2 setting options'
-    get "editors/ketcher2-options" do
-      Ketcher2Setting.find_by(user_id: current_user.id)
-    end
-
-    desc 'update user profile editor ketcher 2 setting options'
-    params do
-      requires :data, type: String, desc: "data structure for ketcher options"
-    end
-    put "editors/ketcher2-options" do
-      ketcher_values = Ketcher2Setting.where(user_id: current_user.id).delete_all;
-      data = JSON.parse(params[:data])
-      new_settings = Ketcher2Setting.create({ user_id: current_user.id }.merge(data))
-      {data: new_settings}
-    end
-
-  end
   end
 end
 # rubocop: enable Style/MultilineIfModifier
