@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Row, Col, FormGroup } from 'react-bootstrap';
+import { Row, Col, Form } from 'react-bootstrap';
 import Select from 'react-select';
 import 'moment-precise-range-plugin';
 import { purificationOptions } from 'src/components/staticDropdownOptions/options';
@@ -109,8 +109,7 @@ export default class ReactionDetailsPurification extends Component {
           <Col md={12}>
             <div><b>Purification</b></div>
             <Select
-              className="status-select"
-              style={{ zIndex: 10 }}
+              className="status-select z-10"
               name="purification"
               multi
               disabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
@@ -120,7 +119,7 @@ export default class ReactionDetailsPurification extends Component {
             />
           </Col>
         </Row>
-        <Row style={{ marginTop: '10px' }}>
+        <Row className='mt-2'>
           <Col md={12}>
             <div><b>Purification Solvents</b></div>
             <MaterialGroupContainer
@@ -136,9 +135,9 @@ export default class ReactionDetailsPurification extends Component {
             />
           </Col>
         </Row>
-        <Row style={{ marginTop: '10px' }}>
+        <Row className='mt-2'>
           <Col md={12}>
-            <FormGroup>
+            <Form.Group>
               <div><b>Additional information for publication and purification details</b></div>
               <div className="quill-resize">
                 {
@@ -152,7 +151,7 @@ export default class ReactionDetailsPurification extends Component {
                     /> : <QuillViewer value={reaction.observation} />
                 }
               </div>
-            </FormGroup>
+            </Form.Group>
             <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
           </Col>
         </Row>

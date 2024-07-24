@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Row, Col, FormGroup, FormControl,
-  ListGroupItem, ListGroup, InputGroup, DropdownButton
+  Row, Col, Form, InputGroup, DropdownButton, Dropdown
 } from 'react-bootstrap';
 import Select from 'react-select';
 import 'moment-precise-range-plugin';
@@ -13,8 +12,6 @@ import StringTag from 'src/apps/mydb/elements/details/reactions/propertiesTab/St
 import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -66,110 +63,108 @@ export default class ReactionDetailsProperties extends Component {
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];
       return (
-        <MenuItem key={i} eventKey={i}>
+        <Dropdown.Item key={i} eventKey={i}>
           <StringTag key={i} string={val} />
-        </MenuItem>
-      )
+        </Dropdown.Item>
+      );
     });
 
     solventsItems.unshift(
-      <MenuItem key={solventsTL.length + 1} eventKey={solventsTL.length + 1}>
+      <Dropdown.Item key={solventsTL.length + 1} eventKey={solventsTL.length + 1}>
         -
-      </MenuItem>
+      </Dropdown.Item>
     );
 
     return (
-      <div>
-        <ListGroup>
-          <ListGroupItem>
-            <div className="reaction-scheme-props">
-              <ReactionDetailsMainProperties
-                reaction={reaction}
-                onInputChange={(type, event) => this.props.onInputChange(type, event)}
-              />
-            </div>
-            <FormGroup>
-              <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
+      <Form className="border">
+        <Row className="mt-2 mb-2">
+          <ReactionDetailsMainProperties
+            reaction={reaction}
+            onInputChange={(type, event) => this.props.onInputChange(type, event)}
+          />
+        </Row>
+        <Row className="ms-2">
+          <Form.Group >
+            <Form.Label className="fs-5">Type (Name Reaction Ontology)</Form.Label>
+            <div className="pe-5">
               <OlsTreeSelect
                 selectName="rxno"
                 selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
+                onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
                 selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
               />
-            </FormGroup>
-            <Row>
-              <Col md={12}>
-                <div><b>Dangerous Products</b></div>
-                <Select
-                  name="dangerous_products"
-                  multi
-                  options={dangerousProductsOptions}
-                  value={reaction.dangerous_products}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
-                  onChange={selectedOptions => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
+            </div>
+          </Form.Group>
+        </Row>
+        <Row className="my-2 ms-2">
+          <Col sm={12}>
+            <div className="fs-5">Dangerous Products</div>
+            <Select
+              name="dangerous_products"
+              multi
+              options={dangerousProductsOptions}
+              value={reaction.dangerous_products}
+              disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
+              onChange={(selectedOptions) => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
+              className="mt-1 rounded-lg me-5"
+            />
+          </Col>
+        </Row>
+        <hr className="mt-4" />
+        <h4 className="mt-3 ms-3">TLC-Control</h4>
+        <Row className="mt-2">
+          <Col sm={6}>
+            <Form.Group className="mx-3">
+              <Form.Label className="fs-5">Solvents (parts)</Form.Label>
+              <InputGroup className="z-0">
+                <DropdownButton
+                  disabled={!permitOn(reaction)}
+                  componentClass={InputGroup.Button}
+                  id="solvents_dd"
+                  onSelect={this.handleOnSolventSelect}
+                >
+                  {solventsItems}
+                </DropdownButton>
+                <Form.Control
+                  type="text"
+                  value={reaction.tlc_solvents || ''}
+                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_solvents')}
+                  placeholder="Solvents as parts..."
+                  onChange={(event) => this.props.onInputChange('tlc_solvents', event)}
                 />
-              </Col>
-            </Row>
-          </ListGroupItem>
-          <ListGroupItem>
-            <h4 className="list-group-item-heading" >TLC-Control</h4>
-            <Row>
-              <Col md={6}>
-                <FormGroup>
-                  <ControlLabel>Solvents (parts)</ControlLabel>
-                  <FormGroup>
-                    <InputGroup>
-                      <DropdownButton
-                        disabled={!permitOn(reaction)}
-                        componentClass={InputGroup.Button}
-                        id="solvents_dd"
-                        title=""
-                        onSelect={this.handleOnSolventSelect}
-                      >
-                        {solventsItems}
-                      </DropdownButton>
-                      <FormControl
-                        style={{ zIndex: 0 }}
-                        type="text"
-                        value={reaction.tlc_solvents || ''}
-                        disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_solvents')}
-                        placeholder="Solvents as parts..."
-                        onChange={event => this.props.onInputChange('tlc_solvents', event)}
-                      />
-                    </InputGroup>
-                  </FormGroup>
-                </FormGroup>
-              </Col>
-              <Col md={6}>
-                <FormGroup>
-                  <ControlLabel>Rf-Value</ControlLabel>
-                  <FormControl
-                    type="text"
-                    value={reaction.rf_value || ''}
-                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('rf_value')}
-                    placeholder="Rf-Value..."
-                    onChange={event => this.props.onInputChange('rfValue', event)}
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <FormGroup>
-                  <ControlLabel>TLC-Description</ControlLabel>
-                  <FormControl
-                    componentClass="textarea"
-                    value={reaction.tlc_description || ''}
-                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_description')}
-                    placeholder="TLC-Description..."
-                    onChange={event => this.props.onInputChange('tlcDescription', event)}
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-          </ListGroupItem>
-        </ListGroup>
-      </div>
+              </InputGroup>
+            </Form.Group>
+          </Col>
+          <Col sm={6}>
+            <Form.Group className="me-5">
+              <Form.Label className="fs-5">Rf-Value</Form.Label>
+              <Form.Control
+                type="text"
+                value={reaction.rf_value || ''}
+                disabled={!permitOn(reaction) || reaction.isMethodDisabled('rf_value')}
+                placeholder="Rf-Value..."
+                onChange={(event) => this.props.onInputChange('rfValue', event)}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row className="my-3 ms-2 me-4">
+          <Col sm={12}>
+            <Form.Group>
+              <Form.Label className="fs-5">TLC-Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                value={reaction.tlc_description || ''}
+                disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_description')}
+                placeholder="TLC-Description..."
+                onChange={(event) => this.props.onInputChange('tlcDescription', event)}
+                className="mb-4"
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+      </Form>
     );
   }
 }

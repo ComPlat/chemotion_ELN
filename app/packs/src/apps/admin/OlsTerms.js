@@ -6,6 +6,7 @@ import Dropzone from 'react-dropzone';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { difference } from 'lodash';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const checkItem = (enableIds, disableIds, enable, idkey, checkStrictly) => {
   if (enable === true) {
