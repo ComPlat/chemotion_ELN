@@ -1,19 +1,10 @@
 import expect from 'expect';
 import { types } from "mobx-state-tree";
 import { AttachmentNotificationStore } from 'src/stores/mobx/AttachmentNotificationStore';
+import AttachmentNotificationFactory from 'factories/AttachmentNotificationFactory';
 
-const message1 = {
-  id: 1,
-  message_id: 101,
-  subject: "Subject 1",
-  channel_type: 1,
-  sender_id: 1,
-  sender_name: "Sender 1",
-  reciever_id: 2,
-  is_ack: 0,
-  created_at: "2023-07-01T12:00:00Z",
-  updated_at: "2023-07-01T12:00:00Z"
-};
+
+
 
 const message2 = {
   id: 2,
@@ -45,7 +36,11 @@ describe('AttachmentNotificationStore', async () => {
   describe('.addMessage', async () => {
     describe('when 3 different messages are added', async () => {
       it('3 messages should be in store', async () => {
+        
         const store = AttachmentNotificationStore.create({ messages: [] });
+      
+        const message1 = await AttachmentNotificationFactory.build('AttachmentNotificationFactory.new');
+        console.log(message1);
         store.addMessage(message1);
         store.addMessage(message2);
         store.addMessage(message3);
