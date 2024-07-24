@@ -10,6 +10,19 @@ const messageModel = types.model({
   receiver_id: types.integer,
   is_ack: types.integer,
   created_at: types.string,
+  updated_at: types.string,
+  content: types.frozen(messageAttachment)
+});
+
+const messageAttachment=types.model({
+  id: types.integer,
+  filename: types.string,
+  identifier: types.string,
+  content_type: types.string,
+  thumb: types.boolean,
+  aasm_state: types.string,
+  filesize: types.integer,
+  created_at: types.string,
   updated_at: types.string
 });
 
@@ -24,8 +37,15 @@ export const AttachmentNotificationStore = types
   .actions((self) => ({
     addMessage(newMessage) {
       const existingMessage = self.messages.find((message) => message.id === newMessage.id);
-      if (!existingMessage) {
+      const channelTypeCorrect = newMessage.channel_type === 999
+      if (!existingMessage&&channelTypeCorrect) {
         self.messages.push(newMessage);
       }
+    }
+  })).views((self) => ({
+    getAttachmentsOfMessages() {
+      return self.messages.map(element => {
+        return element.content || [] 
+      }).flat();
     }
   }));

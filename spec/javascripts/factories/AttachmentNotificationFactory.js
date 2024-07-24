@@ -26,7 +26,7 @@ export default class AttachmentNotificationFactory {
         id: factory.sequence('AttachmentNotificationFactory.id', (n) => n),
         message_id: 101,
         subject: 'Subject 1',
-        channel_type: 1,
+        channel_type: 999,
         sender_id: 1,
         sender_name: 'Sender 1',
         receiver_id: 2,
