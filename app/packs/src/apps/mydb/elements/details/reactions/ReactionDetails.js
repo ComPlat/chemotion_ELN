@@ -54,7 +54,7 @@ export default class ReactionDetails extends Component {
 
     const { reaction } = props;
     this.state = {
-      reaction,
+      reaction: reaction,
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
@@ -94,13 +94,14 @@ export default class ReactionDetails extends Component {
     const { reaction } = this.state;
     const nextReaction = nextProps.reaction;
 
-    if (nextReaction.id !== reaction.id
-      || nextReaction.updated_at !== reaction.updated_at
-      || nextReaction.reaction_svg_file !== reaction.reaction_svg_file
-      || nextReaction.changed || nextReaction.editedSample) {
-      this.setState((prevState) => ({ ...prevState, reaction: nextReaction }));
+    if (nextReaction.id !== reaction.id ||
+      nextReaction.updated_at !== reaction.updated_at ||
+      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
+      nextReaction.changed || nextReaction.editedSample) {
+      this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
-  }
+    }
+  
 
   shouldComponentUpdate(nextProps, nextState) {
     const reactionFromNextProps = nextProps.reaction;
@@ -111,18 +112,29 @@ export default class ReactionDetails extends Component {
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
     } = this.state;
-    return (
-      nextReaction.id !== reaction.id
-      || nextReaction.updated_at !== reaction.updated_at
-      || nextReaction.reaction_svg_file !== reaction.reaction_svg_file
-      || !!nextReaction.changed || !!nextReaction.editedSample
-      || nextActiveTab !== activeTab || nextVisible !== visible
-      || nextActiveAnalysisTab !== activeAnalysisTab
-    );
+  return (
+    reactionFromNextProps.id !== reactionFromCurrentState.id ||
+    reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
+    reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
+    !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
+    nextActiveTab !== activeTab || nextVisible !== visible ||
+    nextActiveAnalysisTab !== activeAnalysisTab
+    || reactionFromNextState !== reactionFromCurrentState
+  );
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange);
+    UIStore.unlisten(this.onUIStoreChange)
+  }
+
+  onUIStoreChange(state) {
+    if (state.reaction.activeTab != this.state.activeTab ||
+      state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
+      this.setState({
+        activeTab: state.reaction.activeTab,
+        activeAnalysisTab: state.reaction.activeAnalysisTab
+      });
+    }
   }
 
   handleSubmit(closeView = false) {
@@ -140,6 +152,11 @@ export default class ReactionDetails extends Component {
     }
   }
 
+  reactionIsValid() {
+    const { reaction } = this.state;
+    return reaction.hasMaterials() && reaction.SMGroupValid();
+  }
+
   handleReactionChange(reaction, options = {}) {
     reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
@@ -147,16 +164,6 @@ export default class ReactionDetails extends Component {
       this.setState({ reaction }, () => this.updateReactionSvg());
     } else {
       this.setState({ reaction });
-    }
-  }
-
-  onUIStoreChange(state) {
-    if (state.reaction.activeTab !== this.state.activeTab
-      || state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
-      this.setState({
-        activeTab: state.reaction.activeTab,
-        activeAnalysisTab: state.reaction.activeAnalysisTab
-      });
     }
   }
 
@@ -187,16 +194,30 @@ export default class ReactionDetails extends Component {
   }
 
   handleProductChange(product, cb) {
-    const { reaction } = this.state;
+    let { reaction } = this.state
 
-    reaction.updateMaterial(product);
-    reaction.changed = true;
+    reaction.updateMaterial(product)
+    reaction.changed = true
 
-    this.setState({ reaction }, cb);
+    this.setState({ reaction }, cb)
+  }
+
+  productLink(product) {
+    return (
+      <span>
+        Analysis:
+        &nbsp;
+        <span className="pseudo-link"
+          onClick={() => this.handleProductClick(product)}
+          role="button"
+          title="Open sample window">
+          <i className="icon-sample" />&nbsp;{product.title()}
+        </span>
+      </span>
+    )
   }
 
   productData(reaction) {
-    // eslint-disable-next-line react/destructuring-assignment
     const { products } = this.state.reaction;
     const { activeAnalysisTab } = this.state;
 

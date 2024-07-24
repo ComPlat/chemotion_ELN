@@ -173,20 +173,20 @@ export default class ReactionDetailsScheme extends Component {
     const { role } = this.props.reaction;
     const accordTo = role === 'parts' ? 'According to' : null;
     return (
-      <span>
-        <Col md={3} style={{ paddingLeft: '6px' }}>
+      <div>
+        <Col sm={3} className="ps-1 w-75">
           <Form.Group>
             <Form.Label>Role</Form.Label>
             {this.renderRoleSelect()}
           </Form.Group>
         </Col>
-        <Col md={3} style={{ paddingLeft: '6px' }}>
+        <Col sm={3} className="ps-1">
           <Form.Group>
             <Form.Label>{accordTo}</Form.Label>
             {this.renderGPDnD()}
           </Form.Group>
         </Col>
-      </span>
+      </div>
     );
   }
 
@@ -952,7 +952,7 @@ export default class ReactionDetailsScheme extends Component {
               onInputChange={(type, event) => this.props.onInputChange(type, event)}
             />
             <Row>
-              <Col md={6}>
+              <Col sm={6}>
                 <Form.Group className="ms-2">
                   <Form.Label>Type (Name Reaction Ontology)</Form.Label>
                   <OlsTreeSelect
@@ -963,10 +963,12 @@ export default class ReactionDetailsScheme extends Component {
                   />
                 </Form.Group>
               </Col>
-              {this.renderRole()}
+              <Col sm={6}>
+                {this.renderRole()}
+              </Col>
             </Row>
             <Row>
-              <Col md={12}>
+              <Col sm={12}>
                 <Form.Group>
                   <Form.Label>Description</Form.Label>
                   <div className="quill-resize">

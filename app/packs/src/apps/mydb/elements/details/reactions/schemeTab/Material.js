@@ -655,7 +655,8 @@ class Material extends Component {
                   size="sm"
                   value={material.external_label}
                   placeholder={material.molecule.iupac_name}
-                  onChange={event => this.handleExternalLabelChange(event)}
+                onChange={event => this.handleExternalLabelChange(event)}
+                className="p-2"
               />
             </OverlayTrigger>
             <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
@@ -676,6 +677,7 @@ class Material extends Component {
             size="sm"
             value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
+            className="p-2"
           />
         </td>
         <td>
@@ -684,6 +686,7 @@ class Material extends Component {
             variant="danger"
             size="sm"
             onClick={() => deleteMaterial(material)}
+            className="mt-1"
           ><i className="fa fa-trash-o" /></Button>
         </td>
       </tr>
