@@ -72,7 +72,6 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
