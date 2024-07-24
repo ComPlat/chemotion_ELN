@@ -241,10 +241,22 @@ class ResearchPlanDetailsAttachments extends Component {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
     const { onUndoDelete, attachments } = this.props;
+    const message1 = {
+      id: 1,
+      message_id: 101,
+      subject: "Subject 1",
+      channel_type: 1,
+      sender_id: 1,
+      sender_name: "Sender 1",
+      reciever_id: 2,
+      is_ack: 0,
+      created_at: "2023-07-01T12:00:00Z",
+      updated_at: "2023-07-01T12:00:00Z"
+    };
 
     return (
-      <div className="attachment-main-container"><button onClick={()=>{ this.context.attachmentNotificationStore.testState('Fabian')}}/>
-        {this.context.attachmentNotificationStore.test()}
+      <div className="attachment-main-container"><button onClick={() => { this.context.attachmentNotificationStore.addMessage(message1)}}/>
+        {this.context.attachmentNotificationStore.messageAmount()}
         {this.renderImageEditModal()}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: '1', alignSelf: 'center' }}>
