@@ -20,7 +20,6 @@ function KetcherEditor(props) {
 
   const handleStorageChange = (event) => {
     if (event.key === 'ketcher-opts') {
-      console.log('Storage key changed:', event.newValue);
       UsersFetcher.updateUserKetcher2Options(event.newValue);
     }
   };
