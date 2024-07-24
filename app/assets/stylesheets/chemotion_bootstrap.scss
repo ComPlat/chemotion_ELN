@@ -124,3 +124,11 @@ $theme-colors: map-merge($theme-colors, $gray-tones);
 .w-40 {
   width: 40%;
 }
+
+.w-45 {
+  width: 45%;
+}
+
+.border-dashed {
+  border-style: dashed;
+}

@@ -24,35 +24,38 @@ const DevicePropertiesTab = () => {
 
   return (
     <Form>
-      <Form.Group validationState={device.valid_name}>
-        <Form.Label>Name *</Form.Label>
+      <Form.Group className="mb-4">
+        <Form.Label className="fw-bold">Name *</Form.Label>
         <Form.Control
           type="text"
           value={device.name}
+          className={device.valid_name}
           onChange={(event) => onChange('name', event.target.value)}
         />
       </Form.Group>
 
-      <Form.Group validationState={device.valid_name_abbreviation}>
-        <Form.Label>Name abbreviation *</Form.Label>
+      <Form.Group className="mb-4">
+        <Form.Label className="fw-bold">Name abbreviation *</Form.Label>
         <Form.Control
           type="text"
           value={device.name_abbreviation}
+          className={device.valid_name_abbreviation}
           onChange={(event) => onChange('name_abbreviation', event.target.value)}
         />
       </Form.Group>
 
-      <Form.Group>
-        <Form.Label>Email</Form.Label>
+      <Form.Group className="mb-4">
+        <Form.Label className="fw-bold">Email</Form.Label>
         <Form.Control
           type="text"
           value={device.email}
-          readOnly={true}
+          readOnly
+          disabled
         />
       </Form.Group>
 
-      <Form.Group>
-        <Form.Label>Serial number</Form.Label>
+      <Form.Group className="mb-4">
+        <Form.Label className="fw-bold">Serial number</Form.Label>
         <Form.Control
           type="text"
           value={device.serial_number ? device.serial_number : ''}
@@ -60,8 +63,8 @@ const DevicePropertiesTab = () => {
         />
       </Form.Group>
 
-      <Form.Group>
-        <Form.Label>Verification Status</Form.Label>
+      <Form.Group className="mb-4">
+        <Form.Label className="fw-bold">Verification Status</Form.Label>
         <Select
           isClearable
           value={verificationStatusValue}
@@ -70,24 +73,22 @@ const DevicePropertiesTab = () => {
         />
       </Form.Group>
 
-      <Form.Group>
+      <Form.Group className="mb-4">
         <Form.Check
           type="checkbox"
           checked={device.account_active}
+          label="Active"
           onChange={(event) => onChange('account_active', event.target.checked)}
-        >
-          Active
-        </Form.Check>
+        />
       </Form.Group>
 
-      <Form.Group>
+      <Form.Group className="mb-4">
         <Form.Check
           type="checkbox"
           checked={device.visibility}
+          label="Visibility"
           onChange={(event) => onChange('visibility', event.target.checked)}
-        >
-          Visibility
-        </Form.Check>
+        />
       </Form.Group>
     </Form>
   );

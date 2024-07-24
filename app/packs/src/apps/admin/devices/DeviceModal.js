@@ -21,7 +21,6 @@ const DeviceModal = () => {
   const errorMessage = devicesStore.error_message + deviceMetadataStore.error_message;
   const successMessage = devicesStore.success_message + deviceMetadataStore.success_message;
   const withAlertClass = errorMessage || successMessage ? 'with-alert' : '';
-  const buttonsWithAlertClass = errorMessage ? 'with-alert' : '';
 
   const minimizedClass = devicesStore.modalMinimized ? ' minimized' : '';
   let deviceParams = {};
@@ -67,36 +66,36 @@ const DeviceModal = () => {
   const handleValidationState = () => {
     let errorMessages = ['Please fill out all needed fields'];
 
-    const nameValue = device.name.trim() === '' ? 'error' : null;
+    const nameValue = device.name.trim() === '' ? 'is-invalid' : '';
     if (nameValue) { errorMessages.push('Please enter a name'); }
     devicesStore.changeDevice('valid_name', nameValue);
 
-    const nameAbbreviationValue = device.name_abbreviation.trim() === '' ? 'error' : null;
+    const nameAbbreviationValue = device.name_abbreviation.trim() === '' ? 'is-invalid' : '';
     if (nameAbbreviationValue) { errorMessages.push('Please enter a name abbreviation'); }
     devicesStore.changeDevice('valid_name_abbreviation', nameAbbreviationValue);
 
     if (anyDatacollectorFields().length >= 1) {
       devicesStore.changeDevice('datacollector_fields', true);
     
-      const methodValue = !device.datacollector_method ? 'error' : null;
+      const methodValue = !device.datacollector_method ? 'is-invalid' : '';
       if (methodValue) { errorMessages.push('Please select watch method'); }
       devicesStore.changeDevice('valid_datacollector_method', methodValue);
     
-      const dirValue = !device.datacollector_dir ? 'error' : null;
+      const dirValue = !device.datacollector_dir ? 'is-invalid' : '';
       if (dirValue) { errorMessages.push('Please enter a watch directory'); }
       devicesStore.changeDevice('valid_datacollector_dir', dirValue);
     
       if (endsWith(device.datacollector_method, 'sftp')) {
-        const userValue = !device.datacollector_user ? 'error' : null;
+        const userValue = !device.datacollector_user ? 'is-invalid' : '';
         if (userValue) { errorMessages.push('Please enter a user'); }
         devicesStore.changeDevice('valid_datacollector_user', userValue);
     
-        const hostValue = !device.datacollector_host ? 'error' : null;
+        const hostValue = !device.datacollector_host ? 'is-invalid' : '';
         if (hostValue) { errorMessages.push('Please enter a host'); }
         devicesStore.changeDevice('valid_datacollector_host', hostValue);
     
         const keyNameValue =
-          device.datacollector_authentication === 'keyfile' && !device.datacollector_key_name ? 'error' : null;
+          device.datacollector_authentication === 'keyfile' && !device.datacollector_key_name ? 'is-invalid' : '';
         if (keyNameValue) { errorMessages.push('Use key file, Please enter a key path'); }
         devicesStore.changeDevice('valid_datacollector_key_name', keyNameValue);
       }
@@ -105,7 +104,7 @@ const DeviceModal = () => {
     }
 
     if (devicesStore.active_tab_key == 4) {
-      const novncTarget = !device.novnc_target ? 'error' : null;
+      const novncTarget = !device.novnc_target ? 'is-invalid' : '';
       if (novncTarget) { errorMessages.push('Please type a Target for the device'); }
       devicesStore.changeDevice('valid_novnc_target', novncTarget);
     }
@@ -224,9 +223,7 @@ const DeviceModal = () => {
                 <div className={`draggable-modal-scrollable-content ${withAlertClass}`}>
                   <Tabs
                     activeKey={devicesStore.active_tab_key}
-                    animation={false}
                     onSelect={handleSelectTab}
-                    id="device-form-tabs"
                     key="form-tabs"
                   >
                     <Tab
@@ -270,7 +267,7 @@ const DeviceModal = () => {
                     </Tab>
                   </Tabs>
                 </div>
-                <ButtonToolbar className={`draggable-modal-form-buttons ${buttonsWithAlertClass}`}>
+                <ButtonToolbar className="draggable-modal-form-buttons">
                   <Button variant="warning" onClick={() => handleCancel()}>
                     Cancel
                   </Button>

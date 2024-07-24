@@ -44,19 +44,20 @@ const DeviceNovncTab = () => {
   }
 
   return (
-    <Form className="form-with-columns">
-      <Form.Group validationState={device.valid_novnc_target} className="col-half">
-        <Form.Label>Target *</Form.Label>
+    <Form className="d-flex justify-content-between flex-wrap">
+      <Form.Group className="w-50 mb-3 pe-4">
+        <Form.Label className="fw-bold">Target *</Form.Label>
         <Form.Control
           type="text"
           value={device.novnc_target ? device.novnc_target : ''}
+          className={device.valid_novnc_target}
           onChange={(event) => onChange('novnc_target', event.target.value)}
           placeholder="e.g. ws://localhost:8092/websockify"
         />
       </Form.Group>
 
-      <Form.Group className="col-half">
-        <Form.Label>Websockify Token</Form.Label>
+      <Form.Group className="w-50 mb-3">
+        <Form.Label className="fw-bold">Websockify Token</Form.Label>
         <Form.Control
           type="text"
           value={device.novnc_token ? device.novnc_token : ''}
@@ -65,22 +66,22 @@ const DeviceNovncTab = () => {
         />
       </Form.Group>
 
-      <Form.Group className="col-full">
-        <span className="fa fa-info-circle" aria-hidden="true">&nbsp;
-          <b>Current Target</b>&nbsp;
+      <Form.Group className="w-100 mb-3">
+        <span className="fa fa-info-circle" aria-hidden="true">
+          <b className="ps-1">Current Target</b>&nbsp;
           <RenderStoredTarget />
         </span>
         <br />
-        <span className="fa fa-info-circle" aria-hidden="true">&nbsp;
-          <b>Edited Target</b>&nbsp;
+        <span className="fa fa-info-circle" aria-hidden="true">
+          <b className="ps-1">Edited Target</b>&nbsp;
           <RenderCurrentTarget />
         </span>
         <hr />
         <h4>RFB Credentials</h4>
       </Form.Group>
 
-      <Form.Group className="col-half">
-        <Form.Label>Password</Form.Label>
+      <Form.Group className="w-50 mb-4 pe-4">
+        <Form.Label className="fw-bold">Password</Form.Label>
         <Form.Control
           type="text"
           value={passwordValue}

@@ -48,10 +48,10 @@ const DevicesList = () => {
 
     return (
       <>
-        <b className="text-success">Data Collector:</b>
+        <b className="text-success pe-1">Data Collector:</b>
         {datacollectorText}
         <br />
-        <b className="text-success">Novnc:</b>
+        <b className="text-success pe-1">Novnc:</b>
         {novncText}
       </>
     );
@@ -254,7 +254,7 @@ const DevicesList = () => {
             {listActionButtons(device, idx)}
             <td>{device.name}</td>
             <td>{device.initials}</td>
-            <td className="device-list-config">{showBasicConfig(device)}</td>
+            <td>{showBasicConfig(device)}</td>
           </tr>
           <tr key={`users-row-${idx}-${device.id}`} className="collapse" id={`row-device-${device.id}`}>
             <td colSpan="5" className="border-top-0">
