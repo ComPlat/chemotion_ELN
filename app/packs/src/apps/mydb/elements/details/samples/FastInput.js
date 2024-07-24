@@ -1,5 +1,5 @@
 /* eslint-disable react/forbid-prop-types */
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   InputGroup, OverlayTrigger, Tooltip, Form, Button
 } from 'react-bootstrap';
@@ -9,11 +9,9 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { validateCas } from 'src/utilities/CasValidation';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 const apiCall = (cas, src = 'cas') => (src === 'cas' ? `https://commonchemistry.cas.org/api/detail?cas_rn=${cas}` : `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${cas}/property/CanonicalSMILES/JSON`);
 function FastInput(props) {
-  const refInput = useRef(null);
   const [value, setValue] = useState(null);
   const notify = (_params) => {
     NotificationActions.add({
@@ -29,7 +27,7 @@ function FastInput(props) {
 
   const searchSmile = () => {
     LoadingActions.start();
-    props.fnHandle(refInput.current.props.value);
+    props.fnHandle(value);
   };
 
   const searchCas = (cas) => {
@@ -66,7 +64,7 @@ function FastInput(props) {
   };
 
   const searchString = (e) => {
-    const input = refInput.current.props.value;
+    const input = value;
     if (e.key === 'Enter' || e.type === 'click') {
       const getCas = validateCas(input, false);
       if (getCas !== 'smile') {
@@ -93,8 +91,6 @@ function FastInput(props) {
         <Form.Control
           id="_fast_create_btn_split"
           type="text"
-          pullRight
-          ref={refInput}
           onChange={updateValue}
           value={value}
           onKeyPress={(e) => searchString(e)}
