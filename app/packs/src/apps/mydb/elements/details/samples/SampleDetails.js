@@ -169,6 +169,10 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
   }
 
+  readableMolFile() {
+    return this.state.molfile.replace(/\r?\n/g, '<br />');
+  }
+
   componentDidMount() {
     const { sample } = this.props;
     const { currentUser } = this.state;
@@ -1376,49 +1380,35 @@ export default class SampleDetails extends React.Component {
   }
 
   renderMolfileModal() {
-    const textAreaStyle = {
-      width: '500px',
-      height: '640px',
-      margin: '30px',
-      whiteSpace: 'pre-line',
-    };
-    if (this.state.showMolfileModal) {
-      let molfile = this.state.molfile;
-      molfile = molfile.replace(/\r?\n/g, '<br />');
-      return (
-        <Modal
-          centered
-          show={this.state.showMolfileModal}
-          dialogClassName="importChemDrawModal"
-          onHide={this.handleMolfileClose}
-        >
-
-          <Modal.Header closeButton>
-            <Modal.Title>Molfile</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div>
-              <Form.Group controlId="molfileInputModal">
-                <Form.Control
-                  componentClass="textarea"
-                  style={textAreaStyle}
-                  readOnly
-                  disabled
-                  inputRef={(m) => { this.molfileInputModal = m; }}
-                  value={this.state.molfile}
-                />
-              </Form.Group>
-            </div>
-            <div>
-              <Button variant="warning" onClick={this.handleMolfileClose}>
-                Close
-              </Button>
-            </div>
-          </Modal.Body>
-        </Modal>
-      );
-    }
-    return (<div />);
+    return (
+      <Modal
+        centered
+        show={this.state.showMolfileModal}
+        dialogClassName="importChemDrawModal"
+        onHide={this.handleMolfileClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Molfile</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div>
+            <Form.Group controlId="molfileInputModal">
+              <Form.Control
+                as="textarea"
+                readOnly
+                disabled
+                value={this.readableMolFile()}
+              />
+            </Form.Group>
+          </div>
+          <div>
+            <Button variant="warning" onClick={this.handleMolfileClose}>
+              Close
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
   }
 
   render() {
@@ -1526,8 +1516,8 @@ export default class SampleDetails extends React.Component {
           </div>
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}
-          {/*this.renderMolfileModal()}
-          <CommentModal element={sample} /> */}
+          {this.renderMolfileModal()}
+          {/*<CommentModal element={sample} /> */}
         </Card.Body>
       </Card>
     );
