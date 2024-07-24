@@ -219,12 +219,12 @@ module Chemotion
     end
 
     
-    desc 'draft: get user profile editor ketcher 2 setting options'
+    desc 'get user profile editor ketcher 2 setting options'
     get "editors/ketcher2-options" do
       Ketcher2Setting.find_by(user_id: current_user.id)
     end
 
-    desc 'draft: update user profile editor ketcher 2 setting options'
+    desc 'update user profile editor ketcher 2 setting options'
     params do
       requires :data, type: String, desc: "data structure for ketcher options"
     end
