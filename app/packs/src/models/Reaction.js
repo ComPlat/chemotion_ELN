@@ -953,26 +953,27 @@ export default class Reaction extends Element {
       
     }
 
-  findFeedstockCatalystMaterialsValues() {
-    const { feedstock, catalyst } = this.findFeedstockCatalystMaterial();
+  findReactionVesselSizeCatalystMaterialValues() {
+    const catalyst = this.findCatalystMaterial();
     const result = {
       catalystMoles: null,
-      feedstockVolume: null
+      vesselSize: null
     };
     result.catalystMoles = catalyst ? this.calculateCatalystMoles(catalyst) : null;
-    result.feedstockVolume = feedstock ? this.updateFeedstockVolume(feedstock) : null;
+    if (this.vessel_size) {
+      if (this.vessel_size.unit === 'l') {
+        result.vesselSize = this.vessel_size.amount;
+      } else {
+        result.vesselSize = this.vessel_size.amount * 0.001;
+      }
+    }
     return result;
   }
 
-  findFeedstockCatalystMaterial() {
+  findCatalystMaterial() {
     const materials = [...this.starting_materials, ...this.reactants];
-    const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     const catalystMaterial = materials.find((material) => (material.gas_type === 'catalyst'));
-    const results = {
-      feedstock: feedstockMaterial,
-      catalyst: catalystMaterial,
-    };
-    return results;
+    return catalystMaterial;
   }
 
   calculateCatalystMoles(material) {
@@ -993,21 +994,6 @@ export default class Reaction extends Element {
       moles = (target_amount_value * purity) / molecularWeight;
     }
     return moles;
-  }
-
-  updateFeedstockVolume(material) {
-    let volume;
-    const { purity, target_amount_unit, target_amount_value } = material;
-    if (target_amount_unit === 'mol') {
-      volume = calculateFeedstockVolume(target_amount_unit, purity);
-    } else if (target_amount_unit === 'l') {
-      volume = target_amount_value;
-    } else if (target_amount_unit === 'g') {
-      const molecularWeight = material.molecule.molecular_weight;
-      const moles = target_amount_value / molecularWeight;
-      volume = calculateFeedstockVolume(moles, purity);
-    }
-    return volume;
   }
 
   isFeedstockMaterialPresent() {

@@ -433,9 +433,6 @@ export default class ReactionDetailsScheme extends Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
-    if (updatedSample.gas_type === 'feedstock') {
-      GaseousReactionActions.setFeedStockReferenceVolume(updatedSample.amount_l);
-    }
 
     if (updatedSample.gas_type === 'catalyst') {
       GaseousReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
@@ -489,56 +486,6 @@ export default class ReactionDetailsScheme extends Component {
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  updateMolValueForUpdatedSample(updatedSample) {
-    const molValue = updatedSample.amount_mol;
-    if (molValue || molValue === 0) {
-      if (updatedSample.gas_type === 'feedstock') {
-        GaseousReactionActions.setFeedStockReferenceVolume(updatedSample.amount_l);
-      }
-    }
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  /* calculateMolValueForUpdatedSample(updatedSample, materialGroup) {
-    const pressure = 1;
-    let temperature;
-    const idealGasConstant = 0.0821;
-    const purity = updatedSample.purity || 1;
-    const volume = updatedSample.amount_l;
-    const amountGram = updatedSample.amount_g;
-    const { density } = updatedSample.density;
-    let molValue = 0;
-    if (materialGroup === 'products') {
-      const ppm = updatedSample.gas_phase_data?.part_per_million || null;
-      if (updatedSample.gas_phase_data.temperature.unit === 'K') {
-        temperature = updatedSample.gas_phase_data.temperature.value;
-      } else if (updatedSample.gas_phase_data.temperature.unit === '°C') {
-        const { value } = updatedSample.gas_phase_data.temperature;
-        temperature = value + 273.15;
-      } else if (updatedSample.gas_phase_data.temperature.unit === '°F') {
-        const { value } = updatedSample.gas_phase_data.temperature;
-        temperature = (((value - 32) * 5) / 9) + 273.15;
-      }
-      if (ppm !== null && temperature !== 0) {
-        if (volume) {
-          molValue = (ppm * purity * pressure * volume) / (idealGasConstant * temperature * 1000000);
-        } else {
-          molValue = density ? (ppm * purity * pressure * amountGram)
-          / (idealGasConstant * temperature * 1000000 * density) : 0;
-        }
-      }
-    } else {
-      temperature = 294;
-      if (volume) {
-        molValue = (purity * pressure * volume) / (idealGasConstant * temperature);
-      } else {
-        molValue = density ? (purity * pressure * amountGram) / (idealGasConstant * temperature * density) : 0;
-      }
-    }
-    return molValue;
-  }
- */
   updatedReactionForGasTypeChange(changeEvent) {
     const {
       sampleID,
@@ -562,7 +509,6 @@ export default class ReactionDetailsScheme extends Component {
         updatedSample.gas_type = 'catalyst';
       } else if (value === 'FES') {
         updatedSample.gas_type = 'off';
-        GaseousReactionActions.setFeedStockReferenceVolume(null);
       } else if (value === 'CAT') {
         updatedSample.gas_type = 'off';
         GaseousReactionActions.setCatalystReferenceMole(null);
@@ -572,7 +518,6 @@ export default class ReactionDetailsScheme extends Component {
         updatedSample.gas_type = 'catalyst';
       }
     }
-    this.updateMolValueForUpdatedSample(updatedSample);
     if (updatedSample.gas_type === 'catalyst') {
       GaseousReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }

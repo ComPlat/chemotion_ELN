@@ -19,6 +19,7 @@ import { statusOptions } from 'src/components/staticDropdownOptions/options';
 import LineChartContainer from 'src/components/lineChart/LineChartContainer';
 import EditableTable from 'src/components/lineChart/EditableTable';
 import { permitOn } from 'src/components/common/uis';
+import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
@@ -66,6 +67,7 @@ export default class ReactionDetailsMainProperties extends Component {
   updateVesselSize(e) {
     const { onInputChange } = this.props;
     const { value } = e.target;
+    GaseousReactionActions.setReactionVesselSize(value);
     onInputChange('vesselSizeAmount', value);
   }
 
