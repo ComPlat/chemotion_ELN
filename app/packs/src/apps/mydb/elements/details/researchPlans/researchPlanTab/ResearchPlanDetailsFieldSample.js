@@ -146,9 +146,6 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (!hasAuth(sample.id)) {
       return noAuth(sample);
     }
-    let className = 'drop-target';
-    if (isOver) className += ' is-over';
-    if (canDrop) className += ' can-drop';
     let content;
     if (error) {
       content = elementError();
@@ -158,8 +155,8 @@ class ResearchPlanDetailsFieldSample extends Component {
       content = 'Drop sample here.';
     }
     return connectDropTarget(
-      <div className={className}>
-        {content}
+      <div className="drop-zone-style p-3 text-center mb-3">
+          {content}
       </div>
     );
   }
