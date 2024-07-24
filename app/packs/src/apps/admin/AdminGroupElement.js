@@ -3,6 +3,7 @@ import { OverlayTrigger, Tooltip, Button, Table, Accordion } from 'react-bootstr
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { findIndex } from 'lodash';
 import DeleteGroupDeviceButton from 'src/apps/admin/DeleteGroupDeviceButton';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class AdminGroupElement extends React.Component {
   constructor(props) {

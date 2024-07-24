@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Form } from 'react-bootstrap';
 import _ from 'lodash';
 import { AgGridReact } from 'ag-grid-react';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 import Sample from 'src/models/Sample';
 import SampleName from 'src/components/common/SampleName';
@@ -51,10 +51,12 @@ function MaterialNameWithIupac({ group, node }) {
 function WasteCheckbox({ node, toggleWaste }) {
   const material = node.data;
   return (
-    <div className="waste-chkbx">
-      <Checkbox
+    <div>
+      <Form.Check
+        type='checkbox'
         checked={material.waste || false}
         onChange={() => toggleWaste(material)}
+        className='mx-4'
       />
     </div>
   );

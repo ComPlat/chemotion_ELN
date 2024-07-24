@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Tooltip, OverlayTrigger, ButtonGroup, Dropdown, Button } from 'react-bootstrap';
 
 import Utils from 'src/utilities/Functions';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const PrintCodeButton = ({
   element,

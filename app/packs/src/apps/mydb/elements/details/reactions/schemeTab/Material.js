@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormControl,
+  Form,
   Button,
   InputGroup,
   OverlayTrigger,
@@ -19,8 +19,6 @@ import { correctPrefix, validDigit } from 'src/utilities/MathUtils';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
-import Radio from 'src/components/legacyBootstrap/Radio'
 
 const matSource = {
   beginDrag(props) {
@@ -79,13 +77,12 @@ const matTagCollect = (connect, monitor) => ({
 
 const notApplicableInput = () => (
   <td>
-    <FormControl
-      bsClass="bs-form--compact form-control"
+    <Form.Control
       size="sm"
-      style={{ textAlign: 'center' }}
       type="text"
       value="n/a"
       disabled
+      className='text-align-center'
     />
   </td>
 );
@@ -195,23 +192,24 @@ class Material extends Component {
       this.props.materialGroup === 'products'
         ? <td />
         : <td>
-          <Radio
+          <Form.Check
+            type='radio'
             disabled={!permitOn(this.props.reaction)}
             name="reference"
             checked={material.reference}
             onChange={e => this.handleReferenceChange(e)}
             size="sm"
-            style={{ margin: 0 }}
+            className='m-1'
           />
         </td>
     );
   }
 
-  materialShowLabel(material, style = { padding: '5px 4px' }) {
+  materialShowLabel(material) {
     return (
       <Button
         active
-        style={style}
+        className='p-1'
         onClick={e => this.handleShowLabelChange(e)}
         variant={material.show_label ? 'success' : 'primary'}
         size="sm"
@@ -238,10 +236,9 @@ class Material extends Component {
       }
       return (
         <div>
-          <FormControl
+          <Form.Control
             name="yield"
             type="text"
-            bsClass="bs-form--compact form-control"
             size="sm"
             value={calculateYield}
             disabled
@@ -413,7 +410,7 @@ class Material extends Component {
 
     const grm = gUnit ? `${gUnit}g, ` : '';
     const vol = lUnit ? `${lUnit}L, ` : '';
-    const solVol = vol.substr(0, vol.length - 2);
+    const solVol = vol.slice(0, -2);
     const mol = molUnit ? `${molUnit}mol, ` : '';
     const mlt = m.molarity_value === 0.0 ?
       '' : `${validDigit(m.molarity_value, 3)}${m.molarity_unit}, `;
@@ -510,7 +507,7 @@ class Material extends Component {
           {this.switchTargetReal(isTarget)}
         </td>
 
-        <td style={{ width: '1%', maxWidth: '5px' }}>
+        <td>
           <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
             <div>
               <NumeralInputWithUnitsCompo
@@ -630,12 +627,13 @@ class Material extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td style={{ width: '25%', maxWidth: '50px' }}>
+        <td style={{ width: '22%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
         <td>
           <OverlayTrigger placement="top" overlay={drySolvTooltip}>
-            <Checkbox
+            <Form.Check
+              type='checkbox'
               checked={material.dry_solvent}
               onChange={(event) => this.handleDrySolventChange(event)}
             />
@@ -651,61 +649,56 @@ class Material extends Component {
               placement="top"
               overlay={<Tooltip id="molecular-weight-info">{material.amount_g} g - {mw} g/mol</Tooltip>}
             >
-              <div>
-                <FormControl
+                <Form.Control
                   disabled={!permitOn(reaction)}
                   type="text"
-                  bsClass="bs-form--compact form-control"
                   size="sm"
                   value={material.external_label}
                   placeholder={material.molecule.iupac_name}
-                  onChange={event => this.handleExternalLabelChange(event)}
-                />
-              </div>
+                onChange={event => this.handleExternalLabelChange(event)}
+                className="p-2"
+              />
             </OverlayTrigger>
-            <InputGroup.Button>
-              <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
+            <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
                 <Button
                   disabled={!permitOn(reaction)}
                   active
                   onClick={e => this.handleExternalLabelCompleted(e)}
                   size="sm"
                 ><i className="fa fa-refresh" /></Button>
-              </OverlayTrigger>
-            </InputGroup.Button>
+            </OverlayTrigger>
           </InputGroup>
         </td>
 
         {this.materialVolume(material)}
-
         <td>
-          <FormControl
+          <Form.Control
             type="text"
-            bsClass="bs-form--compact form-control"
             size="sm"
             value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
+            className="p-2"
           />
         </td>
-
         <td>
           <Button
             disabled={!permitOn(reaction)}
             variant="danger"
             size="sm"
             onClick={() => deleteMaterial(material)}
+            className="mt-1"
           ><i className="fa fa-trash-o" /></Button>
         </td>
       </tr>
     );
   }
 
-  switchTargetReal(isTarget, style = { padding: '5px 4px' }) {
+  switchTargetReal(isTarget) {
     return (
       <Button
         disabled={!permitOn(this.props.reaction)}
         active
-        style={style}
+        className='p-1'
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'success' : 'primary'}
         size="sm"
@@ -788,13 +781,13 @@ class Material extends Component {
 
     return (
       <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)} >
-        <div style={{ display: 'inline-block', maxWidth: '100%' }}>
+        <div className='d-inline-block mw-100'>
           <div className="inline-inside">
             <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-              <Button variant="primary" size="sm" onClick={addToDesc} disabled={!permitOn(reaction)}>
+              <Button variant="primary" size="sm" className='me-1' onClick={addToDesc} disabled={!permitOn(reaction)}>
                 {serialCode}
               </Button>
-            </OverlayTrigger>&nbsp;
+            </OverlayTrigger>
             {materialName}
           </div>
           <span style={iupacStyle}>

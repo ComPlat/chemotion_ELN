@@ -31,11 +31,11 @@ export default class DeleteComment extends Component {
     const { showConfirmModal } = this.state;
 
     return (
-      <span>
+      <>
         <Button
           id="deleteCommentBtn"
           variant="danger"
-          size="sm"
+          size="xsm"
           onClick={() => this.handleModalShow(true)}
         >
           <i className="fa fa-trash-o" />
@@ -50,11 +50,11 @@ export default class DeleteComment extends Component {
             <p>Are you sure you want to delete?</p>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>
-            <Button variant="success" onClick={this.handleDelete} className="pull-left">Delete</Button>
+            <Button variant="secondary" onClick={this.handleModalClose} className="pull-left">Close</Button>
+            <Button variant="danger" onClick={this.handleDelete} className="pull-left">Delete</Button>
           </Modal.Footer>
         </Modal>
-      </span>
+      </>
     );
   }
 }

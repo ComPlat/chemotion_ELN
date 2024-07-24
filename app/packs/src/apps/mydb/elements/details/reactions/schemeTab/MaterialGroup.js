@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import {
+  Button, Tooltip, OverlayTrigger, Table
+} from 'react-bootstrap';
 import VirtualizedSelect from 'react-virtualized-select';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
@@ -12,13 +14,12 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
-const MaterialGroup = ({
+function MaterialGroup({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, addDefaultSolvent, headIndex,
   dropMaterial, dropSample, switchEquiv, lockEquivColumn
-}) => {
+}) {
   const contents = [];
   let index = headIndex;
   if (materials && materials.length > 0) {
@@ -32,7 +33,7 @@ const MaterialGroup = ({
           material={material}
           materialGroup={materialGroup}
           showLoadingColumn={showLoadingColumn}
-          deleteMaterial={m => deleteMaterial(m, materialGroup)}
+          deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
           index={index}
           dropMaterial={dropMaterial}
           dropSample={dropSample}
@@ -40,9 +41,9 @@ const MaterialGroup = ({
         />
       ));
 
-      if (materialGroup === 'products' &&
-        material.adjusted_loading &&
-        material.error_mass) {
+      if (materialGroup === 'products'
+        && material.adjusted_loading
+        && material.error_mass) {
         contents.push((
           <MaterialCalculations
             material={material}
@@ -54,8 +55,8 @@ const MaterialGroup = ({
     });
   }
 
-  if (materialGroup === 'solvents' ||
-    materialGroup === 'purification_solvents') {
+  if (materialGroup === 'solvents'
+    || materialGroup === 'purification_solvents') {
     return (
       <SolventsMaterialGroup
         contents={contents}
@@ -77,15 +78,20 @@ const MaterialGroup = ({
       lockEquivColumn={lockEquivColumn}
     />
   );
-};
+}
 
 const switchEquivTooltip = () => (
-  <Tooltip id="assign_button">Lock/unlock Equiv <br /> for target amounts</Tooltip>
+  <Tooltip id="assign_button">
+    Lock/unlock Equiv
+    <br />
+    {' '}
+    for target amounts
+  </Tooltip>
 );
 
-const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
+function SwitchEquivButton(lockEquivColumn, switchEquiv) {
   return (
-    <OverlayTrigger placement="top" overlay={switchEquivTooltip()} >
+    <OverlayTrigger placement="top" overlay={switchEquivTooltip()}>
       <Button
         id="lock_equiv_column_btn"
         size="sm"
@@ -96,12 +102,12 @@ const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
       </Button>
     </OverlayTrigger>
   );
-};
+}
 
-const GeneralMaterialGroup = ({
+function GeneralMaterialGroup({
   contents, materialGroup, showLoadingColumn, reaction, addDefaultSolvent,
   switchEquiv, lockEquivColumn
-}) => {
+}) {
   const isReactants = materialGroup === 'reactants';
   let headers = {
     ref: 'Ref',
@@ -169,54 +175,68 @@ const GeneralMaterialGroup = ({
       size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
-      <Glyphicon glyph="plus" />
+      <i className="fa fa-plus" />
     </Button>
   );
 
   return (
-    <div>
-      <table width="100%" className="reaction-scheme">
-        <colgroup>
-          <col style={{ width: '4%' }} />
-          <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
-          <col style={{ width: '4%' }} />
-          <col style={{ width: '2%' }} />
-          <col style={{ width: '2%' }} />
-          <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
-          <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
-          {showLoadingColumn && <col style={{ width: '11%' }} />}
-          <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
-          <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>{addSampleButton}</th>
-            <th>{headers.group}</th>
-            {isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
-            {!isReactants && <th>{refTHead}</th>}
-            <th>{headers.show_label}</th>
-            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.tr}</th>}
-            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.reaction_coefficient}</th>}
-            {!isReactants && <th>{headers.amount}</th>}
-            {!isReactants && <th />}
-            {!isReactants && <th />}
-            {showLoadingColumn && !isReactants && <th>{headers.loading}</th>}
-            {!isReactants && <th>{headers.concn}</th>}
-            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
-          </tr>
-        </thead>
-        <tbody>
-          {contents.map(item => item)}
-        </tbody>
-      </table>
-    </div>
+    <Table responsive className="w-100 borderless">
+      <colgroup>
+        <col style={{ width: '4%' }} />
+        <col
+          style={{ width: showLoadingColumn ? '8%' : '15%' }}
+        />
+        <col style={{ width: '4%' }} />
+        <col style={{ width: '2%' }} />
+        <col style={{ width: '2%' }} />
+        <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
+        <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
+        {showLoadingColumn && <col style={{ width: '11%' }} />}
+        <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
+        <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
+      </colgroup>
+      <thead>
+        <tr>
+          <th className>{addSampleButton}</th>
+          <th>{headers.group}</th>
+          {isReactants
+             && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
+          {!isReactants
+             && <th>{refTHead}</th>}
+          <th>{headers.show_label}</th>
+          {!isReactants
+           && <th>{headers.tr}</th>}
+          {!isReactants
+           && <th>{headers.reaction_coefficient}</th>}
+          {!isReactants
+             && <th>{headers.amount}</th>}
+          {!isReactants
+             && <th />}
+          {!isReactants
+             && <th />}
+          {showLoadingColumn
+             && !isReactants && <th>{headers.loading}</th>}
+          {!isReactants
+             && <th>{headers.concn}</th>}
+          {!isReactants && permitOn(reaction)
+            && (
+            <th>
+              {headers.eq}
+              {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}
+            </th>
+            )}
+        </tr>
+      </thead>
+      <tbody>
+        {contents.map((item) => item)}
+      </tbody>
+    </Table>
   );
-};
+}
 
-
-const SolventsMaterialGroup = ({
+function SolventsMaterialGroup({
   contents, materialGroup, reaction, addDefaultSolvent
-}) => {
+}) {
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
@@ -224,7 +244,7 @@ const SolventsMaterialGroup = ({
       size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
-      <Glyphicon glyph="plus" />
+      <i className="fa fa-plus" />
     </Button>
   );
 
@@ -244,50 +264,45 @@ const SolventsMaterialGroup = ({
       });
   };
 
-  const solventOptions = Object.keys(ionic_liquids).reduce(
-    (solvents, ionicLiquid) => solvents.concat({
-      label: ionicLiquid,
-      value: {
-        external_label: ionicLiquid,
-        smiles: ionic_liquids[ionicLiquid],
-        density: 1.0,
-        drySolvent: false
-      }
-    }), defaultMultiSolventsSmilesOptions
-  );
+  const solventOptions = Object.keys(ionic_liquids).reduce((solvents, ionicLiquid) => solvents.concat({
+    label: ionicLiquid,
+    value: {
+      external_label: ionicLiquid,
+      smiles: ionic_liquids[ionicLiquid],
+      density: 1.0,
+      drySolvent: false
+    }
+  }), defaultMultiSolventsSmilesOptions);
 
   return (
-    <div>
-      <table width="100%" className="reaction-scheme">
-        <thead>
-          <tr>
-            <th width="4%">{addSampleButton}</th>
-            <th width="21%" style={{ paddingRight: '10px' }}>
-              <VirtualizedSelect
-                disabled={!permitOn(reaction)}
-                className="solvents-select"
-                name="default solvents"
-                multi={false}
-                options={solventOptions}
-                placeholder="Default solvents"
-                onChange={createDefaultSolventsForReaction}
-              />
-            </th>
-            <th width="2%" title="Dry Solvent">DS</th>
-            <th width="4%">T/R</th>
-            <th width="24%">Label</th>
-            <th width="13%">Vol</th>
-            <th width="13%">Vol ratio</th>
-            <th width="3%" />
-          </tr>
-        </thead>
-        <tbody>
-          {contents.map(item => item)}
-        </tbody>
-      </table>
-    </div>
+    <Table borderless className="w-100">
+      <thead>
+        <tr>
+          <th>{addSampleButton}</th>
+          <th>
+            <VirtualizedSelect
+              disabled={!permitOn(reaction)}
+              className="solvents-select"
+              name="default solvents"
+              multi={false}
+              options={solventOptions}
+              placeholder="Default solvents"
+              onChange={createDefaultSolventsForReaction}
+            />
+          </th>
+          <th title="Dry Solvent">DS</th>
+          <th>T/R</th>
+          <th>Label</th>
+          <th>Vol</th>
+          <th>Vol ratio</th>
+        </tr>
+      </thead>
+      <tbody>
+        {contents.map((item) => item)}
+      </tbody>
+    </Table>
   );
-};
+}
 
 MaterialGroup.propTypes = {
   materialGroup: PropTypes.string.isRequired,
@@ -330,6 +345,5 @@ GeneralMaterialGroup.defaultProps = {
   showLoadingColumn: false,
   lockEquivColumn: false
 };
-
 
 export { MaterialGroup, GeneralMaterialGroup, SolventsMaterialGroup };

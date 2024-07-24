@@ -47,28 +47,29 @@ export default class CommentDetails extends Component {
     if (allComments?.length > 0) {
       commentsTbl = allComments.map((comment) => (
         <tr key={comment.id}>
-          <td width="10%">{formatSection(comment.section, element.type)}</td>
-          <td width="10%">
+          <td>{formatSection(comment.section, element.type)}</td>
+          <td>
             <span className="text-info">
               {formatDate(comment.created_at)}
             </span>
           </td>
-          <td width="34%">{comment.content}</td>
-          <td width="15%">{comment.submitter}</td>
-          <td width="15%">
+          <td>{comment.content}</td>
+          <td>{comment.submitter}</td>
+          <td>
             <ButtonToolbar>
               <Button
                 disabled={disableEditComment(comment)}
                 onClick={() => markCommentResolved(comment)}
+                variant="light"
               >
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
               {
                 commentByCurrentUser(comment, currentUser)
-                  ? (
+                  && (
                     <Button
                       id="editCommentBtn"
-                      size="sm"
+                      size="xsm"
                       variant="primary"
                       onClick={() => editComment(comment)}
                       disabled={disableEditComment(comment)}
@@ -76,20 +77,19 @@ export default class CommentDetails extends Component {
                       <i className="fa fa-edit" />
                     </Button>
                   )
-                  : null
               }
               {
                 commentByCurrentUser(comment, currentUser)
-                  ? (
+                  && (
                     <DeleteComment
                       comment={comment}
                       onDelete={() => deleteComment(comment)}
                     />
-                  ) : null
+                  )
               }
             </ButtonToolbar>
           </td>
-          <td width="15%">{comment.resolver_name}</td>
+          <td>{comment.resolver_name}</td>
         </tr>
       ));
     }
@@ -98,12 +98,12 @@ export default class CommentDetails extends Component {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th width="10%">Column</th>
-            <th width="10%">Date</th>
-            <th width="34%">Comment</th>
-            <th width="15%">From User</th>
-            <th width="17%">Actions</th>
-            <th width="17%">Resolved By</th>
+            <th>Column</th>
+            <th>Date</th>
+            <th>Comment</th>
+            <th>From User</th>
+            <th>Actions</th>
+            <th>Resolved By</th>
           </tr>
         </thead>
         <tbody>{commentsTbl}</tbody>

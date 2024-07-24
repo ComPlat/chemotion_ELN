@@ -2,13 +2,12 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Col,
-  FormGroup,
-  FormControl,
   OverlayTrigger,
   Button,
   Tooltip,
   InputGroup,
-  Row
+  Row,
+  Form
 } from 'react-bootstrap';
 import Select from 'react-select';
 import uuid from 'uuid';
@@ -17,8 +16,6 @@ import { statusOptions } from 'src/components/staticDropdownOptions/options';
 import LineChartContainer from 'src/components/lineChart/LineChartContainer';
 import EditableTable from 'src/components/lineChart/EditableTable';
 import { permitOn } from 'src/components/common/uis';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Grid from 'src/components/legacyBootstrap/Grid'
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
@@ -73,44 +70,45 @@ export default class ReactionDetailsMainProperties extends Component {
     let TempChartRow = <span />;
     if (showTemperatureChart) {
       TempChartRow = (
-        <Col md={12}>
-          <div style={{ width: '74%', float: 'left' }}>
+        <Row className="mt-4">
+          <Col>
             <LineChartContainer
               data={temperature}
               xAxis="Time"
               yAxis={tempUnitLabel}
             />
-          </div>
-          <div style={{ width: '25%', float: 'left' }}>
+          </Col>
+          <Col>
             <EditableTable
               temperature={temperature}
               updateTemperature={this.updateTemperature}
             />
-          </div>
-        </Col>
+          </Col>
+        </Row>
       );
     }
 
     return (
-      <Grid fluid style={{ paddingLeft: 'unset' }}>
-        <Row>
-          <Col md={6}>
-            <FormGroup>
-              <ControlLabel>Name</ControlLabel>
-              <FormControl
+      <>
+        <Row className=" ms-1 me-3">
+          <Col sm={6}>
+            <Form.Group className="my-2">
+              <Form.Label className="fs-5">Name</Form.Label>
+              <Form.Control
                 id={uuid.v4()}
                 name="reaction_name"
                 type="text"
                 value={reaction.name || ''}
                 placeholder="Name..."
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
-                onChange={event => onInputChange('name', event)}
+                onChange={(event) => onInputChange('name', event)}
+                className="py-2"
               />
-            </FormGroup>
+            </Form.Group>
           </Col>
-          <Col md={3}>
-            <FormGroup>
-              <ControlLabel>Status</ControlLabel>
+          <Col sm={3}>
+            <Form.Group className="my-2">
+              <Form.Label className="fs-5">Status</Form.Label>
               <Select
                 className="status-select reaction-status-change"
                 name="status"
@@ -126,48 +124,45 @@ export default class ReactionDetailsMainProperties extends Component {
                   onInputChange('status', wrappedEvent);
                 }}
               />
-            </FormGroup>
+            </Form.Group>
           </Col>
-          <Col md={3}>
-            <FormGroup>
-              <ControlLabel>Temperature</ControlLabel>
+          <Col sm={3}>
+            <Form.Group className="my-2">
+              <Form.Label className="fs-5">Temperature</Form.Label>
               <InputGroup>
-                <InputGroup.Button>
-                  <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
-                    <Button
-                      disabled={!permitOn(reaction)}
-                      active
-                      className="clipboardBtn"
-                      onClick={this.toggleTemperatureChart}
-                    >
-                      <i className="fa fa-area-chart" />
-                    </Button>
-                  </OverlayTrigger>
-                </InputGroup.Button>
-                <FormControl
+                <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
+                  <Button
+                    disabled={!permitOn(reaction)}
+                    active
+                    className="clipboardBtn"
+                    onClick={this.toggleTemperatureChart}
+                    variant="secondary"
+                  >
+                    <i className="fa fa-area-chart" />
+                  </Button>
+                </OverlayTrigger>
+                <Form.Control
                   type="text"
                   value={temperatureDisplay || ''}
                   disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
                   placeholder="Temperature..."
-                  onChange={event => onInputChange('temperature', event)}
+                  onChange={(event) => onInputChange('temperature', event)}
                 />
-                <InputGroup.Button>
-                  <Button
-                    disabled={!permitOn(reaction)}
-                    variant="success"
-                    onClick={() => this.changeUnit()}
-                  >
-                    {this.temperatureUnit}
-                  </Button>
-                </InputGroup.Button>
+                <Button
+                  disabled={!permitOn(reaction)}
+                  variant="success"
+                  onClick={() => this.changeUnit()}
+                >
+                  {this.temperatureUnit}
+                </Button>
               </InputGroup>
-            </FormGroup>
+            </Form.Group>
           </Col>
         </Row>
         <Row>
           {TempChartRow}
         </Row>
-      </Grid>
+      </>
     );
   }
 }
