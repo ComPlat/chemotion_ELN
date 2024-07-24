@@ -706,16 +706,16 @@ export default class Sample extends Element {
     // number of moles for feedstock = Purity*1*Volume/(0.0821*294) & pressure = 1
     // number of moles for gas =  ppm*1*V/(0.0821*temp_in_K*1000000) & pressure = 1
     if (gasType === 'gas') {
-      const volume = this.fetchGasVolumeFromStore();
-      return this.updateGasMoles(volume);
+      const vesselSize = this.fetchReactionVesselSizeFromStore();
+      return this.updateGasMoles(vesselSize);
     }
     return updateFeedstockMoles(purity, amountLiter, this.amount_l);
   }
 
   // eslint-disable-next-line class-methods-use-this
-  fetchGasVolumeFromStore() {
+  fetchReactionVesselSizeFromStore() {
     const gasPhaseStore = GasPhaseReactionStore.getState();
-    return gasPhaseStore.feedStockReferenceVolumeValue;
+    return gasPhaseStore.reactionVesselSizeValue;
   }
 
   updateGasMoles(volume) {

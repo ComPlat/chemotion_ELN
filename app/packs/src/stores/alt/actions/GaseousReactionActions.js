@@ -17,7 +17,7 @@ class GaseousReactionActions {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  setFeedStockReferenceVolume(value) {
+  setReactionVesselSize(value) {
     return value;
   }
 }

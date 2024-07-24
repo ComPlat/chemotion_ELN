@@ -19,9 +19,9 @@ export default class ReactionsFetcher {
         .then((json) => {
           if (json.hasOwnProperty('reaction')) {
             const reaction = new Reaction(json.reaction);
-            const { catalystMoles, feedstockVolume } = reaction.findFeedstockCatalystMaterialsValues();
-            if (feedstockVolume) {
-              GaseousReactionActions.setFeedStockReferenceVolume(feedstockVolume);
+            const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
+            if (vesselSize) {
+              GaseousReactionActions.setReactionVesselSize(vesselSize);
             }
             if (catalystMoles) {
               GaseousReactionActions.setCatalystReferenceMole(catalystMoles);
