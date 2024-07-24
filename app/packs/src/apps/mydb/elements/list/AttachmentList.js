@@ -325,6 +325,7 @@ export const sortingAndFilteringUI = (
 export const thirdPartyAppButton = (attachment, options) => {
   const mime = require('mime-types');
   // var partialReactfrag = <MenuItem> None available </MenuItem> ;
+  var numOfTPA = 0
  
   return(
   <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
@@ -334,8 +335,8 @@ export const thirdPartyAppButton = (attachment, options) => {
     <Dropdown.Menu>
     
       {options.map((option) => {
-        var partialReactfrag = <MenuItem> None available </MenuItem> ;
- 
+        {/* var partialReactfrag = <MenuItem> None available </MenuItem> ; */}
+        var partialReactfrag = <></> ;
         {/* console.log(`${option.fileTypes} ${attachment.content_type}`) */}
         option.fileTypes = option.fileTypes.replace(" ","")
         var optionFileArray = []
@@ -343,10 +344,10 @@ export const thirdPartyAppButton = (attachment, options) => {
           optionFileArray = option.fileTypes.split(",")
         }
         else(optionFileArray[0] = option.fileTypes)
-        
+  
         for(let optionFileType of optionFileArray){
-          console.log(`${optionFileType} ${option.name} ${attachment.filename}`)
           if (mime.lookup(optionFileType) == (attachment.content_type)){
+            numOfTPA = numOfTPA + 1
             partialReactfrag =  
               <MenuItem
                 key={uuid.v4()}
@@ -358,10 +359,16 @@ export const thirdPartyAppButton = (attachment, options) => {
                 {option.name}
               </MenuItem>
           }
+          if (numOfTPA == 0)
+          if (Object.keys(partialReactfrag.props).length == 0)
+          {partialReactfrag = <MenuItem>None available</MenuItem>;
+            }
         }
-        console.log(`returns ${partialReactfrag.props.children}`)
+        console.log(Object.keys(partialReactfrag.props))
         
-        return partialReactfrag
+
+        console.log(attachment.filename)
+        return (partialReactfrag)
   
       })}
      {/* {partialReactfrag} */}
