@@ -324,7 +324,7 @@ export const sortingAndFilteringUI = (
 
 export const thirdPartyAppButton = (attachment, options) => {
   const mime = require('mime-types');
-  var partialReactfrag = <MenuItem> None available </MenuItem> ;
+  // var partialReactfrag = <MenuItem> None available </MenuItem> ;
  
   return(
   <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
@@ -332,30 +332,39 @@ export const thirdPartyAppButton = (attachment, options) => {
       <i className="fa  fa-external-link " aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
+    
       {options.map((option) => {
+        var partialReactfrag = <MenuItem> None available </MenuItem> ;
+ 
         {/* console.log(`${option.fileTypes} ${attachment.content_type}`) */}
         option.fileTypes = option.fileTypes.replace(" ","")
         var optionFileArray = []
         if (option.fileTypes.includes(",")){
           optionFileArray = option.fileTypes.split(",")
         }
+        else(optionFileArray[0] = option.fileTypes)
+        
         for(let optionFileType of optionFileArray){
-       
+          console.log(`${optionFileType} ${option.name} ${attachment.filename}`)
           if (mime.lookup(optionFileType) == (attachment.content_type)){
-            partialReactfrag =  <MenuItem
-              key={uuid.v4()}
-              eventKey={option.id}
-              onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+            partialReactfrag =  
+              <MenuItem
+                key={uuid.v4()}
+                eventKey={option.id}
+                onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
                 .then((result) => window.open(result, '_blank'))}
         // disabled={!isImageFile(attachment.filename) || attachment.isNew}
-      >
-      {option.name}
-      </MenuItem>
-      
-  }
+              >
+                {option.name}
+              </MenuItem>
+          }
         }
-  return partialReactfrag
+        console.log(`returns ${partialReactfrag.props.children}`)
+        
+        return partialReactfrag
+  
       })}
+     {/* {partialReactfrag} */}
     </Dropdown.Menu>
   </Dropdown>);
   // return mainReactFrag
