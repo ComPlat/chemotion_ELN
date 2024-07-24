@@ -431,6 +431,7 @@ export default class SampleForm extends React.Component {
     const metricPrefixes = ['m', 'n', 'u'];
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
     const gasSample = sample.gas_type === 'gas' && disableFieldsForGasTypeSample.includes(field);
+    const feedstockSample = sample.gas_type === 'feedstock' && field === 'amount_g';
     let metric;
     if (unit === 'l') {
       metric = prefixes[1];
@@ -477,7 +478,7 @@ export default class SampleForm extends React.Component {
           metricPrefixes={prefixes}
           precision={precision}
           title={title}
-          disabled={disabled || gasSample}
+          disabled={disabled || gasSample || feedstockSample}
           block={block}
           bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
           onChange={(e) => this.handleFieldChanged(field, e)}
