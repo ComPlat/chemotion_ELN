@@ -4,7 +4,6 @@ import { Row, Col, Button, InputGroup, OverlayTrigger, Tooltip, Form } from 'rea
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
 import { permitOn } from 'src/components/common/uis';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {

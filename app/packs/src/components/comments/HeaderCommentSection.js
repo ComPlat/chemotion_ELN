@@ -74,6 +74,7 @@ class HeaderCommentSection extends Component {
               size="xsm"
               variant="light"
               onClick={CommentActions.toggleCommentSection}
+              className='ms-1'
             >
               <i className={showCommentSection ? 'fa fa-angle-down' : 'fa fa-angle-up'} />
             </Button>

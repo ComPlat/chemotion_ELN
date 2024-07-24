@@ -8,6 +8,7 @@ import {
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 
 const SvgCellRenderer = ({ value, ...props})=>{

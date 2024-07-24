@@ -6,6 +6,8 @@ import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import Panel from 'src/components/legacyBootstrap/Panel';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;

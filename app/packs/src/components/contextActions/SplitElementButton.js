@@ -5,6 +5,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class SplitElementButton extends React.Component {
   constructor(props) {

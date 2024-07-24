@@ -5,6 +5,7 @@ import {
 import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const filterUIState = (uiState) => {
   const {
