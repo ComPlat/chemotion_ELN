@@ -3,7 +3,7 @@ import {
   Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import { values } from 'lodash';
+import { partial, values } from 'lodash';
 import uuid from 'uuid';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
@@ -327,7 +327,7 @@ export const thirdPartyAppButton = (attachment, options) => {
   // var partialReactfrag = <MenuItem> None available </MenuItem> ;
   var numOfTPA = 0
  
-  return(
+  var mainReactfrag = 
   <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
       <i className="fa  fa-external-link " aria-hidden="true" />
@@ -354,25 +354,44 @@ export const thirdPartyAppButton = (attachment, options) => {
                 eventKey={option.id}
                 onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
                 .then((result) => window.open(result, '_blank'))}
-        // disabled={!isImageFile(attachment.filename) || attachment.isNew}
+                // disabled={!isImageFile(attachment.filename) || attachment.isNew}
               >
                 {option.name}
               </MenuItem>
+              }
           }
-          if (numOfTPA == 0)
+        {/* console.log(Object.keys(partialReactfrag.props)) */}
+        {/* if (numOfTPA == 0){
+          numOfTPA = numOfTPA+1;
           if (Object.keys(partialReactfrag.props).length == 0)
-          {partialReactfrag = <MenuItem>None available</MenuItem>;
-            }
-        }
-        console.log(Object.keys(partialReactfrag.props))
-        
+          { 
+            return <MenuItem>none</MenuItem>;
+            }} */}
+          
 
         console.log(attachment.filename)
         return (partialReactfrag)
-  
       })}
      {/* {partialReactfrag} */}
     </Dropdown.Menu>
-  </Dropdown>);
+  </Dropdown>;
   // return mainReactFrag
+  // if (mainReactfrag.props.children[1].props.children){
+  //   mainReactfrag = <MenuItem>None</MenuItem>
+  // }
+  var typeArray = []
+  console.log(mainReactfrag.props.children[1].props.children )
+  for (var count = 0 ; count < mainReactfrag.props.children[1].props.children.length; count++ ){
+    typeArray.push(typeof mainReactfrag.props.children[1].props.children[count].type)
+  console.log(`${typeof mainReactfrag.props.children[1].props.children[count].type} ${count}`)}
+  if(!typeArray.includes("function")){
+    mainReactfrag = <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
+    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+      <i className="fa  fa-external-link " aria-hidden="true" />
+    </Dropdown.Toggle>
+    <Dropdown.Menu> <MenuItem>None Available</MenuItem></Dropdown.Menu>
+  </Dropdown>;
+  }
+  return mainReactfrag
 };
+ 
