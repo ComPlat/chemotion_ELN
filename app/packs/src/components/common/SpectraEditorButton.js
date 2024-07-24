@@ -1,9 +1,10 @@
+/* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup
 } from 'react-bootstrap';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem';
 
 export default function SpectraEditorButton({
   element, spcInfos, hasJcamp, hasChemSpectra,
@@ -69,7 +70,7 @@ export default function SpectraEditorButton({
         ) : (
           <Button
             variant="warning"
-            size="sm"
+            size="xsm"
             onClick={confirmRegenerate}
             disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
           >

@@ -1,13 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Row, Col, FormGroup, FormControl, Button,
-  InputGroup, OverlayTrigger, Tooltip
-} from 'react-bootstrap';
+import { Row, Col, Button, InputGroup, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
 import { permitOn } from 'src/components/common/uis';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {
@@ -64,92 +60,84 @@ export default class ReactionDetailsDuration extends Component {
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
     return (
-      <Row className="small-padding">
+      <Row className='p-2'>
         <Col md={3} sm={6}>
-          <FormGroup>
-            <ControlLabel>Start</ControlLabel>
+          <Form.Group>
+            <Form.Label>Start</Form.Label>
             <InputGroup>
-              <FormControl
+              <Form.Control
                 type="text"
                 value={reaction.timestamp_start || ''}
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('timestamp_start') || reaction.gaseous}
                 placeholder={timePlaceholder}
                 onChange={event => this.props.onInputChange('timestampStart', event)}
               />
-              <InputGroup.Button>
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} active style={{ padding: '6px' }} onClick={() => this.setCurrentTime('timestampStart')}>
+                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='secondary' active onClick={() => this.setCurrentTime('timestampStart')}>
                   <i className="fa fa-clock-o" aria-hidden="true" />
                 </Button>
-              </InputGroup.Button>
             </InputGroup>
-          </FormGroup>
+          </Form.Group>
         </Col>
         <Col md={3} sm={6}>
-          <FormGroup>
-            <ControlLabel>Stop</ControlLabel>
+          <Form.Group>
+            <Form.Label>Stop</Form.Label>
             <InputGroup>
-              <FormControl
+              <Form.Control
                 type="text"
                 value={reaction.timestamp_stop || ''}
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('timestamp_stop') || reaction.gaseous}
                 placeholder={timePlaceholder}
                 onChange={event => this.props.onInputChange('timestampStop', event)}
               />
-              <InputGroup.Button>
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} active style={{ padding: '6px' }} onClick={() => this.setCurrentTime('timestampStop')}>
-                  <i className="fa fa-clock-o" aria-hidden="true" />
+              <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='secondary' active onClick={() => this.setCurrentTime('timestampStop')}>
+                <i className="fa fa-clock-o" aria-hidden="true" />
+              </Button>
+            </InputGroup>
+          </Form.Group>
+        </Col>
+        <Col md={3} sm={6}>
+          <Form.Group>
+            <Form.Label>Duration</Form.Label>
+            <InputGroup>
+              <Form.Control type="text" value={durationCalc || ''} disabled placeholder="Duration" />
+              <OverlayTrigger
+                placement="bottom"
+                overlay={<Tooltip id="copy_duration_to_clipboard">copy to clipboard</Tooltip>}
+              >
+                <Button disabled={!permitOn(reaction) || reaction.gaseous} active variant='secondary' data-clipboard-text={durationCalc || ' '}>
+                  <i className="fa fa-clipboard" aria-hidden="true" />
                 </Button>
-              </InputGroup.Button>
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="bottom"
+                overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
+              >
+                <Button disabled={!permitOn(reaction) || reaction.gaseous} active variant='secondary' onClick={() => this.copyToDuration()}>
+                  <i className="fa fa-arrow-right" aria-hidden="true" />
+                </Button>
+              </OverlayTrigger>
             </InputGroup>
-          </FormGroup>
+          </Form.Group>
         </Col>
         <Col md={3} sm={6}>
-          <FormGroup>
-            <ControlLabel>Duration</ControlLabel>
-            <InputGroup>
-              <FormControl type="text" value={durationCalc || ''} disabled placeholder="Duration" />
-              <InputGroup.Button>
-                <OverlayTrigger
-                  placement="bottom"
-                  overlay={<Tooltip id="copy_duration_to_clipboard">copy to clipboard</Tooltip>}
-                >
-                  <Button disabled={!permitOn(reaction) || reaction.gaseous} active className="clipboardBtn" data-clipboard-text={durationCalc || ' '}>
-                    <i className="fa fa-clipboard" aria-hidden="true" />
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger
-                  placement="bottom"
-                  overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
-                >
-                  <Button disabled={!permitOn(reaction) || reaction.gaseous} active className="clipboardBtn" onClick={() => this.copyToDuration()}>
-                    <i className="fa fa-arrow-right" aria-hidden="true" />
-                  </Button>
-                </OverlayTrigger>
-              </InputGroup.Button>
-            </InputGroup>
-          </FormGroup>
-        </Col>
-        <Col md={3} sm={6}>
-          <FormGroup>
-            <ControlLabel>&nbsp;</ControlLabel>
-            <InputGroup>
-              <FormControl
+          <Form.Group>
+            <Form.Label />
+            <InputGroup className="mt-2">
+              <Form.Control
                 disabled={!permitOn(reaction) || reaction.gaseous}
                 type="text"
                 value={reaction.durationDisplay.dispValue || ''}
-                inputRef={this.refDuration}
+                ref={this.refDuration}
                 placeholder="Input Duration..."
                 onChange={event => this.handleDurationChange(event)}
               />
-              <InputGroup.Button>
                 <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>
                   <Button disabled={!permitOn(reaction) || reaction.gaseous} variant="success" onClick={() => this.changeDurationUnit()}>
                     {reaction.durationUnit}
                   </Button>
                 </OverlayTrigger>
-              </InputGroup.Button>
             </InputGroup>
-          </FormGroup>
+          </Form.Group>
         </Col>
       </Row>
     );

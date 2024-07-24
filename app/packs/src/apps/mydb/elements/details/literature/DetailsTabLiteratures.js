@@ -1,9 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  ListGroup, ListGroupItem, Button, Row, Col
-} from 'react-bootstrap';
+import { Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 import {

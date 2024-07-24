@@ -12,6 +12,8 @@ import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
+import Panel from 'src/components/legacyBootstrap/Panel';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function MessageAlert({ message, onHide }) {
   return (
@@ -1492,7 +1494,7 @@ export default class UserManagement extends React.Component {
         <Card>
           <Card.Body>
             <Button variant="warning" size="md" className='me-1' onClick={() => this.handleMsgShow()}>
-              Send Message;
+              Send Message
               <i className="fa fa-commenting-o ms-1" />
             </Button>
             <Button variant="primary" size="md" className='me-1' onClick={() => this.handleNewUserShow()} data-cy="create-user">

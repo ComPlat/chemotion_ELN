@@ -1,9 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  FormGroup, FormControl, ListGroup, ListGroupItem, Button
-} from 'react-bootstrap';
+import { Form, ListGroup, ListGroupItem, Button } from 'react-bootstrap';
 
 export default class HyperLinksSection extends Component {
   constructor(props) {
@@ -47,10 +45,7 @@ export default class HyperLinksSection extends Component {
 
   listLinkItem(link) {
     return (
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px'
-      }}
-      >
+      <div className='d-flex justify-content-between align-items-center m-2'>
         <a href={link} role="button" target="_blank" rel="noreferrer">{link}</a>
         {this.removeLinkButton(link)}
       </div>
@@ -62,30 +57,28 @@ export default class HyperLinksSection extends Component {
     const { disabled,readOnly } = this.props;
 
     if (disabled) {
-      return <div />;
+      return null;
     }
 
     return (
-      <FormGroup controlId="hyperlink" className="form-inline">
-        <FormControl
+      <Form.Group controlId="hyperlink" className="d-flex align-items-center mb-3">
+        <Form.Control
           type="text"
           value={link || ''}
           onChange={(event) => this.handleLinkInputChange(event)}
-          bsClass="form-control"
-          size="sm"
+          size="md"
           disabled={disabled || readOnly}
-          style={{ width: '90%' }}
+          className='me-2'
         />
         <Button
           variant="success"
           onClick={this.handleAddLink}
           disabled={link == null || readOnly}
           size="sm"
-          style={{ width: '8%' }}
         >
           Add
         </Button>
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -102,7 +95,7 @@ export default class HyperLinksSection extends Component {
           <ListGroup>
             {
               hyperLinks.map((link) => (
-                <ListGroupItem key={link} style={{ margin: 'unset', padding: 'unset' }}>
+                <ListGroupItem key={link} className='m-0 p-0'>
                   {this.listLinkItem(link)}
                 </ListGroupItem>
               ))
@@ -118,7 +111,7 @@ export default class HyperLinksSection extends Component {
     return (
       <div>
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <label>Hyperlinks</label>
+        <Form.Label className='fw-bold'>Hyperlinks</Form.Label>
         {this.renderHyperLinkInput()}
         {this.renderHyperLinkList()}
       </div>

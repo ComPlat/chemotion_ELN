@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Form, InputGroup, Button } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -190,7 +189,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
           >
             <Form.Control
               type="text"
-              bsClass="bs-form--compact form-control"
               disabled={inputDisabled}
               bsSize={bsSize}
               variant={variant}
@@ -211,7 +209,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
         <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
           <Form.Control
             type="text"
-            bsClass="bs-form--compact form-control"
             disabled={inputDisabled}
             bsSize={bsSize}
             variant={variant}
