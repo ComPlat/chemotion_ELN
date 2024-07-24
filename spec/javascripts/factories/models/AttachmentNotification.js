@@ -1,4 +1,5 @@
-export default class AttachmentNotification{
+import Element from 'src/models/Element';
+export default class AttachmentNotification extends Element{
     id
     message_id
     subject
@@ -9,4 +10,9 @@ export default class AttachmentNotification{
     is_ack
     created_at
     updated_at
+
+    constructor(args) {
+        super(args);
+        this.identifier = this.id;
+      }
 }
