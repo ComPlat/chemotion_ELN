@@ -333,18 +333,14 @@ export const thirdPartyAppButton = (attachment, options) => {
       <i className="fa  fa-external-link " aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
-    
       {options.map((option) => {
-        {/* var partialReactfrag = <MenuItem> None available </MenuItem> ; */}
         var partialReactfrag = <></> ;
-        {/* console.log(`${option.fileTypes} ${attachment.content_type}`) */}
         option.fileTypes = option.fileTypes.replace(" ","")
         var optionFileArray = []
         if (option.fileTypes.includes(",")){
           optionFileArray = option.fileTypes.split(",")
         }
         else(optionFileArray[0] = option.fileTypes)
-  
         for(let optionFileType of optionFileArray){
           if (mime.lookup(optionFileType) == (attachment.content_type)){
             numOfTPA = numOfTPA + 1
@@ -360,30 +356,15 @@ export const thirdPartyAppButton = (attachment, options) => {
               </MenuItem>
               }
           }
-        {/* console.log(Object.keys(partialReactfrag.props)) */}
-        {/* if (numOfTPA == 0){
-          numOfTPA = numOfTPA+1;
-          if (Object.keys(partialReactfrag.props).length == 0)
-          { 
-            return <MenuItem>none</MenuItem>;
-            }} */}
-          
-
-        console.log(attachment.filename)
         return (partialReactfrag)
       })}
-     {/* {partialReactfrag} */}
     </Dropdown.Menu>
   </Dropdown>;
-  // return mainReactFrag
-  // if (mainReactfrag.props.children[1].props.children){
-  //   mainReactfrag = <MenuItem>None</MenuItem>
-  // }
+
   var typeArray = []
   console.log(mainReactfrag.props.children[1].props.children )
   for (var count = 0 ; count < mainReactfrag.props.children[1].props.children.length; count++ ){
-    typeArray.push(typeof mainReactfrag.props.children[1].props.children[count].type)
-  console.log(`${typeof mainReactfrag.props.children[1].props.children[count].type} ${count}`)}
+    typeArray.push(typeof mainReactfrag.props.children[1].props.children[count].type)}
   if(!typeArray.includes("function")){
     mainReactfrag = <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
