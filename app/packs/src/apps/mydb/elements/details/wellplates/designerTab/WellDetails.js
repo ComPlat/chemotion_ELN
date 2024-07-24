@@ -93,7 +93,7 @@ const readoutSection = (readouts, readoutTitles) => {
 
   return (
     <div class="mt-3">
-      <h2>Readouts</h2>
+      <h4>Readouts</h4>
       <ul>
         {readoutListItems}
       </ul>
@@ -114,7 +114,7 @@ const labelSelection = (well, onChange) => {
 
   return (
     <div class="mt-3">
-      <h2>Select label type</h2>
+      <h4>Select label type</h4>
       <Select
         className="well-overlay-select"
         id="label"
@@ -138,7 +138,7 @@ const colorPicker = (well, onChange) => {
   return (
     <div class="mt-3">
       <Form.Group as={Row} controlId="formColorSelectorDisplay">
-        <Form.Label as="h2">Select Color</Form.Label>
+        <Form.Label as="h4">Select Color</Form.Label>
         <InputGroup>
           <InputGroup.Text style={{backgroundColor: well.color_code}} />
           <Form.Control
@@ -172,7 +172,7 @@ const WellDetails = ({ well, readoutTitles, handleClose, onChange}) => {
       onHide={handleClose}
     >
       <Modal.Header closeButton>
-        <Modal.Title>Well Details for Well {well.alphanumericPosition}</Modal.Title>
+        <Modal.Title as="h3">Well Details for Well {well.alphanumericPosition}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {sampleVisualisation(well, onChange)}
