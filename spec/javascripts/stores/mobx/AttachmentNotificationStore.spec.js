@@ -1,11 +1,12 @@
+/* eslint-disable import/no-unresolved,no-undef */
 import expect from 'expect';
 import { AttachmentNotificationStore } from 'src/stores/mobx/AttachmentNotificationStore';
 import AttachmentNotificationFactory from 'factories/AttachmentNotificationFactory';
 
 describe('AttachmentNotificationStore', async () => {
-  const message1 = await AttachmentNotificationFactory.build('xxx',{id:1});
-  const message2 = await AttachmentNotificationFactory.build('xxx',{id:2,receiver_id: 3});
-  const message3 = await AttachmentNotificationFactory.build('xxx',{id:3,subject: "Subject 3"});
+  const message1 = await AttachmentNotificationFactory.build('AttachmentNotificationFactory.new');
+  const message2 = await AttachmentNotificationFactory.build('AttachmentNotificationFactory.new');
+  const message3 = await AttachmentNotificationFactory.build('AttachmentNotificationFactory.new');
 
   describe('.addMessage', async () => {
     describe('when 3 different messages are added', async () => {
@@ -14,6 +15,7 @@ describe('AttachmentNotificationStore', async () => {
         store.addMessage(message1);
         store.addMessage(message2);
         store.addMessage(message3);
+
         expect(store.messages.length).toBe(3);
       });
     });

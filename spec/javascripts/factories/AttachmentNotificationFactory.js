@@ -1,6 +1,7 @@
+/* eslint-disable import/no-unresolved,no-underscore-dangle */
 import { factory } from 'factory-bot';
-import Element from 'src/models/Element';
-import AttachmentNotification from './models/AttachmentNotification';
+import AttachmentFactory from 'factories/AttachmentFactory';
+import AttachmentNotification from 'factories/models/AttachmentNotification';
 
 export default class AttachmentNotificationFactory {
   static instance = undefined;
@@ -9,43 +10,36 @@ export default class AttachmentNotificationFactory {
     if (AttachmentNotificationFactory.instance === undefined) {
       AttachmentNotificationFactory.instance = new AttachmentNotificationFactory();
     }
-    
-    //return this.instance.factory.build(...args);
-    const model ={
-      id: parseInt(Element.buildID(), 10),
-      message_id: 101,
-      subject: "Subject 1",
-      channel_type: 1,
-      sender_id: 1,
-      sender_name: "Sender 1",
-      reciever_id: 2,
-      is_ack: 0,
-      created_at: "2023-07-01T12:00:00Z",
-      updated_at: "2023-07-01T12:00:00Z"
-    }
+    AttachmentFactory.build('AttachmentFactory.notificationAttachment');
 
-    if(args.length==2){
-      Object.assign(model, args[1]);
-    }
+    const model = await AttachmentNotificationFactory.instance.factory.build(...args);
+    // I deconstruct the class object here because the store needs a plain js object
 
-    return model
+    return { ...model };
   }
 
   constructor() {
     this.factory = factory;
-  
 
-    this.factory.define('xxx',AttachmentNotification, {
-      id: parseInt(Element.buildID(), 10),
-      message_id: 101,
-      subject: "Subject 1",
-      channel_type: 1,
-      sender_id: 1,
-      sender_name: "Sender 1",
-      reciever_id: 2,
-      is_ack: 0,
-      created_at: "2023-07-01T12:00:00Z",
-      updated_at: "2023-07-01T12:00:00Z"
+    this.factory.define('AttachmentNotificationFactory.new', AttachmentNotification, async () => {
+      const model = {
+        id: factory.sequence('AttachmentNotificationFactory.id', (n) => n),
+        message_id: 101,
+        subject: 'Subject 1',
+        channel_type: 1,
+        sender_id: 1,
+        sender_name: 'Sender 1',
+        receiver_id: 2,
+        is_ack: 0,
+        created_at: '2023-07-01T12:00:00Z',
+        updated_at: '2023-07-01T12:00:00Z'
+      };
+
+      const attachment = await AttachmentFactory.build('AttachmentFactory.notificationAttachment');
+      delete attachment._checksum;
+      // I deconstruct the class object here because the store needs a plain js object
+      model.content = { ...attachment };
+      return model;
     });
   }
 }
