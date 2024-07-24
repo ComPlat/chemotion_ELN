@@ -6,7 +6,7 @@ export default class AttachmentNotification extends Element{
     channel_type
     sender_id
     sender_name
-    reciever_id
+    receiver_id
     is_ack
     created_at
     updated_at

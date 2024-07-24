@@ -7,7 +7,7 @@ const messageModel = types.model({
   channel_type: types.integer,
   sender_id: types.integer,
   sender_name: types.string,
-  reciever_id: types.integer,
+  receiver_id: types.integer,
   is_ack: types.integer,
   created_at: types.string,
   updated_at: types.string

@@ -4,7 +4,7 @@ import AttachmentNotificationFactory from 'factories/AttachmentNotificationFacto
 
 describe('AttachmentNotificationStore', async () => {
   const message1 = await AttachmentNotificationFactory.build('xxx',{id:1});
-  const message2 = await AttachmentNotificationFactory.build('xxx',{id:2,reciever_id: 3});
+  const message2 = await AttachmentNotificationFactory.build('xxx',{id:2,receiver_id: 3});
   const message3 = await AttachmentNotificationFactory.build('xxx',{id:3,subject: "Subject 3"});
 
   describe('.addMessage', async () => {
