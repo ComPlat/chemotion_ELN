@@ -178,7 +178,7 @@ export default class TemplateManagement extends React.Component {
           onDrop={attachment_file => this.handleFileDrop(attachment_file)}
           className='d-flex align-items-center justify-content-center pb-3 w-100 drop-zone-style'
         >
-          <div className='text-center pt-3 text-secondary fs-5'>
+          <div className='text-center pt-3 text-secondary fs-6'>
             Drop File, or Click to Select.
           </div>
         </Dropzone>
@@ -205,11 +205,11 @@ export default class TemplateManagement extends React.Component {
           <Container>
             <Form>
               <Form.Group controlId="formControlName" className='mb-3'>
-                <Form.Label className='fs-5'>Name:</Form.Label>
+                <Form.Label className='fs-6'>Name:</Form.Label>
                 <Form.Control type="text" name="templateName" ref={(ref) => { this.templateName = ref; }} />
               </Form.Group>
               <Form.Group controlId="formControlReportTemplateType" className='mb-3'>
-                <Form.Label className='fs-5'>Type:</Form.Label>
+                <Form.Label className='fs-6'>Type:</Form.Label>
                 <Select
                   options={this.state.reportTemplateTypes}
                   value={this.state.templateType}
@@ -218,7 +218,7 @@ export default class TemplateManagement extends React.Component {
                 />
               </Form.Group>
               <Form.Group controlId="formControlAttachment" className='mb-1'>
-                <Form.Label className='fs-5'>File:</Form.Label>
+                <Form.Label className='fs-6'>File:</Form.Label>
                 {this.dropzoneOrfilePreview()}
               </Form.Group>
             </Form>
@@ -253,11 +253,11 @@ export default class TemplateManagement extends React.Component {
           <Container>
             <Form>
               <Form.Group controlId="formControlName" className='mb-3'>
-                <Form.Label className='fs-5'>Name:</Form.Label>
+                <Form.Label className='fs-6'>Name:</Form.Label>
                 <Form.Control type="text" name="templateName" defaultValue={template.name} ref={(ref) => { this.templateName = ref; }} />
               </Form.Group>
               <Form.Group controlId="formControlReportTemplateType" className='mb-3'>
-                <Form.Label className='fs-5'>Type:</Form.Label>
+                <Form.Label className='fs-6'>Type:</Form.Label>
                 <Select
                   options={this.state.reportTemplateTypes}
                   value={this.state.templateType}
@@ -266,7 +266,7 @@ export default class TemplateManagement extends React.Component {
                 />
               </Form.Group>
               <Form.Group controlId="formControlAttachment" className='mb-3'>
-                <Form.Label className='fs-5'>File:</Form.Label>
+                <Form.Label className='fs-6'>File:</Form.Label>
                 {this.dropzoneOrfilePreview()}
               </Form.Group>
             </Form>
@@ -363,7 +363,7 @@ export default class TemplateManagement extends React.Component {
     ));
 
     return (
-      <Container fluid className='fs-4'>
+      <Container fluid className='fs-5'>
         <Card>
           <Card.Body>
             <Button variant="primary" size="md" onClick={() => this.handleNewTemplateShow()}>

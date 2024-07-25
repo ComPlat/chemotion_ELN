@@ -297,15 +297,15 @@ export default class ReactionDetailsContainers extends Component {
           </div>
 
           <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
-            <div className="fs-4 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
-            <div className="fs-5 ms-2 mt-2">Type: {kind}</div>
-            <div className="fs-5 ms-2 mt-2">
+            <div className="fs-5 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
+            <div className="fs-6 ms-2 mt-2">Type: {kind}</div>
+            <div className="fs-6 ms-2 mt-2">
               Status:
               {status} {nmrMsg(reaction, container)}
               <span className="me-5" />
               {insText}
             </div>
-            <div className="fs-5 ms-2 mt-2 d-flex p-0">
+            <div className="fs-6 ms-2 mt-2 d-flex p-0">
               <span className="me-2 flex-grow-1 text-truncate">
                 Content:
                 <QuillViewer value={contentOneLine} className="text-truncate" />
