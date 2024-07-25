@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import alt from 'src/stores/alt/alt';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
@@ -68,10 +69,10 @@ class UserActions {
       data: { authenticity_token: DocumentHelper.getMetaContent("csrf-token") }
     })
       .then(response => {
-      if (response.status == 204) {
-        location = '/home';
-      }
-    });
+        if (response.status == 204) {
+          location = '/home';
+        }
+      });
   }
 
   fetchProfile() {
@@ -83,11 +84,11 @@ class UserActions {
   }
 
   setUsertemplates() {
-    const storage_key = 'ketcher-tmpls';
+    const storageKey = 'ketcher-tmpls';
     UsersFetcher.fetchProfile().then((res) => {
       if (res?.user_templates) {
-        localStorage.setItem(storage_key, '');
-        localStorage.setItem(storage_key, JSON.stringify(res.user_templates));
+        localStorage.setItem(storageKey, '');
+        localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
       }
     });
   }
@@ -167,9 +168,9 @@ class UserActions {
         cache: 'no-store',
         headers: { 'cache-control': 'no-cache' }
       }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    }
+        console.log(errorMessage);
+      });
+    };
   }
 
   fetchOmniauthProviders() {
@@ -177,7 +178,7 @@ class UserActions {
       UsersFetcher.fetchOmniauthProviders()
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
-    }
+    };
   }
 }
 

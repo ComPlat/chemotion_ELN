@@ -6,11 +6,11 @@ export default class ProfilesFetcher {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(prms)
-    }).then(response => response.json())
+    }).then((response) => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -19,12 +19,11 @@ export default class ProfilesFetcher {
       credentials: 'same-origin',
       method: 'delete',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(prms)
-    }).then(response => response.json())
+    }).then((response) => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
-
 }

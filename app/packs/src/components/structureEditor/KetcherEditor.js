@@ -1,16 +1,16 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 function KetcherEditor(props) {
-  const {editor, iH, iS, molfile} = props;
+  const {
+    editor, iH, iS, molfile
+  } = props;
   const iframeRef = useRef(null);
 
-  const initMol =
-    molfile ||
-    '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
-
+  const initMol = molfile
+    || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
   const loadContent = (event) => {
     if (event.data.eventType === 'init') {
