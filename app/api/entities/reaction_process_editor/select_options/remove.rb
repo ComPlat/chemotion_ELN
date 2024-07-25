@@ -9,9 +9,9 @@ module Entities
         def origin_types
           [
             { value: 'FROM_REACTION', label: 'From Reaction' },
-            { value: 'FROM_STEP', label: 'From Step' },
-            { value: 'FROM_SAMPLE', label: 'From Sample' },
+            { value: 'FROM_STEP', label: 'From Reaction Step' },
             { value: 'DIVERSE_SOLVENTS', label: 'Diverse Solvents' },
+            { value: 'FROM_SAMPLE', label: 'From Sample' },
             { value: 'STEPWISE', label: 'Stepwise' },
             { value: 'FROM_METHOD', label: 'From Method' },
           ]

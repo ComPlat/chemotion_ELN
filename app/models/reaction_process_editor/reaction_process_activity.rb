@@ -58,12 +58,12 @@ module ReactionProcessEditor
     end
 
     def acts_as_sample?
-      !acts_as_medium?
+      !acts_as_medium? && activity_name != 'REMOVE'
     end
 
     def acts_as_medium?
       # These are the 4 subclasses stored in the STI table `media`
-      %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as'])
+      %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as']) && activity_name != 'REMOVE'
     end
 
     private

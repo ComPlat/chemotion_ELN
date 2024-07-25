@@ -20,7 +20,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
       reaction_process_vessel: anything,
       select_options: {
         added_materials: [],
-        removable_materials: { 'ADDITIVE' => [], 'MEDIUM' => [], 'SOLVENT' => [], 'DIVERSE_SOLVENT' => [] },
+        removable_samples: { 'ADDITIVE' => [], 'MEDIUM' => [], 'SOLVENT' => [], 'DIVERSE_SOLVENT' => [] },
         transferable_samples: [],
         transfer_targets: array_including(hash_including({ value: reaction_process_step.id }.deep_stringify_keys)),
         mounted_equipment: [],
@@ -59,10 +59,10 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
       expect(parsed_select_options['added_materials']).to include(hash_including(expected_materials))
     end
 
-    it 'removable_materials' do
+    it 'removable_samples' do
       expected_medium_hash = { acts_as: 'MEDIUM', id: medium.id }.deep_stringify_keys
 
-      expect(parsed_select_options['removable_materials'])
+      expect(parsed_select_options['removable_samples'])
         .to include({ 'MEDIUM' => include(hash_including(expected_medium_hash)) })
     end
 
