@@ -7,8 +7,6 @@ import { Button, Form, Container, Col, InputGroup, Row } from 'react-bootstrap';
 
 import QuillEditor from 'src/components/QuillEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function RemoveRowBtn({ removeRow, node }) {
   const { data } = node;

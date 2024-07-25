@@ -1,13 +1,11 @@
 import React from 'react';
 import {
-  Table, Button, Modal, FormGroup, Form, Tooltip,
-  OverlayTrigger, Popover, FormControl, Card, Container
+  Table, Button, Modal, Form, Tooltip,
+  OverlayTrigger, Popover, Card, Container
 } from 'react-bootstrap';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import Dropzone from 'react-dropzone';
 import Select from 'react-select';
-import Panel from 'src/components/legacyBootstrap/Panel';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const editTooltip = <Tooltip id="inchi_tooltip">Edit this template</Tooltip>;
 
@@ -206,11 +204,11 @@ export default class TemplateManagement extends React.Component {
         <Modal.Body>
           <Container>
             <Form>
-              <FormGroup controlId="formControlName" className='mb-3'>
+              <Form.Group controlId="formControlName" className='mb-3'>
                 <Form.Label className='fs-5'>Name:</Form.Label>
                 <Form.Control type="text" name="templateName" ref={(ref) => { this.templateName = ref; }} />
-              </FormGroup>
-              <FormGroup controlId="formControlReportTemplateType" className='mb-3'>
+              </Form.Group>
+              <Form.Group controlId="formControlReportTemplateType" className='mb-3'>
                 <Form.Label className='fs-5'>Type:</Form.Label>
                 <Select
                   options={this.state.reportTemplateTypes}
@@ -218,11 +216,11 @@ export default class TemplateManagement extends React.Component {
                   isClearable
                   onChange={this.onTemplateTypeChange}
                 />
-              </FormGroup>
-              <FormGroup controlId="formControlAttachment" className='mb-1'>
+              </Form.Group>
+              <Form.Group controlId="formControlAttachment" className='mb-1'>
                 <Form.Label className='fs-5'>File:</Form.Label>
                 {this.dropzoneOrfilePreview()}
-              </FormGroup>
+              </Form.Group>
             </Form>
           </Container>
         </Modal.Body>
@@ -254,11 +252,11 @@ export default class TemplateManagement extends React.Component {
         <Modal.Body>
           <Container>
             <Form>
-              <FormGroup controlId="formControlName" className='mb-3'>
+              <Form.Group controlId="formControlName" className='mb-3'>
                 <Form.Label className='fs-5'>Name:</Form.Label>
-                <FormControl type="text" name="templateName" defaultValue={template.name} ref={(ref) => { this.templateName = ref; }} />
-              </FormGroup>
-              <FormGroup controlId="formControlReportTemplateType" className='mb-3'>
+                <Form.Control type="text" name="templateName" defaultValue={template.name} ref={(ref) => { this.templateName = ref; }} />
+              </Form.Group>
+              <Form.Group controlId="formControlReportTemplateType" className='mb-3'>
                 <Form.Label className='fs-5'>Type:</Form.Label>
                 <Select
                   options={this.state.reportTemplateTypes}
@@ -266,11 +264,11 @@ export default class TemplateManagement extends React.Component {
                   isClearable
                   onChange={this.onTemplateTypeChange}
                 />
-              </FormGroup>
-              <FormGroup controlId="formControlAttachment" className='mb-3'>
+              </Form.Group>
+              <Form.Group controlId="formControlAttachment" className='mb-3'>
                 <Form.Label className='fs-5'>File:</Form.Label>
                 {this.dropzoneOrfilePreview()}
-              </FormGroup>
+              </Form.Group>
             </Form>
           </Container>
         </Modal.Body>

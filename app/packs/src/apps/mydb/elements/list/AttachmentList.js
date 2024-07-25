@@ -8,8 +8,6 @@ import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">

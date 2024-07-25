@@ -3,8 +3,6 @@ import React, { Component } from 'react';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import { Table, Button, Form, Modal, Popover, OverlayTrigger, Alert } from 'react-bootstrap';
 import Select from 'react-select';
-import Panel from 'src/components/legacyBootstrap/Panel';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ChemSpectraLayouts extends Component {
   constructor(props) {
