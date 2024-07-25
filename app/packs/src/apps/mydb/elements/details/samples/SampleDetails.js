@@ -755,9 +755,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
-        {
-          !sample.isNew && <CommentSection section="sample_properties" element={sample} />
-        }
+        {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}
         <SampleForm
           sample={sample}
           parent={this}
@@ -1146,7 +1144,6 @@ export default class SampleDetails extends React.Component {
   }
 
   moleculeMolfile(sample) {
-
     return (
       <InputGroup className="mb-3">
         <InputGroup.Text>Molfile</InputGroup.Text>
@@ -1510,7 +1507,7 @@ export default class SampleDetails extends React.Component {
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}
           {this.renderMolfileModal()}
-          {/*<CommentModal element={sample} /> */}
+          <CommentModal element={sample} />
         </Card.Body>
       </Card>
     );
