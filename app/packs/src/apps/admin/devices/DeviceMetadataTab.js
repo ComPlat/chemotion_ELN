@@ -1,11 +1,10 @@
 import React, { useEffect, useContext } from 'react';
-import { FormControl, FormGroup, Form, Button } from 'react-bootstrap';
+import { Form, Button } from 'react-bootstrap';
 import Select from 'react-select3';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceMetadataTab = () => {
   const devicesStore = useContext(StoreContext).devices;
@@ -80,34 +79,35 @@ const DeviceMetadataTab = () => {
     let dateForms = [];
     deviceMetadata.dates.map((dateItem, index) => {
       dateForms.push(
-        <div className="form-with-columns col-full" key={`group-div-${index}`}>
-          <FormGroup className="col-half">
-            <ControlLabel key={`date-label-${index}`}>Date</ControlLabel>
-            <FormControl
+        <div className="d-flex justify-content-between flex-wrap w-100" key={`group-div-${index}`}>
+          <Form.Group className="col-6 pe-4">
+            <Form.Label key={`date-label-${index}`}>Date</Form.Label>
+            <Form.Control
               type="text"
               value={dateItem.date}
               placeholder="Date e.g. '2020-01-01'"
               onChange={event => updateDeviceMetadataDate(index, 'date', event.target.value)}
             />
-          </FormGroup>
-          <FormGroup className="col-middle">
-            <ControlLabel>Date Type</ControlLabel>
-            <FormControl
+          </Form.Group>
+          <Form.Group className="col-5">
+            <Form.Label>Date Type</Form.Label>
+            <Form.Control
               type="text"
               value={dateItem.dateType}
               placeholder="DateType e.g. 'Created'"
               onChange={event => updateDeviceMetadataDate(index, 'dateType', event.target.value)}
             />
-          </FormGroup>
-          <FormGroup className="col-small">
-            <ControlLabel>Action</ControlLabel>
-            <Button variant="danger" size="sm"
-              className="pull-right"
+          </Form.Group>
+          <Form.Group className="col align-self-center">
+            <Form.Label className="w-100 text-end">Action</Form.Label>
+            <Button variant="danger"
+              size="sm"
+              className="float-end"
               onClick={() => removeDeviceMetadataDate(index)}
             >
               <i className="fa fa-trash-o" />
             </Button>
-          </FormGroup>
+          </Form.Group>
         </div>
       );
     });
@@ -119,7 +119,7 @@ const DeviceMetadataTab = () => {
     if (deviceMetadata.id && deviceMetadata.doi) { return null }
 
     return (
-      <Button className="pull-right with-margin-bottom col-half"
+      <Button className="w-50 mb-4 align-self-end form-control"
         variant="danger"
         onClick={() => syncDeviceMetadataFromDataCite()}
       >
@@ -129,11 +129,11 @@ const DeviceMetadataTab = () => {
   }
 
   const getFromDataCiteHeadline = () => {
-    return deviceMetadata.id && deviceMetadata.doi ? null : <h4 className="col-full">Get Metadata from DataCite</h4>;
+    return deviceMetadata.id && deviceMetadata.doi ? null : <h4 className="w-100">Get Metadata from DataCite</h4>;
   }
 
   const createDeviceMetadataHeadline = () => {
-    return deviceMetadata.id && deviceMetadata.doi ? null : <h4 className="clear-after-button col-full">Or create Metadata and sync to DataCite</h4>;
+    return deviceMetadata.id && deviceMetadata.doi ? null : <h4 className="w-100">Or create Metadata and sync to DataCite</h4>;
   }
 
   const dataCiteUpdatedAt = () => {
@@ -143,99 +143,99 @@ const DeviceMetadataTab = () => {
   }
 
   return (
-    <Form className="form-with-columns">
+    <Form className="d-flex justify-content-between flex-wrap">
       {getFromDataCiteHeadline()}
-      <FormGroup className="col-half">
-        <ControlLabel>DOI *</ControlLabel>
-        <FormControl
+      <Form.Group className="w-50 mb-4 pe-4">
+        <Form.Label>DOI *</Form.Label>
+        <Form.Control
           type="text"
           value={deviceMetadata.doi ? deviceMetadata.doi : ''}
           onChange={(event) => onChange('doi', event.target.value)}
           placeholder="10.*****/**********"
           readOnly={deviceMetadata.id && deviceMetadata.doi ? true : false}
         />
-      </FormGroup>
+      </Form.Group>
       {syncToDataCiteButton()}
       {createDeviceMetadataHeadline()}
 
-      <FormGroup className="col-full">
-        <ControlLabel>State</ControlLabel>
+      <Form.Group className="w-100 mb-4">
+        <Form.Label>State</Form.Label>
         <Select
           value={dataCiteStateValue}
           options={dataCiteStateOptions}
           onChange={(event) => onChange('data_cite_state', event)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>URL *</ControlLabel>
-        <FormControl
+      <Form.Group className="w-50 mb-4 pe-4">
+        <Form.Label>URL *</Form.Label>
+        <Form.Control
           type="text"
           value={deviceMetadata.url ? deviceMetadata.url : ''}
           placeholder="https://<device.url>"
           onChange={(event) => onChange('url', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>Landing Page</ControlLabel>
-        <FormControl
+      <Form.Group className="w-50 mb-4">
+        <Form.Label>Landing Page</Form.Label>
+        <Form.Control
           type="text"
           value={deviceMetadata.landing_page ? deviceMetadata.landing_page : ''}
           placeholder="https://<device.landing.page>"
           onChange={(event) => onChange('landing_page', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>Name</ControlLabel>
-        <FormControl
+      <Form.Group className="w-50 mb-4 pe-4">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
           type="text"
           value={deviceMetadata.name ? deviceMetadata.name : ''}
           placeholder="Name"
           onChange={(event) => onChange('name', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>Publication Year *</ControlLabel>
-        <FormControl
+      <Form.Group className="w-50 mb-4">
+        <Form.Label>Publication Year *</Form.Label>
+        <Form.Control
           type="number"
           value={deviceMetadata.publication_year ? deviceMetadata.publication_year : ''}
           placeholder="Publication Year e.g. '2020'"
           onChange={(event) => onChange('publication_year', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-full">
-        <ControlLabel>Description</ControlLabel>
-        <FormControl
+      <Form.Group className="w-100 mb-4">
+        <Form.Label>Description</Form.Label>
+        <Form.Control
           type="text"
           value={deviceMetadata.description ? deviceMetadata.description : ''}
           placeholder="Description"
           onChange={(event) => onChange('description', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-full">
-        <ControlLabel>Dates</ControlLabel>
-      </FormGroup>
+      <Form.Group className="w-100 mb-2">
+        <Form.Label>Dates</Form.Label>
+      </Form.Group>
       {deviceMetaDataDates()}
 
-      <FormGroup className="col-full">
-        <Button variant="success" size="sm" className="pull-right" onClick={() => addDeviceMetadataDate()}>
+      <Form.Group className="w-100 mb-4 mt-2">
+        <Button variant="success" size="sm" className="float-end" onClick={() => addDeviceMetadataDate()}>
           <i className="fa fa-plus" />
         </Button>
-      </FormGroup>
+      </Form.Group>
 
-      <hr className="col-full" />
+      <hr className="w-100 mb-4" />
 
-      <FormGroup className="col-half">
+      <Form.Group className="w-50 pe-4">
         DataCiteVersion: {deviceMetadata.data_cite_version}<br />
         DataCiteUpdatedAt: {dataCiteUpdatedAt()}
-      </FormGroup>
+      </Form.Group>
 
-      <Button className="pull-right col-half" variant="danger" onClick={() => syncDeviceMetadataToDataCite()}>
+      <Button className="w-50 form-control" variant="danger" onClick={() => syncDeviceMetadataToDataCite()}>
         Sync to DataCite
       </Button>
     </Form>

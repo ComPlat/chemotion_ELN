@@ -104,3 +104,7 @@ $theme-colors: map-merge($theme-colors, $gray-tones);
 .vh-70 {
   height: 70vh;
 }
+
+.border-dashed {
+  border-style: dashed;
+}

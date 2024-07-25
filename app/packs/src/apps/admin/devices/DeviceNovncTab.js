@@ -1,9 +1,8 @@
 import React, { useContext } from 'react';
-import { FormControl, FormGroup, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceNovncTab = () => {
   const devicesStore = useContext(StoreContext).devices;
@@ -17,7 +16,7 @@ const DeviceNovncTab = () => {
     devicesStore.changeDevice(field, newValue);
   }
 
-  const RenderStoredTarget = () => {
+  const renderStoredTarget = () => {
     if (device.novnc_target && device.novnc_token) {
       return `${device.novnc_target}?token=${device.novnc_token}`;
     }
@@ -27,7 +26,7 @@ const DeviceNovncTab = () => {
     return 'None';
   };
 
-  const RenderCurrentTarget = () => {
+  const renderCurrentTarget = () => {
     if (device.novnc_target && device.novnc_token) {
       return `${device.novnc_target}?token=${device.novnc_token}`;
     }
@@ -45,50 +44,52 @@ const DeviceNovncTab = () => {
   }
 
   return (
-    <Form className="form-with-columns">
-      <FormGroup validationState={device.valid_novnc_target} className="col-half">
-        <ControlLabel>Target *</ControlLabel>
-        <FormControl
+    <Form className="d-flex justify-content-between flex-wrap">
+      <Form.Group className="w-50 mb-3 pe-4">
+        <Form.Label>Target *</Form.Label>
+        <Form.Control
           type="text"
           value={device.novnc_target ? device.novnc_target : ''}
+          className={device.valid_novnc_target}
           onChange={(event) => onChange('novnc_target', event.target.value)}
           placeholder="e.g. ws://localhost:8092/websockify"
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-half">
-        <ControlLabel>Websockify Token</ControlLabel>
-        <FormControl
+      <Form.Group className="w-50 mb-3">
+        <Form.Label>Websockify Token</Form.Label>
+        <Form.Control
           type="text"
           value={device.novnc_token ? device.novnc_token : ''}
           onChange={(event) => onChange('novnc_token', event.target.value)}
           placeholder="e.g. 000001"
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup className="col-full">
-        <span className="fa fa-info-circle" aria-hidden="true">&nbsp;
-          <b>Current Target</b>&nbsp;
-          <RenderStoredTarget />
-        </span>
+      <p className="w-100 mb-3">
+        <i className="fa fa-info-circle">
+          <b className="ps-1">Current Target</b>&nbsp;
+          {renderStoredTarget()}
+        </i>
         <br />
-        <span className="fa fa-info-circle" aria-hidden="true">&nbsp;
-          <b>Edited Target</b>&nbsp;
-          <RenderCurrentTarget />
-        </span>
-        <hr />
-        <h4>RFB Credentials</h4>
-      </FormGroup>
+        <i className="fa fa-info-circle" aria-hidden="true">
+          <b className="ps-1">Edited Target</b>&nbsp;
+          {renderCurrentTarget()}
+        </i>
+      </p>
 
-      <FormGroup className="col-half">
-        <ControlLabel>Password</ControlLabel>
-        <FormControl
+      <hr className="w-100" />
+      <h4 className="w-100 mb-4">RFB Credentials</h4>
+
+      <Form.Group className="w-50 mb-4 pe-4">
+        <Form.Label>Password</Form.Label>
+        <Form.Control
           type="text"
           value={passwordValue}
           onChange={(event) => onChange('novnc_password', event.target.value)}
           placeholder="Password"
         />
-      </FormGroup>
+      </Form.Group>
     </Form>
   );
 }
