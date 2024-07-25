@@ -251,7 +251,7 @@ export default class TextTemplate extends React.Component {
               </InputGroup>
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label className='fw-bold fs-5'>Text</Form.Label>
+                  <Form.Label className='fs-5'>Text</Form.Label>
                   <Form.Control
                     type="text"
                     value={text}
@@ -260,7 +260,7 @@ export default class TextTemplate extends React.Component {
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label className='fw-bold fs-5'>Icon</Form.Label>
+                  <Form.Label className='fs-5'>Icon</Form.Label>
                   <Form.Control
                     type="text"
                     value={icon}

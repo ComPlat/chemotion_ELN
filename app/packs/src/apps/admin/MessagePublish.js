@@ -64,7 +64,7 @@ export default class MessagePublish extends React.Component {
       <Row className="flex-grow-1 d-flex">
         <Col md={3} className="d-flex flex-column">
           <Form.Group controlId="channelSelect" className="flex-grow-1 d-flex flex-column m-3">
-            <Form.Label className="fw-bold fs-5">Channel</Form.Label>
+            <Form.Label className="fs-5">Channel</Form.Label>
             <Select
               value={selectedChannel}
               onChange={this.handleChannelChange}
@@ -78,7 +78,7 @@ export default class MessagePublish extends React.Component {
         <Col md={9} className="d-flex flex-column">
           <Form>
             <Form.Group controlId="formControlsTextarea" className="flex-grow-1 d-flex flex-column m-3">
-              <Form.Label className="fw-bold fs-5">Message</Form.Label>
+              <Form.Label className="fs-5">Message</Form.Label>
               <Form.Control
                 as="textarea"
                 placeholder="message..."
