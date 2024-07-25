@@ -182,16 +182,11 @@ export default class ReactionDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className="d-flex justify-content-between align-items-center flex-row-reverse w-100 mb-0">
-        <Button
-          size="xsm"
-          variant="danger"
-          disabled={readOnly}
-          onClick={() => this.handleOnClickRemove(container)}
-        >
-          <i className="fa fa-trash" />
-        </Button>
-        <PrintCodeButton element={reaction} analyses={[container]} ident={container.id} />
+      <div className="d-flex justify-content-between align-items-center mb-0">
+        <AnalysisVariationLink
+          reaction={reaction}
+          analysisID={container.id}
+        />
         <SpectraEditorButton
           element={reaction}
           hasJcamp={hasJcamp}
@@ -202,10 +197,15 @@ export default class ReactionDetailsContainers extends Component {
           toggleNMRDisplayerModal={toggleNMRDisplayerModal}
           hasNMRium={hasNMRium}
         />
-        <AnalysisVariationLink
-          reaction={reaction}
-          analysisID={container.id}
-        />
+        <PrintCodeButton element={reaction} analyses={[container]} ident={container.id} />
+        <Button
+          size="xxsm"
+          variant="danger"
+          disabled={readOnly}
+          onClick={() => this.handleOnClickRemove(container)}
+        >
+          <i className="fa fa-trash" />
+        </Button>
       </div>
     );
   };
@@ -252,10 +252,18 @@ export default class ReactionDetailsContainers extends Component {
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
+
+      const truncateText = (text, maxLength) => {
+        if (text.length <= maxLength) {
+          return text;
+        }
+        return `${text.substring(0, maxLength)}...`;
+      };
+
       const contentOneLine = {
         ops: content.ops.map((x) => {
           const c = Object.assign({}, x);
-          if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100); // Adjust 100 to your desired max length
           return c;
         }),
       };
@@ -271,7 +279,7 @@ export default class ReactionDetailsContainers extends Component {
 
       return (
         <div
-          className="d-flex w-100 mb-0 h-25 light-grey-bg"
+          className="d-flex w-100 mb-0 bg-gray-200"
         >
           <div className="p-3">
             <ImageModal
@@ -298,18 +306,16 @@ export default class ReactionDetailsContainers extends Component {
               {insText}
             </div>
             <div className="fs-5 ms-2 mt-2 d-flex p-0">
-              <span className="me-2">
+              <span className="me-2 flex-grow-1 text-truncate">
                 Content:
-                <QuillViewer value={contentOneLine} className="overflow-wrap" />
+                <QuillViewer value={contentOneLine} className="text-truncate" />
               </span>
             </div>
           </div>
-          <div className="ml-auto mt-3 d-flex align-items-start justify-content-end w-100 me-2">
-            <div className="d-flex">
-              {
+          <div className="d-flex align-items-start justify-content-end me-2 mt-3">
+            {
                 this.headerBtnGroup(container, reaction, readOnly)
-              }
-            </div>
+            }
           </div>
         </div>
       );
@@ -323,19 +329,20 @@ export default class ReactionDetailsContainers extends Component {
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
-        <div className="d-flex w-100 mb-0 light-grey-bg align-items-center">
+        <div className="d-flex w-100 mb-0 bg-gray-200 p-4 align-items-center">
           <strike className="flex-grow-1">
             {container.name}
             {titleKind}
-            {titleStatus}            
+            {titleStatus}
           </strike>
           <Button
             className="ml-auto"
-              size="sm"
-              variant="danger"
-              onClick={() => this.handleUndo(container)}>
-              <i className="fa fa-undo" />
-            </Button>
+            size="sm"
+            variant="danger"
+            onClick={() => this.handleUndo(container)}
+          >
+            <i className="fa fa-undo" />
+          </Button>
         </div>
       );
     };
@@ -351,7 +358,7 @@ export default class ReactionDetailsContainers extends Component {
             <div className="mb-2 me-1 d-flex flex-row-reverse">
               {this.addButton()}
             </div>
-            <Accordion id="reaction-analyses-panel" activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
+            <Accordion>
               {analyses_container[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
@@ -363,7 +370,6 @@ export default class ReactionDetailsContainers extends Component {
                     </Accordion.Item>
                   );
                 }
-
                 return (
                   <div
                     ref={(element) => { this.containerRefs[key] = element; }}
