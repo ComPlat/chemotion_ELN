@@ -20,9 +20,5 @@
           "username": "postgres",
           "password": ""
         }
-      ],
-      "cSpell.words": [
-        "Ketcher",
-        "wellplate"
-      ],
+      ]
 }
