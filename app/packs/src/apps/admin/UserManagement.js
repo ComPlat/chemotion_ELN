@@ -733,7 +733,7 @@ export default class UserManagement extends React.Component {
         <Modal.Body>
             <Form>
             <Form.Group controlId="formControlsTextarea">
-              <Form.Label className='fw-bold'>Message</Form.Label>
+              <Form.Label>Message</Form.Label>
               <Form.Control
                 as="textarea"
                 placeholder="Message..."
@@ -778,7 +778,7 @@ export default class UserManagement extends React.Component {
           <Modal.Title>New User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tabs id="createUserTabs" className='fs-4'>
+          <Tabs id="createUserTabs" className='fs-6'>
             <Tab eventKey="singleUser" title="Single user">
               <Form
                 className='ms-2 mt-2'
@@ -852,7 +852,7 @@ export default class UserManagement extends React.Component {
             <Tab eventKey="multiUser" title="Multiple users from file">
               <Form className='my-3'>
                 <Form.Group>
-                  <Form.Label className='fw-bold'>Please format the user file like the table below.</Form.Label>
+                  <Form.Label>Please format the user file like the table below.</Form.Label>
                   <Table striped bordered hover className='mt-1'>
                     <thead>
                       <tr>
@@ -904,7 +904,7 @@ export default class UserManagement extends React.Component {
                   <i className="fa fa-plus ms-1" />
                 </Button>
                 <Form.Group>
-                  <Form.Label className="fw-bold">Processing Summary</Form.Label>
+                  <Form.Label>Processing Summary</Form.Label>
                   <Form.Control
                     readOnly
                     as="textarea"
@@ -921,7 +921,7 @@ export default class UserManagement extends React.Component {
           <Form.Group controlId="formControlMessage" className="flex-grow-1">
             <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
           </Form.Group>
-          <Button variant="warning" className='fs-5' onClick={() => this.handleNewUserClose()}>Cancel</Button>
+          <Button variant="warning" className='fs-6' onClick={() => this.handleNewUserClose()}>Cancel</Button>
         </Modal.Footer>
       </Modal>
     );
@@ -954,7 +954,7 @@ export default class UserManagement extends React.Component {
               <Tab.Pane eventKey="first">
                 <Form>
                   <Form.Group as={Row} className="mb-3 ms-5 mt-2" controlId="formControlEmail">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Email:
                     </Form.Label>
                     <Col sm="7">
@@ -963,12 +963,12 @@ export default class UserManagement extends React.Component {
                         name="u_email"
                         defaultValue={user.email}
                         ref={(ref) => { this.u_email = ref; }}
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       First name:
                     </Form.Label>
                     <Col sm="7">
@@ -977,12 +977,12 @@ export default class UserManagement extends React.Component {
                         name="u_firstname"
                         defaultValue={user.first_name}
                         ref={(ref) => { this.u_firstname = ref; }}
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Last name:
                     </Form.Label>
                     <Col sm="7">
@@ -991,12 +991,12 @@ export default class UserManagement extends React.Component {
                         name="u_lastname"
                         defaultValue={user.last_name}
                         ref={(ref) => { this.u_lastname = ref; }}
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Abbr:
                     </Form.Label>
                     <Col sm="7">
@@ -1005,19 +1005,19 @@ export default class UserManagement extends React.Component {
                         name="u_abbr"
                         defaultValue={user.initials}
                         ref={(ref) => { this.u_abbr = ref; }}
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Type:
                     </Form.Label>
                     <Col sm="7">
                       <Form.Select
                         defaultValue={user.type}
                         ref={(ref) => { this.u_type = ref; }}
-                        className='fs-5'
+                        className='fs-6'
                       >
                         <option value="Person">Person</option>
                         <option value="Group">Group</option>
@@ -1032,7 +1032,7 @@ export default class UserManagement extends React.Component {
                         readOnly
                         name="messageEditUserModal"
                         value={this.state.messageEditUserModal}
-                        className="my-3 form-control text-danger text-center fs-5"
+                        className="my-3 form-control text-danger text-center fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1054,7 +1054,7 @@ export default class UserManagement extends React.Component {
               <Tab.Pane eventKey="second">
                 <Form>
                   <Form.Group as={Row} className="mb-3 mt-2 ms-5" controlId="formControlEmail">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Email:
                     </Form.Label>
                     <Col sm="7">
@@ -1063,12 +1063,12 @@ export default class UserManagement extends React.Component {
                         name="u_email"
                         defaultValue={user.email}
                         disabled
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       First name:
                     </Form.Label>
                     <Col sm="7">
@@ -1077,12 +1077,12 @@ export default class UserManagement extends React.Component {
                         name="u_firstname"
                         defaultValue={user.first_name}
                         disabled
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Last name:
                     </Form.Label>
                     <Col sm="7">
@@ -1091,12 +1091,12 @@ export default class UserManagement extends React.Component {
                         name="u_lastname"
                         defaultValue={user.last_name}
                         disabled
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Abbr:
                     </Form.Label>
                     <Col sm="7">
@@ -1105,19 +1105,19 @@ export default class UserManagement extends React.Component {
                         name="u_abbr"
                         defaultValue={user.initials}
                         disabled
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
-                    <Form.Label column sm="3" className="fs-5">
+                    <Form.Label column sm="3" className="fs-6">
                       Type:
                     </Form.Label>
                     <Col sm="7">
                       <Form.Control
                         disabled
                         defaultValue={user.type}
-                        className='fs-5'
+                        className='fs-6'
                       />
                     </Col>
                   </Form.Group>
@@ -1128,7 +1128,7 @@ export default class UserManagement extends React.Component {
                         readOnly
                         name="messageEditUserModal"
                         value="Delete User Account. Are you sure?"
-                        className="my-3 fs-5 form-control text-danger text-center"
+                        className="my-3 fs-6 form-control text-danger text-center"
                       />
                     </Col>
                   </Form.Group>
@@ -1165,7 +1165,7 @@ export default class UserManagement extends React.Component {
             <Form.Group controlId="formControlAbbr">
               <Row className="mb-3">
                 <Col column sm={3}>
-                  <Form.Label column sm={3} className='fw-bold fs-5'>Abbr: </Form.Label>
+                  <Form.Label column sm={3} className=' fs-6'>Abbr: </Form.Label>
                 </Col >
                 <Col sm={9}>
                   <Form.Control
@@ -1183,7 +1183,7 @@ export default class UserManagement extends React.Component {
             <Form.Group controlId="formControlID">
               <Row className="mb-3">
                 <Col column sm={3}>
-                  <Form.Label className='fw-bold fs-5'>ID:</Form.Label>
+                  <Form.Label className='fs-6'>ID:</Form.Label>
                 </Col>
                 <Col sm={9}>
                   <Form.Control
@@ -1218,11 +1218,11 @@ export default class UserManagement extends React.Component {
           </Form>
         </Modal.Body>
         <Modal.Footer className="modal-footer border-0">
-          <Button variant="primary" className='fs-5' onClick={() => this.handleRestoreAccount()}>
+          <Button variant="primary" className='fs-6' onClick={() => this.handleRestoreAccount()}>
             Restore
             <i className="fa fa-save ms-1" />
           </Button>
-          <Button variant="warning" className='fs-5' onClick={() => this.handleRestoreAccountClose()}>
+          <Button variant="warning" className='fs-6' onClick={() => this.handleRestoreAccountClose()}>
             Cancel
           </Button>
         </Modal.Footer>
@@ -1306,7 +1306,7 @@ export default class UserManagement extends React.Component {
         </tr>
         <tr>
           <th aria-label="Empty header for the '#' column" />
-          <th className='fs-5 py-3'>
+          <th className='fs-6 py-3'>
             <div className="d-flex justify-content-between">
               <Col xs={5}>
                 <Form.Select
@@ -1330,28 +1330,28 @@ export default class UserManagement extends React.Component {
               </Col>
             </div>
           </th>
-          <th className='fs-5 py-3'>
+          <th className='fs-6 py-3'>
             <Form.Control
               type="text"
               placeholder="Name"
               onChange={(e) => this.updateFilter('name', e.target.value)}
             />
           </th>
-          <th className='fs-5 py-3'>
+          <th className='fs-6 py-3'>
             <Form.Control
               type="text"
               placeholder="Abbr."
               onChange={(e) => this.updateFilter('initials', e.target.value)}
             />
           </th>
-          <th className='fs-5 py-3'>
+          <th className='fs-6 py-3'>
             <Form.Control
               type="text"
               placeholder="Email"
               onChange={(e) => this.updateFilter('email', e.target.value)}
             />
           </th>
-          <th className='fs-5 py-3'>
+          <th className='fs-6 py-3'>
             <Form.Select
               aria-label="Filter Person-Admin"
               onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
@@ -1361,8 +1361,8 @@ export default class UserManagement extends React.Component {
               <option value="Admin">Admin</option>
             </Form.Select>
           </th>
-          <th className='fs-5 py-3' aria-label="Empty header for the 'Login at' column" />
-          <th className='fs-5 py-3' aria-label="Empty header for the 'ID' column" />
+          <th className='fs-6 py-3' aria-label="Empty header for the 'Login at' column" />
+          <th className='fs-6 py-3' aria-label="Empty header for the 'ID' column" />
         </tr>
       </thead>
     );

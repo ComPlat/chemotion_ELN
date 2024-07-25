@@ -127,15 +127,15 @@ export default class AdminGroupElement extends React.Component {
 
     return (
       <tbody key={`tbody_${groupElement.id}`}>
-        <tr key={`row_${groupElement.id}`} id={`row_${groupElement.id}`} className='fs-4 py-3'>
-          <td>{idx + 1}</td>
+        <tr key={`row_${groupElement.id}`} id={`row_${groupElement.id}`} className='py-5'>
+          <td className='py-3'>{idx + 1}</td>
           {this.renderGroupButtons(groupElement)}
-          <td>{groupElement.name}</td>
-          <td>{groupElement.name_abbreviation}</td>
-          <td>
+          <td className='py-3'>{groupElement.name}</td>
+          <td className='py-3'>{groupElement.name_abbreviation}</td>
+          <td className='py-3'>
             {groupElement.admins && groupElement.admins.map(x => x.name).join(', ')}
           </td>
-          <td>{groupElement.email}</td>
+          <td className='py-3'>{groupElement.email}</td>
         </tr>
         <tr className={'collapse' + (showUsers ? 'in' : '')} id={`div_row_${groupElement.id}`}>
           <td colSpan="7">
@@ -147,11 +147,11 @@ export default class AdminGroupElement extends React.Component {
                     <tbody>
                       {groupElement.users.map((u, i) => (
                         <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                          <td className="w-5  py-3 fs-4 ">{i + 1}</td>
-                          <td className="w-20 py-3 fs-4 ">{u.name}</td>
-                          <td className="w-10 py-3 fs-4 ">{u.initials}</td>
-                          <td className="w-20 py-3 fs-4 ">{u.email}</td>
-                          <td className="w-15 py-3 fs-4 ">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
+                          <td className="w-5  py-3">{i + 1}</td>
+                          <td className="w-20 py-3">{u.name}</td>
+                          <td className="w-10 py-3">{u.initials}</td>
+                          <td className="w-20 py-3">{u.email}</td>
+                          <td className="w-15 py-3">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
                           {this.renderGroupUserButtons(groupElement, u)}
                         </tr>
                       ))}
@@ -174,12 +174,12 @@ export default class AdminGroupElement extends React.Component {
                     <tbody>
                       {groupElement.devices.map((u, i) => (
                         <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                          <td className="w-5  py-3 fs-4">{i + 1}</td>
-                          <td className="w-20 py-3 fs-4">{u.name}</td>
-                          <td className="w-10 py-3 fs-4">{u.initials}</td>
-                          <td className="w-20 py-3 fs-4">{ }</td>
-                          <td className="w-15 py-3 fs-4">{ }</td>
-                          <td className="w-30 py-3 fs-4">
+                          <td className="w-5  py-3">{i + 1}</td>
+                          <td className="w-20 py-3">{u.name}</td>
+                          <td className="w-10 py-3">{u.initials}</td>
+                          <td className="w-20 py-3">{ }</td>
+                          <td className="w-15 py-3">{ }</td>
+                          <td className="w-30 py-3">
                             <DeleteGroupDeviceButton rootType={'Group'}
                               actionType={'Device'}
                               groupRec={groupElement}

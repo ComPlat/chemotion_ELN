@@ -51,14 +51,14 @@ export default class DelayedJobs extends Component {
 
     const tcolumn = (
       <tr className="align-middle">
-        <th className="w-4 fs-4" colSpan="2">ID</th>
-        <th className="w-5 fs-4">Queue</th>
-        <th className="w-5 fs-4">Job Class</th>
-        <th className="w-5 fs-4">Run At</th>
-        <th className="w-5 fs-4">Failed At</th>
-        <th className="w-4 fs-4">Attempts</th>
-        <th className="w-4 fs-4">Priority</th>
-        <th className="w-50 fs-4">Last Errors</th>
+        <th className="w-4" colSpan="2">ID</th>
+        <th className="w-5">Queue</th>
+        <th className="w-5">Job Class</th>
+        <th className="w-5">Run At</th>
+        <th className="w-5">Failed At</th>
+        <th className="w-4">Attempts</th>
+        <th className="w-4">Priority</th>
+        <th className="w-50">Last Errors</th>
       </tr>
     );
 
@@ -78,7 +78,7 @@ export default class DelayedJobs extends Component {
 
     return (
       <div>
-        <h3 className='bg-light p-3 rounded'>Delayed Jobs</h3>
+        <h3 className='bg-gray-200 p-3 rounded'>Delayed Jobs</h3>
         <Table responsive hover bordered>
           <thead>
             {tcolumn}

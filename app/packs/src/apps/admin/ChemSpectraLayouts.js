@@ -1,7 +1,9 @@
 /* eslint-disable no-param-reassign */
 import React, { Component } from 'react';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
-import { Table, Button, Form, Modal, Popover, OverlayTrigger, Alert } from 'react-bootstrap';
+import {
+  Table, Button, Form, Modal, Popover, OverlayTrigger, Alert
+} from 'react-bootstrap';
 import Select from 'react-select';
 
 export default class ChemSpectraLayouts extends Component {
@@ -132,8 +134,9 @@ export default class ChemSpectraLayouts extends Component {
     ChemSpectraFetcher.fetchSpectraLayouts()
       .then((layouts) => {
         if (layouts) {
-          this.setState({ layouts: Object.entries(layouts.current_data_types),
-          defaultLayouts: Object.entries(layouts.default_data_types)
+          this.setState({
+            layouts: Object.entries(layouts.current_data_types),
+            defaultLayouts: Object.entries(layouts.default_data_types)
           });
         }
       })
@@ -179,10 +182,10 @@ export default class ChemSpectraLayouts extends Component {
     return (
       <div>
         <Button
-          variant='primary'
-          size='md'
+          variant="primary"
+          size="md"
           onClick={this.handleShowNewTypeLayoutModal}
-          className='mb-2'
+          className="mb-2"
         >
           Add New Data Type
         </Button>
@@ -199,15 +202,15 @@ export default class ChemSpectraLayouts extends Component {
                 {alertMessage}
               </Alert>
             )}
-            <Form className='fs-4'>
-              <Form.Group>
+            <Form>
+              <Form.Group className="mb-2">
                 <Form.Label>Data Type</Form.Label>
                 <Form.Control
                   type="text"
                   name="dataType"
                   value={newDataType.dataType}
                   onChange={this.handleInputChange}
-                  className='py-2'
+                  className="py-2"
                 />
               </Form.Group>
               <Form.Group>
@@ -223,17 +226,17 @@ export default class ChemSpectraLayouts extends Component {
             </Form>
 
           </Modal.Body>
-          <Modal.Footer className='modal-footer border-0'>
-            <Button variant="primary" size='md' onClick={this.handleAddDataType}>
+          <Modal.Footer className="modal-footer border-0">
+            <Button variant="primary" size="md" onClick={this.handleAddDataType}>
               Add Data Type
             </Button>
-            <Button variant="warning" size='md' onClick={this.handleCloseNewTypeLayoutModal}>
+            <Button variant="warning" size="md" onClick={this.handleCloseNewTypeLayoutModal}>
               Cancel
             </Button>
           </Modal.Footer>
         </Modal>
 
-        <h3 className='bg-light p-3 rounded'>Data Types</h3>
+        <h3 className="bg-gray-200 p-3 rounded">Data Types</h3>
         <Table responsive hover bordered>
           <thead>
             <tr>
@@ -251,49 +254,47 @@ export default class ChemSpectraLayouts extends Component {
                 <td>
                   {' '}
                   {defaultLayouts.some(([layout, dataTypes]) => layout === entry.layout
-                    && !dataTypes.includes(entry.dataType)) ? (
+                    && !dataTypes.includes(entry.dataType)) && (
                       <div className="actions d-inline-block">
-                      <OverlayTrigger
-                        root
-                        trigger="focus"
-                        placement="top"
-                        overlay={(
-                          <Popover id="popover-positioned-scrolling-left">
-                            <Popover.Header id="popover-positioned-scrolling-left" as="h5">
-                              Delete this data type?
-                            </Popover.Header>
-                            <Popover.Body className='ps-5'>
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                className='me-2'
-                                onClick={() => {
-                                  this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
-                                }}
-                              >
-                                Yes
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="warning"
-                                onClick={this.handleClick}
-                              >
-                                No
-                              </Button>
-                            </Popover.Body>
-                          </Popover>
-                        )}
-                      >
-                        <Button
-                          size="sm"
-                          variant="danger"
+                        <OverlayTrigger
+                          root
+                          trigger="focus"
+                          placement="top"
+                          overlay={(
+                            <Popover id="popover-positioned-scrolling-left">
+                              <Popover.Header id="popover-positioned-scrolling-left" as="h5">
+                                Delete this data type?
+                              </Popover.Header>
+                              <Popover.Body className="ps-5">
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  className="me-2"
+                                  onClick={() => {
+                                    this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
+                                  }}
+                                >
+                                  Yes
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="warning"
+                                  onClick={this.handleClick}
+                                >
+                                  No
+                                </Button>
+                              </Popover.Body>
+                            </Popover>
+                          )}
                         >
-                          <i className="fa fa-trash-o" />
-                        </Button>
-                      </OverlayTrigger>
-                    </div>
-                  ) : (
-                    <span />
+                          <Button
+                            size="sm"
+                            variant="danger"
+                          >
+                            <i className="fa fa-trash-o" />
+                          </Button>
+                        </OverlayTrigger>
+                      </div>
                   )}
                 </td>
               </tr>

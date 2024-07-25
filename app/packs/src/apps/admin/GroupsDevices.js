@@ -289,7 +289,7 @@ export default class GroupsDevices extends React.Component {
     return (
       <Card>
         <Card.Header>
-          <Card.Title className='fs-3 mt-1 py-1'>
+          <Card.Title className='mt-1 py-1'>
             Group List
             ({groups.length})
             <Button variant="primary" className='ms-2' size='md' onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
@@ -298,7 +298,7 @@ export default class GroupsDevices extends React.Component {
         <Card.Body>
         <Table responsive condensed hover>
           <thead>
-              <tr className='fs-4 py-3' style={{ backgroundColor: '#eee' }}>
+              <tr className='bg-gray-200 '>
                 <th className="w-5 py-3">#</th>
                 <th className="w-25 py-3">Actions</th>
                 <th className="w-20 py-3">Name</th>

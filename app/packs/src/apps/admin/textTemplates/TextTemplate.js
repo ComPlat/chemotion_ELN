@@ -246,7 +246,7 @@ export default class TextTemplate extends React.Component {
           <Col md={8}>
             <div className="p-3">
               <InputGroup className="mb-3">
-                <InputGroup.Text className='fs-4 fw-bold me-3'>Preview</InputGroup.Text>
+                <InputGroup.Text className='fs-5 fw-bold me-3'>Preview</InputGroup.Text>
                 <TextTemplateIcon className='fs-3 my-3' template={selectedTemplate} />
               </InputGroup>
               <Form>
