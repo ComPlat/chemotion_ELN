@@ -19,6 +19,7 @@
     "@rails/webpacker": "https://github.com/rails/webpacker.git",
     "@sentry/react": "^7.73.0",
     "@sentry/tracing": "^7.16.0",
+    "@szhsin/react-accordion": "^1.2.4",
     "acorn": "^5.7.0",
     "ag-grid-community": "^32.0.1",
     "ag-grid-react": "^32.0.1",

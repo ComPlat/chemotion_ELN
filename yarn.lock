@@ -2984,6 +2984,13 @@
   resolved "https://registry.yarnpkg.com/@svgedit/svgcanvas/-/svgcanvas-7.2.0.tgz#71c2ab1c500c66f870752f06be9cebc72ec2e895"
   integrity sha512-ZICcBJIeq3ZKIrej889bEbIzeU2Rh6rosG8HyZI3NVDjkzYHfO5ppiqeNcN8hU6eah0lrhMXhuvu4dRoAYa5Vg==
 
+"@szhsin/react-accordion@^1.2.4":
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/@szhsin/react-accordion/-/react-accordion-1.2.4.tgz#2e2a07617744b0709da40e4d004aedba50d3e693"
+  integrity sha512-3PlhO4TT4myGeW987MY1N3macO+438A1E2U1KIajK9PoqoJ1Ifv47guIsFWuaBUW8QeOxacCvZKTjh/vBjr7wQ==
+  dependencies:
+    react-transition-state "^2.1.1"
+
 "@tootallnate/once@1":
   version "1.1.2"
   resolved "https://registry.npmjs.org/@tootallnate/once/-/once-1.1.2.tgz"
@@ -12414,6 +12421,11 @@ react-transition-group@^4.4.0, react-transition-group@^4.4.5:
     dom-helpers "^5.0.1"
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
+
+react-transition-state@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/react-transition-state/-/react-transition-state-2.1.1.tgz#1601a6177926b647041b7d598bf124321ab8d25b"
+  integrity sha512-kQx5g1FVu9knoz1T1WkapjUgFz08qQ/g1OmuWGi3/AoEFfS0kStxrPlZx81urjCXdz2d+1DqLpU6TyLW/Ro04Q==
 
 react-treeview@0.4.7:
   version "0.4.7"
