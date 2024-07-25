@@ -61,7 +61,7 @@ const DeviceDataCollectorTab = () => {
   const dirValue = userLevelSelected && dir ? `${dir}/{UserSubDirectories}` : (dir ? dir : '');
 
   const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;
-  const userLevelLabel = (<>Enable user level data collection <span className="fa fa-info-circle" aria-hidden="true" /></>);
+  const userLevelLabel = (<>Enable user level data collection <i className="fa fa-info-circle" /></>);
 
   const onChange = (field, value) => {
     let newValue = '';
@@ -82,7 +82,7 @@ const DeviceDataCollectorTab = () => {
                 <Form.Group>
                   <InputGroup>
                     <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                      <Button size="sm" variant="secondary" active className="clipboardBtn btn-xxsm" data-clipboard-target={`#copy-input-${i}`}>
+                      <Button size="sm" variant="secondary" className="clipboardBtn btn-xxsm" data-clipboard-target={`#copy-input-${i}`}>
                         <i className="fa fa-clipboard" />
                       </Button>
                     </OverlayTrigger>
@@ -106,7 +106,7 @@ const DeviceDataCollectorTab = () => {
   return (
     <Form className="d-flex justify-content-between flex-wrap">
       <Form.Group className="w-100 mb-4">
-        <Form.Label className="fw-bold">Watch method *</Form.Label>
+        <Form.Label>Watch method *</Form.Label>
         <Select
           isClearable
           value={methodValue}
@@ -117,7 +117,7 @@ const DeviceDataCollectorTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label className="fw-bold">User *</Form.Label>
+        <Form.Label>User *</Form.Label>
         <Form.Control
           type="text"
           value={userValue}
@@ -130,7 +130,7 @@ const DeviceDataCollectorTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4">
-        <Form.Label className="fw-bold">Host *</Form.Label>
+        <Form.Label>Host *</Form.Label>
         <Form.Control
           type="text"
           value={hostValue}
@@ -143,7 +143,7 @@ const DeviceDataCollectorTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label className="fw-bold">SFTP authentication with</Form.Label>
+        <Form.Label>SFTP authentication with</Form.Label>
         <Select
           value={authenticationValue}
           options={authenticationOptions}
@@ -152,7 +152,7 @@ const DeviceDataCollectorTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4">
-        <Form.Label className="fw-bold">Key file</Form.Label>
+        <Form.Label>Key file</Form.Label>
         <Form.Control
           type="text"
           value={keyFileValue}
@@ -165,7 +165,7 @@ const DeviceDataCollectorTab = () => {
       </Form.Group>
 
       <Form.Group className="w-100 mb-4">
-        <Form.Label className="fw-bold">Watch directory *</Form.Label>
+        <Form.Label>Watch directory *</Form.Label>
         <Form.Control
           type="text"
           value={dirValue}
@@ -212,7 +212,7 @@ const DeviceDataCollectorTab = () => {
           readOnly={startsWith(methodValueCheck, 'file')}
           disabled={startsWith(methodValueCheck, 'file')}
         />
-        <span className="fa fa-info-circle" aria-hidden="true"> Folderwatcher: set to 0 for a varying number of files</span>
+        <i className="fa fa-info-circle"> Folderwatcher: set to 0 for a varying number of files</i>
       </Form.Group>
     </Form>
   );

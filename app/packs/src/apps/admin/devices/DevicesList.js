@@ -63,11 +63,11 @@ const DevicesList = () => {
         <tbody>
           {device.users.map((user, i) => (
             <tr key={`row_${device.id}-${user.id}`}>
-              <td className="w-5">{i + 1}</td>
-              <td className="w-25">{user.name}</td>
-              <td className="w-10">{user.initials}</td>
-              <td className="w-40">{user.type}</td>
-              <td className="w-20">{deleteButton(device, user.type.toLowerCase(), user)}</td>
+              <td>{i + 1}</td>
+              <td>{user.name}</td>
+              <td>{user.initials}</td>
+              <td>{user.type}</td>
+              <td>{deleteButton(device, user.type.toLowerCase(), user)}</td>
             </tr>
           ))}
         </tbody>
@@ -227,7 +227,7 @@ const DevicesList = () => {
               type="button"
               variant="info"
               onClick={() => toggleDeviceUsersAndGroups(device.id)}>
-              <i className="fa fa-users pe-1" />
+              <i className="fa fa-users me-1" />
               ({device.users.length < 10 ? `0${device.users.length}` : device.users.length})
             </Button>
           </OverlayTrigger>
@@ -280,7 +280,7 @@ const DevicesList = () => {
   return (
     <Card>
       <Card.Header className="d-flex justify-content-between align-items-center">
-        <span className="fw-bold fs-3">Devices</span>
+        <span className="fw-bold fs-4">Devices</span>
         <Button variant="light" onClick={() => showCreateDeviceModal()}>Add new device</Button>
       </Card.Header>
       <Card.Body>
@@ -288,11 +288,11 @@ const DevicesList = () => {
         <Table responsive hover key="devices-list">
           <thead>
             <tr className="bg-dark-subtle">
-              <th className="w-5">#</th>
-              <th className="w-20">Actions</th>
-              <th className="w-30">Name</th>
-              <th className="w-10">Initial</th>
-              <th className="w-40">Data Collector / NoVNC</th>
+              <th>#</th>
+              <th>Actions</th>
+              <th>Name</th>
+              <th>Initial</th>
+              <th>Data Collector / NoVNC</th>
             </tr>
           </thead>
           {listDevices()}

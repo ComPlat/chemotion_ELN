@@ -16,7 +16,7 @@ const DeviceNovncTab = () => {
     devicesStore.changeDevice(field, newValue);
   }
 
-  const RenderStoredTarget = () => {
+  const renderStoredTarget = () => {
     if (device.novnc_target && device.novnc_token) {
       return `${device.novnc_target}?token=${device.novnc_token}`;
     }
@@ -26,7 +26,7 @@ const DeviceNovncTab = () => {
     return 'None';
   };
 
-  const RenderCurrentTarget = () => {
+  const renderCurrentTarget = () => {
     if (device.novnc_target && device.novnc_token) {
       return `${device.novnc_target}?token=${device.novnc_token}`;
     }
@@ -46,7 +46,7 @@ const DeviceNovncTab = () => {
   return (
     <Form className="d-flex justify-content-between flex-wrap">
       <Form.Group className="w-50 mb-3 pe-4">
-        <Form.Label className="fw-bold">Target *</Form.Label>
+        <Form.Label>Target *</Form.Label>
         <Form.Control
           type="text"
           value={device.novnc_target ? device.novnc_target : ''}
@@ -57,7 +57,7 @@ const DeviceNovncTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-3">
-        <Form.Label className="fw-bold">Websockify Token</Form.Label>
+        <Form.Label>Websockify Token</Form.Label>
         <Form.Control
           type="text"
           value={device.novnc_token ? device.novnc_token : ''}
@@ -66,22 +66,23 @@ const DeviceNovncTab = () => {
         />
       </Form.Group>
 
-      <Form.Group className="w-100 mb-3">
-        <span className="fa fa-info-circle" aria-hidden="true">
+      <p className="w-100 mb-3">
+        <i className="fa fa-info-circle">
           <b className="ps-1">Current Target</b>&nbsp;
-          <RenderStoredTarget />
-        </span>
+          {renderStoredTarget()}
+        </i>
         <br />
-        <span className="fa fa-info-circle" aria-hidden="true">
+        <i className="fa fa-info-circle" aria-hidden="true">
           <b className="ps-1">Edited Target</b>&nbsp;
-          <RenderCurrentTarget />
-        </span>
-        <hr />
-        <h4>RFB Credentials</h4>
-      </Form.Group>
+          {renderCurrentTarget()}
+        </i>
+      </p>
+
+      <hr className="w-100" />
+      <h4 className="w-100 mb-4">RFB Credentials</h4>
 
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label className="fw-bold">Password</Form.Label>
+        <Form.Label>Password</Form.Label>
         <Form.Control
           type="text"
           value={passwordValue}

@@ -36,7 +36,7 @@ const DeviceUserGroupsTab = () => {
   return (
     <Form>
       <Form.Group className="mb-4">
-        <Form.Label className="fw-bold">Add device permission to users</Form.Label>
+        <Form.Label>Add device permission to users</Form.Label>
         <AsyncSelect
           isMulti
           isClearable={false}
@@ -52,7 +52,7 @@ const DeviceUserGroupsTab = () => {
         />
       </Form.Group>
       <Form.Group className="mb-4">
-        <Form.Label className="fw-bold">Add device permission to groups</Form.Label>
+        <Form.Label>Add device permission to groups</Form.Label>
         <AsyncSelect
           isMulti
           isClearable={false}

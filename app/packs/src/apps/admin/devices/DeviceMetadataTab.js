@@ -80,8 +80,8 @@ const DeviceMetadataTab = () => {
     deviceMetadata.dates.map((dateItem, index) => {
       dateForms.push(
         <div className="d-flex justify-content-between flex-wrap w-100" key={`group-div-${index}`}>
-          <Form.Group className="w-50 pe-4">
-            <Form.Label className="fw-bold" key={`date-label-${index}`}>Date</Form.Label>
+          <Form.Group className="col-6 pe-4">
+            <Form.Label key={`date-label-${index}`}>Date</Form.Label>
             <Form.Control
               type="text"
               value={dateItem.date}
@@ -89,8 +89,8 @@ const DeviceMetadataTab = () => {
               onChange={event => updateDeviceMetadataDate(index, 'date', event.target.value)}
             />
           </Form.Group>
-          <Form.Group className="w-45 pe-4">
-            <Form.Label className="fw-bold">Date Type</Form.Label>
+          <Form.Group className="col-5">
+            <Form.Label>Date Type</Form.Label>
             <Form.Control
               type="text"
               value={dateItem.dateType}
@@ -98,8 +98,8 @@ const DeviceMetadataTab = () => {
               onChange={event => updateDeviceMetadataDate(index, 'dateType', event.target.value)}
             />
           </Form.Group>
-          <Form.Group className="w-5 align-self-center">
-            <Form.Label className="fw-bold w-100">Action</Form.Label>
+          <Form.Group className="col align-self-center">
+            <Form.Label className="w-100 text-end">Action</Form.Label>
             <Button variant="danger"
               size="sm"
               className="float-end"
@@ -146,7 +146,7 @@ const DeviceMetadataTab = () => {
     <Form className="d-flex justify-content-between flex-wrap">
       {getFromDataCiteHeadline()}
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label className="fw-bold">DOI *</Form.Label>
+        <Form.Label>DOI *</Form.Label>
         <Form.Control
           type="text"
           value={deviceMetadata.doi ? deviceMetadata.doi : ''}
@@ -159,7 +159,7 @@ const DeviceMetadataTab = () => {
       {createDeviceMetadataHeadline()}
 
       <Form.Group className="w-100 mb-4">
-        <Form.Label className="fw-bold">State</Form.Label>
+        <Form.Label>State</Form.Label>
         <Select
           value={dataCiteStateValue}
           options={dataCiteStateOptions}
@@ -168,7 +168,7 @@ const DeviceMetadataTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label className="fw-bold">URL *</Form.Label>
+        <Form.Label>URL *</Form.Label>
         <Form.Control
           type="text"
           value={deviceMetadata.url ? deviceMetadata.url : ''}
@@ -178,7 +178,7 @@ const DeviceMetadataTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4">
-        <Form.Label className="fw-bold">Landing Page</Form.Label>
+        <Form.Label>Landing Page</Form.Label>
         <Form.Control
           type="text"
           value={deviceMetadata.landing_page ? deviceMetadata.landing_page : ''}
@@ -188,7 +188,7 @@ const DeviceMetadataTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label className="fw-bold">Name</Form.Label>
+        <Form.Label>Name</Form.Label>
         <Form.Control
           type="text"
           value={deviceMetadata.name ? deviceMetadata.name : ''}
@@ -198,7 +198,7 @@ const DeviceMetadataTab = () => {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4">
-        <Form.Label className="fw-bold">Publication Year *</Form.Label>
+        <Form.Label>Publication Year *</Form.Label>
         <Form.Control
           type="number"
           value={deviceMetadata.publication_year ? deviceMetadata.publication_year : ''}
@@ -208,7 +208,7 @@ const DeviceMetadataTab = () => {
       </Form.Group>
 
       <Form.Group className="w-100 mb-4">
-        <Form.Label className="fw-bold">Description</Form.Label>
+        <Form.Label>Description</Form.Label>
         <Form.Control
           type="text"
           value={deviceMetadata.description ? deviceMetadata.description : ''}
@@ -218,7 +218,7 @@ const DeviceMetadataTab = () => {
       </Form.Group>
 
       <Form.Group className="w-100 mb-2">
-        <Form.Label className="fw-bold">Dates</Form.Label>
+        <Form.Label>Dates</Form.Label>
       </Form.Group>
       {deviceMetaDataDates()}
 
