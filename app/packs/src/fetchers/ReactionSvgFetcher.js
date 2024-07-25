@@ -18,7 +18,7 @@ export default class ReactionSvgFetcher {
         conditions: (typeof conditions === 'string') ? conditions : '',
       })
     }).then((response) => {
-      return response.status == 201 ? response.json() : {}
+      return response.status == 201 ? response.json() : {};
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
