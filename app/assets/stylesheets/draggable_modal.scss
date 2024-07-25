@@ -102,3 +102,41 @@
 .draggable-modal-form-container.minimized {
   display: none;
 }
+
+.draggable-modal-form-fields {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 1.25rem; 
+}
+
+.draggable-modal-form-fields .device-alert {
+  flex: 0 0 auto;
+  height: 93px;
+  overflow-y: auto;
+  white-space: pre-line;
+}
+
+.draggable-modal-form-fields .form-control {
+  height: 38px;
+}
+.draggable-modal-scrollable-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  max-height: calc(85vh - 125px - 1.5rem);
+  margin-bottom: 1.5rem;
+}
+
+.draggable-modal-scrollable-content.with-alert {
+  max-height: calc(85vh - 232px - 1.5rem);
+}
+
+.draggable-modal-scrollable-content .tab-content {
+  padding: 1rem 0.25rem;
+}
+
+.draggable-modal-scrollable-content .tab-content .is-invalid__control {
+  border-color: var(--bs-danger);
+}
+
