@@ -7,7 +7,7 @@ module Entities
         def all(reaction_process_step)
           {
             added_materials: added_materials(reaction_process_step),
-            removable_materials: removable_materials(reaction_process_step),
+            removable_samples: removable_samples(reaction_process_step),
             mounted_equipment: mounted_equipment(reaction_process_step),
             transferable_samples: transferable_samples(reaction_process_step),
             transfer_targets: transfer_targets(reaction_process_step),
@@ -48,32 +48,15 @@ module Entities
         end
 
         # TODO: Rewrite scoped to Remove origin type
-        def removable_materials(reaction_process_step)
-          current_solvents = added_samples_acting_as(reaction_process_step, 'SOLVENT') +
-                             added_samples_acting_as(reaction_process_step, 'MEDIUM') +
-                             added_samples_acting_as(reaction_process_step, 'ADDITIVE') +
-                             added_samples_acting_as(reaction_process_step, 'DIVERSE_SOLVENT')
-
+        def removable_samples(reaction_process_step)
           {
-            FROM_REACTION: current_solvents,
-            FROM_STEP: current_solvents,
-            FROM_SAMPLE: current_solvents,
-            STEPWISE: current_solvents,
-            FROM_METHOD: current_solvents,
+            FROM_REACTION: all_reaction_samples_options(reaction_process_step),
+            FROM_STEP: current_step_samples_options(reaction_process_step),
+            FROM_SAMPLE: saved_sample_with_solvents_options(reaction_process_step),
+            DIVERSE_SOLVENTS: [],
+            STEPWISE: [],
+            FROM_METHOD: [],
           }
-          # For UI selects to REMOVE only previously added materials, scoped to acts_as.
-          # {
-          #   SOLVENT: added_samples_acting_as(reaction_process_step, 'SOLVENT'),
-          #   MEDIUM: added_samples_acting_as(reaction_process_step, 'MEDIUM'),
-          #   ADDITIVE: added_samples_acting_as(reaction_process_step, 'ADDITIVE'),
-          #   DIVERSE_SOLVENT: added_samples_acting_as(reaction_process_step, 'DIVERSE_SOLVENT'),
-          # }
-        end
-
-        def added_samples_acting_as(reaction_process_step, acts_as)
-          reaction_process_step.added_materials(acts_as).map do |sample|
-            sample_minimal_option(sample, acts_as)
-          end
         end
 
         def mounted_equipment(reaction_process_step)
@@ -117,10 +100,56 @@ module Entities
           end
         end
 
+        private
+
+        def current_step_samples_options(reaction_process_step)
+          %w[SOLVENT MEDIUM ADDITIVE DIVERSE_SOLVENT].map do |material|
+            added_samples_acting_as(reaction_process_step, material)
+          end.flatten.uniq
+        end
+
+        def all_reaction_samples_options(reaction_process_step)
+          reaction_process_step.siblings.order(:position).map do |current_step|
+            current_step_samples_options(current_step)
+          end.flatten.uniq
+        end
+
+        def saved_sample_with_solvents_options(reaction_process_step)
+          save_actions = reaction_process_step.reaction_process_activities.select do |activity|
+            activity.activity_name == 'SAVE'
+          end
+
+          save_actions.map do |action|
+            saved_sample_with_solvents_option(action)
+          end
+        end
+
+        def saved_sample_with_solvents_option(action)
+          return {} unless action.sample?
+
+          solvents = action.workup.dig('sample_origin_purify_step', 'solvents') || []
+
+          sample_minimal_option(action.sample, 'SAMPLE').merge(
+            {
+              amount: { value: action.sample.target_amount_value, unit: action.sample.target_amount_unit },
+              solvents: solvents,
+              solvents_amount: action.workup['extra_solvents_amount'],
+            },
+          )
+        end
+
+        def added_samples_acting_as(reaction_process_step, acts_as)
+          reaction_process_step.added_materials(acts_as).map do |sample|
+            sample_minimal_option(sample,
+                                  acts_as).merge({ value: sample.target_amount_value,
+                                                   unit: sample.target_amount_unit })
+          end
+        end
+
         def option_for_purify_step(purify_step, purification, position)
           solvents = purify_step['solvents'] || []
 
-          solvent_labels = solvents&.pluck('label')&.join(', ')
+          solvent_labels = solvents.pluck('label')&.join(', ')
 
           purify_step.merge({
                               value: "#{purification.id}-purify-step-#{position + 1}}",
