@@ -6,9 +6,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, DropdownButton,
-  Modal, Alert, Card, Form,
-  Accordion
+  Tooltip, OverlayTrigger, Modal, Alert, Card, Form,
+  Accordion, Dropdown
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -1199,25 +1198,28 @@ export default class SampleDetails extends React.Component {
 
   initiateAnalysisButton(sample) {
     return (
-      <div style={{ display: 'inline-block', marginLeft: '100px' }}>
-        <DropdownButton id="InitiateAnalysis" variant="info" size="sm" title="Initiate Analysis">
-          <MenuItem
+      <Dropdown className="d-inline-block">
+        <Dropdown.Toggle variant="info" size="sm" id="InitiateAnalysis">
+          Initiate Analysis
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          <Dropdown.Item
             eventKey="1"
             onClick={() => this.initiateAnalysisWithKind(sample, chmoConversions.nmr_1h.termId)}
           >
             {chmoConversions.nmr_1h.label}
-          </MenuItem>
-          <MenuItem
+          </Dropdown.Item>
+          <Dropdown.Item
             eventKey="2"
             onClick={() => this.initiateAnalysisWithKind(sample, chmoConversions.nmr_13c.termId)}
           >
             {chmoConversions.nmr_13c.label}
-          </MenuItem>
-          <MenuItem eventKey="3" onClick={() => this.initiateAnalysisWithKind(sample, 'Others')}>others</MenuItem>
-          <MenuItem eventKey="4" onClick={() => this.initiateAnalysisWithKind(sample, 'Others2x')}>others 2x</MenuItem>
-          <MenuItem eventKey="5" onClick={() => this.initiateAnalysisWithKind(sample, 'Others3x')}>others 3x</MenuItem>
-        </DropdownButton>
-      </div>
+          </Dropdown.Item>
+          <Dropdown.Item eventKey="3" onClick={() => this.initiateAnalysisWithKind(sample, 'Others')}>others</Dropdown.Item>
+          <Dropdown.Item eventKey="4" onClick={() => this.initiateAnalysisWithKind(sample, 'Others2x')}>others 2x</Dropdown.Item>
+          <Dropdown.Item eventKey="5" onClick={() => this.initiateAnalysisWithKind(sample, 'Others3x')}>others 3x</Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
     );
   }
 
@@ -1283,7 +1285,7 @@ export default class SampleDetails extends React.Component {
     return (
       // eslint-disable-next-line react/jsx-no-bind
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
-        <Glyphicon glyph="pencil" />
+        <i className="fa fa-pencil" />
       </Button>
     );
   }
@@ -1302,13 +1304,12 @@ export default class SampleDetails extends React.Component {
           <>
             <div
               className={className}
-              style={{ position: 'relative' }}
               onClick={this.showStructureEditor.bind(this)}
-              onKeyPress={this.showStructureEditor.bind(this)}
+              onKeyPress
               role="button"
               tabIndex="0"
             >
-              <Glyphicon className="pull-right" glyph="pencil" />
+              <i className="fa fa-pencil" />
               <SVG key={svgPath} src={svgPath} className="molecule-mid" />
             </div>
             <MolViewerBtn
