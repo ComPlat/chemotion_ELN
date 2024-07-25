@@ -1,3 +1,4 @@
+/* eslint-disable arrow-parens */
 import 'whatwg-fetch';
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
@@ -255,11 +256,11 @@ export default class UsersFetcher {
     return promise;
   }
 
-  static updateUserKetcher2Options(data) {
-    data = JSON.parse(data);
+  static updateUserKetcher2Options(list) {
+    const data = JSON.parse(list);
     const newSource = {};
-    Object.keys(data).map((item) => {
-      newSource[item.replaceAll("-", "_")] = data[item];
+    Object.keys(data).forEach((item) => {
+      newSource[item.replaceAll('-', '_')] = data[item];
     });
     const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
       credentials: 'same-origin',

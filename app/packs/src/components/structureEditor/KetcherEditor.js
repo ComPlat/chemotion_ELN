@@ -2,10 +2,10 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import UsersFetcher from '../../fetchers/UsersFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 function KetcherEditor(props) {
-  const iframRef = useRef();
+  const iframeRef = useRef();
   const {
     editor, iH, iS, molfile
   } = props;
@@ -39,8 +39,14 @@ function KetcherEditor(props) {
   return (
     <div>
       <iframe
-        ref={iframRef}
-        id={editor.id} src={editor.extSrc} title={editor.label} height={iH} width="100%" style={iS} />
+        ref={iframeRef}
+        id={editor.id}
+        src={editor.extSrc}
+        title={editor.label}
+        height={iH}
+        width="100%"
+        style={iS}
+      />
     </div>
   );
 }
