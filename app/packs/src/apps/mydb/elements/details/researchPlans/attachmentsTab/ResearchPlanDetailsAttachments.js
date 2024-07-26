@@ -1,3 +1,4 @@
+/* eslint-disable lines-between-class-members */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -57,6 +58,7 @@ class ResearchPlanDetailsAttachments extends Component {
     this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
     this.showImportConfirm = this.showImportConfirm.bind(this);
     this.hideImportConfirm = this.hideImportConfirm.bind(this);
+    this.addUniqueAttachments = this.addUniqueAttachments.bind(this);
   }
 
   componentDidMount() {
@@ -216,6 +218,20 @@ class ResearchPlanDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
+  addUniqueAttachments(newAttachments = []) {
+    const { filteredAttachments } = this.state;
+    const existingIds = new Set(filteredAttachments.map((attachment) => attachment.id));
+    const uniqueAttachments = newAttachments.filter((attachment) => {
+      if (!existingIds.has(attachment.id)) {
+        existingIds.add(attachment.id);
+        return true;
+      }
+      return false;
+    });
+
+    filteredAttachments.push(...uniqueAttachments);
+  }
+
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
@@ -241,38 +257,14 @@ class ResearchPlanDetailsAttachments extends Component {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
 
-    const attachmentsFromMessages=this.context.attachmentNotificationStore.getAttachmentsOfMessages();
-    
-    filteredAttachments.push(...attachmentsFromMessages);
+    const attachmentsFromMessages = this.context.attachmentNotificationStore.getAttachmentsOfMessages();
+
+    this.addUniqueAttachments(attachmentsFromMessages);
+
     const { onUndoDelete, attachments } = this.props;
-    const message1 = {
-      id: Math.floor(Math.random()*10000),
-      message_id: 101,
-      subject: "Subject 1",
-      channel_type: 999,
-      sender_id: 1,
-      sender_name: "Sender 1",
-      receiver_id: 2,
-      is_ack: 0,
-      created_at: "2023-07-01T12:00:00Z",
-      updated_at: "2023-07-01T12:00:00Z",
-      content: {
-        "id": 170,
-        "filename": "TLC-_080724160125.png",
-        "identifier": "7d27f986-f682-429e-92e4-c9e6e72eb38a",
-        "content_type": "image/png",
-        "thumb": true,
-        "aasm_state": "non_jcamp",
-        "filesize": 1485,
-        "created_at": "08.07.2024, 14:01:25 +0000",
-        "updated_at": "08.07.2024, 14:01:25 +0000"
-      }
-    };
 
     return (
       <div className="attachment-main-container">
-        <button style={{width: '30px',height: '30px'}} onClick={() => { this.context.attachmentNotificationStore.addMessage(message1)}}/>
-        {this.context.attachmentNotificationStore.messageAmount()}
         {this.renderImageEditModal()}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: '1', alignSelf: 'center' }}>
@@ -280,7 +272,7 @@ class ResearchPlanDetailsAttachments extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {attachments.length > 0
-        && sortingAndFilteringUI( 
+        && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
