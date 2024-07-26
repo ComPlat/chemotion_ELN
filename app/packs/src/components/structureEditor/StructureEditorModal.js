@@ -328,8 +328,8 @@ export default class StructureEditorModal extends React.Component {
   }
 
   render() {
-    const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
-    const { cancelBtnText, submitBtnText } = this.props;
+    const { cancelBtnText, submitBtnText, onSave } = this.props;
+    const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const {
       editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal

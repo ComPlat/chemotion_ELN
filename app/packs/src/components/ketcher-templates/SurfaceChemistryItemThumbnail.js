@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Image
 } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 
 function SurfaceChemistryItemThumbnail({
   item, icon, title, onClickHandle
@@ -17,3 +18,11 @@ function SurfaceChemistryItemThumbnail({
 }
 
 export default SurfaceChemistryItemThumbnail;
+
+SurfaceChemistryItemThumbnail.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  item: PropTypes.object.isRequired,
+  onClickHandle: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  icon: PropTypes.string.isRequired
+};

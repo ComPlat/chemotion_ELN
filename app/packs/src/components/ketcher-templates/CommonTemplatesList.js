@@ -1,6 +1,4 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable react/prop-types */
+import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -61,3 +59,10 @@ function CommonTemplatesList({ options, onClickHandle, selectedItem }) {
 }
 
 export default CommonTemplatesList;
+
+CommonTemplatesList.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  options: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onClickHandle: PropTypes.func.isRequired,
+  selectedItem: PropTypes.string.isRequired
+};

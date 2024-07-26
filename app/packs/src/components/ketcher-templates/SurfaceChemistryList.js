@@ -9,6 +9,7 @@ import {
 } from 'react-bootstrap';
 import { Accordion, AccordionItem } from '@szhsin/react-accordion';
 import SurfaceChemistryItemThumbnail from 'src/components/ketcher-templates/SurfaceChemistryItemThumbnail';
+import PropTypes from 'prop-types';
 
 const basicShapeKetcherFormat = {
   root: {
@@ -194,3 +195,7 @@ function SurfaceChemistryList(props) {
 }
 
 export default SurfaceChemistryList;
+SurfaceChemistryList.propTypes = {
+  onSelectShape: PropTypes.func.isRequired,
+  selectedShape: PropTypes.string.isRequired
+};
