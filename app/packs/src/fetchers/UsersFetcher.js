@@ -1,3 +1,4 @@
+/* eslint-disable arrow-parens */
 import 'whatwg-fetch';
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
@@ -168,10 +169,8 @@ export default class UsersFetcher {
 
   static fetchDeviceMetadataByDeviceId(deviceId) {
     const promise = fetch(`/api/v1/groups/deviceMetadata/${deviceId}`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
+      credentials: 'same-origin'
+    }).then(response => response.json()).then(json => json)
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -301,6 +300,39 @@ export default class UsersFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
+    return promise;
+  }
+
+  static fetchUserKetcher2Options() {
+    const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+    }).then(response => response.json()).then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static updateUserKetcher2Options(list) {
+    const data = JSON.parse(list);
+    const newSource = {};
+    Object.keys(data).forEach((item) => {
+      newSource[item.replaceAll('-', '_')] = data[item];
+    });
+    const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        data: JSON.stringify(newSource)
+      })
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
     return promise;
   }
 }

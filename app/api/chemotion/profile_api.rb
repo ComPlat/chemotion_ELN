@@ -204,6 +204,20 @@ module Chemotion
         new_profile) || error!('profile update failed', 500)
 
         { status: true }
+        end
+      desc 'get user profile editor ketcher 2 setting options'
+      get 'editors/ketcher2-options' do
+        Ketcher2Setting.find_by(user_id: current_user.id)
+      end
+
+      desc 'update user profile editor ketcher 2 setting options'
+      params do
+        requires :data, type: String, desc: 'data structure for ketcher options'
+      end
+      put 'editors/ketcher2-options' do
+        Ketcher2Setting.where(user_id: current_user.id).delete_all
+        new_settings = Ketcher2Setting.create({ user_id: current_user.id }.merge(JSON.parse(params[:data])))
+        { data: new_settings }
       end
     end
   end
