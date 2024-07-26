@@ -186,7 +186,12 @@ module Chemotion
 
           reaction.update!(attributes)
           reaction.touch
-          reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
+          reaction_vessel_size = attributes[:vessel_size]
+          reaction = Usecases::Reactions::UpdateMaterials.new(
+            reaction, materials,
+            current_user,
+            reaction_vessel_size
+          ).execute!
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?

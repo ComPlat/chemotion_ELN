@@ -175,6 +175,7 @@ class Sample < ApplicationRecord
   after_save :update_counter
   after_create :create_root_container
   after_save :update_equivalent_for_reactions
+  after_save :update_gas_material
   after_save :update_svg_for_reactions, unless: :skip_reaction_svg_update?
 
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
@@ -560,6 +561,30 @@ class Sample < ApplicationRecord
     tag&.taggable_data&.fetch('user_labels', nil)
   end
 
+  def detect_amount_type
+    amount_value = real_amount_value.nil? ? target_amount_value : real_amount_value
+    amount_unit = real_amount_unit.nil? ? target_amount_unit : real_amount_unit
+    { 'value' => amount_value, 'unit' => amount_unit }
+  end
+
+  def amount_mol
+    mol = nil
+    amount_value = detect_amount_type['value']
+    case detect_amount_type['unit']
+    when 'l'
+      mol = if has_molarity
+              amount_value * molarity_value
+            else
+              amount_value * density * 1000 * purity / molecule.molecular_weight
+            end
+    when 'mol'
+      mol = amount_value
+    when 'g'
+      mol = (amount_value * purity) / molecule.molecular_weight
+    end
+    mol
+  end
+
 private
 
   def has_collections
@@ -730,6 +755,23 @@ private
     return unless svg_file_name
 
     Rails.public_path.join('images', 'samples', svg_file_name)
+  end
+
+  def update_gas_material
+    rel_reaction_id = reactions_samples.first&.reaction_id
+    gas_type = reactions_samples.first&.gas_type
+    return unless rel_reaction_id && gas_type == 'catalyst'
+
+    catalyst_mol_value = amount_mol
+    return if catalyst_mol_value.nil?
+
+    ReactionsSample.where(
+      reaction_id: rel_reaction_id,
+      gas_type: 3,
+      type: %w[ReactionsProductSample],
+    ).find_each do |material|
+      material.update_gas_material(catalyst_mol_value)
+    end
   end
 end
 # rubocop:enable Metrics/ClassLength

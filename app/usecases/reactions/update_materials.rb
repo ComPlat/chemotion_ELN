@@ -37,9 +37,10 @@ module Usecases
   module Reactions
     class UpdateMaterials
       include ContainerHelpers
+      include Reactable
       attr_reader :current_user
 
-      def initialize(reaction, materials, user)
+      def initialize(reaction, materials, user, vessel_size)
         @reaction = reaction
         @materials = {
           starting_material: Array(materials['starting_materials']).map { |m| OSample.new(m) },
@@ -49,6 +50,7 @@ module Usecases
           product: Array(materials['products']).map { |m| OSample.new(m) }
         }
         @current_user = user
+        @vessel_size = vessel_size
       end
 
       def execute!
@@ -142,13 +144,42 @@ module Usecases
         new_sample
       end
 
+      def update_mole_gas_product(sample, vessel_volume)
+        gas_phase_data = sample.gas_phase_data
+
+        calculate_mole_gas_product(
+          gas_phase_data['part_per_million'],
+          gas_phase_data['temperature'],
+          vessel_volume,
+        )
+      end
+
+      def set_mole_value_gas_product(existing_sample, sample)
+        vessel_volume = reaction_vessel_volume(@reaction.vessel_size)
+        return nil if vessel_volume.nil?
+
+        if sample.real_amount_value.nil?
+          existing_sample.target_amount_value = update_mole_gas_product(sample, vessel_volume)
+          existing_sample.target_amount_unit = 'mol'
+        else
+          existing_sample.real_amount_value = update_mole_gas_product(sample, vessel_volume)
+          existing_sample.real_amount_unit = 'mol'
+        end
+      end
+
       def update_existing_sample(sample, fixed_label)
         existing_sample = Sample.find(sample.id)
 
-        existing_sample.target_amount_value = sample.target_amount_value
-        existing_sample.target_amount_unit = sample.target_amount_unit
-        existing_sample.real_amount_value = sample.real_amount_value
-        existing_sample.real_amount_unit = sample.real_amount_unit
+        update_gas_material = (@reaction.vessel_size['amount'] != @vessel_size['amount'] ||
+          @reaction.vessel_size['unit'] != @vessel_size['unit'])
+        if sample.gas_type == 'gas' && update_gas_material
+          set_mole_value_gas_product(existing_sample, sample)
+        else
+          existing_sample.target_amount_value = sample.target_amount_value
+          existing_sample.target_amount_unit = sample.target_amount_unit
+          existing_sample.real_amount_value = sample.real_amount_value
+          existing_sample.real_amount_unit = sample.real_amount_unit
+        end
         existing_sample.metrics = sample.metrics
         existing_sample.external_label = sample.external_label if sample.external_label
         existing_sample.short_label = sample.short_label if sample.short_label
