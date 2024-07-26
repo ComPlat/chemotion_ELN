@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-no-bind */
 /* eslint-disable max-len */
 /* eslint-disable react/forbid-prop-types */
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -21,13 +21,10 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
-import ProfilesFetcher from '../../fetchers/ProfilesFetcher';
 import SurfaceChemistryList from 'src/components/ketcher-templates/SurfaceChemistryList';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 
-const DEFAULT_EDITOR_KETCHER2 = 'ketcher2';
 const notifyError = (message) => {
   NotificationActions.add({
     title: 'Structure Editor error',
@@ -38,17 +35,15 @@ const notifyError = (message) => {
     autoDismiss: 10,
   });
 };
-const key = 'ketcher-tmpls';
 
 const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
       es: scripts,
       id: editor,
-      cbError: () =>
-        notifyError(
-          `The ${editor} failed to initialize! Please contact your system administrator!`
-        ),
+      cbError: () => notifyError(
+        `The ${editor} failed to initialize! Please contact your system administrator!`
+      ),
       cbLoaded: () => {},
     });
   }
@@ -74,11 +69,11 @@ const createEditor = (configs, availableEditors) => {
 };
 
 const createEditors = (_state = {}) => {
-  const matriceConfigs =
-    _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
+  const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors || {};
+
   const grantEditors = matriceConfigs
-    .map(({configs}) => createEditor(configs, availableEditors.editors))
+    .map(({ configs }) => createEditor(configs, availableEditors.editors))
     .filter(Boolean);
 
   const editors = [
@@ -89,11 +84,14 @@ const createEditors = (_state = {}) => {
       }),
     },
     ...grantEditors,
-  ].reduce((acc, args) => ({...acc, ...args}), {});
+  ].reduce((acc, args) => ({ ...acc, ...args }), {});
+
   return editors;
 };
 
-function Editor({type, editor, molfile, iframeHeight, iframeStyle, fnCb}) {
+function Editor({
+  type, editor, molfile, iframeHeight, iframeStyle, fnCb
+}) {
   switch (type) {
     case 'ketcher2':
       return (
@@ -148,8 +146,7 @@ Editor.propTypes = {
 };
 
 function EditorList(props) {
-  const {options, fnChange, value} = props;
-
+  const { options, fnChange, value } = props;
   return (
     <FormGroup>
       <ControlLabel>Structure Editor</ControlLabel>
@@ -182,36 +179,28 @@ EditorList.propTypes = {
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-function WarningBox({handleCancelBtn, hideWarning, show}) {
-  return show ? (
-    <Panel bsStyle="info">
-      <Panel.Heading>
-        <Panel.Title>Parents/Descendants will not be changed!</Panel.Title>
-      </Panel.Heading>
-      <Panel.Body>
-        <p>
-          This sample has parents or descendants, and they will not be changed.
-        </p>
-        <p>Are you sure?</p>
-        <br />
-        <Button
-          bsStyle="danger"
-          onClick={handleCancelBtn}
-          className="g-marginLeft--10"
-        >
-          Cancel
-        </Button>
-        <Button
-          bsStyle="warning"
-          onClick={hideWarning}
-          className="g-marginLeft--10"
-        >
-          Continue Editing
-        </Button>
-      </Panel.Body>
-    </Panel>
-  ) : null;
-
+function WarningBox({ handleCancelBtn, hideWarning, show }) {
+  return show
+    ? (
+      <Panel bsStyle="info">
+        <Panel.Heading>
+          <Panel.Title>
+            Parents/Descendants will not be changed!
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <p>This sample has parents or descendants, and they will not be changed.</p>
+          <p>Are you sure?</p>
+          <br />
+          <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
+            Cancel
+          </Button>
+          <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
+            Continue Editing
+          </Button>
+        </Panel.Body>
+      </Panel>
+    ) : null;
 }
 
 WarningBox.propTypes = {
@@ -223,7 +212,7 @@ WarningBox.propTypes = {
 const initEditor = () => {
   const userProfile = UserStore.getState().profile;
   const eId = userProfile?.data?.default_structure_editor || 'ketcher';
-  const editor = new StructureEditor({...EditorAttrs[eId], id: eId});
+  const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
   return editor;
 };
 
@@ -236,8 +225,6 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
-      copyOfLocalStorage: JSON.parse(localStorage.getItem(key)) || [],
-      deleteAllowed: true,
       commonTemplatesList: [],
       selectedShape: null,
       selectedCommonTemplate: null,
@@ -250,183 +237,53 @@ export default class StructureEditorModal extends React.Component {
 
   componentDidMount() {
     this.resetEditor(this.editors);
-    this.localStorageEventListener();
     this.fetchCommonTemplates();
   }
 
   componentDidUpdate(prevProps) {
-    const {showModal, molfile} = this.props;
+    const { showModal, molfile } = this.props;
     if (prevProps.showModal !== showModal || prevProps.molfile !== molfile) {
-      this.setState({showModal, molfile});
+      this.setState({ showModal, molfile });
     }
-  }
-
-  async createUserTemplate(item) {
-    const template_response = await ProfilesFetcher.uploadUserTemplates({
-      content: JSON.stringify(item),
-    });
-    const attachment_id = template_response?.template_details?.attachment_data?.id;
-    await UsersFetcher.updateUserProfile({
-      user_template: attachment_id,
-    }).catch((err) => console.log('ISSUE WITH create'));
-  }
-
-  async deleteUserTemplate(path) {
-    return await ProfilesFetcher.deleteUserTemplate({
-      path
-    }).catch(err => console.log("Template not deleted"));
-  }
-
-  async updatePathToNewTemplate(newValue, newItem, attachment_id) {
-    newItem.props.path = attachment_id;
-    newValue[newValue.length - 1] = newItem;
-    localStorage.setItem(key, JSON.stringify(newValue));
-    this.setState({deleteAllowed: false});
-  }
-
-  localStorageEventListener() {
-    window.addEventListener(
-      'storage',
-      async (event) => {
-        let {newValue, oldValue} = event;
-        newValue = JSON.parse(newValue);
-        oldValue = JSON.parse(oldValue);
-
-        const {deleteAllowed} = this.state;
-        if (event.key === key && deleteAllowed) {
-          if (newValue.length > oldValue.length) {
-            let newItem = newValue[newValue.length - 1];
-            const res = await ProfilesFetcher.uploadUserTemplates({
-              content: JSON.stringify(newItem),
-            });
-
-            const attachment_id = res?.template_details?.attachment_data?.id;
-            await this.updatePathToNewTemplate(newValue, newItem, attachment_id)
-            await UsersFetcher.updateUserProfile({
-              user_template: attachment_id,
-            });
-          } else if (newValue.length < oldValue.length) {
-            const listOfLocalid = newValue.map((item) => item.props.path);
-            for (let i = 0; i < oldValue.length; i++) {
-              const localItem = oldValue[i];
-              const itemMismatch = listOfLocalid.indexOf(
-                localItem.props.path
-              );
-
-              if (itemMismatch == -1) {
-                this.deleteUserTemplate(localItem?.props.path)
-                break;
-              }
-            }
-          } else {
-            const listOfLocalNames = newValue.map(
-              (item) => JSON.parse(item.struct).header.moleculeName
-            );
-
-            for (let i = 0; i < oldValue.length; i++) {
-              const struct = JSON.parse(oldValue[i].struct);
-              const misMatchedIdx = listOfLocalNames.indexOf(
-                struct.header.moleculeName
-              );
-              if (misMatchedIdx === -1) {
-                await this.deleteUserTemplate(newValue[i].props.path).then((res) => {
-                  this.createUserTemplate(newValue[i]);
-                }).catch(err => console.log("error with delet"))
-                break;
-              }
-            }
-          }
-        } else {
-          this.setState({deleteAllowed: true});
-        }
-      },
-      false
-    );
   }
 
   handleEditorSelection(e) {
-    this.setState((prevState) => ({
-      ...prevState,
-      editor: this.editors[e.value],
-    }));
+    this.setState((prevState) => ({ ...prevState, editor: this.editors[e.value] }));
   }
 
   handleCancelBtn() {
-    const {onCancel} = this.props;
+    const { onCancel } = this.props;
     this.hideModal();
-    if (onCancel) {
-      onCancel();
-    }
+    if (onCancel) { onCancel(); }
   }
 
   handleSaveBtn() {
-    const {editor} = this.state;
+    const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
-      structure.editor.sketcherInstance.exportStructure('mol').then(
-        (mMol) => {
-          const editorImg = new structure.editor.ImageExporter({
-            imageType: 'image/svg',
-          });
-          editorImg.render(mMol).then(
-            (svg) => {
-              this.setState(
-                {
-                  showModal: false,
-                  showWarning: this.props.hasChildren || this.props.hasParent,
-                },
-                () => {
-                  if (this.props.onSave) {
-                    this.props.onSave(mMol, svg, null, editor.id);
-                  }
-                }
-              );
-            },
-            (error) => {
-              alert(`MarvinJS image generated fail: ${error}`);
-            }
-          );
-        },
-        (error) => {
-          alert(`MarvinJS molfile generated fail: ${error}`);
-        }
-      );
+      structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
+        const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
+        editorImg.render(mMol).then((svg) => {
+          this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
+        }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
+      }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
     } else if (editor.id === 'ketcher2') {
       structure.editor.getMolfile().then((molfile) => {
-        structure.editor
-          .generateImage(molfile, {outputFormat: 'svg'})
-          .then((imgfile) => {
-            imgfile.text().then((text) => {
-              this.setState(
-                {
-                  showModal: false,
-                  showWarning: this.props.hasChildren || this.props.hasParent,
-                },
-                () => {
-                  if (this.props.onSave) {
-                    this.props.onSave(molfile, text, {smiles: ''}, editor.id);
-                  }
-                }
-              );
-            });
+        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
+          imgfile.text().then((text) => {
+            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
           });
+        });
       });
     } else {
       try {
-        const {molfile, info} = structure;
+        const { molfile, info } = structure;
         if (!molfile) throw new Error('No molfile');
         structure.fetchSVG().then((svg) => {
-          this.setState(
-            {
-              showModal: false,
-              showWarning: this.props.hasChildren || this.props.hasParent,
-            },
-            () => {
-              if (this.props.onSave) {
-                this.props.onSave(molfile, svg, info, editor.id);
-              }
-            }
-          );
+          this.setState({
+            showModal: false,
+            showWarning: this.props.hasChildren || this.props.hasParent
+          }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
         });
       } catch (e) {
         notifyError(`The drawing is not supported! ${e}`);
@@ -435,36 +292,34 @@ export default class StructureEditorModal extends React.Component {
   }
 
   initializeEditor() {
-    const {editor, molfile} = this.state;
-    if (editor) {
-      editor.structureDef.molfile = molfile;
-    }
+    const { editor, molfile } = this.state;
+    if (editor) { editor.structureDef.molfile = molfile; }
   }
 
   resetEditor(_editors) {
     const kks = Object.keys(_editors);
-    const {editor} = this.state;
+    const { editor } = this.state;
     if (!kks.find((e) => e === editor.id)) {
       this.setState({
-        editor: new StructureEditor({...EditorAttrs.ketcher, id: 'ketcher'}),
+        editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }),
       });
     }
   }
 
   updateEditor(_editor) {
-    this.setState({editor: _editor});
+    this.setState({ editor: _editor });
   }
 
   hideModal() {
-    const {hasChildren, hasParent} = this.props;
+    const { hasChildren, hasParent } = this.props;
     this.setState({
       showModal: false,
-      showWarning: hasChildren || hasParent,
+      showWarning: hasChildren || hasParent
     });
   }
 
   hideWarning() {
-    this.setState({showWarning: false});
+    this.setState({ showWarning: false });
   }
 
   async fetchCommonTemplates() {
@@ -473,10 +328,8 @@ export default class StructureEditorModal extends React.Component {
   }
 
   render() {
-    const handleSaveBtn = !this.props.onSave
-      ? null
-      : this.handleSaveBtn.bind(this);
-    const {cancelBtnText, submitBtnText} = this.props;
+    const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
+    const { cancelBtnText, submitBtnText } = this.props;
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const {
       editor, showWarning, molfile, selectedCommonTemplate
@@ -516,23 +369,13 @@ export default class StructureEditorModal extends React.Component {
     return (
       <div>
         <Modal
-          dialogClassName={
-            this.state.showWarning ? '' : 'structure-editor-modal'
-          }
+          dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
           animation
           show={this.state.showModal}
           onLoad={this.initializeEditor.bind(this)}
           onHide={this.handleCancelBtn.bind(this)}
         >
           <Modal.Header closeButton>
-            {/* <Modal.Title> */}
-            <EditorList
-              value={editor.id}
-              fnChange={this.handleEditorSelection}
-              options={editorOptions}
-            />
-            {/* </Modal.Title> */}
-
             <div style={{ display: 'flex' }}>
               <div style={{ flex: 3 }}>
                 <EditorList
@@ -573,18 +416,11 @@ export default class StructureEditorModal extends React.Component {
             {useEditor}
             <div style={buttonToolStyle}>
               <ButtonToolbar>
-                <Button
-                  bsStyle="warning"
-                  onClick={this.handleCancelBtn.bind(this)}
-                >
+                <Button bsStyle="warning" onClick={this.handleCancelBtn.bind(this)}>
                   {cancelBtnText}
                 </Button>
                 {!handleSaveBtn ? null : (
-                  <Button
-                    bsStyle="primary"
-                    onClick={handleSaveBtn}
-                    style={{marginRight: '20px'}}
-                  >
+                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
                     {submitBtnText}
                   </Button>
                 )}

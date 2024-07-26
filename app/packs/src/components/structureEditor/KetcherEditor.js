@@ -9,7 +9,6 @@ function KetcherEditor(props) {
   const {
     editor, iH, iS, molfile
   } = props;
-  const iframeRef = useRef(null);
 
   const initMol = molfile
     || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';

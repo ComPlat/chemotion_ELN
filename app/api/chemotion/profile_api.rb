@@ -194,7 +194,7 @@ module Chemotion
 
         # remove file from store
         file_path = Rails.root.join('uploads', Rails.env, params[:path])
-        File.delete(file_path) if(File.exist?(file_path))
+        File.delete(file_path) if File.exist?(file_path)
 
         # update profile
         new_profile = {
@@ -204,7 +204,8 @@ module Chemotion
         new_profile) || error!('profile update failed', 500)
 
         { status: true }
-        end
+      end
+
       desc 'get user profile editor ketcher 2 setting options'
       get 'editors/ketcher2-options' do
         Ketcher2Setting.find_by(user_id: current_user.id)
