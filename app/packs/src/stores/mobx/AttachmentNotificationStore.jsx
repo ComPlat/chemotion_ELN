@@ -37,15 +37,16 @@ export const AttachmentNotificationStore = types
   .actions((self) => ({
     addMessage(newMessage) {
       const existingMessage = self.messages.find((message) => message.id === newMessage.id);
-      const channelTypeCorrect = newMessage.channel_type === 999
-      if (!existingMessage&&channelTypeCorrect) {
+      const channelTypeCorrect = newMessage.channel_type === 8
+        && newMessage.subject === 'Send TPA attachment arrival notification';
+      if (!existingMessage && channelTypeCorrect) {
         self.messages.push(newMessage);
       }
     }
   })).views((self) => ({
     getAttachmentsOfMessages() {
       return self.messages.map(element => {
-        return element.content || [] 
+        return element.content.attachment || [] 
       }).flat();
     }
   }));
