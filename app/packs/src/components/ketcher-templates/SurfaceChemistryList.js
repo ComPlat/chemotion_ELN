@@ -1,7 +1,3 @@
-/* eslint-disable react/prop-types */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable max-len */
 import React, { useState } from 'react';
 import {
   Modal,
@@ -10,10 +6,9 @@ import {
   ControlLabel,
   OverlayTrigger,
   Tooltip,
-  Image,
 } from 'react-bootstrap';
 import { Accordion, AccordionItem } from '@szhsin/react-accordion';
-import { uniqueId } from 'lodash';
+import SurfaceChemistryItemThumbnail from 'src/components/ketcher-templates/SurfaceChemistryItemThumbnail';
 
 const basicShapeKetcherFormat = {
   root: {
@@ -138,7 +133,7 @@ function SurfaceChemistryList(props) {
         className="ketcher-select-common-template"
         onClick={() => setShowSurfaceChemModal(true)}
       >
-        {selectedShape ? `${selectedShape?.name.slice(0, 18)}...` : 'Select shape'}
+        {selectedShape ? `${selectedShape?.name.slice(0, 15)}...` : 'Select shape'}
         <div className="select-template-badge">
           <i className="fa fa-caret-down" />
         </div>
@@ -155,17 +150,17 @@ function SurfaceChemistryList(props) {
               </Panel.Heading>
               <Panel.Body>
                 {
-                  Object.keys(shapesList).map((item) => (
-                    <Accordion key={uniqueId}>
+                  Object.keys(shapesList).map((item, idx) => (
+                    <Accordion key={idx}>
                       <div style={{ position: 'relative' }} className="surface-chem-accordian-heading">
                         <AccordionItem header={item}>
                           <div className="shapes-accordionItem">
                             {
-                              Object.keys(shapesList[item]).map((subItem) => {
+                              Object.keys(shapesList[item]).map((subItem, subIdx) => {
                                 const obj = shapesList[item][subItem];
                                 return (
                                   <SurfaceChemistryItemThumbnail
-                                    key={uniqueId}
+                                    key={subIdx}
                                     icon={obj.icon}
                                     title={`${item} ${obj.Filling}`}
                                     onClickHandle={() => {
@@ -198,16 +193,4 @@ function SurfaceChemistryList(props) {
   );
 }
 
-function SurfaceChemistryItemThumbnail({
-  item, icon, title, onClickHandle
-}) {
-  return (
-    <div className="surface-chem-shape" onClick={() => onClickHandle(item)}>
-      <div className="surface-thumbnail-container">
-        <Image src={`data:image/svg+xml;base64,${icon}`} thumbnail height={30} width={80} />
-      </div>
-      <h4>{title}</h4>
-    </div>
-  );
-}
 export default SurfaceChemistryList;

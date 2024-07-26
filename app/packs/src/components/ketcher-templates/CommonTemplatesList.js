@@ -1,7 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable react/prop-types */
-import { uniqueId } from 'lodash';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -10,6 +6,7 @@ import {
   OverlayTrigger,
   Tooltip,
 } from 'react-bootstrap';
+import CommonTemplateItem from 'src/components/ketcher-templates/CommonTemplateItem';
 
 function CommonTemplatesList({ options, onClickHandle, selectedItem }) {
   const [commonTemplateModal, setCommonTemplateModal] = useState(false);
@@ -32,8 +29,7 @@ function CommonTemplatesList({ options, onClickHandle, selectedItem }) {
       </div>
       <div
         className="ketcher-select-common-template"
-        onClick={() => setCommonTemplateModal(true)}
-      >
+        onClick={() => setCommonTemplateModal(true)}>
         {selectedItem ? selectedItem.name : 'Select Template'}
         <div className="select-template-badge">
           <i className="fa fa-caret-down" />
@@ -50,33 +46,11 @@ function CommonTemplatesList({ options, onClickHandle, selectedItem }) {
               </Panel.Title>
             </Panel.Heading>
             <Panel.Body>
-              {options.map((item) => <TemplateItem key={uniqueId} item={item} onClickItem={(value) => onSelectItem(value)} />)}
+              {options.map((item, idx) => <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />)}
             </Panel.Body>
           </Panel>
         </Modal.Body>
-        {/* <Modal.Footer>
-          <Button variant="secondary" onClick={() => setCommonTemplateModal(false)}>
-            Cancel
-          </Button>
-        </Modal.Footer> */}
       </Modal>
-    </div>
-  );
-}
-
-function TemplateItem(props) {
-  const { item, onClickItem } = props;
-  let iconPath = '/images/ketcherails/icons/small/';
-  if (item?.icon) iconPath += item.icon.split('/')[3];
-
-  return (
-    <div className="ketcher-template-item" onClick={() => onClickItem(item)}>
-      <img src={iconPath} height={80} alt={item?.name} />
-      <h4 style={{ marginLeft: 15 }}>
-        {' '}
-        {item?.name}
-        {' '}
-      </h4>
     </div>
   );
 }
