@@ -1,6 +1,6 @@
 import { reaction } from 'mobx';
 import React, { Component , useState} from 'react';
-import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row} from 'react-bootstrap';
+import { Grid,Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row, ControlLabel} from 'react-bootstrap';
 import PropTypes, { array } from 'prop-types';
 import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
 
@@ -298,27 +298,21 @@ export default class CurationModal extends Component {
     }
 
     render() {
-      const CustomPopover = () => {
-        return (
-          <div 
-            style={{
-              backgroundColor: '#EEE',
-              boxShadow: '0 5px 10px rgba(0, 0, 0, 0.2)',
-              border: '1px solid #CCC',
-              borderRadius: 3,
-                // marginBottom: 185,
-              padding: 15
-            }}
-            >
-                <div className='float' style={{padding: 5}}>
-                  {this.state.correctWord} added To dictionary </div>
-                  <ButtonToolbar>
-                    <Button onClick={()=> {AutomticCurationFetcher.removeFetch(this.state.mispelledWords[this.state.suggestionIndex]) ;this.handlePromptDismiss()}}>Remove last entry</Button>
-                    <Button onClick={()=>{this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);this.handlePromptDismiss()}}>Next</Button>
-                  </ButtonToolbar>
-          </div>
+      var CustomPopover = () =>  (
+          <Grid className="customPopover">
+            <Col md={3} style={{paddingLeft: 0, marginLeft: "-15px"}}>
+              <h4><b>{this.state.correctWord} </b> added To dictionary
+              </h4>
+            </Col>
+            <Col md={3}>
+              <ButtonToolbar>
+                <Button onClick={()=> {AutomticCurationFetcher.removeFetch(this.state.mispelledWords[this.state.suggestionIndex]) ;this.handlePromptDismiss()}}>Remove last entry</Button>
+                <Button onClick={()=>{this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);this.handlePromptDismiss()}}>Next</Button>
+              </ButtonToolbar> 
+            </Col>
+          </Grid>
         );
-      }
+     
     
       const Compo = ({ text, mispelledWords,index ,subscriptList}) => {
         return <div>{this.getHighlightedText(text, mispelledWords,index, subscriptList )}</div>;
@@ -352,7 +346,7 @@ export default class CurationModal extends Component {
 
       const DictionaryButton = ({state})=>{
         if (state == true){
-          return(<CustomPopover/>)
+          return(<></>)
         }
         else{
           return(
@@ -360,11 +354,25 @@ export default class CurationModal extends Component {
             bsStyle="success" 
             onClick= {() => { 
             AutomticCurationFetcher.amendFetch(this.state.correctWord); this.handlePromptShow()
-         // this.change_misspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
             }}>
                 add to dictionary {state}
             </Button>
       )}}
+
+      let formWindow;
+        if(this.state.showPrompt == false){
+          formWindow =  
+          <form>
+            <FormControl
+              type="text"
+              value={this.state.value}
+              placeholder="Enter text"
+              onChange={this.handleSuggestChange}/> 
+          </form>;
+        }
+        else{
+          formWindow = <CustomPopover></CustomPopover>;
+        }
 
       return (
         <div>
@@ -372,26 +380,28 @@ export default class CurationModal extends Component {
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
     
-          <Modal show={this.state.show} onHide={this.handleClose} >
+          <Modal show={this.state.show} onHide={this.handleClose}  >
             <Modal.Header closeButton>
               <Modal.Title>
                 <Col md={6}>Spell Check: English {this.state.dictionaryLanguage}   
                   <Button onClick={()=> this.handleDictionaryLang()}><i class="fa fa-language" ></i>
                   </Button>
                 </Col>
-                </Modal.Title> 
+              </Modal.Title> 
             </Modal.Header>
             <Modal.Body>
-              <Panel>
+              <Panel >
                 <Panel.Heading>
-                  <Row> <Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add selected misspelled words</Button></Row>
-                  <Row style={{padding: 5}}>
-                    {/* <Col md={4}> Or enter a new word:</Col> */}
-                    <Col md={3} > <input onChange={this.handleSuggestChange}/></Col>
-                    <Col md={3} >
-                      <DictionaryButton state={this.state.showPrompt}></DictionaryButton>
-                    </Col>
+                <Grid >
+                  <Row> 
+                    <Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add selected misspelled words
+                    </Button>
                   </Row>
+                  <Row style={{paddingTop:5}}>
+                    <Col md={3} sm={3} style={{paddingLeft:0}} > {formWindow}</Col>
+                    <Col md={2} style={{paddingLeft:0}}> <DictionaryButton state={this.state.showPrompt}></DictionaryButton></Col>
+                  </Row>
+                </Grid>
                 </Panel.Heading>
                 <Panel.Body>
                   <Compo text={this.state.desc} mispelledWords={this.state.mispelledWords} index={this.state.suggestionIndex} subscriptList={this.state.subscriptList} /> 
