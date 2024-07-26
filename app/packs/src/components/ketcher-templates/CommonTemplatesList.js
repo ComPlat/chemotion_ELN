@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
 import {
   Modal,
@@ -29,8 +32,9 @@ function CommonTemplatesList({ options, onClickHandle, selectedItem }) {
       </div>
       <div
         className="ketcher-select-common-template"
-        onClick={() => setCommonTemplateModal(true)}>
-        {selectedItem ? selectedItem.name : 'Select Template'}
+        onClick={() => setCommonTemplateModal(true)}
+      >
+        {selectedItem ? selectedItem?.name : 'Select Template'}
         <div className="select-template-badge">
           <i className="fa fa-caret-down" />
         </div>
@@ -46,7 +50,8 @@ function CommonTemplatesList({ options, onClickHandle, selectedItem }) {
               </Panel.Title>
             </Panel.Heading>
             <Panel.Body>
-              {options.map((item, idx) => <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />)}
+              {options.map((item, idx) =>
+                <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />)}
             </Panel.Body>
           </Panel>
         </Modal.Body>

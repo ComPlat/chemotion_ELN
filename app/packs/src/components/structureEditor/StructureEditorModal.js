@@ -332,9 +332,9 @@ export default class StructureEditorModal extends React.Component {
     const { cancelBtnText, submitBtnText } = this.props;
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const {
-      editor, showWarning, molfile, selectedCommonTemplate
+      editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal
     } = this.state;
-    const iframeHeight = showWarning ? '0px' : '730px';
+    const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
     const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
 
@@ -366,12 +366,14 @@ export default class StructureEditorModal extends React.Component {
       label: this.editors[e].label,
     }));
 
+    console.log(editor.id);
+
     return (
       <div>
         <Modal
           dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
           animation
-          show={this.state.showModal}
+          show={showModal}
           onLoad={this.initializeEditor.bind(this)}
           onHide={this.handleCancelBtn.bind(this)}
         >
@@ -384,26 +386,33 @@ export default class StructureEditorModal extends React.Component {
                   options={editorOptions}
                 />
               </div>
-              <div style={{ flex: 1, margin: '0 10px' }}>
-                <CommonTemplatesList
-                  options={this.state.commonTemplatesList}
-                  value={selectedCommonTemplate?.name}
-                  selectedItem={selectedCommonTemplate}
-                  onClickHandle={(value) => {
-                    this.setState({ selectedCommonTemplate: value });
-                    copyContentToClipboard(value?.molfile);
-                  }}
-                />
-              </div>
-              <div style={{ flex: 0.5, margin: '0 10px' }}>
-                <SurfaceChemistryList
-                  selectedShape={this.state.selectedShape}
-                  onSelectShape={(item) => {
-                    copyContentToClipboard({ root: item.root });
-                    this.setState({ selectedShape: item });
-                  }}
-                />
-              </div>
+              {editor.id === 'ketcher2'
+                && (
+                  <div style={{ flex: 1, margin: '0 10px' }}>
+                    <CommonTemplatesList
+                      options={commonTemplatesList}
+                      value={selectedCommonTemplate?.name}
+                      selectedItem={selectedCommonTemplate}
+                      onClickHandle={(value) => {
+                        this.setState({ selectedCommonTemplate: value });
+                        copyContentToClipboard(value?.molfile);
+                      }}
+                    />
+                  </div>
+                )}
+
+              {editor.id === 'ketcher2'
+                && (
+                  <div style={{ flex: 0.5, margin: '0 10px' }}>
+                    <SurfaceChemistryList
+                      selectedShape={selectedShape}
+                      onSelectShape={(item) => {
+                        copyContentToClipboard({ root: item.root });
+                        this.setState({ selectedShape: item });
+                      }}
+                    />
+                  </div>
+                )}
 
             </div>
           </Modal.Header>
