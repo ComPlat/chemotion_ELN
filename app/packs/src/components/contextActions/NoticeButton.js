@@ -301,11 +301,10 @@ export default class NoticeButton extends React.Component {
     );
     if (remainTime < idleTimeout) {
       MessagesFetcher.fetchMessages(0).then((result) => {
-
-        result.messages.forEach((message)=>{
-          this.context.attachmentNotificationStore.addMessage(message)}
-        )
-        
+        result.messages.forEach((message) => {
+          if (message.subject === 'Send TPA attachment arrival notification')
+            this.context.attachmentNotificationStore.addMessage(message);
+        });
         result.messages.sort((a, b) => a.id - b.id);
         this.setState({
           dbNotices: result.messages,
