@@ -76,8 +76,18 @@ module Chemotion
           filename: params[:attachmentName].presence&.strip || "#{@app.name[0, 20]}-#{params[:file][:filename]}",
           file_path: params[:file][:tempfile].path
         )
-        new_attachment.save
-        { message: 'File uploaded successfully' }
+        if new_attachment.save
+          serialized_attachment = Entities::AttachmentEntity.represent(new_attachment).as_json
+          Message.create_msg_notification(
+            channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION, 
+            message_from: @user.id,
+            attachment: new_attachment,
+            data_args: { 'attachment': serialized_attachment }
+          )
+          { data: { message: 'File uploaded successfully', attachment: Entities::AttachmentEntity.represent(new_attachment) }}
+        else
+          { error: 'Failed to save file' }
+        end
       end
 
       def encode_and_cache_token(payload = @payload)
