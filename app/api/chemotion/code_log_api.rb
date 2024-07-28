@@ -75,7 +75,7 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name]).render
+          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:code_image_size], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name], params[:code_log], params[:text_position], params[:image]).render
         end
 
         post do
@@ -87,7 +87,7 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name], params[:image]).render
+          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:code_image_size], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name], params[:code_log], params[:text_position], params[:image]).render
         end
       end
 

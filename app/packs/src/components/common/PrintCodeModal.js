@@ -7,6 +7,7 @@ import Utils from 'src/utilities/Functions';
 export default function PrintCodeModal({ element, showModal, handleModalClose }) {
   // State for the modal and preview
   const [preview, setPreview] = useState(null);
+  const [urlError, setUrlError] = useState([]);
 
   const json = require('../../../../../public/json/printingConfig/defaultConfig.json');
   // Request options for fetching the PDF.
@@ -14,7 +15,7 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
     credentials: 'same-origin',
     method: 'GET',
   };
-  
+  console.log(element);
   // Form data for the request.
   const formData = new FormData();
 
@@ -64,6 +65,31 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
       });
   };
 
+  // Handles errors in the URL.
+  const errorHandler = () => {
+    const tmpUrlError = [];
+    Object.entries(json).forEach(([key, value]) => {
+      if (value != null) {
+        if (key === 'code_type') {
+          if (value !== 'bar_code' && value !== 'qr_code' && value !== 'data_matrix') {
+            tmpUrlError.push('Invalid code type. correct values: bar_code, qr_code, data_matrix. Value fixed to qr_code');
+          }
+        }
+        if (key === 'code_image_size') {
+          if (value < 0 || value > 100) {
+            tmpUrlError.push('Invalid code image size, correct values: 0-100, Value fixed to 100');
+          }
+        }
+        if (key === 'text_position') {
+          if (value !== 'below' && value !== 'right') {
+            tmpUrlError.push('Invalid text position, correct values: below, right, Value fixed to below');
+          }
+        }
+      }
+    });
+    setUrlError(tmpUrlError);
+  };
+
   // Builds the URL for fetching the PDF.
   const buildURL = () => {
     var newUrl = `/api/v1/code_logs/print_codes?element_type=${element.type}&ids[]=${element.id}`;
@@ -73,12 +99,28 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
         newUrl += `&${key}=${value}`;
       }
     });
+    errorHandler();
     fetchPrintCodes(newUrl);
   };
   // Build the URL when the state of the PDF params changes
   useEffect(() => {
-    buildURL();
+    if (showModal) {
+      buildURL();
+    }
   }, [showModal]);
+
+  // Display the errors in the URL
+  const displayUrlErrorMessage = () => {
+    if (urlError.length > 0) {
+      return (
+        <div style={{ color: 'red' }}>
+          {urlError.map((error, index) => (
+            <div key={index}>{error}</div>
+          ))}
+        </div>
+      );
+    }
+  }
 
   // Render the component
   return (
@@ -91,6 +133,7 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
         <Modal.Body>
           <div>
             <h3 style={{ marginLeft: '10px' }}>Preview</h3>
+            <div style={{ marginLeft: '10px' }}>{displayUrlErrorMessage()}</div>
             <div style={{
               flexDirection: 'column',
               display: 'flex',
