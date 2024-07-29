@@ -82,9 +82,9 @@ module Chemotion
             channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION, 
             message_from: @user.id,
             attachment: new_attachment,
-            data_args: { 'attachment': serialized_attachment }
+            data_args: { 'app': @app.name }
           )
-          { data: { message: 'File uploaded successfully', attachment: Entities::AttachmentEntity.represent(new_attachment) }}
+          { data: { message: 'File uploaded successfully'}}
         else
           { error: 'Failed to save file' }
         end
