@@ -42,11 +42,14 @@ export const AttachmentNotificationStore = types
       if (!existingMessage && channelTypeCorrect) {
         self.messages.push(newMessage);
       }
+    },
+    clearMessages() {
+      self.messages = [];
     }
   })).views((self) => ({
     getAttachmentsOfMessages() {
-      return self.messages.map(element => {
-        return element.content.attachment || [] 
+      return self.messages.map((element) => {
+        return element.content.attachment || [];
       }).flat();
     }
   }));
