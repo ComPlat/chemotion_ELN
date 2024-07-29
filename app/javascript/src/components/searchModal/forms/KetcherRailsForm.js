@@ -25,6 +25,7 @@ function KetcherRailsform() {
   const panelVars = panelVariables(searchStore);
   const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
   const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
+  const { pgCartridgeInstalled } = UIStore.getState();
   let iframe;
   const iframeHeight = panelVars.invisibleClassName ? '88.3vh' : '85vh';
   
