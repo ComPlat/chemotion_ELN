@@ -115,7 +115,7 @@ module Reactable
 
       next if gas_product_mol_amount.nil?
 
-      gas_phase_data['turnover_number'] = calculate_ton(gas_product_amount_mol, catalyst_mol_value)
+      gas_phase_data['turnover_number'] = calculate_ton(gas_product_mol_amount, catalyst_mol_value)
       gas_phase_data['turnover_frequency']['value'] = calculate_ton_frequency(
         gas_phase_data['time'],
         gas_phase_data['turnover_number'],
