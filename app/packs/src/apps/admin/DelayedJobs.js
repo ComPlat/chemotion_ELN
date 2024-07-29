@@ -51,13 +51,13 @@ export default class DelayedJobs extends Component {
 
     const tcolumn = (
       <tr className="align-middle">
-        <th className="w-4" colSpan="2">ID</th>
-        <th className="w-5">Queue</th>
-        <th className="w-5">Job Class</th>
-        <th className="w-5">Run At</th>
-        <th className="w-5">Failed At</th>
-        <th className="w-4">Attempts</th>
-        <th className="w-4">Priority</th>
+        <th colSpan="2">ID</th>
+        <th>Queue</th>
+        <th>Job Class</th>
+        <th>Run At</th>
+        <th>Failed At</th>
+        <th>Attempts</th>
+        <th>Priority</th>
         <th className="w-50">Last Errors</th>
       </tr>
     );

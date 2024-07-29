@@ -298,13 +298,13 @@ export default class GroupsDevices extends React.Component {
         <Card.Body>
         <Table responsive condensed hover>
           <thead>
-              <tr className='bg-gray-200 '>
-                <th className="w-5 py-3">#</th>
-                <th className="w-25 py-3">Actions</th>
-                <th className="w-20 py-3">Name</th>
-                <th className="w-10 py-3">Kürzel</th>
-                <th className="w-20 py-3">Admin by</th>
-                <th className="w-20 py-3">Email</th>
+            <tr className='bg-gray-200 '>
+              <th className="py-3">#</th>
+              <th className="w-25 py-3">Actions</th>
+              <th className="py-3">Name</th>
+              <th className="py-3">Kürzel</th>
+              <th className="py-3">Admin by</th>
+              <th className="py-3">Email</th>
             </tr>
           </thead>
           {tbody}
