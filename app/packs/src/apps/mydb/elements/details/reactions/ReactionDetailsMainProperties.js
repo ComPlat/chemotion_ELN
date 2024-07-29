@@ -93,7 +93,7 @@ export default class ReactionDetailsMainProperties extends Component {
         <Row className=" ms-1 me-3">
           <Col sm={6}>
             <Form.Group className="my-2">
-              <Form.Label className="fs-5">Name</Form.Label>
+              <Form.Label className="fs-6">Name</Form.Label>
               <Form.Control
                 id={uuid.v4()}
                 name="reaction_name"
@@ -108,7 +108,7 @@ export default class ReactionDetailsMainProperties extends Component {
           </Col>
           <Col sm={3}>
             <Form.Group className="my-2">
-              <Form.Label className="fs-5">Status</Form.Label>
+              <Form.Label className="fs-6">Status</Form.Label>
               <Select
                 className="status-select reaction-status-change"
                 name="status"
@@ -128,7 +128,7 @@ export default class ReactionDetailsMainProperties extends Component {
           </Col>
           <Col sm={3}>
             <Form.Group className="my-2">
-              <Form.Label className="fs-5">Temperature</Form.Label>
+              <Form.Label className="fs-6">Temperature</Form.Label>
               <InputGroup>
                 <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
                   <Button

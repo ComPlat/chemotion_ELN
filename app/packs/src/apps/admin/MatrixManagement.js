@@ -6,12 +6,10 @@ import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
-import Panel from 'src/components/legacyBootstrap/Panel';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;
-const Notification = props =>
+const Notification = (props) =>
 (
   NotificationActions.add({
     title: props.title,
@@ -165,7 +163,7 @@ export default class MatrixManagement extends React.Component {
     const tbody = matrices && matrices.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
         <tr key={`row_${e.id}`} id={`row_${e.id}`}
-          className='fs-4 bg-light'
+          // className='bg-light'
         >
           <td>{idx + 1}</td>
           <td>
@@ -203,20 +201,20 @@ export default class MatrixManagement extends React.Component {
 
     return (
       <div>
-          <Table responsive condensed hover>
-            <thead className='fs-4'>
-            <tr className='bg-gray-300'>
-                <th>#</th>
-                <th>Actions</th>
-                <th>ID</th>
-                <th>Function name</th>
-                <th>Description</th>
-                <th>Set globally</th>
-                <th>Enabled for</th>
-                <th>Disabled for</th>
-              </tr>
-            </thead>
-            {tbody}
+        <Table responsive condensed hover className="border">
+          <thead>
+            <tr className="bg-gray-200">
+              <th>#</th>
+              <th>Actions</th>
+              <th>ID</th>
+              <th>Function name</th>
+              <th>Description</th>
+              <th>Set globally</th>
+              <th>Enabled for</th>
+              <th>Disabled for</th>
+            </tr>
+          </thead>
+          {tbody}
         </Table>
       </div>
     );
@@ -239,7 +237,7 @@ export default class MatrixManagement extends React.Component {
     }
 
     return (
-      <Modal centered show={this.state.showEditModal} onHide={this.handleClose} className='fs-4' backdrop='static'>
+      <Modal centered show={this.state.showEditModal} onHide={this.handleClose} backdrop='static'>
         <Modal.Header closeButton>
           <Modal.Title>Edit Permisson</Modal.Title>
         </Modal.Header>
@@ -247,22 +245,22 @@ export default class MatrixManagement extends React.Component {
         <Modal.Body className="overflow-auto">
           <Form className="row g-3">
             <Form.Group controlId="formControlId">
-                <InputGroup>
+              <InputGroup>
                 <InputGroup.Text>ID</InputGroup.Text>
                 <Form.Control type="text" defaultValue={matrice.id} readOnly />
-                </InputGroup>
+              </InputGroup>
             </Form.Group>
             <Form.Group controlId="formControlName">
-                <InputGroup>
+              <InputGroup>
                 <InputGroup.Text>Function name</InputGroup.Text>
                 <Form.Control type="text" defaultValue={matrice.name} readOnly />
-                </InputGroup>
+              </InputGroup>
             </Form.Group>
             <Form.Group controlId="formControlLabel">
-                <InputGroup>
+              <InputGroup>
                 <InputGroup.Text>Description</InputGroup.Text>
                 <Form.Control type="text" defaultValue={matrice.label} ref={(ref) => { this.m_label = ref; }} />
-                </InputGroup>
+              </InputGroup>
             </Form.Group>
             <Form.Group controlId="formControlLabel">
               <Form.Check
@@ -271,50 +269,47 @@ export default class MatrixManagement extends React.Component {
                 checked={matrice.enabled}
                 onChange={e => this.handleChange(!matrice.enabled, e)}
                 label='Enable globally'
+                className="fs-5"
               />
               <p className='ms-3 fs-6'>
-                (When [checked], all users can see/use this feature, when [unchecked], only allowed users can see/use this function)
+                (When [checked], all users can see/use this feature,
+                when [unchecked], only allowed users can see/use this function)
               </p>
-
-
             </Form.Group>
-            <Form.Group controlId="formControlInclude">
-                <InputGroup>
-                <InputGroup.Text>Include Users</InputGroup.Text>
-                <Select.Async
-                  multi
-                  isLoading
-                  backspaceRemoves
-                  value={defaultIncludeUsers}
-                  defaultValue={defaultIncludeUsers}
-                  valueKey="value"
-                  labelKey="label"
-                  matchProp="name"
-                  placeholder="Select ..."
-                  loadOptions={this.loadUserByName}
-                  onChange={this.handleIncludeUser}
-                  className='flex-grow-1'
-                />
-                </InputGroup>
-            </Form.Group>
-            <Form.Group controlId="formControlExclude">
-                <InputGroup>
-                <InputGroup.Text>Exclude Users</InputGroup.Text>
-                <Select.Async
-                  multi
-                  isLoading
-                  backspaceRemoves
-                  value={defaultExcludeUsers}
-                  defaultValue={defaultExcludeUsers}
-                  valueKey="value"
-                  labelKey="label"
-                  matchProp="name"
-                  placeholder="Select ..."
-                  loadOptions={this.loadUserByName}
-                  onChange={this.handleExcludeUser}
-                  className='flex-grow-1' />
-                </InputGroup>
-            </Form.Group>
+            <InputGroup>
+              <InputGroup.Text>Include Users</InputGroup.Text>
+              <Select.Async
+                multi
+                isLoading
+                backspaceRemoves
+                value={defaultIncludeUsers}
+                defaultValue={defaultIncludeUsers}
+                valueKey="value"
+                labelKey="label"
+                matchProp="name"
+                placeholder="Select ..."
+                loadOptions={this.loadUserByName}
+                onChange={this.handleIncludeUser}
+                className='flex-grow-1 fs-6'
+              />
+            </InputGroup>
+            <InputGroup>
+              <InputGroup.Text>Exclude Users</InputGroup.Text>
+              <Select.Async
+                multi
+                isLoading
+                backspaceRemoves
+                value={defaultExcludeUsers}
+                defaultValue={defaultExcludeUsers}
+                valueKey="value"
+                labelKey="label"
+                matchProp="name"
+                placeholder="Select ..."
+                loadOptions={this.loadUserByName}
+                onChange={this.handleExcludeUser}
+                className='flex-grow-1 fs-6'
+              />
+            </InputGroup>
           </Form>
         </Modal.Body>
 
@@ -335,7 +330,9 @@ export default class MatrixManagement extends React.Component {
     const { matrice, showJsonBtn } = this.state;
 
     return (
-      <Modal centered show={this.state.showJsonModal}
+      <Modal
+        centered
+        show={this.state.showJsonModal}
         onHide={this.handleJsonClose}
         backdrop='static'>
         <Modal.Header closeButton>

@@ -85,7 +85,7 @@ export default class ReactionDetailsProperties extends Component {
         </Row>
         <Row className="ms-2">
           <Form.Group >
-            <Form.Label className="fs-5">Type (Name Reaction Ontology)</Form.Label>
+            <Form.Label className="fs-6">Type (Name Reaction Ontology)</Form.Label>
             <div className="pe-5">
               <OlsTreeSelect
                 selectName="rxno"
@@ -98,7 +98,7 @@ export default class ReactionDetailsProperties extends Component {
         </Row>
         <Row className="my-2 ms-2">
           <Col sm={12}>
-            <div className="fs-5">Dangerous Products</div>
+            <div className="fs-6">Dangerous Products</div>
             <Select
               name="dangerous_products"
               multi
@@ -111,11 +111,11 @@ export default class ReactionDetailsProperties extends Component {
           </Col>
         </Row>
         <hr className="mt-4" />
-        <h4 className="mt-3 ms-3">TLC-Control</h4>
+        <h4 className="my-3 ms-3">TLC-Control</h4>
         <Row className="mt-2">
           <Col sm={6}>
             <Form.Group className="mx-3">
-              <Form.Label className="fs-5">Solvents (parts)</Form.Label>
+              <Form.Label className="fs-6">Solvents (parts)</Form.Label>
               <InputGroup className="z-0">
                 <DropdownButton
                   disabled={!permitOn(reaction)}
@@ -137,7 +137,7 @@ export default class ReactionDetailsProperties extends Component {
           </Col>
           <Col sm={6}>
             <Form.Group className="me-5">
-              <Form.Label className="fs-5">Rf-Value</Form.Label>
+              <Form.Label className="fs-6">Rf-Value</Form.Label>
               <Form.Control
                 type="text"
                 value={reaction.rf_value || ''}
@@ -151,7 +151,7 @@ export default class ReactionDetailsProperties extends Component {
         <Row className="my-3 ms-2 me-4">
           <Col sm={12}>
             <Form.Group>
-              <Form.Label className="fs-5">TLC-Description</Form.Label>
+              <Form.Label className="fs-6">TLC-Description</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={4}

@@ -7,8 +7,6 @@ import { Button, Form, Container, Col, InputGroup, Row } from 'react-bootstrap';
 
 import QuillEditor from 'src/components/QuillEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function RemoveRowBtn({ removeRow, node }) {
   const { data } = node;
@@ -248,12 +246,12 @@ export default class TextTemplate extends React.Component {
           <Col md={8}>
             <div className="p-3">
               <InputGroup className="mb-3">
-                <InputGroup.Text className='fs-4 fw-bold me-3'>Preview</InputGroup.Text>
+                <InputGroup.Text className='fs-5 fw-bold me-3'>Preview</InputGroup.Text>
                 <TextTemplateIcon className='fs-3 my-3' template={selectedTemplate} />
               </InputGroup>
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label className='fw-bold fs-5'>Text</Form.Label>
+                  <Form.Label className='fs-5'>Text</Form.Label>
                   <Form.Control
                     type="text"
                     value={text}
@@ -262,7 +260,7 @@ export default class TextTemplate extends React.Component {
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label className='fw-bold fs-5'>Icon</Form.Label>
+                  <Form.Label className='fs-5'>Icon</Form.Label>
                   <Form.Control
                     type="text"
                     value={icon}

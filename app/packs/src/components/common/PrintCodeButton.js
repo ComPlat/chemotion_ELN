@@ -4,10 +4,10 @@ import { Tooltip, OverlayTrigger, ButtonGroup, Dropdown, Button } from 'react-bo
 
 import Utils from 'src/utilities/Functions';
 
-const PrintCodeButton = ({
+function PrintCodeButton({
   element,
   analyses, allAnalyses, ident
-}) => {
+}) {
   const { type, id } = element;
   let tooltipText = 'Print bar/qr-code Label';
   const ids = analyses.length > 0 ? analyses.map(e => e.id) : [];
@@ -41,17 +41,23 @@ const PrintCodeButton = ({
           variant="light"
           id={`print-code-split-button-${ident || 0}`}
           disabled={element.isNew}
-          onClick={() => Utils.downloadFile({ contents: menuItems[0].contents })}
+          onClick={(event) => {
+            event.stopPropagation();
+            Utils.downloadFile({ contents: menuItems[0].contents });
+          }}
           size="xxsm"
-          >
-            <i className="fa fa-barcode fa-lg" />
+        >
+          <i className="fa fa-barcode fa-lg" />
         </Button>
         <Dropdown.Toggle split variant="light" size="xxsm" />
         <Dropdown.Menu>
-          {menuItems.map(e => (
+          {menuItems.map((e) => (
             <Dropdown.Item
               key={e.key}
-              onClick={() => Utils.downloadFile({ contents: e.contents })}
+              onClick={(event) => {
+                event.stopPropagation();
+                Utils.downloadFile({ contents: e.contents });
+              }}
             >
               {e.text}
             </Dropdown.Item>
@@ -60,7 +66,7 @@ const PrintCodeButton = ({
       </Dropdown>
     </OverlayTrigger>
   );
-};
+}
 
 PrintCodeButton.propTypes = {
   element: PropTypes.object,

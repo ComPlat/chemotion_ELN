@@ -111,7 +111,7 @@ export default class HyperLinksSection extends Component {
     return (
       <div>
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <Form.Label className='fw-bold'>Hyperlinks</Form.Label>
+        <Form.Label>Hyperlinks</Form.Label>
         {this.renderHyperLinkInput()}
         {this.renderHyperLinkList()}
       </div>
