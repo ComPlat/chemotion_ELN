@@ -9,7 +9,6 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import GatePushButton from 'src/components/common/GatePushButton';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {

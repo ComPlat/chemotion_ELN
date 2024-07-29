@@ -76,7 +76,7 @@ class AdminHome extends React.Component {
     }
 
     return (
-      <Nav className="flex-column fs-4" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
+      <Nav className="flex-column fs-5 gap-3 mt-2" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
         <NavItem>
           <Nav.Link eventKey={0}>Dashboard</Nav.Link>
         </NavItem>

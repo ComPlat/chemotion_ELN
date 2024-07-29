@@ -12,8 +12,6 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;

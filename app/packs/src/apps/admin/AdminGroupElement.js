@@ -3,7 +3,6 @@ import { OverlayTrigger, Tooltip, Button, Table, Accordion } from 'react-bootstr
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { findIndex } from 'lodash';
 import DeleteGroupDeviceButton from 'src/apps/admin/DeleteGroupDeviceButton';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class AdminGroupElement extends React.Component {
   constructor(props) {
@@ -97,7 +96,7 @@ export default class AdminGroupElement extends React.Component {
     const isAdmin = group.admins && group.admins.filter(a => (a.id === user.id)).length > 0;
     const adminTooltip = isAdmin === true ? 'set to normal user' : 'set to Administrator';
     return (
-      <td className="w-30">
+      <td>
         <div className="d-inline-block">
           <OverlayTrigger placement="top" overlay={<Tooltip id="userAdmin">{adminTooltip}</Tooltip>}>
             <Button
@@ -128,7 +127,7 @@ export default class AdminGroupElement extends React.Component {
 
     return (
       <tbody key={`tbody_${groupElement.id}`}>
-        <tr key={`row_${groupElement.id}`} id={`row_${groupElement.id}`} className='fs-4 py-3'>
+        <tr key={`row_${groupElement.id}`} id={`row_${groupElement.id}`} className='py-5'>
           <td>{idx + 1}</td>
           {this.renderGroupButtons(groupElement)}
           <td>{groupElement.name}</td>
@@ -148,11 +147,11 @@ export default class AdminGroupElement extends React.Component {
                     <tbody>
                       {groupElement.users.map((u, i) => (
                         <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                          <td className="w-5  py-3 fs-4 ">{i + 1}</td>
-                          <td className="w-20 py-3 fs-4 ">{u.name}</td>
-                          <td className="w-10 py-3 fs-4 ">{u.initials}</td>
-                          <td className="w-20 py-3 fs-4 ">{u.email}</td>
-                          <td className="w-15 py-3 fs-4 ">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
+                          <td className="py-3">{i + 1}</td>
+                          <td className="py-3">{u.name}</td>
+                          <td className="py-3">{u.initials}</td>
+                          <td className="py-3">{u.email}</td>
+                          <td className="py-3">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
                           {this.renderGroupUserButtons(groupElement, u)}
                         </tr>
                       ))}
@@ -175,12 +174,12 @@ export default class AdminGroupElement extends React.Component {
                     <tbody>
                       {groupElement.devices.map((u, i) => (
                         <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                          <td className="w-5  py-3 fs-4">{i + 1}</td>
-                          <td className="w-20 py-3 fs-4">{u.name}</td>
-                          <td className="w-10 py-3 fs-4">{u.initials}</td>
-                          <td className="w-20 py-3 fs-4">{ }</td>
-                          <td className="w-15 py-3 fs-4">{ }</td>
-                          <td className="w-30 py-3 fs-4">
+                          <td className="py-3">{i + 1}</td>
+                          <td className="py-3 m-0">{u.name}</td>
+                          <td className="py-3">{u.initials}</td>
+                          <td className="py-3">{ }</td>
+                          <td className="py-3">{ }</td>
+                          <td className="py-3">
                             <DeleteGroupDeviceButton rootType={'Group'}
                               actionType={'Device'}
                               groupRec={groupElement}

@@ -55,7 +55,7 @@ export default class GenericAdminModal extends Component {
     return (
       <Modal centered show onHide={() => fnShowModal(false)} >
         <Modal.Header closeButton>
-          <Modal.Title className='fs-4'>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
+          <Modal.Title className='fs-5'>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="d-flex flex-wrap ms-3">

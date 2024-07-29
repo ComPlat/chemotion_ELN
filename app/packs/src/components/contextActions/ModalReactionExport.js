@@ -3,7 +3,6 @@ import { Button, ButtonToolbar, Form } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
-import Radio from 'src/components/legacyBootstrap/Radio'
 
 export default class ModalReactionExport extends React.Component {
   constructor(props) {

@@ -1033,9 +1033,8 @@ export default class ReactionDetailsScheme extends Component {
     return (
       <Button
         size="sm"
-        className="w-100 grey-bg"
+        className="w-100 bg-gray-200"
         variant="light"
-        style={{ backgroundColor: '#ddd' }}
           onClick={() => this.setState({ open: !open })}
       >
         {arrow} Solvents
@@ -1051,7 +1050,7 @@ export default class ReactionDetailsScheme extends Component {
     return (
       <Button
         size="sm"
-        className="w-100 grey-bg"
+        className="w-100 bg-gray-200"
         variant="light"
         onClick={() => this.setState({ cCon: !cCon })}
       >

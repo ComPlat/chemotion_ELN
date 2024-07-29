@@ -6,7 +6,6 @@ import AdminFetcher from 'src/fetchers/AdminFetcher';
 import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 import { selectUserOptionFormater, selectDeviceOptionFormater } from 'src/utilities/selectHelper';
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class GroupsDevices extends React.Component {
   constructor(props) {
@@ -290,7 +289,7 @@ export default class GroupsDevices extends React.Component {
     return (
       <Card>
         <Card.Header>
-          <Card.Title className='fs-3 mt-1 py-1'>
+          <Card.Title className='mt-1 py-1'>
             Group List
             ({groups.length})
             <Button variant="primary" className='ms-2' size='md' onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
@@ -299,13 +298,13 @@ export default class GroupsDevices extends React.Component {
         <Card.Body>
         <Table responsive condensed hover>
           <thead>
-              <tr className='fs-4 py-3' style={{ backgroundColor: '#eee' }}>
-                <th className="w-5 py-3">#</th>
-                <th className="w-25 py-3">Actions</th>
-                <th className="w-20 py-3">Name</th>
-                <th className="w-10 py-3">Kürzel</th>
-                <th className="w-20 py-3">Admin by</th>
-                <th className="w-20 py-3">Email</th>
+            <tr className='bg-gray-200 '>
+              <th className="py-3">#</th>
+              <th className="w-25 py-3">Actions</th>
+              <th className="py-3">Name</th>
+              <th className="py-3">Kürzel</th>
+              <th className="py-3">Admin by</th>
+              <th className="py-3">Email</th>
             </tr>
           </thead>
           {tbody}
