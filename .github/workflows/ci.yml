@@ -19,8 +19,12 @@ jobs:
         - name: Cypress run
           uses: cypress-io/github-action@v6
           with:
-            build: npm run build
-            start: npm start
+            project: spec
+            config-file: cypress.config.js
+            working-directory: spec/cypress
+            build: yarn run build
+            start: yarn start
+
 
   linting:
     if: github.event.pull_request && (github.triggering_actor != 'dependabot[bot]')
