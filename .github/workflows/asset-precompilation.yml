@@ -1,0 +1,49 @@
+name: test assets precompilation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    container: complat/chemotion_eln_runner:main
+
+    services:
+      postgres:
+        image: postgres    # https://hub.docker.com/_/postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: configure repository
+        run: |
+          cd config
+          cp database.yml.ci database.yml
+          cp -f profile_default.yml.example profile_default.yml
+          cp -f shrine.yml.example shrine.yml
+          cp -f storage.yml.example storage.yml
+          touch klasses.json
+          bundle config set without ''
+
+      - name: bundle install
+        run: bundle install
+
+      - name: yarn install
+        run:  yarn install --production=false
+
+      - name: prepare postgres
+        run: |
+          RAILS_ENV=production bundle exec rake db:migrate
+
+      - name: precompile
+        run: RAILS_ENV=production bundle exec rake assets:precompile
