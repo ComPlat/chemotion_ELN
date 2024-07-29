@@ -9,6 +9,38 @@ on:
       - cypress-on-CI
 
 jobs:
+  linting:
+    if: github.event.pull_request && (github.triggering_actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    env:
+      PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+      - run: |
+          git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+
+      - name: install linting dependencies
+        run: gem install rubocop pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
+
+      - name: run Pronto
+        run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
+        env:
+          PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
+        if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+
+      - name: run Pronto on fork
+        # We cannot use the `github_status` formatter on forks in order to report the linting status,
+        # since the formatter requires write access, which isn't the default on forks.
+        # This is why we're using the `--exit-code` flag, which causes Pronto to propagate non-zero exit codes,
+        # i.e., we can use the `--exit-code` flag to fail the linting job in case Pronto reports warning or errors (https://github.com/prontolabs/pronto).
+        run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
+        if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+
   cypress-run:
       runs-on: ubuntu-22.04
       steps:
