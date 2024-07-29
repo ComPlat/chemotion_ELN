@@ -186,7 +186,7 @@ export default class ScreenDetails extends Component {
   }
 
   screenHeader(screen) {
-    const saveBtnDisplay = screen.isEdited ? '' : 'none';
+    const saveBtnDisplay = screen.isEdited ? 'block' : 'none';
     const datetp = formatTimeStampsOfElement(screen || {});
 
     return (
@@ -432,7 +432,7 @@ export default class ScreenDetails extends Component {
 
     return (
       <Card className="eln-panel-detail">
-        <Card.Header className={` p-2 text-bg-${screen.isPendingToSave ? 'info' : 'primary'}`}>
+        <Card.Header className={`p-2 text-bg-${screen.isPendingToSave ? 'info' : 'primary'}`}>
           {this.screenHeader(screen)}
         </Card.Header>
         <Card.Body>
