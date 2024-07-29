@@ -978,20 +978,31 @@ export default class Reaction extends Element {
 
   calculateCatalystMoles(material) {
     let moles;
+    let amount;
+    let unit;
     const {
       purity,
       target_amount_unit,
       target_amount_value,
+      real_amount_unit,
+      real_amount_value,
       density
     } = material;
+    if (real_amount_value && real_amount_unit) {
+      amount = real_amount_value;
+      unit = real_amount_unit;
+    } else {
+      amount = target_amount_value;
+      unit = target_amount_unit;
+    }
     const molecularWeight = material.molecule.molecular_weight;
-    if (target_amount_unit === 'mol') {
-      moles = target_amount_value;
-    } else if (target_amount_unit === 'l') {
-      const amountInGram = target_amount_unit * density * 1000;
+    if (unit === 'mol') {
+      moles = amount;
+    } else if (unit === 'l') {
+      const amountInGram = amount * density * 1000;
       moles = (amountInGram * purity) / molecularWeight;
-    } else if (target_amount_unit === 'g') {
-      moles = (target_amount_value * purity) / molecularWeight;
+    } else if (unit === 'g') {
+      moles = (amount * purity) / molecularWeight;
     }
     return moles;
   }
