@@ -218,18 +218,18 @@ class ResearchPlanDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
-  addUniqueAttachments(newAttachments = []) {
+  addUniqueAttachments(attachmentsFromMessages, researchPlan) {
     const { filteredAttachments } = this.state;
-    const existingIds = new Set(filteredAttachments.map((attachment) => attachment.id));
-    const uniqueAttachments = newAttachments.filter((attachment) => {
-      if (!existingIds.has(attachment.id)) {
-        existingIds.add(attachment.id);
-        return true;
+    attachmentsFromMessages.forEach((attachment) => {
+      const existingMessage = filteredAttachments.find((a) => a.id === attachment.id);
+      const forCurrentElement = researchPlan.id === attachment.attachable_id;
+      if (!existingMessage && forCurrentElement) {
+        const copiedAttachment = { ...attachment };
+        copiedAttachment.is_deleted = false;
+        filteredAttachments.push(copiedAttachment);
+        researchPlan.attachments.push(copiedAttachment);
       }
-      return false;
     });
-
-    filteredAttachments.push(...uniqueAttachments);
   }
 
   renderImageEditModal() {
@@ -256,10 +256,11 @@ class ResearchPlanDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
+    const { researchPlan } = this.props;
 
     const attachmentsFromMessages = this.context.attachmentNotificationStore.getAttachmentsOfMessages();
 
-    this.addUniqueAttachments(attachmentsFromMessages);
+    this.addUniqueAttachments(attachmentsFromMessages, researchPlan);
 
     const { onUndoDelete, attachments } = this.props;
 
