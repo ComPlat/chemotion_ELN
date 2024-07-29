@@ -8,9 +8,10 @@ module SVG
     def structure_svg(editor, svg, hexdigest, is_centered = false)
       processor = case editor
                   when /marvinjs/i
-                    Chemotion::MarvinjsSvgProcessor.new(svg)
                   when /ketcher2/i
-                    Chemotion::KetcherSvgProcessor.new(svg)
+                    Chemotion::MarvinjsSvgProcessor.new(svg)
+                  # when /ketcher2/i
+                  #   Chemotion::KetcherSvgProcessor.new(svg)
                   when /chemdraw/i
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   when /ketcher/i

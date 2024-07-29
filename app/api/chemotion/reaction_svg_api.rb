@@ -20,7 +20,6 @@ module Chemotion
                                                     conditions: params[:conditions],
                                                     show_yield: true)
         data = composer.compose_reaction_svg
-        puts data
         # logic to scale each g indviually
         # extract each g tag from the data
         # for each g tag content, calculation width/height on the tags inside g
