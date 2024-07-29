@@ -1,14 +1,14 @@
+/* eslint-disable */
 import Aviator from 'aviator';
 import equal from 'deep-equal';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, ButtonGroup, Dropdown, Table } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 class MeasurementCandidate extends Component {
   static propTypes = {
@@ -154,7 +154,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className='measurementExportModal__body'>
-          <table className="table">
+          <Table className="table">
             <thead>
               <tr>
                 <th>{this._selectAllButton()}</th>
@@ -164,35 +164,33 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
               </tr>
             </thead>
             <tbody>
-              {measurementCandidates && measurementCandidates.map((candidate) => {
-                return (
-                  <MeasurementCandidate
-                    description={candidate.description}
-                    errors={candidate.errors}
-                    id={candidate.id}
-                    key={candidate.uuid}
-                    onChange={this._toggleCandidate.bind(this)}
-                    sample_identifier={candidate.sample_identifier}
-                    selected={candidate.selected}
-                    unit={candidate.unit}
-                    uuid={candidate.uuid}
-                    value={candidate.value}
-                  />
-                );
-              })}
+              {measurementCandidates && measurementCandidates.map((candidate) => (
+                <MeasurementCandidate
+                  description={candidate.description}
+                  errors={candidate.errors}
+                  id={candidate.id}
+                  key={candidate.uuid}
+                  onChange={this._toggleCandidate.bind(this)}
+                  sample_identifier={candidate.sample_identifier}
+                  selected={candidate.selected}
+                  unit={candidate.unit}
+                  uuid={candidate.uuid}
+                  value={candidate.value}
+                />
+              ))}
             </tbody>
-          </table>
-          <div>
-            <ButtonToolbar>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer className="modal-footer border-0">
+            <ButtonToolbar className="gap-1">
               <Button variant="warning" onClick={this.props.onHide}>
                 Close
               </Button>
               <Button variant="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
                 Link data to sample
               </Button>
-            </ButtonToolbar>
-          </div>
-        </Modal.Body>
+          </ButtonToolbar>
+        </Modal.Footer> 
       </Modal>
     );
   }
@@ -218,21 +216,24 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
       );
     } else {
       const readoutSelectors = prefixes.map((prefix, index) => (
-        <MenuItem
+        <Dropdown.Item
           eventKey={prefix}
           key={`SelectAllButtonForReadout${index}`}
           onClick={() => this._selectAll.bind(this)(prefix)}
         >
           {prefix}
-        </MenuItem>
+        </Dropdown.Item>
       ));
 
       return (
         <ButtonGroup>
-          <Button onClick={() => this._selectAll.bind(this)()}>Select all</Button>
-          <DropdownButton title="by Readout">
-            {readoutSelectors}
-          </DropdownButton>
+          <Button variant="light" onClick={this._selectAll.bind(this)}>Select all</Button>
+          <Dropdown as={ButtonGroup}>
+            <Dropdown.Toggle variant="light" id="dropdown-basic">by Readout</Dropdown.Toggle>
+            <Dropdown.Menu>
+              {readoutSelectors}
+            </Dropdown.Menu>
+          </Dropdown>
         </ButtonGroup>
       );
     }
