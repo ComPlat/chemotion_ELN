@@ -15,7 +15,7 @@ jobs:
       PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - run: |
           git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
 
