@@ -528,6 +528,7 @@ export default class Reaction extends Element {
 
     this.rebuildReference(newSrcMaterial);
     this.setPositions(tagGp);
+    this.updateMaterial(newSrcMaterial, null, "svgupdate");
   }
 
   deleteMaterial(material, group) {
@@ -797,7 +798,7 @@ export default class Reaction extends Element {
     return this.referenceMaterial;
   }
 
-  updateMaterial(material, refreshCoefficient) {
+  async updateMaterial(material, refreshCoefficient) {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
     let group;
