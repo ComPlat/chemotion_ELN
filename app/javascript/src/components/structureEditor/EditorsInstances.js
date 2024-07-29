@@ -32,11 +32,12 @@ const loadEditor = (editor, scripts) => {
 /**
  * Creates an editor by ID.
  */
-export function getEditorById(editorId, configs = {}, availableEditors = null) {
+export function getEditorById(editorIdP, configs = {}, availableEditors = null) {
+  let editorId = editorIdP;
+  if (editorId === 'ketcher') editorId = 'ketcher2';
   const available = availableEditors?.[editorId] || UIStore.getState().structureEditors?.editors?.[editorId];
 
   if (!available) return null;
-
   loadEditor(editorId, available.extJs);
   return new StructureEditor({
     ...EditorAttrs[editorId],
@@ -52,7 +53,6 @@ export function getEditorById(editorId, configs = {}, availableEditors = null) {
 export function createEditors(_state = {}) {
   const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors?.editors || {};
-
   const grantEditors = matriceConfigs
     .map(({ configs }) => {
       const id = configs.editor;

@@ -1,5 +1,5 @@
 const EditorAttrs = {
-  ketcher:
+  ketcher2:
   {
     structure:
     {
