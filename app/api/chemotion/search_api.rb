@@ -27,7 +27,7 @@ module Chemotion
             All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements cell_lines by_ids advanced structure
           ]
           optional :molfile, type: String
-          optional :search_type, type: String, values: %w[similar sub subPgCart]
+          optional :search_type, type: String, values: %w[similar sub subRDKit]
           optional :tanimoto_threshold, type: Float
           optional :page_size, type: Integer
           optional :structure_search, type: Boolean
@@ -103,7 +103,7 @@ module Chemotion
             Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
           when 'sub'
             Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
-          when 'subPgCart'
+          when 'subRDKit'
             Sample.by_collection_id(c_id).search_by_rdkit_sub(molfile)
           end
         order_by_molecule(scope)

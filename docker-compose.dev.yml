@@ -11,9 +11,10 @@
 #
 services:
   postgres:
-    image: 'postgres:14'
+    image: 'postgres-rdkit:16'
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
+      - 'POSTGRES_CARTRIDGE_INSTALLED=true'
     expose: # expose port to app container
       - '5432'
     ports: # expose port to host machine in case we want to use external db gui tools
