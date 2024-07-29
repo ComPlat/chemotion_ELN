@@ -10,7 +10,6 @@ import DetailSearch from './DetailSearch';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const TextSearch = () => {
   const elnElements = ['cell_lines', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans'];

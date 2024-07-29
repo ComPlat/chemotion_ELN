@@ -327,7 +327,7 @@ export default class ReactionDetailsContainers extends Component {
           <strike className="flex-grow-1">
             {container.name}
             {titleKind}
-            {titleStatus}            
+            {titleStatus}
           </strike>
           <Button
             className="ml-auto"

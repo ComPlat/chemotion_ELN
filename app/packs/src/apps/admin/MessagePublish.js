@@ -7,7 +7,6 @@ import Select from 'react-select';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
-
 export default class MessagePublish extends React.Component {
   constructor(props) {
     super(props);

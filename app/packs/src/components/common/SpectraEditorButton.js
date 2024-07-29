@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import {
   Tooltip, Button, OverlayTrigger, ButtonGroup, Dropdown
 } from 'react-bootstrap';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem';
 
 export default function SpectraEditorButton({
   element, spcInfos, hasJcamp, hasChemSpectra,

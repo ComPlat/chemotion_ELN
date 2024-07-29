@@ -8,7 +8,6 @@ import SearchResult from './SearchResult';
 import PublicationSearchRow from './PublicationSearchRow';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const PublicationSearch = () => {
   const searchStore = useContext(StoreContext).search;
