@@ -43,13 +43,10 @@ class ScreenResearchPlans extends Component {
 
   renderDropZone() {
     const { isOver, connectDropTarget } = this.props;
-    const style = {
-      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '8px'
-    };
-    if (isOver) { style.borderColor = '#337ab7'; }
+    const hoverColor = isOver ? 'border-primary' : '';
 
     return connectDropTarget( // eslint-disable-line function-paren-newline
-      <div style={style}>
+      <div className={`p-2 mb-4 border-dashed text-center text-gray-600 ${hoverColor}`}>
         Drop Research Plan here to add.
       </div>);
   }
