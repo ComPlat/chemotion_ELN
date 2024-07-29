@@ -1,0 +1,5 @@
+development:
+  :indigo_service_url: 'http://indigo_service/'
+
+production:
+  :indigo_service_url: 'http://indigo_service/'
