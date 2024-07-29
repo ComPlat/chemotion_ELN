@@ -46,15 +46,19 @@ jobs:
       steps:
         - name: Checkout
           uses: actions/checkout@v4
-        # Install npm dependencies, cache them correctly
-        # and run all Cypress tests
-        - name: yarn install
-          run:  yarn install --production=false
+        - name: Setup Ruby
+          uses: ruby/setup-ruby@v1
+          with:
+            ruby-version: '3.3.0'
+        - name: Install Bundler
+          run: gem install bundler
+        - name: Install dependencies
+          run: yarn install --production=false
+        - name: Start Rails server
+          run: bundle exec rails server -b 0.0.0.0 -p 3000
         - name: Cypress run
           uses: cypress-io/github-action@v6
           with:
-            start: bundle exec rails server -b 0.0.0.0 -p 3000
             wait-on: 'http://localhost:3000'
             project: spec
             config-file: cypress.config.js
-            working-directory: spec/cypress
