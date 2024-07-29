@@ -16,6 +16,10 @@ jobs:
           uses: actions/checkout@v4
         # Install npm dependencies, cache them correctly
         # and run all Cypress tests
+        - name: yarn install
+          run:  yarn install --production=false
+        - name: Start server in the background
+          run: bundle exec rails server -b 0.0.0.0 -p 3000
         - name: Cypress run
           uses: cypress-io/github-action@v6
           with:
