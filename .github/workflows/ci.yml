@@ -18,11 +18,11 @@ jobs:
         # and run all Cypress tests
         - name: yarn install
           run:  yarn install --production=false
-        - name: Start server in the background
-          run: exec rails server -b 0.0.0.0 -p 3000
         - name: Cypress run
           uses: cypress-io/github-action@v6
           with:
+            start: bundle exec rails server -b 0.0.0.0 -p 3000
+            wait-on: 'http://localhost:3000'
             project: spec
             config-file: cypress.config.js
             working-directory: spec/cypress
