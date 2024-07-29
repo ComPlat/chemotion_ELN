@@ -187,8 +187,6 @@ module Chemotion
         params do
           requires :spectra_ids, type: [Integer]
           requires :front_spectra_idx, type: Integer # index of front spectra
-          requires :container_id, type: Integer
-          requires :edited_data_spectra, type: [Hash]
         end
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)

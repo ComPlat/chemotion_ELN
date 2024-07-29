@@ -1,4 +1,5 @@
 import { FN } from '@complat/react-spectra-editor';
+import Sample from 'src/models/Sample';
 const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf', 'zip'];
 
 const JcampIds = (container) => {
@@ -318,7 +319,7 @@ const BuildSpectraComparedInfos = (sample, container) => {
 }
 
 const BuildSpectraComparedSelection = (sample) => {
-  if (!sample) return [];
+  if (!sample) return { menuItems: [], selectedFiles: [] };
   const filteredAttachments = (dataset) => {
     if (dataset) {
       const filtered = dataset.attachments.filter((attch) => {
@@ -331,7 +332,27 @@ const BuildSpectraComparedSelection = (sample) => {
   };
 
   const listComparible = sample.getAnalysisContainersComparable();
-  const menuItems = Object.keys(listComparible).map((layout) => {
+  const listComparibleKeys = Object.keys(listComparible);
+  let comparisonContainers = [];
+  listComparibleKeys.forEach((layout) => {
+    const listAics = listComparible[layout];
+    comparisonContainers = listAics.filter((aic) => {
+      const { comparable_info } = aic;
+      return comparable_info ? comparable_info.is_comparison : false;
+    });
+  });
+
+  const selectedFiles = [];
+  comparisonContainers.forEach((container) => {
+    const { comparable_info } = container;
+    const { list_attachments } = comparable_info;
+    const ids = list_attachments.map((att) => {
+      return att.id;
+    });
+    selectedFiles.push(...ids);
+  });
+
+  const menuItems = listComparibleKeys.map((layout) => {
     const listAics = listComparible[layout].map((aic)=> {
       const { children } = aic;
       let subSubMenu = null;
@@ -345,17 +366,21 @@ const BuildSpectraComparedSelection = (sample) => {
           const spectraItems = attachments.map((item) => {
             return { title: item.filename, key: item.id, value: item.id }
           });
-          return { title: dts.name, key: dts.id, value: dts, checkable: false , children: spectraItems };
+          return { title: dts.name, key: dts.id, value: dts.id, checkable: false , children: spectraItems };
         });
       }
-      return { title: aic.name, value: aic.name, key: aic.id, children: subSubMenu, checkable: false };
+      return { title: aic.name, value: aic.id, key: aic.id, children: subSubMenu, checkable: false };
     });
     return { title: layout, key: layout, value: layout, children: listAics, checkable: false }
   });
-  return menuItems;
+
+  return { menuItems, selectedFiles };
 };
 
 const GetSelectedComparedAnalyses = (container, treeData, selectedFiles, info) => {
+  if (!selectedFiles || !info) return [];
+  if (selectedFiles.length > info.length) return [];
+
   const getParentNode = (key, tree) => {
     let parentNode;
     for (let i = 0; i < tree.length; i++) {
@@ -385,8 +410,37 @@ const GetSelectedComparedAnalyses = (container, treeData, selectedFiles, info) =
   return selectedData;
 };
 
+const ProcessSampleWithComparisonAnalyses = (sample, spectraStore) => {
+  const { spcIdx, prevIdx } = spectraStore;
+  const newSample = new Sample(sample);
+  const comparableContainers = newSample.getAnalysisContainersComparable();
+  const listComparibleKeys = Object.keys(comparableContainers);
+  let comparisonContainers = [];
+  listComparibleKeys.forEach((layout) => {
+    const listAics = comparableContainers[layout];
+    comparisonContainers = listAics.filter((aic) => {
+      const { comparable_info } = aic;
+      return comparable_info ? comparable_info.is_comparison : false;
+    });
+  });
+  comparisonContainers.forEach((container) => {
+    const { extended_metadata } = container;
+    const { analyses_compared } = extended_metadata;
+    const newListAtts = analyses_compared.map((att) => {
+      const { file } = att;
+      if (file.id === prevIdx) {
+        const newFileInfo = Object.assign({}, file, { id: spcIdx });
+        return Object.assign({}, att, { file: newFileInfo });
+      }
+      return att;
+    });
+    extended_metadata.analyses_compared = newListAtts;
+  });
+  return newSample;
+};
+
 export {
   BuildSpcInfos, BuildSpcInfosForNMRDisplayer,
   JcampIds, isNMRKind, cleaningNMRiumData, inlineNotation, BuildSpectraComparedInfos,
-  BuildSpectraComparedSelection, GetSelectedComparedAnalyses
+  BuildSpectraComparedSelection, GetSelectedComparedAnalyses, ProcessSampleWithComparisonAnalyses,
 }; // eslint-disable-line

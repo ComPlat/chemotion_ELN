@@ -39,29 +39,6 @@ function RndNoAnalyses({ sample,
         {AnalysisModeBtn(mode, toggleMode, isDisabled)}
         {addButton()}
       </p>
-      {/* {
-        orderContainers.map((container, i) => {
-          const id = container.id || `fake_${i}`;
-          return (
-            <ContainerRow
-              sample={sample}
-              mode={mode}
-              container={container}
-              readOnly={readOnly}
-              isDisabled={isDisabled}
-              key={`${id}CRowOrder`}
-              addButton={addButton}
-              handleMove={handleMove}
-              handleRemove={handleRemove}
-              handleSubmit={handleSubmit}
-              handleAccordionOpen={handleAccordionOpen}
-              handleUndo={handleUndo}
-              toggleAddToReport={toggleAddToReport}
-            />
-          );
-        })
-      } */}
-      {/* <p>{addButton()}</p> */}
       <p className="noAnalyses-warning">There are currently no Analyses.</p>
     </div>
   );

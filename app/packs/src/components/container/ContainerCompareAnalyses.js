@@ -16,6 +16,8 @@ export default class ContainerCompareAnalyses extends Component {
     const textTemplate = TextTemplateStore.getState()[templateType] || Map();
     this.state = {
       container,
+      selectedFilesIds: [],
+      menuItems: null,
       textTemplate: textTemplate && textTemplate.toJS()
     };
 
@@ -31,6 +33,8 @@ export default class ContainerCompareAnalyses extends Component {
 
   componentDidMount() {
     TextTemplateStore.listen(this.handleTemplateChange);
+    const { menuItems, selectedFiles } = this.buildSelectAnalysesMenu();
+    this.setState({ menuItems, selectedFilesIds: selectedFiles});
   }
 
   // eslint-disable-next-line camelcase
@@ -83,8 +87,15 @@ export default class ContainerCompareAnalyses extends Component {
   }
 
   handleChangeSelectAnalyses(treeData, selectedFiles, info) {
-    const { container } = this.state;
+    const { container, selectedFilesIds } = this.state;
     const selectedData = GetSelectedComparedAnalyses(container, treeData, selectedFiles, info);
+    let newSelectedFilesIds = [];
+    if (selectedFilesIds.length < selectedFiles.length) {
+      newSelectedFilesIds = Array.from(new Set([...selectedFilesIds, ...selectedFiles]));
+    } else {
+      newSelectedFilesIds = [...selectedFiles];
+    }
+    this.setState({selectedFilesIds: newSelectedFilesIds});
     container.extended_metadata.analyses_compared = selectedData;
     this.onChange(container);
   }
@@ -97,15 +108,13 @@ export default class ContainerCompareAnalyses extends Component {
 
   buildSelectAnalysesMenu() {
     const { sample } = this.props;
-    const menuItems = BuildSpectraComparedSelection(sample);
-    return menuItems;
+    const { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample);
+    return { menuItems, selectedFiles };
   }
 
   render() {
-    const { container } = this.state;
+    const { container, menuItems, selectedFilesIds } = this.state;
     const { readOnly, disabled } = this.props;
-    const treeAnalysesData = this.buildSelectAnalysesMenu();
-    console.log('treeAnalysesData', treeAnalysesData);
 
     return (
       <div>
@@ -114,7 +123,7 @@ export default class ContainerCompareAnalyses extends Component {
           <FormControl
             type="text"
             label="Name"
-            value={container.name || '***'}
+            value={container.name || ''}
             // eslint-disable-next-line react/jsx-no-bind
             onChange={this.handleInputChange.bind(this, 'name')}
             disabled={readOnly || disabled} />
@@ -140,8 +149,9 @@ export default class ContainerCompareAnalyses extends Component {
               style={{ width: '100%' }}
               placeholder="Please select"
               treeCheckable={true}
-              treeData={treeAnalysesData}
-              onChange={this.handleChangeSelectAnalyses.bind(this, treeAnalysesData)}
+              value={selectedFilesIds}
+              treeData={menuItems}
+              onChange={this.handleChangeSelectAnalyses.bind(this, menuItems)}
             />
           </div>
         </Col>

@@ -118,7 +118,7 @@ class ViewSpectraCompare extends React.Component {
 
   buildOpsByLayout(et) {
     return [
-      { name: 'save & close', value: this.saveOp },
+      { name: 'close', value: this.closeOp },
     ];
   }
 
@@ -140,7 +140,7 @@ class ViewSpectraCompare extends React.Component {
 
   renderTitle() {
     const { elementData } = this.props;
-    const treeAnalysesData = BuildSpectraComparedSelection(elementData);
+    const { menuItems } = BuildSpectraComparedSelection(elementData);
     const { container } = this.state;
     let modalTitle = '';
     let selectedFiles = [];
@@ -164,9 +164,9 @@ class ViewSpectraCompare extends React.Component {
             style={{ width: '100%' }}
             placeholder="Please select"
             treeCheckable={true}
-            treeData={treeAnalysesData}
+            treeData={menuItems}
             value={selectedFiles}
-            onChange={this.handleChangeSelectAnalyses.bind(this, treeAnalysesData)}
+            onChange={this.handleChangeSelectAnalyses.bind(this, menuItems)}
           />
         </div>
         <Button
@@ -194,14 +194,21 @@ class ViewSpectraCompare extends React.Component {
       return entity;
     });
 
+    const { container } = this.state;
+    let entityFileNames = null;
+    if (container) {
+      const { comparable_info } = container;
+      if (comparable_info) {
+        const { list_attachments } = comparable_info;
+        if (list_attachments) {
+          entityFileNames = list_attachments.map((att) => {
+            return att.filename;
+          });
+        }
+      }
+    }
+
     const operations = this.buildOpsByLayout(currEntity);
-    // const descriptions = this.getQDescVal();
-    // const forecast = {
-    //   btnCb: this.predictOp,
-    //   refreshCb: this.saveOp,
-    //   molecule: 'molecule',
-    //   predictions,
-    // };
 
     return (
       <Modal.Body>
@@ -211,6 +218,7 @@ class ViewSpectraCompare extends React.Component {
               <SpectraEditor
                 entity={currEntity}
                 multiEntities={multiEntities}
+                entityFileNames={entityFileNames}
                 operations={operations}
               />
             )

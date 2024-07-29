@@ -155,6 +155,7 @@ class SpectraStore {
       spcIdx: fetchedIdx,
       others: [],
       arrSpcIdx: newArrSpcIdx,
+      prevIdx,
     });
   }
 

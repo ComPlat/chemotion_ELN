@@ -129,11 +129,13 @@ export default class Element {
       const { extended_metadata } = aic;
       const layout = (extended_metadata && extended_metadata.kind) ? extended_metadata.kind : '';
       if (layout !== '') {
-        let listAics = result[layout] ? result[layout] : [];
+        const splittedStr = layout.split('|');
+        const cleanedLayout = splittedStr.length > 1 ? splittedStr[1] : layout;
+        let listAics = result[cleanedLayout] ? result[cleanedLayout] : [];
         const dts = aic.children.filter(el => ~el.container_type.indexOf('dataset'));
         const aicWithDataset = Object.assign({}, aic, { children: dts });
         listAics.push(aicWithDataset);
-        result[layout] = listAics;
+        result[cleanedLayout] = listAics;
       }
     });
     return result;

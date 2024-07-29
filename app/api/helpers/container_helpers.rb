@@ -153,5 +153,4 @@ module ContainerHelpers
       layout: layout,
     }
   end
-
-end # module
+end

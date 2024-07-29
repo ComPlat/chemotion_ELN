@@ -70,7 +70,6 @@ module Entities
       else
         build_preview_image(attachments_with_thumbnail)
       end
-      
     end
 
     def build_preview_image(attachments_with_thumbnail)
