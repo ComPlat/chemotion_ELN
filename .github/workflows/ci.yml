@@ -42,23 +42,32 @@ jobs:
         if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
 
   cypress-run:
-      runs-on: ubuntu-22.04
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-        - name: Setup Ruby
-          uses: ruby/setup-ruby@v1
-          with:
-            ruby-version: '3.3.0'
-        - name: Install Bundler
-          run: gem install bundler
-        - name: Install dependencies
-          run: yarn install --production=false
-        - name: Start Rails server
-          run: bundle exec rails server -b 0.0.0.0 -p 3000
-        - name: Cypress run
-          uses: cypress-io/github-action@v6
-          with:
-            wait-on: 'http://localhost:3000'
-            project: spec
-            config-file: cypress.config.js
+  runs-on: ubuntu-22.04
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3.0'
+    - name: Install Bundler
+      run: gem install bundler
+    - name: Install dependencies
+      run: yarn install --production=false
+    - name: Install Rails dependencies
+      run: bundle install
+    - name: Add bundler bin to PATH
+      run: echo "::add-path::$(ruby -e 'print Gem.user_dir')/bin"
+    - name: Start Rails server
+      run: bundle exec rails server -b 0.0.0.0 -p 3000 &
+      env:
+        RAILS_ENV: test
+    - name: Wait for server to be ready
+      run: npx wait-on http://localhost:3000
+    - name: Cypress run
+      uses: cypress-io/github-action@v6
+      with:
+        wait-on: 'http://localhost:3000'
+        project: spec/cypress
+        config-file: spec/cypress/cypress.config.js
+
