@@ -15,7 +15,6 @@ import {
   Row,
   Col
 } from 'react-bootstrap';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 
 function omniauthLabel(icon, name) {

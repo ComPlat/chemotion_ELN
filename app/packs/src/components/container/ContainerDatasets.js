@@ -158,7 +158,7 @@ export default class ContainerDatasets extends Component {
       );
     }
     return (
-      <div className='custom-light-grey-bg'>
+      <div className='bg-gray-200'>
         <div className="border rounded p-2 mb-2">
           <p>There are currently no Datasets.</p>
           <div className="list-group">

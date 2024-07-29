@@ -3,7 +3,6 @@ import { Modal, Button } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ElementReactionLabels extends React.Component {
   constructor(props) {

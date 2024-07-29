@@ -1,7 +1,6 @@
 import React from 'react';
 import { FormControl, InputGroup, Card } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
-import Panel from 'src/components/legacyBootstrap/Panel';
 
 export default class AdminDashboard extends React.Component {
   constructor(props) {
