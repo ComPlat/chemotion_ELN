@@ -257,7 +257,6 @@ export default class CurationModal extends Component {
           {combined_array.includes(part)
             ? (output_div)
             : (part)} 
-            
         </React.Fragment>))
         
         return (
@@ -383,7 +382,7 @@ export default class CurationModal extends Component {
           <Modal show={this.state.show} onHide={this.handleClose}  >
             <Modal.Header closeButton>
               <Modal.Title>
-                <Col md={6}>Spell Check: English {this.state.dictionaryLanguage}   
+                <Col md={6}><span style={{paddingRight:10}}>Spell Check: English {this.state.dictionaryLanguage}   </span>
                   <Button onClick={()=> this.handleDictionaryLang()}><i class="fa fa-language" ></i>
                   </Button>
                 </Col>
@@ -394,8 +393,7 @@ export default class CurationModal extends Component {
                 <Panel.Heading>
                 <Grid >
                   <Row> 
-                    <Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add selected misspelled words
-                    </Button>
+                    
                   </Row>
                   <Row style={{paddingTop:5}}>
                     <Col md={3} sm={3} style={{paddingLeft:0}} > {formWindow}</Col>
@@ -408,8 +406,12 @@ export default class CurationModal extends Component {
                 </Panel.Body> 
                 <Panel>
                   <Panel.Heading>
-                    <h4> Suggestions for : {this.state.mispelledWords[this.state.suggestionIndex]}
-                    </h4>
+                  <Row>
+                  <Col md={7}>
+                 <h5> Suggestions for : <b>{this.state.mispelledWords[this.state.suggestionIndex]}
+                  </b>  </h5></Col><Col md={5}><Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add selected misspelled words
+                    </Button></Col>
+                    </Row>
                   </Panel.Heading>
                   <Panel.Body>
                     <Col md={6}>
@@ -424,7 +426,7 @@ export default class CurationModal extends Component {
                 <Button onClick={()=>
                 {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
                 this.convertStringToObject(this.state.desc)}}>Correct</Button>
-                <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button>
+                {/* <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button> */}
                 <div className='pull-right'><Button onClick={()=> {this.props.onChange(this.state.descriptionObject);console.log(this.state.descriptionObject);this.convertStringToObject(this.state.desc); this.handleClose()}}> <i class="fa fa-floppy-o"></i> </Button></div>
               </ButtonToolbar> 
               </Panel.Footer>

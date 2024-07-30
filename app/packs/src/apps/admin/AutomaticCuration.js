@@ -52,32 +52,59 @@ export default class DictionaryCuration extends Component  {
       var affixArray =affixStr.split("\n")
       var iArray = []
       var affixObject = {}
+      var aff1stLine ={}
       for (var i =0 ; i < affixArray.length; i++){
         var affixLine = affixArray[i]
         if (affixLine.match(/((SFX)|(PFX)) [A-Z] ((Y)|(N)) \d/g)){
           iArray.push(i)
         }
       }
+
       for (var i =0 ; i < iArray.length; i++){
         var startingLine = (affixArray[iArray[i]])
         var numOfLines = startingLine.match(/\d/).join()
         var affixLetter= startingLine.match(/ [A-Z] /)
         affixLetter[0] = affixLetter[0].replaceAll(" ", "") 
-        var affixMap = new Map
         var endingLine = iArray[i] + parseInt(numOfLines)
-          for (var j = iArray[i] +1; j <= endingLine; j++){
+      
+          for (var j = iArray[i] ; j <= endingLine; j++){
+
+            if (affixArray[j].match(/((SFX)|(PFX)) [A-Z] ((Y)|(N)) \d/g))
+            {
+              var splitLine =affixArray[j].split(" ")
+              var sOrP =splitLine[0]
+              var affixLetter = splitLine[1]
+              var yesNo = splitLine[2]
+              var numOfLines = splitLine[3]
+               aff1stLine = {[affixLetter]: [sOrP,yesNo,numOfLines]}
+
+            }
+            else{
             var selectedLine = affixArray[j];
-            var slicedLine = selectedLine.slice(14,selectedLine.length);
-            var splitSlicedLine = slicedLine.split(" ");
-            var filteredLine = splitSlicedLine.filter((x)=> x != "" );
-            var affix = filteredLine[0]
-            var lastChar = filteredLine[1]
-            affixMap.set(lastChar, affix)
-            affixObject[affixLetter] = [affixMap]
+            var slicedLine = selectedLine.split(/\s* /);
+            // for (var property in slicedLine){
+            //   property = property.replace(" ","")
+            // }
+            // var slicedLine = slicedLine.filter((x)=> x != "" );
+            var sOrP = slicedLine[0]
+            var affixLetter = slicedLine[1]
+            var removedLetter = slicedLine[2];
+            var addedaffix = slicedLine[3]
+            var lastChar = slicedLine[4]
+            var affNthLine =  {[lastChar] :[sOrP,removedLetter,addedaffix]}
+           
+            // charMap.lastChar = removedLetter
+            // affixMap.affix = charMap
+            // affixObject[affixLetter] = [affixMap]
              }
-             var sOrP = (startingLine.match(/((SFX)|(PFX))/)[0])
-             affixObject[affixLetter].push(sOrP)
-          }
+             var affObject = new Object 
+              affObject = {[affixLetter]:[aff1stLine]}
+             affObject[affixLetter].push(affNthLine)
+             Object.assign(affixObject,affObject)
+             console.log(affixObject)
+          }}
+          
+          
       return affixObject
     }
 
@@ -116,7 +143,9 @@ export default class DictionaryCuration extends Component  {
       var sOrP = affixObject[indvidualAff][1]
       var affMap = affixObject[indvidualAff][0]
       var wordLastChar = word.charAt(word.length-1)
-      var affKey = affMap.keys()
+      var removeChar = affixObject[indvidualAff][0]
+     
+      var affKey = Object.keys(affMap)
       for(var key of affKey){
         const keyRegex = new RegExp(key)
         if (keyRegex.test(wordLastChar)){
@@ -249,6 +278,7 @@ export default class DictionaryCuration extends Component  {
             {/* <Button onClick={()=> this.creatDictionaryFromString()}>Create dictionary</Button> */}
             <Row>
               <Col lg={6}>
+             
                   <FormGroup controlId="customDictionary">
                       <ControlLabel>Custom Dictionary
                         <Row>
@@ -259,7 +289,7 @@ export default class DictionaryCuration extends Component  {
                               onChange={this.handleChangeCustomSearch}/>
                           </Col>
                           <Col lg={5}> 
-                            <Button onClick={()=> 
+                            <Button type='submit' onClick={()=> 
                               this.handleSearchSubmit(this.state.customDictionaryText,this.state.customSearch,"customValue")}>
                               Submit
                             </Button>
@@ -287,7 +317,7 @@ export default class DictionaryCuration extends Component  {
                               onChange={this.handleChangeEstablishedSearch}/>
                           </Col>
                           <Col lg={5}> 
-                            <Button onClick={()=> 
+                            <Button type='submit' onClick={()=> 
                               this.handleSearchSubmit
                               (this.state.establishedDictionaryText,this.state.establishedSearch,"establishedValue")}>
                               Submit
@@ -303,6 +333,7 @@ export default class DictionaryCuration extends Component  {
                       />
                       <FormControl.Feedback />
                   </FormGroup>
+                 
                   </Col>
                 </Row>
             </div>
