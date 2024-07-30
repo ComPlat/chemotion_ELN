@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
+import { Button } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
@@ -28,20 +29,19 @@ const hasAuth = (id) => {
 };
 
 const noAuth = (el) => (
-  <div className="research-plan-no-auth">
+  <div className="text-center border-gray-300 border-dashed">
     <h4>
       {el.id.split(':')[2]}
-      &nbsp;
-      <i className="fa fa-eye-slash" aria-hidden="true" />
+      <i className="fa fa-eye-slash ms-1" aria-hidden="true" />
     </h4>
   </div>
 );
 
 function elementError() {
   return (
-    <div style={{ color: 'red', textAlign: 'center' }}>
-      <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-      <span style={{ fontWeight: 'bold' }}>Internal Server Error: Sample can not be found!</span>
+    <div className="text-danger text-center">
+      <i className="fa fa-exclamation-triangle me-1" aria-hidden="true" />
+      <span className="fw-bold">Internal Server Error: Sample can not be found!</span>
     </div>
   );
 }
@@ -102,21 +102,13 @@ class ResearchPlanDetailsFieldSample extends Component {
     }
     const { edit } = this.props;
     const link = (
-      <button
-        type="button"
-        style={{
-          color: '#003366',
-          backgroundColor: 'transparent',
-          border: '1px solid #003366',
-          borderRadius: '4px',
-          margin: '5px',
-          outline: 'none',
-        }}
+      <Button
+        variant="light"
+        size="xsm"
         onClick={() => this.showSample()}
-        role="button"
       >
         {sample.title()}
-      </button>
+      </Button>
     );
 
     let image;
@@ -124,15 +116,10 @@ class ResearchPlanDetailsFieldSample extends Component {
       image = <img src={sample.svgPath} alt={sample.title()} />;
     }
 
-    const sampleStyle = edit ? {} : {
-      border: '1px solid #cccccc',
-      padding: '5px',
-    };
-
     return (
-      <div className="research-plan-field-image" style={sampleStyle}>
+      <div className={`${!edit && 'border'} text-start`}>
         {link}
-        <div className="image-container">
+        <div className="text-center mb-0 mw-100">
           {image}
           <SampleName sample={sample} />
         </div>
@@ -155,8 +142,9 @@ class ResearchPlanDetailsFieldSample extends Component {
       content = 'Drop sample here.';
     }
     return connectDropTarget(
-      <div className="border-dashed border-gray-300 p-3 text-center mb-3">
-          {content}
+      <div
+        className={`p-2 text-center mb-3 ${(isOver || canDrop) ? 'border border-gray-300 border-3' : 'border-dashed border-gray-300'} `}>
+        {content}
       </div>
     );
   }
