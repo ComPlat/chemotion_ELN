@@ -2,8 +2,8 @@
 
 module OrdKit
   module Exporter
-    module Compounds
-      class PurifyCompoundExporter
+    module Samples
+      class SampleExporter
         def initialize(sample)
           @sample = sample
         end
@@ -27,15 +27,18 @@ module OrdKit
         attr_reader :sample
 
         def identifiers
+          Rails.logger.info('SAMPLE')
+          Rails.logger.info(sample.inspect)
           [OrdKit::CompoundIdentifier.new(
             type: OrdKit::CompoundIdentifier::IdentifierType::UNSPECIFIED, # TODO: hardcoded clarify
-            details: sample&.name,
-            value: sample&.preferred_label || sample&.short_label || 'No label (data missing)',
+            value: sample['label'],
           )]
         end
 
         def reaction_role
-          OrdKit::ReactionRole::ReactionRoleType::SOLVENT
+          OrdKit::ReactionRole::ReactionRoleType.const_get sample['acts_as']
+        rescue NameError
+          OrdKit::ReactionRole::ReactionRoleType::UNSPECIFIED
         end
       end
     end
