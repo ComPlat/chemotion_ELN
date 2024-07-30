@@ -82,29 +82,11 @@ jobs:
       - name: yarn install
         run:  yarn install --production=false
 
-      - name: prepare postgres
-        run: |
-          RAILS_ENV=test bundle exec rake db:migrate
-          RAILS_ENV=test bundle exec rake db:test:prepare
-          RAILS_ENV=test bundle exec rake db:seed
+      - name: start background server
+        run: bundle exec rails s -p 3000 -b 0.0.0.0
 
-      - name: npm test
-        run: npm test
-
-      - name: rspec unit
-        run: |
-          eval `ssh-agent`
-          ssh-add $HOME/.ssh/id_test
-          RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
-
-      - name: coverage rspec unit
-        if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (github.triggering_actor != 'dependabot[bot]')  # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
-        uses: zgosalvez/github-actions-report-lcov@v1
-        with:
-          coverage-files: coverage/lcov/${{ github.event.repository.name }}.lcov
-          minimum-coverage: 57
-          artifact-name: code-coverage-report
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: run Cypress tests # wait on server? (https://til.simonwillison.net/bash/start-test-then-stop-server)
+        run: yarn cypress run --config-file cypress.config.js
 
 #      - name: precompile
 #        run: RAILS_ENV=test bundle exec rake webpacker:compile

@@ -875,7 +875,7 @@ DEPENDENCIES
   chronic
   closure_tree
   countries
-  cypress-on-rails
+  cypress-on-rails (~> 1.0)
   database_cleaner
   database_cleaner-active_record
   debase
