@@ -155,7 +155,7 @@ class ResearchPlanDetailsFieldSample extends Component {
       content = 'Drop sample here.';
     }
     return connectDropTarget(
-      <div className="drop-zone-style p-3 text-center mb-3">
+      <div className="border-dashed border-gray-300 p-3 text-center mb-3">
           {content}
       </div>
     );
