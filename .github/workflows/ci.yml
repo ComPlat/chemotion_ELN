@@ -6,7 +6,7 @@ on:
   push:
     branches:
       - main
-      - cypress-ci # TODO: replace with main
+      - cypress-on-CI # TODO: replace with main
 
 jobs:
   # linting:
