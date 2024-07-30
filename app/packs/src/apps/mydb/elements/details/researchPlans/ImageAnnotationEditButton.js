@@ -13,26 +13,23 @@ export default class ImageAnnotationEditButton extends Component {
         placement="top"
         overlay={<Tooltip id="annotate_tooltip">{tooltipText}</Tooltip>}
       >
-        <span>
-          <Button
-            size="sm"
-            variant="warning"
-            style={this.props.style}
-            className={this.props.className}
-            onClick={() => {
-              if (isActive) {
-                this.props.parent.setState({
-                  imageEditModalShown: true,
-                  chosenAttachment: this.props.attachment,
-                  imageName: this.props.attachment.filename,
-                });
-              }
-            }}
-            disabled={!isActive}
-          >
-            <i className="fa fa-pencil-square-o" aria-hidden="true" />
-          </Button>
-        </span>
+        <Button
+          size="md"
+          variant="warning"
+          className="d-flex align-items-center justify-content-center "
+          onClick={() => {
+            if (isActive) {
+              this.props.parent.setState({
+                imageEditModalShown: true,
+                chosenAttachment: this.props.attachment,
+                imageName: this.props.attachment.filename,
+              });
+            }
+          }}
+          disabled={!isActive}
+        >
+          <i className="fa fa-pencil-square-o text-white" aria-hidden="true" />
+        </Button>
       </OverlayTrigger>
     );
   }
