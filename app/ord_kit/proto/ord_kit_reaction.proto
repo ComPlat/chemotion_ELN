@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (enhancing but incompatible in either direction to the original ORD Schema).
 //
-// v0.6.0
-// (draft, 03.06.2024)
+// v0.6.1
+// (draft, 28.07.2024)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -287,10 +287,16 @@ message ReactionProcessAction {
     }
 
     message Automated {
+
+      message WavelengthList {
+        repeated Wavelength peaks = 1;
+        bool is_range = 2;
+      }
+
       Equipment equipment = 1;
       string column_type = 2;
       repeated ChromatographyStep.Detector detectors = 3;
-      Wavelength wavelength = 4;
+      WavelengthList wavelengths = 4;
     }
 
     repeated ChromatographyStep steps = 1;
@@ -357,7 +363,28 @@ message ReactionProcessAction {
 
   message ActionWait { Time duration = 1; }
 
-  message ActionSaveSample { Compound sample = 1; }
+  message ActionSaveSample {
+    enum OriginType {
+      UNSPECIFIED = 0;
+      ALL = 1;
+      SPLIT = 2;
+      PURIFICATION = 3;
+    }
+
+    message PurifyOrigin {
+      int32 origin_action_position = 1;
+      int32 origin_purify_step_position = 2;
+      repeated Compound solvents = 3;
+      Amount amount = 4;
+      repeated Compound extra_solvents = 5;
+    }
+
+    Compound sample = 1;
+    repeated Compound molecular_entities = 2;
+    Vessel vessel = 3;
+    OriginType origin_type = 4;
+    optional PurifyOrigin purify_origin = 5;
+  }
 }
 /**
  * The quantitative amount of a Compound used in a particular reaction.
