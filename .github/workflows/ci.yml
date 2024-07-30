@@ -32,7 +32,6 @@ jobs:
   #       env:
   #         PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
   #       if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
-
   #     - name: run Pronto on fork
   #       # We cannot use the `github_status` formatter on forks in order to report the linting status,
   #       # since the formatter requires write access, which isn't the default on forks.
