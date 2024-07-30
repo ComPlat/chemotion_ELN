@@ -2,72 +2,140 @@ name: Continuous Integration
 
 on:
   workflow_dispatch:
-  pull_request:
+  # pull_request:
   push:
     branches:
-      - main
-      - cypress-on-CI
+      - cypress-ci # TODO: replace with main
 
 jobs:
-  linting:
-    if: github.event.pull_request && (github.triggering_actor != 'dependabot[bot]')
+  # linting:
+  #   if: github.event.pull_request && (github.triggering_actor != 'dependabot[bot]')
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
+  #   steps:
+  #     - name: checkout repository
+  #       uses: actions/checkout@v3
+  #     - run: |
+  #         git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
+
+  #     - uses: ruby/setup-ruby@v1
+  #       with:
+  #         ruby-version: '2.7.7'
+
+  #     - name: install linting dependencies
+  #       # IMPORTANT: install rubocop first for pinning to take effect (`gem` doesn't resolve dependencies but simply installs gems in order)
+  #       run: gem install rubocop:1.37.1 pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance    # TODO: unpin rubocop once it's not breaking pronto anymore (as does rubocop:1.38.0)
+
+  #     - name: run Pronto
+  #       run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
+  #       env:
+  #         PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
+  #       if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+
+  #     - name: run Pronto on fork
+  #       # We cannot use the `github_status` formatter on forks in order to report the linting status,
+  #       # since the formatter requires write access, which isn't the default on forks.
+  #       # This is why we're using the `--exit-code` flag, which causes Pronto to propagate non-zero exit codes,
+  #       # i.e., we can use the `--exit-code` flag to fail the linting job in case Pronto reports warning or errors (https://github.com/prontolabs/pronto).
+  #       run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
+  #       if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+
+  testing:
+    # needs: [linting]
+    # if: always() && (needs.linting.result == 'success' || needs.linting.result == 'skipped')    # https://github.com/actions/runner/issues/491
     runs-on: ubuntu-latest
-    env:
-      PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
+    defaults:
+      run:
+        shell: bash
+
+    container: complat/chemotion_eln_runner:v1.7.0-3
+
+    services:
+      postgres:
+        image: postgres    # https://hub.docker.com/_/postgres
+        env:
+          POSTGRES_DB: chemotion_test # image creates this db on startup
+          POSTGRES_USER: chemotion_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
-      - run: |
-          git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
 
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3.0'
+      - name: create user for datacollectors testing
+        run: |
+          useradd testuser -m -s /bin/bash
+          mkdir /home/testuser/.ssh
+          chown testuser:testuser /home/testuser/.ssh
+          chmod 700 /home/testuser/.ssh
 
-      - name: install linting dependencies
-        run: gem install rubocop pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
+      - name: configure ssh for datacollectors testing
+        run: |
+          service ssh restart
+          mkdir -p $HOME/.ssh
+          chmod 700 $HOME/.ssh
+          ssh-keygen -t ed25519 -f $HOME/.ssh/id_test -N ""
+          # echo "$(<$HOME/.ssh/id_test.pub)" >> $HOME/.ssh/authorized_keys
+          echo "$(<$HOME/.ssh/id_test.pub)" | sudo tee -a /home/testuser/.ssh/authorized_keys
+          eval `ssh-agent`
+          ssh-add $HOME/.ssh/id_test
+          ssh-keyscan -H 127.0.0.1  >> $HOME/.ssh/known_hosts
 
-      - name: run Pronto
-        run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
-        env:
-          PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
-        if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+      - name: configure repository
+        run: |
+          mv public/welcome-message-sample.md public/welcome-message.md
+          cd config
+          cp database.yml.gitlab database.yml
+          cp -f datacollectors.yml.example datacollectors.yml
+          cp -f profile_default.yml.example profile_default.yml
+          cp -f shrine.yml.example shrine.yml
+          cp -f storage.yml.example storage.yml
+          cp -f radar.yml.example radar.yml
+          touch klasses.json
+          bundle config set without ''
 
-      - name: run Pronto on fork
-        # We cannot use the `github_status` formatter on forks in order to report the linting status,
-        # since the formatter requires write access, which isn't the default on forks.
-        # This is why we're using the `--exit-code` flag, which causes Pronto to propagate non-zero exit codes,
-        # i.e., we can use the `--exit-code` flag to fail the linting job in case Pronto reports warning or errors (https://github.com/prontolabs/pronto).
-        run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
-        if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
-
-  cypress-run:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3.0'
-      - name: Install Bundler
-        run: gem install bundler
-      - name: Install dependencies
-        run: yarn install --production=false
-      - name: Install Rails dependencies
+      - name: bundle install
         run: bundle install
-      - name: Add bundler bin to PATH
-        run: echo "::add-path::$(ruby -e 'print Gem.user_dir')/bin"
-      - name: Start Rails server
-        run: bundle exec rails server -b 0.0.0.0 -p 3000 &
-        env:
-          RAILS_ENV: test
-      - name: Wait for server to be ready
-        run: npx wait-on http://localhost:3000
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
-        with:
-          wait-on: 'http://localhost:3000'
-          project: spec/cypress
-          config-file: spec/cypress/cypress.config.js
 
+      - name: yarn install
+        run:  yarn install --production=false
+
+      - name: prepare postgres
+        run: |
+          RAILS_ENV=test bundle exec rake db:migrate
+
+      - name: npm test
+        run: npm test
+
+      - name: rspec unit
+        run: |
+          eval `ssh-agent`
+          ssh-add $HOME/.ssh/id_test
+          RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
+
+      - name: coverage rspec unit
+        if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (github.triggering_actor != 'dependabot[bot]')  # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+        uses: zgosalvez/github-actions-report-lcov@v1
+        with:
+          coverage-files: coverage/lcov/${{ github.event.repository.name }}.lcov
+          minimum-coverage: 57
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: install missing Cypress dependencies # TODO: this is an interim solution; install in Docker image instead
+        run: apt-get update && apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
+      - name: precompile JS assets (public/packs-test)
+        run: RAILS_ENV=test bundle exec rake webpacker:compile
+
+      - name: start background test server
+        run: RAILS_ENV=test bundle exec rails server -d -b localhost -p 3000
+
+      - name: run Cypress tests # wait on server? (https://til.simonwillison.net/bash/start-test-then-stop-server)
+        run: yarn cypress run --project spec

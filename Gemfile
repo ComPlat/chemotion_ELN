@@ -155,6 +155,7 @@ end
 group :development, :test do
   gem 'annotate'
   gem 'awesome_print'
+  gem 'cypress-on-rails', '~> 1.0'
 
   gem 'binding_of_caller'
   gem 'bullet'
@@ -183,7 +184,6 @@ end
 
 group :test do
   gem 'capybara'
-  gem 'cypress-on-rails'
 
   gem 'database_cleaner'
   gem 'database_cleaner-active_record'
