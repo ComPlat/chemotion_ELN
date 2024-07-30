@@ -154,6 +154,7 @@ module Entities
           purify_step.merge({
                               value: "#{purification.id}-purify-step-#{position + 1}}",
                               label: "#{purification.position + 1}.#{position + 1} #{solvent_labels}",
+                              position: position + 1,
                             })
         end
       end
