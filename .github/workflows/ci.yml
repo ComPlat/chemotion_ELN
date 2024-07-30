@@ -83,7 +83,7 @@ jobs:
         run:  yarn install --production=false
 
       - name: start background server
-        run: bundle exec rails s -p 3000 -b 0.0.0.0
+        run: RAILS_ENV=development $(which bundle) exec rails server -b 0.0.0.0 -p 3000
 
       - name: run Cypress tests # wait on server? (https://til.simonwillison.net/bash/start-test-then-stop-server)
         run: yarn cypress run --config-file cypress.config.js
