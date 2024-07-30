@@ -24,8 +24,8 @@ module OrdKit
               vessel: Vessels::ReactionProcessVesselExporter.new(@action.reaction_process_vessel).to_ord,
             }.merge(action_type_attributes),
           )
-        rescue StandardError => e
-          raise StandardError,  workup.to_s + e.to_s
+          # rescue StandardError => e
+          #   raise StandardError,  workup.to_s + e.to_s
         end
 
         private
@@ -65,7 +65,7 @@ module OrdKit
           workup['equipment'].map do |equipment|
             OrdKit::Equipment.new(
               type: equipment_type(equipment),
-              details: '',  # Currently n/a in ELN.
+              details: '', # Currently n/a in ELN.
             )
           end
         end

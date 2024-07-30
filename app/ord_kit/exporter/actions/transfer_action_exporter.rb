@@ -19,7 +19,7 @@ module OrdKit
         end
 
         def sample
-          OrdKit::Exporter::Samples::TransferSampleExporter.new(action).to_ord
+          OrdKit::Exporter::Actions::Samples::TransferSampleExporter.new(action).to_ord
         end
 
         def amount

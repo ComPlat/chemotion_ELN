@@ -10,7 +10,7 @@ module OrdKit
           {
             removal: OrdKit::ReactionProcessAction::ActionRemove.new(
               reaction_role: workup['acts_as'],
-              input: Samples::RemoveSampleExporter.new(action).to_ord,
+              input: Actions::Samples::RemoveSampleExporter.new(action).to_ord,
               replacement_medium: workup['replacement_medium'],
               remove_repetitions: remove_repetitions,
             ),
