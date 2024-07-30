@@ -14,9 +14,9 @@ module OrdKit
           private
 
           def automation
-            { AUTOMATED: {},
+            { AUTOMATED: { automated: automated_fields }.stringify_keys,
               MANUAL: { manual: manual_fields },
-              SEMI_AUTOMATED: { semi_automated: semi_automated_fields } }.stringify_keys
+              SEMI_AUTOMATED: { semi_automated: automated_fields } }.stringify_keys
           end
 
           def steps
@@ -45,12 +45,12 @@ module OrdKit
             )
           end
 
-          def semi_automated_fields
-            OrdKit::ReactionProcessAction::ActionChromatography::SemiAutomated.new(
+          def automated_fields
+            OrdKit::ReactionProcessAction::ActionChromatography::Automated.new(
               equipment: equipment_device,
               column_type: workup['column_type'],
               detectors: detectors,
-              wavelength: OrdKit::Exporter::Metrics::WavelengthExporter.new(workup['wavelength']).to_ord,
+              wavelengths: wavelengths,
             )
           end
 
@@ -69,10 +69,19 @@ module OrdKit
 
           def detectors
             Array(workup['detectors']).map do |detector|
-              Analysis::AnalysisType.const_get detector
+              OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Detector.const_get detector
             rescue NameError
-              Analysis::AnalysisType::UNSPECIFIED
+              OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::DETECTOR_UNSPECIFIED
             end
+          end
+
+          def wavelengths
+            OrdKit::ReactionProcessAction::ActionChromatography::Automated::WavelengthList.new(
+              peaks: Array(workup.dig('wavelengths', 'peaks')).map do |wavelength|
+                       OrdKit::Exporter::Metrics::WavelengthExporter.new(wavelength).to_ord
+                     end,
+              is_range: workup.dig('wavelengths', 'is_range'),
+            )
           end
 
           def ord_step(stepname)
