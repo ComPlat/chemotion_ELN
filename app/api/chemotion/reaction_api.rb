@@ -313,8 +313,14 @@ module Chemotion
               prod
             end
           end
+          reaction_vessel_size = attributes[:vessel_size]
 
-          reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
+          reaction = Usecases::Reactions::UpdateMaterials.new(
+            reaction,
+            materials,
+            current_user,
+            reaction_vessel_size,
+          ).execute!
           reaction.reload
 
           # save to profile
