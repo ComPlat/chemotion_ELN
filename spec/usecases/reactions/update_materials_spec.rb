@@ -9,7 +9,20 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:root_container) { create(:root_container) }
   let(:sample1) { create(:sample, name: 'Sample1', container: create(:container)) }
   let(:sample2) { create(:sample, name: 'Sample2', container: create(:container)) }
+  let(:product_sample) do
+    create(:reactions_product_sample,
+           reaction: reaction,
+           sample: sample1,
+           gas_phase_data: {
+             'time' => { 'unit' => 'h', 'value' => nil },
+             'temperature' => { 'unit' => '°C', 'value' => 1 },
+             'turnover_number' => nil,
+             'part_per_million' => 1,
+             'turnover_frequency' => { 'unit' => 'TON/h', 'value' => nil },
+           })
+  end
   let(:molfile) { File.read(Rails.root + 'spec/fixtures/test_2.mol') }
+  let(:vessel_size) { { 'amount' => 100, 'unit' => 'ml' } }
   let(:starting_materials) do
     {
       'starting_materials' => [
@@ -49,8 +62,9 @@ describe Usecases::Reactions::UpdateMaterials do
         'reference' => false,
         'is_new' => true,
         'molfile' => molfile,
-        'container' => root_container
-      ]
+        'container' => root_container,
+        'gas_phase_data' => { 'part_per_million' => 1, 'temperature' => { 'unit' => '°C', 'value' => 1 } },
+      ],
     }
   end
   let(:mixed_materials) do
@@ -67,6 +81,7 @@ describe Usecases::Reactions::UpdateMaterials do
       ]
     }.merge(starting_materials, reactants, products)
   end
+  let(:class_instance) { described_class.new(reaction, products, user, vessel_size) }
 
   describe '#execute!' do
     let(:samples) { mixed_materials }
@@ -76,7 +91,7 @@ describe Usecases::Reactions::UpdateMaterials do
         reaction: reaction, sample: sample1, reference: true, equivalent: 1
       )
       allow(SVG::ReactionComposer).to receive(:new) if example.metadata[:svg_update]
-      described_class.new(reaction, samples, user).execute!
+      described_class.new(reaction, samples, user, vessel_size).execute!
     end
 
     it 'associates reaction with materials' do
@@ -118,6 +133,20 @@ describe Usecases::Reactions::UpdateMaterials do
       it 'creates new sample' do
         expect(Sample.count).to eq(1) # UpdateMaterials create new sample
         expect(Sample.find_by(name: 'product').target_amount_value).to eq(99.08304)
+      end
+    end
+
+    context 'when vessel volume is valid' do
+      it 'returns the calculated mole gas product' do
+        result = class_instance.send(:update_mole_gas_product, product_sample, 80)
+        expect(result).to eq(3.5543368129550247e-06)
+      end
+    end
+
+    context 'when vessel volume is nil' do
+      it 'returns nil' do
+        result = class_instance.send(:update_mole_gas_product, product_sample, nil)
+        expect(result).to be_nil
       end
     end
   end
