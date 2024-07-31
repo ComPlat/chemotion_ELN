@@ -5,6 +5,7 @@ import PropTypes, { array } from 'prop-types';
 import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
 
 
+
 export default class CurationModal extends Component {
     constructor(props) {
       super(props);
@@ -166,7 +167,7 @@ export default class CurationModal extends Component {
       var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
       var ms_words = [];
       var ss_list = []
-      var word_array = description.split(' ')
+      var word_array = description.split(/[\s]|.[\n]/g)
       if (this.state.dictionaryLanguage === "UK"){
         var en_dictionary = uk_dictionary
         console.log("uk used")
@@ -176,7 +177,8 @@ export default class CurationModal extends Component {
         console.log("us used")
       }
       for (let i = 0; i < word_array.length; i++){
-        var punctuation = /[\.\,\?\!\(\) \"]/g;
+        var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:\']/g;
+        word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
         var double_space_regex= /\s\s/g
         word_array[i] = word_array[i].replace(punctuation, "");
         word_array[i] = word_array[i].replace(double_space_regex, " ")
@@ -186,7 +188,8 @@ export default class CurationModal extends Component {
             var spell_checked_word = true
           }
           else
-            {if(/[a-z]*\-[a-z]*/.test(word_array[i])){console.log("help" +word_array[i])}
+            {if(/[a-z]*\-[a-z]*/.test(word_array[i]))
+              {console.log("help" +word_array[i])}
             else{
               var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
            }
@@ -236,6 +239,7 @@ export default class CurationModal extends Component {
       if(text !== undefined){
       var combined_array = mispelledWords.concat(subscriptList)
       var highlight = combined_array.join("|")
+      console.log(highlight)
       var parts = text.split(new RegExp(`(${highlight})`, "gi"));
       var output_div
       var list_items = parts.map((part, index) => (
@@ -366,7 +370,9 @@ export default class CurationModal extends Component {
               type="text"
               value={this.state.value}
               placeholder="Enter text"
-              onChange={this.handleSuggestChange}/> 
+              onChange={this.handleSuggestChange}
+              maxLength={30}
+              /> 
           </form>;
         }
         else{
@@ -401,7 +407,7 @@ export default class CurationModal extends Component {
                   </Row>
                 </Grid>
                 </Panel.Heading>
-                <Panel.Body>
+                <Panel.Body style={{overflowY:"scroll",height:300}}>
                   <Compo text={this.state.desc} mispelledWords={this.state.mispelledWords} index={this.state.suggestionIndex} subscriptList={this.state.subscriptList} /> 
                 </Panel.Body> 
                 <Panel>
