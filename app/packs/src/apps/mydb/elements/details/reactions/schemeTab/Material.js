@@ -710,7 +710,7 @@ class Material extends Component {
               metricPrefix={metricMolConc}
               metricPrefixes={metricPrefixesMolConc}
               precision={4}
-              disabled={material.gas_type !== 'catalyst'}
+              disabled
               onChange={(e) => this.handleAmountUnitChange(e, material.concn)}
               onMetricsChange={this.handleMetricsChange}
             />
