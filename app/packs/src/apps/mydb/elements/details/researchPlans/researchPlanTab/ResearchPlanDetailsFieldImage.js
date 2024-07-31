@@ -75,7 +75,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   renderEdit() {
     const { field } = this.props;
     const currentAttachment = this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name);
-    const is_annotationUpdated = currentAttachment != null && currentAttachment.updatedAnnotation;
+    const isAnnotationUpdated = currentAttachment != null && currentAttachment.updatedAnnotation;
     const { zoom } = this.state;
     let content;
     if (field.value.public_name) {
@@ -113,13 +113,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             </div>
           </InputGroup>
         </Form.Group>
-        <SaveEditedImageWarning visible={is_annotationUpdated} />
         <Dropzone
           accept="image/*"
           multiple={false}
           onDrop={(files) => this.handleDrop(files)}
           className="border-dashed border-gray-300 text-center p-2 mb-3"
         >
+          {isAnnotationUpdated && <SaveEditedImageWarning visible />}
           {content}
         </Dropzone>
         {this.renderImageEditModal()}
