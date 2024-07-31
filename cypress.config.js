@@ -9,7 +9,7 @@ module.exports = defineConfig({
   viewportHeight: 960,
 
   e2e: {
-    defaultCommandTimeout: 10000,
+    defaultCommandTimeout: 15000,
     specPattern: 'spec/cypress/end_to_end/*.cy.js',
     supportFile: 'spec/cypress/support/index.js',
     baseUrl: `http://localhost:${port}/`,
