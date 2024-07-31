@@ -10,7 +10,7 @@ module.exports = defineConfig({
 
   e2e: {
     defaultCommandTimeout: 10000,
-    specPattern: 'spec/cypress/end_to_end/admin.cy.js',
+    specPattern: 'spec/cypress/end_to_end/*.cy.js',
     supportFile: 'spec/cypress/support/index.js',
     baseUrl: `http://localhost:${port}/`,
     video: false,
