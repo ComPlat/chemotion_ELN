@@ -13,6 +13,7 @@ export default class DictionaryCuration extends Component  {
         this.handleChangeEstablished = this.handleChangeEstablished.bind(this);
         this.handleChangeCustomSearch = this.handleChangeCustomSearch.bind(this)
         this.handleChangeEstablishedSearch = this.handleChangeEstablishedSearch.bind(this)
+        this.checkCvEstDictionary= this.checkCvEstDictionary.bind(this)
         this.state = {
             customValue: '',
             establishedValue:"",
@@ -34,21 +35,31 @@ export default class DictionaryCuration extends Component  {
 
       const [new_customDictionaryText, new_establishedDictionaryText, new_affixText ] = await Promise.all([customDictionaryText,establishedDictionaryText,affixText])
       console.log(`fetch done: ${Date.now() - initTime}`)
-      var affObject = this.convertAffxStrtoObj(new_affixText)
+      // var affObject = this.convertAffxStrtoObj(new_affixText)
       console.log(`aff converted done: ${Date.now() - initTime}`)
       this.setState({
         establishedValue : new_establishedDictionaryText,
         establishedDictionaryText : new_establishedDictionaryText,
         customValue : new_customDictionaryText,
         customDictionaryText : new_customDictionaryText,
-        affObject: affObject,
+        affObject: {},
         loading : true
         }
-        ,()=>{this.applyAffix(); console.log(`aff done: ${Date.now() - initTime}`)}
+        ,
+      //   ()=>{this.applyAffix(); console.log(`aff done: ${Date.now() - initTime}`)}
       ); 
         this.fileDisplay()  
     }
+    useDictionary(word){
+      var Typo = require("typo-js");
+      var us_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
+      var is_word_correct = us_dictionary.check(word)
+      return is_word_correct
+      }
+ 
+    
     convertAffxStrtoObj(affixStr){
+     
       var affixArray =affixStr.split("\n")
       var iArray = []
       var affixObject = {}
@@ -99,7 +110,9 @@ export default class DictionaryCuration extends Component  {
              }
              var affObject = new Object 
               affObject = {[affixLetter]:[aff1stLine]}
-             affObject[affixLetter].push(affNthLine)
+            for (var k = 0; k < numOfLines; k++){
+              // console.log(affNthLine)
+             affObject[affixLetter].push(affNthLine)}
              Object.assign(affixObject,affObject)
              console.log(affixObject)
           }}
@@ -220,6 +233,19 @@ export default class DictionaryCuration extends Component  {
       this.setState({customValue: newCustomArray.join("\n")})
     }
 
+    checkCvEstDictionary(custom){
+      var Typo = require("typo-js");
+        var us_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
+      var customArray = custom.split("\n")
+      for (var customEntry of customArray){
+        var is_word_correct = us_dictionary.check(customEntry)
+        if (is_word_correct == true){
+          var customArray = customArray.filter(e => e !== customEntry)
+        }
+      }
+      this.setState({customValue: customArray.join("\n")})
+    }
+
     creatDictionaryFromString(){
       var input = 'The Tetrarchy was the administrative division of the Roman Empire instituted by Roman emperor Diocletian in 293 AD, marking the end of the Crisis of the Third Century and the recovery of the Roman Empire. The first phase, sometimes referred to as the Diarchy ("the rule of two"), involved the designation of the general Maximian as co-emperor firstly as Caesar (junior emperor) in 285, followed by his promotion to Augustus in 286. Diocletian took care of matters in the Eastern regions of the Empire while Maximian similarly took charge of the Western regions. In 293, feeling more focus was needed on both civic and military problems, Diocletian, with Maximian\'s consent, expanded the imperial college by appointing two Caesars (one responsible to each Augustus) Galerius and Constantius Chlorus. '
       // input = input.replaceAll(/\d/g, "")
@@ -272,7 +298,7 @@ export default class DictionaryCuration extends Component  {
         return(
         <div>
             {this.dropzoneOrfilePreview()}
-            <Button onClick={()=> this.checkCustomVsEstablished(this.state.customValue,this.state.establishedDictionaryText)}>Check Custom Dictionary</Button>
+            <Button onClick={()=> this.checkCvEstDictionary(this.state.customValue)}>Check Custom Dictionary</Button>
             <Button onClick={()=> this.saveFile()}>Save dictionary</Button>
             {/* <Button onClick={()=> this.applyAffix()}>load affix</Button> */}
             {/* <Button onClick={()=> this.creatDictionaryFromString()}>Create dictionary</Button> */}
