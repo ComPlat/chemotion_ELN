@@ -1,4 +1,3 @@
-import { reaction } from 'mobx';
 import React, { Component , useState} from 'react';
 import { Grid,Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row, ControlLabel} from 'react-bootstrap';
 import PropTypes, { array } from 'prop-types';
@@ -120,17 +119,25 @@ export default class CurationModal extends Component {
 
     handleSuggest(miss_spelled_words, index){
       var Typo = require("typo-js");
+      // var startTime = new Date();
+      // var nowTime = Date.now() - startTime
       var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
       var mispelled_word = miss_spelled_words[index]
+     
       if (typeof mispelled_word === "string" )
-      {
+      {  
+        
         // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
         var ms_suggestion = dictionary.suggest(mispelled_word)
+        setTimeout(() => {
+          console.log("this is taking a while");return;
+        }, 2000);
         this.setState({ suggestion : ms_suggestion}) 
       }   
       else {
         console.log("run spell check")
       }
+     
     }
 
     useAllDicitonary(en_dictionary,custom_dictionary, word){
@@ -238,15 +245,19 @@ export default class CurationModal extends Component {
       // this.clean_misspelled_array(mispelledWords)
       if(text !== undefined){
       var combined_array = mispelledWords.concat(subscriptList)
+      // for (var msword of combined_array){
+      //   combined_array[msword] =`(${msword})`
+      // }
+
       var highlight = combined_array.join("|")
-      console.log(highlight)
+      // highlight = " " + highlight
+      console.log(new RegExp(`${highlight}`, "gi"))
       var parts = text.split(new RegExp(`(${highlight})`, "gi"));
       var output_div
       var list_items = parts.map((part, index) => (
         <React.Fragment key={index}>
           {(()=> {
             var miss_spelled_words_wo_current_word = mispelledWords.toSpliced(ms_index, 1)
-
             if(subscriptList.includes(part)){
               output_div =  this.checkSubScript(part)   
             }
@@ -262,7 +273,6 @@ export default class CurationModal extends Component {
             ? (output_div)
             : (part)} 
         </React.Fragment>))
-        
         return (
           <div>
             {list_items}
@@ -415,7 +425,7 @@ export default class CurationModal extends Component {
                   <Row>
                   <Col md={7}>
                  <h5> Suggestions for : <b>{this.state.mispelledWords[this.state.suggestionIndex]}
-                  </b>  </h5></Col><Col md={5}><Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add selected misspelled words
+                  </b>  </h5></Col><Col md={5}><Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add Selected Word
                     </Button></Col>
                     </Row>
                   </Panel.Heading>

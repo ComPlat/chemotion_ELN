@@ -4,7 +4,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
-  Table, Glyphicon, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem
+  Table, Glyphicon, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem,
+  Row, Col
 } from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -599,11 +600,12 @@ export default class SampleForm extends React.Component {
   sampleDescription(sample) {
     return (
       <FormGroup>
-        <ControlLabel>Description</ControlLabel>
-        <CurationModal 
+      <Row>
+       <Col md={2}><ControlLabel>Description</ControlLabel> </Col> 
+       <Col md={1}> <CurationModal 
                 description= {sample.description || ''} 
                 onChange = {(e) => this.handleFieldChanged('description', e.target.value)}
-                />
+                /> </Col></Row>
         <FormControl
           componentClass="textarea"
           ref={(input) => { this.descriptionInput = input; }}
