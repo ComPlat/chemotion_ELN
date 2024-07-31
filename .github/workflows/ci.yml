@@ -88,6 +88,12 @@ jobs:
           RAILS_ENV=test bundle exec rake db:test:prepare
           RAILS_ENV=test bundle exec rake db:seed
 
+      - name: install missing Cypress dependencies # TODO: this is an interim solution; install in Docker image instead
+        run: apt-get update && apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
+      - name: precompile JS assets (public/packs-test)
+        run: RAILS_ENV=test bundle exec rake webpacker:compile
+        
       - name: start background server
         run: RAILS_ENV=test $(which bundle) exec rails server -d -b 0.0.0.0 -p 3000
 
