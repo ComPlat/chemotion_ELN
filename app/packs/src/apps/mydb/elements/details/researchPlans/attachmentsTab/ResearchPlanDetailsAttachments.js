@@ -222,7 +222,8 @@ class ResearchPlanDetailsAttachments extends Component {
     const { filteredAttachments } = this.state;
     attachmentsFromMessages.forEach((attachment) => {
       const existingMessage = filteredAttachments.find((a) => a.id === attachment.id);
-      const forCurrentElement = researchPlan.id === attachment.attachable_id;
+      const forCurrentElement = researchPlan.id === attachment.attachable_id
+        && attachment.attachable_type === 'ResearchPlan';
       if (!existingMessage && forCurrentElement) {
         const copiedAttachment = { ...attachment };
         copiedAttachment.is_deleted = false;
