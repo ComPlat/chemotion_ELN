@@ -78,10 +78,15 @@ module Chemotion
         )
         if new_attachment.save
           serialized_attachment = Entities::AttachmentEntity.represent(new_attachment).as_json
+          serialized_attachment[:preview]='data:image/png;base64,'+new_attachment.preview.to_s
+          
+          serialized_attachment[:attachable_id]=new_attachment.attachable_id
+          serialized_attachment[:attachable_type]=new_attachment.attachable_type
+
           Message.create_msg_notification(
             channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION, 
             message_from: @user.id,
-            attachment: new_attachment,
+            attachment: serialized_attachment,
             data_args: { 'app': @app.name }
           )
           { data: { message: 'File uploaded successfully'}}

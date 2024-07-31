@@ -234,6 +234,10 @@ class Attachment < ApplicationRecord
     )
   end
 
+  def preview
+    Base64.encode64(read_thumbnail) if thumb
+ end
+
   private
 
   def generate_key
