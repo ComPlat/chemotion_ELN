@@ -629,18 +629,20 @@ export default class ResearchPlanDetails extends Component {
           <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
             {tabContents}
           </Tabs>
+          <CommentModal element={researchPlan} />
+        </Card.Body>
+        <Card.Footer>
           <ButtonToolbar className="gap-2">
             <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              (researchPlan.changed || researchPlan.is_copy) ? (
+              (researchPlan.changed || researchPlan.is_copy) && (
                 <Button variant="warning" onClick={() => this.handleSubmit()}>
                   {researchPlan.isNew ? 'Create' : 'Save'}
                 </Button>
-              ) : <div />
+              )
             }
           </ButtonToolbar>
-          <CommentModal element={researchPlan} />
-        </Card.Body>
+        </Card.Footer>
       </Card>
     );
   }
