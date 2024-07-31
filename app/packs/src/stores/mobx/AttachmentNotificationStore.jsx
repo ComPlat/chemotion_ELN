@@ -23,7 +23,8 @@ const messageAttachment=types.model({
   aasm_state: types.string,
   filesize: types.integer,
   created_at: types.string,
-  updated_at: types.string
+  updated_at: types.string,
+  preview: types.string
 });
 
 // eslint-disable-next-line import/prefer-default-export
@@ -36,9 +37,12 @@ export const AttachmentNotificationStore = types
   }))
   .actions((self) => ({
     addMessage(newMessage) {
+      
       const existingMessage = self.messages.find((message) => message.id === newMessage.id);
+     
       const channelTypeCorrect = newMessage.channel_type === 8
         && newMessage.subject === 'Send TPA attachment arrival notification';
+     
       if (!existingMessage && channelTypeCorrect) {
         self.messages.push(newMessage);
       }

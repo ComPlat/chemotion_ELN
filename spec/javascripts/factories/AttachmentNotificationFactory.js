@@ -25,8 +25,8 @@ export default class AttachmentNotificationFactory {
       const model = {
         id: factory.sequence('AttachmentNotificationFactory.id', (n) => n),
         message_id: 101,
-        subject: 'Subject 1',
-        channel_type: 999,
+        subject: 'Send TPA attachment arrival notification',
+        channel_type: 8,
         sender_id: 1,
         sender_name: 'Sender 1',
         receiver_id: 2,
@@ -36,6 +36,7 @@ export default class AttachmentNotificationFactory {
       };
 
       const attachment = await AttachmentFactory.build('AttachmentFactory.notificationAttachment');
+      attachment.preview='MyPreview';
       delete attachment._checksum;
       // I deconstruct the class object here because the store needs a plain js object
       model.content = { ...attachment };
