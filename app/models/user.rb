@@ -269,7 +269,7 @@ class User < ApplicationRecord
   end
 
   def profile
-    super || create_profile
+    super || (new_record? && build_profile ) || create_profile
   end
 
   has_many :users_groups, dependent: :destroy
