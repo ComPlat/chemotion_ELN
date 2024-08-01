@@ -259,7 +259,12 @@ class ResearchPlanDetailsAttachments extends Component {
     } = this.state;
     const { researchPlan } = this.props;
 
-    const attachmentsFromMessages = this.context.attachmentNotificationStore.getAttachmentsOfMessages();
+    //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
+    let attachmentsFromMessages = [] ;
+    if(this.context.attachmentNotificationStore ){
+      attachmentsFromMessages = this.context.attachmentNotificationStore.getAttachmentsOfMessages();
+    }
+    
 
     this.addUniqueAttachments(attachmentsFromMessages, researchPlan);
 
