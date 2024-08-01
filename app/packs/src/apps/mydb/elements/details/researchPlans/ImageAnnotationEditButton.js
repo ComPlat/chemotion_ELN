@@ -14,7 +14,7 @@ export default class ImageAnnotationEditButton extends Component {
         overlay={<Tooltip id="annotate_tooltip">{tooltipText}</Tooltip>}
       >
         <Button
-          size="md"
+          size="sm"
           variant="warning"
           className="d-flex align-items-center justify-content-center "
           onClick={() => {
