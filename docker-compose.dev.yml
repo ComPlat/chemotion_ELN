@@ -11,7 +11,9 @@
 #
 services:
   postgres:
-    image: 'postgres-rdkit:16'
+    build:
+      context: '.'
+      dockerfile: 'Dockerfile.RDKit'
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
       - 'PG_CARTRIDGE_INSTALLED=true'
