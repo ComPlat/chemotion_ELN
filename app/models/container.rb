@@ -48,7 +48,7 @@ class Container < ApplicationRecord
   end
 
   def root_element
-    root.containable
+    root&.containable
   end
 
   def self.create_root_container(**args)

@@ -33,14 +33,21 @@ import {
   sortingAndFilteringUI,
   formatFileSize,
   moveBackButton,
-  attachmentThumbnail
+  attachmentThumbnail,
+  thirdPartyAppButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class ContainerDatasetModalContent extends Component {
   constructor(props) {
     super(props);
     const datasetContainer = { ...props.datasetContainer };
+    const {
+      onImport
+    } = props;
+    const { thirdPartyApps } = UIStore.getState() || [];
+    this.thirdPartyApps = thirdPartyApps;
     this.state = {
       datasetContainer,
       instruments: null,
@@ -509,6 +516,10 @@ export default class ContainerDatasetModalContent extends Component {
             </Button>
           ) : (
             <>
+            {thirdPartyAppButton(
+                      attachment,
+                      this.thirdPartyApps,
+                    )}
               {downloadButton(attachment)}
               {editButton(
                 attachment,

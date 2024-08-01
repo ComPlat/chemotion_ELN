@@ -264,6 +264,7 @@ class ResearchPlanDetailsAttachments extends Component {
     this.addUniqueAttachments(attachmentsFromMessages, researchPlan);
 
     const { onUndoDelete, attachments } = this.props;
+    const thirdPartyApps = this.thirdPartyApps;
 
     return (
       <div className="attachment-main-container">
@@ -324,9 +325,9 @@ class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
-                    {thirdPartyAppButton(
+                    {thirdPartyApps.length > 0 && thirdPartyAppButton(
                       attachment,
-                      this.thirdPartyApps,
+                      thirdPartyApps,
                     )}
                     {editButton(
                       attachment,
