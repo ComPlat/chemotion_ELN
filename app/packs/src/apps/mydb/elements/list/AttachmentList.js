@@ -146,7 +146,7 @@ export const annotateButton = (attachment, parent) => (
   <ImageAnnotationEditButton
     parent={parent}
     attachment={attachment}
-    className={`attachment-button-size ${!isImageFile(attachment.filename) ? 'attachment-gray-button' : ''}`}
+    className={`attachment-button-size ${!isImageFile(attachment.filename) && 'attachment-gray-button'}`}
     disabled={!isImageFile(attachment.filename)}
   />
 );
