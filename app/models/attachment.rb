@@ -258,8 +258,8 @@ class Attachment < ApplicationRecord
   end
 
   def preview
-    'data:image/png;base64,'+Base64.encode64(read_thumbnail) if thumb
- end
+    "data:image/png;base64,#{Base64.encode64(read_thumbnail)}" if thumb
+  end
 
   private
 
