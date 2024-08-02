@@ -1,5 +1,21 @@
 import { types } from 'mobx-state-tree';
 
+const messageAttachment = types.model({
+  id: types.union(types.string, types.integer),
+  filename: types.string,
+  identifier: types.union(types.string, types.integer),
+  content_type: types.string,
+  thumb: types.boolean,
+  filesize: types.integer,
+  created_at: types.string,
+  updated_at: types.string,
+  preview: types.maybeNull(types.string)
+});
+
+const messageContent = types.model({
+  attachment: types.frozen(messageAttachment)
+});
+
 const messageModel = types.model({
   id: types.integer,
   message_id: types.integer,
@@ -11,20 +27,7 @@ const messageModel = types.model({
   is_ack: types.integer,
   created_at: types.string,
   updated_at: types.string,
-  content: types.frozen(messageAttachment)
-});
-
-const messageAttachment=types.model({
-  id: types.integer,
-  filename: types.string,
-  identifier: types.string,
-  content_type: types.string,
-  thumb: types.boolean,
-  aasm_state: types.string,
-  filesize: types.integer,
-  created_at: types.string,
-  updated_at: types.string,
-  preview: types.string
+  content: types.frozen(messageContent)
 });
 
 // eslint-disable-next-line import/prefer-default-export
@@ -37,12 +40,11 @@ export const AttachmentNotificationStore = types
   }))
   .actions((self) => ({
     addMessage(newMessage) {
-      
       const existingMessage = self.messages.find((message) => message.id === newMessage.id);
-     
+
       const channelTypeCorrect = newMessage.channel_type === 8
         && newMessage.subject === 'Send TPA attachment arrival notification';
-     
+
       if (!existingMessage && channelTypeCorrect) {
         self.messages.push(newMessage);
       }
@@ -52,8 +54,20 @@ export const AttachmentNotificationStore = types
     }
   })).views((self) => ({
     getAttachmentsOfMessages() {
-      return self.messages.map((element) => {
-        return element.content.attachment || [];
-      }).flat();
-    }
+      return self.messages.map((element) => element.content.attachment || []).flat();
+    },
+    getCombinedAttachments(attachmentsFromElement, element, elementContext) {
+      self.getAttachmentsOfMessages().forEach((attachment) => {
+        const attachmentAlreadyInElement = attachmentsFromElement.find((a) => a.id === attachment.id);
+        const forCurrentElement = element.id === attachment.attachable_id
+          && attachment.attachable_type === elementContext;
+        if (!attachmentAlreadyInElement && forCurrentElement) {
+          const copiedAttachment = { ...attachment };
+          copiedAttachment.is_deleted = false;
+          attachmentsFromElement.push(copiedAttachment);
+          element.attachments.push(copiedAttachment);
+        }
+      });
+      return attachmentsFromElement;
+    },
   }));
