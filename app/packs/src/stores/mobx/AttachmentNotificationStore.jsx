@@ -56,7 +56,7 @@ export const AttachmentNotificationStore = types
     getAttachmentsOfMessages() {
       return self.messages.map((element) => element.content.attachment || []).flat();
     },
-    getCombinedAttachments(attachmentsFromElement, elementContext,element=undefined) {
+    getCombinedAttachments(attachmentsFromElement, elementContext,element) {
       self.getAttachmentsOfMessages().forEach((attachment) => {
         const attachmentAlreadyInElement = attachmentsFromElement.find((a) => a.id === attachment.id);
         const forCurrentElement = element.id === attachment.attachable_id
@@ -65,7 +65,7 @@ export const AttachmentNotificationStore = types
           const copiedAttachment = { ...attachment };
           copiedAttachment.is_deleted = false;
           attachmentsFromElement.push(copiedAttachment);
-          if(element){
+          if(element.attachments){
             element.attachments.push(copiedAttachment);
           }
         }
