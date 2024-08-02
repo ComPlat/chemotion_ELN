@@ -247,7 +247,7 @@ class ResearchPlanDetailsAttachments extends Component {
     
     let combinedAttachments = filteredAttachments;
     if(this.context.attachmentNotificationStore ){
-      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,researchPlan,"ResearchPlan");
+      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"ResearchPlan",researchPlan);
     }
 
     const { onUndoDelete, attachments } = this.props;
