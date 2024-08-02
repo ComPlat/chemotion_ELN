@@ -181,7 +181,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       const contentOneLine = {
         ops: content.ops.map((x) => {
           const c = Object.assign({}, x);
-          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 300);
+          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
           return c;
         }),
       };
