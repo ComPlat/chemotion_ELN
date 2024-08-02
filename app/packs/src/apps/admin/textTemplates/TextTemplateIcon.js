@@ -8,14 +8,14 @@ const TextTemplateIcon = ({ template }) => {
 
   if (data.icon) {
     return (
-      <i className={` fs-3 ${data.icon}`} />
+      <i className={`fs-5 mt-2 ${data.icon}`} />
     );
   }
 
   const text = (data || {}).text || name;
 
   return (
-    <span className='fs-3'>{text.toUpperCase()}</span>
+    <span className='fs-4'>{text.toUpperCase()}</span>
   );
 };
 
