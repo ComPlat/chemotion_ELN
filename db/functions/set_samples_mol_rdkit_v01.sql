@@ -3,11 +3,11 @@ returns trigger as
 $FUNC$
 begin
 	if (TG_OP='INSERT') then
-		new.mol_rdkit := mol_from_ctab(encode(new.molfile, 'escape')::cstring);
+		insert into rdk.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
 	end if;
 	if (TG_OP='UPDATE') then
 		if new.MOLFILE <> old.MOLFILE then
-			new.mol_rdkit := mol_from_ctab(encode(new.molfile, 'escape')::cstring);
+			update rdk.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring);
 		end if;
 	end if;
 	return new;

@@ -182,7 +182,7 @@ class Sample < ApplicationRecord
 
   scope :search_by_rdkit_sub, lambda { |molfile|
     smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
-    where("molecules.id in (select id from rdk.mols where m operator(@>) '#{smarts_query}' )", molfile)
+    where("samples.id in (select id from rdk.mols where m operator(@>) '#{smarts_query}' )", molfile)
   }
 
   before_save :auto_set_molfile_to_molecules_molfile
@@ -405,7 +405,6 @@ class Sample < ApplicationRecord
     subsample.collections << collections
 
     subsample.container = Container.create_root_container
-    subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save!
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
     subsample
