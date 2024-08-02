@@ -67,6 +67,10 @@ export default class ScreenDetailsContainers extends Component {
     this.props.parent.setState({ screen: screen })
   }
 
+  stopToggleAccordion(event) {
+    event.stopPropagation();
+  }
+
   addButton() {
     const { readOnly } = this.props;
     if (readOnly) { return null; }
@@ -109,7 +113,7 @@ export default class ScreenDetailsContainers extends Component {
         <div>
           {this.headerValues(container)}
         </div>
-        <div>
+        <div onClick={this.stopToggleAccordion}>
           <PrintCodeButton element={screen} analyses={[container]} ident={container.id} />
           <Button
             size="xxsm"
@@ -131,7 +135,7 @@ export default class ScreenDetailsContainers extends Component {
         <div className="text-decoration-line-through">
           {this.headerValues(container)}
         </div>
-        <div>
+        <div onClick={this.stopToggleAccordion}>
           <Button
             size="xxsm"
             variant="danger"
