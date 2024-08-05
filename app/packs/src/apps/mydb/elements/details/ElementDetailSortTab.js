@@ -1,5 +1,4 @@
 /* eslint-disable no-param-reassign */
-/* eslint-disable react/prop-types */
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
@@ -22,8 +21,6 @@ export default class ElementDetailSortTab extends Component {
       showTabLayoutContainer: false
     };
 
-    this.type = props.type;
-
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onCloseTabLayoutContainer = this.onCloseTabLayoutContainer.bind(this);
     this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
@@ -40,16 +37,16 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
-    const { addInventoryTab, availableTabs } = this.props;
+    const { addInventoryTab, availableTabs, type } = this.props;
     const { currentCollection } = UIStore.getState();
     const collectionTabs = currentCollection?.tabs_segment;
     let layout;
-    if (!collectionTabs || _.isEmpty(collectionTabs[`${this.type}`])) {
-      layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
+    if (!collectionTabs || _.isEmpty(collectionTabs[`${type}`])) {
+      layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${type}`];
     } else {
-      layout = collectionTabs[`${this.type}`];
+      layout = collectionTabs[`${type}`];
     }
-    const { visible, hidden } = getArrayFromLayout(layout, this.type, addInventoryTab, availableTabs);
+    const { visible, hidden } = getArrayFromLayout(layout, type, addInventoryTab, availableTabs);
     const { onTabPositionChanged } = this.props;
 
     this.setState(
@@ -79,15 +76,16 @@ export default class ElementDetailSortTab extends Component {
   updateLayout() {
     const layout = filterTabLayout(this.tabLayoutContainerElement.state);
     const { currentCollection } = UIStore.getState();
+    const { type } = this.props;
     let tabSegment = currentCollection?.tabs_segment;
-    _.set(tabSegment, `${this.type}`, layout);
-    tabSegment = { ...tabSegment, [`${this.type}`]: layout };
+    _.set(tabSegment, `${type}`, layout);
+    tabSegment = { ...tabSegment, [`${type}`]: layout };
     if (currentCollection && !currentCollection.is_sync_to_me) {
       CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
     }
 
     const userProfile = UserStore.getState().profile;
-    const layoutName = `data.layout_detail_${this.type}`;
+    const layoutName = `data.layout_detail_${type}`;
     _.set(userProfile, layoutName, layout);
 
     UserActions.updateUserProfile(userProfile);
@@ -148,6 +146,7 @@ export default class ElementDetailSortTab extends Component {
 }
 
 ElementDetailSortTab.propTypes = {
+  type: PropTypes.string,
   onTabPositionChanged: PropTypes.func,
   availableTabs: PropTypes.arrayOf(PropTypes.string),
   tabTitles: PropTypes.object,
