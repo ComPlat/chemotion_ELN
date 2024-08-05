@@ -345,8 +345,7 @@ export default class StructureEditorModal extends React.Component {
     return (
       <Modal
         centered
-        size={!this.state.showWarning && 'xl'}
-        // dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
+        className={!this.state.showWarning && 'modal-xxxl'}
         show={this.state.showModal}
         onLoad={this.initializeEditor.bind(this)}
         onHide={this.handleCancelBtn.bind(this)}

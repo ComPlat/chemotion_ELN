@@ -102,13 +102,17 @@ class ResearchPlanDetailsFieldSample extends Component {
     }
     const { edit } = this.props;
     const link = (
-      <Button
-        variant="light"
-        size="xsm"
-        onClick={() => this.showSample()}
-      >
-        {sample.title()}
-      </Button>
+      <div className="p-3">
+        <Button
+          variant="light"
+          size="sm"
+          onClick={() => this.showSample()}
+          className="border-dark"
+        >
+          {sample.title()}
+        </Button>
+      </div>
+      
     );
 
     let image;
@@ -143,7 +147,9 @@ class ResearchPlanDetailsFieldSample extends Component {
     }
     return connectDropTarget(
       <div
-        className={`p-2 text-center mb-3 ${(isOver || canDrop) ? 'border border-gray-300 border-3' : 'border-dashed border-gray-300'} `}>
+        className={`p-3 text-center mb-3 ${(isOver || canDrop)
+          ? 'border border-gray-300 border-3' : 'border-dashed border-3 border-gray-300'}`}
+      >
         {content}
       </div>
     );

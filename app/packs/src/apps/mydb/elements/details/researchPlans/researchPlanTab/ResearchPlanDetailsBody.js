@@ -71,7 +71,7 @@ export default class ResearchPlanDetailsBody extends Component {
               <Col sm={12}>
                 <ResearchPlanDetailsDropTarget index={fields.length} />
                 <div>
-                  <Form.Label className="fw-bold">Add field</Form.Label>
+                  <Form.Label>Add field</Form.Label>
                   <div className="mb-2">
                     <ResearchPlanDetailsAddField onAdd={onAdd} />
                   </div>

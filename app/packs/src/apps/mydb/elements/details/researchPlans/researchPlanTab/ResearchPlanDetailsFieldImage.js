@@ -115,7 +115,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           accept="image/*"
           multiple={false}
           onDrop={(files) => this.handleDrop(files)}
-          className="border-dashed border-gray-300 text-center p-2 mb-3"
+          className="border-dashed border-gray-300 text-center p-3 mb-3"
         >
           {isAnnotationUpdated && <SaveEditedImageWarning visible />}
           {content}

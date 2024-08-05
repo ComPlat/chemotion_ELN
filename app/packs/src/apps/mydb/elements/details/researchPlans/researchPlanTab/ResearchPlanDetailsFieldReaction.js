@@ -101,13 +101,16 @@ class ResearchPlanDetailsFieldReaction extends Component {
     }
     const { edit } = this.props;
     const link = (
-      <Button
-        variant="light"
-        size="xsm"
-        onClick={() => this.showReaction()}
-      >
-        {reaction.title()}
-      </Button>
+      <div className="p-3">
+        <Button
+          variant="light"
+          size="sm"
+          onClick={() => this.showReaction()}
+          className="border-dark"
+        >
+          {reaction.title()}
+        </Button>
+      </div>
     );
 
     let image;
@@ -141,7 +144,9 @@ class ResearchPlanDetailsFieldReaction extends Component {
     }
     return connectDropTarget(
       <div
-        className={` p-2 text-center mb-3 ${(isOver || canDrop) ? 'border border-gray-300 border-3' : 'border-dashed border-gray-300'} `}>
+        className={`p-3 text-center mb-3 ${(isOver || canDrop)
+          ? 'border border-gray-300 border-3' : 'border-dashed border-gray-300 border-3'} `}
+      >
         {content}
       </div>
     );
