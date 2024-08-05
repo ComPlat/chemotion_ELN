@@ -125,6 +125,7 @@ export default class ElementDetailSortTab extends Component {
       <>
         <Button
           variant={buttonInfo}
+          className="float-end"
           ref={buttonRef}
           size="sm"
           onClick={this.toggleTabLayoutContainer}
