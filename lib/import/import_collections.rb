@@ -348,7 +348,6 @@ module Import
           'updated_at',
           'vessel_size',
           'gaseous',
-          'vessel_size',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(

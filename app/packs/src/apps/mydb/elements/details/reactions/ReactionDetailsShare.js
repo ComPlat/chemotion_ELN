@@ -79,17 +79,6 @@ const setReactionByType = (reaction, type, value) => {
       }
     case 'gaseous':
       reaction.gaseous = value;
-    case 'vesselSizeAmount':
-      console.log(reaction.vessel_size);
-      reaction.vessel_size.amount = value;
-      break;
-    case 'vesselSizeUnit':
-      reaction.vessel_size.unit = value;
-      if (value === 'ml') {
-        reaction.vessel_size.amount = reaction.vessel_size.amount * 1000;
-      } else if (value === 'l') {
-        reaction.vessel_size.amount = reaction.vessel_size.amount / 1000;
-      }
       break;
   }
 
