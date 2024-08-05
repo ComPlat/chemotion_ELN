@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Modal, Radio, Checkbox } from 'react-bootstrap';
 import Utils from 'src/utilities/Functions';
-
+import json from '../../../../../public/json/printingConfig/defaultConfig.json';
 // Component that allows users to print a PDF.
 export default function PrintCodeModal({ element, showModal, handleModalClose }) {
   // State for the modal and preview
   const [preview, setPreview] = useState(null);
   const [urlError, setUrlError] = useState([]);
 
-  const json = require('../../../../../public/json/printingConfig/defaultConfig.json');
   // Request options for fetching the PDF.
   let requestOptions = {
     credentials: 'same-origin',
