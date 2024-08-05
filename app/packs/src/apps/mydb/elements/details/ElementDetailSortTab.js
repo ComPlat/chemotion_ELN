@@ -32,18 +32,12 @@ export default class ElementDetailSortTab extends Component {
     UserActions.fetchCurrentUser();
   }
 
-  // to force popups to stay anchored to button
-  // as shouldUpdatePosition prop for Overlay does not work for reactions
-  resize = () => this.forceUpdate()
-
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
-    window.addEventListener('resize', this.resize);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
-    window.removeEventListener('resize', this.resize);
   }
 
   onChangeUser(state) {
