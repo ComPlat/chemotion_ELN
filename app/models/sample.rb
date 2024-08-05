@@ -181,8 +181,8 @@ class Sample < ApplicationRecord
   }
 
   scope :search_by_rdkit_sub, lambda { |molfile|
-    smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
-    where("samples.id in (select id from rdk.mols where m operator(@>) '#{smarts_query}' )", molfile)
+    where("samples.id in (select id from rdk.mols
+            where m operator(@>) mol_from_ctab(encode('#{molfile}', 'escape')::cstring) )")
   }
 
   before_save :auto_set_molfile_to_molecules_molfile
@@ -441,10 +441,10 @@ class Sample < ApplicationRecord
     return if inchikey.blank?
 
     is_partial = babel_info[:is_partial]
-    molfile_version = babel_info[:version]
-    if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
-      self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
-    end
+    babel_info[:version]
+    return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
+
+    self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
   end
 
   def find_or_create_fingerprint
@@ -528,13 +528,13 @@ class Sample < ApplicationRecord
     end
 
     # init empty object keys for user-calculated composition input
-    unless elemental_compositions.find { |i| i.composition_type == 'found' }
-      clone_data = (d || {}).keys.index_with do |_key|
-        nil
-      end
+    return if elemental_compositions.find { |i| i.composition_type == 'found' }
 
-      set_elem_composition_data 'found', clone_data, 0.0
+    clone_data = (d || {}).keys.index_with do |_key|
+      nil
     end
+
+    set_elem_composition_data 'found', clone_data, 0.0
   end
 
   def contains_residues
