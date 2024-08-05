@@ -5,4 +5,11 @@ const capitalizeWords = (string) => (string || '')
   .trim()
   .replace(/\b\w/g, (m) => m.toUpperCase());
 
-export default capitalizeWords;
+const truncateText = (text, maxLength) => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.substring(0, maxLength)}...`;
+};
+
+export { capitalizeWords, truncateText };

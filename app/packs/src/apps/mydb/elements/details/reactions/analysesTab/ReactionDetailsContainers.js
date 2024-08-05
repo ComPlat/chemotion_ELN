@@ -23,6 +23,7 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import { truncateText } from 'src/utilities/textHelper';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -253,17 +254,10 @@ export default class ReactionDetailsContainers extends Component {
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
 
-      const truncateText = (text, maxLength) => {
-        if (text.length <= maxLength) {
-          return text;
-        }
-        return `${text.substring(0, maxLength)}...`;
-      };
-
       const contentOneLine = {
         ops: content.ops.map((x) => {
           const c = Object.assign({}, x);
-          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100); // Adjust 100 to your desired max length
+          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
           return c;
         }),
       };
@@ -355,7 +349,7 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex flex-row-reverse">
+            <div className="mb-2 me-1 d-flex justify-content-end">
               {this.addButton()}
             </div>
             <Accordion>
