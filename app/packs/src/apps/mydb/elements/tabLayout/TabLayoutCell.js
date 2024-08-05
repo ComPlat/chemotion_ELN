@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import capitalizeWords from 'src/utilities/textHelper';
+import { capitalizeWords } from 'src/utilities/textHelper';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 const layoutSource = {

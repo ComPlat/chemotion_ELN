@@ -1,11 +1,13 @@
+/* eslint-disable react/function-component-definition */
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
+  Form,
   Button,
   ButtonToolbar,
   Modal,
-  FormGroup,
+  Card
 } from 'react-bootstrap';
 import Select from 'react-select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -17,8 +19,6 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -143,11 +143,11 @@ Editor.propTypes = {
 function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
-    <FormGroup>
-      <div className="col-lg-2 col-md-2">
-        <ControlLabel>Structure Editor</ControlLabel>
+    <Form.Group>
+      <div>
+        <Form.Label>Structure Editor</Form.Label>
       </div>
-      <div className="col-lg-6 col-md-8">
+      <div>
         <Select
           className="status-select"
           name="editor selection"
@@ -157,8 +157,7 @@ function EditorList(props) {
           value={value}
         />
       </div>
-      <div className="col-lg-4 col-md-2"> </div>
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -168,27 +167,30 @@ EditorList.propTypes = {
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
-  (
-    <Panel variant="info">
-      <Panel.Heading>
-        <Panel.Title>
-          Parents/Descendants will not be changed!
-        </Panel.Title>
-      </Panel.Heading>
-      <Panel.Body>
-        <p>This sample has parents or descendants, and they will not be changed.</p>
-        <p>Are you sure?</p>
-        <br />
-        <Button variant="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
+const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show
+  && (
+  <Card variant="info">
+    <Card.Header>
+      Parents/Descendants will not be changed!
+    </Card.Header>
+    <Card.Body>
+      <span className="mb-5">
+        This sample has parents or descendants, and they will not be changed.
+        Are you sure?
+      </span>
+    </Card.Body>
+    <Card.Footer className="d-flex justify-content-end">
+      <ButtonToolbar className="gap-1">
+        <Button variant="danger" onClick={handleCancelBtn}>
           Cancel
         </Button>
-        <Button variant="warning" onClick={hideWarning} className="g-marginLeft--10">
+        <Button variant="warning" onClick={hideWarning}>
           Continue Editing
         </Button>
-      </Panel.Body>
-    </Panel>
-  ) : null
+      </ButtonToolbar>
+    </Card.Footer>
+  </Card>
+  )
 );
 
 WarningBox.propTypes = {
@@ -313,7 +315,6 @@ export default class StructureEditorModal extends React.Component {
     const { editor, showWarning, molfile } = this.state;
     const iframeHeight = showWarning ? '0px' : '730px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
-    const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
 
     let useEditor = (
       <div>
@@ -343,47 +344,47 @@ export default class StructureEditorModal extends React.Component {
       label: this.editors[e].label,
     }));
     return (
-      <div>
-        <Modal
-          centered
-          dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
-          animation
-          show={this.state.showModal}
-          onLoad={this.initializeEditor.bind(this)}
-          onHide={this.handleCancelBtn.bind(this)}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>
-              <EditorList
-                value={editor.id}
-                fnChange={this.handleEditorSelection}
-                options={editorOptions}
-              />
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <WarningBox
-              handleCancelBtn={this.handleCancelBtn.bind(this)}
-              hideWarning={this.hideWarning.bind(this)}
-              show={!!showWarning}
+      <Modal
+        centered
+        className={!this.state.showWarning && 'modal-xxxl'}
+        show={this.state.showModal}
+        onLoad={this.initializeEditor.bind(this)}
+        onHide={this.handleCancelBtn.bind(this)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <EditorList
+              value={editor.id}
+              fnChange={this.handleEditorSelection}
+              options={editorOptions}
             />
-            {useEditor}
-            <div style={buttonToolStyle}>
-              <ButtonToolbar>
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <WarningBox
+            handleCancelBtn={this.handleCancelBtn.bind(this)}
+            hideWarning={this.hideWarning.bind(this)}
+            show={!!showWarning}
+          />
+          {useEditor}
+        </Modal.Body>
+        {!this.state.showWarning &&
+          (
+            <Modal.Footer className="modal-footer border-0">
+              <ButtonToolbar className="gap-1">
                 <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
                   {cancelBtnText}
                 </Button>
-                {!handleSaveBtn ? null : (
-                  <Button variant="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
+                {handleSaveBtn && (
+                  <Button variant="primary" onClick={handleSaveBtn}>
                     {submitBtnText}
                   </Button>
                 )}
-                {!handleSaveBtn ? null : submitAddons}
+                {handleSaveBtn && submitAddons}
               </ButtonToolbar>
-            </div>
-          </Modal.Body>
-        </Modal>
-      </div>
+            </Modal.Footer>
+          )}
+      </Modal>
     );
   }
 }

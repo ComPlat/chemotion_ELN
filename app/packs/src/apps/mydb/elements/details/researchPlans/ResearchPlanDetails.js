@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup
+  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup, Card
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -43,8 +43,6 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ResearchPlanDetails extends Component {
   static contextType = StoreContext;
@@ -322,34 +320,31 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
-  // render functions
-
   renderExportButton(disabled) {
     return (
       <Dropdown
         id="research-plan-export-dropdown"
-        className="research-plan-export-dropdown dropdown-right pull-right"
         disabled={disabled}
       >
-        <Dropdown.Toggle>
+        <Dropdown.Toggle variant="light">
           Export
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <MenuItem onSelect={() => this.handleExport('docx')}>
+          <Dropdown.Item onClick={() => this.handleExport('docx')}>
             as .docx
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('odt')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('odt')}>
             as .odt
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('html')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('html')}>
             as HTML
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('markdown')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('markdown')}>
             as Markdown
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('latex')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('latex')}>
             as LaTeX
-          </MenuItem>
+          </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
     );
@@ -413,8 +408,8 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
+          <div className="d-flex justify-content-between align-items-start">
+            <div className="flex-fill">
               <ResearchPlanDetailsName
                 value={name}
                 disabled={researchPlan.isMethodDisabled('name')}
@@ -422,8 +417,8 @@ export default class ResearchPlanDetails extends Component {
                 edit={edit}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-              <div style={{ marginRight: '5px', marginLeft: '5px' }}>
+            <div className="d-flex justify-content-center align-items-end">
+              <div className="mt-3">
                 {btnMode}
               </div>
               {this.renderExportButton(changed)}
@@ -494,8 +489,8 @@ export default class ResearchPlanDetails extends Component {
 
   renderPanelHeading(researchPlan) {
     const { currentCollection } = UIStore.getState();
-    const rootCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+    const rootCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
     const copyBtn = (
       <CopyElementModal
@@ -505,38 +500,41 @@ export default class ResearchPlanDetails extends Component {
     );
 
     return (
-      <Panel.Heading>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="fa fa-file-text-o" />
-            &nbsp;&nbsp;
-            <span>{researchPlan.name}</span>
-            &nbsp;&nbsp;
-          </span>
-        </OverlayTrigger>
-        <ElementCollectionLabels element={researchPlan} placement="right" />
-        <HeaderCommentSection element={researchPlan} />
-        <ConfirmClose el={researchPlan} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => this.handleSubmit()}
-            style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
-          >
-            <i className="fa fa-floppy-o" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
-          <Button variant="info" size="sm" onClick={this.toggleFullScreen}>
-            <i className="fa fa-expand" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        {researchPlan.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-        {copyBtn}
-      </Panel.Heading>
+      <Card.Header className={`text-bg-${researchPlan.isPendingToSave ? 'info' : 'primary'}`}>
+        <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center gap-2">
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
+              <span>
+                <i className="fa fa-file-text-o" />
+                <span className="mx-1">{researchPlan.name}</span>
+              </span>
+            </OverlayTrigger>
+            <ElementCollectionLabels element={researchPlan} placement="right" />
+            <HeaderCommentSection element={researchPlan} />
+          </div>
+          <div className="d-flex align-items-center gap-1 flex-row-reverse">
+            <ConfirmClose el={researchPlan} />
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
+              <Button
+                variant="warning"
+                size="xxsm"
+                onClick={() => this.handleSubmit()}
+                style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
+              >
+                <i className="fa fa-floppy-o" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
+              <Button variant="info" size="xxsm" onClick={this.toggleFullScreen}>
+                <i className="fa fa-expand" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            {!researchPlan.isNew
+              && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
+            {copyBtn}
+          </div>
+        </div>
+      </Card.Header>
     );
   }
 
@@ -620,12 +618,9 @@ export default class ResearchPlanDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel
-        variant={researchPlan.isPendingToSave ? 'info' : 'primary'}
-        className="eln-panel-detail research-plan-details"
-      >
+      <Card className="eln-panel-detail">
         {this.renderPanelHeading(researchPlan)}
-        <Panel.Body>
+        <Card.Body>
           <ElementDetailSortTab
             type="research_plan"
             availableTabs={Object.keys(tabContentsMap)}
@@ -635,19 +630,21 @@ export default class ResearchPlanDetails extends Component {
           <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
             {tabContents}
           </Tabs>
-          <ButtonToolbar>
+          <CommentModal element={researchPlan} />
+        </Card.Body>
+        <Card.Footer>
+          <ButtonToolbar className="gap-2">
             <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              (researchPlan.changed || researchPlan.is_copy) ? (
+              (researchPlan.changed || researchPlan.is_copy) && (
                 <Button variant="warning" onClick={() => this.handleSubmit()}>
                   {researchPlan.isNew ? 'Create' : 'Save'}
                 </Button>
-              ) : <div />
+              )
             }
           </ButtonToolbar>
-          <CommentModal element={researchPlan} />
-        </Panel.Body>
-      </Panel>
+        </Card.Footer>
+      </Card>
     );
   }
 }

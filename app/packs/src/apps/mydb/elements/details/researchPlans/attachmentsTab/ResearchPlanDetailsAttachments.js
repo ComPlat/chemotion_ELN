@@ -2,13 +2,13 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
+import React, { Component } from 'react';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
-import { observer } from 'mobx-react';
-import React, { Component } from 'react';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { Button } from 'react-bootstrap';
 import { last, findKey } from 'lodash';
@@ -255,23 +255,23 @@ class ResearchPlanDetailsAttachments extends Component {
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: '1', alignSelf: 'center' }}>
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="flex-grow-1 align-self-center">
             {customDropzone(this.props.onDrop)}
           </div>
-          <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
+          <div className="ms-3 align-self-center">
             {attachments.length > 0
-        && sortingAndFilteringUI(
-          sortDirection,
-          this.handleSortChange,
-          this.toggleSortDirection,
-          this.handleFilterChange,
-          true
-        )}
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                true
+              )}
           </div>
         </div>
         {combinedAttachments.length === 0 ? (
-          <div className="no-attachments-text">
+          <div className="text-center text-gray-500 fs-5">
             There are currently no attachments.
           </div>
         ) : (
@@ -286,19 +286,19 @@ class ResearchPlanDetailsAttachments extends Component {
                 )}
                 <div className="attachment-row-subtext">
                   <div>
-                    Created:&nbsp;
-                    {formatDate(attachment.created_at)}
+                    Created:
+                    <span className="ms-1">{formatDate(attachment.created_at)} </span>
                   </div>
-                  &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+                  <span className="ms-2 me-2">|</span>
                   <div>
-                    Size:&nbsp;
-                    <span style={{ fontWeight: 'bold', color: '#444' }}>
+                    Size:
+                    <span className="fw-bold text-gray-700 ms-1">
                       {formatFileSize(attachment.filesize)}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div className="attachment-row-actions d-flex justify-content-end align-items-center gap-1">
                 {attachment.is_deleted ? (
                   <Button
                     size="sm"
@@ -310,33 +310,43 @@ class ResearchPlanDetailsAttachments extends Component {
                   </Button>
                 ) : (
                   <>
-                    {downloadButton(attachment)}
-                    <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
-                    {editButton(
-                      attachment,
-                      extension,
-                      attachmentEditor,
-                      attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                          < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                      !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                          || attachment.is_new || this.documentType(attachment.filename) === null,
-                      this.handleEdit
-                    )}
-                    {annotateButton(attachment, this)}
-                    {importButton(
-                      attachment,
-                      this.state.showImportConfirm,
-                      this.props.researchPlan.changed,
-                      this.showImportConfirm,
-                      this.hideImportConfirm,
-                      this.confirmAttachmentImport
-                    )}
-                    &nbsp;
-                    {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
+                    <ButtonToolbar className="gap-1">
+                      {downloadButton(attachment)}
+                      <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
+                      {editButton(
+                        attachment,
+                        extension,
+                        attachmentEditor,
+                        attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                        !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                        || attachment.is_new || this.documentType(attachment.filename) === null,
+                        this.handleEdit
+                      )}
+                      {annotateButton(attachment, this)}
+                      {importButton(
+                        attachment,
+                        this.state.showImportConfirm,
+                        this.props.researchPlan.changed,
+                        this.showImportConfirm,
+                        this.hideImportConfirm,
+                        this.confirmAttachmentImport
+                      )}
+                    </ButtonToolbar>
+                    <div className="ms-2">
+                      {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
+                    </div>
                   </>
                 )}
               </div>
-              {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+              {attachment.updatedAnnotation && (
+                <div
+                  className="position-absolute top-50 start-50 translate-middle"
+                  style={{ whiteSpace: 'nowrap', height: 'auto', lineHeight: '1.5' }}
+                >
+                  <SaveEditedImageWarning visible />
+                </div>
+              )}
             </div>
           ))
         )}
