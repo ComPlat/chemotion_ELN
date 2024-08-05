@@ -7,7 +7,7 @@ begin
 	end if;
 	if (TG_OP='UPDATE') then
 		if new.MOLFILE <> old.MOLFILE then
-			update rdk.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring);
+			update rdk.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
 		end if;
 	end if;
 	return new;
