@@ -191,7 +191,7 @@ export default class ResearchPlanDetailsField extends Component {
       <Row className="my-3">
         {dropTarget}
         <Col sm={12}>
-          <div className={`${!edit && 'mb-5'}`}>
+          <div className={`${!edit ? 'mb-5' : ''}`}>
             {fieldHeader}
             {component}
           </div>

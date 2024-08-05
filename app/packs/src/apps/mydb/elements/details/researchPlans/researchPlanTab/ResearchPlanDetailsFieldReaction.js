@@ -119,7 +119,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
     }
 
     return (
-      <div className={`${!edit && 'border'} text-start`}>
+      <div className={`${!edit ? 'border' : ''} text-start`}>
         {link}
         <div className="text-center mb-0 mw-100">
           {image}

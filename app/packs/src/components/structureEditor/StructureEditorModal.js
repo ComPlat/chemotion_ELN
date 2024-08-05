@@ -174,9 +174,10 @@ const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show
       Parents/Descendants will not be changed!
     </Card.Header>
     <Card.Body>
-      <p>This sample has parents or descendants, and they will not be changed.</p>
-      <p>Are you sure?</p>
-      <br />
+      <span className="mb-5">
+        This sample has parents or descendants, and they will not be changed.
+        Are you sure?
+      </span>
     </Card.Body>
     <Card.Footer className="d-flex justify-content-end">
       <ButtonToolbar className="gap-1">
