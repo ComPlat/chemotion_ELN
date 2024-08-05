@@ -4,7 +4,6 @@ import { Form, Row, Col } from 'react-bootstrap';
 import ResearchPlanDetailsAddField from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsAddField';
 import ResearchPlanDetailsDropTarget from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsDropTarget';
 import Field from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsField';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class ResearchPlanDetailsBody extends Component {
