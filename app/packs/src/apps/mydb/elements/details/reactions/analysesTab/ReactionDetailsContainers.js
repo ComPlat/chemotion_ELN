@@ -23,6 +23,7 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import { truncateText } from 'src/utilities/textHelper';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -252,13 +253,6 @@ export default class ReactionDetailsContainers extends Component {
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
-
-      const truncateText = (text, maxLength) => {
-        if (text.length <= maxLength) {
-          return text;
-        }
-        return `${text.substring(0, maxLength)}...`;
-      };
 
       const contentOneLine = {
         ops: content.ops.map((x) => {

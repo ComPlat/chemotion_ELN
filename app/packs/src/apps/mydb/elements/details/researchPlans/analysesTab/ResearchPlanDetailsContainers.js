@@ -16,6 +16,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import { truncateText } from 'src/utilities/textHelper';
 
 export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
@@ -170,13 +171,6 @@ export default class ResearchPlanDetailsContainers extends Component {
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
-
-      const truncateText = (text, maxLength) => {
-        if (text.length <= maxLength) {
-          return text;
-        }
-        return `${text.substring(0, maxLength)}...`;
-      };
 
       const contentOneLine = {
         ops: content.ops.map((x) => {
