@@ -12,9 +12,6 @@ import Container from 'src/models/Container';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
-import {
-  calculateFeedstockVolume,
-} from 'src/utilities/UnitsConversion';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -132,17 +129,8 @@ export default class Reaction extends Element {
       can_update: true,
       can_copy: false,
       variations: [],
-<<<<<<< HEAD
       vessel_size: { amount: null, unit: 'ml' },
       gaseous: false
-=======
-<<<<<<< HEAD
-      gaseous: false,
-      vessel_size: { amount: null, unit: 'ml' },
-=======
-      gaseous: false
->>>>>>> parent of 6dbea32da (merge: reaction-vessel-size)
->>>>>>> 2d55017b1 (revert-merge:reaction-vessel-size)
     })
     
     reaction.short_label = this.buildReactionShortLabel()
@@ -209,17 +197,8 @@ export default class Reaction extends Element {
       timestamp_stop: this.timestamp_stop,
       segments: this.segments.map(s => s.serialize()),
       variations: this.variations,
-<<<<<<< HEAD
       vessel_size: this.vessel_size,
       gaseous: this.gaseous
-=======
-<<<<<<< HEAD
-      gaseous: this.gaseous,
-      vessel_size: this.vessel_size,
-=======
-      gaseous: this.gaseous
->>>>>>> parent of 6dbea32da (merge: reaction-vessel-size)
->>>>>>> 2d55017b1 (revert-merge:reaction-vessel-size)
     });
   }
   
