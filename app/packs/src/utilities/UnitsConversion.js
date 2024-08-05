@@ -129,8 +129,8 @@ const calculateVolumeForFeedstockOrGas = (amountGram, molecularWeight, purity, g
 const calculateGasMoles = (volume, ppm, temperatureInKelvin) => (ppm * volume)
  / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR);
 
-const calculateFeedstockMoles = (volume, purity) => (volume) / (
-  IDEAL_GAS_CONSTANT * DEFAULT_TEMPERATURE_IN_KELVIN * purity);
+const calculateFeedstockMoles = (volume, purity) => (volume * purity) / (
+  IDEAL_GAS_CONSTANT * DEFAULT_TEMPERATURE_IN_KELVIN);
 
 const updateFeedstockMoles = (purity, amountLiter, currentAmountLiter) => {
   const volume = amountLiter || currentAmountLiter;
