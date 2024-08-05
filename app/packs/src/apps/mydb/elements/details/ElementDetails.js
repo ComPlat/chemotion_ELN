@@ -19,9 +19,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import {
-  Tabs, Tab, Button
+  Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
-import Label from 'src/components/legacyBootstrap/Label';
 
 const tabInfoHash = {
   metadata: {
@@ -248,15 +247,16 @@ export default class ElementDetails extends Component {
     const focusing = elKey === activeKey;
     const variant = el.isPendingToSave ? 'info' : 'primary';
 
-    let iconElement = (<i className={`me-1 icon-${el.type}`} />);
+    const tab = tabInfoHash[el.type] ?? {};
+    const title = tab.title ?? el.title();
 
-    const tab = tabInfoHash[el.type] || {};
-    const title = tab.title || el.title();
-    if (tab.iconEl) { iconElement = tab.iconEl; }
-    if (el.element_klass) { iconElement = (<i className={`${el.element_klass.icon_name}`} />); }
-    const icon = focusing ? (iconElement) : (<Label variant={variant || ''}>{iconElement}</Label>);
+    const iconElement = el.element_klass
+      ? (<i className={`${el.element_klass.icon_name}`} />)
+      : tab.iconEl ?? (<i className={`icon-${el.type}`} />);
+    const icon = focusing ? iconElement : (<Badge bg={variant}>{iconElement}</Badge>);
+
     return (
-      <div>
+      <div className="d-flex align-items-baseline gap-2">
         {icon}
         {title}
       </div>
