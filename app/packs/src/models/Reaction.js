@@ -1008,4 +1008,10 @@ export default class Reaction extends Element {
     const materials = [...this.starting_materials, ...this.reactants];
     return materials.some((material) => material.gas_type === 'feedstock');
   }
+
+  findFeedstockMaterial() {
+    const materials = [...this.starting_materials, ...this.reactants];
+    const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
+    return feedstockMaterial;
+  }
 }
