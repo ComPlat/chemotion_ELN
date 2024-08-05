@@ -2,7 +2,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Button, Overlay, Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
@@ -60,8 +59,21 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onCloseTabLayoutContainer() {
-    this.toggleTabLayoutContainer();
-    this.updateLayout();
+    this.setState(
+      (state) => ({ ...state, showTabLayoutContainer: false }),
+      () => this.updateLayout()
+    );
+  }
+
+  toggleTabLayoutContainer() {
+    const { showTabLayoutContainer } = this.state;
+    const isClosing = showTabLayoutContainer;
+    this.setState(
+      (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
+      () => {
+        if (isClosing) this.updateLayout();
+      }
+    );
   }
 
   updateLayout() {
@@ -81,64 +93,55 @@ export default class ElementDetailSortTab extends Component {
     UserActions.updateUserProfile(userProfile);
   }
 
-  toggleTabLayoutContainer() {
-    this.setState({ showTabLayoutContainer: !this.state.showTabLayoutContainer });
-  }
-
   render() {
     const { visible, hidden, showTabLayoutContainer } = this.state;
     const { tabTitles } = this.props;
     const { currentCollection } = UIStore.getState();
     const tabs = currentCollection?.tabs_segment;
     const buttonInfo = isEmpty(tabs) ? 'info' : 'light';
-    const tabLayoutContainerElement = (
-      <TabLayoutContainer
-        visible={visible}
-        hidden={hidden}
-        tabTitles={tabTitles}
-        isElementDetails
-        ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
-      />
-    );
     const wd = 200 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
     const popoverSettings = (
       <Popover
         className="scrollable-popover"
         id="tab-layout-popover"
-        style={{ maxWidth: 'none', width: `${wd}px`, position: 'absolute' }}
+        style={{ maxWidth: 'none', width: `${wd}px` }}
       >
-        <Popover.Header as="h3">Tab Layout</Popover.Header>
+        <Popover.Header>Tab Layout</Popover.Header>
         <Popover.Body>
-          {tabLayoutContainerElement}
+          <TabLayoutContainer
+            visible={visible}
+            hidden={hidden}
+            tabTitles={tabTitles}
+            isElementDetails
+            ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
+          />
         </Popover.Body>
       </Popover>
     );
-    // Using a ref object for the Popover placement
-    let div_ref = null;
+
+    const buttonRef = React.createRef(null);
+
     return (
-      <div ref={thisDiv => div_ref = thisDiv }>
+      <>
         <Button
           variant={buttonInfo}
+          ref={buttonRef}
           size="sm"
-          ref={button => { this.tabLayoutButton = button; }}
           onClick={this.toggleTabLayoutContainer}
           title="Tabs layout for all collections can also be managed in Collection Tabs page"
         >
           <i className="fa fa-sliders" aria-hidden="true" />
         </Button>
         <Overlay
-          style={{ overflowY: 'scroll'}}
-          container={div_ref}
           onHide={this.onCloseTabLayoutContainer}
+          target={buttonRef}
           placement="bottom"
           rootClose
           show={showTabLayoutContainer}
-          target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
-          shouldUpdatePosition // works alongside resize event listener
         >
           {popoverSettings}
         </Overlay>
-      </div>
+      </>
     );
   }
 }
