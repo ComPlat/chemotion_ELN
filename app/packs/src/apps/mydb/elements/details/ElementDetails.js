@@ -123,10 +123,6 @@ export default class ElementDetails extends Component {
     ElementStore.listen(this.onDetailChange);
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return true;
-  }
-
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
     ElementStore.unlisten(this.onDetailChange);
