@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 
-export default class ExportSamplesBtn extends Component {
+export default class ExportSamplesButton extends Component {
   constructor(props) {
     super(props);
     this.state = { startExport: false };
@@ -27,7 +27,7 @@ export default class ExportSamplesBtn extends Component {
   }
 }
 
-ExportSamplesBtn.propTypes = {
+ExportSamplesButton.propTypes = {
   type: PropTypes.string.isRequired,
   id: PropTypes.number.isRequired
 };
