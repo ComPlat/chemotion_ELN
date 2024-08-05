@@ -154,7 +154,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className='measurementExportModal__body'>
-          <Table className="table">
+          <Table>
             <thead>
               <tr>
                 <th>{this._selectAllButton()}</th>
@@ -181,7 +181,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
             </tbody>
           </Table>
         </Modal.Body>
-        <Modal.Footer className="modal-footer border-0">
+        <Modal.Footer className="border-0">
             <ButtonToolbar className="gap-1">
               <Button variant="warning" onClick={this.props.onHide}>
                 Close

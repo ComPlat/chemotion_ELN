@@ -17,7 +17,7 @@ export default class ResearchPlanDetailsName extends Component {
       >
         <Button
           id="copyMetadataButton"
-          className="fa fa-laptop pull-right"
+          className="fa fa-laptop ms-auto"
           variant="info"
           size="xsm"
           onClick={() => onCopyToMetadata(null, 'name')}
@@ -35,15 +35,18 @@ export default class ResearchPlanDetailsName extends Component {
       return (
         <Row>
           <Col sm={8}>
-            <Form.Group>
-              <Form.Label className="fw-bold">Name</Form.Label>
-              {this.renderCopyToMetadataButton()}
+            <Form.Group className="mt-2">
+              <div className="d-flex align-items-center">
+                <Form.Label className="mb-1 me-2">Name</Form.Label>
+                {this.renderCopyToMetadataButton()}
+              </div>
               <Form.Control
                 type="text"
                 value={value || ''}
                 onChange={(event) => onChange(event.target.value)}
                 disabled={disabled}
                 name="research_plan_name"
+                className="p-2"
               />
             </Form.Group>
           </Col>

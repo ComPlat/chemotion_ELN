@@ -93,7 +93,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     }
     return (
       <div>
-        <Form.Group style={{ width: '30%' }}>
+        <Form.Group className="col col-sm-4">
           <InputGroup>
             <InputGroup.Text>Zoom</InputGroup.Text>
             <Form.Control
@@ -105,12 +105,10 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               onChange={(event) => this.handleResizeChange(event)}
             />
             <InputGroup.Text>%</InputGroup.Text>
-            <div className="image-annotation-button-researchplan">
-              <ImageAnnotationEditButton
-                parent={this}
-                attachment={currentAttachment}
-              />
-            </div>
+            <ImageAnnotationEditButton
+              parent={this}
+              attachment={currentAttachment}
+            />
           </InputGroup>
         </Form.Group>
         <Dropzone

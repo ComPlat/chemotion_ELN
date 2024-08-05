@@ -409,7 +409,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         size="xxsm"
         title={collapseToggleTitle}
         onClick={this.toggleTemporaryCollapse.bind(this)}
-        className="pull-right"
+        className="ms-auto"
       >
         <i className={`fa ${collapseToggleIconClass}`} />
       </Button>

@@ -86,69 +86,69 @@ export default class ResearchPlanMetadata extends Component {
       } else if (result.research_plan_metadata) {
         this.setState({
           researchPlanMetadata: result.research_plan_metadata
-        })
+        });
       }
     });
   }
 
   updateResearchPlanMetadataDataCiteState(value) {
     this.setState(state => {
-      const researchPlanMetadata = state.researchPlanMetadata
-      researchPlanMetadata.data_cite_state = value
+      const researchPlanMetadata = state.researchPlanMetadata;
+      researchPlanMetadata.data_cite_state = value;
 
       return {
         researchPlanMetadata
-      }
-    })
+      };
+    });
   }
 
   newItemByType(type) {
     switch (type) {
       case 'alternate_identifier':
-        return { alternateIdentifier: '', alternateIdentifierType: '' }
+        return { alternateIdentifier: '', alternateIdentifierType: '' };
       case 'related_identifier':
-        return { relatedIdentifier: '', relatedIdentifierType: '' }
+        return { relatedIdentifier: '', relatedIdentifierType: '' };
       case 'description':
-        return { description: '', descriptionType: '' }
+        return { description: '', descriptionType: '' };
       case 'geo_location':
-        return { geoLocationPoint: { latitude: '', longitude: '' } }
+        return { geoLocationPoint: { latitude: '', longitude: '' } };
       case 'funding_reference':
-        return { funderName: '', funderIdentifier: '' }
+        return { funderName: '', funderIdentifier: '' };
     }
   }
 
   addResearchPlanMetadataArrayItem(type) {
     this.setState(state => {
-      const newItem = this.newItemByType(type)
+      const newItem = this.newItemByType(type);
 
-      const researchPlanMetadata = state.researchPlanMetadata
-      const currentCollection = researchPlanMetadata[type] ? researchPlanMetadata[type] : []
-      const newCollection = currentCollection.concat(newItem)
-      researchPlanMetadata[type] = newCollection
+      const researchPlanMetadata = state.researchPlanMetadata;
+      const currentCollection = researchPlanMetadata[type] ? researchPlanMetadata[type] : [];
+      const newCollection = currentCollection.concat(newItem);
+      researchPlanMetadata[type] = newCollection;
 
-      return researchPlanMetadata
-    })
+      return researchPlanMetadata;
+    });
   }
 
   removeResearchPlanMetadataArrayItem(type, index) {
     this.setState(state => {
-      const researchPlanMetadata = state.researchPlanMetadata
-      const currentCollection = researchPlanMetadata[type] ? researchPlanMetadata[type] : []
-      currentCollection.splice(index, 1)
+      const researchPlanMetadata = state.researchPlanMetadata;
+      const currentCollection = researchPlanMetadata[type] ? researchPlanMetadata[type] : [];
+      currentCollection.splice(index, 1);
 
-      researchPlanMetadata[type] = currentCollection
+      researchPlanMetadata[type] = currentCollection;
 
-      return researchPlanMetadata
-    })
+      return researchPlanMetadata;
+    });
   }
 
   updateResearchPlanMetadataArrayItem(type, index, fieldname, value) {
     this.setState(state => {
-      const researchPlanMetadata = state.researchPlanMetadata
-      researchPlanMetadata[type][index][fieldname] = value
+      const researchPlanMetadata = state.researchPlanMetadata;
+      researchPlanMetadata[type][index][fieldname] = value;
 
-      return researchPlanMetadata
-    })
+      return researchPlanMetadata;
+    });
   }
 
   updateResearchPlanMetadataGeoLocation(index, fieldname, value) {
@@ -156,13 +156,13 @@ export default class ResearchPlanMetadata extends Component {
       const researchPlanMetadata = state.researchPlanMetadata;
       researchPlanMetadata.geo_location[index]['geoLocationPoint'][fieldname] = value;
       return researchPlanMetadata;
-    })
+    });
   }
 
   render() {
     const { researchPlanMetadata } = this.state;
     return (
-      <div className="border rounded px-3 pt-3 pb-5">
+      <div className="border rounded px-3 pt-3 pb-2">
         <Form>
           <Form.Group className="mb-2" controlId="title">
             <Form.Label>Title</Form.Label>
@@ -187,7 +187,7 @@ export default class ResearchPlanMetadata extends Component {
           {researchPlanMetadata?.alternate_identifier && researchPlanMetadata?.alternate_identifier.map((alternateIdentifier, index) => (
             <div key={index}>
               <Row>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Alternate Identifier</Form.Label>
                     <Form.Control
@@ -198,7 +198,7 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Type</Form.Label>
                     <Form.Control
@@ -209,9 +209,9 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={2}>
+                <Col sm={2} className="d-flex align-items-center">
                   <Form.Label>Action</Form.Label><br />
-                  <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('alternate_identifier', index)}>
+                  <Button variant="danger" className="ms-auto" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('alternate_identifier', index)}>
                     <i className="fa fa-trash-o" />
                   </Button>
                 </Col>
@@ -219,8 +219,8 @@ export default class ResearchPlanMetadata extends Component {
             </div>
           ))}
           <Row>
-            <Col smOffset={0} sm={12}>
-              <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('alternate_identifier')}>
+            <Col sm={12} className="d-flex align-items-center">
+              <Button className="ms-auto" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('alternate_identifier')}>
                 <i className="fa fa-plus" />
               </Button>
             </Col>
@@ -230,7 +230,7 @@ export default class ResearchPlanMetadata extends Component {
           {researchPlanMetadata?.related_identifier && researchPlanMetadata?.related_identifier.map((relatedIdentifier, index) => (
             <div key={index}>
               <Row>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Related Identifier</Form.Label>
                     <Form.Control
@@ -241,7 +241,7 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Type</Form.Label>
                     <Form.Control
@@ -252,9 +252,9 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={2}>
+                <Col sm={2} className="d-flex align-items-center">
                   <Form.Label>Action</Form.Label><br />
-                  <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('related_identifier', index)}>
+                  <Button variant="danger" className="ms-auto" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('related_identifier', index)}>
                     <i className="fa fa-trash-o" />
                   </Button>
                 </Col>
@@ -262,8 +262,8 @@ export default class ResearchPlanMetadata extends Component {
             </div>
           ))}
           <Row>
-            <Col smOffset={0} sm={12}>
-              <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('related_identifier')}>
+            <Col sm={12} className="d-flex align-items-center">
+              <Button className="ms-auto" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('related_identifier')}>
                 <i className="fa fa-plus" />
               </Button>
             </Col>
@@ -273,7 +273,7 @@ export default class ResearchPlanMetadata extends Component {
           {researchPlanMetadata?.description && researchPlanMetadata?.description.map((description, index) => (
             <div key={index}>
               <Row>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Description</Form.Label>
                     <Form.Control
@@ -284,7 +284,7 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Type</Form.Label>
                     <Form.Control
@@ -295,9 +295,9 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={2}>
+                <Col sm={2} className="d-flex align-items-center">
                   <Form.Label>Action</Form.Label><br />
-                  <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('description', index)}>
+                  <Button variant="danger" className="ms-auto" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('description', index)}>
                     <i className="fa fa-trash-o" />
                   </Button>
                 </Col>
@@ -305,8 +305,8 @@ export default class ResearchPlanMetadata extends Component {
             </div>
           ))}
           <Row>
-            <Col smOffset={0} sm={12}>
-              <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('description')}>
+            <Col sm={12} className="d-flex align-items-center">
+              <Button className="ms-auto" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('description')}>
                 <i className="fa fa-plus" />
               </Button>
             </Col>
@@ -335,7 +335,7 @@ export default class ResearchPlanMetadata extends Component {
           {researchPlanMetadata?.geo_location && researchPlanMetadata?.geo_location.map((locationItem, index) => (
             <div key={index}>
               <Row>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Longitude</Form.Label>
                     <Form.Control
@@ -346,7 +346,7 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Latitude</Form.Label>
                     <Form.Control
@@ -357,10 +357,10 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={2}>
+                <Col sm={2} className="d-flex align-items-center">
                   <Form.Label>Action</Form.Label>
                   <br />
-                  <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('geo_location', index)}>
+                  <Button variant="danger" className="ms-auto" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('geo_location', index)}>
                     <i className="fa fa-trash-o" />
                   </Button>
                 </Col>
@@ -368,8 +368,8 @@ export default class ResearchPlanMetadata extends Component {
             </div>
           ))}
           <Row>
-            <Col smOffset={0} sm={12}>
-              <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('geo_location')}>
+            <Col sm={12} className="d-flex align-items-center">
+              <Button className="ms-auto" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('geo_location')}>
                 <i className="fa fa-plus" />
               </Button>
             </Col>
@@ -379,7 +379,7 @@ export default class ResearchPlanMetadata extends Component {
           {researchPlanMetadata?.funding_reference && researchPlanMetadata?.funding_reference.map((fundingReferenceItem, index) => (
             <div key={index}>
               <Row>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Funder Name</Form.Label>
                     <Form.Control
@@ -390,7 +390,7 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={5}>
+                <Col sm={5}>
                   <Form.Group className="mb-2">
                     <Form.Label>Funder Identifier</Form.Label>
                     <Form.Control
@@ -401,10 +401,10 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={2}>
+                <Col sm={2} className="d-flex align-items-center">
                   <Form.Label>Action</Form.Label>
                   <br />
-                  <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('funding_reference', index)}>
+                  <Button variant="danger" className="ms-auto" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('funding_reference', index)}>
                     <i className="fa fa-trash-o" />
                   </Button>
                 </Col>
@@ -412,8 +412,8 @@ export default class ResearchPlanMetadata extends Component {
             </div>
           ))}
           <Row>
-            <Col smOffset={0} sm={12}>
-              <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('funding_reference')}>
+            <Col sm={12} className="d-flex align-items-center">
+              <Button className="ms-auto" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('funding_reference')}>
                 <i className="fa fa-plus" />
               </Button>
             </Col>
@@ -474,7 +474,7 @@ export default class ResearchPlanMetadata extends Component {
           {researchPlanMetadata?.dates && researchPlanMetadata?.dates.map((dateItem, index) => (
             <div key={index}>
               <Row>
-                <Col smOffset={0} sm={6}>
+                <Col sm={6}>
                   <Form.Group className="mb-2">
                     <Form.Label>Date</Form.Label>
                     <Form.Control
@@ -485,7 +485,7 @@ export default class ResearchPlanMetadata extends Component {
                     />
                   </Form.Group>
                 </Col>
-                <Col smOffset={0} sm={6}>
+                <Col sm={6}>
                   <Form.Group className="mb-2">
                     <Form.Label>DateType</Form.Label>
                     <Form.Control
@@ -500,11 +500,11 @@ export default class ResearchPlanMetadata extends Component {
             </div>
           ))}
 
-          {/* <Form.Group className="mb-2"> */}
-            <Button className="pull-right mt-2" variant="success" size='md' onClick={() => this.saveResearchPlanMetadata()}>
-              Save Metadata
-            </Button>
-          {/* </Form.Group> */}
+          <div className="d-flex align-items-center mt-5 mb-0">
+          <Button className="ms-auto" variant="success" size="md" onClick={() => this.saveResearchPlanMetadata()}>
+            Save Metadata
+          </Button>
+          </div>
         </Form>
       </div>
     );

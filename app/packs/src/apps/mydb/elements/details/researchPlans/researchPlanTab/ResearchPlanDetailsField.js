@@ -137,7 +137,7 @@ export default class ResearchPlanDetailsField extends Component {
             delayShow={500}
             overlay={<Tooltip id="metadataTooltip">{metadataTooltipText}</Tooltip>}
           >
-            <ButtonGroup className="pull-right">
+            <ButtonGroup>
               <Dropdown as={ButtonGroup}>
                 <Dropdown.Toggle
                   id="copyMetadataButton"
@@ -168,29 +168,30 @@ export default class ResearchPlanDetailsField extends Component {
       }
 
       fieldHeader = (
-        <div className="mt-3">
+        <div className="mt-3 d-flex align-items-center">
           {/* TODO: make label editable */}
-          <Form.Label className="fw-bold">{label}</Form.Label>
-          <Button
-            className="pull-right"
-            variant="danger"
-            size="xsm"
-            onClick={() => onDelete(field.id, this.props.attachments)}
-            data-cy="researchplan-item-delete"
-          >
-            <i className="fa fa-times" />
-          </Button>
-          {copyToMetadataButton}
-          <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)} />
+          <Form.Label className="me-auto">{label}</Form.Label>
+          <div className="ms-auto">
+            <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)} />
+            {copyToMetadataButton}
+            <Button
+              variant="danger"
+              size="xsm"
+              onClick={() => onDelete(field.id, this.props.attachments)}
+              data-cy="researchplan-item-delete"
+            >
+              <i className="fa fa-times" />
+            </Button>
+          </div>
         </div>
       );
     }
 
     return (
-      <Row>
+      <Row className="my-3">
         {dropTarget}
         <Col sm={12}>
-          <div className={`${!edit ? 'mb-5' : null}`}>
+          <div className={`${!edit && 'mb-5'}`}>
             {fieldHeader}
             {component}
           </div>

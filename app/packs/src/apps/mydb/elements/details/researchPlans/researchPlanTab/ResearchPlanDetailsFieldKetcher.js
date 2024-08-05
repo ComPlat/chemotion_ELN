@@ -80,18 +80,15 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
 
   renderEdit() {
     const { field } = this.state;
-    let className;
     let svgPath;
     if (field.value.svg_file) {
-      className = 'svg-container';
       svgPath = `/images/research_plans/${field.value.svg_file}`;
     } else {
-      className = 'svg-container-empty';
       svgPath = '/images/wild_card/no_image_180.svg';
     }
     return (
-      <div className={`${className} text-center`} onClick={this.showStructureEditor.bind(this)}>
-        <i className="fa fa-pencil fa-lg pull-right" />
+      <div className="border border-info border-3 text-center" onClick={this.showStructureEditor.bind(this)}>
+        <i className="fa fa-pencil fa-lg pull-right bg-info p-2" />
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
         {this.renderStructureEditorModal(field)}
       </div>
@@ -102,9 +99,7 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
     const { field } = this.props;
     if (typeof (field.value.svg_file) === 'undefined'
       || field.value.svg_file === null) {
-      return (
-        <div />
-      );
+      return null;
     }
     const svgPath = `/images/research_plans/${field.value.svg_file}`;
     return (

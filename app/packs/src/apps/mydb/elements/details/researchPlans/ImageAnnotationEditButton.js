@@ -16,7 +16,7 @@ export default class ImageAnnotationEditButton extends Component {
         <Button
           size="sm"
           variant="warning"
-          className="d-flex align-items-center justify-content-center "
+          className="d-flex align-items-center justify-content-center ms-1"
           onClick={() => {
             if (isActive) {
               this.props.parent.setState({
