@@ -252,7 +252,7 @@ export default class DeviceBox extends React.Component {
           className="fa fa-trash-o"
           aria-hidden="true"
           onClick={() => this.toggleTooltip()}
-          style={{ cursor: 'pointer' }}
+          role="button"
         >
           &nbsp;
         </i>
@@ -261,13 +261,13 @@ export default class DeviceBox extends React.Component {
             Delete this item(s)?
             <ButtonGroup>
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
+                variant="danger"
+                size="sm"
                 onClick={() => this.deleteCheckedDataset(device_box)}
               >
                 Yes
               </Button>
-              <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.toggleTooltip()}>
+              <Button variant="warning" size="sm" onClick={() => this.toggleTooltip()}>
                 No
               </Button>
             </ButtonGroup>
@@ -314,7 +314,7 @@ export default class DeviceBox extends React.Component {
                 <i
                   className="fa fa-trash-o"
                   onClick={() => this.deleteDeviceBox(device_box)}
-                  style={{ cursor: 'pointer' }}
+                  role="button"
                 >
                   &nbsp;&nbsp;
                 </i>

@@ -37,14 +37,14 @@ class MeasurementsTab extends Component {
     return (<ButtonGroup>
       <Button
         active={this.state.displayMode == 'table'}
-        bsSize="small"
+        size="sm"
         onClick={() => this.setState({ displayMode: 'table' })}
       >
         Show as Table
       </Button>
       <Button
         active={this.state.displayMode == 'list'}
-        bsSize="small"
+        size="sm"
         onClick={() => this.setState({ displayMode: 'list' })}
       >
         Show as List

@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
+import { Button, Col, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 import { alternateIdentifierTypes } from 'src/components/staticDropdownOptions/radar/alternateIdentifierTypes'
 
@@ -42,7 +43,7 @@ const MetadataAlternateIdentifier = ({ alternateIdentifier, index, onChange, onR
           <ControlLabel>
             &nbsp;
           </ControlLabel>
-          <Button bsStyle="danger" onClick={() => onRemove('alternateIdentifiers', index)}>
+          <Button variant="danger" onClick={() => onRemove('alternateIdentifiers', index)}>
             <i className="fa fa-trash-o" />
           </Button>
         </Col>

@@ -26,8 +26,8 @@
 @import "react-vis/dist/style.css";
 @import "reactflow/dist/style.css";
 
-@import "bootstrap-sprockets";
-@import "bootstrap";
+@import "chemotion_bootstrap.scss";
+
 @import "icons";
 @import "font-awesome";
 @import "autocomplete";
@@ -52,14 +52,6 @@ label.required:after {
   content: " *";
 }
 
-.navbar-custom {
-  border-radius: 0;
-  background-color: #EFEFEF;
-
-  a.dropdown-toggle:hover {
-    color: black;
-  }
-}
 .custom-modal {
   width: 100%;
 }
@@ -67,10 +59,14 @@ label.required:after {
 .modal-container {
   position: relative;
 }
+
 .modal-container .modal, .modal-container .modal-backdrop {
   position: absolute;
 }
 
+.drop-zone-style {
+  border: 3px dashed lightgray;
+}
 
 #app {
   -webkit-user-select: none;
@@ -115,16 +111,10 @@ label.required:after {
   max-height: calc(100vh - 320px);
 }
 
-.btn-unified {
-  color: #fff;
-  background-color: #777777;
-  border-color: #555555;
-
-}
-.dropdown > .btn-unified ~ .btn {
-  color: #fff;
-  background-color: #777777;
-  border-color: #555555;
+.btn-unified, .dropdown > .btn-unified ~ .btn {
+  color: $white;
+  background-color: $gray-600;
+  border-color: $gray-700;
 }
 
 @media screen and (min-width: 1367px) {
@@ -141,7 +131,7 @@ label.required:after {
 
 span.pseudo-link {
   cursor:pointer;
-  color: #337ab7;
+  color: $link-color;
 }
 
 span.pseudo-link:hover {
@@ -169,12 +159,13 @@ span.pseudo-link:hover {
   min-height: 350px;
 }
 
+
 .full-main {
   width: 99%;
 }
 
-.collec-tree {
-  width: 15%;
+.collection-tree {
+  max-width: 15%;
   margin-left: 3px;
 }
 
@@ -195,11 +186,6 @@ $font-icons-research_plan: "\f0f6";
 .icon-cell_line:before {
   font-family: FontAwesome;
   content: "\f0a3";
-}
-
-.exportModal {
-   width: 60%;
-   height: 100%;
 }
 
 .importChemDrawModal {
@@ -228,7 +214,7 @@ $font-icons-research_plan: "\f0f6";
 
   ::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
-  border: solid #fff;
+  border: solid $white;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -246,7 +232,7 @@ $font-icons-research_plan: "\f0f6";
   }
 
   ::-webkit-scrollbar-track-piece {
-  background-color: #fff;
+  background-color: $white;
   }
 
   ::-webkit-scrollbar-corner {
@@ -254,12 +240,12 @@ $font-icons-research_plan: "\f0f6";
   }
 
   ::-webkit-scrollbar-thumb {
-  background-color: #ADADAD;
+  background-color: $gray-500;
   -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,0.10),inset 0 -1px 0 rgba(0,0,0,0.07);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-  background-color: #999;
+  background-color: $gray-600;
   }
 }
 
@@ -267,37 +253,6 @@ tr.strokeout  td {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NkYGCQBAAAIwAbDJgTxgAAAABJRU5ErkJggg==');
     background-repeat: repeat-x;
     background-position: 50% 40%;
-}
-
-.noticeModal {
-   width: 60%;
-   height: auto;
-   margin: unset !important;
-   .modal-header {
-     padding: 10px;
-   }
-   .modal-body {
-     padding: 5px;
-   }
-   .modal-content {
-     height: 100%;
-     .modal-body {
-       height: 70vh;
-     }
-   }
-   .panel-heading {
-     padding: 5px 5px;
-   }
-   .panel-title {
-     font-size: 14px;
-     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif, FontAwesome;
-   }
-   .panel-body {
-     word-break: break-all;
-     padding: 0px;
-     border-top-color: transparent !important;
-     white-space: pre-line;
-   }
 }
 
 .force-mouse-pointer > div > canvas {

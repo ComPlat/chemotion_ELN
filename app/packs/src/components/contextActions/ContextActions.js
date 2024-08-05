@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { ButtonGroup } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CreateButton from 'src/components/contextActions/CreateButton';
-import SplitElementBtn from 'src/components/contextActions/SplitElementBtn';
+import SplitElementButton from 'src/components/contextActions/SplitElementButton';
 import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 import ScanCodeButton from 'src/components/contextActions/ScanCodeButton';
@@ -56,7 +56,11 @@ export default class ContextActions extends React.Component {
   render() {
     const { updateModalProps, customClass } = this.props;
     return (
-      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
+      <div className="d-flex gap-2">
+        <ButtonGroup>
+          <SplitElementButton />
+          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
+        </ButtonGroup>
         <ButtonGroup>
           <ExportImportButton
             isDisabled={this.isDisabled()}
@@ -65,24 +69,10 @@ export default class ContextActions extends React.Component {
           />
           <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
-        <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
-          <ButtonGroup>
-            <SplitElementBtn />
-            <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
-          </ButtonGroup>
-        </div>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
-          <ScanCodeButton customClass={customClass} />
-        </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
-          <InboxButton />
-        </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
-          <SampleTaskNavigationElement />
-        </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '20px' }}>
-          <NoticeButton />
-        </ButtonGroup>
+        <ScanCodeButton customClass={customClass} />
+        <InboxButton />
+        <SampleTaskNavigationElement />
+        <NoticeButton />
       </div>
     );
   }

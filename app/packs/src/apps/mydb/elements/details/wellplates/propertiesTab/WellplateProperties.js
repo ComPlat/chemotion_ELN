@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  FormGroup, InputGroup, FormControl, ControlLabel, Button, ButtonGroup, Overlay, OverlayTrigger, Tooltip
+  FormGroup, InputGroup, FormControl, Button, ButtonGroup, Overlay, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
@@ -8,6 +8,7 @@ import QuillEditor from 'src/components/QuillEditor';
 import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
 import Wellplate from 'src/models/Wellplate';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class WellplateProperties extends Component {
   constructor(props) {
@@ -72,15 +73,15 @@ export default class WellplateProperties extends Component {
         <br />
         <ButtonGroup>
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="sm"
             onClick={() => this.deleteReadoutTitle(index)}
           >
             Yes
           </Button>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             onClick={() => this.hideDeleteReadoutTitleConfirm(index)}
           >
             No
@@ -96,8 +97,7 @@ export default class WellplateProperties extends Component {
           overlay={<Tooltip id="delete_readout_title_tooltip">Delete Readout Title</Tooltip>}
         >
           <Button
-            bsStyle="danger"
-            className="button-right"
+            variant="danger"
             ref={(ref) => { this.deleteButtonRefs[index] = ref; }}
             onClick={() => this.showDeleteReadoutTitleConfirm(index)}
           >
@@ -200,7 +200,7 @@ export default class WellplateProperties extends Component {
                   placement="top"
                   overlay={<Tooltip id="add_readout_title_tooltip">Add Readout Title</Tooltip>}
                 >
-                  <Button className="button-right" bsStyle="success" onClick={() => this.addReadoutTitle()}>
+                  <Button variant="success" onClick={() => this.addReadoutTitle()}>
                     Add Readouts
                   </Button>
                 </OverlayTrigger>

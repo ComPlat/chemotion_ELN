@@ -1,14 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Label } from 'react-bootstrap';
 
 import { iconByBool } from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/icon';
+import Label from 'src/components/legacyBootstrap/Label'
 
 const iconNmr = (ansNmr) => {
   const { conclusion, conclusionOwn } = ansNmr;
   if (!conclusion && conclusionOwn) {
     return (
-      <Label bsStyle="success" className="label-qc">
+      <Label variant="success" className="label-qc">
         Pass due to owner correction
       </Label>
     );
@@ -20,7 +20,7 @@ const iconIr = (ansIr) => {
   const { conclusion, conclusionOwn } = ansIr;
   if (!conclusion && conclusionOwn) {
     return (
-      <Label bsStyle="success" className="label-qc">
+      <Label variant="success" className="label-qc">
         Pass due to owner correction
       </Label>
     );

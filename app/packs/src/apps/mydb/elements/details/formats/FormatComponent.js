@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Accordion, Button } from 'react-bootstrap';
+import { Accordion, Button } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 
 import PanelHeader from 'src/components/common/PanelHeader';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const tryParse = function TryParseToJson(obj) {
   if (typeof obj === 'object') return obj;
@@ -58,9 +59,8 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
     <Button
       key="closeBtn"
       onClick={onClose}
-      bsStyle="danger"
-      bsSize="xsmall"
-      className="button-right"
+      variant="danger"
+      size="sm"
     >
       <i className="fa fa-times" />
     </Button>
@@ -69,9 +69,8 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
     <Button
       key="saveBtn"
       onClick={onSave}
-      bsStyle="warning"
-      bsSize="xsmall"
-      className="button-right"
+      variant="warning"
+      size="sm"
     >
       <i className="fa fa-floppy-o" />
     </Button>
@@ -80,9 +79,8 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
     <Button
       key="formatBtn"
       onClick={onFormat}
-      bsStyle="info"
-      bsSize="xsmall"
-      className="button-right"
+      variant="info"
+      size="sm"
     >
       <i className="fa fa-magic" />
     </Button>
@@ -93,7 +91,7 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
 }
 
 function FormatComponent({
-  list, bsStyle, onSave, onFormat, onClose
+  list, variant, onSave, onFormat, onClose
 }) {
   const elements = list.map((el, idx) => (
     <ElementAnalyses key={el.id} element={el} idx={idx} />
@@ -108,7 +106,7 @@ function FormatComponent({
 
   return (
     <Panel
-      bsStyle={bsStyle}
+      variant={variant}
       className="format-analysis-panel"
     >
       <Panel.Heading>
@@ -144,14 +142,14 @@ FormatComponentHeader.propTypes = {
 
 FormatComponent.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object).isRequired,
-  bsStyle: PropTypes.string,
+  variant: PropTypes.string,
   onSave: PropTypes.func.isRequired,
   onFormat: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
 };
 
 FormatComponent.defaultProps = {
-  bsStyle: 'info'
+  variant: 'info'
 };
 
 export default FormatComponent;

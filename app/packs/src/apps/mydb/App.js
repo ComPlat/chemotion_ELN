@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Col, Grid, Row } from 'react-bootstrap';
+import { Col, Row, Container } from 'react-bootstrap';
 import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
@@ -104,19 +104,6 @@ class App extends Component {
     });
   }
 
-  collectionTree() {
-    const { showCollectionTree } = this.state;
-    if (!showCollectionTree) {
-      return <div />;
-    }
-
-    return (
-      <Col className="small-col collec-tree">
-        <CollectionTree />
-      </Col>
-    );
-  }
-
   mainContent() {
     const { showCollectionManagement, mainContentClassName } = this.state;
     return (
@@ -129,13 +116,13 @@ class App extends Component {
   render() {
     const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
     return (
-      <Grid fluid>
-        <Row className="card-navigation">
+      <Container fluid>
+        <Row className="top-0 bg-light" style={{ zIndex: 5 }}>
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
         </Row>
-        <Row className="card-content container-fluid">
-          {this.collectionTree()}
+        <Row className="container-fluid pt-3">
+          {showCollectionTree && <CollectionTree />}
           {this.mainContent()}
         </Row>
         <Row>
@@ -150,7 +137,7 @@ class App extends Component {
         />
         <InboxModal showCollectionTree={showCollectionTree} />
         <Calendar />
-      </Grid>
+      </Container>
     );
   }
 }

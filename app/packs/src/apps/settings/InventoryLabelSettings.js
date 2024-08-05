@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import TreeSelect from 'antd/lib/tree-select';
 import {
-  Button, Panel, Row, Col, FormGroup, FormControl
+  Button, Row, Col, FormGroup, FormControl
 } from 'react-bootstrap';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import { find } from 'lodash';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const textInput = (label, value, onChange) => (
   <FormGroup>
@@ -260,7 +261,7 @@ function InventoryLabelSettings() {
           </Col>
           <Col sm={4} className="update-inventory-user-button">
             <Button
-              bsStyle="primary"
+              variant="primary"
               className="text-center"
               onClick={() => { updateUserSettings(); }}
             >

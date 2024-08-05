@@ -2,10 +2,11 @@ import React from 'react';
 import SVG from 'react-inlinesvg';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import { Panel, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const orderSource = {
   beginDrag(props) {
@@ -49,9 +50,8 @@ const headerTitle = (el, icon) => {
     <span>
       {el.title()} {icon}
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
-        className="button-right"
+        variant="danger"
+        size="sm"
         onClick={clickToRm}
       >
         <i className="fa fa-times" />
@@ -74,30 +74,30 @@ const ObjRow = ({ element, template, connectDragSource, connectDropTarget,
     style.opacity = 0.2;
   }
 
-  let bsStyle = 'default';
+  let variant = 'light';
   let icon = null;
   const isStdTemplate = template === 'standard';
   const { type, role } = element;
   if (type === 'sample') {
-    bsStyle = 'success';
+    variant = 'success';
   } else if (!isStdTemplate && type === 'reaction' && role === 'gp') {
-    bsStyle = 'primary';
+    variant = 'primary';
     icon = <i className="fa fa-home c-bs-info" />;
   } else if (!isStdTemplate && type === 'reaction' && role === 'single') {
-    bsStyle = 'default';
+    variant = 'light';
     icon = <i className="fa fa-asterisk c-bs-danger" />;
   } else if (!isStdTemplate && type === 'reaction' && role === 'parts') {
-    bsStyle = 'info';
+    variant = 'info';
     icon = <i className="fa fa-bookmark c-bs-success" />;
   } else if (type === 'reaction') {
-    bsStyle = 'info';
+    variant = 'info';
   }
 
   return compose(connectDragSource, connectDropTarget)(
     <div>
       <Panel
         style={style}
-        bsStyle={bsStyle}
+        variant={variant}
       >
         <Panel.Heading>{headerTitle(element, icon)}</Panel.Heading>
         <div className="row">

@@ -54,9 +54,8 @@ export default class OlsTreeSelect extends Component {
         treeDefaultExpandedKeys={[this.props.selectName]}
         name={this.props.selectName}
         showSearch
-        style={{ width: '100%' }}
+        className='w-100'
         value={this.props.selectedValue}
-        dropdownStyle={{ maxHeight: 300, overflow: 'auto' }}
         treeData={treeData}
         placeholder="Select..."
         allowClear

@@ -2,7 +2,7 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Panel, Pagination, OverlayTrigger, Tooltip, DropdownButton, MenuItem
+  Badge, Button, Pagination, OverlayTrigger, Tooltip, DropdownButton
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
@@ -15,6 +15,8 @@ import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class InboxModal extends React.Component {
   constructor(props) {
@@ -306,8 +308,8 @@ export default class InboxModal extends React.Component {
           title="Size"
           className="header-button"
           id="dropdown-size-button"
-          bsStyle="info"
-          bsSize="xs"
+          variant="info"
+          size="sm"
           style={{ marginLeft: '10px' }}
 
         >
@@ -328,7 +330,7 @@ export default class InboxModal extends React.Component {
       <CopyToClipboard text={collectorAddress}>
         <OverlayTrigger placement="bottom" overlay={this.infoMessage()}>
           <Button
-            bsSize="xsmall"
+            size="sm"
             className="header-button"
           >
             <i className="fa fa-info" />
@@ -350,8 +352,8 @@ export default class InboxModal extends React.Component {
     return (
       <OverlayTrigger placement="bottom" overlay={sortTooltip}>
         <Button
-          bsStyle="success"
-          bsSize="xs"
+          variant="success"
+          size="sm"
           className="header-button"
           onClick={this.changeSortColumn}
         >
@@ -382,7 +384,7 @@ export default class InboxModal extends React.Component {
               zIndex: 10, position: 'absolute', top: '70px', left: '10px'
             }}
           >
-            <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
+            <Panel variant="primary" className="eln-panel-detail research-plan-details cursor">
               <Panel.Heading
                 className="cursor handle draggable"
                 id="draggableInbox"
@@ -416,16 +418,16 @@ export default class InboxModal extends React.Component {
                     {collectorAddress ? this.collectorAddressInfoButton() : null}
                     {this.renderSizingIcon()}
                     <Button
-                      bsStyle="success"
-                      bsSize="xs"
+                      variant="success"
+                      size="sm"
                       className="header-button"
                       onClick={() => this.refreshInbox()}
                     >
                       <i className="fa fa-refresh" />
                     </Button>
                     <Button
-                      bsStyle="danger"
-                      bsSize="xs"
+                      variant="danger"
+                      size="sm"
                       className="header-button"
                       onClick={InboxActions.toggleInboxModal}
                     >

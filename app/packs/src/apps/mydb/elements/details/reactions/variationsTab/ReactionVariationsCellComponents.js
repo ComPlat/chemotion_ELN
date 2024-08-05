@@ -21,13 +21,12 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
-      <Badge>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
-      {' '}
+      <Badge bg='secondary' className='me-2'>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
       <ButtonGroup>
-        <Button bsSize="xsmall" bsStyle="success" onClick={() => copyRow(variationsRow)}>
+        <Button size="xsm" variant="success" onClick={() => copyRow(variationsRow)}>
           <i className="fa fa-clone" />
         </Button>
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => removeRow(variationsRow)}>
+        <Button size="xsm" variant="danger" onClick={() => removeRow(variationsRow)}>
           <i className="fa fa-trash-o" />
         </Button>
       </ButtonGroup>

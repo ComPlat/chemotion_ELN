@@ -12,7 +12,7 @@ function TableEditBtn({ dataLength, onEditBtnClick, node }) {
     <Button
       active
       onClick={() => onEditBtnClick(node.rowIndex)}
-      bsSize="xsmall"
+      size="sm"
     >
       <i className={`fa ${btnIcon}`} />
     </Button>

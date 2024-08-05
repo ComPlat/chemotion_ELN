@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger } from 'react-bootstrap';
+import { Button, Tooltip, Overlay, OverlayTrigger, ButtonToolbar } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -31,20 +31,22 @@ export default class ConfirmClose extends Component {
     const popover = (
       <Tooltip placement="left" className="in" id="tooltip-bottom">
         Unsaved data will be lost.<br /> Close {el.type}?<br />
-        <ButtonGroup>
+        <ButtonToolbar className="gap-2 justify-content-center">
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="xxsm"
             onClick={DetailActions.confirmDelete}
-          >Yes
+          >
+            Yes
           </Button>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="xxsm"
             onClick={() => this.setState({ showTooltip: false })}
-          >No
+          >
+            No
           </Button>
-        </ButtonGroup>
+        </ButtonToolbar>
       </Tooltip>
     );
     const sharedProps = {
@@ -55,12 +57,16 @@ export default class ConfirmClose extends Component {
     };
 
     return (
-      <span>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="closeSample">Close {el.type}</Tooltip>}>
+      <>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={
+            <Tooltip id="closeSample">Close {el.type}</Tooltip>
+          }
+        >
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
-            className="button-right"
+            variant="danger"
+            size="xsm"
             onClick={() => this.onClickButton(el)}
             ref={(button) => { this.target = button; }}
           >
@@ -74,7 +80,7 @@ export default class ConfirmClose extends Component {
         >
           { popover }
         </Overlay>
-      </span>
+      </>
     );
   }
 }

@@ -5,7 +5,7 @@ import uuid from 'uuid';
 
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import TabLayoutCell from 'src/apps/mydb/elements/tabLayout/TabLayoutCell';
-import capitalizeWords from 'src/utilities/textHelper';
+import { capitalizeWords } from 'src/utilities/textHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class TabLayoutContainer extends React.Component {

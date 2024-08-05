@@ -43,7 +43,6 @@ const templateInfo = (
 export default class WellplateDetailsAttachments extends Component {
   constructor(props) {
     super(props);
-    this.importButtonRefs = [];
     const {
       onImport
     } = props;
@@ -244,7 +243,7 @@ export default class WellplateDetailsAttachments extends Component {
       <div>
         <ButtonGroup style={{ marginBottom: '10px' }}>
           <Button
-            bsStyle="primary"
+            variant="primary"
             onClick={() => this.handleTemplateDownload()}
           >
             <i className="fa fa-download" aria-hidden="true" />
@@ -253,7 +252,7 @@ export default class WellplateDetailsAttachments extends Component {
           </Button>
           <OverlayTrigger placement="bottom" overlay={templateInfo}>
             <Button
-              bsStyle="info"
+              variant="info"
             >
               <i className="fa fa-info" aria-hidden="true" />
             </Button>
@@ -320,8 +319,8 @@ export default class WellplateDetailsAttachments extends Component {
               <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 {attachment.is_deleted ? (
                   <Button
-                    bsSize="xs"
-                    bsStyle="danger"
+                    size="sm"
+                    variant="danger"
                     className="attachment-button-size"
                     onClick={() => onUndoDelete(attachment)}
                   >
@@ -345,7 +344,6 @@ export default class WellplateDetailsAttachments extends Component {
                       attachment,
                       this.state.showImportConfirm,
                       this.props.wellplate.changed,
-                      this.importButtonRefs,
                       this.showImportConfirm,
                       this.hideImportConfirm,
                       this.confirmAttachmentImport

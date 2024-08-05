@@ -1,11 +1,12 @@
 import React from 'react';
 import Select from 'react-select';
 import {
-  FormGroup, OverlayTrigger, ControlLabel, FormControl, Tooltip,
+  FormGroup, OverlayTrigger, FormControl, Tooltip,
   Row, Col
 } from 'react-bootstrap';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
-import CheckBoxs from 'src/components/common/CheckBoxs';
+import CheckBoxList from 'src/components/common/CheckBoxList';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const imgFormatOpts = () => (
   [
@@ -122,7 +123,7 @@ const suiConfig = ({ template, configs, fileName, checkedAllConfigs,
       <br />
       <FileName fileName={fileName} />
       <FileDescription fileDescription={fileDescription} />
-      <CheckBoxs
+      <CheckBoxList
         items={filteredConfigs}
         toggleCheckbox={toggleConfigs}
         toggleCheckAll={toggleConfigsAll}
@@ -143,7 +144,7 @@ const suiStdRxnConfig = ({
       <br />
       <FileName fileName={fileName} />
       <FileDescription fileDescription={fileDescription} />
-      <CheckBoxs
+      <CheckBoxList
         items={filteredConfigs}
         toggleCheckbox={toggleConfigs}
         toggleCheckAll={toggleConfigsAll}
@@ -168,7 +169,7 @@ const stdConfig = ({
     <br />
     <FileName fileName={fileName} />
     <FileDescription fileDescription={fileDescription} />
-    <CheckBoxs
+    <CheckBoxList
       items={configs}
       toggleCheckbox={toggleConfigs}
       toggleCheckAll={toggleConfigsAll}

@@ -40,7 +40,7 @@ export default class ProgressModal extends Component {
     }
 
     return (
-      <Modal className='loading-progress-modal' animation show={loadingWithProgress}>
+      <Modal centered className='loading-progress-modal' animation show={loadingWithProgress}>
         {progressValue}
       </Modal>
     );

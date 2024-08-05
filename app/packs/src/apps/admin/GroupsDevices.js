@@ -1,11 +1,10 @@
 import React from 'react';
-import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, FormControl } from 'react-bootstrap';
+import { Modal, Table, Button, Form, Card } from 'react-bootstrap';
 import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 import { selectUserOptionFormater, selectDeviceOptionFormater } from 'src/utilities/selectHelper';
-
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
 
 export default class GroupsDevices extends React.Component {
@@ -288,28 +287,30 @@ export default class GroupsDevices extends React.Component {
     }
 
     return (
-      <Panel key="group-panel-key">
-        <Panel.Heading>
-          <Panel.Title>
-            Group List &nbsp;
-            ({groups.length}) &nbsp;
-            <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
-          </Panel.Title>
-        </Panel.Heading>
+      <Card>
+        <Card.Header>
+          <Card.Title className='mt-1 py-1'>
+            Group List
+            ({groups.length})
+            <Button variant="primary" className='ms-2' size='md' onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
+          </Card.Title>
+        </Card.Header>
+        <Card.Body>
         <Table responsive condensed hover>
           <thead>
-            <tr style={{ backgroundColor: '#ddd' }}>
-              <th width="5%">#</th>
-              <th width="25%">Actions</th>
-              <th width="20%">Name</th>
-              <th width="10%">Kürzel</th>
-              <th width="20%">Admin by</th>
-              <th width="20%">Email</th>
+            <tr className='bg-gray-200 '>
+              <th className="py-3">#</th>
+              <th className="w-25 py-3">Actions</th>
+              <th className="py-3">Name</th>
+              <th className="py-3">Kürzel</th>
+              <th className="py-3">Admin by</th>
+              <th className="py-3">Email</th>
             </tr>
           </thead>
           {tbody}
         </Table>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   }
 
@@ -318,58 +319,56 @@ export default class GroupsDevices extends React.Component {
     const title = (rootType === 'Group') ? 'Add new group' : 'Add new device';
     return (
       <Modal
+        centered
         show={showCreateModal}
         onHide={this.handleCloseGroup}
       >
-        <Modal.Header closeButton>
+        <Modal.Header closeButton className='bg-light'>
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Panel bsStyle="success">
-            <Panel.Heading>
-              <Panel.Title>
-                {title}
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
-              <Form>
-                <FormGroup controlId="formInlineName">
-                  <ControlLabel>Name*</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.firstInput = m; }}
-                    placeholder="eg: AK"
-                  />
-                </FormGroup>
-                <FormGroup controlId="formInlineName">
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.lastInput = m; }}
-                    placeholder="J. Moriarty"
-                  />
-                </FormGroup>&nbsp;&nbsp;
-                <FormGroup controlId="formInlineNameAbbr">
-                  <ControlLabel>Name abbreviation* </ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.abbrInput = m; }}
-                    placeholder="AK-JM"
-                  />
-                </FormGroup>&nbsp;&nbsp;
-                <FormGroup controlId="formInlineEmail">
-                  <ControlLabel>Email</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.emailInput = m; }}
-                    placeholder="eg: abc@kit.edu"
-                  />
-                </FormGroup>
-                <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
-                  Create new {rootType === 'Group' ? 'group' : 'device'}
-                </Button>
-              </Form>
-            </Panel.Body>
-          </Panel>
+          <Form>
+            <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
+              <Form.Label>Name*</Form.Label>
+              <Form.Control
+                type="text"
+                ref={(m) => { this.firstInput = m; }}
+                placeholder="eg: AK"
+                className='py-2'
+              />
+            </Form.Group>
+            <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
+              <Form.Control
+                type="text"
+                ref={(m) => { this.lastInput = m; }}
+                placeholder="J. Moriarty"
+                className='py-2'
+              />
+            </Form.Group>
+            <Form.Group controlId="formInlineNameAbbr" className='mb-3 fs-5 fw-bold'>
+              <Form.Label>Name abbreviation*</Form.Label>
+              <Form.Control
+                type="text"
+                ref={(m) => { this.abbrInput = m; }}
+                placeholder="AK-JM"
+                className='py-2'
+              />
+            </Form.Group>
+            <Form.Group controlId="formInlineEmail" className='mb-4 fs-5 fw-bold'>
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type="text"
+                ref={(m) => { this.emailInput = m; }}
+                placeholder="eg: abc@kit.edu"
+                className='py-2'
+              />
+            </Form.Group>
+            <Modal.Footer className='modal-footer border-0'>
+              <Button size="lg" variant="primary" onClick={() => this.createGroup()}>
+                Create new {rootType === 'Group' ? 'group' : 'device'}
+              </Button>
+            </Modal.Footer>
+          </Form>
         </Modal.Body>
       </Modal>
     );
@@ -405,6 +404,7 @@ export default class GroupsDevices extends React.Component {
 
     return (
       <Modal
+        centered
         show={showModal}
         onHide={this.handleClose}
       >
@@ -412,13 +412,6 @@ export default class GroupsDevices extends React.Component {
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Panel bsStyle="success">
-            <Panel.Heading>
-              <Panel.Title>
-                {title}
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
               <Select.Async
                 multi
                 isLoading
@@ -432,9 +425,7 @@ export default class GroupsDevices extends React.Component {
                 loadOptions={this.loadUserByNameType}
                 onChange={this.handleSelectUser}
               />
-              <Button bsSize="small" type="button" bsStyle="warning" onClick={() => this.addToRoot(root)}>Add</Button>
-            </Panel.Body>
-          </Panel>
+          <Button size="md" type="button" variant="warning" className='mt-3' onClick={() => this.addToRoot(root)}>Add</Button>
         </Modal.Body>
       </Modal>
     );

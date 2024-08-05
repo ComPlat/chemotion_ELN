@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import { Form, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import Select from 'react-select'
@@ -19,7 +19,7 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   onSelectChange(e) {
-    let selected = e && e.value
+    const selected = e && e.value;
     this.setState((previousProps, previousState) => {
       return { ...previousState, selected: selected }
     });
@@ -98,11 +98,11 @@ export default class ManagingModalCollectionActions extends React.Component {
     const { newLabel, selected } = this.state
     const l = newLabel && newLabel.length
     return l && l > 0 ? (
-      <Button bsStyle="warning" onClick={this.handleSubmit}>
+      <Button variant="warning" onClick={this.handleSubmit}>
         Create collection &lsquo;{newLabel}&rsquo; and Submit
       </Button>
     ) : (
-      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!selected}>
+      <Button variant="warning" onClick={this.handleSubmit} disabled={!selected}>
         Submit
       </Button>
     );
@@ -117,27 +117,28 @@ export default class ManagingModalCollectionActions extends React.Component {
       });
     }
     return (
-      <div>
-        <FormGroup>
-          <ControlLabel>Select a Collection</ControlLabel>
+      <Form>
+        <Form.Group className="mb-3">
+          <Form.Label>Select a Collection</Form.Label>
           <Select
             options={options}
             value={selected}
             onChange={this.onSelectChange}
             className="select-assign-collection"
           />
-        </FormGroup>
-        <FormGroup>
-          <ControlLabel>or Create a new Collection</ControlLabel>
-          <FormControl
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>or Create a new Collection</Form.Label>
+          <Form.Control
             type="text"
             placeholder="-- Please insert collection name --"
             onChange={onChange}
           />
-        </FormGroup>
+        </Form.Group>
         {this.submitButton()}
-      </div>
-    )
+      </Form>
+    );
   }
 }
 

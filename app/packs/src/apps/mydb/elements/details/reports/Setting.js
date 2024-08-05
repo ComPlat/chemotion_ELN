@@ -1,7 +1,7 @@
 import React from 'react';
-import { Panel } from 'react-bootstrap';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
-import CheckBoxs from 'src/components/common/CheckBoxs';
+import CheckBoxList from 'src/components/common/CheckBoxList';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const toggleSplSettings = (text, checked) => {
   ReportActions.updateSplSettings({ text, checked });
@@ -22,14 +22,14 @@ const toggleRxnSettingsAll = () => {
 const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
   checkedAllRxnSettings }) => (
   <div>
-    <Panel bsStyle="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Sample
         </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
-        <CheckBoxs
+        <CheckBoxList
           items={splSettings}
           toggleCheckbox={toggleSplSettings}
           toggleCheckAll={toggleSplSettingsAll}
@@ -37,14 +37,14 @@ const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
         />
       </Panel.Body>
     </Panel>
-    <Panel bsStyle="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Reaction
         </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
-        <CheckBoxs
+        <CheckBoxList
           items={rxnSettings}
           checkedAll={checkedAllRxnSettings}
           toggleCheckbox={toggleRxnSettings}
@@ -65,14 +65,14 @@ const toggleSiRxnSettingsAll = () => {
 
 const suiSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
   <div>
-    <Panel bsStyle="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Synthesis Products Information
         </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
-        <CheckBoxs
+        <CheckBoxList
           items={siRxnSettings}
           checkedAll={checkedAllSiRxnSettings}
           toggleCheckbox={toggleSiRxnSettings}

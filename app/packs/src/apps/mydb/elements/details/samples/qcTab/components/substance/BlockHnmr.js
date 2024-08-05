@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Alert } from 'react-bootstrap';
+import { Alert } from 'react-bootstrap';
 
 import QuillViewer from 'src/components/QuillViewer';
 import QcMolView from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/QcMolView';
@@ -9,6 +9,7 @@ import {
   tableNmr,
   formatQV,
 } from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/nmr';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const emptyBlock = () => (
   <div className="card-qc">
@@ -16,7 +17,7 @@ const emptyBlock = () => (
       <span>1. Analysis of the provided digital NMR spectroscopy data: 1H NMR:</span>
     </h5>
     <div className="card-qc">
-      <Alert bsStyle="danger">
+      <Alert variant="danger">
         No Information. Please upload spectrum & make predictions in Spectra Editor.
       </Alert>
     </div>

@@ -1,26 +1,16 @@
 import React, { Component } from 'react';
 // import PropTypes from 'prop-types';
-import { FormControl } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
-const source = {
-  beginDrag(props) {
-    return props;
-  }
-};
-
-const collect = (connect, monitor) => ({
-  connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging()
-});
 
 export default class MaterialCalculations extends Component {
 
-  notApplicableInput(inputsStyle) {
+  notApplicableInput() {
     return (
-      <td style={inputsStyle}>
-        <FormControl type="text"
+      <td className='pt-4 px-1'>
+        <Form.Control type="text"
           value="N / A"
           disabled={true}
         />
@@ -37,7 +27,7 @@ export default class MaterialCalculations extends Component {
       return this.notApplicableInput(inputsStyle);
     else
       return (
-        <td style={inputsStyle}>
+        <td className='pt-4 px-1'>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_ml || ''}
@@ -68,13 +58,11 @@ export default class MaterialCalculations extends Component {
     };
 
     return <tr>
-      <td style={inputsStyle}></td>
-      <td style={inputsStyle}></td>
-      <td style={inputsStyle}></td>
-      <td style={inputsStyle}></td>
-      <td style={inputsStyle}></td>
-      <td style={inputsStyle}><label>Adjusted: </label></td>
-      <td style={inputsStyle}>
+      <td className='pt-4 px-1'></td>
+      <td className='pt-4 px-1'></td>
+      <td className='pt-4 px-1'></td>
+      <td className='pt-4 px-1'><label>Adjusted: </label></td>
+      <td className='pt-4 px-1'>
         <NumeralInputWithUnitsCompo
           key={material.id}
           value={material.adjusted_amount_g}
@@ -89,7 +77,7 @@ export default class MaterialCalculations extends Component {
 
       {this.materialVolume(material, inputsStyle)}
 
-      <td style={inputsStyle}>
+      <td className='pt-4 px-1'>
         <NumeralInputWithUnitsCompo
           key={'adjusted_amount_mol' + material.id.toString()}
           value={material.adjusted_amount_mol}
@@ -102,7 +90,7 @@ export default class MaterialCalculations extends Component {
         />
       </td>
 
-      <td style={inputsStyle}>
+      <td className='pt-4 px-1'>
         <NumeralInputWithUnitsCompo
           key={'adjusted_loading' + material.id.toString()}
           value={material.adjusted_loading}
@@ -115,8 +103,8 @@ export default class MaterialCalculations extends Component {
         />
       </td>
 
-      <td style={inputsStyle}>
-        <FormControl
+      <td className='pt-4 px-1'>
+        <Form.Control
           type="text"
           value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
           disabled

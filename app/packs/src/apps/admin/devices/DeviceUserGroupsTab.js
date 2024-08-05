@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { FormGroup, ControlLabel, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import AsyncSelect from 'react-select3/async';
 import { selectUserOptionFormater, selectedUserFormater } from 'src/utilities/selectHelper';
 
@@ -35,8 +35,8 @@ const DeviceUserGroupsTab = () => {
 
   return (
     <Form>
-      <FormGroup>
-        <ControlLabel>Add device permission to users</ControlLabel>
+      <Form.Group className="mb-4">
+        <Form.Label>Add device permission to users</Form.Label>
         <AsyncSelect
           isMulti
           isClearable={false}
@@ -50,9 +50,9 @@ const DeviceUserGroupsTab = () => {
           onMenuClose={() => toggleLoading(false)}
           className="device-multi-select"
         />
-      </FormGroup>
-      <FormGroup>
-        <ControlLabel>Add device permission to groups</ControlLabel>
+      </Form.Group>
+      <Form.Group className="mb-4">
+        <Form.Label>Add device permission to groups</Form.Label>
         <AsyncSelect
           isMulti
           isClearable={false}
@@ -66,7 +66,7 @@ const DeviceUserGroupsTab = () => {
           onMenuClose={() => toggleLoading(false)}
           className="device-multi-select"
         />
-      </FormGroup>
+      </Form.Group>
     </Form>
   );
 }

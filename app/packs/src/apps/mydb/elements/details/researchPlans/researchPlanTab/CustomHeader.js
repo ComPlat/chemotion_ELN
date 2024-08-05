@@ -48,7 +48,7 @@ export default class CustomHeader extends Component {
     let sort = null;
     if (this.props.enableSorting) {
       sort = (
-        <div className="sortHeader" style={{ display: 'inline-block' }}>
+        <div className="d-inline-block">
           <div
             onClick={this.onSortRequested.bind(this, 'asc')}
             onTouchEnd={this.onSortRequested.bind(this, 'asc')}

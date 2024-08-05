@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 import Select from 'react-select';
 import {
-  Grid, Row, Col, Button, ControlLabel, Form, FormGroup, FormControl
+  Row, Col, Button, Form, FormGroup, FormControl
 } from 'react-bootstrap';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -12,6 +12,8 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 
 import ComputedPropsGraph from 'src/components/computedProps/ComputedPropsGraph';
 import GraphReferenceTable from 'src/components/computedProps/GraphReferenceTable';
+import Grid from 'src/components/legacyBootstrap/Grid'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const etlReferences = [
   { x: -1.8, y: 50, type: 'reference' },
@@ -301,11 +303,11 @@ export default class ComputedPropsGraphContainer extends React.Component {
               </FormGroup>
               <FormGroup style={{ marginBottom: 0 }}>
                 <Col sm={12}>
-                  <Button bsStyle="info" onClick={this.saveTemplate}>
+                  <Button variant="info" onClick={this.saveTemplate}>
                     Save Template
                   </Button>
                   {' '}
-                  <Button bsStyle="danger" onClick={this.deleteTemplate}>
+                  <Button variant="danger" onClick={this.deleteTemplate}>
                     Delete Template
                   </Button>
                 </Col>

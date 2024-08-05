@@ -1,9 +1,9 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
-import { Panel } from 'react-bootstrap';
 import Formula from 'src/components/common/Formula';
 import CommonInput from 'src/components/common/CommonInput';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const Serial = ({ serial, counter }) => {
   if (!serial) return null;

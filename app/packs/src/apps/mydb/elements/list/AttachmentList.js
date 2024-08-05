@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
+  Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import { values } from 'lodash';
@@ -48,7 +48,7 @@ export const attachmentThumbnail = (attachment) => (
         popObject={
         attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
           ? {
-            fetchNeeded:true,
+            fetchNeeded: true,
             src: `/api/v1/attachments/${attachment.id}/annotated_image`,
           }
           : {
@@ -95,20 +95,20 @@ const handleDownloadOriginal = (attachment) => {
 
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
-    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+    <Dropdown.Toggle style={{ height: '30px' }} size="sm" variant="primary">
       <i className="fa fa-download" aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
-      <MenuItem eventKey="1" onClick={() => handleDownloadOriginal(attachment)}>
+      <Dropdown.Item eventKey="1" onClick={() => handleDownloadOriginal(attachment)}>
         Download Original
-      </MenuItem>
-      <MenuItem
+      </Dropdown.Item>
+      <Dropdown.Item
         eventKey="2"
         onClick={() => handleDownloadAnnotated(attachment)}
         disabled={!isImageFile(attachment.filename) || attachment.isNew}
       >
         Download Annotated
-      </MenuItem>
+      </Dropdown.Item>
     </Dropdown.Menu>
   </Dropdown>
 );
@@ -116,8 +116,8 @@ export const downloadButton = (attachment) => (
 export const removeButton = (attachment, onDelete, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
     <Button
-      bsSize="xs"
-      bsStyle="danger"
+      size="sm"
+      variant="danger"
       className="attachment-button-size"
       onClick={() => onDelete(attachment)}
       disabled={readOnly}
@@ -130,8 +130,8 @@ export const removeButton = (attachment, onDelete, readOnly) => (
 export const moveBackButton = (attachment, onBack, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="back_tooltip">Move attachment back to inbox</Tooltip>}>
     <Button
-      bsSize="xs"
-      bsStyle="danger"
+      size="sm"
+      variant="danger"
       className="attachment-button-size"
       onClick={() => onBack(attachment)}
       disabled={readOnly}
@@ -178,8 +178,8 @@ export const editButton = (
     <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
       <Button
         className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
-        bsSize="xs"
-        bsStyle="success"
+        size="sm"
+        variant="success"
         disabled={editDisable}
         onClick={() => handleEdit(attachment)}
       >
@@ -193,7 +193,6 @@ export const importButton = (
   attachment,
   showImportConfirm,
   importDisabled,
-  importButtonRefs,
   showImportConfirmFunction,
   hideImportConfirmFunction,
   confirmAttachmentImportFunction
@@ -211,15 +210,15 @@ export const importButton = (
       <br />
       <ButtonGroup>
         <Button
-          bsStyle="success"
-          bsSize="xs"
+          variant="success"
+          size="sm"
           onClick={() => confirmAttachmentImportFunction(attachment)}
         >
           Yes
         </Button>
         <Button
-          bsStyle="warning"
-          bsSize="xs"
+          variant="warning"
+          size="sm"
           onClick={() => hideImportConfirmFunction(attachment.id)}
         >
           No
@@ -228,30 +227,31 @@ export const importButton = (
     </Tooltip>
   );
 
+  const buttonRef = React.createRef();
   return (
     <div>
       <OverlayTrigger placement="top" overlay={importTooltip}>
-        <div style={{ float: 'right' }}>
+        {/* add span because disabled buttons cannot trigger tooltip overlay */}
+        <span>
           <Button
-            bsSize="xs"
-            bsStyle="success"
+            size="sm"
+            variant="success"
             disabled={importDisabled || extension !== 'xlsx'}
-            // eslint-disable-next-line no-param-reassign
-            ref={(ref) => { importButtonRefs[attachment.id] = ref; }}
+            ref={buttonRef}
             className={`attachment-button-size ${importDisabled
               || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
             onClick={() => showImportConfirmFunction(attachment.id)}
           >
-            <Glyphicon glyph="import" />
+            <i className="fa fa-plus-circle" />
           </Button>
-        </div>
+        </span>
       </OverlayTrigger>
       <Overlay
         show={show}
         placement="bottom"
         rootClose
         onHide={() => hideImportConfirmFunction(attachment.id)}
-        target={importButtonRefs[attachment.id]}
+        target={buttonRef}
       >
         {confirmTooltip}
       </Overlay>

@@ -2,14 +2,6 @@
   padding-right: 10px;
 }
 
-.button-right {
-  float: right;
-  right: 0px;
-  z-index: 1;
-  margin-left: 2px;
-  text-align: center;
-}
-
 .no-margin {
   margin: 0 !important;
 }
@@ -36,6 +28,18 @@
 }
 
 .normal-screen .eln-panel-detail > .panel-body {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: calc(100vh - 240px);
+}
+
+.full-screen .eln-panel-detail .card-body {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: calc(100vh - 110px);
+}
+
+.normal-screen .eln-panel-detail .card-body {
   overflow-x: hidden;
   overflow-y: scroll;
   max-height: calc(100vh - 240px);

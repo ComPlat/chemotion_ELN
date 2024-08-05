@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import EditModeHeader from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeHeader';
-import { Panel } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PropTypes from 'prop-types';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class EditModeRow extends Component {

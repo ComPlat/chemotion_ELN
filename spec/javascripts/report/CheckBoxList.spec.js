@@ -6,11 +6,11 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 
 
 import sinon from 'sinon'
-import CheckBoxs from '../../../app/packs/src/components/common/CheckBoxs'
+import CheckBoxList from '../../../app/packs/src/components/common/CheckBoxList'
 
 Enzyme.configure({ adapter: new Adapter() });
 
-describe('CheckBoxs', () => {
+describe('CheckBoxList', () => {
   const items = [ {text: "formula", checked: true},
                   {text: "material", checked: true},
                   {text: "description", checked: true} ]
@@ -18,10 +18,14 @@ describe('CheckBoxs', () => {
   const toggleCheckAll = () => {}
   const checkedAll = true
   const wrapper = (items, toggleCheckbox, toggleCheckAll, checkedAll) => {
-    return mount(<CheckBoxs  items={items}
-                             toggleCheckbox={toggleCheckbox}
-                             toggleCheckAll={toggleCheckAll}
-                             checkedAll={checkedAll} />)
+    return mount(
+      <CheckBoxList
+        items={items}
+        toggleCheckbox={toggleCheckbox}
+        toggleCheckAll={toggleCheckAll}
+        checkedAll={checkedAll}
+      />
+    )
   }
 
   it('should match text & checked', () => {

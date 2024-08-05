@@ -377,23 +377,23 @@ class ConverterAdmin extends Component {
           <a href="/">Back to MyDB</a>
         </div>
 
-        <Modal show={this.state.createdModal}>
+        <Modal centered show={this.state.createdModal}>
           <Modal.Header>
             <Modal.Title>Profile successfully created!</Modal.Title>
           </Modal.Header>
 
           <Modal.Footer>
-            <Button bsStyle="primary" onClick={this.hideCreatedModal}>Great!</Button>
+            <Button variant="primary" onClick={this.hideCreatedModal}>Great!</Button>
           </Modal.Footer>
         </Modal>
 
-        <Modal show={this.state.deleteModal}>
+        <Modal centered show={this.state.deleteModal}>
           <Modal.Header>
             <Modal.Title>Do you really want to delete this profile?</Modal.Title>
           </Modal.Header>
           <Modal.Footer>
-            <Button bsStyle="default" onClick={this.hideDeleteModal}>Cancel</Button>
-            <Button bsStyle="danger" onClick={this.deleteProfile}>Delete profile</Button>
+            <Button variant="light" onClick={this.hideDeleteModal}>Cancel</Button>
+            <Button variant="danger" onClick={this.deleteProfile}>Delete profile</Button>
           </Modal.Footer>
         </Modal>
       </div>

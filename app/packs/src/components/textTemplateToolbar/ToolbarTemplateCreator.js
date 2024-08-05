@@ -181,8 +181,8 @@ export default class ToolbarTemplateCreator extends React.Component {
             defaultValue={name}
           />
           <Button
-            bsStyle="danger"
-            bsSize="xs"
+            variant="danger"
+            size="sm"
             onClick={removeDropdown}
             style={{ float: 'right', width: '25px', marginLeft: '10px' }}
           >
@@ -206,14 +206,14 @@ export default class ToolbarTemplateCreator extends React.Component {
       <div style={{ width: '600px' }}>
         <div>
           <Button
-            bsStyle="success"
+            variant="success"
             onClick={this.saveUserTemplates}
           >
             Save
           </Button>
           &nbsp;&nbsp;
           <Button
-            bsStyle="info"
+            variant="info"
             onClick={this.createDropdownTemplate}
           >
             New dropdown

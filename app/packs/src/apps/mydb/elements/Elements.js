@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Col } from 'react-bootstrap';
+import { Row, Col } from 'react-bootstrap';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
@@ -30,29 +30,25 @@ export default class Elements extends Component {
 
   render() {
     const { currentElement } = this.state;
-    const showReport = (currentElement || []).type === 'report';
+    const hasCurrentElement = currentElement !== null;
 
-    let md = 12;
-    const overview = !(currentElement);
-    let page = null;
-
-    if (currentElement) {
-      md = 5;
-      page = (
-        <Col md={7} className="small-col">
-          <ElementDetails currentElement={currentElement} />
-        </Col>
-      );
-    }
+    const showReport = currentElement?.type === 'report';
+    const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
-      <div>
-        <Col md={md} className="small-col">
-          <ElementsList overview={overview} showReport={showReport} />
+      <Row>
+        <Col xs={listWidth}>
+          <ElementsList
+            overview={!hasCurrentElement}
+            showReport={showReport}
+          />
         </Col>
-        {page}
-      </div>
+        {hasCurrentElement && (
+          <Col xs={7}>
+            <ElementDetails currentElement={currentElement} />
+          </Col>
+        )}
+      </Row>
     );
   }
 }
-

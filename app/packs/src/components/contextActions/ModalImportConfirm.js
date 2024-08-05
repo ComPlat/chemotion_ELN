@@ -3,18 +3,13 @@ import PropTypes from 'prop-types';
 import {
   Button,
   ButtonToolbar,
-  FormGroup,
-  Checkbox
+  Form
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 
-const MyCell = ({col,data,rowIndex, ...props})=>{
-  return <Cell width={300}>{data[rowIndex][col]}</Cell>
-
-}
 const SvgCellRenderer = ({ value, ...props})=>{
   return <SVG src={"/images/"+value} className="molecule-fixed-data" />
 }
@@ -23,16 +18,13 @@ SvgCellRenderer.propTypes = {
   value: PropTypes.string,
 }
 
-const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props})=>{
- return props.data.inchikey ?
-    <FormGroup>
-      <Checkbox
-       onChange={(e)=>onSelectChange(e.target.checked,rowIndex)}
-       defaultChecked={value}
+const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props }) => {
+  return props.data.inchikey
+    ? <Form.Check
+         onChange={(e)=>onSelectChange(e.target.checked, rowIndex)}
+         defaultChecked={value}
         />
-    </FormGroup>
-  : null
-
+    : null;
 }
 
 
@@ -183,10 +175,6 @@ export default class ModalImportConfirm extends React.Component {
     this.setState({defaultSelected:defaultSelected})
   }
 
-  isDisabled() {
-    false
-  }
-
   render() {
     let {rows,defaultSelected} = this.state
     const {onHide,custom_data_keys} = this.props
@@ -241,8 +229,8 @@ export default class ModalImportConfirm extends React.Component {
         &nbsp;
 
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+          <Button variant="warning" onClick={() => this.handleClick()}>Import</Button>
         </ButtonToolbar>
       </div>
     )

@@ -1,9 +1,11 @@
 import React from 'react';
-import { FormGroup, ControlLabel, FormControl, Radio, Row, Col } from 'react-bootstrap';
+import { FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
 import Select from 'react-select'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Radio from 'src/components/legacyBootstrap/Radio'
 
 export default class PolymerSection extends React.Component {
 
@@ -127,7 +129,7 @@ export default class PolymerSection extends React.Component {
             key={'polymer_loading_input' + sample.id.toString()}
             name="polymer_loading"
             // TODO: enable again
-            //bsStyle={this.checkInputStatus(sample, 'loading')}
+            //variant={this.checkInputStatus(sample, 'loading')}
             onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
             disabled={disabled}
             readOnly={disabled}
@@ -187,7 +189,7 @@ export default class PolymerSection extends React.Component {
                 precision={3}
                 key={'polymer_loading_input' + sample.id.toString()}
                 name="polymer_loading"
-                bsStyle={this.checkInputStatus(sample, 'loading')}
+                variant={this.checkInputStatus(sample, 'loading')}
                 onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
                 disabled={residue.custom_info.loading_type != 'external'}
                 readOnly={residue.custom_info.loading_type != 'external'}

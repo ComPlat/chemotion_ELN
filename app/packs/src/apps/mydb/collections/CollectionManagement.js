@@ -7,22 +7,16 @@ import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeColle
 import SyncWithMeCollections from 'src/apps/mydb/collections/SyncWithMeCollections';
 import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
 
-const CollectionManagement = () => {
-  const tabContents = [
-    <Tab eventKey={0} key={0} title="My Collections"><MyCollections /></Tab>,
-    <Tab eventKey={1} key={1} title="My Shared Collections"><MySharedCollections /></Tab>,
-    <Tab eventKey={2} key={2} title="Collections shared with me "><SharedWithMeCollections /></Tab>,
-    <Tab eventKey={3} key={3} title="Collections synchronized with me "><SyncWithMeCollections /></Tab>,
-    <Tab eventKey={4} key={4} title="Collection Tabs"><CollectionTabs /></Tab>
-  ];
-
+export default function CollectionManagement() {
   return (
-    <div id="collection-management">
+    <div className="tabs-container--with-borders">
       <Tabs defaultActiveKey={0} id="collection-management-tab">
-        {tabContents.map(e => e)}
+        <Tab eventKey={0} title="My Collections"><MyCollections /></Tab>
+        <Tab eventKey={1} title="My Shared Collections"><MySharedCollections /></Tab>
+        <Tab eventKey={2} title="Collections shared with me "><SharedWithMeCollections /></Tab>
+        <Tab eventKey={3} title="Collections synchronized with me "><SyncWithMeCollections /></Tab>
+        <Tab eventKey={4} title="Collection Tabs"><CollectionTabs /></Tab>
       </Tabs>
     </div>
   );
-};
-
-export default CollectionManagement;
+}

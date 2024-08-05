@@ -1,3 +1,6 @@
+@import "bootstrap/functions";
+@import "bootstrap/variables";
+
 // https://github.com/Hacker0x01/react-datepicker/issues/624#issuecomment-261696513
 
 .react-datepicker {
@@ -37,31 +40,8 @@ th.drag {
   margin-top: 11px;
 }
 
-.decoupled-icon span {
-  border: 1px solid grey;
-  background-color: white;
-  color: black;
-  cursor: auto;
-}
-
-.collection-label {
-  display: inline-block;
-  cursor: pointer;
-}
-
-.collection-label span {
-  border: 1px solid grey;
-  background-color: white;
-  color: black;
-}
-
-.collection-label span:hover {
-  background-color: #19B5FE;
-}
-
-.collection-overlay > .popover-content {
+.scrollable-popover > .popover-body {
   overflow-y: scroll;
-  padding: 0px !important;
 }
 
 .fa-user-secret {
@@ -82,22 +62,18 @@ th.drag {
   input {
     font-size: 13px;
     border-radius: 4px;
-    box-shadow: inset 0 2px 2px #e9e9e9;
-    border: 1px solid #aeaeae;
+    box-shadow: inset 0 2px 2px $gray-100;
+    border: 1px solid $gray-200;
     line-height: 16px;
     padding: 6px 10px 5px;
     width: 95px;
   }
 }
 
-.list-container-bottom {
-  width: 100%;
-}
-
 .list-elements {
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
+  border-left: 1px solid $gray-100;
+  border-right: 1px solid $gray-100;
+  border-bottom: 1px solid $gray-100;
   max-height: calc(100vh - 300px);
   margin-bottom: 15px;
   overflow-x: hidden;
@@ -108,21 +84,15 @@ th.drag {
   margin: 5px 0 0 0;
 }
 
-.list-show-count {
-  float: right;
-  margin: 3px 15px 0px 0px;
-  width: 80px;
-}
-
 .table-header {
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
+  border-left: 1px solid $gray-300;
+  border-right: 1px solid $gray-300;
+  border-bottom: 1px solid $gray-300;
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 40px;
-  background-color: #ddd;
+  background-color: $gray-300;
   padding: 5px;
 }
 
@@ -135,7 +105,7 @@ th.drag {
 }
 
 #tabList .active a {
-  border-bottom-color: #ddd;
+  border-bottom-color: $gray-100;
 }
 
 .sample-entries > tbody > tr > td {

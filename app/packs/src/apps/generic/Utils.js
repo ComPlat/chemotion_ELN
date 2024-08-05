@@ -42,7 +42,7 @@ export const GenericDSMisType = () => {
           </Tooltip>
         }
       >
-        <span style={{ color: 'red' }}>
+        <span className="text-danger">
           <i className="fa fa-exclamation-triangle" />
           &nbsp;
         </span>
@@ -119,8 +119,8 @@ export const FlowViewerBtn = props => {
     >
       <Button
         onClick={() => renderFlowModal(generic, true, flowType)}
-        bsSize="xsmall"
-        bsStyle="primary"
+        size="sm"
+        variant="primary"
       >
         <i className="fa fa-sitemap" aria-hidden="true" />{` ${label}`}
       </Button>

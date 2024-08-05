@@ -19,7 +19,7 @@ const MetadataContributors = ({ metadata, onAdd, onChange, onRemove }) => (
         />
       ))
     }
-    <Button bsStyle="success" bsSize="small" onClick={() => onAdd('contributors')}>
+    <Button variant="success" size="sm" onClick={() => onAdd('contributors')}>
       Add new contributor
     </Button>
   </div>

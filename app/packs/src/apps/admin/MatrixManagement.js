@@ -1,5 +1,5 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Checkbox, FormControl, Button, Modal, Col, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
+import { Table, Button, Modal, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import Select from 'react-select';
 import JSONInput from 'react-json-editor-ajrm';
@@ -9,7 +9,7 @@ import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;
-const Notification = props =>
+const Notification = (props) =>
 (
   NotificationActions.add({
     title: props.title,
@@ -162,29 +162,32 @@ export default class MatrixManagement extends React.Component {
     const { matrices } = this.state;
     const tbody = matrices && matrices.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
-        <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
+        <tr key={`row_${e.id}`} id={`row_${e.id}`}
+          // className='bg-light'
+        >
           <td>{idx + 1}</td>
           <td>
             <OverlayTrigger placement="bottom" overlay={editTooltip} >
               <Button
-                bsSize="xsmall"
-                bsStyle="info"
+                size="sm"
+                variant="info"
                 onClick={() => this.edit(e)}
+                className='me-1'
               >
                 <i className="fa fa-pencil-square-o" />
               </Button>
             </OverlayTrigger>
-            &nbsp;
+
             <OverlayTrigger placement="bottom" overlay={jsonTooltip} >
               <Button
-                bsSize="xsmall"
-                bsStyle="warning"
+                size="sm"
+                variant="warning"
                 onClick={() => this.editJson(e)}
+                className='me-1'
               >
                 <i className="fa fa-cog" />
               </Button>
             </OverlayTrigger>
-            &nbsp;
           </td>
           <td>{e.id}</td>
           <td>{e.name}</td>
@@ -197,25 +200,23 @@ export default class MatrixManagement extends React.Component {
     ))
 
     return (
-      <Panel>
-        <Panel.Heading>
-          <Table responsive condensed hover>
-            <thead>
-              <tr style={{ backgroundColor: '#ddd' }}>
-                <th width="2%">#</th>
-                <th width="5%">Actions</th>
-                <th width="3%">ID</th>
-                <th width="10%">Function name</th>
-                <th width="10%">Description</th>
-                <th width="10%">Set globally</th>
-                <th width="40%">Enabled for</th>
-                <th width="20%">Disabled for</th>
-              </tr>
-            </thead>
-            {tbody}
-          </Table>
-        </Panel.Heading>
-      </Panel>
+      <div>
+        <Table responsive condensed hover className="border">
+          <thead>
+            <tr className="bg-gray-200">
+              <th>#</th>
+              <th>Actions</th>
+              <th>ID</th>
+              <th>Function name</th>
+              <th>Description</th>
+              <th>Set globally</th>
+              <th>Enabled for</th>
+              <th>Disabled for</th>
+            </tr>
+          </thead>
+          {tbody}
+        </Table>
+      </div>
     );
   }
 
@@ -236,132 +237,141 @@ export default class MatrixManagement extends React.Component {
     }
 
     return (
-      <Modal show={this.state.showEditModal} onHide={this.handleClose}>
-        <Modal.Header closeButton><Modal.Title>Edit Permisson</Modal.Title></Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-12">
-            <Form horizontal className="input-form">
-              <FormGroup controlId="formControlId">
-                <InputGroup>
-                  <InputGroup.Addon>ID</InputGroup.Addon>
-                  <FormControl type="text" defaultValue={matrice.id} readOnly />
-                </InputGroup>
-              </FormGroup>
-              <FormGroup controlId="formControlName">
-                <InputGroup>
-                  <InputGroup.Addon>Function name</InputGroup.Addon>
-                  <FormControl type="text" defaultValue={matrice.name} readOnly />
-                </InputGroup>
-              </FormGroup>
-              <FormGroup controlId="formControlLabel">
-                <InputGroup>
-                  <InputGroup.Addon>Description</InputGroup.Addon>
-                  <FormControl type="text" defaultValue={matrice.label} inputRef={(ref) => { this.m_label = ref; }} />
-                </InputGroup>
-              </FormGroup>
-              <FormGroup controlId="formControlLabel">
-                <Checkbox inline type="checkbox" checked={matrice.enabled} onChange={e => this.handleChange(!matrice.enabled, e)}>Enable globally <br /> (when [checked], all users can see/use this feature, when [unchecked], only allowed users can see/use this function)</Checkbox>
-              </FormGroup>
-              <FormGroup controlId="formControlInclude">
-                <InputGroup>
-                  <InputGroup.Addon>Include Users</InputGroup.Addon>
-                  <Select.Async
-                    multi
-                    isLoading
-                    backspaceRemoves
-                    value={defaultIncludeUsers}
-                    defaultValue={defaultIncludeUsers}
-                    valueKey="value"
-                    labelKey="label"
-                    matchProp="name"
-                    placeholder="Select ..."
-                    loadOptions={this.loadUserByName}
-                    onChange={this.handleIncludeUser}
-                  />
-                </InputGroup>
-              </FormGroup>
-              <FormGroup controlId="formControlExclude">
-                <InputGroup>
-                  <InputGroup.Addon>Exclude Users</InputGroup.Addon>
-                  <Select.Async
-                    multi
-                    isLoading
-                    backspaceRemoves
-                    value={defaultExcludeUsers}
-                    defaultValue={defaultExcludeUsers}
-                    valueKey="value"
-                    labelKey="label"
-                    matchProp="name"
-                    placeholder="Select ..."
-                    loadOptions={this.loadUserByName}
-                    onChange={this.handleExcludeUser}
-                  />
-                </InputGroup>
-              </FormGroup>
-              <FormGroup>
-                <Col smOffset={0} sm={10}>
-                  <Button bsStyle="warning" onClick={() => this.handleClose()} >
-                    Cancel&nbsp;
-                  </Button>
-                  &nbsp;
-                  <Button bsStyle="primary" onClick={() => this.handleSave(matrice)} >
-                    Update&nbsp;
-                    <i className="fa fa-save" />
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
-          </div>
+      <Modal centered show={this.state.showEditModal} onHide={this.handleClose} backdrop='static'>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Permisson</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body className="overflow-auto">
+          <Form className="row g-3">
+            <Form.Group controlId="formControlId">
+              <InputGroup>
+                <InputGroup.Text>ID</InputGroup.Text>
+                <Form.Control type="text" defaultValue={matrice.id} readOnly />
+              </InputGroup>
+            </Form.Group>
+            <Form.Group controlId="formControlName">
+              <InputGroup>
+                <InputGroup.Text>Function name</InputGroup.Text>
+                <Form.Control type="text" defaultValue={matrice.name} readOnly />
+              </InputGroup>
+            </Form.Group>
+            <Form.Group controlId="formControlLabel">
+              <InputGroup>
+                <InputGroup.Text>Description</InputGroup.Text>
+                <Form.Control type="text" defaultValue={matrice.label} ref={(ref) => { this.m_label = ref; }} />
+              </InputGroup>
+            </Form.Group>
+            <Form.Group controlId="formControlLabel">
+              <Form.Check
+                inline
+                type="checkbox"
+                checked={matrice.enabled}
+                onChange={e => this.handleChange(!matrice.enabled, e)}
+                label='Enable globally'
+                className="fs-5"
+              />
+              <p className='ms-3 fs-6'>
+                (When [checked], all users can see/use this feature,
+                when [unchecked], only allowed users can see/use this function)
+              </p>
+            </Form.Group>
+            <InputGroup>
+              <InputGroup.Text>Include Users</InputGroup.Text>
+              <Select.Async
+                multi
+                isLoading
+                backspaceRemoves
+                value={defaultIncludeUsers}
+                defaultValue={defaultIncludeUsers}
+                valueKey="value"
+                labelKey="label"
+                matchProp="name"
+                placeholder="Select ..."
+                loadOptions={this.loadUserByName}
+                onChange={this.handleIncludeUser}
+                className='flex-grow-1 fs-6'
+              />
+            </InputGroup>
+            <InputGroup>
+              <InputGroup.Text>Exclude Users</InputGroup.Text>
+              <Select.Async
+                multi
+                isLoading
+                backspaceRemoves
+                value={defaultExcludeUsers}
+                defaultValue={defaultExcludeUsers}
+                valueKey="value"
+                labelKey="label"
+                matchProp="name"
+                placeholder="Select ..."
+                loadOptions={this.loadUserByName}
+                onChange={this.handleExcludeUser}
+                className='flex-grow-1 fs-6'
+              />
+            </InputGroup>
+          </Form>
         </Modal.Body>
+
+        <Modal.Footer className='modal-footer border-0'>
+          <Button variant="warning" onClick={() => this.handleClose()} className='me-1' >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={() => this.handleSave(matrice)} >
+            Update
+            <i className="fa fa-save ms-1" />
+          </Button>
+        </Modal.Footer>
       </Modal>
     );
   }
-
 
   renderJsonModal() {
     const { matrice, showJsonBtn } = this.state;
 
     return (
-      <Modal show={this.state.showJsonModal} onHide={this.handleJsonClose}>
-        <Modal.Header closeButton><Modal.Title>JSON Configurations</Modal.Title></Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-12">
-            <Form horizontal className="input-form">
-              <FormGroup controlId="formControlId">
+      <Modal
+        centered
+        show={this.state.showJsonModal}
+        onHide={this.handleJsonClose}
+        backdrop='static'>
+        <Modal.Header closeButton>
+          <Modal.Title>JSON Configurations</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body className="overflow-auto">
+          <Form className="row g-3">
+            <Form.Group controlId="formControlId">
                 <InputGroup>
-                  <InputGroup.Addon>ID</InputGroup.Addon>
-                  <FormControl type="text" defaultValue={matrice.id} readOnly />
+                <InputGroup.Text>ID</InputGroup.Text>
+                <Form.Control type="text" defaultValue={matrice.id} readOnly />
                 </InputGroup>
-              </FormGroup>
-              <FormGroup controlId="formControlName">
+            </Form.Group>
+            <Form.Group controlId="formControlName">
                 <InputGroup>
-                  <InputGroup.Addon>Function name</InputGroup.Addon>
-                  <FormControl type="text" defaultValue={matrice.name} readOnly />
+                <InputGroup.Text>Function name</InputGroup.Text>
+                <Form.Control type="text" defaultValue={matrice.name} readOnly />
                 </InputGroup>
-              </FormGroup>
-              <FormGroup controlId="formControlJson">
+            </Form.Group>
+            <Form.Group controlId="formControlJson">
                 <JSONInput
                   placeholder={matrice.configs}
                   width="100%"
                   onChange={e => this.onChangeJson(e)}
                 />
-              </FormGroup>
-
-              <FormGroup>
-                <Col smOffset={0} sm={10}>
-                  <Button bsStyle="warning" onClick={() => this.handleJsonClose()} >
-                    Cancel&nbsp;
-                  </Button>
-                  &nbsp;
-                  <Button bsStyle="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)} >
-                    Update&nbsp;
-                    <i className="fa fa-save" />
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
-          </div>
+            </Form.Group>
+          </Form>
         </Modal.Body>
+
+        <Modal.Footer className='modal-footer border-0'>
+          <Button variant="warning" onClick={() => this.handleJsonClose()} >
+            Cancel
+          </Button>
+          <Button variant="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)} >
+            Update
+            <i className="fa fa-save ms-1" />
+          </Button>
+        </Modal.Footer>
       </Modal>
     );
   }

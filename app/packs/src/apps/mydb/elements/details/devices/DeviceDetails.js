@@ -1,15 +1,17 @@
 import React from 'react'
-import { Panel, PanelGroup, ButtonToolbar, Button, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import { ButtonToolbar, Button, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import ElementActions from 'src/stores/alt/actions/ElementActions'
 import DetailActions from 'src/stores/alt/actions/DetailActions'
 import DeviceManagement from 'src/apps/mydb/elements/details/devices/DeviceManagement'
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 
 const DeviceDetails = ({ device, toggleFullScreen }) => {
   return (
     <Panel
       className='panel-detail'
-      bsStyle={device.isPendingToSave ? 'info' : 'primary'}
+      variant={device.isPendingToSave ? 'info' : 'primary'}
     >
       <Panel.Heading>
         {<Header device={device} toggleFullScreen={toggleFullScreen} />}
@@ -29,10 +31,10 @@ const DeviceDetails = ({ device, toggleFullScreen }) => {
         </PanelGroup>
 
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => DetailActions.close(device)}>
+          <Button variant="primary" onClick={() => DetailActions.close(device)}>
             Close
           </Button>
-          <Button bsStyle="warning" onClick={() => handleSubmit(device)}>
+          <Button variant="warning" onClick={() => handleSubmit(device)}>
             Save
           </Button>
         </ButtonToolbar>
@@ -54,21 +56,21 @@ const Header = ({ device, toggleFullScreen }) => {
       {device.title}
       <OverlayTrigger placement="bottom"
         overlay={<Tooltip id="closeReaction">Close Device</Tooltip>}>
-        <Button bsStyle="danger" bsSize="xsmall" className="button-right"
+        <Button variant="danger" size="sm"
           onClick={() => DetailActions.close(device)}>
           <i className="fa fa-times"></i>
         </Button>
       </OverlayTrigger>
       <OverlayTrigger placement="bottom"
         overlay={<Tooltip id="saveReaction">Save Device</Tooltip>}>
-        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+        <Button variant="warning" size="sm"
           onClick={() => handleSubmit(device)}>
           <i className="fa fa-floppy-o "></i>
         </Button>
       </OverlayTrigger>
       <OverlayTrigger placement="bottom"
         overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
+        <Button variant="info" size="sm"
           onClick={() => toggleFullScreen()}>
           <i className="fa fa-expand"></i>
         </Button>

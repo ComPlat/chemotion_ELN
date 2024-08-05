@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon
+  Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -11,6 +11,8 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {
@@ -81,10 +83,10 @@ export default class EmbeddedWellplate extends Component {
         Import data from Wellplate? This will create a table.
         <br />
         <ButtonGroup>
-          <Button bsStyle="success" bsSize="xsmall" onClick={() => this.confirmWellplateImport()}>
+          <Button variant="success" size="sm" onClick={() => this.confirmWellplateImport()}>
             Yes
           </Button>
-          <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.hideImportConfirm()}>
+          <Button variant="warning" size="sm" onClick={() => this.hideImportConfirm()}>
             No
           </Button>
         </ButtonGroup>
@@ -94,9 +96,8 @@ export default class EmbeddedWellplate extends Component {
     return ([
       <OverlayTrigger key="overlay_trigger_import_button" placement="bottom" overlay={importTooltip}>
         <Button
-          bsSize="xsmall"
-          bsStyle="success"
-          className="button-right"
+          size="sm"
+          variant="success"
           disabled={importDisabled}
           ref={(button) => { this.target = button; }}
           onClick={() => this.showImportConfirm()}
@@ -190,10 +191,10 @@ export default class EmbeddedWellplate extends Component {
         &nbsp;from ResearchPlan?
         <br />
         <ButtonGroup>
-          <Button bsStyle="danger" bsSize="xsmall" onClick={() => deleteWellplate(wellplate.id)}>
+          <Button variant="danger" size="sm" onClick={() => deleteWellplate(wellplate.id)}>
             Yes
           </Button>
-          <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.setState({ confirmRemove: false })}>
+          <Button variant="warning" size="sm" onClick={() => this.setState({ confirmRemove: false })}>
             No
           </Button>
         </ButtonGroup>
@@ -221,9 +222,8 @@ export default class EmbeddedWellplate extends Component {
         >
           <Button
             ref={(button) => { this.target = button; }}
-            bsStyle="danger"
-            bsSize="xsmall"
-            className="button-right"
+            variant="danger"
+            size="sm"
             onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
           >
             <i className="fa fa-trash-o" aria-hidden="true" />
@@ -239,7 +239,7 @@ export default class EmbeddedWellplate extends Component {
           {popover}
         </Overlay>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="open_wellplate">Open Wellplate in Tab</Tooltip>}>
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.openWellplate()}>
+          <Button variant="info" size="sm" onClick={() => this.openWellplate()}>
             <i className="fa fa-window-maximize" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -248,9 +248,8 @@ export default class EmbeddedWellplate extends Component {
           overlay={<Tooltip id="expand_wellplate">Show/hide Wellplate details</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
+            variant="info"
+            size="sm"
             onClick={() => this.setState({ expanded: !this.state.expanded })}
           >
             <i className={expandIconClass} aria-hidden="true" />
@@ -268,7 +267,7 @@ export default class EmbeddedWellplate extends Component {
       <Panel
         expanded={this.state.expanded}
         onToggle={() => {}}
-        bsStyle="primary"
+        variant="primary"
         className="eln-panel-detail wellplate-details"
       >
         {this.renderPanelHeading(wellplate)}

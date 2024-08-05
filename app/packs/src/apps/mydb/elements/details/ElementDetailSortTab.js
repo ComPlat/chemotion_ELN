@@ -107,7 +107,7 @@ export default class ElementDetailSortTab extends Component {
   render() {
     const currentCollection = UIStore.getState().currentCollection;
     const tabs = currentCollection?.tabs_segment;
-    const buttonInfo = isEmpty(tabs) ? 'info' : 'default';
+    const buttonInfo = isEmpty(tabs) ? 'info' : 'light';
     const tabLayoutContainerElement = (
       <TabLayoutContainer
         visible={this.state.visible}
@@ -121,16 +121,14 @@ export default class ElementDetailSortTab extends Component {
     const wd = 200 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
     const popoverSettings = (
       <Popover
-        className="collection-overlay"
-        id="popover-layout"
+        className="scrollable-popover"
+        id="tab-layout-popover"
         style={{ maxWidth: 'none', width: `${wd}px`, position: 'absolute' }}
       >
-        <div>
-          <h3 className="popover-title">Tab Layout</h3>
-          <div className="popover-content">
-            {tabLayoutContainerElement}
-          </div>
-        </div>
+        <Popover.Header as="h3">Tab Layout</Popover.Header>
+        <Popover.Body>
+          {tabLayoutContainerElement}
+        </Popover.Body>
       </Popover>
     );
     // Using a ref object for the Popover placement
@@ -138,9 +136,8 @@ export default class ElementDetailSortTab extends Component {
     return (
       <div ref={thisDiv => div_ref = thisDiv }>
         <Button
-          bsStyle={buttonInfo}
-          bsSize="xsmall"
-          className="button-right"
+          variant={buttonInfo}
+          size="sm"
           ref={button => { this.tabLayoutButton = button; }}
           onClick={this.toggleTabLayoutContainer}
           title="Tabs layout for all collections can also be managed in Collection Tabs page"

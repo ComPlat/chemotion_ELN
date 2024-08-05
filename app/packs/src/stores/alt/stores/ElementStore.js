@@ -594,7 +594,7 @@ class ElementStore {
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-        
+
         if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
@@ -822,10 +822,10 @@ class ElementStore {
       UIActions.updateModalProps.defer({
         show: true,
         component: ModalImportConfirm,
-        title: "Sample Import Confirmation",
+        title: 'Sample Import Confirmation',
         action: null,
         listSharedCollections: false,
-        customModal: "custom-modal",
+        customModal: 'modal-xl',
         data: data.data,
         //raw_data: data.raw_data,
         custom_data_keys: data.custom_data_keys,

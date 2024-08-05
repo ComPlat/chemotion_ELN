@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, FormGroup, ControlLabel, FormControl, HelpBlock } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, Form } from 'react-bootstrap';
 
 class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   constructor(props) {
@@ -34,7 +34,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   handleSubmit() {
     const { columns, onSubmit } = this.props;
     const { columnNameValue } = this.state;
-    const keys = columns.map(column => column.headerName);
+    const keys = columns.map((column) => column.headerName);
 
     if (!columnNameValue) {
       this.setState({ columnNameError: 'Please give a column name.' });
@@ -57,38 +57,34 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
       title = 'Rename column';
     }
 
-    const validationState = columnNameError ? 'error' : null;
-
     return (
-      <Modal animation show={modal.show} onHide={onHide}>
+      <Modal centered animation show={modal.show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>
             {title}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body >
-          <div>
-            <FormGroup validationState={validationState}>
-              <ControlLabel>Column name</ControlLabel>
-              <FormControl
-                type="text"
-                value={columnNameValue}
-                onChange={this.handleColumnNameChange.bind(this)}
-              />
-              <HelpBlock>{columnNameError}</HelpBlock>
-            </FormGroup>
-          </div>
-          <div>
-            <ButtonToolbar>
-              <Button bsStyle="warning" onClick={onHide}>
-                Cancel
-              </Button>
-              <Button bsStyle="primary" onClick={this.handleSubmit.bind(this)}>
-                {title}
-              </Button>
-            </ButtonToolbar>
-          </div>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Column name</Form.Label>
+            <Form.Control
+              type="text"
+              value={columnNameValue}
+              onChange={this.handleColumnNameChange.bind(this)}
+            />
+            <Form.Text className="text-danger">{columnNameError}</Form.Text>
+          </Form.Group>
         </Modal.Body>
+        <Modal.Footer className="modal-footer border-0">
+          <ButtonToolbar className="gap-1">
+            <Button variant="warning" onClick={onHide}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={this.handleSubmit.bind(this)}>
+              {title}
+            </Button>
+          </ButtonToolbar>
+        </Modal.Footer>
       </Modal>
     );
   }

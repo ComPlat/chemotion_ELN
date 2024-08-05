@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Alert, Panel, Tabs, Tab } from 'react-bootstrap';
+import { Alert, Tabs, Tab } from 'react-bootstrap';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
@@ -12,6 +12,7 @@ import Archives from 'src/apps/mydb/elements/details/reports/Archives';
 import Config from 'src/apps/mydb/elements/details/reports/Config';
 import PanelHeader from 'src/components/common/PanelHeader';
 import { CloseBtn, ResetBtn, GenerateReportBtn } from 'src/apps/mydb/elements/details/reports/ReportComponent';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const fetchPreviewTabs = [3, 4];
 
@@ -133,7 +134,7 @@ export default class ReportContainer extends Component {
     const tabStyle = {padding: "15px", border: "1px solid #ddd", borderRadius: "4px"}
     return (
       <Panel
-        bsStyle="default"
+        variant="light"
       >
         {alertTemplateNotFound && (
           <Alert variant="warning">

@@ -19,7 +19,7 @@ const MetadataFundingReferences = ({ metadata, onAdd, onChange, onRemove }) => {
           />
         ))
       }
-      <Button bsStyle="success" bsSize="small" onClick={event => onAdd('fundingReferences')}>
+      <Button variant="success" size="sm" onClick={event => onAdd('fundingReferences')}>
         Add new funding reference
       </Button>
     </div>

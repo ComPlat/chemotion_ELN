@@ -8,7 +8,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NavNewSession from 'src/components/navigation/NavNewSession'
 import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
@@ -27,7 +26,7 @@ export default class Navigation extends React.Component {
       modalProps: {
         show: false,
         title: "",
-        component: "",
+        component: null,
         action: null,
         listSharedCollections: false,
       },
@@ -98,20 +97,34 @@ export default class Navigation extends React.Component {
   }
 
   navHeader() {
+    const { isHidden } = this.props;
+
     return (
-      <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{ cursor: "pointer" }}>
-          <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-            <i
-              className="fa fa-list"
-              style={{ fontStyle: "normal", visibility: this.props.isHidden ? 'hidden' : 'visible' }}
-              onClick={this.toggleCollectionTree}
-            />
-          </OverlayTrigger>
-        </Navbar.Text>
-        <Navbar.Text />
+      <React.Fragment>
+        {!isHidden && (
+          <Navbar.Text>
+            <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
+              <i
+                className="fa fa-list"
+                onClick={this.toggleCollectionTree}
+                role='button'
+              />
+            </OverlayTrigger>
+          </Navbar.Text>
+        )}
         <NavHead />
-      </Navbar.Header>
+      </React.Fragment>
+    )
+  }
+
+  userSession(omniauthProviders, extraRules) {
+    return (
+      this.state.currentUser ?
+      <div className='d-flex gap-2'>
+        <OpenCalendarButton />
+        <UserAuth />
+      </div>
+      : <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
     )
   }
 
@@ -119,26 +132,22 @@ export default class Navigation extends React.Component {
     const { modalProps, genericEls, omniauthProviders, extraRules } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
-    return (this.state.currentUser
-      ? <Navbar fluid className='navbar-custom'>
+    return (
+      <Navbar className='bg-gray-200 justify-content-between px-4'>
         {this.navHeader()}
-        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
-          <Search />
-          <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
-          <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
-          <NavigationModal {...modalProps} />
-        </Nav>
-        <UserAuth />
-        <OpenCalendarButton />
-        <div style={{ clear: "both" }} />
-      </Navbar>
-      : <Navbar fluid className='navbar-custom'>
-        {this.navHeader()}
-        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
-          <Search noSubmit={true} />
-        </Nav>
-        <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
-        <div style={{ clear: "both" }} />
+        {!this.props.isHidden &&
+          <Nav navbar className='navbar-form gap-2'>
+            <Search noSubmit={!!this.state.currentUser} />
+            {this.state.currentUser &&
+              <>
+                <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
+                <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
+                <NavigationModal {...modalProps} />
+              </>
+            }
+          </Nav>
+          }
+        {this.userSession(omniauthProviders, extraRules)}
       </Navbar>
     )
   }

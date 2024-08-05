@@ -83,8 +83,8 @@ export default class UnsortedDataset extends React.Component {
             <tr>
               <td>
                 <Button
-                  bsSize="xsmall"
-                  bsStyle="danger"
+                  size="sm"
+                  variant="danger"
                   onClick={() => this.handleUndo(attachment)}
                 >
                   <i className="fa fa-undo" />
@@ -101,7 +101,7 @@ export default class UnsortedDataset extends React.Component {
         <tbody>
           <tr>
             <td>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} role="button">{attachment.filename}</a>
             </td>
           </tr>
           <tr>
@@ -136,7 +136,7 @@ export default class UnsortedDataset extends React.Component {
 
   removeAttachmentButton(attachment) {
     return (
-      <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
+      <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -167,9 +167,9 @@ export default class UnsortedDataset extends React.Component {
         </Col>
         <Col md={12}>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => onModalHide()}>Close</Button>
+            <Button variant="primary" onClick={() => onModalHide()}>Close</Button>
             <Button
-              bsStyle="warning"
+              variant="warning"
               onClick={() => this.handleSave()}
             >
               Save

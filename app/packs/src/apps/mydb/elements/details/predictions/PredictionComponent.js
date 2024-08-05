@@ -15,9 +15,8 @@ const CloseBtn = ({ el }) => {
 
   return (
     <Button
-      bsStyle="danger"
-      bsSize="xsmall"
-      className="button-right"
+      variant="danger"
+      size="sm"
       onClick={onClickToClose}
     >
       <i className="fa fa-times" />
@@ -32,9 +31,8 @@ const clickToReset = () => {
 
 const ResetBtn = () => (
   <Button
-    bsStyle="info"
-    bsSize="xsmall"
-    className="button-right"
+    variant="info"
+    size="sm"
     onClick={clickToReset}
   >
     <span><i className="fa fa-eraser" /> Reset</span>
@@ -50,9 +48,8 @@ const PredictBtn = ({ inputEls, template }) => {
 
   return (
     <Button
-      bsStyle="primary"
-      bsSize="xsmall"
-      className="button-right"
+      variant="primary"
+      size="sm"
       disabled={disableBtn}
       onClick={onClick}
     >

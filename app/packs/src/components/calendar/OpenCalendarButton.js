@@ -1,10 +1,5 @@
 import React, { Component } from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Nav,
-  NavItem,
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import CalendarStore from 'src/stores/alt/stores/CalendarStore';
 import PropTypes from 'prop-types';
@@ -46,8 +41,8 @@ export default class OpenCalendarButton extends Component {
     if (isPanelHeader) {
       return (
         <Button
-          bsSize="xsmall"
-          className="button-right"
+          size="xxsm"
+          variant="light"
           onClick={this.onClick}
         >
           <i className="fa fa-calendar" />
@@ -56,19 +51,13 @@ export default class OpenCalendarButton extends Component {
     }
 
     return (
-      <Nav navbar pullRight>
-        <NavItem eventKey={0} className="navItemCalendar">
-          <ButtonGroup className="navCalendarButton">
-            <Button
-              variant="primary"
-              onClick={this.onClick}
-              style={{ width: '60px' }}
-            >
-              <i className="fa fa-calendar indicator" />
-            </Button>
-          </ButtonGroup>
-        </NavItem>
-      </Nav>
+      <Button
+        variant="light"
+        onClick={this.onClick}
+        style={{ width: '60px' }}
+      >
+        <i className="fa fa-calendar indicator" />
+      </Button>
     );
   }
 }

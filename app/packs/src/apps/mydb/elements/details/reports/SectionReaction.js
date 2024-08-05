@@ -1,8 +1,9 @@
 import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
-import {Alert, Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Alert, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import { map } from 'lodash';
+import Label from 'src/components/legacyBootstrap/Label'
 
 const SectionReaction = ({reaction, settings, configs}) => {
   const {description, literatures, starting_materials, reactants,
@@ -193,11 +194,11 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="success"> Starting Materials </Label></h4>
+        <h4><Label variant="success"> Starting Materials </Label></h4>
         <div> {table(rows(starting_materials, false))} </div>
-        <h4><Label bsStyle="warning"> Reactants </Label></h4>
+        <h4><Label variant="warning"> Reactants </Label></h4>
         <div> {table(rows(reactants, false))} </div>
-        <h4><Label bsStyle="danger"> Products </Label></h4>
+        <h4><Label variant="danger"> Products </Label></h4>
         <div> {table(rows(products, true))} </div>
       </div>
       : null

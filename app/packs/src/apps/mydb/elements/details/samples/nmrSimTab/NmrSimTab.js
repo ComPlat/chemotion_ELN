@@ -75,7 +75,7 @@ export default class NmrSimTab extends React.Component {
       <div>
         <br />
         <ListGroup>
-          <ListGroupItem bsStyle={style}>
+          <ListGroupItem variant={style}>
             Sorry, the {type} simulation is not available now. Please check directly on
             <a target="_blank" href="https://www.nmrdb.org/">
               <img src="/images/nmrdb_logo.jpg" alt="" width="80" />
@@ -95,11 +95,11 @@ export default class NmrSimTab extends React.Component {
     return (
       <div style={{ width: '100%' }}>
         <ButtonToolbar>
-          <Button bsStyle="primary"
+          <Button variant="primary"
             onClick={this.updateNmrdb.bind(this, '1H')}>
             predict 1H NMR
           </Button>
-          <Button bsStyle="success"
+          <Button variant="success"
             onClick={this.updateNmrdb.bind(this, '13C')}>
             predict 13C NMR
           </Button>

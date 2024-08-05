@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger
+  Pagination, Form, InputGroup, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -23,6 +23,7 @@ import Select from 'react-select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -252,19 +253,14 @@ export default class ElementsTable extends React.Component {
 
   collapseButton = () => {
     const { collapseAll } = this.state;
-    const collapseIcon = collapseAll ? 'chevron-right' : 'chevron-down';
 
     return (
-      <Glyphicon
-        glyph={collapseIcon}
-        title="Collapse/Uncollapse"
+      <ChevronIcon
+        direction={collapseAll ? 'right' : 'down'}
         onClick={() => this.changeCollapse(collapseAll)}
-        style={{
-          fontSize: '20px',
-          cursor: 'pointer',
-          color: '#337ab7',
-          top: 0
-        }}
+        color="primary"
+        className="fs-5"
+        role="button"
       />
     );
   };
@@ -298,33 +294,24 @@ export default class ElementsTable extends React.Component {
     }, 900);
   }
 
-  numberOfResultsInput() {
+  renderNumberOfResultsInput() {
     const { ui } = this.state;
     return (
-      <Form horizontal className="list-show-count">
-        <FormGroup>
-          <InputGroup>
-            <InputGroup.Addon>Show</InputGroup.Addon>
-            <FormControl
-              type="text"
-              style={
-                { textAlign: 'center', zIndex: 0 }
-              }
-              onChange={(event) => this.handleNumberOfResultsChange(event)}
-              value={ui.number_of_results ? ui.number_of_results : 0}
-            />
-          </InputGroup>
-        </FormGroup>
+      <Form className="w-25 ms-1">
+        <InputGroup>
+          <InputGroup.Text>Show</InputGroup.Text>
+          <Form.Control
+            type="text"
+            onChange={(event) => this.handleNumberOfResultsChange(event)}
+            value={ui.number_of_results ?? 0}
+          />
+        </InputGroup>
       </Form>
     );
   }
 
-  pagination() {
+  renderPagination() {
     const { page, pages } = this.state;
-    if (pages <= 1) {
-      return null;
-    }
-
     const items = [];
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
@@ -348,18 +335,16 @@ export default class ElementsTable extends React.Component {
     if (pages > maxPage) {
       items.push(<Pagination.Ellipsis key="Ell" />);
     }
-    if (page === pages) {
+    if (page !== pages) {
       items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page + 1)} />);
     }
     items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
 
-    return (
-      <div className="list-pagination">
-        <Pagination>
-          {items}
-        </Pagination>
-      </div>
-    )
+    return pages > 1 && (
+      <Pagination>
+        {items}
+      </Pagination>
+    );
   }
 
   renderSamplesHeader = () => {
@@ -392,11 +377,12 @@ export default class ElementsTable extends React.Component {
         >
           <button
             type="button"
-            style={{ border: 'none' }}
+            className="border-0"
             onClick={this.toggleProductOnly}
+            role="button"
           >
             <i
-              style={{ cursor: 'pointer', color }}
+              style={{ color }}
               className="fa fa-lg fa-product-hunt"
             />
           </button>
@@ -586,13 +572,7 @@ export default class ElementsTable extends React.Component {
           />
         </div>
         <div
-          className="header-right"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            flexWrap: 'wrap'
-          }}
+          className="header-right d-flex gap-1 align-items-center"
         >
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
@@ -668,16 +648,13 @@ export default class ElementsTable extends React.Component {
           type={type}
         />
       );
-    } else if (type === 'cell_line'){
+    } else if (type === 'cell_line') {
       elementsTableEntries = (
-        <CellLineContainer 
-        cellLineGroups={CellLineGroup.buildFromElements(elements)}
-      />
+        <CellLineContainer
+          cellLineGroups={CellLineGroup.buildFromElements(elements)}
+        />
       );
-    }
-    
-    
-    else {
+    } else {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}
@@ -700,11 +677,9 @@ export default class ElementsTable extends React.Component {
       <div className="list-container">
         {this.renderHeader()}
         {this.renderEntries()}
-        <div className="list-container-bottom">
-          <Row>
-            <Col sm={6}>{this.pagination()}</Col>
-            <Col sm={6}>{this.numberOfResultsInput()}</Col>
-          </Row>
+        <div className="d-flex flex-row-reverse justify-content-between">
+          {this.renderNumberOfResultsInput()}
+          {this.renderPagination()}
         </div>
       </div>
     );

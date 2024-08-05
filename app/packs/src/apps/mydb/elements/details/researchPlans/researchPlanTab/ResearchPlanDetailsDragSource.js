@@ -24,9 +24,9 @@ const collect = (connect, monitor) => ({
 
 class ResearchPlanDetailsDragSource extends Component {
   render() {
-    const { connectDragSource, index } = this.props;
+    const { connectDragSource } = this.props;
 
-    return connectDragSource(<span className="fa fa-lg fa-arrows text-info drag-source" />);
+    return connectDragSource(<span className="fa fa-lg fa-arrows text-info drag-source me-1 mt-1" />);
   }
 }
 

@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Tooltip, OverlayTrigger, MenuItem, SplitButton, ButtonGroup } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger, ButtonGroup, Dropdown, Button } from 'react-bootstrap';
 
 import Utils from 'src/utilities/Functions';
 
-const PrintCodeButton = ({
+function PrintCodeButton({
   element,
   analyses, allAnalyses, ident
-}) => {
+}) {
   const { type, id } = element;
   let tooltipText = 'Print bar/qr-code Label';
   const ids = analyses.length > 0 ? analyses.map(e => e.id) : [];
@@ -36,36 +36,37 @@ const PrintCodeButton = ({
       delayShow={500}
       overlay={<Tooltip id="printCode">{tooltipText}</Tooltip>}
     >
-      <ButtonGroup className="button-right">
-        <SplitButton
+      <Dropdown as={ButtonGroup}>
+        <Button
+          variant="light"
           id={`print-code-split-button-${ident || 0}`}
-          pullRight
-          bsStyle="default"
           disabled={element.isNew}
-          bsSize="xsmall"
-          onToggle={(isOpen, event) => { if (event) { event.stopPropagation(); } }}
-          title={<i className="fa fa-barcode fa-lg" />}
           onClick={(event) => {
             event.stopPropagation();
             Utils.downloadFile({ contents: menuItems[0].contents });
           }}
+          size="xxsm"
         >
-          {menuItems.map(e => (
-            <MenuItem
+          <i className="fa fa-barcode fa-lg" />
+        </Button>
+        <Dropdown.Toggle split variant="light" size="xxsm" />
+        <Dropdown.Menu>
+          {menuItems.map((e) => (
+            <Dropdown.Item
               key={e.key}
-              onSelect={(eventKey, event) => {
+              onClick={(event) => {
                 event.stopPropagation();
                 Utils.downloadFile({ contents: e.contents });
               }}
             >
               {e.text}
-            </MenuItem>
+            </Dropdown.Item>
           ))}
-        </SplitButton>
-      </ButtonGroup>
+        </Dropdown.Menu>
+      </Dropdown>
     </OverlayTrigger>
   );
-};
+}
 
 PrintCodeButton.propTypes = {
   element: PropTypes.object,

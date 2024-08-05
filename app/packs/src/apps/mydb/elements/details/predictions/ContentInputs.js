@@ -1,6 +1,6 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
-import { Panel } from 'react-bootstrap';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const styles = {
   svgContainer: {
@@ -54,7 +54,7 @@ const ContentInputs = (template, els) => {
   const titleStr = titleFromTemplate(template) || 'TBD';
 
   return (
-    <Panel bsStyle="default" defaultExpanded>
+    <Panel variant="light" defaultExpanded>
       <Panel.Heading>
         <Panel.Title toggle>
           { titleStr }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonGroup, Popover, OverlayTrigger } from 'react-bootstrap';
+import { Button, Popover, OverlayTrigger } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 export default class DeleteGroupDeviceButton extends React.Component {
@@ -72,20 +72,22 @@ export default class DeleteGroupDeviceButton extends React.Component {
 
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
-        {msg} <br />
-        <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
+        <Popover.Header id="popover-positioned-scrolling-left" as="h5">
+          {msg}
+        </Popover.Header>
+        <Popover.Body>
+          <Button size="sm" variant="danger" className='me-2' onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
             Yes
-          </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          </Button>
+          <Button size="sm" variant="warning" onClick={this.handleClick} >
             No
           </Button>
-        </div>
+        </Popover.Body>
       </Popover>
     );
 
     return (
-      <ButtonGroup className="actions">
+      <div className="actions d-inline-block">
         <OverlayTrigger
           animation
           placement="right"
@@ -93,11 +95,11 @@ export default class DeleteGroupDeviceButton extends React.Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button size="sm" variant="danger" >
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
-      </ButtonGroup>
+      </div>
     );
   }
 }

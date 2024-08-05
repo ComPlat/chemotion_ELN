@@ -6,6 +6,7 @@ import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 import Aviator from 'aviator';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -17,10 +18,6 @@ export default class CellLineEntry extends Component {
       detailedInformation: false,
       showEntries: true
     };
-  }
-
-  componentDidMount() {
-    UIStore.getState();
   }
 
   getBorderStyle() {
@@ -46,22 +43,17 @@ export default class CellLineEntry extends Component {
         key={firstCellLineItem.cellLineName}
         className="cell-line-group-header-name"
       >
-        {firstCellLineItem.cellLineName}
-        {' '}
-        -
-        {' '}
-        {firstCellLineItem.source}
-      </div>];
+        {`${firstCellLineItem.cellLineName} - ${firstCellLineItem.source}`}
+      </div>
+    ];
   }
 
   renderArrow() {
     const { showEntries } = this.state;
-    const arrowType = showEntries ? 'glyphicon-chevron-right' : 'glyphicon-chevron-down';
     return (
       <div key="arrow" className="cell-line-group-arrow floating-right">
-        <i className={`glyphicon ${arrowType}`} />
+        <ChevronIcon direction={showEntries ? 'down' : 'right'} />
       </div>
-
     );
   }
 
@@ -83,10 +75,18 @@ export default class CellLineEntry extends Component {
     const { detailedInformation } = this.state;
     const buttonActive = detailedInformation ? 'detailed-info-on' : 'detailed-info-off';
     return (
-      <OverlayTrigger key="detailedInfoButton" placement="top" overlay={<Tooltip id="detailed-info-button">Show detailed information about the material</Tooltip>}>
+      <OverlayTrigger
+        key="detailedInfoButton"
+        placement="top"
+        overlay={(
+          <Tooltip id="detailed-info-button">
+            Show detailed information about the material
+          </Tooltip>
+        )}
+      >
         <Button
-          className={`button-right ${buttonActive}`}
-          bsSize="xsmall"
+          className={buttonActive}
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             this.setState({ detailedInformation: !detailedInformation });
@@ -102,13 +102,21 @@ export default class CellLineEntry extends Component {
     const { cellLineItems } = this.props;
     const { currentCollection, isSync } = UIStore.getState();
     if (currentCollection.label === 'All') { return null; }
-    if (currentCollection.is_sync_to_me && currentCollection.permission_level==0){return null;}
-    
+    if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) { return null; }
+
     return (
-      <OverlayTrigger key="subSampleButton" placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
+      <OverlayTrigger
+        key="subSampleButton"
+        placement="top"
+        overlay={(
+          <Tooltip id="detailed-info-button">
+            Create sample of cell line material
+          </Tooltip>
+        )}
+      >
         <Button
-          className="button-right quick-sample"
-          bsSize="xsmall"
+          className="quick-sample"
+          size="sm"
           onClick={(event) => {
             event.stopPropagation();
 

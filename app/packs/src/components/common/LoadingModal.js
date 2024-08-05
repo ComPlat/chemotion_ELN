@@ -28,7 +28,7 @@ export default class LoadingModal extends Component {
     const { loading } = this.state;
 
     return (
-      <Modal className="loading-modal" animation show={loading}>
+      <Modal centered className="loading-modal" animation show={loading}>
         <i className="fa fa-refresh fa-spin fa-3x fa-fw" />
       </Modal>
     );

@@ -314,7 +314,7 @@ export default class GenericSegmentsAdmin extends React.Component {
   
   handleDownloadKlass(e) {
     LoadingActions.start();
-    GenericKlassFetcher.downloadKlass(e.id,'SegmentKlass')
+    GenericKlassFetcher.downloadKlass(e.id, 'SegmentKlass')
       .then(result => {
         LoadingActions.stop();
       })
@@ -411,10 +411,10 @@ export default class GenericSegmentsAdmin extends React.Component {
       return <GenericAdminUnauth userName={user.name} text="GenericSegments" />;
     }
     return (
-      <div style={{ width: '90vw', margin: 'auto' }}>
+      <div className="vw-90 my-auto mx-auto">
         <GenericAdminNav userName={user.name} text="GenericSegments" />
         <hr />
-        <div style={{ marginTop: '60px' }}>
+        <div className="mt-5 pt-5">
           <h3>Generic Segments Designer</h3>
           <SyncBtn
             data={this.state.repoData}
@@ -425,7 +425,6 @@ export default class GenericSegmentsAdmin extends React.Component {
             klasses={this.state.klasses}
             showModal={this.state.show.modal === 'NewRepo'}
           />
-          &nbsp;
           {this.renderGrid()}
         </div>
         <Notifications />

@@ -1,9 +1,10 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Button, Panel, Row, Col } from 'react-bootstrap';
+import { Button, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const DEFAULT_EDITOR = 'ketcher';
 
@@ -73,7 +74,7 @@ const UserSetting = () => {
             />
           </Col>
           <Col sm={4}>
-            <Button bsStyle="primary" onClick={() => updateProfile()}>
+            <Button variant="primary" onClick={() => updateProfile()}>
               {
                 editor.changing ? <i className="fa fa-spinner fa-pulse" aria-hidden="true" /> : null
               }

@@ -10,12 +10,13 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 import {
-  Panel, ButtonToolbar, Button,
+  ButtonToolbar, Button,
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -81,7 +82,7 @@ class CellLineDetails extends React.Component {
       <div>
 
         <ElementCollectionLabels
-          class="collection-label floating"
+          className="collection-label floating"
           element={cellLineItem}
           key={cellLineItem.id}
           placement="right"
@@ -104,9 +105,8 @@ class CellLineDetails extends React.Component {
     const { toggleFullScreen } = this.props;
     return (
       <Button
-        bsStyle="info"
-        bsSize="xsmall"
-        className="button-right"
+        variant="info"
+        size="sm"
         onClick={toggleFullScreen}
       >
         <i className="fa fa-expand" />
@@ -141,7 +141,7 @@ class CellLineDetails extends React.Component {
         placement="bottom"
         overlay={<Tooltip>{toolTipMessage}</Tooltip>}
       >
-        <Button disabled={disabled} bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
+        <Button disabled={disabled} variant="warning" size="sm" onClick={action}>
           {icons}
         </Button>
       </OverlayTrigger>
@@ -153,9 +153,8 @@ class CellLineDetails extends React.Component {
 
     return (
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
-        className="button-right"
+        variant="danger"
+        size="sm"
         onClick={() => { this.handleClose(cellLineItem); }}
       >
         <i className="fa fa-times" />
@@ -172,7 +171,7 @@ class CellLineDetails extends React.Component {
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
     const disabledButton = (
       <Button
-        bsStyle="warning"
+        variant="warning"
         disabled
         onClick={() => { this.handleSubmit(cellLineItem); }}
       >
@@ -181,7 +180,7 @@ class CellLineDetails extends React.Component {
     );
     const enabledButton = (
       <Button
-        bsStyle="warning"
+        variant="warning"
         onClick={() => { this.handleSubmit(cellLineItem); }}
       >
         {buttonText}
@@ -227,7 +226,7 @@ class CellLineDetails extends React.Component {
             </Tab>
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => { this.handleClose(cellLineItem); }}>
+            <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
               Close
             </Button>
             {this.renderSubmitButton()}

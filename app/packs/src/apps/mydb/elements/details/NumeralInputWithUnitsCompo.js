@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
+import { Form, InputGroup, Button } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -31,7 +31,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const hasChanged = nextProps.value !== this.props.value
       || nextProps.block !== this.props.block
       || nextProps.metricPrefix !== this.props.metricPrefix
-      || nextProps.bsStyle !== this.props.bsStyle
+      || nextProps.variant !== this.props.variant
       || nextProps.disabled !== this.props.disabled
       || nextState.value !== this.state.value
       || nextState.block !== this.state.block
@@ -103,6 +103,15 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }, () => this._onChangeCallback());
   }
 
+  handleInputDoubleClick() {
+    if (this.state.block) {
+      this.setState({
+        block: false,
+        value: 0,
+      });
+    }
+  }
+
   _onChangeCallback() {
     if (this.props.onChange) {
       this.props.onChange({ ...this.state, unit: this.props.unit });
@@ -126,7 +135,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      bsSize, bsStyle, disabled, label, unit, name
+      bsSize, variant, disabled, label, unit, name
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -144,37 +153,35 @@ export default class NumeralInputWithUnitsCompo extends Component {
     };
     const inputDisabled = disabled ? true : block;
     // BsStyle-s for Input and buttonAfter have differences
-    const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
-    const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
+    const variantBtnAfter = variant === 'error' ? 'danger' : variant;
     if (unit !== 'n') {
       const prefixSwitch = (
-        <InputGroup.Button>
-          <Button
-            disabled={inputDisabled}
-            active
-            onClick={() => { this.togglePrefix(); }}
-            bsStyle={bsStyleBtnAfter}
-            bsSize={bsSize}
-          >
-            {mp + unit}
-          </Button>
-        </InputGroup.Button>
+        <Button
+          disabled={inputDisabled}
+          active
+          onClick={() => { this.togglePrefix(); }}
+          variant={variantBtnAfter}
+          bsSize={bsSize}
+        >
+          {mp + unit}
+        </Button>
       );
 
       return (
         <div className={`numeric-input-unit_${this.props.unit}`}>
-          {labelWrap}
-          <InputGroup>
-            <FormControl
+          {label && <Form.Label>{label}</Form.Label>}
+          <InputGroup
+            onDoubleClick={event => this.handleInputDoubleClick(event)}
+          >
+            <Form.Control
               type="text"
-              bsClass="bs-form--compact form-control"
               disabled={inputDisabled}
               bsSize={bsSize}
-              bsStyle={bsStyle}
+              variant={variant}
               value={val() || ''}
-              onChange={(event) => this._handleInputValueChange(event)}
-              onFocus={(event) => this._handleInputValueFocus(event)}
-              onBlur={(event) => this._handleInputValueBlur(event)}
+              onChange={event => this._handleInputValueChange(event)}
+              onFocus={event => this._handleInputValueFocus(event)}
+              onBlur={event => this._handleInputValueBlur(event)}
               name={name}
             />
             {prefixSwitch}
@@ -184,18 +191,18 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
     return (
       <div className="numeric-input-unit">
-        {labelWrap}
-        <div>
-          <FormControl
+        {label && <Form.Label>{label}</Form.Label>}
+        <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
+          <Form.Control
             type="text"
-            bsClass="bs-form--compact form-control"
             disabled={inputDisabled}
             bsSize={bsSize}
-            bsStyle={bsStyle}
+            variant={variant}
             value={val() || ''}
-            onChange={(event) => this._handleInputValueChange(event)}
-            onFocus={(event) => this._handleInputValueFocus(event)}
-            onBlur={(event) => this._handleInputValueBlur(event)}
+            onChange={event => this._handleInputValueChange(event)}
+            onFocus={event => this._handleInputValueFocus(event)}
+            onBlur={event => this._handleInputValueBlur(event)}
+            onDoubleClick={event => this.handleInputDoubleClick(event)}
             name={name}
           />
         </div>
@@ -215,7 +222,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   disabled: PropTypes.bool,
   label: PropTypes.node,
   bsSize: PropTypes.string,
-  bsStyle: PropTypes.string,
+  variant: PropTypes.string,
   name: PropTypes.string
 };
 
@@ -226,6 +233,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disabled: false,
   block: false,
   bsSize: 'small',
-  bsStyle: 'default',
+  variant: 'light',
   name: ''
 };

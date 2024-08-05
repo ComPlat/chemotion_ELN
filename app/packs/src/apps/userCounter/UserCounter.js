@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import uuid from 'uuid';
-import { Row, Col, Panel, Button, FormControl } from 'react-bootstrap';
+import { Row, Col, Button, FormControl } from 'react-bootstrap';
 
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 class UserCounter extends Component {
   constructor(props) {
@@ -93,7 +94,7 @@ class UserCounter extends Component {
               <Col sm={2}>{nextNum}</Col>
               <Col sm={4}>
                 <Button
-                  bsStyle="primary"
+                  variant="primary"
                   onClick={() => this.handleUpdate(klass.name)}
                 >
                   Update counter

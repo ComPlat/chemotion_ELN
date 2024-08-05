@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
+import { Button, Col, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 import { contributorTypes } from 'src/components/staticDropdownOptions/radar/contributorTypes'
 
@@ -83,14 +84,14 @@ const MetadataContributor = ({ contributor, index, onAdd, onChange, onRemove }) 
                   </Col>
                   <Col xs={4}>
                     <Button
-                      className="metadata-remove-affiliation" bsStyle="danger"
+                      className="metadata-remove-affiliation" variant="danger"
                       onClick={() => onRemove('contributors', index, 'affiliations', affiliationIndex)}>
                       <i className="fa fa-trash-o" />
                     </Button>
                     {
                       (affiliationIndex === contributor.affiliations.length - 1) &&
                       <Button
-                        className="metadata-add-affiliation" bsStyle="success"
+                        className="metadata-add-affiliation" variant="success"
                         onClick={() => onAdd('contributors', index, 'affiliations')}>
                         <i className="fa fa-plus" />
                       </Button>
@@ -102,7 +103,7 @@ const MetadataContributor = ({ contributor, index, onAdd, onChange, onRemove }) 
           </FormGroup>
         </Col>
         <Col sm={12}>
-          <Button bsStyle="danger" bsSize="small" onClick={() => onRemove('contributors', index)}>
+          <Button variant="danger" size="sm" onClick={() => onRemove('contributors', index)}>
             Remove contributor
           </Button>
         </Col>

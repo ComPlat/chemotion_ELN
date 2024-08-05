@@ -1,6 +1,6 @@
 import React from 'react';
 import RFB from '@novnc/novnc/lib/rfb';
-import { Grid, Row, Col } from 'react-bootstrap';
+import { Row, Col } from 'react-bootstrap';
 import { uniq } from 'lodash';
 
 import DeviceActions from 'src/stores/alt/actions/UserActions';
@@ -9,6 +9,7 @@ import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
 import Navigation from 'src/apps/commandAndControl/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { ConnectedBtn, DisconnectedBtn } from 'src/apps/commandAndControl/NovncStatus';
+import Grid from 'src/components/legacyBootstrap/Grid'
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;

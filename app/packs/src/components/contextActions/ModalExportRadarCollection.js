@@ -1,8 +1,7 @@
 import React from 'react';
-import {Button, ButtonToolbar} from 'react-bootstrap';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
-import { elementShowOrNew } from 'src/utilities/routesUtils'
 import { subjectAreas } from 'src/components/staticDropdownOptions/radar/subjectAreas'
 import { contributorTypes } from 'src/components/staticDropdownOptions/radar/contributorTypes'
 import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes'
@@ -238,7 +237,7 @@ export default class ModalExportRadarCollection extends React.Component {
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
+            <Button variant="primary" onClick={onHide}>Cancel</Button>
             <Button onClick={this.handleEdit}>Edit collection metadata</Button>
             <a href={archiveUrl} target="_blank"
                className="btn btn-danger"

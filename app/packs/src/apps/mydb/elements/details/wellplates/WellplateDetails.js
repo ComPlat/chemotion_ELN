@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
-  Well, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
+  ListGroup, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
@@ -38,6 +38,8 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import Well from 'src/components/legacyBootstrap/Well'
 
 export default class WellplateDetails extends Component {
   constructor(props) {
@@ -257,9 +259,8 @@ export default class WellplateDetails extends Component {
         <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
+            variant="warning"
+            size="sm"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
           >
@@ -267,7 +268,7 @@ export default class WellplateDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.props.toggleFullScreen()}>
+          <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
             <i className="fa fa-expand" />
           </Button>
         </OverlayTrigger>
@@ -389,7 +390,7 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
+      <Panel variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
         <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
         <Panel.Body>
           <ElementDetailSortTab
@@ -402,17 +403,17 @@ export default class WellplateDetails extends Component {
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+            <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
             {
               wellplate.changed ? (
-                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+                <Button variant="warning" onClick={() => this.handleSubmit()}>
                   {wellplate.isNew ? 'Create' : 'Save'}
                 </Button>
               ) : <div />
             }
             {exportButton}
             <Button
-              bsStyle="primary"
+              variant="primary"
               onClick={() => this.handlePrint()}
               disabled={printButtonDisabled}
             >
