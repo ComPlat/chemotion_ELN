@@ -482,13 +482,13 @@ export default class ContainerDatasetModalContent extends Component {
           <div className="attachment-row-subtext">
             <div>
               Created:
-              <span> {' '}{formatDate(attachment.created_at)} </span>
+              <span className="ms-1">{formatDate(attachment.created_at)} </span>
             </div>
-            <span className='ms-2 me-2'>|</span>
+            <span className="ms-2 me-2">|</span>
             <div>
               Size:
-              <span className='fw-bold text-black'>
-                {' '}{formatFileSize(attachment.filesize)}
+              <span className="fw-bold text-gray-700 ms-1">
+                {formatFileSize(attachment.filesize)}
               </span>
             </div>
           </div>
@@ -505,20 +505,20 @@ export default class ContainerDatasetModalContent extends Component {
             </Button>
           ) : (
               <>
-            <ButtonToolbar className="gap-1">
-              {downloadButton(attachment)}
-              {editButton(
-                attachment,
-                extension,
-                attachmentEditor,
-                attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                  || attachment.is_new || this.documentType(attachment.filename) === null,
-                this.handleEdit
-              )}
-              {annotateButton(attachment, this)}
-              {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
+                <ButtonToolbar className="gap-1">
+                  {downloadButton(attachment)}
+                  {editButton(
+                    attachment,
+                    extension,
+                    attachmentEditor,
+                    attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                    < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                    !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                    || attachment.is_new || this.documentType(attachment.filename) === null,
+                    this.handleEdit
+                  )}
+                  {annotateButton(attachment, this)}
+                  {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
                 </ButtonToolbar>
                 <div className="ms-2">
                   {removeButton(attachment, this.handleAttachmentRemove, readOnly)}

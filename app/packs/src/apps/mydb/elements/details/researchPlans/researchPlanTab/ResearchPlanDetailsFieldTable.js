@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, ContextMenuTrigger } from "react-contextmenu";
-import { Row, Col, Button } from 'react-bootstrap';
+import { Button, Row, Col, Table, Dropdown } from 'react-bootstrap';
 
 import CustomHeader from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/CustomHeader';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -13,14 +13,7 @@ import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/apps/mydb/e
 import ResearchPlanDetailsFieldTableSchemasModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import ReactionsFetcher from 'src/fetchers/ReactionsFetcher'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-
-
-// regexp to parse tap separated paste from the clipboard
-const defaultParsePaste = str => (
-  str.split(/\r\n|\n|\r/).map(row => row.split('\t'))
-);
+import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
 export default class ResearchPlanDetailsFieldTable extends Component {
 
@@ -44,7 +37,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       gridApi: {},
       columnClicked: null,
       rowClicked: null,
-      isDisable: true
+      isDisable: true,
     };
 
     uniqueId.enableUniqueIds(this)
@@ -161,7 +154,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     onChange(field.value, field.id);
   }
 
-  handleSchemaModalShow() {
+  handleSchemaModalShow = () => {
     ResearchPlansFetcher.fetchTableSchemas().then((json) => {
       this.setState({
         schemaModal: {
@@ -186,21 +179,21 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
   }
 
-  _handleMeasurementExportModalShow() {
+  _handleMeasurementExportModalShow = () => {
     this.setState({
       measurementExportModal: {
         show: true
       }
     });
-  }
+  };
 
-  _handleMeasurementExportModalHide() {
+  _handleMeasurementExportModalHide = () => {
     this.setState({
       measurementExportModal: {
         show: false
       }
     });
-  }
+  };
 
   handleSchemasModalUse(schema) {
     const { field, onChange } = this.props;
@@ -267,9 +260,9 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     onChange(field.value, field.id);
   }
 
-  addNewRow() {
+  addNewRow = () => {
     const { field, onChange } = this.props;
-    const { gridApi } = this.state
+    const { gridApi } = this.state;
 
     gridApi.applyTransaction({
       add: [{}],
@@ -278,14 +271,14 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     let rowData = [];
     gridApi.forEachNode(node => rowData.push(node.data));
     field.value.columns = gridApi.getColumnDefs();
-    field.value.rows = rowData
+    field.value.rows = rowData;
 
     onChange(field.value, field.id);
-  }
+  };
 
-  removeThisRow() {
+  removeThisRow = () => {
     const { field, onChange } = this.props;
-    const { gridApi, rowClicked } = this.state
+    const { gridApi, rowClicked } = this.state;
     let rowData = [];
     gridApi.forEachNodeAfterFilterAndSort(node => {
       rowData.push(node.data);
@@ -295,14 +288,14 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     rowData = rowData.filter(function (value, index, arr) {
       return index !== rowClicked;
     });
-    field.value.rows = rowData
+    field.value.rows = rowData;
 
     onChange(field.value, field.id);
-  }
+  };
 
-  removeThisColumn() {
+  removeThisColumn = () => {
     const { field, onChange } = this.props;
-    const { gridApi, columnClicked } = this.state
+    const { gridApi, columnClicked } = this.state;
     if (columnClicked) {
       let columnDefs = gridApi.getColumnDefs();
       columnDefs = columnDefs.filter(function (value, index, arr) {
@@ -315,20 +308,20 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
       onChange(field.value, field.id);
     }
-  }
+  };
 
   onCellContextMenu(params) {
     this.setState({ columnClicked: params.column.colId, rowClicked: params.rowIndex });
   }
 
-  handleRenameClick() {
+  handleRenameClick = () => {
     const { columnClicked } = this.state;
     if (columnClicked) {
       this.handleColumnNameModalShow('rename', columnClicked);
     }
-  }
+  };
 
-  handlePaste(event) {
+  handlePaste = (event) => {
     const { field, onChange } = this.props;
     const { gridApi, columnClicked, rowClicked } = this.state;
     onChange(field.value, field.id);
@@ -350,7 +343,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
         let rowIndex = 0;
         for (let i = 0; i < rowData.length; i++) {
-          let row = [];
           let startUpdate = false;
           if (i >= rowClicked) {
             let columnIndex = 0;
@@ -378,12 +370,12 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       });
   }
 
-  handleInsertColumnClick() {
+  handleInsertColumnClick = () => {
     const { columnClicked } = this.state;
     if (columnClicked) {
       this.handleColumnNameModalShow('insert', columnClicked);
     }
-  }
+  };
 
   onCellMouseOver() {
     this.setState({ isDisable: false });
@@ -414,11 +406,12 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     return (
       <Button
         variant="info"
-        size="sm"
+        size="xxsm"
         title={collapseToggleTitle}
         onClick={this.toggleTemporaryCollapse.bind(this)}
+        className="pull-right"
       >
-        <i className={`fa ${collapseToggleIconClass}`}></i>
+        <i className={`fa ${collapseToggleIconClass}`} />
       </Button>
     );
   }
@@ -434,13 +427,13 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     }
 
     return (
-      <button
-        className="btn btn-sm btn-info"
-        style={{ "margin-bottom": "5px" }}
+      <Button
+        variant="info"
+        size="xxsm"
         onClick={togglePermanentCollapse.bind(this)}
       >
         Table is <strong>{collapsed ? 'collapsed' : 'expanded'}</strong> in view mode
-      </button>
+      </Button>
     )
   }
 
@@ -468,7 +461,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     return (
       <div>
-        <div>
+        <div className="d-flex justify-content-between">
           {this.permanentCollapseToggleButton()}
           {this.temporaryCollapseToggleButton()}
         </div>
@@ -500,44 +493,48 @@ export default class ResearchPlanDetailsFieldTable extends Component {
               />
             </ContextMenuTrigger>
             <ContextMenu id={contextMenuId}>
-              <MenuItem onClick={this.handlePaste.bind(this)}>
-                Paste
-              </MenuItem>
-              <MenuItem onClick={this.handleRenameClick.bind(this)}>
-                Rename column
-              </MenuItem>
-              <MenuItem divider />
-              <MenuItem onClick={this.handleInsertColumnClick.bind(this)}>
-                Add new column
-              </MenuItem>
-              <MenuItem onClick={this.addNewRow.bind(this)}>
-                Add new row
-              </MenuItem>
-              <MenuItem divider />
-              <MenuItem onClick={this.removeThisColumn.bind(this)}>
-                Remove this column
-              </MenuItem>
-              <MenuItem onClick={this.removeThisRow.bind(this)}>
-                Remove this row
-              </MenuItem>
+              <Dropdown.Menu show>
+                <Dropdown.Item onClick={this.handlePaste}>Paste</Dropdown.Item>
+                <Dropdown.Item onClick={this.handleRenameClick}>Rename column</Dropdown.Item>
+                <Dropdown.Divider />
+                <Dropdown.Item onClick={this.handleInsertColumnClick}>Add new column</Dropdown.Item>
+                <Dropdown.Item onClick={this.addNewRow}>Add new row</Dropdown.Item>
+                <Dropdown.Divider />
+                <Dropdown.Item onClick={this.removeThisColumn}>Remove this column</Dropdown.Item>
+                <Dropdown.Item onClick={this.removeThisRow}>Remove this row</Dropdown.Item>
+              </Dropdown.Menu>
+
             </ContextMenu>
           </div>
         </div>
 
-        <div className='research-plan-table-toolbar'>
-          <Row>
+        <div>
+          <Row className="py-2">
             <Col xs={4}>
-              <Button bsSize='xsmall' onClick={this.handleSchemaModalShow.bind(this)}>
+              <Button
+                size="xsm"
+                className="py-2 px-4 w-100"
+                variant="light"
+                onClick={this.handleSchemaModalShow}>
                 Table schemas
               </Button>
             </Col>
             <Col xs={4}>
-              <Button bsSize='xsmall' onClick={this._handleMeasurementExportModalShow.bind(this)}>
+              <Button
+                size="xsm"
+                className="py-2 px-4 w-100"
+                variant="light"
+                onClick={this._handleMeasurementExportModalShow}>
                 Export Measurements
               </Button>
             </Col>
             <Col xs={4}>
-              <Button bsSize='xsmall' onClick={() => onExport(field)}>
+              <Button
+                size="xsm"
+                className="py-2 px-4 w-100"
+                variant="light"
+                onClick={() => onExport(field)}
+              >
                 Export as Excel
               </Button>
             </Col>
@@ -556,7 +553,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
           onDelete={this.handleSchemasModalDelete.bind(this)} />
         <ResearchPlanDetailsFieldTableMeasurementExportModal
           show={measurementExportModal.show}
-          onHide={this._handleMeasurementExportModalHide.bind(this)}
+          onHide={this._handleMeasurementExportModalHide}
           rows={rows}
           columns={columns} />
       </div>
@@ -573,7 +570,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       return (
         <th key={column.colId}>
           {column.headerName}
-          {index == lastColumn ? this.temporaryCollapseToggleButton() : ''}
+          {index == lastColumn && this.temporaryCollapseToggleButton()}
         </th>
       );
     });
@@ -603,7 +600,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             </a>
           }
         }
-        return <td style={{ 'height': '37px' }} key={column.colId}>{cellContent}</td>;
+        return <td key={column.colId} style={{ height: '37px' }}>{cellContent}</td>;
       });
       return (
         <tr key={index}>
@@ -611,19 +608,19 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         </tr>
       );
     });
-    const collapsed = this.state.currentlyCollapsedInViewMode
+    const collapsed = this.state.currentlyCollapsedInViewMode;
 
     return (
-      <table className='table table-bordered'>
+      <Table bordered>
         <thead>
           <tr>
             {th}
           </tr>
         </thead>
-        <tbody className={collapsed ? 'hidden' : ''}>
+        <tbody className={collapsed ? 'd-none' : ''}>
           {tr}
         </tbody>
-      </table>
+      </Table>
     );
   }
 

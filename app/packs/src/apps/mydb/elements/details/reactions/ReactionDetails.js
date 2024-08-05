@@ -206,12 +206,11 @@ export default class ReactionDetails extends Component {
     return (
       <span>
         Analysis:
-        &nbsp;
         <span className="pseudo-link"
           onClick={() => this.handleProductClick(product)}
           role="button"
           title="Open sample window">
-          <i className="icon-sample" />&nbsp;{product.title()}
+          <i className="icon-sample" />{product.title()}
         </span>
       </span>
     )

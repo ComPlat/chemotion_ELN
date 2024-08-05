@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, Accordion } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
@@ -16,8 +16,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
+import { truncateText } from 'src/utilities/textHelper';
 
 export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
@@ -119,15 +118,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className="upper-btn">
-        <Button
-          size="sm"
-          variant="danger"
-          disabled={readOnly}
-          onClick={() => this.handleRemove(container)}
-        >
-          <i className="fa fa-trash" />
-        </Button>
+      <div className="d-flex justify-content-between align-items-center mb-0">
         <SpectraEditorButton
           element={researchPlan}
           hasJcamp={hasJcamp}
@@ -138,6 +129,14 @@ export default class ResearchPlanDetailsContainers extends Component {
           toggleNMRDisplayerModal={toggleNMRDisplayerModal}
           hasNMRium={hasNMRium}
         />
+        <Button
+          size="xxsm"
+          variant="danger"
+          disabled={readOnly}
+          onClick={() => this.handleRemove(container)}
+        >
+          <i className="fa fa-trash" />
+        </Button>
       </div>
     );
   }
@@ -146,17 +145,19 @@ export default class ResearchPlanDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button
-          size="sm"
-          variant="success"
-          onClick={this.handleAdd}
-        >
-          Add analysis
-        </Button>
+        <div className="mt-2">
+          <Button
+            size="sm"
+            variant="success"
+            onClick={this.handleAdd}
+          >
+            Add analysis
+          </Button>
+        </div>
       );
     }
 
-    return (<span />);
+    return null;
   }
 
   render() {
@@ -170,10 +171,11 @@ export default class ResearchPlanDetailsContainers extends Component {
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
+
       const contentOneLine = {
         ops: content.ops.map((x) => {
           const c = Object.assign({}, x);
-          if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
           return c;
         }),
       };
@@ -188,8 +190,8 @@ export default class ResearchPlanDetailsContainers extends Component {
       }
 
       return (
-        <div className="analysis-header order" style={{ width: '100%' }}>
-          <div className="preview">
+        <div className="d-flex w-100 mb-0 bg-gray-200">
+          <div className="p-3">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -203,23 +205,27 @@ export default class ResearchPlanDetailsContainers extends Component {
               }}
             />
           </div>
-          <div className="abstract">
+          <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
+            <div className="fs-5 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
+            <div className="fs-6 ms-2 mt-2">Type: {kind}</div>
+            <div className="fs-6 ms-2 mt-2">Status: {status}
+              <span className="me-5" />
+              {insText}
+            </div>
+
+            <div className="fs-6 ms-2 mt-2 d-flex p-0">
+              <span className="me-2 flex-grow-1 text-truncate">
+                Content:
+                <QuillViewer value={contentOneLine} preview />
+              </span>
+            </div>
+
+          </div>
+          <div className="d-flex align-items-start justify-content-end me-2 mt-3">
             {
               this.headerBtnGroup(container, readOnly)
             }
-            <div className="lower-text">
-              <div className="main-title">{container.name}</div>
-              <div className="sub-title">Type: {kind}</div>
-              <div className="sub-title">Status: {status} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
 
-              <div className="desc sub-title">
-                <span style={{ float: 'left', marginRight: '5px' }}>
-                  Content:
-                </span>
-                <QuillViewer value={contentOneLine} preview />
-              </div>
-
-            </div>
           </div>
         </div>
       );
@@ -233,14 +239,14 @@ export default class ResearchPlanDetailsContainers extends Component {
       const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
       return (
-        <div style={{ width: '100%' }}>
-          <strike>
+        <div className="d-flex w-100 mb-0 bg-gray-200 p-4 align-items-center">
+          <strike className="flex-grow-1">
             {container.name}
             {titleKind}
             {titleStatus}
           </strike>
           <Button
-            className="pull-right"
+            className="ml-auto"
             size="sm"
             variant="danger"
             onClick={() => this.handleUndo(container)}
@@ -259,33 +265,31 @@ export default class ResearchPlanDetailsContainers extends Component {
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <div style={{ marginBottom: '10px' }}>
-              &nbsp;{this.addButton()}
+            <div className="mb-2 me-1 d-flex justify-content-end">
+              {this.addButton()}
             </div>
-            <PanelGroup id="research_plan-analyses-panel" defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
+            <Accordion defaultActiveKey={['0']} alwaysOpen>
               {analysesContainer[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
-                    <Panel
+                    <Accordion.Item
                       eventKey={key}
                       key={`research_plan_container_deleted_${container.id}`}
                     >
-                      <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
-                    </Panel>
+                      <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
+                    </Accordion.Item>
                   );
                 }
 
                 return (
-                  <Panel
+                  <Accordion.Item
                     eventKey={key}
                     key={`research_plan_container_${container.id}`}
                   >
-                    <Panel.Heading>
-                      <Panel.Title toggle>
+                    <Accordion.Header>
                         {containerHeader(container)}
-                      </Panel.Title>
-                    </Panel.Heading>
-                    <Panel.Body collapsible>
+                    </Accordion.Header>
+                    <Accordion.Body>
                       <ContainerComponent
                         templateType="researchPlan"
                         readOnly={readOnly}
@@ -303,28 +307,27 @@ export default class ResearchPlanDetailsContainers extends Component {
                         handleSampleChanged={this.handleSpChange}
                         handleSubmit={this.props.handleSubmit}
                       />
-                    </Panel.Body>
-                  </Panel>
+                    </Accordion.Body>
+                  </Accordion.Item>
                 );
               })}
-            </PanelGroup>
+            </Accordion>
           </div>
         );
       }
 
       return (
-        <div
-          style={{ marginBottom: '10px' }}
-          className="noAnalyses-warning"
-        >
-          There are currently no Analyses.
-          {this.addButton()}
+        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+          <span className="ms-3"> There are currently no Analyses. </span>
+          <div>
+            {this.addButton()}
+          </div>
         </div>
       );
     }
 
     return (
-      <div className="noAnalyses-warning">
+      <div className="m-4">
         There are currently no Analyses.
       </div>
     );
