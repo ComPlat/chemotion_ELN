@@ -31,7 +31,7 @@ module Chemotion
           molecule_viewer: Matrice.molecule_viewer,
           collector_address: collector_address.presence,
           third_party_apps: Entities::ThirdPartyAppEntity.represent(ThirdPartyApp.all),
-          pg_cartridge_installed: Chemotion::Application.config.rdkit_installed || false,
+          pg_cartridge: Chemotion::Application.config.pg_cartridge,
         }
       end
     end

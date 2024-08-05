@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-if Chemotion::Application.config.pg_cartridge_installed
+if Chemotion::Application.config.pg_cartridge == 'RDKit'
   mols = ActiveRecord::Base.connection.exec_query('select count(*) c from information_schema.tables
                                                     where table_schema = \'rdk\' AND table_name = \'mols\';')
 
