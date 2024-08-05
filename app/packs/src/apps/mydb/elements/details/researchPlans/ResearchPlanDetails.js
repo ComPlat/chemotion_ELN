@@ -317,8 +317,6 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
-  // render functions
-
   renderExportButton(disabled) {
     return (
       <Dropdown
@@ -417,7 +415,7 @@ export default class ResearchPlanDetails extends Component {
               />
             </div>
             <div className="d-flex justify-content-center align-items-end">
-              <div className="mx-1">
+              <div className="mt-3">
                 {btnMode}
               </div>
               {this.renderExportButton(changed)}
