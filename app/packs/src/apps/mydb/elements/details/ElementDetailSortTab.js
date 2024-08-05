@@ -14,20 +14,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from '../../../../stores/alt/actions/CollectionActions';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 
-const getNodeText = (node) => {
-  if (['string', 'number'].includes(typeof node)) return node;
-  if (node instanceof Array) return node.map(getNodeText).join('');
-  if (typeof node === 'object' && node) {
-    if (node.props.children) {
-      return getNodeText(node.props.children);
-    } else if (node.props.alt) {
-      return getNodeText(node.props.alt);
-    }
-    return '';
-  }
-  return '';
-};
-
 export default class ElementDetailSortTab extends Component {
   constructor(props) {
     super(props);
