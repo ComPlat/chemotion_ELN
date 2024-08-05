@@ -29,6 +29,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { parseNumericString } from 'src/utilities/MathUtils';
 import { convertTemperature, convertTime, convertTurnoverFrequency } from 'src/utilities/UnitsConversion';
 import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
+import { parseNumericString } from 'src/utilities/MathUtils';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
