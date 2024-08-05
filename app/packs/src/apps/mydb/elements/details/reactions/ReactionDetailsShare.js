@@ -68,7 +68,6 @@ const setReactionByType = (reaction, type, value) => {
       reaction.rxno = value;
       break;
     case 'vesselSizeAmount':
-      console.log(reaction.vessel_size);
       reaction.vessel_size.amount = value;
       break;
     case 'vesselSizeUnit':
