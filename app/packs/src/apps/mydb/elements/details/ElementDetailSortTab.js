@@ -41,8 +41,8 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
-    let { addInventoryTab, availableTabs } = this.props;
-    const currentCollection = UIStore.getState().currentCollection;
+    const { addInventoryTab, availableTabs } = this.props;
+    const { currentCollection } = UIStore.getState();
     const collectionTabs = currentCollection?.tabs_segment;
     let layout;
     if (!collectionTabs || _.isEmpty(collectionTabs[`${this.type}`])) {
@@ -51,10 +51,11 @@ export default class ElementDetailSortTab extends Component {
       layout = collectionTabs[`${this.type}`];
     }
     const { visible, hidden } = getArrayFromLayout(layout, this.type, addInventoryTab, availableTabs);
+    const { onTabPositionChanged } = this.props;
 
     this.setState(
       { visible, hidden },
-      () => this.props.onTabPositionChanged(visible)
+      () => onTabPositionChanged(visible)
     );
   }
 
@@ -65,7 +66,7 @@ export default class ElementDetailSortTab extends Component {
 
   updateLayout() {
     const layout = filterTabLayout(this.tabLayoutContainerElement.state);
-    const currentCollection = UIStore.getState().currentCollection;
+    const { currentCollection } = UIStore.getState();
     let tabSegment = currentCollection?.tabs_segment;
     _.set(tabSegment, `${this.type}`, layout);
     tabSegment = { ...tabSegment, [`${this.type}`]: layout };
@@ -85,19 +86,20 @@ export default class ElementDetailSortTab extends Component {
   }
 
   render() {
-    const currentCollection = UIStore.getState().currentCollection;
+    const { visible, hidden, showTabLayoutContainer } = this.state;
+    const { tabTitles } = this.props;
+    const { currentCollection } = UIStore.getState();
     const tabs = currentCollection?.tabs_segment;
     const buttonInfo = isEmpty(tabs) ? 'info' : 'light';
     const tabLayoutContainerElement = (
       <TabLayoutContainer
-        visible={this.state.visible}
-        hidden={this.state.hidden}
-        tabTitles={this.props.tabTitles}
+        visible={visible}
+        hidden={hidden}
+        tabTitles={tabTitles}
         isElementDetails
         ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
       />
     );
-    const { visible, hidden } = this.state;
     const wd = 200 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
     const popoverSettings = (
       <Popover
@@ -130,7 +132,7 @@ export default class ElementDetailSortTab extends Component {
           onHide={this.onCloseTabLayoutContainer}
           placement="bottom"
           rootClose
-          show={this.state.showTabLayoutContainer}
+          show={showTabLayoutContainer}
           target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
           shouldUpdatePosition // works alongside resize event listener
         >
