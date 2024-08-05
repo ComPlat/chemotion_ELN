@@ -1,4 +1,3 @@
-/* eslint-disable react/destructuring-assignment */
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import DeviceDetails from 'src/apps/mydb/elements/details/devices/DeviceDetails';
@@ -130,7 +129,8 @@ export default class ElementDetails extends Component {
 
   handleResize() {
     const windowHeight = window.innerHeight || 1;
-    if (this.state.fullScreen || windowHeight < 500) {
+    const { fullScreen } = this.state;
+    if (fullScreen || windowHeight < 500) {
       this.setState({ offsetTop: 0 });
     } else {
       this.setState({ offsetTop: 70 });
@@ -244,8 +244,9 @@ export default class ElementDetails extends Component {
   }
 
   tabTitle(el, elKey) {
+    const { activeKey } = this.state;
+    const focusing = elKey === activeKey;
     const variant = el.isPendingToSave ? 'info' : 'primary';
-    const focusing = elKey === this.state.activeKey;
 
     let iconElement = (<i className={`me-1 icon-${el.type}`} />);
 
