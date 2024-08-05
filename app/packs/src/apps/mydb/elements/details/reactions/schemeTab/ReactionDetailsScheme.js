@@ -26,6 +26,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { parseNumericString } from 'src/utilities/MathUtils';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -58,6 +59,7 @@ export default class ReactionDetailsScheme extends Component {
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
     this.reactionVesselSize = this.reactionVesselSize.bind(this);
     this.updateVesselSize = this.updateVesselSize.bind(this);
+    this.updateVesselSizeOnBlur = this.updateVesselSizeOnBlur.bind(this);
     this.changeVesselSizeUnit = this.changeVesselSizeUnit.bind(this);
   }
 
@@ -814,6 +816,13 @@ export default class ReactionDetailsScheme extends Component {
     onInputChange('vesselSizeAmount', value);
   }
 
+  updateVesselSizeOnBlur(e) {
+    const { onInputChange } = this.props;
+    const { value } = e.target;
+    const newValue = parseNumericString(value);
+    onInputChange('vesselSizeAmount', newValue);
+  }
+
   changeVesselSizeUnit() {
     const { onInputChange, reaction } = this.props;
     if (reaction.vessel_size.unit === 'ml') {
@@ -838,6 +847,7 @@ export default class ReactionDetailsScheme extends Component {
               value={reaction.vessel_size?.amount || ''}
               disabled={false}
               onChange={(event) => this.updateVesselSize(event)}
+              onBlur={(event) => this.updateVesselSizeOnBlur(event)}
             />
             <InputGroup.Button>
               <Button
