@@ -106,6 +106,5 @@ $theme-colors: map-merge($theme-colors, $gray-tones);
 }
 
 .border-dashed {
-  border: dashed;
+  border-style: dashed;
 }
-
