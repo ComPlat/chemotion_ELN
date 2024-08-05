@@ -22,7 +22,7 @@ import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDe
 import {
   Tabs, Tab, Button
 } from 'react-bootstrap';
-import Label from 'src/components/legacyBootstrap/Label'
+import Label from 'src/components/legacyBootstrap/Label';
 
 const tabInfoHash = {
   metadata: {
@@ -229,7 +229,7 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
-        return <CellLineDetails cellLineItem={el}  toggleFullScreen={this.toggleFullScreen}/>;
+        return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
       default:
         return (
           <div style={{ textAlign: 'center' }}>
