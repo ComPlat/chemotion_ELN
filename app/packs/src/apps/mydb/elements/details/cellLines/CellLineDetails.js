@@ -28,7 +28,6 @@ class CellLineDetails extends React.Component {
       activeTab: 'tab1',
       readOnly: this.isReadOnly()
     };
-    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
   }
 
   handleSubmit(cellLineItem) {
@@ -57,11 +56,6 @@ class CellLineDetails extends React.Component {
 
   handleTabChange(eventKey) {
     this.setState({ activeTab: eventKey });
-  }
-
-  onTabPositionChanged(visible) {
-    // eslint-disable-next-line react/no-unused-state
-    this.setState({ visible });
   }
 
   isReadOnly() {
