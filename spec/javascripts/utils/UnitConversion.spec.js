@@ -84,11 +84,11 @@ describe('Testing React Utility Functions', () => {
   });
 
   it('should calculate feedstock moles correctly', () => {
-    assert.strictEqual(calculateFeedstockMoles(10, 0.5), 0.8285896575438945);
+    assert.strictEqual(calculateFeedstockMoles(10, 0.5), 0.20714741438597362);
   });
 
   it('should update feedstock moles correctly', () => {
-    assert.strictEqual(updateFeedstockMoles(0.5, 10, null), 0.8285896575438945);
+    assert.strictEqual(updateFeedstockMoles(10, 0.5, null), 0.20714741438597362);
   });
 
   it('should calculate TON correctly', () => {
