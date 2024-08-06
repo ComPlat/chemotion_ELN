@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Clipboard from 'clipboard';
 import PropTypes from 'prop-types';
 import {
+  Card,
   Table,
   Button,
   ListGroup,
@@ -347,26 +348,22 @@ export default class LiteratureDetails extends Component {
     });
 
     return (
-      <Panel
-        variant="info"
-        className="format-analysis-panel"
-      >
-        <Panel.Heading>
-          <PanelHeader
-            title={`Literature Management for collection '${label}'`}
-            btns={[
-              <Button
-                key="closeBtn"
-                onClick={this.onClose}
-                variant="danger"
-                size="sm"
-              >
-                <i className="fa fa-times" />
-              </Button>
-            ]}
-          />
-        </Panel.Heading>
-        <Panel.Body>
+      <Card>
+        <Card.Header className="text-bg-primary d-flex justify-content-between">
+          <span>
+            <i className="fa fa-book me-1" />
+            Literature Management for collection '{label}'
+          </span>
+          <Button
+            key="closeBtn"
+            onClick={this.onClose}
+            variant="danger"
+            size="xxsm"
+          >
+            <i className="fa fa-times" />
+          </Button>
+        </Card.Header>
+        <Card.Body>
           <PanelGroup accordion defaultActiveKey="1">
             <Panel
               eventKey="2"
@@ -549,8 +546,8 @@ export default class LiteratureDetails extends Component {
               </Panel.Body>
             </Panel>
           </PanelGroup>
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   }
 }
