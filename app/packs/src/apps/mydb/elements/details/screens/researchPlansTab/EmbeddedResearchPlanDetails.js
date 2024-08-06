@@ -56,7 +56,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     let { researchPlan, expanded } = nextProps;
     if (!(researchPlan instanceof ResearchPlan)) {
       const rResearchPlan = new ResearchPlan(researchPlan);
