@@ -36,11 +36,6 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const Cite = require('citation-js');
 
-
-const clipboardTooltip = () => (
-  <Tooltip id="assign_button">copy to clipboard</Tooltip>
-);
-
 const ElementLink = ({ literature }) => {
   const {
     external_label,
@@ -61,8 +56,8 @@ const ElementLink = ({ literature }) => {
         }
       }}
     >
-      <i className={element_type ? 'icon-'.concat(type) : ''} />
-      &nbsp; {short_label}
+      <i className={`me-2 ${element_type ? `icon-${type}` : ''}`} />
+      {short_label}
     </Button>
   );
 };
@@ -76,8 +71,8 @@ const ElementTypeLink = ({ literature, type }) => {
   } = literature;
   return (
     <Button title={`cited in ${count} ${type}${count && count > 1 ? 's' : ''}`}>
-      <i className={`icon-${type}`} />
-      &nbsp; {count}
+      <i className={`icon-${type} me-2`} />
+      {count}
     </Button>
   );
 };
