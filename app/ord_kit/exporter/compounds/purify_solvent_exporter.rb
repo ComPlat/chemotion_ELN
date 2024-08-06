@@ -20,7 +20,6 @@ module OrdKit
             identifiers: identifiers, #   repeated :identifiers, :message, 1, "ord.CompoundIdentifier"
             amount: nil, #  optional :amount, :message, 2, "ord.Amount"
             reaction_role: reaction_role, #   optional :reaction_role, :enum, 3, "ord.ReactionRole.ReactionRoleType"
-            is_limiting: nil, #   proto3_optional :is_limiting, :bool, 4 # TODO hardcoded empty
             preparations: nil, #   repeated :preparations, :message, 5, "ord.CompoundPreparation"
             source: nil, #   optional :source, :message, 6, "ord.Compound.Source"
             features: nil, #   map :features, :string, :message, 7, "ord.Data"

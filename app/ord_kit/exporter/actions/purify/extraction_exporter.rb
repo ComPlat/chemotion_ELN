@@ -15,25 +15,12 @@ module OrdKit
           end
 
           def steps
-            Array(workup['extraction_steps']).map do |extraction_step|
+            Array(workup['purify_steps']).map do |extraction_step|
               OrdKit::ReactionProcessAction::ActionExtraction::ExtractionStep.new(
-                solvents: solvents_with_ratio(extraction_step['solvents']),
+                solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(extraction_step['solvents']).to_ord,
                 amount: Metrics::AmountExporter.new(extraction_step['amount']).to_ord,
-                flow_rate: OrdKit::Exporter::Metrics::FlowRateExporter.new(extraction_step['flow_rate']).to_ord,
-                duration: OrdKit::Time.new(
-                  value: extraction_step['duration'].to_i / 1000,
-                  precision: nil,
-                  units: OrdKit::Time::TimeUnit::SECOND,
-                ),
-              )
-            end
-          end
-
-          def solvents_with_ratio(solvents)
-            solvents&.map do |solvent|
-              OrdKit::CompoundWithRatio.new(
-                compound: OrdKit::Exporter::Compounds::PurifySampleOrDiverseSolventExporter.new(solvent['id']).to_ord,
-                ratio: solvent['ratio'].to_s,
+                flow_rate: Metrics::FlowRateExporter.new(extraction_step['flow_rate']).to_ord,
+                duration: Metrics::TimeSpanExporter.new(extraction_step['duration']).to_ord,
               )
             end
           end
