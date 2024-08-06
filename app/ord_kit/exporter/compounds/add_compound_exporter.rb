@@ -40,9 +40,15 @@ module OrdKit
           OrdKit::Exporter::Metrics::AmountExporter.new(workup['target_amount']).to_ord
         end
 
+        def percentage
+          OrdKit::Exporter::Metrics::Amounts::PercentageExporter.new(
+            { value: workup.dig('target_amount', 'percentage') }.stringify_keys,
+          ).to_ord
+        end
+
         def preparations
           [
-            Preparations::CompoundPreparationsExporter.new(action).to_ord,
+            Preparations::CompoundPreparationsExporter.new(@action).to_ord,
           ].compact
         end
 
