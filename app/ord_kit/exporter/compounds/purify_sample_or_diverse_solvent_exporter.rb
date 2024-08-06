@@ -16,7 +16,7 @@ module OrdKit
         end
 
         def to_ord
-          CompoundExporter.new(@sample).to_ord
+          PurifyCompoundExporter.new(@sample).to_ord
         end
       end
     end

@@ -23,27 +23,13 @@ module OrdKit
           end
 
           def steps
-            Array(workup['filtration_steps']).map do |filtration_step|
+            Array(workup['purify_steps']).map do |filtration_step|
               OrdKit::ReactionProcessAction::ActionFiltration::FiltrationStep.new(
-                solvents: solvents_with_ratio(filtration_step['solvents']),
+                solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(filtration_step['solvents']).to_ord,
                 amount: Metrics::AmountExporter.new(filtration_step['amount']).to_ord,
                 repetitions: filtration_step['repetitions']['value'],
                 rinse_vessel: filtration_step['rinse_vessel'],
-                flow_rate: OrdKit::Exporter::Metrics::FlowRateExporter.new(filtration_step['flow_rate']).to_ord,
-                duration: OrdKit::Time.new(
-                  value: filtration_step['duration'].to_i / 1000,
-                  precision: nil,
-                  units: OrdKit::Time::TimeUnit::SECOND,
-                ),
-              )
-            end
-          end
-
-          def solvents_with_ratio(solvents)
-            Array(solvents).map do |solvent|
-              OrdKit::CompoundWithRatio.new(
-                compound: Compounds::PurifySampleOrDiverseSolventExporter.new(solvent['id']).to_ord,
-                ratio: solvent['ratio'].to_s,
+                duration: Metrics::TimeSpanExporter.new(filtration_step['duration']).to_ord,
               )
             end
           end

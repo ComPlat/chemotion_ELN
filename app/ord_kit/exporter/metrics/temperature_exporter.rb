@@ -6,7 +6,7 @@ module OrdKit
       class TemperatureExporter < OrdKit::Exporter::Metrics::Base
         def to_ord
           Temperature.new(
-            value: value.to_f,
+            value: @value.to_f,
             precision: nil, # hardcoded empty
             units: temperature_unit,
           )
@@ -15,7 +15,7 @@ module OrdKit
         private
 
         def temperature_unit
-          Temperature::TemperatureUnit.const_get unit.to_s
+          Temperature::TemperatureUnit.const_get @unit.to_s
         rescue NameError
           Temperature::TemperatureUnit::UNSPECIFIED
         end

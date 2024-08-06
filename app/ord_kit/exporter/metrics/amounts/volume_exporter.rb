@@ -15,7 +15,7 @@ module OrdKit
 
           def to_ord
             Volume.new(
-              value: value.to_f,
+              value: @value.to_f,
               precision: nil,
               units: units,
             )
@@ -24,7 +24,7 @@ module OrdKit
           private
 
           def units
-            Volume::VolumeUnit.const_get ORD_UNIT_MAPPING[unit].to_s
+            Volume::VolumeUnit.const_get ORD_UNIT_MAPPING[@unit].to_s
           rescue NameError
             Volume::VolumeUnit::UNSPECIFIED
           end

@@ -51,7 +51,7 @@ module Entities
         def removable_samples(reaction_process_step)
           {
             FROM_REACTION: all_reaction_samples_options(reaction_process_step),
-            FROM_STEP: current_step_samples_options(reaction_process_step),
+            FROM_REACTION_STEP: current_step_samples_options(reaction_process_step),
             FROM_SAMPLE: saved_sample_with_solvents_options(reaction_process_step),
             DIVERSE_SOLVENTS: [],
             STEPWISE: [],
@@ -133,16 +133,14 @@ module Entities
             {
               amount: { value: action.sample.target_amount_value, unit: action.sample.target_amount_unit },
               solvents: solvents,
-              solvents_amount: action.workup['extra_solvents_amount'],
+              solvents_amount: action.workup['solvents_amount'],
             },
           )
         end
 
         def added_samples_acting_as(reaction_process_step, acts_as)
           reaction_process_step.added_materials(acts_as).map do |sample|
-            sample_minimal_option(sample,
-                                  acts_as).merge({ value: sample.target_amount_value,
-                                                   unit: sample.target_amount_unit })
+            sample_minimal_option(sample, acts_as)
           end
         end
 
