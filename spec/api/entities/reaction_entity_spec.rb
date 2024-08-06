@@ -306,7 +306,6 @@ describe Entities::ReactionEntity do
           variations: [],
           vessel_size: '***',
           gaseous: '***',
-          vessel_size: '***',
         )
       end
 
