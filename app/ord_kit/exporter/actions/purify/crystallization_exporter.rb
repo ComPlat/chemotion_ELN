@@ -8,33 +8,17 @@ module OrdKit
           def to_ord
             {
               crystallization: {
-                solvents: solvents_with_ratio(workup['solvents']),
+                # crystallization has only 1 purify_step but it is wrapped in an array for consistency.
+                solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(
+                  workup.dig('purify_steps', 0, 'solvents'),
+                ).to_ord,
                 amount: Metrics::AmountExporter.new(workup['amount']).to_ord,
                 temperature: Metrics::TemperatureExporter.new(workup['TEMPERATURE']).to_ord,
-                heating_duration: duration(workup['heating_duration']),
-                cooling_duration: duration(workup['cooling_duration']),
+                heating_duration: Metrics::TimeSpanExporter.new(workup['heating_duration']).to_ord,
+                cooling_duration: Metrics::TimeSpanExporter.new(workup['cooling_duration']).to_ord,
                 crystallization_mode: crystallization_mode,
               },
             }
-          end
-
-          def solvents_with_ratio(solvents)
-            solvents&.map do |solvent|
-              sample = Medium::Additive.find_by(id: solvent['id'])
-
-              OrdKit::CompoundWithRatio.new(
-                compound: OrdKit::Exporter::Compounds::PurifyCompoundExporter.new(sample).to_ord,
-                ratio: solvent['ratio'].to_s,
-              )
-            end
-          end
-
-          def duration(milliseconds)
-            OrdKit::Time.new(
-              value: milliseconds.to_i / 1000,
-              precision: nil,
-              units: OrdKit::Time::TimeUnit::SECOND,
-            )
           end
 
           def crystallization_mode

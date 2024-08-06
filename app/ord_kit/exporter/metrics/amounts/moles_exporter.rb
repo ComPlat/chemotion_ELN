@@ -15,7 +15,7 @@ module OrdKit
 
           def to_ord
             Moles.new(
-              value: value.to_f,
+              value: @value.to_f,
               precision: nil,
               units: units,
             )
@@ -24,7 +24,7 @@ module OrdKit
           private
 
           def units
-            Moles::MolesUnit.const_get ORD_UNIT_MAPPING[unit].to_s
+            Moles::MolesUnit.const_get ORD_UNIT_MAPPING[@unit].to_s
           rescue NameError
             Moles::MolesUnit::UNSPECIFIED
           end

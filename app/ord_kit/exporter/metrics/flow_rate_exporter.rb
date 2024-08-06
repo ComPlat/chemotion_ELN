@@ -11,7 +11,7 @@ module OrdKit
 
         def to_ord
           FlowRate.new(
-            value: value.to_f,
+            value: @value.to_f,
             precision: nil,
             units: flow_rate_unit,
           )
@@ -20,7 +20,7 @@ module OrdKit
         private
 
         def flow_rate_unit
-          FlowRate::FlowRateUnit.const_get ORD_UNIT_MAPPING[unit].to_s
+          FlowRate::FlowRateUnit.const_get ORD_UNIT_MAPPING[@unit].to_s
         rescue NameError
           FlowRate::FlowRateUnit::UNSPECIFIED
         end

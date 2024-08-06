@@ -6,7 +6,7 @@ module OrdKit
       class PowerExporter < OrdKit::Exporter::Metrics::Base
         def to_ord
           Power.new(
-            value: value.to_f,
+            value: @value.to_f,
             precision: nil,
             units: units,
           )
@@ -15,7 +15,7 @@ module OrdKit
         private
 
         def units
-          Power::PowerUnit.const_get unit
+          Power::PowerUnit.const_get @unit.to_s
         rescue NameError
           Power::PowerUnit::UNSPECIFIED
         end

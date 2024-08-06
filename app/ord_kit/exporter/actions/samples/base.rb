@@ -47,20 +47,12 @@ module OrdKit
           end
 
           def addition_time
-            OrdKit::Time.new(
-              value: 0, # TODO: redundant start_time has been removed, needs to be calculated.
-              # action.start_time.to_i,
-              precision: nil,
-              units: OrdKit::Time::TimeUnit::SECOND,
-            )
+            # TODO: redundant `action.start_time` has been removed, needs to be calculated.
+            Metrics::TimeSpanExporter.new(0).to_ord
           end
 
           def addition_duration
-            OrdKit::Time.new(
-              value: action.workup['duration'].to_i / 1000,
-              precision: nil,
-              units: OrdKit::Time::TimeUnit::SECOND,
-            )
+            Metrics::TimeSpanExporter.new(action.workup['duration']).to_ord
           end
 
           # Override where applicable (i.e. Actions ADD)

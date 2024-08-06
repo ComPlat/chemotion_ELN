@@ -9,7 +9,7 @@ module OrdKit
 
           def components
             [
-              OrdKit::Exporter::Compounds::AddCompoundExporter.new(action).to_ord,
+              OrdKit::Exporter::Compounds::AddCompoundExporter.new(@action).to_ord,
             ]
           end
         end

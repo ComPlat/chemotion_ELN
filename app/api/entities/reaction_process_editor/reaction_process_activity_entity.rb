@@ -3,7 +3,7 @@
 module Entities
   module ReactionProcessEditor
     class ReactionProcessActivityEntity < Grape::Entity
-      expose(:id, :step_id, :activity_name, :position, :workup, :sample_names)
+      expose(:id, :step_id, :activity_name, :position, :workup)
 
       expose :sample, using: 'Entities::ReactionProcessEditor::SampleEntity'
       expose :medium, using: 'Entities::ReactionProcessEditor::MediumEntity'
@@ -29,14 +29,6 @@ module Entities
 
         # source_step is stored only as index (1-indexed) in its reaction_step (for human readability in ELN).
         object.reaction_process_step.siblings[ris.reaction_step - 1]&.name
-      end
-
-      def sample_names
-        # Supportive attribute for easy display in frontend.
-        names = Sample.where(id: object.workup['purify_solvent_sample_ids']).map(&:preferred_label)
-        names << object.sample.preferred_label if object.sample?
-        names << object.medium.preferred_label if object.medium?
-        names.join(', ')
       end
 
       def step_id

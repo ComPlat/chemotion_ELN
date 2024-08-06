@@ -6,13 +6,9 @@ module OrdKit
       class Base
         def initialize(amount)
           @amount = amount
-          @value = amount&.dig('value')
-          @unit = amount&.dig('unit').to_s
+          @value = @amount&.dig('value')
+          @unit = @amount&.dig('unit').to_s
         end
-
-        private
-
-        attr_reader :amount, :value, :unit
       end
     end
   end

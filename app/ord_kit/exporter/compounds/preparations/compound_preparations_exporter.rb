@@ -20,8 +20,8 @@ module OrdKit
 
           def samples_preparation
             ReactionProcessEditor::SamplesPreparation.find_by(
-              reaction_process: action.reaction_process,
-              sample: action.sample,
+              reaction_process: @action.reaction_process,
+              sample: @action.sample,
             )
           end
 

@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (enhancing but incompatible in either direction to the original ORD Schema).
 //
-// v0.6.1
-// (draft, 28.07.2024)
+// v0.6.3
+// (draft, 05.08.2024)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -86,9 +86,9 @@ message ReactionStep {
   // The position of this step within the Reaction
   int32 position = 2;
   // The start_time (in seconds) in the total reaction.
-  Time start_time = 3;
+  TimeSpan start_time = 3;
   // The total duration.
-  Time duration = 4;
+  TimeSpan duration = 4;
   // The setup specifies how the reaction step was prepared.
   // Most importantly it contains the Vessel.
   ReactionSetup setup = 5;
@@ -161,7 +161,7 @@ message ReactionInput {
   int32 addition_order = 3;
   // When the addition event took place in terms of the reaction time (or,
   // in the case of flow chemistry, the residence time).
-  Time addition_time = 4;
+  TimeSpan addition_time = 4;
   message AdditionSpeed {
     enum AdditionSpeedType {
       // Unspecified.
@@ -182,7 +182,7 @@ message ReactionInput {
   // The qualitative rate of addition.
   AdditionSpeed addition_speed = 5;
   // Quantitatively, how long addition took
-  Time addition_duration = 6;
+  TimeSpan addition_duration = 6;
   // For continuous synthesis, we instead specify a flow rate.
   FlowRate flow_rate = 7;
   // The device used for addition.
@@ -198,21 +198,22 @@ message ReactionInput {
  *
  */
 message ReactionProcessAction {
-  string description = 1;
-  int32 position = 2;
-  Time start_time = 3;
-  Time duration = 4;
-  repeated Equipment equipment = 5;
-  optional Vessel vessel = 6;
+  string id = 1;
+  string description = 2;
+  int32 position = 3;
+  TimeSpan start_time = 4;
+  TimeSpan duration = 5;
+  repeated Equipment equipment = 6;
+  optional Vessel vessel = 7;
   oneof action {
-    ActionAdd addition = 7;
-    ActionRemove removal = 8;
-    ReactionConditions conditions = 9;
-    ActionPurify purify = 10;
-    ActionTransfer transfer = 11;
-    ActionWait wait = 12;
-    ActionSaveSample save_sample = 13;
-    Analysis analysis = 14;
+    ActionAdd addition = 8;
+    ActionRemove removal = 9;
+    ReactionConditions conditions = 10;
+    ActionPurify purify = 11;
+    ActionTransfer transfer = 12;
+    ActionWait wait = 13;
+    ActionSaveSample save_sample = 14;
+    Analysis analysis = 15;
   }
 
   message ActionAdd {
@@ -221,11 +222,30 @@ message ReactionProcessAction {
   }
 
   message ActionRemove {
-    optional ReactionRole.ReactionRoleType reaction_role = 1;
-    ReactionInput input = 2;
+    message DiverseSolvents {
+      repeated CompoundWithRatio solvents = 1;
+      Amount solvents_amount = 2;
+    }
+    message FromReaction {
+      repeated Compound samples = 1;
+      Amount amount = 2;
+      repeated CompoundWithRatio solvents = 3;
+      Amount solvents_amount = 4;
+    }
+    message FromMethod {
+      ReactionConditions starter_conditions = 1;
+      repeated ReactionConditionLimits limits = 2;
+    }
 
-    string replacement_medium = 3; // TODO: Compound? maybe ReactionInput?
-    int32 remove_repetitions = 4;
+    Automation.AutomationMode automation = 1;
+    oneof origin {
+      FromReaction from_reaction = 2;
+      FromReaction from_reaction_step = 3;
+      FromReaction from_sample = 4;
+      FromMethod from_method = 5;
+      FromMethod stepwise = 7;
+      DiverseSolvents diverse_solvents = 6;
+    }
   }
 
   message ActionCrystallization {
@@ -239,8 +259,8 @@ message ReactionProcessAction {
     repeated CompoundWithRatio solvents = 1;
     Amount amount = 2;
     Temperature temperature = 3;
-    Time heating_duration = 4;
-    Time cooling_duration = 5;
+    TimeSpan heating_duration = 4;
+    TimeSpan cooling_duration = 5;
     CrystallizationMode crystallization_mode = 6;
   }
 
@@ -271,7 +291,7 @@ message ReactionProcessAction {
         THERMAL_CONDUCTIVIT = 9;
       }
 
-      Time duration = 1;
+      TimeSpan duration = 1;
       repeated CompoundWithRatio solvents = 2;
       Amount amount = 3;
       FlowRate flow_rate = 4;
@@ -287,7 +307,6 @@ message ReactionProcessAction {
     }
 
     message Automated {
-
       message WavelengthList {
         repeated Wavelength peaks = 1;
         bool is_range = 2;
@@ -309,7 +328,7 @@ message ReactionProcessAction {
 
   message ActionExtraction {
     message ExtractionStep {
-      Time duration = 1;
+      TimeSpan duration = 1;
       repeated CompoundWithRatio solvents = 2;
       Amount amount = 3;
       FlowRate flow_rate = 4;
@@ -331,7 +350,7 @@ message ReactionProcessAction {
       KEEP_PRECIPITATE = 2;
     }
     message FiltrationStep {
-      Time duration = 1;
+      TimeSpan duration = 1;
       repeated CompoundWithRatio solvents = 2;
       Amount amount = 3;
       FlowRate flow_rate = 4;
@@ -361,7 +380,7 @@ message ReactionProcessAction {
     Percentage percentage = 6;
   }
 
-  message ActionWait { Time duration = 1; }
+  message ActionWait { TimeSpan duration = 1; }
 
   message ActionSaveSample {
     enum OriginType {
@@ -372,7 +391,7 @@ message ReactionProcessAction {
     }
 
     message PurifyOrigin {
-      int32 origin_action_position = 1;
+      string origin_action_id = 1;
       int32 origin_purify_step_position = 2;
       repeated Compound solvents = 3;
       Amount amount = 4;
@@ -382,7 +401,7 @@ message ReactionProcessAction {
     Compound sample = 1;
     repeated Compound molecular_entities = 2;
     Vessel vessel = 3;
-    OriginType origin_type = 4;
+    OriginType sample_origin_type = 4;
     optional PurifyOrigin purify_origin = 5;
   }
 }
@@ -467,9 +486,8 @@ message Compound {
   // and list all constituent compounds in the "components" field.
   repeated CompoundIdentifier identifiers = 1;
   Amount amount = 2;
-  ReactionRole.ReactionRoleType reaction_role = 3;
-  // Whether this species is intended to be a limiting reactant.
-  optional bool is_limiting = 4;
+  optional Percentage percentage = 3;
+  ReactionRole.ReactionRoleType reaction_role = 4;
   repeated CompoundPreparation preparations = 5;
   message Source {
     // Name of the vendor or supplier the compound was purchased from.
@@ -494,6 +512,8 @@ message Compound {
 
   // Optional flag when adding solvents.
   optional bool is_waterfree_solvent = 10;
+
+  string location = 11;
 }
 
 message CompoundWithRatio {
@@ -844,6 +864,11 @@ message ReactionConditions {
   string details = 10;
 }
 
+message ReactionConditionLimits {
+  ReactionConditions conditions = 1;
+  TimeSpan duration = 2;
+}
+
 message PhAdjustConditions {
   enum PhAdjustMeasurementType {
     UNSPECIFIED = 0;
@@ -891,7 +916,7 @@ message TemperatureConditions {
     }
     MeasurementType type = 1;
     string details = 2;
-    Time time = 3;
+    TimeSpan time = 3;
     Temperature temperature = 4;
   }
   repeated Measurement measurements = 3;
@@ -943,7 +968,7 @@ message PressureConditions {
     }
     MeasurementType type = 1;
     string details = 2;
-    Time time = 3;
+    TimeSpan time = 3;
     Pressure pressure = 4;
   }
   repeated Measurement measurements = 4;
@@ -1021,7 +1046,7 @@ message ElectrochemistryConditions {
   string cathode_material = 6;
   Length electrode_separation = 7;
   message Measurement {
-    Time time = 1;
+    TimeSpan time = 1;
     oneof kind {
       Current current = 2;
       Voltage voltage = 3;
@@ -1096,7 +1121,7 @@ message ReactionNotes {
 }
 
 message ReactionObservation {
-  Time time = 1;      // The reaction time at which the observation was made.
+  TimeSpan time = 1;      // The reaction time at which the observation was made.
   string comment = 2; // e.g. what color is the reaction?
   Data image = 3;
 }
@@ -1166,7 +1191,7 @@ message ReactionWorkup {
   // Include step-specific details such as purpose of an addition, e.g.,
   // "crystallization". Include method details, e.g., "layer diffusion".
   string details = 2;
-  Time duration = 3;
+  TimeSpan duration = 3;
   ReactionInput input = 4;
   // When aliquotting a portion of the reaction mixture, the amount is
   // specified by mass or volume. Note that the amounts for additions should
@@ -1194,7 +1219,7 @@ message ReactionWorkup {
  */
 message ReactionOutcome {
   // Reaction time (for flow, equivalent to residence time or spacetime).
-  Time reaction_time = 1;
+  TimeSpan reaction_time = 1;
   // Conversion with respect to the sole limiting reactant. If there is
   // ambiguity in which species the conversion is defined with respect to, the
   // quantification of leftover starting materials should be defined as the
@@ -1347,7 +1372,7 @@ message ProductMeasurement {
   }
   // A time to be used only when specifying the retention time at which a peak
   // area or intensity was calculated, e.g., as in LC, LCMS, GC, or GCMS.
-  Time retention_time = 12;
+  TimeSpan retention_time = 12;
   // More details about how a particular performance metric (e.g., counts)
   // was calculated from an analysis using mass spec. This includes
   // distinguishing total ion current (TIC) counts from extracted ion
@@ -1484,13 +1509,13 @@ message RecordEvent {
  * of the measurement in the same units as the measurement itself. Often the
  * precision will be the standard deviation from an instrument calibration.
  */
-message Time {
+message TimeSpan {
   enum TimeUnit {
     UNSPECIFIED = 0;
-    DAY = 4;
-    HOUR = 1;
+    SECOND = 1;
     MINUTE = 2;
-    SECOND = 3;
+    HOUR = 3;
+    DAY = 4;
   }
   optional float value = 1;
   // Precision of the measurement (with the same units as `value`).

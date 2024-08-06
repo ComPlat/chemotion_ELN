@@ -15,17 +15,16 @@ module OrdKit
           OrdKit::Compound.new(
             identifiers: identifiers,
             amount: amount,
+            percentage: percentage,
             reaction_role: reaction_role,
-            is_limiting: nil,
             preparations: preparations,
             source: compound_source,
             features: nil,
             analyses: nil,
             purity: purity,
             is_waterfree_solvent: workup['is_waterfree_solvent'],
+            location: workup['location'],
           )
-        rescue StandardError
-          raise StandardError, workup
         end
 
         private
@@ -37,6 +36,10 @@ module OrdKit
         end
 
         def amount
+          nil
+        end
+
+        def percentage
           nil
         end
 
