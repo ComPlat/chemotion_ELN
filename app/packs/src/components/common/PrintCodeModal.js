@@ -70,8 +70,8 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
     Object.entries(json).forEach(([key, value]) => {
       if (value != null) {
         if (key === 'code_type') {
-          if (value !== 'bar_code' && value !== 'qr_code' && value !== 'data_matrix') {
-            tmpUrlError.push('Invalid code type. correct values: bar_code, qr_code, data_matrix. Value fixed to qr_code');
+          if (value !== 'bar_code' && value !== 'qr_code' && value !== 'data_matrix_code') {
+            tmpUrlError.push('Invalid code type. correct values: bar_code, qr_code, data_matrix_code. Value fixed to qr_code');
           }
         }
         if (key === 'code_image_size') {

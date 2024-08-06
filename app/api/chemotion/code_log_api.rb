@@ -74,20 +74,43 @@ module Chemotion
           content_type('application/pdf')
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
-
-          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:code_image_size], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name], params[:code_log], params[:text_position], params[:image]).render
+          body CodePdf.new(elements,
+          width: params[:width],
+          element_type: params[:element_type],
+          code_type: params[:code_type],
+          code_image_size: params[:code_image_size],
+          display_sample: params[:displaySample],
+          name: params[:name],
+          short_label: params[:short_label],
+          external_label: params[:external_label],
+          molecule_name: params[:molecule_name],
+          code_log: params[:code_log],
+          text_position: params[:text_position],
+          image: params[:image]).render
         end
 
         post do
           #TODO vide supra
           ids = params[:ids][0] && params[:ids][0].split(/,/).map(&:to_i)
           elements = params[:element_type].classify.constantize.where(id: ids)
+          puts params
 
           content_type('application/pdf')
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
-
-          body CodePdf.new(elements, params[:width], params[:element_type], params[:code_type], params[:code_image_size], params[:displaySample], params[:name], params[:short_label], params[:external_label], params[:molecule_name], params[:code_log], params[:text_position], params[:image]).render
+          body CodePdf.new(elements,
+          width: params[:width],
+          element_type: params[:element_type],
+          code_type: params[:codeType],
+          code_image_size: params[:code_image_size],
+          display_sample: params[:displaySample],
+          name: params[:name],
+          short_label: params[:short_label],
+          external_label: params[:external_label],
+          molecule_name: params[:molecule_name],
+          code_log: params[:code_log],
+          text_position: params[:text_position],
+          image: params[:image]).render
         end
       end
 
