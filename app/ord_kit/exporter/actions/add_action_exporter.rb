@@ -10,7 +10,7 @@ module OrdKit
           {
             addition: OrdKit::ReactionProcessAction::ActionAdd.new(
               reaction_role: workup['acts_as'],
-              input: Actions::Samples::AddSampleExporter.new(action).to_ord,
+              input: Actions::Samples::AddSampleExporter.new(@action).to_ord,
             ),
           }
         end

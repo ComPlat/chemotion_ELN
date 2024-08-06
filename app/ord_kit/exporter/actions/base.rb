@@ -11,11 +11,12 @@ module OrdKit
           @action = action
         end
 
-        delegate :workup, to: :action
+        delegate :workup, to: :@action
 
         def to_ord(starts_at:)
           OrdKit::ReactionProcessAction.new(
             {
+              id: @action.id,
               description: description,
               position: position,
               start_time: start_time(starts_at),
@@ -24,13 +25,9 @@ module OrdKit
               vessel: Vessels::ReactionProcessVesselExporter.new(@action.reaction_process_vessel).to_ord,
             }.merge(action_type_attributes),
           )
-          # rescue StandardError => e
-          #   raise StandardError,  workup.to_s + e.to_s
         end
 
         private
-
-        attr_reader :action
 
         # ORD attributes in order of ORD definition by convention (they are numbered).
         def description
@@ -38,31 +35,21 @@ module OrdKit
         end
 
         def position
-          action.position + 1
+          @action.position + 1
         end
 
         def start_time(starts_at)
-          OrdKit::Time.new(
-            value: starts_at.to_i / 1000,
-            precision: nil,
-            units: OrdKit::Time::TimeUnit::SECOND,
-          )
+          OrdKit::Exporter::Metrics::TimeSpanExporter.new(starts_at).to_ord
         end
 
         def duration
-          # We deliver all Times in seconds per convention. However currently we store milliseconds.
-          # (this is the finest granularity, milliseconds not available in ORD). cbuggle, 6.1.2022
-          OrdKit::Time.new(
-            value: workup['duration'].to_i / 1000,
-            precision: nil,
-            units: OrdKit::Time::TimeUnit::SECOND,
-          )
+          OrdKit::Exporter::Metrics::TimeSpanExporter.new(workup['duration']).to_ord
         end
 
         def equipment
-          return unless workup['equipment']
+          return unless workup.dig('EQUIPMENT', 'value')
 
-          workup['equipment'].map do |equipment|
+          workup.dig('EQUIPMENT', 'value').map do |equipment|
             OrdKit::Equipment.new(
               type: equipment_type(equipment),
               details: '', # Currently n/a in ELN.

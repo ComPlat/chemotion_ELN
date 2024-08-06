@@ -20,7 +20,10 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
       reaction_process_vessel: anything,
       select_options: {
         added_materials: [],
-        removable_samples: { 'ADDITIVE' => [], 'MEDIUM' => [], 'SOLVENT' => [], 'DIVERSE_SOLVENT' => [] },
+        removable_samples: {
+          DIVERSE_SOLVENTS: [], FROM_METHOD: [], FROM_REACTION: [],
+          FROM_REACTION_STEP: [], FROM_SAMPLE: [], STEPWISE: []
+        }.stringify_keys,
         transferable_samples: [],
         transfer_targets: array_including(hash_including({ value: reaction_process_step.id }.deep_stringify_keys)),
         mounted_equipment: [],
@@ -60,10 +63,24 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
     end
 
     it 'removable_samples' do
-      expected_medium_hash = { acts_as: 'MEDIUM', id: medium.id }.deep_stringify_keys
+      expected_medium_hash = { DIVERSE_SOLVENTS: [],
+                               FROM_REACTION_STEP: [hash_including(
+                                 { acts_as: 'MEDIUM', label: medium.label }.stringify_keys,
+                               )],
+                               FROM_REACTION: [
+                                 hash_including(
+                                   { acts_as: 'MEDIUM', label: medium.label }.stringify_keys,
+                                 ),
+                               ],
+                               FROM_SAMPLE: [hash_including(
+                                 { acts_as: 'SAMPLE', label: 'iupac_name' }.stringify_keys,
+                               )],
+                               FROM_METHOD: [],
+                               STEPWISE: [] }
+                             .deep_stringify_keys
 
       expect(parsed_select_options['removable_samples'])
-        .to include({ 'MEDIUM' => include(hash_including(expected_medium_hash)) })
+        .to include(expected_medium_hash)
     end
 
     it 'assigned_vessel' do

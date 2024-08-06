@@ -7,10 +7,10 @@ module OrdKit
         OrdKit::ReactionStep.new(
           reaction_step_id: model.id,
           position: model.position + 1,
-          setup: setup,
-          actions: reaction_process_activities,
           start_time: start_time(starts_at),
           duration: duration,
+          setup: setup,
+          actions: reaction_process_activities,
           outcomes: outcomes,
         )
       end
@@ -35,19 +35,11 @@ module OrdKit
       end
 
       def start_time(starts_at)
-        OrdKit::Time.new(
-          value: starts_at.to_i / 1000, # model.start_time.to_i,
-          precision: nil,
-          units: OrdKit::Time::TimeUnit::SECOND,
-        )
+        OrdKit::Exporter::Metrics::TimeSpanExporter.new(starts_at).to_ord
       end
 
       def duration
-        OrdKit::Time.new(
-          value: model.duration.to_i / 1000,
-          precision: nil,
-          units: OrdKit::Time::TimeUnit::SECOND,
-        )
+        OrdKit::Exporter::Metrics::TimeSpanExporter.new(model.duration).to_ord
       end
 
       def outcomes

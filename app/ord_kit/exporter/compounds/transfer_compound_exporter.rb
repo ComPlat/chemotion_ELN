@@ -39,7 +39,7 @@ module OrdKit
 
         def preparations
           [
-            Preparations::CompoundPreparationsExporter.new(action).to_ord,
+            Preparations::CompoundPreparationsExporter.new(@action).to_ord,
           ].compact
         end
 
