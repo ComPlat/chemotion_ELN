@@ -1,5 +1,3 @@
-/* eslint-disable object-shorthand, no-trailing-spaces,
-object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
@@ -26,7 +24,7 @@ export default class PrivateNoteElement extends React.Component {
       note = PrivateNote.buildEmpty();
     }
     note.content = value;
-    this.setState({ note: note });
+    this.setState({ note });
   }
 
   fetchNote(element) {
@@ -36,7 +34,7 @@ export default class PrivateNoteElement extends React.Component {
 
     PrivateNoteFetcher.fetchByNoteableId(element.id, element.type).then((note) => {
       if (note != null) {
-        this.setState({ note: note });
+        this.setState({ note });
       }
     }).catch((errorMessage) => {
       console.log(errorMessage);
@@ -49,24 +47,25 @@ export default class PrivateNoteElement extends React.Component {
     if (!element || !note) {
       return;
     }
-    this.setState({ isSaving: true })
+    this.setState({ isSaving: true });
     if (!note.created_at) {
       const params = {
-        content: note.content, noteable_id: element.id,
+        content: note.content,
+        noteable_id: element.id,
         noteable_type: element.type
       };
       PrivateNoteFetcher.create(params).then((newNote) => {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({ isSaving: false })
+        this.setState({ isSaving: false });
       });
     } else {
       PrivateNoteFetcher.update(note).then((newNote) => {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({ isSaving: false })
+        this.setState({ isSaving: false });
       });
     }
   }
@@ -107,11 +106,11 @@ export default class PrivateNoteElement extends React.Component {
           />
         </Form.Group>
       </div>
-    )
+    );
   }
 }
 
 PrivateNoteElement.propTypes = {
-  element: PropTypes.object,
-  handlePrivateNoteChanged: PropTypes.func,
+  element: PropTypes.object.isRequired,
+  disabled: PropTypes.bool.isRequired,
 };
