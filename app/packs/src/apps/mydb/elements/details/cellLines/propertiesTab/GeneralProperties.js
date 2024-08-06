@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Col, Row, FormControl
+  Accordion, Col, Row, Form
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import Creatable from 'react-select3/creatable';
@@ -10,20 +10,10 @@ import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      openPanel: 'common-properties',
-    };
-  }
 
   renderOptionalAttribute(attributeName, defaultValue, onChangeCallBack) {
     return this.renderAttribute(attributeName, defaultValue, onChangeCallBack, true);
@@ -51,10 +41,10 @@ class GeneralProperties extends React.Component {
     }
     return (
       <div>
-        <Row className={"property-row"}>
-          <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
+        <Row className="property-row">
+          <Col componentClass={Form.Label} sm={3}>{attributeName}</Col>
           <Col sm={9}>
-            <FormControl
+            <Form.Control
               disabled={readOnly}
               className={styleClass}
               type="text"
@@ -79,8 +69,8 @@ class GeneralProperties extends React.Component {
     ];
     return (
       <div>
-        <Row className={"property-row"}>
-          <Col componentClass={ControlLabel} sm={3}>Biosafety level</Col>
+        <Row className="property-row">
+          <Col componentClass={Form.Label} sm={3}>Biosafety level</Col>
           <Col sm={9}>
             <Select
               disabled={readOnly}
@@ -105,7 +95,7 @@ class GeneralProperties extends React.Component {
     ];
 
     const unitComponent = readOnly ? (
-      <FormControl
+      <Form.Control
         disabled
         className=""
         type="text"
@@ -128,7 +118,7 @@ class GeneralProperties extends React.Component {
     return (
       <div>
         <Row>
-          <Col componentClass={ControlLabel} sm={3}>Amount *</Col>
+          <Col componentClass={Form.Label} sm={3}>Amount *</Col>
           <Col sm={6}>
             <Amount
               cellLineId={item.id}
@@ -144,121 +134,94 @@ class GeneralProperties extends React.Component {
     );
   }
 
-  renderPanelHeaderIcon(panelName) {
-    const { openPanel } = this.state;
-    const arrowType = openPanel === panelName
-      ? 'fa fa-angle-double-down'
-      : 'fa fa-angle-double-right';
-    return (
-      <div className="floating-right">
-        <i className={arrowType} aria-hidden="true" />
-      </div>
-    );
-  }
-
   render() {
     const { item, readOnly } = this.props;
     const { cellLineDetailsStore } = this.context;
     const cellLineItem = cellLineDetailsStore.cellLines(item.id);
     const cellLineId = item.id;
-    const { openPanel } = this.state;
+
     return (
-      <div>
-        <div />
-        <PanelGroup
-          className="cell-line-properties"
-          id={`cellLinePropertyPanelGroupOf:${cellLineItem.id}`}
-          activeKey={openPanel}
-          accordion
-          onSelect={() => {}}
-        >
-          <Panel
-            eventKey="common-properties"
-            key="common-properties"
-          >
-            <Panel.Heading onClick={() => { this.setState({ openPanel: 'common-properties' }); }}>
-              <InvalidPropertyWarning item={item} propsToCheck={['cellLineName', 'source']} />
-              Common Properties
-              {this.renderPanelHeaderIcon('common-properties')}
-            </Panel.Heading>
-            <Panel.Body collapsible>
+      <Accordion
+        className="cell-line-properties"
+        id={`cellLinePropertyPanelGroupOf:${cellLineItem.id}`}
+        defaultActiveKey="common-properties"
+      >
+        <Accordion.Item eventKey="common-properties">
+          <Accordion.Header>
+            <InvalidPropertyWarning item={item} propsToCheck={['cellLineName', 'source']} />
+            Common Properties
+          </Accordion.Header>
+          <Accordion.Body>
+            <CellLineName
+              id={cellLineId}
+              name={cellLineItem.cellLineName}
+              readOnly={readOnly}
+            />
+            {this.renderAttribute('Source *', cellLineItem.source, (e) => {
+              cellLineDetailsStore.changeSource(cellLineId, e.target.value);
+            })}
 
-              <CellLineName
-                id={cellLineId}
-                name={cellLineItem.cellLineName}
-                readOnly={readOnly}
-              />
-              {this.renderAttribute('Source *', cellLineItem.source, (e) => {
-                cellLineDetailsStore.changeSource(cellLineId, e.target.value);
-              })}
+            {this.renderOptionalAttribute('Disease', cellLineItem.disease, (e) => {
+              cellLineDetailsStore.changeDisease(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Organism', cellLineItem.organism, (e) => {
+              cellLineDetailsStore.changeOrganism(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Tissue', cellLineItem.tissue, (e) => {
+              cellLineDetailsStore.changeTissue(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Growth medium', cellLineItem.growthMedium, (e) => {
+              cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => {
+              cellLineDetailsStore.changeMutation(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Variant', cellLineItem.variant, (e) => {
+              cellLineDetailsStore.changeVariant(cellLineId, e.target.value);
+            })}
+            {this.renderBiosafetyLevel(cellLineItem)}
+            {this.renderOptionalAttribute(
+              'Cryopreservation medium',
+              cellLineItem.cryopreservationMedium,
+              (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); }
+            )}
+            {this.renderOptionalAttribute('Opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => {
+              cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value));
+            })}
+            {this.renderOptionalAttribute('Gender', cellLineItem.gender, (e) => {
+              cellLineDetailsStore.changeGender(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Cell type', cellLineItem.cellType, (e) => {
+              cellLineDetailsStore.changeCellType(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => {
+              cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value);
+            })}
+          </Accordion.Body>
+        </Accordion.Item>
 
-              {this.renderOptionalAttribute('Disease', cellLineItem.disease, (e) => {
-                cellLineDetailsStore.changeDisease(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Organism', cellLineItem.organism, (e) => {
-                cellLineDetailsStore.changeOrganism(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Tissue', cellLineItem.tissue, (e) => {
-                cellLineDetailsStore.changeTissue(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Growth medium', cellLineItem.growthMedium, (e) => {
-                cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => {
-                cellLineDetailsStore.changeMutation(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Variant', cellLineItem.variant, (e) => {
-                cellLineDetailsStore.changeVariant(cellLineId, e.target.value);
-              })}
-              {this.renderBiosafetyLevel(cellLineItem)}
-              {this.renderOptionalAttribute(
-                'Cryopreservation medium',
-                cellLineItem.cryopreservationMedium,
-                (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); }
-              )}
-              {this.renderOptionalAttribute('Opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => {
-                cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value));
-              })}
-              {this.renderOptionalAttribute('Gender', cellLineItem.gender, (e) => {
-                cellLineDetailsStore.changeGender(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Cell type', cellLineItem.cellType, (e) => {
-                cellLineDetailsStore.changeCellType(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => {
-                cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value);
-              })}
-            </Panel.Body>
-          </Panel>
-
-          <Panel
-            eventKey="specific-properties"
-            key="specific-properties"
-          >
-            <Panel.Heading onClick={() => { this.setState({ openPanel: 'specific-properties' }); }}>
-              <InvalidPropertyWarning item={item} propsToCheck={['passage', 'amount', 'unit']} />
-              Item specific properties
-              {this.renderPanelHeaderIcon('specific-properties')}
-            </Panel.Heading>
-            <Panel.Body collapsible>
-              {this.renderAmount(cellLineItem)}
-              {this.renderAttribute('Passage *', cellLineItem.passage, (e) => {
-                cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value));
-              }, false, true)}
-              {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => {
-                cellLineDetailsStore.changeContamination(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => {
-                cellLineDetailsStore.changeItemName(cellLineId, e.target.value);
-              })}
-              {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => {
-                cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value);
-              })}
-            </Panel.Body>
-          </Panel>
-        </PanelGroup>
-
-      </div>
+        <Accordion.Item eventKey="specific-properties">
+          <Accordion.Header>
+            <InvalidPropertyWarning item={item} propsToCheck={['passage', 'amount', 'unit']} />
+            Item specific properties
+          </Accordion.Header>
+          <Accordion.Body>
+            {this.renderAmount(cellLineItem)}
+            {this.renderAttribute('Passage *', cellLineItem.passage, (e) => {
+              cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value));
+            }, false, true)}
+            {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => {
+              cellLineDetailsStore.changeContamination(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => {
+              cellLineDetailsStore.changeItemName(cellLineId, e.target.value);
+            })}
+            {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => {
+              cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value);
+            })}
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     );
   }
 }
