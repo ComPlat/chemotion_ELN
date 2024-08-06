@@ -46,6 +46,7 @@ module Entities
       expose! :tlc_description,                             unless: :displayed_in_list
       expose! :tlc_solvents,                                unless: :displayed_in_list
       expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
+      expose! :vessel_size
     end
 
     expose_timestamps

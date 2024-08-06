@@ -35,6 +35,7 @@ export default class OlsTreeSelect extends Component {
   render() {
     const { rxnos, chmos, bao } = UserStore.getState();
     let treeData = [];
+    const height = this.props.selectName === 'rxno' ? '35px' : null;
     switch (this.props.selectName) {
       case 'rxno':
         treeData = rxnos;
@@ -54,7 +55,7 @@ export default class OlsTreeSelect extends Component {
         treeDefaultExpandedKeys={[this.props.selectName]}
         name={this.props.selectName}
         showSearch
-        style={{ width: '100%' }}
+        style={{ width: '100%', height }}
         value={this.props.selectedValue}
         dropdownStyle={{ maxHeight: 300, overflow: 'auto' }}
         treeData={treeData}

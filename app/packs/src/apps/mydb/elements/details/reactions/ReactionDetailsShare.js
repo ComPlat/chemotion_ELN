@@ -67,6 +67,17 @@ const setReactionByType = (reaction, type, value) => {
     case 'rxno':
       reaction.rxno = value;
       break;
+    case 'vesselSizeAmount':
+      reaction.vessel_size.amount = value;
+      break;
+    case 'vesselSizeUnit':
+      reaction.vessel_size.unit = value;
+      if (value === 'ml') {
+        reaction.vessel_size.amount = reaction.vessel_size.amount * 1000;
+      } else if (value === 'l') {
+        reaction.vessel_size.amount = reaction.vessel_size.amount / 1000;
+      }
+      break;
   }
 
   return { newReaction: reaction, options: options }
