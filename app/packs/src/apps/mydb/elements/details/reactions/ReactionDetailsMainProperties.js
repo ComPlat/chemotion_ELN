@@ -60,6 +60,7 @@ export default class ReactionDetailsMainProperties extends Component {
     this.props.onInputChange('temperatureUnit', unit);
   }
 
+
   render() {
     const { reaction, onInputChange } = this.props;
     const temperatureTooltip = (

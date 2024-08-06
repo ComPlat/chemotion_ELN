@@ -128,7 +128,8 @@ export default class Reaction extends Element {
       type: 'reaction',
       can_update: true,
       can_copy: false,
-      variations: []
+      variations: [],
+      vessel_size: { amount: null, unit: 'ml' },
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -194,7 +195,8 @@ export default class Reaction extends Element {
       timestamp_start: this.timestamp_start,
       timestamp_stop: this.timestamp_stop,
       segments: this.segments.map(s => s.serialize()),
-      variations: this.variations
+      variations: this.variations,
+      vessel_size: this.vessel_size,
     });
   }
 
