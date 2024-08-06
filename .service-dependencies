@@ -1,6 +1,6 @@
 #syntax=v1
 CONVERTER=ComPlat/chemotion-converter-app@v1.2.0
 KETCHER=ptrxyz/chemotion-ketchersvc@main
-SPECTRA=ComPlat/chem-spectra-app@1.2.2
+SPECTRA=ComPlat/chem-spectra-app@1.2.3
 NMRIUMWRAPPER=NFDI4Chem/nmrium-react-wrapper@v0.4.0
 KETCHER2=epam/ketcher@v2.20.0
