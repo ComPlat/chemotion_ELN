@@ -6,9 +6,9 @@ module OrdKit
       class PressureExporter < OrdKit::Exporter::Metrics::Base
         def to_ord
           Pressure.new(
-            value: value.to_f,
+            value: @value.to_f,
             precision: nil,
-            units: Pressure::PressureUnit.const_get(unit),
+            units: Pressure::PressureUnit.const_get(@unit.to_s),
           )
         end
       end

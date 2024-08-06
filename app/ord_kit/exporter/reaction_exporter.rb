@@ -9,19 +9,19 @@ module OrdKit
       def to_ord
         OrdKit::Reaction.new(
           # TODO: Fill all the nils!
+          reaction_id: model.reaction_process.id,
+          conditions: conditions,
+          provenance: OrdKit::Exporter::Reactions::ReactionProvenanceExporter.new(
+            model.reaction_process.provenance,
+          ).to_ord,
+          reaction_steps: OrdKit::Exporter::Reactions::ReactionProcessExporter.new(model.reaction_process).to_ord,
           identifiers: nil,
           inputs: {},
           setup: nil,
-          conditions: conditions,
           observations: nil,
           notes: nil,
           workups: nil,
           outcomes: nil,
-          provenance: OrdKit::Exporter::Reactions::ReactionProvenanceExporter.new(
-            model.reaction_process.provenance,
-          ).to_ord,
-          reaction_id: model.reaction_process.id,
-          reaction_steps: OrdKit::Exporter::Reactions::ReactionProcessExporter.new(model.reaction_process).to_ord,
         )
       end
 

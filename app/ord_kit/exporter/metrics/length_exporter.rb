@@ -6,7 +6,7 @@ module OrdKit
       class LengthExporter < OrdKit::Exporter::Metrics::Base
         def to_ord
           Length.new(
-            value: value.to_f,
+            value: @value.to_f,
             precision: nil,
             units: units,
           )
@@ -15,7 +15,7 @@ module OrdKit
         private
 
         def units
-          Length::LengthUnit.const_get unit.to_s
+          Length::LengthUnit.const_get @unit.to_s
         rescue NameError
           Length::LengthUnit::UNSPECIFIED
         end
