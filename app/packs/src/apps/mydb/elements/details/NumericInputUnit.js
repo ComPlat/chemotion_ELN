@@ -109,11 +109,11 @@ export default function NumericInputUnit(props) {
     <div className={`numericInputWithUnit_${unit}`}>
       {label
         ? <Form.Label>{label}</Form.Label>
-        : <Form.Label style={{ paddingTop: '15px' }} />}
+        : <Form.Label className="pt-2" />}
       <InputGroup>
         <Form.Control
           type="text"
-          className="bs-form--compact"
+          className="px-1"
           disabled={inputDisabled}
           size={bsSize}
           value={value}
@@ -125,7 +125,7 @@ export default function NumericInputUnit(props) {
           disabled={inputDisabled}
           active
           onClick={toggleInput}
-          bsSize={bsSize}
+          size={bsSize}
         >
           {currentUnit}
         </Button>
