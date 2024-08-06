@@ -248,7 +248,7 @@ class Material extends Component {
             type="text"
             bsClass="bs-form--compact form-control"
             bsSize="small"
-            value={calculateYield}
+            value={calculateYield || 'n.d.'}
             disabled
           />
         </div>
@@ -536,6 +536,14 @@ class Material extends Component {
       '' : `${validDigit(m.molarity_value, 3)}${m.molarity_unit}, `;
     const eqv = `${validDigit(m.equivalent, 3)}`;
     const yld = `${Math.round(m.equivalent * 100)}%`;
+
+    if (m.gas_type === 'gas') {
+      const ton = `TON: ${validDigit(m.gas_phase_data.turnover_number, 3)}, `;
+      const tofUnit = (m.gas_phase_data.turnover_frequency.unit).split('TON')[1];
+      const tofValue = m.gas_phase_data.turnover_frequency.value;
+      const tof = `TOF: ${validDigit(tofValue, 3)}${tofUnit}, `;
+      return `${molName} (${mol}${ton}${tof}${yld})`;
+    }
 
     switch (materialGroup) {
       case 'purification_solvents':
