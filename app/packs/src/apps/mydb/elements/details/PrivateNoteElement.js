@@ -2,12 +2,9 @@
 object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  FormGroup, FormControl, OverlayTrigger, Tooltip
-} from 'react-bootstrap';
+import { Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import PrivateNote from 'src/models/PrivateNote';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class PrivateNoteElement extends React.Component {
   constructor(props) {
@@ -84,34 +81,31 @@ export default class PrivateNoteElement extends React.Component {
     }
 
     return (
-      <div style={{ marginBottom: '10px' }}>
-        <FormGroup>
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id="private-note">Only you can see this note</Tooltip>
-          }
-          >
-            <ControlLabel>
-              Private Note
-              {' '}
-              <span className="glyphicon glyphicon-info-sign" />
-            </ControlLabel>
-          </OverlayTrigger>
+      <div className="mb-2">
+        <Form.Group>
+          <Form.Label>
+            Private Note
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id="private-note">Only you can see this note</Tooltip>
+            }
+            >
+              <i className="ms-1 fa fa-info-circle" />
+            </OverlayTrigger>
+          </Form.Label>
 
           <i>{isSaving ? ' saving your note' : ''}</i>
 
-          <FormControl
-            componentClass="textarea"
-            ref={(input) => { this.noteInput = input; }}
-            placeholder={content}
+          <Form.Control
+            as="textarea"
             value={content ?? ''}
             onChange={(e) => this.handleInputChange(e.target.value)}
             rows={2}
             disabled={disabled}
             onBlur={() => this.saveNote()}
           />
-        </FormGroup>
+        </Form.Group>
       </div>
     )
   }
