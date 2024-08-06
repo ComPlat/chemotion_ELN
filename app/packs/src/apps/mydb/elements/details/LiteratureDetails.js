@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Clipboard from 'clipboard';
 import PropTypes from 'prop-types';
 import {
+  Accordion,
   Card,
   Table,
   Button,
@@ -31,10 +32,7 @@ import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import PanelHeader from 'src/components/common/PanelHeader';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import Panel from 'src/components/legacyBootstrap/Panel';
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup';
 
 const Cite = require('citation-js');
 
@@ -317,6 +315,24 @@ export default class LiteratureDetails extends Component {
     });
   }
 
+  renderSectionHeader(title, clipboardText) {
+    return (
+      <div className="d-flex flex-grow-1 align-items-baseline justify-content-between">
+        {title}
+        <OverlayTrigger
+          placement="bottom"
+          overlay={
+            <Tooltip id="assign_button">copy to clipboard</Tooltip>
+          }
+        >
+          <Button size="sm" active className="clipboardBtn me-2" data-clipboard-text={clipboardText}>
+            <i className="fa fa-clipboard" />
+          </Button>
+        </OverlayTrigger>
+      </div>
+    );
+  }
+
   render() {
     const {
       sampleRefs,
@@ -364,120 +380,40 @@ export default class LiteratureDetails extends Component {
           </Button>
         </Card.Header>
         <Card.Body>
-          <PanelGroup accordion defaultActiveKey="1">
-            <Panel
-              eventKey="2"
-              collapsible="true"
-            >
-              <Panel.Heading>
-                <Row>
-                  <Col md={11} style={{ paddingRight: 0 }}>
-                    <Panel.Title toggle>
-                      References for Samples
-                    </Panel.Title>
-                  </Col>
-                  <Col md={1}>
-                    <Panel.Title>
-                      <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentSamples}>
-                          <i className="fa fa-clipboard" />
-                        </Button>
-                      </OverlayTrigger>
-                    </Panel.Title>
-                  </Col>
-                </Row>
-              </Panel.Heading>
-              <Panel.Body collapsible="true">
-                <Table>
-                  <thead>
-                    <tr>
-                      <th width="10%" />
-                      <th width="80%" />
-                      <th width="10%" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sampleRefs.map((lit) => (
-                      <tr key={`sampleRef-${lit.id}`}>
-                        <td><ElementTypeLink literature={lit} type="sample" /></td>
-                        <td className="padding-right">
-                          <Citation literature={lit} />
-                        </td>
-                        <td />
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Panel.Body>
-            </Panel>
-            <Panel
-              eventKey="3"
-              collapsible="true"
-            >
-              <Panel.Heading>
-                <Row>
-                  <Col md={11} style={{ paddingRight: 0 }}>
-                    <Panel.Title toggle>
-                      References for Reactions
-                    </Panel.Title>
-                  </Col>
-                  <Col md={1}>
-                    <Panel.Title>
-                      <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentReactions}>
-                          <i className="fa fa-clipboard" />
-                        </Button>
-                      </OverlayTrigger>
-                    </Panel.Title>
-                  </Col>
-                </Row>
-              </Panel.Heading>
-              <Panel.Body collapsible="true">
-                <Table>
-                  <thead>
-                    <tr>
-                      <th width="10%" />
-                      <th width="80%" />
-                      <th width="10%" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reactionRefs.map((lit) => (
-                      <tr key={`reactionRef-${lit.id}`}>
-                        <td><ElementTypeLink literature={lit} type="reaction" /></td>
-                        <td className="padding-right">
-                          <Citation literature={lit} />
-                        </td>
-                        <td />
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Panel.Body>
-            </Panel>
-            <Panel
-              eventKey="4"
-              collapsible="true"
-            >
-              <Panel.Heading>
-                <Row>
-                  <Col md={11} style={{ paddingRight: 0 }}>
-                    <Panel.Title toggle>
-                      References for selected Elements
-                    </Panel.Title>
-                  </Col>
-                  <Col md={1}>
-                    <Panel.Title>
-                      <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentElements}>
-                          <i className="fa fa-clipboard" />
-                        </Button>
-                      </OverlayTrigger>
-                    </Panel.Title>
-                  </Col>
-                </Row>
-              </Panel.Heading>
-              <Panel.Body collapsible="true">
+          <Accordion>
+            <Accordion.Item eventKey="2">
+              <Accordion.Header>
+                {this.renderSectionHeader('Refenrecs for Samples', contentSamples)}
+              </Accordion.Header>
+              <Accordion.Body>
+                {sampleRefs.map((lit) => (
+                  <Row key={`sampleRef-${lit.id}`} className="mb-3">
+                    <Col xs={1}><ElementTypeLink literature={lit} type="sample" /></Col>
+                    <Col xs={11}><Citation literature={lit} /></Col>
+                  </Row>
+                ))}
+              </Accordion.Body>
+            </Accordion.Item>
+
+            <Accordion.Item eventKey="3">
+              <Accordion.Header>
+                {this.renderSectionHeader('References for Reactions', contentReactions)}
+              </Accordion.Header>
+              <Accordion.Body>
+                {reactionRefs.map((lit) => (
+                  <Row key={`reactionRef-${lit.id}`} className="mb-3">
+                    <Col xs={1}><ElementTypeLink literature={lit} type="reaction" /></Col>
+                    <Col xs={11}><Citation literature={lit} /></Col>
+                  </Row>
+                ))}
+              </Accordion.Body>
+            </Accordion.Item>
+
+            <Accordion.Item eventKey="4">
+              <Accordion.Header>
+                {this.renderSectionHeader('References for selected Elements', contentElements)}
+              </Accordion.Header>
+              <Accordion.Body>
                 <ListGroup>
                   <ListGroupItem>
                     <Row>
@@ -543,9 +479,9 @@ export default class LiteratureDetails extends Component {
                   removeCitation={this.handleLiteratureRemove}
                   userId={currentUser.id}
                 />
-              </Panel.Body>
-            </Panel>
-          </PanelGroup>
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
         </Card.Body>
       </Card>
     );
