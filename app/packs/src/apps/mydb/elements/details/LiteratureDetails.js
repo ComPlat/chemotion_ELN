@@ -32,8 +32,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PanelHeader from 'src/components/common/PanelHeader';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
+import Panel from 'src/components/legacyBootstrap/Panel';
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup';
 
 const Cite = require('citation-js');
 
@@ -326,7 +326,7 @@ export default class LiteratureDetails extends Component {
       literature
     } = this.state;
     const { currentUser } = UserStore.getState();
-    const label = currentCollection ? currentCollection.label : null
+    const label = currentCollection ? currentCollection.label : null;
     let contentSamples = '';
     sampleRefs.forEach((citation) => {
       contentSamples = `${contentSamples}\n${literatureContent(citation, true)}`;
@@ -382,7 +382,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentSamples} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentSamples}>
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -392,9 +392,15 @@ export default class LiteratureDetails extends Component {
               </Panel.Heading>
               <Panel.Body collapsible="true">
                 <Table>
-                  <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
+                  <thead>
+                    <tr>
+                      <th width="10%" />
+                      <th width="80%" />
+                      <th width="10%" />
+                    </tr>
+                  </thead>
                   <tbody>
-                    {sampleRefs.map(lit => (
+                    {sampleRefs.map((lit) => (
                       <tr key={`sampleRef-${lit.id}`}>
                         <td><ElementTypeLink literature={lit} type="sample" /></td>
                         <td className="padding-right">
@@ -421,7 +427,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentReactions} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentReactions}>
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -431,9 +437,15 @@ export default class LiteratureDetails extends Component {
               </Panel.Heading>
               <Panel.Body collapsible="true">
                 <Table>
-                  <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
+                  <thead>
+                    <tr>
+                      <th width="10%" />
+                      <th width="80%" />
+                      <th width="10%" />
+                    </tr>
+                  </thead>
                   <tbody>
-                    {reactionRefs.map(lit => (
+                    {reactionRefs.map((lit) => (
                       <tr key={`reactionRef-${lit.id}`}>
                         <td><ElementTypeLink literature={lit} type="reaction" /></td>
                         <td className="padding-right">
@@ -460,7 +472,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentElements} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentElements}>
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -473,10 +485,19 @@ export default class LiteratureDetails extends Component {
                   <ListGroupItem>
                     <Row>
                       <Col md={8} style={{ paddingRight: 0 }}>
-                        <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..." />
+                        <LiteratureInput
+                          handleInputChange={this.handleInputChange}
+                          literature={literature}
+                          field="doi"
+                          placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
+                        />
                       </Col>
                       <Col md={3} style={{ paddingRight: 0 }}>
-                        <LiteralType handleInputChange={this.handleInputChange} disabled={false} val={literature.litype} />
+                        <LiteralType
+                          handleInputChange={this.handleInputChange}
+                          disabled={false}
+                          val={literature.litype}
+                        />
                       </Col>
                       <Col md={1} style={{ paddingRight: 0 }}>
                         <Button
@@ -494,18 +515,37 @@ export default class LiteratureDetails extends Component {
                         <Citation literature={literature} />
                       </Col>
                       <Col md={7} style={{ paddingRight: 0 }}>
-                        <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="title" placeholder="Title..." />
+                        <LiteratureInput
+                          handleInputChange={this.handleInputChange}
+                          literature={literature}
+                          field="title"
+                          placeholder="Title..."
+                        />
                       </Col>
                       <Col md={4} style={{ paddingRight: 0 }}>
-                        <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="url" placeholder="URL..." />
+                        <LiteratureInput
+                          handleInputChange={this.handleInputChange}
+                          literature={literature}
+                          field="url"
+                          placeholder="URL..."
+                        />
                       </Col>
                       <Col md={1}>
-                        <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} title="add citation to selection" />
+                        <AddButton
+                          onLiteratureAdd={this.handleLiteratureAdd}
+                          literature={literature}
+                          title="add citation to selection"
+                        />
                       </Col>
                     </Row>
                   </ListGroupItem>
                 </ListGroup>
-                <CitationTable rows={selectedRefs} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser.id} />
+                <CitationTable
+                  rows={selectedRefs}
+                  sortedIds={sortedIds}
+                  removeCitation={this.handleLiteratureRemove}
+                  userId={currentUser.id}
+                />
               </Panel.Body>
             </Panel>
           </PanelGroup>
