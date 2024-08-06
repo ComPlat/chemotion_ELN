@@ -37,20 +37,6 @@ import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const Cite = require('citation-js');
 
-const CloseBtn = ({ onClose }) => (
-  <Button
-    key="closeBtn"
-    onClick={onClose}
-    variant="danger"
-    size="sm"
-  >
-    <i className="fa fa-times" />
-  </Button>
-);
-
-CloseBtn.propTypes = {
-  onClose: PropTypes.func.isRequired,
-};
 
 const clipboardTooltip = () => (
   <Tooltip id="assign_button">copy to clipboard</Tooltip>
@@ -368,7 +354,16 @@ export default class LiteratureDetails extends Component {
         <Panel.Heading>
           <PanelHeader
             title={`Literature Management for collection '${label}'`}
-            btns={[<CloseBtn key="close tab" onClose={this.onClose} />]}
+            btns={[
+              <Button
+                key="closeBtn"
+                onClick={this.onClose}
+                variant="danger"
+                size="sm"
+              >
+                <i className="fa fa-times" />
+              </Button>
+            ]}
           />
         </Panel.Heading>
         <Panel.Body>
