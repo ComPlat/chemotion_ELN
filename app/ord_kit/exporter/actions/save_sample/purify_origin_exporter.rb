@@ -13,8 +13,8 @@ module OrdKit
 
           def to_ord
             {
-              purify_origin_action_id: workup['sample_origin_action_id'],
-              purify_origin_step_number: workup.dig('sample_origin_purify_step', 'position'),
+              origin_action_id: workup['sample_origin_action_id'],
+              origin_purify_step_position: workup.dig('sample_origin_purify_step', 'position'),
               amount: Metrics::AmountExporter.new(workup['solvents_amount']).to_ord,
               solvents: solvents_to_ord(workup['solvents']),
               extra_solvents: solvents_to_ord(workup['extra_solvents']),
