@@ -79,6 +79,7 @@ RSpec.describe Chemotion::AdminDeviceAPI do
           key_data: [],
           keys: Pathname.new(device_with_sftp.datacollector_key_name),
           keys_only: true,
+          non_interactive: true,
           timeout: 5,
         ).and_return(sftp_double)
 
