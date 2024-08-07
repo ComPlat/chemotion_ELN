@@ -40,20 +40,18 @@ class GeneralProperties extends React.Component {
       }
     }
     return (
-      <div>
-        <Row className="property-row">
-          <Col componentClass={Form.Label} sm={3}>{attributeName}</Col>
-          <Col sm={9}>
-            <Form.Control
-              disabled={readOnly}
-              className={styleClass}
-              type="text"
-              value={defaultValue}
-              onChange={onChangeCallBack}
-            />
-          </Col>
-        </Row>
-      </div>
+      <Form.Group as={Row} className="mt-3">
+        <Form.Label column sm={3}>{attributeName}</Form.Label>
+        <Col sm={9}>
+          <Form.Control
+            disabled={readOnly}
+            className={styleClass}
+            type="text"
+            value={defaultValue}
+            onChange={onChangeCallBack}
+          />
+        </Col>
+      </Form.Group>
     );
   }
 
@@ -68,20 +66,18 @@ class GeneralProperties extends React.Component {
       { value: 'S3', label: 'Biosafety level 3' }
     ];
     return (
-      <div>
-        <Row className="property-row">
-          <Col componentClass={Form.Label} sm={3}>Biosafety level</Col>
-          <Col sm={9}>
-            <Select
-              disabled={readOnly}
-              options={options}
-              clearable={false}
-              value={item.bioSafetyLevel}
-              onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
-            />
-          </Col>
-        </Row>
-      </div>
+      <Form.Group as={Row} className="mt-3">
+        <Form.Label column sm={3}>Biosafety level</Form.Label>
+        <Col sm={9}>
+          <Select
+            disabled={readOnly}
+            options={options}
+            clearable={false}
+            value={item.bioSafetyLevel}
+            onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
+          />
+        </Col>
+      </Form.Group>
     );
   }
 
@@ -116,21 +112,19 @@ class GeneralProperties extends React.Component {
     );
 
     return (
-      <div>
-        <Row>
-          <Col componentClass={Form.Label} sm={3}>Amount *</Col>
-          <Col sm={6}>
-            <Amount
-              cellLineId={item.id}
-              initialValue={item.amount}
-              readOnly={readOnly}
-            />
-          </Col>
-          <Col sm={3} className="amount-unit">
-            {unitComponent}
-          </Col>
-        </Row>
-      </div>
+      <Form.Group as={Row}>
+        <Form.Label column sm={3}>Amount *</Form.Label>
+        <Col sm={6}>
+          <Amount
+            cellLineId={item.id}
+            initialValue={item.amount}
+            readOnly={readOnly}
+          />
+        </Col>
+        <Col sm={3} className="amount-unit">
+          {unitComponent}
+        </Col>
+      </Form.Group>
     );
   }
 
