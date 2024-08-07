@@ -17,7 +17,7 @@ export default class AttachmentFactory {
     this.factory = factory;
 
     this.factory.define('AttachmentFactory.new', Attachment, {
-      id: parseInt(Element.buildID(), 10),
+      id: factory.sequence('AttachmentFactory.id', (n) => n),
       is_new: true,
       updated_at: new Date(),
       filename: 'test.png',
@@ -31,15 +31,15 @@ export default class AttachmentFactory {
     });
 
     this.factory.define('AttachmentFactory.notificationAttachment', Attachment, {
-      id: parseInt(Element.buildID(), 10),
+      id: factory.sequence('AttachmentFactory.id', (n) => n),
       filename: 'MyAttachment',
       identifier: 'myIdentifier',
       content_type: 'image/png',
       thumb: true,
-      aasm_state: 'non_jcamp',
       filesize: 1485,
       created_at: '08.07.2024, 14:01:25 +0000',
-      updated_at: '08.07.2024, 14:01:25 +0000'
+      updated_at: '08.07.2024, 14:01:25 +0000',
+      preview: 'myPreview'
     });
   }
 }
