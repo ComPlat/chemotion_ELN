@@ -776,21 +776,21 @@ export default class ReactionDetailsScheme extends Component {
               }
             }
           } else {
-            if (materialGroup === 'products') {
+            if (materialGroup === 'products' && sample.gas_type !== 'gas') {
               sample.equivalent = 0.0;
             } else {
               sample.equivalent = 1.0;
             }
           }
         } else {
-          if (!lockEquivColumn || materialGroup === 'products') {
+          if ((!lockEquivColumn || materialGroup === 'products') && sample.gas_type !== 'gas') {
             // calculate equivalent, don't touch real amount
             sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
             // yield taking into account stoichiometry:
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
-            if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock') {
+            if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock' && sample.gas_type !== 'gas') {
               sample.setAmountAndNormalizeToGram({
                 value: sample.equivalent * referenceMaterial.amount_mol,
                 unit: 'mol',
@@ -802,14 +802,17 @@ export default class ReactionDetailsScheme extends Component {
         if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && !sample.reference) {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
-        } else if (materialGroup === 'products' && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
+        } else if (materialGroup === 'products'
+          && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))
+          && sample.gas_type !== 'gas') {
           // if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = 1.0;
-        } else if (materialGroup === 'products' && (sample.amount_mol === 0 || referenceMaterial.amount_mol === 0)) {
+        } else if ((materialGroup === 'products' && (sample.amount_mol === 0 || referenceMaterial.amount_mol === 0)
+          && sample.gas_type !== 'gas')) {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = 0.0;
-        } else if (materialGroup === 'products' && sample.amount_g > sample.maxAmount) {
+        } else if (materialGroup === 'products' && sample.amount_g > sample.maxAmount && sample.gas_type !== 'gas') {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = 1;
           this.triggerNotification(sample.decoupled);
