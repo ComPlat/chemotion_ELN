@@ -440,7 +440,8 @@ export default class SampleForm extends React.Component {
     disabled = false,
     title = '',
     block = false,
-    notApplicable = false
+    notApplicable = false,
+    showInfoTooltip = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
@@ -497,6 +498,7 @@ export default class SampleForm extends React.Component {
           onChange={(e) => this.handleFieldChanged(field, e)}
           onMetricsChange={(e) => this.handleMetricsChange(e)}
           id={`numInput_${field}`}
+          showInfoTooltip={showInfoTooltip}
         />
       </td>
     );
@@ -561,7 +563,9 @@ export default class SampleForm extends React.Component {
           'l',
           isDisabled,
           '',
-          false
+          false,
+          false,
+          true
         ));
       }
 
@@ -740,7 +744,6 @@ export default class SampleForm extends React.Component {
       });
     }
   }
-  
 
   sampleTypeInput() {
     const { sample } = this.props;

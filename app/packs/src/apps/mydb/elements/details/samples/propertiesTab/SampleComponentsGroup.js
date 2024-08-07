@@ -52,7 +52,8 @@ const SampleComponentsGroup = ({
       concn: 'Conc.',
       eq: 'Ratio',
       ref: 'Ref',
-      purity: 'Purity'
+      purity: 'Purity',
+      density: 'Density',
     };
 
     if (materialGroup === 'solid') {
@@ -115,7 +116,7 @@ const SampleComponentsGroup = ({
               </Tabs>
               <th>
             </th></th>}
-            {materialGroup === 'solid' && <th></th>}
+            {materialGroup === 'solid' && <th>{headers.density}</th>}
             <th>{headers.concn}</th>
             <th>{headers.purity}</th>
             <th>{headers.eq}</th>

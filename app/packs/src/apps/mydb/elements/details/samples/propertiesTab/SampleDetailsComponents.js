@@ -20,6 +20,8 @@ export default class SampleDetailsComponents extends React.Component {
       showModal: false,
       droppedMaterial: null,
       activeTab: 'concentration',
+      lockAmountColumn: false,
+      lockAmountColumnSolids: false,
     };
 
     this.dropSample = this.dropSample.bind(this);
@@ -39,12 +41,33 @@ export default class SampleDetailsComponents extends React.Component {
     this.updatePurity = this.updatePurity.bind(this);
   }
 
+  handleModalClose() {
+    this.setState({ showModal: false, droppedMaterial: null });
+  }
+
+  handleModalAction(action) {
+    const { droppedMaterial, sample } = this.state;
+
+    if (droppedMaterial) {
+      const {
+        srcMat, srcGroup, tagMat, tagGroup
+      } = droppedMaterial;
+      this.dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action);
+    }
+    this.handleModalClose();
+    this.props.onChange(sample);
+  }
+
+  handleTabSelect(tab) {
+    this.setState({ activeTab: tab });
+  }
+
   onChangeComponent(changeEvent) {
     const { sample } = this.state;
 
     sample.components = sample.components.map((component) => {
       if (!(component instanceof Component)) {
-        return new Component(component)
+        return new Component(component);
       }
       return component;
     });
@@ -67,7 +90,7 @@ export default class SampleDetailsComponents extends React.Component {
         break;
       case 'purityChanged':
         this.updatePurity(changeEvent);
-      break;
+        break;
       case 'densityChanged':
         this.updateDensity(changeEvent);
         break;
@@ -76,11 +99,10 @@ export default class SampleDetailsComponents extends React.Component {
     }
     this.props.onChange(sample);
   }
-  
-  
+
   updatedSampleForAmountUnitChange(changeEvent) {
     const { sample } = this.props;
-    const { sampleID, amount, concType, updateVolume } = changeEvent;
+    const {sampleID, amount, concType, updateVolume} = changeEvent;
     const componentIndex = this.props.sample.components.findIndex(
       (component) => component.id === sampleID
     );
@@ -88,12 +110,14 @@ export default class SampleDetailsComponents extends React.Component {
     const totalVolume = sample.amount_l;
 
     if (amount.unit === 'g' || amount.unit === 'l') {
-      sample.components[componentIndex].setAmount(amount, totalVolume)
-    } else if (amount.unit === 'mol/l' ) {
-      sample.components[componentIndex].setConc(amount, totalVolume, concType, updateVolume)
-    } 
+      sample.components[componentIndex].setAmount(amount, totalVolume);
+    } else if (amount.unit === 'mol') {
+      sample.components[componentIndex].setMol(amount, totalVolume);
+    } else if (amount.unit === 'mol/l') {
+      sample.components[componentIndex].setConc(amount, totalVolume, concType, updateVolume);
+    }
     // update components ratio
-    sample.updateMixtureComponentEquivalent()
+    sample.updateMixtureComponentEquivalent();
   }
 
   updateDensity(changeEvent) {
@@ -105,9 +129,9 @@ export default class SampleDetailsComponents extends React.Component {
 
     const totalVolume = sample.amount_l;
 
-    sample.components[componentIndex].setDensity(amount, updateVolume, totalVolume)
+    sample.components[componentIndex].setDensity(amount, updateVolume, totalVolume);
     // update components ratio
-    sample.updateMixtureComponentEquivalent()
+    sample.updateMixtureComponentEquivalent();
   }
 
   updatePurity(changeEvent) {
@@ -118,9 +142,9 @@ export default class SampleDetailsComponents extends React.Component {
       (component) => component.id === sampleID
     );
     sample.components[componentIndex].setPurity(purity, sample.amount_l);
-    sample.updateMixtureComponentEquivalent()
+    sample.updateMixtureComponentEquivalent();
   }
-  
+
   updatedSampleForMetricsChange(changeEvent) {
     const { sample } = this.props;
     const { sampleID, metricUnit, metricPrefix } = changeEvent;
@@ -132,58 +156,57 @@ export default class SampleDetailsComponents extends React.Component {
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
     const { sample } = this.state;
-    const { currentCollection } = UIStore.getState()
+    const { currentCollection } = UIStore.getState();
     let splitSample;
 
     if (srcSample instanceof Molecule || isNewSample) {
       splitSample = Sample.buildNew(srcSample, currentCollection.id);
-      splitSample = new Component(splitSample)
+      splitSample = new Component(splitSample);
     } else if (srcSample instanceof Sample) {
       splitSample = srcSample.buildChildWithoutCounter();
-      splitSample = new Component(splitSample)
+      splitSample = new Component(splitSample);
     }
 
     splitSample.material_group = tagGroup;
 
     if (splitSample.sample_type === 'Mixture') {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
-      .then(async components => {
-        for (const component of components) {
-          const { component_properties, ...rest } = component;
-          const sampleData = {
-            ...rest,
-            ...component_properties
-          };
-          let sampleComponent = new Component(sampleData);
-          sampleComponent.parent_id = splitSample.parent_id
-          sampleComponent.material_group = tagGroup;
-          sampleComponent.reference = false;
-          if (tagGroup === 'solid') {
-            sampleComponent.setMolarity({ value: 0, unit: 'M' }, sample.amount_l, 'startingConc');
-            sampleComponent.setAmount({ value: sampleComponent.amount_g, unit: 'g' }, sample.amount_l);
-          } else if (tagGroup === 'liquid') {
-            sampleComponent.setAmount({ value: sampleComponent.amount_l, unit: 'l' }, sample.amount_l);
+        .then(async (components) => {
+          for (const component of components) {
+            const { component_properties, ...rest } = component;
+            const sampleData = {
+              ...rest,
+              ...component_properties
+            };
+            const sampleComponent = new Component(sampleData);
+            sampleComponent.parent_id = splitSample.parent_id;
+            sampleComponent.material_group = tagGroup;
+            sampleComponent.reference = false;
+            if (tagGroup === 'solid') {
+              sampleComponent.setMolarity({ value: 0, unit: 'M' }, sample.amount_l, 'startingConc');
+              sampleComponent.setAmount({ value: sampleComponent.amount_g, unit: 'g' }, sample.amount_l);
+            } else if (tagGroup === 'liquid') {
+              sampleComponent.setAmount({ value: sampleComponent.amount_l, unit: 'l' }, sample.amount_l);
+            }
+            sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`;
+            await sample.addMixtureComponent(sampleComponent);
+            sample.updateMixtureComponentEquivalent();
           }
-          sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
-          await sample.addMixtureComponent(sampleComponent);
-          sample.updateMixtureComponentEquivalent()
-        }
-        this.props.onChange(sample);
-      })
-        .catch(errorMessage => {
+          this.props.onChange(sample);
+        })
+        .catch((errorMessage) => {
           console.error(errorMessage);
         });
     } else {
       sample.addMixtureComponent(splitSample);
-      sample.updateMixtureComponentEquivalent()
+      sample.updateMixtureComponentEquivalent();
       this.props.onChange(sample);
     }
   }
 
   updateComponentName(changeEvent) {
     const { sample } = this.props;
-    const sampleID = changeEvent.sampleID;
-    const newName = changeEvent.newName;
+    const { sampleID, newName } = changeEvent;
     const componentIndex = this.props.sample.components.findIndex(
       (component) => component.id === sampleID
     );
@@ -196,7 +219,7 @@ export default class SampleDetailsComponents extends React.Component {
     const { sample } = this.state;
     sample.components = sample.components.map((component) => {
       if (!(component instanceof Component)) {
-        return new Component(component)
+        return new Component(component);
       }
       return component;
     });
@@ -206,15 +229,14 @@ export default class SampleDetailsComponents extends React.Component {
       this.props.onChange(sample);
     } else if (action === 'merge') {
       sample.mergeComponents(srcMat, srcGroup, tagMat, tagGroup)
-      .then(() => {
-        this.props.onChange(sample);
-      })
-      .catch((error) => {
-        console.error('Error merging components:', error);
-      });
+        .then(() => {
+          this.props.onChange(sample);
+        })
+        .catch((error) => {
+          console.error('Error merging components:', error);
+        });
     }
   }
-
 
   deleteMixtureComponent(component) {
     const { sample } = this.state;
@@ -231,13 +253,11 @@ export default class SampleDetailsComponents extends React.Component {
     }
   }
 
-  handleTabSelect(tab) {
-    this.setState({ activeTab: tab });
-  }
-
   updateRatio(changeEvent) {
     const { sample } = this.props;
-    const { sampleID, newRatio, materialGroup, adjustAmount } = changeEvent;
+    const {
+      sampleID, newRatio, materialGroup
+    } = changeEvent;
     const componentIndex = this.props.sample.components.findIndex(
       (component) => component.id === sampleID
     );
@@ -247,7 +267,7 @@ export default class SampleDetailsComponents extends React.Component {
     const referenceMoles = sample.components[refIndex].amount_mol;
     const totalVolume = sample.amount_l;
 
-    sample.components[componentIndex].updateRatio(newRatio, materialGroup, totalVolume, referenceMoles)
+    sample.components[componentIndex].updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
 
     sample.updateMixtureMolecularWeight();
 
@@ -261,7 +281,6 @@ export default class SampleDetailsComponents extends React.Component {
       (component) => component.id === sampleID
     );
 
-    
     sample.setReferenceComponent(componentIndex);
   }
 
@@ -275,30 +294,16 @@ export default class SampleDetailsComponents extends React.Component {
     }
     this.setState({
       showModal: true,
-      droppedMaterial: { srcMat, srcGroup, tagMat, tagGroup },
+      droppedMaterial: {
+        srcMat, srcGroup, tagMat, tagGroup
+      },
     });
-  }
-
-  handleModalClose() {
-    this.setState({ showModal: false, droppedMaterial: null });
-  }
-
-  handleModalAction(action) {
-    const { droppedMaterial, sample } = this.state;
-
-    if (droppedMaterial) {
-      const { srcMat, srcGroup, tagMat, tagGroup } = droppedMaterial;
-      this.dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action);
-    }
-    this.handleModalClose();
-    this.props.onChange(sample);
   }
 
   renderModal() {
     return (
       <Modal show={this.state.showModal} onHide={this.handleModalClose}>
-        <Modal.Header closeButton>
-        </Modal.Header>
+        <Modal.Header closeButton />
         <Modal.Body>
           <p>Do you want to merge or move this component?</p>
         </Modal.Body>
@@ -327,16 +332,14 @@ export default class SampleDetailsComponents extends React.Component {
     const minPadding = { padding: '1px 2px 2px 0px' };
 
     if (sample && sample.components) {
-      sample.components = sample.components.map(component =>
-        component instanceof Component ? component : new Component(component)
-      );
+      sample.components = sample.components.map((component) => (component instanceof Component ? component : new Component(component)));
     }
 
     const liquids = sample.components
-      ? sample.components.filter(component => component.material_group === 'liquid')
+      ? sample.components.filter((component) => component.material_group === 'liquid')
       : [];
     const solids = sample.components
-      ? sample.components.filter(component => component.material_group === 'solid')
+      ? sample.components.filter((component) => component.material_group === 'solid')
       : [];
 
     return (
@@ -344,36 +347,36 @@ export default class SampleDetailsComponents extends React.Component {
         {this.renderModal()}
         <ListGroupItem style={minPadding}>
           <SampleDetailsComponentsDnd
-          sample={sample}
-          sampleComponents={liquids}
-          dropSample={this.dropSample}
-          dropMaterial={this.dropMaterial}
-          deleteMixtureComponent={this.deleteMixtureComponent}
-          onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
-          switchAmount={this.switchAmount}
-          lockAmountColumn={this.state.lockAmountColumn}
-          lockAmountColumnSolids={this.state.lockAmountColumnSolids}
-          materialGroup="liquid"
-          showModalWithMaterial={this.showModalWithMaterial}
-          handleTabSelect={this.handleTabSelect}
-          activeTab={this.state.activeTab}
+            sample={sample}
+            sampleComponents={liquids}
+            dropSample={this.dropSample}
+            dropMaterial={this.dropMaterial}
+            deleteMixtureComponent={this.deleteMixtureComponent}
+            onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
+            switchAmount={this.switchAmount}
+            lockAmountColumn={this.state.lockAmountColumn}
+            lockAmountColumnSolids={this.state.lockAmountColumnSolids}
+            materialGroup="liquid"
+            showModalWithMaterial={this.showModalWithMaterial}
+            handleTabSelect={this.handleTabSelect}
+            activeTab={this.state.activeTab}
           />
         </ListGroupItem>
         <ListGroupItem style={minPadding}>
           <SampleDetailsComponentsDnd
-          sample={sample}
-          sampleComponents={solids}
-          dropSample={this.dropSample}
-          dropMaterial={this.dropMaterial}
-          deleteMixtureComponent={this.deleteMixtureComponent}
-          onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
-          switchAmount={this.switchAmount}
-          lockAmountColumn={this.state.lockAmountColumn}
-          lockAmountColumnSolids={this.state.lockAmountColumnSolids}
-          materialGroup="solid"
-          showModalWithMaterial={this.showModalWithMaterial}
-          handleTabSelect={this.handleTabSelect}
-          activeTab={this.state.activeTab}
+            sample={sample}
+            sampleComponents={solids}
+            dropSample={this.dropSample}
+            dropMaterial={this.dropMaterial}
+            deleteMixtureComponent={this.deleteMixtureComponent}
+            onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
+            switchAmount={this.switchAmount}
+            lockAmountColumn={this.state.lockAmountColumn}
+            lockAmountColumnSolids={this.state.lockAmountColumnSolids}
+            materialGroup="solid"
+            showModalWithMaterial={this.showModalWithMaterial}
+            handleTabSelect={this.handleTabSelect}
+            activeTab={this.state.activeTab}
           />
         </ListGroupItem>
       </ListGroup>

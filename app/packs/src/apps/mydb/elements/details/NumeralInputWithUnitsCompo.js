@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
+import {
+  FormControl, ControlLabel, InputGroup, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -135,7 +137,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      bsSize, bsStyle, disabled, label, unit, name
+      bsSize, bsStyle, disabled, label, unit, name, showInfoTooltip
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -173,6 +175,20 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return (
         <div className={`numeric-input-unit_${this.props.unit}`}>
           {labelWrap}
+          {showInfoTooltip && (
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="info-total-volume">
+                  It is only a value given manually, i.e. volume by definition - not (re)calculated
+                </Tooltip>
+              )}
+            >
+              <ControlLabel style={{ marginLeft: '5px' }}>
+                <span className="glyphicon glyphicon-info-sign" />
+              </ControlLabel>
+            </OverlayTrigger>
+          )}
           <InputGroup
             onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
@@ -228,7 +244,8 @@ NumeralInputWithUnitsCompo.propTypes = {
   label: PropTypes.node,
   bsSize: PropTypes.string,
   bsStyle: PropTypes.string,
-  name: PropTypes.string
+  name: PropTypes.string,
+  showInfoTooltip: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -239,5 +256,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   block: false,
   bsSize: 'small',
   bsStyle: 'default',
-  name: ''
+  name: '',
+  showInfoTooltip: false,
 };

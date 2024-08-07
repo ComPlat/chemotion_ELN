@@ -1030,8 +1030,8 @@ export default class Sample extends Element {
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
       coefficient: this.coefficient,
-      components: this.components && this.components.length > 0 
-      ? this.components.map(s => s.serializeComponent()) 
+      components: this.components && this.components.length > 0
+      ? this.components.map(s => s.serializeComponent())
       : []
     };
     _.merge(params, extra_params);
@@ -1147,13 +1147,14 @@ export default class Sample extends Element {
 
   initialComponents(components) {
     this.components = components.sort((a, b) => a.position - b.position);
+    this._checksum = this.checksum();
   }
 
-  async addMixtureComponent(newComponent) { 
+  async addMixtureComponent(newComponent) {
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey
-                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound) 
+                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
 
     if (!newComponent.material_group){
       newComponent.material_group = 'liquid';
@@ -1178,7 +1179,7 @@ export default class Sample extends Element {
       }
     }
   }
- 
+
   async deleteMixtureComponent(componentToDelete) {
     const tmpComponents = [...(this.components || [])];
     const filteredComponents = tmpComponents.filter(
@@ -1201,10 +1202,10 @@ export default class Sample extends Element {
     if (newSmiles !== this.molecule_cano_smiles ){
       const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
       this.molecule = result;
-      this.molfile = result.molfile; 
+      this.molfile = result.molfile;
     }
     this.setComponentPositions()
-  } 
+  }
 
 
   updateMixtureComponentVolume(prevTotalVolume) {
@@ -1212,7 +1213,7 @@ export default class Sample extends Element {
       return;
     }
     const totalVolume = this.amount_l;
-  
+
     this.components.forEach((component) => {
       const purity = component.purity || 1.0;
       if (component.material_group === 'liquid') {
@@ -1315,13 +1316,13 @@ export default class Sample extends Element {
   async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
     const srcIndex = this.components.findIndex(mat => mat === srcMat);
     const tagIndex = this.components.findIndex(mat => mat === tagMat);
-  
+
     if (srcIndex === -1 || tagIndex === -1) {
       console.error('Source or target material not found in components.');
       return;
     }
     const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
-  
+
     try {
       const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
       const newComponent = Sample.buildNew(newMolecule, this.collection_id);
@@ -1330,23 +1331,23 @@ export default class Sample extends Element {
       await this.deleteMixtureComponent(tagMat)
       await this.deleteMixtureComponent(srcMat)
       await this.addMixtureComponent(newComponent);
-  
+
     } catch (error) {
       console.error('Error merging components:', error);
     }
   }
-  
+
   setComponentPositions() {
     this.components.forEach((mat, index) => {
       mat.position = index;
     });
-  }  
+  }
 
   splitSmilesToMolecule(mixtureSmiles, editor) {
     const promises = mixtureSmiles.map(smiles => {
       return MoleculesFetcher.fetchBySmi(smiles, null, null, editor);
     });
-    
+
     return Promise.all(promises)
       .then(mixtureMolecules => {
         return this.mixtureMoleculeToSubsample(mixtureMolecules);
