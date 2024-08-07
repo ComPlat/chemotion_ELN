@@ -84,38 +84,33 @@ class AnalysesContainer extends Component {
     const { readOnly } = this.props;
 
     return (
-      <div className="add-button">
-        <Button
-          size="sm"
-          variant="success"
-          onClick={() => this.handleAdd()}
-          disabled={readOnly}
-        >
-          Add analysis
-        </Button>
-      </div>
+      <Button
+        size="sm"
+        variant="success"
+        onClick={() => this.handleAdd()}
+        disabled={readOnly}
+      >
+        Add analysis
+      </Button>
     );
   }
 
-  renderOrderModeButton() {
+  renderModeButton() {
     const { mode } = this.state;
     const { readOnly } = this.props;
     const buttonText = mode === 'order' ? 'Order mode' : 'Edit mode';
     const buttonIcon = mode === 'order' ? 'fa fa-reorder' : 'fa fa-edit';
-    const styleClass = mode === 'order' ? 'orderMode' : 'editMode';
+    const variant = mode === 'order' ? 'success' : 'primary';
     return (
-      <div className="order-mode-button">
-        <Button
-          disabled={readOnly}
-          size="sm"
-          className=""
-          variant={styleClass}
-          onClick={() => this.handleModeToggle()}
-        >
-          <i className={buttonIcon} aria-hidden="true" />
-          {buttonText}
-        </Button>
-      </div>
+      <Button
+        disabled={readOnly}
+        size="sm"
+        variant={variant}
+        onClick={() => this.handleModeToggle()}
+      >
+        <i className={`me-1 ${buttonIcon}`} aria-hidden="true" />
+        {buttonText}
+      </Button>
     );
   }
 
@@ -180,11 +175,11 @@ class AnalysesContainer extends Component {
   render() {
     return (
       <div className="analysis-container">
-        <div>
-          {this.renderOrderModeButton()}
+        <div className="d-flex justify-content-between mb-3">
+          {this.renderModeButton()}
           {this.renderAddButton()}
         </div>
-        { this.renderContainerPanel()}
+        {this.renderContainerPanel()}
       </div>
     );
   }
