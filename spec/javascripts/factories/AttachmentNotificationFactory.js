@@ -32,14 +32,15 @@ export default class AttachmentNotificationFactory {
         receiver_id: 2,
         is_ack: 0,
         created_at: '2023-07-01T12:00:00Z',
-        updated_at: '2023-07-01T12:00:00Z'
+        updated_at: '2023-07-01T12:00:00Z',
+        content:{}
+
       };
 
       const attachment = await AttachmentFactory.build('AttachmentFactory.notificationAttachment');
-      attachment.preview='MyPreview';
       delete attachment._checksum;
       // I deconstruct the class object here because the store needs a plain js object
-      model.content = { ...attachment };
+      model.content.attachment = { ...attachment };
       return model;
     });
   }

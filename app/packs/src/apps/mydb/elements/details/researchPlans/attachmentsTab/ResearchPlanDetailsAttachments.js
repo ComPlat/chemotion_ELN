@@ -58,7 +58,6 @@ class ResearchPlanDetailsAttachments extends Component {
     this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
     this.showImportConfirm = this.showImportConfirm.bind(this);
     this.hideImportConfirm = this.hideImportConfirm.bind(this);
-    this.addUniqueAttachments = this.addUniqueAttachments.bind(this);
   }
 
   componentDidMount() {
@@ -218,21 +217,6 @@ class ResearchPlanDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
-  addUniqueAttachments(attachmentsFromMessages, researchPlan) {
-    const { filteredAttachments } = this.state;
-    attachmentsFromMessages.forEach((attachment) => {
-      const existingMessage = filteredAttachments.find((a) => a.id === attachment.id);
-      const forCurrentElement = researchPlan.id === attachment.attachable_id
-        && attachment.attachable_type === 'ResearchPlan';
-      if (!existingMessage && forCurrentElement) {
-        const copiedAttachment = { ...attachment };
-        copiedAttachment.is_deleted = false;
-        filteredAttachments.push(copiedAttachment);
-        researchPlan.attachments.push(copiedAttachment);
-      }
-    });
-  }
-
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
@@ -260,17 +244,15 @@ class ResearchPlanDetailsAttachments extends Component {
     const { researchPlan } = this.props;
 
     //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
-    let attachmentsFromMessages = [] ;
-    if(this.context.attachmentNotificationStore ){
-      attachmentsFromMessages = this.context.attachmentNotificationStore.getAttachmentsOfMessages();
-    }
     
-
-    this.addUniqueAttachments(attachmentsFromMessages, researchPlan);
+    let combinedAttachments = filteredAttachments;
+    if(this.context.attachmentNotificationStore ){
+      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"ResearchPlan",researchPlan);
+    }
 
     const { onUndoDelete, attachments } = this.props;
     const thirdPartyApps = this.thirdPartyApps;
-
+    
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
@@ -289,12 +271,12 @@ class ResearchPlanDetailsAttachments extends Component {
         )}
           </div>
         </div>
-        {filteredAttachments.length === 0 ? (
+        {combinedAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (
-          filteredAttachments.map((attachment) => (
+          combinedAttachments.map((attachment) => (
             <div className="attachment-row" key={attachment.id}>
               {attachmentThumbnail(attachment)}
               <div className="attachment-row-text" title={attachment.filename}>
