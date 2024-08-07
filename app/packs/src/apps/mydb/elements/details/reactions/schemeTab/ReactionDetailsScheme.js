@@ -26,7 +26,6 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { parseNumericString } from 'src/utilities/MathUtils';
 import {
   convertTemperature,
   convertTime,
