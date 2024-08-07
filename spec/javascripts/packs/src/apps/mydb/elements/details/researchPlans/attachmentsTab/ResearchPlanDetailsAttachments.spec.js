@@ -15,9 +15,11 @@ import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ResearchPlanDetailsAttachments from
   'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
 
+import { StoreContext } from 'src/stores/mobx/RootStore';
 Enzyme.configure({ adapter: new Adapter() });
 
 describe('ResearchPlanDetailsAttachments', async () => {
+  
   describe('.createAttachmentPreviews()', async () => {
     describe('.when preview was changed', async () => {
       it('new preview is rendered', async () => {
@@ -43,7 +45,6 @@ describe('ResearchPlanDetailsAttachments', async () => {
           onEdit={(() => {})}
           readOnly={false}
         />);
-
         await new Promise(process.nextTick);
         const expectedPreviewComponent = '<img src="data:image/png;base64,reloadedPreviewData"';
 
