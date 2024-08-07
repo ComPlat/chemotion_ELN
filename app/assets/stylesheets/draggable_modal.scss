@@ -1,4 +1,12 @@
 .modal.draggable-modal-dialog {
+  width: fit-content;
+  height: fit-content;
+  top: 10%;
+  left: 10%;
+  padding-right: 0 !important;
+}
+
+.modal.draggable-modal-dialog-xxxl {
   width: auto;
   height: auto;
   top: calc(100% - 95vh);
@@ -6,14 +14,17 @@
   padding-right: 0 !important;
 }
 
-.modal.draggable-modal-dialog.minimized {
+.modal.draggable-modal-dialog.minimized, .modal.draggable-modal-dialog-xxxl.minimized {
   height: 55px;
   overflow: hidden;
 }
 
 .modal-dialog.draggable-modal {
-  transform: none !important;
   margin: 0;
+}
+
+.modal-dialog.draggable-modal.modal-xxxl {
+  transform: none !important;
   width: 90vw;
   height: 85vh;
 }
