@@ -25,6 +25,8 @@ import {
   thirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
 
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
@@ -42,7 +44,9 @@ const templateInfo = (
   </Popover>
 );
 
-export default class WellplateDetailsAttachments extends Component {
+export class WellplateDetailsAttachments extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
@@ -271,7 +275,12 @@ export default class WellplateDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const { onUndoDelete, attachments } = this.props;
+    const { onUndoDelete, attachments,wellplate } = this.props;
+
+    let combinedAttachments = filteredAttachments;
+    if(this.context.attachmentNotificationStore ){
+      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"Wellplate",wellplate);
+    }
 
     return (
       <div className="attachment-main-container">
@@ -292,12 +301,12 @@ export default class WellplateDetailsAttachments extends Component {
         )}
           </div>
         </div>
-        {filteredAttachments.length === 0 ? (
+        {combinedAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (
-          filteredAttachments.map((attachment) => (
+          combinedAttachments.map((attachment) => (
             <div className="attachment-row" key={attachment.id}>
               {attachmentThumbnail(attachment)}
 
@@ -430,3 +439,5 @@ WellplateDetailsAttachments.propTypes = {
 WellplateDetailsAttachments.defaultProps = {
   attachments: [],
 };
+
+export default observer(WellplateDetailsAttachments);
