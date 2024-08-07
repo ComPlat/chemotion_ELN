@@ -401,6 +401,7 @@ export default class StructureEditorModal extends React.Component {
                   </div>
                 )}
 
+              {/* list of surface chemistry shapes disabled */}
               {false && editor.id === 'ketcher2'
                 && (
                   <div style={{ flex: 0.5, margin: '0 10px' }}>
