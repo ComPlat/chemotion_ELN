@@ -3,8 +3,7 @@ import ReactFlow, {
   ReactFlowProvider, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
   Panel as ReactFlowPanel, useUpdateNodeInternals
 } from 'reactflow'
-import { Modal, Button, ButtonGroup, InputGroup } from 'react-bootstrap'
-import Panel from 'src/components/legacyBootstrap/Panel'
+import { Modal, Button, ButtonGroup, InputGroup, Card, ListGroup } from 'react-bootstrap'
 
 const buildUnassignedNodes = (nodes, researchplans) => {
   return researchplans.reduce((newNodes, plan) => {
@@ -104,56 +103,55 @@ const ResearchplanFlowEditor = (props) => {
   }
 
   const edgeLabelEditor = () => {
-    if (!currentEdge) { return (<div></div>); }
+    if (!currentEdge) { return null; }
 
     return (
-      <Panel variant="primary">
-        <Panel.Heading>
-          <Panel.Title>Connection name</Panel.Title>
-        </Panel.Heading>
-        <Panel.Body>
+      <Card bg="primary" className="mb-4">
+        <Card.Header className="text-white">
+          Connection name
+        </Card.Header>
+        <Card.Body className="bg-white">
           <InputGroup>
-            <InputGroup.Button>
-              <Button
-                className="btn btn-danger"
-                type="button"
-                onClick={() => labelInput.current.value = currentEdge.label}
-              >
-                Reset
-              </Button>
-            </InputGroup.Button>
+            <Button
+              variant="danger"
+              onClick={() => labelInput.current.value = currentEdge.label}
+            >
+              Reset
+            </Button>
             <input name="edgeLabel" className="form-control" ref={labelInput} defaultValue={currentEdge.label} />
-            <InputGroup.Button>
-              <Button
-                className="btn btn-success"
-                type="button"
-                onClick={() => changeLabelOfCurrentEdge(labelInput.current.value)}
-              >
-                Save
-              </Button>
-            </InputGroup.Button>
+
+            <Button
+              variant="success"
+              onClick={() => changeLabelOfCurrentEdge(labelInput.current.value)}
+            >
+              Save
+            </Button>
           </InputGroup>
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   };
+
   const unassignedNodeButtons = () => {
-    if (unassignedNodes.length == 0) { return (<div></div>) };
+    if (unassignedNodes.length == 0) { return null };
 
     return (
-      <Panel variant="primary">
-        <Panel.Heading>
-          <Panel.Title>Unused Research Plans</Panel.Title>
-        </Panel.Heading>
-        <Panel.Body>
-          <ButtonGroup vertical>
+      <Card bg="primary">
+        <Card.Header className="text-white">
+          Unused Research Plans
+        </Card.Header>
+        <Card.Body className="bg-white">
+          <ListGroup>
             {
               unassignedNodes.map(
-                (node, index) => <Button key={index} onClick={() => handleClickToAddNode(index)}>{node.data.label}</Button>)
+                (node, index) => 
+                  <ListGroup.Item key={index} onClick={() => handleClickToAddNode(index)}>
+                    {node.data.label}
+                  </ListGroup.Item>)
             }
-          </ButtonGroup>
-        </Panel.Body>
-      </Panel>
+          </ListGroup>
+        </Card.Body>
+      </Card>
     );
   }
 
@@ -163,7 +161,7 @@ const ResearchplanFlowEditor = (props) => {
         centered
         show={visible}
         animation
-        dialogClassName="researchplan-flow-editor-modal"
+        size="xxxl"
         onHide={onHide}
         onEnter={onEnter}
       >
