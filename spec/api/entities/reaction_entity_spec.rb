@@ -218,7 +218,6 @@ describe Entities::ReactionEntity do
           tlc_solvents: reaction.tlc_solvents,
           vessel_size: reaction.vessel_size,
           gaseous: reaction.gaseous,
-          vessel_size: reaction.vessel_size,
         )
       end
 
