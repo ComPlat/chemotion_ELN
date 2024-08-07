@@ -12,16 +12,20 @@ export default class InvalidPropertyWarning extends React.Component {
     const { cellLineDetailsStore } = this.context;
     const cellLineItem = cellLineDetailsStore.cellLines(item.id);
     const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
-    const icon = propsToCheck.every((property) => !validationInfo.includes(property))
+    return propsToCheck.every((property) => !validationInfo.includes(property))
       ? null
       : (
-        <div className="floating missing-property">
-          <OverlayTrigger placement="top" overlay={<Tooltip id="missing-property">Required attributes are missing</Tooltip>}>
-            <i className="fa fa-exclamation-triangle" />
-          </OverlayTrigger>
-        </div>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip>
+              Required attributes are missing
+            </Tooltip>
+          )}
+        >
+          <i className="fa fa-exclamation-triangle me-1 text-danger" />
+        </OverlayTrigger>
       );
-    return icon;
   }
 }
 InvalidPropertyWarning.propTypes = {
