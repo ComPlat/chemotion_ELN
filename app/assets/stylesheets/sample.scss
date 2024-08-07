@@ -57,6 +57,9 @@
     visibility: visible;
     background-color: powderblue;
   }
+  .file-type-conversion-button{
+    display: block;
+  }
 }
 
 .sample-form,
@@ -305,4 +308,15 @@
 .sample-inventory-header {
   float: right;
   margin: 0px 30px 0px 0px !important;
+}
+
+.file-type-conversion-button{
+  position: absolute;
+  border-color: powderblue;
+  visibility: visible;
+  background-color: powderblue;
+  padding: 2.83px;
+  right: 48px;
+  top: 0;
+  display: none;
 }
