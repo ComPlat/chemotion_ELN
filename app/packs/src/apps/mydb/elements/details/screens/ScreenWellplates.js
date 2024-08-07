@@ -41,37 +41,12 @@ class ScreenWellplates extends Component {
 
   renderDropZone() {
     const { isOver, canDrop, connectDropTarget } = this.props;
-    const hoverColor = isOver && canDrop ? 'border-primary' : '';
+    const borderColor = isOver && canDrop ? 'border-primary' : 'border-gray-400';
 
     return connectDropTarget( // eslint-disable-line function-paren-newline
-      <div className={`p-2 mb-4 border-dashed border-3 border-gray-400 text-center text-gray-600 ${hoverColor}`}>
+      <div className={`p-2 mb-4 border-dashed border-3 text-center text-gray-600 ${borderColor}`}>
         Drop Wellplate here to add.
       </div>);
-  }
-
-  handleAddResearchPlan() {
-    const { currentCollection } = UIStore.getState();
-    const collection_id = currentCollection.id;
-    const screen_id = this.getScreenIdFromPath();
-    if (screen_id == -1) { return }
-    LoadingActions.start();
-
-    ElementActions.addResearchPlanToScreen(
-      screen_id,
-      collection_id,
-      () => LoadingActions.stop()
-    );
-  }
-
-  getScreenIdFromPath() {
-    const currentURI = Aviator.getCurrentURI();
-
-    const screenMatch = currentURI.match(/\/screen\/(\d+)/);
-    if (screenMatch) {
-      return screenMatch[1];
-    } else {
-      return -1;
-    }
   }
 
   render() {
