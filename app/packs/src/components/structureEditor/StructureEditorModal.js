@@ -401,7 +401,7 @@ export default class StructureEditorModal extends React.Component {
                   </div>
                 )}
 
-              {editor.id === 'ketcher2'
+              {false && editor.id === 'ketcher2'
                 && (
                   <div style={{ flex: 0.5, margin: '0 10px' }}>
                     <SurfaceChemistryList
