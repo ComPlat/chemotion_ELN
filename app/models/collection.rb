@@ -69,6 +69,8 @@ class Collection < ApplicationRecord
 
   has_one :metadata
 
+  delegate :id, :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
+
   # A collection is locked if it is not allowed to rename or rearrange it
   scope :unlocked, -> { where(is_locked: false) }
   scope :locked, -> { where(is_locked: true) }
@@ -184,6 +186,18 @@ class Collection < ApplicationRecord
       collections = collections_group.map { |c| { id: c.id, label: c.label } }
       inventory = collections_group.first&.inventory
       collections_group_by_inventory(collections, inventory)
+    end
+  end
+
+  def as_json(options = {})
+    if options[:include_inventory]
+      super(options).merge(
+        inventory_id: inventory&.id,
+        inventory_prefix: inventory&.prefix,
+        inventory_name: inventory&.name,
+      )
+    else
+      super(options)
     end
   end
 end

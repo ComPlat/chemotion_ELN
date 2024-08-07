@@ -18,6 +18,8 @@
 class Inventory < ApplicationRecord
   has_many :collections, dependent: :nullify
 
+  scope :by_collection_id, ->(collection_id) { joins(:collections).where(collections: { id: collection_id }) }
+
   def self.compare_associations(collection_ids)
     inventory_collection_ids = []
     collection_ids.map do |collection_id|
@@ -76,5 +78,15 @@ class Inventory < ApplicationRecord
 
   def self.fetch_inventories(user_id)
     joins(collections: :user).where(users: { id: user_id })
+  end
+
+  def match_inventory_counter(inventory_label, next_inventory_counter)
+    label_number_match = inventory_label.match(/(?<=-)?\d+/)
+    label_number = label_number_match[0].to_i if label_number_match
+    label_number == next_inventory_counter
+  end
+
+  def construct_inventory_label(prefix, conuter)
+    "#{prefix}-#{conuter}"
   end
 end

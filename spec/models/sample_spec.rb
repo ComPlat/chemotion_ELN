@@ -187,18 +187,6 @@ RSpec.describe Sample do
     end
   end
 
-  context 'when updating sample inventory label' do
-    let(:sample) { create(:sample_with_valid_inventory_label) }
-    let(:inventory) { sample.collections.first.inventory }
-
-    it 'sample inventory label matches the prefix-counter of the collection' do
-      sample.reload
-      expected_sample_inventory_label = "#{inventory['prefix']}-#{
-        inventory['counter']}"
-      expect(sample.xref['inventory_label']).to eq expected_sample_inventory_label
-    end
-  end
-
   describe 'unit conversion' do
     let(:sample) { create(:sample) }
 

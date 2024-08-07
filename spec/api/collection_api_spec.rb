@@ -171,7 +171,7 @@ describe Chemotion::CollectionAPI do
         end
         let!(:c6) do
           create(
-            :collection, user: g1, is_shared: true,
+            :collection, user: user, is_shared: true,
                          shared_by_id: p2.id, is_locked: false,
                          ancestry: root_g.id.to_s
           )

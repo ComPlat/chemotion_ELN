@@ -346,6 +346,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :collection_id, type: Integer, desc: 'Collection id'
         # use :root_container_params
       end
 
@@ -393,6 +394,18 @@ module Chemotion
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
 
+          inventory_label = params[:xref]&.fetch(:inventory_label, nil)
+
+          if inventory_label
+            inventory_label_changed = @sample.xref['inventory_label'] != inventory_label
+            collection_id = params[:collection_id]
+            condition = inventory_label_changed && !collection_id.nil?
+            # update inventory_label only if sample inventory label has a new value
+            @sample.update_inventory_label(inventory_label, collection_id) if condition
+          end
+          # remove collection_id from sample attributes after updating inventory label
+          attributes.delete(:collection_id)
+
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
@@ -407,6 +420,16 @@ module Chemotion
             policy: @element_policy,
             root: :sample,
           )
+        rescue ActiveRecord::RecordNotUnique => e
+          # Extract the column or index name from the error message
+          match = e.message.match(/duplicate key value violates unique constraint "(?<index_name>.+)"/)
+          index_name = match[:index_name] if match
+
+          error_info = {
+            error_type: 'ActiveRecord::RecordNotUnique',
+            index_name: index_name,
+          }
+          error!(error_info, 500)
         end
       end
 
@@ -544,6 +567,7 @@ module Chemotion
         end
 
         sample.container = update_datamodel(params[:container])
+        sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
 
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
