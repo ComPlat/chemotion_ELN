@@ -141,15 +141,17 @@ const ResearchplanFlowEditor = (props) => {
           Unused Research Plans
         </Card.Header>
         <Card.Body className="bg-white">
-          <ListGroup>
-            {
-              unassignedNodes.map(
-                (node, index) => 
-                  <ListGroup.Item key={index} onClick={() => handleClickToAddNode(index)}>
-                    {node.data.label}
-                  </ListGroup.Item>)
-            }
-          </ListGroup>
+          <div className="overflow-y-auto" style={{ maxHeight: '280px' }}>
+            <ListGroup>
+              {
+                unassignedNodes.map(
+                  (node, index) => 
+                    <ListGroup.Item key={index} onClick={() => handleClickToAddNode(index)}>
+                      {node.data.label}
+                    </ListGroup.Item>)
+              }
+            </ListGroup>
+          </div>
         </Card.Body>
       </Card>
     );
@@ -169,7 +171,7 @@ const ResearchplanFlowEditor = (props) => {
           <Modal.Title>ResearchPlan Flow Editor</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div style={{ width: '100%', height: '500px', display: 'block' }}>
+          <div className="w-100 block" style={{ height: '500px' }}>
             <ReactFlow
               nodes={nodes}
               onNodesChange={onNodesChange}
@@ -188,11 +190,11 @@ const ResearchplanFlowEditor = (props) => {
             </ReactFlow>
           </div>
         </Modal.Body>
-        <Modal.Footer>
-          <Button className="pull-left" variant="light" onClick={onHide}>
+        <Modal.Footer className="justify-content-between">
+          <Button variant="light" onClick={onHide}>
             Cancel
           </Button>
-          <Button className="pull-right" variant="success" onClick={onClickSave}>
+          <Button variant="success" onClick={onClickSave}>
             Save
           </Button>
         </Modal.Footer>
