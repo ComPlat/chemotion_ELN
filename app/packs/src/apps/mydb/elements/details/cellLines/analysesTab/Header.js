@@ -5,7 +5,7 @@ import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import { Button } from 'react-bootstrap';
 
-export default class EditModeHeader extends React.Component {
+export default class Header extends React.Component {
   handleUndoDeletionOfContainer(container, e) {
     const { parent } = this.props;
     e.stopPropagation();
@@ -27,7 +27,7 @@ export default class EditModeHeader extends React.Component {
   }
 
   renderDeletedContainer() {
-    const { container } = this.props;
+    const { container, isEditHeader } = this.props;
     const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
     const titleKind = kind
       ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`)
@@ -43,20 +43,22 @@ export default class EditModeHeader extends React.Component {
           {titleKind}
           {titleStatus}
         </strike>
-        <Button
-          className="pull-right"
-          size="sm"
-          variant="danger"
-          onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
-        >
-          <i className="fa fa-undo" />
-        </Button>
+        {isEditHeader && (
+          <Button
+            className="pull-right"
+            size="sm"
+            variant="danger"
+            onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
+          >
+            <i className="fa fa-undo" />
+          </Button>
+        )}
       </div>
     );
   }
 
   renderNotDeletedContainer() {
-    const { container, readOnly } = this.props;
+    const { container, readOnly, isEditHeader } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
 
     const kind = container.extended_metadata.kind?.split('|')[1] || '';
@@ -73,14 +75,16 @@ export default class EditModeHeader extends React.Component {
       <div className="analysis-header">
         <div className="preview">{this.renderImagePreview(container)}</div>
         <div className="abstract">
-          <Button
-            disabled={readOnly}
-            size="sm"
-            variant="danger"
-            onClick={(e) => { this.handleDeleteContainer(container, e); }}
-          >
-            <i className="fa fa-trash" />
-          </Button>
+          {isEditHeader && (
+            <Button
+              disabled={readOnly}
+              size="sm"
+              variant="danger"
+              onClick={(e) => { this.handleDeleteContainer(container, e); }}
+            >
+              <i className="fa fa-trash" />
+            </Button>
+          )}
           <div className="lower-text">
             <div className="main-title">{container.name}</div>
             <div className="sub-title">
@@ -107,17 +111,15 @@ export default class EditModeHeader extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   renderImagePreview() {
-    const { container } = this.props;
+    const { container, isEditHeader } = this.props;
     const previewImg = previewContainerImage(container);
     const fetchNeeded = false;
     const fetchId = 1;
 
     return (
       <div className="preview">
-        
         <ImageModal
-          hasPop={true}
-          disableClick={false}
+          hasPop={isEditHeader}
           previewObject={{
             src: previewImg
           }}
@@ -141,7 +143,12 @@ export default class EditModeHeader extends React.Component {
   }
 }
 
-EditModeHeader.propTypes = {
+Header.defaultProps = {
+  readOnly: false,
+  isEditHeader: false,
+};
+
+Header.propTypes = {
   container: PropTypes.shape({
     extended_metadata: PropTypes.shape({
       status: PropTypes.string,
@@ -155,13 +162,10 @@ EditModeHeader.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 
   }).isRequired,
-  readOnly: PropTypes.bool.isRequired,
+  readOnly: PropTypes.bool,
+  isEditHeader: PropTypes.bool,
+
   parent: PropTypes.shape({
     handleChange: PropTypes.func.isRequired
   }).isRequired,
-  element: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    type: PropTypes.string.isRequired,
-    isNew: PropTypes.bool.isRequired,
-  }).isRequired
 };
