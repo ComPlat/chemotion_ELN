@@ -39,18 +39,47 @@ class ScreenWellplates extends Component {
     wellplateShowOrNew({ params: { wellplateID } });
   }
 
-  render() {
-    // eslint-disable-next-line object-curly-newline
-    const { wellplates, isOver, canDrop, connectDropTarget, deleteWellplate } = this.props;
-    let containerClassName = '';
-    if (isOver && canDrop) {
-      containerClassName = 'border-primary border-dashed p-3';
-    } else if (canDrop) {
-      containerClassName = 'border-dashed p-3';
-    }
+  renderDropZone() {
+    const { isOver, canDrop, connectDropTarget } = this.props;
+    const hoverColor = isOver && canDrop ? 'border-primary' : '';
 
-    return connectDropTarget(
-      <div className={containerClassName}>
+    return connectDropTarget( // eslint-disable-line function-paren-newline
+      <div className={`p-2 mb-4 border-dashed border-3 border-gray-400 text-center text-gray-600 ${hoverColor}`}>
+        Drop Wellplate here to add.
+      </div>);
+  }
+
+  handleAddResearchPlan() {
+    const { currentCollection } = UIStore.getState();
+    const collection_id = currentCollection.id;
+    const screen_id = this.getScreenIdFromPath();
+    if (screen_id == -1) { return }
+    LoadingActions.start();
+
+    ElementActions.addResearchPlanToScreen(
+      screen_id,
+      collection_id,
+      () => LoadingActions.stop()
+    );
+  }
+
+  getScreenIdFromPath() {
+    const currentURI = Aviator.getCurrentURI();
+
+    const screenMatch = currentURI.match(/\/screen\/(\d+)/);
+    if (screenMatch) {
+      return screenMatch[1];
+    } else {
+      return -1;
+    }
+  }
+
+  render() {
+    const { wellplates, deleteWellplate } = this.props;
+  
+    return (
+      <div>
+        {this.renderDropZone()}
         <Row>
           <Col className="fw-bold col-4">Name</Col>
           <Col className="fw-bold col-7">Description</Col>
