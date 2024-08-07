@@ -49,7 +49,7 @@ const ElementLink = ({ literature }) => {
     <Button
       title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
       onClick={() => {
-        const { uri, namedParams } = Aviator.getCurrentRequest();
+        const { uri } = Aviator.getCurrentRequest();
         const uriArray = uri.split(/\//);
         if (type && element_id) {
           Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
@@ -90,17 +90,22 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
       {sortedIds.map((id, k, ids) => {
         const citation = rows.get(id);
         const prevCit = (k > 0) ? rows.get(ids[k - 1]) : null;
-        const sameRef = prevCit && prevCit.id === citation.id;
-        const sameElement = prevCit && prevCit.element_id === citation.element_id && prevCit.element_type === citation.element_type;
+        const sameRef = prevCit?.id === citation.id;
+        const sameElement = prevCit
+          && prevCit.element_id === citation.element_id
+          && prevCit.element_type === citation.element_type;
         return sameRef && sameElement ? (
-          <tr key={`header-${id}-${citation.id}`} className={`collapse cit_${citation.id}-${citation.element_type}_${citation.element_id}`}>
+          <tr
+            key={`header-${id}-${citation.id}`}
+            className={`collapse cit_${citation.id}-${citation.element_type}_${citation.element_id}`}
+          >
             <td />
             <td className="padding-right">
               <CitationUserRow literature={citation} userId={userId} />
             </td>
             <td>
               <Button
-                size="sm"
+                size="xxsm"
                 variant="danger"
                 onClick={() => removeCitation(citation)}
               >
@@ -109,19 +114,24 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
             </td>
           </tr>
         ) : (
-          <tr key={id} className={``}>
+          <tr key={id}>
             <td>{sameElement ? null : <ElementLink literature={citation} />}</td>
             <td className="padding-right">
               <Citation literature={citation} />
             </td>
-            <td>
-            </td>
+            <td />
           </tr>
         );
       })}
     </tbody>
   </Table>
 );
+CitationTable.propTypes = {
+  sortedIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  rows: PropTypes.array.isRequired,
+  userId: PropTypes.number.isRequired,
+  removeCitation: PropTypes.func.isRequired,
+};
 
 export default class LiteratureDetails extends Component {
   constructor(props) {
