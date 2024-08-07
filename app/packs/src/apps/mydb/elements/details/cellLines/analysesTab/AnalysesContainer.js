@@ -135,7 +135,7 @@ class AnalysesContainer extends Component {
       const styleClass = chosenElementClass + lastHoveredClass;
 
       return (
-        <ListGroup.Item className={styleClass} key={container.id}>
+        <ListGroup.Item className={`p-3 ${styleClass}`} key={container.id}>
           <OrderModeRow
             updateFunction={(e) => { this.handleChange(e); }}
             startDragFunction={() => { this.handleStartDrag(container); }}

@@ -37,15 +37,14 @@ export default class Header extends React.Component {
     const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
     return (
-      <div style={{ width: '100%' }}>
-        <strike>
+      <div className="flex-grow-1 d-flex align-items-baseline justify-content-between gap-1 me-2">
+        <div className="text-decoration-line-through">
           {container.name}
           {titleKind}
           {titleStatus}
-        </strike>
+        </div>
         {isEditHeader && (
           <Button
-            className="pull-right"
             size="sm"
             variant="danger"
             onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
@@ -72,39 +71,35 @@ export default class Header extends React.Component {
     };
 
     return (
-      <div className="analysis-header">
-        <div className="preview">{this.renderImagePreview(container)}</div>
-        <div className="abstract">
-          {isEditHeader && (
-            <Button
-              disabled={readOnly}
-              size="sm"
-              variant="danger"
-              onClick={(e) => { this.handleDeleteContainer(container, e); }}
-            >
-              <i className="fa fa-trash" />
-            </Button>
-          )}
-          <div className="lower-text">
-            <div className="main-title">{container.name}</div>
-            <div className="sub-title">
-              Type:
-              {' '}
-              {kind}
-            </div>
-            <div className="sub-title">
-              Status:
-              {' '}
-              {container.extended_metadata.status || ''}
-            </div>
-            <div className="desc sub-title">
-              <span style={{ float: 'left', marginRight: '5px' }}>
-                Content:
-              </span>
-              <QuillViewer value={contentOneLine} preview />
-            </div>
+      <div className="d-flex align-items-start flex-grow-1 justify-content-between gap-2 pe-2">
+        <div>{this.renderImagePreview(container)}</div>
+        <div className="flex-grow-1">
+          <div className="mb-2 fs-4 text-decoration-underline">{container.name}</div>
+          <div>
+            Type:
+            {' '}
+            {kind}
+          </div>
+          <div>
+            Status:
+            {' '}
+            {container.extended_metadata.status || ''}
+          </div>
+          <div>
+            Content:
+            <QuillViewer value={contentOneLine} preview />
           </div>
         </div>
+        {isEditHeader && (
+          <Button
+            disabled={readOnly}
+            size="sm"
+            variant="danger"
+            onClick={(e) => { this.handleDeleteContainer(container, e); }}
+          >
+            <i className="fa fa-trash" />
+          </Button>
+        )}
       </div>
     );
   }
@@ -117,20 +112,18 @@ export default class Header extends React.Component {
     const fetchId = 1;
 
     return (
-      <div className="preview">
-        <ImageModal
-          hasPop={isEditHeader}
-          previewObject={{
-            src: previewImg
-          }}
-          popObject={{
-            title: container.name,
-            src: previewImg,
-            fetchNeeded,
-            fetchId
-          }}
-        />
-      </div>
+      <ImageModal
+        hasPop={isEditHeader}
+        previewObject={{
+          src: previewImg
+        }}
+        popObject={{
+          title: container.name,
+          src: previewImg,
+          fetchNeeded,
+          fetchId
+        }}
+      />
     );
   }
 

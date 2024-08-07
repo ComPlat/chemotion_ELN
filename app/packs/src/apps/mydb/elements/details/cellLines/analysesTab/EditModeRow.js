@@ -6,7 +6,7 @@ import { Accordion } from 'react-bootstrap';
 
 const EditModeRow = ({ container, parent, element, readOnly }) => (
   <Accordion.Item eventKey={container.id}>
-    <Accordion.Header>
+    <Accordion.Header as="div">
       <Header
         isEditHeader
         element={element}
