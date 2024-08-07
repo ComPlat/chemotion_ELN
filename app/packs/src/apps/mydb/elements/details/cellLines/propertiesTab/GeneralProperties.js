@@ -112,7 +112,7 @@ class GeneralProperties extends React.Component {
     );
 
     return (
-      <Form.Group as={Row}>
+      <Form.Group as={Row} className="align-items-baseline">
         <Form.Label column sm={3}>Amount *</Form.Label>
         <Col sm={6}>
           <Amount
