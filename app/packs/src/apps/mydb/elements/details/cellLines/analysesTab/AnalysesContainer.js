@@ -130,7 +130,7 @@ class AnalysesContainer extends Component {
     const containers = currentElement.container.children[0].children;
 
     const analysisRows = containers.map((container) => {
-      const chosenElementClass = container.id === draggingContainer ? 'chosen-element' : '';
+      const chosenElementClass = container.id === draggingContainer ? 'opacity-25' : '';
       const lastHoveredClass = lastHoveredContainer === container.id ? ' last-hovered-element' : '';
       const styleClass = chosenElementClass + lastHoveredClass;
 
