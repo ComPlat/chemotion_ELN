@@ -131,7 +131,7 @@ export default class SampleForm extends React.Component {
           checked={sample.dry_solvent}
           onChange={(e) => this.handleFieldChanged('dry_solvent', e.target.checked)}
         >
-          Dry Solvent
+          Anhydrous
         </Checkbox>
       );
     }
@@ -263,7 +263,7 @@ export default class SampleForm extends React.Component {
     const onOpenMolName = () => this.openMolName(sample);
     return (
       <FormGroup style={{ width: '100%', paddingRight: '10px' }}>
-        <ControlLabel>Molecule</ControlLabel>
+        <ControlLabel>Molecule name</ControlLabel>
         <InputGroup>
           <Select.Creatable
             name="moleculeName"
@@ -615,19 +615,33 @@ export default class SampleForm extends React.Component {
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
-    const minPadding = { padding: '4px 4px 4px 4px' };
 
     return (
       <ListGroup fill="true">
-        <h5 style={{ fontWeight: 'bold' }}>Additional Properties:</h5>
-        <ListGroupItem style={minPadding}>
+        <h5 style={{ fontWeight: 'bold' }}>Additional properties of the pure compound:</h5>
+        <ListGroupItem style={{ padding: '4px 4px 4px 4px', border: 'none' }}>
           <div className="properties-form" style={{ width: '100%' }}>
             <table width="100%">
               <tbody>
                 <tr>
                   <td colSpan="3">
                     <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ width: '33%' }}>
+                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                        {this.textInput(sample, 'xref_form', 'Form')}
+                      </div>
+                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                        {this.textInput(sample, 'xref_color', 'Color')}
+                      </div>
+                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                        {this.textInput(sample, 'xref_solubility', 'Soluble in ')}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="4">
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
                         <TextRangeWithAddon
                           field="melting_point"
                           label="Melting point"
@@ -638,7 +652,19 @@ export default class SampleForm extends React.Component {
                           tipOnText="Use space-separated value to input a Temperature range"
                         />
                       </div>
-                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                      <div style={{ width: '20%', paddingLeft: '5px' }}>
+                        <TextRangeWithAddon
+                          field="melting_point"
+                          label="Decompose"
+                          addon="°C"
+                          value={sample.melting_point_display}
+                          disabled={polyDisabled}
+                          onChange={this.handleRangeChanged}
+                          tipOnText="Use space-separated value to input a Temperature range"
+                          includeCheckBox
+                        />
+                      </div>
+                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
                         <TextRangeWithAddon
                           field="boiling_point"
                           label="Boiling point"
@@ -649,26 +675,11 @@ export default class SampleForm extends React.Component {
                           tipOnText="Use space-separated value to input a Temperature range"
                         />
                       </div>
-                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
                         {this.inputWithUnit(sample, 'xref_flash_point', 'Flash Point')}
                       </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan="4">
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ width: '24.5%' }}>
+                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
                         {this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}
-                      </div>
-                      <div style={{ width: '24.5%' }}>
-                        {this.textInput(sample, 'xref_form', 'Form')}
-                      </div>
-                      <div style={{ width: '24.5%' }}>
-                        {this.textInput(sample, 'xref_color', 'Color')}
-                      </div>
-                      <div style={{ width: '24.5%' }}>
-                        {this.textInput(sample, 'xref_solubility', 'Solubility ')}
                       </div>
                     </div>
                   </td>
@@ -701,7 +712,6 @@ export default class SampleForm extends React.Component {
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
     const densityBlocked = isDisabled ? true : !molarityBlocked;
     const { enableSampleDecoupled } = this.props;
-    const minPadding = { padding: '4px 4px 4px 4px' };
 
     if (sample.belongTo !== undefined && sample.belongTo !== null) {
       // assign amount type for product samples of reaction to real
@@ -713,13 +723,18 @@ export default class SampleForm extends React.Component {
         <tbody>
           <ListGroup fill="true">
             <h5 style={{ fontWeight: 'bold' }}>Basic Properties:</h5>
-            <ListGroupItem style={minPadding}>
+            <ListGroupItem style={{ padding: '4px 4px 4px 4px', border: 'none' }}>
               <div className="properties-form" style={{ width: '100%' }}>
                 <tr>
-                  <td colSpan="4">
+                  <td colSpan="3">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ width: '100%', display: 'flex' }}>
+                      <div
+                        style={{ width: '100%', display: 'flex' }}
+                      >
                         {this.moleculeInput()}
+                        <div style={{ width: '100%', display: 'flex' }}>
+                          {this.textInput(sample, 'name', 'Sample name')}
+                        </div>
                         {this.stereoAbsInput()}
                         {this.stereoRelInput()}
                       </div>
@@ -727,15 +742,15 @@ export default class SampleForm extends React.Component {
                   {this.topSecretCheckbox(sample)}
                 </div> */}
                       {
-                  enableSampleDecoupled ? (
-                    <div
-                      style={{ paddingLeft: '10px' }}
-                      className="decoupled-checkbox"
-                    >
-                      {this.decoupledCheckbox(sample)}
-                    </div>
-                  ) : null
-                }
+                        enableSampleDecoupled && (
+                          <div
+                            style={{ paddingLeft: '10px' }}
+                            className="decoupled-checkbox"
+                          >
+                            {this.decoupledCheckbox(sample)}
+                          </div>
+                        )
+                      }
                     </div>
                   </td>
                 </tr>
@@ -743,13 +758,16 @@ export default class SampleForm extends React.Component {
                   <td colSpan="4">
                     <div className="name-form">
                       <div style={{ width: '30%' }}>
-                        {this.textInput(sample, 'name', 'Name')}
+                        {this.textInput(sample, 'short_label', 'Short label')}
                       </div>
                       <div style={{ width: '30%', paddingLeft: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
                       <div style={{ width: '30%', paddingLeft: '5px' }}>
                         {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                      </div>
+                      <div style={{ width: '30%', paddingLeft: '5px' }}>
+                        {this.textInput(sample, 'location', 'Location')}
                       </div>
                       <div style={{ width: '10%', paddingLeft: '10px' }} className="top-secret-checkbox">
                         {this.drySolventCheckbox(sample)}
@@ -762,18 +780,18 @@ export default class SampleForm extends React.Component {
                   </td>
                 </tr>
                 {sample.decoupled
-            && (
-            <tr>
-              {
-                this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
-              }
-              <td colSpan="3">
-                {
-                  this.textInput(sample, 'sum_formula', 'Sum formula')
-                }
-              </td>
-            </tr>
-            )}
+                  && (
+                    <tr>
+                      {
+                        this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
+                      }
+                      <td colSpan="3">
+                        {
+                          this.textInput(sample, 'sum_formula', 'Sum formula')
+                        }
+                      </td>
+                    </tr>
+                  )}
 
                 <tr className="visible-hd">
                   <td colSpan="6">
@@ -799,19 +817,19 @@ export default class SampleForm extends React.Component {
                               >
                                 <Tab eventKey="density" title="Density">
                                   {
-                              this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                            }
+                                    this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                                  }
                                 </Tab>
                                 <Tab eventKey="molarity" title="Molarity">
                                   {
-                              this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                            }
+                                    this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                                  }
                                 </Tab>
                               </Tabs>
                               <div style={{ width: '40%', paddingLeft: '5px' }}>
                                 {
-                            this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
-                          }
+                                  this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+                                }
                               </div>
                             </div>
                           </td>
@@ -826,22 +844,8 @@ export default class SampleForm extends React.Component {
           <tr>
             {this.additionalProperties(sample)}
           </tr>
-          <tr>
-            <td colSpan="4">
-              <SampleDetailsSolvents
-                sample={sample}
-                onChange={this.handleSolventChanged}
-              />
-            </td>
-          </tr>
-
           <tr style={{ paddingTop: '15px' }}>
             <td colSpan="4">{this.sampleDescription(sample)}</td>
-          </tr>
-          <tr>
-            <td colSpan="4">
-              {this.textInput(sample, 'location', 'Location')}
-            </td>
           </tr>
           <tr>
             <td colSpan="4">
