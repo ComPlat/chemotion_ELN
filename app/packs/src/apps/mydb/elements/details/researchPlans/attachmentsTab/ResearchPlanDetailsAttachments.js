@@ -1,10 +1,13 @@
+/* eslint-disable lines-between-class-members */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
 import React, { Component } from 'react';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { Button } from 'react-bootstrap';
@@ -26,7 +29,9 @@ import {
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
-export default class ResearchPlanDetailsAttachments extends Component {
+class ResearchPlanDetailsAttachments extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
@@ -53,6 +58,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
     this.showImportConfirm = this.showImportConfirm.bind(this);
     this.hideImportConfirm = this.hideImportConfirm.bind(this);
+    this.addUniqueAttachments = this.addUniqueAttachments.bind(this);
   }
 
   componentDidMount() {
@@ -212,6 +218,21 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
+  addUniqueAttachments(attachmentsFromMessages, researchPlan) {
+    const { filteredAttachments } = this.state;
+    attachmentsFromMessages.forEach((attachment) => {
+      const existingMessage = filteredAttachments.find((a) => a.id === attachment.id);
+      const forCurrentElement = researchPlan.id === attachment.attachable_id
+        && attachment.attachable_type === 'ResearchPlan';
+      if (!existingMessage && forCurrentElement) {
+        const copiedAttachment = { ...attachment };
+        copiedAttachment.is_deleted = false;
+        filteredAttachments.push(copiedAttachment);
+        researchPlan.attachments.push(copiedAttachment);
+      }
+    });
+  }
+
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
@@ -236,6 +257,17 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
+    const { researchPlan } = this.props;
+
+    //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
+    let attachmentsFromMessages = [] ;
+    if(this.context.attachmentNotificationStore ){
+      attachmentsFromMessages = this.context.attachmentNotificationStore.getAttachmentsOfMessages();
+    }
+    
+
+    this.addUniqueAttachments(attachmentsFromMessages, researchPlan);
+
     const { onUndoDelete, attachments } = this.props;
     const thirdPartyApps = this.thirdPartyApps;
 
@@ -390,6 +422,8 @@ ResearchPlanDetailsAttachments.propTypes = {
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
 };
+
+export default observer(ResearchPlanDetailsAttachments);
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],

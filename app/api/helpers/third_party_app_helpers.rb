@@ -55,7 +55,7 @@ module ThirdPartyAppHelpers
   end
 
   # desc: return file for download to third party app
-      
+
   def download_attachment_to_third_party_app
     update_cache(:download)
     return error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
@@ -78,7 +78,15 @@ module ThirdPartyAppHelpers
       filename: params[:attachmentName].presence&.strip || "#{@app.name[0, 20]}-#{params[:file][:filename]}",
       file_path: params[:file][:tempfile].path,
     )
-    new_attachment.save
+    if new_attachment.save
+
+      Message.create_msg_notification(
+        channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION,
+        message_from: @user.id,
+        attachment: Entities::NotificationAttachmentEntity.represent(new_attachment).as_json,
+        data_args: { app: @app.name },
+      )
+    end
     { message: 'File uploaded successfully' }
   end
 
