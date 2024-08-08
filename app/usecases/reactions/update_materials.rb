@@ -170,8 +170,10 @@ module Usecases
       def update_existing_sample(sample, fixed_label)
         existing_sample = Sample.find(sample.id)
 
-        update_gas_material = @reaction.vessel_size && @vessel_size && (@reaction.vessel_size['amount'] != @vessel_size['amount'] ||
-          @reaction.vessel_size['unit'] != @vessel_size['unit'])
+        update_gas_material = @reaction.vessel_size && @vessel_size && (
+          @reaction.vessel_size['amount'] != @vessel_size['amount'] ||
+          @reaction.vessel_size['unit'] != @vessel_size['unit']
+        )
         if sample.gas_type == 'gas' && update_gas_material
           set_mole_value_gas_product(existing_sample, sample)
         else
