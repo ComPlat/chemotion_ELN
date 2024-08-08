@@ -56,6 +56,10 @@ function getReactionMaterials(reaction) {
   }, {});
 }
 
+function getReactionMaterialsIDs(reactionMaterials) {
+  return Object.values(reactionMaterials).flat().map((material) => material.id);
+}
+
 function updateYields(variationsRow, reactionHasPolymers) {
   const updatedVariationsRow = cloneDeep(variationsRow);
   const referenceMaterial = getReferenceMaterial(updatedVariationsRow);
@@ -310,6 +314,7 @@ export {
   MaterialOverlay,
   getMaterialColumnGroupChild,
   getReactionMaterials,
+  getReactionMaterialsIDs,
   getMaterialData,
   updateColumnDefinitionsMaterials,
   updateNonReferenceMaterialOnMassChange,

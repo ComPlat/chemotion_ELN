@@ -1,6 +1,6 @@
 class PagesController < ApplicationController
-  skip_before_action :authenticate_user!, only: [
-    :home, :about, :chemscanner, :chemspectra, :chemspectra_editor
+  skip_before_action :authenticate_user!, only: %i[
+    home about chemspectra chemspectra_editor
   ]
   before_action :fetch_affiliations, only: [:affiliations, :update_affiliations]
   before_action :build_affiliation, only: [:affiliations, :update_affiliations]
@@ -8,6 +8,10 @@ class PagesController < ApplicationController
   def home; end
 
   def about; end
+
+  def chemspectra; end
+
+  def chemspectra_editor; end
 
   def docx; end
 
