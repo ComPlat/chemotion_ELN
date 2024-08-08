@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, Row, Col } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -39,57 +39,55 @@ class ScreenWellplates extends Component {
     wellplateShowOrNew({ params: { wellplateID } });
   }
 
+  renderDropZone() {
+    const { isOver, canDrop, connectDropTarget } = this.props;
+    const borderColor = isOver && canDrop ? 'border-primary' : 'border-gray-400';
+
+    return connectDropTarget( // eslint-disable-line function-paren-newline
+      <div className={`p-2 mb-4 border-dashed border-3 text-center text-gray-600 ${borderColor}`}>
+        Drop Wellplate here to add.
+      </div>);
+  }
+
   render() {
-    // eslint-disable-next-line object-curly-newline
-    const { wellplates, isOver, canDrop, connectDropTarget, deleteWellplate } = this.props;
-    const style = { padding: 10 };
-    if (isOver && canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderColor = '#337ab7';
-    } else if (canDrop) {
-      style.borderStyle = 'dashed';
-    }
-    return connectDropTarget(
-      <div style={style}>
-        <table width="100%">
-          <thead>
-            <tr>
-              <th width="45%">Name</th>
-              <th width="50%">Description</th>
-              <th width="5%" />
-            </tr>
-          </thead>
-          <tbody>
-            {wellplates.map(wellplate => (
-              <tr key={wellplate.id} style={{ height: '80px', verticalAlign: 'middle' }}>
-                <td>
-                  <a
-                    onClick={() => this.handleWellplateClick(wellplate)}
-                    role="button"
-                  >
-                    {wellplate.name}
-                  </a>
-                </td>
-                <td>
-                  <QuillViewer
-                    value={wellplate.description}
-                    theme="bubble"
-                    height="44px"
-                  />
-                </td>
-                <td style={{ verticalAlign: 'middle' }}>
-                  <Button
-                    variant="danger"
-                    style={{ marginLeft: '10px' }}
-                    onClick={() => deleteWellplate(wellplate)}
-                  >
-                    <i className="fa fa-trash-o" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    const { wellplates, deleteWellplate } = this.props;
+  
+    return (
+      <div>
+        {this.renderDropZone()}
+        <Row>
+          <Col className="fw-bold col-4">Name</Col>
+          <Col className="fw-bold col-7">Description</Col>
+          <Col></Col>
+        </Row>
+        {wellplates.map(wellplate => (
+          <Row key={wellplate.id}>
+            <Col className="col-4">
+              <Button
+                variant="link"
+                className="border-0 pt-3 px-0 text-decoration-none"
+                onClick={() => this.handleWellplateClick(wellplate)}
+              >
+                {wellplate.name}
+              </Button>
+            </Col>
+            <Col className="col-7">
+              <QuillViewer
+                value={wellplate.description}
+                theme="bubble"
+              />
+            </Col>
+            <Col>
+              <Button
+                variant="danger"
+                className="float-end mt-3"
+                onClick={() => deleteWellplate(wellplate)}
+              >
+                <i className="fa fa-trash-o" />
+              </Button>
+            </Col>
+          </Row>
+        ))}
       </div>
     );
   }
