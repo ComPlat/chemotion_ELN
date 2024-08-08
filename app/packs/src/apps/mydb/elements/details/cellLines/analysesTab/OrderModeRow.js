@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import OrderModeHeader from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeHeader';
+import Header from 'src/apps/mydb/elements/details/cellLines/analysesTab/Header';
 import { DragSource, DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { compose } from 'redux';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import PropTypes from 'prop-types';
 import Container from 'src/models/Container';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const dragHooks = {
 
@@ -63,12 +62,7 @@ class OrderModeRow extends Component {
     return (
       compose(connectDragSource, connectDropTarget)(
         <div>
-          <Panel>
-            <Panel.Heading>
-              <OrderModeHeader container={container} />
-            </Panel.Heading>
-            <Panel.Body collapsible />
-          </Panel>
+          <Header container={container} />
         </div>
       )
     );
