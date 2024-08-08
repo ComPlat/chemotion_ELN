@@ -3,7 +3,7 @@ import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
   updateNonReferenceMaterialOnMassChange, updateColumnDefinitionsMaterials,
-  getMaterialColumnGroupChild
+  getMaterialColumnGroupChild, getReactionMaterialsIDs
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -125,5 +125,12 @@ describe('ReactionVariationsMaterials', () => {
       updatedColumnDefinitions,
       'startingMaterials'
     )).toEqual(updatedStartingMaterialIDs);
+  });
+  it('retrieves reaction material IDs', async () => {
+    const reaction = await setUpReaction();
+    const reactionMaterials = getReactionMaterials(reaction);
+    const reactionMaterialsIDs = getReactionMaterialsIDs(reactionMaterials);
+    expect(Array.isArray(reactionMaterialsIDs)).toBe(true);
+    expect(new Set(reactionMaterialsIDs).size).toBe(5);
   });
 });

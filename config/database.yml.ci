@@ -1,0 +1,12 @@
+shared:
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  timeout: 5000
+  username: postgres
+  password:
+  template: template0
+  host: postgres
+  port: 5432
+  database: chemotion
+
