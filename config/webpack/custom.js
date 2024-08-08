@@ -1,3 +1,7 @@
+const {
+  sentryWebpackPlugin
+} = require("@sentry/webpack-plugin");
+
 const webpack = require('webpack');
 
 module.exports = {
@@ -13,20 +17,24 @@ module.exports = {
       'process/browser': require.resolve('process/browser'),
     },
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.version': JSON.stringify(process.version),
-      'process.env.SENTRY_FRONTEND_DSN': JSON.stringify(
-        process.env.SENTRY_FRONTEND_DSN
-      ),
-      'process.env.SENTRY_FRONTEND_SAMPLE_RATE': JSON.stringify(
-        process.env.SENTRY_FRONTEND_SAMPLE_RATE
-      ),
-    }),
-    new webpack.ProvidePlugin({
-      process: 'process/browser',
-    }),
-  ],
+
+  plugins: [new webpack.DefinePlugin({
+    'process.version': JSON.stringify(process.version),
+    'process.env.SENTRY_FRONTEND_DSN': JSON.stringify(
+      process.env.SENTRY_FRONTEND_DSN
+    ),
+    'process.env.SENTRY_FRONTEND_SAMPLE_RATE': JSON.stringify(
+      process.env.SENTRY_FRONTEND_SAMPLE_RATE
+    ),
+  }), new webpack.ProvidePlugin({
+    process: 'process/browser',
+  }), sentryWebpackPlugin({
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    url: process.env.SENTRY_URL
+  })],
+
   module: {
     rules: [
       {
@@ -35,4 +43,6 @@ module.exports = {
       },
     ],
   },
+
+  devtool: "source-map"
 };
