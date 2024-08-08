@@ -101,7 +101,6 @@ class AttachmentContainer extends Component {
     const { inboxSize } = InboxStore.getState();
 
     const trash = (
-      <span>
         <OverlayTrigger
           show={deletingTooltip}
           animation
@@ -130,11 +129,10 @@ class AttachmentContainer extends Component {
           )}
         >
           <i
-            className="fa fa-trash-o"
+            className="fa fa-trash-o mt-1"
             onClick={() => this.toggleTooltip()}
             role="button" />
         </OverlayTrigger>
-      </span>
     );
 
     const attachmentId = attachment.id;

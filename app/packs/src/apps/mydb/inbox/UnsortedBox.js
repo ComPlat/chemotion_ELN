@@ -187,16 +187,13 @@ export default class UnsortedBox extends React.Component {
           checked={checkedAll && checkedIds.length === currentItems.length}
           onChange={this.toggleSelectAllCheckbox}
         />
-        <span
-          className="ms-2 fw-bold"
-        >
+        <span className="ms-2 fw-bold">
           {checkedAll && checkedIds.length === currentItems.length ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
 
     const trash = (
-      <span>
         <OverlayTrigger
           show={deletingTooltip}
           animation
@@ -205,9 +202,7 @@ export default class UnsortedBox extends React.Component {
           overlay={(
             <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             {`Delete ${checkedIds.length} attachment${checkedIds.length > 1 ? 's' : ''}?`}
-            <ButtonGroup
-              style={{ marginLeft: '5px' }}
-            >
+            <ButtonGroup className="ms-1">
               <Button
                 variant="danger"
                 size="sm"
@@ -233,7 +228,6 @@ export default class UnsortedBox extends React.Component {
           role="button"
         />
         </OverlayTrigger>     
-      </span>
     );
 
     const attachments = visible && currentItems.map((attachment) => (
