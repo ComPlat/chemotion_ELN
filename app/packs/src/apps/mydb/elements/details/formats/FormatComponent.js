@@ -1,18 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Accordion, Button } from 'react-bootstrap';
+import { Card, Button } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
-
-import PanelHeader from 'src/components/common/PanelHeader';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const tryParse = function TryParseToJson(obj) {
   if (typeof obj === 'object') return obj;
   return JSON.parse(obj);
 };
 
-function ElementAnalyses({ element, idx }) {
-  const children = element.children.map(x => (
+const ElementAnalyses = ({ element, idx }) => {
+  const children = element.children?.map((x) => (
     <ElementAnalyses key={x.id} element={x} />
   ));
 
@@ -21,103 +18,38 @@ function ElementAnalyses({ element, idx }) {
     kind = (kind.split('|')[1] || kind).trim();
     const header = `Analysis name: ${x.name} - Type: ${kind}`;
     return (
-      <Panel key={x.id}>
-        <Panel.Heading>
+      <Card key={x.id}>
+        <Card.Header>
           {header}
-        </Panel.Heading>
-        <Panel.Body>
+        </Card.Header>
+        <Card.Body>
           <QuillViewer value={tryParse(x.extended_metadata.content)} />
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   });
 
   if (element.analyses.length === 0) {
     analyses = (
-      <p> This {element.type} does not have any analysis.</p>
+      <p>This {element.type} does not have any analysis.</p>
     );
   }
 
   return (
-    <Panel
+    <Card
       key={element.id}
       eventKey={idx}
     >
-      <Panel.Heading>
+      <Card.Header>
         {`${element.type}: ${element.short_label}`}
-      </Panel.Heading>
-      <Panel.Body>
-      {children}
-      {analyses}
-      </Panel.Body>
-    </Panel>
+      </Card.Header>
+      <Card.Body>
+        {children}
+        {analyses}
+      </Card.Body>
+    </Card>
   );
-}
-
-function FormatComponentHeader({ onClose, onSave, onFormat }) {
-  const closeBtn = (
-    <Button
-      key="closeBtn"
-      onClick={onClose}
-      variant="danger"
-      size="sm"
-    >
-      <i className="fa fa-times" />
-    </Button>
-  );
-  const saveBtn = (
-    <Button
-      key="saveBtn"
-      onClick={onSave}
-      variant="warning"
-      size="sm"
-    >
-      <i className="fa fa-floppy-o" />
-    </Button>
-  );
-  const formatBtn = (
-    <Button
-      key="formatBtn"
-      onClick={onFormat}
-      variant="info"
-      size="sm"
-    >
-      <i className="fa fa-magic" />
-    </Button>
-  );
-  const btns = [closeBtn, saveBtn, formatBtn];
-
-  return <PanelHeader title="Analyses Formatting" btns={btns} />;
-}
-
-function FormatComponent({
-  list, variant, onSave, onFormat, onClose
-}) {
-  const elements = list.map((el, idx) => (
-    <ElementAnalyses key={el.id} element={el} idx={idx} />
-  ));
-  const header = (
-    <FormatComponentHeader
-      onSave={onSave}
-      onFormat={onFormat}
-      onClose={onClose}
-    />
-  );
-
-  return (
-    <Panel
-      variant={variant}
-      className="format-analysis-panel"
-    >
-      <Panel.Heading>
-        {header}
-      </Panel.Heading>
-      <Panel.Body>
-        <Accordion>{elements}</Accordion>
-      </Panel.Body>
-    </Panel>
-  );
-}
+};
 
 ElementAnalyses.propTypes = {
   element: PropTypes.shape({
@@ -134,11 +66,60 @@ ElementAnalyses.defaultProps = {
   idx: null
 };
 
+const FormatComponentHeader = ({ onClose, onSave, onFormat }) => (
+  <div className="d-flex gap-1 align-items-baseline">
+    <span className="flex-grow-1">Analyses Formatting</span>
+    <Button
+      key="formatBtn"
+      onClick={onFormat}
+      variant="info"
+      size="xxsm"
+    >
+      <i className="fa fa-magic" />
+    </Button>
+    <Button
+      key="saveBtn"
+      onClick={onSave}
+      variant="warning"
+      size="xxsm"
+    >
+      <i className="fa fa-floppy-o" />
+    </Button>
+    <Button
+      key="closeBtn"
+      onClick={onClose}
+      variant="danger"
+      size="xxsm"
+    >
+      <i className="fa fa-times" />
+    </Button>
+  </div>
+);
+
 FormatComponentHeader.propTypes = {
   onSave: PropTypes.func.isRequired,
   onFormat: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
 };
+
+const FormatComponent = ({
+  list, variant, onSave, onFormat, onClose
+}) => (
+  <Card className="eln-panel-detail">
+    <Card.Header className={`text-bg-${variant}`}>
+      <FormatComponentHeader
+        onSave={onSave}
+        onFormat={onFormat}
+        onClose={onClose}
+      />
+    </Card.Header>
+    <Card.Body className="d-flex flex-column gap-3">
+      {list.map((el, idx) => (
+        <ElementAnalyses key={el.id} element={el} idx={idx} />
+      ))}
+    </Card.Body>
+  </Card>
+);
 
 FormatComponent.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object).isRequired,
