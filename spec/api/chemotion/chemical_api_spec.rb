@@ -120,15 +120,16 @@ describe Chemotion::ChemicalAPI do
 
       before do
         stub_request(:get, 'https://www.alfa.com/en/search/?q=')
-          .with(headers: { 'Access-Control-Request-Method' => 'GET', 'Accept' => '*/*', 'User-Agent': 'Google Chrome' })
+          .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip, deflate, br',
+                           'Access-Control-Request-Method' => 'GET' })
           .to_return(status: 200, body: '', headers: {})
         stub_request(:get, 'https://www.sigmaaldrich.com/US/en/search')
-          .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip, deflate, br',
                            'Access-Control-Request-Method' => 'GET',
                            'User-Agent' => 'Google Chrome' })
           .to_return(status: 200, body: '', headers: {})
         get "/api/v1/chemicals/fetch_safetysheet/#{chemical.sample_id}?data[vendor]=#{params[:vendor]}&data[option]=
-            #{params[:option]}&data[language]=#{params[:language]}", params: params
+          #{params[:option]}&data[language]=#{params[:language]}", params: params
       end
 
       it 'fetches the response from merck/thermofischer api' do
