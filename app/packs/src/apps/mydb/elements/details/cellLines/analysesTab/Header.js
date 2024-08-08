@@ -5,7 +5,7 @@ import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import { Button } from 'react-bootstrap';
 
-export default class EditModeHeader extends React.Component {
+export default class Header extends React.Component {
   handleUndoDeletionOfContainer(container, e) {
     const { parent } = this.props;
     e.stopPropagation();
@@ -27,7 +27,7 @@ export default class EditModeHeader extends React.Component {
   }
 
   renderDeletedContainer() {
-    const { container } = this.props;
+    const { container, isEditHeader } = this.props;
     const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
     const titleKind = kind
       ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`)
@@ -37,26 +37,27 @@ export default class EditModeHeader extends React.Component {
     const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
     return (
-      <div style={{ width: '100%' }}>
-        <strike>
+      <div className="flex-grow-1 d-flex align-items-baseline justify-content-between gap-1 me-2">
+        <div className="text-decoration-line-through">
           {container.name}
           {titleKind}
           {titleStatus}
-        </strike>
-        <Button
-          className="pull-right"
-          size="sm"
-          variant="danger"
-          onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
-        >
-          <i className="fa fa-undo" />
-        </Button>
+        </div>
+        {isEditHeader && (
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
+          >
+            <i className="fa fa-undo" />
+          </Button>
+        )}
       </div>
     );
   }
 
   renderNotDeletedContainer() {
-    const { container, readOnly } = this.props;
+    const { container, readOnly, isEditHeader } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
 
     const kind = container.extended_metadata.kind?.split('|')[1] || '';
@@ -70,9 +71,26 @@ export default class EditModeHeader extends React.Component {
     };
 
     return (
-      <div className="analysis-header">
-        <div className="preview">{this.renderImagePreview(container)}</div>
-        <div className="abstract">
+      <div className="d-flex align-items-start flex-grow-1 justify-content-between gap-2 pe-2">
+        <div>{this.renderImagePreview(container)}</div>
+        <div className="flex-grow-1">
+          <div className="mb-2 fs-4 text-decoration-underline">{container.name}</div>
+          <div>
+            Type:
+            {' '}
+            {kind}
+          </div>
+          <div>
+            Status:
+            {' '}
+            {container.extended_metadata.status || ''}
+          </div>
+          <div>
+            Content:
+            <QuillViewer value={contentOneLine} preview />
+          </div>
+        </div>
+        {isEditHeader && (
           <Button
             disabled={readOnly}
             size="sm"
@@ -81,54 +99,31 @@ export default class EditModeHeader extends React.Component {
           >
             <i className="fa fa-trash" />
           </Button>
-          <div className="lower-text">
-            <div className="main-title">{container.name}</div>
-            <div className="sub-title">
-              Type:
-              {' '}
-              {kind}
-            </div>
-            <div className="sub-title">
-              Status:
-              {' '}
-              {container.extended_metadata.status || ''}
-            </div>
-            <div className="desc sub-title">
-              <span style={{ float: 'left', marginRight: '5px' }}>
-                Content:
-              </span>
-              <QuillViewer value={contentOneLine} preview />
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     );
   }
 
   // eslint-disable-next-line class-methods-use-this
   renderImagePreview() {
-    const { container } = this.props;
+    const { container, isEditHeader } = this.props;
     const previewImg = previewContainerImage(container);
     const fetchNeeded = false;
     const fetchId = 1;
 
     return (
-      <div className="preview">
-        
-        <ImageModal
-          hasPop={true}
-          disableClick={false}
-          previewObject={{
-            src: previewImg
-          }}
-          popObject={{
-            title: container.name,
-            src: previewImg,
-            fetchNeeded,
-            fetchId
-          }}
-        />
-      </div>
+      <ImageModal
+        hasPop={isEditHeader}
+        previewObject={{
+          src: previewImg
+        }}
+        popObject={{
+          title: container.name,
+          src: previewImg,
+          fetchNeeded,
+          fetchId
+        }}
+      />
     );
   }
 
@@ -141,7 +136,12 @@ export default class EditModeHeader extends React.Component {
   }
 }
 
-EditModeHeader.propTypes = {
+Header.defaultProps = {
+  readOnly: false,
+  isEditHeader: false,
+};
+
+Header.propTypes = {
   container: PropTypes.shape({
     extended_metadata: PropTypes.shape({
       status: PropTypes.string,
@@ -155,13 +155,10 @@ EditModeHeader.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 
   }).isRequired,
-  readOnly: PropTypes.bool.isRequired,
+  readOnly: PropTypes.bool,
+  isEditHeader: PropTypes.bool,
+
   parent: PropTypes.shape({
     handleChange: PropTypes.func.isRequired
   }).isRequired,
-  element: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    type: PropTypes.string.isRequired,
-    isNew: PropTypes.bool.isRequired,
-  }).isRequired
 };
