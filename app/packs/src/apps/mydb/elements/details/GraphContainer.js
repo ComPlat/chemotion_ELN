@@ -1,9 +1,6 @@
-/* eslint-disable no-param-reassign */
-
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Accordion } from 'react-bootstrap';
-import Panel from 'src/components/legacyBootstrap/Panel';
+import { Button, Card } from 'react-bootstrap';
 
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -40,7 +37,8 @@ export default class GraphContainer extends React.Component {
   }
 
   onClose() {
-    DetailActions.close(this.props.graph, true);
+    const { graph } = this.props;
+    DetailActions.close(graph, true);
   }
 
   onChangeUI(state) {
@@ -54,7 +52,7 @@ export default class GraphContainer extends React.Component {
   onChangeRp(state) {
     const { selectedObjTags, defaultObjTags } = state;
     const selectedComputedProps = [];
-    state.selectedObjs.filter(s => s.molecule_computed_props).forEach((s) => {
+    state.selectedObjs.filter((s) => s.molecule_computed_props).forEach((s) => {
       const cprops = s.molecule_computed_props.sort((a, b) => (
         a.updated_at - b.updated_at
       ));
@@ -75,37 +73,31 @@ export default class GraphContainer extends React.Component {
 
   render() {
     const { selectedComputedProps } = this.state;
-    const header = (
-      <div>
-        {'Graph'}
-        <Button
-          key="closeBtn"
-          onClick={this.onClose}
-          variant="danger"
-          size="sm"
-        >
-          <i className="fa fa-times" />
-        </Button>
-      </div>
-    );
 
     return (
-      <Panel
-        variant="primary"
-      >
-        <Panel.Heading>
-          {header}
-        </Panel.Heading>
-        <Panel.Body>
-          <Accordion>
-            <ComputedPropsGraphContainer
-              show
-              style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
-              graphData={selectedComputedProps}
-            />
-          </Accordion>
-        </Panel.Body>
-      </Panel>
+      <Card>
+        <Card.Header className="text-bg-primary d-flex align-items-baseline justify-content-between">
+          <div>
+            <i className="fa fa-area-chart me-1" />
+            Graph
+          </div>
+          <Button
+            key="closeBtn"
+            onClick={this.onClose}
+            variant="danger"
+            size="xxsm"
+          >
+            <i className="fa fa-times" />
+          </Button>
+        </Card.Header>
+        <Card.Body>
+          <ComputedPropsGraphContainer
+            show
+            style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
+            graphData={selectedComputedProps}
+          />
+        </Card.Body>
+      </Card>
     );
   }
 }

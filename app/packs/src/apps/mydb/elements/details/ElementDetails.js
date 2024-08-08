@@ -1,4 +1,3 @@
-/* eslint-disable react/destructuring-assignment */
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import DeviceDetails from 'src/apps/mydb/elements/details/devices/DeviceDetails';
@@ -20,9 +19,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import {
-  Tabs, Tab, Button
+  Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
-import Label from 'src/components/legacyBootstrap/Label'
 
 const tabInfoHash = {
   metadata: {
@@ -123,10 +121,6 @@ export default class ElementDetails extends Component {
     ElementStore.listen(this.onDetailChange);
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return true;
-  }
-
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
     ElementStore.unlisten(this.onDetailChange);
@@ -134,7 +128,8 @@ export default class ElementDetails extends Component {
 
   handleResize() {
     const windowHeight = window.innerHeight || 1;
-    if (this.state.fullScreen || windowHeight < 500) {
+    const { fullScreen } = this.state;
+    if (fullScreen || windowHeight < 500) {
       this.setState({ offsetTop: 0 });
     } else {
       this.setState({ offsetTop: 70 });
@@ -229,7 +224,7 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
-        return <CellLineDetails cellLineItem={el}  toggleFullScreen={this.toggleFullScreen}/>;
+        return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
       default:
         return (
           <div style={{ textAlign: 'center' }}>
@@ -248,18 +243,20 @@ export default class ElementDetails extends Component {
   }
 
   tabTitle(el, elKey) {
+    const { activeKey } = this.state;
+    const focusing = elKey === activeKey;
     const variant = el.isPendingToSave ? 'info' : 'primary';
-    const focusing = elKey === this.state.activeKey;
 
-    let iconElement = (<i className={`me-1 icon-${el.type}`} />);
+    const tab = tabInfoHash[el.type] ?? {};
+    const title = tab.title ?? el.title();
 
-    const tab = tabInfoHash[el.type] || {};
-    const title = tab.title || el.title();
-    if (tab.iconEl) { iconElement = tab.iconEl; }
-    if (el.element_klass) { iconElement = (<i className={`${el.element_klass.icon_name}`} />); }
-    const icon = focusing ? (iconElement) : (<Label variant={variant || ''}>{iconElement}</Label>);
+    const iconElement = el.element_klass
+      ? (<i className={`${el.element_klass.icon_name}`} />)
+      : tab.iconEl ?? (<i className={`icon-${el.type}`} />);
+    const icon = focusing ? iconElement : (<Badge bg={variant}>{iconElement}</Badge>);
+
     return (
-      <div>
+      <div className="d-flex align-items-baseline gap-2">
         {icon}
         {title}
       </div>
