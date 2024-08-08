@@ -32,7 +32,7 @@ import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
-import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
+import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
@@ -567,7 +567,7 @@ export default class ReactionDetails extends Component {
     });
 
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
+    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
 
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 

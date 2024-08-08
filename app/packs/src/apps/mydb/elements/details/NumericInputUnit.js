@@ -103,35 +103,32 @@ export default function NumericInputUnit(props) {
     setValue(newInput);
   };
 
-  const labelWrap = label ? <Form.Label>{label}</Form.Label> : <Form.Label style={{ paddingTop: '15px' }} />;
-  const bsSize = field === 'flash_point' ? 'small' : null;
-
-  const unitSwitch = (
-    <Button
-      disabled={inputDisabled}
-      active
-      onClick={() => { toggleInput(); }}
-      bsSize={bsSize}
-    >
-      {currentUnit}
-    </Button>
-  );
+  const bsSize = field === 'flash_point' ? 'sm' : null;
 
   return (
     <div className={`numericInputWithUnit_${unit}`}>
-      {labelWrap}
+      {label
+        ? <Form.Label>{label}</Form.Label>
+        : <Form.Label className="pt-2" />}
       <InputGroup>
         <Form.Control
           type="text"
-          bsClass="bs-form--compact form-control"
+          className="px-1"
           disabled={inputDisabled}
-          bsSize={bsSize}
+          size={bsSize}
           value={value}
           onChange={(event) => handleInputValueChange(event)}
           name={field}
           label={label}
         />
-        {unitSwitch}
+        <Button
+          disabled={inputDisabled}
+          active
+          onClick={toggleInput}
+          size={bsSize}
+        >
+          {currentUnit}
+        </Button>
       </InputGroup>
     </div>
   );
