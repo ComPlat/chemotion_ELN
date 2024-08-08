@@ -231,6 +231,9 @@ class Material extends Component {
   recalculateYieldForGasProduct(material, reaction) {
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     const refMaterial = reaction.findFeedstockMaterial();
+    if (!refMaterial) {
+      return null;
+    }
     const purity = refMaterial?.purity || 1;
     const feedstockMolValue = calculateFeedstockMoles(vesselVolume, purity);
     const result = material.amount_mol / feedstockMolValue;
