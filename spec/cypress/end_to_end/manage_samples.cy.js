@@ -64,7 +64,7 @@ describe('Manage Samples', () => {
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
       cy.get('#tab-density-molarity-tab-density').click();
-      cy.get('.numeric-input-unit_M > .input-group > .bs-form--compact').should('have.value', '1.0000');
+      cy.get('.numeric-input-unit_M > .input-group > input').should('have.value', '1.0000');
     });
   });
 
@@ -72,7 +72,7 @@ describe('Manage Samples', () => {
     cy.login('cu1', 'user_password');
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
-      cy.get('.numeric-input-unit_M > .input-group > .bs-form--compact').should('have.value', '1.0000');
+      cy.get('.numeric-input-unit_M > .input-group > input').should('have.value', '1.0000');
     });
   });
 
@@ -81,7 +81,7 @@ describe('Manage Samples', () => {
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
       cy.get('#Solvents').click();
-      cy.get('[width="50%"] > .bs-form--compact').should('have.value', 'trideuterio(deuteriooxy)methane');
+      cy.get('[width="50%"] > input').should('have.value', 'trideuterio(deuteriooxy)methane');
     });
   });
 
@@ -90,7 +90,7 @@ describe('Manage Samples', () => {
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
       cy.get('#Solvents').click();
-      cy.get('[width="26%"] > .bs-form--compact').should('have.value', '100');
+      cy.get('[width="26%"] > input').should('have.value', '100');
     });
   });
 
@@ -99,7 +99,7 @@ describe('Manage Samples', () => {
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
       cy.get('#Solvents').click();
-      cy.get('[width="26%"] > .bs-form--compact').should('have.value', '100');
+      cy.get('[width="26%"] > input').should('have.value', '100');
     });
   });
 
@@ -107,7 +107,7 @@ describe('Manage Samples', () => {
     cy.login('cu1', 'user_password');
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
-      cy.get('.numeric-input-unit_g > .input-group > .bs-form--compact').should('have.value', '4671');
+      cy.get('.numeric-input-unit_g > .input-group > input').should('have.value', '4671');
     });
   });
 

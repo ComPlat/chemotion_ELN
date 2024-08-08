@@ -27,7 +27,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
-import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
+import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
@@ -304,7 +304,7 @@ export default class WellplateDetails extends Component {
     const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
     const exportButton = (wellplate && wellplate.isNew)
-      ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
+      ? null : <ExportSamplesButton type="wellplate" id={wellplate.id} />;
 
     const tabContentsMap = {
       designer: (
