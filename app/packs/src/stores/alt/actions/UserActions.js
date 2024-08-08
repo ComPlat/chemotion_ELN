@@ -1,3 +1,5 @@
+/* eslint-disable arrow-parens */
+/* eslint-disable class-methods-use-this */
 import alt from 'src/stores/alt/alt';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
@@ -27,6 +29,7 @@ class UserActions {
         });
     };
   }
+
   fetchOlsBao() {
     return (dispatch) => {
       UsersFetcher.fetchOls('bao')
@@ -60,12 +63,11 @@ class UserActions {
     };
   }
 
-
   logout() {
     fetch('/users/sign_out', {
       method: 'delete',
       credentials: 'same-origin',
-      data: { authenticity_token: DocumentHelper.getMetaContent("csrf-token") }
+      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') }
     })
       .then(response => {
         if (response.status == 204) {
@@ -158,7 +160,7 @@ class UserActions {
       }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    }
+    };
   }
 
   fetchOmniauthProviders() {
@@ -166,7 +168,23 @@ class UserActions {
       UsersFetcher.fetchOmniauthProviders()
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
-    }
+    };
+  }
+
+  fetchKetcher2Options() {
+    return () => {
+      UsersFetcher.fetchUserKetcher2Options()
+        .then((result) => {
+          if (result) {
+            const newSource = {};
+            Object.keys(result).forEach((item) => {
+              newSource[item.replaceAll('_', '-')] = result[item];
+            });
+            localStorage.setItem('ketcher-opts', JSON.stringify(newSource));
+          }
+        })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 }
 
