@@ -35,7 +35,8 @@ module Usecases
         @shared_methods.serialization_by_elements_and_page(@elements, '')
 
         results = @shared_methods.serialization_by_elements_and_page(@elements, '')
-        results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: params["per_page"], pages: 0, totalElements: 0, error: '' }
+        results['cell_lines'] =
+          { elements: [], ids: [], page: 1, perPage: params['per_page'], pages: 0, totalElements: 0, error: '' }
         results
       end
 
@@ -50,10 +51,13 @@ module Usecases
 
         # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
         scope =
-          if @params[:selection][:search_type] == 'similar'
+          case params[:selection][:search_type]
+          when 'similar'
             Sample.by_collection_id(@collection_id).search_by_fingerprint_sim(molfile, threshold)
-          else
+          when 'sub'
             Sample.by_collection_id(@collection_id).search_by_fingerprint_sub(molfile)
+          when 'subRDKit'
+            Sample.by_collection_id(@collection_id).search_by_rdkit_sub(molfile)
           end
         scope = @shared_methods.order_by_molecule(scope)
         scope.pluck(:id)

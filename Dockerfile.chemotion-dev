@@ -10,9 +10,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
 RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
       imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
-      build-essential sudo postgresql-client libappindicator1 swig \
-      gconf-service libasound2 libgconf-2-4 cmake \
-      libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils tzdata libpq-dev \
+      build-essential sudo postgresql-client swig cmake \
+      libnspr4 libnss3 libxss1 xdg-utils tzdata libpq-dev \
       gtk2-engines-pixbuf \
       libssl-dev libreadline-dev\
       unzip openssh-client \
