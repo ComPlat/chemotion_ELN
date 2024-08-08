@@ -1,6 +1,6 @@
 import alt from 'src/stores/alt/alt';
 
-class GaseousReactionActions {
+class GasPhaseReactionActions {
   // eslint-disable-next-line class-methods-use-this
   handleGasButtonStatusChange() {
     return null;
@@ -22,4 +22,4 @@ class GaseousReactionActions {
   }
 }
 
-export default alt.createActions(GaseousReactionActions);
+export default alt.createActions(GasPhaseReactionActions);

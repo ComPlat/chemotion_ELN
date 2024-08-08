@@ -32,7 +32,7 @@ import {
   convertTurnoverFrequency,
   calculateFeedstockMoles,
 } from 'src/utilities/UnitsConversion';
-import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
+import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { parseNumericString } from 'src/utilities/MathUtils';
 
@@ -443,7 +443,7 @@ export default class ReactionDetailsScheme extends Component {
     updatedSample.setAmount(amount);
 
     if (updatedSample.gas_type === 'catalyst') {
-      GaseousReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
+      GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
@@ -539,7 +539,7 @@ export default class ReactionDetailsScheme extends Component {
         updatedSample.gas_type = 'off';
       } else if (value === 'CAT') {
         updatedSample.gas_type = 'off';
-        GaseousReactionActions.setCatalystReferenceMole(null);
+        GasPhaseReactionActions.setCatalystReferenceMole(null);
       } else if (value === 'off' && !isFeedstockMaterialPresent) {
         updatedSample.gas_type = 'feedstock';
       } else if (value === 'off') {
@@ -547,7 +547,7 @@ export default class ReactionDetailsScheme extends Component {
       }
     }
     if (updatedSample.gas_type === 'catalyst') {
-      GaseousReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
+      GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
     return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample);
   }
@@ -1063,7 +1063,7 @@ export default class ReactionDetailsScheme extends Component {
     const newValue = parseNumericString(value);
     onInputChange('vesselSizeAmount', newValue);
     const valueInLiter = unit === 'ml' ? newValue * 0.001 : newValue;
-    GaseousReactionActions.setReactionVesselSize(valueInLiter);
+    GasPhaseReactionActions.setReactionVesselSize(valueInLiter);
     reaction.products = this.updatesEquivalentForGasProductSamples(reaction.products, valueInLiter);
     this.onReactionChange(reaction);
   }

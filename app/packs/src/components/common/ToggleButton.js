@@ -4,7 +4,7 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
+import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 
 export default function ToggleButton({ gaseous, handleGaseousChange }) {
   const GasPhaseReactionState = GasPhaseReactionStore.getState();
@@ -12,7 +12,7 @@ export default function ToggleButton({ gaseous, handleGaseousChange }) {
 
   const handleChange = () => {
     setIsToggled(!isToggled);
-    GaseousReactionActions.handleGasButtonStatusChange();
+    GasPhaseReactionActions.handleGasButtonStatusChange();
     handleGaseousChange();
   };
 
