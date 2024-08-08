@@ -1,5 +1,5 @@
 import alt from 'src/stores/alt/alt';
-import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
+import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 
 class GasPhaseReactionStore {
   constructor() {
@@ -15,7 +15,7 @@ class GasPhaseReactionStore {
       setCatalystReferenceMole: this.setCatalystReferenceMole,
       setReactionVesselSize: this.setReactionVesselSize,
     });
-    this.bindActions(GaseousReactionActions);
+    this.bindActions(GasPhaseReactionActions);
   }
 
   handleGasButtonStatusChange() {

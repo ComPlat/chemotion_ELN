@@ -45,7 +45,7 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import ToggleButton from 'src/components/common/ToggleButton';
-import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
+import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -84,7 +84,7 @@ export default class ReactionDetails extends Component {
 
     UIStore.listen(this.onUIStoreChange);
     setTimeout(() => {
-      GaseousReactionActions.gaseousReaction(reaction.gaseous);
+      GasPhaseReactionActions.gaseousReaction(reaction.gaseous);
     }, 0);
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {

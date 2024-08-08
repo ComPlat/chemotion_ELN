@@ -7,7 +7,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
-import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
+import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -21,10 +21,10 @@ export default class ReactionsFetcher {
             const reaction = new Reaction(json.reaction);
             const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
             if (vesselSize) {
-              GaseousReactionActions.setReactionVesselSize(vesselSize);
+              GasPhaseReactionActions.setReactionVesselSize(vesselSize);
             }
             if (catalystMoles) {
-              GaseousReactionActions.setCatalystReferenceMole(catalystMoles);
+              GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
             }
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));
