@@ -22,6 +22,7 @@ import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
 const matSource = {
   beginDrag(props) {
@@ -226,19 +227,30 @@ class Material extends Component {
     );
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  recalculateYieldForGasProduct(material, reaction) {
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+    const refMaterial = reaction.findFeedstockMaterial();
+    const purity = refMaterial?.purity || 1;
+    const feedstockMolValue = calculateFeedstockMoles(vesselVolume, purity);
+    const result = material.amount_mol / feedstockMolValue;
+    return result > 1 ? 1 : `${(result * 100).toFixed(0)}%`;
+  }
+
   equivalentOrYield(material) {
     const { reaction, materialGroup } = this.props;
     if (materialGroup === 'products') {
       const refMaterial = reaction.getReferenceMaterial();
       let calculateYield = material.equivalent;
-      if (reaction.hasPolymers()) {
+      if (material.gas_type === 'gas') {
+        calculateYield = this.recalculateYieldForGasProduct(material, reaction);
+      } else if (reaction.hasPolymers()) {
         calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
       } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
         calculateYield = 'n.a.';
       } else if (material.purity < 1 && material.equivalent > 1) {
         calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
-      }
-      else {
+      } else {
         calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
       }
       return (

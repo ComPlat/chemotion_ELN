@@ -19,7 +19,6 @@ import { statusOptions } from 'src/components/staticDropdownOptions/options';
 import LineChartContainer from 'src/components/lineChart/LineChartContainer';
 import EditableTable from 'src/components/lineChart/EditableTable';
 import { permitOn } from 'src/components/common/uis';
-import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
