@@ -1,3 +1,5 @@
+/* eslint-disable react/jsx-no-bind */
+/* eslint-disable max-len */
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -7,7 +9,7 @@ import {
   Modal,
   Panel,
   FormGroup,
-  ControlLabel
+  ControlLabel,
 } from 'react-bootstrap';
 import Select from 'react-select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -19,6 +21,9 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
+import SurfaceChemistryList from 'src/components/ketcher-templates/SurfaceChemistryList';
+import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
+import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -144,22 +149,28 @@ function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
     <FormGroup>
-      <div className="col-lg-2 col-md-2">
-        <ControlLabel>Structure Editor</ControlLabel>
-      </div>
-      <div className="col-lg-6 col-md-8">
-        <Select
-          className="status-select"
-          name="editor selection"
-          clearable={false}
-          options={options}
-          onChange={fnChange}
-          value={value}
-        />
-      </div>
-      <div className="col-lg-4 col-md-2"> </div>
+      <ControlLabel>Structure Editor</ControlLabel>
+      <Select
+        className="status-select"
+        name="editor selection"
+        clearable={false}
+        options={options}
+        onChange={fnChange}
+        value={value}
+      />
     </FormGroup>
   );
+}
+
+function copyContentToClipboard(content) {
+  if (navigator.clipboard) {
+    const data = typeof content === 'object' ? JSON.stringify(content) : content;
+    navigator.clipboard.writeText(data).then(() => {
+      // alert('Please click on canvas and press CTRL+V to use the template.');
+    }).catch((err) => {
+      console.error('Failed to copy text: ', err);
+    });
+  }
 }
 
 EditorList.propTypes = {
@@ -168,28 +179,29 @@ EditorList.propTypes = {
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
-  (
-    <Panel bsStyle="info">
-      <Panel.Heading>
-        <Panel.Title>
-          Parents/Descendants will not be changed!
-        </Panel.Title>
-      </Panel.Heading>
-      <Panel.Body>
-        <p>This sample has parents or descendants, and they will not be changed.</p>
-        <p>Are you sure?</p>
-        <br />
-        <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
-          Cancel
-        </Button>
-        <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
-          Continue Editing
-        </Button>
-      </Panel.Body>
-    </Panel>
-  ) : null
-);
+function WarningBox({ handleCancelBtn, hideWarning, show }) {
+  return show
+    ? (
+      <Panel bsStyle="info">
+        <Panel.Heading>
+          <Panel.Title>
+            Parents/Descendants will not be changed!
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <p>This sample has parents or descendants, and they will not be changed.</p>
+          <p>Are you sure?</p>
+          <br />
+          <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
+            Cancel
+          </Button>
+          <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
+            Continue Editing
+          </Button>
+        </Panel.Body>
+      </Panel>
+    ) : null;
+}
 
 WarningBox.propTypes = {
   handleCancelBtn: PropTypes.func.isRequired,
@@ -213,6 +225,9 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
+      commonTemplatesList: [],
+      selectedShape: null,
+      selectedCommonTemplate: null,
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -222,6 +237,7 @@ export default class StructureEditorModal extends React.Component {
 
   componentDidMount() {
     this.resetEditor(this.editors);
+    this.fetchCommonTemplates();
   }
 
   componentDidUpdate(prevProps) {
@@ -306,11 +322,18 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
+  async fetchCommonTemplates() {
+    const list = await CommonTemplatesFetcher.fetchCommonTemplates();
+    this.setState({ commonTemplatesList: list?.templates });
+  }
+
   render() {
     const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
     const { cancelBtnText, submitBtnText } = this.props;
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const { editor, showWarning, molfile } = this.state;
+    const {
+      editor, showWarning, molfile, selectedCommonTemplate
+    } = this.state;
     const iframeHeight = showWarning ? '0px' : '730px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
     const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
@@ -342,6 +365,7 @@ export default class StructureEditorModal extends React.Component {
       name: this.editors[e].label,
       label: this.editors[e].label,
     }));
+
     return (
       <div>
         <Modal
@@ -352,13 +376,36 @@ export default class StructureEditorModal extends React.Component {
           onHide={this.handleCancelBtn.bind(this)}
         >
           <Modal.Header closeButton>
-            <Modal.Title>
-              <EditorList
-                value={editor.id}
-                fnChange={this.handleEditorSelection}
-                options={editorOptions}
-              />
-            </Modal.Title>
+            <div style={{ display: 'flex' }}>
+              <div style={{ flex: 3 }}>
+                <EditorList
+                  value={editor.id}
+                  fnChange={this.handleEditorSelection}
+                  options={editorOptions}
+                />
+              </div>
+              <div style={{ flex: 1, margin: '0 10px' }}>
+                <CommonTemplatesList
+                  options={this.state.commonTemplatesList}
+                  value={selectedCommonTemplate?.name}
+                  selectedItem={selectedCommonTemplate}
+                  onClickHandle={(value) => {
+                    this.setState({ selectedCommonTemplate: value });
+                    copyContentToClipboard(value?.molfile);
+                  }}
+                />
+              </div>
+              <div style={{ flex: 0.5, margin: '0 10px' }}>
+                <SurfaceChemistryList
+                  selectedShape={this.state.selectedShape}
+                  onSelectShape={(item) => {
+                    copyContentToClipboard({ root: item.root });
+                    this.setState({ selectedShape: item });
+                  }}
+                />
+              </div>
+
+            </div>
           </Modal.Header>
           <Modal.Body>
             <WarningBox

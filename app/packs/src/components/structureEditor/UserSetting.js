@@ -1,24 +1,24 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Button, Panel, Row, Col } from 'react-bootstrap';
+import {
+  Button, Panel, Row, Col
+} from 'react-bootstrap';
 import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const DEFAULT_EDITOR = 'ketcher';
 
-const UserSetting = () => {
+function UserSetting() {
   const [editors, setEditors] = useState([]);
-  const [editor, setEditor] =
-    useState({ default: DEFAULT_EDITOR, selected: DEFAULT_EDITOR, changing: false });
+  const [editor, setEditor] = useState({ default: DEFAULT_EDITOR, selected: DEFAULT_EDITOR, changing: false });
 
   const initProfile = () => {
     UsersFetcher.fetchProfile().then((result) => {
-      setEditor(prev =>
-        ({ ...prev, default: (result?.data?.default_structure_editor || DEFAULT_EDITOR) }));
+      setEditor((prev) => ({ ...prev, default: (result?.data?.default_structure_editor || DEFAULT_EDITOR) }));
     }).catch((error) => {
       console.log(error);
-      setEditor(prev => ({ ...prev, default: DEFAULT_EDITOR }));
+      setEditor((prev) => ({ ...prev, default: DEFAULT_EDITOR }));
     });
   };
 
@@ -37,22 +37,21 @@ const UserSetting = () => {
   }, []);
 
   const updateProfile = () => {
-    setEditor(prev => ({ ...prev, changing: true }));
+    setEditor((prev) => ({ ...prev, changing: true }));
     UsersFetcher.updateUserProfile({ data: { default_structure_editor: editor.selected } })
       .then((result) => {
-        setEditor(prev =>
-          ({ ...prev, default: result.data.default_structure_editor, changing: false }));
+        setEditor((prev) => ({ ...prev, default: result.data.default_structure_editor, changing: false }));
       }).catch((error) => {
         console.log(error);
       });
   };
 
   const onChange = (e) => {
-    setEditor(prev => ({ ...prev, selected: e.value }));
+    setEditor((prev) => ({ ...prev, selected: e.value }));
   };
 
   let options = editors
-    .map(e => ({ value: e.configs.editor, label: `${e.label} (${e.configs.editor})` }));
+    .map((e) => ({ value: e.configs.editor, label: `${e.label} (${e.configs.editor})` }));
   options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }].concat(options);
 
   return (
@@ -85,7 +84,7 @@ const UserSetting = () => {
       </Panel.Body>
     </Panel>
   );
-};
+}
 
 export default UserSetting;
 

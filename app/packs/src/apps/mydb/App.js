@@ -38,12 +38,14 @@ class App extends Component {
     UserActions.fetchOlsChmo();
     UserActions.fetchOlsBao();
     UserActions.fetchProfile();
+    UserActions.setUsertemplates()
     UserActions.fetchUserLabels();
     UserActions.fetchGenericEls();
     UserActions.fetchSegmentKlasses();
     UserActions.fetchDatasetKlasses();
     UserActions.fetchUnitsSystem();
     UserActions.fetchEditors();
+    UserActions.fetchKetcher2Options();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
 
