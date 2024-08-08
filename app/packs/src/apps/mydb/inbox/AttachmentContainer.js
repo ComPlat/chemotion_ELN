@@ -101,38 +101,38 @@ class AttachmentContainer extends Component {
     const { inboxSize } = InboxStore.getState();
 
     const trash = (
-        <OverlayTrigger
-          show={deletingTooltip}
-          animation
-          trigger="click"
-          placement="bottom"
-          overlay={(
-            <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-              Delete this attachment?
-              <ButtonGroup>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => InboxActions.deleteAttachment(attachment, fromUnsorted)}
-                >
-                  Yes
-                </Button>
-                <Button
-                  variant="warning"
-                  size="sm"
-                  onClick={() => this.toggleTooltip()}
-                >
-                  No
-                </Button>
-              </ButtonGroup>
-            </Tooltip>
-          )}
-        >
-          <i
-            className="fa fa-trash-o mt-1"
-            onClick={() => this.toggleTooltip()}
-            role="button" />
-        </OverlayTrigger>
+      <OverlayTrigger
+        show={deletingTooltip}
+        animation
+        trigger="click"
+        placement="bottom"
+        overlay={(
+          <Tooltip placement="bottom" className="in" id="tooltip-bottom">
+            Delete this attachment?
+            <ButtonGroup>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => InboxActions.deleteAttachment(attachment, fromUnsorted)}
+              >
+                Yes
+              </Button>
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => this.toggleTooltip()}
+              >
+                No
+              </Button>
+            </ButtonGroup>
+          </Tooltip>
+        )}
+      >
+        <i
+          className="fa fa-trash-o mt-1"
+          onClick={() => this.toggleTooltip()}
+          role="button" />
+      </OverlayTrigger>
     );
 
     const attachmentId = attachment.id;

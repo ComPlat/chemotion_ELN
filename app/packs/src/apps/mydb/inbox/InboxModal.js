@@ -368,8 +368,10 @@ export default class InboxModal extends React.Component {
     } = this.state;
 
     const panelClass = showCollectionTree ? `small-col col-md-${colMdValue}` : 'small-col col-md-5';
+    const inboxDisplay = inboxVisible ? '' : 'none';
 
-    if (visible) {
+    if (!visible) { return null; };
+
       return (
         <Draggable
           handle=".handle"
@@ -387,13 +389,11 @@ export default class InboxModal extends React.Component {
                 id="draggableInbox"
                 onMouseDown={this.handleMouseDown}
               >
-                <div
-                  className="d-flex justify-content-between align-items-center w-100"
-                >
+                <div className="d-flex justify-content-between align-items-center w-100">
                   <div>
                     <button
                       type="button"
-                      className="btn-inbox"
+                      className="border-0 bg-transparent"
                       onClick={() => this.onClickInbox()}
                     >
                       <i className="fa fa-inbox" />
@@ -429,8 +429,10 @@ export default class InboxModal extends React.Component {
               </Card.Header>
               <Card.Body>
                 <div>
-                  <div className="tree-view">
-                    <div className={`${inboxVisible ? 'd-none' : ''}`}>
+                  <div>
+                    <div
+                      className={`${inboxVisible ? 'd-none' : ''}`}
+                      style={{ display: inboxVisible ? 'none' : '' }}>
                       <Button
                         variant="light"
                         onClick={() => this.onClickInbox()}
@@ -441,7 +443,9 @@ export default class InboxModal extends React.Component {
                     </div>
 
                   </div>
-                  <div className={`tree-wrapper${inboxVisible ? 'd-none' : ''}`}>
+                  <div
+                    className={`tree-wrapper${inboxVisible ? 'd-none' : ''}`}
+                    style={{ display: inboxDisplay }}>
                     {this.inboxSubtrees()}
                   </div>
                 </div>
@@ -450,8 +454,6 @@ export default class InboxModal extends React.Component {
           </div>
         </Draggable>
       );
-    }
-    return null;
   }
 }
 
