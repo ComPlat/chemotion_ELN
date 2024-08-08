@@ -73,11 +73,13 @@ class CellLineDetails extends React.Component {
 
     return (
       <div className="d-flex align-items-center justify-content-between">
-        <div>
-          <i className="icon-cell_line me-1" />
-          {cellLineItem.short_label}
+        <div className="d-flex gap-2">
+          <span>
+            <i className="icon-cell_line me-1" />
+            {cellLineItem.short_label}
+          </span>
           <ElementCollectionLabels
-            className="collection-label floating"
+            className="collection-label"
             element={cellLineItem}
             key={cellLineItem.id}
             placement="right"
