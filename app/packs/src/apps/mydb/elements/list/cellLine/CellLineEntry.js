@@ -23,8 +23,8 @@ export default class CellLineEntry extends Component {
   getBorderStyle() {
     const { showEntries } = this.state;
     return showEntries
-      ? 'list-container title-panel'
-      : 'list-container title-panel cell-line-group-bottom-border';
+      ? 'list-container title-panel p-3'
+      : 'list-container title-panel p-3 cell-line-group-bottom-border';
   }
 
   renderItemEntries(cellLineItems) {
@@ -35,45 +35,38 @@ export default class CellLineEntry extends Component {
   }
 
   renderNameHeader(firstCellLineItem) {
-    return [
-      this.renderArrow(),
-      this.renderDetailedInfoButton(),
-      this.renderCreateSubSampleButton(),
-      <div
-        key={firstCellLineItem.cellLineName}
-        className="cell-line-group-header-name"
-      >
-        {`${firstCellLineItem.cellLineName} - ${firstCellLineItem.source}`}
-      </div>
-    ];
-  }
-
-  renderArrow() {
     const { showEntries } = this.state;
     return (
-      <div key="arrow" className="cell-line-group-arrow floating-right">
-        <ChevronIcon direction={showEntries ? 'down' : 'right'} />
+      <div className="d-flex gap-2 align-items-center">
+        <div className="flex-grow-1 fw-bold fs-5">
+          {`${firstCellLineItem.cellLineName} - ${firstCellLineItem.source}`}
+        </div>
+        {this.renderCreateSubSampleButton()}
+        {this.renderDetailedInfoButton()}
+        <ChevronIcon color="primary" direction={showEntries ? 'down' : 'right'} />
       </div>
     );
   }
 
   renderDetailedInfos(firstCellLineItem) {
     const { detailedInformation } = this.state;
-    return !detailedInformation ? [] : [
-      this.renderProperty('Organism', firstCellLineItem.organism),
-      this.renderProperty('Disease', firstCellLineItem.disease),
-      this.renderProperty('Tissue', firstCellLineItem.tissue),
-      this.renderProperty('Mutation', firstCellLineItem.mutation),
-      this.renderProperty('Variant', firstCellLineItem.variant),
-      this.renderProperty('Bio safety level', firstCellLineItem.bioSafetyLevel),
-      this.renderProperty('Cryopreservation medium', firstCellLineItem.cryopreservationMedium),
-      this.renderProperty('Gender', firstCellLineItem.gender)
-    ];
+    return !detailedInformation ? null : (
+      <div className="mt-2">
+        {this.renderProperty('Organism', firstCellLineItem.organism)}
+        {this.renderProperty('Disease', firstCellLineItem.disease)}
+        {this.renderProperty('Tissue', firstCellLineItem.tissue)}
+        {this.renderProperty('Mutation', firstCellLineItem.mutation)}
+        {this.renderProperty('Variant', firstCellLineItem.variant)}
+        {this.renderProperty('Bio safety level', firstCellLineItem.bioSafetyLevel)}
+        {this.renderProperty('Cryopreservation medium', firstCellLineItem.cryopreservationMedium)}
+        {this.renderProperty('Gender', firstCellLineItem.gender)}
+      </div>
+    );
   }
 
   renderDetailedInfoButton() {
     const { detailedInformation } = this.state;
-    const buttonActive = detailedInformation ? 'detailed-info-on' : 'detailed-info-off';
+    const active = !!detailedInformation;
     return (
       <OverlayTrigger
         key="detailedInfoButton"
@@ -85,7 +78,8 @@ export default class CellLineEntry extends Component {
         )}
       >
         <Button
-          className={buttonActive}
+          variant="info"
+          className={active ? 'border border-primary' : ''}
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
@@ -115,7 +109,6 @@ export default class CellLineEntry extends Component {
         )}
       >
         <Button
-          className="quick-sample"
           size="sm"
           onClick={(event) => {
             event.stopPropagation();
