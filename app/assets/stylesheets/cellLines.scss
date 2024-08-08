@@ -12,22 +12,6 @@
     }
 }
 
-.amount{
-    width: 90%;
-    input{
-        height:38px;
-    }
-}
-
-.scientific-button{
-    button{
-        margin-top: 2px;
-        margin-left: 3px;
-        width: 32px;
-        height: 32px;
-    }
-}
-
 .cell-line-group{
     .group-entry{
         .elements{
@@ -153,10 +137,6 @@
     }
 }
 
-.property-row{
-    margin-top: 2px;
-}
-
 .cell-line-name{
     input{
         font-size: 14px !important;
@@ -237,14 +217,6 @@
     margin-top:16px;
 }
 
-.missing-property{
-    margin-right: 5px;
-    
-    i {
-        color:red;
-    }
-}
-
 #cell-line-details-tab{
     .tab-content{
         margin-top: 20px;
@@ -275,10 +247,6 @@
     float:right;
 }
 
-.property-block{
-    width:20%;
-}
-
 .cell-line-group-header-name{
     font-size: large;
     margin-left: 30px;
@@ -299,53 +267,10 @@
     }
 }
 
-.order-mode-button{
-    margin-left: 10px;
-    margin-top: 10px;
-    float:left
-}
-.add-button{
-    margin-right: 10px;
-    margin-top: 10px;
-    float:right
-}
-.analyses{
-    margin-top: 10px;
-}
-.no-analyses-panel{
-    padding-top: 50px;
-    margin-bottom: 25px;
-}
 .analysis-container{
-    .chosen-element{
-        opacity: 0.1;
-    }
     .last-hovered-element{
         border-width: 1px;
         border: #337ab7;
         border-style: dashed;
     }
-
-    .order-mode-button{
-        .btn-orderMode{
-            color: #fff;
-            background-color: #5cb85c
-            
-        }
-        .btn-editMode{
-            color: #fff;
-            background-color: #337ab7
-        }
-        .btn{
-            width:100px;
-            i{
-                margin-right: 6px;
-            }
-        }
-    }
 }
-.analyses{
-    padding-top: 50px;
-    margin-bottom: 25px; 
-}
-
