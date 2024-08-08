@@ -70,6 +70,7 @@ class Fingerprint < ApplicationRecord
     fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile) if molfile
     threshold = threshold.to_f
     query_num_set_bits = count_bits_set(fp_vector)
+    return none unless query_num_set_bits.positive?
 
     sim_query = sanitize_sql_for_conditions(
       [sql_query_similar, query_num_set_bits] + fp_vector + [

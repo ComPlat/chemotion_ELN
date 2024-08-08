@@ -2,18 +2,19 @@
 
 require 'rails_helper'
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations,  RSpec/NestedGroups
 
 describe Chemotion::SearchAPI do
   include_context 'api request authorization context'
 
-  let(:other_user) { create(:person) }
   let(:collection) { create(:collection, user: user) }
-  let(:other_collection) { create(:collection, user: other_user) }
+  let(:other_collection) { create(:collection, user: user) }
   let(:sample_a) { create(:sample, name: 'SampleA', creator: user) }
   let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
-  let(:sample_c) { create(:sample, name: 'SampleC', creator: other_user) }
-  let(:sample_d) { create(:sample, name: 'SampleD', creator: other_user) }
+  let(:sample_c) { create(:sample, name: 'SampleC', creator: user) }
+  let(:sample_d) { create(:sample, name: 'SampleD', creator: user) }
+  let(:sample_e) { create(:sample, name: 'Methonol', creator: user, molfile: mof3000_2) }
+  let(:sample_f) { create(:sample, name: 'Dekan', creator: user, molfile: mof3000_1) }
   let(:wellplate) { create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)]) }
   let(:other_wellplate) { create(:wellplate, name: 'Other Wellplate', wells: [build(:well, sample: sample_b)]) }
   let(:reaction) { create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user) }
@@ -38,10 +39,12 @@ describe Chemotion::SearchAPI do
   end
 
   let(:reaction_with_duration) { create(:reaction, name: 'invalid Reaction', creator: user, duration: '1.33 Day(s)') }
-  let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: other_user) }
+  let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: user) }
   let(:screen) { create(:screen, name: 'Screen') }
   let(:other_screen) { create(:screen, name: 'Other Screen') }
   let!(:cell_line) { create(:cellline_sample, name: 'another-cellline-search-example', collections: [collection]) }
+  let!(:mof3000_1) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
+  let!(:mof3000_2) { Rails.root.join('spec/fixtures/mof_v3000_2.mol').read }
 
   before do
     CollectionsReaction.create!(reaction: reaction, collection: collection)
@@ -52,6 +55,8 @@ describe Chemotion::SearchAPI do
     CollectionsReaction.create!(reaction: reaction_with_negative_temperature, collection: collection)
     CollectionsReaction.create!(reaction: invalid_reaction_with_temperature, collection: collection)
     CollectionsSample.create!(sample: sample_a, collection: collection)
+    CollectionsSample.create!(sample: sample_e, collection: collection)
+    CollectionsSample.create!(sample: sample_f, collection: collection)
     CollectionsScreen.create!(screen: screen, collection: collection)
     CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
     ScreensWellplate.create!(wellplate: wellplate, screen: screen)
@@ -281,37 +286,177 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/structure' do
     let(:url) { '/api/v1/search/structure' }
-    let(:params) do
-      {
-        selection: {
-          elementType: :structure,
-          molfile: molfile,
-          search_type: 'sub',
-          tanimoto_threshold: 0.7,
-          search_by_method: :structure,
-          structure_search: true,
-        },
-        collection_id: collection.id,
-        page: 1,
-        per_page: 15,
-        molecule_sort: true,
-      }
+
+    context 'when search_by_fingerprint_sim' do
+      let(:params) do
+        {
+          selection: {
+            elementType: :structure,
+            molfile: molfile,
+            search_type: 'similar',
+            tanimoto_threshold: 0.7,
+            search_by_method: :structure,
+            structure_search: true,
+          },
+          collection_id: collection.id,
+          page: 1,
+          per_page: 15,
+          molecule_sort: true,
+        }
+      end
+
+      context 'when molecule is too small' do
+        let(:molfile) { sample_a.molfile }
+
+        it 'returns nothing found' do
+          result = JSON.parse(response.body)
+
+          expect(result.dig('reactions', 'totalElements')).to eq 0
+          expect(result.dig('samples', 'totalElements')).to eq 0
+          expect(result.dig('screens', 'totalElements')).to eq 0
+          expect(result.dig('wellplates', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when molecule is big enough' do
+        let(:molfile) { sample_e.molfile }
+
+        it 'returns the sample' do
+          result = JSON.parse(response.body)
+
+          expect(result.dig('reactions', 'totalElements')).to eq 1
+          expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+          expect(result.dig('samples', 'totalElements')).to eq 2
+          expect(result.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
+          expect(result.dig('screens', 'totalElements')).to eq 1
+          expect(result.dig('screens', 'ids')).to eq [screen.id]
+          expect(result.dig('wellplates', 'totalElements')).to eq 1
+          expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+        end
+      end
     end
 
-    context 'when searching a molfile in samples in correct collection' do
-      let(:molfile) { sample_a.molfile }
+    context 'when search_by_fingerprint_sub' do
+      context 'when searching a molfile in samples in correct collection' do
+        let(:molfile) { sample_a.molfile }
 
-      it 'returns the sample and all other objects referencing the sample from the requested collection' do
-        result = JSON.parse(response.body)
+        let(:params) do
+          {
+            selection: {
+              elementType: :structure,
+              molfile: molfile,
+              search_type: 'sub',
+              search_by_method: :structure,
+              structure_search: true,
+            },
+            collection_id: collection.id,
+            page: 1,
+            per_page: 15,
+            molecule_sort: true,
+          }
+        end
 
-        expect(result.dig('reactions', 'totalElements')).to eq 1
-        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
-        expect(result.dig('samples', 'totalElements')).to eq 1
-        expect(result.dig('samples', 'ids')).to eq [sample_a.id]
-        expect(result.dig('screens', 'totalElements')).to eq 1
-        expect(result.dig('screens', 'ids')).to eq [screen.id]
-        expect(result.dig('wellplates', 'totalElements')).to eq 1
-        expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+        it 'returns the sample and all other objects referencing the sample from the requested collection' do
+          result = JSON.parse(response.body)
+          expect(result.dig('reactions', 'totalElements')).to eq 1
+          expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+          expect(result.dig('samples', 'totalElements')).to eq 2
+          expect(result.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
+          expect(result.dig('screens', 'totalElements')).to eq 1
+          expect(result.dig('screens', 'ids')).to eq [screen.id]
+          expect(result.dig('wellplates', 'totalElements')).to eq 1
+          expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+        end
+      end
+
+      context 'when searching a molfile in samples in wrong collection' do
+        let(:molfile) { mof3000_1 }
+        let(:params) do
+          {
+            selection: {
+              elementType: :structure,
+              molfile: molfile,
+              search_type: 'sub',
+              search_by_method: :structure,
+              structure_search: true,
+            },
+            collection_id: other_collection.id,
+            page: 1,
+            per_page: 15,
+            molecule_sort: true,
+          }
+        end
+
+        it 'returns nothing found' do
+          result = JSON.parse(response.body)
+
+          expect(result.dig('reactions', 'totalElements')).to eq 0
+          expect(result.dig('samples', 'totalElements')).to eq 0
+          expect(result.dig('screens', 'totalElements')).to eq 0
+          expect(result.dig('wellplates', 'totalElements')).to eq 0
+        end
+      end
+    end
+
+    context 'when search_by_rdkit_sub' do
+      context 'when searching a molfile in samples in correct collection' do
+        let(:molfile) { sample_a.molfile }
+
+        let(:params) do
+          {
+            selection: {
+              elementType: :structure,
+              molfile: molfile,
+              search_type: 'subRDKit',
+              search_by_method: :structure,
+              structure_search: true,
+            },
+            collection_id: collection.id,
+            page: 1,
+            per_page: 15,
+            molecule_sort: true,
+          }
+        end
+
+        it 'returns the sample and all other objects referencing the sample from the requested collection' do
+          result = JSON.parse(response.body)
+          expect(result.dig('reactions', 'totalElements')).to eq 1
+          expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+          expect(result.dig('samples', 'totalElements')).to eq 2
+          expect(result.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
+          expect(result.dig('screens', 'totalElements')).to eq 1
+          expect(result.dig('screens', 'ids')).to eq [screen.id]
+          expect(result.dig('wellplates', 'totalElements')).to eq 1
+          expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+        end
+      end
+
+      context 'when searching a molfile in samples in wrong collection' do
+        let(:molfile) { mof3000_1 }
+        let(:params) do
+          {
+            selection: {
+              elementType: :structure,
+              molfile: molfile,
+              search_type: 'subRDKit',
+              search_by_method: :structure,
+              structure_search: true,
+            },
+            collection_id: other_collection.id,
+            page: 1,
+            per_page: 15,
+            molecule_sort: true,
+          }
+        end
+
+        it 'returns nothing found' do
+          result = JSON.parse(response.body)
+
+          expect(result.dig('reactions', 'totalElements')).to eq 0
+          expect(result.dig('samples', 'totalElements')).to eq 0
+          expect(result.dig('screens', 'totalElements')).to eq 0
+          expect(result.dig('wellplates', 'totalElements')).to eq 0
+        end
       end
     end
   end
@@ -405,4 +550,4 @@ describe Chemotion::SearchAPI do
     pending 'TODO: Add missing spec'
   end
 end
-# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations, RSpec/NestedGroups
