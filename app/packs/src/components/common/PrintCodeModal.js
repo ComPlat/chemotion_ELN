@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Modal } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
 import Utils from 'src/utilities/Functions';
 import json from '../../../../../public/json/printingConfig/defaultConfig.json';
+
 // Component that allows users to print a PDF.
 export default function PrintCodeModal({ element, showModal, handleModalClose }) {
   // State for the modal and preview
@@ -18,6 +20,7 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
       credentials: 'same-origin',
       method: 'GET',
     };
+
     // Fetch the PDF and set the preview.
     fetch(url, requestOptions)
       .then((response) => response.blob())
@@ -41,15 +44,19 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
           if (value !== 'bar_code' && value !== 'qr_code' && value !== 'data_matrix_code') {
             tmpUrlError.push('Invalid code type.'
                + ' correct values: bar_code, qr_code, data_matrix_code. Value have been overwrite');
+            tmpUrlError.push('Invalid code type.'
+               + ' correct values: bar_code, qr_code, data_matrix_code. Value have been overwrite');
           }
         }
         if (key === 'code_image_size') {
           if (value < 0 || value > 100) {
             tmpUrlError.push('Invalid code image size, correct values: 0-100. Value  have been overwrite');
+            tmpUrlError.push('Invalid code image size, correct values: 0-100. Value  have been overwrite');
           }
         }
         if (key === 'text_position') {
           if (value !== 'below' && value !== 'right') {
+            tmpUrlError.push('Invalid text position, correct values: below, right. Value have been overwrite');
             tmpUrlError.push('Invalid text position, correct values: below, right. Value have been overwrite');
           }
         }
@@ -60,6 +67,8 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
 
   // Builds the URL for fetching the PDF.
   const buildURL = () => {
+    let newUrl = '/api/v1/code_logs/print_codes?'
+      + `element_type=${element.type}&ids[]=${element.id}`;
     let newUrl = '/api/v1/code_logs/print_codes?'
       + `element_type=${element.type}&ids[]=${element.id}`;
     Object.entries(json).forEach(([key, value]) => {
@@ -83,6 +92,8 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
     if (urlError.length > 0) {
       return (
         <div style={{ color: 'red' }}>
+          {urlError.map((error, i) => (
+            <div key={i}>{error}</div>
           {urlError.map((error, i) => (
             <div key={i}>{error}</div>
           ))}
