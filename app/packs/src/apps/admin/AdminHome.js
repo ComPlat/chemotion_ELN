@@ -12,6 +12,8 @@ import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateCont
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
+import PrintingConfig from 'src/apps/admin/PrintingConfig';
+
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
@@ -53,6 +55,8 @@ class AdminHome extends React.Component {
       return this.renderGroupMgnt();
     } else if (pageIndex === 5) {
       return this.renderOlsTerms();
+    } else if (pageIndex === 6) {
+      return this.renderPrintingConfig();
     } else if (pageIndex === 7) {
       return this.renderContent(<MatrixManagement />);
     } else if (pageIndex === 8) {
@@ -87,6 +91,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={8}>Text Templates</NavItem>
             <NavItem eventKey={2}>Message Publish</NavItem>
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
+            <NavItem eventKey={6}>Printing Config</NavItem>
             {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
             <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
@@ -137,6 +142,15 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <OlsTerms />
+      </Col>
+    );
+  }
+
+  renderPrintingConfig() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <PrintingConfig />
       </Col>
     );
   }

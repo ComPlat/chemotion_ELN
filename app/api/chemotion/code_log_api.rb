@@ -53,7 +53,14 @@ module Chemotion
           requires :element_type, type: String, values: ['sample', 'reaction', 'wellplate', 'screen']
           #TODO check coerce with  type Array[Integer] not working with before do
           requires :ids, type: Array#, coerce_with: ->(val) { val.split(/,/).map(&:to_i) }
-          requires :size, type: String, values: ["small", "big"]
+          requires :width, type: Integer
+          requires :displaySample, type: Boolean
+          requires :name, type: Boolean
+          requires :short_label, type: Boolean
+          requires :external_label, type: Boolean
+          requires :molecule_name, type: Boolean
+          requires :code_log, type: Boolean
+          requires :code_type, type: String
         end
 
         before do
@@ -73,9 +80,20 @@ module Chemotion
           content_type('application/pdf')
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
-
-          body CodePdf.new(elements, params[:size], params[:element_type]).render
+          body CodePdf.new(elements,
+          width: params[:width],
+          element_type: params[:element_type],
+          code_type: params[:code_type],
+          code_image_size: params[:code_image_size],
+          display_sample: params[:displaySample],
+          name: params[:name],
+          short_label: params[:short_label],
+          external_label: params[:external_label],
+          molecule_name: params[:molecule_name],
+          code_log: params[:code_log],
+          text_position: params[:text_position]).render
         end
+
       end
 
       namespace :print_analyses_codes do
@@ -85,7 +103,6 @@ module Chemotion
           requires :element_type, type: String, values: ['sample', 'reaction', 'wellplate', 'screen']
           requires :id, type: Integer, desc: "Element id"
           requires :analyses_ids, type: Array[Integer]
-          # requires :type, type: String
           requires :size, type: String, values: ["small", "big"]
         end
 
