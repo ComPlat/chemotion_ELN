@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ControlLabel, FormGroup, InputGroup, FormControl, Checkbox, Row } from 'react-bootstrap';
+import { ControlLabel, FormGroup, InputGroup, FormControl } from 'react-bootstrap';
 
 export default class TextRangeWithAddon extends Component {
   handleInputChange(e) {
@@ -54,21 +54,12 @@ export default class TextRangeWithAddon extends Component {
 
   render() {
     const {
-      addon, disabled, label, tipOnText, value, includeCheckBox
+      addon, disabled, label, tipOnText, value
     } = this.props;
     return (
       <FormGroup bsSize="small">
-        <Row style={{ display: 'flex', alignItems: 'center', marginBottom: 0 }}>
-          <ControlLabel style={{ marginLeft: '15px' }}>{label}</ControlLabel>
-          {includeCheckBox && (
-            <Checkbox
-              checked={() => console.log('test check')}
-              onChange={() => console.log('test change')}
-              style={{ marginLeft: '5px', marginTop: 0 }}
-            />
-          )}
-        </Row>
-        <InputGroup data-cy={"cy_" + label} style={{ marginTop: 0, marginBottom: 0 }}>
+        <ControlLabel>{label}</ControlLabel>
+        <InputGroup data-cy={"cy_"+label}>
           <FormControl
             title={tipOnText}
             type="text"

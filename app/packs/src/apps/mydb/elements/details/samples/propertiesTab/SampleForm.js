@@ -641,7 +641,7 @@ export default class SampleForm extends React.Component {
                 <tr>
                   <td colSpan="4">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
+                      <div style={{ width: '25%', paddingLeft: '5px', marginTop: '12px' }}>
                         <TextRangeWithAddon
                           field="melting_point"
                           label="Melting point"
@@ -652,19 +652,7 @@ export default class SampleForm extends React.Component {
                           tipOnText="Use space-separated value to input a Temperature range"
                         />
                       </div>
-                      <div style={{ width: '20%', paddingLeft: '5px' }}>
-                        <TextRangeWithAddon
-                          field="melting_point"
-                          label="Decompose"
-                          addon="°C"
-                          value={sample.melting_point_display}
-                          disabled={polyDisabled}
-                          onChange={this.handleRangeChanged}
-                          tipOnText="Use space-separated value to input a Temperature range"
-                          includeCheckBox
-                        />
-                      </div>
-                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
+                      <div style={{ width: '25%', paddingLeft: '5px', marginTop: '12px' }}>
                         <TextRangeWithAddon
                           field="boiling_point"
                           label="Boiling point"
@@ -675,10 +663,10 @@ export default class SampleForm extends React.Component {
                           tipOnText="Use space-separated value to input a Temperature range"
                         />
                       </div>
-                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
+                      <div style={{ width: '25%', paddingLeft: '5px', marginTop: '12px' }}>
                         {this.inputWithUnit(sample, 'xref_flash_point', 'Flash Point')}
                       </div>
-                      <div style={{ width: '20%', paddingLeft: '5px', marginTop: '12px' }}>
+                      <div style={{ width: '25%', paddingLeft: '5px', marginTop: '12px' }}>
                         {this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}
                       </div>
                     </div>
