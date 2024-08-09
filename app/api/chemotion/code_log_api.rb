@@ -55,6 +55,12 @@ module Chemotion
           requires :ids, type: Array#, coerce_with: ->(val) { val.split(/,/).map(&:to_i) }
           requires :width, type: Integer
           requires :displaySample, type: Boolean
+          requires :name, type: Boolean
+          requires :short_label, type: Boolean
+          requires :external_label, type: Boolean
+          requires :molecule_name, type: Boolean
+          requires :code_log, type: Boolean
+          requires :code_type, type: String
         end
 
         before do
@@ -85,33 +91,9 @@ module Chemotion
           external_label: params[:external_label],
           molecule_name: params[:molecule_name],
           code_log: params[:code_log],
-          text_position: params[:text_position],
-          image: params[:image]).render
+          text_position: params[:text_position]).render
         end
 
-        post do
-          #TODO vide supra
-          ids = params[:ids][0] && params[:ids][0].split(/,/).map(&:to_i)
-          elements = params[:element_type].classify.constantize.where(id: ids)
-          puts params
-
-          content_type('application/pdf')
-          header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:element_type]}_codes_#{params[:size]}.pdf"
-          env["api.format"] = :binary
-          body CodePdf.new(elements,
-          width: params[:width],
-          element_type: params[:element_type],
-          code_type: params[:codeType],
-          code_image_size: params[:code_image_size],
-          display_sample: params[:displaySample],
-          name: params[:name],
-          short_label: params[:short_label],
-          external_label: params[:external_label],
-          molecule_name: params[:molecule_name],
-          code_log: params[:code_log],
-          text_position: params[:text_position],
-          image: params[:image]).render
-        end
       end
 
       namespace :print_analyses_codes do
