@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Row, Col, ListGroup, ListGroupItem, Button } from 'react-bootstrap';
+import { Row, Col, ListGroup, ListGroupItem, Button, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 
@@ -68,7 +68,7 @@ export default class UnsortedDataset extends React.Component {
       .filter(f => f.is_new && !f.is_deleted))()
       .then(() => { onModalHide(); InboxActions.fetchInboxUnsorted(); });
   }
-  
+
   listGroupItem(attachment) {
     return (
       <Row>
@@ -147,12 +147,25 @@ export default class UnsortedDataset extends React.Component {
   }
 
   render() {
+    const { onModalHide } = this.props;
+
     return (
       <Row>
         <Col sm={12}>
           {this.attachments()}
           {this.dropzone()}
           <br />
+        </Col>
+        <Col md={12}>
+          <ButtonToolbar className="gap-1 justify-content-end">
+            <Button variant="primary" onClick={() => onModalHide()}>Close</Button>
+            <Button
+              variant="warning"
+              onClick={() => this.handleSave()}
+            >
+              Save
+            </Button>
+          </ButtonToolbar>
         </Col>
       </Row>
     );
