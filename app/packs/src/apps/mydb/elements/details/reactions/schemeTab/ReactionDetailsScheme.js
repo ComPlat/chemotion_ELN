@@ -561,7 +561,7 @@ export default class ReactionDetailsScheme extends Component {
     } = changeEvent;
     const { reaction } = this.props;
     const updatedSample = reaction.sampleById(sampleID);
-    if (materialGroup === 'products') {
+    if (materialGroup === 'products' && updatedSample.gas_type === 'gas') {
       switch (field) {
         case 'temperature':
         case 'time':
@@ -577,10 +577,15 @@ export default class ReactionDetailsScheme extends Component {
         default:
           break;
       }
-    }
-    if (field === 'temperature' || field === 'part_per_million') {
-      const { vesselVolume } = this.state;
-      updatedSample.equivalent = this.calculateEquivalentForGasProduct(updatedSample, vesselVolume);
+      if (field === 'temperature' || field === 'part_per_million') {
+        const { vesselVolume } = this.state;
+        updatedSample.equivalent = this.calculateEquivalentForGasProduct(updatedSample, vesselVolume);
+        updatedSample.amount_value = updatedSample.updateGasMoles(vesselVolume);
+      } else if (field === 'time') {
+        const gasPhaseTime = updatedSample.gas_phase_data.time;
+        const tonValue = updatedSample.gas_phase_data.turnover_number;
+        updatedSample.updateTONPerTimeValue(tonValue, gasPhaseTime);
+      }
     }
     return this.updatedReactionWithSample(
       this.updatedSamplesForGasProductFieldsChange.bind(this),
