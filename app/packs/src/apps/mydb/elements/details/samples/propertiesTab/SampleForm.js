@@ -341,7 +341,7 @@ export default class SampleForm extends React.Component {
     } else { this.props.parent.setState({ sample }); }
   }
 
-  textInput(sample, field, label, disabled = false) {
+  textInput(sample, field, label, disabled = false, readOnly = false) {
     const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
@@ -354,7 +354,7 @@ export default class SampleForm extends React.Component {
           value={updateValue}
           onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
           disabled={disabled || !sample.can_update}
-          readOnly={disabled || !sample.can_update}
+          readOnly={disabled || !sample.can_update || readOnly}
         />
       </FormGroup>
     );
@@ -745,7 +745,7 @@ export default class SampleForm extends React.Component {
                   <td colSpan="4">
                     <div className="name-form">
                       <div style={{ width: '30%' }}>
-                        {this.textInput(sample, 'short_label', 'Short label')}
+                        {this.textInput(sample, 'short_label', 'Short label', true)}
                       </div>
                       <div style={{ width: '30%', paddingLeft: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
