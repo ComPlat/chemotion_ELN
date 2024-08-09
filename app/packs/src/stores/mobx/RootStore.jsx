@@ -6,6 +6,7 @@ import { CellLineDetailsStore } from 'src/stores/mobx/CellLineDetailsStore';
 import { SearchStore } from 'src/stores/mobx/SearchStore';
 import { DevicesStore } from 'src/stores/mobx/DevicesStore';
 import { DeviceMetadataStore } from 'src/stores/mobx/DeviceMetadataStore';
+import { AttachmentNotificationStore } from 'src/stores/mobx/AttachmentNotificationStore';
 
 export const RootStore = types
   .model({
@@ -15,6 +16,7 @@ export const RootStore = types
     searchStore: types.optional(SearchStore, {}),
     devicesStore: types.optional(DevicesStore, {}),
     deviceMetadataStore: types.optional(DeviceMetadataStore, {}),
+    attachmentNotificationStore: types.optional(AttachmentNotificationStore,{})
   })
   .views(self => ({
     get measurements() { return self.measurementsStore },
@@ -23,5 +25,6 @@ export const RootStore = types
     get search() { return self.searchStore },
     get devices() { return self.devicesStore },
     get deviceMetadata() { return self.deviceMetadataStore },
+    get attachmentNotifications() { return self.attachmentNotificationStore },
   }));
 export const StoreContext = React.createContext(RootStore.create({}));

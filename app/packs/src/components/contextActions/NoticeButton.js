@@ -1,4 +1,5 @@
 import React from 'react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
   PanelGroup, Panel, Button, Modal, Table
 } from 'react-bootstrap';
@@ -136,6 +137,7 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
 };
 
 export default class NoticeButton extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -299,6 +301,10 @@ export default class NoticeButton extends React.Component {
     );
     if (remainTime < idleTimeout) {
       MessagesFetcher.fetchMessages(0).then((result) => {
+        result.messages.forEach((message) => {
+          if (message.subject === 'Send TPA attachment arrival notification')
+            this.context.attachmentNotificationStore.addMessage(message);
+        });
         result.messages.sort((a, b) => a.id - b.id);
         this.setState({
           dbNotices: result.messages,
