@@ -13,7 +13,6 @@ import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
-import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class SampleForm extends React.Component {
@@ -617,7 +616,7 @@ export default class SampleForm extends React.Component {
     const polyDisabled = isPolymer || isDisabled;
 
     return (
-      <ListGroup fill="true">
+      <ListGroup fill="true" style={{marginBottom: 0}}>
         <h5 style={{ fontWeight: 'bold' }}>Additional properties of the pure compound:</h5>
         <ListGroupItem style={{ padding: '4px 4px 4px 4px', border: 'none' }}>
           <div className="properties-form" style={{ width: '100%' }}>
@@ -699,7 +698,7 @@ export default class SampleForm extends React.Component {
     const polyDisabled = isPolymer || isDisabled;
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
     const densityBlocked = isDisabled ? true : !molarityBlocked;
-    const { enableSampleDecoupled } = this.props;
+    const { enableSampleDecoupled, customizableField } = this.props;
 
     if (sample.belongTo !== undefined && sample.belongTo !== null) {
       // assign amount type for product samples of reaction to real
@@ -797,7 +796,7 @@ export default class SampleForm extends React.Component {
                           </td>
                           {this.sampleAmount(sample)}
                           <td style={{ width: '47%' }}>
-                            <div className="name-form" style={{ marginBottom: '15px' }}>
+                            <div className="name-form" style={{ marginBottom: '10px' }}>
                               <Tabs
                                 style={{ width: '60%' }}
                                 id="tab-density-molarity"
@@ -829,18 +828,16 @@ export default class SampleForm extends React.Component {
               </div>
             </ListGroupItem>
           </ListGroup>
-          <tr>
+          {/* <tr> */}
             {this.additionalProperties(sample)}
-          </tr>
+          {/* </tr> */}
           <tr style={{ paddingTop: '15px' }}>
             <td colSpan="4">{this.sampleDescription(sample)}</td>
           </tr>
-          <tr>
-            <td colSpan="4">
-              <PrivateNoteElement element={sample} disabled={!sample.can_update} />
-            </td>
-          </tr>
-          {this.props.customizableField()}
+          <td colSpan="4">
+            {customizableField}
+          </td>
+  
         </tbody>
       </Table>
     );
