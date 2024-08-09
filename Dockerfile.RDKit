@@ -27,7 +27,7 @@ RUN apt-get update \
         libboost-system${boost_dev_version}-dev \
         libeigen3-dev \
         libfreetype6-dev \
-        postgresql-server-dev-${postgres_version}=$(postgres -V | awk '{print $3}')\* \
+        postgresql-server-dev-${postgres_version} \
         zlib1g-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

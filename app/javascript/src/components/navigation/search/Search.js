@@ -21,7 +21,7 @@ export default class Search extends React.Component {
       searchType: 'sub',
       tanimotoThreshold: 0.7,
     };
-    this.handleClearSearchSelection = this.handleClearSearchSelection.bind( this);
+    this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
   }
 
   handleSelectionChange(selection) {

@@ -21,7 +21,8 @@ module Chemotion
       'version' => 'v0', 'base_revision' => '0', 'current_revision' => '0'
     }
     config.version['current_revision'] = File.read('REVISION') if File.exist?('REVISION')
-    config.pg_cartridge = ENV.fetch('PG_CARTRIDGE')
+    # TODO: remove "|| 'development'" after env is in production
+    config.pg_cartridge = ENV.fetch('PG_CARTRIDGE') || 'development'
     config.action_dispatch.perform_deep_munge = false
 
     # TODO: Update autoload configuration to current rails standards

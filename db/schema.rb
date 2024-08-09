@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_07_26_064022) do
+ActiveRecord::Schema.define(version: 2024_08_08_125802) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
@@ -1737,9 +1737,6 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
   SQL
 
 
-  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
-  SQL
   create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
       CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
   SQL
