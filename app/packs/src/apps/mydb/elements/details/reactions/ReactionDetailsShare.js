@@ -78,6 +78,9 @@ const setReactionByType = (reaction, type, value) => {
         reaction.vessel_size.amount = reaction.vessel_size.amount / 1000;
       }
       break;
+    case 'gaseous':
+      reaction.gaseous = value;
+      break;
   }
 
   return { newReaction: reaction, options: options }
