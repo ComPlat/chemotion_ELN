@@ -30,7 +30,7 @@ export default function CommentButton(props) {
       <Button
         id="commentBtn"
         variant={sectionComments.length > 0 ? 'success' : 'light'}
-        size="sm"
+        size="xsm"
         onClick={() => {
           CommentActions.fetchComments(element);
           CommentActions.toggleCommentModal(true);
