@@ -281,15 +281,16 @@ class Material extends Component {
 
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
-    const { value, unit } = this.getFieldData(field, gasPhaseData);
+    const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
 
     const style = { maxWidth: '5px', paddingRight: '3px' };
+    const colSpan = isTimeField ? '2' : '1';
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
 
     return (
-      <td colSpan={1} style={style}>
+      <td colSpan={colSpan} style={style}>
         <NumeralInputWithUnitsCompo
           precision={4}
           bsStyle="success"
@@ -307,13 +308,13 @@ class Material extends Component {
   getFieldData(field, gasPhaseData) {
     switch (field) {
       case 'turnover_number':
-        return { value: gasPhaseData.turnover_number, unit: 'TON' };
+        return { value: gasPhaseData.turnover_number, unit: 'TON', isTimeField: false };
       case 'part_per_million':
-        return { value: gasPhaseData.part_per_million, unit: 'ppm' };
+        return { value: gasPhaseData.part_per_million, unit: 'ppm', isTimeField: false };
       case 'time':
-        return { value: gasPhaseData.time?.value, unit: gasPhaseData.time?.unit };
+        return { value: gasPhaseData.time?.value, unit: gasPhaseData.time?.unit, isTimeField: true };
       default:
-        return { value: gasPhaseData[field]?.value, unit: gasPhaseData[field]?.unit };
+        return { value: gasPhaseData[field]?.value, unit: gasPhaseData[field]?.unit, isTimeField: false };
     }
   }
 
@@ -348,11 +349,11 @@ class Material extends Component {
           {this.pseudoField()}
           {this.pseudoField()}
           {this.pseudoField()}
-          {this.pseudoField()}
-          {this.pseudoField()}
           {this.gaseousInputFields('time', material)}
           {this.gaseousInputFields('temperature', material)}
           {this.gaseousInputFields('part_per_million', material)}
+          {this.gaseousInputFields('turnover_number', material)}
+          {this.gaseousInputFields('turnover_frequency', material)}
         </tr>
       );
     }
@@ -697,17 +698,10 @@ class Material extends Component {
               </div>
             </OverlayTrigger>
           </td>
-          {
-            material.gas_type === 'gas' ? this.gaseousInputFields('turnover_number', material)
-              : (
-                <td>
-                  {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
-                </td>
-              )
-          }
-
-          {material.gas_type === 'gas' ? this.gaseousInputFields('turnover_frequency', material)
-            : this.materialVolume(material)}
+          <td>
+            {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
+          </td>
+          {this.materialVolume(material)}
           <td>
             <NumeralInputWithUnitsCompo
               key={material.id}
