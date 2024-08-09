@@ -108,17 +108,15 @@ export default class UnsortedDataset extends React.Component {
       return null;
     }
 
-      return (
-        <ListGroup>
-          {datasetContainer.attachments.map((attachment) => {
-            return (
-              <ListGroupItem key={attachment.id}>
-                {this.listGroupItem(attachment)}
-              </ListGroupItem>
-            );
-          })}
-        </ListGroup>
-      );
+    return (
+      <ListGroup>
+        {datasetContainer.attachments.map((attachment) => (
+          <ListGroupItem key={attachment.id}>
+            {this.listGroupItem(attachment)}
+          </ListGroupItem>
+        ))}
+      </ListGroup>
+    );
   }
 
   removeAttachmentButton(attachment) {
@@ -137,7 +135,7 @@ export default class UnsortedDataset extends React.Component {
   dropzone() {
     return (
       <Dropzone
-        onDrop={files => this.handleFileDrop(files)}
+        onDrop={(files) => this.handleFileDrop(files)}
         className="border-dashed border-gray-200">
         <div className="text-center p-3 text-gray-500">
           Drop Files, or Click to Select.
