@@ -8,7 +8,10 @@ import Container from 'src/models/Container';
 export default class UnsortedDatasetModal extends React.Component {
   render() {
     const { show, datasetContainer, onHide } = this.props;
-    if (show) {
+
+    if (!show) { 
+      return null;
+    }
       return (
         <div>
           <Modal
@@ -32,9 +35,6 @@ export default class UnsortedDatasetModal extends React.Component {
           </Modal>
         </div>
       )
-    } else {
-      return null;
-    }
   }
 }
 

@@ -194,13 +194,13 @@ export default class UnsortedBox extends React.Component {
     );
 
     const trash = (
-        <OverlayTrigger
-          show={deletingTooltip}
-          animation
-          trigger="click"
-          placement="bottom"
-          overlay={(
-            <Tooltip placement="bottom" className="in" id="tooltip-bottom">
+      <OverlayTrigger
+        show={deletingTooltip}
+        animation
+        trigger="click"
+        placement="bottom"
+        overlay={(
+          <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             {`Delete ${checkedIds.length} attachment${checkedIds.length > 1 ? 's' : ''}?`}
             <ButtonGroup className="ms-1">
               <Button
@@ -219,15 +219,15 @@ export default class UnsortedBox extends React.Component {
               </Button>
             </ButtonGroup>
           </Tooltip>
-          )}
-        >
+        )}
+      >
         <i
           className="fa fa-trash-o"
           aria-hidden="true"
           onClick={() => this.toggleTooltip()}
           role="button"
         />
-        </OverlayTrigger>     
+      </OverlayTrigger>
     );
 
     const attachments = visible && currentItems.map((attachment) => (

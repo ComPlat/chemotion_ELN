@@ -160,7 +160,9 @@ class DatasetContainer extends Component {
             )
           }
         </ButtonToolbar>
-        <div>{visible ? attachments : null}</div>
+        {visible
+          && <div>{attachments}</div>
+        }
       </div>,
       { dropEffect: 'move' }
     );

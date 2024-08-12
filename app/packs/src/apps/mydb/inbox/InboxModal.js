@@ -429,10 +429,8 @@ export default class InboxModal extends React.Component {
               </Card.Header>
               <Card.Body>
                 <div>
-                  <div>
-                    <div
-                      className={`${inboxVisible ? 'd-none' : ''}`}
-                      style={{ display: inboxVisible ? 'none' : '' }}>
+                  {!inboxVisible &&
+                    <div>
                       <Button
                         variant="light"
                         onClick={() => this.onClickInbox()}
@@ -441,11 +439,8 @@ export default class InboxModal extends React.Component {
                         <span className="ms-2">Fetch Inbox</span>
                       </Button>
                     </div>
-
-                  </div>
-                  <div
-                    className={`tree-wrapper${inboxVisible ? 'd-none' : ''}`}
-                    style={{ display: inboxDisplay }}>
+                  }
+                  <div style={{ display: inboxDisplay }}>
                     {this.inboxSubtrees()}
                   </div>
                 </div>
