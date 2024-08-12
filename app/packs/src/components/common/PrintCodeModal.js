@@ -9,8 +9,6 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
   const [preview, setPreview] = useState(null);
   const [urlError, setUrlError] = useState([]);
 
-  console.log(element);
-
   // Fetches the PDF for the element.
   const fetchPrintCodes = async (url) => {
     // Request options for fetching the PDF.
