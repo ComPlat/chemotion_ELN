@@ -317,14 +317,13 @@ export default class ReactionDetails extends Component {
 
     return (
       <div className="d-flex justify-content-between">
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="icon-reaction me-1" />
-            {reaction.title()}
-          </span>
-        </OverlayTrigger>
-
-        <div className="ms-1">
+        <div className="d-flex align-items-center gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+            <span>
+              <i className="icon-reaction me-1" />
+              {reaction.title()}
+            </span>
+          </OverlayTrigger>
           {colLabel}
           {rsPlanLabel}
           <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
+import { Button, Tooltip, ButtonGroup, OverlayTrigger } from 'react-bootstrap';
 
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import Pagination from 'src/apps/mydb/inbox/Pagination';
@@ -187,31 +187,22 @@ export default class UnsortedBox extends React.Component {
           checked={checkedAll && checkedIds.length === currentItems.length}
           onChange={this.toggleSelectAllCheckbox}
         />
-        <span
-          className="g-marginLeft--10"
-          style={{ fontWeight: 'bold' }}
-        >
+        <span className="ms-2 fw-bold">
           {checkedAll && checkedIds.length === currentItems.length ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
 
     const trash = (
-      <span>
-        <i
-          className="fa fa-trash-o"
-          aria-hidden="true"
-          onClick={() => this.toggleTooltip()}
-          role="button"
-        >
-          &nbsp;
-        </i>
-        {deletingTooltip ? (
+      <OverlayTrigger
+        show={deletingTooltip}
+        animation
+        trigger="click"
+        placement="bottom"
+        overlay={(
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             {`Delete ${checkedIds.length} attachment${checkedIds.length > 1 ? 's' : ''}?`}
-            <ButtonGroup
-              style={{ marginLeft: '5px' }}
-            >
+            <ButtonGroup className="ms-1">
               <Button
                 variant="danger"
                 size="sm"
@@ -228,11 +219,18 @@ export default class UnsortedBox extends React.Component {
               </Button>
             </ButtonGroup>
           </Tooltip>
-        ) : null}
-      </span>
+        )}
+      >
+        <i
+          className="fa fa-trash-o"
+          aria-hidden="true"
+          onClick={() => this.toggleTooltip()}
+          role="button"
+        />
+      </OverlayTrigger>
     );
 
-    const attachments = visible ? currentItems.map((attachment) => (
+    const attachments = visible && currentItems.map((attachment) => (
       <AttachmentContainer
         key={`attach_${attachment.id}`}
         sourceType={DragDropItemTypes.UNLINKED_DATA}
@@ -241,7 +239,7 @@ export default class UnsortedBox extends React.Component {
         fromUnsorted
         isSelected={checkedIds.includes(attachment.id)}
       />
-    )) : <div />;
+    ));
 
     const folderClass = `fa fa-folder${visible ? '-open' : ''}`;
 
@@ -255,21 +253,21 @@ export default class UnsortedBox extends React.Component {
 
     const uploadButton = (
       <Button
-        style={{ position: 'absolute', right: 0 }}
         size="sm"
+        variant="outline-dark"
         onClick={(e) => {
           e.stopPropagation();
           this.handleUploadButton();
         }}
+        className="ms-auto"
       >
         <i className="fa fa-upload" aria-hidden="true" />
       </Button>
     );
 
     return (
-      <div className="tree-view">
-        <div
-          className="title"
+      <div>
+        <div className="bg-gray-200 p-1 overflow-auto d-flex align-items-between"
           onClick={() => this.handleClick()}
           role="button"
           tabIndex={0}
@@ -277,7 +275,7 @@ export default class UnsortedBox extends React.Component {
         >
           <button
             type="button"
-            className="btn-inbox"
+            className="border-0 bg-transparent"
             onClick={InboxActions.showInboxModal}
             tabIndex={0}
             onKeyDown={(e) => {
@@ -287,32 +285,30 @@ export default class UnsortedBox extends React.Component {
             }}
           >
             <i
-              className={folderClass}
+              className={`${folderClass} me-1`}
               aria-hidden="true"
-              style={{ marginRight: '5px' }}
             />
             Unsorted
           </button>
-          {' '}
           {uploadButton}
         </div>
         {
-          visible && unsorted_box.length > dataItemsPerPage ? (
+          visible && unsorted_box.length > dataItemsPerPage && (
             <Pagination
               currentDataSetPage={currentUnsortedBoxPage}
               totalPages={totalPages}
               handlePrevClick={this.handlePrevClick}
               handleNextClick={this.handleNextClick}
             />
-          ) : null
+          )
         }
         <table>
           <tbody>
             <tr>
-              <td style={{ width: '80%', paddingRight: '30px' }}>
+              <td className="w-75 pe-5">
                 <div>{visible ? renderCheckAll : null}</div>
               </td>
-              <td style={{ width: '20%' }}>
+              <td className="w-25">
                 <div>{visible ? trash : null}</div>
               </td>
             </tr>

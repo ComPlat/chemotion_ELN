@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
-import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
+import { Button, ButtonGroup, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -73,104 +73,99 @@ class DatasetContainer extends Component {
     const { connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect, checkedIds } = this.props;
     const { inboxSize } = InboxStore.getState();
 
-    if (sourceType === DragDropItemTypes.DATASET) {
-      const { visible, deletingTooltip } = this.state;
-      const attachments = dataset.attachments.map(attachment => (
-        <AttachmentContainer
-          key={`attach_${attachment.id}`}
-          sourceType={DragDropItemTypes.DATA}
-          attachment={attachment}
-          largerInbox={largerInbox}
-          isSelected={checkedIds.includes(attachment.id)}
-          checked={isSelected}
-        />
-      ));
-      const attCount = this.attachmentCount();
-      const textStyle = {
-        display: 'block',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'clip',
-        maxWidth: '100%',
-        cursor: 'move'
-      };
-
-      if (largerInbox === true) {
-        textStyle.marginTop = '6px';
-        textStyle.marginBottom = '6px';
-      }
-
-      const trash = this.props.cache.length === this.props.cache.length // Set it as always show
-        ? (
-          <span>
-            <i className="fa fa-trash-o" onClick={() => this.deleteDataset()} role="button">&nbsp;</i>
-            {deletingTooltip ? (
-              <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-                {`Delete ${attCount} attachment${attCount > 1 ? 's' : ''}?`}
-                <ButtonGroup
-                  style={{ marginLeft: '5px' }}
-                >
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => this.confirmDeleteDataset()}
-                  >
-                    Yes
-                  </Button>
-                  <Button
-                    variant="warning"
-                    size="sm"
-                    onClick={() => this.toggleTooltip()}
-                  >
-                    No
-                  </Button>
-                </ButtonGroup>
-              </Tooltip>
-            ) : null}
-          </span>
-        ) : null;
-      const datasetCheckbox = (
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onDatasetSelect(dataset.id)}
-        />
-      );
-
-      return connectDragSource(
-        <div>
-          <div style={textStyle}>
-            {datasetCheckbox}
-            &nbsp;{trash}&nbsp;
-            <button
-              type="button"
-              className="btn-inbox"
-              onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
-            >
-              <i
-                className={`fa fa-folder${visible ? '-open' : ''}`}
-                role="button"
-              >
-                <span className="text-info fa fa-arrows ms-1" role="button" />
-              </i>
-              <span style={{ marginLeft: '8px' }}>{dataset.name}</span>
-            </button>
-            {
-              inboxSize && inboxSize !== 'Small'
-              && (
-                <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-                  {formatDate(dataset.created_at)}
-                </span>
-              )
-            }
-          </div>
-          <div>{visible ? attachments : null}</div>
-        </div>,
-        { dropEffect: 'move' }
-      );
+    if (sourceType !== DragDropItemTypes.DATASET) {
+      return null;
     }
 
-    return null;
+    const { visible, deletingTooltip } = this.state;
+    const attachments = dataset.attachments.map(attachment => (
+      <AttachmentContainer
+        key={`attach_${attachment.id}`}
+        sourceType={DragDropItemTypes.DATA}
+        attachment={attachment}
+        largerInbox={largerInbox}
+        isSelected={checkedIds.includes(attachment.id)}
+        checked={isSelected}
+      />
+    ));
+    const attCount = this.attachmentCount();
+
+    const trash = this.props.cache.length === this.props.cache.length // Set it as always show
+      && (
+        <OverlayTrigger
+          show={deletingTooltip}
+          animation
+          trigger="click"
+          placement="bottom"
+          overlay={(<Tooltip placement="bottom" className="in" id="tooltip-bottom">
+            {`Delete ${attCount} attachment${attCount > 1 ? 's' : ''}?`}
+            <ButtonGroup>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => this.confirmDeleteDataset()}
+              >
+                Yes
+              </Button>
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => this.toggleTooltip()}
+              >
+                No
+              </Button>
+            </ButtonGroup>
+          </Tooltip>
+          )}
+        >
+          <i
+            className="fa fa-trash-o"
+            onClick={() => this.deleteDataset()}
+            role="button" />
+        </OverlayTrigger>
+      );
+    const datasetCheckbox = (
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={() => onDatasetSelect(dataset.id)}
+      />
+    );
+
+    return connectDragSource(
+      <div>
+        <ButtonToolbar className="d-flex align-items-center gap-1 w-100">
+          {datasetCheckbox}
+          {trash}
+          <button
+            type="button"
+            className="border-0 bg-transparent"
+            onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
+          >
+            <i
+              className={`fa fa-folder${visible ? '-open' : ''}`}
+              role="button"
+            >
+              <span className="text-info fa fa-arrows ms-1" role="button" />
+            </i>
+            <span className="ms-1">{dataset.name}</span>
+          </button>
+
+          {
+            inboxSize && inboxSize !== 'Small'
+            && (
+              <span className={`text-info ms-auto ${largerInbox ? '' : 'none'}`}>
+                {formatDate(dataset.created_at)}
+              </span>
+            )
+          }
+        </ButtonToolbar>
+        {visible
+          && <div>{attachments}</div>
+        }
+      </div>,
+      { dropEffect: 'move' }
+    );
   }
 }
 

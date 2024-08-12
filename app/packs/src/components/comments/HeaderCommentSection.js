@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
@@ -48,7 +48,7 @@ class HeaderCommentSection extends Component {
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !element?.isNew) {
       return (
-        <>
+        <ButtonToolbar className="gap-1">
           <OverlayTrigger
             key="ot_comments"
             placement="top"
@@ -75,12 +75,11 @@ class HeaderCommentSection extends Component {
               size="xsm"
               variant="light"
               onClick={CommentActions.toggleCommentSection}
-              className='ms-1'
             >
               <i className={showCommentSection ? 'fa fa-angle-down' : 'fa fa-angle-up'} />
             </Button>
           </OverlayTrigger>
-        </>
+        </ButtonToolbar>
       );
     }
     return null;

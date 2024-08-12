@@ -2,7 +2,8 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Pagination, OverlayTrigger, Tooltip, DropdownButton
+  Badge, Button, Pagination, OverlayTrigger, Tooltip, Dropdown, Card,
+  ButtonToolbar
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
@@ -15,8 +16,6 @@ import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class InboxModal extends React.Component {
   constructor(props) {
@@ -225,7 +224,7 @@ export default class InboxModal extends React.Component {
     }
 
     return (
-      <div className="list-pagination">
+      <div className="mt-1">
         <Pagination>
           <Pagination.First disabled={currentPage === 1} key="First" onClick={() => this.handlePageChange(1)} />
           <Pagination.Prev
@@ -271,14 +270,14 @@ export default class InboxModal extends React.Component {
       <div className="tree-view">
         {boxes}
         {this.renderPagination()}
-        {inbox.unlinked_attachments ? (
+        {inbox.unlinked_attachments && (
           <UnsortedBox
             key="unsorted_box"
             unsorted_box={inbox.unlinked_attachments}
             unsortedVisible={activeDeviceBoxId === -1}
             largerInbox
           />
-        ) : ''}
+        )}
       </div>
     );
   }
@@ -303,22 +302,23 @@ export default class InboxModal extends React.Component {
     const sizes = ['Small', 'Medium', 'Large'];
 
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}>
-        <DropdownButton
-          title="Size"
-          className="header-button"
-          id="dropdown-size-button"
-          variant="info"
-          size="sm"
-          style={{ marginLeft: '10px' }}
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}
+      >
+        <Dropdown>
+          <Dropdown.Toggle id="dropdown-size-button" variant="info" size="sm">
+            Size
+          </Dropdown.Toggle>
 
-        >
-          {sizes.map((size) => (
-            <MenuItem key={size} eventKey={size} onSelect={this.handleSizingIconClick}>
-              {size}
-            </MenuItem>
-          ))}
-        </DropdownButton>
+          <Dropdown.Menu>
+            {sizes.map((size) => (
+              <Dropdown.Item key={size} eventKey={size} onClick={() => this.handleSizingIconClick(size)}>
+                {size}
+              </Dropdown.Item>
+            ))}
+          </Dropdown.Menu>
+        </Dropdown>
       </OverlayTrigger>
     );
   };
@@ -330,8 +330,7 @@ export default class InboxModal extends React.Component {
       <CopyToClipboard text={collectorAddress}>
         <OverlayTrigger placement="bottom" overlay={this.infoMessage()}>
           <Button
-            size="sm"
-            className="header-button"
+            size="xsm"
           >
             <i className="fa fa-info" />
           </Button>
@@ -353,8 +352,7 @@ export default class InboxModal extends React.Component {
       <OverlayTrigger placement="bottom" overlay={sortTooltip}>
         <Button
           variant="success"
-          size="sm"
-          className="header-button"
+          size="xsm"
           onClick={this.changeSortColumn}
         >
           {sortIcon}
@@ -369,10 +367,13 @@ export default class InboxModal extends React.Component {
       visible, inboxVisible, numberOfAttachments, collectorAddress, colMdValue
     } = this.state;
 
-    const panelClass = showCollectionTree ? `small-col col-md-${colMdValue}` : 'small-col col-md-5';
+    const panelClass = showCollectionTree
+      ? `small-col col-md-${colMdValue} ${colMdValue === 2 ? 'small-panel' : ''}`
+      : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
 
-    if (visible) {
+    if (!visible) { return null; };
+
       return (
         <Draggable
           handle=".handle"
@@ -384,85 +385,72 @@ export default class InboxModal extends React.Component {
               zIndex: 10, position: 'absolute', top: '70px', left: '10px'
             }}
           >
-            <Panel variant="primary" className="eln-panel-detail research-plan-details cursor">
-              <Panel.Heading
-                className="cursor handle draggable"
+            <Card className="eln-panel-detail cursor">
+              <Card.Header
+                className="cursor handle draggable bg-gray-400"
                 id="draggableInbox"
                 onMouseDown={this.handleMouseDown}
               >
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'
-                }}
-                >
+                <div className="d-flex justify-content-between align-items-center w-100">
                   <div>
                     <button
                       type="button"
-                      className="btn-inbox"
+                      className="border-0 bg-transparent"
                       onClick={() => this.onClickInbox()}
                     >
                       <i className="fa fa-inbox" />
-                      <span style={{ marginLeft: '10px', marginRight: '5px', fontWeight: 'bold' }}>Inbox</span>
+                      <span className="ms-2 me-1 fw-bold">Inbox</span>
                     </button>
                     {
-                      numberOfAttachments > 0 ? (
-                        <Badge>
-                          &nbsp;
-                          {numberOfAttachments}
-                          &nbsp;
-                        </Badge>
-                      ) : ''
+                      numberOfAttachments > 0
+                      && (
+                        <Badge bg="light" className="mx-1 text-primary">{numberOfAttachments}</Badge>
+                      )
                     }
                   </div>
-                  <div>
+                  <ButtonToolbar className=" gap-1">
                     {this.renderSortButton()}
-                    {collectorAddress ? this.collectorAddressInfoButton() : null}
+                    {collectorAddress && this.collectorAddressInfoButton()}
                     {this.renderSizingIcon()}
                     <Button
                       variant="success"
-                      size="sm"
-                      className="header-button"
+                      size="xsm"
                       onClick={() => this.refreshInbox()}
                     >
                       <i className="fa fa-refresh" />
                     </Button>
                     <Button
                       variant="danger"
-                      size="sm"
-                      className="header-button"
+                      size="xsm"
                       onClick={InboxActions.toggleInboxModal}
                     >
                       <i className="fa fa-close" />
                     </Button>
-                  </div>
+                  </ButtonToolbar>
                 </div>
-              </Panel.Heading>
-              <Panel.Body>
+              </Card.Header>
+              <Card.Body>
                 <div>
-                  <div className="tree-view">
-                    <div className="title" style={{ backgroundColor: 'white', display: inboxVisible ? 'none' : '' }}>
-                      <button
-                        type="button"
-                        className="btn-inbox"
+                  {!inboxVisible &&
+                    <div>
+                      <Button
+                        variant="light"
                         onClick={() => this.onClickInbox()}
                       >
                         <i className="fa fa-inbox" />
-                        <span style={{ marginLeft: '10px' }}>Fetch Inbox</span>
-                      </button>
+                        <span className="ms-2">Fetch Inbox</span>
+                      </Button>
                     </div>
-
-                  </div>
-                  <div className="tree-wrapper" style={{ display: inboxDisplay }}>
+                  }
+                  <div style={{ display: inboxDisplay }}>
                     {this.inboxSubtrees()}
                   </div>
                 </div>
-              </Panel.Body>
-            </Panel>
+              </Card.Body>
+            </Card>
           </div>
         </Draggable>
-
       );
-    }
-    return null;
   }
 }
 
