@@ -293,7 +293,7 @@ const DangerBlock = ({ el }) => {
 
 const descContent = (el) => {
   if (['gp', 'parts'].indexOf(el.role) >= 0) return [];
-  let block = rmOpsRedundantSpaceBreak(el.description.ops);
+  let block = rmOpsRedundantSpaceBreak(el.description?.ops ?? []);
   block = [{ insert: '\n' }, ...block];
   return block;
 };
