@@ -26,28 +26,34 @@ const stdPreviews = ({
   const rxnSettingsPairs = objToKeyValPairs(rxnSettings);
   const configsPairs = objToKeyValPairs(configs);
 
-  const objs = previewObjs.map((obj, i) => (
+  const objs = previewObjs.map((obj) => (
     obj.type === 'sample'
-      ? <SectionSample
-        key={i}
-        sample={obj}
-        settings={splSettingsPairs}
-        configs={configsPairs}
-      />
-      : <SectionReaction
-        key={i}
-        reaction={obj}
-        settings={rxnSettingsPairs}
-        configs={configsPairs}
-      />
+      ? (
+        <SectionSample
+          key={obj.id}
+          sample={obj}
+          settings={splSettingsPairs}
+          configs={configsPairs}
+        />
+      )
+      : (
+        <SectionReaction
+          key={obj.id}
+          reaction={obj}
+          settings={rxnSettingsPairs}
+          configs={configsPairs}
+        />
+      )
   ));
 
   return (
-    <div> {objs} </div>
+    <div>{objs}</div>
   );
 };
 
-const suiPreviews = ({ previewObjs, configs, molSerials, siRxnSettings }) => {
+const suiPreviews = ({
+  previewObjs, configs, molSerials, siRxnSettings
+}) => {
   const configsPairs = objToKeyValPairs(configs);
   const setPairs = objToKeyValPairs(siRxnSettings);
 
@@ -75,7 +81,9 @@ const suiPreviews = ({ previewObjs, configs, molSerials, siRxnSettings }) => {
   );
 };
 
-const suiStdRxnPreviews = ({ previewObjs, configs, molSerials, siRxnSettings }) => {
+const suiStdRxnPreviews = ({
+  previewObjs, configs, molSerials, siRxnSettings
+}) => {
   const configsPairs = objToKeyValPairs(configs);
   const setPairs = objToKeyValPairs(siRxnSettings);
 
@@ -140,8 +148,8 @@ const previewsContent = (props) => {
   }
 };
 
-const Previews = props => (
-  <div className="report-preview">
+const Previews = (props) => (
+  <div>
     {previewsContent(props)}
   </div>
 );
