@@ -748,7 +748,7 @@ class Material extends Component {
           </td>
         </tr>
         {material.gas_type === 'gas'
-        && gaseousReactionStore.gaseousReactionStatus ? this.gaseousProductRow(material) : null}
+        && reaction.gaseous ? this.gaseousProductRow(material) : null}
       </tbody>
     );
   }
@@ -994,7 +994,7 @@ class Material extends Component {
     return (
       <div style={{ display: 'inline-block', maxWidth: '100%' }}>
         <div className="inline-inside">
-          {gaseousReactionStore.gaseousReactionStatus && materialGroup !== 'solvents'
+          {reaction.gaseous && materialGroup !== 'solvents'
             ? this.gasType(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
             <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc} disabled={!permitOn(reaction)}>

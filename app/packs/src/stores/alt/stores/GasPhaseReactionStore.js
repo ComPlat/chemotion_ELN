@@ -4,30 +4,15 @@ import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActi
 class GasPhaseReactionStore {
   constructor() {
     this.state = {
-      gaseousReactionStatus: false,
       catalystReferenceMolValue: null,
       reactionVesselSizeValue: null,
     };
 
     this.bindListeners({
-      handleGasButtonStatusChange: this.handleGasButtonStatusChange,
-      gaseousReaction: this.gaseousReaction,
       setCatalystReferenceMole: this.setCatalystReferenceMole,
       setReactionVesselSize: this.setReactionVesselSize,
     });
     this.bindActions(GasPhaseReactionActions);
-  }
-
-  handleGasButtonStatusChange() {
-    this.setState({
-      gaseousReactionStatus: !this.state.gaseousReactionStatus,
-    });
-  }
-
-  gaseousReaction(boolean) {
-    this.setState({
-      gaseousReactionStatus: boolean,
-    });
   }
 
   setCatalystReferenceMole(value) {

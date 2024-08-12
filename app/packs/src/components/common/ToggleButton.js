@@ -1,47 +1,56 @@
 import React, { useState } from 'react';
-import {
-  Button, OverlayTrigger, Tooltip
-} from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 
-export default function ToggleButton({ gaseous, handleGaseousChange }) {
-  const GasPhaseReactionState = GasPhaseReactionStore.getState();
-  const [isToggled, setIsToggled] = useState(gaseous);
+export default function ToggleButton({
+  isToggledInitial, onToggle, onChange, onLabel, offLabel,
+  onColor, offColor, tooltipOn, tooltipOff
+}) {
+  const [isToggled, setIsToggled] = useState(isToggledInitial);
 
   const handleChange = () => {
-    setIsToggled(!isToggled);
-    GasPhaseReactionActions.handleGasButtonStatusChange();
-    handleGaseousChange();
+    const newToggledState = !isToggled;
+    setIsToggled(newToggledState);
+    if (onToggle) onToggle(newToggledState);
+    if (onChange) onChange(newToggledState);
   };
 
-  let buttonColor = '#d3d3d3';
-  let toolTipMessage = 'click to enable gas mode, clicking gas mode will mark this reaction as a gaseous reaction';
-
-  if (isToggled) {
-    buttonColor = '#afcfee';
-    toolTipMessage = 'click to enable Default mode';
-  }
+  const buttonColor = isToggled ? onColor : offColor;
+  const toolTipMessage = isToggled ? tooltipOn : tooltipOff;
 
   return (
-    <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-gas-mode">{toolTipMessage}</Tooltip>}>
+    <OverlayTrigger placement="top" overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}>
       <Button
         className={`toggle-button ${isToggled ? 'on' : 'off'}`}
         bsSize="xs"
         onClick={handleChange}
-        onChange={GasPhaseReactionState.handleGasButtonStatusChange}
         style={{ backgroundColor: buttonColor, minWidth: '50px', border: 'none' }}
       >
-        <span style={{ fontSize: '13.5px' }}>{isToggled ? 'Gas Scheme' : 'Default Scheme'}</span>
+        <span style={{ fontSize: '13.5px' }}>{isToggled ? onLabel : offLabel}</span>
       </Button>
     </OverlayTrigger>
-
   );
 }
 
 ToggleButton.propTypes = {
-  gaseous: PropTypes.bool.isRequired,
-  handleGaseousChange: PropTypes.func.isRequired
+  isToggledInitial: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func,
+  onChange: PropTypes.func,
+  onLabel: PropTypes.string,
+  offLabel: PropTypes.string,
+  onColor: PropTypes.string,
+  offColor: PropTypes.string,
+  tooltipOn: PropTypes.string,
+  tooltipOff: PropTypes.string,
+};
 
+ToggleButton.defaultProps = {
+  onToggle: null,
+  onChange: null,
+  onLabel: 'On',
+  offLabel: 'Off',
+  onColor: '#afcfee',
+  offColor: '#d3d3d3',
+  tooltipOn: 'Click to switch off',
+  tooltipOff: 'Click to switch on',
 };
