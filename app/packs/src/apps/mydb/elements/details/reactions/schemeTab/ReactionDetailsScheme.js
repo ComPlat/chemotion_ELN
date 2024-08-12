@@ -531,7 +531,9 @@ export default class ReactionDetailsScheme extends Component {
       }
       const { referenceMaterial } = reaction;
       const stoichiometryCoeff = (updatedSample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
-      updatedSample = this.calculateEquivalentForProduct(updatedSample, referenceMaterial, stoichiometryCoeff);
+      if (referenceMaterial && stoichiometryCoeff) {
+        updatedSample = this.calculateEquivalentForProduct(updatedSample, referenceMaterial, stoichiometryCoeff);
+      }
     } else if (materialGroup === 'starting_materials' || materialGroup === 'reactants') {
       if (isFeedstockMaterialPresent && value === 'off') {
         updatedSample.gas_type = 'catalyst';
