@@ -25,7 +25,7 @@ import {
   sortingAndFilteringUI,
   formatFileSize,
   attachmentThumbnail,
-  thirdPartyAppButton,
+  ThirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
@@ -312,10 +312,7 @@ class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
-                    {thirdPartyApps.length > 0 && thirdPartyAppButton(
-                      attachment,
-                      thirdPartyApps,
-                    )}
+                    <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
                     {editButton(
                       attachment,
                       extension,
