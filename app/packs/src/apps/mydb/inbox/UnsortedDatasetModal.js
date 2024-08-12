@@ -1,16 +1,26 @@
+/* eslint-disable react/prefer-stateless-function */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal } from 'react-bootstrap';
+import { ButtonToolbar, Modal, Button } from 'react-bootstrap';
 import UnsortedDataset from 'src/apps/mydb/inbox/UnsortedDataset';
 import Container from 'src/models/Container';
 
 export default class UnsortedDatasetModal extends React.Component {
   render() {
     const { show, datasetContainer, onHide } = this.props;
-    if (show) {
+
+    if (!show) { 
+      return null;
+    }
       return (
         <div>
-          <Modal centered animation show={show} size="lg" onHide={() => onHide()}>
+          <Modal
+            centered
+            animation
+            show={show}
+            size="lg"
+            onHide={() => onHide()}
+          >
             <Modal.Header closeButton>
               <Modal.Title>
                 Upload files to Inbox
@@ -25,9 +35,6 @@ export default class UnsortedDatasetModal extends React.Component {
           </Modal>
         </div>
       )
-    } else {
-      return <div></div>
-    }
   }
 }
 

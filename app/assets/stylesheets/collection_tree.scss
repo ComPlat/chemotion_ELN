@@ -49,3 +49,13 @@
   font-size: 14px;
   font-weight: 'bold';
 }
+
+.small-panel .d-flex {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.small-panel .btn-toolbar {
+  flex-wrap: nowrap;
+}

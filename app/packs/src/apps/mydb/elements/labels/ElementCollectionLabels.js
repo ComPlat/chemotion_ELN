@@ -35,20 +35,18 @@ export default class ElementCollectionLabels extends React.Component {
     return labels.map((label, index) => {
       if (is_synchronized && label.isOwner) {
         return (
-          <span className="collection-label" key={index}>
+          <span className="d-inline-block m-1" key={index}>
             <Button disabled variant="light" size="sm">
               {label.name}
             </Button>
-            &nbsp;
           </span>
         );
       }
       return (
-        <span className="collection-label" key={index}>
+        <span className="d-inline-block m-1" key={index}>
           <Button variant="light" size="sm" onClick={(e) => this.handleOnClick(label, e, is_synchronized)}>
             {label.name}
           </Button>
-          &nbsp;
         </span>
       );
     });
@@ -115,12 +113,12 @@ export default class ElementCollectionLabels extends React.Component {
         placement={this.props.placement}
         overlay={collectionOverlay}
       >
-        <Button size="xxsm" variant="light" key={element.id}> 
+        <Button size="xxsm" variant="light" key={element.id}>
           <i className="fa fa-list" />
           {` ${labels.length} `}
           {' - '}
           {`${total_shared_collections} `}
-          <i className="fa fa-share-alt" /> 
+          <i className="fa fa-share-alt" />
         </Button>
       </OverlayTrigger>
     );
