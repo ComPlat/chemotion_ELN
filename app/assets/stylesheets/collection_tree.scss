@@ -37,3 +37,13 @@
   float: right;
   margin-top: 5px;
 }
+
+.small-panel .d-flex {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.small-panel .btn-toolbar {
+  flex-wrap: nowrap;
+}

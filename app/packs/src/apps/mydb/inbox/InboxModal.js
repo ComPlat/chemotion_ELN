@@ -313,7 +313,7 @@ export default class InboxModal extends React.Component {
 
           <Dropdown.Menu>
             {sizes.map((size) => (
-              <Dropdown.Item key={size} eventKey={size} onClick={this.handleSizingIconClick}>
+              <Dropdown.Item key={size} eventKey={size} onClick={() => this.handleSizingIconClick(size)}>
                 {size}
               </Dropdown.Item>
             ))}
@@ -367,7 +367,9 @@ export default class InboxModal extends React.Component {
       visible, inboxVisible, numberOfAttachments, collectorAddress, colMdValue
     } = this.state;
 
-    const panelClass = showCollectionTree ? `small-col col-md-${colMdValue}` : 'small-col col-md-5';
+    const panelClass = showCollectionTree
+      ? `small-col col-md-${colMdValue} ${colMdValue === 2 ? 'small-panel' : ''}`
+      : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
 
     if (!visible) { return null; };
