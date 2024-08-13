@@ -2,33 +2,14 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Modal } from 'react-bootstrap';
 import Utils from 'src/utilities/Functions';
+import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import json from '../../../../../public/json/printingConfig/defaultConfig.json';
+
 // Component that allows users to print a PDF.
 export default function PrintCodeModal({ element, showModal, handleModalClose }) {
   // State for the modal and preview
   const [preview, setPreview] = useState(null);
   const [urlError, setUrlError] = useState([]);
-
-  // Fetches the PDF for the element.
-  const fetchPrintCodes = async (url) => {
-    // Request options for fetching the PDF.
-    const requestOptions = {
-      credentials: 'same-origin',
-      method: 'GET',
-    };
-    // Fetch the PDF and set the preview.
-    fetch(url, requestOptions)
-      .then((response) => response.blob())
-      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .then((result) => {
-        if (result.data != null) {
-          setPreview(result.data);
-        }
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  };
 
   // Handles errors in the URL.
   const errorHandler = () => {
@@ -57,7 +38,7 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
   };
 
   // Builds the URL for fetching the PDF.
-  const buildURL = () => {
+  const buildURL = async () => {
     let newUrl = '/api/v1/code_logs/print_codes?'
       + `element_type=${element.type}&ids[]=${element.id}`;
     Object.entries(json).forEach(([key, value]) => {
@@ -67,8 +48,13 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
       }
     });
     errorHandler();
-    fetchPrintCodes(newUrl);
+    PrintCodeFetcher.fetchPrintCodes(newUrl).then((result) => {
+      if (result != null) {
+        setPreview(result);
+      }
+    });
   };
+
   // Build the URL when the state of the PDF params changes
   useEffect(() => {
     if (showModal) {
@@ -81,13 +67,14 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
     if (urlError.length > 0) {
       return (
         <div style={{ color: 'red' }}>
-          {urlError.map((error, i) => (
-            <div key={i}>{error}</div>
+          {urlError.map((error) => (
+            <div key={error}>{error}</div>
           ))}
         </div>
       );
     }
-  }
+    return null;
+  };
 
   // Render the component
   return (

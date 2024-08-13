@@ -19,7 +19,7 @@ export default function PrintCodeButton({ element }) {
   };
 
   // Set the tooltip text for the button
-  const tooltipText = 'Print bar/qr-code Label';
+  const tooltipText = 'Print code Label';
 
   // Render the component
   return (
