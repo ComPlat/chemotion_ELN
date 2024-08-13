@@ -20,6 +20,12 @@ module Reactable
     CELSIUS: '°C',
   }.freeze
 
+  TOF_UNITS = {
+    PER_SECOND: 'TON/s',
+    PER_MINUTE: 'TON/m',
+    PER_HOUR: 'TON/h',
+  }.freeze
+
   def update_equivalent
     ref_record = ReactionsSample.where(reaction_id: reaction_id, reference: true).first
     return unless ref_record
@@ -42,15 +48,16 @@ module Reactable
   end
 
   def detect_amount_type
-    amount_value = real_amount_value.nil? ? target_amount_value : real_amount_value
-    amount_unit = real_amount_unit.nil? ? target_amount_unit : real_amount_unit
-    { 'value' => amount_value, 'unit' => amount_unit }
+    condition = real_amount_value.nil? || real_amount_unit.nil?
+    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if condition
+
+    { 'value' => real_amount_value, 'unit' => real_amount_unit }
   end
 
   def convert_temperature_to_kelvin(temperature)
     temperature_value = temperature['value'].to_f
 
-    raise "Unsupported temperature unit: #{temperature['unit']}" if temperature['unit'].nil? || temperature_value.nan?
+    return nil if temperature['unit'].nil? || temperature_value.nan?
 
     case temperature['unit']
     when TEMPERATURE_UNITS[:FAHRENHEIT]
@@ -59,13 +66,11 @@ module Reactable
       temperature_value + 273.15
     when TEMPERATURE_UNITS[:KELVIN]
       temperature_value
-    else
-      raise "Unsupported temperature unit: #{temperature['unit']}"
     end.abs
   end
 
   def reaction_vessel_volume(reaction_vessel)
-    return nil if reaction_vessel['amount'].nil?
+    return nil if reaction_vessel['amount'].nil? || reaction_vessel['unit'].nil?
 
     case reaction_vessel['unit']
     when 'ml'
@@ -77,7 +82,7 @@ module Reactable
 
   def calculate_mole_gas_product(ppm, temperature, vessel_volume)
     ##  Mol Value = ppm*pressure*V/(0.0821*temp_in_K*1000000)
-    return nil if vessel_volume.nil? || ppm.nil?
+    return nil if vessel_volume.nil? || ppm.nil? || temperature.nil?
 
     temperature_in_kelvin = convert_temperature_to_kelvin(temperature)
 
@@ -90,25 +95,98 @@ module Reactable
     amount_liter / (IDEAL_GAS_CONSTANT * DEFAULT_TEMPERATURE_IN_KELVIN * purity)
   end
 
-  def calculate_ton(gas_product_amount_mol, catalyst_mol_value)
-    if catalyst_mol_value.nil?
-      nil
-    else
-      gas_product_amount_mol.to_f / catalyst_mol_value
+  def calculate_ton(gas_product_mol_amount, catalyst_mol_value)
+    return nil if catalyst_mol_value.nil? || gas_product_mol_amount.nil?
+
+    gas_product_mol_amount.to_f / catalyst_mol_value
+  end
+
+  def convert_time(value, from_unit, to_unit)
+    conversion_factors = {
+      seconds: { minutes: 1.0 / 60, hours: 1.0 / 3600, seconds: 1 },
+      minutes: { seconds: 60, hours: 1.0 / 60, minutes: 1 },
+      hours: { seconds: 3600, minutes: 60, hours: 1 },
+    }
+
+    return nil unless conversion_factors.key?(from_unit) && conversion_factors[from_unit].key?(to_unit)
+
+    value * conversion_factors[from_unit][to_unit]
+  end
+
+  def calculate_ton_per_time_value(time_value, time_unit)
+    return nil if time_value.nil? || time_unit.nil?
+
+    case time_unit
+    when TIME_UNITS[:SECONDS]
+      {
+        hours: convert_time(time_value, :seconds, :hours),
+        minutes: convert_time(time_value, :seconds, :minutes),
+        seconds: time_value,
+      }
+    when TIME_UNITS[:MINUTES]
+      {
+        hours: convert_time(time_value, :minutes, :hours),
+        minutes: time_value,
+        seconds: convert_time(time_value, :minutes, :seconds),
+      }
+    when TIME_UNITS[:HOURS]
+      {
+        hours: time_value,
+        minutes: convert_time(time_value, :hours, :minutes),
+        seconds: convert_time(time_value, :hours, :seconds),
+      }
     end
   end
 
-  def calculate_ton_frequency(time, ton_value)
-    ton_value / time['value'] unless time['unit'].nil?
+  def extract_time_value(tof_unit, time_values)
+    return nil if tof_unit.nil? || time_values.nil?
+
+    case tof_unit
+    when TOF_UNITS[:PER_SECOND]
+      time_values[:seconds]
+    when TOF_UNITS[:PER_MINUTE]
+      time_values[:minutes]
+    when TOF_UNITS[:PER_HOUR]
+      time_values[:hours]
+    end
+  end
+
+  def calculate_ton_frequency(time_value, ton_value)
+    return nil if time_value.nil? || ton_value.nil?
+
+    ton_value / time_value
+  end
+
+  def update_gas_phase_data(catalyst_mol_value, gas_product_mol_amount, gas_phase_data)
+    return gas_phase_data if catalyst_mol_value.nil?
+
+    gas_phase_data['turnover_number'] = calculate_ton(gas_product_mol_amount, catalyst_mol_value)
+    time_values = calculate_ton_per_time_value(gas_phase_data['time']['value'], gas_phase_data['time']['unit'])
+    return gas_phase_data unless time_values
+
+    time_value = extract_time_value(gas_phase_data['turnover_frequency']['unit'], time_values)
+    return gas_phase_data unless time_values && time_value
+
+    gas_phase_data['turnover_frequency']['value'] = calculate_ton_frequency(
+      time_value,
+      gas_phase_data['turnover_number'],
+    )
+    gas_phase_data
+  end
+
+  def find_reaction_sample_by_id
+    ReactionsSample.where(reaction_id: reaction_id, gas_type: 3)
+  end
+
+  def find_reaction_vessel
+    Reaction.find_by(id: reaction_id).vessel_size
   end
 
   def update_gas_material(catalyst_mol_value)
-    gas_materials = ReactionsSample.where(reaction_id: reaction_id, gas_type: 3)
-
-    gas_materials.each do |material|
+    find_reaction_sample_by_id.each do |material|
       gas_phase_data = material.gas_phase_data
 
-      reaction_vessel = Reaction.find_by(id: reaction_id).vessel_size
+      reaction_vessel = find_reaction_vessel
       vessel_volume = reaction_vessel_volume(reaction_vessel)
       gas_product_mol_amount = calculate_mole_gas_product(
         gas_phase_data['part_per_million'],
@@ -118,11 +196,7 @@ module Reactable
 
       next if gas_product_mol_amount.nil?
 
-      gas_phase_data['turnover_number'] = calculate_ton(gas_product_mol_amount, catalyst_mol_value)
-      gas_phase_data['turnover_frequency']['value'] = calculate_ton_frequency(
-        gas_phase_data['time'],
-        gas_phase_data['turnover_number'],
-      )
+      material.gas_phase_data = update_gas_phase_data(catalyst_mol_value, gas_product_mol_amount, gas_phase_data)
       material.save!
     end
   end

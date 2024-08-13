@@ -562,9 +562,10 @@ class Sample < ApplicationRecord
   end
 
   def detect_amount_type
-    amount_value = real_amount_value.nil? ? target_amount_value : real_amount_value
-    amount_unit = real_amount_unit.nil? ? target_amount_unit : real_amount_unit
-    { 'value' => amount_value, 'unit' => amount_unit }
+    condition = real_amount_value.nil? || real_amount_unit.nil?
+    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if condition
+
+    { 'value' => real_amount_value, 'unit' => real_amount_unit }
   end
 
   def amount_mol
