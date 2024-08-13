@@ -4,8 +4,8 @@ require 'spec_helper'
 
 RSpec.describe Reactable, type: :module do
   let(:reactable) { Class.new { include Reactable }.new }
-  let(:sample1) { create(:sample, real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'mol') }
-  let(:sample2) do
+  let(:sample_with_target_amount) { create(:sample, real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'mol') }
+  let(:sample_with_real_amount) do
     create(:sample, real_amount_value: 15, real_amount_unit: 'mol', target_amount_value: 10, target_amount_unit: 'g')
   end
   let(:reaction) { create(:reaction) }
@@ -13,7 +13,7 @@ RSpec.describe Reactable, type: :module do
   let(:product_sample) do
     create(:reactions_product_sample,
            reaction: reaction,
-           sample: sample1,
+           sample: sample_with_target_amount,
            gas_phase_data: {
              'time' => { 'unit' => 's', 'value' => 3999 },
              'temperature' => { 'unit' => '°C', 'value' => 1 },
@@ -26,12 +26,12 @@ RSpec.describe Reactable, type: :module do
   describe '#test methods for gas phase reaction samples' do
     describe '#detect_amount_type' do
       it 'returns a hash with sample target_amount_value and target_amount_unit' do
-        result = sample1.detect_amount_type
+        result = sample_with_target_amount.detect_amount_type
         expect(result).to eq({ 'value' => 10, 'unit' => 'mol' })
       end
 
       it 'returns a hash with sample real_amount_value and real_amount_unit' do
-        result = sample2.detect_amount_type
+        result = sample_with_real_amount.detect_amount_type
         expect(result).to eq({ 'value' => 15, 'unit' => 'mol' })
       end
     end
@@ -265,8 +265,10 @@ RSpec.describe Reactable, type: :module do
 
     describe '#update_gas_material' do
       before do
-        allow(reactable).to receive(:find_reaction_sample_by_id).and_return([product_sample])
-        allow(reactable).to receive(:find_reaction_vessel).and_return({ 'amount' => 1, 'unit' => 'l' })
+        allow(reactable).to receive_messages(
+          find_reaction_sample_by_id: [product_sample],
+          find_reaction_vessel: { 'amount' => 1, 'unit' => 'l' },
+        )
       end
 
       it 'updates the gas_phase_data for each gas material' do
