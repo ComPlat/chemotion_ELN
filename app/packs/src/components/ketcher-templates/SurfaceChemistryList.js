@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   Modal,
   Panel,
@@ -7,7 +7,7 @@ import {
   OverlayTrigger,
   Tooltip,
 } from 'react-bootstrap';
-import { Accordion, AccordionItem } from '@szhsin/react-accordion';
+import {Accordion, AccordionItem} from '@szhsin/react-accordion';
 import SurfaceChemistryItemThumbnail from 'src/components/ketcher-templates/SurfaceChemistryItemThumbnail';
 import PropTypes from 'prop-types';
 
@@ -15,30 +15,17 @@ const basicShapeKetcherFormat = {
   root: {
     nodes: [
       {
-        type: 'rasterImage',
-        center: {
-          x: 58.7833333333333,
-          y: -142.38015873015874,
-          z: 0
+        "type": "image",
+        "format": "image/svg+xml",
+        "boundingBox": {
+          "x": 7.400000000000077,
+          "y": -3.324999999999994,
+          "z": 0,
+          "width": 1,
+          "height": 1
         },
-        data: {
-          bitmap: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPg0KPHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4NCjxwYXRoIGQ9Ik03LjUgMTFWMTNNMTMuNSA4VjE2TTEwLjUgMTBWMTRNMTYuNSAxMC41VjEzLjVNMjEgMTJDMjEgMTYuOTcwNiAxNi45NzA2IDIxIDEyIDIxQzcuMDI5NDQgMjEgMyAxNi45NzA2IDMgMTJDMyA3LjAyOTQ0IDcuMDI5NDQgMyAxMiAzQzE2Ljk3MDYgMyAyMSA3LjAyOTQ0IDIxIDEyWiIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPg0KPC9zdmc+',
-          halfSize: {
-            x: 58.7833333333333,
-            y: -142.38015873015874,
-            z: 0
-          },
-          position: [
-            {
-              x: -52.2166666666667,
-              y: -89.00515873015873,
-              z: 0
-            }
-
-          ]
-        }
+        "data": ''
       }
-
     ],
     connections: [
 
@@ -115,15 +102,24 @@ const shapesList = {
   }
 };
 
-function SurfaceChemistryList(props) {
+const SurfaceChemistryList = (props) => {
   const [showSurfaceChemModal, setShowSurfaceChemModal] = useState(false);
-  const { onSelectShape, selectedShape } = props;
+  const {onSelectShape, selectedShape} = props;
   const toolTip = 'Select a template and Press CTRL + v inside the canvas.';
 
+  const onShapeSelection = (item, obj) => {
+    basicShapeKetcherFormat.root.nodes[0].data = `${obj.icon}`;
+    onSelectShape({
+      ...basicShapeKetcherFormat,
+      ...obj,
+      name: `${item} ${obj.Filling} ${obj.Color}`
+    });
+    setShowSurfaceChemModal(false);
+  };
   return (
     <FormGroup>
       <div className="common-template-header">
-        <div style={{ width: '95%' }}>
+        <div style={{width: '95%'}}>
           <ControlLabel>Shapes:</ControlLabel>
         </div>
         <OverlayTrigger placement="top" overlay={<Tooltip id="commontemplates">{toolTip}</Tooltip>}>
@@ -153,7 +149,7 @@ function SurfaceChemistryList(props) {
                 {
                   Object.keys(shapesList).map((item, idx) => (
                     <Accordion key={idx}>
-                      <div style={{ position: 'relative' }} className="surface-chem-accordian-heading">
+                      <div style={{position: 'relative'}} className="surface-chem-accordian-heading">
                         <AccordionItem header={item}>
                           <div className="shapes-accordionItem">
                             {
@@ -164,15 +160,8 @@ function SurfaceChemistryList(props) {
                                     key={subIdx}
                                     icon={obj.icon}
                                     title={`${item} ${obj.Filling}`}
-                                    onClickHandle={() => {
-                                      basicShapeKetcherFormat.root.nodes[0].data.bitmap = `data:image/svg+xml;base64,${obj.icon}`;
-                                      onSelectShape({
-                                        ...basicShapeKetcherFormat,
-                                        ...obj,
-                                        name: `${item} ${obj.Filling} ${obj.Color}`
-                                      });
-                                      setShowSurfaceChemModal(false);
-                                    }}
+                                    onClickHandle={() => onShapeSelection(item, obj)}
+
                                   />
                                 );
                               })
@@ -192,7 +181,7 @@ function SurfaceChemistryList(props) {
 
     </FormGroup>
   );
-}
+};
 
 export default SurfaceChemistryList;
 SurfaceChemistryList.propTypes = {
