@@ -23,17 +23,21 @@ export default class DictionaryCuration extends Component  {
             affObject : null,
             establishedDictionaryText :"",
             customDictionaryText: "",
-            loading :false
+            loading :false,
+            estMain: "",
+            cusMain: ""
+            
         }}
     
     async componentDidMount(){
       var initTime = new Date();
       console.log(`start: ${initTime}`)
-      const customDictionaryText = AutomticCurationFetcher.dictionaryFetch("custom", "custom.dic")
+      const customDictionaryText= AutomticCurationFetcher.dictionaryFetch("custom", "custom.dic")
+      const cusMain= AutomticCurationFetcher.dictionaryFetch("custom", "custom.dic")
       const establishedDictionaryText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.dic")
       const affixText = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.aff")
-
-      const [new_customDictionaryText, new_establishedDictionaryText, new_affixText ] = await Promise.all([customDictionaryText,establishedDictionaryText,affixText])
+      const estMain = AutomticCurationFetcher.dictionaryFetch("en_US", "en_US.dic")
+      const [new_customDictionaryText, new_establishedDictionaryText, new_affixText , new_estMain, new_cusMain] = await Promise.all([customDictionaryText,establishedDictionaryText,affixText,estMain, cusMain])
       console.log(`fetch done: ${Date.now() - initTime}`)
       // var affObject = this.convertAffxStrtoObj(new_affixText)
       console.log(`aff converted done: ${Date.now() - initTime}`)
@@ -43,7 +47,9 @@ export default class DictionaryCuration extends Component  {
         customValue : new_customDictionaryText,
         customDictionaryText : new_customDictionaryText,
         affObject: {},
-        loading : true
+        loading : true,
+        estMain: new_estMain,
+        cusMain: new_cusMain
         }
         ,
       //   ()=>{this.applyAffix(); console.log(`aff done: ${Date.now() - initTime}`)}
@@ -208,17 +214,44 @@ export default class DictionaryCuration extends Component  {
     }
 
     handleChangeCustomSearch(e) {
-      this.setState({ customSearch: e.target.value });
-    }
+      var dictionaryArray = this.state.cusMain.split("\n")
+      var searchTerm = e.target.value
+      var count = []
+      var newDictString =""
+      for (var dictEntry of dictionaryArray){
+        if (dictEntry.includes(searchTerm)){
+          count.push(dictionaryArray.indexOf(dictEntry))
+        }
+      }
+      for (var countValue of count){
+        newDictString = newDictString + dictionaryArray[countValue] + "\n"
+      }
+      this.setState({customValue: newDictString})
+      // this.setState({ establishedSearch: e.target.value });
+      }
 
     handleChangeEstablishedSearch(e) {
+      var dictionaryArray = this.state.estMain.split("\n")
+      var searchTerm = e.target.value
+      var count = []
+      var newDictString =""
+      if(searchTerm.length > 1){
+      for (var dictEntry of dictionaryArray){
+        if (dictEntry.includes(searchTerm)){
+          count.push(dictionaryArray.indexOf(dictEntry))
+        }
+      }
+      for (var countValue of count){
+        newDictString = newDictString + dictionaryArray[countValue] + "\n"
+      }
+      this.setState({establishedValue: newDictString})
       this.setState({ establishedSearch: e.target.value });
-    }
+    }}
 
     handleFileDrop(attach) {
         this.setState({ file: attach[0] });
     }
-    
+
     handleAttachmentRemove() {
         this.setState({ file: null });
     }

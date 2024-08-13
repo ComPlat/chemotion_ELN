@@ -6,6 +6,7 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 
 import _ from 'lodash';
+import CurationModal from "src/components/CurationModal.js";
 import { ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Popover, Button } from 'react-bootstrap';
 
 const toolbarOptions = [
@@ -24,6 +25,7 @@ const toolbarOptions = [
   // [{ 'size': ['small', false, 'large', 'huge'] }],
   // [{ 'align': [] }],
   // ['clean'],
+  [{'automaticCuration':2 } ]
 ];
 
 export default class QuillEditor extends React.Component {
@@ -140,7 +142,6 @@ export default class QuillEditor extends React.Component {
   initQuill() {
     if (!this.editor) {
       const quillEditor = ReactDOM.findDOMNode(this.refs[this.id]);
-
       const quillOptions = {
         modules: {
           toolbar: {
@@ -184,6 +185,7 @@ export default class QuillEditor extends React.Component {
           this.handleEditorValue(this.props.toolbarSymbol, element);
         });
       });
+      
     }
   }
 
@@ -243,17 +245,31 @@ export default class QuillEditor extends React.Component {
                     <button>
                       <span> &#937; </span>
                     </button>
+                
                   </span>
                 </OverlayTrigger>
+
+               
+              
               );
             }
-
+         
+            else if(Object.keys(element) == 'automaticCuration'){
+              return(
+              <CurationModal 
+              description= {this.props} 
+              onChange = {( event) => this.props.onChange( event)}
+              />)
+            }
+            console.log(toolbarOptions)
             return (
               <select
                 className={`ql-${elementName}`}
                 key={`btnKey_${elementName}`}
               >
                 {options}
+         
+       
               </select>
             );
           }
@@ -301,6 +317,7 @@ export default class QuillEditor extends React.Component {
           style={{ marginRight: '10px', cursor: 'pointer' }}
         >
           <i className={`icon-${element.name}`} />
+          
         </span>
       )
     });
@@ -308,6 +325,7 @@ export default class QuillEditor extends React.Component {
     return (
       <span className="ql-formats custom-toolbar" >
         { customToolbarElement }
+        
       </span>
     );
   }
@@ -326,6 +344,7 @@ export default class QuillEditor extends React.Component {
           >
             {this.props.toolbarDropdown.map(t => <MenuItem key={`mi_${t.name}`} eventKey={t.name} onSelect={() => this.handleEditorValue(this.props.toolbarDropdown, t)}>{t.name.toUpperCase()}</MenuItem>)}
           </DropdownButton>
+         
         </ButtonToolbar>
       </span>
     );
@@ -334,14 +353,22 @@ export default class QuillEditor extends React.Component {
   render() {
     return (
       <div>
+       
         <div id={`toolbar-${this.id}`}>
+       
           {this.renderQuillToolbarGroup()}
           <span className="ql-formats custom-toolbar">
             { this.props.customToolbar }
           </span>
+          
           {this.renderCustomToolbar()}
           {this.renderCustomDropdown()}
+          <CurationModal 
+                description= {this.props} 
+                onChange = {( event) => this.props.onChange( event)}
+                />    
         </div>
+      
         <div
           ref={this.id}
           style={{ height: this.height }}

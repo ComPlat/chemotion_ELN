@@ -390,7 +390,7 @@ export default class CurationModal extends Component {
         }
 
       return (
-        <div>
+        <span>
           <Button  onClick={this.handleShow}>
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
@@ -450,7 +450,7 @@ export default class CurationModal extends Component {
         </Panel>
     </Modal.Body>
   </Modal>
-</div>
+</span>
       );
     }
   }

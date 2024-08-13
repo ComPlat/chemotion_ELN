@@ -14,13 +14,13 @@ import BaseToolbar from 'src/components/reactQuill/BaseToolbar';
 
 import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
-
 import CurationModal from "src/components/CurationModal.js";
+
 
 const toolbarOptions = [
   'bold', 'italic', 'underline',
   'header', 'script',
-  'list', 'bullet',
+  'list', 'bullet','automaticCuration'
 ];
 
 export default class ReactionDescriptionEditor extends React.Component {

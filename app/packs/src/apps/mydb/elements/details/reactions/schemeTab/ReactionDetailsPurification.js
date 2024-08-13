@@ -11,6 +11,7 @@ import Sample from 'src/models/Sample';
 import { observationPurification, solventsTL } from 'src/utilities/reactionPredefined';
 import { permitOn } from 'src/components/common/uis';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import CurationModal from "src/components/CurationModal.js";
 
 function dummy() { return true; }
 
@@ -141,6 +142,7 @@ export default class ReactionDetailsPurification extends Component {
             <FormGroup>
               <div><b>Additional information for publication and purification details</b></div>
               <div className="quill-resize">
+      
                 {
                   permitOn(reaction) ?
                     <QuillEditor
@@ -149,9 +151,16 @@ export default class ReactionDetailsPurification extends Component {
                       height="100%"
                       disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
                       onChange={event => onInputChange('observation', event)}
-                    /> : <QuillViewer value={reaction.observation} />
+                    /> :<span> <QuillViewer value={reaction.observation} />         <div class="child inline-block-child">
+          <CurationModal 
+                description= {this.props} 
+                onChange = {( event) => this.props.onChange( event)}
+                />
+        </div>  </span>
                 }
+              
               </div>
+           
             </FormGroup>
             <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
           </Col>
