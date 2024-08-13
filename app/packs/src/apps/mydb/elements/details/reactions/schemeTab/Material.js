@@ -119,6 +119,7 @@ class Material extends Component {
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
+    this.calculateYield = this.calculateYield.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
   }
 
@@ -221,21 +222,28 @@ class Material extends Component {
     );
   }
 
+  calculateYield(material) {
+    const { reaction } = this.props;
+    const refMaterial = reaction.getReferenceMaterial();
+    let yieldValue = material.equivalent;
+
+    if (isNaN(yieldValue || (material.decoupled && !material.molecular_mass))) {
+      yieldValue = 'n.a.';
+    } else if (reaction.hasPolymers()) {
+      yieldValue = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
+    } else if (material.purity < 1 && material.equivalent > 1) {
+      yieldValue = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
+    } else {
+      yieldValue = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
+    }
+    return yieldValue;
+  }
+
   equivalentOrYield(material) {
     const { reaction, materialGroup } = this.props;
     if (materialGroup === 'products') {
-      const refMaterial = reaction.getReferenceMaterial();
-      let calculateYield = material.equivalent;
-      if (reaction.hasPolymers()) {
-        calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
-      } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
-        calculateYield = 'n.a.';
-      } else if (material.purity < 1 && material.equivalent > 1) {
-        calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
-      }
-      else {
-        calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
-      }
+      let yieldValue = this.calculateYield(material);
+
       return (
         <div>
           <FormControl
@@ -243,7 +251,7 @@ class Material extends Component {
             type="text"
             bsClass="bs-form--compact form-control"
             bsSize="small"
-            value={calculateYield}
+            value={yieldValue}
             disabled
           />
         </div>
@@ -418,7 +426,7 @@ class Material extends Component {
     const mlt = m.molarity_value === 0.0 ?
       '' : `${validDigit(m.molarity_value, 3)}${m.molarity_unit}, `;
     const eqv = `${validDigit(m.equivalent, 3)}`;
-    const yld = `${Math.round(m.equivalent * 100)}%`;
+    const yld = (m.decoupled && !m.molecular_mass) ? 'yield: n.a.' : `${this.calculateYield(m)} yield`;
 
     switch (materialGroup) {
       case 'purification_solvents':
@@ -426,7 +434,7 @@ class Material extends Component {
         return `${molName} (${solVol})`;
       }
       case 'products': {
-        return `${molName} (${grm}${vol}${mol}${mlt}${yld} yield)`;
+        return `${molName} (${grm}${vol}${mol}${mlt}${yld})`;
       }
       default: {
         return `${molName} (${grm}${vol}${mol}${mlt}${eqv} equiv)`;
@@ -601,7 +609,7 @@ class Material extends Component {
   generateMolecularWeightTooltipText(sample, reaction) {
     const isProduct = reaction.products.includes(sample);
     const molecularWeight = sample.decoupled ?
-      (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
+      (sample.molecular_mass || 0) : (sample.molecule && sample.molecule.molecular_weight);
     let theoreticalMassPart = "";
     if (isProduct && sample.maxAmount) {
       theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
