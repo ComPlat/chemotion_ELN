@@ -25,7 +25,6 @@ const toolbarOptions = [
   // [{ 'size': ['small', false, 'large', 'huge'] }],
   // [{ 'align': [] }],
   // ['clean'],
-  [{'automaticCuration':2 } ]
 ];
 
 export default class QuillEditor extends React.Component {
