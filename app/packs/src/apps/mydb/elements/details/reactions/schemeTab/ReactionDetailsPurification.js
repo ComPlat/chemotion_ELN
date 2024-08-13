@@ -104,7 +104,7 @@ export default class ReactionDetailsPurification extends Component {
   render() {
     const { reaction, onInputChange, additionQuillRef } = this.props;
     return (
-      <span>
+      <div className="p-2">
         <Row>
           <Col md={12}>
             <div><b>Purification</b></div>
@@ -155,7 +155,7 @@ export default class ReactionDetailsPurification extends Component {
             <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
           </Col>
         </Row>
-      </span>
+      </div>
     );
   }
 }
