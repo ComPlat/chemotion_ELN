@@ -1,6 +1,6 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
-import {Alert, Badge, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Card, Badge, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 
 const SectionReaction = ({reaction, settings, configs}) => {
@@ -22,12 +22,12 @@ const SectionReaction = ({reaction, settings, configs}) => {
 
   return (
     <div>
-      <Alert style={{ textAlign: 'center',
-                      backgroundColor: '#428bca',
-                      color:'white',
-                      border:'none'}}> {reaction.short_label}
-        <StatusContent status={status}/>
-      </Alert>
+      <Card bg="primary" text="white" className="mb-3">
+        <Card.Header className="text-center">
+          {reaction.short_label}
+          <StatusContent status={status}/>
+        </Card.Header>
+      </Card>
 
       <SVGContent show={settings.diagram}
                   svgPath={svgPath}
@@ -94,7 +94,7 @@ const SVGContent = ({show, svgPath, products, isProductOnly}) => {
 
 const StatusContent = ({ status }) => {
   let tooltip = null;
-  switch(status) {
+  switch (status) {
     case "Successful":
       tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
       return (

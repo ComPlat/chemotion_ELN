@@ -1,6 +1,6 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
-import { Alert } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer'
 
 const SectionSample = ({ sample, settings, configs }) => {
@@ -9,14 +9,11 @@ const SectionSample = ({ sample, settings, configs }) => {
 
   return (
     <div>
-      <Alert style={{
-        textAlign: 'center',
-        backgroundColor: '#000000',
-        color: 'white',
-        border: 'none'
-      }}
-      > {`${molecule_iupac_name} (${name || external_label || short_label})`}
-      </Alert>
+      <Card bg="dark" text="white" className="mb-3">
+        <Card.Header className="text-center">
+          {`${molecule_iupac_name} (${name || external_label || short_label})`}
+        </Card.Header>
+      </Card>
 
       <SVGContent
         show={settings.diagram}
