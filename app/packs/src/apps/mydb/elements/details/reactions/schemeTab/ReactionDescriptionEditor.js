@@ -208,6 +208,7 @@ export default class ReactionDescriptionEditor extends React.Component {
           <CurationModal 
                 description= {this.props.value.ops} 
                 onChange = {( event) => this.props.onChange( event)}
+                ref = {this.reactQuillRef}
                 />
         </div>  
       </DynamicToolbarEditor>

@@ -46,6 +46,11 @@ export default class CurationModal extends Component {
       this.spellCheck(this.state.desc)
     }
 
+    componentDidMount(){
+      
+      // console.log(this.props.ref)
+    }
+
     convertStringToObject(input_string){
       var word_with_subscript = input_string.match(/\b[a-z]\w*\d[a-z]*/gi);
       var regex_string = '';
@@ -79,7 +84,7 @@ export default class CurationModal extends Component {
       output_object["ops"] = output_object["ops"].filter((x)=> x["insert"] != "" )
       this.setState({descriptionObject:output_object});
       // add await comand here maybe
-      console.log(output_object["ops"]);
+      // console.log(output_object["ops"]);
       return output_object
     }
 
@@ -222,7 +227,7 @@ export default class CurationModal extends Component {
     cleanMisspelledArray(input_array){
       const counts = {};
       input_array.forEach(function (x) { counts[x] = (counts[x] || 0) + 1; });
-      console.log(counts.values)
+      // console.log(counts.values)
       return counts
     }
 
@@ -251,7 +256,7 @@ export default class CurationModal extends Component {
 
       var highlight = combined_array.join("|")
       // highlight = " " + highlight
-      console.log(new RegExp(`${highlight}`, "gi"))
+      // console.log(new RegExp(`${highlight}`, "gi"))
       var parts = text.split(new RegExp(`(${highlight})`, "gi"));
       var output_div
       var list_items = parts.map((part, index) => (
@@ -295,8 +300,14 @@ export default class CurationModal extends Component {
     }
 
     cleanData(description){
+      
       if (description !== undefined){
         if(typeof description === "string"){
+          return description
+        }
+        else if(typeof description.value == "object"){
+          description = description.value.ops[0].insert
+          console.log(description)
           return description
         }
         else{
@@ -307,6 +318,7 @@ export default class CurationModal extends Component {
         });
       
         const str_out = (array_output.join(""));
+        console.log(str_out)
         return str_out;}}
     }
 
@@ -391,7 +403,7 @@ export default class CurationModal extends Component {
 
       return (
         <span>
-          <Button  onClick={this.handleShow} style={{float:"none"}}>
+          <Button  onClick={this.handleShow} style={{float:"none"}}  id={this.props.ref}>
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
     
@@ -458,5 +470,6 @@ export default class CurationModal extends Component {
 CurationModal.propTypes = {
     reaction: PropTypes.object,
     onChange: PropTypes.func,
+    ref: PropTypes.string
   };
   

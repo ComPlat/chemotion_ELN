@@ -104,6 +104,7 @@ export default class ReactionDetailsPurification extends Component {
 
   render() {
     const { reaction, onInputChange, additionQuillRef } = this.props;
+    // console.log(this.props)
     return (
       <span>
         <Row>
@@ -153,8 +154,9 @@ export default class ReactionDetailsPurification extends Component {
                       onChange={event => onInputChange('observation', event)}
                     /> :<span> <QuillViewer value={reaction.observation} />         <div class="child inline-block-child">
           <CurationModal 
-                description= {this.props} 
+                description= {this.props.description} 
                 onChange = {( event) => this.props.onChange( event)}
+                ref = {this.additionQuillRef}
                 />
         </div>  </span>
                 }

@@ -252,15 +252,7 @@ export default class QuillEditor extends React.Component {
               
               );
             }
-         
-            else if(Object.keys(element) == 'automaticCuration'){
-              return(
-              <CurationModal 
-              description= {this.props} 
-              onChange = {( event) => this.props.onChange( event)}
-              />)
-            }
-            console.log(toolbarOptions)
+        
             return (
               <select
                 className={`ql-${elementName}`}
@@ -275,7 +267,6 @@ export default class QuillEditor extends React.Component {
         }
         return (<span key={`span_empty_${index}`}/>);
       });
-
       return (
         <span className="ql-formats" key={`sp_${index}`} >
           {groupElement}
@@ -365,6 +356,7 @@ export default class QuillEditor extends React.Component {
           <CurationModal 
                 description= {this.props} 
                 onChange = {( event) => this.props.onChange( event)}
+                ref={this.id}
                 />    
         </div>
       
