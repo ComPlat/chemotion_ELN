@@ -523,12 +523,11 @@ module Chemotion
         end
 
         post do
-          Usecases::Search::StructureSearch.new(
-            collection_id: @c_id,
-            params: params,
-            user: current_user,
-            detail_levels: @dl,
-          ).perform!
+          samples = sample_structure_search
+          serialization_by_elements_and_page(
+            elements_by_scope(samples),
+            params[:page],
+          )
         end
       end
 
