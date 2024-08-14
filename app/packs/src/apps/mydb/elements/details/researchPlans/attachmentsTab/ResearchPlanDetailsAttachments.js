@@ -1,17 +1,17 @@
 /* eslint-disable lines-between-class-members */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
-import { StoreContext } from 'src/stores/mobx/RootStore';
+import {StoreContext} from 'src/stores/mobx/RootStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
-import { observer } from 'mobx-react';
-import React, { Component } from 'react';
+import {observer} from 'mobx-react';
+import React, {Component} from 'react';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import { Button } from 'react-bootstrap';
-import { last, findKey } from 'lodash';
+import {Button} from 'react-bootstrap';
+import {last, findKey} from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -27,8 +27,7 @@ import {
   attachmentThumbnail,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import ThirdPartyAppButton from 'src/apps/mydb/elements/list/ThirdPartyAppButton';
-import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
-import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
+import {formatDate, parseDate} from 'src/utilities/timezoneHelper';
 
 class ResearchPlanDetailsAttachments extends Component {
   static contextType = StoreContext;
@@ -36,7 +35,7 @@ class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
-    const { thirdPartyApps } = UIStore.getState() || [];
+    const {thirdPartyApps} = UIStore.getState() || [];
     this.thirdPartyApps = thirdPartyApps;
 
     this.state = {
@@ -67,10 +66,10 @@ class ResearchPlanDetailsAttachments extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { attachments } = this.props;
+    const {attachments} = this.props;
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
-      this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
+      this.setState({filteredAttachments: [...attachments]}, this.filterAndSortAttachments);
     }
   }
 
@@ -78,7 +77,7 @@ class ResearchPlanDetailsAttachments extends Component {
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
 
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
+    EditorFetcher.startEditing({attachment_id: attachment.id})
       .then((result) => {
         if (result.token) {
           const url = `/editor?id=${attachment.id}&docType=${docType}
@@ -97,7 +96,7 @@ class ResearchPlanDetailsAttachments extends Component {
   }
 
   onImport(attachment) {
-    const { researchPlan, onAttachmentImportComplete } = this.props;
+    const {researchPlan, onAttachmentImportComplete} = this.props;
     const researchPlanId = researchPlan.id;
     LoadingActions.start();
     ElementActions.importTableFromSpreadsheet(
@@ -109,11 +108,11 @@ class ResearchPlanDetailsAttachments extends Component {
   }
 
   handleFilterChange = (e) => {
-    this.setState({ filterText: e.target.value }, this.filterAndSortAttachments);
+    this.setState({filterText: e.target.value}, this.filterAndSortAttachments);
   };
 
   handleSortChange = (e) => {
-    this.setState({ sortBy: e.target.value }, this.filterAndSortAttachments);
+    this.setState({sortBy: e.target.value}, this.filterAndSortAttachments);
   };
 
   toggleSortDirection = () => {
@@ -123,7 +122,7 @@ class ResearchPlanDetailsAttachments extends Component {
   };
 
   filterAndSortAttachments() {
-    const { filterText, sortBy } = this.state;
+    const {filterText, sortBy} = this.state;
 
     const filter = new ImageAttachmentFilter();
     let filteredAttachments = filter.filterAttachmentsWhichAreInBody(
@@ -156,14 +155,14 @@ class ResearchPlanDetailsAttachments extends Component {
       return this.state.sortDirection === 'asc' ? comparison : -comparison;
     });
 
-    this.setState({ filteredAttachments });
+    this.setState({filteredAttachments});
   }
 
   createAttachmentPreviews() {
-    const { attachments } = this.props;
+    const {attachments} = this.props;
     attachments.map((attachment) => {
       if (attachment.thumb) {
-        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
+        AttachmentFetcher.fetchThumbnail({id: attachment.id}).then(
           (result) => {
             if (result != null) {
               attachment.preview = `data:image/png;base64,${result}`;
@@ -180,7 +179,7 @@ class ResearchPlanDetailsAttachments extends Component {
   }
 
   documentType(filename) {
-    const { extension } = this.state;
+    const {extension} = this.state;
 
     const ext = last(filename.split('.'));
     const docType = findKey(extension, (o) => o.includes(ext));
@@ -202,15 +201,15 @@ class ResearchPlanDetailsAttachments extends Component {
   }
 
   showImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
+    const {showImportConfirm} = this.state;
     showImportConfirm[attachmentId] = true;
-    this.setState({ showImportConfirm });
+    this.setState({showImportConfirm});
   }
 
   hideImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
+    const {showImportConfirm} = this.state;
     showImportConfirm[attachmentId] = false;
-    this.setState({ showImportConfirm });
+    this.setState({showImportConfirm});
   }
 
   confirmAttachmentImport(attachment) {
@@ -219,8 +218,8 @@ class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImageEditModal() {
-    const { chosenAttachment, imageEditModalShown } = this.state;
-    const { onEdit } = this.props;
+    const {chosenAttachment, imageEditModalShown} = this.state;
+    const {onEdit} = this.props;
     return (
       <ImageAnnotationModalSVG
         attachment={chosenAttachment}
@@ -229,11 +228,11 @@ class ResearchPlanDetailsAttachments extends Component {
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
             chosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
+            this.setState({imageEditModalShown: false});
             onEdit(chosenAttachment);
           }
         }
-        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+        handleOnClose={() => {this.setState({imageEditModalShown: false});}}
       />
     );
   }
@@ -242,26 +241,27 @@ class ResearchPlanDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const { researchPlan } = this.props;
+    const {researchPlan} = this.props;
 
     //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
-    
+
     let combinedAttachments = filteredAttachments;
-    if(this.context.attachmentNotificationStore ){
-      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"ResearchPlan",researchPlan);
+    if (this.context.attachmentNotificationStore) {
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, "ResearchPlan", researchPlan);
     }
 
-    const { onUndoDelete, attachments } = this.props;
+
+    const {onUndoDelete, attachments} = this.props;
     const thirdPartyApps = this.thirdPartyApps;
-    
+
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: '1', alignSelf: 'center' }}>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div style={{flex: '1', alignSelf: 'center'}}>
             {customDropzone(this.props.onDrop)}
           </div>
-          <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
+          <div style={{marginLeft: '20px', alignSelf: 'center'}}>
             {attachments.length > 0
               && sortingAndFilteringUI(
                 sortDirection,
@@ -294,13 +294,13 @@ class ResearchPlanDetailsAttachments extends Component {
                   &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
                   <div>
                     Size:&nbsp;
-                    <span style={{ fontWeight: 'bold', color: '#444' }}>
+                    <span style={{fontWeight: 'bold', color: '#444'}}>
                       {formatFileSize(attachment.filesize)}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div className="attachment-row-actions" style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
                 {attachment.is_deleted ? (
                   <Button
                     bsSize="xs"
