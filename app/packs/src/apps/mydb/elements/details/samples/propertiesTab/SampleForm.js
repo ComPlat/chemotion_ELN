@@ -736,7 +736,7 @@ export default class SampleForm extends React.Component {
   densityMolarityInput(sample, isPolymer, molarityBlocked, densityBlocked) {
     return (
       <>
-        <ButtonGroup className='mb-2'>
+        <ButtonGroup className="mb-2">
           <Button
             onClick={() => this.setState({ densityMolarity: 'density' })}
             variant={this.state.densityMolarity === 'density' ? 'info' : 'light'}
@@ -763,10 +763,10 @@ export default class SampleForm extends React.Component {
 
   sampleDescription(sample) {
     return (
-      <Form.Group>
+      <Form.Group className="my-4">
         <Form.Label>Description</Form.Label>
-        <FormControl
-          componentClass="textarea"
+        <Form.Control
+          as="textarea"
           ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
@@ -777,7 +777,6 @@ export default class SampleForm extends React.Component {
       </Form.Group>
     );
   }
-
 
   // eslint-disable-next-line class-methods-use-this
   assignAmountType(reaction, sample) {
@@ -810,26 +809,26 @@ export default class SampleForm extends React.Component {
         <h5>Basic Properties:</h5>
         <Row className='align-items-end mb-4'>
           <Col>{this.moleculeInput()}</Col>
+          <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
           <Col>{this.stereoAbsInput()}</Col>
           <Col>{this.stereoRelInput()}</Col>
-
-                      {
-                  enableSampleDecoupled && (
+          {
+            enableSampleDecoupled && (
               <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>
-                  )
+            )
           }
         </Row>
-        <Row className='align-items-end mb-4'>
-
+        <Row className="align-items-end mb-4">
           <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
           <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
           <Col>
             {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
             {this.nextInventoryLabel(sample)}
           </Col>
-          <Col> {this.textInput(sample, 'location', 'Location')}</Col>
-          <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>
+          <Col>{this.textInput(sample, 'location', 'Location')}</Col>
+          <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
         </Row>
+
         {sample.decoupled && (
           <Row className='mb-4'>
             <Col>{this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}</Col>
@@ -840,46 +839,30 @@ export default class SampleForm extends React.Component {
             </Col>
           </Row>
         )}
-        <Row className='align-items-end mb-4'>
-          <Col xs={6} className='d-flex align-items-end gap-2'>
+
+        <Row className='align-items-center g-2 mb-4'>
+          <Col xs={6} className="d-flex align-items-end gap-2">
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>
-                          <Col style={{ width: '47%' }}>
-                            <div className="name-form" style={{ marginBottom: '15px' }}>
-                              <Tabs
-                                style={{ width: '60%' }}
-                                id="tab-density-molarity"
-                                defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
-                              >
-                                <Tab eventKey="density" title="Density">
-                                  {
-                              this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                            }
-                                </Tab>
-                                <Tab eventKey="molarity" title="Molarity">
-                                  {
-                              this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                            }
-                                </Tab>
-                              </Tabs>
-                              <div style={{ width: '40%', paddingLeft: '5px' }}>
-                                {
-                            this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
-                          }
-                              </div>
-                            </div>
-                      </Col>
-              </Row>
+          <Col>
+            {this.densityMolarityInput(sample)}
+          </Col>
+          <Col className="gap-2">
+            {
+              this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+            }
+          </Col>
+        </Row>
 
-        <h5>Additional properties of the pure compound:</h5>
-        <Row className='mb-4'>
+        <h5 className="py-2">Additional properties of the pure compound:</h5>
+        <Row className="mb-4">
 
           <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
           <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
           <Col>{this.textInput(sample, 'xref_solubility', 'Solubility ')}</Col>
         </Row>
-        <Row>
+        <Row className="mb-4">
           <Col>
             <TextRangeWithAddon
               field="melting_point"
