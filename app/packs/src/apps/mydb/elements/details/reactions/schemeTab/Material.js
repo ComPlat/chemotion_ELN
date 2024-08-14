@@ -297,7 +297,7 @@ class Material extends Component {
           value={updateValue}
           disabled={readOnly}
           onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
-          onChange={(e) => this.handleGasFieldsChange(field, e)}
+          onChange={(e) => this.handleGasFieldsChange(field, e, value)}
           unit={unit}
         />
       </td>
@@ -519,9 +519,9 @@ class Material extends Component {
     }
   }
 
-  handleGasFieldsChange(field, e) {
+  handleGasFieldsChange(field, e, currentValue) {
     const { materialGroup, onChange } = this.props;
-    if (onChange && e.value !== undefined && e.unit !== undefined) {
+    if (onChange && e.value !== undefined && e.unit !== undefined && e.value !== currentValue) {
       const event = {
         type: 'gasFieldsChanged',
         materialGroup,

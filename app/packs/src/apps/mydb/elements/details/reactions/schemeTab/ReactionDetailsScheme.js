@@ -998,6 +998,11 @@ export default class ReactionDetailsScheme extends Component {
 
       if (field === 'temperature' || field === 'part_per_million') {
         sample.equivalent = updatedSample.equivalent;
+        setTimeout(() => {
+          if (sample.equivalent > 1) {
+            this.triggerNotification(sample.decoupled);
+          }
+        }, 200);
       }
       return {
         ...sample,
