@@ -240,7 +240,7 @@ export default class WellplateDetails extends Component {
   }
 
   wellplateHeader(wellplate) {
-    const saveBtnDisplay = wellplate.isEdited || wellplate.isNew ? '' : 'none';
+    const displaySaveButton = wellplate.isEdited || wellplate.isNew
     const datetp = formatTimeStampsOfElement(wellplate || {});
 
     return (
@@ -255,16 +255,17 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
           <ConfirmClose el={wellplate} />
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
-            <Button
-              variant="warning"
-              size="sm"
-              onClick={() => this.handleSubmit()}
-              style={{ display: saveBtnDisplay }}
-            >
-              <i className="fa fa-floppy-o " />
-            </Button>
-          </OverlayTrigger>
+          { displaySaveButton &&
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => this.handleSubmit()}
+              >
+                <i className="fa fa-floppy-o " />
+              </Button>
+            </OverlayTrigger>
+          }
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
             <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
               <i className="fa fa-expand" />
@@ -279,7 +280,6 @@ export default class WellplateDetails extends Component {
 
   render() {
     const { wellplate, showWellplate, visible } = this.state;
-    console.debug('Wellplate:', wellplate)
     const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
     const exportButton = (wellplate && wellplate.isNew)
