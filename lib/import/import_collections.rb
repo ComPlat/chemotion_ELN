@@ -386,6 +386,8 @@ module Import
             'position',
             'waste',
             'coefficient',
+            'gas_type',
+            'gas_phase_data',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
             sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
