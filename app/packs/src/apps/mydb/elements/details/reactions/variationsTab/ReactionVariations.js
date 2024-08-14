@@ -42,11 +42,11 @@ function MenuHeader({
   const [unit, setUnit] = useState(units[0]);
 
   const onSortChanged = () => {
-    setAscendingSort(column.isSortAscending() ? 'active' : 'inactive');
-    setDescendingSort(column.isSortDescending() ? 'active' : 'inactive');
+    setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
+    setDescendingSort(column.isSortDescending() ? 'sort_active' : 'inactive');
     setNoSort(
       !column.isSortAscending() && !column.isSortDescending()
-        ? 'active'
+        ? 'sort_active'
         : 'inactive'
     );
   };
@@ -123,7 +123,7 @@ function MenuHeader({
   );
 
   const sortMenu = (
-    <div style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
+    <div className="sortHeader" style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
       <div
         onClick={(event) => onSortRequested('asc', event)}
         onTouchEnd={(event) => onSortRequested('asc', event)}
@@ -150,7 +150,12 @@ function MenuHeader({
 
   return (
     <div style={{ display: 'grid' }}>
-      <b onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}>{name}</b>
+      <span
+        className="header-title"
+        onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
+      >
+        {name}
+      </span>
       <div>
         {entrySelection}
         {' '}
