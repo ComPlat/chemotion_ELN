@@ -167,7 +167,7 @@ export default class ReactQuill extends React.Component {
     }
   }
 
-  componentWillUnmount() {
+  UNSAFE_componentWillMount() {
     this.destroyEditor();
   }
 
@@ -175,8 +175,8 @@ export default class ReactQuill extends React.Component {
     let error;
     if (this.lastDeltaChangeSet && this.lastDeltaChangeSet === props.value) {
       error = 'You are passing the `delta` object from the `onChange` event ' +
-              'back as `value`. You most probably ' +
-              'want `editor.getContents()` instead. ';
+        'back as `value`. You most probably ' +
+        'want `editor.getContents()` instead. ';
       throw new Error(error);
     }
 
@@ -185,13 +185,13 @@ export default class ReactQuill extends React.Component {
     if (noChild) {
       if (noChild > 1) {
         error = 'The Quill editing area can only be composed ' +
-                'of a single React element.';
+          'of a single React element.';
       }
 
       const child = React.Children.only(props.children);
       if (child && child.type === 'textarea') {
         error = 'Quill does not support editing on a <textarea>. ' +
-                'Use a <div> instead.';
+          'Use a <div> instead.';
       }
 
       if (error) throw new Error(error);

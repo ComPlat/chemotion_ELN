@@ -52,7 +52,7 @@ const ResearchplanFlowDisplay = (props) => {
   }
 
   return (
-    <div style={{ marginBottom: "10px", width: "100%", height: "250px" }}>
+    <div className="w-100 mb-2" style={{ height: "250px" }}>
       <ReactFlow
         fitView
         nodes={defaultNodes}

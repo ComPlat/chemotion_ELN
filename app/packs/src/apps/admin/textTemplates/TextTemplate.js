@@ -247,7 +247,7 @@ export default class TextTemplate extends React.Component {
             <div className="p-3">
               <InputGroup className="mb-3">
                 <InputGroup.Text className='fs-5 fw-bold me-3'>Preview</InputGroup.Text>
-                <TextTemplateIcon className='fs-3 my-3' template={selectedTemplate} />
+                <TextTemplateIcon iconClass='fs-3 my-3' template={selectedTemplate} />
               </InputGroup>
               <Form>
                 <Form.Group className="mb-3">
@@ -255,7 +255,7 @@ export default class TextTemplate extends React.Component {
                   <Form.Control
                     type="text"
                     value={text}
-                    onChange={selectedTemplate ? this.onChangeText : () => { }}
+                    onChange={selectedTemplate ? this.onChangeText : () => {}}
                     className='py-3'
                   />
                 </Form.Group>
@@ -264,7 +264,7 @@ export default class TextTemplate extends React.Component {
                   <Form.Control
                     type="text"
                     value={icon}
-                    onChange={selectedTemplate ? this.onChangeIcon : () => { }}
+                    onChange={selectedTemplate ? this.onChangeIcon : () => {}}
                     className='py-3'
                   />
                 </Form.Group>
@@ -276,7 +276,7 @@ export default class TextTemplate extends React.Component {
                   />
                 </Form.Group>
               </Form>
-              <Button variant="primary" onClick={selectedTemplate ? this.saveTemplate : () => { }}>
+              <Button variant="primary" onClick={selectedTemplate ? this.saveTemplate : () => {}}>
                 Save
               </Button>
             </div>
