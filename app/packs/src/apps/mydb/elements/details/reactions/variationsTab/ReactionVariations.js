@@ -394,6 +394,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     );
   }
 
+  const fitColumnToContent = (event) => {
+    const { column } = event;
+    gridRef.current.api.autoSizeColumns([column], false);
+  };
+
   return (
     <div>
       <OverlayTrigger
@@ -447,8 +452,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           */
           readOnlyEdit
           onCellEditRequest={updateRow}
-          onVirtualColumnsChanged={() => gridRef.current.api.autoSizeAllColumns(false)}
-          onColumnHeaderClicked={() => gridRef.current.api.autoSizeAllColumns(false)}
+          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
+          onCellValueChanged={(event) => fitColumnToContent(event)}
+          onColumnHeaderClicked={(event) => fitColumnToContent(event)}
         />
       </div>
     </div>
