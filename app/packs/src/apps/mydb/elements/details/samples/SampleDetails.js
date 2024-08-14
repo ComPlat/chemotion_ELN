@@ -73,8 +73,6 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
@@ -759,12 +757,12 @@ export default class SampleDetails extends React.Component {
             Chemical identifiers
             {sample.decoupled && <span className="text-danger ms-1">[decoupled]</span>}
           </Accordion.Header>
-            <Accordion.Body>
-              {this.moleculeInchi(sample)}
-              {this.moleculeCanoSmiles(sample)}
-              {this.moleculeMolfile(sample)}
-            </Accordion.Body>
-          </Accordion.Item>
+          <Accordion.Body>
+            {this.moleculeInchi(sample)}
+            {this.moleculeCanoSmiles(sample)}
+            {this.moleculeMolfile(sample)}
+          </Accordion.Body>
+        </Accordion.Item>
       </Accordion>
     );
   }
@@ -782,10 +780,9 @@ export default class SampleDetails extends React.Component {
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
         />
-
         <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
-        {this.elementalPropertiesItem(sample)}
-        {this.chemicalIdentifiersItem(sample)}
+        {sample.molecule_formula && this.elementalPropertiesItem(sample)}
+        {this.state.showChemicalIdentifiers && this.chemicalIdentifiersItem(sample)}
         <div className="mt-2">
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>
