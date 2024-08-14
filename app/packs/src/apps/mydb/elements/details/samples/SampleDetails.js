@@ -73,6 +73,7 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
+import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 
 const MWPrecision = 6;
 
@@ -737,12 +738,12 @@ export default class SampleDetails extends React.Component {
             Chemical identifiers
             {sample.decoupled && <span className="text-danger ms-1">[decoupled]</span>}
           </Accordion.Header>
-            <Accordion.Body>
-              {this.moleculeInchi(sample)}
-              {this.moleculeCanoSmiles(sample)}
-              {this.moleculeMolfile(sample)}
-            </Accordion.Body>
-          </Accordion.Item>
+          <Accordion.Body>
+            {this.moleculeInchi(sample)}
+            {this.moleculeCanoSmiles(sample)}
+            {this.moleculeMolfile(sample)}
+          </Accordion.Body>
+        </Accordion.Item>
       </Accordion>
     );
   }
@@ -760,13 +761,11 @@ export default class SampleDetails extends React.Component {
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
         />
-
-        {this.chemicalIdentifiersItem(sample)}
-
-        <div className="mt-2">
+        {this.state.showChemicalIdentifiers && this.chemicalIdentifiersItem(sample)}
+        <div className="my-3">
           <EditUserLabels element={sample} />
         </div>
-        {this.elementalPropertiesItem(sample)}
+        {sample.molecule_formula && this.elementalPropertiesItem(sample)}
         <div className="mt-2">
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>

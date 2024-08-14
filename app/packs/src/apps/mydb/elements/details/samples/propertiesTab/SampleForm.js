@@ -673,7 +673,7 @@ export default class SampleForm extends React.Component {
 
           <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
           <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
-          <Col>{this.textInput(sample, 'xref_solubility', 'Solubility ')}</Col>
+          <Col>{this.textInput(sample, 'xref_solubility', 'Solubile in')}</Col>
         </Row>
         <Row className="mb-4">
           <Col>
