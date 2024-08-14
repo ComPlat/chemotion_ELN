@@ -150,14 +150,13 @@ export default class WellplateDetails extends Component {
     const { type, value } = change;
     switch (type) {
       case 'name':
-        wellplate.name = value === '' ? 'New Wellplate' : value;
-        break;
+        wellplate.name = value === '' ? 'New Wellplate' : value
       case 'description':
         wellplate.description = value;
-        break;
       case 'readoutTitles':
         wellplate.readout_titles = value;
-        break;
+      case 'size':
+        wellplate.changeSize(value.width, value.height);
       default:
         break;
     }
@@ -252,7 +251,7 @@ export default class WellplateDetails extends Component {
             <span className="mx-2">{wellplate.name}</span>
           </span>
         </OverlayTrigger>
-        <div class="d-flex justify-content-end gap-2">
+        <div className="d-flex justify-content-end gap-2">
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
           <ConfirmClose el={wellplate} />
