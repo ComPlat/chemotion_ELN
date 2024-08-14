@@ -49,7 +49,6 @@ export default class CurationModal extends Component {
 
     updateDescription(){
       this.setState({desc: this.cleanData(this.props.description) })
-      // console.log(this.props.ref)
     }
 
     convertStringToObject(input_string){
@@ -132,12 +131,15 @@ export default class CurationModal extends Component {
      
       if (typeof mispelled_word === "string" )
       {  
-        
         // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
+        if (/(.)\1{4,}/.test(mispelled_word))
+        {
+          var repeatedCharacter = mispelled_word.match(/(.)\1{4,}/)
+          var newMisspeled = mispelled_word.replace(/(.)\1{4,}/, repeatedCharacter[0].charAt(0)  ) 
+          var ms_suggestion = [newMisspeled]
+        }
+        else
         var ms_suggestion = dictionary.suggest(mispelled_word)
-        // setTimeout(() => {
-        //   console.log("this is taking a while");return;
-        // }, 2000);
         this.setState({ suggestion : ms_suggestion}) 
       }   
       else {
@@ -199,22 +201,19 @@ export default class CurationModal extends Component {
           if(word_array[i].includes("°") ){
             var spell_checked_word = true
           }
-          else
-            {if(/[a-z]*\-[a-z]*/.test(word_array[i]))
+          else{
+            if(/[a-z]*\-[a-z]*/.test(word_array[i]))
               {console.log("help" +word_array[i])}
             else{
               var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
-           }
-            }}
+            }
+        }}
         else
           {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
-            {
-              ss_list.push(word_array[i])
-            }
+            {ss_list.push(word_array[i])}
           else{
-            var spell_checked_word = true; 
-              }
-          } 
+            var spell_checked_word = true; }
+          }
         if (spell_checked_word == false){
           ms_words.push(word_array[i]);
         } 
@@ -227,52 +226,44 @@ export default class CurationModal extends Component {
     cleanMisspelledArray(input_array){
       const counts = {};
       input_array.forEach(function (x) { counts[x] = (counts[x] || 0) + 1; });
-      // console.log(counts.values)
       return counts
     }
 
     changeMisspelling(description,selected_choice,ms_words,index){
       if (selected_choice !== ""){
-      var fixed_description = description.replace(ms_words[index], selected_choice);}
+        var fixed_description = description.replace(ms_words[index], selected_choice);}
       else{
-      var fixed_description = description}
-      if (index < ms_words.length){
-        index= index +1 }
-      else {
-          index = 0
-        }
+        var fixed_description = description}
+          if (index < ms_words.length){
+            index= index +1 }
+          else {
+            index = 0
+      }
       this.setState({suggestionIndex : index,desc :fixed_description});
       this.handleSuggest(ms_words, index);
       this.setState({correctWord: ""})
     }
 
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
-      // this.clean_misspelled_array(mispelledWords)
       if(text !== undefined){
-      var combined_array = mispelledWords.concat(subscriptList)
-      // for (var msword of combined_array){
-      //   combined_array[msword] =`(${msword})`
-      // }
-
-      var highlight = combined_array.join("|")
-      // highlight = " " + highlight
-      // console.log(new RegExp(`${highlight}`, "gi"))
-      var parts = text.split(new RegExp(`(${highlight})`, "gi"));
-      var output_div
-      var list_items = parts.map((part, index) => (
-        <React.Fragment key={index}>
-          {(()=> {
-            var miss_spelled_words_wo_current_word = mispelledWords.toSpliced(ms_index, 1)
-            if(subscriptList.includes(part)){
-              output_div =  this.checkSubScript(part)   
-            }
-            else if(part === mispelledWords[ms_index])
-              {output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
+        var combined_array = mispelledWords.concat(subscriptList)
+        var highlight = combined_array.join("|")
+        var parts = text.split(new RegExp(`(${highlight})`, "gi"));
+        var output_div
+        var list_items = parts.map((part, index) => (
+          <React.Fragment key={index}>
+            {(()=> {
+              var miss_spelled_words_wo_current_word = mispelledWords.toSpliced(ms_index, 1)
+              if(subscriptList.includes(part)){
+                output_div =  this.checkSubScript(part)   
               }
-            else if(miss_spelled_words_wo_current_word.includes(part)) 
-              {output_div = (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
-              }
-            })()
+              else if(part === mispelledWords[ms_index])
+                {output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
+                }
+              else if(miss_spelled_words_wo_current_word.includes(part)) 
+                {output_div = (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+                }
+              })()
           }
           {combined_array.includes(part)
             ? (output_div)
@@ -300,13 +291,14 @@ export default class CurationModal extends Component {
     }
 
     cleanData(description){
-      console.log(description.value)
       if (description !== undefined){
         if(typeof description === "string"){
           return description
         }
         else if(typeof description.value == "object" && description.value.ops !== undefined){
-          description = description.value.ops[0].insert
+          for (var element of description.value.ops){
+            description = description + element.insert
+          }
           return description
         }
         else{
@@ -402,7 +394,8 @@ export default class CurationModal extends Component {
 
       return (
         <span>
-          <Button  onClick={() => {this.handleShow(); this.updateDescription()}} style={{float:"none"}}  id={this.props.ref}>
+          <Button  onClick={() => {this.handleShow(); this.updateDescription()}} style={{float:"none"}}  
+          id={this.props.ref}>
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
     
@@ -419,9 +412,6 @@ export default class CurationModal extends Component {
               <Panel >
                 <Panel.Heading>
                 <Grid >
-                  <Row> 
-                    
-                  </Row>
                   <Row style={{paddingTop:5}}>
                     <Col md={3} sm={3} style={{paddingLeft:0}} > {formWindow}</Col>
                     <Col md={2} style={{paddingLeft:0}}> <DictionaryButton state={this.state.showPrompt}></DictionaryButton></Col>
@@ -457,7 +447,12 @@ export default class CurationModal extends Component {
                 {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
                 this.convertStringToObject(this.state.desc)}}>Correct</Button>
                 {/* <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button> */}
-                <div className='pull-right'><Button onClick={()=> {this.props.onChange(this.state.descriptionObject);console.log(this.state.descriptionObject);this.convertStringToObject(this.state.desc); this.handleClose()}}> <i class="fa fa-floppy-o"></i> </Button></div>
+                <div className='pull-right'><Button onClick={()=> {this.props.onChange(this.state.descriptionObject);
+                  console.log(this.state.descriptionObject);
+                  this.convertStringToObject(this.state.desc); 
+                  this.handleClose()}}> 
+                  <i class="fa fa-floppy-o"></i> </Button>
+                </div>
               </ButtonToolbar> 
               </Panel.Footer>
             </Panel>
