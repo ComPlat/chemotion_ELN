@@ -1,10 +1,13 @@
+/* eslint-disable lines-between-class-members */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
 import React, { Component } from 'react';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { Button } from 'react-bootstrap';
@@ -27,7 +30,9 @@ import ThirdPartyAppButton from 'src/apps/mydb/elements/list/ThirdPartyAppButton
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
 
-export default class ResearchPlanDetailsAttachments extends Component {
+class ResearchPlanDetailsAttachments extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
@@ -237,8 +242,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const { onUndoDelete, attachments } = this.props;
+    const { researchPlan } = this.props;
 
+    //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
+    
+    let combinedAttachments = filteredAttachments;
+    if(this.context.attachmentNotificationStore ){
+      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"ResearchPlan",researchPlan);
+    }
+
+    const { onUndoDelete, attachments } = this.props;
+    const thirdPartyApps = this.thirdPartyApps;
+    
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
@@ -257,12 +272,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
               )}
           </div>
         </div>
-        {filteredAttachments.length === 0 ? (
+        {combinedAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (
-          filteredAttachments.map((attachment) => (
+          combinedAttachments.map((attachment) => (
             <div className="attachment-row" key={attachment.id}>
               {attachmentThumbnail(attachment)}
               <div className="attachment-row-text" title={attachment.filename}>
@@ -298,7 +313,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
-
                     <ThirdPartyAppButton
                       attachment={attachment}
                       options={this.thirdPartyApps}
@@ -391,6 +405,8 @@ ResearchPlanDetailsAttachments.propTypes = {
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
 };
+
+export default observer(ResearchPlanDetailsAttachments);
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],

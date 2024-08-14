@@ -4,11 +4,6 @@
 
 set -euo pipefail
 
-## ag-grid css
-src5=$(node -e 'console.log(require.resolve("ag-grid-community/styles/ag-grid.css"))')
-src6=$(node -e 'console.log(require.resolve("ag-grid-community/styles/ag-grid-no-native-widgets.css"))')
-
-
 YEL='\033[0;33m'
 NOC='\033[0m'
 yellow() {
@@ -16,14 +11,19 @@ yellow() {
 }
 
 
+## ag-grid css
+src5=$(node -e 'console.log(require.resolve("ag-grid-community/styles/ag-grid.css"))')
+dest5=$(dirname $src5)
 
-yellow "$src5"
-sed -i "s~height: min~height: Min~" $src5
-sed -i "s~height: min~height: Min~" $src6
+# for each css file in the parent directory, run a sed command
+
+for file in ${dest5}/*.{css,scss}; do
+  yellow "Processing $file"
+   sed -i -E "s~min\(var\(([^)]+)\), var\(([^)]+)\) \* var\(([^)]+)\)~min\(var\(\1\), calc\(var\(\2\) * var\(\3\)\)~g" $file
+   sed -i "s~ min(~ Min(~" $file
+done
+
 yellow "Done fixing css."
-
-
-
 
 # move svgedit to public folder
 yellow "Adding symbolic link to svg editor in public folder"

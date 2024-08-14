@@ -9,6 +9,12 @@
 #  cellline_sample_id :integer
 #  deleted_at         :datetime
 #
+# Indexes
+#
+#  index_collections_celllines_on_cellsample_id_and_coll_id  (cellline_sample_id,collection_id) UNIQUE
+#  index_collections_celllines_on_collection_id              (collection_id)
+#  index_collections_celllines_on_deleted_at                 (deleted_at)
+#
 class CollectionsCellline < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
@@ -18,56 +24,23 @@ class CollectionsCellline < ApplicationRecord
   include Collecting
 
   # Remove from collection and process associated elements (and update collection info tag)
-  def self.remove_in_collection(cellline_id, collection_id)
-    CollectionsCellline.find_by(
-      collection_id: collection_id,
-      cellline_sample_id: cellline_id,
-      deleted_at: nil,
-    )&.destroy
+  def self.remove_in_collection(element_ids, collection_ids)
+    # Remove from collections
+    delete_in_collection(element_ids, collection_ids)
+    # update sample tag with collection info
+    update_tag_by_element_ids(element_ids)
   end
 
-  def self.move_to_collection(cellline_ids, from_collection_id, to_colllection_id)
-    raise "could not find collection with #{to_colllection_id}" unless Collection.find_by(id: to_colllection_id)
-
-    Array(cellline_ids).each do |cell_line_id|
-      next if to_colllection_id == from_collection_id
-
-      CollectionsCellline.save_to_collection(cell_line_id, to_colllection_id)
-      CollectionsCellline.remove_in_collection(cell_line_id, from_collection_id)
-    end
-
-    CollectionsCellline.update_collection_tag(cellline_ids)
+  def self.move_to_collection(element_ids, from_collection_ids, to_colllection_ids)
+    # Delete in collection
+    delete_in_collection(element_ids, from_collection_ids)
+    # Upsert in target collection
+    insert_in_collection(element_ids, to_colllection_ids)
+    # Update element tag with collection info
+    update_tag_by_element_ids(element_ids)
   end
 
   def self.create_in_collection(cellline_ids, to_col_id)
-    raise "could not find collection with #{to_col_id}" unless Collection.find_by(id: to_col_id)
-
-    Array(cellline_ids).each do |cell_line_id|
-      CollectionsCellline.save_to_collection(cell_line_id, to_col_id) unless CollectionsCellline.find_by(
-        collection_id: to_col_id,
-        cellline_sample_id: cell_line_id,
-        deleted_at: nil,
-      )
-    end
-    CollectionsCellline.update_collection_tag(cellline_ids)
-  end
-
-  def self.save_to_collection(cell_line_id, to_col_id)
-    entry_already_there = CollectionsCellline.find_by(
-      cellline_sample_id: cell_line_id,
-      collection_id: to_col_id,
-    )
-
-    return if entry_already_there
-
-    CollectionsCellline.new(
-      cellline_sample_id: cell_line_id,
-      collection_id: to_col_id,
-    ).save
-  end
-
-  def self.update_collection_tag(element_ids)
-    CelllineSample.includes(:tag).where(id: element_ids).select(:id)
-                  .each { |el| el.update_tag!(collection_tag: true) }
+    static_create_in_collection(cellline_ids, to_col_id)
   end
 end

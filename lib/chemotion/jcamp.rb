@@ -119,6 +119,7 @@ module Chemotion
           data_type_mapping: read_data_type_mapping,
           axes_units: params[:axes_units],
           detector: params[:detector],
+          dsc_meta_data: params[:dsc_meta_data],
         }
       end
 

@@ -16,27 +16,32 @@ module AdminHelpers
   end
 
   def connect_sftp_with_password(prms)
-    sftp = Net::SFTP.start(
-      prms[:host],
-      prms[:user],
+    options = {
       password: prms[:password],
       auth_methods: ['password'],
       number_of_password_prompts: 0,
-      timeout: 5
-    )
-    raise 'Connection can not be initialized!' unless sftp.open?
-  ensure
-    sftp.nil? || sftp.close_channel
+    }
+    sftp_start_with_options(prms, options)
   end
 
   def connect_sftp_with_key(prms)
-    sftp = Net::SFTP.start(
-      prms[:datacollector_host],
-      prms[:datacollector_user],
+    options = {
       key_data: [],
       keys: key_path(prms[:datacollector_key_name]),
       keys_only: true,
-      timeout: 5
+    }
+    sftp_start_with_options(prms, options)
+  end
+
+  def sftp_start_with_options(prms, options)
+    uri = URI.parse("ssh://#{prms[:datacollector_host]}")
+    options[:port] = uri.port if uri.port
+    options[:timeout] = 5
+    options[:non_interactive] = true
+    sftp = Net::SFTP.start(
+      uri.host,
+      prms[:datacollector_user],
+      **options,
     )
     raise 'Connection can not be initialized!' unless sftp.open?
   ensure

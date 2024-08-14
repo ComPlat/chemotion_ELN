@@ -41,7 +41,6 @@ export default class ThirdPartyAppFetcher {
 
   static fetchAttachmentToken(collectionID, attID, appID, elementID) {
     const { currentType } = UserStore.getState();
-
     const queryParams = new URLSearchParams({ collectionID, attID, appID, type: currentType, elementID }).toString();
     const url = `${TPA_ENDPOINT}/token?${queryParams}`;
     return fetch(url, {

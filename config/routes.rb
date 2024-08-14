@@ -53,8 +53,6 @@ Rails.application.routes.draw do
     get 'generic_datasets_admin', to: 'pages#gda'
   end
 
-  # Standalone page for ChemScanner
-  get 'chemscanner', to: 'pages#chemscanner'
   get 'editor',      to: 'pages#editor'
 
   # Standalone page for ChemSpectra

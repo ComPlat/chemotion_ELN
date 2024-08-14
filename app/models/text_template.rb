@@ -21,6 +21,9 @@
 class TextTemplate < ApplicationRecord
   belongs_to :user
 
+  TYPES = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate
+             ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate].freeze
+
   DEFAULT_TEMPLATES = {
     'MS': %w[ei fab esi apci asap maldi m+ hr hr-ei hr-fab aa bb],
     '_toolbar': %w[ndash h-nmr c-nmr ir uv ea]
@@ -30,6 +33,14 @@ class TextTemplate < ApplicationRecord
     def_names = {}
     name.to_s.constantize::DEFAULT_TEMPLATES.each { |k, v| def_names[k] = PredefinedTextTemplate.where(name: v).pluck(:name) }
     def_names
+  end
+
+  def self.create_default_text_templates_for_user(id)
+    ids = TextTemplate::TYPES.map do |type|
+      klass = type.to_s.constantize
+      klass.create(user_id: id, data: klass.default_templates)&.id
+    end
+    where(id: ids.compact)
   end
 end
 
@@ -50,6 +61,7 @@ end
 
 class ResearchPlanTextTemplate < TextTemplate
 end
+
 class ElementTextTemplate < TextTemplate
 end
 

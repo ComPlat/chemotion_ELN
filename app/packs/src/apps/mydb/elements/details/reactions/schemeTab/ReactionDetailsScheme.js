@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   ListGroup, ListGroupItem, FormGroup, ControlLabel, FormControl,
-  Row, Col, Collapse, Button, ButtonGroup
+  Row, Col, Collapse, Button, ButtonGroup, InputGroup, Grid,
 } from 'react-bootstrap';
 import Select from 'react-select';
 import Delta from 'quill-delta';
@@ -26,6 +26,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { parseNumericString } from 'src/utilities/MathUtils';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -56,6 +57,10 @@ export default class ReactionDetailsScheme extends Component {
     this.switchEquiv = this.switchEquiv.bind(this);
     this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
+    this.reactionVesselSize = this.reactionVesselSize.bind(this);
+    this.updateVesselSize = this.updateVesselSize.bind(this);
+    this.updateVesselSizeOnBlur = this.updateVesselSizeOnBlur.bind(this);
+    this.changeVesselSizeUnit = this.changeVesselSizeUnit.bind(this);
   }
 
   componentDidMount() {
@@ -171,23 +176,34 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   renderRole() {
-    const { role } = this.props.reaction;
-    const accordTo = role === 'parts' ? 'According to' : null;
+    const { reaction } = this.props;
+    const { role } = reaction;
+    let accordTo;
+    let width;
+    if (role === 'parts') {
+      accordTo = 'According to';
+      width = 2;
+    } else {
+      accordTo = null;
+      width = 4;
+    }
     return (
-      <span>
-        <Col md={3} style={{ paddingLeft: '6px' }}>
+      <>
+        <Col md={width}>
           <FormGroup>
             <ControlLabel>Role</ControlLabel>
             {this.renderRoleSelect()}
           </FormGroup>
         </Col>
-        <Col md={3} style={{ paddingLeft: '6px' }}>
-          <FormGroup>
-            <ControlLabel>{accordTo}</ControlLabel>
-            {this.renderGPDnD()}
-          </FormGroup>
-        </Col>
-      </span>
+        {role === 'parts' && (
+          <Col md={2}>
+            <FormGroup>
+              <ControlLabel>{accordTo}</ControlLabel>
+              {this.renderGPDnD()}
+            </FormGroup>
+          </Col>
+        )}
+      </>
     );
   }
 
@@ -794,6 +810,61 @@ export default class ReactionDetailsScheme extends Component {
     );
   }
 
+  updateVesselSize(e) {
+    const { onInputChange } = this.props;
+    const { value } = e.target;
+    onInputChange('vesselSizeAmount', value);
+  }
+
+  updateVesselSizeOnBlur(e) {
+    const { onInputChange } = this.props;
+    const { value } = e.target;
+    const newValue = parseNumericString(value);
+    onInputChange('vesselSizeAmount', newValue);
+  }
+
+  changeVesselSizeUnit() {
+    const { onInputChange, reaction } = this.props;
+    if (reaction.vessel_size.unit === 'ml') {
+      onInputChange('vesselSizeUnit', 'l');
+    } else if (reaction.vessel_size.unit === 'l') {
+      onInputChange('vesselSizeUnit', 'ml');
+    }
+  }
+
+  reactionVesselSize() {
+    const { reaction } = this.props;
+    return (
+      <Col md={3} className="vesselSize">
+        <InputGroup style={{ width: '100%', paddingRight: '40px' }}>
+          <ControlLabel>Vessel size</ControlLabel>
+          <FormGroup style={{ display: 'flex' }}>
+            <FormControl
+              id="reactionVesselSize"
+              name="reaction_vessel_size"
+              type="text"
+              style={{ height: '36px' }}
+              value={reaction.vessel_size?.amount || ''}
+              disabled={false}
+              onChange={(event) => this.updateVesselSize(event)}
+              onBlur={(event) => this.updateVesselSizeOnBlur(event)}
+            />
+            <InputGroup.Button>
+              <Button
+                disabled={false}
+                bsStyle="success"
+                onClick={() => this.changeVesselSizeUnit()}
+                style={{ width: '44px', height: '36px' }}
+              >
+                {reaction.vessel_size?.unit || 'ml'}
+              </Button>
+            </InputGroup.Button>
+          </FormGroup>
+        </InputGroup>
+      </Col>
+    );
+  }
+
   render() {
     const {
       reaction,
@@ -858,7 +929,7 @@ export default class ReactionDetailsScheme extends Component {
               headIndex={0}
             />
           </ListGroupItem>
-          <ListGroupItem style={minPadding} >
+          <ListGroupItem style={minPadding}>
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="reactants"
@@ -950,8 +1021,8 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               onInputChange={(type, event) => this.props.onInputChange(type, event)}
             />
-            <Row>
-              <Col md={6}>
+            <Row className="small-padding">
+              <Col md={5}>
                 <FormGroup>
                   <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
                   <OlsTreeSelect
@@ -963,6 +1034,7 @@ export default class ReactionDetailsScheme extends Component {
                 </FormGroup>
               </Col>
               {this.renderRole()}
+              {this.reactionVesselSize()}
             </Row>
             <Row>
               <Col md={12}>

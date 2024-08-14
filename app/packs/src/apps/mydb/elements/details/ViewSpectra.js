@@ -11,6 +11,7 @@ import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
+import { inlineNotation } from 'src/utilities/SpectraHelper';
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;
@@ -55,6 +56,7 @@ class ViewSpectra extends React.Component {
     this.buildOthers = this.buildOthers.bind(this);
     this.onSpectraDescriptionChanged = this.onSpectraDescriptionChanged.bind(this);
     this.isShowMultipleSelectFile = this.isShowMultipleSelectFile.bind(this);
+    this.notationVoltammetry = this.notationVoltammetry.bind(this);
   }
 
   componentDidMount() {
@@ -347,7 +349,7 @@ class ViewSpectra extends React.Component {
   writeCommon({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
     keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt,
-    waveLength, axesUnitsSt, detectorSt,
+    waveLength, axesUnitsSt, detectorSt, dscMetaData,
   }, isMpy = false) {
     const { sample, handleSampleChanged } = this.props;
     const si = this.getSpcInfo();
@@ -358,6 +360,8 @@ class ViewSpectra extends React.Component {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
+    } else if (FN.isCyclicVoltaLayout(layout)) {
+      ops = this.notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample);
     } else {
       ops = this.formatPks({
         peaks,
@@ -382,7 +386,7 @@ class ViewSpectra extends React.Component {
           ...ops,
         ];
         const firstOps = ai.extended_metadata.content.ops[0];
-        if (firstOps.insert && firstOps.insert === '\n') {
+        if (firstOps && firstOps.insert && firstOps.insert === '\n') {
           ai.extended_metadata.content.ops.shift();
         }
 
@@ -391,10 +395,33 @@ class ViewSpectra extends React.Component {
 
     const cb = () => (
       this.saveOp({
-        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, waveLength, axesUnitsSt, detectorSt,
+        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, layout, waveLength, axesUnitsSt, detectorSt, dscMetaData,
       })
     );
     handleSampleChanged(sample, cb);
+  }
+
+  notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample) {
+    const { spectraList } = cyclicvoltaSt;
+    const { curveIdx, listCurves } = curveSt;
+    const selectedVolta = spectraList[curveIdx];
+    const selectedCurve = listCurves[curveIdx];
+    const { feature } = selectedCurve;
+    const { scanRate } = feature;
+    const data = {
+      scanRate,
+      voltaData: {
+        listPeaks: selectedVolta.list,
+        xyData: feature.data[0],
+      },
+      sampleName: sample.name,
+      concentration: null,
+      solvent: null,
+      internalRef: null,
+    };
+    const desc = inlineNotation(layout, data);
+    const { quillData } = desc;
+    return quillData;
   }
 
   writePeakOp(params) {
@@ -408,7 +435,7 @@ class ViewSpectra extends React.Component {
   }
 
   saveOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr = false, layout, axesUnitsSt, detectorSt,
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr = false, layout, axesUnitsSt, detectorSt, dscMetaData,
   }) {
     const { handleSubmit } = this.props;
     const { curveIdx } = curveSt;
@@ -430,8 +457,8 @@ class ViewSpectra extends React.Component {
     const selectedMutiplicity = multiplicities[curveIdx];
   
     const isSaveCombined = FN.isCyclicVoltaLayout(layout);
-    const { spcInfos } = this.state;
-    const previousSpcInfos = spcInfos.filter((spc) => spc.idDt === si.idDt);
+    const { spcInfos, arrSpcIdx } = this.state;
+    const previousSpcInfos = spcInfos.filter((spc) => (spc.idDt === si.idDt && arrSpcIdx.includes(spc.idx)));
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
       si,
@@ -452,14 +479,15 @@ class ViewSpectra extends React.Component {
       isSaveCombined,
       axesUnitsStr,
       detector,
+      JSON.stringify(dscMetaData),
     );
   }
 
   refreshOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, axesUnitsSt, detectorSt
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, axesUnitsSt, detectorSt
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, layout, axesUnitsSt, detectorSt
     });
   }
 
@@ -485,10 +513,10 @@ class ViewSpectra extends React.Component {
   }
 
   saveCloseOp({
-    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt,
+    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData,
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt,
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData,
     });
     this.closeOp();
   }
@@ -574,10 +602,17 @@ class ViewSpectra extends React.Component {
     }
 
     if (layoutsWillShowMulti.includes(et.layout)) {
-      return [
-        { name: 'save', value: this.saveOp },
-        { name: 'save & close', value: this.saveCloseOp },
-      ];
+      if (FN.isCyclicVoltaLayout(et.layout)) {
+        return [
+          { name: 'save', value: this.writeCommon },
+          { name: 'save & close', value: this.writeCloseCommon },
+        ];
+      } else {
+        return [
+          { name: 'save', value: this.saveOp },
+          { name: 'save & close', value: this.saveCloseOp },
+        ];
+      }
     }
     const saveable = updatable;
     if (saveable) {

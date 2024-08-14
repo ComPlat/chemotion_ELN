@@ -321,6 +321,9 @@ describe Chemotion::CollectionAPI do
             }
           end
 
+          before { Delayed::Worker.delay_jobs = false }
+          after  { Delayed::Worker.delay_jobs = true }
+
           context 'when try to move two of three cell line elements into empty collection' do
             let(:target_collection_id) { c_target.id }
             let(:cell_line_ids) { [cell_line_1.id, cell_line_2.id] }
@@ -403,6 +406,9 @@ describe Chemotion::CollectionAPI do
               },
             }
           end
+
+          before { Delayed::Worker.delay_jobs = false }
+          after  { Delayed::Worker.delay_jobs = true }
 
           context 'when assigning cellline to new collection' do
             before do

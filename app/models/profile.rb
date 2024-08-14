@@ -24,6 +24,8 @@ class Profile < ApplicationRecord
 
   belongs_to :user
 
+  before_create :set_default
+
   scope :novnc, -> { where("\"data\"->>'novnc' is distinct from null") }
 
   def computed_props
@@ -50,5 +52,42 @@ class Profile < ApplicationRecord
     end
 
     save!
+  end
+
+  private
+
+  def set_default
+    return unless user.is_a?(Person)
+
+    data_default_chmo
+    data_default_bool
+    data_default_layout
+  end
+
+  def data_default_chmo
+    file = Rails.root.join('db/chmo.default.profile.json')
+    result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.file?(file)
+    return if result.nil? || result['ols_terms'].nil?
+
+    data['chmo'] = result['ols_terms']
+  end
+
+  def data_default_bool
+    data['is_templates_moderator'] = false
+    data['molecule_editor'] = false
+    data['converter_admin'] = false
+  end
+
+  def data_default_layout
+    return if data['layout'].present?
+
+    data.merge!(layout: {
+                  'sample' => 1,
+                  'reaction' => 2,
+                  'wellplate' => 3,
+                  'screen' => 4,
+                  'research_plan' => 5,
+                  'cell_line' => -1000,
+                })
   end
 end

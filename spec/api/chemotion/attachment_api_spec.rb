@@ -281,7 +281,63 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'GET /api/v1/attachments/{attachment_id}' do
-    pending 'not yet implemented'
+    let(:owner_user) { create(:person) }
+    let(:receiving_user) { logged_in_user }
+    let(:shared_collection) do
+      create(:collection,
+             user_id: receiving_user.id,
+             is_shared: true,
+             shared_by_id: owner_user.id,
+             is_locked: true,
+             permission_level: 0,
+             label: 'shared by owner_user')
+    end
+
+    let(:attachment) { create(:attachment, :with_png_image) }
+
+    context 'when attachment is directly linked to the research plan' do
+      let(:research_plan) do
+        create(:research_plan,
+               creator: owner_user,
+               attachments: [attachment],
+               collections: [shared_collection])
+      end
+
+      before do
+        research_plan
+        get "/api/v1/attachments/#{attachment.id}"
+      end
+
+      it 'expecting return code 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'expecting attachment as binary stream of correct size' do
+        expect(response.body.size).to be 318_425
+      end
+    end
+
+    context 'when attachment is nested in a analysis container' do
+      let(:research_plan) do
+        create(:research_plan,
+               creator: owner_user,
+               collections: [shared_collection],
+               container: create(:container, :with_jpg_in_dataset))
+      end
+      let(:attachment) { research_plan.container.children.first.children.first.children.first.attachments.first }
+
+      before do
+        get "/api/v1/attachments/#{attachment.id}"
+      end
+
+      it 'expecting return code 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'expecting attachment as binary stream of correct size' do
+        expect(response.body.size).to be 163_233
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/zip/{container_id}' do
@@ -423,7 +479,7 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'POST /api/v1/attachments/thumbnails' do
-    pending 'not yet implemented'
+    pending
   end
 
   describe 'POST /api/v1/attachments/files' do

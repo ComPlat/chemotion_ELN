@@ -1,0 +1,6 @@
+shared:
+  :desc: 'configuration missing or invalid - service disabled'
+  :disabled: true
+  :disabled?: true
+  :enabled: false
+  :enabled?: false

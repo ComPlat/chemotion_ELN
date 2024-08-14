@@ -1,7 +1,7 @@
 import expect from 'expect';
 
 import {
-  fixDigit, validDigit, correctPrefix,
+  fixDigit, validDigit, correctPrefix, parseNumericString,
 } from '../../../app/packs/src/utilities/MathUtils';
 
 describe('fixDigit', () => {
@@ -168,5 +168,33 @@ describe('correctPrefix', () => {
     const result = correctPrefix(num, 3).toString();
     const expected = `${11.1} \u03BC`;
     expect(result).toEqual(expected);
+  });
+});
+
+describe('number formatting', () => {
+  it('converts decimal separator', () => {
+    expect(parseNumericString('1.23')).toEqual(1.23);
+    expect(parseNumericString('1,23')).toEqual(1.23);
+  });
+  it('removes thousands separator', () => {
+    expect(parseNumericString('12.345,8')).toEqual(12345.8);
+    expect(parseNumericString('12,345.8')).toEqual(12345.8);
+  });
+  it('accepts negative numbers', () => {
+    expect(parseNumericString('-1,23')).toEqual(-1.23);
+  });
+  it('handles malformatted numbers', () => {
+    expect(parseNumericString('--1,-23-')).toEqual(-1.23);
+    expect(parseNumericString('..,1,2.3,')).toEqual(123);
+    expect(parseNumericString('-foo1.2bar,3.baz---)')).toEqual(-123);
+    expect(parseNumericString('12.3.4,567')).toEqual(1234.567);
+  });
+  it('handles invalid input', () => {
+    expect(parseNumericString('foo')).toEqual(NaN);
+    expect(parseNumericString('.')).toEqual(NaN);
+    expect(parseNumericString(',')).toEqual(NaN);
+    expect(parseNumericString('-')).toEqual(NaN);
+    expect(parseNumericString('')).toEqual(NaN);
+    expect(parseNumericString(1)).toEqual(NaN);
   });
 });

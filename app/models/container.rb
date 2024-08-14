@@ -4,17 +4,18 @@
 #
 # Table name: containers
 #
-#  id                :integer          not null, primary key
-#  ancestry          :string
-#  containable_id    :integer
-#  containable_type  :string
-#  name              :string
-#  container_type    :string
-#  description       :text
-#  extended_metadata :hstore
-#  created_at        :datetime         not null
-#  updated_at        :datetime         not null
-#  parent_id         :integer
+#  id                 :integer          not null, primary key
+#  ancestry           :string
+#  containable_id     :integer
+#  containable_type   :string
+#  name               :string
+#  container_type     :string
+#  description        :text
+#  extended_metadata  :hstore
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  parent_id          :integer
+#  plain_text_content :text
 #
 # Indexes
 #
@@ -48,7 +49,7 @@ class Container < ApplicationRecord
   end
 
   def root_element
-    root.containable
+    root&.containable
   end
 
   def self.create_root_container(**args)
