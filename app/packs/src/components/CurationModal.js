@@ -18,6 +18,7 @@ export default class CurationModal extends Component {
       this.handlePromptDismiss = this.handlePromptDismiss.bind(this);
       this.handlePromptShow = this.handlePromptShow.bind(this);
       this.convertStringToObject = this.convertStringToObject.bind(this);
+      this.updateDescription = this.updateDescription.bind(this)
       this.state = {
         desc : this.cleanData(this.props.description),
         show : false, 
@@ -46,8 +47,8 @@ export default class CurationModal extends Component {
       this.spellCheck(this.state.desc)
     }
 
-    componentDidMount(){
-      
+    updateDescription(){
+      this.setState({desc: this.cleanData(this.props.description) })
       // console.log(this.props.ref)
     }
 
@@ -134,9 +135,9 @@ export default class CurationModal extends Component {
         
         // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
         var ms_suggestion = dictionary.suggest(mispelled_word)
-        setTimeout(() => {
-          console.log("this is taking a while");return;
-        }, 2000);
+        // setTimeout(() => {
+        //   console.log("this is taking a while");return;
+        // }, 2000);
         this.setState({ suggestion : ms_suggestion}) 
       }   
       else {
@@ -146,7 +147,6 @@ export default class CurationModal extends Component {
     }
 
     useAllDicitonary(en_dictionary,custom_dictionary, word){
-      var Typo = require("typo-js");
       var is_word_correct = false ;
       if (en_dictionary.check(word)){
         is_word_correct = true}
@@ -300,14 +300,13 @@ export default class CurationModal extends Component {
     }
 
     cleanData(description){
-      
+      console.log(description.value)
       if (description !== undefined){
         if(typeof description === "string"){
           return description
         }
-        else if(typeof description.value == "object"){
+        else if(typeof description.value == "object" && description.value.ops !== undefined){
           description = description.value.ops[0].insert
-          console.log(description)
           return description
         }
         else{
@@ -318,8 +317,8 @@ export default class CurationModal extends Component {
         });
       
         const str_out = (array_output.join(""));
-        console.log(str_out)
         return str_out;}}
+      else return
     }
 
     render() {
@@ -403,7 +402,7 @@ export default class CurationModal extends Component {
 
       return (
         <span>
-          <Button  onClick={this.handleShow} style={{float:"none"}}  id={this.props.ref}>
+          <Button  onClick={() => {this.handleShow(); this.updateDescription()}} style={{float:"none"}}  id={this.props.ref}>
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
     
@@ -430,7 +429,10 @@ export default class CurationModal extends Component {
                 </Grid>
                 </Panel.Heading>
                 <Panel.Body style={{overflowY:"scroll",height:300}}>
-                  <Compo text={this.state.desc} mispelledWords={this.state.mispelledWords} index={this.state.suggestionIndex} subscriptList={this.state.subscriptList} /> 
+                  <Compo text={this.state.desc} 
+                    mispelledWords={this.state.mispelledWords} 
+                    index={this.state.suggestionIndex} 
+                    subscriptList={this.state.subscriptList} /> 
                 </Panel.Body> 
                 <Panel>
                   <Panel.Heading>
