@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  ButtonGroup,
   OverlayTrigger,
   Popover,
   Button,
@@ -199,23 +198,22 @@ export default class GroupElement extends React.Component {
     );
 
     return (
-      <ButtonGroup className="actions">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
+      <OverlayTrigger
+        animation
+        placement="right"
+        root
+        trigger="focus"
+        overlay={popover}
+      >
+        <Button
+          size="sm"
+          type="button"
+          variant="danger"
+          onClick={() => this.confirmDelete(groupRec, userRec)}
         >
-          <Button
-            size="sm"
-            type="button"
-            variant="danger"
-            className="fa fa-trash-o"
-            onClick={() => this.confirmDelete(groupRec, userRec)}
-          />
-        </OverlayTrigger>
-      </ButtonGroup>
+          <i className="fa fa-trash-o" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 
@@ -237,9 +235,10 @@ export default class GroupElement extends React.Component {
               size="sm"
               type="button"
               variant="info"
-              className="fa fa-list"
               onClick={this.toggleUsers}
-            />
+            >
+              <i className="fa fa-list" />
+            </Button>
           </OverlayTrigger>
           {isAdmin && (
             <>
@@ -248,9 +247,10 @@ export default class GroupElement extends React.Component {
                   size="sm"
                   type="button"
                   variant="success"
-                  className="fa fa-plus"
                   onClick={this.toggleRowAdd}
-                />
+                >
+                  <i className="fa fa-plus" />
+                </Button>
               </OverlayTrigger>
               <OverlayTrigger
                 placement="top"
@@ -286,10 +286,11 @@ export default class GroupElement extends React.Component {
               size="sm"
               type="button"
               variant="success"
-              className="fa fa-user-plus"
               onClick={() => this.addUser(groupElement)}
               disabled={!selectedUsers}
-            />
+            >
+              <i className="fa fa-user-plus" />
+            </Button>
           </div>
         )}
       </>
@@ -314,9 +315,10 @@ export default class GroupElement extends React.Component {
               size="sm"
               type="button"
               variant={adminButtonStyle}
-              className="fa fa-key"
               onClick={() => this.setGroupAdmin(groupRec, userRec, !isAdmin)}
-            />
+            >
+              <i className="fa fa-key" />
+            </Button>
           </OverlayTrigger>
         )}
         {canDelete && (

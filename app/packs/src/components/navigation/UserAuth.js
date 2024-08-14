@@ -301,7 +301,7 @@ export default class UserAuth extends Component {
         <tr
           key={`row_${g.id}`}
           id={`row_${g.id}`}
-          style={{ fontWeight: 'bold' }}
+          className="fw-bold"
         >
           <td>{g.name}</td>
           <td>{g.name_abbreviation}</td>
@@ -310,9 +310,10 @@ export default class UserAuth extends Component {
               size="sm"
               type="button"
               variant="info"
-              className="fa fa-laptop"
               onClick={() => this.handleDeviceMetadataModalShow(g)}
-            />
+            >
+              <i className="fa fa-laptop" />
+            </Button>
           </td>
         </tr>
       </tbody>
@@ -340,9 +341,6 @@ export default class UserAuth extends Component {
                     <Form.Label>Name:</Form.Label>
                     <Form.Control
                       type="text"
-                      style={{
-                        marginRight: '5px',
-                      }}
                       placeholder="eg: AK"
                       onChange={this.handleInputChange.bind(this, 'first')}
                     />
@@ -351,9 +349,6 @@ export default class UserAuth extends Component {
                     <Form.Control
                       type="text"
                       placeholder="J. Moriarty"
-                      style={{
-                        marginRight: '20px',
-                      }}
                       onChange={this.handleInputChange.bind(this, 'last')}
                     />
                   </Form.Group>
@@ -362,9 +357,6 @@ export default class UserAuth extends Component {
                     <Form.Control
                       type="text"
                       placeholder="AK-JM"
-                      style={{
-                        marginRight: '10px',
-                      }}
                       onChange={this.handleInputChange.bind(this, 'abbr')}
                     />
                   </Form.Group>
@@ -425,7 +417,7 @@ export default class UserAuth extends Component {
   // render modal
   renderSubscribeModal() {
     const tbody = this.state.currentSubscriptions.map((g) => (
-      <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
+      <tr key={`row_${g.id}`} className="fw-bold">
         <td width="10%" style={{ border: 'none' }}>
           <Button
             size="sm"
