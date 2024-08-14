@@ -24,7 +24,7 @@ module Chemotion
       # desc: define the cache key based on the attachment/user/app ids
       def cache_key
         @cache_key_user_rsearchPlan ||= "#{@user&.id}/#{@collection&.id}/#{@type}"
-        @cache_key_attachment_app ||= "#{@elementID}/#{@app&.id}/#{@attachment&.id}"
+        @cache_key_attachment_app ||= "#{@element_id}/#{@app&.id}/#{@attachment&.id}"
         [@cache_key_user_rsearchPlan, @cache_key_attachment_app]
       end
 
@@ -36,7 +36,7 @@ module Chemotion
           'attID' => params[:attID],
           'collectionID' => params[:collectionID],
           'type' => params[:type],
-          'elementID' => params[:elementID]
+          'elementID' => params[:elementID],
         }
       end
 
@@ -48,8 +48,7 @@ module Chemotion
         @app = ThirdPartyApp.find(payload['appID']&.to_i)
         @collection = Collection.find(payload['collectionID']&.to_i)
         @type = payload['type']
-        @elementID = payload['elementID']
-        
+        @element_id = payload['elementID']
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end
@@ -59,11 +58,11 @@ module Chemotion
         parse_payload(token)
         cached_token
 
-        if (cached_token.nil? || @cached_token[:download] < 1 && @cached_token[:upload] < 1)
-          cache.delete(cache_key[1]);
-          return error!('Invalid token', 403)
-        elsif (@cached_token[key] < 1)
-          return error!("Token #{key} permission expired", 403)   
+        if cached_token.nil? || (@cached_token[:download] < 1 && @cached_token[:upload] < 1)
+          cache.delete(cache_key[1])
+          error!('Invalid token', 403)
+        elsif @cached_token[key] < 1
+          error!("Token #{key} permission expired", 403)
         else
           @cached_token[key] -= 1
           cache.write(cache_key[1], @cached_token)
@@ -87,21 +86,21 @@ module Chemotion
           created_by: @attachment.created_by,
           created_for: @attachment.created_for,
           filename: params[:attachmentName].presence&.strip || "#{@app.name[0, 20]}-#{params[:file][:filename]}",
-          file_path: params[:file][:tempfile].path
+          file_path: params[:file][:tempfile].path,
         )
         new_attachment.save
         { message: 'File uploaded successfully' }
       end
-      
+
       # store token values if updated
       def encode_and_cache_token_user_collection_with_type
         current_state = cache.read(cache_key[0])
         new_state = if current_state
-          idx = current_state.index(cache_key[1])
-          idx.nil? ? current_state.push(cache_key[1]) : current_state
-        else
-          [cache_key[1]]
-        end
+                      idx = current_state.index(cache_key[1])
+                      idx.nil? ? current_state.push(cache_key[1]) : current_state
+                    else
+                      [cache_key[1]]
+                    end
         cache.write(cache_key[0], new_state)
       end
 
@@ -117,19 +116,18 @@ module Chemotion
 
       # update values through keys in cache for cache 1 and cache 2
       def find_and_update_key_with_request_type(first_level_key, second_level_key, request_type)
-          # update first level key: remove item from an array!
-          second_level_key_list = cache.read(first_level_key);
-          previous_length = second_level_key_list.length
+        # update first level key: remove item from an array!
+        second_level_key_list = cache.read(first_level_key)
+        previous_length = second_level_key_list.length
 
-        if(request_type === 'revoke')
+        if request_type === 'revoke'
           # delete second level key
           cache.delete(second_level_key)
-          second_level_key_list = second_level_key_list.select{ |item| item != second_level_key}
+          second_level_key_list = second_level_key_list.select { |item| item != second_level_key }
           cache.write(first_level_key, second_level_key_list)
-          return previous_length > cache.read(first_level_key).length
+          previous_length > cache.read(first_level_key).length
         end
       end
-
     end
 
     # desc: public endpoint for third party apps to {down,up}load files
@@ -243,24 +241,24 @@ module Chemotion
         cache_user_researchid_keys = cache.read("#{current_user.id}/#{params[:collection_id]}/#{params[:type]}")
         if cache_user_researchid_keys
           cache_user_researchid_keys.each do |token_key|
-            splits = token_key.split("/")
-        
+            splits = token_key.split('/')
+
             element_details = ResearchPlan.find_by(id: splits[0])
             app = ThirdPartyApp.find_by(id: splits[1])
             attachment = Attachment.find_by(id: splits[2])
             cached_value = cache.read(token_key)
-        
+
             next unless app && attachment && element_details && cached_value
 
             token_list.push({
-              "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}": cached_value,
-              alias_element: element_details.name,
-              alias_app_id: app.name,
-              alias_attachment_id: attachment.filename
-            })
+                              "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}": cached_value,
+                              alias_element: element_details.name,
+                              alias_app_id: app.name,
+                              alias_attachment_id: attachment.filename,
+                            })
           end
         end
-        { token_list: token_list}
+        { token_list: token_list }
       end
 
       desc 'Revok an attachment token'
@@ -275,7 +273,7 @@ module Chemotion
         second_level_key = "#{splits[3]}/#{splits[4]}/#{splits[5]}"
 
         status = find_and_update_key_with_request_type(first_level_key, second_level_key, params[:action_type])
-        {status: status}
+        { status: status }
       end
 
       route_param :id, type: Integer, desc: '3rd party app id' do

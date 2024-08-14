@@ -21,23 +21,22 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-                      .find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        else
-          # All collection of current_user
-          ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
-        
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                else
+                  # All collection of current_user
+                  ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                end.order('created_at DESC')
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
@@ -54,7 +53,7 @@ module Chemotion
           Entities::ResearchPlanEntity.represent(
             research_plan,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
           )
         end
         { research_plans: research_plans }
@@ -72,7 +71,7 @@ module Chemotion
       post do
         attributes = {
           name: params[:name],
-          body: params[:body]
+          body: params[:body],
         }
 
         attributes.delete(:can_copy)
@@ -121,7 +120,7 @@ module Chemotion
         post do
           attributes = {
             name: params[:name],
-            value: params[:value]
+            value: params[:value],
           }
 
           table_schema = ResearchPlanTableSchema.new attributes
@@ -134,7 +133,8 @@ module Chemotion
         desc 'Delete table schema'
         route_param :id do
           before do
-            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
+            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user,
+                                                                         ResearchPlanTableSchema.find(params[:id])).destroy?
           end
           delete do
             present ResearchPlanTableSchema.find(params[:id]).destroy, with: Entities::ResearchPlanTableSchemaEntity
@@ -166,10 +166,12 @@ module Chemotion
           research_plan = ResearchPlan.find(params[:id])
           # TODO: Refactor this massively ugly fallback to be in a more convenient place
           # (i.e. the entity or maybe return a null element from the model)
-          research_plan.build_research_plan_metadata(
-            title: research_plan.name,
-            subject: ''
-          ) if research_plan.research_plan_metadata.nil?
+          if research_plan.research_plan_metadata.nil?
+            research_plan.build_research_plan_metadata(
+              title: research_plan.name,
+              subject: '',
+            )
+          end
           {
             research_plan: Entities::ResearchPlanEntity.represent(
               research_plan,
@@ -244,13 +246,11 @@ module Chemotion
         public_name = "#{SecureRandom.uuid}#{file_extname}"
         public_path = "public/images/research_plans/#{public_name}"
 
-        File.open(public_path, 'wb') do |file|
-          file.write(params[:file][:tempfile].read)
-        end
+        File.binwrite(public_path, params[:file][:tempfile].read)
 
         {
           file_name: file_name,
-          public_name: public_name
+          public_name: public_name,
         }
       end
 
@@ -286,7 +286,7 @@ module Chemotion
               present export.to_file
             end
           else
-            send_data export.to_html, filename: "document.docx"
+            send_data export.to_html, filename: 'document.docx'
           end
         end
       end
@@ -340,8 +340,8 @@ module Chemotion
               research_plan: Entities::ResearchPlanEntity.represent(
                 research_plan,
                 detail_levels: ElementDetailLevelCalculator.new(
-                  user: current_user, element: research_plan
-                ).detail_levels
+                  user: current_user, element: research_plan,
+                ).detail_levels,
               ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
@@ -373,8 +373,8 @@ module Chemotion
               research_plan: Entities::ResearchPlanEntity.represent(
                 research_plan,
                 detail_levels: ElementDetailLevelCalculator.new(
-                  user: current_user, element: research_plan
-                ).detail_levels
+                  user: current_user, element: research_plan,
+                ).detail_levels,
               ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
