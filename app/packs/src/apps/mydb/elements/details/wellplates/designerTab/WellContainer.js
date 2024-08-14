@@ -53,7 +53,7 @@ class WellContainer extends Component {
   }
 
   render() {
-    const { style, isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop, active } = this.props;
+    const { isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop, active } = this.props;
     const containerStyle = {
       paddingTop: 9,
       borderRadius: '50%',
@@ -65,7 +65,10 @@ class WellContainer extends Component {
       verticalAlign: 'middle',
       lineHeight: 2,
       cursor: 'move',
-      backgroundColor: well.color_code || 'white'
+      backgroundColor: well.color_code || 'white',
+      fontSize: 8,
+      width: 60,
+      height: 60
     };
     if (active) {
       containerStyle.backgroundColor = '#337ab7';
@@ -87,7 +90,7 @@ class WellContainer extends Component {
 
     return (
       connectDragSource(connectDropTarget(
-        <div style={{ ...containerStyle, ...style }}>
+        <div className="wellplate--well-container" style={{ ...containerStyle }}>
           <Well
             active={active}
             label={well.label}

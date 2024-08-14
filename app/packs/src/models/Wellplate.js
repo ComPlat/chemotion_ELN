@@ -48,6 +48,25 @@ export default class Wellplate extends Element {
     return 99;
   }
 
+  static columnLabel(columnIndex) {
+    if (columnIndex == 0) return ''
+
+    return columnIndex
+  }
+
+  static rowLabel(rowIndex) {
+    if (rowIndex == 0) return ''
+
+    const rowLabels = [
+      ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), // row 1-26
+      ...'AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ'.split(' '), // row 27-52
+      ...'BA BB BC BD BE BF BG BH BI BJ BK BL BM BN BO BP BQ BR BS BT BU BV BW BX BY BZ'.split(' '), // row 53-78
+      ...'CA CB CC CD CE CF CG CH CI CJ CK CL CM CN CO CP CQ CR CS CT CU CV CW CX CY CZ'.split(' ')  // row 79-104
+    ]
+
+  return rowLabels[rowIndex - 1]
+  }
+
   get name() {
     return this._name;
   }
