@@ -176,6 +176,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [columnDefinitions, setColumnDefinitions] = useState([
     {
+      headerName: 'Tools',
       field: null,
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
