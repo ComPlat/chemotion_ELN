@@ -60,12 +60,10 @@ const tableBody = (objs, molSerials) => {
 const SectionReactionList = ({ objs, molSerials }) => (
   <div>
     <p>* Images are hidden in the preview.</p>
-    <div className="overflow-x-auto">
-      <Table striped bordered condensed hover>
-        {tableHeader()}
-        {tableBody(objs, molSerials)}
-      </Table>
-    </div>
+    <Table striped bordered hover responsive>
+      {tableHeader()}
+      {tableBody(objs, molSerials)}
+    </Table>
   </div>
 );
 
