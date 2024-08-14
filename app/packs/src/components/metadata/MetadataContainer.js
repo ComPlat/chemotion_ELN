@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Tabs, Tab } from 'react-bootstrap';
+import { Card, Tabs, Tab } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Metadata from 'src/models/Metadata';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,7 +16,6 @@ import MetadataAlternateIdentifiers from 'src/components/metadata/MetadataAltern
 import MetadataRelatedIdentifiers from 'src/components/metadata/MetadataRelatedIdentifiers';
 import MetadataRightsList from 'src/components/metadata/MetadataRightsList';
 import MetadataFundingReferences from 'src/components/metadata/MetadataFundingReferences';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class MetadataContainer extends Component {
   constructor(props) {
@@ -84,14 +83,23 @@ export default class MetadataContainer extends Component {
     const saveBtnDisplay = !!metadata.isEdited;
 
     return (
-      <Panel variant="light" className="eln-panel-detail">
-        <Panel.Heading>
-          <MetadataHeader title={title} saveBtnDisplay={saveBtnDisplay} onSave={this.handleSave} onClose={this.handleClose} />
-        </Panel.Heading>
-        <Panel.Body>
-          <Tabs activeKey={this.state.activeTab} onSelect={(key) => this.handleSelect(key)}
-                className="metadata-tabs" id="metadata-tabs">
-            <Tab eventKey="general" title="General" key="general">
+      <Card className="eln-panel-detail">
+        <Card.Header>
+          <MetadataHeader
+            title={title}
+            saveBtnDisplay={saveBtnDisplay}
+            onSave={this.handleSave}
+            onClose={this.handleClose}
+          />
+        </Card.Header>
+        <Card.Body className="tabs-container--with-borders">
+          <Tabs
+            id="metadata-tabs"
+            activeKey={this.state.activeTab}
+            onSelect={key => this.handleSelect(key)}
+            className="metadata-tabs"
+          >
+            <Tab eventKey="general" title="General">
               <MetadataGeneral
                 metadata={metadata.metadata}
                 onAdd={this.handleAdd}
@@ -99,7 +107,7 @@ export default class MetadataContainer extends Component {
                 onRemove={this.handleRemove}
               />
             </Tab>
-            <Tab eventKey="creators" title="Creators" key="creators">
+            <Tab eventKey="creators" title="Creators">
               <MetadataCreators
                 metadata={metadata.metadata}
                 onAdd={this.handleAdd}
@@ -107,7 +115,7 @@ export default class MetadataContainer extends Component {
                 onRemove={this.handleRemove}
               />
             </Tab>
-            <Tab eventKey="contributors" title="Contributors" key="contributors">
+            <Tab eventKey="contributors" title="Contributors">
               <MetadataContributors
                 metadata={metadata.metadata}
                 onAdd={this.handleAdd}
@@ -115,7 +123,7 @@ export default class MetadataContainer extends Component {
                 onRemove={this.handleRemove}
               />
             </Tab>
-            <Tab eventKey="identifiers" title="Identifiers" key="identifiers">
+            <Tab eventKey="identifiers" title="Identifiers">
               <MetadataRelatedIdentifiers
                 metadata={metadata.metadata}
                 onAdd={this.handleAdd}
@@ -130,7 +138,7 @@ export default class MetadataContainer extends Component {
                 onRemove={this.handleRemove}
               />
             </Tab>
-            <Tab eventKey="rights" title="Rights" key="rights">
+            <Tab eventKey="rights" title="Rights">
               <MetadataRightsList
                 metadata={metadata.metadata}
                 onAdd={this.handleAdd}
@@ -138,7 +146,7 @@ export default class MetadataContainer extends Component {
                 onRemove={this.handleRemove}
               />
             </Tab>
-            <Tab eventKey="funding" title="Funding" key="funding">
+            <Tab eventKey="funding" title="Funding">
               <MetadataFundingReferences
                 metadata={metadata.metadata}
                 onAdd={this.handleAdd}
@@ -147,8 +155,8 @@ export default class MetadataContainer extends Component {
               />
             </Tab>
           </Tabs>
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   }
 }
