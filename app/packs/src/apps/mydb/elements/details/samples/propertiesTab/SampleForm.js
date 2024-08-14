@@ -776,7 +776,6 @@ export default class SampleForm extends React.Component {
     );
   }
 
-
   // eslint-disable-next-line class-methods-use-this
   assignAmountType(reaction, sample) {
     // eslint-disable-next-line no-underscore-dangle
