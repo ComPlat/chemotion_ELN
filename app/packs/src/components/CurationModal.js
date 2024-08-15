@@ -48,7 +48,8 @@ export default class CurationModal extends Component {
     }
 
     updateDescription(){
-      this.setState({desc: this.cleanData(this.props.description) })
+      this.setState({desc: this.cleanData(this.props.description) }, (() => {this.spellCheck(this.state.desc );
+      }))
     }
 
     convertStringToObject(input_string){
@@ -118,8 +119,9 @@ export default class CurationModal extends Component {
     }
 
     handleShow() {
-      this.setState({ show: true });
-      this.spellCheck(this.state.desc)
+      // this.updateDescription()
+      this.setState({ show: true }, this.updateDescription);
+   
     }
 
     handleSuggest(miss_spelled_words, index){
@@ -134,6 +136,7 @@ export default class CurationModal extends Component {
         // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
         if (/(.)\1{4,}/.test(mispelled_word))
         {
+          console.log(mispelled_word)
           var repeatedCharacter = mispelled_word.match(/(.)\1{4,}/)
           var newMisspeled = mispelled_word.replace(/(.)\1{4,}/, repeatedCharacter[0].charAt(0)  ) 
           var ms_suggestion = [newMisspeled]
@@ -292,15 +295,17 @@ export default class CurationModal extends Component {
 
     cleanData(description){
       if (description !== undefined){
+        var newDescription = ""
         if(typeof description === "string"){
-          return description
+          return description 
         }
         else if(typeof description.value == "object" && description.value.ops !== undefined){
           for (var element of description.value.ops){
-            description = description + element.insert
+            newDescription = newDescription + element.insert
           }
-          return description
+          return newDescription
         }
+
         else{
         const array_input = Object.values(description);
         let array_output =[];
@@ -310,7 +315,9 @@ export default class CurationModal extends Component {
       
         const str_out = (array_output.join(""));
         return str_out;}}
-      else return
+      else  
+      return
+      // throw Error('data is not in correct format')
     }
 
     render() {
@@ -394,7 +401,7 @@ export default class CurationModal extends Component {
 
       return (
         <span>
-          <Button  onClick={() => {this.handleShow(); this.updateDescription()}} style={{float:"none"}}  
+          <Button  onClick={() => {this.handleShow()}} style={{float:"none"}}  
           id={this.props.ref}>
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
