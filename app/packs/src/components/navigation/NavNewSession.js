@@ -68,7 +68,7 @@ function SignInForm({ authenticityToken }) {
   );
 }
 
-function NewSession({ authenticityToken, omniauthProviders, extraRules = {} }) {
+function NewSession({ authenticityToken, omniauthProviders= {}, extraRules = {} }) {
   const items = omniauthProviders && Object.keys(omniauthProviders).map((key) => (
     <Button
       key={uuid.v4()}
