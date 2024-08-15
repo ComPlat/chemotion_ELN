@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { memo, useState } from 'react';
+import React, {memo, useState} from 'react';
 import {
   Modal,
   Panel,
@@ -9,7 +9,7 @@ import {
 } from 'react-bootstrap';
 import CommonTemplateItem from 'src/components/ketcher-templates/CommonTemplateItem';
 
-const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
+const CommonTemplatesList = memo(({options, onClickHandle, selectedItem}) => {
   const [commonTemplateModal, setCommonTemplateModal] = useState(false);
   const toolTip = 'Select a template and Press CTRL + v inside the canvas.';
 
@@ -21,7 +21,7 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
   return (
     <div>
       <div className="common-template-header">
-        <div style={{ width: '95%' }}>
+        <div style={{width: '95%'}}>
           <ControlLabel>Common Templates:</ControlLabel>
         </div>
         <OverlayTrigger placement="top" overlay={<Tooltip id="commontemplates">{toolTip}</Tooltip>}>
@@ -41,19 +41,23 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
       <Modal show={commonTemplateModal} onHide={() => setCommonTemplateModal(false)}>
         <Modal.Header closeButton />
         <Modal.Body>
-          <Panel>
+          <Panel style={{height: 300}}>
             <Panel.Heading>
               <Panel.Title>
                 Common Template list:
               </Panel.Title>
             </Panel.Heading>
-            <Panel.Body>
-              {options.map((item, idx) =>
-                <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />)}
+            <Panel.Body style={{height: '80%', overflow: 'auto'}}>
+              <div>
+                {options.map((item, idx) =>
+                  <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />
+                )}
+              </div>
             </Panel.Body>
           </Panel>
         </Modal.Body>
       </Modal>
+
     </div>
   );
 });

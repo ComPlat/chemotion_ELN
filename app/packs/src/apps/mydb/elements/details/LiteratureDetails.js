@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import Clipboard from 'clipboard';
 import PropTypes from 'prop-types';
 import {
@@ -14,7 +14,7 @@ import {
   Tooltip
 } from 'react-bootstrap';
 import Immutable from 'immutable';
-import { uniqBy } from 'lodash';
+import {uniqBy} from 'lodash';
 import {
   Citation,
   CitationUserRow,
@@ -37,7 +37,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const Cite = require('citation-js');
 
-const CloseBtn = ({ onClose }) => (
+const CloseBtn = ({onClose}) => (
   <Button
     key="closeBtn"
     onClick={onClose}
@@ -57,7 +57,7 @@ const clipboardTooltip = () => (
   <Tooltip id="assign_button">copy to clipboard</Tooltip>
 );
 
-const ElementLink = ({ literature }) => {
+const ElementLink = ({literature}) => {
   const {
     external_label,
     short_label,
@@ -70,7 +70,7 @@ const ElementLink = ({ literature }) => {
     <Button
       title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
       onClick={() => {
-        const { uri, namedParams } = Aviator.getCurrentRequest();
+        const {uri, namedParams} = Aviator.getCurrentRequest();
         const uriArray = uri.split(/\//);
         if (type && element_id) {
           Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
@@ -86,7 +86,7 @@ ElementLink.propTypes = {
   literature: PropTypes.instanceOf(Literature).isRequired,
 };
 
-const ElementTypeLink = ({ literature, type }) => {
+const ElementTypeLink = ({literature, type}) => {
   const {
     count
   } = literature;
@@ -105,7 +105,7 @@ ElementTypeLink.defaultProps = {
   type: 'sample'
 };
 
-const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
+const CitationTable = ({rows, sortedIds, userId, removeCitation}) => (
   <Table>
     <tbody>
       {sortedIds.map((id, k, ids) => {
@@ -164,14 +164,14 @@ export default class LiteratureDetails extends Component {
   }
 
   componentDidMount() {
-    const { currentCollection, sample, reaction } = UIStore.getState();
+    const {currentCollection, sample, reaction} = UIStore.getState();
     LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
       this.setState(prevState => ({
         ...prevState,
         ...literatures,
         currentCollection,
-        sample: { ...sample },
-        reaction: { ...reaction },
+        sample: {...sample},
+        reaction: {...reaction},
 
       }));
     });
@@ -189,7 +189,7 @@ export default class LiteratureDetails extends Component {
 
   handleUIStoreChange(state) {
     const cCol = this.state.currentCollection;
-    const { currentCollection, sorting } = state;
+    const {currentCollection, sorting} = state;
 
     if (cCol && currentCollection &&
       (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
@@ -206,7 +206,7 @@ export default class LiteratureDetails extends Component {
       });
       return null;
     }
-    const { sample, reaction } = state;
+    const {sample, reaction} = state;
     const prevSample = this.state.sample;
     const prevReaction = this.state.reaction;
 
@@ -230,8 +230,8 @@ export default class LiteratureDetails extends Component {
           ...prevState,
           selectedRefs,
           currentCollection,
-          sample: { ...sample },
-          reaction: { ...reaction },
+          sample: {...sample},
+          reaction: {...reaction},
           sortedIds
         }));
       });
@@ -240,8 +240,8 @@ export default class LiteratureDetails extends Component {
   }
 
   handleLiteratureRemove(literature) {
-    const { element_type, element_id } = literature;
-    LiteraturesFetcher.deleteElementReference({ element: { type: element_type.toLowerCase(), id: element_id }, literature })
+    const {element_type, element_id} = literature;
+    LiteraturesFetcher.deleteElementReference({element: {type: element_type.toLowerCase(), id: element_id}, literature})
       .then(() => {
         this.setState(prevState => ({
           ...prevState,
@@ -252,8 +252,8 @@ export default class LiteratureDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    const { literature } = this.state;
-    const { value } = event.target;
+    const {literature} = this.state;
+    const {value} = event.target;
     switch (type) {
       case 'url':
         literature.url = value;
@@ -270,39 +270,39 @@ export default class LiteratureDetails extends Component {
       default:
         break;
     }
-    this.setState(prevState => ({ ...prevState, literature }));
+    this.setState(prevState => ({...prevState, literature}));
   }
 
   handleLiteratureAdd(literature) {
-    const { doi } = literature;
+    const {doi} = literature;
 
-    const { currentCollection, sample, reaction } = UIStore.getState();
+    const {currentCollection, sample, reaction} = UIStore.getState();
     const params = {
       sample,
       reaction,
       id: currentCollection.id,
       is_sync_to_me: currentCollection.is_sync_to_me,
-      ref: { ...literature, doi: sanitizeDoi(doi || '') }
+      ref: {...literature, doi: sanitizeDoi(doi || '')}
     };
     LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
       this.setState(prevState => ({
         ...prevState,
         selectedRefs,
         currentCollection,
-        sample: { ...sample },
-        reaction: { ...reaction },
+        sample: {...sample},
+        reaction: {...reaction},
         sortedIds: sortByElement(selectedRefs),
       }));
     });
   }
 
   fetchDOIMetadata() {
-    const { doi } = this.state.literature;
+    const {doi} = this.state.literature;
     NotificationActions.removeByUid('literature');
     Cite.async(sanitizeDoi(doi)).then((json) => {
       if (json.data && json.data.length > 0) {
         const citation = new Cite(json.data[0]);
-        const { title, year } = json.data[0];
+        const {title, year} = json.data[0];
         this.setState(prevState => ({
           ...prevState,
           literature: {
@@ -340,8 +340,8 @@ export default class LiteratureDetails extends Component {
       currentCollection,
       literature
     } = this.state;
-    const { currentUser } = UserStore.getState();
-    const label = currentCollection ? currentCollection.label : null
+    const {currentUser} = UserStore.getState();
+    const label = currentCollection ? currentCollection.label : null;
     let contentSamples = '';
     sampleRefs.forEach((citation) => {
       contentSamples = `${contentSamples}\n${literatureContent(citation, true)}`;
@@ -380,7 +380,7 @@ export default class LiteratureDetails extends Component {
             >
               <Panel.Heading>
                 <Row>
-                  <Col md={11} style={{ paddingRight: 0 }}>
+                  <Col md={11} style={{paddingRight: 0}}>
                     <Panel.Title toggle>
                       References for Samples
                     </Panel.Title>
@@ -419,7 +419,7 @@ export default class LiteratureDetails extends Component {
             >
               <Panel.Heading>
                 <Row>
-                  <Col md={11} style={{ paddingRight: 0 }}>
+                  <Col md={11} style={{paddingRight: 0}}>
                     <Panel.Title toggle>
                       References for Reactions
                     </Panel.Title>
@@ -458,7 +458,7 @@ export default class LiteratureDetails extends Component {
             >
               <Panel.Heading>
                 <Row>
-                  <Col md={11} style={{ paddingRight: 0 }}>
+                  <Col md={11} style={{paddingRight: 0}}>
                     <Panel.Title toggle>
                       References for selected Elements
                     </Panel.Title>
@@ -478,17 +478,17 @@ export default class LiteratureDetails extends Component {
                 <ListGroup>
                   <ListGroupItem>
                     <Row>
-                      <Col md={8} style={{ paddingRight: 0 }}>
+                      <Col md={8} style={{paddingRight: 0}}>
                         <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..." />
                       </Col>
-                      <Col md={3} style={{ paddingRight: 0 }}>
+                      <Col md={3} style={{paddingRight: 0}}>
                         <LiteralType handleInputChange={this.handleInputChange} disabled={false} val={literature.litype} />
                       </Col>
-                      <Col md={1} style={{ paddingRight: 0 }}>
+                      <Col md={1} style={{paddingRight: 0}}>
                         <Button
                           bsStyle="success"
                           bsSize="small"
-                          style={{ marginTop: 2 }}
+                          style={{marginTop: 2}}
                           onClick={this.fetchDOIMetadata}
                           title="fetch metadata for this doi and add citation to selection"
                           disabled={!doiValid(literature.doi)}
@@ -496,13 +496,13 @@ export default class LiteratureDetails extends Component {
                           <i className="fa fa-plus" />
                         </Button>
                       </Col>
-                      <Col md={12} style={{ paddingRight: 0 }}>
+                      <Col md={12} style={{paddingRight: 0}}>
                         <Citation literature={literature} />
                       </Col>
-                      <Col md={7} style={{ paddingRight: 0 }}>
+                      <Col md={7} style={{paddingRight: 0}}>
                         <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="title" placeholder="Title..." />
                       </Col>
-                      <Col md={4} style={{ paddingRight: 0 }}>
+                      <Col md={4} style={{paddingRight: 0}}>
                         <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="url" placeholder="URL..." />
                       </Col>
                       <Col md={1}>
