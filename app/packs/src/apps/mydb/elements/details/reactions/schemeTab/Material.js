@@ -213,7 +213,7 @@ class Material extends Component {
     );
   }
 
-  materialShowLabel(material, style = { padding: '5px 4px' }) {
+  materialShowLabel(material, style = { padding: '5px 4px', width: '16px' }) {
     return (
       <Button
         active
@@ -660,7 +660,6 @@ class Material extends Component {
       paddingRight: 2,
       paddingLeft: 2,
     };
-    const gaseousReactionStore = GasPhaseReactionStore.getState();
 
     return (
       <tbody>
@@ -682,12 +681,14 @@ class Material extends Component {
             {this.materialShowLabel(material)}
           </td>
 
-          <td style={{ inputsStyle }}>
+          <td style={{ minWidth: '30px', inputsStyle }}>
             {this.switchTargetReal(isTarget)}
           </td>
 
-          <td style={{ width: '1%', maxWidth: '5px' }}>
-            <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
+          <td style={{ minWidth: '35px' }}>
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
               <div>
                 <NumeralInputWithUnitsCompo
                   key={material.id}
@@ -719,7 +720,7 @@ class Material extends Component {
 
           {this.materialLoading(material, showLoadingColumn)}
 
-          <td>
+          <td style={{ maxWidth: '4%' }}>
             <NumeralInputWithUnitsCompo
               key={material.id}
               value={material.concn}
@@ -733,7 +734,7 @@ class Material extends Component {
             />
           </td>
 
-          <td>
+          <td style={{ minWidth: '35px' }}>
             {this.equivalentOrYield(material)}
           </td>
           <td>
@@ -855,7 +856,7 @@ class Material extends Component {
     );
   }
 
-  switchTargetReal(isTarget, style = { padding: '5px 4px' }) {
+  switchTargetReal(isTarget, style = { padding: '5px 4px', width: '16px' }) {
     return (
       <Button
         disabled={!permitOn(this.props.reaction)}
