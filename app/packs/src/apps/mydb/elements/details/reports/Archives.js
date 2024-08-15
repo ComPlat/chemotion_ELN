@@ -1,22 +1,16 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
+  Badge,
   Button,
+  Card,
   OverlayTrigger,
-  Tooltip
+  Tooltip,
 } from 'react-bootstrap';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { stopBubble } from 'src/utilities/DomHelper';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
-import Label from 'src/components/legacyBootstrap/Label'
-
-const fileDescription = archive => (
-  archive.file_description
-    ? <p>{archive.file_description}</p>
-    : <p className="text-comment">No file description</p>
-);
 
 const clickDownloadReport = (e, archiveId, template) => {
   e.stopPropagation();
@@ -25,7 +19,7 @@ const clickDownloadReport = (e, archiveId, template) => {
 
 const reportStatusBtn = (archive) => {
   const { downloadable, id, template } = archive;
-  const onClickDownloadReport = e => clickDownloadReport(e, id, template);
+  const onClickDownloadReport = (e) => clickDownloadReport(e, id, template);
   const downloadTP = <Tooltip id="download-docx">Download</Tooltip>;
   const processTP = (
     <Tooltip id="wait-processing">
@@ -59,7 +53,7 @@ const clickToDelete = (e, archive) => {
 };
 
 const deleteBtn = (archive) => {
-  const onClickToDelete = e => clickToDelete(e, archive);
+  const onClickToDelete = (e) => clickToDelete(e, archive);
   const deleteTP = (
     <Tooltip id="delete-tp">
       Delete this archive.
@@ -85,7 +79,7 @@ const clickToClone = (e, archive) => {
 };
 
 const cloneBtn = (archive) => {
-  const onClickToClone = e => clickToClone(e, archive);
+  const onClickToClone = (e) => clickToClone(e, archive);
   const cloneTP = (
     <Tooltip id="clone-tp">
       Load data from this report.
@@ -109,7 +103,7 @@ const suiTooltip = () => (
 
 const suiLabel = () => (
   <OverlayTrigger placement="right" overlay={suiTooltip()}>
-    <Label variant="info">SI</Label>
+    <Badge bg="info">SI</Badge>
   </OverlayTrigger>
 );
 
@@ -119,7 +113,7 @@ const suiStdRxnLabelTooltip = () => (
 
 const suiStdRxnLabel = () => (
   <OverlayTrigger placement="right" overlay={suiStdRxnLabelTooltip()}>
-    <Label variant="info">SI STD-RXN</Label>
+    <Badge bg="info">SI STD-RXN</Badge>
   </OverlayTrigger>
 );
 
@@ -129,7 +123,7 @@ const spcTooltip = () => (
 
 const spcLabel = () => (
   <OverlayTrigger placement="right" overlay={spcTooltip()}>
-    <Label variant="info">SI-SPC</Label>
+    <Badge bg="info">SI-SPC</Badge>
   </OverlayTrigger>
 );
 
@@ -139,19 +133,19 @@ const rxlTooltip = () => (
 
 const rxlXlsxLabel = () => (
   <OverlayTrigger placement="right" overlay={rxlTooltip()}>
-    <Label variant="info">SI-XLSX</Label>
+    <Badge bg="info">SI-XLSX</Badge>
   </OverlayTrigger>
 );
 
 const rxlCsvLabel = () => (
   <OverlayTrigger placement="right" overlay={rxlTooltip()}>
-    <Label variant="info">SI-CSV</Label>
+    <Badge bg="info">SI-CSV</Badge>
   </OverlayTrigger>
 );
 
 const rxlHtmlLabel = () => (
   <OverlayTrigger placement="right" overlay={rxlTooltip()}>
-    <Label variant="info">SI-HTML</Label>
+    <Badge bg="info">SI-HTML</Badge>
   </OverlayTrigger>
 );
 
@@ -176,39 +170,38 @@ const templateLable = (archive) => {
   }
 };
 
-const title = (archive) => {
-  const newLabel = archive.unread
-    ? <Label variant="warning">new</Label>
-    : null;
+const Archives = ({ archives }) => (
+  <div className="d-flex flex-column gap-3">
+    {archives.map((archive) => (
+      <Card key={archive.id}>
+        <Card.Header>
+          <div className="d-flex justify-content-between">
+            <div className="d-flex align-items-center gap-2">
+              {archive.file_name}
+              {archive.unread && (
+                <Badge bg="warning">new</Badge>
+              )}
+              {templateLable(archive)}
+            </div>
+            <div className="d-flex gap-2">
+              {cloneBtn(archive)}
+              {reportStatusBtn(archive)}
+              {deleteBtn(archive)}
+            </div>
+          </div>
+        </Card.Header>
+        <Card.Body>
+          {archive.file_description
+            ? <p>{archive.file_description}</p>
+            : <p className="text-comment">No file description</p>}
+        </Card.Body>
+      </Card>
+    ))}
+  </div>
+);
 
-  return (
-    <div style={{ width: '100%', lineHeight: '30px' }}>
-      {archive.file_name} {newLabel} {templateLable(archive)}
-      <div className="d-flex">
-        {cloneBtn(archive)}
-        {reportStatusBtn(archive)}
-        {deleteBtn(archive)}
-      </div>
-    </div>
-  );
-};
-
-const Archives = ({ archives }) => {
-  const content = archives.map((archive, index) => (
-    <Panel
-      eventKey={index}
-      key={index}
-    >
-      <Panel.Heading>{title(archive)}</Panel.Heading>
-      {fileDescription(archive)}
-    </Panel>
-  ));
-
-  return (
-    <PanelGroup accordion>
-      {content}
-    </PanelGroup>
-  );
+Archives.propTypes = {
+  archives: PropTypes.array.isRequired,
 };
 
 export default Archives;

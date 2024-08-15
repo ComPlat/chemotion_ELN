@@ -1,7 +1,7 @@
 import React from 'react';
+import { Card } from 'react-bootstrap'
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import CheckBoxList from 'src/components/common/CheckBoxList';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const toggleSplSettings = (text, checked) => {
   ReportActions.updateSplSettings({ text, checked });
@@ -21,37 +21,34 @@ const toggleRxnSettingsAll = () => {
 
 const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
   checkedAllRxnSettings }) => (
-  <div>
-    <Panel variant="light">
-      <Panel.Heading>
-        <Panel.Title>
-          Sample
-        </Panel.Title>
-      </Panel.Heading>
-      <Panel.Body>
+  <div className="d-flex flex-column gap-3">
+    <Card>
+      <Card.Header>
+        Sample
+      </Card.Header>
+      <Card.Body>
         <CheckBoxList
           items={splSettings}
           toggleCheckbox={toggleSplSettings}
           toggleCheckAll={toggleSplSettingsAll}
           checkedAll={checkedAllSplSettings}
         />
-      </Panel.Body>
-    </Panel>
-    <Panel variant="light">
-      <Panel.Heading>
-        <Panel.Title>
-          Reaction
-        </Panel.Title>
-      </Panel.Heading>
-      <Panel.Body>
+      </Card.Body>
+    </Card>
+
+    <Card>
+      <Card.Header>
+        Reaction
+      </Card.Header>
+      <Card.Body>
         <CheckBoxList
           items={rxnSettings}
           checkedAll={checkedAllRxnSettings}
           toggleCheckbox={toggleRxnSettings}
           toggleCheckAll={toggleRxnSettingsAll}
         />
-      </Panel.Body>
-    </Panel>
+      </Card.Body>
+    </Card>
   </div>
 );
 
@@ -64,32 +61,22 @@ const toggleSiRxnSettingsAll = () => {
 };
 
 const suiSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
-  <div>
-    <Panel variant="light">
-      <Panel.Heading>
-        <Panel.Title>
-          Synthesis Products Information
-        </Panel.Title>
-      </Panel.Heading>
-      <Panel.Body>
-        <CheckBoxList
-          items={siRxnSettings}
-          checkedAll={checkedAllSiRxnSettings}
-          toggleCheckbox={toggleSiRxnSettings}
-          toggleCheckAll={toggleSiRxnSettingsAll}
-        />
-      </Panel.Body>
-    </Panel>
-  </div>
+  <Card variant="light">
+    <Card.Header>
+      Synthesis Products Information
+    </Card.Header>
+    <Card.Body>
+      <CheckBoxList
+        items={siRxnSettings}
+        checkedAll={checkedAllSiRxnSettings}
+        toggleCheckbox={toggleSiRxnSettings}
+        toggleCheckAll={toggleSiRxnSettingsAll}
+      />
+    </Card.Body>
+  </Card>
 );
 
-const spcSetting = () => (
-  <div>
-    <h5>Not applicable.</h5>
-  </div>
-);
-
-const rxlSetting = () => (
+const notApplicable = () => (
   <div>
     <h5>Not applicable.</h5>
   </div>
@@ -99,15 +86,14 @@ const Setting = (props) => {
   switch (props.template.value) {
     case 'standard':
       return stdSetting(props);
-    case 'spectrum':
-      return spcSetting();
     case 'supporting_information':
     case 'supporting_information_std_rxn':
       return suiSetting(props);
+    case 'spectrum':
     case 'rxn_list_xlsx':
     case 'rxn_list_csv':
     case 'rxn_list_html':
-      return rxlSetting(props);
+      return notApplicable(props);
     default:
       return stdSetting(props);
   }

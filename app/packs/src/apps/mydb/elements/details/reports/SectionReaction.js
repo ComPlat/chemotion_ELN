@@ -1,9 +1,7 @@
-import React, {Component} from 'react'
+import React from 'react';
 import SVG from 'react-inlinesvg';
-import {Alert, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Card, Badge, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
-import { map } from 'lodash';
-import Label from 'src/components/legacyBootstrap/Label'
 
 const SectionReaction = ({reaction, settings, configs}) => {
   const {description, literatures, starting_materials, reactants,
@@ -24,12 +22,12 @@ const SectionReaction = ({reaction, settings, configs}) => {
 
   return (
     <div>
-      <Alert style={{ textAlign: 'center',
-                      backgroundColor: '#428bca',
-                      color:'white',
-                      border:'none'}}> {reaction.short_label}
-        <StatusContent status={status}/>
-      </Alert>
+      <Card bg="primary" text="white" className="mb-3">
+        <Card.Header className="text-center">
+          {reaction.short_label}
+          <StatusContent status={status}/>
+        </Card.Header>
+      </Card>
 
       <SVGContent show={settings.diagram}
                   svgPath={svgPath}
@@ -96,7 +94,7 @@ const SVGContent = ({show, svgPath, products, isProductOnly}) => {
 
 const StatusContent = ({ status }) => {
   let tooltip = null;
-  switch(status) {
+  switch (status) {
     case "Successful":
       tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
       return (
@@ -194,11 +192,11 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   return (
     show ?
       <div>
-        <h4><Label variant="success"> Starting Materials </Label></h4>
+        <h4><Badge bg="success">Starting Materials</Badge></h4>
         <div> {table(rows(starting_materials, false))} </div>
-        <h4><Label variant="warning"> Reactants </Label></h4>
+        <h4><Badge bg="warning">Reactants</Badge></h4>
         <div> {table(rows(reactants, false))} </div>
-        <h4><Label variant="danger"> Products </Label></h4>
+        <h4><Badge bg="danger">Products</Badge></h4>
         <div> {table(rows(products, true))} </div>
       </div>
       : null
@@ -335,7 +333,7 @@ const AnalysesContent = ({ show, products }) => {
 };
 
 const LiteratureContent = ({show, literatures}) => {
-  const rows = map(literatures,(literature, i) => {
+  const rows = literatures.map((literature, i) => {
     return (
       <tr key={i}>
         <td>{literature.title}</td>
