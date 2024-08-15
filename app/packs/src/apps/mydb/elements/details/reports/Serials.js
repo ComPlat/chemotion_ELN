@@ -1,73 +1,84 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import Formula from 'src/components/common/Formula';
 import CommonInput from 'src/components/common/CommonInput';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
+import { Table } from 'react-bootstrap';
 
 const Serial = ({ serial, counter }) => {
   if (!serial) return null;
-  const mol = serial.mol;
-  const oddClass = counter % 2 === 1 ? 'order-even' : null;
-  const onCompleteEdit = val => ReportActions.updMSVal(mol.id, val);
+
+  const { mol, value } = serial;
+  const onCompleteEdit = (val) => ReportActions.updMSVal(mol.id, val);
 
   return (
-    <Panel eventKey={counter} key={counter} >
-      <Panel.Body>
-        <div className="report-serial">
-          <div className={`order ${oddClass}`}>{counter + 1}</div>
-          <div className="svg">
-            <SVG src={mol.svgPath} key={mol.svgPath} />
-          </div>
-          <div className="info">
-            <p><Formula formula={mol.sumFormula} /></p>
-            <p>{mol.iupacName}</p>
-          </div>
-          <div className="input">
-            <CommonInput
-              value={serial.value}
-              key={mol.id}
-              placeholder="xx"
-              onCompleteEdit={onCompleteEdit}
-            />
-          </div>
-        </div>
-      </Panel.Body>
-    </Panel>
+    <tr className="report-serial">
+      <td valign="middle">{counter + 1}</td>
+      <td valign="middle">
+        <SVG src={mol.svgPath} key={mol.svgPath} />
+      </td>
+      <td>
+        <Formula formula={mol.sumFormula} />
+        <div className="mt-3">{mol.iupacName}</div>
+      </td>
+      <td valign="middle">
+        <CommonInput
+          value={value}
+          key={mol.id}
+          placeholder="xx"
+          onCompleteEdit={onCompleteEdit}
+        />
+      </td>
+    </tr>
   );
 };
 
-const stdSerials = () => (<h5>Not applicable.</h5>);
-
-const suiSerials = (props) => {
-  const { selMolSerials, template } = props;
-  const contents = selMolSerials.map((molSer, i) => (
-    <Serial id={i} key={`ms-${molSer.mol.id}`} serial={molSer} counter={i} />
-  ));
-
-  return <div className="report-serials">{contents}</div>;
+Serial.propTypes = {
+  serial: PropTypes.shape({
+    // eslint-disable-next-line react/forbid-prop-types
+    mol: PropTypes.object.isRequired,
+    value: PropTypes.string.isRequired,
+  }).isRequired,
+  counter: PropTypes.number.isRequired,
 };
 
-const spcSerials = props => suiSerials(props);
+const Serials = ({ template, selMolSerials }) => {
+  const isApplicable = [
+    'spectrum',
+    'supporting_information',
+    'supporting_information_std_rxn',
+    'rxn_list_xlsx',
+    'rxn_list_csv',
+    'rxn_list_html',
+  ].includes(template.value);
 
-const rxlSerials = props => suiSerials(props);
-
-const Serials = (props) => {
-  switch (props.template.value) {
-    case 'standard':
-      return stdSerials();
-    case 'spectrum':
-      return spcSerials(props);
-    case 'supporting_information':
-    case 'supporting_information_std_rxn':
-      return suiSerials(props);
-    case 'rxn_list_xlsx':
-    case 'rxn_list_csv':
-    case 'rxn_list_html':
-      return rxlSerials(props);
-    default:
-      return stdSerials();
+  if (!isApplicable) {
+    return (
+      <h5>Not applicable.</h5>
+    );
   }
+
+  return (
+    <Table striped bordered>
+      <tbody>
+        {selMolSerials.map((molSer, i) => (
+          <Serial
+            key={`ms-${molSer.mol.id}`}
+            serial={molSer}
+            counter={i}
+          />
+        ))}
+      </tbody>
+    </Table>
+  );
+};
+
+Serials.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  template: PropTypes.object.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  selMolSerials: PropTypes.array.isRequired,
 };
 
 export default Serials;
