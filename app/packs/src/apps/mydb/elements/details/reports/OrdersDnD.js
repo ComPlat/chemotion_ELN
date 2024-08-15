@@ -6,6 +6,7 @@ import { Card, Button } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import classnames from 'classnames';
 
 const orderSource = {
   beginDrag(props) {
@@ -47,15 +48,6 @@ const ObjRow = ({
   isDragging,
   isOver
 }) => {
-  const style = {};
-  if (isOver) {
-    style.borderStyle = 'dashed';
-    style.borderWidth = '2px';
-  }
-  if (isDragging) {
-    style.opacity = 0.2;
-  }
-
   let variant = 'light';
   let icon = null;
   const isStdTemplate = template === 'standard';
@@ -84,7 +76,10 @@ const ObjRow = ({
   return compose(connectDragSource, connectDropTarget)(
     <div>
       <Card
-        style={style}
+        className={classnames({
+          'border-dashed border-3': isOver,
+          'opacity-25': isDragging,
+        })}
         border={variant}
       >
         <Card.Header className={`d-flex align-items-center justify-content-between text-bg-${variant}`}>
