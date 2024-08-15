@@ -7,7 +7,6 @@ function NavigationModal({
   show, title, component, customModal, ...props
 }) {
   const Component = component;
-  if (!show) return (<span />);
 
   return (
     <Modal
