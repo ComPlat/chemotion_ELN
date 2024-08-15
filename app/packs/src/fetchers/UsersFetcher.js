@@ -9,10 +9,13 @@ export default class UsersFetcher {
       api = '/api/v1/generic_elements/klasses.json?generic_only=true';
     }
     return fetch(api, {
-      credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchElementKlassNames(genericOnly = true) {
@@ -22,25 +25,36 @@ export default class UsersFetcher {
     }
 
     return fetch(api, {
-      credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchOmniauthProviders() {
     return fetch('/api/v1/public/omniauth_providers.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchUsersByName(name, type = 'Person') {
-    const promise = fetch(`/api/v1/users/name.json?${new URLSearchParams({ name, type })}`, {
-      credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+    const promise = fetch(
+      `/api/v1/users/name.json?${new URLSearchParams({ name, type })}`,
+      {
+        credentials: 'same-origin',
+      }
+    )
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
 
@@ -49,9 +63,11 @@ export default class UsersFetcher {
 
   static fetchCurrentUser() {
     const promise = fetch('/api/v1/users/current.json', {
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
 
@@ -60,9 +76,11 @@ export default class UsersFetcher {
 
   static fetchProfile() {
     const promise = fetch('/api/v1/profiles.json', {
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
 
@@ -75,12 +93,15 @@ export default class UsersFetcher {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      body: JSON.stringify(params),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -91,11 +112,14 @@ export default class UsersFetcher {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-    }).then(response => response.json())
-      .then(json => json.devices)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    })
+      .then((response) => response.json())
+      .then((json) => json.devices)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static createGroup(params = {}) {
@@ -104,21 +128,26 @@ export default class UsersFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      body: JSON.stringify(params),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
 
   static fetchCurrentGroup() {
     const promise = fetch('/api/v1/groups/qrycurrent', {
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
 
@@ -127,9 +156,11 @@ export default class UsersFetcher {
 
   static fetchCurrentDevices() {
     const promise = fetch('/api/v1/groups/queryCurrentDevices', {
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
 
@@ -149,10 +180,13 @@ export default class UsersFetcher {
 
   static fetchUserOmniauthProviders() {
     return fetch('/api/v1/users/omniauth_providers.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static updateGroup(params = {}) {
@@ -161,7 +195,7 @@ export default class UsersFetcher {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         id: params.id,
@@ -170,25 +204,35 @@ export default class UsersFetcher {
         add_users: params.add_users,
         add_admin: params.add_admin,
         rm_admin: params.rm_admin,
-      })
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      }),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
 
   static fetchOls(name, edited = true) {
     return fetch(`/api/v1/ols_terms/list.json?name=${name}&edited=${edited}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static listEditors() {
-    const promise = fetch('/api/v1/users/list_editors.json', { credentials: 'same-origin' })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+    const promise = fetch('/api/v1/users/list_editors.json', {
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
     return promise;
@@ -196,9 +240,11 @@ export default class UsersFetcher {
 
   static listUserLabels() {
     const promise = fetch('/api/v1/users/list_labels.json', {
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
     return promise;
@@ -210,12 +256,15 @@ export default class UsersFetcher {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      body: JSON.stringify(params),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     return promise;
   }
 
@@ -225,12 +274,15 @@ export default class UsersFetcher {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      body: JSON.stringify(params),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -238,10 +290,16 @@ export default class UsersFetcher {
   static scifinderCredential() {
     const promise = fetch('/api/v1/users/scifinder', {
       credentials: 'same-origin',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     return promise;
   }
 

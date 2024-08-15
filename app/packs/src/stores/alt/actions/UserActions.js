@@ -1,4 +1,3 @@
-/* eslint-disable arrow-parens */
 /* eslint-disable class-methods-use-this */
 import alt from 'src/stores/alt/alt';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
@@ -67,7 +66,7 @@ class UserActions {
     fetch('/users/sign_out', {
       method: 'delete',
       credentials: 'same-origin',
-      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') }
+      data: {authenticity_token: DocumentHelper.getMetaContent('csrf-token')}
     })
       .then(response => {
         if (response.status == 204) {
@@ -79,9 +78,20 @@ class UserActions {
   fetchProfile() {
     return (dispatch) => {
       UsersFetcher.fetchProfile()
-        .then((result) => { dispatch(result); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .then((result) => {dispatch(result);})
+        .catch((errorMessage) => {console.log(errorMessage);});
     };
+  }
+
+  setUsertemplates() {
+    const storageKey = 'ketcher-tmpls';
+    UsersFetcher.fetchProfile().then((res) => {
+      console.log(res);
+      if (res?.user_templates) {
+        localStorage.setItem(storageKey, '');
+        localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
+      }
+    });
   }
 
   selectTab(tab) {
@@ -124,8 +134,8 @@ class UserActions {
   fetchNoVNCDevices() {
     return (dispatch) => {
       UsersFetcher.fetchNoVNCDevices()
-        .then(result => { dispatch(result); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .then(result => {dispatch(result);})
+        .catch((errorMessage) => {console.log(errorMessage);});
     };
   }
 
@@ -145,7 +155,8 @@ class UserActions {
       GenericDSsFetcher.fetchKlass()
         .then((result) => {
           dispatch(result);
-        }).catch((errorMessage) => {
+        })
+        .catch((errorMessage) => {
           console.log(errorMessage);
         });
     };
@@ -156,7 +167,7 @@ class UserActions {
       fetch('/units_system/units_system.json', {
         credentials: 'same-origin',
         cache: 'no-store',
-        headers: { 'cache-control': 'no-cache' }
+        headers: {'cache-control': 'no-cache'}
       }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -166,8 +177,8 @@ class UserActions {
   fetchOmniauthProviders() {
     return (dispatch) => {
       UsersFetcher.fetchOmniauthProviders()
-        .then((result) => { dispatch(result); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .then((result) => {dispatch(result);})
+        .catch((errorMessage) => {console.log(errorMessage);});
     };
   }
 
@@ -183,7 +194,7 @@ class UserActions {
             localStorage.setItem('ketcher-opts', JSON.stringify(newSource));
           }
         })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .catch((errorMessage) => {console.log(errorMessage);});
     };
   }
 }

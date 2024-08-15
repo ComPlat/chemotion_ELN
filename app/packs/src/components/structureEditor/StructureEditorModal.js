@@ -24,6 +24,8 @@ import loadScripts from 'src/components/structureEditor/loadScripts';
 import SurfaceChemistryList from 'src/components/ketcher-templates/SurfaceChemistryList';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import ProfilesFetcher from '../../fetchers/ProfilesFetcher';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -35,6 +37,8 @@ const notifyError = (message) => {
     autoDismiss: 10,
   });
 };
+
+const key = 'ketcher-tmpls';
 
 const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
@@ -73,7 +77,7 @@ const createEditors = (_state = {}) => {
   const availableEditors = UIStore.getState().structureEditors || {};
 
   const grantEditors = matriceConfigs
-    .map(({ configs }) => createEditor(configs, availableEditors.editors))
+    .map(({configs}) => createEditor(configs, availableEditors.editors))
     .filter(Boolean);
 
   const editors = [
@@ -84,7 +88,7 @@ const createEditors = (_state = {}) => {
       }),
     },
     ...grantEditors,
-  ].reduce((acc, args) => ({ ...acc, ...args }), {});
+  ].reduce((acc, args) => ({...acc, ...args}), {});
 
   return editors;
 };
@@ -146,7 +150,7 @@ Editor.propTypes = {
 };
 
 function EditorList(props) {
-  const { options, fnChange, value } = props;
+  const {options, fnChange, value} = props;
   return (
     <FormGroup>
       <ControlLabel>Structure Editor</ControlLabel>
@@ -179,7 +183,7 @@ EditorList.propTypes = {
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-function WarningBox({ handleCancelBtn, hideWarning, show }) {
+function WarningBox({handleCancelBtn, hideWarning, show}) {
   return show
     ? (
       <Panel bsStyle="info">
@@ -212,7 +216,7 @@ WarningBox.propTypes = {
 const initEditor = () => {
   const userProfile = UserStore.getState().profile;
   const eId = userProfile?.data?.default_structure_editor || 'ketcher';
-  const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
+  const editor = new StructureEditor({...EditorAttrs[eId], id: eId});
   return editor;
 };
 
@@ -228,6 +232,7 @@ export default class StructureEditorModal extends React.Component {
       commonTemplatesList: [],
       selectedShape: null,
       selectedCommonTemplate: null,
+      deleteAllowed: true
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -238,52 +243,140 @@ export default class StructureEditorModal extends React.Component {
   componentDidMount() {
     this.resetEditor(this.editors);
     this.fetchCommonTemplates();
+    this.localStorageEventListener();
   }
 
   componentDidUpdate(prevProps) {
-    const { showModal, molfile } = this.props;
+    const {showModal, molfile} = this.props;
     if (prevProps.showModal !== showModal || prevProps.molfile !== molfile) {
-      this.setState({ showModal, molfile });
+      this.setState({showModal, molfile});
     }
   }
 
+  async deleteAndStoreItemAgain(item) {
+    const res = await ProfilesFetcher.uploadUserTemplates({
+      content: JSON.stringify(item),
+    });
+    const attachment_id = res?.template_details?.attachment_data?.id;
+    await UsersFetcher.updateUserProfile({
+      user_templates: attachment_id,
+    }).catch((err) => console.log('ISSUE WITH create'));
+  }
+
+  localStorageEventListener() {
+    window.addEventListener(
+      'storage',
+      async (event) => {
+        let {newValue, oldValue} = event;
+        newValue = JSON.parse(newValue);
+        oldValue = JSON.parse(oldValue);
+        const {deleteAllowed} = this.state;
+        if (event.key === key && deleteAllowed) {
+          if (newValue.length > oldValue.length) {
+            console.log("change");
+
+            let newItem = newValue[newValue.length - 1];
+            const res = await ProfilesFetcher.uploadUserTemplates({
+              content: JSON.stringify(newItem),
+            });
+
+            const attachment_id = res?.template_details?.attachment_data?.id;
+            newItem.props.path = attachment_id;
+            newValue[newValue.length - 1] = newItem;
+            localStorage.setItem(key, JSON.stringify(newValue));
+            this.setState({deleteAllowed: false});
+
+            // udpate user profile
+            await UsersFetcher.updateUserProfile({
+              user_template: attachment_id,
+            });
+          } else if (newValue.length < oldValue.length) {
+            console.log("delet");
+            // delete
+            const listOfLocalid = newValue.map((item) => item.props.path);
+            for (let i = 0; i < oldValue.length; i++) {
+              const localItem = oldValue[i];
+              const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
+                localItem.props.path
+              );
+              if (itemIndexShouldBeRemoved == -1) {
+                await ProfilesFetcher.deleteUserTemplate({
+                  path: localItem?.props.path,
+                });
+                break;
+              }
+            }
+          } else if (newValue.length == oldValue.length) {
+            console.log("same");
+            const listOfLocalNames = newValue.map(
+              (item) => JSON.parse(item.struct).header.moleculeName
+            );
+
+            for (let i = 0; i < oldValue.length; i++) {
+              const localItem = JSON.parse(oldValue[i].struct);
+
+              const itemIndexShouldBeRemoved = listOfLocalNames.indexOf(
+                localItem.header.moleculeName
+              );
+
+              if (itemIndexShouldBeRemoved == -1) {
+                await ProfilesFetcher.deleteUserTemplate({
+                  path: newValue[i].props.path,
+                }).catch((err) =>
+                  console.log('ISSUE WITH DELETE', localItem?.props?.path)
+                );
+                this.deleteAndStoreItemAgain(newValue[i]);
+                break;
+              } else {
+                console.log('INDEX NOT FOUND@');
+              }
+            }
+          }
+        } else {
+          this.setState({deleteAllowed: true});
+        }
+      },
+      false
+    );
+  }
+
   handleEditorSelection(e) {
-    this.setState((prevState) => ({ ...prevState, editor: this.editors[e.value] }));
+    this.setState((prevState) => ({...prevState, editor: this.editors[e.value]}));
   }
 
   handleCancelBtn() {
-    const { onCancel } = this.props;
+    const {onCancel} = this.props;
     this.hideModal();
-    if (onCancel) { onCancel(); }
+    if (onCancel) {onCancel();}
   }
 
   handleSaveBtn() {
-    const { editor } = this.state;
+    const {editor} = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
       structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
-        const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
+        const editorImg = new structure.editor.ImageExporter({imageType: 'image/svg'});
         editorImg.render(mMol).then((svg) => {
-          this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
-        }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
-      }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
+          this.setState({showModal: false, showWarning: this.props.hasChildren || this.props.hasParent}, () => {if (this.props.onSave) {this.props.onSave(mMol, svg, null, editor.id);} });
+        }, (error) => {alert(`MarvinJS image generated fail: ${error}`);});
+      }, (error) => {alert(`MarvinJS molfile generated fail: ${error}`);});
     } else if (editor.id === 'ketcher2') {
       structure.editor.getMolfile().then((molfile) => {
-        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
+        structure.editor.generateImage(molfile, {outputFormat: 'svg'}).then((imgfile) => {
           imgfile.text().then((text) => {
-            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
+            this.setState({showModal: false, showWarning: this.props.hasChildren || this.props.hasParent}, () => {if (this.props.onSave) {this.props.onSave(molfile, text, {smiles: ''}, editor.id);} });
           });
         });
       });
     } else {
       try {
-        const { molfile, info } = structure;
+        const {molfile, info} = structure;
         if (!molfile) throw new Error('No molfile');
         structure.fetchSVG().then((svg) => {
           this.setState({
             showModal: false,
             showWarning: this.props.hasChildren || this.props.hasParent
-          }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
+          }, () => {if (this.props.onSave) {this.props.onSave(molfile, svg, info, editor.id);} });
         });
       } catch (e) {
         notifyError(`The drawing is not supported! ${e}`);
@@ -292,26 +385,26 @@ export default class StructureEditorModal extends React.Component {
   }
 
   initializeEditor() {
-    const { editor, molfile } = this.state;
-    if (editor) { editor.structureDef.molfile = molfile; }
+    const {editor, molfile} = this.state;
+    if (editor) {editor.structureDef.molfile = molfile;}
   }
 
   resetEditor(_editors) {
     const kks = Object.keys(_editors);
-    const { editor } = this.state;
+    const {editor} = this.state;
     if (!kks.find((e) => e === editor.id)) {
       this.setState({
-        editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }),
+        editor: new StructureEditor({...EditorAttrs.ketcher, id: 'ketcher'}),
       });
     }
   }
 
   updateEditor(_editor) {
-    this.setState({ editor: _editor });
+    this.setState({editor: _editor});
   }
 
   hideModal() {
-    const { hasChildren, hasParent } = this.props;
+    const {hasChildren, hasParent} = this.props;
     this.setState({
       showModal: false,
       showWarning: hasChildren || hasParent
@@ -319,24 +412,25 @@ export default class StructureEditorModal extends React.Component {
   }
 
   hideWarning() {
-    this.setState({ showWarning: false });
+    this.setState({showWarning: false});
   }
 
   async fetchCommonTemplates() {
     const list = await CommonTemplatesFetcher.fetchCommonTemplates();
-    this.setState({ commonTemplatesList: list?.templates });
+    this.setState({commonTemplatesList: list?.templates});
   }
 
   render() {
-    const { cancelBtnText, submitBtnText, onSave } = this.props;
+    const {cancelBtnText, submitBtnText, onSave} = this.props;
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
+
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const {
       editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal
     } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
-    const iframeStyle = showWarning ? { border: 'none' } : {};
-    const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
+    const iframeStyle = showWarning ? {border: 'none'} : {};
+    const buttonToolStyle = showWarning ? {marginTop: '20px', display: 'none'} : {marginTop: '20px'};
 
     let useEditor = (
       <div>
@@ -366,8 +460,6 @@ export default class StructureEditorModal extends React.Component {
       label: this.editors[e].label,
     }));
 
-    console.log(editor.id);
-
     return (
       <div>
         <Modal
@@ -378,45 +470,49 @@ export default class StructureEditorModal extends React.Component {
           onHide={this.handleCancelBtn.bind(this)}
         >
           <Modal.Header closeButton>
-            <div style={{ display: 'flex' }}>
-              <div style={{ flex: 3 }}>
+            <div style={{display: 'flex'}}>
+              <div style={{flex: 3}}>
                 <EditorList
                   value={editor.id}
                   fnChange={this.handleEditorSelection}
                   options={editorOptions}
                 />
               </div>
-              {editor.id === 'ketcher2'
+              {
+                editor.id === 'ketcher2'
                 && (
-                  <div style={{ flex: 1, margin: '0 10px' }}>
+                  <div style={{flex: 1, margin: '0 10px'}}>
                     <CommonTemplatesList
                       options={commonTemplatesList}
                       value={selectedCommonTemplate?.name}
                       selectedItem={selectedCommonTemplate}
                       onClickHandle={(value) => {
-                        this.setState({ selectedCommonTemplate: value });
+                        this.setState({selectedCommonTemplate: value});
                         copyContentToClipboard(value?.molfile);
                       }}
                     />
                   </div>
-                )}
+                )
+              }
 
               {/* list of surface chemistry shapes disabled */}
-              {false && editor.id === 'ketcher2'
+              {
+                false && editor.id === 'ketcher2'
                 && (
-                  <div style={{ flex: 0.5, margin: '0 10px' }}>
+                  <div style={{flex: 0.5, margin: '0 10px'}}>
                     <SurfaceChemistryList
                       selectedShape={selectedShape}
                       onSelectShape={(item) => {
-                        copyContentToClipboard({ root: item.root });
-                        this.setState({ selectedShape: item });
+                        copyContentToClipboard({root: item.root});
+                        this.setState({selectedShape: item});
                       }}
                     />
                   </div>
-                )}
+                )
+              }
 
-            </div>
-          </Modal.Header>
+            </div >
+          </Modal.Header >
           <Modal.Body>
             <WarningBox
               handleCancelBtn={this.handleCancelBtn.bind(this)}
@@ -430,7 +526,7 @@ export default class StructureEditorModal extends React.Component {
                   {cancelBtnText}
                 </Button>
                 {!handleSaveBtn ? null : (
-                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
+                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{marginRight: '20px'}}>
                     {submitBtnText}
                   </Button>
                 )}
@@ -438,8 +534,8 @@ export default class StructureEditorModal extends React.Component {
               </ButtonToolbar>
             </div>
           </Modal.Body>
-        </Modal>
-      </div>
+        </Modal >
+      </div >
     );
   }
 }

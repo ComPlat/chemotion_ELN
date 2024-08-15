@@ -24,6 +24,7 @@ module Chemotion
         data = profile.data || {}
         layout = {}
         layout = Rails.configuration.profile_default&.layout if Rails.configuration.respond_to?(:profile_default)
+        templates_list = []
 
         layout&.each_key do |ll|
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
@@ -64,12 +65,27 @@ module Chemotion
           data[dt] = sorted_layout
         end
 
+        if profile.user_templates?
+          profile.user_templates.each do |template|
+            next unless template
+
+            file_path = Rails.root.join('uploads', Rails.env, template)
+            next unless File.exist?(file_path)
+
+            content = File.read(file_path)
+            content = JSON(content)
+            content['props']['path'] = template
+            templates_list.push(content)
+          end
+        end
+
         {
           data: data,
           show_external_name: profile.show_external_name,
           show_sample_name: profile.show_sample_name,
           show_sample_short_label: profile.show_sample_short_label,
           curation: profile.curation,
+          user_templates: templates_list,
         }
       end
 
@@ -97,8 +113,8 @@ module Chemotion
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
+        optional :user_template, type: String
       end
-
       put do
         declared_params = declared(params, include_missing: false)
         available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
@@ -125,24 +141,77 @@ module Chemotion
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
         data['default_structure_editor'] = 'ketcher' if data['default_structure_editor'].nil?
-
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
+          user_templates: current_user.profile.user_templates.push(declared_params[:user_template]),
         }
-
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)
       end
 
-      desc 'draft: get user profile editor ketcher 2 setting options'
+      desc 'post user template'
+      params do
+        requires :content, type: String, desc: 'ketcher file content'
+      end
+      post do
+        file_name = 'template.txt'
+        file_path = Rails.root.join('uploads', Rails.env, file_name)
+        begin
+          File.new(file_path, 'w') unless File.exist?(file_path)
+          File.write(file_path, params[:content])
+          template_attachment = Attachment.new(
+            bucket: 1,
+            filename: file_name,
+            key: 'user_template',
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: 'text/html',
+            file_path: file_path,
+          )
+          begin
+            template_attachment.save!
+          rescue StandardError
+            error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+          ensure
+            File.delete(file_path)
+          end
+          { template_details: template_attachment }
+        rescue Errno::EACCES
+          error!('Save files error!', 500)
+        end
+      end
+
+      desc 'delete user template'
+      params do
+        requires :path, type: String, desc: 'file path of user template'
+      end
+      delete do
+        user_templates = current_user.profile.user_templates
+        user_templates.delete(params[:path])
+
+        # remove file from store
+        file_path = Rails.root.join('uploads', Rails.env, params[:path])
+        File.delete(file_path) if File.exist?(file_path)
+
+        # update profile
+        new_profile = {
+          user_templates: user_templates,
+        }
+        (current_user.profile.update!(**new_profile) &&
+        new_profile) || error!('profile update failed', 500)
+
+        { status: true }
+      end
+
+      desc 'get user profile editor ketcher 2 setting options'
       get 'editors/ketcher2-options' do
         Ketcher2Setting.find_by(user_id: current_user.id)
       end
 
-      desc 'draft: update user profile editor ketcher 2 setting options'
+      desc 'update user profile editor ketcher 2 setting options'
       params do
         requires :data, type: String, desc: 'data structure for ketcher options'
       end
