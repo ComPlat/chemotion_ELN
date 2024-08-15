@@ -233,22 +233,18 @@ export default class ModalExport extends React.Component {
     const chemicalColumns = this.filteredColumns();
     const sdfChemicalExport = chemicalColumns.chemicals.length !== 0;
     return (
-      <ButtonToolbar>
-        <div className="pull-right">
-          <ButtonToolbar>
-            <Button variant="primary" onClick={onHide}>Cancel</Button>
-            <DropdownButton
-              drop="up"
-              variant="warning"
-              id="md-export-dropdown"
-              title="XLSX/SD Export"
-              onSelect={this.handleClick}
-            >
-              <Dropdown.Item eventKey="1">XLSX Export</Dropdown.Item>
-              <Dropdown.Item eventKey="2" disabled={sdfChemicalExport}>SDF Export</Dropdown.Item>
-            </DropdownButton>
-          </ButtonToolbar>
-        </div>
+      <ButtonToolbar className="justify-content-end gap-1">
+        <Button variant="primary" onClick={onHide}>Cancel</Button>
+        <DropdownButton
+          drop="up"
+          variant="warning"
+          id="md-export-dropdown"
+          title="XLSX/SD Export"
+          onSelect={this.handleClick}
+        >
+          <Dropdown.Item eventKey="1">XLSX Export</Dropdown.Item>
+          <Dropdown.Item eventKey="2" disabled={sdfChemicalExport}>SDF Export</Dropdown.Item>
+        </DropdownButton>
       </ButtonToolbar>
     );
   }

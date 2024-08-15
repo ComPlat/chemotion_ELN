@@ -191,21 +191,17 @@ export default class ModalExportCollection extends React.Component {
     const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
     const bTitle = processing === true ? 'Exporting' : 'Export ZIP';
     return (
-      <ButtonToolbar>
-        <div className="pull-right">
-          <ButtonToolbar>
-            <Button variant="primary" onClick={onHide}>Cancel</Button>
-            <Button
-              variant={bStyle}
-              id="md-export-dropdown"
-              disabled={this.isDisabled()}
-              title="Export as ZIP file (incl. attachments)"
-              onClick={this.handleClick}
-            >
-              <span><i className={bClass} />&nbsp;{bTitle}</span>
-            </Button>
-          </ButtonToolbar>
-        </div>
+      <ButtonToolbar className="justify-content-end gap-1">
+        <Button variant="primary" onClick={onHide}>Cancel</Button>
+        <Button
+          variant={bStyle}
+          id="md-export-dropdown"
+          disabled={this.isDisabled()}
+          title="Export as ZIP file (incl. attachments)"
+          onClick={this.handleClick}
+        >
+          <span><i className={bClass} />&nbsp;{bTitle}</span>
+        </Button>
       </ButtonToolbar>
     );
   }

@@ -212,8 +212,7 @@ export default class ModalImportConfirm extends React.Component {
     )})
 
     return (
-      <div style={{width:'80%',height:'80%', margin:'auto'}}>
-
+      <div>
         <div className="ag-theme-bootstrap" style={{height: '500px'}} >
           <AgGridReact
             columnDefs={columns.columnDefs}
@@ -226,9 +225,7 @@ export default class ModalImportConfirm extends React.Component {
           />
         </div>
 
-        &nbsp;
-
-        <ButtonToolbar>
+        <ButtonToolbar className="mt-2 justify-content-end gap-1">
           <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
           <Button variant="warning" onClick={() => this.handleClick()}>Import</Button>
         </ButtonToolbar>
