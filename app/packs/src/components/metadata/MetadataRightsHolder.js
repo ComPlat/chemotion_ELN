@@ -1,26 +1,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, FormControl, FormGroup, Row } from 'react-bootstrap';
+import {
+  Button, Col, Form, Row
+} from 'react-bootstrap';
 
-const MetadataRightsHolder = ({ rightsHolder, index, onChange, onRemove }) => (
-  <div>
-    <Row>
-      <Col sm={11}>
-        <FormGroup>
-          <FormControl
-            type="text"
-            value={rightsHolder}
-            onChange={event => onChange(event.target.value, 'rightsHolders', index)}
-          />
-        </FormGroup>
-      </Col>
-      <Col sm={1}>
-        <Button variant="danger" onClick={() => onRemove('rightsHolders', index)}>
-          <i className="fa fa-trash-o" />
-        </Button>
-      </Col>
-    </Row>
-  </div>
+const MetadataRightsHolder = ({
+  rightsHolder, index, onChange, onRemove
+}) => (
+  <Row className="mb-3">
+    <Form.Group as={Col} xs={11}>
+      <Form.Control
+        type="text"
+        value={rightsHolder}
+        onChange={(event) => onChange(event.target.value, 'rightsHolders', index)}
+      />
+    </Form.Group>
+    <Col xs={1}>
+      <Button variant="danger" onClick={() => onRemove('rightsHolders', index)}>
+        <i className="fa fa-trash-o" />
+      </Button>
+    </Col>
+  </Row>
 );
 
 MetadataRightsHolder.propTypes = {

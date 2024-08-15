@@ -1,53 +1,48 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, FormControl, FormGroup, Row } from 'react-bootstrap';
+import {
+  Button, Form
+} from 'react-bootstrap';
 import Select from 'react-select3';
 
-import { controlledRightsList } from 'src/components/staticDropdownOptions/radar/controlledRightsList'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import { controlledRightsList } from 'src/components/staticDropdownOptions/radar/controlledRightsList';
 
-const MetadataRights = ({ rights, index, onChange, onRemove }) => {
-  const controlledRights = controlledRightsList.find(el => el.value == rights.controlledRights)
+const MetadataRights = ({
+  rights, index, onChange, onRemove
+}) => {
+  const controlledRights = controlledRightsList.find((el) => el.value == rights.controlledRights);
 
   return (
     <div>
-      <Row>
-        <Col sm={12}>
-          <FormGroup>
-            <ControlLabel>
-              Controlled rights
-            </ControlLabel>
-            <Select
-              name="relationType"
-              options={controlledRightsList}
-              onChange={option => onChange(option.value, 'rights', index, 'controlledRights')}
-              value={controlledRights}
-              menuPortalTarget={document.body}
-              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-            />
-          </FormGroup>
-        </Col>
-        <Col sm={12}>
-          <FormGroup>
-            <ControlLabel>
-              Additional rights
-            </ControlLabel>
-            <FormControl
-              type="text"
-              value={rights.additionalRights}
-              onChange={event => onChange(event.target.value, 'rights', index, 'additionalRights')}
-            />
-          </FormGroup>
-        </Col>
-        <Col sm={12}>
-          <Button variant="danger" size="sm" onClick={() => onRemove('rights', index)}>
-            Remove rights
-          </Button>
-        </Col>
-      </Row>
+      <Form.Group className="mb-3">
+        <Form.Label>
+          Controlled rights
+        </Form.Label>
+        <Select
+          name="relationType"
+          options={controlledRightsList}
+          onChange={(option) => onChange(option.value, 'rights', index, 'controlledRights')}
+          value={controlledRights}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>
+          Additional rights
+        </Form.Label>
+        <Form.Control
+          type="text"
+          value={rights.additionalRights}
+          onChange={(event) => onChange(event.target.value, 'rights', index, 'additionalRights')}
+        />
+      </Form.Group>
+      <Button variant="danger" size="sm" onClick={() => onRemove('rights', index)}>
+        Remove rights
+      </Button>
       <hr />
     </div>
-  )
+  );
 };
 
 MetadataRights.propTypes = {
