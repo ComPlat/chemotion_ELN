@@ -1,5 +1,7 @@
 import React from 'react';
-import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import {
+  Nav, Navbar, Tooltip, OverlayTrigger
+} from 'react-bootstrap';
 import UserAuth from 'src/components/navigation/UserAuth';
 import Search from 'src/components/navigation/search/Search';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
@@ -8,7 +10,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import NavNewSession from 'src/components/navigation/NavNewSession'
+import NavNewSession from 'src/components/navigation/NavNewSession';
 import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
@@ -25,13 +27,13 @@ export default class Navigation extends React.Component {
       genericEls: null,
       modalProps: {
         show: false,
-        title: "",
+        title: '',
         component: null,
         action: null,
         listSharedCollections: false,
       },
       omniauthProviders: []
-    }
+    };
     this.onChange = this.onChange.bind(this);
     this.onUIChange = this.onUIChange.bind(this);
     this.toggleCollectionTree = this.toggleCollectionTree.bind(this);
@@ -39,7 +41,7 @@ export default class Navigation extends React.Component {
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIChange)
+    UIStore.listen(this.onUIChange);
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
     UserActions.fetchGenericEls();
@@ -47,13 +49,13 @@ export default class Navigation extends React.Component {
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIChange)
+    UIStore.unlisten(this.onUIChange);
     UserStore.unlisten(this.onChange);
   }
 
   onChange(state) {
-    let newId = state.currentUser ? state.currentUser.id : null
-    let oldId = this.state.currentUser ? this.state.currentUser.id : null
+    const newId = state.currentUser ? state.currentUser.id : null;
+    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
     if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
@@ -88,7 +90,7 @@ export default class Navigation extends React.Component {
   }
 
   token() {
-    return DocumentHelper.getMetaContent("csrf-token")
+    return DocumentHelper.getMetaContent('csrf-token');
   }
 
   updateModalProps(modalProps) {
@@ -100,56 +102,76 @@ export default class Navigation extends React.Component {
     const { isHidden } = this.props;
 
     return (
-      <React.Fragment>
+      <>
         {!isHidden && (
           <Navbar.Text>
             <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
               <i
                 className="fa fa-list"
                 onClick={this.toggleCollectionTree}
-                role='button'
+                role="button"
               />
             </OverlayTrigger>
           </Navbar.Text>
         )}
         <NavHead />
-      </React.Fragment>
-    )
+      </>
+    );
   }
 
   userSession(omniauthProviders, extraRules) {
+    const { currentUser } = this.state;
     return (
-      this.state.currentUser ?
-      <div className='d-flex gap-2'>
-        <OpenCalendarButton />
-        <UserAuth />
-      </div>
-      : <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
-    )
+      currentUser
+        ? (
+          <div className="d-flex gap-2">
+            <OpenCalendarButton />
+            <UserAuth />
+          </div>
+        )
+        : (
+          <NavNewSession
+            authenticityToken={this.token()}
+            omniauthProviders={omniauthProviders}
+            extraRules={extraRules}
+          />
+        )
+    );
   }
 
   render() {
-    const { modalProps, genericEls, omniauthProviders, extraRules } = this.state;
+    const {
+      currentUser,
+      modalProps, genericEls, omniauthProviders, extraRules
+    } = this.state;
+    const { isHidden } = this.props;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (
-      <Navbar className='bg-gray-200 justify-content-between px-4'>
+      <Navbar className="bg-gray-200 justify-content-between px-4">
         {this.navHeader()}
-        {!this.props.isHidden &&
-          <Nav navbar className='navbar-form gap-2'>
-            <Search noSubmit={!!this.state.currentUser} />
-            {this.state.currentUser &&
+        {!isHidden && (
+          <Nav navbar className="navbar-form gap-2">
+            <Search noSubmit={!!currentUser} />
+            {currentUser && (
               <>
-                <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
-                <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
+                <ManagingActions
+                  updateModalProps={this.updateModalProps}
+                  customClass={customClass}
+                  genericEls={genericEls}
+                />
+                <ContextActions
+                  updateModalProps={this.updateModalProps}
+                  customClass={customClass}
+                />
                 <NavigationModal {...modalProps} />
               </>
-            }
+            )}
           </Nav>
-          }
+        )}
         {this.userSession(omniauthProviders, extraRules)}
       </Navbar>
-    )
+    );
   }
 }
 
