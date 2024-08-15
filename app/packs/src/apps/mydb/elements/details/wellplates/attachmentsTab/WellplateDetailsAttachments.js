@@ -22,7 +22,7 @@ import {
   sortingAndFilteringUI,
   formatFileSize,
   attachmentThumbnail,
-  thirdPartyAppButton,
+  ThirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -342,11 +342,8 @@ export class WellplateDetailsAttachments extends Component {
                   </Button>
                 ) : (
                   <>
-                  {thirdPartyAppButton(
-                      attachment,
-                      this.thirdPartyApps,
-                    )}
                     {downloadButton(attachment)}
+                    <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
                     {editButton(
                       attachment,
                       extension,
