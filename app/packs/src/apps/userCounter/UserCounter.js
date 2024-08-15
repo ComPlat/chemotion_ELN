@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import uuid from 'uuid';
-import { Row, Col, Button, FormControl } from 'react-bootstrap';
+import {
+  Row, Col, Button, FormControl
+} from 'react-bootstrap';
 
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Panel from 'src/components/legacyBootstrap/Panel'
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 class UserCounter extends Component {
   constructor(props) {
@@ -51,15 +53,14 @@ class UserCounter extends Component {
       .then(() => {
         document.location.href = '/';
       })
-      .catch(errorMessage => {
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
 
   fetchKlasses() {
-    GenericElsFetcher.fetchElementKlasses().then(result => {
-      const genericEntities =
-        result && result.klass.filter(u => u.is_generic === true);
+    GenericElsFetcher.fetchElementKlasses().then((result) => {
+      const genericEntities = result && result.klass.filter((u) => u.is_generic === true);
       this.setState({ klasses: genericEntities || [] });
     });
   }
@@ -67,15 +68,14 @@ class UserCounter extends Component {
   render() {
     const { currentUser, klasses } = this.state;
     const counterBody = (klasses || [])
-      .filter(k => k.is_active === true)
-      .map(klass => {
+      .filter((k) => k.is_active === true)
+      .map((klass) => {
         const counter = parseInt(
           (currentUser && currentUser.counters[klass.name]) || 0,
           10
         );
-        const nextNum = `${currentUser && currentUser.initials}-${
-          klass.klass_prefix
-        }${counter + 1}`;
+        const nextNum = `${currentUser && currentUser.initials}-${klass.klass_prefix
+          }${counter + 1}`;
         return (
           <div key={uuid.v1()} style={{ marginTop: 10 }}>
             <Row key={uuid.v1()}>
@@ -85,9 +85,7 @@ class UserCounter extends Component {
                 <FormControl
                   type="number"
                   value={counter}
-                  onChange={e =>
-                    this.handleCounterChange(klass.name, e.target.value)
-                  }
+                  onChange={(e) => this.handleCounterChange(klass.name, e.target.value)}
                   min={0}
                 />
               </Col>
