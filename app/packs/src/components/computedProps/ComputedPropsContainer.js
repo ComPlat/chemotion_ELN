@@ -1,13 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, Button } from 'react-bootstrap';
+import { ButtonGroup, Button, Form } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import ComputedPropsGraphContainer from 'src/components/computedProps/ComputedPropsGraphContainer';
 import SampleComputedProps from 'src/components/computedProps/SampleComputedProps';
 import { ConfirmModal } from 'src/components/common/ConfirmModal';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ComputedPropsContainer extends React.Component {
   constructor(props) {
@@ -59,7 +58,7 @@ export default class ComputedPropsContainer extends React.Component {
       arrow = <i className="fa fa-angle-double-up" />;
     }
     const confirmText = (
-      <ControlLabel>Would you like to simulate this molecule ?</ControlLabel>
+      <Form.Label>Would you like to simulate this molecule ?</Form.Label>
     );
 
     return (
@@ -69,15 +68,16 @@ export default class ComputedPropsContainer extends React.Component {
           variant="success"
           size="sm"
           onClick={this.onClickComputeBtn}
-          style={{ marginTop: '10px', marginBottom: '10px' }}
+          className="my-2"
         >
-          <i className="fa fa-paper-plane" />
-          &nbsp;&nbsp; Compute
+          <i className="fa fa-paper-plane gap-2" />
+            Compute
         </Button>
         <ButtonGroup vertical block>
           <Button
             size="sm"
-            style={{ marginBottom: '20px', backgroundColor: '#ddd' }}
+            className="mb-4"
+            style={{ backgroundColor: '#ddd' }}
             onClick={this.toggleGraph}
           >
             {text} &nbsp; {arrow}

@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 import Select from 'react-select';
 import {
-  Row, Col, Button, Form, FormGroup, FormControl
+  Row, Col, Button, Form
 } from 'react-bootstrap';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -12,8 +12,6 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 
 import ComputedPropsGraph from 'src/components/computedProps/ComputedPropsGraph';
 import GraphReferenceTable from 'src/components/computedProps/GraphReferenceTable';
-import Grid from 'src/components/legacyBootstrap/Grid'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const etlReferences = [
   { x: -1.8, y: 50, type: 'reference' },
@@ -221,8 +219,8 @@ export default class ComputedPropsGraphContainer extends React.Component {
     ));
 
     return (
-      <Grid fluid style={style}>
-        <Row className="show-grid">
+      <div className="container-fluid" style={style}>
+        <Row>
           <Col xs={18} md={12}>
             <ComputedPropsGraph
               xAxis={xAxis}
@@ -246,10 +244,8 @@ export default class ComputedPropsGraphContainer extends React.Component {
           </Col>
           <Col xs={9} md={6}>
             <Form horizontal>
-              <FormGroup controlId="formInlineTemplate">
-                <Col componentClass={ControlLabel} sm={4}>
-                  Template
-                </Col>
+              <Form.Group controlId="formInlineTemplate">
+                <Form.Label column sm={4}>Template</Form.Label>
                 <Col sm={8}>
                   <Select.Creatable
                     onChange={this.onTemplateChange}
@@ -259,11 +255,9 @@ export default class ComputedPropsGraphContainer extends React.Component {
                     promptTextCreator={label => `Create new ${label} template`}
                   />
                 </Col>
-              </FormGroup>
-              <FormGroup controlId="formInlineXAxis">
-                <Col componentClass={ControlLabel} sm={4}>
-                  X Axis
-                </Col>
+              </Form.Group>
+              <Form.Group controlId="formInlineXAxis">
+                <Form.Label column sm={4}>X Axis</Form.Label>
                 <Col sm={8}>
                   <Select
                     onChange={this.onXAxisChange}
@@ -272,11 +266,9 @@ export default class ComputedPropsGraphContainer extends React.Component {
                     options={axisSelectOptions}
                   />
                 </Col>
-              </FormGroup>
-              <FormGroup controlId="formInlineYAxis">
-                <Col componentClass={ControlLabel} sm={4}>
-                  Y Axis
-                </Col>
+              </Form.Group>
+              <Form.Group controlId="formInlineYAxis">
+                <Form.Label column sm={4}>Y Axis</Form.Label>
                 <Col sm={8}>
                   <Select
                     onChange={this.onYAxisChange}
@@ -285,37 +277,34 @@ export default class ComputedPropsGraphContainer extends React.Component {
                     options={axisSelectOptions}
                   />
                 </Col>
-              </FormGroup>
-              <FormGroup controlId="formInlineRefDesc">
-                <Col componentClass={ControlLabel} sm={4}>
-                  References Description
-                </Col>
+              </Form.Group>
+              <Form.Group controlId="formInlineRefDesc">
+                <Form.Label column sm={4}>References Description</Form.Label>
                 <Col sm={8}>
-                  <FormControl
-                    componentClass="textarea"
+                  <Form.Control
+                    as="textarea"
                     type="description"
                     placeholder="Description"
                     value={referenceDesc}
-                    style={{ height: '193px' }}
+                    rows={5}
                     onChange={e => this.onDescChange(e)}
                   />
                 </Col>
-              </FormGroup>
-              <FormGroup style={{ marginBottom: 0 }}>
-                <Col sm={12}>
+              </Form.Group>
+              <Form.Group className="mb-0">
+                <Col sm={12} className="gap-1">
                   <Button variant="info" onClick={this.saveTemplate}>
                     Save Template
                   </Button>
-                  {' '}
                   <Button variant="danger" onClick={this.deleteTemplate}>
                     Delete Template
                   </Button>
                 </Col>
-              </FormGroup>
+              </Form.Group>
             </Form>
           </Col>
         </Row>
-      </Grid>
+      </div>
     );
   }
 }

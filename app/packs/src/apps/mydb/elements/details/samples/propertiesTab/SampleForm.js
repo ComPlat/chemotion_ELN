@@ -111,7 +111,7 @@ export default class SampleForm extends React.Component {
     if (sample.can_update) {
       return (
         <Form.Check
-          inputRef={(ref) => { this.topSecretInput = ref; }}
+          ref={(ref) => { this.topSecretInput = ref; }}
           checked={sample.is_top_secret}
           onChange={(e) => this.handleFieldChanged('is_top_secret', e.target.checked)}
           label="Top secret"
@@ -142,7 +142,7 @@ export default class SampleForm extends React.Component {
     if (sample.can_update) {
       return (
         <Form.Check
-          inputRef={(ref) => { this.decoupledInput = ref; }}
+          ref={(ref) => { this.decoupledInput = ref; }}
           checked={sample.decoupled}
           onChange={(e) => this.handleFieldChanged('decoupled', e.target.checked)}
           label="Decoupled"
