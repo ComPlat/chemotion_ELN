@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import uuid from 'uuid';
 import {
-  Row, Col, Button, FormControl
+  Card, Row, Col, Table, Button, Form
 } from 'react-bootstrap';
 
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Panel from 'src/components/legacyBootstrap/Panel';
 
 class UserCounter extends Component {
   constructor(props) {
@@ -66,75 +65,61 @@ class UserCounter extends Component {
   }
 
   render() {
-    const { currentUser, klasses } = this.state;
-    const counterBody = (klasses || [])
+    const { currentUser, klasses = [] } = this.state;
+    if (klasses.length === 0) return null;
+
+    const counterBody = klasses
       .filter((k) => k.is_active === true)
       .map((klass) => {
-        const counter = parseInt(
-          (currentUser && currentUser.counters[klass.name]) || 0,
-          10
-        );
-        const nextNum = `${currentUser && currentUser.initials}-${klass.klass_prefix
-          }${counter + 1}`;
+        const counter = parseInt((currentUser && currentUser.counters[klass.name]) || 0, 10);
+        const nextNum = `${currentUser && currentUser.initials}-${klass.klass_prefix}${counter + 1}`;
         return (
-          <div key={uuid.v1()} style={{ marginTop: 10 }}>
-            <Row key={uuid.v1()}>
-              <Col sm={2}>{klass.label}</Col>
-              <Col sm={1}>{klass.klass_prefix}</Col>
-              <Col sm={3}>
-                <FormControl
-                  type="number"
-                  value={counter}
-                  onChange={(e) => this.handleCounterChange(klass.name, e.target.value)}
-                  min={0}
-                />
-              </Col>
-              <Col sm={2}>{nextNum}</Col>
-              <Col sm={4}>
-                <Button
-                  variant="primary"
-                  onClick={() => this.handleUpdate(klass.name)}
-                >
-                  Update counter
-                </Button>
-              </Col>
-            </Row>
-          </div>
+          <tr key={klass.id} className="align-middle">
+            <td>{klass.label}</td>
+            <td>{klass.klass_prefix}</td>
+            <td>
+              <Form.Control
+                type="number"
+                value={counter}
+                onChange={(e) => this.handleCounterChange(klass.name, e.target.value)}
+                min={0}
+              />
+            </td>
+            <td>{nextNum}</td>
+            <td>
+              <Button
+                variant="primary"
+                onClick={() => this.handleUpdate(klass.name)}
+              >
+                Update counter
+              </Button>
+            </td>
+          </tr>
         );
       });
-    if (klasses && klasses.length === 0) return <span />;
+
     return (
-      <Panel>
-        <Panel.Heading>
-          <Panel.Title>Element Counter</Panel.Title>
-        </Panel.Heading>
-        <Panel.Body>
-          <Row>
-            <Col sm={2}>
-              <b>
-                <u>Element Label</u>
-              </b>
-            </Col>
-            <Col sm={1}>
-              <b>
-                <u>Prefix</u>
-              </b>
-            </Col>
-            <Col sm={3}>
-              <b>
-                <u>Counter starts at</u>
-              </b>
-            </Col>
-            <Col sm={2}>
-              <b>
-                <u>Next Label</u>
-              </b>
-            </Col>
-            <Col sm={4}>&nbsp;</Col>
-          </Row>
-          {counterBody}
-        </Panel.Body>
-      </Panel>
+      <Card className="mb-3">
+        <Card.Header>
+          Element Counter
+        </Card.Header>
+        <Card.Body>
+          <Table bordered responsive>
+            <thead>
+              <tr>
+                <th>Element Label</th>
+                <th>Prefix</th>
+                <th>Counter starts at</th>
+                <th>Next Label</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {counterBody}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
     );
   }
 }
