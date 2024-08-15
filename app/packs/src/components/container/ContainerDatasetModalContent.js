@@ -34,7 +34,7 @@ import {
   formatFileSize,
   moveBackButton,
   attachmentThumbnail,
-  thirdPartyAppButton
+  ThirdPartyAppButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -519,11 +519,8 @@ export class ContainerDatasetModalContent extends Component {
             </Button>
           ) : (
             <>
-            {thirdPartyAppButton(
-                      attachment,
-                      this.thirdPartyApps,
-                    )}
               {downloadButton(attachment)}
+              <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
               {editButton(
                 attachment,
                 extension,
