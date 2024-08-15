@@ -12319,12 +12319,6 @@ react-transition-state@^2.1.1:
   resolved "https://registry.yarnpkg.com/react-transition-state/-/react-transition-state-2.1.1.tgz#1601a6177926b647041b7d598bf124321ab8d25b"
   integrity sha512-kQx5g1FVu9knoz1T1WkapjUgFz08qQ/g1OmuWGi3/AoEFfS0kStxrPlZx81urjCXdz2d+1DqLpU6TyLW/Ro04Q==
 
-react-treeview@0.4.7:
-  version "0.4.7"
-  resolved "https://registry.npmjs.org/react-treeview/-/react-treeview-0.4.7.tgz"
-  integrity sha1-9kfgT3BJbrEfsJEsNRh+gOtg1Fg=
-  dependencies:
-    prop-types "^15.5.8"
 react-ui-tree@3.1.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/react-ui-tree/-/react-ui-tree-3.1.0.tgz"
