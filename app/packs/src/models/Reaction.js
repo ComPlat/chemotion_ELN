@@ -201,7 +201,7 @@ export default class Reaction extends Element {
       gaseous: this.gaseous
     });
   }
-  
+
   set variations(variations) {
     /*
     variations data structure (also see Entities::ReactionVariationEntity):
@@ -215,23 +215,63 @@ export default class Reaction extends Element {
         },
         "analyses": [<id>, <id>, ...],
         "startingMaterials": {
-          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
           ...
         },
         "reactants": {
-          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
           ...
         },
         "products": {
-          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
           ...
         },
         "solvents": {
-          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
           ...
         },
       },
@@ -241,7 +281,7 @@ export default class Reaction extends Element {
       },
       ...
     ]
-    
+
     Units are to be treated as immutable. Units and corresponding values
     are changed (not mutated in the present data-structure!) only for display or export
     (i.e., at the boundaries of the application).
@@ -255,11 +295,11 @@ export default class Reaction extends Element {
     }
     this._variations = variations;
   }
-  
+
   get variations() {
     return this._variations;
   }
-  
+
   // Reaction Duration
   
   durationCalc() {
