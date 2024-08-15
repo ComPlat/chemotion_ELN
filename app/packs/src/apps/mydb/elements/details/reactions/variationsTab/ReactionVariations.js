@@ -25,7 +25,7 @@ import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
   EquivalentFormatter, EquivalentParser,
-  RowToolsCellRenderer
+  RowToolsCellRenderer, NoteCellEditor
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
 
 function MenuHeader({
@@ -196,11 +196,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       field: 'notes',
       sortable: false,
       cellDataType: 'text',
-      cellEditor: 'agLargeTextCellEditor',
+      cellEditor: NoteCellEditor,
       cellEditorPopup: true,
-      cellEditorParams: {
-        maxLength: 1000
-      }
     },
     {
       headerName: 'Analyses',
