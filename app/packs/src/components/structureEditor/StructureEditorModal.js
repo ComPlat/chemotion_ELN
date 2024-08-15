@@ -259,7 +259,7 @@ export default class StructureEditorModal extends React.Component {
     });
     const attachment_id = res?.template_details?.attachment_data?.id;
     await UsersFetcher.updateUserProfile({
-      user_templates: attachment_id,
+      user_template: attachment_id,
     }).catch((err) => console.log('ISSUE WITH create'));
   }
 
@@ -273,8 +273,6 @@ export default class StructureEditorModal extends React.Component {
         const {deleteAllowed} = this.state;
         if (event.key === key && deleteAllowed) {
           if (newValue.length > oldValue.length) {
-            console.log("change");
-
             let newItem = newValue[newValue.length - 1];
             const res = await ProfilesFetcher.uploadUserTemplates({
               content: JSON.stringify(newItem),
@@ -291,7 +289,6 @@ export default class StructureEditorModal extends React.Component {
               user_template: attachment_id,
             });
           } else if (newValue.length < oldValue.length) {
-            console.log("delet");
             // delete
             const listOfLocalid = newValue.map((item) => item.props.path);
             for (let i = 0; i < oldValue.length; i++) {
@@ -307,7 +304,6 @@ export default class StructureEditorModal extends React.Component {
               }
             }
           } else if (newValue.length == oldValue.length) {
-            console.log("same");
             const listOfLocalNames = newValue.map(
               (item) => JSON.parse(item.struct).header.moleculeName
             );
