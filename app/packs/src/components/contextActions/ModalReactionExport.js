@@ -16,18 +16,18 @@ export default class ModalReactionExport extends React.Component {
   buttonBar() {
     const { onHide } = this.props;
     return (
-      <ButtonToolbar>
-        <div className="pull-right">
-          <ButtonToolbar>
-            <Button variant="primary" onClick={onHide}>Cancel</Button>
-            <Button variant="warning" id="md-export-dropdown"
-              title="Reaction Smiles CSV Export" onClick={this.handleClick}>
-              Smiles Export
-            </Button>
-          </ButtonToolbar>
-        </div>
+      <ButtonToolbar className="justify-content-end gap-1">
+        <Button variant="primary" onClick={onHide}>Cancel</Button>
+        <Button
+          variant="warning"
+          id="md-export-dropdown"
+          title="Reaction Smiles CSV Export"
+          onClick={this.handleClick}
+        >
+          Smiles Export
+        </Button>
       </ButtonToolbar>
-    )
+    );
   }
 
   handleClick() {
