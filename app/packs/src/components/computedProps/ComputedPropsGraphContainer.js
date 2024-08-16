@@ -196,7 +196,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
     const xAxis = graphSettings[xAxisType] || graphSettings.lumo;
     const yAxis = graphSettings[yAxisType] || graphSettings.mean_abs_potential;
 
-    const { referenceDesc } = template?.referenceDesc || '';
+    const referenceDesc = template?.referenceDesc ?? defaultTemplate.referenceDesc;
     const referencePoints = template?.referencePoints || etlReferences;
     if (referencePoints.length === 0) {
       referencePoints.push({ x: '', y: '', type: 'reference' });
