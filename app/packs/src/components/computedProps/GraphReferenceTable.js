@@ -13,6 +13,7 @@ function TableEditBtn({ dataLength, onEditBtnClick, node }) {
       active
       onClick={() => onEditBtnClick(node.rowIndex)}
       size="sm"
+      variant="light"
     >
       <i className={`fa ${btnIcon}`} />
     </Button>
