@@ -68,8 +68,8 @@ export default class ComputedPropsGraph extends React.Component {
     };
 
     return (
-      <div>
-        <div style={{ float: 'left' }}>
+      <div className="d-flex">
+        <div className="flex-grow-1 me-3">
           <XYPlot
             height={450}
             width={450}
@@ -128,7 +128,7 @@ export default class ComputedPropsGraph extends React.Component {
             <CustomAxisLabel title={`${yAxisLabel} (${yAxis.unit})`} />
           </XYPlot>
         </div>
-        <div style={{ float: 'right' }}>
+        <div className="flex-shrink-0">
           <DiscreteColorLegend
             width={105}
             items={[dataInfo, refInfo]}
@@ -145,5 +145,4 @@ ComputedPropsGraph.propTypes = {
   xAxis: PropTypes.object.isRequired,
   yAxis: PropTypes.object.isRequired,
   referencePoints: PropTypes.arrayOf(PropTypes.object).isRequired,
-  // referenceDesc: PropTypes.string.isRequired,
 };
