@@ -20,7 +20,10 @@ function CustomAxisLabel({
 
   return (
     <g transform={transform}>
-      <text className="unselectable axis-labels" style={{ fill: '#6b6b76' }}>
+      <text
+        // className="unselectable axis-labels"
+        // style={{ fill: '#6b6b76' }}
+      >
         {title}
       </text>
     </g>
