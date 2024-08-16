@@ -112,4 +112,33 @@ describe('Testing React Utility Functions', () => {
     assert.strictEqual(converted, 120);
     assert.strictEqual(unit, TON_UNITS.PER_MINUTE);
   });
+
+  it('should handle float numbers with non-numeric precision/value', () => {
+    const result = handleFloatNumbers('abc', 'abc');
+    assert.strictEqual(result, null);
+  });
+
+  it('should return null for invalid temperature input', () => {
+    const result = convertTemperature('abc', TEMPERATURE_UNITS.KELVIN);
+    assert.strictEqual(result, null);
+  });
+
+  it('should return null for invalid temperature conversion to Kelvin', () => {
+    assert.strictEqual(convertTemperatureToKelvin({ value: 'abc', unit: TEMPERATURE_UNITS.CELSIUS }), null);
+  });
+
+  it('should return null or handle invalid values for TON per time calculation', () => {
+    const result = calculateTONPerTimeValue('abc', TIME_UNITS.MINUTES);
+    assert.strictEqual(result, null);
+  });
+
+  it('should return null for invalid inputs for turnover frequency conversion', () => {
+    const result = convertTurnoverFrequency('12,9', TON_UNITS.PER_HOUR);
+    assert.strictEqual(result, null);
+  });
+
+  it('should handle invalid inputs for volume calculation for feedstock or gas', () => {
+    const gasPhaseData = { part_per_million: 1000, temperature: { value: 'invalid', unit: TEMPERATURE_UNITS.CELSIUS } };
+    assert.strictEqual(calculateVolumeForFeedstockOrGas(null, 2, 0.5, 'gas', gasPhaseData), 0);
+  });
 });

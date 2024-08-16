@@ -21,12 +21,18 @@ const PARTS_PER_MILLION_FACTOR = 1_000_000;
 const DEFAULT_TEMPERATURE_IN_KELVIN = 294; // Assuming 21°C is used in the original formula
 
 const handleFloatNumbers = (number, decimalPlaces) => {
+  const numericValue = Number(number);
+  if (Number.isNaN(numericValue)) return null;
+
   const roundedValue = Math.round(Math.abs(number) * 10 ** decimalPlaces)
     / 10 ** decimalPlaces;
   return parseFloat(number < 0 ? -roundedValue : roundedValue);
 };
 
 const convertTemperature = (valueToFormat, currentUnit) => {
+  const numericValue = Number(valueToFormat);
+  if (Number.isNaN(numericValue)) return null;
+
   const kelvinToCelsius = (value) => value - 273.15;
   const celsiusToFahrenheit = (value) => ((value * 9) / 5) + 32;
   const fahrenheitToKelvin = (value) => (((value - 32) * 5) / 9) + 273.15;
@@ -60,10 +66,7 @@ const convertTemperature = (valueToFormat, currentUnit) => {
 const convertTemperatureToKelvin = (temperature) => {
   const { unit, value } = temperature || {};
   const temperatureValue = parseFloat(value);
-
-  if (Number.isNaN(temperatureValue)) {
-    return null;
-  }
+  if (Number.isNaN(temperatureValue)) return null;
 
   switch (unit) {
     case TEMPERATURE_UNITS.FAHRENHEIT:
@@ -85,6 +88,8 @@ const secondsToHours = (value) => (value / 3600);
 const secondsToMinutes = (value) => (value / 60);
 
 const convertTime = (valueToFormat, currentUnit) => {
+  const numericValue = Number(valueToFormat);
+  if (Number.isNaN(numericValue)) return null;
   const decimalPlaces = 4;
   const conversions = {
     h: { convertedUnit: TIME_UNITS.MINUTES, conversionFunc: hoursToMinutes },
@@ -153,6 +158,9 @@ const calculateTON = (moles, moleOfCatalystReference) => {
 };
 
 const calculateTONPerTimeValue = (timeValue, timeUnit) => {
+  const numericValue = Number(timeValue);
+  if (Number.isNaN(numericValue)) return null;
+
   switch (timeUnit) {
     case TIME_UNITS.SECONDS:
       return {
@@ -198,6 +206,9 @@ const determineTONFrequencyValue = (tonValue, tonFrequencyUnit, timeValues, defa
 };
 
 const convertTurnoverFrequency = (valueToFormat, currentUnit) => {
+  const numericValue = Number(valueToFormat);
+  if (Number.isNaN(numericValue)) return null;
+
   const decimalPlaces = 4;
 
   const conversions = {
