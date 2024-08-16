@@ -69,6 +69,33 @@ describe 'Chemotion::Calculations' do
     # {"C"=>6, "H"=>7, "N"=>1}
   end
 
+  describe '.mw_from_formula' do
+    it 'calculates the molecular weight of a simple formula without crystallization water' do
+      formula = 'C2H5OH'
+      expect(Chemotion::Calculations.mw_from_formula(formula)).to eq(46.06848) # Approximation for ethanol
+    end
+
+    it 'calculates the molecular weight of a compound with crystallization water' do
+      formula = 'C6H12O6.H2O'
+      expect(Chemotion::Calculations.mw_from_formula(formula)).to be_within(0.01).of(198.17) # Glucose monohydrate
+    end
+
+    it 'calculates the molecular weight with parentheses groups' do
+      formula = 'Al2(SO4)3'
+      expect(Chemotion::Calculations.mw_from_formula(formula)).to be_within(0.01).of(342.15) # Aluminum sulfate
+    end
+
+    it 'handles formulas with coefficients' do
+      formula = '2C6H12O6'
+      expect(Chemotion::Calculations.mw_from_formula(formula)).to be_within(0.01).of(360.31) # Two glucose molecules
+    end
+
+    it 'returns zero for an empty formula' do
+      formula = ''
+      expect(Chemotion::Calculations.mw_from_formula(formula)).to eq(0.0)
+    end
+  end
+
   describe '.get_composition' do # composition <-> loading
     context 'not polymer' do
       let(:comp) { Chemotion::Calculations.get_composition sum_formula }
