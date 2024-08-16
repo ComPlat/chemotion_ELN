@@ -3,9 +3,7 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 
 import Select from 'react-select';
-import {
-  Row, Col, Button, Form
-} from 'react-bootstrap';
+import { Row, Col, Button, Form, Container, ButtonToolbar } from 'react-bootstrap';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -193,13 +191,13 @@ export default class ComputedPropsGraphContainer extends React.Component {
       defaultTemplate :
       graphTemplates[curTemplateIdx];
 
-    const xAxisType = template.xAxisType || 'lumo';
-    const yAxisType = template.yAxisType || 'mean_abs_potential';
+    const xAxisType = template?.xAxisType || 'lumo';
+    const yAxisType = template?.yAxisType || 'mean_abs_potential';
     const xAxis = graphSettings[xAxisType] || graphSettings.lumo;
     const yAxis = graphSettings[yAxisType] || graphSettings.mean_abs_potential;
 
-    const { referenceDesc } = template;
-    const referencePoints = template.referencePoints || etlReferences;
+    const { referenceDesc } = template?.referenceDesc || '';
+    const referencePoints = template?.referencePoints || etlReferences;
     if (referencePoints.length === 0) {
       referencePoints.push({ x: '', y: '', type: 'reference' });
     }
@@ -219,7 +217,8 @@ export default class ComputedPropsGraphContainer extends React.Component {
     ));
 
     return (
-      <div className="container-fluid" style={style}>
+      <Container
+        style={style}>
         <Row>
           <Col xs={18} md={12}>
             <ComputedPropsGraph
@@ -233,8 +232,8 @@ export default class ComputedPropsGraphContainer extends React.Component {
             />
           </Col>
         </Row>
-        <Row>
-          <Col xs={9} md={6}>
+        <Row >
+          <Col xs={9} md={6} >
             <GraphReferenceTable
               xLabel={xAxis.label}
               yLabel={yAxis.label}
@@ -242,11 +241,10 @@ export default class ComputedPropsGraphContainer extends React.Component {
               updateData={this.updateReferences}
             />
           </Col>
-          <Col xs={9} md={6}>
-            <Form horizontal>
-              <Form.Group controlId="formInlineTemplate">
+          <Col xs={9} md={6} className="d-flex">
+            <Form horizontal className="flex-grow-1 justify-content-end mt-2">
+              <Form.Group controlId="formInlineTemplate" className="mb-2">
                 <Form.Label column sm={4}>Template</Form.Label>
-                <Col sm={8}>
                   <Select.Creatable
                     onChange={this.onTemplateChange}
                     value={curTemplateIdx}
@@ -254,33 +252,27 @@ export default class ComputedPropsGraphContainer extends React.Component {
                     clearable={false}
                     promptTextCreator={label => `Create new ${label} template`}
                   />
-                </Col>
               </Form.Group>
-              <Form.Group controlId="formInlineXAxis">
+              <Form.Group controlId="formInlineXAxis" className="mb-2">
                 <Form.Label column sm={4}>X Axis</Form.Label>
-                <Col sm={8}>
                   <Select
                     onChange={this.onXAxisChange}
                     value={xAxisType}
                     clearable={false}
                     options={axisSelectOptions}
                   />
-                </Col>
               </Form.Group>
-              <Form.Group controlId="formInlineYAxis">
+              <Form.Group controlId="formInlineYAxis" className="mb-2">
                 <Form.Label column sm={4}>Y Axis</Form.Label>
-                <Col sm={8}>
                   <Select
                     onChange={this.onYAxisChange}
                     value={yAxisType}
                     clearable={false}
                     options={axisSelectOptions}
                   />
-                </Col>
               </Form.Group>
-              <Form.Group controlId="formInlineRefDesc">
-                <Form.Label column sm={4}>References Description</Form.Label>
-                <Col sm={8}>
+              <Form.Group controlId="formInlineRefDesc" className="mb-2">
+                <Form.Label>References Description</Form.Label>
                   <Form.Control
                     as="textarea"
                     type="description"
@@ -289,22 +281,19 @@ export default class ComputedPropsGraphContainer extends React.Component {
                     rows={5}
                     onChange={e => this.onDescChange(e)}
                   />
-                </Col>
               </Form.Group>
-              <Form.Group className="mb-0">
-                <Col sm={12} className="gap-1">
-                  <Button variant="info" onClick={this.saveTemplate}>
+                <ButtonToolbar className="gap-1 mt-2 justify-content-end">
+                  <Button variant="info" size="sm" onClick={this.saveTemplate}>
                     Save Template
                   </Button>
-                  <Button variant="danger" onClick={this.deleteTemplate}>
+                  <Button variant="danger" size="sm" onClick={this.deleteTemplate}>
                     Delete Template
                   </Button>
-                </Col>
-              </Form.Group>
+                </ButtonToolbar>
             </Form>
           </Col>
         </Row>
-      </div>
+      </Container>
     );
   }
 }
