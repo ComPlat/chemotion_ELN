@@ -546,8 +546,10 @@ export default class AttachmentFetcher {
         let jcampIds = oldSpcInfos.map((spc) => (spc.idx));
         const fetchedFilesIdxs = json.files.map((file) => (file.id));
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
-
-        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx).then((res) => json).catch((errMsg) => {
+  
+        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params).then((res) => {
+          return json;
+        }).catch((errMsg) => {
           console.log(errMsg); // eslint-disable-line
         });
       })
@@ -650,7 +652,8 @@ export default class AttachmentFetcher {
     return promise;
   }
 
-  static combineSpectra(jcampIds, curveIdx) {
+  static combineSpectra(jcampIds, curveIdx, extraParams = null) {
+    const extras = JSON.stringify(decamelizeKeys(extraParams))
     const promise = fetch(
       '/api/v1/chemspectra/file/combine_spectra',
       {
@@ -664,6 +667,7 @@ export default class AttachmentFetcher {
         body: JSON.stringify({
           spectra_ids: jcampIds,
           front_spectra_idx: curveIdx,
+          extras: extras,
         }),
       },
     )
