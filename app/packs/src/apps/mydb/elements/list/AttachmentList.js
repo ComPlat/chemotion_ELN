@@ -321,43 +321,50 @@ export const sortingAndFilteringUI = (
 
 // validate id as uuid
 // TODO replace with uuid.validate after upgrade to uuid 10
-const validateId = (id) => {
+const isUUID = (id) => {
   const uuidRegex = new RegExp(
     '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
   );
   return uuidRegex.test(id);
 };
 
+const filterOptions = (contentType, options) => {
+  const [itemType, itemSubtype] = contentType.split('/');
+  return options
+    .filter((option) => {
+      if (!option.fileTypes || option.fileTypes.length === 0) { return false; }
+      return option.fileTypes.split(',').some((filter) => {
+        const [type, subtype] = filter.split('/');
+        return (type === '*' || type === itemType) && (!subtype || subtype === '*' || subtype === itemSubtype);
+      });
+    });
+};
+
+const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
+
 export function ThirdPartyAppButton({ attachment, options = [] }) {
   const [menuItems, setMenuItems] = useState([]);
-  const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
   const contentType = mime.contentType(attachment.content_type) ? attachment.content_type : mime.lookup(attachment.filename);
 
   useEffect(() => {
-    const generateMenuItems = () => {
-      if (validateId(attachment?.id)) { return noChoice; }
-      const items = [];
-      options.forEach((option) => {
-        const optionFileTypes = option.fileTypes.split(',').map((type) => type.trim());
-        if (optionFileTypes.includes('*') || (contentType && (optionFileTypes.includes(contentType)))) {
-          items.push(
-            <MenuItem
-              key={uuid.v4()}
-              eventKey={option.id}
-              onClick={() => {
-                ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
-                  .then((result) => window.open(result, '_blank'));
-              }}
-            >
-              {option.name}
-            </MenuItem>
-          );
-        }
-      });
-      return items.length > 0 ? items : noChoice;
+    const generatedMenuItems = () => {
+      if (isUUID(attachment?.id)) { return noChoice; }
+      const filteredOptions = filterOptions(contentType, options);
+      if (filteredOptions.length === 0) { return noChoice; }
+      return filteredOptions.map((option) => (
+        <MenuItem
+          key={uuid.v4()}
+          eventKey={option.id}
+          onClick={() => {
+            ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+              .then((result) => window.open(result, '_blank'));
+          }}
+        >
+          {option.name}
+        </MenuItem>
+      ));
     };
-
-    setMenuItems(generateMenuItems());
+    setMenuItems(generatedMenuItems());
   }, [attachment, options]);
 
   return (
