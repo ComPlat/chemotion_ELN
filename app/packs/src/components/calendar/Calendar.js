@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Calendar as BaseCalendar, Views, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import { OverlayTrigger, Button, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Button, ButtonGroup, Tooltip, Modal, Stack } from 'react-bootstrap';
+import Draggable from "react-draggable";
 import moment from 'moment';
 
 import CalendarStore from 'src/stores/alt/stores/CalendarStore';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import CalendarEntryEditor from 'src/components/calendar/CalendarEntryEditor';
-import Draggable from 'react-draggable';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CalendarEvent, { setCurrentViewForEventRenderer } from 'src/components/calendar/CalendarEvent';
 
@@ -26,8 +26,6 @@ const formats = {
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(BaseCalendar);
 
-const ModalWidth = 900;
-const ModalHeight = 700;
 const ColorCache = {};
 const DragThreshold = 25;
 
@@ -100,15 +98,14 @@ function getWindowStyleOffsets(state) {
 
 const allDayAccessor = (event) => {
   if ((event.start && event.start.getHours() === 0 && event.start.getMinutes() === 0)
-  && (event.end && event.end.getHours() === 0 && event.end.getMinutes() === 0) &&
-  moment(event.start).format() !== moment(event.end).format()) {
+    && (event.end && event.end.getHours() === 0 && event.end.getMinutes() === 0) &&
+    moment(event.start).format() !== moment(event.end).format()) {
     return true;
   }
   return false;
 };
 
 // see:
-//  https://react-bootstrap-v3.netlify.app/components/modal/
 //  https://jquense.github.io/react-big-calendar/examples/?path=/docs/props-full-prop-list--page
 
 function idToColorComponent(id) {
@@ -197,24 +194,6 @@ function onHandleTimeUpdate(ev) {
   CalendarActions.updateEntry(entry);
 }
 
-function getEventableIcon(type) {
-  let icon;
-
-  if (type === 'Sample') {
-    icon = 'icon-sample';
-  } else if (type === 'Reaction') {
-    icon = 'icon-reaction';
-  } else if (type === 'Wellplate') {
-    icon = 'icon-wellplate';
-  } else if (type === 'Research Plan') {
-    icon = 'icon-research_plan';
-  } else if (type === 'Screen') {
-    icon = 'icon-screen';
-  }
-
-  return icon;
-}
-
 function onSwitchShowSharedCollectionEntries(val) {
   const {
     start,
@@ -242,307 +221,108 @@ function eventStyleGetter(event) {
   return { style };
 }
 
-export default class Calendar extends React.Component {
-  constructor(props) {
-    super(props);
-    const scrollTime = new Date();
-    scrollTime.setHours(5);
-    scrollTime.setMinutes(55);
 
-    this.state = {
-      showTimeSlotEditor: false,
-      currentEntry: null,
-      currentEntryEditable: false,
-      bounds: {
-        left: 0,
-        top: 0,
-        bottom: 0,
-        right: 0
-      },
-      backgroundClickToClose: true,
-      startDrag: false,
-      dragging: false,
-      dragDisabled: false,
 
-      windowPreviewState: WindowPreviewNone,
-      windowPreviewStateLast: WindowPreviewNone,
-      windowPreviewArgs: {},
-      windowStyleArgs: {
-        width: ModalWidth,
-        height: ModalHeight
-      },
-      windowOffsets: {
-        x: 0,
-        y: 0
-      },
-      scrollTime,
-      isFullScreen: false,
-      showOwnEntries: false,
-      currentView: null,
+
+
+const Calendar = () => {
+  const { currentUser } = UserStore.getState();
+  const { clientWidth, clientHeight } = window.document.documentElement;
+  let modalDimensions = { width: 900, height: 700, x: 0, y: 0 }
+  let smallScreen = modalDimensions.width >= clientWidth || modalDimensions.height >= clientHeight;
+
+  const scrollTime = new Date();
+  scrollTime.setHours(5);
+  scrollTime.setMinutes(55);
+
+  const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
+  const [calendarClosed, setCalendarClosed] = useState(true);
+  const [backdrop, setBackdrop] = useState(true);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [currentEntry, setCurrentEntry] = useState(null);
+  const [currentEntryEditable, setCurrentEntryEditable] = useState(false);
+  const [showTimeSlotEditor, setShowTimeSlotEditor] = useState(false);
+  const [showOwnEntries, setShowOwnEntries] = useState(false);
+  const [currentView, setCurrentView] = useState(null);
+  const [calendarStore, setCalendarStore] = useState(CalendarStore.getState());
+
+  const handleResize = () => {
+    const { clientWidth, clientHeight } = window.document.documentElement;
+    const modal = document.querySelector('[data-type="calendar-modal"]');
+    if (!modal) { return null; }
+
+    modalDimensions = modal.getBoundingClientRect();
+    const newPosition = {
+      x: (clientWidth - modalDimensions.width) / 2,
+      y: (clientHeight - modalDimensions.height) / 2
     };
-    this.onRangeChange = this.onRangeChange.bind(this);
-    this.onChange = this.onChange.bind(this);
-    this.closeCalendar = this.closeCalendar.bind(this);
-    this.selectEntry = this.selectEntry.bind(this);
-    this.selectSlotEvent = this.selectSlotEvent.bind(this);
-    this.closeItemEditor = this.closeItemEditor.bind(this);
-    this.handleEntryKeyUpdate = this.handleEntryKeyUpdate.bind(this);
-    this.saveEntry = this.saveEntry.bind(this);
-    this.deleteEntry = this.deleteEntry.bind(this);
-    this.onStartDrag = this.onStartDrag.bind(this);
-    this.onClickBackground = this.onClickBackground.bind(this);
-    this.onLockBackgroundClose = this.onLockBackgroundClose.bind(this);
-    this.handleResize = this.handleResize.bind(this);
-    this.onFullScreen = this.onFullScreen.bind(this);
-    this.onShowOwnEntries = this.onShowOwnEntries.bind(this);
-    this.onDrag = this.onDrag.bind(this);
-    this.onDragStop = this.onDragStop.bind(this);
-    this.enableDrag = this.enableDrag.bind(this);
-    this.disableDrag = this.disableDrag.bind(this);
-    this.draggleHtmlRef = null;
+    setDeltaPosition(newPosition);
+    smallScreen = modalDimensions.width >= clientWidth || modalDimensions.height >= clientHeight;
   }
 
-  componentDidMount() {
-    CalendarStore.listen(this.onChange);
-    window.addEventListener('resize', this.handleResize);
+  useEffect(() => {
+    CalendarStore.listen(onChangeCalendarState);
+    window.addEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (calendarStore.show) {
+      handleResize();
+    }
+
+    if (calendarClosed && calendarStore.show) {
+      setCalendarClosed(false);
+    }
+
+    if (calendarClosed && !calendarStore.show) {
+      CalendarStore.unlisten(onChangeCalendarState());
+      window.removeEventListener('resize', handleResize);
+    }
+  }, [CalendarStore.getState().show]);
+
+  useEffect(() => {
+    if (fullscreen) {
+      setDeltaPosition({ x: 0, y: 0 });
+    } else {
+      handleResize();
+    }
+  }, [fullscreen]);
+
+  const onChangeCalendarState = function () {
+    setCalendarStore(CalendarStore.getState());
+    return true;
   }
 
-  componentWillUnmount() {
-    CalendarStore.unlisten(this.onChange);
-    window.removeEventListener('resize', this.handleResize);
+  const handleDrag = (e, ui) => {
+    const { x, y } = deltaPosition;
+    setDeltaPosition({
+      x: x + ui.deltaX,
+      y: y + ui.deltaY,
+    });
   }
 
-  handleResize() {
-    this.onStartDrag();
+  const getEventableIcon = (type) => {
+    switch (type) {
+      case 'Sample':
+        return 'icon-sample';
+      case 'Reaction':
+        return 'icon-reaction';
+      case 'Wellplate':
+        return 'icon-wellplate';
+      case 'ResearchPlan':
+        return 'fa fa-file-text-o';
+      case 'Screen':
+        return 'icon-screen';
+    }
   }
 
-  handleEntryKeyUpdate(key, value) {
-    let { currentEntry } = this.state;
+  const handleEntryKeyUpdate = (key, value) => {
     currentEntry = currentEntry || {};
     currentEntry[key] = value;
-    this.setState({ currentEntry });
+    setCurrentEntry(currentEntry);
   }
 
-  onChange() {
-    this.setState(CalendarStore.getState());
-  }
-
-  onDragStop(ev) {
-    if (!ev.target) return;
-
-    const evType = ev.target.tagName;
-    if (evType === 'BUTTON' || evType === 'I') {
-      ev.stopPropagation();
-      ev.preventDefault();
-      return;
-    }
-
-    const { dragging } = this.state;
-    if (!dragging) {
-      ev.stopPropagation();
-      ev.preventDefault();
-      return;
-    }
-
-    if (ev.x < DragThreshold) {
-      this.setState({
-        startDrag: false,
-        dragging: false,
-        partialWindow: true,
-        windowPreviewState: WindowPreviewNone,
-        windowPreviewStateLast: WindowPreviewLeft,
-        windowPreviewArgs: getPreviewStyleArgs(WindowPreviewNone),
-        windowStyleArgs: getPreviewStyleArgs(WindowPreviewLeft),
-        windowOffsets: { x: 0, y: 0 }
-      });
-    } else if (window.document.documentElement.clientWidth - ev.x < DragThreshold) {
-      this.setState({
-        startDrag: false,
-        dragging: false,
-        partialWindow: true,
-        windowPreviewState: WindowPreviewNone,
-        windowPreviewStateLast: WindowPreviewRight,
-        windowPreviewArgs: getPreviewStyleArgs(WindowPreviewNone),
-        windowStyleArgs: getPreviewStyleArgs(WindowPreviewRight),
-        windowOffsets: { x: 0, y: 0 }
-      });
-    } else if (ev.y < DragThreshold) {
-      this.setState({
-        startDrag: false,
-        dragging: false,
-        partialWindow: true,
-        windowPreviewState: WindowPreviewNone,
-        windowPreviewStateLast: WindowPreviewFullScreen,
-        windowPreviewArgs: getPreviewStyleArgs(WindowPreviewNone),
-        windowStyleArgs: getPreviewStyleArgs(WindowPreviewFullScreen),
-        windowOffsets: { x: 0, y: 0 }
-      });
-    } else {
-      this.setState({
-        startDrag: false,
-        dragging: false,
-        windowPreviewStateLast: WindowPreviewNone,
-        windowOffsets: { x: 0, y: 0 }
-      });
-    }
-  }
-
-  onDrag(ev) {
-    if (!ev.target) return;
-
-    const evType = ev.target.tagName;
-    if (evType === 'BUTTON' || evType === 'I') {
-      ev.stopPropagation();
-      ev.preventDefault();
-      return;
-    }
-
-    const { windowPreviewState, startDrag, dragging } = this.state;
-    if (!dragging) {
-      ev.stopPropagation();
-      ev.preventDefault();
-      return;
-    }
-
-    const { clientWidth, clientHeight } = window.document.documentElement;
-    const smallScreen = ModalWidth >= clientWidth || ModalHeight >= clientHeight;
-    if (smallScreen) return;
-
-    if (ev.x < DragThreshold) {
-      if (windowPreviewState !== WindowPreviewLeft) {
-        this.setState({
-          windowPreviewState: WindowPreviewLeft,
-          windowPreviewArgs: getPreviewStyleArgs(WindowPreviewLeft)
-        });
-      }
-    } else if (clientWidth - ev.x < DragThreshold) {
-      if (windowPreviewState !== WindowPreviewRight) {
-        this.setState({
-          windowPreviewState: WindowPreviewRight,
-          windowPreviewArgs: getPreviewStyleArgs(WindowPreviewRight)
-        });
-      }
-    } else if (ev.y < DragThreshold) {
-      if (windowPreviewState !== WindowPreviewFullScreen) {
-        this.setState({
-          windowPreviewState: WindowPreviewFullScreen,
-          windowPreviewArgs: getPreviewStyleArgs(WindowPreviewFullScreen)
-        });
-      }
-    } else if (windowPreviewState !== WindowPreviewNone) {
-      this.setState({
-        windowPreviewState: WindowPreviewNone,
-        windowPreviewArgs: getPreviewStyleArgs(WindowPreviewNone)
-      });
-    }
-
-    if (startDrag) {
-      this.setState({
-        startDrag: false
-      });
-    }
-  }
-
-  onStartDrag(event) {
-    if (!event?.target) return;
-
-    const evType = event.target.tagName;
-    if (evType === 'BUTTON' || evType === 'I') {
-      event.stopPropagation();
-      event.preventDefault();
-      return;
-    }
-
-    this.setState({
-      dragging: true,
-    });
-
-    if (!this.draggleHtmlRef) {
-      this.draggleHtmlRef = document.querySelector('.calendarModal');
-    }
-
-    const { clientWidth, clientHeight } = document.documentElement;
-    const targetRect = this.draggleHtmlRef.getBoundingClientRect();
-    const SmallScreen = ModalWidth >= clientWidth || ModalHeight >= clientHeight;
-    const { windowPreviewStateLast } = this.state;
-
-    const hideFactor = 1 / 3;
-    const bounds = {
-      left: -targetRect.width * (1 - hideFactor),
-      right: clientWidth - targetRect.width * hideFactor,
-      top: 0,
-      bottom: clientHeight - (targetRect.height * hideFactor)
-    };
-
-    if (SmallScreen) {
-      this.setState({
-        partialWindow: false,
-        isFullScreen: true,
-        bounds,
-        windowStyleArgs: {
-          width: clientWidth,
-          height: clientHeight,
-        }
-      });
-    } else {
-      this.setState({
-        startDrag: true,
-        partialWindow: false,
-        isFullScreen: false,
-        bounds,
-        windowStyleArgs: {
-          width: ModalWidth,
-          height: ModalHeight,
-        },
-        windowOffsets: getWindowStyleOffsets(windowPreviewStateLast),
-      });
-    }
-  }
-
-  onClickBackground(ev) {
-    const { backgroundClickToClose } = this.state;
-    if (backgroundClickToClose) {
-      this.closeCalendar();
-      ev.stopPropagation();
-      ev.preventDefault();
-    }
-  }
-
-  onShowOwnEntries(val) {
-    this.setState({ showOwnEntries: val });
-  }
-
-  onFullScreen(val) {
-    if (val) {
-      this.setState({
-        isFullScreen: true,
-        windowStyleArgs: {
-          width: window.innerWidth,
-          height: window.innerHeight,
-          left: 0,
-          top: 0,
-        },
-        windowPreviewStateLast: WindowPreviewFullScreen,
-      });
-    } else {
-      this.setState({
-        isFullScreen: false,
-        windowStyleArgs: {
-          width: ModalWidth,
-          height: ModalHeight,
-          left: 'initial',
-          top: 'initial',
-        },
-        windowPreviewStateLast: WindowPreviewNone,
-      });
-    }
-  }
-
-  onLockBackgroundClose(val) {
-    this.setState({ backgroundClickToClose: val });
-  }
-
-  onRangeChange(range, view) {
+  const onRangeChange = (range, view) => {
     let newRange = range;
 
     if (Array.isArray(range)) {
@@ -569,7 +349,7 @@ export default class Calendar extends React.Component {
     } = CalendarStore.getState();
 
     if (view) {
-      this.setState({ currentView: view });
+      setCurrentView(view);
     }
 
     if (start <= newRange.start && end >= newRange.end) return;
@@ -584,23 +364,13 @@ export default class Calendar extends React.Component {
     CalendarActions.setViewParams(params);
   }
 
-  enableDrag() {
-    this.setState({ dragDisabled: false });
+  const closeItemEditor = () => {
+    setCurrentEntry({});
+    setShowTimeSlotEditor(false);
+    setCurrentEntryEditable(false);
   }
 
-  disableDrag() {
-    this.setState({ dragDisabled: true });
-  }
-
-  closeItemEditor() {
-    this.setState({
-      currentEntry: {},
-      showTimeSlotEditor: false,
-      currentEntryEditable: false,
-    });
-  }
-
-  selectEntry(entry) {
+  const selectEntry = (entry) => {
     if (entry.eventableType) {
       CalendarActions.getEventableUsers({
         eventable_type: entry.eventableType,
@@ -610,14 +380,12 @@ export default class Calendar extends React.Component {
       CalendarActions.clearEventableUsers();
     }
 
-    this.setState({
-      currentEntry: entry,
-      showTimeSlotEditor: true,
-      currentEntryEditable: canEditEntry(entry)
-    });
+    setCurrentEntry(entry);
+    setShowTimeSlotEditor(true);
+    setCurrentEntryEditable(canEditEntry(entry));
   }
 
-  selectSlotEvent(entry) {
+  const selectSlotEvent = (entry) => {
     const { eventableType, eventableId } = CalendarStore.getState();
 
     if (eventableType) {
@@ -629,15 +397,12 @@ export default class Calendar extends React.Component {
       CalendarActions.clearEventableUsers();
     }
 
-    this.setState({
-      currentEntry: buildNewEntry(entry),
-      showTimeSlotEditor: true,
-      currentEntryEditable: canEditEntry(entry)
-    });
+    setCurrentEntry(buildNewEntry(entry));
+    setShowTimeSlotEditor(true);
+    setCurrentEntryEditable(canEditEntry(entry));
   }
 
-  saveEntry() {
-    const { currentEntry } = this.state;
+  const saveEntry = () => {
     const { title } = currentEntry;
     if (!title) {
       // eslint-disable-next-line no-alert
@@ -649,28 +414,24 @@ export default class Calendar extends React.Component {
     } else {
       CalendarActions.createEntry(currentEntry);
     }
-    this.closeItemEditor();
+    closeItemEditor();
   }
 
-  deleteEntry() {
-    const { currentEntry } = this.state;
+  const deleteEntry = () => {
     CalendarActions.deleteEntry(currentEntry.id);
-    this.closeItemEditor();
+    closeItemEditor();
   }
 
-  closeCalendar() {
-    this.setState({
-      currentEntry: null,
-      showTimeSlotEditor: false
-    });
-
+  const closeCalendar = () => {
+    setCurrentEntry(null);
+    setShowTimeSlotEditor(false);
+    setCalendarClosed(true);
     CalendarActions.hideCalendar();
   }
 
-  filterEntries(entries, options) {
+  const filterEntries = (entries, options) => {
     if (options.eventableType) {
       // eventable calendar
-      const { showOwnEntries } = this.state;
       if (showOwnEntries) {
         return entries;
       }
@@ -684,204 +445,145 @@ export default class Calendar extends React.Component {
     return entries;
   }
 
-  render() {
-    const {
-      show,
-      entries,
-      eventableType,
-      eventableId,
-      showSharedCollectionEntries
-    } = CalendarStore.getState();
-    const {
-      showTimeSlotEditor,
-      currentEntry,
-      currentEntryEditable,
-      bounds,
-      showOwnEntries,
-      backgroundClickToClose,
-      isFullScreen,
-      partialWindow,
-      windowPreviewArgs,
-      windowStyleArgs,
-      windowOffsets,
-      startDrag,
-      dragDisabled,
-      windowPreviewState,
-      scrollTime,
-      currentView
-    } = this.state;
-    const { currentUser } = UserStore.getState();
-    const { clientWidth, clientHeight } = window.document.documentElement;
-    const smallScreen = ModalWidth >= clientWidth || ModalHeight >= clientHeight;
-    const defaultPosition = {
-      x: (clientWidth - ModalWidth) / 2,
-      y: (clientHeight - ModalHeight) / 2
-    };
+  const filteredEntries = filterEntries(calendarStore.entries, {
+    eventableType: calendarStore.eventableType,
+    eventableId: calendarStore.eventableId,
+    showSharedCollectionEntries: calendarStore.showSharedCollectionEntries
+  });
 
-    currentUserId = currentUser?.id;
+  const toggleEntries = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (calendarStore.eventableType) {
+      setShowOwnEntries(!showOwnEntries);
+    } else {
+      const {
+        start,
+        end,
+        eventableType,
+        eventableId
+      } = CalendarStore.getState();
 
-    const filteredEntries = this.filterEntries(entries, {
-      eventableType,
-      eventableId,
-      showSharedCollectionEntries
-    });
+      const params = {
+        start,
+        end,
+        eventableType,
+        eventableId,
+        showSharedCollectionEntries: !calendarStore.showSharedCollectionEntries
+      };
 
-    if (show && !currentView) {
-      setTimeout(() => {
-        this.setState({ currentView: 'week' });
-      }, 10);
+      CalendarActions.setViewParams(params);
     }
+  }
 
-    setCurrentViewForEventRenderer(currentView);
-    let dragPosition = null;
-    if (smallScreen || isFullScreen) {
-      dragPosition = { x: 0, y: 0 };
-    } else if ((partialWindow || startDrag)) {
-      dragPosition = windowOffsets;
-    }
+  const toggleFullscreen = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setFullscreen(!fullscreen);
+  }
 
-    function headerDescription() {
-      return ` ${eventableType} - Calendar`;
-    }
+  const toggleBackdrop = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setBackdrop(!backdrop);
+  }
+
+  const headerDescription = () => {
+    if (!calendarStore.eventableType) { return 'Calendar'; }
 
     return (
-      <div
-        role="button"
-        tabIndex="-1"
-        onKeyUp={() => { }}
-        onClick={this.onClickBackground}
-        className="calendarModalBackground"
-        style={{
-          display: show ? 'initial' : 'none',
-          pointerEvents: backgroundClickToClose ? 'initial' : 'none',
-          backgroundColor: backgroundClickToClose ? '#50505050' : 'transparent'
-        }}
-      >
-        <div
-          className="calendarDragPreview"
-          style={{
-            ...windowPreviewArgs,
-            opacity: (windowPreviewState === WindowPreviewNone ? 0 : 1)
-          }}
-        />
-        <Draggable
-          handle=".handle"
-          bounds={bounds}
-          disabled={smallScreen || dragDisabled}
-          defaultPosition={defaultPosition}
-          position={dragPosition}
-          onStart={this.onStartDrag}
-          onDrag={this.onDrag}
-          onStop={this.onDragStop}
-        >
-          <div
-            role="button"
-            tabIndex="0"
-            onKeyUp={() => { }}
-            onKeyDown={() => { }}
-            style={windowStyleArgs}
-            className="calendarModal"
-            onClick={(ev) => {
-              ev.stopPropagation();
-              ev.preventDefault();
-            }}
-          >
-            <div className="calendarHeader handle">
-              <header>
-                { eventableType ? (
-                  <span>
-                    <i className={getEventableIcon(eventableType)} />
-                    {headerDescription()}
-                  </span>
-                ) : 'Calendar' }
-              </header>
-              <div className="calendarHeaderActions">
-                { eventableType ? (
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip id="showMyEntries">Show my entries</Tooltip>}>
-                    <Button
-                      size="sm"
-                      type="button"
-                      variant={showOwnEntries ? 'success' : 'light'}
-                      onKeyUp={() => { }}
-                      onMouseEnter={this.disableDrag}
-                      onMouseLeave={this.enableDrag}
-                      onClick={(e) => {
-                        this.onShowOwnEntries(!showOwnEntries);
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }}
-                    >
-                      <i className="fa fa-user-plus" />
-                      &nbsp;
-                    </Button>
-                  </OverlayTrigger>
-                ) : (
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip id="showSharedCollectionEntries">Show shared collection entries</Tooltip>}>
-                    <Button
-                      size="sm"
-                      type="button"
-                      variant={showSharedCollectionEntries ? 'success' : 'light'}
-                      onMouseEnter={this.disableDrag}
-                      onMouseLeave={this.enableDrag}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        onSwitchShowSharedCollectionEntries(!showSharedCollectionEntries);
-                      }}
-                    >
-                      <i className="fa fa-files-o" />
-                      &nbsp;
-                    </Button>
-                  </OverlayTrigger>
-                )}
-                { smallScreen ? null : (
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullscreenCalendar">FullScreen</Tooltip>}>
-                    <Button
-                      size="sm"
-                      type="button"
-                      variant={isFullScreen ? 'success' : 'light'}
-                      onMouseEnter={this.disableDrag}
-                      onMouseLeave={this.enableDrag}
-                      onClick={(e) => {
-                        this.onFullScreen(!isFullScreen);
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }}
-                    >
-                      <i className="fa fa-expand" />
-                      &nbsp;
-                    </Button>
-                  </OverlayTrigger>
-                )}
-                { smallScreen ? null : (
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip id="calendarBackgroundClickDescription">Click in background without closing Calendar</Tooltip>}>
-                    <Button
-                      size="sm"
-                      type="button"
-                      variant={backgroundClickToClose ? 'light' : 'info'}
-                      onMouseEnter={this.disableDrag}
-                      onMouseLeave={this.enableDrag}
-                      onClick={(e) => {
-                        this.onLockBackgroundClose(!backgroundClickToClose);
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }}
-                    >
-                      { backgroundClickToClose ? <i className="fa fa-unlock" /> : <i className="fa fa-lock" /> }
-                      &nbsp;
-                    </Button>
-                  </OverlayTrigger>
-                )}
-                <OverlayTrigger placement="bottom" overlay={<Tooltip id="closeCalendarButtonDescription">Close Calendar</Tooltip>}>
-                  <Button size="sm" type="button" variant="danger" onClick={this.closeCalendar}>
-                    <i className="fa fa-close" />
-                    &nbsp;
-                  </Button>
-                </OverlayTrigger>
-              </div>
+      <>
+        <i className={`${getEventableIcon(calendarStore.eventableType)} me-2`} />
+        {calendarStore.eventableType} - Calendar
+      </>
+    );
+  }
 
-            </div>
-            <div className="calendarBody">
+  const modalPropertiesButtons = () => {
+    if (smallScreen) { return null; }
+
+    return (
+      <>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="toggle-fullscreen">FullScreen</Tooltip>}
+        >
+          <Button
+            variant={fullscreen ? 'success' : 'light'}
+            onClick={(e) => { toggleFullscreen(e) }}
+          >
+            <i className="fa fa-expand" />
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="toggle-backdrop">Click in background without closing Calendar</Tooltip>}
+        >
+          <Button
+            type="button"
+            variant={backdrop ? 'light' : 'info'}
+            onClick={(e) => { toggleBackdrop(e) }}
+          >
+            {backdrop ? <i className="fa fa-unlock" /> : <i className="fa fa-lock" />}
+          </Button>
+        </OverlayTrigger>
+      </>
+    );
+  }
+
+  const showEntriesButton = () => {
+    const tooltip = calendarStore.eventableType ? 'Show my entries' : 'Show shared collection entries';
+    const variant = showOwnEntries || calendarStore.showSharedCollectionEntries ? 'success' : 'light';
+    const icon = calendarStore.eventableType ? 'fa fa-user-plus' : 'fa fa-files-o';
+
+    return (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id={tooltip.replace(' ', '-')}>{tooltip}</Tooltip>}
+      >
+        <Button
+          variant={variant}
+          onKeyUp={() => {}}
+          onClick={(e) => { toggleEntries(e) }}
+        >
+          <i className={icon} />
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+
+  return (
+    <Draggable handle=".modal-header" onDrag={handleDrag}>
+      <div>
+        <Modal
+          size="xl"
+          show={calendarStore.show}
+          onHide={() => closeCalendar()}
+          backdrop={backdrop}
+          fullscreen={fullscreen}
+          className="draggable-modal-dialog calendar"
+          dialogClassName="draggable-modal"
+          contentClassName="draggable-modal-content calendar"
+          data-type="calendar-modal"
+          style={{
+            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
+          }}
+        >
+     
+          <Modal.Header closeButton>
+            <Stack direction="horizontal" className="draggable-modal-stack" gap={3}>
+              <Modal.Title className="draggable-modal-stack-title">
+                {headerDescription()}
+              </Modal.Title>
+              <ButtonGroup className="ms-5 ms-lg-auto me-lg-5 gap-2">
+                {showEntriesButton()}
+                {modalPropertiesButtons()}
+              </ButtonGroup>
+            </Stack>
+          </Modal.Header>
+        
+          <Modal.Body>
+            <div className="overflow-y-auto" style={{ height: fullscreen ? '95vh' : '620px' }}>
               <DragAndDropCalendar
                 components={{
                   event: CalendarEvent
@@ -892,13 +594,13 @@ export default class Calendar extends React.Component {
                 view={currentView || 'month'}
                 startAccessor="start"
                 endAccessor="end"
-                className="calendar"
+                style={{ height: 'inherit' }}
                 selectable
                 resizable
-                onRangeChange={this.onRangeChange}
-                onView={() => { }} // prevent warning message in browser
-                onSelectEvent={this.selectEntry}
-                onSelectSlot={this.selectSlotEvent}
+                onRangeChange={onRangeChange}
+                onView={() => {}} // prevent warning message in browser
+                onSelectEvent={selectEntry}
+                onSelectSlot={selectSlotEvent}
                 onEventDrop={onHandleTimeUpdate}
                 onEventResize={onHandleTimeUpdate}
                 step={15}
@@ -907,34 +609,36 @@ export default class Calendar extends React.Component {
                 showMultiDayTimes={false}
                 formats={formats}
                 allDayAccessor={allDayAccessor}
-                // enableAutoScroll={true}
+              // enableAutoScroll={true}
               />
 
               <CalendarEntryEditor
                 show={showTimeSlotEditor}
-                closeModal={this.closeItemEditor}
+                closeModal={closeItemEditor}
                 entry={currentEntry}
-                updateEntry={this.handleEntryKeyUpdate}
-                saveEntry={this.saveEntry}
-                deleteEntry={this.deleteEntry}
+                updateEntry={handleEntryKeyUpdate}
+                saveEntry={saveEntry}
+                deleteEntry={deleteEntry}
                 editable={currentEntryEditable}
                 onShowLink={() => {
-                  this.onLockBackgroundClose(false);
-                  this.setState({
-                    startDrag: false,
-                    partialWindow: true,
-                    windowPreviewState: WindowPreviewNone,
-                    windowPreviewStateLast: WindowPreviewLeft,
-                    windowPreviewArgs: getPreviewStyleArgs(WindowPreviewNone),
-                    windowStyleArgs: getPreviewStyleArgs(WindowPreviewLeft),
-                    windowOffsets: { x: 0, y: 0 }
-                  });
+                  //this.onLockBackgroundClose(false);
+                  //this.setState({
+                  //  startDrag: false,
+                  //  partialWindow: true,
+                  //  windowPreviewState: WindowPreviewNone,
+                  //  windowPreviewStateLast: WindowPreviewLeft,
+                  //  windowPreviewArgs: getPreviewStyleArgs(WindowPreviewNone),
+                  //  windowStyleArgs: getPreviewStyleArgs(WindowPreviewLeft),
+                  //  windowOffsets: { x: 0, y: 0 }
+                  //});
                 }}
               />
             </div>
-          </div>
-        </Draggable>
+          </Modal.Body>
+        </Modal>
       </div>
-    );
-  }
-}
+    </Draggable>
+  );
+};
+
+export default Calendar;
