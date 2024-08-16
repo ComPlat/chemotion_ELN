@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, Button, Form } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
@@ -62,27 +62,26 @@ export default class ComputedPropsContainer extends React.Component {
     );
 
     return (
-      <div>
+      <>
+      <div className="d-flex align-items-center">
         <SampleComputedProps cprops={cprops} />
         <Button
           variant="success"
           size="sm"
           onClick={this.onClickComputeBtn}
-          className="my-2"
+          className="my-2 ms-auto"
         >
-          <i className="fa fa-paper-plane gap-2" />
+          <i className="fa fa-paper-plane me-1" />
             Compute
-        </Button>
-        <ButtonGroup vertical block>
+          </Button>
+          </div>
           <Button
             size="sm"
-            className="mb-4"
-            style={{ backgroundColor: '#ddd' }}
+            className="w-100 bg-gray-300 p-0 text-gray-600 mt-3"
             onClick={this.toggleGraph}
           >
-            {text} &nbsp; {arrow}
+            {text} {arrow}
           </Button>
-        </ButtonGroup>
         <ComputedPropsGraphContainer
           show={showGraph}
           graphData={[{ name: sample.short_label, props: lastCProp }]}
@@ -93,7 +92,7 @@ export default class ComputedPropsContainer extends React.Component {
           content={confirmText}
           onClick={this.computePropsFromSmiles}
         />
-      </div>
+      </>
     );
   }
 }
