@@ -39,7 +39,7 @@ function InventoryLabelSettings() {
       const { collections, inventory } = group;
 
       // If the group has an inventory, create a group label
-      if (inventory.id !== null) {
+      if (inventory?.id !== null) {
         const groupLabel = `Collection Group ${groupCounter + 1}`;
         const groupObject = { value: groupLabel, title: groupLabel, children: [] };
 
