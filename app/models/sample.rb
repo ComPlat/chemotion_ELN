@@ -565,25 +565,10 @@ class Sample < ApplicationRecord
 
   def update_inventory_label(inventory_label, collection_id = nil)
     return if collection_id.blank? || skip_inventory_label_update
+    return unless (inventory = Inventory.by_collection_id(collection_id).first)
+    return if inventory_label.present? && !inventory.match_inventory_counter(inventory_label)
 
-    inventory = Inventory.by_collection_id(collection_id).first
-    return if inventory.blank?
-
-    next_inventory_counter = inventory.counter + 1
-    # auto generate inventory_label on sample create if inventory exists for collection
-    if inventory_label.nil?
-      inventory_label = inventory.construct_inventory_label(
-        inventory.prefix,
-        next_inventory_counter,
-      )
-    end
-
-    condition = inventory.match_inventory_counter(inventory_label, next_inventory_counter)
-
-    return nil unless condition && inventory_label
-
-    inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
-    self['xref']['inventory_label'] = inventory.construct_inventory_label(inventory['prefix'], inventory['counter'])
+    self['xref']['inventory_label'] = inventory.label if inventory.update_incremented_counter
   end
 
   private

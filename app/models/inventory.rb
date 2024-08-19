@@ -67,26 +67,24 @@ class Inventory < ApplicationRecord
     end
   end
 
-  def increment_inventory_label_counter(collection_ids)
-    inventory = Collection.find_by(id: collection_ids)&.inventory
-    return if inventory.nil? || inventory['counter'].nil?
-
-    inventory['counter'] = inventory['counter'].succ
-    inventory.save!
-    inventory
+  def update_incremented_counter
+    update(counter: counter + 1)
   end
 
   def self.fetch_inventories(user_id)
     joins(collections: :user).where(users: { id: user_id })
   end
 
-  def match_inventory_counter(inventory_label, next_inventory_counter)
-    label_number_match = inventory_label.match(/(?<=-)?\d+/)
-    label_number = label_number_match[0].to_i if label_number_match
-    label_number == next_inventory_counter
+  # compare the counter of a given label with the current counter+1
+  # @param [String] label
+  # @return [Boolean]
+  def match_inventory_counter(inventory_label)
+    # match the integer part of the label at the end of the string after the last '-'
+    # with the current counter + 1
+    inventory_label.split('-').last.to_i == counter + 1
   end
 
-  def construct_inventory_label(prefix, conuter)
-    "#{prefix}-#{conuter}"
+  def label
+    "#{prefix}-#{counter}"
   end
 end
