@@ -1,8 +1,8 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
+
 
 function KetcherEditor(props) {
   const iframeRef = useRef();
@@ -19,18 +19,10 @@ function KetcherEditor(props) {
     }
   };
 
-  const handleStorageChange = (event) => {
-    if (event.key === 'ketcher-opts') {
-      UsersFetcher.updateUserKetcher2Options(event.newValue);
-    }
-  };
-
   useEffect(() => {
     window.addEventListener('message', loadContent);
-    window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('message', loadContent);
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 

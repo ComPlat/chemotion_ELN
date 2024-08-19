@@ -316,6 +316,7 @@ export default class UsersFetcher {
 
   static updateUserKetcher2Options(list) {
     const data = JSON.parse(list);
+    alert("hit!");
 
     const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
       credentials: 'same-origin',
