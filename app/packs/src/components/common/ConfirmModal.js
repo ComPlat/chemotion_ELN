@@ -12,8 +12,8 @@ function ConfirmModal({ showModal, title, content, onClick, dialogClassName }) {
       </Modal.Body>
       <Modal.Footer className="border-0">
         <ButtonToolbar className="gap-1">
-          <Button variant="danger" onClick={() => onClick(true)}>Yes</Button>
           <Button variant="primary" onClick={() => onClick(false)}>No</Button>
+          <Button variant="danger" onClick={() => onClick(true)}>Yes</Button>
         </ButtonToolbar>
       </Modal.Footer>
     </Modal>
