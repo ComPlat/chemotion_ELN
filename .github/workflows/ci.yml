@@ -121,15 +121,15 @@ jobs:
           RAILS_ENV=test bundle exec rake db:test:prepare
           RAILS_ENV=test bundle exec rake db:seed
 
-      - name: npm test
-        run: npm test
-
+          - name: npm test
+          run: npm test
+  
       - name: rspec unit
         run: |
           eval `ssh-agent`
           ssh-add $HOME/.ssh/id_test
           RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
-
+  
       - name: coverage rspec unit
         if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (github.triggering_actor != 'dependabot[bot]')  # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
         uses: zgosalvez/github-actions-report-lcov@v1
@@ -139,10 +139,14 @@ jobs:
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: precompile
-#        run: RAILS_ENV=test bundle exec rake webpacker:compile
+      - name: install missing Cypress dependencies # TODO: this is an interim solution; install in Docker image instead
+        run: apt-get update && apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
-#      - name: rspec acceptance
-#        continue-on-error: true    # don't fail job because this step; TODO: fix flaky acceptance tests...
-#        run: RAILS_ENV=test bundle exec rspec spec/features
+      - name: precompile JS assets (public/packs-test)
+        run: RAILS_ENV=test bundle exec rake webpacker:compile
+        
+      - name: start background server
+        run: RAILS_ENV=test $(which bundle) exec rails server -d -b 0.0.0.0 -p 3000
 
+      - name: run Cypress tests # wait on server? (https://til.simonwillison.net/bash/start-test-then-stop-server)
+        run: yarn cypress run --config-file cypress.config.js
