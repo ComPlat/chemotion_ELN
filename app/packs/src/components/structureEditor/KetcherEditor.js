@@ -1,6 +1,6 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
@@ -16,6 +16,10 @@ function KetcherEditor(props) {
   const loadContent = (event) => {
     if (event.data.eventType === 'init') {
       editor.structureDef.editor.setMolecule(initMol);
+      // const sub = editor.structureDef.editor.editor;
+      // sub.subscribe("change", (item) => console.log({ change: item }));
+      // sub.subscribe("message", (item) => console.log({ message: item }));
+      // sub.subscribe("Add atom", (item) => console.log({ message: item }));
     }
   };
 
