@@ -92,12 +92,13 @@ class DatasetContainer extends Component {
 
     const trash = this.props.cache.length === this.props.cache.length // Set it as always show
       && (
-        <OverlayTrigger
-          show={deletingTooltip}
-          animation
-          trigger="click"
-          placement="bottom"
-          overlay={(<Tooltip placement="bottom" className="in" id="tooltip-bottom">
+      <OverlayTrigger
+        show={deletingTooltip}
+        animation
+        trigger="click"
+        placement="bottom"
+        overlay={(
+          <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             {`Delete ${attCount} attachment${attCount > 1 ? 's' : ''}?`}
             <ButtonGroup>
               <Button
@@ -116,13 +117,14 @@ class DatasetContainer extends Component {
               </Button>
             </ButtonGroup>
           </Tooltip>
-          )}
-        >
-          <i
-            className="fa fa-trash-o"
-            onClick={() => this.deleteDataset()}
-            role="button" />
-        </OverlayTrigger>
+        )}
+      >
+        <i
+          className="fa fa-trash-o"
+          onClick={() => this.deleteDataset()}
+          role="button"
+        />
+      </OverlayTrigger>
       );
     const datasetCheckbox = (
       <input
@@ -134,27 +136,27 @@ class DatasetContainer extends Component {
 
     return connectDragSource(
       <div>
-        <ButtonToolbar className="d-flex align-items-center gap-1 w-100">
+        <ButtonToolbar className="d-flex align-items-center gap-2 w-100">
           {datasetCheckbox}
           {trash}
-          <button
-            type="button"
-            className="border-0 bg-transparent"
-            onClick={() => this.setState(prevState => ({ ...prevState, visible: !visible }))}
+          <Button
+            variant="link"
+            className="p-0 d-flex align-items-center border-0 bg-transparent text-decoration-none"
+            onClick={() => this.setState({ visible: !this.state.visible })}
+            aria-expanded={visible}
           >
             <i
-              className={`fa fa-folder${visible ? '-open' : ''}`}
-              role="button"
+              className={`fa fa-folder${visible ? '-open' : ''} text-dark`}
             >
-              <span className="text-info fa fa-arrows ms-1" role="button" />
+              <span className="text-primary fa fa-arrows ms-1" />
             </i>
-            <span className="ms-1">{dataset.name}</span>
-          </button>
+            <span className="ms-1 text-dark">{dataset.name}</span>
+          </Button>
 
           {
             inboxSize && inboxSize !== 'Small'
             && (
-              <span className={`text-info ms-auto ${largerInbox ? '' : 'none'}`}>
+              <span className={`text-dark ms-auto ${largerInbox ? '' : 'none'}`}>
                 {formatDate(dataset.created_at)}
               </span>
             )
