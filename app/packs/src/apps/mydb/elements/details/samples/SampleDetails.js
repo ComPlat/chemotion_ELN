@@ -717,7 +717,7 @@ export default class SampleDetails extends React.Component {
                   show={sample.contains_residues}
                   materialGroup={materialGroup}
                 />
-              ) : (     
+              ) : (
                 <ElementalCompositionGroup
                   handleSampleChanged={(s) => this.handleSampleChanged(s)}
                   sample={sample}
@@ -1498,20 +1498,28 @@ export default class SampleDetails extends React.Component {
         </Card.Header>
         <Card.Body>
           {this.sampleInfo(sample)}
+          <ElementDetailSortTab
+            type="sample"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+            addInventoryTab={sample.inventory_sample}
+          />
           {this.state.sfn && <ScifinderSearch el={sample} />}
           <div className='tabs-container--with-borders'>
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
-              {this.samplePropertiesTab('properties')}
+              {tabContents}
+              {/* {this.samplePropertiesTab('properties')}
               {this.sampleContainerTab('analyses')}
               {this.sampleLiteratureTab()}
               {this.sampleImportReadoutTab('results')}
               {this.qualityCheckTab('qc_curation')}
-              {this.measurementsTab('measurements')}
+              {this.measurementsTab('measurements')}  */}
             </Tabs>
+            {this.sampleFooter()}
+            {this.structureEditorModal(sample)}
+            {this.renderMolfileModal()}
           </div>
-          {this.sampleFooter()}
-          {this.structureEditorModal(sample)}
-          {this.renderMolfileModal()}
           <CommentModal element={sample} />
         </Card.Body>
       </Card>
