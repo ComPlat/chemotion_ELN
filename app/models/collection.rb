@@ -98,14 +98,14 @@ class Collection < ApplicationRecord
   SQL_INVENT_SELECT = 'inventory_id,' \
                       'row_to_json(inventories) AS inventory,' \
                       'JSON_AGG(collections) AS collections'
-  SQL_INVENT_FROM = '(select c.id,c."label",c.inventory_id,' \
+  SQL_INVENT_FROM = '(select c.id,c."label",c.inventory_id,c.deleted_at,' \
                     'c.is_locked,c.is_shared,c.user_id from collections c) collections'
 
   # group by inventory_id for collections owned by user_id
   # @param user_id [Integer] user id
   # @return [ActiveRecord()] array of {inventory_id, inventory, collections: []}
   scope :inventory_collections, lambda { |user_id|
-    unscoped.unlocked.unshared.where(user_id: user_id)
+    unscoped.unlocked.unshared.where(user_id: user_id, deleted_at: nil)
             .joins(SQL_INVENT_JOIN)
             .select(SQL_INVENT_SELECT)
             .from(SQL_INVENT_FROM)
