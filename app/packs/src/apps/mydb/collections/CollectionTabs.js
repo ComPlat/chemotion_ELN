@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import {
-  Button, Form, Modal, Col
+  Button, Modal, Col
 } from 'react-bootstrap';
 import _ from 'lodash';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
