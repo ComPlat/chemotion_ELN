@@ -978,7 +978,6 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
-    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
