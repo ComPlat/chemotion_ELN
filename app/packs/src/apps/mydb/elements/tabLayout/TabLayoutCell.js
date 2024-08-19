@@ -13,7 +13,7 @@ const layoutSource = {
 };
 
 const layoutTarget = {
-  drop(props, monitor, component) {
+  drop(props, monitor) {
     props.moveLayout(monitor.getItem(), props);
   }
 };
@@ -30,7 +30,7 @@ class TabLayoutCell extends Component {
       isCollectionTab
     } = this.props;
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'];
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
     let cellIcon = `icon-${cell}`;
     let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
@@ -44,20 +44,24 @@ class TabLayoutCell extends Component {
     }
 
     let content = isElementDetails ? (
-      <div style={{ width: '100%' }}>
-        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
+      <div className="p-2">
+        <p className={`text-center fs-6 ${title === 'hidden' ? 'text-muted' : ''}`}>
+          {title === 'hidden' ? '-' : title}
+        </p>
       </div>
     ) : (
       <div>
-        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')}>
+        <i className={`${cellIcon} text-center`} title={[cellTitle, cellDescription].join(': ')}>
           {isHidden ? '\u00A0' : ''}
         </i>
       </div>
     );
 
     content = isCollectionTab ? (
-      <div style={{ width: 'auto' }}>
-        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
+      <div className="w-auto">
+        <p className={`text-center p-0 m-0 ${title === 'hidden' ? 'text-muted' : ''}`}>
+          {title === 'hidden' ? '-' : title}
+        </p>
       </div>
     ) : (
       content
