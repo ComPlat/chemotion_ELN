@@ -194,6 +194,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
               disabled={researchPlan.isMethodDisabled('name')}
               onChange={this.handleNameChange}
               edit={edit}
+              onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             />
             <ResearchPlanDetailsBody
               body={body}
