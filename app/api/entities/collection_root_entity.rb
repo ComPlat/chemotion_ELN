@@ -1,6 +1,8 @@
 module Entities
   class CollectionRootEntity < Grape::Entity
-    expose :inventory_id, :inventory_prefix, :inventory_name
+    expose(:inventory_id) { |obj| obj['inventory_id'] }
+    expose(:inventory_prefix) { |obj| obj['inventory_prefix'] }
+    expose(:inventory_name) { |obj| obj['inventory_name'] }
 
     expose :id do |obj|
         obj['id']
