@@ -25,7 +25,8 @@ const DetailSearch = () => {
   let genericFields = [];
   let genericSelectOptions = [];
   let fieldsByTab = [];
-  let datasetOptions = []
+  let datasetOptions = [];
+  let datasetSelectOptions = [];
   let inventoryData = SampleInventoryFieldData.chemicals;
   let analysesData = AnalysesFieldData.containers;
   let measurementData = MeasurementFieldData.measurements;
@@ -82,7 +83,7 @@ const DetailSearch = () => {
               Object.assign(v, { key: value[1].key });
             }
             if (v.table === undefined) {
-              Object.assign(v, { table: 'datasets', column: `datasets_${v.field}` });
+              Object.assign(v, { table: 'datasets', column: `datasets_${v.field}`, term_id: dataset.ols_term_id });
             }
             mappedValues.push(v);
           });
@@ -127,9 +128,9 @@ const DetailSearch = () => {
         {
           value: {
             type: 'headline',
-            label: 'Datasets',
+            label: 'Dataset metadata',
           },
-          label: 'Datasets',
+          label: 'Dataset metadata',
         },
         {
           label: 'Datasets',
@@ -152,9 +153,19 @@ const DetailSearch = () => {
   if (dsKlasses) {
     dsKlasses.forEach((dataset) => {
       datasetOptions.push({ key: dataset.ols_term_id, label: dataset.label, value: dataset.ols_term_id });
-      Object.assign(genericSelectOptions, dataset.properties_template.select_options);
+      if (dataset.properties_template.select_options) {
+        Object.entries(dataset.properties_template.select_options).map((options) => {
+          datasetSelectOptions[`${options[0]}_${dataset.ols_term_id.replace(':', '_')}`] = options[1];
+        });
+      }
     });
-    Object.assign(genericSelectOptions, { datasets: { options: datasetOptions } });
+    Object.assign(
+      genericSelectOptions,
+      {
+        datasets: { options: datasetOptions },
+        dataset_select: { options: datasetSelectOptions }
+      }
+    );
   }
 
   if (genericEls) {
@@ -252,9 +263,15 @@ const DetailSearch = () => {
   const optionsForSelect = (option) => {
     let options = [];
     let genericOptions = [];
+    let optionKey = '';
+    let datasetOptionsByKey = [];
 
     if (option.field !== undefined) {
       genericOptions = genericFields.length >= 1 ? genericFields : fieldsByTab;
+    }
+    if (option.term_id && genericSelectOptions['dataset_select']) {
+      optionKey = `${option.option_layers}_${option.term_id.replace(':', '_')}`;
+      datasetOptionsByKey = genericSelectOptions['dataset_select'].options[optionKey];
     }
 
     if (option.type == 'system-defined') {
@@ -267,11 +284,16 @@ const DetailSearch = () => {
       } else {
         options = systemOptions.units;
       }
+    } else if (option.term_id && optionKey && datasetOptionsByKey) {
+      Object.values(datasetOptionsByKey.options).forEach((selectOption) => {
+        selectOption.value = selectOption.value ? selectOption.value : selectOption.label;
+        options.push(selectOption);
+      });
     } else if ((genericOptions.length >= 1 || option.column === 'datasets_type')
       && genericSelectOptions[option.option_layers]) {
-      Object.values(genericSelectOptions[option.option_layers].options).forEach((option) => {
-        option.value = option.value ? option.value : option.label;
-        options.push(option);
+      Object.values(genericSelectOptions[option.option_layers].options).forEach((selectOption) => {
+        selectOption.value = selectOption.value ? selectOption.value : selectOption.label;
+        options.push(selectOption);
       });
     } else {
       options = FieldOptions[option.option_layers];
