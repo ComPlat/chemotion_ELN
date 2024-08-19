@@ -51,7 +51,10 @@ class TabLayoutCell extends Component {
       </div>
     ) : (
       <div>
-        <i className={`${cellIcon} text-center`} title={[cellTitle, cellDescription].join(': ')}>
+        <i
+          className={`${cellIcon} text-center ${isHidden ? 'text-gray-600' : 'text-primary'}`}
+          title={[cellTitle, cellDescription].join(': ')}
+        >
           {isHidden ? '\u00A0' : ''}
         </i>
       </div>
