@@ -262,6 +262,58 @@ export default class StructureEditorModal extends React.Component {
     }).catch((err) => console.log('ISSUE WITH create'));
   }
 
+
+  // helper functions for ketcher-tmpls
+  addAttachmentidToNewUserTemplate(attachment_id, newValue, newItem) {
+    newItem.props.path = attachment_id;
+    newValue[newValue.length - 1] = newItem;
+    localStorage.setItem(key, JSON.stringify(newValue));
+
+    this.setState({ deleteAllowed: false });
+    // udpate user profile
+    UsersFetcher.updateUserProfile({
+      user_template: attachment_id,
+    });
+  }
+
+  removeUserTemplate(listOfLocalid, oldValue) {
+    for (let i = 0; i < oldValue.length; i++) {
+      const localItem = oldValue[i];
+      const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
+        localItem.props.path
+      );
+      if (itemIndexShouldBeRemoved == -1) {
+        ProfilesFetcher.deleteUserTemplate({
+          path: localItem?.props.path,
+        });
+        break;
+      }
+    }
+  }
+
+  async updateUserTemplateDetails(listOfLocalNames, oldValue, newValue) {
+    for (let i = 0; i < oldValue.length; i++) {
+      const localItem = JSON.parse(oldValue[i].struct);
+
+      const itemIndexShouldBeRemoved = listOfLocalNames.indexOf(
+        localItem.header.moleculeName
+      );
+
+      if (itemIndexShouldBeRemoved == -1) {
+        await ProfilesFetcher.deleteUserTemplate({
+          path: newValue[i].props.path,
+        }).catch(() =>
+          console.log('ISSUE WITH DELETE', localItem?.props?.path)
+        );
+        this.deleteAndStoreItemAgain(newValue[i]);
+        break;
+      } else {
+        console.log('INDEX NOT FOUND@');
+      }
+    }
+  }
+  // helpers end
+
   localStorageEventListener() {
     window.addEventListener(
       'storage',
@@ -270,62 +322,22 @@ export default class StructureEditorModal extends React.Component {
         newValue = JSON.parse(newValue);
         oldValue = JSON.parse(oldValue);
         const { deleteAllowed } = this.state;
-        if (event.key === key && deleteAllowed) {
-          if (newValue.length > oldValue.length) {
+        if (event.key === key && deleteAllowed) { // matching key
+          if (newValue.length > oldValue.length) { // when a new template is added
             let newItem = newValue[newValue.length - 1];
             const res = await ProfilesFetcher.uploadUserTemplates({
               content: JSON.stringify(newItem),
             });
-
             const attachment_id = res?.template_details?.attachment_data?.id;
-            newItem.props.path = attachment_id;
-            newValue[newValue.length - 1] = newItem;
-            localStorage.setItem(key, JSON.stringify(newValue));
-            this.setState({ deleteAllowed: false });
-
-            // udpate user profile
-            UsersFetcher.updateUserProfile({
-              user_template: attachment_id,
-            });
-          } else if (newValue.length < oldValue.length) {
-            // delete
+            this.addAttachmentidToNewUserTemplate(attachment_id, newValue, newItem);
+          } else if (newValue.length < oldValue.length) { // when a template is deleted
             const listOfLocalid = newValue.map((item) => item.props.path);
-            for (let i = 0; i < oldValue.length; i++) {
-              const localItem = oldValue[i];
-              const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
-                localItem.props.path
-              );
-              if (itemIndexShouldBeRemoved == -1) {
-                ProfilesFetcher.deleteUserTemplate({
-                  path: localItem?.props.path,
-                });
-                break;
-              }
-            }
-          } else if (newValue.length == oldValue.length) {
+            this.removeUserTemplate(listOfLocalid, oldValue);
+          } else if (newValue.length == oldValue.length) { // when a template is update atom id, bond id
             const listOfLocalNames = newValue.map(
               (item) => JSON.parse(item.struct).header.moleculeName
             );
-
-            for (let i = 0; i < oldValue.length; i++) {
-              const localItem = JSON.parse(oldValue[i].struct);
-
-              const itemIndexShouldBeRemoved = listOfLocalNames.indexOf(
-                localItem.header.moleculeName
-              );
-
-              if (itemIndexShouldBeRemoved == -1) {
-                await ProfilesFetcher.deleteUserTemplate({
-                  path: newValue[i].props.path,
-                }).catch(() =>
-                  console.log('ISSUE WITH DELETE', localItem?.props?.path)
-                );
-                this.deleteAndStoreItemAgain(newValue[i]);
-                break;
-              } else {
-                console.log('INDEX NOT FOUND@');
-              }
-            }
+            this.updateUserTemplateDetails(listOfLocalNames, oldValue, newValue);
           }
         } else {
           this.setState({ deleteAllowed: true });
