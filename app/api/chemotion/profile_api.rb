@@ -157,6 +157,7 @@ module Chemotion
         requires :content, type: String, desc: 'ketcher file content'
       end
       post do
+        error_messages = []
         file_name = 'template.txt'
         file_path = Rails.root.join('uploads', Rails.env, file_name)
         begin
@@ -172,13 +173,13 @@ module Chemotion
             file_path: file_path,
           )
           begin
-            template_attachment.save!
+            template_attachment.save
           rescue StandardError
             error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
           ensure
             File.delete(file_path)
           end
-          { template_details: template_attachment }
+          { template_details: template_attachment, error_messages: error_messages }
         rescue Errno::EACCES
           error!('Save files error!', 500)
         end
