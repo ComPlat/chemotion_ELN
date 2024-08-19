@@ -194,17 +194,45 @@ module Chemotion
 
       desc 'get user profile editor ketcher 2 setting options'
       get 'editors/ketcher2-options' do
-        Ketcher2Setting.find_by(user_id: current_user.id)
+        # Ketcher2Setting.find_by(user_id: current_user.id)
+        file_path = "ketcher-optns/#{current_user.id}.json"
+        complete_folder_path = Rails.root.join('uploads', Rails.env, file_path)
+        begin
+          JSON(File.read(complete_folder_path))
+        rescue StandardError
+          'Issues with reading settings file'
+        end
       end
 
       desc 'update user profile editor ketcher 2 setting options'
       params do
-        requires :data, type: String, desc: 'data structure for ketcher options'
+        requires :data, type: Hash, desc: 'data structure for ketcher options'
       end
       put 'editors/ketcher2-options' do
-        Ketcher2Setting.where(user_id: current_user.id).delete_all
-        new_settings = Ketcher2Setting.create({ user_id: current_user.id }.merge(JSON.parse(params[:data])))
-        { data: new_settings }
+        error_messages = []
+        folder_path = 'ketcher-optns'
+        complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
+        file_path = "#{complete_folder_path}/#{current_user.id}.json"
+        begin
+          FileUtils.mkdir_p(complete_folder_path) unless File.directory?(complete_folder_path)
+          File.new(file_path, 'w') unless File.exist?(file_path)
+          File.write(file_path, JSON(params[:data]))
+
+          template_attachment = Attachment.new(
+            bucket: 1,
+            filename: file_path,
+            key: 'ketcher-optns',
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: 'text/json',
+            file_path: file_path,
+          )
+          begin
+            template_attachment.save
+          rescue StandardError
+            error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+          end
+        end
       end
     end
   end

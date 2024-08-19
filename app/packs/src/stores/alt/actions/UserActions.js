@@ -66,7 +66,7 @@ class UserActions {
     fetch('/users/sign_out', {
       method: 'delete',
       credentials: 'same-origin',
-      data: {authenticity_token: DocumentHelper.getMetaContent('csrf-token')}
+      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') }
     })
       .then(response => {
         if (response.status == 204) {
@@ -78,8 +78,8 @@ class UserActions {
   fetchProfile() {
     return (dispatch) => {
       UsersFetcher.fetchProfile()
-        .then((result) => {dispatch(result);})
-        .catch((errorMessage) => {console.log(errorMessage);});
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
@@ -133,8 +133,8 @@ class UserActions {
   fetchNoVNCDevices() {
     return (dispatch) => {
       UsersFetcher.fetchNoVNCDevices()
-        .then(result => {dispatch(result);})
-        .catch((errorMessage) => {console.log(errorMessage);});
+        .then(result => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
@@ -166,7 +166,7 @@ class UserActions {
       fetch('/units_system/units_system.json', {
         credentials: 'same-origin',
         cache: 'no-store',
-        headers: {'cache-control': 'no-cache'}
+        headers: { 'cache-control': 'no-cache' }
       }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -176,8 +176,8 @@ class UserActions {
   fetchOmniauthProviders() {
     return (dispatch) => {
       UsersFetcher.fetchOmniauthProviders()
-        .then((result) => {dispatch(result);})
-        .catch((errorMessage) => {console.log(errorMessage);});
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
@@ -186,14 +186,10 @@ class UserActions {
       UsersFetcher.fetchUserKetcher2Options()
         .then((result) => {
           if (result) {
-            const newSource = {};
-            Object.keys(result).forEach((item) => {
-              newSource[item.replaceAll('_', '-')] = result[item];
-            });
-            localStorage.setItem('ketcher-opts', JSON.stringify(newSource));
+            localStorage.setItem('ketcher-opts', JSON.stringify(result));
           }
         })
-        .catch((errorMessage) => {console.log(errorMessage);});
+        .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 }

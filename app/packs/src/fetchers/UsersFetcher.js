@@ -316,10 +316,7 @@ export default class UsersFetcher {
 
   static updateUserKetcher2Options(list) {
     const data = JSON.parse(list);
-    const newSource = {};
-    Object.keys(data).forEach((item) => {
-      newSource[item.replaceAll('-', '_')] = data[item];
-    });
+
     const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
       credentials: 'same-origin',
       method: 'PUT',
@@ -328,7 +325,7 @@ export default class UsersFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        data: JSON.stringify(newSource)
+        data
       })
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);
