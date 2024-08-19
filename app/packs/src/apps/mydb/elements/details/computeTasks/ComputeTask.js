@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 
 import Aviator from 'aviator';
 import Label from 'src/components/legacyBootstrap/Label'
@@ -53,28 +53,28 @@ export default class ComputeTask extends React.Component {
 
     return (
       <tr>
-        <td style={{ textAlign: 'center' }}>
+        <td className="text-center">
           <Button variant="link" onClick={this.navigateSample}>
             Sample
           </Button>
         </td>
-        <td style={{ textAlign: 'center' }}>
+        <td className="text-center">
           <Label variant="primary">{displayStatus}</Label>
         </td>
-        <td style={{ textAlign: 'center' }}>{task.updatedAt}</td>
-        <td style={{ textAlign: 'center' }}>
-          <Button variant="info" onClick={this.checkState} size="sm" style={{ width: '22px' }}>
-            <i className="fa fa-long-arrow-up" />
-            <i className="fa fa-long-arrow-down" />
-          </Button>
-          &nbsp;&nbsp;
-          <Button variant="warning" onClick={this.revokeTask} size="sm">
-            <i className="fa fa-stop" />
-          </Button>
-          &nbsp;&nbsp;
-          <Button variant="danger" onClick={this.deleteTask} size="sm">
-            <i className="fa fa-trash" />
-          </Button>
+        <td className="text-center">{task.updatedAt}</td>
+        <td className="text-center">
+          <ButtonToolbar className="gap-1">
+            <Button variant="info" onClick={this.checkState} size="xsm" style={{ width: '22px' }}>
+              <i className="fa fa-long-arrow-up" />
+              <i className="fa fa-long-arrow-down" />
+            </Button>
+            <Button variant="warning" onClick={this.revokeTask} size="xsm">
+              <i className="fa fa-stop" />
+            </Button>
+            <Button variant="danger" onClick={this.deleteTask} size="xsm">
+              <i className="fa fa-trash" />
+            </Button>
+          </ButtonToolbar>
         </td>
       </tr>
     );
