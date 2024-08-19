@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 
 import Select from 'react-select';
-import { Row, Col, Button, Form, Container, ButtonToolbar } from 'react-bootstrap';
+import {
+  Row, Col, Button, Form, Container, ButtonToolbar
+} from 'react-bootstrap';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -202,14 +204,14 @@ export default class ComputedPropsGraphContainer extends React.Component {
       referencePoints.push({ x: '', y: '', type: 'reference' });
     }
 
-    const data = graphData.filter(dat => dat.props).map(dat => ({
+    const data = graphData.filter((dat) => dat.props).map((dat) => ({
       name: dat.name,
       svgPath: dat.svgPath,
       x: _.get(dat, `props.${xAxisType}`, dat.props.lumo),
       y: _.get(dat, `props.${yAxisType}`, dat.props.mean_abs_potential),
     }));
 
-    const axisSelectOptions = Object.keys(graphSettings).map(k => (
+    const axisSelectOptions = Object.keys(graphSettings).map((k) => (
       { label: graphSettings[k].label, value: k }
     ));
     const templateOptions = graphTemplates.map((templ, idx) => (
@@ -217,8 +219,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
     ));
 
     return (
-      <Container
-        style={style}>
+      <Container style={style}>
         <Row>
           <Col xs={18} md={12}>
             <ComputedPropsGraph
@@ -245,51 +246,51 @@ export default class ComputedPropsGraphContainer extends React.Component {
             <Form horizontal className="flex-grow-1 justify-content-end mt-2">
               <Form.Group controlId="formInlineTemplate" className="mb-2">
                 <Form.Label column sm={4}>Template</Form.Label>
-                  <Select.Creatable
-                    onChange={this.onTemplateChange}
-                    value={curTemplateIdx}
-                    options={templateOptions}
-                    clearable={false}
-                    promptTextCreator={label => `Create new ${label} template`}
-                  />
+                <Select.Creatable
+                  onChange={this.onTemplateChange}
+                  value={curTemplateIdx}
+                  options={templateOptions}
+                  clearable={false}
+                  promptTextCreator={(label) => `Create new ${label} template`}
+                />
               </Form.Group>
               <Form.Group controlId="formInlineXAxis" className="mb-2">
                 <Form.Label column sm={4}>X Axis</Form.Label>
-                  <Select
-                    onChange={this.onXAxisChange}
-                    value={xAxisType}
-                    clearable={false}
-                    options={axisSelectOptions}
-                  />
+                <Select
+                  onChange={this.onXAxisChange}
+                  value={xAxisType}
+                  clearable={false}
+                  options={axisSelectOptions}
+                />
               </Form.Group>
               <Form.Group controlId="formInlineYAxis" className="mb-2">
                 <Form.Label column sm={4}>Y Axis</Form.Label>
-                  <Select
-                    onChange={this.onYAxisChange}
-                    value={yAxisType}
-                    clearable={false}
-                    options={axisSelectOptions}
-                  />
+                <Select
+                  onChange={this.onYAxisChange}
+                  value={yAxisType}
+                  clearable={false}
+                  options={axisSelectOptions}
+                />
               </Form.Group>
               <Form.Group controlId="formInlineRefDesc" className="mb-2">
                 <Form.Label>References Description</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    type="description"
-                    placeholder="Description"
-                    value={referenceDesc}
-                    rows={5}
-                    onChange={e => this.onDescChange(e)}
-                  />
+                <Form.Control
+                  as="textarea"
+                  type="description"
+                  placeholder="Description"
+                  value={referenceDesc}
+                  rows={5}
+                  onChange={e => this.onDescChange(e)}
+                />
               </Form.Group>
-                <ButtonToolbar className="gap-1 mt-2 justify-content-end">
-                  <Button variant="info" size="sm" onClick={this.saveTemplate}>
-                    Save Template
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={this.deleteTemplate}>
-                    Delete Template
-                  </Button>
-                </ButtonToolbar>
+              <ButtonToolbar className="gap-1 mt-2 justify-content-end">
+                <Button variant="info" size="sm" onClick={this.saveTemplate}>
+                  Save Template
+                </Button>
+                <Button variant="danger" size="sm" onClick={this.deleteTemplate}>
+                  Delete Template
+                </Button>
+              </ButtonToolbar>
             </Form>
           </Col>
         </Row>
@@ -306,4 +307,4 @@ ComputedPropsGraphContainer.propTypes = {
 
 ComputedPropsGraphContainer.defaultProps = {
   style: {}
-}
+};
