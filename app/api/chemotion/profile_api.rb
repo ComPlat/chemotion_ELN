@@ -195,7 +195,7 @@ module Chemotion
 
         # remove file from store
         file_path = Rails.root.join('uploads', Rails.env, params[:path])
-        File.delete(file_path) if File.exist?(file_path)
+        FileUtils.rm_f(file_path)
 
         # update profile
         new_profile = {

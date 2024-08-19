@@ -291,16 +291,14 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  async updateUserTemplateDetails(listOfLocalNames, oldValue, newValue) {
+  updateUserTemplateDetails(listOfLocalNames, oldValue, newValue) {
     for (let i = 0; i < oldValue.length; i++) {
       const localItem = JSON.parse(oldValue[i].struct);
-
       const itemIndexShouldBeRemoved = listOfLocalNames.indexOf(
         localItem.header.moleculeName
       );
-
       if (itemIndexShouldBeRemoved == -1) {
-        await ProfilesFetcher.deleteUserTemplate({
+        ProfilesFetcher.deleteUserTemplate({
           path: newValue[i].props.path,
         }).catch(() =>
           console.log('ISSUE WITH DELETE', localItem?.props?.path)
