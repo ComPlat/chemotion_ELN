@@ -21,6 +21,8 @@ class UserAffiliation < ApplicationRecord
   attr_accessor :from_month, :to_month
   validate :from_to, on: :update
 
+  delegate :country, :organization, :department, :group, to: :affiliation, prefix: false, allow_nil: true
+
   private
 
   def from_to
