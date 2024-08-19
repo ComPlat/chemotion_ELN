@@ -107,7 +107,7 @@ module Chemotion
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked, is_shared, inventory_id,
             case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
           SQL
-        ).as_json(include_inventory: true)
+        ).as_json(methods: %i[inventory_name inventory_prefix])
         build_tree.call(collects, false)
       end
 
@@ -121,7 +121,7 @@ module Chemotion
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
             case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
           SQL
-        ).as_json(include_inventory: true)
+        ).as_json(methods: %i[inventory_name inventory_prefix])
         build_tree.call(collects, true)
       end
 
@@ -136,7 +136,7 @@ module Chemotion
             shared_user_as_json(user_id, #{current_user.id}) AS shared_to,
             position
           SQL
-        ).as_json(include_inventory: true)
+        ).as_json(methods: %i[inventory_name inventory_prefix])
         build_tree.call(collects, true)
       end
 
