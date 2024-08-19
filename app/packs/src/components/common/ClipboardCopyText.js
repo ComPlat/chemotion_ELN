@@ -19,10 +19,9 @@ export default class ClipboardCopyText extends Component {
         overlay={<Tooltip id="copy_clipboard">copy to clipboard</Tooltip>}
       >
         <span
-          style={{ display: 'inline' }}
           role="button"
           data-clipboard-text={clipText}
-          className="clipboardBtn"
+          className="clipboardBtn d-inline"
         >
           {this.props.text}
         </span>
