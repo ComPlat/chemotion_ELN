@@ -1,8 +1,8 @@
-.container.my-3
+.container.my-3.d-flex.flex-column.gap-3
   %h1
     Account &amp; Profile
 
-  .card.mb-3
+  .card
     .card-header Reaction Label
     .card-body
       = form_for current_user, url: pages_update_user_path do |f|
@@ -38,7 +38,7 @@
 
   #InventoryLabelSettings
 
-  .card.mb-3
+  .card
     .card-header Sample Title
     .card-body
       = form_for current_user.profile, url: pages_update_profiles_path do |f|
@@ -52,7 +52,7 @@
           .col.offset-8
             = f.submit "Update user settings", class: "btn btn-primary"
 
-  .card.mb-3
+  .card
     .card-header Curation
     .card-body
       = form_for current_user.profile, url: pages_update_profiles_path do |f|
@@ -67,7 +67,7 @@
             = f.submit "Update user profiles", class: "btn btn-primary"
 
   - plugin_with_setting_view_list.each_with_index do |plugin, i|
-    .card.mb-3
+    .card
       .card-header
         = (p=plugin.capitalize.constantize)::const_defined?('TITLE') && p::TITLE || plugin.to_s
       .card-body
@@ -82,6 +82,6 @@
   #UserCounter
 
   = link_to(root_path) do
-    %button.btn.btn-primary Back
+    %button.btn.btn-primary.mb-5 Back
 
   %script{:src => asset_path('pages.js')}

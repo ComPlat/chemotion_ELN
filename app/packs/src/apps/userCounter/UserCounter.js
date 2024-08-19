@@ -99,7 +99,7 @@ class UserCounter extends Component {
       });
 
     return (
-      <Card className="mb-3">
+      <Card>
         <Card.Header>
           Element Counter
         </Card.Header>

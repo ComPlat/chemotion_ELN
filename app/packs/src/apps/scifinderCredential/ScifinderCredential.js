@@ -32,7 +32,7 @@ const ScifinderCredential = () => {
   }, [credential.access_token]);
 
   return (
-    <Card className="mb-3">
+    <Card>
       <Card.Header>SciFinder-n Credential</Card.Header>
       <Card.Body>
         <Row>

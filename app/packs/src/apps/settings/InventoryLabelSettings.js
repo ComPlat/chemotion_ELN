@@ -207,7 +207,7 @@ const InventoryLabelSettings = () => {
   const nextInventoryLabel = counterValue && prefixValue ? `${prefixValue}${nextValue}` : null;
 
   return (
-    <Card className="mb-3">
+    <Card>
       <Card.Header>Sample Inventory Label</Card.Header>
       <Card.Body>
         <Row className="mb-3">
