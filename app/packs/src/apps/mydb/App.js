@@ -15,10 +15,8 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Calendar from 'src/components/calendar/Calendar';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
-import ProfilesFetcher from '../../fetchers/ProfilesFetcher';
+import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 
-const key = 'ketcher-tmpls';
 
 class App extends Component {
   constructor(_props) {
@@ -59,7 +57,6 @@ class App extends Component {
     // user templates
     this.removeLocalStorageEventListener();
     this.storageListener();
-
   }
 
   componentWillUnmount() {
@@ -68,92 +65,15 @@ class App extends Component {
   }
 
   removeLocalStorageEventListener() {
-    window.removeEventListener('storage', this.onChangeKetcherTemplates);
+    window.removeEventListener('storage', this.storageListener);
   }
 
   storageListener() {
     window.addEventListener(
       'storage',
-      // this.debounce(this.onChangeKetcherTemplates.bind(this), 300),
-      this.onEventListen.bind(this),
+      OnEventListen,
       false
     );
-  }
-
-  // helpers end
-  async onEventListen(event) {
-    let { newValue, oldValue } = event;
-    newValue = JSON.parse(newValue);
-    oldValue = JSON.parse(oldValue);
-    // const { deleteAllowed } = this.state;
-    if (event.key === key) { // matching key && deleteAllowed
-      if (newValue.length > oldValue.length) { // when a new template is added
-        console.log("new");
-        let newItem = newValue[newValue.length - 1];
-        this.createAddAttachmentidToNewUserTemplate(newValue, newItem);
-      } else if (newValue.length < oldValue.length) { // when a template is deleted
-        console.log("removed");
-        const listOfLocalid = newValue.map((item) => item.props.path);
-        this.removeUserTemplate(listOfLocalid, oldValue);
-      } else if (newValue.length == oldValue.length) { // when a template is update atom id, bond id
-        this.updateUserTemplateDetails(oldValue, newValue);
-      }
-    } else if (event.key === 'ketcher-opts') {
-      UsersFetcher.updateUserKetcher2Options(event.newValue);
-    }
-    else {
-      // this.setState({ deleteAllowed: true });
-    }
-  }
-
-  async createAddAttachmentidToNewUserTemplate(newValue, newItem, deleteIdx) {
-    const res = await ProfilesFetcher.uploadUserTemplates({
-      content: JSON.stringify(newItem),
-    }).catch(err => console.log("err in create"));
-    const attachment_id = res?.template_details?.filename;
-    newItem['props']['path'] = attachment_id;
-    newValue[newValue.length - 1] = newItem;
-    if (deleteIdx) newValue.splice(deleteIdx, 1);
-    // this.setState({ deleteAllowed: false });
-    this.removeLocalStorageEventListener();
-    localStorage.setItem(key, JSON.stringify(newValue));
-    // this.localStorageEventListener();
-  }
-
-
-  removeUserTemplate(listOfLocalid, oldValue) {
-    for (let i = 0; i < oldValue.length; i++) {
-      const localItem = oldValue[i];
-      const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
-        localItem.props.path
-      );
-      if (itemIndexShouldBeRemoved === -1) {
-        ProfilesFetcher.deleteUserTemplate({
-          path: localItem?.props.path,
-        });
-        break;
-      }
-    }
-  }
-
-  async updateUserTemplateDetails(oldValue, newValue) {
-    const listOfLocalNames = newValue.map(
-      (item) => JSON.parse(item.struct).header.moleculeName
-    );
-    for (let i = 0; i < oldValue.length; i++) {
-      const localItem = JSON.parse(oldValue[i].struct);
-      const exists = listOfLocalNames.indexOf(localItem.header.moleculeName) !== -1;
-      if (!exists) {
-        console.log({ exists, name: localItem.header.moleculeName });
-        await ProfilesFetcher.deleteUserTemplate({
-          path: oldValue[i].props.path,
-        }).catch(() =>
-          console.log('ISSUE WITH DELETE', localItem?.props?.path)
-        );
-        this.createAddAttachmentidToNewUserTemplate(newValue, newValue[i], i);
-        break;
-      }
-    }
   }
 
   handleUiStoreChange(state) {
