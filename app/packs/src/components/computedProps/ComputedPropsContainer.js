@@ -51,11 +51,11 @@ export default class ComputedPropsContainer extends React.Component {
 
     const { compute, showGraph } = this.state;
     let text = 'Show Graph';
-    let arrow = <i className="fa fa-angle-double-down" />;
+    let arrow = <i className="fa fa-angle-double-down ms-2" />;
 
     if (showGraph) {
       text = 'Hide Graph';
-      arrow = <i className="fa fa-angle-double-up" />;
+      arrow = <i className="fa fa-angle-double-up ms-2" />;
     }
     const confirmText = (
       <h5>Would you like to simulate this molecule ?</h5>
