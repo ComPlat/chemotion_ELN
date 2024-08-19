@@ -295,7 +295,7 @@ export default class WellplateDetailsAttachments extends Component {
         ) : (
           filteredAttachments.map((attachment) => (
             <div className="attachment-row" key={attachment.id}>
-              {attachmentThumbnail(attachment)}
+              {attachmentThumbnail(attachment, true)}
 
               <div className="attachment-row-text" title={attachment.filename}>
                 {attachment.is_deleted ? (

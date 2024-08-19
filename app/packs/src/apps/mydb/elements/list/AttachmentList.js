@@ -9,7 +9,7 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 
-export const attachmentThumbnail = (attachment) => (
+export const attachmentThumbnail = (attachment, tab = false) => (
   <div className="attachment-row-image">
     <ImageModal
       imageStyle={{
@@ -27,8 +27,9 @@ export const attachmentThumbnail = (attachment) => (
       }}
       popObject
       disableClick
+      className={`large-preview-modal ${tab ? 'tab-left' : 'default-left'}`}
     />
-    <div className="large-preview-modal">
+    <div className={`large-preview-modal ${tab ? 'tab-left' : 'default-left'}`}>
       <ImageModal
         imageStyle={{
           width: '400px',
@@ -46,14 +47,14 @@ export const attachmentThumbnail = (attachment) => (
           src: attachment.preview,
         }}
         popObject={
-        attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
-          ? {
-            fetchNeeded:true,
-            src: `/api/v1/attachments/${attachment.id}/annotated_image`,
-          }
-          : {
-            src: attachment.preview,
-          }
+          attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
+            ? {
+              fetchNeeded: true,
+              src: `/api/v1/attachments/${attachment.id}/annotated_image`,
+            }
+            : {
+              src: attachment.preview,
+            }
         }
         disableClick
       />

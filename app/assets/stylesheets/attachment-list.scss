@@ -76,7 +76,6 @@
 
 .attachment-row-image .large-preview-modal {
   position: absolute;
-  left: 1000%;
   top: -300%;
   width: 400px;
   height: 400px;
@@ -88,6 +87,14 @@
   visibility: hidden;
   transition: opacity 0.8s ease, visibility 0s linear 0.8s;
   z-index: 10;
+}
+
+.attachment-row-image .large-preview-modal.default-left {
+  left: 1000%;
+}
+
+.attachment-row-image .large-preview-modal.tab-left {
+  left: 300%;
 }
 
 .attachment-row-image:hover .large-preview-modal {
