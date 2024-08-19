@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Form } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
@@ -58,30 +58,31 @@ export default class ComputedPropsContainer extends React.Component {
       arrow = <i className="fa fa-angle-double-up" />;
     }
     const confirmText = (
-      <Form.Label>Would you like to simulate this molecule ?</Form.Label>
+      <h5>Would you like to simulate this molecule ?</h5>
     );
 
     return (
       <>
-      <div className="d-flex align-items-center">
-        <SampleComputedProps cprops={cprops} />
-        <Button
-          variant="success"
-          size="sm"
-          onClick={this.onClickComputeBtn}
-          className="my-2 ms-auto"
-        >
-          <i className="fa fa-paper-plane me-1" />
+        <div className="d-flex align-items-center">
+          <SampleComputedProps cprops={cprops} />
+          <Button
+            variant="success"
+            size="sm"
+            onClick={this.onClickComputeBtn}
+            className="my-2 ms-auto"
+          >
+            <i className="fa fa-paper-plane me-1" />
             Compute
           </Button>
-          </div>
-          <Button
-            size="sm"
-            className="w-100 bg-gray-300 p-0 text-gray-600 mt-3"
-            onClick={this.toggleGraph}
-          >
-            {text} {arrow}
-          </Button>
+        </div>
+        <Button
+          size="sm"
+          className="w-100 bg-gray-300 p-0 text-gray-600 mt-3"
+          onClick={this.toggleGraph}
+        >
+          {text}
+          {arrow}
+        </Button>
         <ComputedPropsGraphContainer
           show={showGraph}
           graphData={[{ name: sample.short_label, props: lastCProp }]}
