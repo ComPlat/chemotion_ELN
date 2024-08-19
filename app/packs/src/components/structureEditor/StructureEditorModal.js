@@ -237,12 +237,19 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
+    this.createAddAttachmentidToNewUserTemplate = this.createAddAttachmentidToNewUserTemplate.bind(this);
+    this.updateUserTemplateDetails = this.updateUserTemplateDetails.bind(this);
+    this.removeUserTemplate = this.removeUserTemplate.bind(this);
   }
 
   componentDidMount() {
     this.resetEditor(this.editors);
     this.fetchCommonTemplates();
     this.localStorageEventListener();
+
+    return () => {
+      this.localStorageEventListener();
+    };
   }
 
   componentDidUpdate(prevProps) {
@@ -252,28 +259,22 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  async deleteAndStoreItemAgain(item) {
-    const res = await ProfilesFetcher.uploadUserTemplates({
+  deleteAndStoreItemAgain(item) {
+    ProfilesFetcher.uploadUserTemplates({
       content: JSON.stringify(item),
     });
-    const attachment_id = res?.template_details?.attachment_data?.id;
-    await UsersFetcher.updateUserProfile({
-      user_template: attachment_id,
-    }).catch((err) => console.log('ISSUE WITH create'));
   }
 
-
   // helper functions for ketcher-tmpls
-  addAttachmentidToNewUserTemplate(attachment_id, newValue, newItem) {
-    newItem.props.path = attachment_id;
+  async createAddAttachmentidToNewUserTemplate(newValue, newItem) {
+    const res = await ProfilesFetcher.uploadUserTemplates({
+      content: JSON.stringify(newItem),
+    }).catch(err => console.log("err in create"));
+    const attachment_id = res?.template_details?.filename;
+    newItem['props']['path'] = attachment_id;
     newValue[newValue.length - 1] = newItem;
     localStorage.setItem(key, JSON.stringify(newValue));
-
     this.setState({ deleteAllowed: false });
-    // udpate user profile
-    UsersFetcher.updateUserProfile({
-      user_template: attachment_id,
-    });
   }
 
   removeUserTemplate(listOfLocalid, oldValue) {
@@ -282,7 +283,7 @@ export default class StructureEditorModal extends React.Component {
       const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
         localItem.props.path
       );
-      if (itemIndexShouldBeRemoved == -1) {
+      if (itemIndexShouldBeRemoved === -1) {
         ProfilesFetcher.deleteUserTemplate({
           path: localItem?.props.path,
         });
@@ -291,19 +292,22 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  updateUserTemplateDetails(listOfLocalNames, oldValue, newValue) {
+  async updateUserTemplateDetails(oldValue, newValue) {
+    const listOfLocalNames = newValue.map(
+      (item) => JSON.parse(item.struct).header.moleculeName
+    );
     for (let i = 0; i < oldValue.length; i++) {
       const localItem = JSON.parse(oldValue[i].struct);
       const itemIndexShouldBeRemoved = listOfLocalNames.indexOf(
         localItem.header.moleculeName
       );
       if (itemIndexShouldBeRemoved == -1) {
-        ProfilesFetcher.deleteUserTemplate({
-          path: newValue[i].props.path,
+        await ProfilesFetcher.deleteUserTemplate({
+          path: oldValue[i].props.path,
         }).catch(() =>
           console.log('ISSUE WITH DELETE', localItem?.props?.path)
         );
-        this.deleteAndStoreItemAgain(newValue[i]);
+        this.createAddAttachmentidToNewUserTemplate(newValue, newValue[i]);
         break;
       } else {
         console.log('INDEX NOT FOUND@');
@@ -323,19 +327,13 @@ export default class StructureEditorModal extends React.Component {
         if (event.key === key && deleteAllowed) { // matching key
           if (newValue.length > oldValue.length) { // when a new template is added
             let newItem = newValue[newValue.length - 1];
-            const res = await ProfilesFetcher.uploadUserTemplates({
-              content: JSON.stringify(newItem),
-            });
-            const attachment_id = res?.template_details?.attachment_data?.id;
-            this.addAttachmentidToNewUserTemplate(attachment_id, newValue, newItem);
+            this.createAddAttachmentidToNewUserTemplate(newValue, newItem);
           } else if (newValue.length < oldValue.length) { // when a template is deleted
             const listOfLocalid = newValue.map((item) => item.props.path);
             this.removeUserTemplate(listOfLocalid, oldValue);
           } else if (newValue.length == oldValue.length) { // when a template is update atom id, bond id
-            const listOfLocalNames = newValue.map(
-              (item) => JSON.parse(item.struct).header.moleculeName
-            );
-            this.updateUserTemplateDetails(listOfLocalNames, oldValue, newValue);
+            console.log("equals?");
+            this.updateUserTemplateDetails(oldValue, newValue);
           }
         } else {
           this.setState({ deleteAllowed: true });

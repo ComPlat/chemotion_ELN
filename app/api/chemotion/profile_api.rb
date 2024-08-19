@@ -65,16 +65,15 @@ module Chemotion
           data[dt] = sorted_layout
         end
 
-        if profile.user_templates?
-          profile.user_templates.each do |template|
-            next unless template
+        folder_path = "user_templates/#{current_user.id}"
+        user_templates_path = Rails.root.join('uploads', Rails.env, folder_path)
+        Dir.glob("#{user_templates_path}/*.txt") do |file|
+          next unless file
 
-            file_path = Rails.root.join('uploads', Rails.env, template)
-            next unless File.exist?(file_path)
-
-            content = File.read(file_path)
+          if File.file?(file)
+            content = File.read(file)
             content = JSON(content)
-            content['props']['path'] = template
+            content['props']['path'] = file
             templates_list.push(content)
           end
         end
@@ -113,7 +112,6 @@ module Chemotion
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
-        optional :user_template, type: String
       end
       put do
         declared_params = declared(params, include_missing: false)
@@ -146,7 +144,6 @@ module Chemotion
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
-          user_templates: current_user.profile.user_templates.push(declared_params[:user_template]),
         }
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)
@@ -158,14 +155,17 @@ module Chemotion
       end
       post do
         error_messages = []
-        file_name = 'template.txt'
-        file_path = Rails.root.join('uploads', Rails.env, file_name)
+        folder_path = "user_templates/#{current_user.id}"
+        complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
+        file_path = "#{complete_folder_path}/#{SecureRandom.alphanumeric(10)}.txt"
         begin
+          FileUtils.mkdir_p(complete_folder_path) unless File.directory?(complete_folder_path)
           File.new(file_path, 'w') unless File.exist?(file_path)
           File.write(file_path, params[:content])
+
           template_attachment = Attachment.new(
             bucket: 1,
-            filename: file_name,
+            filename: file_path,
             key: 'user_template',
             created_by: current_user.id,
             created_for: current_user.id,
@@ -176,8 +176,6 @@ module Chemotion
             template_attachment.save
           rescue StandardError
             error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
-          ensure
-            File.delete(file_path)
           end
           { template_details: template_attachment, error_messages: error_messages }
         rescue Errno::EACCES
@@ -190,20 +188,7 @@ module Chemotion
         requires :path, type: String, desc: 'file path of user template'
       end
       delete do
-        user_templates = current_user.profile.user_templates
-        user_templates.delete(params[:path])
-
-        # remove file from store
-        file_path = Rails.root.join('uploads', Rails.env, params[:path])
-        FileUtils.rm_f(file_path)
-
-        # update profile
-        new_profile = {
-          user_templates: user_templates,
-        }
-        (current_user.profile.update!(**new_profile) &&
-        new_profile) || error!('profile update failed', 500)
-
+        FileUtils.rm_f(params[:path])
         { status: true }
       end
 
