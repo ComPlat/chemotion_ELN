@@ -1,9 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar } from 'react-bootstrap';
+import { Button, ButtonToolbar, Badge } from 'react-bootstrap';
 
 import Aviator from 'aviator';
-import Label from 'src/components/legacyBootstrap/Label'
 
 const statusMap = {
   not_computed: 'pending'
@@ -59,7 +58,7 @@ export default class ComputeTask extends React.Component {
           </Button>
         </td>
         <td className="text-center">
-          <Label variant="primary">{displayStatus}</Label>
+          <Badge bg="primary">{displayStatus}</Badge>
         </td>
         <td className="text-center">{task.updatedAt}</td>
         <td className="text-center">
