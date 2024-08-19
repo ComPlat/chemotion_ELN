@@ -150,7 +150,7 @@ export default class ElementsTableSettings extends React.Component {
       />
     );
 
-    const showSettings = (currentType == "sample" || currentType == "reaction");
+    const showSettings = (currentType === 'sample' || currentType === 'reaction');
     const popoverSettings = (
       <Popover
         className="scrollable-popover w-auto mw-100"
