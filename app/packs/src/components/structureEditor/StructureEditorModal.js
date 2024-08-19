@@ -21,7 +21,6 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-import SurfaceChemistryList from 'src/components/ketcher-templates/SurfaceChemistryList';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
@@ -490,23 +489,6 @@ export default class StructureEditorModal extends React.Component {
                   </div>
                 )
               }
-
-              {/* list of surface chemistry shapes disabled */}
-              {
-                false && editor.id === 'ketcher2'
-                && (
-                  <div style={{ flex: 0.5, margin: '0 10px' }}>
-                    <SurfaceChemistryList
-                      selectedShape={selectedShape}
-                      onSelectShape={(item) => {
-                        copyContentToClipboard({ root: item.root });
-                        this.setState({ selectedShape: item });
-                      }}
-                    />
-                  </div>
-                )
-              }
-
             </div >
           </Modal.Header >
           <Modal.Body>
