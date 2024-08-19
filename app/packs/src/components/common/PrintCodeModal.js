@@ -3,13 +3,30 @@ import PropTypes from 'prop-types';
 import { Button, Modal } from 'react-bootstrap';
 import Utils from 'src/utilities/Functions';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
-import json from '../../../../../public/json/printingConfig/defaultConfig.json';
 
 // Component that allows users to print a PDF.
-export default function PrintCodeModal({ element, showModal, handleModalClose }) {
+export default function PrintCodeModal({ element, showModal, handleModalClose, selectedConfig, analyses }) {
   // State for the modal and preview
   const [preview, setPreview] = useState(null);
   const [urlError, setUrlError] = useState([]);
+  const [json, setJson] = useState({});
+
+  useEffect(() => {
+    // Import the file when the component mounts
+    async function loadData() {
+      try {
+        const response = await fetch('/json/printingConfig/defaultConfig.json');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const tmpJson = await response.json();
+        setJson(tmpJson);
+      } catch (err) {
+        console.error('Failed to fetch JSON', err);
+      }
+    }
+    loadData();
+  }, []); // Empty dependency array ensures this runs only once when the component mounts
 
   // Handles errors in the URL.
   const errorHandler = () => {
@@ -39,14 +56,20 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
 
   // Builds the URL for fetching the PDF.
   const buildURL = async () => {
-    let newUrl = '/api/v1/code_logs/print_codes?'
-      + `element_type=${element.type}&ids[]=${element.id}`;
-    Object.entries(json).forEach(([key, value]) => {
-      if (value != null) {
-        console.log(key, value);
-        newUrl += `&${key}=${value}`;
-      }
-    });
+    const ids = analyses.length > 0 ? analyses.map(e => e.id) : [];
+    let newUrl = analyses.length > 0
+      ? `/api/v1/code_logs/print_analyses_codes?element_type=${element.type}&id=${element.id}&analyses_ids[]=${ids}&size=${selectedConfig}`
+      : `/api/v1/code_logs/print_codes?element_type=${element.type}&ids[]=${element.id}`;
+
+    if (analyses.length === 0) {
+      Object.entries(json).forEach(([configKey, configValue]) => {
+        if (configKey === selectedConfig) {
+          Object.entries(configValue).forEach(([key, value]) => {
+            newUrl += `&${key}=${value}`;
+          });
+        }
+      });
+    }
     errorHandler();
     PrintCodeFetcher.fetchPrintCodes(newUrl).then((result) => {
       if (result != null) {
@@ -107,7 +130,7 @@ export default function PrintCodeModal({ element, showModal, handleModalClose })
           <Button
             id="submit-copy-element-btn"
             bsStyle="success"
-            onClick={() => Utils.downloadFile({ contents: preview, name: 'print_codes.pdf' })}
+            onClick={() => Utils.downloadFile({ contents: preview, name: `print_codes_${element.id}.pdf` })}
             className="pull-left"
           >
             Print
@@ -122,4 +145,5 @@ PrintCodeModal.propTypes = {
   element: PropTypes.object.isRequired,
   showModal: PropTypes.bool.isRequired,
   handleModalClose: PropTypes.func.isRequired,
+  selectedConfig: PropTypes.string.isRequired,
 };
