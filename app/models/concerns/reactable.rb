@@ -44,7 +44,18 @@ module Reactable
       amount = condition ? sample.amount_mmol(:real) : sample.amount_mmol
       ref_amount = ref_record_condition ? ref_record.sample.amount_mmol(:real) : ref_record.sample.amount_mmol
     end
-    update_attribute :equivalent, ref_amount.zero? ? 0 : amount / ref_amount
+    if gas_type == 'gas'
+      return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
+
+      temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
+      update_attribute :equivalent, calculate_equivalent_for_gas_material(
+        sample.purity || 1,
+        temperature_in_kelvin,
+        gas_phase_data['ppm'],
+      )
+    else
+      update_attribute :equivalent, ref_amount.zero? ? 0 : amount / ref_amount
+    end
   end
 
   def detect_amount_type
@@ -199,5 +210,9 @@ module Reactable
       material.gas_phase_data = update_gas_phase_data(catalyst_mol_value, gas_product_mol_amount, gas_phase_data)
       material.save!
     end
+  end
+
+  def calculate_equivalent_for_gas_material(purity, temperature_in_kelvin, ppm)
+    ppm * DEFAULT_TEMPERATURE_IN_KELVIN / purity * PARTS_PER_MILLION_FACTOR * temperature_in_kelvin
   end
 end

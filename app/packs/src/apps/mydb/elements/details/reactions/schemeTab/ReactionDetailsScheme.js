@@ -498,7 +498,7 @@ export default class ReactionDetailsScheme extends Component {
     const { vesselVolume } = this.state;
     if (sample.gas_type === 'gas') {
       const result = this.calculateEquivalentForGasProduct(sample, vesselVolume);
-      const equivalent = result > 100 ? 1 : result;
+      const equivalent = result > 1 ? 1 : result;
       return { ...sample, equivalent };
     }
     const numerator = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight;
@@ -581,8 +581,13 @@ export default class ReactionDetailsScheme extends Component {
       }
       if (field === 'temperature' || field === 'part_per_million') {
         const { vesselVolume } = this.state;
-        updatedSample.equivalent = this.calculateEquivalentForGasProduct(updatedSample, vesselVolume);
         updatedSample.amount_value = updatedSample.updateGasMoles(vesselVolume);
+        const equivalent = this.calculateEquivalentForGasProduct(updatedSample, vesselVolume);
+        updatedSample.equivalent = equivalent;
+        if (equivalent > 1) {
+          updatedSample.equivalent = 1;
+          setTimeout(() => this.triggerNotification(updatedSample.decoupled), 200);
+        }
       } else if (field === 'time') {
         const gasPhaseTime = updatedSample.gas_phase_data.time;
         const tonValue = updatedSample.gas_phase_data.turnover_number;
@@ -760,7 +765,8 @@ export default class ReactionDetailsScheme extends Component {
               sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
               // yield taking into account stoichiometry:
               if (updatedSample.gas_type === 'gas') {
-                sample.equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
+                const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
+                sample.equivalent = equivalent > 1 ? 1 : equivalent;
               } else {
                 sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
               }
@@ -964,7 +970,8 @@ export default class ReactionDetailsScheme extends Component {
           sample.gas_type = 'off';
         }
         if (sample.gas_type === 'gas') {
-          sample.equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
+          const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
+          sample.equivalent = equivalent;
         }
       }
       return sample;
@@ -998,11 +1005,6 @@ export default class ReactionDetailsScheme extends Component {
 
       if (field === 'temperature' || field === 'part_per_million') {
         sample.equivalent = updatedSample.equivalent;
-        setTimeout(() => {
-          if (sample.equivalent > 1) {
-            this.triggerNotification(sample.decoupled);
-          }
-        }, 200);
       }
       return {
         ...sample,
@@ -1057,7 +1059,8 @@ export default class ReactionDetailsScheme extends Component {
   updatesEquivalentForGasProductSamples(samples, vesselVolume) {
     return samples.map((sample) => {
       if (sample.gas_type === 'gas') {
-        sample.equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
+        const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
+        sample.equivalent = equivalent > 1 ? 1 : equivalent;
       }
       return sample;
     });
