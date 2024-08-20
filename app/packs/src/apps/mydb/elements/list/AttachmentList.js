@@ -322,15 +322,13 @@ export const sortingAndFilteringUI = (
 // validate id as uuid
 // TODO replace with uuid.validate after upgrade to uuid 10
 const isUUID = (id) => {
-  const uuidRegex = new RegExp(
-    '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-  );
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-6][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
   return uuidRegex.test(id);
 };
 
 const filterOptions = (contentType, options) => {
-  const [itemType, itemSubtype] = contentType.split('/');
-  return options
+  const [itemType, itemSubtype] = (contentType || '').split('/');
+  return (options || [])
     .filter((option) => {
       if (!option.fileTypes || option.fileTypes.length === 0) { return false; }
       return option.fileTypes.split(',').some((filter) => {

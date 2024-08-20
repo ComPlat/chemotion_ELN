@@ -105,7 +105,7 @@ export default class ThirdPartyApp extends React.Component {
       showMsgModalEdit: true,
       currentName: app?.name,
       currentIP: app?.url,
-      currentFileTypes: app?.file_types,
+      currentFileTypes: app?.fileTypes,
       currentID: key
     });
   }
@@ -456,7 +456,7 @@ export default class ThirdPartyApp extends React.Component {
 
                 <td>{entry.name}</td>
                 <td>{entry.url}</td>
-                <td>{entry.file_types}</td>
+                <td>{entry.fileTypes}</td>
                 <td>{entry.id}</td>
               </tr>
             ))}

@@ -86,7 +86,7 @@ module Chemotion
 
       desc 'get all thirdPartyApps'
       get do
-        ThirdPartyApp.all
+        present ThirdPartyApp.all, with: Entities::ThirdPartyAppEntity
       end
 
       desc 'create token for use in download public_api'
