@@ -128,14 +128,6 @@ gem 'icalendar'
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
 
-  gem 'capistrano'
-  gem 'capistrano-bundler'
-  gem 'capistrano-npm'
-  gem 'capistrano-nvm', require: false
-  gem 'capistrano-rails'
-  gem 'capistrano-rvm'
-  gem 'capistrano-yarn'
-
   gem 'fast_stack'    # For Ruby MRI 2.0
   gem 'flamegraph'
 
