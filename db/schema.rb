@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_07_26_064022) do
+ActiveRecord::Schema.define(version: 2024_08_20_101958) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -639,12 +639,6 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
-  end
-
-  create_table "ketcher_settings", force: :cascade do |t|
-    t.string "name"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
