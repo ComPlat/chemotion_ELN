@@ -34,9 +34,6 @@ module Chemotion
           'appID' => params[:appID],
           'userID' => current_user.id,
           'attID' => params[:attID],
-          # 'collectionID' => params[:collectionID],
-          # 'type' => params[:type],
-          # 'elementID' => params[:elementID],
         }
       end
 
@@ -46,9 +43,6 @@ module Chemotion
         @attachment = Attachment.find(payload['attID']&.to_i)
         @user = User.find(payload['userID']&.to_i)
         @app = ThirdPartyApp.find(payload['appID']&.to_i)
-        # @collection = Collection.find(payload['collectionID']&.to_i)
-        # @type = payload['type']
-        # @element_id = payload['elementID']
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end

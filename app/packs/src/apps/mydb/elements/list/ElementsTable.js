@@ -681,7 +681,7 @@ export default class ElementsTable extends React.Component {
           }}
         >
           {
-            currentElement?.type == 'research_plan' &&
+            false && currentElement?.type == 'research_plan' &&
             <OverlayTrigger placement="top" overlay={!currentElement ? disabledAttachmentToolTip : attachmentToolTip}>
               <button
                 disabled={!currentElement && !attachmentTokens?.length}
