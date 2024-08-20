@@ -44,7 +44,7 @@ class TabLayoutCell extends Component {
     }
 
     let content = isElementDetails ? (
-      <div className="p-2">
+      <div className="p-1 mt-2">
         <p className={`text-center fs-6 ${title === 'hidden' ? 'text-muted' : ''}`}>
           {title === 'hidden' ? '-' : title}
         </p>
@@ -55,16 +55,13 @@ class TabLayoutCell extends Component {
           className={`${cellIcon} text-center ${isHidden ? 'text-gray-600' : 'text-primary'}`}
           title={[cellTitle, cellDescription].join(': ')}
         >
-          {isHidden ? '\u00A0' : ''}
         </i>
       </div>
     );
 
     content = isCollectionTab ? (
-      <div className="w-auto">
-        <p className={`text-center p-0 m-0 ${title === 'hidden' ? 'text-muted' : ''}`}>
+      <div className={`w-auto text-center p-0 m-0 ${title === 'hidden' ? 'text-muted' : ''}`}>
           {title === 'hidden' ? '-' : title}
-        </p>
       </div>
     ) : (
       content

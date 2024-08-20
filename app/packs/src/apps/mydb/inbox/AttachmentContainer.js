@@ -170,9 +170,7 @@ class AttachmentContainer extends Component {
           )}
           <OverlayTrigger placement="top" overlay={filenameTooltip} >
             <span>
-              <span
-                className="text-primary fa fa-arrows mx-1"
-              />
+              <i className="text-primary fa fa-arrows mx-1" />
               {attachment.filename}
             </span>
           </OverlayTrigger>
