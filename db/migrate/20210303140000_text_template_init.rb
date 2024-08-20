@@ -18,6 +18,5 @@ class TextTemplateInit < ActiveRecord::Migration[4.2]
         user_id: Admin.first&.id || 0
       )
     end
-    Person.all.each(&:create_text_template)
   end
 end

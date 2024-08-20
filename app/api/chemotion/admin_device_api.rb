@@ -4,6 +4,9 @@ module Chemotion
   class AdminDeviceAPI < Grape::API
     helpers AdminHelpers
     resource :admin_devices do
+      before do
+        error!(401) unless current_user.is_a?(Admin)
+      end
       namespace :byname do
         # Find top (5) matched device by name
         params do

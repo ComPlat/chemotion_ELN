@@ -161,6 +161,19 @@ module Chemotion
         end
       end
 
+      namespace :molecular_weight do
+        desc 'Calculate the molecular mass from the molecular_formula for decoupled sample'
+        params do
+          requires :molecular_formula, type: String, desc: 'Molecular formula of decoupled sample'
+        end
+        get do
+          formula = params[:molecular_formula]
+          total_mass = Chemotion::Calculations.mw_from_formula(formula)
+
+          total_mass
+        end
+      end
+
       desc 'Return molecule by Molfile'
       params do
         requires :molfile, type: String, desc: 'Molecule molfile'

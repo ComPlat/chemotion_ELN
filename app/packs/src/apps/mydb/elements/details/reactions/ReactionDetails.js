@@ -168,7 +168,8 @@ export default class ReactionDetails extends Component {
     if (type === 'temperatureUnit' || type === 'temperatureData'
       || type === 'description' || type === 'role'
       || type === 'observation' || type === 'durationUnit'
-      || type === 'duration' || type === 'rxno') {
+      || type === 'duration' || type === 'rxno'
+      || type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
