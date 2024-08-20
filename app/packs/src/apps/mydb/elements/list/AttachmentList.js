@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import {values} from 'lodash';
+import uuid from 'uuid';
+import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
@@ -49,7 +51,7 @@ export const attachmentThumbnail = (attachment) => (
         popObject={
         attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
           ? {
-            fetchNeeded:true,
+            fetchNeeded: true,
             src: `/api/v1/attachments/${attachment.id}/annotated_image`,
           }
           : {
@@ -316,7 +318,6 @@ export const sortingAndFilteringUI = (
   </div>
 );
 
-
 export const thirdPartyAppButton = (attachment, options) => (
   <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
@@ -337,3 +338,56 @@ export const thirdPartyAppButton = (attachment, options) => (
     </Dropdown.Menu>
   </Dropdown>
 );
+
+// validate id as uuid
+// TODO replace with uuid.validate after upgrade to uuid 10
+const validateId = (id) => {
+  const uuidRegex = new RegExp(
+    '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+  );
+  return uuidRegex.test(id);
+};
+
+export function ThirdPartyAppButton({ attachment, options = [] }) {
+  const [menuItems, setMenuItems] = useState([]);
+  const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
+  const contentType = mime.contentType(attachment.content_type) ? attachment.content_type : mime.lookup(attachment.filename);
+
+  useEffect(() => {
+    const generateMenuItems = () => {
+      if (validateId(attachment?.id)) { return noChoice; }
+      const items = [];
+      options.forEach((option) => {
+        const optionFileTypes = option.fileTypes.split(',').map((type) => type.trim());
+        if (optionFileTypes.includes('*') || (contentType && (optionFileTypes.includes(contentType)))) {
+          items.push(
+            <MenuItem
+              key={uuid.v4()}
+              eventKey={option.id}
+              onClick={() => {
+                ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+                  .then((result) => window.open(result, '_blank'));
+              }}
+            >
+              {option.name}
+            </MenuItem>
+          );
+        }
+      });
+      return items.length > 0 ? items : noChoice;
+    };
+
+    setMenuItems(generateMenuItems());
+  }, [attachment, options]);
+
+  return (
+    <Dropdown id={`dropdown-TPA-attachment${attachment?.id || uuid.v4()}`} style={{ float: 'right' }}>
+      <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+        <i className="fa fa-external-link" aria-hidden="true" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        {menuItems}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+}
