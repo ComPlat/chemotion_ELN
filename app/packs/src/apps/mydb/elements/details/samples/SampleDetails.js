@@ -162,6 +162,7 @@ export default class SampleDetails extends React.Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.decoupleChanged = this.decoupleChanged.bind(this);
     this.handleFastInput = this.handleFastInput.bind(this);
+    this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
@@ -344,8 +345,12 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
+    const { currentCollection } = UIStore.getState();
     LoadingActions.start.defer();
     const { sample, validCas } = this.state;
+    if (this.matchSelectedCollection(currentCollection) && sample.xref.inventory_label !== undefined) {
+      sample.collection_id = currentCollection.id;
+    }
     this.checkMolfileChange();
     if (!validCas) {
       sample.xref = { ...sample.xref, cas: '' };
@@ -434,6 +439,17 @@ export default class SampleDetails extends React.Component {
         ...previousState, activeTab: state.sample.activeTab
       }));
     }
+  }
+
+  /* eslint-disable camelcase */
+  matchSelectedCollection(currentCollection) {
+    const { sample } = this.props;
+    if (sample.isNew) {
+      return true;
+    }
+    const { collection_labels } = sample.tag?.taggable_data || [];
+    const result = collection_labels.filter((object) => object.id === currentCollection.id).length > 0;
+    return result;
   }
 
   sampleFooter() {
