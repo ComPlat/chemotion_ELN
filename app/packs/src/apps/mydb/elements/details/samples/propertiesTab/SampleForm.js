@@ -13,6 +13,8 @@ import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import InventoryFetcher from 'src/fetchers/InventoryFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 
 export default class SampleForm extends React.Component {
@@ -34,6 +36,8 @@ export default class SampleForm extends React.Component {
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.fetchNextInventoryLabel = this.fetchNextInventoryLabel.bind(this);
+    this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
     this.markSumFormulaUndefined = this.markSumFormulaUndefined.bind(this);
     this.handleMassCalculation = this.handleMassCalculation.bind(this);
     this.calculateMolecularMass = this.calculateMolecularMass.bind(this);
@@ -294,6 +298,42 @@ export default class SampleForm extends React.Component {
     this.props.parent.setState({ sample });
   }
 
+  /* eslint-disable camelcase */
+  matchSelectedCollection(currentCollection) {
+    const { sample } = this.props;
+    const { collection_labels } = sample.tag?.taggable_data || [];
+    const result = collection_labels?.filter((object) => object.id === currentCollection.id).length > 0;
+    return result;
+  }
+
+  fetchNextInventoryLabel() {
+    const { currentCollection } = UIStore.getState();
+    if (this.matchSelectedCollection(currentCollection)) {
+      InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
+        .then((result) => {
+          if (result && result.prefix && result.counter !== undefined) {
+            const { prefix, counter } = result;
+            const value = `${prefix}-${counter + 1}`;
+            this.handleFieldChanged('xref_inventory_label', value);
+          } else {
+            NotificationActions.add({
+              message: 'Could not find next inventory label. '
+              + 'Please assign a prefix and a counter for a valid collection first.',
+              level: 'error'
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } else {
+      NotificationActions.add({
+        message: 'Please select the collection to which sample belongs first',
+        level: 'error'
+      });
+    }
+  }
+
   handleFieldChanged(field, e, unit = null) {
     const { sample } = this.props;
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
@@ -465,6 +505,31 @@ export default class SampleForm extends React.Component {
           readOnly={disabled || !sample.can_update || readOnly}
         />
       </FormGroup>
+    );
+  }
+
+  nextInventoryLabel(sample) {
+    const overlayMessage = sample.isNew
+      ? 'Inventory label will be auto generated on sample create,'
+       + ' if sample belongs to a collection with a predefined label'
+      : 'click to assign next inventory label';
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <ControlLabel> &nbsp; </ControlLabel>
+        <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>
+          }
+        >
+          <Button
+            onClick={this.fetchNextInventoryLabel}
+            disabled={sample.isNew}
+          >
+            <Glyphicon glyph="tag" />
+          </Button>
+        </OverlayTrigger>
+      </div>
     );
   }
 
@@ -862,8 +927,12 @@ export default class SampleForm extends React.Component {
                       <div style={{ width: '30%', paddingLeft: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
+                      <div style={{
+                        maxWidth: '26%', paddingLeft: '5px', display: 'flex', justifyContent: 'space-between'
+                      }}
+                      >
                         {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                        {this.nextInventoryLabel(sample)}
                       </div>
                       <div style={{ width: '30%', paddingLeft: '5px' }}>
                         {this.textInput(sample, 'location', 'Location')}

@@ -57,6 +57,8 @@
 
 # rubocop:disable Metrics/ClassLength
 class Sample < ApplicationRecord
+  attr_accessor :skip_inventory_label_update
+
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model
@@ -169,7 +171,6 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
-  before_save :update_inventory_label, if: :new_record?
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_save :update_counter
@@ -351,6 +352,8 @@ class Sample < ApplicationRecord
   # rubocop:disable Layout/TrailingWhitespace
   def create_subsample user, collection_ids, copy_ea = false, type = nil
     subsample = self.dup
+    subsample.xref['inventory_label'] = nil
+    subsample.skip_inventory_label_update = true
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
 
@@ -560,7 +563,15 @@ class Sample < ApplicationRecord
     tag&.taggable_data&.fetch('user_labels', nil)
   end
 
-private
+  def update_inventory_label(inventory_label, collection_id = nil)
+    return if collection_id.blank? || skip_inventory_label_update
+    return unless (inventory = Inventory.by_collection_id(collection_id).first)
+    return if inventory_label.present? && !inventory.match_inventory_counter(inventory_label)
+
+    self['xref']['inventory_label'] = inventory.label if inventory.update_incremented_counter
+  end
+
+  private
 
   def has_collections
     if self.collections_samples.blank?
@@ -652,26 +663,6 @@ private
     end
   end
 
-  def find_collection_id
-    collection_ids = collections_samples.map(&:collection_id)
-    all_collection_id = Collection.where(id: collection_ids, label: 'All').pick(:id)
-    collection_ids.delete(all_collection_id)
-    # on sample create, sample is assigned only to the collection in which it will be created along with All collection
-    collection_ids.first
-  end
-
-  def update_inventory_label
-    collection_id = find_collection_id
-    return if collection_id.blank?
-
-    collection = Collection.find_by(id: collection_id)
-    inventory = collection.inventory
-    return if inventory.blank?
-
-    inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
-    self['xref']['inventory_label'] =
-      "#{inventory['prefix']}-#{inventory['counter']}"
-  end
 
   # rubocop: enable Metrics/AbcSize
   # rubocop: enable Metrics/CyclomaticComplexity

@@ -69,6 +69,8 @@ class Collection < ApplicationRecord
 
   has_one :metadata
 
+  delegate :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
+
   # A collection is locked if it is not allowed to rename or rearrange it
   scope :unlocked, -> { where(is_locked: false) }
   scope :locked, -> { where(is_locked: true) }
@@ -90,6 +92,25 @@ class Collection < ApplicationRecord
   }
 
   default_scope { ordered }
+  SQL_INVENT_JOIN = 'LEFT JOIN ' \
+                    'inventories  ' \
+                    'ON collections.inventory_id = inventories.id'
+  SQL_INVENT_SELECT = 'inventory_id,' \
+                      'row_to_json(inventories) AS inventory,' \
+                      'JSON_AGG(collections) AS collections'
+  SQL_INVENT_FROM = '(select c.id,c."label",c.inventory_id,c.deleted_at,' \
+                    'c.is_locked,c.is_shared,c.user_id from collections c) collections'
+
+  # group by inventory_id for collections owned by user_id
+  # @param user_id [Integer] user id
+  # @return [ActiveRecord()] array of {inventory_id, inventory, collections: []}
+  scope :inventory_collections, lambda { |user_id|
+    unscoped.unlocked.unshared.where(user_id: user_id, deleted_at: nil)
+            .joins(SQL_INVENT_JOIN)
+            .select(SQL_INVENT_SELECT)
+            .from(SQL_INVENT_FROM)
+            .group(:inventory_id, :inventories)
+  }
 
   def self.get_all_collection_for_user(user_id)
     find_by(user_id: user_id, label: 'All', is_locked: true)
@@ -159,32 +180,6 @@ class Collection < ApplicationRecord
   def self.reject_shared(user_id, collection_id)
     Collection.where(id: collection_id, user_id: user_id, is_shared: true)
               .find_each(&:destroy)
-  end
-
-  def self.collections_for_user(user_id)
-    Collection.where(user_id: user_id, shared_by_id: nil)
-  end
-
-  def self.collections_group_by_inventory(collections, inventory)
-    {
-      collections: collections,
-      inventory: {
-        id: inventory&.id,
-        prefix: inventory&.prefix,
-        name: inventory&.name,
-        counter: inventory&.counter,
-      },
-    }
-  end
-
-  def self.inventory_collections(user_id)
-    collections = collections_for_user(user_id).reject { |c| c.label == 'All' }
-    grouped_collections = collections.group_by { |c| c.inventory&.id }
-    grouped_collections.values.map do |collections_group|
-      collections = collections_group.map { |c| { id: c.id, label: c.label } }
-      inventory = collections_group.first&.inventory
-      collections_group_by_inventory(collections, inventory)
-    end
   end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
