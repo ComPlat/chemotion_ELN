@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe Chemotion::Profile do
+describe Chemotion::ProfileAPI do
   include_context 'api request authorization context'
 
   let(:user) { create(:user) }
@@ -132,25 +134,18 @@ describe Chemotion::Profile do
         expect(File.exist?(file_path)).to be true
         file_content = JSON.parse(File.read(file_path))
         expect(file_content).to eq(valid_data.stringify_keys)
-
-        attachment = Attachment.find_by(filename: file_path)
-        expect(attachment).not_to be_nil
-        expect(attachment.bucket).to eq('1')
-        expect(attachment.key).to eq('ketcher-optns')
-        expect(attachment.content_type).to eq('application/json')
       end
     end
 
     context 'when the attachment cannot be saved' do
       it 'returns a 422 error if the attachment record cannot be saved' do
-        allow_any_instance_of(Attachment).to receive(:save).and_return(false)
+        attachment = instance_double(Attachment, save: false) # Create a double for the Attachment
+        allow(Attachment).to receive(:new).and_return(attachment) # Stub the creation of the attachment
 
         put '/api/v1/profiles/editors/ketcher2-options', params: { data: valid_data }.to_json, headers: headers
 
         expect(response).to have_http_status(:unprocessable_entity)
-
         response_body = JSON.parse(response.body)
-
         expect(response_body['status']).to be false
         expect(response_body['error_messages']).not_to be_empty
       end

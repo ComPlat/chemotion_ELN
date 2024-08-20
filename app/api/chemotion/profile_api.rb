@@ -205,7 +205,7 @@ module Chemotion
 
         begin
           JSON(File.read(complete_folder_path))
-        rescue StandardError => e
+        rescue StandardError
           error_messages.push('Issues with reading settings file')
           error!({ status: false, error_messages: error_messages.flatten }, 500)
         end
