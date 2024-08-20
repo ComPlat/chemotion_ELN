@@ -46,16 +46,6 @@ const sampleVisualisation = (well, onChange) => {
     onChange(well)
   }
 
-  const svgContainerStyle = {
-    borderRadius: '50%',
-    height: 190,
-    width: 190,
-    border: '6px solid lightgray',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    lineHeight: 2,
-    margin: '0 auto'
-  };
   if (sample) {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
     removeButton = (
@@ -67,7 +57,7 @@ const sampleVisualisation = (well, onChange) => {
   return (
     <>
       {removeButton}
-      <div style={svgContainerStyle}>
+      <div class="well-details--svg-container">
         {svg}
       </div>
       <p className="wellplate-overlay text-center">

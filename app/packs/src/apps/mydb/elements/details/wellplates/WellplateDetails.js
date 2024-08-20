@@ -39,7 +39,6 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
-import Well from 'src/components/legacyBootstrap/Well'
 
 export default class WellplateDetails extends Component {
   constructor(props) {
@@ -291,12 +290,14 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_designer" element={wellplate} />
           }
-          <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
-            <Wellplate
-              wellplate={wellplate}
-              handleWellsChange={(wells) => this.handleWellsChange(wells)}
-            />
-          </Well>
+          <Card id="wellplate-designer" className="overflow-scroll">
+            <Card.Body>
+              <Wellplate
+                wellplate={wellplate}
+                handleWellsChange={(wells) => this.handleWellsChange(wells)}
+              />
+            </Card.Body>
+          </Card>
         </Tab>
       ),
       list: (
@@ -304,13 +305,15 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
-          <Well style={{ overflow: 'scroll', height: '100%', maxHeight: 'calc(100vh - 375px)' }}>
-            <WellplateList
-              wells={wellplate.wells}
-              readoutTitles={readoutTitles}
-              handleWellsChange={(w) => this.handleWellsChange(w)}
-            />
-          </Well>
+          <Card className="overflow-scroll h-100" style={{ maxHeight: 'calc(100vh - 375px)' }}>
+            <Card.Body>
+              <WellplateList
+                wells={wellplate.wells}
+                readoutTitles={readoutTitles}
+                handleWellsChange={(w) => this.handleWellsChange(w)}
+              />
+            </Card.Body>
+          </Card>
         </Tab>
       ),
       properties: (

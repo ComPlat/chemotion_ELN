@@ -54,43 +54,20 @@ class WellContainer extends Component {
 
   render() {
     const { isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop, active } = this.props;
-    const containerStyle = {
-      paddingTop: 9,
-      borderRadius: '50%',
-      float: 'left',
-      borderWidth: 4,
-      borderStyle: 'solid',
-      borderColor: 'lightgray',
-      textAlign: 'center',
-      verticalAlign: 'middle',
-      lineHeight: 2,
-      cursor: 'move',
+    const styleOverrides = {
       backgroundColor: well.color_code || 'white',
-      fontSize: 8,
-      width: 60,
-      height: 60
     };
-    if (active) {
-      containerStyle.backgroundColor = '#337ab7';
-      containerStyle.color = 'white';
-    }
-    if (isDragging) {
-      containerStyle.opacity = 0;
-    }
-    if (well.sample) {
-      containerStyle.borderColor = 'gray';
-    }
-    if (isOver && canDrop) {
-      containerStyle.borderStyle = 'dashed';
-      containerStyle.borderColor = '#337ab7';
-      containerStyle.opacity = 0;
-    } else if (canDrop) {
-      containerStyle.borderStyle = 'dashed';
-    }
+
+    const classes = ['wellplate--well-container']
+    if (active) classes.push('active')
+    if (isDragging) classes.push('is-dragging')
+    if (well.sample) classes.push('has-sample')
+    if (canDrop) classes.push('can-drop')
+    if (isOver) classes.push('is-over')
 
     return (
       connectDragSource(connectDropTarget(
-        <div className="wellplate--well-container" style={{ ...containerStyle }}>
+        <div className={classes} style={{ ...styleOverrides }}>
           <Well
             active={active}
             label={well.label}
