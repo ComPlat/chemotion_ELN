@@ -37,7 +37,6 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
     const localItem = JSON.parse(oldValue[i].struct);
     const exists = listOfLocalNames.indexOf(localItem.header.moleculeName) !== -1;
     if (!exists) {
-      console.log({ exists, name: localItem.header.moleculeName });
       await ProfilesFetcher.deleteUserTemplate({
         path: oldValue[i].props.path,
       }).catch(() =>
@@ -53,14 +52,11 @@ const onEventListen = async (event) => {
   let { newValue, oldValue } = event;
   newValue = JSON.parse(newValue);
   oldValue = JSON.parse(oldValue);
-  // const { deleteAllowed } = this.state;
   if (event.key === key) { // matching key && deleteAllowed
     if (newValue.length > oldValue.length) { // when a new template is added
-      console.log("new");
       let newItem = newValue[newValue.length - 1];
       createAddAttachmentidToNewUserTemplate(newValue, newItem);
     } else if (newValue.length < oldValue.length) { // when a template is deleted
-      console.log("removed");
       const listOfLocalid = newValue.map((item) => item.props.path);
       removeUserTemplate(listOfLocalid, oldValue);
     } else if (newValue.length == oldValue.length) { // when a template is update atom id, bond id

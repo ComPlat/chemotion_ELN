@@ -17,7 +17,6 @@ import Calendar from 'src/components/calendar/Calendar';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 
-
 class App extends Component {
   constructor(_props) {
     super();

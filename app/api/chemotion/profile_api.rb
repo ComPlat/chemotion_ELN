@@ -155,6 +155,9 @@ module Chemotion
       end
       post do
         error_messages = []
+
+        error!({ error_messages: ['Content cannot be blank'] }, 422) if params[:content].blank?
+
         folder_path = "user_templates/#{current_user.id}"
         complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
         file_path = "#{complete_folder_path}/#{SecureRandom.alphanumeric(10)}.txt"
@@ -188,19 +191,23 @@ module Chemotion
         requires :path, type: String, desc: 'file path of user template'
       end
       delete do
-        FileUtils.rm_f(params[:path])
+        path = params[:path]
+        error!({ error_messages: ['path cannot be blank'] }, 422) if path.empty? || !File.exist?(path)
+        FileUtils.rm_f(path)
         { status: true }
       end
 
       desc 'get user profile editor ketcher 2 setting options'
       get 'editors/ketcher2-options' do
-        # Ketcher2Setting.find_by(user_id: current_user.id)
         file_path = "ketcher-optns/#{current_user.id}.json"
         complete_folder_path = Rails.root.join('uploads', Rails.env, file_path)
+        error_messages = []
+
         begin
           JSON(File.read(complete_folder_path))
-        rescue StandardError
-          'Issues with reading settings file'
+        rescue StandardError => e
+          error_messages.push('Issues with reading settings file')
+          error!({ status: false, error_messages: error_messages.flatten }, 500)
         end
       end
 
@@ -224,14 +231,18 @@ module Chemotion
             key: 'ketcher-optns',
             created_by: current_user.id,
             created_for: current_user.id,
-            content_type: 'text/json',
+            content_type: 'application/json',
             file_path: file_path,
           )
-          begin
-            template_attachment.save
-          rescue StandardError
-            error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+          if template_attachment.save
+            { status: true, message: 'Ketcher options updated successfully' }
+          else
+            error_messages.push('Attachment could not be saved')
+            error!({ status: false, error_messages: error_messages.flatten }, 422)
           end
+        rescue StandardError => e
+          error_messages.push(e.message)
+          error!({ status: false, error_messages: error_messages.flatten }, 500)
         end
       end
     end
