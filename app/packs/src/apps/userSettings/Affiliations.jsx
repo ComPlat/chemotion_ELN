@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CreatableSelect from 'react-select/lib/Creatable';
-import { Button, Modal, Table, Container, Row, Col } from 'react-bootstrap';
+import { Button, Modal, Table } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 
@@ -163,7 +163,6 @@ function Affiliations({ show, onHide }) {
       </Modal.Header>
 
       <Modal.Body>
-        <>
           <div className="current-container">
             <h4 className="align-title"> Current affiliations</h4>
             <div className="entry-container">
@@ -277,7 +276,8 @@ function Affiliations({ show, onHide }) {
                       showPopperArrow={false}
                       disabled={item.disabled}
                       value={item.from}
-                      onChange={(date) => onChangeHandler(index, 'from', moment(date).format('YYYY-MM-DD'))} />
+                      onChange={(date) => onChangeHandler(index, 'from', moment(date).format('YYYY-MM-DD'))}         
+                    />
                   </td>
                   <td>
                     <DatePicker
@@ -288,7 +288,8 @@ function Affiliations({ show, onHide }) {
                       showPopperArrow={false}
                       disabled={item.disabled}
                       value={item.to}
-                      onChange={(date) => onChangeHandler(index, 'to', date ? moment(date).format('YYYY-MM-DD') : date)} />
+                      onChange={(date) => onChangeHandler(index, 'to', date ? moment(date).format('YYYY-MM-DD') : date)}
+                    />
                   </td>
                   <td>
                     <div className='pull-right'>
@@ -326,7 +327,6 @@ function Affiliations({ show, onHide }) {
               ))}
             </tbody>
           </Table>
-        </>
       </Modal.Body>
     </Modal>
   );
