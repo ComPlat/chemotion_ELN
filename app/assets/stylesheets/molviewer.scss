@@ -1,0 +1,29 @@
+
+@mixin viewer-modal {
+  height: 95%;
+  top: 52% !important;
+  margin: unset !important;
+}
+
+
+.file-viewer-modal {
+  @include viewer-modal;
+  width: 98vw !important;
+  .modal-content {
+    height: 95%;
+  }
+}
+
+.structure-viewer-modal {
+  @include viewer-modal;
+  width: 60vw !important;
+  .modal-content {
+    height: calc(100% - 60px);
+  }
+}
+
+.structure-editor-container {
+  position: absolute;
+  top: 6px;
+  right: 46px;
+}

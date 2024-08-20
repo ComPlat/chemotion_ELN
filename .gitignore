@@ -104,6 +104,9 @@
 !/public/ontologies/rxno.default.json
 !/public/ontologies/rxno.default.edited.json
 
+/public/jsmol/*
+!/public/jsmol/.keep
+
 /public/data_type.json
 /public/default_editors
 

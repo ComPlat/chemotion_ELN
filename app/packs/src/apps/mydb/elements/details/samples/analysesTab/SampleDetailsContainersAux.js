@@ -13,6 +13,9 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/utilities/imageHelper';
+import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
+import MolViewerSet from 'src/components/viewer/MolViewerSet';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 
 const qCheckPass = () => (
@@ -189,6 +192,8 @@ const headerBtnGroup = (
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
   const { chmos } = UserStore.getState();
   const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
   return (
     <div className="upper-btn">
@@ -218,6 +223,9 @@ const headerBtnGroup = (
         toggleNMRDisplayerModal={toggleNMRDisplayerModal}
         hasNMRium={hasNMRium}
       />
+      <span className="button-right">
+        <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
+      </span>
       <span
         className="button-right add-to-report"
         onClick={stopBubble}
