@@ -23,9 +23,9 @@ module Chemotion
 
       # desc: define the cache key based on the attachment/user/app ids
       def cache_key
-        @cache_key_user_rsearchPlan ||= "#{@user&.id}/#{@collection&.id}/#{@type}"
-        @cache_key_attachment_app ||= "#{@element_id}/#{@app&.id}/#{@attachment&.id}"
-        [@cache_key_user_rsearchPlan, @cache_key_attachment_app]
+        @user_key ||= @user&.id
+        @cache_key_attachment_app ||= "#{@app&.id}/#{@attachment&.id}"
+        [@user_key, @cache_key_attachment_app]
       end
 
       # desc: prepare the token payload from the params
@@ -34,9 +34,9 @@ module Chemotion
           'appID' => params[:appID],
           'userID' => current_user.id,
           'attID' => params[:attID],
-          'collectionID' => params[:collectionID],
-          'type' => params[:type],
-          'elementID' => params[:elementID],
+          # 'collectionID' => params[:collectionID],
+          # 'type' => params[:type],
+          # 'elementID' => params[:elementID],
         }
       end
 
@@ -46,9 +46,9 @@ module Chemotion
         @attachment = Attachment.find(payload['attID']&.to_i)
         @user = User.find(payload['userID']&.to_i)
         @app = ThirdPartyApp.find(payload['appID']&.to_i)
-        @collection = Collection.find(payload['collectionID']&.to_i)
-        @type = payload['type']
-        @element_id = payload['elementID']
+        # @collection = Collection.find(payload['collectionID']&.to_i)
+        # @type = payload['type']
+        # @element_id = payload['elementID']
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end
@@ -232,31 +232,19 @@ module Chemotion
 
       desc 'list of TPA token in a collection'
       params do
-        requires :collection_id, type: Integer, desc: 'Collection id'
-        requires :type, type: String, desc: 'Current active tab type'
+        # requires :collection_id, type: Integer, desc: 'Collection id'
+        # requires :type, type: String, desc: 'Current active tab type'
       end
 
       get 'collection_tpa_tokens' do
         token_list = []
-        cache_user_researchid_keys = cache.read("#{current_user.id}/#{params[:collection_id]}/#{params[:type]}")
-        if cache_user_researchid_keys
-          cache_user_researchid_keys.each do |token_key|
-            splits = token_key.split('/')
-
-            element_details = ResearchPlan.find_by(id: splits[0])
-            app = ThirdPartyApp.find_by(id: splits[1])
-            attachment = Attachment.find_by(id: splits[2])
-            cached_value = cache.read(token_key)
-
-            next unless app && attachment && element_details && cached_value
-
-            token_list.push({
-                              "#{current_user.id}/#{params[:collection_id]}/#{params[:type]}/#{token_key}": cached_value,
-                              alias_element: element_details.name,
-                              alias_app_id: app.name,
-                              alias_attachment_id: attachment.filename,
-                            })
-          end
+        cache_user_keys = cache.read(current_user.id)
+        cache_user_keys&.each do |token_key|
+          cached_value = cache.read(token_key)
+          token_list
+            .push({
+                    "#{token_key}": cached_value,
+                  })
         end
         { token_list: token_list }
       end

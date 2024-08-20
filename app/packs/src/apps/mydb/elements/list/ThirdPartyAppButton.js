@@ -8,7 +8,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
-const ThirdPartyAppButton = ({ attachment, options }) => {
+const ThirdPartyAppButton = ({ attachment, options, tokenList }) => {
 
   const handleFetchAttachToken = (option) => {
     const { currentElement } = ElementStore.getState();
@@ -22,24 +22,16 @@ const ThirdPartyAppButton = ({ attachment, options }) => {
   };
 
   const tpaTokenExists = (attachment_id, tpa) => {
-    const { attachmentTokens, currentElement } = ElementStore.getState();
     let status = false;
-    attachmentTokens?.map((item) => {
-      const keySplit = Object.keys(item)[0].split("/");
-      // comparing attachment id
-      const attachment_id_match = keySplit[5] == attachment_id;
-      // comparing selected element id
-      const selected_element = keySplit[3] == currentElement.id;
-      // comparing third party name
-      const tpa_name = item.alias_app_id == tpa.name;
-
-      if (selected_element) {
-        if (tpa_name) {
-          if (attachment_id_match) {
-            status = true;
-          }
+    tokenList?.map((item) => {
+      const keySplit = Object.keys(item)[0].split('/');
+      const attachment_id_match = keySplit[1] == attachment_id;
+      const tpa_id = keySplit[0] == tpa.id;
+      if (tpa_id) {
+        if (attachment_id_match) {
+          status = true;
         }
-      };
+      }
     });
     return status;
   };
