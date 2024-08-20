@@ -883,8 +883,7 @@ export default class Reaction extends Element {
                 m.coefficient = refreshCoefficient.coefficient;
               }
             }
-            
-            if (g === '_products') {
+            if (g === '_products' && m.gas_type !== 'gas') {
               const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
               m.equivalent = m.amount_mol / refMat.amount_mol / stoichiometryCoeff;
             } else {
