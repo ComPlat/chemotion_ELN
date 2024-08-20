@@ -267,7 +267,7 @@ GEM
     cocaine (0.5.8)
       climate_control (>= 0.0.3, < 1.0)
     coderay (1.1.3)
-    concurrent-ruby (1.3.1)
+    concurrent-ruby (1.3.4)
     content_disposition (1.0.0)
     countries (5.1.2)
       sixarm_ruby_unaccent (~> 1.1)
@@ -352,7 +352,7 @@ GEM
     flamegraph (0.9.5)
     font-awesome-rails (4.7.0.8)
       railties (>= 3.2, < 8.0)
-    fugit (1.11.0)
+    fugit (1.11.1)
       et-orbi (~> 1, >= 1.2.11)
       raabro (~> 1.4)
     fx (0.7.0)
@@ -843,7 +843,6 @@ GEM
     zeitwerk (2.6.15)
 
 PLATFORMS
-  ruby
   x86_64-linux
 
 DEPENDENCIES
