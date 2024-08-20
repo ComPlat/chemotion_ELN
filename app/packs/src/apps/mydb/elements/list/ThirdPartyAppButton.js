@@ -4,21 +4,15 @@ import {
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 
-const ThirdPartyAppButton = ({ attachment, options, tokenList }) => {
+const ThirdPartyAppButton = ({ attachment, options, tokenList, onChangeRecall }) => {
 
   const handleFetchAttachToken = (option) => {
-    const { currentElement } = ElementStore.getState();
-    const { currentCollection } = UIStore.getState();
-    ThirdPartyAppFetcher.fetchAttachmentToken(currentCollection?.id, attachment.id, option.id, currentElement.id)
+    ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
       .then((result) => {
-        ElementActions.fetchCollectionAttachmentTokens(currentCollection?.id, currentElement.id);
-        window.open(result, '_blank');
+        onChangeRecall();
+        // window.open(result, '_blank');
       });
-    // disabled={!isImageFile(attachment.filename) || attachment.isNew}
   };
 
   const tpaTokenExists = (attachment_id, tpa) => {

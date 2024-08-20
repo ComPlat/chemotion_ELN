@@ -72,15 +72,15 @@ export default class ElementsTable extends React.Component {
   }
 
   handlePaginationSelect(eventKey) {
-    const {pages} = this.state;
-    const {type} = this.props;
+    const { pages } = this.state;
+    const { type } = this.props;
 
     if (eventKey > 0 && eventKey <= pages) {
       this.setState({
         page: eventKey
       }, () => {
-        const {page} = this.state;
-        UIActions.setPagination({type, page});
+        const { page } = this.state;
+        UIActions.setPagination({ type, page });
         this.handleScrollToElement(this.elementRef);
       });
     }
@@ -88,16 +88,16 @@ export default class ElementsTable extends React.Component {
 
   handleScrollToElement = () => {
     if (this.elementRef.current) {
-      this.elementRef.current.scrollTo({top: 0, left: 0, behavior: "smooth", });
+      this.elementRef.current.scrollTo({ top: 0, left: 0, behavior: "smooth", });
     }
   };
 
   onChangeUI(state) {
-    const {type} = this.props;
+    const { type } = this.props;
     if (typeof state[type] === 'undefined' || state[type] === null) {
       return;
     }
-    const {checkedIds, uncheckedIds, checkedAll} = state[type];
+    const { checkedIds, uncheckedIds, checkedAll } = state[type];
     const {
       filterCreatedAt, fromDate, toDate, number_of_results, currentSearchByID, productOnly
     } = state;
@@ -108,7 +108,7 @@ export default class ElementsTable extends React.Component {
 
     let isSearchResult = currentSearchByID ? true : false;
 
-    const {currentStateProductOnly, searchResult} = this.state;
+    const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
       checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt
       || fromDate || toDate || productOnly !== currentStateProductOnly
@@ -136,40 +136,40 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    const {type} = this.props;
+    const { type } = this.props;
     const elementsState = (state && state.elements && state.elements[`${type}s`]) || {};
-    const {elements, page, pages} = elementsState;
+    const { elements, page, pages } = elementsState;
 
     let currentElement;
     if (!state.currentElement || state.currentElement.type === type) {
-      const {currentElement: stateCurrentElement} = state;
+      const { currentElement: stateCurrentElement } = state;
       currentElement = stateCurrentElement;
     }
 
-    const {elements: stateElements, currentElement: stateCurrentElement} = this.state;
+    const { elements: stateElements, currentElement: stateCurrentElement } = this.state;
     const elementsDidChange = elements && !deepEqual(elements, stateElements);
     const currentElementDidChange = !deepEqual(currentElement, stateCurrentElement);
 
-    const nextState = {page, pages, currentElement};
-    if (elementsDidChange) {nextState.elements = elements;}
-    if (elementsDidChange || currentElementDidChange) {this.setState(nextState);}
-    this.setState({attachmentTokens: ElementStore.getState().attachmentTokens});
+    const nextState = { page, pages, currentElement };
+    if (elementsDidChange) { nextState.elements = elements; }
+    if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
+    this.setState({ attachmentTokens: ElementStore.getState().attachmentTokens });
   }
 
   setFromDate(date) {
-    const {fromDate} = this.state;
+    const { fromDate } = this.state;
     if (fromDate !== date) UIActions.setFromDate(date);
   }
 
   setToDate(date) {
-    const {toDate} = this.state;
+    const { toDate } = this.state;
     if (toDate !== date) UIActions.setToDate(date);
   }
 
   initState = () => {
     this.onChange(ElementStore.getState());
 
-    const {type, genericEl} = this.props;
+    const { type, genericEl } = this.props;
 
     if (type === 'reaction' || genericEl) {
       const userState = UserStore.getState();
@@ -186,11 +186,11 @@ export default class ElementsTable extends React.Component {
   };
 
   changeCollapse = (collapseAll) => {
-    this.setState({collapseAll: !collapseAll});
+    this.setState({ collapseAll: !collapseAll });
   };
 
   changeSampleSort = () => {
-    let {moleculeSort} = this.state;
+    let { moleculeSort } = this.state;
     moleculeSort = !moleculeSort;
 
     this.setState({
@@ -199,7 +199,7 @@ export default class ElementsTable extends React.Component {
   };
 
   updateFilterAndUserProfile = (elementsSort, sortDirection, elementsGroup) => {
-    const {type} = this.props;
+    const { type } = this.props;
 
     ElementActions.changeElementsFilter({
       name: type,
@@ -222,7 +222,7 @@ export default class ElementsTable extends React.Component {
   };
 
   changeElementsGroup = (elementsGroup) => {
-    const {elementsSort, sortDirection} = this.state;
+    const { elementsSort, sortDirection } = this.state;
 
     this.setState({
       elementsGroup,
@@ -233,8 +233,8 @@ export default class ElementsTable extends React.Component {
   };
 
   changeElementsSort = () => {
-    const {elementsGroup, sortDirection} = this.state;
-    let {elementsSort} = this.state;
+    const { elementsGroup, sortDirection } = this.state;
+    let { elementsSort } = this.state;
     elementsSort = !elementsSort;
 
     this.setState({
@@ -245,11 +245,11 @@ export default class ElementsTable extends React.Component {
   };
 
   changeSortDirection = () => {
-    const {elementsGroup, elementsSort, sortDirection} = this.state;
+    const { elementsGroup, elementsSort, sortDirection } = this.state;
     const newSortDirection = sortDirection === 'DESC' ? 'ASC' : 'DESC';
 
     this.setState(
-      {sortDirection: newSortDirection},
+      { sortDirection: newSortDirection },
       () => {
         this.updateFilterAndUserProfile(elementsSort, newSortDirection, elementsGroup);
       }
@@ -257,17 +257,16 @@ export default class ElementsTable extends React.Component {
   };
 
   handleRevokeAttachmentToken = (key, idx, action_type) => {
-    const {attachmentTokens} = this.state;
+    const { attachmentTokens } = this.state;
     ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, action_type)
       .then(res => {
         let alias = attachmentTokens;
         alias = alias.filter((i, index) => {
           if (index !== idx) return i;
         });
-        this.setState({attachmentTokens: [...alias]});
+        this.setState({ attachmentTokens: [...alias] });
         // tpa token call
         const uistoreContainer = UIStore.getState();
-        ElementActions.fetchCollectionAttachmentTokens(uistoreContainer?.currentCollection?.id);
       })
       .catch((err) => {
         alert("Revoking token failed! check console to verify!");
@@ -277,7 +276,7 @@ export default class ElementsTable extends React.Component {
   };
 
   collapseButton = () => {
-    const {collapseAll} = this.state;
+    const { collapseAll } = this.state;
     const collapseIcon = collapseAll ? 'chevron-right' : 'chevron-down';
     return (
       <Glyphicon
@@ -295,8 +294,8 @@ export default class ElementsTable extends React.Component {
   };
 
   attachmentTokenModal = () => {
-    const {showAttachmentTokenModal, attachmentTokens} = this.state;
-    const {currentElement} = ElementStore.getState();
+    const { showAttachmentTokenModal, attachmentTokens } = this.state;
+    const { currentElement } = ElementStore.getState();
     return (
       <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
         <Modal.Header closeButton />
@@ -314,7 +313,7 @@ export default class ElementsTable extends React.Component {
                   const value = item[key[0]];
                   const key_split = key[0].split("/");
                   return currentElement?.id == key_split[3] && (
-                    <Row style={{marginBottom: 10}}>
+                    <Row style={{ marginBottom: 10 }}>
                       <Col xs={10}>
                         <div>Element: {item?.alias_element} </div>
                         <div>Attachment: {item?.alias_attachment_id} </div>
@@ -349,18 +348,18 @@ export default class ElementsTable extends React.Component {
   };
 
   changeDateFilter() {
-    let {filterCreatedAt} = this.state;
+    let { filterCreatedAt } = this.state;
     filterCreatedAt = !filterCreatedAt;
     UIActions.setFilterCreatedAt(filterCreatedAt);
   }
 
   toggleProductOnly() {
-    const {productOnly} = this.state;
+    const { productOnly } = this.state;
     UIActions.setProductOnly(!productOnly);
   }
 
   handleNumberOfResultsChange(event) {
-    const {value} = event.target;
+    const { value } = event.target;
 
     if (parseInt(value, 10) > 0) {
       UIActions.changeNumberOfResultsShown(value);
@@ -369,7 +368,7 @@ export default class ElementsTable extends React.Component {
   }
 
   handleDelayForNumberOfResults() {
-    const {type} = this.props;
+    const { type } = this.props;
 
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
@@ -378,7 +377,7 @@ export default class ElementsTable extends React.Component {
   }
 
   numberOfResultsInput() {
-    const {ui} = this.state;
+    const { ui } = this.state;
     return (
       <Form horizontal className="list-show-count">
         <FormGroup>
@@ -387,7 +386,7 @@ export default class ElementsTable extends React.Component {
             <FormControl
               type="text"
               style={
-                {textAlign: 'center', zIndex: 0}
+                { textAlign: 'center', zIndex: 0 }
               }
               onChange={(event) => this.handleNumberOfResultsChange(event)}
               value={ui.number_of_results ? ui.number_of_results : 0}
@@ -399,7 +398,7 @@ export default class ElementsTable extends React.Component {
   }
 
   pagination() {
-    const {page, pages} = this.state;
+    const { page, pages } = this.state;
     if (pages <= 1) {
       return null;
     }
@@ -448,8 +447,8 @@ export default class ElementsTable extends React.Component {
     } = this.state;
 
     const options = [
-      {value: false, label: 'Grouped by Sample'},
-      {value: true, label: 'Grouped by Molecule'}
+      { value: false, label: 'Grouped by Sample' },
+      { value: true, label: 'Grouped by Molecule' }
     ];
     const color = productOnly ? '#5cb85c' : 'currentColor';
     const tooltipText = productOnly ? 'Show all' : 'Show products only';
@@ -471,11 +470,11 @@ export default class ElementsTable extends React.Component {
         >
           <button
             type="button"
-            style={{border: 'none'}}
+            style={{ border: 'none' }}
             onClick={this.toggleProductOnly}
           >
             <i
-              style={{cursor: 'pointer', color}}
+              style={{ cursor: 'pointer', color }}
               className="fa fa-lg fa-product-hunt"
             />
           </button>
@@ -486,7 +485,7 @@ export default class ElementsTable extends React.Component {
   };
 
   renderChangeSortDirectionIcon = () => {
-    const {sortDirection} = this.state;
+    const { sortDirection } = this.state;
     const sortDirectionIcon = sortDirection === 'ASC' ? 'fa-long-arrow-up' : 'fa-long-arrow-down';
     const changeSortDirectionTitle = sortDirection === 'ASC' ? 'change to descending' : 'change to ascending';
     const sortDirectionTooltip = <Tooltip id="change_sort_direction">{changeSortDirectionTitle}</Tooltip>;
@@ -494,7 +493,7 @@ export default class ElementsTable extends React.Component {
       <OverlayTrigger placement="top" overlay={sortDirectionTooltip}>
         <button
           type="button"
-          style={{border: 'none'}}
+          style={{ border: 'none' }}
           onClick={this.changeSortDirection}
         >
           <i className={`fa fa-fw ${sortDirectionIcon}`} />
@@ -504,17 +503,17 @@ export default class ElementsTable extends React.Component {
   };
 
   renderReactionsHeader = () => {
-    const {elementsGroup, elementsSort, sortDirection} = this.state;
+    const { elementsGroup, elementsSort, sortDirection } = this.state;
     const optionsHash = {
-      none: {sortColumn: 'create date', label: 'List'},
-      rinchi_short_key: {sortColumn: 'RInChI', label: 'Grouped by RInChI'},
-      rxno: {sortColumn: 'type', label: 'Grouped by type'},
+      none: { sortColumn: 'create date', label: 'List' },
+      rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
+      rxno: { sortColumn: 'type', label: 'Grouped by type' },
     };
     const options = Object.entries(optionsHash).map((option) => ({
       value: option[0],
       label: option[1].label
     }));
-    const {sortColumn} = optionsHash[elementsGroup];
+    const { sortColumn } = optionsHash[elementsGroup];
     const sortDirectionText = sortDirection === 'ASC' ? 'ascending' : 'descending';
     const sortTitle = elementsSort
       ? `click to sort by update date (${sortDirectionText}) - currently sorted by ${sortColumn} (${sortDirectionText})`
@@ -532,7 +531,7 @@ export default class ElementsTable extends React.Component {
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
           type="button"
-          style={{border: 'none'}}
+          style={{ border: 'none' }}
           onClick={this.changeElementsSort}
         >
           {sortIcon}
@@ -559,15 +558,15 @@ export default class ElementsTable extends React.Component {
   };
 
   renderGenericElementsHeader = () => {
-    const {elementsGroup, elementsSort} = this.state;
-    const {genericEl} = this.props;
+    const { elementsGroup, elementsSort } = this.state;
+    const { genericEl } = this.props;
 
     if (!genericEl.properties_release) return null;
 
     const optionsHash = {
-      none: {sortColumn: 'update date', label: 'List'},
+      none: { sortColumn: 'update date', label: 'List' },
     };
-    const {layers} = genericEl.properties_release;
+    const { layers } = genericEl.properties_release;
     const allowedTypes = [
       'select',
       'text',
@@ -591,7 +590,7 @@ export default class ElementsTable extends React.Component {
     const options = Object.entries(optionsHash).map((option, index) => {
       const label = index === 0 ? option[1].label : `Grouped by ${option[1].label}`;
 
-      return {value: option[0], label};
+      return { value: option[0], label };
     });
 
     if (!optionsHash[elementsGroup]) {
@@ -599,7 +598,7 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = 'none';
     }
-    const {sortColumn} = optionsHash[elementsGroup] || optionsHash.none;
+    const { sortColumn } = optionsHash[elementsGroup] || optionsHash.none;
     const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
@@ -608,7 +607,7 @@ export default class ElementsTable extends React.Component {
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
           type="button"
-          style={{border: 'none'}}
+          style={{ border: 'none' }}
           onClick={this.changeElementsSort}
         >
           {sortIcon}
@@ -634,10 +633,10 @@ export default class ElementsTable extends React.Component {
   };
 
   renderHeader = () => {
-    const {filterCreatedAt, ui, attachmentTokens} = this.state;
-    const {type, showReport, genericEl} = this.props;
-    const {fromDate, toDate} = ui;
-    const {currentElement} = ElementStore.getState();
+    const { filterCreatedAt, ui, attachmentTokens } = this.state;
+    const { type, showReport, genericEl } = this.props;
+    const { fromDate, toDate } = ui;
+    const { currentElement } = ElementStore.getState();
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -687,7 +686,7 @@ export default class ElementsTable extends React.Component {
               <button
                 disabled={!currentElement && !attachmentTokens?.length}
                 type="button"
-                style={{border: 'none'}}
+                style={{ border: 'none' }}
                 onClick={this.toggleAttachmentTokens}
               >
                 {attachmentTokenIcon}
@@ -697,7 +696,7 @@ export default class ElementsTable extends React.Component {
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
               type="button"
-              style={{border: 'none'}}
+              style={{ border: 'none' }}
               onClick={this.changeDateFilter}
             >
               {filterIcon}
@@ -739,7 +738,7 @@ export default class ElementsTable extends React.Component {
       moleculeSort,
       elementsGroup,
     } = this.state;
-    const {overview, type, genericEl} = this.props;
+    const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
 
     if (type === 'sample') {

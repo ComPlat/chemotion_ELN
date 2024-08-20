@@ -39,9 +39,8 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchAttachmentToken(collectionID, attID, appID, elementID) {
-    const { currentType } = UserStore.getState();
-    const queryParams = new URLSearchParams({ collectionID, attID, appID, type: currentType, elementID }).toString();
+  static fetchAttachmentToken(attID, appID) {
+    const queryParams = new URLSearchParams({ attID, appID }).toString();
     const url = `${TPA_ENDPOINT}/token?${queryParams}`;
     return fetch(url, {
       credentials: 'same-origin'
@@ -50,9 +49,8 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchCollectionAttachmentTokensByCollectionId(collection_id, currentType, elementID) {
-    const queryParams = new URLSearchParams({ collection_id, type: currentType, elementID });
-    const url = `${TPA_ENDPOINT}/collection_tpa_tokens?${queryParams}`;
+  static fetchCollectionAttachmentTokensByCollectionId() {
+    const url = `${TPA_ENDPOINT}/collection_tpa_tokens`;
     return fetch(url, {
       credentials: 'same-origin'
     }).then(response => response.json())

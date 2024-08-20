@@ -70,17 +70,26 @@ class ResearchPlanDetailsAttachments extends Component {
     this.fetch3paTokenByUserId();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     const { attachments } = this.props;
+    const { tokenList } = this.state;
+
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
+    }
+
+    // Check if tokenList has changed
+    if (tokenList !== prevState.tokenList) {
+      this.fetch3paTokenByUserId();
     }
   }
 
   async fetch3paTokenByUserId() {
     const res = await ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId();
-    this.setState({ tokenList: res?.token_list });
+    if (this.state.tokenList.length !== res.token_list.length) {
+      this.setState({ tokenList: res?.token_list });
+    }
   };
 
   handleEdit(attachment) {
@@ -327,6 +336,7 @@ class ResearchPlanDetailsAttachments extends Component {
                       attachment={attachment}
                       options={this.thirdPartyApps}
                       tokenList={this.state.tokenList}
+                      onChangeRecall={() => this.fetch3paTokenByUserId()}
                     />
                     {editButton(
                       attachment,

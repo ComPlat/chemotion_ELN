@@ -271,7 +271,7 @@ class ElementStore {
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
-      handleTpaAttachmentTokensByCollectionId: ElementActions.fetchCollectionAttachmentTokens
+
     });
   }
 
@@ -650,7 +650,6 @@ class ElementStore {
     this.state.elements.wellplates = result;
     this.state.attachmentTokens = [];
     const { currentCollection } = UIStore.getState();
-    ElementActions.fetchCollectionAttachmentTokens(currentCollection.id, this.state?.currentElement?.id);
   }
 
   handleFetchScreensByCollectionId(result) {
@@ -661,7 +660,6 @@ class ElementStore {
     this.state.elements.research_plans = result;
     this.state.attachmentTokens = [];
     const { currentCollection } = UIStore.getState();
-    ElementActions.fetchCollectionAttachmentTokens(currentCollection.id, this.state?.currentElement?.id);
   }
 
   handlefetchCellLinesByCollectionId(result) {

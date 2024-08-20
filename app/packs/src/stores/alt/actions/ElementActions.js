@@ -202,7 +202,7 @@ class ElementActions {
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
+      onAdd: function(notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
@@ -219,7 +219,7 @@ class ElementActions {
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
+      onAdd: function(notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchResultIds(params)
@@ -783,7 +783,7 @@ class ElementActions {
 
 
   // -- Screens --
-  addResearchPlanToScreen(screen_id, collection_id, afterComplete = () => {}) {
+  addResearchPlanToScreen(screen_id, collection_id, afterComplete = () => { }) {
     return (dispatch) => {
       ScreensFetcher.addResearchPlan(screen_id, collection_id)
         .then(result => dispatch(result.screen))
@@ -888,7 +888,7 @@ class ElementActions {
     };
   }
 
-  importWellplateIntoResearchPlan(researchPlanId, wellplateId, afterComplete = () => {}) {
+  importWellplateIntoResearchPlan(researchPlanId, wellplateId, afterComplete = () => { }) {
     return (dispatch) => {
       ResearchPlansFetcher.importWellplate(researchPlanId, wellplateId)
         .then((result) => { dispatch(result); })
@@ -897,7 +897,7 @@ class ElementActions {
     };
   }
 
-  importTableFromSpreadsheet(researchPlanId, attachmentId, afterComplete = () => {}) {
+  importTableFromSpreadsheet(researchPlanId, attachmentId, afterComplete = () => { }) {
     return (dispatch) => {
       ResearchPlansFetcher.importTableFromSpreadsheet(researchPlanId, attachmentId)
         .then((result) => { dispatch(result); })
@@ -1064,17 +1064,6 @@ class ElementActions {
   updatePrivateNote(note) {
     return (dispatch) => {
       PrivateNoteFetcher.update(note).then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    };
-  }
-
-  fetchCollectionAttachmentTokens(collection_id, elementID) {
-    const { currentType, } = ElementStore.getState();
-    return (dispatch) => {
-      ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId(collection_id, currentType, elementID).then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);

@@ -215,9 +215,6 @@ module Chemotion
       params do
         requires :attID, type: Integer, desc: 'Attachment ID'
         requires :appID, type: Integer, desc: 'id of the third party app'
-        requires :collectionID, type: Integer, desc: 'collection id'
-        requires :elementID, type: Integer, desc: 'Selected element'
-        requires :type, type: String, desc: 'Current active tab type'
       end
 
       get 'token' do
@@ -231,11 +228,6 @@ module Chemotion
       end
 
       desc 'list of TPA token in a collection'
-      params do
-        # requires :collection_id, type: Integer, desc: 'Collection id'
-        # requires :type, type: String, desc: 'Current active tab type'
-      end
-
       get 'collection_tpa_tokens' do
         token_list = []
         cache_user_keys = cache.read(current_user.id)
@@ -257,10 +249,9 @@ module Chemotion
 
       put 'update_attachment_token_with_type' do
         splits = params[:key].split('/')
-        first_level_key = "#{splits[0]}/#{splits[1]}/#{splits[2]}"
-        second_level_key = "#{splits[3]}/#{splits[4]}/#{splits[5]}"
-
-        status = find_and_update_key_with_request_type(first_level_key, second_level_key, params[:action_type])
+        first_level_key = current_user.id
+        second_level_key = "#{splits[0]}/#{splits[1]}"
+        status = find_and_update_key_with_request_type(first_level_key, second_level_key)
         { status: status }
       end
 
