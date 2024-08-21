@@ -3,7 +3,6 @@ import { Card, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const OmniauthCredential = () => {
   const notify = (_params) => {

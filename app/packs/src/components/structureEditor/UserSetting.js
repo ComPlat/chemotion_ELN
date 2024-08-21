@@ -5,7 +5,6 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const DEFAULT_EDITOR = 'ketcher';
 
