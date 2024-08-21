@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import {
-  Button, FormGroup, FormControl, OverlayTrigger, Tooltip
+  Button, Form, OverlayTrigger, Tooltip, ButtonToolbar, Accordion
 } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
@@ -10,22 +10,18 @@ import {
   HeaderNormal,
   AnalysisModeBtn,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 function RndNotAvailable() {
   return (
-    <div>
-      <p className="noAnalyses-warning">Not available.</p>
-    </div>
+    <p className="m-0">Not available.</p>
   );
 }
 
 function RndNoAnalyses({ addButton }) {
   return (
-    <div>
-      <p>{addButton()}</p>
-      <p className="noAnalyses-warning">There are currently no Analyses.</p>
+    <div className='d-flex justify-content-between align-items-center'>
+      <p className='m-0'>There are currently no Analyses.</p>
+      {addButton()}
     </div>
   );
 }
@@ -41,9 +37,8 @@ function renderCommentButton(handleCommentButtonClick, disableMode = true) {
       )}
     >
       <Button
-        size="sm"
+        size="xsm"
         variant="primary"
-        style={{ float: 'right', marginRight: '10px' }}
         onClick={handleCommentButtonClick}
         disabled={disableMode}
       >
@@ -56,15 +51,15 @@ function renderCommentButton(handleCommentButtonClick, disableMode = true) {
 function renderCommentBox(sample, handleCommentTextChange) {
   const { container } = sample;
   return (
-    <FormGroup>
-      <FormControl
+    <Form.Group>
+      <Form.Control
         componentClass="textarea"
         style={{ marginTop: '10px', marginBottom: '10px' }}
         rows={2}
         value={container.description}
         onChange={handleCommentTextChange}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -85,18 +80,13 @@ function RndOrder({
 }) {
   return (
     <div>
-      <p style={{
-        position: 'sticky',
-        top: '0px',
-        zIndex: 1000,
-        backgroundColor: 'white',
-
-      }}
-      >
+      <div className="d-flex justify-content-between align-items-center mb-3">
         {AnalysisModeBtn(mode, toggleMode, isDisabled)}
-        {addButton()}
-        {renderCommentButton()}
-      </p>
+        <ButtonToolbar className="gap-2">
+          {renderCommentButton()}
+          {addButton()}
+        </ButtonToolbar>
+      </div>
       <div style={{
         position: 'relative',
         height: '600px',
@@ -127,8 +117,6 @@ function RndOrder({
     </div>
   );
 }
-
-const panelOnSelect = () => { };
 
 function RndEdit({
   sample,
@@ -183,57 +171,40 @@ function RndEdit({
 
   return (
     <div>
-      <p style={{
-        position: 'sticky',
-        top: '0px',
-        zIndex: 1000,
-        backgroundColor: 'white',
-
-      }}
-      >
+      <div className="d-flex justify-content-between align-items-center mb-3">
         {AnalysisModeBtn(mode, toggleMode, isDisabled)}
-        {addButton()}
-        {renderCommentButton(handleCommentButtonClick, false)}
-        {commentBoxVisible ? renderCommentBox(sample, handleCommentTextChange) : null}
-      </p>
-      <PanelGroup
+        <ButtonToolbar className="gap-2">
+          {renderCommentButton()}
+          {addButton()}
+          {commentBoxVisible && renderCommentBox(sample, handleCommentTextChange)}
+        </ButtonToolbar>
+      </div>
+      <Accordion
         id="editable-analysis-list"
         defaultActiveKey={0}
         activeKey={activeAnalysis}
-        onSelect={panelOnSelect}
-        accordion
-        style={{
-          position: 'relative',
-          height: '600px',
-          overflowY: 'scroll'
-        }}
       >
         {orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
-          if (container.is_deleted) {
-            return (
-              <Panel eventKey={id} key={`${id}CRowEdit`}>
-                <Panel.Heading>{headerDeletedFunc(container)}</Panel.Heading>
-              </Panel>
-            );
-          }
-
           return (
-            <Panel eventKey={id} key={`${id}CRowEdit`}>
-              <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
-              <Panel.Body collapsible>
-                <ContainerComponent
-                  templateType="sample"
-                  readOnly={readOnly}
-                  container={container}
-                  disabled={isDisabled}
-                  onChange={handleChange}
-                />
-              </Panel.Body>
-            </Panel>
+            <Accordion.Item eventKey={id} key={`${id}CRowEdit`}>
+              <Accordion.Header>{headerNormalFunc(container, id)}</Accordion.Header>
+              <Accordion.Body>
+                Test
+                {!container.is_deleted && (
+                  <ContainerComponent
+                    templateType="sample"
+                    readOnly={readOnly}
+                    container={container}
+                    disabled={isDisabled}
+                    onChange={handleChange}
+                  />
+                )}
+              </Accordion.Body>
+            </Accordion.Item>
           );
         })}
-      </PanelGroup>
+      </Accordion>
     </div>
   );
 }

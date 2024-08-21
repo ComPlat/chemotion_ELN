@@ -13,22 +13,10 @@
     overflow: hidden;
     position: relative;
     &:before {
-      background: $excerpt-bg;
+      position: absolute;
       bottom: 0;
-      position: absolute;
       right: 0;
-      float: right;
       content: '\2026';
-      margin-left: -3rem;
-      width: 3rem;
-    }
-    &:after {
-      content: '';
-      background: $excerpt-bg;
-      position: absolute;
-      height: 50px;
-      width: 100%;
-      z-index: 1;
     }
   }
 }
@@ -143,10 +131,6 @@
   font-weight: bold;
 }
 
-.noAnalyses-warning {
-  margin: 20px;
-}
-
 .analysis-header-delete {
   display: inline-block;
   line-height: 2.5;
@@ -159,105 +143,74 @@
   }
 }
 
-.analysis-header.order {
-  width: calc(100% - 30px) !important;
-}
-
 .analysis-header {
-  display: inline-block;
-  height: 125px;
-  width: 100%;
+  &.order {
+    width: calc(100% - 30px) !important;
+  }
 
   .preview {
-    display: inline-block;
-    // height: 125px;
-    vertical-align: top;
-    width: 125px;
-
     img {
-      float: left;
       height: 120px;
-      margin: 0 20px 0 0;
       width: 120px;
     }
   }
 
-  .abstract {
-    display: inline-block;
-    width: calc(100% - 125px);
+  .upper-btn {
+    height: 22px;
 
-    .upper-btn {
+    .add-to-report {
+      font-size: 12px;
       height: 22px;
-      float: right;
-
-      .add-to-report {
-        font-size: 12px;
-        height: 22px;
-        padding: 0 12px;
-        vertical-align: middle;
-      }
-
-      .checkbox {
-        margin: 0;
-
-        span {
-          line-height: 22px;
-        }
-      }
+      padding: 0 12px;
+      vertical-align: middle;
     }
 
-    .lower-text {
-      // height: 103px;
+    .checkbox {
+      margin: 0;
 
-      .main-title {
-        font-size: 16px;
-        font-weight: bold;
-        margin: 0 0 0 10px;
-        overflow: hidden;
-        text-decoration: underline;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+      span {
+        line-height: 22px;
       }
+    }
+  }
 
-      .sub-title {
-        font-size: 14px;
-        font-weight: normal;
-        margin-left: 10px;
-        margin-top: 3px;
+  .main-title {
+    font-size: 16px;
+    font-weight: bold;
+    overflow: hidden;
+    text-decoration: underline;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sub-title {
+    font-size: 14px;
+  }
+
+  .ql-hidden {
+    display: none;
+  }
+
+  .ql-editor {
+    font-size: 14px;
+    padding: 0;
+    display: block; /* Fallback for non-webkit */
+    display: -webkit-box;
+    max-height: 5rem; /* Fallback for non-webkit */
+    line-height: 1.3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    @-moz-document url-prefix() {
+      overflow: hidden;
+      position: relative;
+      &:before {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        content: '\2026';
       }
-
-      .desc {
-        // font-size: 12px;
-        // display: inline-flex;
-        font-weight: normal;
-        margin-left: 10px;
-        margin-right: 0px;
-        // overflow: hidden;
-        // text-overflow: ellipsis;
-        // white-space: nowrap;
-        // width: 80%;
-      }
-
-      .ql-hidden {
-        display: none;
-      }
-
-      .ql-editor {
-        font-size: 14px;
-        padding: 0;
-        @include excerpt($font-size: 1.3rem, $line-height: 1.3, $lines-to-show: 3, $excerpt-bg: #f5f5f5);
-        // overflow-y: inherit;
-        // display: table;
-        // table-layout: fixed;
-        // width: 100%;
-        p {
-          margin-top: 3px;
-          // overflow: hidden;
-          // text-overflow: ellipsis;
-          // white-space: nowrap;
-        }
-      }
-
     }
   }
 }

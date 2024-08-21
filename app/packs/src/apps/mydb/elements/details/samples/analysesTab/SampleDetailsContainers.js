@@ -45,9 +45,6 @@ export default class SampleDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates('sample');
   }
 
-  // componentWillReceiveProps(nextProps) {
-  // }
-
   componentWillUnmount() {
     UIStore.unlisten(this.onUIStoreChange);
   }
@@ -60,16 +57,6 @@ export default class SampleDetailsContainers extends Component {
 
   handleChange(container) {
     const { sample } = this.props;
-    // const analyses = sample.container.children.find(child => (
-    //   child.container_type === 'analyses'
-    // ));
-    // analyses.children.map((child, ind) => {
-    //   if (child.container_type === 'analysis' && child.id === container.id) {
-    //     analyses.children[ind] = container;
-    //   }
-    //   return null;
-    // });
-
     this.props.handleSampleChanged(sample);
   }
 
@@ -162,7 +149,7 @@ export default class SampleDetailsContainers extends Component {
     }
     return (
       <Button
-        size="sm"
+        size="xsm"
         variant="success"
         onClick={this.handleAdd}
         disabled={!sample.can_update}

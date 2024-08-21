@@ -154,11 +154,9 @@ export default class WellplateDetailsContainers extends Component {
         )
       } else {
         return (
-          <div>
-            <p className='noAnalyses-warning'>
-              There are currently no Analyses.
-              {this.addButton()}
-            </p>
+          <div className='d-flex justify-content-between align-items-center'>
+            <p className='m-0'>There are currently no Analyses.</p>
+            {addButton()}
           </div>
         )
       }
@@ -167,7 +165,7 @@ export default class WellplateDetailsContainers extends Component {
 
       return (
         <div>
-          <p className='noAnalyses-warning'>
+          <p className='m-4'>
             There are currently no Analyses.
           </p>
         </div>

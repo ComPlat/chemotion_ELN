@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/utilities/DomHelper';
@@ -17,20 +17,15 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const qCheckPass = () => (
-  <div style={{ display: 'inline', color: 'green' }}>
-    &nbsp;
-    <i className="fa fa-check" />
-  </div>
+  <i className="fa fa-check ms-1 text-success"/>
 );
 
 const qCheckFail = (msg, kind, atomNum = '') => (
-  <div style={{ display: 'inline', color: 'red' }}>
-    &nbsp;
-    (<sup>{atomNum}</sup>{kind} {msg})
-  </div>
+  <span className="ms-1 text-danger">
+    <sup>{atomNum}</sup>{kind} {msg})
+  </span>
 );
 
 const qCheckMsg = (sample, container) => {
@@ -58,41 +53,18 @@ const qCheckMsg = (sample, container) => {
   return '';
 };
 
-const editModeBtn = (toggleMode, isDisabled) => (
-  <Button
-    size="sm"
-    variant="primary"
-    onClick={toggleMode}
-    disabled={isDisabled}
-  >
-    <span>
-      <i className="fa fa-edit" />&nbsp;
-      Edit mode
-    </span>
-  </Button>
-);
-
-const orderModeBtn = (toggleMode, isDisabled) => (
-  <Button
-    size="sm"
-    variant="success"
-    onClick={toggleMode}
-    disabled={isDisabled}
-  >
-    <span>
-      <i className="fa fa-reorder" />&nbsp;
-      Order mode
-    </span>
-  </Button>
-);
-
 const AnalysisModeBtn = (mode, toggleMode, isDisabled) => {
-  switch (mode) {
-    case 'order':
-      return orderModeBtn(toggleMode, isDisabled);
-    default:
-      return editModeBtn(toggleMode, isDisabled);
-  }
+  return (
+    <Button
+      size="xsm"
+      variant={mode === 'order' ? 'success' : 'primary'}
+      onClick={toggleMode}
+      disabled={isDisabled}
+    >
+      <i className={"fa me-1 " + (mode === 'order' ? 'fa-reorder' : 'fa-edit')}  />
+      {mode.charAt(0).toUpperCase() + mode.slice(1)} mode
+    </Button>
+  )
 };
 
 const undoBtn = (container, mode, handleUndo) => {
@@ -101,7 +73,6 @@ const undoBtn = (container, mode, handleUndo) => {
   if (mode === 'edit') {
     return (
       <Button
-        className="pull-right"
         size="sm"
         variant="danger"
         onClick={clickUndo}
@@ -197,20 +168,15 @@ const headerBtnGroup = (
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
   return (
-    <div className="upper-btn">
-      <Button
-        size="sm"
-        variant="danger"
-        disabled={readOnly || isDisabled}
-        onClick={confirmDelete}
-      >
-        <i className="fa fa-trash" />
-      </Button>
-      <PrintCodeButton
-        element={sample}
-        analyses={[container]}
-        ident={container.id}
+    <div className="d-flex gap-1 align-items-center">
+      <Form.Check
+        type="checkbox"
+        onClick={onToggleAddToReport}
+        defaultChecked={inReport}
+        label="Add to Report"
+        className="mx-2"
       />
+      <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
       <SpectraEditorButton
         element={sample}
         hasJcamp={hasJcamp}
@@ -223,20 +189,19 @@ const headerBtnGroup = (
         toggleNMRDisplayerModal={toggleNMRDisplayerModal}
         hasNMRium={hasNMRium}
       />
-      <span className="button-right">
-        <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
-      </span>
-      <span
-        className="add-to-report"
-        onClick={stopBubble}
+      <PrintCodeButton
+        element={sample}
+        analyses={[container]}
+        ident={container.id}
+      />
+      <Button
+        size="xxsm"
+        variant="danger"
+        disabled={readOnly || isDisabled}
+        onClick={confirmDelete}
       >
-        <Checkbox
-          onClick={onToggleAddToReport}
-          defaultChecked={inReport}
-        >
-          <span>Add to Report</span>
-        </Checkbox>
-      </span>
+        <i className="fa fa-trash" />
+      </Button>
     </div>
   );
 };
@@ -271,10 +236,10 @@ const HeaderNormal = ({
   }
   return (
     <div
-      className={`analysis-header ${mode === 'edit' ? '' : 'order'}`}
+      className={`analysis-header w-100 border-end pe-3 me-3 d-flex gap-3 ${mode === 'edit' ? '' : 'order'}`}
       onClick={clickToOpen}
     >
-      <div className="preview">
+      <div className="preview border">
         <ImageModal
           hasPop={hasPop}
           previewObject={{
@@ -288,24 +253,26 @@ const HeaderNormal = ({
           }}
         />
       </div>
-      <div className="abstract">
-        {
-          headerBtnGroup(
-            container, sample, mode, handleRemove, handleSubmit,
-            toggleAddToReport, isDisabled, readOnly,
-          )
-        }
+      <div className="flex-grow-1">
         <div className="lower-text">
-          <div className="main-title">{container.name}</div>
+          <div className="d-flex justify-content-between">
+            <h4 className="flex-grow-1">{container.name}</h4>
+            {
+              headerBtnGroup(
+                container, sample, mode, handleRemove, handleSubmit,
+                toggleAddToReport, isDisabled, readOnly,
+              )
+            }
+          </div>
           <div className="sub-title">Type: {kind}</div>
           <div className="sub-title">
             Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
           </div>
-          <div className="desc sub-title">
-            <span style={{ float: 'left', marginRight: '5px' }}>
-              Content:
-            </span>
-            <QuillViewer value={contentOneLine} />
+          <div className="sub-title d-flex gap-2">
+            <span>Content:</span>
+            <div className="flex-grow-1">
+              <QuillViewer value={contentOneLine} className="p-0"/>
+            </div>
           </div>
         </div>
       </div>
