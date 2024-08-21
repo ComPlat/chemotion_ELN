@@ -39,8 +39,8 @@ function InventoryLabelSettings() {
       const { collections, inventory } = group;
 
       // If the group has an inventory, create a group label
-      if (inventory.id !== null) {
-        const groupLabel = `Collection Group ${groupCounter + 1}`;
+      if (inventory?.id) {
+        const groupLabel = `Collections in inventory: ${inventory.name}`;
         const groupObject = { value: groupLabel, title: groupLabel, children: [] };
 
         assignedOptions.push(groupObject);
@@ -80,8 +80,15 @@ function InventoryLabelSettings() {
   }, []);
 
   const handlePrefixChange = (event) => {
-    setPrefixValue(event.target.value);
-    setErrorMessage(null);
+    const prefixString = event.target.value;
+    const regex = /^[A-Za-z]+$/;
+    if (regex.test(prefixString)) {
+      setPrefixValue(prefixString);
+      setErrorMessage(null);
+    } else {
+      setPrefixValue('');
+      setErrorMessage('prefix must be alphabetic');
+    }
   };
 
   const handleNameChange = (event) => {
@@ -92,8 +99,10 @@ function InventoryLabelSettings() {
   const handleCounterChange = (event) => {
     const inputValue = event.target.value;
     const parsedValue = parseInt(inputValue, 10);
-    if (!Number.isNaN(parsedValue) || inputValue === '') {
-      setCounterValue(parsedValue || inputValue);
+    if (Number.isInteger(parsedValue) && !Number.isNaN(parsedValue)) {
+      setCounterValue(parsedValue);
+    } else {
+      setCounterValue('');
     }
   };
 
@@ -149,7 +158,10 @@ function InventoryLabelSettings() {
   const updateUserSettings = () => {
     setSpinner(true);
     const collectionIds = collectCollectionIds(selectedCollections);
-    if (prefixValue.length !== 0 && counterValue.length !== 0 && nameValue.length !== 0) {
+    const prefixCondition = prefixValue !== undefined && prefixValue !== null && prefixValue !== '';
+    const nameCondition = nameValue !== undefined && nameValue !== null && nameValue !== '';
+    const counterCondition = counterValue !== undefined && counterValue !== null && counterValue !== '';
+    if (prefixCondition && nameCondition && counterCondition && collectionIds.length !== 0) {
       setErrorMessage(null);
       InventoryFetcher.updateInventoryLabel({
         prefix: prefixValue,
@@ -162,7 +174,7 @@ function InventoryLabelSettings() {
           if (result.error_type === 'ActiveRecord::RecordNotUnique') {
             setErrorMessage('Entered Prefix is not available. Please use a different prefix');
           } else {
-            setErrorMessage('Please enter a valid prefix and counter values before updating user settings');
+            setErrorMessage('Please enter a valid name, prefix, and counter inputs before updating user settings');
           }
           setPrefixValue('');
         } else {
@@ -170,8 +182,8 @@ function InventoryLabelSettings() {
         }
       });
     } else {
-      const message = 'Please enter a valid prefix and counter values for the chosen option(s) '
-      + 'before updating user settings';
+      const message = 'Please select the desired collection(s) and enter a valid name, prefix,'
+      + 'and counter inputs before updating user settings';
       setErrorMessage(message);
       setSpinner(false);
     }
@@ -210,14 +222,16 @@ function InventoryLabelSettings() {
       setPrefixValue(inventory.prefix);
       setNameValue(inventory.name);
     } else {
-      setCounterValue('');
-      setPrefixValue('');
-      setNameValue('');
+      setCounterValue(counterValue);
+      setPrefixValue(prefixValue);
+      setNameValue(nameValue);
     }
   };
 
-  const nextValue = counterValue !== '' ? `-${parseInt(counterValue + 1, 10)}` : '';
-  const nextInventoryLabel = counterValue && prefixValue ? `${prefixValue}${nextValue}` : null;
+  const nextValue = counterValue !== '' && counterValue !== null ? `-${parseInt(counterValue + 1, 10)}` : '';
+  const prefixCondition = prefixValue !== undefined && prefixValue !== null && prefixValue !== '';
+  const nameCondition = nameValue !== undefined && nameValue !== null && nameValue !== '';
+  const nextInventoryLabel = prefixCondition && nameCondition ? `${prefixValue}${nextValue}` : null;
   const message = (
     <div className="text-danger">
       { errorMessage }

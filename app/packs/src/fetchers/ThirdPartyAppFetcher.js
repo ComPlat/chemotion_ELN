@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import { ThirdPartyAppServices } from 'src/endpoints/ApiServices';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
+
 const { TPA_ENDPOINT } = ThirdPartyAppServices;
 const TPA_ENDPOINT_ADMIN = `${TPA_ENDPOINT}/admin`;
 
@@ -12,6 +13,7 @@ export default class ThirdPartyAppFetcher {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
+
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -36,6 +38,7 @@ export default class ThirdPartyAppFetcher {
       method: 'DELETE',
     }).then(response => response.json())
       .then(json => json)
+
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -73,6 +76,16 @@ export default class ThirdPartyAppFetcher {
         type: currentType
       })
     }).then(response => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static getHandlerUrl(attID, type) {
+    const queryParams = new URLSearchParams({ attID, type }).toString();
+    const url = `${TPA_ENDPOINT}/url?${queryParams}`;
+    return fetch(url, {
+      credentials: 'same-origin'
+    }).then((response) => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

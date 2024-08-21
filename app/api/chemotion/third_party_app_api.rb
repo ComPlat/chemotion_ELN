@@ -5,6 +5,7 @@ TPA_EXPIRATION = 48.hours
 module Chemotion
   # Publish-Subscription MessageAPI
   class ThirdPartyAppAPI < Grape::API
+
     helpers do
       # desc: expiry time for the token and the cached upload/download counters
       def expiry_time
@@ -107,6 +108,7 @@ module Chemotion
         )
       end
     end
+    helpers AttachmentHelpers
 
     # desc: public endpoint for third party apps to {down,up}load files
     namespace :public do
@@ -151,7 +153,7 @@ module Chemotion
           requires :url, type: String, allow_blank: false, desc: 'The url in order to redirect to the app.'
           requires :name, type: String, allow_blank: false,
                           desc: 'name of third party app. User will chose correct app based on names.'
-          optional :file_types, type: String, desc: 'comma separated mime-types'
+          requires :file_types, type: String, desc: 'comma separated mime-types'
         end
 
         rescue_from ActiveRecord::RecordInvalid do |e|
@@ -186,7 +188,7 @@ module Chemotion
 
       desc 'get all thirdPartyApps'
       get do
-        ThirdPartyApp.all
+        present ThirdPartyApp.all, with: Entities::ThirdPartyAppEntity
       end
 
       desc 'create token for use in download public_api'
@@ -200,6 +202,7 @@ module Chemotion
         parse_payload
         encode_and_cache_token_user_collection_with_type
         encode_and_cache_token_attachment_app
+        return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
         "#{@app.url}?url=#{url}"
@@ -217,6 +220,30 @@ module Chemotion
                   })
         end
         { token_list: token_list }
+
+      desc 'get chemotion handler url'
+      params do
+        requires :attID, type: Integer, desc: 'Attachment ID'
+        optional :type, type: Integer, default: 0, desc: 'Format of the link'
+      end
+
+      get 'url' do
+        params[:appID] = 0
+        prepare_payload
+        parse_payload
+        encode_and_cache_token
+        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
+        case params[:type]
+        when 1
+          url = URI.parse Rails.application.config.root_url
+          url.path = "/api/v1/public/third_party_apps/#{@token}"
+          url.scheme = 'chemotion'
+          url.to_s
+        when 2
+          "chemotion://#{@attachment.filename}?url=#{url}"
+        else
+          "chemotion://?url=#{url}"
+        end
       end
 
       route_param :id, type: Integer, desc: '3rd party app id' do

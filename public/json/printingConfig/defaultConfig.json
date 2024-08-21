@@ -1,0 +1,12 @@
+{
+    "code_type": "qr_code",
+    "code_image_size": 30,
+    "name": true,
+    "short_label": true,
+    "external_label": true,
+    "code_log": true,
+    "molecule_name": true,
+    "displaySample": true,
+    "text_position" : "below",
+    "width": 100
+}

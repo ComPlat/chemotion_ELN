@@ -97,10 +97,10 @@ const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
   );
 };
 
-const GeneralMaterialGroup = ({
+function GeneralMaterialGroup({
   contents, materialGroup, showLoadingColumn, reaction, addDefaultSolvent,
   switchEquiv, lockEquivColumn
-}) => {
+}) {
   const isReactants = materialGroup === 'reactants';
   let headers = {
     ref: 'Ref',
@@ -108,7 +108,7 @@ const GeneralMaterialGroup = ({
     show_label: 'L/S',
     tr: 'T/R',
     mass: 'Mass',
-    reaction_coefficient: 'Coeff',
+    reaction_coefficient: 'Coef',
     amount: 'Amount',
     loading: 'Loading',
     concn: 'Conc',
@@ -194,8 +194,20 @@ const GeneralMaterialGroup = ({
             {isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
             {!isReactants && <th>{refTHead}</th>}
             <th>{headers.show_label}</th>
-            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.tr}</th>}
-            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.reaction_coefficient}</th>}
+            {!isReactants && <th style={{ padding: '2px 2px' }}>{headers.tr}</th>}
+            {!isReactants
+              && (
+                <th style={{ padding: '2px 2px' }}>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={
+                      <Tooltip id="coefficientHeaderTitleReactionScheme">Coefficient</Tooltip>
+                    }
+                  >
+                    <span>{headers.reaction_coefficient}</span>
+                  </OverlayTrigger>
+                </th>
+              )}
             {!isReactants && <th>{headers.amount}</th>}
             {!isReactants && <th />}
             {!isReactants && <th />}
@@ -204,13 +216,11 @@ const GeneralMaterialGroup = ({
             {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
           </tr>
         </thead>
-        <tbody>
-          {contents.map(item => item)}
-        </tbody>
+        {contents.map(item => item)}
       </table>
     </div>
   );
-};
+}
 
 
 const SolventsMaterialGroup = ({

@@ -2,9 +2,12 @@
 
 module Entities
   class ThirdPartyAppEntity < Grape::Entity
-    expose :ip_address
-    expose :name
-    expose :password
-    expose :file_type
+    expose :id, documentation: { type: 'Integer', desc: 'Third party app id' }
+    expose :url, documentation: { type: 'String', desc: 'Third party app URL' }
+    expose :name, documentation: { type: 'String', desc: 'Third party app name' }
+    expose :file_types, as: :fileTypes,
+                        documentation: {
+                          type: 'String', desc: 'comma separated File types supported by the third party app'
+                        }
   end
 end

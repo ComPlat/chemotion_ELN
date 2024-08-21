@@ -33,8 +33,11 @@ module Usecases
           basic_conditions_by_filter(filter)
           table_or_tab_types
           special_and_generic_conditions_by_filter(filter, i)
+          conditions_for_query = conditions
 
-          @conditions[:query] = "#{@conditions[:query]} #{filter['link']} (#{conditions}) "
+          if conditions_for_query.present?
+            @conditions[:query] = "#{@conditions[:query]} #{filter['link']} (#{conditions_for_query}) "
+          end
           @conditions[:value] += @conditions[:words] if @conditions[:field].present?
         end
         @conditions
@@ -68,7 +71,7 @@ module Usecases
         elsif @table_or_tab_types[:chemicals]
           chemicals_tab_options(filter)
         elsif @table_or_tab_types[:analyses]
-          analyses_tab_options(filter)
+          analyses_tab_options(filter, number)
         elsif @table_or_tab_types[:measurements]
           measurements_tab_options(filter)
         elsif @table_or_tab_types[:literatures]
@@ -83,7 +86,7 @@ module Usecases
         @table_or_tab_types[:generics] = (@field_table.present? && @field_table == 'segments') ||
                                          (@table == 'elements' && %w[name short_label].exclude?(@conditions[:field]))
         @table_or_tab_types[:chemicals] = @field_table.present? && @field_table == 'chemicals'
-        @table_or_tab_types[:analyses] = @field_table.present? && @field_table == 'containers'
+        @table_or_tab_types[:analyses] = @field_table.present? && %w[containers datasets].include?(@field_table)
         @table_or_tab_types[:measurements] = @field_table.present? && @field_table == 'measurements'
         @table_or_tab_types[:literatures] = @table.present? && @table == 'literatures'
       end
@@ -100,7 +103,7 @@ module Usecases
 
         @conditions[:words] = [@conditions[:words].join("\n")] if @conditions[:words].size > 1 && @match == '='
 
-        @conditions[:words].collect { condition }.join(' OR ')
+        @conditions[:words].collect { condition }.join(' OR ') if condition.present?
       end
 
       def table_or_detail_level_is_not_allowed(filter)
@@ -111,7 +114,7 @@ module Usecases
       end
 
       def whitelisted_table(table:, column:, **_)
-        tables = %w[elements segments chemicals containers measurements molecules literals literatures]
+        tables = %w[elements segments chemicals containers measurements molecules literals literatures datasets]
         return true if tables.include?(table)
 
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
@@ -328,25 +331,75 @@ module Usecases
       end
       # rubocop:enable Metrics/AbcSize
 
-      def analyses_tab_options(filter)
-        prop = "prop_#{@field_table}"
+      def analyses_tab_options(filter, number)
+        prop = 'prop_containers'
         @conditions[:condition_table] = ''
-        field_table_inner_join =
-          "INNER JOIN #{@field_table} AS #{prop} ON #{prop}.containable_type = '#{@conditions[:model_name]}'
-          AND #{prop}.containable_id = #{@table}.id"
+        analyses_joins(prop)
 
-        if @conditions[:joins].exclude?(field_table_inner_join)
-          @conditions[:joins] << field_table_inner_join
-          @conditions[:joins] << "INNER JOIN #{@field_table} AS analysis ON analysis.parent_id = #{prop}.id"
-          @conditions[:joins] << "INNER JOIN #{@field_table} AS children ON children.parent_id = analysis.id"
+        if @field_table == 'datasets'
+          dataset_tab_options(filter, number)
+        else
+          @conditions[:field] =
+            if %w[name description plain_text_content].include?(filter['field']['column'])
+              "children.#{filter['field']['column']}"
+            else
+              "children.extended_metadata -> '#{filter['field']['column']}'"
+            end
+
+          @conditions[:additional_condition] +=
+            if %w[name description plain_text_content].include?(filter['field']['column'])
+              "OR dataset.#{filter['field']['column']} ILIKE '%#{filter['value']}%'"
+            else
+              "OR dataset.extended_metadata -> '#{filter['field']['column']}' ILIKE '%#{filter['value']}%'"
+            end
         end
+      end
 
-        @conditions[:field] =
-          if %w[name description plain_text_content].include?(filter['field']['column'])
-            "children.#{filter['field']['column']}"
-          else
-            "children.extended_metadata -> '#{filter['field']['column']}'"
+      def analyses_joins(prop)
+        field_table_inner_join =
+          "INNER JOIN containers AS #{prop} ON #{prop}.containable_type = '#{@conditions[:model_name]}'
+          AND #{prop}.containable_id = #{@table}.id"
+        return if @conditions[:joins].include?(field_table_inner_join)
+
+        @conditions[:joins] << field_table_inner_join
+        @conditions[:joins] << "INNER JOIN containers AS analysis ON analysis.parent_id = #{prop}.id"
+        @conditions[:joins] << 'INNER JOIN containers AS children ON children.parent_id = analysis.id'
+        @conditions[:joins] << 'LEFT JOIN containers AS dataset ON dataset.parent_id = children.id'
+      end
+
+      def dataset_tab_options(filter, number)
+        key = filter['field']['key']
+        prop = "prop_#{key}_#{number}"
+        datasets_joins(filter, prop, key)
+
+        if filter['field']['column'] == 'datasets_type'
+          @conditions[:field] = ''
+        else
+          field = filter['field']['column'].remove('datasets_')
+          @conditions[:field] = "(#{prop} ->> 'value')::TEXT"
+          @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{field}'"
+          if filter['unit'].present?
+            unit = filter['unit'].remove('°').remove(/ \(.*\)/).tr('/', '_')
+            @conditions[:additional_condition] +=
+              " AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{unit}')"
           end
+        end
+      end
+
+      def datasets_joins(filter, prop, key)
+        datasets_join =
+          "INNER JOIN datasets ON datasets.element_id = dataset.id AND datasets.element_type = 'Container'"
+
+        @conditions[:joins] << datasets_join if @conditions[:joins].exclude?(datasets_join)
+
+        if filter['field']['column'] == 'datasets_type'
+          @conditions[:joins] <<
+            "INNER JOIN dataset_klasses ON dataset_klasses.id = datasets.dataset_klass_id
+            AND dataset_klasses.ols_term_id = '#{filter['value']}'"
+        else
+          @conditions[:joins] <<
+            "CROSS JOIN jsonb_array_elements(datasets.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
+        end
       end
 
       def measurements_tab_options(filter)

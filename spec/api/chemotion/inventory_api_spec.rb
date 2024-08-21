@@ -51,4 +51,17 @@ describe Chemotion::InventoryAPI do
       expect(json_response).to have_key('inventory_collections')
     end
   end
+
+  describe 'GET inventory/collection_id' do
+    before do
+      allow(Inventory).to receive(:by_collection_id).and_return([build(:inventory)])
+    end
+
+    it 'fetch inventory for collection' do
+      get "/api/v1/inventory/#{collection.id}"
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)).to include('id', 'prefix', 'name', 'counter')
+    end
+  end
 end

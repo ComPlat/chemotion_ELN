@@ -173,6 +173,7 @@ module Chemotion
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
+        optional :user_label, type: Integer, desc: 'user label'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :product_only, type: Boolean, desc: 'query only reaction products'
       end
@@ -220,12 +221,14 @@ module Chemotion
                        end
         from = params[:from_date]
         to = params[:to_date]
+        user_label = params[:user_label]
         by_created_at = params[:filter_created_at] || false
 
         sample_scope = sample_scope.created_time_from(Time.zone.at(from)) if from && by_created_at
         sample_scope = sample_scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
         sample_scope = sample_scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
         sample_scope = sample_scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
+        sample_scope = sample_scope.by_user_label(user_label) if user_label
 
         sample_list = []
 
@@ -247,7 +250,7 @@ module Chemotion
           end
         else
           reset_pagination_page(sample_scope)
-          sample_scope = sample_scope.order('updated_at DESC')
+          sample_scope = sample_scope.order('samples.updated_at DESC')
           paginate(sample_scope).each do |sample|
             detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
             sample_list.push(
@@ -275,7 +278,7 @@ module Chemotion
         end
 
         get do
-          sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container)
+          sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container, :reactions_samples)
                          .find(params[:id])
           present(
             sample,
@@ -346,6 +349,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :collection_id, type: Integer, desc: 'Collection id'
         # use :root_container_params
       end
 
@@ -393,6 +397,18 @@ module Chemotion
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
 
+          inventory_label = params[:xref]&.fetch(:inventory_label, nil)
+
+          if inventory_label
+            inventory_label_changed = @sample.xref['inventory_label'] != inventory_label
+            collection_id = params[:collection_id]
+            condition = inventory_label_changed && !collection_id.nil?
+            # update inventory_label only if sample inventory label has a new value
+            @sample.update_inventory_label(inventory_label, collection_id) if condition
+          end
+          # remove collection_id from sample attributes after updating inventory label
+          attributes.delete(:collection_id)
+
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
@@ -407,6 +423,16 @@ module Chemotion
             policy: @element_policy,
             root: :sample,
           )
+        rescue ActiveRecord::RecordNotUnique => e
+          # Extract the column or index name from the error message
+          match = e.message.match(/duplicate key value violates unique constraint "(?<index_name>.+)"/)
+          index_name = match[:index_name] if match
+
+          error_info = {
+            error_type: 'ActiveRecord::RecordNotUnique',
+            index_name: index_name,
+          }
+          error!(error_info, 500)
         end
       end
 
@@ -440,6 +466,7 @@ module Chemotion
         optional :melting_point_lowerbound, type: Float, desc: 'lower bound of sample melting point'
         optional :residues, type: Array
         optional :segments, type: Array
+        optional :user_labels, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
         optional :stereo, type: Hash do
@@ -520,6 +547,7 @@ module Chemotion
           )
         end
         attributes.delete(:segments)
+        attributes.delete(:user_labels)
 
         sample = Sample.new(attributes)
 
@@ -544,8 +572,10 @@ module Chemotion
         end
 
         sample.container = update_datamodel(params[:container])
+        sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
 
+        update_element_labels(sample, params[:user_labels], current_user.id)
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
         # save to profile

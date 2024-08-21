@@ -372,20 +372,30 @@ class User < ApplicationRecord
     super.presence || TextTemplate.create_default_text_templates_for_user(id)
   end
 
-  def self.from_omniauth(provider, uid, email, first_name, last_name)
-    user = find_by(email: email&.downcase)
+  def self.from_omniauth(params)
+    user = find_by(email: params&.email&.downcase)
     if user.present?
       providers = user.providers || {}
-      providers[provider] = uid
+      providers[params&.provider] = params&.uid
       user.providers = providers
       user.save!
     else
       user = User.new(
-        email: email,
-        first_name: first_name,
-        last_name: last_name,
+        email: params&.email,
+        first_name: params&.first_name,
+        last_name: params&.last_name,
         password: Devise.friendly_token[0, 20],
       )
+    end
+
+    if params&.groups&.length&.positive?
+      params.groups.each do |group|
+        name = group.split(':')
+        if name.size == 3
+          group = Group.find_by(first_name: name[2], last_name: name[1])
+          user.groups << group if group.present?
+        end
+      end
     end
     user
   end

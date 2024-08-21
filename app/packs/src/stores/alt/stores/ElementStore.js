@@ -746,8 +746,8 @@ class ElementStore {
     const { name, ui_state } = obj;
     const page = ui_state[name] ? ui_state[name].page : 1;
     const per_page = ui_state.number_of_results;
-    const { fromDate, toDate, productOnly } = ui_state;
-    const params = { page, per_page, fromDate, toDate, productOnly, name };
+    const { fromDate, toDate, userLabel, productOnly } = ui_state;
+    const params = { page, per_page, fromDate, toDate, userLabel, productOnly, name };
     ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, ui_state.isSync, name);
   }
 
@@ -1107,8 +1107,8 @@ class ElementStore {
       this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID);
     } else {
       const per_page = uiState.number_of_results;
-      const { fromDate, toDate, productOnly } = uiState;
-      const params = { page, per_page, fromDate, toDate, productOnly, name: type };
+      const { fromDate, toDate, userLabel, productOnly } = uiState;
+      const params = { page, per_page, fromDate, toDate, userLabel, productOnly, name: type };
       const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
       let fn = `fetch${fnName}ByCollectionId`;
       const allowedActions = [
@@ -1139,18 +1139,19 @@ class ElementStore {
 
   handleRefreshElementsForSearchById(type, uiState, currentSearchByID) {
     currentSearchByID.page_size = uiState.number_of_results;
-    const { filterCreatedAt, fromDate, toDate, productOnly } = uiState;
+    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = uiState;
     const { moleculeSort } = this.state;
     const { page } = uiState[type];
     let filterParams = {};
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let modelName = !elnElements.includes(type) ? 'element' : type;
 
-    if (fromDate || toDate || productOnly) {
+    if (fromDate || toDate || userLabel || productOnly) {
       filterParams = {
         filter_created_at: filterCreatedAt,
         from_date: fromDate,
         to_date: toDate,
+        user_label: userLabel,
         product_only: productOnly,
       };
     }

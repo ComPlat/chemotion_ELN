@@ -75,8 +75,10 @@ export default class ManagingModalSharing extends React.Component {
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
 
       // eslint-disable-next-line no-unused-expressions
-      elementNames(false).forEach((klass) => {
-        isElementSelectionEmpty = isElementSelectionEmpty && this.isElementSelectionEmpty(uiState[`${klass}`]);
+      elementNames(false).then((klassArray) => {
+        klassArray.forEach((klass) => {
+          isElementSelectionEmpty = isElementSelectionEmpty && this.isElementSelectionEmpty(uiState[`${klass}`]);
+        });
       });
     }
 
@@ -125,16 +127,17 @@ export default class ManagingModalSharing extends React.Component {
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    elementNames(false).forEach((klass) => {
-      filterParams[`${klass}`] = {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId
-      };
+    elementNames(false).then((klassArray) => {
+      klassArray.forEach((klass) => {
+        filterParams[`${klass}`] = {
+          all: true,
+          included_ids: [],
+          excluded_ids: [],
+          collection_id: collectionId
+        };
+      });
     });
 
-    console.log(filterParams);
     return filterParams;
   }
 

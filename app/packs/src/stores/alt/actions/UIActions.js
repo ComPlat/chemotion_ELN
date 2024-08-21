@@ -135,6 +135,10 @@ class UIActions {
     return filterCreatedAt;
   }
 
+  setUserLabel(label) {
+    return label;
+  }
+
   setFromDate(date) {
     return date;
   }

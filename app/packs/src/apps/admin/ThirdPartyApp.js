@@ -93,7 +93,7 @@ export default class ThirdPartyApp extends React.Component {
 
   showNewThirdPartyAppModal() {
     this.setState({
-      showMsgModal: true
+      showMsgModal: true,
     });
   }
 
@@ -105,7 +105,7 @@ export default class ThirdPartyApp extends React.Component {
       showMsgModalEdit: true,
       currentName: app?.name,
       currentIP: app?.url,
-      currentFileTypes: app?.file_types,
+      currentFileTypes: app?.fileTypes,
       currentID: key
     });
   }
@@ -148,7 +148,7 @@ export default class ThirdPartyApp extends React.Component {
 
     if (fileTypes.length == 0) {
       this.setState({
-        errorMessage: 'File type has to have at least one letter'
+        errorMessage: 'File type cannot be empty'
       });
       return false;
     }
@@ -215,7 +215,8 @@ export default class ThirdPartyApp extends React.Component {
     const handleEdit = () => {
       const url = urlRef.value?.trim();
       const name = nameRef.value?.trim();
-      const fileTypes = this.state.currentFileTypes.trim();
+
+      const fileTypes = fileTypesRef.value?.trim();
 
       if (this.checkInput(name, url, fileTypes)) {
         this.edit(name, url, fileTypes)
@@ -283,16 +284,30 @@ export default class ThirdPartyApp extends React.Component {
                 IP address:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="IP address" value={this.state.currentIP} onChange={handleIPChange} inputRef={(ref) => { urlRef = ref; }} />
+                <FormControl
+                  type="text"
+                  name="IP address"
+                  value={this.state.currentIP}
+                  onChange={handleIPChange}
+                  inputRef={(ref) => { urlRef = ref; }}
+                />
               </Col>
             </FormGroup>
 
             <FormGroup controlId="formControlFileType">
               <Col componentClass={ControlLabel} sm={3}>
-                File types:
+
+                Compatible File types (MIME):
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="File types" value={this.state.currentFileTypes} onChange={handleFileTypesChange} inputRef={(ref) => { fileTypesRef = ref; }} />
+                <FormControl
+                  type="text"
+                  name="Mime types list"
+                  value={this.state.currentFileTypes}
+                  onChange={handleFileTypesChange}
+                  inputRef={(ref) => { fileTypesRef = ref; }}
+                  placeholder="* or comma separated list: image/png,text..."
+                />
               </Col>
             </FormGroup>
 
@@ -360,10 +375,15 @@ export default class ThirdPartyApp extends React.Component {
 
             <FormGroup controlId="formControlFileTypes">
               <Col componentClass={ControlLabel} sm={3}>
-                File types:
+                File types (MIME):
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="File types" inputRef={(ref) => { fileTypesRef = ref; }} />
+                <FormControl
+                  type="text"
+                  name="File types"
+                  inputRef={(ref) => { fileTypesRef = ref; }}
+                  placeholder="* or comma separated list: image/png,text..."
+                />
               </Col>
             </FormGroup>
 
@@ -438,7 +458,7 @@ export default class ThirdPartyApp extends React.Component {
 
                 <td>{entry.name}</td>
                 <td>{entry.url}</td>
-                <td>{entry.file_types}</td>
+                <td>{entry.fileTypes}</td>
                 <td>{entry.id}</td>
               </tr>
             ))}

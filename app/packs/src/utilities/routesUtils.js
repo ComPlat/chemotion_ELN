@@ -49,7 +49,11 @@ const collectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
+    elementNames(false).then((klassArray) => {
+      klassArray.forEach((klass) => {
+        UIActions.uncheckAllElements({ type: klass, range: 'all' });
+      });
+    });
     // }
   });
 };
@@ -94,7 +98,11 @@ const scollectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
+    elementNames(false).then((klassArray) => {
+      klassArray.forEach((klass) => {
+        UIActions.uncheckAllElements({ type: klass, range: 'all' });
+      });
+    });
 
     // }
   });
@@ -126,11 +134,11 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  if (e.params.new_cellLine || (e.params.new_cellLine === undefined && e.params.cell_lineID === "new")) {
-    ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
-  } else {
-    if (e.params.cellLineID) {
-      e.params.cellLineId = e.params.cellLineID;
+  if(e.params.new_cellLine||(e.params.new_cellLine===undefined&&e.params.cell_lineID==="new")){
+     ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
+  }else{
+    if(e.params.cellLineID){
+     e.params.cellLineId=e.params.cellLineID
     }
     ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
   }

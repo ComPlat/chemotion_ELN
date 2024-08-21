@@ -3,7 +3,9 @@
 /* eslint-disable react/destructuring-assignment */
 import { findKey, last } from 'lodash';
 import { observer } from 'mobx-react';
+
 import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
 import React, { Component } from 'react';
 import { Button } from 'react-bootstrap';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
@@ -18,6 +20,9 @@ import {
   importButton,
   removeButton,
   sortingAndFilteringUI,
+  formatFileSize,
+  attachmentThumbnail,
+  ThirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import ThirdPartyAppButton from 'src/apps/mydb/elements/list/ThirdPartyAppButton';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -262,16 +267,15 @@ class ResearchPlanDetailsAttachments extends Component {
     const { researchPlan } = this.props;
 
     //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
-
+    
     let combinedAttachments = filteredAttachments;
-    if (this.context.attachmentNotificationStore) {
-      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, "ResearchPlan", researchPlan);
+    if(this.context.attachmentNotificationStore ){
+      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"ResearchPlan",researchPlan);
     }
-
 
     const { onUndoDelete, attachments } = this.props;
     const thirdPartyApps = this.thirdPartyApps;
-
+    
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
@@ -337,6 +341,7 @@ class ResearchPlanDetailsAttachments extends Component {
                       tokenList={this.state.tokenList}
                       onChangeRecall={() => this.fetch3paTokenByUserId()}
                     />
+
                     {editButton(
                       attachment,
                       extension,

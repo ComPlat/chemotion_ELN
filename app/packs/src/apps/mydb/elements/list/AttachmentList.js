@@ -10,6 +10,7 @@ import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 
 export const attachmentThumbnail = (attachment) => (
@@ -96,6 +97,21 @@ const handleDownloadOriginal = (attachment) => {
   });
 };
 
+const handleOpenLocally = (attachment, option = 0) => {
+  ThirdPartyAppFetcher.getHandlerUrl(attachment.id, option).then((url) => {
+    const link = document.createElement('a');
+    link.download = attachment.filename;
+    console.log('url', url);
+    link.href = url;
+    const event = new window.MouseEvent('click', {
+      view: window,
+      bubbles: true,
+      cancelable: true
+    });
+    link.dispatchEvent(event);
+  });
+};
+
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
     <Dropdown.Toggle style={{height: '30px'}} bsSize="xs" bsStyle="primary">
@@ -111,6 +127,13 @@ export const downloadButton = (attachment) => (
         disabled={!isImageFile(attachment.filename) || attachment.isNew}
       >
         Download Annotated
+      </MenuItem>
+      <MenuItem
+        eventKey="3"
+        onClick={() => handleOpenLocally(attachment, 1)}
+        disabled={attachment.isNew}
+      >
+        Open locally
       </MenuItem>
     </Dropdown.Menu>
   </Dropdown>
@@ -318,66 +341,50 @@ export const sortingAndFilteringUI = (
   </div>
 );
 
-export const thirdPartyAppButton = (attachment, options) => (
-  <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
-    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
-      <i className="fa  fa-external-link " aria-hidden="true" />
-    </Dropdown.Toggle>
-    <Dropdown.Menu>
-      {options.map((option) => (
-        <MenuItem
-          key={uuid.v4()}
-          eventKey={option.id}
-          onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
-            .then((result) => window.open(result, '_blank'))}
-          // disabled={!isImageFile(attachment.filename) || attachment.isNew}
-        >
-          {option.name}
-        </MenuItem>
-      ))}
-    </Dropdown.Menu>
-  </Dropdown>
-);
-
 // validate id as uuid
 // TODO replace with uuid.validate after upgrade to uuid 10
-const validateId = (id) => {
-  const uuidRegex = new RegExp(
-    '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-  );
+const isUUID = (id) => {
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-6][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
   return uuidRegex.test(id);
 };
 
+const filterOptions = (contentType, options) => {
+  const [itemType, itemSubtype] = (contentType || '').split('/');
+  return (options || [])
+    .filter((option) => {
+      if (!option.fileTypes || option.fileTypes.length === 0) { return false; }
+      return option.fileTypes.split(',').some((filter) => {
+        const [type, subtype] = filter.split('/');
+        return (type === '*' || type === itemType) && (!subtype || subtype === '*' || subtype === itemSubtype);
+      });
+    });
+};
+
+const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
+
 export function ThirdPartyAppButton({ attachment, options = [] }) {
   const [menuItems, setMenuItems] = useState([]);
-  const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
   const contentType = mime.contentType(attachment.content_type) ? attachment.content_type : mime.lookup(attachment.filename);
 
   useEffect(() => {
-    const generateMenuItems = () => {
-      if (validateId(attachment?.id)) { return noChoice; }
-      const items = [];
-      options.forEach((option) => {
-        const optionFileTypes = option.fileTypes.split(',').map((type) => type.trim());
-        if (optionFileTypes.includes('*') || (contentType && (optionFileTypes.includes(contentType)))) {
-          items.push(
-            <MenuItem
-              key={uuid.v4()}
-              eventKey={option.id}
-              onClick={() => {
-                ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
-                  .then((result) => window.open(result, '_blank'));
-              }}
-            >
-              {option.name}
-            </MenuItem>
-          );
-        }
-      });
-      return items.length > 0 ? items : noChoice;
+    const generatedMenuItems = () => {
+      if (isUUID(attachment?.id)) { return noChoice; }
+      const filteredOptions = filterOptions(contentType, options);
+      if (filteredOptions.length === 0) { return noChoice; }
+      return filteredOptions.map((option) => (
+        <MenuItem
+          key={uuid.v4()}
+          eventKey={option.id}
+          onClick={() => {
+            ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+              .then((result) => window.open(result, '_blank'));
+          }}
+        >
+          {option.name}
+        </MenuItem>
+      ));
     };
-
-    setMenuItems(generateMenuItems());
+    setMenuItems(generatedMenuItems());
   }, [attachment, options]);
 
   return (

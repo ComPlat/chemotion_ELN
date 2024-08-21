@@ -37,9 +37,10 @@ module Usecases
   module Reactions
     class UpdateMaterials
       include ContainerHelpers
+      include Reactable
       attr_reader :current_user
 
-      def initialize(reaction, materials, user)
+      def initialize(reaction, materials, user, vessel_size)
         @reaction = reaction
         @materials = {
           starting_material: Array(materials['starting_materials']).map { |m| OSample.new(m) },
@@ -49,6 +50,7 @@ module Usecases
           product: Array(materials['products']).map { |m| OSample.new(m) }
         }
         @current_user = user
+        @vessel_size = vessel_size
       end
 
       def execute!
@@ -97,7 +99,6 @@ module Usecases
         subsample.real_amount_unit = sample.real_amount_unit
         subsample.metrics = sample.metrics
         subsample.dry_solvent = sample.dry_solvent
-
         # add new data container
         subsample.container = update_datamodel(sample.container) if sample.container
 
@@ -111,7 +112,8 @@ module Usecases
           :id, :is_new, :is_split, :reference, :equivalent, :position,
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
-          :melting_point_lowerbound, :melting_point_upperbound, :segments
+          :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
+          :gas_phase_data
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -131,23 +133,55 @@ module Usecases
         )
 
         new_sample.short_label = fixed_label if fixed_label
+        new_sample.xref['inventory_label'] = nil if new_sample.xref['inventory_label']
+        new_sample.skip_inventory_label_update = true
 
         # add new data container
         new_sample.container = update_datamodel(container_info)
 
         new_sample.collections << @reaction.collections
-
         new_sample.save!
         new_sample
+      end
+
+      def update_mole_gas_product(sample, vessel_volume)
+        gas_phase_data = sample.gas_phase_data
+
+        calculate_mole_gas_product(
+          gas_phase_data['part_per_million'],
+          gas_phase_data['temperature'],
+          vessel_volume,
+        )
+      end
+
+      def set_mole_value_gas_product(existing_sample, sample)
+        vessel_volume = reaction_vessel_volume(@reaction.vessel_size)
+        return nil if vessel_volume.nil?
+
+        if sample.real_amount_value.nil?
+          existing_sample.target_amount_value = update_mole_gas_product(sample, vessel_volume)
+          existing_sample.target_amount_unit = 'mol'
+        else
+          existing_sample.real_amount_value = update_mole_gas_product(sample, vessel_volume)
+          existing_sample.real_amount_unit = 'mol'
+        end
       end
 
       def update_existing_sample(sample, fixed_label)
         existing_sample = Sample.find(sample.id)
 
-        existing_sample.target_amount_value = sample.target_amount_value
-        existing_sample.target_amount_unit = sample.target_amount_unit
-        existing_sample.real_amount_value = sample.real_amount_value
-        existing_sample.real_amount_unit = sample.real_amount_unit
+        update_gas_material = @reaction.vessel_size && @vessel_size && (
+          @reaction.vessel_size['amount'] != @vessel_size['amount'] ||
+          @reaction.vessel_size['unit'] != @vessel_size['unit']
+        )
+        if sample.gas_type == 'gas' && update_gas_material
+          set_mole_value_gas_product(existing_sample, sample)
+        else
+          existing_sample.target_amount_value = sample.target_amount_value
+          existing_sample.target_amount_unit = sample.target_amount_unit
+          existing_sample.real_amount_value = sample.real_amount_value
+          existing_sample.real_amount_unit = sample.real_amount_unit
+        end
         existing_sample.metrics = sample.metrics
         existing_sample.external_label = sample.external_label if sample.external_label
         existing_sample.short_label = sample.short_label if sample.short_label
@@ -178,7 +212,9 @@ module Usecases
             waste: sample.waste,
             coefficient: sample.coefficient,
             position: sample.position,
-            type: reactions_sample_klass
+            type: reactions_sample_klass,
+            gas_type: sample.gas_type,
+            gas_phase_data: sample.gas_phase_data,
           )
         # sample was moved to other materialgroup
         else
@@ -191,7 +227,9 @@ module Usecases
             waste: sample.waste,
             coefficient: sample.coefficient,
             position: sample.position,
-            type: reactions_sample_klass
+            type: reactions_sample_klass,
+            gas_type: sample.gas_type,
+            gas_phase_data: sample.gas_phase_data,
           )
         end
       end

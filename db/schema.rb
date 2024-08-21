@@ -930,6 +930,7 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
+    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
@@ -967,6 +968,7 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
     t.text "plain_text_observation"
     t.jsonb "variations", default: []
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
+    t.boolean "gaseous", default: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -985,6 +987,8 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
+    t.integer "gas_type", default: 0
+    t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1735,8 +1739,8 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL

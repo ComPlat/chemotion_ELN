@@ -91,6 +91,8 @@
 !/public/editors/.keep
 /public/favicon.ico
 
+/public/klasses.json
+
 /public/ontologies/*
 !/public/ontologies/.keep
 !/public/ontologies/chmo.default.edited.json
@@ -206,3 +208,5 @@ public/sprite.png
 
 # generic elements
 data/klasses.json
+
+public/pdf.worker.min.js

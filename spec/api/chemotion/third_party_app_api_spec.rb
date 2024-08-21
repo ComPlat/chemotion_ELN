@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/LetSetup,RSpec/MultipleExpectations,RSpec/NestedGroups,RSpec/MultipleMemoizedHelpers
 require 'rails_helper'
 describe Chemotion::ThirdPartyAppAPI do
   include_context 'api request authorization context'
@@ -10,8 +11,8 @@ describe Chemotion::ThirdPartyAppAPI do
   end
 
   describe 'GET /third_party_apps/all' do
-    let!(:first_3PA) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
-    let!(:second_3PA) { create(:third_party_app, url: 'http://test2.com', name: 'Test2-app') }
+    let!(:first_3pa) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
+    let!(:second_3pa) { create(:third_party_app, url: 'http://test2.com', name: 'Test2-app') }
 
     context 'when two apps are available' do
       before do
@@ -38,7 +39,7 @@ describe Chemotion::ThirdPartyAppAPI do
   end
 
   describe 'POST /api/v1/third_party_apps/admin' do
-    let(:params) { { url: 'exampleUrl', name: 'exampleApp' } }
+    let(:params) { { url: 'exampleUrl', name: 'exampleApp', file_types: 'csv' } }
 
     before do
       post '/api/v1/third_party_apps/admin', params: params
@@ -56,6 +57,7 @@ describe Chemotion::ThirdPartyAppAPI do
       it 'Created app has correct properties' do
         expect(ThirdPartyApp.first.name).to eq 'exampleApp'
         expect(ThirdPartyApp.first.url).to eq 'exampleUrl'
+        expect(ThirdPartyApp.first.file_types).to eq 'csv'
       end
     end
   end
@@ -109,8 +111,9 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'GET v1/third_party_apps/{id}' do
     let(:response_data) { JSON.parse(response.body) }
-    let!(:first_3PA) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
-    let(:id) { first_3PA.id }
+
+    let!(:first_3pa) { create(:third_party_app, url: 'http://test1.com', name: 'Test1-app') }
+    let(:id) { first_3pa.id }
 
     context 'when 3PA is available' do
       before do
@@ -140,7 +143,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'GET /api/v1/third_party_apps/token' do
     let(:tpa) { create(:third_party_app) }
-    let(:attachment) { create(:attachment) }
+    let(:collection) { create(:collection, user: admin1) }
     let(:token) do
       parts = CGI.unescape(JSON.parse(response.body))
       parts.split('/').last
@@ -177,6 +180,94 @@ describe Chemotion::ThirdPartyAppAPI do
         created_for: user.id,
       )
     end
+    context 'when user is allowed to read attachment' do
+      context 'when attachment is directly linked and readable and 3pa exists' do
+        let!(:research_plan) do
+          create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
+        end
+        let(:attachment) { create(:attachment, created_for: admin1.id) }
+
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
+
+        it 'Payload of token is correct' do
+          expect(payload['attID']).to eq attachment.id
+          expect(payload['userID']).to eq admin1.id
+          expect(payload['appID']).to eq tpa.id
+        end
+      end
+
+      context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
+        let!(:research_plan) do
+          create(:research_plan, creator: admin1, collections: [collection], container: root_container)
+        end
+        let(:root_container) { create(:container, :with_jpg_in_dataset) }
+        let(:attachment) do
+          attachment = root_container.children.first.children.first.children.first.attachments.first
+          attachment.created_for = admin1.id
+          attachment.save
+          attachment
+        end
+
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
+
+        it 'Payload of token is correct' do
+          expect(payload['attID']).to eq attachment.id
+          expect(payload['userID']).to eq admin1.id
+          expect(payload['appID']).to eq tpa.id
+        end
+      end
+    end
+
+    context 'when user is not allowed to read attachment' do
+      let(:other_user) { create(:user, collections: [collection]) }
+
+      context 'when attachment is directly linked and readable and 3pa exists' do
+        let!(:research_plan) do
+          create(:research_plan, creator: other_user, collections: [collection], attachments: [attachment])
+        end
+        let(:attachment) { create(:attachment, created_for: other_user.id) }
+
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
+      end
+
+      context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
+        let(:collection) { create(:collection) }
+        let!(:research_plan) do
+          create(:research_plan, creator: other_user, collections: [collection], container: root_container)
+        end
+        let(:root_container) { create(:container, :with_jpg_in_dataset) }
+        let(:attachment) do
+          attachment = root_container.children.first.children.first.children.first.attachments.first
+          attachment.created_for = other_user.id
+          attachment.save
+          attachment
+        end
+
+        before do
+          get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
+      end
+    end
+  end
+
+  describe 'POST /api/v1/public/third_party_apps/{token}' do
+    let(:user) { create(:person) }
+    let!(:attachment) { create(:attachment, :with_image, storage: 'tmp', created_by: user.id, created_for: user.id) }
+
     let(:params_token) do
       {
         attID: attachment.id,
@@ -225,6 +316,106 @@ describe Chemotion::ThirdPartyAppAPI do
 
     context 'User is not allowed to upload file' do
       context 'amount of uploads exceeded' do
+    let(:collection) { create(:collection, user: user) }
+
+    context 'when user is allowed to upload file' do
+      context 'when attachment is directly linked to researchplan' do
+        let!(:research_plan) do
+          create(:research_plan, creator: user, collections: [collection], attachments: [attachment])
+        end
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'upload a file' do
+          expect(response.body).to include('File uploaded successfully')
+        end
+
+        it 'status code is 201' do
+          expect(response).to have_http_status :created
+        end
+
+        it 'thumbnail was generated' do
+          expect(Attachment.find_by(filename: 'attachment_of_3pa').thumb).to be true
+        end
+      end
+
+      context 'when attachment is in a dataset of the researchplan' do
+        let!(:research_plan) do
+          create(:research_plan, creator: user, collections: [collection], container: root_container)
+        end
+        let(:root_container) do
+          container = create(:container, :with_jpg_in_dataset)
+          container.children.first.children.first.children.first.attachments.drop(1)
+          container.children.first.children.first.children.first.attachments.push(attachment)
+          container
+        end
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'upload a file' do
+          expect(response.body).to include('File uploaded successfully')
+        end
+
+        it 'status code is 201' do
+          expect(response).to have_http_status :created
+        end
+
+        it 'thumbnail was generated' do
+          expect(Attachment.find_by(filename: 'attachment_of_3pa').thumb).to be true
+        end
+      end
+    end
+
+    context 'when user is not allowed to upload file' do
+      let(:inaccessible_collection) { create(:collection) }
+      let(:attachment) do
+        create(:attachment, :with_image, storage: 'tmp', created_by: user.id, created_for: user.id)
+      end
+
+      context 'when attachment is directly linked to researchplan' do
+        let!(:research_plan) do
+          create(:research_plan, creator: admin1, collections: [inaccessible_collection], attachments: [attachment])
+        end
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
+      end
+
+      context 'when attachment is in a dataset of the researchplan' do
+        let(:collection) { create(:collection) }
+        let!(:research_plan) do
+          create(:research_plan, creator: admin1, collections: [collection], container: root_container)
+        end
+        let(:root_container) do
+          container = create(:container, :with_jpg_in_dataset)
+          container.children.first.children.first.children.first.attachments.drop(1)
+          container.children.first.children.first.children.first.attachments.push(attachment)
+          container
+        end
+
+        before do
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          post "/api/v1/public/third_party_apps/#{token}", params: params
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status :forbidden
+        end
+      end
+
+      context 'when amount of uploads exceeded' do
         let(:allowed_uploads) { -1 }
 
         before do
@@ -238,4 +429,50 @@ describe Chemotion::ThirdPartyAppAPI do
       end
     end
   end
+
+  describe 'GET /api/v1/public/third_party_apps/{token}' do
+    let(:token) do
+      parts = CGI.unescape(JSON.parse(response.body))
+      parts.split('/').last
+    end
+
+    let(:tpa) { create((:third_party_app)) }
+
+    let!(:research_plan) do
+      create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
+    end
+    let(:attachment) { create(:attachment, created_for: admin1.id) }
+
+    let(:attachment_size) { attachment.attachment_data['metadata']['size'] }
+    let(:collection) { create(:collection, user: admin1) }
+
+    context 'when user is allowed to upload attachment' do
+      before do
+        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        get "/api/v1/public/third_party_apps/#{token}"
+      end
+
+      it 'status of get request 200?' do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'recieved attachment size is correct' do
+        expect(response.header['Content-Length'].to_i).to be attachment_size
+      end
+    end
+
+    context 'when user is not allowed to upload attachment' do
+      before do
+        get '/api/v1/third_party_apps/token', params: { appID: tpa.id.to_s, attID: attachment.id.to_s }
+        research_plan.collections = []
+        research_plan.save
+        get "/api/v1/public/third_party_apps/#{token}"
+      end
+
+      it 'status of get request 403?' do
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
 end
+# rubocop:enable RSpec/LetSetup,RSpec/MultipleExpectations,RSpec/NestedGroups,RSpec/MultipleMemoizedHelpers

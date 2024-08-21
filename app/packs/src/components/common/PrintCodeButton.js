@@ -1,87 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Tooltip, OverlayTrigger, MenuItem, SplitButton, ButtonGroup } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
+import PrintCodeModal from 'src/components/common/PrintCodeModal';
 
-import Utils from 'src/utilities/Functions';
+// Component that allows users to print a PDF.
+export default function PrintCodeButton({ element }) {
+  // State for the modal and preview
+  const [showModal, setShowModal] = useState(false);
 
-const PrintCodeButton = ({
-  element,
-  analyses, allAnalyses, ident
-}) => {
-  const { type, id } = element;
-  let tooltipText = 'Print bar/qr-code Label';
-  const ids = analyses.length > 0 ? analyses.map(e => e.id) : [];
-  const contentsUri = analyses.length > 0
-    ? `/api/v1/code_logs/print_analyses_codes?element_type=${type}&id=${id}&analyses_ids[]=${ids}`
-    : `/api/v1/code_logs/print_codes?element_type=${type}&ids[]=${id}`;
-  const menuItems = [
-    {
-      key: 'smallCode',
-      contents: `${contentsUri}&size=small`,
-      text: 'Small Label',
-    },
-    {
-      key: 'bigCode',
-      contents: `${contentsUri}&size=big`,
-      text: 'Large Label',
-    },
-  ];
+  // Handles the show event for the modal.
+  const handleModalShow = () => {
+    setShowModal(true);
+  };
 
-  if (analyses.length > 0) { tooltipText = 'Print bar/qr-code Labels for this analysis'; }
-  if (allAnalyses && analyses.length > 0) { tooltipText = 'Print bar/qr-code Labels for all analyses'; }
+  // Handles the close event for the modal.
+  const handleModalClose = () => {
+    setShowModal(false);
+  };
 
+  // Set the tooltip text for the button
+  const tooltipText = 'Print code Label';
+
+  // Render the component
   return (
-    <OverlayTrigger
-      placement="top"
-      delayShow={500}
-      overlay={<Tooltip id="printCode">{tooltipText}</Tooltip>}
-    >
-      <ButtonGroup className="button-right">
-        <SplitButton
-          id={`print-code-split-button-${ident || 0}`}
+    <>
+      {/* Overlay for the button */}
+      <OverlayTrigger
+        placement="top"
+        delayShow={500}
+        overlay={(
+          <Tooltip id="printCode">
+            {tooltipText}
+          </Tooltip>
+        )}
+      >
+        {/* Button to open the modal */}
+        <Button
+          className="button-right"
+          id="print-code"
           pullRight
           bsStyle="default"
           disabled={element.isNew}
           bsSize="xsmall"
-          onToggle={(isOpen, event) => { if (event) { event.stopPropagation(); } }}
-          title={<i className="fa fa-barcode fa-lg" />}
-          onClick={(event) => {
-            event.stopPropagation();
-            Utils.downloadFile({ contents: menuItems[0].contents });
-          }}
+          onClick={handleModalShow}
         >
-          {menuItems.map(e => (
-            <MenuItem
-              key={e.key}
-              onSelect={(eventKey, event) => {
-                event.stopPropagation();
-                Utils.downloadFile({ contents: e.contents });
-              }}
-            >
-              {e.text}
-            </MenuItem>
-          ))}
-        </SplitButton>
-      </ButtonGroup>
-    </OverlayTrigger>
+          <i className="fa fa-barcode fa-lg" />
+        </Button>
+      </OverlayTrigger>
+
+      {/* Display the modal */}
+      <PrintCodeModal showModal={showModal} handleModalClose={handleModalClose} element={element} />
+    </>
   );
-};
+}
 
 PrintCodeButton.propTypes = {
-  element: PropTypes.object,
-  analyses: PropTypes.array,
-  allAnalyses: PropTypes.bool,
-  ident: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ])
+  element: PropTypes.object.isRequired,
 };
-
-PrintCodeButton.defaultProps = {
-  // element: ,
-  analyses: [],
-  allAnalyses: false,
-  ident: 0
-};
-
-export default PrintCodeButton;
