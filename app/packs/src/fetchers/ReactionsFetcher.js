@@ -7,6 +7,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -19,6 +20,13 @@ export default class ReactionsFetcher {
           const userLabels = json?.reaction?.tag?.taggable_data?.user_labels || null;
           if (json.hasOwnProperty('reaction')) {
             const reaction = new Reaction(json.reaction);
+            const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
+            if (vesselSize) {
+              GasPhaseReactionActions.setReactionVesselSize(vesselSize);
+            }
+            if (catalystMoles) {
+              GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+            }
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));
               const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());

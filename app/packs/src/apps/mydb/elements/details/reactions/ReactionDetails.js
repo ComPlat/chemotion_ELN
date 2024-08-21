@@ -44,6 +44,8 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import ToggleButton from 'src/components/common/ToggleButton';
+import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
 
 
@@ -74,6 +76,7 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.handleGaseousChange = this.handleGaseousChange.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
@@ -84,6 +87,9 @@ export default class ReactionDetails extends Component {
     const { currentUser } = this.state;
 
     UIStore.listen(this.onUIStoreChange);
+    setTimeout(() => {
+      GasPhaseReactionActions.gaseousReaction(reaction.gaseous);
+    }, 0);
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {
       CommentActions.fetchComments(reaction);
@@ -173,7 +179,8 @@ export default class ReactionDetails extends Component {
       || type === 'description' || type === 'role'
       || type === 'observation' || type === 'durationUnit'
       || type === 'duration' || type === 'rxno'
-      || type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
+      || type === 'vesselSizeAmount' || type === 'vesselSizeUnit'
+      || type === 'gaseous') {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
@@ -439,12 +446,33 @@ export default class ReactionDetails extends Component {
     this.setState({ reaction });
   }
 
+  handleGaseousChange() {
+    const { reaction } = this.state;
+    this.handleInputChange('gaseous', !reaction.gaseous);
+  }
+
   render() {
     const { reaction } = this.state;
     const { visible } = this.state;
+    const schemeTitle = reaction ? (
+      <div style={{ display: 'flex' }}>
+        <div style={{ paddingRight: '2px' }}>
+          <ToggleButton
+            isToggledInitial={reaction.gaseous}
+            onToggle={this.handleGaseousChange}
+            onLabel="Gas Scheme"
+            offLabel="Default Scheme"
+            onColor="#afcfee"
+            offColor="#d3d3d3"
+            tooltipOn="Click to enable Default mode"
+            tooltipOff="Click to enable Gas mode"
+          />
+        </div>
+      </div>
+    ) : 'Scheme';
     const tabContentsMap = {
       scheme: (
-        <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
+        <Tab eventKey="scheme" title={schemeTitle} key={`scheme_${reaction.id}`}>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }
