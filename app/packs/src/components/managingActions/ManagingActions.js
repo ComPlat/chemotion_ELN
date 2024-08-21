@@ -16,7 +16,7 @@ import ManagingModalTopSecret from 'src/components/managingActions/ManagingModal
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
-const upState = (state) => {
+const upState = async (state) => {
   const { sample, reaction, screen, wellplate, research_plan, cell_line } = state;
   const stateObj = {
     sample: {
@@ -52,7 +52,8 @@ const upState = (state) => {
   };
 
   // eslint-disable-next-line no-unused-expressions
-  elementNames(false).forEach((klass) => {
+  const klassArray = await elementNames(false);
+  klassArray.forEach((klass) => {
     stateObj[`${klass}`] = {
       checkedAll: state[`${klass}`] ? state[`${klass}`].checkedAll : false,
       checkedIds: state[`${klass}`] ? state[`${klass}`].checkedIds : List(),
@@ -60,7 +61,6 @@ const upState = (state) => {
     };
   });
   //  }
-
   return (stateObj);
 };
 
@@ -75,8 +75,7 @@ export default class ManagingActions extends React.Component {
       deletion_allowed: false,
       remove_allowed: false,
       is_top_secret: false,
-      genericEls: [],
-      ...upState({})
+      genericEls: []
     };
 
     this.handleButtonClick = this.handleButtonClick.bind(this);
@@ -84,6 +83,8 @@ export default class ManagingActions extends React.Component {
 
     this.onUserChange = this.onUserChange.bind(this);
     this.onPermissionChange = this.onPermissionChange.bind(this);
+
+    this.initializeAsyncState();
   }
 
   componentDidMount() {
@@ -99,7 +100,7 @@ export default class ManagingActions extends React.Component {
     PermissionStore.unlisten(this.onPermissionChange);
   }
 
-  onChange(state) {
+  async onChange(state) {
     const {
        currentCollection
     } = state;
@@ -114,11 +115,13 @@ export default class ManagingActions extends React.Component {
       });
     }
     else if (this.checkUIState(state)) {
-      const hasSel = elementNames(true).find(el => (
-        state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
+      let hasSel = false;
+      const klassArray = await elementNames(true);
+      hasSel = klassArray.find((el) => (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
       PermissionActions.fetchPermissionStatus(state);
+      const upStateResult = await upState(state);
       this.setState({
-        ...upState(state), hasSel
+        ...upStateResult, hasSel
       });
     }
   }
@@ -140,6 +143,11 @@ export default class ManagingActions extends React.Component {
 
   onPermissionChange(state) {
     this.setState({ ...state });
+  }
+
+  async initializeAsyncState() {
+    const upStateResult = await upState({});
+    this.setState({ ...upStateResult });
   }
 
   collectionChanged(state) {

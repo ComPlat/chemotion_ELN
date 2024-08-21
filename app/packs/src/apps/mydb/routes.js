@@ -1,6 +1,6 @@
+import Aviator from 'aviator';
 import * as routesUtils from 'src/utilities/routesUtils';
-import { elementNames } from 'src/apps/generic/Utils';
-
+import { loadEls } from 'src/apps/generic/Utils';
 
 const routes = {
   '/': 'root',
@@ -111,16 +111,25 @@ const routes = {
   }
 };
 
-elementNames(false).forEach((klass) => {
-  const item = {};
-  item['target'] = { showOrNew: routesUtils.genericElShowOrNew };
-  item[`/:${klass}ID`] = 'showOrNew';
-  routes[`/${klass}`] = item;
-});
+function setRoutes() {
+  return loadEls().then((klassArray) => {
+    klassArray.forEach((klass) => {
+      if (!routes[`/${klass}`]) {
+        const item = {};
+        item.target = { showOrNew: routesUtils.genericElShowOrNew };
+        item[`/:${klass}ID`] = 'showOrNew';
+        routes[`/${klass}`] = item;
+      }
+    });
+  }).catch((error) => {
+    console.error('Error loading routes:', error);
+  }).finally(() => {
+    Aviator.root = '/mydb';
+    Aviator.pushStateEnabled = true;
+    Aviator.setRoutes(routes);
+  });
+}
 
-
-export default function() {
-  Aviator.root = '/mydb';
-  Aviator.pushStateEnabled = true;
-  Aviator.setRoutes(routes);
+export default function appRoutes() {
+  return setRoutes();
 }

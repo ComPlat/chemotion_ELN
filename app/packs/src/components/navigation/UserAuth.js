@@ -27,7 +27,6 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
-import MatrixCheck from 'src/components/common/MatrixCheck';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
@@ -651,11 +650,6 @@ export default class UserAuth extends Component {
       </MenuItem>
     );
 
-    let userLabel = <span />;
-    if (MatrixCheck(this.state.currentUser.matrix, 'userLabel')) {
-      userLabel = <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>;
-    }
-
     return (
       <div>
         <Nav navbar pullRight>
@@ -676,7 +670,7 @@ export default class UserAuth extends Component {
               My Affiliations
             </MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
-            {userLabel}
+            <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
             <MenuItem eventKey="7" href="/command_n_control">
