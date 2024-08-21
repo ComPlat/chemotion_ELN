@@ -6,8 +6,9 @@ import Aviator from 'aviator';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import App from 'src/apps/mydb/App';
-import initRoutes from 'src/apps/mydb/routes';
+import appRoutes from 'src/apps/mydb/routes';
 import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
+
 Sentry.init({
   sendClientReports: false,
   dsn: process.env.SENTRY_FRONTEND_DSN,
@@ -30,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </StoreContext.Provider>,
       domElement
     );
-    initRoutes();
-    Aviator.dispatch();
+    appRoutes().then(() => { Aviator.dispatch(); });
   }
 });

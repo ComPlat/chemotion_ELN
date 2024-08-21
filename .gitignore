@@ -91,6 +91,8 @@
 !/public/editors/.keep
 /public/favicon.ico
 
+/public/klasses.json
+
 /public/ontologies/*
 !/public/ontologies/.keep
 !/public/ontologies/chmo.default.edited.json

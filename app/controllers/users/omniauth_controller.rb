@@ -46,6 +46,18 @@ module Users
       auth&.info&.email
     end
 
+    def groups
+      entitlements = auth.extra.raw_info.entitlements
+      entitlements&.map do |str|
+        match = str.match(/(group:[^#]+)/)
+        match[1] if match
+      end
+    rescue StandardError => e
+      Rails.logger.error(e.message)
+      Rails.logger.error(e.backtrace.join("\n"))
+      []
+    end
+
     def affiliation
       {}
       # affiliation['organization'] = Swot.school_name(email)
@@ -62,7 +74,15 @@ module Users
     end
 
     def auth_signup
-      @user = User.from_omniauth(auth.provider, auth.uid, email, first_name, last_name)
+      params = {
+        email: email,
+        uid: auth.uid,
+        provider: auth.provider,
+        first_name: first_name,
+        last_name: last_name,
+        groups: groups,
+      }
+      @user = User.from_omniauth(params)
       if @user.persisted?
         sign_in_and_redirect @user, event: :authentication
       else

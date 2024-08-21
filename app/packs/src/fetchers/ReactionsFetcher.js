@@ -17,6 +17,7 @@ export default class ReactionsFetcher {
         credentials: 'same-origin'
       }).then((response) => response.json())
         .then((json) => {
+          const userLabels = json?.reaction?.tag?.taggable_data?.user_labels || null;
           if (json.hasOwnProperty('reaction')) {
             const reaction = new Reaction(json.reaction);
             const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
@@ -35,9 +36,11 @@ export default class ReactionsFetcher {
               reaction.research_plans = json.research_plans;
             }
             reaction.updateMaxAmountOfProducts();
+            if (!userLabels) reaction.user_labels = userLabels;
             return reaction;
           }
           const rReaction = new Reaction(json.reaction);
+          if (!userLabels) rReaction.setUserLabels(userLabels);
           if (json.error) {
             rReaction.id = `${id}:error:Reaction ${id} is not accessible!`;
           }

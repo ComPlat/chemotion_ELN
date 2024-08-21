@@ -1,6 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
-import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 import { filter, cloneDeep } from 'lodash';
 import { Constants } from 'chem-generic-ui';
@@ -8,7 +8,21 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import elklasses from 'klasses.json';
+
+export async function loadEls() {
+  const response = await fetch('/klasses.json', {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache'
+    }
+  });
+  if (!response.ok) {
+    console.log('Network response was not ok: ', response);
+    return [];
+  }
+  const json = await response.json();
+  return json;
+}
 
 export const ALL_TYPES = [
   Constants.GENERIC_TYPES.ELEMENT,
@@ -77,55 +91,19 @@ export const segmentsByKlass = name => {
   );
 };
 
-export const elementNames = (all = true, generics = null) => {
+export const elementNames = async (all = true, generics = null) => {
   const elnElements = all
     ? ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line']
     : [];
   try {
-    if (generics?.length > 0)
-      return elnElements.concat(generics?.map(el => el.name));
-    // const { klasses } = UIStore.getState();
-    // if (typeof klasses !== 'undefined' && klasses?.length > 0) return elnElements.concat(klasses);
-    if (elklasses?.length > 0) return elnElements.concat(elklasses);
+    if (generics?.length > 0) return elnElements.concat(generics?.map((el) => el.name));
+    const result = await loadEls();
+    if (result?.length > 0) return elnElements.concat(result);
     return elnElements;
   } catch (error) {
     console.error('Can not get Element Names:', error);
     return elnElements;
   }
-};
-
-export const FlowViewerBtn = props => {
-  const { generic, flowType, label = 'Designed Workflow', text = 'click to view defined workflow' } = props;
-  const propertiesRelease = generic.properties_release || {};
-
-  if (Object.keys(propertiesRelease || {}).length < 1) return null;
-
-  const hasFlow =
-    (Object.keys(propertiesRelease.flow || {}).length > 0 &&
-      propertiesRelease.flow?.elements?.length > 2) ||
-    false;
-  const hasFlowObject =
-    (Object.keys(propertiesRelease.flowObject || {}).length > 0 &&
-      propertiesRelease.flowObject?.nodes?.length > 2) ||
-    false;
-
-  if (!hasFlow && !hasFlowObject) return null;
-
-  return (
-    <OverlayTrigger
-      delayShow={500}
-      placement="top"
-      overlay={<Tooltip id={uuid.v4()}>{text}</Tooltip>}
-    >
-      <Button
-        onClick={() => renderFlowModal(generic, true, flowType)}
-        bsSize="xsmall"
-        bsStyle="primary"
-      >
-        <i className="fa fa-sitemap" aria-hidden="true" />{` ${label}`}
-      </Button>
-    </OverlayTrigger>
-  );
 };
 
 export const submit = async (_action, _params) => {

@@ -11,11 +11,10 @@ import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericKlassFetcher from 'src/fetchers/GenericKlassFetcher'; 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { FunctionLocation, GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
 import { notification, submit } from 'src/apps/generic/Utils';
-import {
-  GenericAdminNav,
-  GenericAdminUnauth,
-} from 'src/apps/generic/GenericAdminNav';
+
+const FN_ID = 'GenericElements';
 
 const validateKlass = klass => /\b[a-z]{3,5}\b/g.test(klass);
 const validateInput = element => {
@@ -458,15 +457,14 @@ export default class GenericElementsAdmin extends React.Component {
   render() {
     const { user } = this.state;
     if (!user.generic_admin?.elements) {
-      return <GenericAdminUnauth userName={user.name} text="GenericElements" />;
+      return <Unauthorized userName={user.name} text={FN_ID} />;
     }
 
     return (
       <div style={{ width: '90vw', margin: 'auto' }}>
-        <GenericAdminNav userName={user.name} text="GenericElements" />
-        <hr />
-        <div style={{ marginTop: '60px' }}>
-          <h3>Generic Elements Designer</h3>
+        <GenericMenu userName={user.name} text={FN_ID} />
+        <div>
+          <FunctionLocation name={FN_ID} />
           <SyncBtn
             data={this.state.repoData}
             fnCreate={this.handleCreateRepo}
@@ -487,7 +485,7 @@ export default class GenericElementsAdmin extends React.Component {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('GenericElementsAdmin');
+  const domElement = document.getElementById(`${FN_ID}Admin`);
   if (domElement)
     ReactDOM.render(
       <DndProvider backend={HTML5Backend}>

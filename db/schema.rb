@@ -924,6 +924,7 @@ ActiveRecord::Schema.define(version: 2024_07_11_120833) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
+    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
@@ -1329,6 +1330,15 @@ ActiveRecord::Schema.define(version: 2024_07_11_120833) do
     t.index ["user_id"], name: "index_text_templates_on_user_id"
   end
 
+  create_table "third_party_apps", force: :cascade do |t|
+    t.string "url"
+    t.string "name", limit: 100, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "file_types", limit: 100
+    t.index ["name"], name: "index_third_party_apps_on_name", unique: true
+  end
+
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
     t.integer "user_id"
     t.integer "affiliation_id"
@@ -1700,8 +1710,8 @@ ActiveRecord::Schema.define(version: 2024_07_11_120833) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL

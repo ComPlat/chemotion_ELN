@@ -46,6 +46,8 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
+import { ShowUserLabels } from 'src/components/UserLabels';
+
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -376,6 +378,7 @@ export default class ReactionDetails extends Component {
         <div style={{ display: "inline-block", marginLeft: "10px" }}>
           {colLabel}
           {rsPlanLabel}
+          <ShowUserLabels element={reaction} />
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
           <HeaderCommentSection element={reaction} />
         </div>

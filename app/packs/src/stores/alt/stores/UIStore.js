@@ -64,6 +64,7 @@ class UIStore {
       filterCreatedAt: true,
       fromDate: null,
       toDate: null,
+      userLabel: null,
       productOnly: false,
       number_of_results: 15,
       currentCollection: null,
@@ -76,7 +77,8 @@ class UIStore {
       modalParams: {},
       hasChemSpectra: false,
       hasNmriumWrapper: false,
-      matrices: {}
+      matrices: {},
+      thirdPartyApps: [],
     };
 
     this.bindListeners({
@@ -113,6 +115,7 @@ class UIStore {
       handleShowModalChange: UIActions.updateModalProps,
       handleHideModal: UIActions.hideModal,
       handleSetFilterCreatedAt: UIActions.setFilterCreatedAt,
+      handleSetUserLabel: UIActions.setUserLabel,
       handleSetFromDate: UIActions.setFromDate,
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
@@ -300,7 +303,7 @@ class UIStore {
   handleSelectCollection(collection, hasChanged = false) {
     const state = this.state;
     const isSync = collection.is_sync_to_me ? true : false;
-    const { filterCreatedAt, fromDate, toDate, productOnly } = state;
+    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
 
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
@@ -320,7 +323,7 @@ class UIStore {
       this.state.isSync = isSync;
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
-      const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
+      const params = { per_page, filterCreatedAt, fromDate, toDate, userLabel, productOnly };
       const { profile } = UserStore.getState();
 
       if (profile && profile.data && profile.data.layout) {
@@ -386,7 +389,7 @@ class UIStore {
     const state = this.state;
     const isSync = state.isSync;
     const searchResult = { ...state.currentSearchByID };
-    const { filterCreatedAt, fromDate, toDate, productOnly } = state;
+    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
     const { moleculeSort } = ElementStore.getState();
     const per_page = state.number_of_results;
 
@@ -397,11 +400,12 @@ class UIStore {
         const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
         let modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
 
-        if (fromDate || toDate || productOnly) {
+        if (fromDate || toDate || productOnly || userLabel) {
           filterParams = {
             filter_created_at: filterCreatedAt,
             from_date: fromDate,
             to_date: toDate,
+            user_label: userLabel,
             product_only: productOnly,
           }
         }
@@ -488,6 +492,11 @@ class UIStore {
     if (this.state.fromDate != null || this.state.toDate != null) {
       this.handleSelectCollection(this.state.currentCollection, true);
     }
+  }
+
+  handleSetUserLabel(label) {
+    this.state.userLabel = label;
+    this.handleSelectCollection(this.state.currentCollection, true);
   }
 
   handleSetFromDate(fromDate) {

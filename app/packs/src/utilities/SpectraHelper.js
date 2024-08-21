@@ -226,15 +226,18 @@ const cleaningNMRiumData = (nmriumData) => {
   return cleanedNMRiumData;
 };
 
-const inlineNotation = (layout, data) => {
+const inlineNotation = (layout, data, metadata) => {
   let formattedString = '';
   let quillData = [];
   if (!data) return { quillData, formattedString };
 
   const {
-    scanRate, voltaData, sampleName,
-    concentration, solvent, internalRef,
+    scanRate, voltaData, sampleName
   } = data;
+  const {
+    cvConc, cvSolvent, cvRef, cvRefOthers, cvScanRate,
+  } = metadata;
+
   switch (layout) {
     case FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY: {
       if (!voltaData) {
@@ -254,20 +257,20 @@ const inlineNotation = (layout, data) => {
         const scanRateStr = scanRate ? FN.strNumberFixedLength(scanRate, 3) : '0';
         if (isRef) {
           const posNegString = x[0] > x[1] ? 'neg.' : 'pos.';
-          const concentrationStr = concentration ? concentration : '<conc. of sample>';
-          const solventStr = solvent ? solvent : '<solvent>';
+          const concentrationStr = cvConc || '<conc. of sample>';
+          const solventStr = cvSolvent || '<solvent>';
           let internalRefStr = "(Fc+/Fc)";
           refOps = [
-            { insert: `CV (${concentrationStr} mM in ${solventStr} vs. Ref ` },
+            { insert: `CV (${concentrationStr} in ${solventStr} vs. Ref ` },
             { insert: `(Fc` },
             { insert: '+', attributes: { script: 'super' } },
             { insert: `/Fc) ` },
             { insert: `= ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):` },
           ];
-          if (internalRef === 'decamethylferrocene') {
+          if (cvRef === 'decamethylferrocene') {
             internalRefStr = "(Me10Fc+/Me10Fc)";
             refOps = [
-              { insert: `CV (${concentrationStr} mM in ${solventStr} vs. Ref ` },
+              { insert: `CV (${concentrationStr} in ${solventStr} vs. Ref ` },
               { insert: `(Me` },
               { insert: '10', attributes: { script: 'sub' } },
               { insert: `Fc` },

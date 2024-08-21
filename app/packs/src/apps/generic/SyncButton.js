@@ -28,11 +28,10 @@ const SyncBtn = props => {
         <Button
           style={{ float: 'left' }}
           bsStyle="info"
-          bsSize="xs"
+          bsSize="sm"
           onClick={fnModalOpen}
         >
-          Fetch from LabIMotion Hub&nbsp;
-          <i className="fa fa-reply" aria-hidden="true" />
+          <i className="fa fa-refresh" aria-hidden="true" />&nbsp;Fetch from LabIMotion Hub
         </Button>
       </OverlayTrigger>
       <RepoNewModal

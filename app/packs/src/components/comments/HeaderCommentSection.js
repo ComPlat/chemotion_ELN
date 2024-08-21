@@ -65,8 +65,6 @@ class HeaderCommentSection extends Component {
                 }}
               >
                 <i className="fa fa-comments" />
-                &nbsp;
-                Comments
               </Button>
             </OverlayTrigger>
             <OverlayTrigger
