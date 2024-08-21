@@ -37,7 +37,7 @@ module ThirdPartyAppHelpers
     # TODO: implement attachment authorization
     @attachment = Attachment.find(payload['attID']&.to_i)
     @user = User.find(payload['userID']&.to_i)
-    @app = ThirdPartyApp.find(payload['appID']&.to_i)
+    @app = payload['appID'].to_i.zero? ? ThirdPartyApp.new : ThirdPartyApp.find(payload['appID']&.to_i)
   rescue ActiveRecord::RecordNotFound
     error!('Record not found', 404)
   end
@@ -55,12 +55,12 @@ module ThirdPartyAppHelpers
   end
 
   # desc: return file for download to third party app
-
   def download_attachment_to_third_party_app
     update_cache(:download)
     return error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
 
     content_type 'application/octet-stream'
+    header['Content-Length'] = @attachment.filesize.to_s
     header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
     env['api.format'] = :binary
     @attachment.read_file
