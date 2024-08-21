@@ -2,9 +2,11 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { GenInterface, GenButtonReload, GenButtonExport } from 'chem-generic-ui';
+import {
+  GenInterface, GenButtonReload, GenButtonExport, GenFlowViewerBtn
+} from 'chem-generic-ui';
 import { Panel, ButtonToolbar } from 'react-bootstrap';
-import { FlowViewerBtn } from 'src/apps/generic/Utils';
+import { renderFlowModal } from 'src/apps/generic/Utils';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
@@ -59,7 +61,7 @@ class GenericSGDetails extends Component {
           generic={segment}
           fnExport={this.handleExport}
         />
-        <FlowViewerBtn generic={segment} />
+        <GenFlowViewerBtn generic={segment} fnClick={renderFlowModal} />
         <RevisionViewerBtn
           fnRetrieve={this.handleRetrieveRevision}
           generic={segment}

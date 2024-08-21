@@ -10,11 +10,10 @@ import Notifications from 'src/components/Notifications';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { FunctionLocation, GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
 import { notification, submit } from 'src/apps/generic/Utils';
-import {
-  GenericAdminNav,
-  GenericAdminUnauth,
-} from 'src/apps/generic/GenericAdminNav';
+
+const FN_ID = 'GenericDatasets';
 
 export default class GenericDatasetsAdmin extends React.Component {
   constructor(props) {
@@ -214,15 +213,14 @@ export default class GenericDatasetsAdmin extends React.Component {
   render() {
     const { user } = this.state;
     if (!user.generic_admin?.datasets) {
-      return <GenericAdminUnauth userName={user.name} text="GenericDatasets" />;
+      return <Unauthorized userName={user.name} text={FN_ID} />;
     }
 
     return (
       <div style={{ width: '90vw', margin: 'auto' }}>
-        <GenericAdminNav userName={user.name} text="GenericDatasets" />
-        <hr />
-        <div style={{ marginTop: '60px' }}>
-          <h3>Generic Datasets Designer</h3>
+        <GenericMenu userName={user.name} text={FN_ID} />
+        <div>
+          <FunctionLocation name={FN_ID} />
           <SyncBtn
             data={this.state.repoData}
             fnCreate={this.handleCreateRepo}
@@ -243,7 +241,7 @@ export default class GenericDatasetsAdmin extends React.Component {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('GenericDatasetsAdmin');
+  const domElement = document.getElementById(`${FN_ID}Admin`);
   if (domElement)
     ReactDOM.render(
       <DndProvider backend={HTML5Backend}>

@@ -88,7 +88,6 @@ export default class ElementsTableSettings extends React.Component {
     }
 
     const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-
     UserActions.updateUserProfile({
       show_external_name: showSampleExternalLabel,
       show_sample_short_label: showSampleShortLabel,
@@ -149,6 +148,7 @@ export default class ElementsTableSettings extends React.Component {
 
     const userProfile = UserStore.getState().profile;
     _.set(userProfile, 'data.layout', layout);
+
     UserActions.updateUserProfile(userProfile);
   }
 
