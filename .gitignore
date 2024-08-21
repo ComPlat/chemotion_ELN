@@ -206,3 +206,5 @@ public/sprite.png
 
 # generic elements
 data/klasses.json
+
+public/pdf.worker.min.js

@@ -36,6 +36,13 @@ export default {
               type: 'text',
             },
             {
+              column: 'instrument',
+              label: 'Instrument',
+              key: 'analyses',
+              table: 'containers',
+              type: 'text',
+            },
+            {
               column: 'description',
               label: 'Description',
               key: 'analyses',
