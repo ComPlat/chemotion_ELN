@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -45,6 +46,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import CurationModal from "src/components/CurationModal.js";
 
 export default class ResearchPlanDetails extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     const { researchPlan } = props;
@@ -106,6 +108,7 @@ export default class ResearchPlanDetails extends Component {
   handleSubmit() {
     const { researchPlan } = this.state;
     LoadingActions.start();
+    this.context.attachmentNotificationStore.clearMessages();
 
     if (researchPlan.isNew) {
       ElementActions.createResearchPlan(researchPlan);

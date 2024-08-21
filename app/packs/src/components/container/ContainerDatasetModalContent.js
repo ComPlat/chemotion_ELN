@@ -33,14 +33,24 @@ import {
   sortingAndFilteringUI,
   formatFileSize,
   moveBackButton,
-  attachmentThumbnail
+  attachmentThumbnail,
+  ThirdPartyAppButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
 
-export default class ContainerDatasetModalContent extends Component {
+export class ContainerDatasetModalContent extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     const datasetContainer = { ...props.datasetContainer };
+    const {
+      onImport
+    } = props;
+    const { thirdPartyApps } = UIStore.getState() || [];
+    this.thirdPartyApps = thirdPartyApps;
     this.state = {
       datasetContainer,
       instruments: null,
@@ -510,6 +520,7 @@ export default class ContainerDatasetModalContent extends Component {
           ) : (
             <>
               {downloadButton(attachment)}
+              <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
               {editButton(
                 attachment,
                 extension,
@@ -538,6 +549,12 @@ export default class ContainerDatasetModalContent extends Component {
     } = this.state;
     const { datasetContainer } = this.props;
 
+    let combinedAttachments = filteredAttachments;
+    if (this.context.attachmentNotificationStore) {
+      // eslint-disable-next-line max-len
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Container', datasetContainer);
+    }
+
     const renderGroup = (attachments, title, key) => (
       <div key={key} style={{ marginTop: '10px' }}>
         <div style={{
@@ -550,7 +567,7 @@ export default class ContainerDatasetModalContent extends Component {
         >
           {title}
         </div>
-        {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
+        {combinedAttachments.map((attachment) => this.renderAttachmentRow(attachment))}
       </div>
     );
 
@@ -576,7 +593,7 @@ export default class ContainerDatasetModalContent extends Component {
               )}
           </div>
         </div>
-        {filteredAttachments.length === 0 ? (
+        {combinedAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
@@ -735,3 +752,5 @@ ContainerDatasetModalContent.defaultProps = {
   kind: null,
   onInstrumentChange: () => {},
 };
+
+export default observer(ContainerDatasetModalContent);
