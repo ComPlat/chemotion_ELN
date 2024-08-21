@@ -55,6 +55,7 @@
     "moment-precise-range-plugin": "^1.2.4",
     "npm": "^8.11.0",
     "numeral": "^1.5.3",
+    "pdf-lib": "^1.17.1",
     "prop-types": "15.6.2",
     "qrcode.react": "^0.6.1",
     "quagga": "^0.11.5",
