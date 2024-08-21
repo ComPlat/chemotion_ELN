@@ -15,7 +15,7 @@ module ThirdPartyAppHelpers
 
   # desc: fetch the token and download/upload counters from the cache
   def cached_token
-    @cached_token ||= cache.read(cache_key)
+    @cached_token ||= cache.read(cache_key[1])
   end
 
   # desc: define the cache key based on the attachment/user/app ids
@@ -45,9 +45,10 @@ module ThirdPartyAppHelpers
   end
 
   # desc: decrement the counters / check if token permission is expired
-  def update_cache(key)
-    parse_payload
-    if cached_token.nil? || (@cached_token[:download] < 1 && @cached_token[:upload] < 1)
+  def update_cache(key, token)
+    parse_payload(token)
+    cached_token
+    if @cached_token.nil? || (@cached_token[:download] < 1 && @cached_token[:upload] < 1)
       cache.delete(cache_key[1])
       error!('Invalid token', 403)
     elsif @cached_token[key] < 1
@@ -59,8 +60,8 @@ module ThirdPartyAppHelpers
   end
 
   # desc: return file for download to third party app
-  def download_attachment_to_third_party_app
-    update_cache(:download)
+  def download_attachment_to_third_party_app(token)
+    update_cache(:download, token)
     return error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
 
     content_type 'application/octet-stream'
@@ -71,8 +72,8 @@ module ThirdPartyAppHelpers
   end
 
   # desc: upload file from the third party app
-  def upload_attachment_from_third_party_app
-    update_cache(:upload)
+  def upload_attachment_from_third_party_app(token)
+    update_cache(:upload, token)
     return error!('No write access to attachment', 403) unless write_access?(@attachment, @user)
 
     new_attachment = Attachment.new(
@@ -94,7 +95,7 @@ module ThirdPartyAppHelpers
     { message: 'File uploaded successfully' }
   end
 
-  def encode_and_cache_token
+  def encode_and_cache_token_user_collection_with_type
     current_state = cache.read(cache_key[0])
     new_state = if current_state
                   idx = current_state.index(cache_key[1])
@@ -103,5 +104,14 @@ module ThirdPartyAppHelpers
                   [cache_key[1]]
                 end
     cache.write(cache_key[0], new_state)
+  end
+
+  def encode_and_cache_token_attachment_app(payload = @payload)
+    @token = JsonWebToken.encode(payload, expiry_time)
+    cache.write(
+      cache_key[1],
+      { token: @token, download: 3, upload: 10 },
+      expires_at: expiry_time,
+    )
   end
 end

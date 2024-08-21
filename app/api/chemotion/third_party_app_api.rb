@@ -17,7 +17,7 @@ module Chemotion
           end
           desc 'download file to 3rd party app'
           get '/', requirements: { token: /.*/ } do
-            download_attachment_to_third_party_app
+            download_attachment_to_third_party_app(JsonWebToken.decode(params[:token]))
           end
 
           desc 'Upload file from 3rd party app'
@@ -26,7 +26,7 @@ module Chemotion
             optional :attachmentName, type: String, desc: 'Name of the file'
           end
           post '/' do
-            upload_attachment_from_third_party_app
+            upload_attachment_from_third_party_app(JsonWebToken.decode(params[:token]))
           end
         end
       end
@@ -98,7 +98,8 @@ module Chemotion
       get 'token' do
         prepare_payload
         parse_payload
-        encode_and_cache_token
+        encode_and_cache_token_user_collection_with_type
+        encode_and_cache_token_attachment_app
         return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
