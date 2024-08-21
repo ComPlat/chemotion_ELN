@@ -43,18 +43,24 @@ module Chemotion
 
       desc 'create user affiliation'
       params do
-        requires :organization, type: String, desc: 'organization'
+        requires :organization, type: String, desc: 'organization', allow_blank: false
         optional :country, type: String, desc: 'country'
         optional :department, type: String, desc: 'department'
         optional :group, type: String, desc: 'working group'
-        optional :from, type: Date, desc: 'from'
-        optional :to, type: Date, desc: 'to'
+        optional :from, type: String, desc: 'from'
+        optional :to, type: String, desc: 'to'
       end
       post do
-        attributes = declared(params, include_missing: false)
-        affiliation = Affiliation.find_or_create_by(attributes.except(:from, :to))
-        UserAffiliation.create(affiliation_id: affiliation.id, from: affiliation.from, to: affiliation.to,
-                                user_id: current_user.id)
+        attributes = declared(params, include_missing: false).compact_blank
+        from = attributes.delete(:from)
+        to = attributes.delete(:to)
+        affiliation = Affiliation.find_or_create_by(attributes)
+        UserAffiliation.create(
+          affiliation_id: affiliation.id,
+          user_id: current_user.id,
+          to: Date.strptime(to, '%Y-%m'),
+          from: Date.strptime(from, '%Y-%m'),
+        )
         status 201
       rescue ActiveRecord::RecordInvalid => e
         { error: e.message }
@@ -63,7 +69,7 @@ module Chemotion
       desc 'update user affiliation'
       params do
         requires :id, type: Integer, desc: 'user_affiliation id'
-        requires :organization, type: String, desc: 'organization'
+        requires :organization, type: String, desc: 'organization', allow_blank: false
         optional :country, type: String, desc: 'country'
         optional :department, type: String, desc: 'department'
         optional :group, type: String, desc: 'working group'
@@ -71,11 +77,13 @@ module Chemotion
         optional :to, type: String, desc: 'to'
       end
       put do
-        attributes = declared(params, include_missing: false)
+        attributes = declared(params, include_missing: false).compact_blank
         affiliation = Affiliation.find_or_create_by(attributes.except(:from, :to))
-        @affiliations.find(params[:id]).update(attributes.slice(:from, :to).merge(affiliation_id: affiliation.id))
-
-        status 204
+        @affiliations.find(params[:id]).update(
+          affiliation_id: affiliation.id,
+          to: Date.strptime(attributes[:to], '%Y-%m'),
+          from: Date.strptime(attributes[:from], '%Y-%m'),
+        )
       rescue ActiveRecord::RecordInvalid => e
         { error: e.message }
       end

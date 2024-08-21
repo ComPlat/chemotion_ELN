@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 
 export default class UserSettingsFetcher {
-  static async getAutoCompleteSuggestions(type) {
+  static getAutoCompleteSuggestions(type) {
     return fetch(
       `/api/v1/public/affiliations/${type}`
     ).then((response) => response.json())
@@ -11,7 +11,7 @@ export default class UserSettingsFetcher {
       });
   }
 
-  static async getAllAffiliations() {
+  static getAllAffiliations() {
     return fetch(
       '/api/v1/affiliations/'
     ).then((response) => response.json())
@@ -21,7 +21,7 @@ export default class UserSettingsFetcher {
       });
   }
 
-  static async createAffiliation(params) {
+  static createAffiliation(params) {
     return fetch('/api/v1/affiliations/', {
       credentials: 'same-origin',
       method: 'POST',
