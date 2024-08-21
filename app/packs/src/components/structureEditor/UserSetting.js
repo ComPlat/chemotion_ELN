@@ -1,25 +1,23 @@
-/* eslint-disable react/forbid-prop-types */
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Button, Row, Col } from 'react-bootstrap';
+import {
+  Button, Card, Row, Col
+} from 'react-bootstrap';
 import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const DEFAULT_EDITOR = 'ketcher';
 
 const UserSetting = () => {
   const [editors, setEditors] = useState([]);
-  const [editor, setEditor] =
-    useState({ default: DEFAULT_EDITOR, selected: DEFAULT_EDITOR, changing: false });
+  const [editor, setEditor] = useState({ default: DEFAULT_EDITOR, selected: DEFAULT_EDITOR, changing: false });
 
   const initProfile = () => {
     UsersFetcher.fetchProfile().then((result) => {
-      setEditor(prev =>
-        ({ ...prev, default: (result?.data?.default_structure_editor || DEFAULT_EDITOR) }));
+      setEditor((prev) => ({ ...prev, default: (result?.data?.default_structure_editor || DEFAULT_EDITOR) }));
     }).catch((error) => {
       console.log(error);
-      setEditor(prev => ({ ...prev, default: DEFAULT_EDITOR }));
+      setEditor((prev) => ({ ...prev, default: DEFAULT_EDITOR }));
     });
   };
 
@@ -38,33 +36,36 @@ const UserSetting = () => {
   }, []);
 
   const updateProfile = () => {
-    setEditor(prev => ({ ...prev, changing: true }));
+    setEditor((prev) => ({ ...prev, changing: true }));
     UsersFetcher.updateUserProfile({ data: { default_structure_editor: editor.selected } })
       .then((result) => {
-        setEditor(prev =>
-          ({ ...prev, default: result.data.default_structure_editor, changing: false }));
+        setEditor((prev) => ({ ...prev, default: result.data.default_structure_editor, changing: false }));
       }).catch((error) => {
         console.log(error);
       });
   };
 
   const onChange = (e) => {
-    setEditor(prev => ({ ...prev, selected: e.value }));
+    setEditor((prev) => ({ ...prev, selected: e.value }));
   };
 
   let options = editors
-    .map(e => ({ value: e.configs.editor, label: `${e.label} (${e.configs.editor})` }));
+    .map((e) => ({ value: e.configs.editor, label: `${e.label} (${e.configs.editor})` }));
   options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }].concat(options);
 
   return (
-    <Panel>
-      <Panel.Heading><Panel.Title>Structure Editor</Panel.Title></Panel.Heading>
-      <Panel.Body>
-        <Row className="profile-row">
-          <Col sm={2}><b>Current default is</b></Col>
-          <Col sm={2}>{editor?.default}</Col>
-          <Col sm={2}><b>Editor Selection</b></Col>
-          <Col sm={2}>
+    <Card>
+      <Card.Header>Structure Editor</Card.Header>
+      <Card.Body>
+        <Row className="mb-3">
+          <Col xs={{ span: 3, offset: 3 }} className="fw-bold">Current default is</Col>
+          <Col xs={2}>{editor?.default ?? '-'}</Col>
+        </Row>
+        <Row className="mb-3 align-items-baseline">
+          <Col xs={{ span: 3, offset: 3 }} className="fw-bold">
+            Editor Selection
+          </Col>
+          <Col xs={2}>
             <Select
               name="editor selection"
               clearable={false}
@@ -73,18 +74,19 @@ const UserSetting = () => {
               value={editor?.selected}
             />
           </Col>
-          <Col sm={4}>
+        </Row>
+        <Row>
+          <Col xs={{ offset: 8 }}>
             <Button variant="primary" onClick={() => updateProfile()}>
-              {
-                editor.changing ? <i className="fa fa-spinner fa-pulse" aria-hidden="true" /> : null
-              }
+              {editor.changing && (
+                <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
+              )}
               Update user profiles
             </Button>
           </Col>
         </Row>
-        <br />
-      </Panel.Body>
-    </Panel>
+      </Card.Body>
+    </Card>
   );
 };
 
