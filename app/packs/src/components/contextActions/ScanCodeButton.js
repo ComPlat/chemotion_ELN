@@ -10,6 +10,7 @@ import QrReader from 'react-qr-reader';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
@@ -19,7 +20,8 @@ export default class ScanCodeButton extends React.Component {
       showQrReader: false,
       scanError: null,
       scanInfo: null,
-      checkedIds: UIStore.getState().sample.checkedIds
+      checkedIds: UIStore.getState().sample.checkedIds,
+      json: {}
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -28,10 +30,22 @@ export default class ScanCodeButton extends React.Component {
     this.startBarcodeScan = this.startBarcodeScan.bind(this);
     this.startQrCodeScan = this.startQrCodeScan.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.downloadPrintCodesPDF = this.downloadPrintCodesPDF.bind(this);
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     UIStore.listen(this.onUIStoreChange);
+    // Import the file when the component mounts
+    try {
+      const response = await fetch('/json/printingConfig/defaultConfig.json');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const tmpJson = await response.json();
+      this.setState({ json: tmpJson });
+    } catch (err) {
+      console.error('Failed to fetch JSON', err);
+    }
   }
 
   componentWillUnmount() {
@@ -219,22 +233,34 @@ export default class ScanCodeButton extends React.Component {
     return null;
   }
 
+  /**
+   * Downloads a PDF file with the print codes for the given element
+   */
+  downloadPrintCodesPDF(id, selectedConfig) {
+    const { json } = this.state;
+    let newUrl = `/api/v1/code_logs/print_codes?element_type=sample&ids[]=${id}`;
+    // build the URL by adding the selected config parameters
+    Object.entries(json).forEach(([configKey, configValue]) => {
+      if (configKey === selectedConfig) {
+        Object.entries(configValue).forEach(([key, value]) => {
+          newUrl += `&${key}=${value}`;
+        });
+      }
+    });
+    // fetch the PDF and download it
+    PrintCodeFetcher.fetchPrintCodes(newUrl).then((result) => {
+      if (result != null) {
+        Utils.downloadFile({ contents: result, name: `print_codes_${id}.pdf` });
+      }
+    });
+  }
+
   render() {
+    const { json } = this.state;
+    console.log(json);
     const ids = this.state.checkedIds.toArray();
     const disabledPrint = !(ids.length > 0);
-    const contentsUri = `/api/v1/code_logs/print_codes?element_type=sample&ids[]=${ids}`;
-    const menuItems = [
-      {
-        key: 'smallCode',
-        contents: `${contentsUri}&size=small`,
-        text: 'Small Label',
-      },
-      {
-        key: 'bigCode',
-        contents: `${contentsUri}&size=big`,
-        text: 'Large Label',
-      },
-    ];
+    const menuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     const title = (
       <span className="fa-stack" style={{ top: -4 }} >
@@ -242,6 +268,7 @@ export default class ScanCodeButton extends React.Component {
         <i className="fa fa-search fa-stack-1x" style={{ left: 7 }} />
       </span>
     );
+
     const { customClass } = this.props;
     return (
       <div>
@@ -253,16 +280,16 @@ export default class ScanCodeButton extends React.Component {
           onClick={this.open}
           style={{ height: '34px' }}
         >
-          {menuItems.map(e => (
+          {menuItems.map((e) => (
             <MenuItem
               key={e.key}
               disabled={disabledPrint}
               onSelect={(eventKey, event) => {
                 event.stopPropagation();
-                Utils.downloadFile({ contents: e.contents });
+                ids.map((id) => this.downloadPrintCodesPDF(id, e.name));
               }}
             >
-              {e.text}
+              {e.name}
             </MenuItem>
           ))}
         </SplitButton>
@@ -272,7 +299,6 @@ export default class ScanCodeButton extends React.Component {
     );
   }
 }
-
 
 ScanCodeButton.propTypes = {
   customClass: PropTypes.string,
