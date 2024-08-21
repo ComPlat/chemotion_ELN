@@ -186,12 +186,13 @@ class CodePdf < Prawn::Document
   # @return [Array<String, String, String>] An array containing the width, height and URL of the SVG image.
   def image_data_getter
     element = elements.first
-    doc = Nokogiri::XML(File.read("public/images/samples/#{element.sample_svg_file}"))
+    full_svg_path = element.send(:full_svg_path)
+    doc = Nokogiri::XML(File.read(full_svg_path))
     # Extract the width and height attributes from the SVG element
     svg_width = doc.at_css('svg')['width']
     svg_height = doc.at_css('svg')['height']
 
-    [svg_width, svg_height, "public/images/samples/#{element.sample_svg_file}"]
+    [svg_width, svg_height, full_svg_path]
   end
 
   # ratio use to scale the text on the PDF based on the width of the page

@@ -99,7 +99,7 @@ module Chemotion
         params do
           requires :element_type, type: String, values: %w[sample reaction wellplate screen]
           requires :id, type: Integer, desc: 'Element id'
-          requires :analyses_ids, type: Array[Integer]
+          requires :analyses_ids, type: Array[String]
           requires :size, type: String, values: %w[small big]
         end
 
