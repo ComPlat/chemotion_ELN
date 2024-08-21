@@ -88,7 +88,7 @@ module Chemotion
       h_statements = {}
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
 
-      h_array = vendor == 'merck' ? h_phrases[1].split(/\s[+-]\s/) : h_phrases
+      h_array = vendor == 'merck' ? h_phrases[4].split(',') : h_phrases
       h_array.each do |element|
         h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
       end
@@ -98,7 +98,7 @@ module Chemotion
     def self.construct_p_statements(p_phrases, vendor = nil)
       p_statements = {}
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
-      p_array = vendor == 'merck' ? p_phrases[2].split(/\s[+-]\s/) : p_phrases
+      p_array = vendor == 'merck' ? p_phrases[5].split('-').map { |element| element.gsub(/\s+/, '') } : p_phrases
       p_array.each do |element|
         p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
       end
@@ -107,7 +107,7 @@ module Chemotion
 
     def self.construct_pictograms(pictograms)
       pictograms_hash = JSON.parse(File.read('./public/json/pictograms.json'))
-      pictograms.filter_map { |e| pictograms_hash[e] || nil }
+      pictograms.filter_map { |e| pictograms_hash[e] ? e : nil }
     end
 
     def self.safety_phrases_thermofischer(product_number)
@@ -117,8 +117,7 @@ module Chemotion
       pictograms = health_section.css('img').map do |e|
         e.attributes['src'].value.gsub('/static//images/pictogram/', '')
       end
-      h_statements = construct_h_statements(h_phrases)
-      { 'h_statements' => h_statements,
+      { 'h_statements' => construct_h_statements(h_phrases),
         'p_statements' => construct_p_statements(p_phrases),
         'pictograms' => construct_pictograms(pictograms) }
     rescue StandardError
@@ -135,11 +134,10 @@ module Chemotion
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
       safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
-      pictograms = safety_array[0].split(',')
-      verified_pictograms = pictograms.select { |pictogram| pictograms_hash.value?(pictogram) }
+      pictograms = safety_array[3].split(',')
       { 'h_statements' => construct_h_statements(safety_array, 'merck'),
         'p_statements' => construct_p_statements(safety_array, 'merck'),
-        'pictograms' => verified_pictograms }
+        'pictograms' => construct_pictograms(pictograms) }
     rescue StandardError
       'Could not find H and P phrases'
     end
