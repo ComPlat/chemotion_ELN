@@ -116,17 +116,18 @@ export default class ChemicalTab extends React.Component {
       safetySheets.splice(index, 1);
       this.setState({ safetySheets });
     }
-    if (chemical._chemical_data[0].safetySheetPath.length > 0) {
+    const path = chemical._chemical_data[0].safetySheetPath;
+    if (path && path.length > 0) {
       const { safetySheetPath } = chemical._chemical_data[0];
 
       const alfaIndex = safetySheetPath.findIndex((element) => element.alfa_link);
       const merckIndex = safetySheetPath.findIndex((element) => element.merck_link);
       if (alfaIndex !== -1 && document.alfa_link) {
         delete parameters.alfaProductInfo;
-        chemical._chemical_data[0].safetySheetPath.splice(alfaIndex, 1);
+        path.splice(alfaIndex, 1);
       } else if (merckIndex !== -1 && document.merck_link) {
         delete parameters.merckProductInfo;
-        chemical._chemical_data[0].safetySheetPath.splice(merckIndex, 1);
+        path.splice(merckIndex, 1);
       }
       this.setState({ chemical });
       this.handleSubmitSave();
@@ -788,11 +789,13 @@ export default class ChemicalTab extends React.Component {
     }
     const savedSds = chemical._chemical_data[0].safetySheetPath;
     const sdsStatus = safetySheets.length ? safetySheets : savedSds;
-    const mappedSafetySheets = sdsStatus.map((document, index) => {
+    const mappedSafetySheets = sdsStatus?.map((document, index) => {
       const key = (document.alfa_product_number || document.merck_product_number) || index;
+      const isValidDocument = document !== 'Could not find safety data sheet from Thermofisher'
+        && document !== 'Could not find safety data sheet from Merck';
       return (
         <div className="safety-sheets-form" key={key}>
-          {document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
+          {isValidDocument ? (
             <ListGroupItem key={`${key}-file`}>
               {this.renderChildElements(document, index)}
             </ListGroupItem>

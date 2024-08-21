@@ -1,11 +1,11 @@
 {
-    "Explosive.gif":"GHS01",
-    "Flammable.gif":"GHS02",
-    "Oxidizing.gif":"GHS03",
-    "Gases.gif":"GHS04",
-    "Corrosive.gif":"GHS05",
-    "Toxic.gif":"GHS06",
-    "Harmful_Irritant.gif":"GHS07",
-    "Health_hazard.gif":"GHS08",
-    "Dangerous.gif":"GHS09"
+    "GHS01": "Explosive.gif",
+    "GHS02": "Flammable.gif",
+    "GHS03": "Oxidizing.gif",
+    "GHS04": "Gases.gif",
+    "GHS05": "Corrosive.gif",
+    "GHS06": "Toxic.gif",
+    "GHS07": "Harmful_Irritant.gif",
+    "GHS08": "Health_hazard.gif",
+    "GHS09": "Dangerous.gif"
  }
