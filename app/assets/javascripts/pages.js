@@ -9,6 +9,5 @@ const showExampleLabel = () => {
   }
 };
 
-(function showExampleLabelWrapper() {
-  showExampleLabel();
-}());
+// Fill in label initially after page load
+showExampleLabel();
