@@ -1,6 +1,14 @@
+$highlightColor: #337ab7;
+
 div[role=columnheader] {
   display: grid;
 
+}
+
+.header-title {
+    &:hover {
+        color: $highlightColor;
+    }
 }
 
 .customHeaderLabel {
@@ -29,5 +37,5 @@ div[role=columnheader] {
 }
 
 .sort_active {
-  color:#5bc0de;
+  color: $highlightColor;
 }

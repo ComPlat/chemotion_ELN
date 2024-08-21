@@ -99,7 +99,6 @@ module Usecases
         subsample.real_amount_unit = sample.real_amount_unit
         subsample.metrics = sample.metrics
         subsample.dry_solvent = sample.dry_solvent
-
         # add new data container
         subsample.container = update_datamodel(sample.container) if sample.container
 
@@ -134,12 +133,13 @@ module Usecases
         )
 
         new_sample.short_label = fixed_label if fixed_label
+        new_sample.xref['inventory_label'] = nil if new_sample.xref['inventory_label']
+        new_sample.skip_inventory_label_update = true
 
         # add new data container
         new_sample.container = update_datamodel(container_info)
 
         new_sample.collections << @reaction.collections
-
         new_sample.save!
         new_sample
       end

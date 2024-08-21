@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
+import { Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -17,6 +17,7 @@ export default class CollectionSubtree extends React.Component {
     this.state = {
       isRemote: props.isRemote,
       label: props.root.label,
+      inventoryPrefix: props.root.inventory_prefix,
       selected: false,
       root: props.root,
       visible: false
@@ -36,7 +37,8 @@ export default class CollectionSubtree extends React.Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       root: nextProps.root,
-      label: nextProps.root.label
+      label: nextProps.root.label,
+      inventoryPrefix: nextProps.root.inventory_prefix
     });
   }
 
@@ -218,7 +220,7 @@ export default class CollectionSubtree extends React.Component {
 
   render() {
     const { fakeRoot } = this.props;
-    const { label, root } = this.state;
+    const { label, root, inventoryPrefix } = this.state;
     let { visible } = this.state;
 
     let style;
@@ -240,6 +242,24 @@ export default class CollectionSubtree extends React.Component {
           {this.synchronizedIcon()}
           {gated}
           {label}
+          {inventoryPrefix ? (
+            <div style={{ position: 'relative', float: 'right', paddingRight: '5px' }}>
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="collection_inventory_label">Inventory Label</Tooltip>}
+              >
+                <i
+                  className="collection-inventory-prefix"
+                >
+                  <span
+                    className="collection-inventory-prefix-span"
+                  >
+                    {inventoryPrefix}
+                  </span>
+                </i>
+              </OverlayTrigger>
+            </div>
+          ) : null}
         </div>
         <ul style={style}>
           {this.subtrees()}
