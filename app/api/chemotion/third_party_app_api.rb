@@ -51,7 +51,6 @@ module Chemotion
       def update_cache(key, token)
         parse_payload(token)
         cached_token
-
         if cached_token.nil? || (@cached_token[:download] < 1 && @cached_token[:upload] < 1)
           cache.delete(cache_key[1])
           error!('Invalid token', 403)
@@ -106,21 +105,6 @@ module Chemotion
           { token: @token, download: 3, upload: 10 },
           expires_at: expiry_time,
         )
-      end
-
-      # update values through keys in cache for cache 1 and cache 2
-      def find_and_update_key_with_request_type(first_level_key, second_level_key, request_type)
-        # update first level key: remove item from an array!
-        second_level_key_list = cache.read(first_level_key)
-        previous_length = second_level_key_list.length
-
-        if request_type === 'revoke'
-          # delete second level key
-          cache.delete(second_level_key)
-          second_level_key_list = second_level_key_list.select { |item| item != second_level_key }
-          cache.write(first_level_key, second_level_key_list)
-          previous_length > cache.read(first_level_key).length
-        end
       end
     end
 
@@ -233,20 +217,6 @@ module Chemotion
                   })
         end
         { token_list: token_list }
-      end
-
-      desc 'Revok an attachment token'
-      params do
-        requires :key, type: String, desc: 'unique key for each token sent with get request'
-        requires :action_type, type: String, desc: 'unique key for each token sent with get request', values: ['revoke']
-      end
-
-      put 'update_attachment_token_with_type' do
-        splits = params[:key].split('/')
-        first_level_key = current_user.id
-        second_level_key = "#{splits[0]}/#{splits[1]}"
-        status = find_and_update_key_with_request_type(first_level_key, second_level_key)
-        { status: status }
       end
 
       route_param :id, type: Integer, desc: '3rd party app id' do

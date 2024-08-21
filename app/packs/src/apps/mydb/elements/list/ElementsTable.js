@@ -1,29 +1,37 @@
 /* eslint-disable camelcase */
 import React from 'react';
 
+import deepEqual from 'deep-equal';
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger, Modal, Panel, Button
+  Col,
+  Form,
+  FormControl,
+  FormGroup,
+  Glyphicon,
+  InputGroup,
+  OverlayTrigger,
+  Pagination,
+  Row,
+  Tooltip
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
-import deepEqual from 'deep-equal';
 
-import UIStore from 'src/stores/alt/stores/UIStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
-import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
-import Select from 'react-select';
 import PropTypes from 'prop-types';
-import CellLineGroup from 'src/models/cellLine/CellLineGroup';
+import Select from 'react-select';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
-import ThirdPartyAppFetcher from '../../../../fetchers/ThirdPartyAppFetcher';
+import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
+import CellLineGroup from 'src/models/cellLine/CellLineGroup';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -43,8 +51,6 @@ export default class ElementsTable extends React.Component {
       elementsGroup: 'none',
       elementsSort: true,
       sortDirection: 'DESC',
-      showAttachmentTokenModal: false,
-      attachmentTokens: [],
       showEmpty: false
     };
 
@@ -153,7 +159,6 @@ export default class ElementsTable extends React.Component {
     const nextState = { page, pages, currentElement };
     if (elementsDidChange) { nextState.elements = elements; }
     if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
-    this.setState({ attachmentTokens: ElementStore.getState().attachmentTokens });
   }
 
   setFromDate(date) {
@@ -256,24 +261,7 @@ export default class ElementsTable extends React.Component {
     );
   };
 
-  handleRevokeAttachmentToken = (key, idx, action_type) => {
-    const { attachmentTokens } = this.state;
-    ThirdPartyAppFetcher.update_attachment_token_with_action_type(key, action_type)
-      .then(res => {
-        let alias = attachmentTokens;
-        alias = alias.filter((i, index) => {
-          if (index !== idx) return i;
-        });
-        this.setState({ attachmentTokens: [...alias] });
-        // tpa token call
-        const uistoreContainer = UIStore.getState();
-      })
-      .catch((err) => {
-        alert("Revoking token failed! check console to verify!");
-        console.log(err.message);
-      })
-      ;
-  };
+
 
   collapseButton = () => {
     const { collapseAll } = this.state;
@@ -291,60 +279,6 @@ export default class ElementsTable extends React.Component {
         }}
       />
     );
-  };
-
-  attachmentTokenModal = () => {
-    const { showAttachmentTokenModal, attachmentTokens } = this.state;
-    const { currentElement } = ElementStore.getState();
-    return (
-      <Modal show={showAttachmentTokenModal} onHide={this.toggleAttachmentTokens}>
-        <Modal.Header closeButton />
-        <Modal.Body>
-          <Panel>
-            <Panel.Heading>
-              <Panel.Title>
-                List of Attachment Tokens for element {currentElement?.name}:
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
-              {
-                attachmentTokens?.map((item, idx) => {
-                  const key = Object.keys(item);
-                  const value = item[key[0]];
-                  const key_split = key[0].split("/");
-                  return currentElement?.id == key_split[3] && (
-                    <Row style={{ marginBottom: 10 }}>
-                      <Col xs={10}>
-                        <div>Element: {item?.alias_element} </div>
-                        <div>Attachment: {item?.alias_attachment_id} </div>
-                        <div>App: {item?.alias_app_id} </div>
-                        <div>Download: {value?.download} </div>
-                        <div>Upload: {value?.upload} </div>
-                      </Col>
-                      <Col xs={2}>
-                        <Button className='btn btn-danger' onClick={() => this.handleRevokeAttachmentToken(key, idx, 'revoke')}>
-                          <i class="fa fa-trash"></i>
-                        </Button>
-                      </Col>
-                    </Row>);
-                })
-              }
-            </Panel.Body>
-          </Panel>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={this.toggleAttachmentTokens}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    );
-  };
-
-  toggleAttachmentTokens = () => {
-    this.setState((prevState) => ({
-      showAttachmentTokenModal: !prevState.showAttachmentTokenModal
-    }));
   };
 
   changeDateFilter() {
@@ -633,10 +567,9 @@ export default class ElementsTable extends React.Component {
   };
 
   renderHeader = () => {
-    const { filterCreatedAt, ui, attachmentTokens } = this.state;
+    const { filterCreatedAt, ui } = this.state;
     const { type, showReport, genericEl } = this.props;
     const { fromDate, toDate } = ui;
-    const { currentElement } = ElementStore.getState();
 
     let typeSpecificHeader = <span />;
     if (type === 'sample') {
@@ -654,13 +587,6 @@ export default class ElementsTable extends React.Component {
 
     const filterTooltip = <Tooltip id="date_tooltip">{filterTitle}</Tooltip>;
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
-
-
-    const attachmentTokensToolTip = "Click to view/revoke all avaialable attachment tokens in this research plan.";
-    const attachTokensUnselectedToopTip = "Please select an element to view attachment tokens.";
-    const attachmentTokenIcon = <i className={`fa fa-key`} />;
-    const attachmentToolTip = <Tooltip id="attachment_tokens_tooltip">{attachmentTokensToolTip}</Tooltip>;
-    const disabledAttachmentToolTip = <Tooltip id="attachment_tokens_tooltip">{attachTokensUnselectedToopTip}</Tooltip>;
 
     return (
       <div className="table-header">
@@ -680,19 +606,6 @@ export default class ElementsTable extends React.Component {
             flexWrap: 'wrap'
           }}
         >
-          {
-            false && currentElement?.type == 'research_plan' &&
-            <OverlayTrigger placement="top" overlay={!currentElement ? disabledAttachmentToolTip : attachmentToolTip}>
-              <button
-                disabled={!currentElement && !attachmentTokens?.length}
-                type="button"
-                style={{ border: 'none' }}
-                onClick={this.toggleAttachmentTokens}
-              >
-                {attachmentTokenIcon}
-              </button>
-            </OverlayTrigger>
-          }
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
               type="button"
@@ -723,7 +636,6 @@ export default class ElementsTable extends React.Component {
             />
           </div>
           {typeSpecificHeader}
-          {this.attachmentTokenModal()}
         </div>
       </div>
     );

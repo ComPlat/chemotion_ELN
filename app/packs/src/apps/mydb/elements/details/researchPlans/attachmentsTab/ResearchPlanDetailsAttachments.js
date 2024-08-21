@@ -1,35 +1,34 @@
 /* eslint-disable lines-between-class-members */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
-import { StoreContext } from 'src/stores/mobx/RootStore';
+import { findKey, last } from 'lodash';
+import { observer } from 'mobx-react';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
+import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
+import {
+  annotateButton,
+  attachmentThumbnail,
+  customDropzone,
+  downloadButton,
+  editButton,
+  formatFileSize,
+  importButton,
+  removeButton,
+  sortingAndFilteringUI,
+} from 'src/apps/mydb/elements/list/AttachmentList';
+import ThirdPartyAppButton from 'src/apps/mydb/elements/list/ThirdPartyAppButton';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import PropTypes from 'prop-types';
-import { observer } from 'mobx-react';
-import React, { Component } from 'react';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import { Button } from 'react-bootstrap';
-import { last, findKey } from 'lodash';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
-import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
-import {
-  downloadButton,
-  removeButton,
-  annotateButton,
-  editButton,
-  importButton,
-  customDropzone,
-  sortingAndFilteringUI,
-  formatFileSize,
-  attachmentThumbnail,
-  // ThirdPartyAppButton,
-} from 'src/apps/mydb/elements/list/AttachmentList';
-import ThirdPartyAppButton from 'src/apps/mydb/elements/list/ThirdPartyAppButton';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
-import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 class ResearchPlanDetailsAttachments extends Component {
   static contextType = StoreContext;

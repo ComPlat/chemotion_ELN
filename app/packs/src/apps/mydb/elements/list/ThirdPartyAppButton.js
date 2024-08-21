@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Dropdown, MenuItem
 } from 'react-bootstrap';
-import uuid from 'uuid';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import uuid from 'uuid';
 
 const ThirdPartyAppButton = ({ attachment, options, tokenList, onChangeRecall }) => {
 
@@ -11,7 +11,7 @@ const ThirdPartyAppButton = ({ attachment, options, tokenList, onChangeRecall })
     ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
       .then((result) => {
         onChangeRecall();
-        // window.open(result, '_blank');
+        window.open(result, '_blank');
       });
   };
 
