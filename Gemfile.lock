@@ -539,8 +539,8 @@ GEM
       mime-types
       mimemagic (~> 0.3.0)
     parallel (1.26.3)
-    paranoia (3.0.0)
-      activerecord (>= 6, < 8.1)
+    paranoia (2.6.0)
+      activerecord (>= 5.1, < 7.1)
     parser (3.3.4.2)
       ast (~> 2.4.1)
       racc
@@ -930,7 +930,7 @@ DEPENDENCIES
   omniauth_openid_connect
   openbabel (= 2.4.90.3)!
   pandoc-ruby
-  paranoia
+  paranoia (= 2.6.0)
   pg
   pg_search
   prawn
