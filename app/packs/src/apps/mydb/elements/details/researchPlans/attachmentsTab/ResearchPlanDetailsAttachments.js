@@ -1,32 +1,33 @@
 /* eslint-disable lines-between-class-members */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
-import { StoreContext } from 'src/stores/mobx/RootStore';
+import { findKey, last } from 'lodash';
+import { observer } from 'mobx-react';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
+import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
+import {
+  annotateButton,
+  attachmentThumbnail,
+  customDropzone,
+  downloadButton,
+  editButton,
+  formatFileSize,
+  importButton,
+  removeButton,
+  sortingAndFilteringUI,
+} from 'src/apps/mydb/elements/list/AttachmentList';
+import ThirdPartyAppButton from 'src/apps/mydb/elements/list/ThirdPartyAppButton';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import PropTypes from 'prop-types';
-import { observer } from 'mobx-react';
-import React, { Component } from 'react';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import { Button } from 'react-bootstrap';
-import { last, findKey } from 'lodash';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
-import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
-import {
-  downloadButton,
-  removeButton,
-  annotateButton,
-  editButton,
-  importButton,
-  customDropzone,
-  sortingAndFilteringUI,
-  formatFileSize,
-  attachmentThumbnail,
-  ThirdPartyAppButton,
-} from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
 class ResearchPlanDetailsAttachments extends Component {
@@ -47,6 +48,7 @@ class ResearchPlanDetailsAttachments extends Component {
       filterText: '',
       sortBy: 'name',
       sortDirection: 'asc',
+      tokenList: []
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -63,15 +65,29 @@ class ResearchPlanDetailsAttachments extends Component {
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
+    this.fetch3paTokenByUserId();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     const { attachments } = this.props;
+    const { tokenList } = this.state;
+
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
     }
+    // Check if tokenList has changed
+    if (tokenList !== prevState.tokenList) {
+      this.fetch3paTokenByUserId();
+    }
   }
+
+  async fetch3paTokenByUserId() {
+    const res = await ThirdPartyAppFetcher.fetchCollectionAttachmentTokensByCollectionId();
+    if (this.state.tokenList.length !== res.token_list.length) {
+      this.setState({ tokenList: res?.token_list });
+    }
+  };
 
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
@@ -244,15 +260,14 @@ class ResearchPlanDetailsAttachments extends Component {
     const { researchPlan } = this.props;
 
     //Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
-    
+
     let combinedAttachments = filteredAttachments;
-    if(this.context.attachmentNotificationStore ){
-      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"ResearchPlan",researchPlan);
+    if (this.context.attachmentNotificationStore) {
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, "ResearchPlan", researchPlan);
     }
 
     const { onUndoDelete, attachments } = this.props;
-    const thirdPartyApps = this.thirdPartyApps;
-    
+
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
@@ -262,13 +277,13 @@ class ResearchPlanDetailsAttachments extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {attachments.length > 0
-        && sortingAndFilteringUI(
-          sortDirection,
-          this.handleSortChange,
-          this.toggleSortDirection,
-          this.handleFilterChange,
-          true
-        )}
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                true
+              )}
           </div>
         </div>
         {combinedAttachments.length === 0 ? (
@@ -312,15 +327,20 @@ class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
-                    <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
+                    <ThirdPartyAppButton
+                      attachment={attachment}
+                      options={this.thirdPartyApps}
+                      tokenList={this.state.tokenList}
+                      onChangeRecall={() => this.fetch3paTokenByUserId()}
+                    />
                     {editButton(
                       attachment,
                       extension,
                       attachmentEditor,
                       attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                          < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                      < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                       !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                          || attachment.is_new || this.documentType(attachment.filename) === null,
+                      || attachment.is_new || this.documentType(attachment.filename) === null,
                       this.handleEdit
                     )}
                     {annotateButton(attachment, this)}

@@ -106,6 +106,20 @@ module Chemotion
         "#{@app.url}?url=#{url}"
       end
 
+      desc 'list of TPA token in a collection'
+      get 'collection_tpa_tokens' do
+        token_list = []
+        cache_user_keys = cache.read(current_user.id)
+        cache_user_keys&.each do |token_key|
+          cached_value = cache.read(token_key)
+          token_list
+            .push({
+                    "#{token_key}": cached_value,
+                  })
+        end
+        { token_list: token_list }
+      end
+
       desc 'get chemotion handler url'
       params do
         requires :attID, type: Integer, desc: 'Attachment ID'
