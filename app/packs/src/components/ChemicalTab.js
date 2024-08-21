@@ -791,22 +791,23 @@ export default class ChemicalTab extends React.Component {
     const sdsStatus = safetySheets.length ? safetySheets : savedSds;
     const mappedSafetySheets = sdsStatus?.map((document, index) => {
       const key = (document.alfa_product_number || document.merck_product_number) || index;
+      const isValidDocument = document !== 'Could not find safety data sheet from Thermofisher'
+        && document !== 'Could not find safety data sheet from Merck';
       return (
         <div className="safety-sheets-form" key={key}>
-          {document !== 'Could not find safety data sheet from Thermofisher'
-            && document !== 'Could not find safety data sheet from Merck' ? (
-              <ListGroupItem key={`${key}-file`}>
-                {this.renderChildElements(document, index)}
-              </ListGroupItem>
-            ) : (
-              <ListGroupItem key={`${key}-no-document`}>
-                <div>
-                  <p className="safety-sheets-paragraph">
-                    {document}
-                  </p>
-                </div>
-              </ListGroupItem>
-            )}
+          {isValidDocument ? (
+            <ListGroupItem key={`${key}-file`}>
+              {this.renderChildElements(document, index)}
+            </ListGroupItem>
+          ) : (
+            <ListGroupItem key={`${key}-no-document`}>
+              <div>
+                <p className="safety-sheets-paragraph">
+                  {document}
+                </p>
+              </div>
+            </ListGroupItem>
+          )}
         </div>
       );
     });
