@@ -39,6 +39,7 @@ class Channel < ApplicationRecord
   IMPORT_SAMPLES_NOTIFICATION = 'Import Samples Completed'
   COMMENT_ON_MY_COLLECTION = 'New comment on synchronized collection'
   COMMENT_RESOLVED = 'Comment resolved in synchronized collection'
+  SEND_TPA_ATTACHMENT_NOTIFICATION = 'Send TPA attachment arrival notification'
 
   class << self
     def build_message(**args)

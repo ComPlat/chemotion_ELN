@@ -76,7 +76,8 @@ class UIStore {
       modalParams: {},
       hasChemSpectra: false,
       hasNmriumWrapper: false,
-      matrices: {}
+      matrices: {},
+      thirdPartyApps: [],
     };
 
     this.bindListeners({
