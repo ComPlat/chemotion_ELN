@@ -103,6 +103,21 @@ module Chemotion::Calculations
     smaller_than_zero(num, tail_len, precision)
   end
 
+  def self.mw_from_formula(formula)
+    # to handle formulas with the molecule of crystallization like, C2HCl3O.H2O
+    components = formula.split('.')
+    total_mass = 0.0
+
+    components.each do |component|
+      coefficient = extract_coefficient(component)
+
+      total_mass += calculate_mass_from_groups(component) * coefficient
+      total_mass += calculate_mass_from_elements(component) * coefficient
+    end
+
+    total_mass
+  end
+
 private
 
   def self.get_polymer_composition m_formula, p_formula, p_loading
@@ -214,5 +229,42 @@ private
     return "%.#{pc_for_zero}f" % num&.round(pc_for_zero) if num == 0.0
     pc_non_zero = prec_limit(pc + tail_len)
     "%.#{pc_non_zero}f" % num&.round(pc_non_zero)
+  end
+
+  def self.calculate_mass_from_groups(formula)
+    group_pattern = /\((.*?)\)(\d*)/
+    total_mass = 0.0
+
+    # Iterate through the formula to extract groups with parentheses
+    while formula.match?(group_pattern)
+      formula.sub!(group_pattern) do
+        group = ::Regexp.last_match(1)
+        count_str = ::Regexp.last_match(2)
+        count = count_str&.empty? ? 1 : count_str.to_i
+        total_mass += calculate_mass_from_elements(group) * count
+        ''
+      end
+    end
+
+    total_mass
+  end
+
+  def self.calculate_mass_from_elements(formula)
+    element_pattern = /([A-Z][a-z]*)(\d*)/
+    total_mass = 0.0
+
+    formula.scan(element_pattern) do |element_symbol, count_str|
+      count = count_str.empty? ? 1 : count_str.to_i
+      element = ChemicalElements::PeriodicTable.find(element_symbol)
+
+      total_mass += element.atomic_amount * count if element
+    end
+
+    total_mass
+  end
+
+  def self.extract_coefficient(component)
+    match = component.match(/^\d+/)
+    match ? match[0].to_i : 1
   end
 end

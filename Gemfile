@@ -42,7 +42,7 @@ gem 'grape-swagger'
 gem 'grape-swagger-entity'
 gem 'grape-swagger-rails'
 
-gem 'graphql'
+gem 'graphql', '< 2.2'
 
 gem 'haml-rails'
 gem 'hashie-forbidden_attributes'
@@ -56,7 +56,8 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
+# gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
+gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: 'd4ae864a0e2d9e853eac8e4fc4ce7e3ab8174f80'
 
 gem 'labimotion', '1.4.0.rc10'
 
@@ -77,9 +78,10 @@ gem 'omniauth_openid_connect'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth-shibboleth'
 
+gem 'chemical_elements'
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ptrxyz/openbabel-gem.git', branch: 'ptrxyz-ctime-fix'
 gem 'pandoc-ruby'
-gem 'paranoia'
+gem 'paranoia', '2.6.0'
 gem 'pg'
 gem 'pg_search'
 gem 'prawn'
@@ -126,14 +128,6 @@ gem 'icalendar'
 
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser
-
-  gem 'capistrano'
-  gem 'capistrano-bundler'
-  gem 'capistrano-npm'
-  gem 'capistrano-nvm', require: false
-  gem 'capistrano-rails'
-  gem 'capistrano-rvm'
-  gem 'capistrano-yarn'
 
   gem 'fast_stack'    # For Ruby MRI 2.0
   gem 'flamegraph'

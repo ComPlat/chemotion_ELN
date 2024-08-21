@@ -47,6 +47,7 @@ module Usecases
                                         .joins(@conditions[:joins].join(' '))
         scope = @shared_methods.order_by_molecule(scope) if @conditions[:model_name] == Sample
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
+        scope = scope.group('samples.id, molecules.sum_formular') if @conditions[:model_name] == Sample
         scope.pluck(:id)
       end
 

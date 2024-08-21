@@ -1,8 +1,8 @@
 /* eslint-disable react/display-name */
-import React from 'react';
+import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Badge
+  Button, ButtonGroup, Badge, Modal, FormControl
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
@@ -129,6 +129,55 @@ function MaterialParser({
   );
 }
 
+function NoteCellEditor({
+  data: variationsRow,
+  value,
+  onValueChange,
+  stopEditing,
+  context
+}) {
+  const [note, setNote] = useState(value);
+  const { reactionShortLabel } = context;
+
+  const onClose = () => {
+    stopEditing();
+  };
+
+  const onSave = () => {
+    onValueChange(note);
+    stopEditing();
+  };
+
+  const cellContent = (
+    <Modal show onHide={onClose}>
+      <Modal.Header closeButton>
+        {`Edit note for ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
+      </Modal.Header>
+      <Modal.Body>
+        <FormControl
+          componentClass="textarea"
+          placeholder="Start typing your note..."
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={onSave}>Save</Button>
+      </Modal.Footer>
+    </Modal>
+  );
+
+  return cellContent;
+}
+
+NoteCellEditor.propTypes = {
+  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
+  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  onValueChange: PropTypes.func.isRequired,
+  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+};
+
 export {
   RowToolsCellRenderer,
   EquivalentFormatter,
@@ -136,5 +185,6 @@ export {
   PropertyFormatter,
   PropertyParser,
   MaterialFormatter,
-  MaterialParser
+  MaterialParser,
+  NoteCellEditor
 };

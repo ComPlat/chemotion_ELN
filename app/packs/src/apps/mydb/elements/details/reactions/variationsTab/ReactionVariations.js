@@ -25,7 +25,7 @@ import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
   EquivalentFormatter, EquivalentParser,
-  RowToolsCellRenderer
+  RowToolsCellRenderer, NoteCellEditor
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
 
 function MenuHeader({
@@ -42,11 +42,11 @@ function MenuHeader({
   const [unit, setUnit] = useState(units[0]);
 
   const onSortChanged = () => {
-    setAscendingSort(column.isSortAscending() ? 'active' : 'inactive');
-    setDescendingSort(column.isSortDescending() ? 'active' : 'inactive');
+    setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
+    setDescendingSort(column.isSortDescending() ? 'sort_active' : 'inactive');
     setNoSort(
       !column.isSortAscending() && !column.isSortDescending()
-        ? 'active'
+        ? 'sort_active'
         : 'inactive'
     );
   };
@@ -123,7 +123,7 @@ function MenuHeader({
   );
 
   const sortMenu = (
-    <div style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
+    <div className="sortHeader" style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
       <div
         onClick={(event) => onSortRequested('asc', event)}
         onTouchEnd={(event) => onSortRequested('asc', event)}
@@ -150,7 +150,12 @@ function MenuHeader({
 
   return (
     <div style={{ display: 'grid' }}>
-      <b onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}>{name}</b>
+      <span
+        className="header-title"
+        onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
+      >
+        {name}
+      </span>
       <div>
         {entrySelection}
         {' '}
@@ -176,6 +181,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [columnDefinitions, setColumnDefinitions] = useState([
     {
+      headerName: 'Tools',
       field: null,
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
@@ -190,11 +196,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       field: 'notes',
       sortable: false,
       cellDataType: 'text',
-      cellEditor: 'agLargeTextCellEditor',
+      cellEditor: NoteCellEditor,
       cellEditorPopup: true,
-      cellEditorParams: {
-        maxLength: 1000
-      }
     },
     {
       headerName: 'Analyses',
@@ -393,6 +396,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     );
   }
 
+  const fitColumnToContent = (event) => {
+    const { column } = event;
+    gridRef.current.api.autoSizeColumns([column], false);
+  };
+
   return (
     <div>
       <OverlayTrigger
@@ -446,8 +454,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           */
           readOnlyEdit
           onCellEditRequest={updateRow}
-          onVirtualColumnsChanged={() => gridRef.current.api.autoSizeAllColumns(false)}
-          onColumnHeaderClicked={() => gridRef.current.api.autoSizeAllColumns(false)}
+          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
+          onCellValueChanged={(event) => fitColumnToContent(event)}
+          onColumnHeaderClicked={(event) => fitColumnToContent(event)}
         />
       </div>
     </div>
