@@ -1,23 +1,21 @@
-import React, { Component } from 'react';
-import { Button, ButtonGroup } from 'react-bootstrap';
+import React from 'react';
+import { Button } from 'react-bootstrap';
 
 const CollapseButton = (props) => {
     const { openTab, setOpenTab } = props;
     const arrow = openTab
-        ? <i className="fa fa-angle-double-up" />
-        : <i className="fa fa-angle-double-down" />;
+        ? <i className="fa fa-angle-double-up me-1" />
+        : <i className="fa fa-angle-double-down me-1" />;
     return (
-        <ButtonGroup vertical block>
         <Button
             id={props.name}
-            size="sm"
-            style={{ backgroundColor: '#ddd' }}
+            size="xxsm"
+            className="w-100 bg-gray-200 text-dark"
             onClick={() =>  props.setOpenTab(!openTab)}
         >
             {arrow}
-            &nbsp; {props.name}
+            {props.name}
         </Button>
-        </ButtonGroup>
     );
 }
 export default CollapseButton;
