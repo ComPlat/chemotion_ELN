@@ -387,7 +387,7 @@ export default class InboxModal extends React.Component {
           >
             <Card className="eln-panel-detail cursor">
               <Card.Header
-                className="cursor handle draggable bg-gray-400"
+                className="cursor handle draggable bg-primary"
                 id="draggableInbox"
                 onMouseDown={this.handleMouseDown}
               >
@@ -399,7 +399,7 @@ export default class InboxModal extends React.Component {
                       onClick={() => this.onClickInbox()}
                     >
                       <i className="fa fa-inbox" />
-                      <span className="ms-2 me-1 fw-bold">Inbox</span>
+                      <span className="ms-2 me-1 fw-bold text-white">Inbox</span>
                     </button>
                     {
                       numberOfAttachments > 0

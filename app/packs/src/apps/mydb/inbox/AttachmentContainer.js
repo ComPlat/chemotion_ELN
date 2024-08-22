@@ -149,36 +149,38 @@ class AttachmentContainer extends Component {
         <p>
           {attachment.filename}
         </p>
-      </Tooltip>);
+      </Tooltip>
+    );
 
     return connectDragSource(
       <div className="d-flex align-items-center overflow-hidden p-1">
         <ButtonToolbar className="gap-2">
-        {checkBox}
-        {trash}
-        <i className="fa fa-download mt-1" onClick={() => handleAttachmentDownload(attachment)} role="button" />
-        {largerInbox && (
-          <MoveToAnalysisButton
-            attachment={attachment}
-            largerInbox={largerInbox}
-            sourceType={sourceType}
+          {checkBox}
+          {trash}
+          <i
+            className="fa fa-download mt-1"
+            onClick={() => handleAttachmentDownload(attachment)}
           />
-        )}
-        <OverlayTrigger placement="top" overlay={filenameTooltip} >
-          <span>
-            <span
-              className="text-info fa fa-arrows mx-1"
+          {largerInbox && (
+            <MoveToAnalysisButton
+              attachment={attachment}
+              largerInbox={largerInbox}
+              sourceType={sourceType}
             />
-            {attachment.filename}
-          </span>
+          )}
+          <OverlayTrigger placement="top" overlay={filenameTooltip} >
+            <span>
+              <i className="text-primary fa fa-arrows mx-1" />
+              {attachment.filename}
+            </span>
           </OverlayTrigger>
         </ButtonToolbar>
         {
           inboxSize && inboxSize !== 'Small'
           && (
             <span
-              className={`text-info ms-auto ${largerInbox ? '' : 'none'}`}
-              >
+              className={`text-dark ms-auto ${largerInbox ? '' : 'none'}`}
+            >
               {formatDate(attachment.created_at)}
             </span>
           )}

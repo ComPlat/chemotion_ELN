@@ -415,6 +415,7 @@ export default class ResearchPlanDetails extends Component {
                 disabled={researchPlan.isMethodDisabled('name')}
                 onChange={this.handleNameChange}
                 edit={edit}
+                onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
               />
             </div>
             <div className="d-flex justify-content-center align-items-end">

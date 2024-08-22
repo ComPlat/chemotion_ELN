@@ -187,6 +187,22 @@
     }
 }
 
+.tab-content{
+    .eln-panel-detail{
+        .header{
+            margin-top: 3px;
+            margin-right: 10px;
+            color: white;
+        }
+        .card-header{
+            min-height: 41px;
+        }
+        .blue-background{
+            background:rgb(51, 122, 183)
+        }
+    }
+}
+
 .floating{
     float:left;
 }

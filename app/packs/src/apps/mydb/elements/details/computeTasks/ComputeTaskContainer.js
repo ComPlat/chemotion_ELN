@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Table } from 'react-bootstrap';
-import Panel from 'src/components/legacyBootstrap/Panel';
+import { Button, Table, Card } from 'react-bootstrap';
 
 import ComputeTaskActions from 'src/stores/alt/actions/ComputeTaskActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -67,30 +66,31 @@ export default class ComputeTaskContainer extends React.Component {
     const { tasks } = this.state;
 
     return (
-      <Panel className="eln-panel-detail" variant="primary">
-        <Panel.Heading>
-          {'Task'}
+      <Card className="eln-panel-detail">
+        <Card.Header className="d-flex text-bg-primary align-items-baseline justify-content-between">
+          Task
           <Button
             key="closeBtn"
             onClick={this.onClose}
             variant="danger"
-            size="sm"
+            size="xxsm"
+            className="ms-auto"
           >
             <i className="fa fa-times" />
           </Button>
-        </Panel.Heading>
-        <Panel.Body>
+        </Card.Header>
+        <Card.Body>
           <Table striped condensed hover>
             <thead>
               <tr>
-                <th style={{ textAlign: 'center' }}>Sample</th>
-                <th style={{ textAlign: 'center' }}>Status</th>
-                <th style={{ textAlign: 'center' }}>Updated at</th>
-                <th style={{ textAlign: 'center' }}>Actions</th>
+                <th className="text-center">Sample</th>
+                <th className="text-center">Status</th>
+                <th className="text-center">Updated at</th>
+                <th className="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {tasks.map(task => (
+              {tasks.map((task) => (
                 <ComputeTask
                   key={task.id}
                   task={task}
@@ -101,8 +101,8 @@ export default class ComputeTaskContainer extends React.Component {
               ))}
             </tbody>
           </Table>
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   }
 }
