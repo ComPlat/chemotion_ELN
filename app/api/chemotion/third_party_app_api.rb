@@ -111,6 +111,8 @@ module Chemotion
       get 'collection_tpa_tokens' do
         token_list = []
         cache_user_keys = cache.read(current_user.id)
+        return { token_list: [] } if cache_user_keys.blank?
+
         cache_user_keys&.each do |token_key|
           cached_value = cache.read(token_key)
           token_list

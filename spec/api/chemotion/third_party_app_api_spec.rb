@@ -385,7 +385,7 @@ describe Chemotion::ThirdPartyAppAPI do
       parts.split('/').last
     end
 
-    let(:tpa) { create((:third_party_app)) }
+    let(:tpa) { create(:third_party_app) }
 
     let!(:research_plan) do
       create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
@@ -420,6 +420,35 @@ describe Chemotion::ThirdPartyAppAPI do
 
       it 'status of get request 403?' do
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe 'CollectionTPATokens', type: :request do
+    describe 'GET /collection_tpa_tokens' do
+      let(:cache) { Rails.cache }
+
+      context 'when the user has cached tokens' do
+        let(:token_keys) { %w[token_1 token_2 token_3] }
+        let(:cached_values) { %w[value_1 value_2 value_3] }
+
+        before do
+          # Write the token keys associated with the user
+          cache.write(user.id, token_keys)
+
+          # Write each token's corresponding value into the cache
+          token_keys.each_with_index do |token_key, index|
+            cache.write(token_key, cached_values[index])
+          end
+        end
+
+        it 'returns the list of TPA tokens' do
+          get '/api/v1/third_party_apps/collection_tpa_tokens'
+
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body).deep_symbolize_keys
+          expect(json_response[:token_list]).not_to be_empty
+        end
       end
     end
   end
