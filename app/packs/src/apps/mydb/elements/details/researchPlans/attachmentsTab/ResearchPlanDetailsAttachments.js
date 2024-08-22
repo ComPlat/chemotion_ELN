@@ -68,17 +68,12 @@ class ResearchPlanDetailsAttachments extends Component {
     this.fetch3paTokenByUserId();
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps) {
     const { attachments } = this.props;
-    const { tokenList } = this.state;
 
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
-    }
-    // Check if tokenList has changed
-    if (tokenList !== prevState.tokenList) {
-      this.fetch3paTokenByUserId();
     }
   }
 
