@@ -34,8 +34,7 @@ import {
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { parseNumericString } from 'src/utilities/MathUtils';
-
-
+import CollapseButton from "../../../../../../components/common/CollapseButton";
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
@@ -1024,35 +1023,23 @@ export default class ReactionDetailsScheme extends Component {
 
   solventCollapseBtn() {
     const { open } = this.state;
-    const arrow = open
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
-    return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-          onClick={() => this.setState({ open: !open })}
-      >
-        {arrow} Solvents
-      </Button>
+    return(
+    <CollapseButton
+      openTab={open}
+      setOpenTab={() => this.setState({ open: !open })}
+      name="Solvents"
+    />
     );
   }
-
+    
   conditionsCollapseBtn() {
     const { cCon } = this.state;
-    const arrow = cCon
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
     return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-        onClick={() => this.setState({ cCon: !cCon })}
-      >
-        {arrow} Conditions
-      </Button>
+      <CollapseButton
+        openTab={open}
+        setOpenTab={() => this.setState({ cCon: !cCon })}
+        name="Conditions"
+      />
     );
   }
 
@@ -1207,6 +1194,7 @@ export default class ReactionDetailsScheme extends Component {
             <hr className="mt-0" />
           </div>
           <div>
+
             {this.solventCollapseBtn()}
             <Collapse in={this.state.open}>
               <div>
