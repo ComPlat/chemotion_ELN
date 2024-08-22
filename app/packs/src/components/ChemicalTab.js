@@ -2,8 +2,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Collapse, Modal
+  Form, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
+  ListGroup, ListGroupItem, InputGroup, Collapse, Modal, Row, Col
 } from 'react-bootstrap';
 import Select from 'react-select';
 import SVG from 'react-inlinesvg';
@@ -12,7 +12,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import CollapseButton from 'src/components/common/CollapseButton';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
@@ -385,9 +384,8 @@ export default class ChemicalTab extends React.Component {
       { label: 'Ordered', value: 'Ordered' }
     ];
     return (
-      <FormGroup>
-        <ControlLabel>{label}</ControlLabel>
-        <InputGroup id="chemical-status">
+      <Form.Group>
+        <Form.Label>{label}</Form.Label>
           <Select.Creatable
             name="chemicalStatus"
             multi={false}
@@ -396,8 +394,7 @@ export default class ChemicalTab extends React.Component {
             value={val}
             clearable={false}
           />
-        </InputGroup>
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -418,13 +415,13 @@ export default class ChemicalTab extends React.Component {
     } else {
       conditionalOverlay = null;
     }
-    const checkLabel = label !== 'Date' && <ControlLabel>{label}</ControlLabel>;
+    const checkLabel = label !== 'Date' && <Form.Label>{label}</Form.Label>;
 
     return (
       <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
-        <FormGroup>
+        <Form.Group>
           {checkLabel}
-          <FormControl
+          <Form.Control
             componentClass={componentClass}
             id={`textInput_${label}`}
             type="text"
@@ -432,7 +429,7 @@ export default class ChemicalTab extends React.Component {
             onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
             rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
           />
-        </FormGroup>
+        </Form.Group>
       </OverlayTrigger>
     );
   }
@@ -483,22 +480,20 @@ export default class ChemicalTab extends React.Component {
     const modifyStr = string.charAt(0).toUpperCase() + string.slice(1);
     const ParentLabelCondition = ['host_building', 'current_building', 'host_group', 'current_group'];
     const ParentLabel = ParentLabelCondition.includes(parameter)
-      ? <ControlLabel>{modifyStr}</ControlLabel> : <ControlLabel className="location-input"> </ControlLabel>;
+      ? <Form.Label>{modifyStr}</Form.Label> : <Form.Label className="location-input"> </Form.Label>;
     const paramsObj = {};
     paramsObj[domain] = parameter;
 
     return (
       <div>
         {ParentLabel}
-        <InputGroup className="location-chemicalTab">
+        <InputGroup>
           <InputGroup.Text>{subLabel}</InputGroup.Text>
-          <FormGroup controlId="subLabel">
-            <FormControl
-              componentClass="input"
+            <Form.Control
+              type="text"
               value={value}
               onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
             />
-          </FormGroup>
         </InputGroup>
       </div>
     );
@@ -694,8 +689,8 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <FormGroup>
-        <ControlLabel>Vendor</ControlLabel>
+      <Form.Group>
+        <Form.Label>Vendor</Form.Label>
         <Select
           name="chemicalVendor"
           clearable={false}
@@ -703,7 +698,7 @@ export default class ChemicalTab extends React.Component {
           onChange={(e) => this.handleVendorOption(e.value)}
           value={vendorValue}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -720,8 +715,8 @@ export default class ChemicalTab extends React.Component {
     return (
       <OverlayTrigger placement="top" overlay={cas && cas !== '' ? <div /> : <Tooltip id="sds-query-message">{conditionalOverlay}</Tooltip>}>
 
-        <FormGroup>
-          <ControlLabel>Query SDS using</ControlLabel>
+        <Form.Group>
+          <Form.Label>Query SDS using</Form.Label>
           <Select
             name="queryOption"
             clearable={false}
@@ -729,7 +724,7 @@ export default class ChemicalTab extends React.Component {
             onChange={(e) => this.handleQueryOption(e.value)}
             value={queryOption}
           />
-        </FormGroup>
+        </Form.Group>
       </OverlayTrigger>
 
     );
@@ -744,8 +739,8 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <FormGroup>
-        <ControlLabel>Choose Language of SDS</ControlLabel>
+      <Form.Group>
+        <Form.Label>Choose Language of SDS</Form.Label>
         <Select
           name="languageOption"
           clearable={false}
@@ -753,7 +748,7 @@ export default class ChemicalTab extends React.Component {
           onChange={(e) => this.handleLanguageOption(e.value)}
           value={safetySheetLanguage}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -846,7 +841,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div className="render-chemical-properties">
-        <InputGroup.Button>
+        <InputGroup>
           <OverlayTrigger placement="top" overlay={<Tooltip id="renderChemProp">Info, if any found, will be copied to properties fields in sample properties tab</Tooltip>}>
             <Button
               id="fetch-properties"
@@ -869,7 +864,7 @@ export default class ChemicalTab extends React.Component {
           <OverlayTrigger placement="top" overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}>
             <Button active className="show-properties-modal" onClick={() => this.handlePropertiesModal(vendor)}><i className="fa fa-file-text" /></Button>
           </OverlayTrigger>
-        </InputGroup.Button>
+        </InputGroup>
 
       </div>
     );
@@ -916,32 +911,34 @@ export default class ChemicalTab extends React.Component {
       <div className="inventory-tab">
         {this.inventoryCollapseBtn()}
         <Collapse in={openInventoryInformationTab} key="inventory-Information-collapse-list">
-          <div className="inventory-tab">
-            <div className="inventory-information">
-              <div className="inventory-information-status">
+          <div>
+          <Row className="m-3">
+            {/* <div className="inventory-information"> */}
+              <Col className="inventory-information-status">
                 {this.chemicalStatus(data, 'Status', 'status')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col className="inventory-text-input">
                 {this.textInput(data, 'Vendor', 'vendor')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col className="inventory-text-input">
                 {this.textInput(data, 'Order number', 'order_number')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col className="inventory-text-input">
                 {this.numInputWithoutTable(data, 'Amount', 'amount')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col className="inventory-text-input">
                 {this.numInputWithoutTable(data, '', 'volume')}
-              </div>
-            </div>
-            <div className="text-input-group">
-              <div className="inventory-text-input">
+            </Col>
+            </Row>
+            {/* </div> */}
+            <Row>
+              <Col>
                 {this.textInput(data, 'Price', 'price')}
-              </div>
-              <div className="text-input-person">
+              </Col>
+              <Col>
                 {this.textInput(data, 'Person', 'person')}
-              </div>
-              <div className="text-input-date">
+              </Col>
+              <Col>
                 <Tabs id="tab-date">
                   <Tab eventKey="required" title="Required date">
                     {this.textInput(data, 'Date', 'required_date')}
@@ -950,11 +947,11 @@ export default class ChemicalTab extends React.Component {
                     {this.textInput(data, 'Date', 'ordered_date')}
                   </Tab>
                 </Tabs>
-              </div>
-              <div className="text-input-required-by">
+              </Col>
+              <Col>
                 {this.textInput(data, 'Required by', 'required_by')}
-              </div>
-            </div>
+              </Col>
+            </Row>
           </div>
         </Collapse>
       </div>
@@ -1136,8 +1133,8 @@ export default class ChemicalTab extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <div className="properties-modal-dev">
-              <FormGroup controlId="propertiesModal">
-                <FormControl
+              <Form.Group controlId="propertiesModal">
+                <Form.Control
                   componentClass="textarea"
                   className="properties-modal"
                   readOnly
@@ -1145,7 +1142,7 @@ export default class ChemicalTab extends React.Component {
                   type="text"
                   value={fetchedChemicalProperties}
                 />
-              </FormGroup>
+              </Form.Group>
             </div>
             <div>
               <Button variant="warning" onClick={() => this.closePropertiesModal()}>
@@ -1175,32 +1172,20 @@ export default class ChemicalTab extends React.Component {
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
-      <table className="table table-borderless table-responsive">
-        <tbody>
-          <tr>
-            <td className="chemical-table-cells">
-              {this.inventoryInformationTab(data)}
-            </td>
-          </tr>
-          <tr>
-            <td className="chemical-table-cells">
-              {this.safetyTab()}
-            </td>
-          </tr>
-          <tr>
-            <td className="chemical-table-cells">
-              {this.locationTab(data)}
-            </td>
-          </tr>
-          <tr>
-            <td className="chemical-table-cells">
-              <div>
-                {this.renderPropertiesModal()}
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="container-fluid">
+        <div className="mb-3">
+          {this.inventoryInformationTab(data)}
+        </div>
+        <div className="mb-3">
+          {this.safetyTab()}
+        </div>
+        <div className="mb-3">
+          {this.locationTab(data)}
+        </div>
+        <div>
+          {this.renderPropertiesModal()}
+        </div>
+      </div>
     );
   }
 }
