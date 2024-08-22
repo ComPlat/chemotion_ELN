@@ -72,7 +72,6 @@ function RndOrder({
   handleSubmit,
   handleMove,
   handleUndo,
-  handleAccordionOpen,
   toggleAddToReport,
   toggleMode,
   orderContainers,
@@ -125,7 +124,6 @@ function RndEdit({
   handleAccordionOpen,
   toggleAddToReport,
   toggleMode,
-  activeAnalysis,
   orderContainers,
   readOnly,
   isDisabled,
@@ -152,7 +150,7 @@ function RndEdit({
     setCommentBoxVisible(!commentBoxVisible);
   };
 
-  const headerNormalFunc = (container, serial) => (
+  const headerNormalFunc = (container) => (
     <HeaderNormal
       sample={sample}
       container={container}
