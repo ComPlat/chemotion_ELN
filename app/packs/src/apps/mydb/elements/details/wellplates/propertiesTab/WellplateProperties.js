@@ -53,7 +53,6 @@ export default class WellplateProperties extends Component {
     const {
       readoutTitles, wellplate, changeProperties
     } = this.props;
-
     const { name, description } = wellplate;
     const { selectedReadoutIndex } = this.state;
     const showDeletionConfirmationModal = selectedReadoutIndex != null;

@@ -49,7 +49,7 @@ const sampleVisualisation = (well, onChange) => {
   if (sample) {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
     removeButton = (
-      <Button className="pull-right" size="sm" variant="danger" onClick={removeSampleFromWell}>
+      <Button size="sm" variant="danger" onClick={removeSampleFromWell}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -57,7 +57,7 @@ const sampleVisualisation = (well, onChange) => {
   return (
     <>
       {removeButton}
-      <div class="well-details--svg-container">
+      <div class="well-details-svg-container">
         {svg}
       </div>
       <p className="wellplate-overlay text-center">

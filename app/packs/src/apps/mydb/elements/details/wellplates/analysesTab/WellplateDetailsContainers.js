@@ -116,7 +116,7 @@ export default class WellplateDetailsContainers extends Component {
           {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) : ''}
         </strike>
         <div className="d-flex justify-content-end gap-2 me-2">
-          <Button className="pull-right" size="sm" variant="danger" onClick={() => this.handleUndo(container)}>
+          <Button size="sm" variant="danger" onClick={() => this.handleUndo(container)}>
             <i className="fa fa-undo"></i>
           </Button>
         </div>

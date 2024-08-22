@@ -147,18 +147,12 @@ export default class WellplateDetails extends Component {
   handleChangeProperties(change = {}) {
     const { wellplate } = this.state;
     const { type, value } = change;
-    switch (type) {
-      case 'name':
-        wellplate.name = value === '' ? 'New Wellplate' : value
-      case 'description':
-        wellplate.description = value;
-      case 'readoutTitles':
-        wellplate.readout_titles = value;
-      case 'size':
-        wellplate.changeSize(value.width, value.height);
-      default:
-        break;
-    }
+
+    if (type == 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
+    if (type == 'description') wellplate.description = value;
+    if (type == 'readoutTitles') wellplate.readout_titles = value;
+    if (type == 'size') wellplate.changeSize(value.width, value.height);
+
     this.setState({ wellplate });
   }
 
@@ -244,16 +238,23 @@ export default class WellplateDetails extends Component {
 
     return (
       <div className="d-flex justify-content-between">
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
-          <span>
-            <i className="icon-wellplate" />
-            <span className="mx-2">{wellplate.name}</span>
-          </span>
-        </OverlayTrigger>
-        <div className="d-flex justify-content-end gap-2">
+        <div className="d-flex justify-content-start gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
+            <span>
+              <i className="icon-wellplate" />
+              <span className="mx-2">{wellplate.name}</span>
+            </span>
+          </OverlayTrigger>
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
-          <ConfirmClose el={wellplate} />
+        </div>
+        <div className="d-flex justify-content-end gap-2">
+          <PrintCodeButton element={wellplate} />
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
+            <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
           { displaySaveButton &&
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
               <Button
@@ -265,12 +266,7 @@ export default class WellplateDetails extends Component {
               </Button>
             </OverlayTrigger>
           }
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-            <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
-          <PrintCodeButton element={wellplate} />
+          <ConfirmClose el={wellplate} />
         </div>
       </div>
     );
@@ -305,7 +301,7 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
-          <Card className="overflow-scroll h-100" style={{ maxHeight: 'calc(100vh - 375px)' }}>
+          <Card className="overflow-scroll h-100">
             <Card.Body>
               <WellplateList
                 wells={wellplate.wells}
@@ -338,7 +334,7 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_analyses" element={wellplate} />
           }
-          <ListGroupItem style={{ paddingBottom: 20 }}>
+          <ListGroupItem className="pb-2">
             <WellplateDetailsContainers
               wellplate={wellplate}
               parent={this}

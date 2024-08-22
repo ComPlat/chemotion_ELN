@@ -1,3 +1,5 @@
+// TODO: check if imported_readout is still functionality that is used or if it is abandoned and should be removed
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Table, Form } from 'react-bootstrap';
@@ -30,22 +32,18 @@ export default class WellplateList extends Component {
       well.readouts && well.readouts.map((readout, index) => {
         return (
           [
-            <td key={`well_${well.id}_readout_${index}_value`} style={{ padding: 0 }}>
+            <td key={`well_${well.id}_readout_${index}_value`} className="p-0">
               <Form.Control
-                componentClass="textarea"
-                style={{ resize: 'none', height: 66 }}
                 value={readout.value || ''}
                 onChange={event => this.handleReadoutOfWellChange(event, well, index, 'value')}
-                className="no-margin"
+                className="m-0"
               />
             </td>,
-            <td key={`well_${well.id}_readout_${index}_unit`} style={{ padding: 0 }}>
+            <td key={`well_${well.id}_readout_${index}_unit`} className="p-0">
               <Form.Control
-                componentClass="textarea"
-                style={{ resize: 'none', height: 66 }}
                 value={readout.unit || ''}
                 onChange={event => this.handleReadoutOfWellChange(event, well, index, 'unit')}
-                className="no-margin"
+                className="m-0"
               />
             </td>,
           ]
@@ -80,14 +78,6 @@ export default class WellplateList extends Component {
             let sum_formular = '';
             let importedReadout = '';
             let svgNode = '';
-            const style = {
-              resize: 'none',
-              height: 66
-            };
-            const inputContainerStyle = {
-              padding: 0,
-              display: 'none'
-            };
             if (sample) {
               svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
               svgNode = <SVG className="molecule-small" src={svgPath} />;
@@ -106,14 +96,8 @@ export default class WellplateList extends Component {
                 <td>{externalLabel}</td>
                 <td>{sum_formular}</td>
                 {this.renderReadoutFields(well)}
-                <td style={inputContainerStyle}>
-                  <Form.Control
-                    componentClass="textarea"
-                    style={style}
-                    value={importedReadout || ''}
-                    disabled
-                    className="no-margin"
-                  />
+                <td className="p-0" style={{display: 'none'}}>
+                  <Form.Control value={importedReadout || ''} disabled className="m-0" />
                 </td>
               </tr>
             );

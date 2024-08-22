@@ -7,11 +7,11 @@ import WellplateModel from 'src/models/Wellplate';
 import { Container, Row } from 'react-bootstrap'
 
 const HorizontalHeaderField = ({label}) => {
-  return (<div className="fw-bold text-center wellplate--horizontal-header-field">{label}</div>)
+  return (<div className="fw-bold text-center wellplate-horizontal-header-field">{label}</div>)
 }
 
 const VerticalHeaderField = ({label}) => {
-  return (<div className="d-inline-flex align-items-center fw-bold text-right wellplate--vertical-header-field">{label}</div>)
+  return (<div className="d-inline-flex align-items-center fw-bold text-right wellplate-vertical-header-field">{label}</div>)
 }
 
 const Wellplate = ({ wellplate, handleWellsChange }) => {
@@ -93,14 +93,8 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
   }
 
   const wellSize = 60
-  // const style = {
-  //   width: (wellplate.width + 1) * wellSize,
-  //   height: (wellplate.height + 1) * wellSize
-  // };
-  const style = {};
-
   return(
-    <div style={style} className="d-inline-flex flex-column">
+    <div className="d-inline-flex flex-column">
       {wellplateRows(wellplate).map(rowContent => (<div className="d-inline-flex flex-row">{rowContent}</div>))}
       {selectedWell &&
         <WellDetails

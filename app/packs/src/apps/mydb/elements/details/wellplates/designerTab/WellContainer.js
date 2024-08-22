@@ -58,7 +58,7 @@ class WellContainer extends Component {
       backgroundColor: well.color_code || 'white',
     };
 
-    const classes = ['wellplate--well-container']
+    const classes = ['wellplate-well-container']
     if (active) classes.push('active')
     if (isDragging) classes.push('is-dragging')
     if (well.sample) classes.push('has-sample')
