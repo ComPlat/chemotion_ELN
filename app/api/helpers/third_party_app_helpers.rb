@@ -84,7 +84,6 @@ module ThirdPartyAppHelpers
       file_path: params[:file][:tempfile].path,
     )
     if new_attachment.save
-
       Message.create_msg_notification(
         channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION,
         message_from: @user.id,

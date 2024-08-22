@@ -426,6 +426,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'CollectionTPATokens', type: :request do
     describe 'GET /collection_tpa_tokens' do
+      let(:user) { create(:user) }
       let(:cache) { Rails.cache }
 
       context 'when the user has cached tokens' do
@@ -446,6 +447,7 @@ describe Chemotion::ThirdPartyAppAPI do
           get '/api/v1/third_party_apps/collection_tpa_tokens'
 
           expect(response).to have_http_status(:ok)
+
           json_response = JSON.parse(response.body).deep_symbolize_keys
           expect(json_response[:token_list]).not_to be_empty
         end
