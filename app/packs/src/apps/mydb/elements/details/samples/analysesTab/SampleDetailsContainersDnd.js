@@ -35,7 +35,7 @@ const orderDropCollect = (connect, monitor) => ({
 
 const ContainerRow = ({
   sample, container, mode, readOnly, isDisabled, handleRemove,
-  handleSubmit, handleAccordionOpen, toggleAddToReport, handleUndo,
+  handleSubmit, toggleAddToReport, handleUndo,
   connectDragSource, connectDropTarget, isDragging, isOver, canDrop,
 }) => {
   const style = {};
@@ -73,7 +73,6 @@ const ContainerRow = ({
             isDisabled={isDisabled}
             handleRemove={handleRemove}
             handleSubmit={handleSubmit}
-            handleAccordionOpen={handleAccordionOpen}
             toggleAddToReport={toggleAddToReport}
           />
       }

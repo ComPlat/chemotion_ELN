@@ -107,7 +107,6 @@ function RndOrder({
               handleMove={handleMove}
               handleRemove={handleRemove}
               handleSubmit={handleSubmit}
-              handleAccordionOpen={handleAccordionOpen}
               handleUndo={handleUndo}
               toggleAddToReport={toggleAddToReport}
             />
@@ -158,13 +157,11 @@ function RndEdit({
       sample={sample}
       container={container}
       mode={mode}
-      serial={serial}
       handleUndo={handleUndo}
       readOnly={readOnly}
       isDisabled={isDisabled}
       handleRemove={handleRemove}
       handleSubmit={handleSubmit}
-      handleAccordionOpen={handleAccordionOpen}
       toggleAddToReport={toggleAddToReport}
     />
   );
@@ -182,13 +179,15 @@ function RndEdit({
       <Accordion
         id="editable-analysis-list"
         defaultActiveKey={0}
-        activeKey={activeAnalysis}
+        onSelect={handleAccordionOpen}
       >
         {orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
           return (
             <Accordion.Item eventKey={id} key={`${id}CRowEdit`}>
-              <Accordion.Header>{headerNormalFunc(container, id)}</Accordion.Header>
+              <Accordion.Header>
+                {headerNormalFunc(container, id)}
+              </Accordion.Header>
               <Accordion.Body>
                 Test
                 {!container.is_deleted && (

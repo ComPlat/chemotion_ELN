@@ -207,10 +207,8 @@ const headerBtnGroup = (
 };
 
 const HeaderNormal = ({
-  sample, container, mode, readOnly, isDisabled, serial,
-  handleRemove, handleSubmit, handleAccordionOpen, toggleAddToReport,
+  sample, container, mode, readOnly, isDisabled, handleRemove, handleSubmit, toggleAddToReport,
 }) => {
-  const clickToOpen = () => handleAccordionOpen(serial);
 
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
@@ -236,8 +234,7 @@ const HeaderNormal = ({
   }
   return (
     <div
-      className={`analysis-header w-100 border-end pe-3 me-3 d-flex gap-3 ${mode === 'edit' ? '' : 'order'}`}
-      onClick={clickToOpen}
+      className={`analysis-header w-100 pe-3 d-flex gap-3 ${mode === 'edit' ? '' : 'order'}`}
     >
       <div className="preview border">
         <ImageModal
@@ -253,7 +250,7 @@ const HeaderNormal = ({
           }}
         />
       </div>
-      <div className="flex-grow-1">
+      <div className="flex-grow-1 pe-3 border-end">
         <div className="lower-text">
           <div className="d-flex justify-content-between">
             <h4 className="flex-grow-1">{container.name}</h4>
