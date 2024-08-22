@@ -623,7 +623,7 @@ export default class ElementsTable extends React.Component {
               onChange={this.setFromDate}
               popperPlacement="bottom-start"
               isClearable
-              dateFormat="DD-MM-YY"
+              dateFormat="dd-MM-YY"
             />
           </div>
           <div className="sample-list-to-date">
@@ -633,7 +633,7 @@ export default class ElementsTable extends React.Component {
               popperPlacement="bottom"
               onChange={this.setToDate}
               isClearable
-              dateFormat="DD-MM-YY"
+              dateFormat="dd-MM-YY"
             />
           </div>
           {typeSpecificHeader}
