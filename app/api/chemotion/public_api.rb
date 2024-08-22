@@ -174,40 +174,6 @@ module Chemotion
           )
         end
       end
-
-      namespace :affiliations do
-        params do
-          optional :domain, type: String, desc: 'email domain', regexp: /\A([a-z\d\-]+\.)+[a-z]{2,64}\z/i
-        end
-
-        desc 'Return all countries available'
-        get 'countries' do
-          ISO3166::Country.all_translated
-        end
-
-        desc 'Return all current organizations'
-        get 'organizations' do
-          Affiliation.pluck('DISTINCT organization')
-        end
-
-        desc 'Return all current departments'
-        get 'departments' do
-          Affiliation.pluck('DISTINCT department')
-        end
-
-        desc 'Return all current groups'
-        get 'groups' do
-          Affiliation.pluck('DISTINCT "group"')
-        end
-
-        # desc "Return organization's name from email domain"
-        # get 'swot' do
-        #   return if params[:domain].blank?
-
-        #   Swot.school_name(params[:domain]).presence ||
-        #     Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
-        # end
-      end
     end
 
     namespace :upload do
