@@ -49,6 +49,7 @@ describe Chemotion::ProfileAPI do
   describe 'DELETE /api/v1/profiles' do
     before do
       # Ensure the file exists
+      FileUtils.mkdir_p(folder_path)
       File.write(file_path, 'Test content')
     end
 
