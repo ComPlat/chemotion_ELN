@@ -258,7 +258,7 @@ module Chemotion
         namespace :queue_task do
           desc 'queue task'
           params do
-            requires :task, type: String, desc: 'Admin task name'
+            requires :task, type: String, desc: 'Admin task name', values: %w[collection_restore install_ketcher2]
           end
 
           get do
