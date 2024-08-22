@@ -53,14 +53,17 @@ module Chemotion
       post do
         attributes = declared(params, include_missing: false).compact_blank
         from = attributes.delete(:from)
+        from = from.present? ? Date.strptime(from, '%Y-%m') : nil
         to = attributes.delete(:to)
-        affiliation = Affiliation.find_or_create_by(attributes)
-        UserAffiliation.create(
-          affiliation_id: affiliation.id,
+        to = to.present? ? Date.strptime(to, '%Y-%m') : nil
+        ua_attributes = {
           user_id: current_user.id,
-          to: Date.strptime(to, '%Y-%m'),
-          from: Date.strptime(from, '%Y-%m'),
-        )
+          affiliation: Affiliation.find_or_create_by(attributes),
+          from: from,
+          to: to,
+        }.compact_blank
+
+        UserAffiliation.create(ua_attributes)
         status 201
       rescue ActiveRecord::RecordInvalid => e
         { error: e.message }
@@ -78,12 +81,13 @@ module Chemotion
       end
       put do
         attributes = declared(params, include_missing: false).compact_blank
-        affiliation = Affiliation.find_or_create_by(attributes.except(:from, :to))
-        @affiliations.find(params[:id]).update(
+        affiliation = Affiliation.find_or_create_by(attributes.except(:from, :to, :id))
+        ua_attributes = {
           affiliation_id: affiliation.id,
-          to: Date.strptime(attributes[:to], '%Y-%m'),
-          from: Date.strptime(attributes[:from], '%Y-%m'),
-        )
+          to: attributes[:to].present? ? Date.strptime(attributes[:to], '%Y-%m') : nil,
+          from: attributes[:from].present? ? Date.strptime(attributes[:from], '%Y-%m') : nil,
+        }.compact_blank
+        @affiliations.find(params[:id]).update(ua_attributes)
       rescue ActiveRecord::RecordInvalid => e
         { error: e.message }
       end
