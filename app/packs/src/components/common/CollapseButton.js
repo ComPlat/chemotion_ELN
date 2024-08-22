@@ -11,7 +11,7 @@ const CollapseButton = (props) => {
             id={props.name}
             size="xxsm"
             className="w-100 bg-gray-200 text-dark"
-            onClick={() =>  props.setOpenTab(!openTab)}
+            onClick={() =>  setOpenTab(!openTab)}
         >
             {arrow}
             {props.name}
