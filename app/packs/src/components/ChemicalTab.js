@@ -2,8 +2,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Collapse, Modal, Row, Col
+  Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
+  ListGroup, ListGroupItem, InputGroup, Collapse, Modal, Row, Col,
+  ButtonGroup
 } from 'react-bootstrap';
 import Select from 'react-select';
 import SVG from 'react-inlinesvg';
@@ -33,6 +34,7 @@ export default class ChemicalTab extends React.Component {
       openInventoryInformationTab: true,
       openSafetyTab: true,
       openLocationTab: true,
+      switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewModalForVendor: ''
     };
@@ -480,7 +482,7 @@ export default class ChemicalTab extends React.Component {
     const modifyStr = string.charAt(0).toUpperCase() + string.slice(1);
     const ParentLabelCondition = ['host_building', 'current_building', 'host_group', 'current_group'];
     const ParentLabel = ParentLabelCondition.includes(parameter)
-      ? <Form.Label>{modifyStr}</Form.Label> : <Form.Label className="location-input"> </Form.Label>;
+      ? <Form.Label>{modifyStr}</Form.Label> : <Form.Label className="pt-3"> </Form.Label>;
     const paramsObj = {};
     paramsObj[domain] = parameter;
 
@@ -823,7 +825,7 @@ export default class ChemicalTab extends React.Component {
       fetchedSafetyPhrases = (phrases !== undefined) ? this.stylePhrases(phrases) : '';
     }
     return (
-      <div className="render-safety-phrases">
+      <div className="pt-2 w-100">
         {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
       </div>
     );
@@ -847,7 +849,7 @@ export default class ChemicalTab extends React.Component {
               id="fetch-properties"
               onClick={() => this.fetchChemicalProperties(vendor)}
               disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties.loading}
-              className="fetch-properties-button"
+              className=""
             >
               {loadChemicalProperties.loading === true && loadChemicalProperties.vendor === vendor
                 ? (
@@ -908,47 +910,57 @@ export default class ChemicalTab extends React.Component {
   inventoryInformationTab(data) {
     const { openInventoryInformationTab } = this.state;
     return (
-      <div className="inventory-tab">
+      <div>
         {this.inventoryCollapseBtn()}
         <Collapse in={openInventoryInformationTab} key="inventory-Information-collapse-list">
           <div>
-          <Row className="m-3">
-            {/* <div className="inventory-information"> */}
-              <Col className="inventory-information-status">
+            <Row className="my-3">
+              <Col >
                 {this.chemicalStatus(data, 'Status', 'status')}
               </Col>
-              <Col className="inventory-text-input">
+              <Col >
                 {this.textInput(data, 'Vendor', 'vendor')}
               </Col>
-              <Col className="inventory-text-input">
+              <Col >
                 {this.textInput(data, 'Order number', 'order_number')}
               </Col>
-              <Col className="inventory-text-input">
+              <Col >
                 {this.numInputWithoutTable(data, 'Amount', 'amount')}
               </Col>
-              <Col className="inventory-text-input">
+              <Col className="pt-2">
                 {this.numInputWithoutTable(data, '', 'volume')}
             </Col>
             </Row>
-            {/* </div> */}
             <Row>
-              <Col>
+              <Col sm={3}>
                 {this.textInput(data, 'Price', 'price')}
               </Col>
-              <Col>
+              <Col sm={3}>
                 {this.textInput(data, 'Person', 'person')}
               </Col>
-              <Col>
-                <Tabs id="tab-date">
-                  <Tab eventKey="required" title="Required date">
-                    {this.textInput(data, 'Date', 'required_date')}
-                  </Tab>
-                  <Tab eventKey="ordered" title="Ordered date">
-                    {this.textInput(data, 'Date', 'ordered_date')}
-                  </Tab>
-                </Tabs>
+              <Col sm={3}>   
+                <ButtonGroup className="mb-2">
+                  <Button
+                    onClick={()=> this.setState({switchRequiredOrdered: 'required'})}
+                    variant={this.state.switchRequiredOrderedDate === 'required' ? 'secondary' : 'light'}
+                    size="xxsm"
+                  >
+                    Required date
+                  </Button>
+                  <Button
+                    onClick={() => this.setState({ switchRequiredOrdered: 'ordered' })}
+                    variant={this.state.densityMolarity === 'ordered' ? 'secondary' : 'light'}
+                    size="xxsm"
+                  >
+                    Ordered date
+                  </Button>
+                </ButtonGroup>
+                {this.state.switchRequiredOrderedDate === 'required' ?
+                  this.textInput(data, 'Date', 'required_date')
+                  : this.textInput(data, 'Date', 'ordered_date')
+              }                
               </Col>
-              <Col>
+              <Col sm={3}>
                 {this.textInput(data, 'Required by', 'required_by')}
               </Col>
             </Row>
@@ -964,41 +976,41 @@ export default class ChemicalTab extends React.Component {
       <div>
         {this.locationCollapseBtn()}
         <Collapse in={openLocationTab} key="location-tab-collapse-list">
-          <div className="location-tab">
-            <div className="location-input-group">
-              <div>
+          <div>
+            <Row className="my-3">
+              <Col>
                 {this.locationInput(data, 'host_building', 'host_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_room', 'host_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_cabinet', 'host_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_group', 'host_group')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_owner', 'host_group')}
-              </div>
-            </div>
-            <div className="location-input-group">
-              <div>
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col>
                 {this.locationInput(data, 'current_building', 'current_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'current_room', 'current_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'current_cabinet', 'current_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'current_group', 'current_group')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'borrowed_by', 'current_group')}
-              </div>
-            </div>
+              </Col>
+            </Row>
             <div className="disposal-info">
               <div>
                 {this.textInput(data, 'Disposal information', 'disposal_info')}
@@ -1039,7 +1051,9 @@ export default class ChemicalTab extends React.Component {
       <Button
         id="submit-sds-btn"
         onClick={() => this.querySafetySheets()}
+        variant="light"
         disabled={!!loadingQuerySafetySheets || checkSavedSds}
+        
       >
         {loadingQuerySafetySheets === false ? 'Search for SDS'
           : (
@@ -1059,7 +1073,7 @@ export default class ChemicalTab extends React.Component {
     );
 
     const buttonElement = (
-      <div className="button-container">
+      <div className="mt-4">
         {button}
         {checkSavedSds && (
           <OverlayTrigger placement="top" overlay={overlay}>
@@ -1078,20 +1092,20 @@ export default class ChemicalTab extends React.Component {
         {this.safetyCollapseBtn()}
         <Collapse in={openSafetyTab} key="inventory-safety-tab-collapse-list">
           <div className="safety-tab">
-            <div className="parent-element-safety">
-              <div className="choose-vendor">
+            <Row>
+              <Col>
                 {this.chooseVendor()}
-              </div>
-              <div className="query-option">
+              </Col>
+              <Col>
                 {this.queryOption()}
-              </div>
-              <div className="safety-sheet-language">
+              </Col>
+              <Col>
                 {this.safetySheetLanguage()}
-              </div>
-              <div className="query-safety-sheet-button">
+              </Col>
+              <Col className="pt-2">
                 {this.querySafetySheetButton()}
-              </div>
-            </div>
+              </Col>
+            </Row>
             <div>
               { displayWell && (
                 <div>
