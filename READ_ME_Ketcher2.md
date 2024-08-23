@@ -11,31 +11,23 @@ This guide will help you integrate Ketcher2 into your project. Follow the steps 
 
 ## Installation Steps
 
-### 1. Add Ketcher Files to `public/`
+### 1. Add Ketcher2 Files
 
-- Run the installation script:
+- Run the installation script (Choose one script based on release requried):
+    
+    1- fetching build assets from github release
+
     ```bash
-    bin/ket2-install.sh
+        ✅ bin/chem-ket2-install.sh  -s epam/ketcher@v2.21.0
     ```
 
-### 2. Seed the Database
-
-- Seed your database to include necessary initial data for Matrice(table):
+    2- building from src at  v2.22.0-rc.9
     ```bash
-    bundle exec rails db:seed
+        ✅ bin/chem-ket2-install.sh -b -s epam/ketcher@v2.22.0-rc.9
     ```
 
-    OR Execute a database query
 
-        Matrice.create(
-        name: 'ketcher2Editor',
-        enabled: false,
-        label: 'ketcher2Editor',
-        include_ids: [],
-        exclude_ids: [],
-        configs: { editor: 'ketcher2' })
-
-### 3. Restart Your Server/Container
+### 2. Restart Your Server/Container
 
 - After completing the above steps, restart your server or container to apply the changes.
 
