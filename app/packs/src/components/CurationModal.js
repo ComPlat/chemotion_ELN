@@ -2,6 +2,8 @@ import React, { Component , useState} from 'react';
 import { Grid,Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row, ControlLabel} from 'react-bootstrap';
 import PropTypes, { array } from 'prop-types';
 import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
+import { hgroup } from 'react-dom-factories';
+
 
 
 export default class CurationModal extends Component {
@@ -60,6 +62,7 @@ export default class CurationModal extends Component {
     }
 
     updateDescription(){
+      console.log(this.props.description)
       this.setState({desc: this.cleanData(this.props.description) }, (() => {this.spellCheck(this.state.desc );
         this.scrollToId()
       }))
