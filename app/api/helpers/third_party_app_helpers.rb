@@ -21,7 +21,7 @@ module ThirdPartyAppHelpers
   # desc: define the cache key based on the attachment/user/app ids
   def cache_key
     @user_key ||= @user&.id
-    @cache_key_attachment_app ||= "#{@app&.id}/#{@attachment&.id}"
+    @cache_key_attachment_app ||= "#{@attachment&.id}/#{@app&.id}"
     [@user_key, @cache_key_attachment_app]
   end
 
@@ -45,23 +45,23 @@ module ThirdPartyAppHelpers
   end
 
   # desc: decrement the counters / check if token permission is expired
-  def update_cache(key, token)
-    parse_payload(token)
-    cached_token
-    if @cached_token.nil? || (@cached_token[:download] < 1 && @cached_token[:upload] < 1)
+  def update_cache(key)
+    download_count = cached_token[:download].to_i
+    upload_count = cached_token[:upload].to_i
+    if cached_token.nil? || (download_count < 1 && upload_count < 1)
       cache.delete(cache_key[1])
       error!('Invalid token', 403)
-    elsif @cached_token[key] < 1
+    elsif cached_token[key].to_i < 1
       error!("Token #{key} permission expired", 403)
     else
-      @cached_token[key] -= 1
-      cache.write(cache_key[1], @cached_token)
+      cached_token[key] -= 1
+      cache.write(cache_key[1], cached_token)
     end
   end
 
   # desc: return file for download to third party app
-  def download_attachment_to_third_party_app(token)
-    update_cache(:download, token)
+  def download_attachment_to_third_party_app
+    update_cache(:download)
     return error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
 
     content_type 'application/octet-stream'
@@ -72,8 +72,8 @@ module ThirdPartyAppHelpers
   end
 
   # desc: upload file from the third party app
-  def upload_attachment_from_third_party_app(token)
-    update_cache(:upload, token)
+  def upload_attachment_from_third_party_app
+    update_cache(:upload)
     return error!('No write access to attachment', 403) unless write_access?(@attachment, @user)
 
     new_attachment = Attachment.new(
@@ -84,6 +84,7 @@ module ThirdPartyAppHelpers
       file_path: params[:file][:tempfile].path,
     )
     if new_attachment.save
+
       Message.create_msg_notification(
         channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION,
         message_from: @user.id,

@@ -256,7 +256,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
     let(:third_party_app) { create(:third_party_app) }
     let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
-    let(:cache_key) { "#{attachment.id}/#{user.id}/#{third_party_app.id}" }
+    let(:cache_key) { "#{attachment.id}/#{third_party_app.id}" }
     let(:secret) { Rails.application.secrets.secret_key_base }
     let(:token) { JWT.encode(payload, secret, 'HS256') }
     let(:allowed_uploads) { 1 }
@@ -274,7 +274,7 @@ describe Chemotion::ThirdPartyAppAPI do
         end
 
         before do
-          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          cache.write(cache_key, { token: token, upload: allowed_uploads, download: 1 }, expires_in: 1.hour)
           post "/api/v1/public/third_party_apps/#{token}", params: params
         end
 
@@ -303,7 +303,7 @@ describe Chemotion::ThirdPartyAppAPI do
         end
 
         before do
-          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          cache.write(cache_key, { token: token, upload: allowed_uploads, download: 1 }, expires_in: 1.hour)
           post "/api/v1/public/third_party_apps/#{token}", params: params
         end
 
@@ -365,7 +365,7 @@ describe Chemotion::ThirdPartyAppAPI do
       end
 
       context 'when amount of uploads exceeded' do
-        let(:allowed_uploads) { -1 }
+        let(:allowed_uploads) { 0 }
 
         before do
           cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
