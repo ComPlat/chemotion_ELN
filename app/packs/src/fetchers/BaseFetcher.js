@@ -55,10 +55,11 @@ export default class BaseFetcher {
       ? '&filter_created_at=true' : '&filter_created_at=false';
     const fromDate = queryParams.fromDate ? `&from_date=${dateToUnixTimestamp(queryParams.fromDate)}` : '';
     const toDate = queryParams.toDate ? `&to_date=${dateToUnixTimestamp(queryParams.toDate)}` : '';
+    const userLabel = queryParams.userLabel ? `&user_label=${queryParams.userLabel}` : '';
     const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
       + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-      + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
+      + `${fromDate}${toDate}${userLabel}${filterCreatedAt}${productOnly}`;
     let addQuery = '';
     let userState;
     let group;
