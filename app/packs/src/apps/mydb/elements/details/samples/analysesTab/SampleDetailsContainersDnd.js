@@ -2,7 +2,7 @@ import React from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import { HeaderDeleted, HeaderNormal } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+import { AnalysesHeader } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 
 const orderSource = {
   beginDrag(props) {
@@ -38,44 +38,33 @@ const ContainerRow = ({
   handleSubmit, toggleAddToReport, handleUndo,
   connectDragSource, connectDropTarget, isDragging, isOver, canDrop,
 }) => {
-  const style = {};
+  let dndClass = " border";
   if (canDrop) {
-    style.borderStyle = 'dashed';
-    style.borderWidth = 2;
+    dndClass = " dnd-zone";
   }
   if (isOver) {
-    style.borderColor = '#337ab7';
+    dndClass += " dnd-zone-over";
   }
   if (isDragging) {
-    style.opacity = 0.2;
+    dndClass += " dnd-dragging";
   }
 
-  const oPanelCN = container.is_deleted ? "order-panel-delete" : "order-panel";
-
   return compose(connectDragSource, connectDropTarget)(
-    <div className={oPanelCN} style={style}>
-      <div className="dnd-btn">
-        <span className="text-info fa fa-arrows" />
+    <div className={"d-flex gap-2 mb-3 bg-gray-100 px-2 py-3 rounded" + dndClass}>
+      <div className="dnd-button d-flex align-items-center">
+        <i className="dnd-arrow-enable text-info fa fa-arrows" />
       </div>
-      {
-        container.is_deleted
-          ? <HeaderDeleted
-            container={container}
-            handleUndo={handleUndo}
-            mode={mode}
-          />
-          : <HeaderNormal
-            sample={sample}
-            container={container}
-            mode={mode}
-            handleUndo={handleUndo}
-            readOnly={readOnly}
-            isDisabled={isDisabled}
-            handleRemove={handleRemove}
-            handleSubmit={handleSubmit}
-            toggleAddToReport={toggleAddToReport}
-          />
-      }
+      <AnalysesHeader
+        sample={sample}
+        container={container}
+        mode={mode}
+        handleUndo={handleUndo}
+        readOnly={readOnly}
+        isDisabled={isDisabled}
+        handleRemove={handleRemove}
+        handleSubmit={handleSubmit}
+        toggleAddToReport={toggleAddToReport}
+      />
     </div>,
   );
 };

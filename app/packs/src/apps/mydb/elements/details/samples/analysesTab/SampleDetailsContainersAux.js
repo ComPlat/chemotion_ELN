@@ -66,50 +66,10 @@ const AnalysisModeBtn = (mode, toggleMode, isDisabled) => {
   )
 };
 
-const undoBtn = (container, mode, handleUndo) => {
-  const clickUndo = () => handleUndo(container);
-
-  if (mode === 'edit') {
-    return (
-      <Button
-        size="sm"
-        variant="danger"
-        onClick={clickUndo}
-      >
-        <i className="fa fa-undo" />
-      </Button>
-    );
-  }
-  return null;
-};
-
-const HeaderDeleted = ({ container, handleUndo, mode }) => {
-  const mKind = container.extended_metadata.kind;
-  const mStatus = container.extended_metadata.status;
-  const kind = (mKind && mKind !== '') ? ` - Type: ${(mKind.split('|')[1] || mKind).trim()}` : '';
-  const status = (mStatus && mStatus !== '') ? ` - Status: ${mStatus}` : '';
-
-  return (
-    <div className="analysis-header-delete">
-      <strike>
-        {container.name}
-        {kind}
-        {status}
-      </strike>
-      <div className="undo-middle">
-        {undoBtn(container, mode, handleUndo)}
-      </div>
-    </div>
-  );
-};
-
 const headerBtnGroup = (
-  container, sample, mode, handleRemove, handleSubmit,
-  toggleAddToReport, isDisabled, readOnly,
+  deleted, container, sample, handleRemove, handleSubmit,
+  toggleAddToReport, isDisabled, readOnly, handleUndo
 ) => {
-  if (mode !== 'edit') {
-    return null;
-  }
 
   const inReport = container.extended_metadata.report;
   const confirmDelete = (e) => {
@@ -166,7 +126,14 @@ const headerBtnGroup = (
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
-  return (
+  return (deleted ?
+    <Button
+      size="xxsm"
+      variant="danger"
+      onClick={() => {handleUndo(container)}}
+    >
+      <i className="fa fa-undo" />
+    </Button> :
     <div className="d-flex gap-1 align-items-center">
       <Form.Check
         type="checkbox"
@@ -205,12 +172,13 @@ const headerBtnGroup = (
   );
 };
 
-const HeaderNormal = ({
-  sample, container, mode, readOnly, isDisabled, handleRemove, handleSubmit, toggleAddToReport,
+const AnalysesHeader = ({
+  sample, container, mode, readOnly, isDisabled, handleRemove, handleUndo, handleSubmit, toggleAddToReport,
 }) => {
 
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
+  const deleted = container.is_deleted;
   const insText = instrumentText(container);
   const status = container.extended_metadata.status || '';
   const previewImg = previewContainerImage(container);
@@ -233,47 +201,51 @@ const HeaderNormal = ({
   }
   return (
     <div
-      className={`analysis-header w-100 pe-3 d-flex gap-3 ${mode === 'edit' ? '' : 'order'}`}
+      className={`analysis-header w-100 pe-3 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order'}`}
     >
-      <div className="preview border">
-        <ImageModal
-          hasPop={hasPop}
-          previewObject={{
-            src: previewImg
-          }}
-          popObject={{
-            title: container.name,
-            src: previewImg,
-            fetchNeeded,
-            fetchId
-          }}
-        />
+      <div className="preview border d-flex align-items-center">
+        {deleted ?
+          <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :
+          <ImageModal
+            hasPop={hasPop}
+            previewObject={{
+              src: previewImg
+            }}
+            popObject={{
+              title: container.name,
+              src: previewImg,
+              fetchNeeded,
+              fetchId
+            }}
+          />
+    }  
       </div>
-      <div className="flex-grow-1 pe-3 border-end">
-        <div className="lower-text">
-          <div className="d-flex justify-content-between">
-            <h4 className="flex-grow-1">{container.name}</h4>
-            {
-              headerBtnGroup(
-                container, sample, mode, handleRemove, handleSubmit,
-                toggleAddToReport, isDisabled, readOnly,
-              )
-            }
-          </div>
-          <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">
-            Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
-          </div>
-          <div className="sub-title d-flex gap-2">
+      <div className={"flex-grow-1" + ((mode === 'edit') ? " pe-3 border-end" : "") + (deleted ? "" : " analysis-header-fade")}>
+        <div className="d-flex justify-content-between align-items-center">
+          <h4 className={"flex-grow-1" + (deleted ? " text-decoration-line-through" : "")}>{container.name}</h4>
+          {(mode === 'edit') &&
+            headerBtnGroup(
+              deleted, container, sample, handleRemove, handleSubmit,
+              toggleAddToReport, isDisabled, readOnly, handleUndo
+            )
+          }
+        </div>
+        <div className={deleted ? "text-body-tertiary" : ""}>
+          Type: {kind}
+          <br />
+          Status: <span className='me-4'>{status} {qCheckMsg(sample, container)}</span>{insText}
+        </div>
+        {!deleted &&
+          <div className="d-flex gap-2">
             <span>Content:</span>
             <div className="flex-grow-1">
               <QuillViewer value={contentOneLine} className="p-0"/>
             </div>
           </div>
-        </div>
+        }
       </div>
     </div>
   );
 };
 
-export { HeaderDeleted, HeaderNormal, AnalysisModeBtn };
+export { AnalysesHeader, AnalysisModeBtn };

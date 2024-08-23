@@ -6,8 +6,7 @@ import {
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
 import {
-  HeaderDeleted,
-  HeaderNormal,
+  AnalysesHeader,
   AnalysisModeBtn,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 
@@ -86,12 +85,7 @@ function RndOrder({
           {addButton()}
         </ButtonToolbar>
       </div>
-      <div style={{
-        position: 'relative',
-        height: '600px',
-        overflowY: 'scroll'
-      }}
-      >
+      <div>
         {orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
           return (
@@ -132,10 +126,6 @@ function RndEdit({
   handleUndo,
   handleCommentTextChange,
 }) {
-  const headerDeletedFunc = (container) => (
-    <HeaderDeleted container={container} handleUndo={handleUndo} mode={mode} />
-  );
-
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
 
   useEffect(() => {
@@ -149,20 +139,6 @@ function RndEdit({
   const handleCommentButtonClick = () => {
     setCommentBoxVisible(!commentBoxVisible);
   };
-
-  const headerNormalFunc = (container) => (
-    <HeaderNormal
-      sample={sample}
-      container={container}
-      mode={mode}
-      handleUndo={handleUndo}
-      readOnly={readOnly}
-      isDisabled={isDisabled}
-      handleRemove={handleRemove}
-      handleSubmit={handleSubmit}
-      toggleAddToReport={toggleAddToReport}
-    />
-  );
 
   return (
     <div>
@@ -184,11 +160,20 @@ function RndEdit({
           return (
             <Accordion.Item eventKey={id} key={`${id}CRowEdit`}>
               <Accordion.Header>
-                {headerNormalFunc(container, id)}
+                <AnalysesHeader
+                  sample={sample}
+                  container={container}
+                  mode={mode}
+                  handleUndo={handleUndo}
+                  readOnly={readOnly}
+                  isDisabled={isDisabled}
+                  handleRemove={handleRemove}
+                  handleSubmit={handleSubmit}
+                  toggleAddToReport={toggleAddToReport}
+                />
               </Accordion.Header>
-              <Accordion.Body>
-                Test
-                {!container.is_deleted && (
+              {!container.is_deleted && (
+                <Accordion.Body>
                   <ContainerComponent
                     templateType="sample"
                     readOnly={readOnly}
@@ -196,8 +181,8 @@ function RndEdit({
                     disabled={isDisabled}
                     onChange={handleChange}
                   />
-                )}
-              </Accordion.Body>
+                </Accordion.Body>
+)}
             </Accordion.Item>
           );
         })}
