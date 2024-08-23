@@ -37,6 +37,11 @@ class Matrice < ApplicationRecord
     configs.dig('extra_rules', 'enable') == true ? configs['extra_rules'] : {}
   end
 
+  def self.molecule_viewer
+    rec = find_by(name: 'moleculeViewer')
+    { feature_enabled: rec&.enabled || false }.merge(rec&.configs || {}).deep_symbolize_keys
+  end
+
   private
 
   def gen_json
