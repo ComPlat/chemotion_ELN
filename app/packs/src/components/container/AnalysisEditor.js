@@ -16,6 +16,7 @@ import BaseToolbar from 'src/components/reactQuill/BaseToolbar';
 
 import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
+import CurationModal from "src/components/CurationModal.js";
 
 const toolbarOptions = [
   'bold', 'italic', 'underline',
@@ -230,6 +231,12 @@ export default class AnalysisEditor extends React.Component {
             </button>
           </span>
         </OverlayTrigger>
+        {/* {console.log(this)} */}
+        <CurationModal 
+                description= {value.ops} 
+                onChange = {( event) => this.props.onChange( event)}
+                ref = {this.additionQuillRef}
+                />
       </DynamicToolbarEditor>
     );
   }

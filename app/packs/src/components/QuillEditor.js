@@ -240,7 +240,7 @@ export default class QuillEditor extends React.Component {
                   rootClose
                   overlay={templateCreatorPopover}
                 >
-                  <span className="ql-formats">
+                  <span className="ql-formats" style={{marginRight : 0}}>
                     <button>
                       <span> &#937; </span>
                     </button>

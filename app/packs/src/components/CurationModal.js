@@ -2,6 +2,7 @@ import React, { Component , useState} from 'react';
 import { Grid,Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row, ControlLabel} from 'react-bootstrap';
 import PropTypes, { array } from 'prop-types';
 import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
+import { hgroup } from 'react-dom-factories';
 
 
 
@@ -48,7 +49,9 @@ export default class CurationModal extends Component {
     }
 
     updateDescription(){
+      console.log(this.props.description)
       this.setState({desc: this.cleanData(this.props.description) }, (() => {this.spellCheck(this.state.desc );
+        
       }))
     }
 
@@ -84,8 +87,6 @@ export default class CurationModal extends Component {
       output_object = {"ops" : new_array}
       output_object["ops"] = output_object["ops"].filter((x)=> x["insert"] != "" )
       this.setState({descriptionObject:output_object});
-      // add await comand here maybe
-      // console.log(output_object["ops"]);
       return output_object
     }
 
@@ -119,15 +120,12 @@ export default class CurationModal extends Component {
     }
 
     handleShow() {
-      // this.updateDescription()
       this.setState({ show: true }, this.updateDescription);
    
     }
 
     handleSuggest(miss_spelled_words, index){
       var Typo = require("typo-js");
-      // var startTime = new Date();
-      // var nowTime = Date.now() - startTime
       var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
       var mispelled_word = miss_spelled_words[index]
      
@@ -136,7 +134,7 @@ export default class CurationModal extends Component {
         // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
         if (/(.)\1{4,}/.test(mispelled_word))
         {
-          console.log(mispelled_word)
+          // console.log(mispelled_word)
           var repeatedCharacter = mispelled_word.match(/(.)\1{4,}/)
           var newMisspeled = mispelled_word.replace(/(.)\1{4,}/, repeatedCharacter[0].charAt(0)  ) 
           var ms_suggestion = [newMisspeled]
@@ -148,7 +146,6 @@ export default class CurationModal extends Component {
       else {
         console.log("run spell check")
       }
-     
     }
 
     useAllDicitonary(en_dictionary,custom_dictionary, word){
@@ -178,52 +175,70 @@ export default class CurationModal extends Component {
 
     spellCheck(description){
       if(description !== undefined){
-      var Typo = require("typo-js");
-      var us_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
-      var cus_dictionary = new Typo("custom", false, false, { dictionaryPath: "/typojs" });
-      var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
-      var ms_words = [];
-      var ss_list = []
-      var word_array = description.split(/[\s]|.[\n]/g)
-      if (this.state.dictionaryLanguage === "UK"){
-        var en_dictionary = uk_dictionary
-        console.log("uk used")
-      }
-      else {
-        var en_dictionary = us_dictionary
-        console.log("us used")
-      }
-      for (let i = 0; i < word_array.length; i++){
-        var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:\']/g;
-        word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
-        var double_space_regex= /\s\s/g
-        word_array[i] = word_array[i].replace(punctuation, "");
-        word_array[i] = word_array[i].replace(double_space_regex, " ")
-        // check if word has a number in it
-        if (/\b[\p{Script=Latin}]+\b/giu.test(word_array[i])){
-          if(word_array[i].includes("°") ){
-            var spell_checked_word = true
-          }
-          else{
-            if(/[a-z]*\-[a-z]*/.test(word_array[i]))
-              {console.log("help" +word_array[i])}
-            else{
-              var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
+        var Typo = require("typo-js");
+        var us_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
+        var cus_dictionary = new Typo("custom", false, false, { dictionaryPath: "/typojs" });
+        var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
+        var ms_words = [];
+        var ss_list = []
+        var word_array = description.split(/[\s]|[\n]/g)
+        // console.log(word_array)
+        if (this.state.dictionaryLanguage === "UK"){
+          var en_dictionary = uk_dictionary
+          console.log("uk used")
+        }
+        else {
+          var en_dictionary = us_dictionary
+          console.log("us used")
+        }
+        for (let i = 0; i < word_array.length; i++){
+          var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:—]/g;
+          word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
+          var double_space_regex= /\s\s/g
+          word_array[i] = word_array[i].replace(punctuation, " ");
+          word_array[i] = word_array[i].replace(double_space_regex, " ")
+          // check if word has a number in it
+          if (/\b[\p{Script=Latin}]+\b/giu.test(word_array[i])){
+            if(word_array[i].includes("°") ){
+              var spell_checked_word = true
             }
-        }}
-        else
-          {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
-            {ss_list.push(word_array[i])}
-          else{
-            var spell_checked_word = true; }
-          }
-        if (spell_checked_word == false){
-          ms_words.push(word_array[i]);
-        } 
-      }
-      this.setState({mispelledWords: ms_words, subscriptList:ss_list})
-      this.handleSuggest(ms_words, 0)
-      }
+            else{
+              if(/[a-z]*\-[a-z]*/.test(word_array[i]))
+                {console.log("help " +word_array[i])}
+              else{
+              // console.log(/'/.test( word_array[i]))
+              // console.log(word_array[i])
+                if(/'/.test( word_array[i])){
+                  console.log(word_array[i])
+                  var sliceIndex = word_array[i].indexOf("\'")
+                  console.log(sliceIndex)
+                  word_array[i] = word_array[i].substring(0 ,sliceIndex) 
+                }
+                if(/-/.test(word_array[i])){
+                  var sliceIndex = word_array[i].indexOf("\-")
+                  console.log[word_array[i]]
+                  word_array[i] = word_array[i].substring(0,sliceIndex)
+                  word_array = word_array.push(word_array[i].slice(sliceIndex))
+                }
+
+                var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
+              }
+          }}
+          else
+            {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
+              {ss_list.push(word_array[i])}
+            else{
+              var spell_checked_word = true; }
+            }
+          if (spell_checked_word == false){
+            ms_words.push(word_array[i]);
+            // console.log(word_array[i])
+          } 
+        }
+        ms_words = ms_words.filter((x)=> x != "" )
+        this.setState({mispelledWords: ms_words, subscriptList:ss_list}, ()=>{console.log(this.state.mispelledWords)})
+        this.handleSuggest(ms_words, 0)
+        }
       else{}}
 
     cleanMisspelledArray(input_array){
@@ -248,23 +263,36 @@ export default class CurationModal extends Component {
     }
 
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
+  var splitMispelledWords = mispelledWords.join(" , ")
+  mispelledWords = splitMispelledWords.split(",")
+
+    //  console.log(mispelledWords)
       if(text !== undefined){
         var combined_array = mispelledWords.concat(subscriptList)
         var highlight = combined_array.join("|")
+        console.log(new RegExp(`${highlight}`, "gi"))
         var parts = text.split(new RegExp(`(${highlight})`, "gi"));
+      
         var output_div
         var list_items = parts.map((part, index) => (
           <React.Fragment key={index}>
             {(()=> {
+              {/* part = part.replaceAll(" ", "") */}
               var miss_spelled_words_wo_current_word = mispelledWords.toSpliced(ms_index, 1)
               if(subscriptList.includes(part)){
                 output_div =  this.checkSubScript(part)   
               }
               else if(part === mispelledWords[ms_index])
-                {output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
+                {
+                  {/* part = part.replace(" ","") */}
+                  output_div = ( <b style={{backgroundColor:"#32a852"}}>{part}</b> ) 
                 }
               else if(miss_spelled_words_wo_current_word.includes(part)) 
-                {output_div = (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+                {
+                  {/* console.log(miss_spelled_words_wo_current_word)
+                  console.log(part) */}
+                  {/* part = part.replace(" ","") */}
+                  output_div = ( <b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
                 }
               })()
           }
@@ -356,7 +384,7 @@ export default class CurationModal extends Component {
           // this.setState({mispelledWords:[]})
         return(
         <div>
-          <h5>SpellCheck Finished</h5>
+          <h5>No corrections detected</h5>
         </div>)}
         else{
           return (

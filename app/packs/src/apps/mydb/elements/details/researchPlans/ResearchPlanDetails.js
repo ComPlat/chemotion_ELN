@@ -42,6 +42,7 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
+import CurationModal from "src/components/CurationModal.js";
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -529,6 +530,7 @@ export default class ResearchPlanDetails extends Component {
             <i className="fa fa-expand" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
+        
         {researchPlan.isNew
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
