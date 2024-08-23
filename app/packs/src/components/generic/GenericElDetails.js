@@ -413,7 +413,7 @@ export default class GenericElDetails extends Component {
             &nbsp;
           </span>
         </OverlayTrigger>
-        <ElementCollectionLabels element={genericEl} />
+        {genericEl.isNew ? null : <ElementCollectionLabels element={genericEl} />}
         <ShowUserLabels element={genericEl} />
         <ConfirmClose el={genericEl} />
         {copyBtn}
