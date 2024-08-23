@@ -618,8 +618,10 @@ export default class ReactionDetailsScheme extends Component {
     } else if (field === 'turnover_frequency') {
       convertedValues = convertTurnoverFrequency(value, unit);
     }
-    updatedSample.gas_phase_data[field].value = convertedValues[0];
-    updatedSample.gas_phase_data[field].unit = convertedValues[1];
+    if (convertedValues) {
+      updatedSample.gas_phase_data[field].value = convertedValues[0];
+      updatedSample.gas_phase_data[field].unit = convertedValues[1];
+    }
 
     return this.updatedReactionWithSample(
       this.updatedSamplesForGasProductFieldsChange.bind(this),
