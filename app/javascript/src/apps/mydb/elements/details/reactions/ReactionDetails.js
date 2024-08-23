@@ -7,7 +7,7 @@ import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
-import { findIndex } from 'lodash';
+import { findIndex, isEmpty } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
@@ -215,17 +215,64 @@ export default class ReactionDetails extends Component {
           onClick={() => this.handleProductClick(product)}
           role="button"
           title="Open sample window">
-          <i className="icon-sample" />{product.title()}
+          <i className="icon-sample" />
+          &nbsp;
+          {product.title()}
         </span>
       </span>
     )
   }
 
-  productData(reaction) {
-    const { products } = this.state.reaction;
+  handleSelect = (key) => {
+    UIActions.selectTab({ tabKey: key, type: 'reaction' });
+    this.setState({
+      activeTab: key
+    });
+  };
+
+  handleSelectActiveAnalysisTab = (key) => {
+    UIActions.selectActiveAnalysisTab(key);
+    this.setState({
+      activeAnalysisTab: key
+    });
+  };
+
+  handleSegmentsChange(se) {
+    const { reaction } = this.state;
+    const { segments } = reaction;
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    reaction.segments = segments;
+    reaction.changed = true;
+    this.setState({ reaction });
+  }
+
+  onUIStoreChange(state) {
+    const { activeTab } = this.state;
+    const { activeAnalysisTab } = this.state;
+    if (state.reaction.activeTab !== activeTab
+      || state.reaction.activeAnalysisTab !== activeAnalysisTab) {
+      this.setState({
+        activeTab: state.reaction.activeTab,
+        activeAnalysisTab: state.reaction.activeAnalysisTab
+      });
+    }
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  reactionIsValid() {
+    const { reaction } = this.state;
+    return reaction.hasMaterials() && reaction.SMGroupValid();
+  }
+
+  productData() {
+    const { reaction } = this.state;
     const { activeAnalysisTab } = this.state;
 
-    const tabs = products.map((product, key) => {
+    const tabs = reaction.products.map((product, key) => {
       const title = this.productLink(product);
       const setState = () => this.handleProductChange(product);
       const handleSampleChanged = (_, cb) => this.handleProductChange(product, cb);
@@ -313,8 +360,8 @@ export default class ReactionDetails extends Component {
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
-    const rsPlanLabel = !(reaction.isNew || _.isEmpty(reaction.research_plans)) && (
-      <ElementResearchPlanLabels plans={reaction.research_plans} placement="right" />
+    const rsPlanLabel = (reaction.isNew || isEmpty(reaction.research_plans)) ? null : (
+      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
     );
 
     return (
