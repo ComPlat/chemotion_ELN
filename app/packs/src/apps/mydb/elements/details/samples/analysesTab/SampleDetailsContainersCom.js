@@ -118,6 +118,7 @@ function RndEdit({
   handleAccordionOpen,
   toggleAddToReport,
   toggleMode,
+  activeAnalysis,
   orderContainers,
   readOnly,
   isDisabled,
@@ -152,8 +153,8 @@ function RndEdit({
       </div>
       <Accordion
         id="editable-analysis-list"
-        defaultActiveKey={0}
         onSelect={handleAccordionOpen}
+        activeKey={activeAnalysis}
       >
         {orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
