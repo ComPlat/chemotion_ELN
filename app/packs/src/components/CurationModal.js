@@ -192,7 +192,7 @@ export default class CurationModal extends Component {
           console.log("us used")
         }
         for (let i = 0; i < word_array.length; i++){
-          var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:—]/g;
+          var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:]/g;
           word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
           var double_space_regex= /\s\s/g
           word_array[i] = word_array[i].replace(punctuation, " ");
@@ -214,11 +214,12 @@ export default class CurationModal extends Component {
                   console.log(sliceIndex)
                   word_array[i] = word_array[i].substring(0 ,sliceIndex) 
                 }
-                if(/-/.test(word_array[i])){
-                  var sliceIndex = word_array[i].indexOf("\-")
+                if(/—/.test(word_array[i])){
+                  var sliceIndex = word_array[i].indexOf("—")
                   console.log[word_array[i]]
                   word_array[i] = word_array[i].substring(0,sliceIndex)
-                  word_array = word_array.push(word_array[i].slice(sliceIndex))
+                  word_array.push(word_array[i].slice(sliceIndex))
+                  console.log(word_array)
                 }
 
                 var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
@@ -263,8 +264,8 @@ export default class CurationModal extends Component {
     }
 
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
-  var splitMispelledWords = mispelledWords.join(" , ")
-  mispelledWords = splitMispelledWords.split(",")
+      var splitMispelledWords = mispelledWords.join(" , ")
+      mispelledWords = splitMispelledWords.split(",")
 
     //  console.log(mispelledWords)
       if(text !== undefined){
@@ -285,14 +286,14 @@ export default class CurationModal extends Component {
               else if(part === mispelledWords[ms_index])
                 {
                   {/* part = part.replace(" ","") */}
-                  output_div = ( <b style={{backgroundColor:"#32a852"}}>{part}</b> ) 
+                  output_div = (<span> <b style={{backgroundColor:"#32a852"}}>{part.replaceAll(/\s+/g,"")}</b> </span>) 
                 }
               else if(miss_spelled_words_wo_current_word.includes(part)) 
                 {
                   {/* console.log(miss_spelled_words_wo_current_word)
                   console.log(part) */}
                   {/* part = part.replace(" ","") */}
-                  output_div = ( <b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+                  output_div = (<span> <b style={{backgroundColor:"#e8bb49"}}>{part.replaceAll(/\s+/g,"")}</b> </span>)
                 }
               })()
           }
