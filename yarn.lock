@@ -3744,6 +3744,11 @@
   resolved "https://registry.npmjs.org/@redux-saga/types/-/types-1.1.0.tgz"
   integrity sha512-afmTuJrylUU/0OtqzaRkbyYFFNgCF73Bvel/sw90pvGrWIZ+vyoIJqA6eMSoA6+nb443kTmulmBtC9NerXboNg==
 
+"@remix-run/router@1.19.1":
+  version "1.19.1"
+  resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.19.1.tgz#984771bfd1de2715f42394c87fb716c1349e014f"
+  integrity sha512-S45oynt/WH19bHbIXjtli6QmwNYvaz+vtnubvNpNDvUOoA/OWh6j1OikIP3G+v5GHdxyC6EXoChG3HgYGEUfcg==
+
 "@restart/hooks@^0.4.7":
   version "0.4.9"
   resolved "https://registry.yarnpkg.com/@restart/hooks/-/hooks-0.4.9.tgz#ad858fb39d99e252cccce19416adc18fc3f18fcb"
@@ -5809,10 +5814,10 @@ cheerio@^1.0.0-rc.3:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chem-generic-ui@^1.4.0-rc10:
-  version "1.4.0-rc9"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.4.0-rc9.tgz#21f4a17680dfc0e5f52dfbf5720844430525af20"
-  integrity sha512-vHVVHU/veeoT5dOHGWbNysRuiaHIZZbzIuK3Z7AzZtaMUY0do599oPZvGdHzKgPqDF1cEnDx80+OL/S/p6AOgA==
+chem-generic-ui@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.4.0.tgz#67f6041b5671aa848bf4afcc72a2a403ef3b69b8"
+  integrity sha512-m38x2XXDnQxriiBe4bv3Z31gT86mi6ujM5eWDuoXs98t6lDqJt4NqLRau68W2CYQLp8jn6j3QKgvB7vTCFC9hA==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.5.2"
     "@fortawesome/free-regular-svg-icons" "^6.5.2"
@@ -5821,7 +5826,7 @@ chem-generic-ui@^1.4.0-rc10:
     ag-grid-community "^32.0.1"
     ag-grid-react "^32.0.1"
     date-fns "^2.29.3"
-    generic-ui-core "^1.4.0"
+    generic-ui-core "^1.4.6"
     html-to-image "^1.11.11"
     lodash "^4.17.21"
     moment "^2.29.4"
@@ -8106,7 +8111,7 @@ expect@^29.0.0:
     jest-message-util "^29.5.0"
     jest-util "^29.5.0"
 
-express@^4.17.3:
+express@^4.17.3, express@^4.19.2:
   version "4.19.2"
   resolved "https://registry.yarnpkg.com/express/-/express-4.19.2.tgz#e25437827a3aa7f2a827bc8171bbbb664a356465"
   integrity sha512-5T6nhjsT+EOMzuck8JjBHARTHfMht0POzlA60WV2pMD3gyXw2LZnZ+ueGdNxG+0calOJcWKbpFcuzLZ91YWq9Q==
@@ -8576,7 +8581,7 @@ gauge@^4.0.3:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
-generic-ui-core@^1.4.0:
+generic-ui-core@^1.4.6:
   version "1.4.6"
   resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.4.6.tgz#342ead068ff6287a1c28ebd3ffe4b91699869588"
   integrity sha512-GMhFfpwllH2v15rIyt0bctLEZJLyobZKTtind1Kxrlxpp+GY98vVIB2+g5kxsuUZjfWQTgRA/sT2KeeXvHq2Hw==
@@ -13126,6 +13131,19 @@ react-markdown@^6.0.2:
     unist-util-visit "^2.0.0"
     vfile "^4.0.0"
 
+react-molviewer@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/react-molviewer/-/react-molviewer-1.1.1.tgz#d897131f41a1061cf0be26d167c0c471d028ab1b"
+  integrity sha512-WGAut0bLRVnKyLpTFJ8O3VTsyvT9HKcURwpXSnjjvGVQ3eDGu/dW6x7BYAbs42Cp7pwCUvyfH+FH4NQ0cU23Aw==
+  dependencies:
+    express "^4.19.2"
+    numeral "^2.0.6"
+    prop-types "^15.8.1"
+    react "^17.0.2"
+    react-dom "^17.0.2"
+    react-router-dom "^6.14.1"
+    uuid "^9.0.0"
+
 react-motion@^0.5.2:
   version "0.5.2"
   resolved "https://registry.npmjs.org/react-motion/-/react-motion-0.5.2.tgz"
@@ -13251,6 +13269,21 @@ react-refresh@^0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.12.0.tgz#28ac0a2c30ef2bb3433d5fd0621e69a6d774c3a4"
   integrity sha512-suLIhrU2IHKL5JEKR/fAwJv7bbeq4kJ+pJopf77jHwuR+HmJS/HbrPIGsTBUVfw7tXPOmYv7UJ7PCaN49e8x4A==
+
+react-router-dom@^6.14.1:
+  version "6.26.1"
+  resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-6.26.1.tgz#a408892b41767a49dc94b3564b0e7d8e3959f623"
+  integrity sha512-veut7m41S1fLql4pLhxeSW3jlqs+4MtjRLj0xvuCEXsxusJCbs6I8yn9BxzzDX2XDgafrccY6hwjmd/bL54tFw==
+  dependencies:
+    "@remix-run/router" "1.19.1"
+    react-router "6.26.1"
+
+react-router@6.26.1:
+  version "6.26.1"
+  resolved "https://registry.yarnpkg.com/react-router/-/react-router-6.26.1.tgz#88c64837e05ffab6899a49df2a1484a22471e4ce"
+  integrity sha512-kIwJveZNwp7teQRI5QmwWo39A5bXRyqpH0COKKmPnyD2vBvDwgFXSqDUYtt1h+FEyfnE8eXr7oe0MxRzVwCcvQ==
+  dependencies:
+    "@remix-run/router" "1.19.1"
 
 "react-select3@npm:react-select@^3.1.1":
   version "3.2.0"
