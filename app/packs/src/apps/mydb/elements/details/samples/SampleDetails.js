@@ -103,7 +103,16 @@ const rangeCheck = (field, sample) => {
   return true;
 };
 
+const clipboardTooltip = () => (
+  <Tooltip id="assign_button">copy to clipboard</Tooltip>
+);
+
+const moleculeCreatorTooltip = () => (
+  <Tooltip id="assign_button">create molecule</Tooltip>
+);
 export default class SampleDetails extends React.Component {
+  // eslint-disable-next-line react/static-property-placement
+
   constructor(props) {
     super(props);
 
@@ -482,7 +491,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInventoryTab(ind) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
     const { saveInventoryAction } = this.state;
 
     return (
@@ -544,7 +553,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleImportReadoutTab(ind) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
     return (
       <Tab
         eventKey={ind}
@@ -570,7 +579,7 @@ export default class SampleDetails extends React.Component {
   }
 
   measurementsTab(index) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
 
     return (
       <Tab
@@ -579,6 +588,27 @@ export default class SampleDetails extends React.Component {
         key={`Measurements${sample.id.toString()}`}
       >
         <MeasurementsTab sample={sample} />
+      </Tab>
+    );
+  }
+
+  versioningTable(index) {
+    const { sample } = this.state;
+
+    return (
+      <Tab
+        eventKey={index}
+        title="Versions"
+        key={`Versions_Sample_${sample.id.toString()}`}
+      >
+        <ListGroupItem>
+          <VersionsTable
+            type="samples"
+            id={sample.id}
+            element={sample}
+            parent={this}
+          />
+        </ListGroupItem>
       </Tab>
     );
   }
@@ -733,7 +763,7 @@ export default class SampleDetails extends React.Component {
   }
 
   samplePropertiesTab(ind) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
 
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
@@ -1294,7 +1324,7 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
     const { visible, isChemicalEdited } = this.state;
     const tabContentsMap = {
       properties: this.samplePropertiesTab('properties'),
@@ -1302,7 +1332,8 @@ export default class SampleDetails extends React.Component {
       references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
-      measurements: this.measurementsTab('measurements')
+      measurements: this.measurementsTab('measurements'),
+      versioning: this.versioningTable('versioning')
     };
 
     if (this.enableComputedProps) {

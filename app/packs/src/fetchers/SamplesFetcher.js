@@ -8,8 +8,6 @@ import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 export default class SamplesFetcher {
   static fetchSamplesByUIStateAndLimit(params) {
-    const limit = params.limit ? limit : null;
-
     return fetch('/api/v1/samples/ui_state/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -119,7 +117,6 @@ export default class SamplesFetcher {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

@@ -23,10 +23,14 @@ class Versioning::Fetchers::SampleFetcher
       versions += Versioning::Serializers::ContainerSerializer.call(analysis, ["Analysis: #{analysis.name}"])
 
       analysis.children.with_deleted.with_log_data.each do |dataset|
-        versions += Versioning::Serializers::ContainerSerializer.call(dataset, ["Analysis: #{analysis.name}", "Dataset: #{dataset.name}"])
+        versions += Versioning::Serializers::ContainerSerializer.call(dataset,
+                                                                      ["Analysis: #{analysis.name}",
+                                                                       "Dataset: #{dataset.name}"])
 
         versions += dataset.attachments.with_log_data.flat_map do |attachment|
-          Versioning::Serializers::AttachmentSerializer.call(attachment, ["Analysis: #{analysis.name}", "Dataset: #{dataset.name}", "Attachment: #{attachment.filename}"])
+          Versioning::Serializers::AttachmentSerializer.call(attachment,
+                                                             ["Analysis: #{analysis.name}", "Dataset: #{dataset.name}",
+                                                              "Attachment: #{attachment.filename}"])
         end
       end
     end
