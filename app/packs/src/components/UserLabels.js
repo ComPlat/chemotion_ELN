@@ -3,16 +3,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal,
-  Table,
-  Col,
-  Badge,
-  ButtonGroup,
-  Button,
-  Form,
-  FormGroup,
-  FormControl,
-  InputGroup,
+  Modal, Table, Col, Badge, ButtonGroup, Button,
+  Form, InputGroup
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
@@ -20,8 +12,6 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 class UserLabelModal extends Component {
   constructor(props) {
@@ -184,32 +174,26 @@ class UserLabelModal extends Component {
     }
     return (
       <div>
-        <Panel variant="success">
-          <Panel.Heading>
-            <div>
-              <ButtonGroup>
-                <Button variant="primary" onClick={() => this.handelNewLabel()}>
-                  Create&nbsp;
-                  <i className="fa fa-plus" />
-                </Button>
-              </ButtonGroup>
-            </div>
-          </Panel.Heading>
-          <Table striped bordered condensed hover>
-            <thead>
-              <tr>
-                <th>Label</th>
-                <th>Access</th>
-                <th>Description</th>
-                <th>Color</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {this.renderUserLabels()}
-            </tbody>
-          </Table>
-        </Panel>
+        <h3 className="p-3 bg-gray-300">
+          <Button variant="primary" size="sm" onClick={() => this.handelNewLabel()}>
+            Create
+            <i className="fa fa-plus ms-1" />
+          </Button>
+        </h3>
+        <Table striped bordered condensed hover>
+          <thead>
+            <tr>
+              <th>Label</th>
+              <th>Access</th>
+              <th>Description</th>
+              <th>Color</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {this.renderUserLabels()}
+          </tbody>
+        </Table>
       </div>
     );
   }
@@ -226,8 +210,8 @@ class UserLabelModal extends Component {
 
     return (
       <Form horizontal>
-        <FormGroup controlId="accessLevelInput">
-          <Col componentClass={ControlLabel} sm={2}>
+        <Form.Group controlId="accessLevelInput">
+          <Col as="label" sm={2}>
             Public?
           </Col>
           <Col sm={10}>
@@ -240,54 +224,54 @@ class UserLabelModal extends Component {
               value={label.access_level}
             />
           </Col>
-        </FormGroup>
-        <FormGroup controlId="titleInput">
-          <Col componentClass={ControlLabel} sm={2}>
+        </Form.Group>
+        <Form.Group controlId="titleInput">
+          <Col as="label" sm={2}>
             Title
           </Col>
           <Col sm={10}>
-            <FormControl
+            <Form.Control
               type="text"
-              inputRef={(m) => { this.titleInput = m; }}
+              ref={(m) => { this.titleInput = m; }}
               defaultValue={label.title || ''}
             />
           </Col>
-        </FormGroup>
+        </Form.Group>
 
-        <FormGroup controlId="descInput">
-          <Col componentClass={ControlLabel} sm={2}>
+        <Form.Group controlId="descInput">
+          <Col as="label" sm={2}>
             Description
           </Col>
           <Col sm={10}>
-            <FormControl
+            <Form.Control
               type="text"
-              inputRef={(m) => { this.descInput = m; }}
+              ref={(m) => { this.descInput = m; }}
               defaultValue={label.description || ''}
             />
           </Col>
-        </FormGroup>
+        </Form.Group>
 
-        <FormGroup controlId="colorInput">
-          <Col componentClass={ControlLabel} sm={2}>
+        <Form.Group controlId="colorInput">
+          <Col as="label" sm={2}>
             Background Color
           </Col>
           <Col sm={10}>
             <InputGroup>
               <InputGroup.Text style={bcStyle} />
-              <FormControl
+              <Form.Control
                 type="text"
                 readOnly
-                inputRef={(m) => { this.colorInput = m; }}
+                ref={(m) => { this.colorInput = m; }}
                 value={label.color || this.state.defaultColor}
               />
             </InputGroup>
           </Col>
-        </FormGroup>
-        <FormGroup controlId="formHorizontalPicker">
+        </Form.Group>
+        <Form.Group controlId="formHorizontalPicker">
           <Col sm={12}>
             <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
           </Col>
-        </FormGroup>
+        </Form.Group>
 
         <ButtonGroup>
           <Button onClick={this.handleBackButton}>Back</Button>
@@ -409,8 +393,8 @@ class EditUserLabels extends React.Component {
 
     return (
       <div>
-        <FormGroup>
-          <ControlLabel>My Labels</ControlLabel>
+        <Form.Group>
+          <Form.Label>My Labels</Form.Label>
           <Select
             className="status-select"
             name="sampleUserLabels"
@@ -420,7 +404,7 @@ class EditUserLabels extends React.Component {
             value={selectedLabels}
             onChange={(e) => this.handleSelectChange(e)}
           />
-        </FormGroup>
+        </Form.Group>
       </div>
     );
   }
