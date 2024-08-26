@@ -1,8 +1,10 @@
 import React from 'react';
 import {
-  Panel, Table, Button, Modal, FormGroup, ControlLabel, Col, FormControl, Tooltip, OverlayTrigger
+  Table, Button, Modal, FormGroup, Col, FormControl, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import Panel from 'src/components/legacyBootstrap/Panel';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel';
 
 const editTip = <Tooltip id="inchi_tooltip">edit third party app</Tooltip>;
 const newTip = <Tooltip id="inchi_tooltip">create new third party app</Tooltip>;

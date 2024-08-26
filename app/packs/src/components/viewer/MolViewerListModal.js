@@ -1,10 +1,12 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Col, Modal, PanelGroup, Panel, Nav, NavItem } from 'react-bootstrap';
+import { Col, Modal, Nav, NavItem } from 'react-bootstrap';
 import { MolViewer } from 'react-molviewer';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import Panel from 'src/components/legacyBootstrap/Panel';
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup';
 
 const basicCommands = (
   <>
