@@ -32,6 +32,7 @@ class UserLabelModal extends Component {
 
   componentDidMount() {
     UserStore.listen(this.onChange);
+    UserActions.fetchUserLabels();
   }
 
   componentWillUnmount() {
@@ -126,8 +127,8 @@ class UserLabelModal extends Component {
 
   renderUserLabels() {
     const { labels } = this.state;
-    if (labels == null || labels.length === 0) {
-      return <div />;
+    if (labels === null || labels.length === 0) {
+      return null;
     }
 
     return (labels || []).map(g => {
