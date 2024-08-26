@@ -794,7 +794,12 @@ export default class ChemicalTab extends React.Component {
     }
     const savedSds = chemical._chemical_data[0]?.safetySheetPath;
     const sdsStatus = safetySheets.length ? safetySheets : savedSds;
-    const mappedSafetySheets = sdsStatus?.map((document, index) => {
+
+    if (!Array.isArray(sdsStatus)) {
+      console.error('sdsStatus is not an array', sdsStatus);
+      return null;
+    }
+    const mappedSafetySheets = sdsStatus.map((document, index) => {
       const key = (document.alfa_product_number || document.merck_product_number) || index;
       const isValidDocument = document !== 'Could not find safety data sheet from Thermofisher'
         && document !== 'Could not find safety data sheet from Merck';
