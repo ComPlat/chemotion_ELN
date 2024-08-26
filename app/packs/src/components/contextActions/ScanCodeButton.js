@@ -252,7 +252,6 @@ export default class ScanCodeButton extends React.Component {
 
   render() {
     const { json } = this.state;
-    console.log(json);
     const ids = this.state.checkedIds.toArray();
     const disabledPrint = !(ids.length > 0);
     const menuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
