@@ -4,7 +4,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Modal, Table, Col, Badge, ButtonGroup, Button,
-  Form, InputGroup
+  Form, InputGroup,
+  ButtonToolbar
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
@@ -210,10 +211,10 @@ class UserLabelModal extends Component {
 
     return (
       <Form horizontal>
-        <Form.Group controlId="accessLevelInput">
-          <Col as="label" sm={2}>
+        <Form.Group controlId="accessLevelInput" className="mb-2">
+          <Form.Label>
             Public?
-          </Col>
+          </Form.Label>
           <Col sm={10}>
             <Select
               style={{ zIndex: 2000 }}
@@ -225,10 +226,10 @@ class UserLabelModal extends Component {
             />
           </Col>
         </Form.Group>
-        <Form.Group controlId="titleInput">
-          <Col as="label" sm={2}>
+        <Form.Group controlId="titleInput" className="mb-2">
+          <Form.Label>
             Title
-          </Col>
+          </Form.Label>
           <Col sm={10}>
             <Form.Control
               type="text"
@@ -238,10 +239,10 @@ class UserLabelModal extends Component {
           </Col>
         </Form.Group>
 
-        <Form.Group controlId="descInput">
-          <Col as="label" sm={2}>
+        <Form.Group controlId="descInput" className="mb-2">
+          <Form.Label>
             Description
-          </Col>
+          </Form.Label>
           <Col sm={10}>
             <Form.Control
               type="text"
@@ -251,10 +252,10 @@ class UserLabelModal extends Component {
           </Col>
         </Form.Group>
 
-        <Form.Group controlId="colorInput">
-          <Col as="label" sm={2}>
+        <Form.Group controlId="colorInput" className="mb-2">
+          <Form.Label>
             Background Color
-          </Col>
+          </Form.Label>
           <Col sm={10}>
             <InputGroup>
               <InputGroup.Text style={bcStyle} />
@@ -267,22 +268,19 @@ class UserLabelModal extends Component {
             </InputGroup>
           </Col>
         </Form.Group>
-        <Form.Group controlId="formHorizontalPicker">
+        <Form.Group controlId="formHorizontalPicker" className="mb-2">
           <Col sm={12}>
             <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
           </Col>
         </Form.Group>
-
-        <ButtonGroup>
-          <Button onClick={this.handleBackButton}>Back</Button>
-          <Button onClick={this.handleSaveLabel}>Save</Button>
-        </ButtonGroup>
       </Form>
     );
   }
 
   render() {
     const { showLabelModal } = this.props;
+    const { showDetails } = this.state;
+
     return (
       <Modal
         centered
@@ -295,6 +293,15 @@ class UserLabelModal extends Component {
         <Modal.Body>
           {this.renderLabels()}
         </Modal.Body>
+        {showDetails
+          && (
+          <Modal.Footer className="border-0">
+            <ButtonToolbar className="gap-1 mt-2">
+              <Button variant="light" onClick={this.handleBackButton}>Back</Button>
+              <Button variant="primary" onClick={this.handleSaveLabel}>Save</Button>
+            </ButtonToolbar>
+          </Modal.Footer>
+          )}
       </Modal>
     );
   }
