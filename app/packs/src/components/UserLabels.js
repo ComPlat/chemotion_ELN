@@ -473,7 +473,7 @@ class ShowUserLabels extends React.Component {
       );
     }
 
-    const elementLabels = (showLabels || []).map((ll) => (
+    return (showLabels || []).map((ll) => (
       <Badge
         key={`bg_${ll.id}`}
         bg="custom"
@@ -485,8 +485,6 @@ class ShowUserLabels extends React.Component {
         {ll.title}
       </Badge>
     ));
-
-    return ({elementLabels});
   }
 }
 
