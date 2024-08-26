@@ -110,7 +110,7 @@ module Chemotion
       desc 'list of TPA token in a collection'
       get 'collection_tpa_tokens' do
         token_list = []
-        cache_user_keys = cache.read(current_user.id)
+        cache_user_keys = Rails.cache.read(current_user.id)
         return { token_list: [] } if cache_user_keys.blank?
 
         cache_user_keys&.each do |token_key|

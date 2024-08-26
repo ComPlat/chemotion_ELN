@@ -19,8 +19,8 @@ const ThirdPartyAppButton = ({ attachment, options, tokenList, onChangeRecall })
     let status = false;
     tokenList?.map((item) => {
       const keySplit = Object.keys(item)[0].split('/');
-      const attachment_id_match = keySplit[1] == attachment_id;
-      const tpa_id = keySplit[0] == tpa.id;
+      const attachment_id_match = keySplit[0] == attachment_id;
+      const tpa_id = keySplit[1] == tpa.id;
       if (tpa_id) {
         if (attachment_id_match) {
           status = true;

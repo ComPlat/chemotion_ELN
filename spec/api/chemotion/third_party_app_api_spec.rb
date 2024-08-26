@@ -6,6 +6,7 @@ require 'rails_helper'
 describe Chemotion::ThirdPartyAppAPI do
   include_context 'api request authorization context'
   let!(:admin1) { create(:admin) }
+  let(:user) { create(:user) }
 
   before do
     allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin1) # rubocop:disable RSpec/AnyInstance
@@ -426,7 +427,6 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'CollectionTPATokens', type: :request do
     describe 'GET /collection_tpa_tokens' do
-      let(:user) { create(:user) }
       let(:cache) { Rails.cache }
 
       context 'when the user has cached tokens' do
@@ -434,10 +434,8 @@ describe Chemotion::ThirdPartyAppAPI do
         let(:cached_values) { %w[value_1 value_2 value_3] }
 
         before do
-          # Write the token keys associated with the user
+          allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
           cache.write(user.id, token_keys)
-
-          # Write each token's corresponding value into the cache
           token_keys.each_with_index do |token_key, index|
             cache.write(token_key, cached_values[index])
           end
