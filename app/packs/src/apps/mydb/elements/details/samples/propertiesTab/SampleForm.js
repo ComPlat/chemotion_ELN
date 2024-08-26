@@ -890,10 +890,6 @@ export default class SampleForm extends React.Component {
           <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}</Col>
         </Row>
 
-        <SampleDetailsSolvents
-          sample={sample}
-          onChange={this.handleSolventChanged}
-        />
         {this.sampleDescription(sample)}
         {this.props.customizableField()}
       </Form>
