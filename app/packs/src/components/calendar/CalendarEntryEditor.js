@@ -1,316 +1,293 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import DateTimePicker from 'react-datetime-picker/dist/entry.nostyle';
-import {
-  Form,
-  FormControl,
-  FormGroup,
-  Button,
-  ButtonToolbar,
-  Alert
-} from 'react-bootstrap';
+import { Form, FormControl, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger } from 'react-bootstrap';
 import Select from 'react-select';
-import CalendarStore, { CalendarTypes } from 'src/stores/alt/stores/CalendarStore';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { capitalizeWords } from 'src/utilities/textHelper';
 import PropTypes from 'prop-types';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
-function capitalize(s) {
-  return s && s[0].toUpperCase() + s.slice(1);
-}
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class CalendarEntryEditor extends React.Component {
-  constructor(props) {
-    super(props);
+const CalendarEntryEditor = (props) => {
+  const calendarStore = useContext(StoreContext).calendar;
+  const { entry, resizeEditor } = props;
 
-    this.onClickBackground = this.onClickBackground.bind(this);
-    this.showDetails = this.showDetails.bind(this);
-    this.navigationLink = this.navigationLink.bind(this);
-  }
+  const accessible = entry?.accessible === true;
+  const notAccessible = !accessible;
+  const editable = calendarStore.current_entry_editable;
+  const disabled = !editable || notAccessible;
+ 
+  let currentCalendarTypes = calendarStore.calendar_types.default;
+  if (calendarStore.eventable_type) {
+    currentCalendarTypes = calendarStore.calendar_types[calendarStore.eventable_type];
+  } 
+  const calendarTypes = currentCalendarTypes.map((type) => (
+    { label: capitalizeWords(type), value: type }
+  ));
 
-  componentDidUpdate(prevProps) {
-    const { show } = this.props;
-    if (show && (prevProps.show !== show)) {
-      this.titleInput?.focus();
+  const notifyUserList = calendarStore.collectionUsers?.map((user) => (
+    { label: user.label, value: user.id }
+  )) || [];
+
+  useEffect(() => {
+    if (calendarStore.show_time_slot_editor) {
+      resizeEditor();
     }
+  }, [calendarStore.show_time_slot_editor]);
+
+  const closeEditor = () => {
+    calendarStore.resetEditorValues();
   }
 
-  onClickBackground(ev) {
-    const { closeModal } = this.props;
-    if (ev.target.className === 'calendarElementModal') closeModal();
+  const updateEntry = (key, value) => {
+    calendarStore.changeCurrentEntry(key, value);
   }
 
-  showDetails(entry) {
-    const { eventableId } = entry;
-    let { eventableType } = entry;
-    eventableType = eventableType.toLowerCase();
-
-    const e = { type: eventableType, params: {} };
-    e.params[`${eventableType}ID`] = eventableId;
-    if (/\blabimotion\b/.test(eventableType)) {
-      e.klassType = 'GenericEl';
+  const saveEntry = () => {
+    if (!calendarStore.current_entry.title) {
+      calendarStore.changeErrorMessage('Please enter a title.');
+      return;
     }
-
-    const { onShowLink } = this.props;
-    onShowLink();
-    elementShowOrNew(e);
+    if (calendarStore.current_entry.id) {
+      calendarStore.updateEntry(calendarStore.current_entry);
+    } else {
+      calendarStore.createEntry(calendarStore.current_entry);
+    }
+    closeEditor();
   }
 
-  navigationLink(entry, accessible) {
-    if (entry.eventableType && accessible) {
+  const deleteEntry = () => {
+    calendarStore.deleteEntry(calendarStore.current_entry.id);
+    closeEditor();
+  }
+
+  const showDetails = () => {
+    calendarStore.openElement();
+    const { clientWidth, clientHeight } = window.document.documentElement;
+    calendarStore.changeModalDimension({ width: Math.round((48 / 100) * clientWidth), height: clientHeight });
+    resizeEditor();
+    calendarStore.navigateToElement(entry);
+  }
+
+  const createdBy = () => {
+    if (!entry.user_name_abbreviation) { return null; }
+
+    return (
+      <div className="fst-italic text-end">
+        {`created by ${entry.user_name_abbreviation} `}
+        <span>({entry.user_email})</span>
+      </div>
+    );
+  }
+
+  const linkToElement = () => {
+    if (entry.eventable_type && accessible) {
       return (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-          <button
-            type="button"
-            className="btn-link"
-            style={{ marginLeft: '8px' }}
-            onClick={() => this.showDetails(entry)}
+        <div className="d-flex justify-content-end mb-2">
+          <Button
+            variant="link"
+            className="ms-2 border-0 text-decoration-none"
+            onClick={() => showDetails()}
           >
             {entry.element_name}
-          </button>
+          </Button>
         </div>
       );
     }
 
-    if (entry.eventableType) {
+    if (entry.eventable_type) {
       return (
-        <div
-          style={{
-            fontStyle: 'italic',
-            textAlign: 'end'
-          }}
-        >
+        <div className="fst-italic text-end">
           {entry.element_name}
         </div>
       );
     }
 
-    return <div />;
+    return null;
   }
 
-  render() {
-    const {
-      show,
-      entry,
-      closeModal,
-      updateEntry,
-      saveEntry,
-      deleteEntry,
-      editable
-    } = this.props;
-    const { eventableType, collectionUsers } = CalendarStore.getState();
-    const currentCalendarTypes = CalendarTypes[eventableType] || CalendarTypes.default;
-    const calendarTypes = currentCalendarTypes.map((type) => (
-      { label: capitalize(type), value: type }
-    ));
-    const notifyUserList = collectionUsers?.map((user) => (
-      { label: user.label, value: user.id }
-    )) || [];
-    const accessible = entry?.accessible === true;
-    const notAccessible = !accessible;
+  const deleteEntryButton = () => {
+    if (entry.id === undefined) { return null; }
+    if (!editable) { return null; }
 
-    function createdBy() {
-      return (
-        <>
-          { `created by ${entry.user_name_abbreviation} ` }
-          <span>
-            (
-            {entry.user_email}
-            )
-          </span>
-        </>
-      );
-    }
+    const popover = (
+      <Popover id="popover-delete-entry">
+        <Popover.Header as="h3">Are you sure you want to delete the calendar entry?</Popover.Header>
+        <Popover.Body>
+          <ButtonToolbar className="gap-2">
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => deleteEntry()}>
+              Yes
+            </Button>
+            <Button size="sm" variant="warning">
+              No
+            </Button>
+          </ButtonToolbar>
+        </Popover.Body>
+      </Popover>
+    );
 
-    return entry ? (
-      <div
-        role="button"
-        tabIndex="-1"
-        onKeyUp={() => { }}
-        className="calendarElementModal"
-        style={{ display: (show ? 'block' : 'none') }}
-        onClick={this.onClickBackground}
-      >
-        <section
-          className="calendarElementModalBox"
-          role="document"
-        >
-          { entry.user_name_abbreviation ? (
-            <div
-              style={{
-                fontStyle: 'italic',
-                textAlign: 'end'
-              }}
-            >
-              {createdBy()}
+    return (
+      <OverlayTrigger placement="top" trigger="focus" overlay={popover}>
+        <Button variant="danger">
+          Delete
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+
+  // https://www.npmjs.com/package/react-datetime-picker
+
+  return (
+    <Modal
+      backdrop={calendarStore.editor_backdrop}
+      keyboard={false}
+      show={calendarStore.show_time_slot_editor}
+      onHide={closeEditor}
+      data-type="calendar-editor"
+      style={{
+        transform: `translate(${calendarStore.delta_position_editor.x}px, ${calendarStore.delta_position_editor.y}px)`,
+        maxWidth: '500px'
+      }}
+    >
+      <Modal.Body>
+        {createdBy()}
+        {linkToElement()}
+        {calendarStore.error ? (
+          <Alert variant="danger">
+            {calendarStore.error}
+          </Alert>
+        ) : null}
+        <Form>
+          <Form.Group controlId="calendarTitle" className="mb-3">
+            <Form.Label>Title*</Form.Label>
+            <Form.Control
+              disabled={disabled}
+              value={entry.title || ''}
+              onChange={(ev) => updateEntry('title', ev.target.value)}
+              autoFocus
+            />
+          </Form.Group>
+
+          <Form.Group controlId="calendarDescription" className="mb-3">
+            <Form.Label>Description</Form.Label>
+            <Form.Control
+              disabled={disabled}
+              as="textarea"
+              value={entry.description || ''}
+              onChange={(ev) => updateEntry('description', ev.target.value)}
+              style={{ resize: 'none' }}
+              rows={4}
+            />
+          </Form.Group>
+    
+          <Form.Group controlId="calendarEntryType" className="mb-3">
+            <Form.Label>Type</Form.Label>
+            <Select
+              disabled={disabled}
+              value={entry.kind || ''}
+              onChange={(ev) => updateEntry('kind', ev?.value || '')}
+              options={calendarTypes}
+            />
+          </Form.Group>
+    
+          <Form.Group
+            controlId="calendarEntryEmailNotification"
+            className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
+          >
+            <Form.Label>Notify Users</Form.Label>
+            <Select
+              disabled={disabled}
+              clearable
+              searchable
+              multi
+              value={entry.notify_users || ''}
+              onChange={(list) => updateEntry('notify_users', list || '')}
+              options={notifyUserList}
+            />
+          </Form.Group>
+    
+          <Form.Group
+            controlId="calendarEntryNotifiedUsers"
+            className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
+          >
+            <Form.Label>Notified Users</Form.Label>
+            <FormControl
+              disabled
+              as="textarea"
+              value={entry.notified_users}
+              style={{ resize: 'none' }}
+              rows={4}
+            />
+          </Form.Group>
+    
+          <Form.Group controlId="calendarStartEntry" className="mb-3">
+            <Form.Label className="w-100">Start*</Form.Label>
+            <DateTimePicker
+              disabled={disabled}
+              clearIcon={null}
+              value={entry.start}
+              onChange={(date) => updateEntry('start', date)}
+              format="dd-MM-y H:mm"
+              className="w-100"
+            />
+          </Form.Group>
+    
+          <Form.Group controlId="calendarEndEntry" className="mb-3">
+            <Form.Label className="w-100">End*</Form.Label>
+            <DateTimePicker
+              disabled={disabled}
+              clearIcon={null}
+              value={entry.end}
+              onChange={(date) => updateEntry('end', date)}
+              format="dd-MM-y H:mm"
+              className="w-100"
+            />
+          </Form.Group>
+          {notAccessible ? (
+            <Alert variant="danger">
+              Your access to {entry.element_name} was removed.
+            </Alert>
+          ) : null}
+          <ButtonToolbar className="d-flex align-items-center gap-2">
+            <div className="flex-grow-1">
+              {(entry.eventable_type && accessible && entry.id !== undefined) ? (
+                <div>
+                  <a
+                    href={`/api/v1/calendar_entries/ical?id=${entry.id}`}
+                    onClick={() => window.open(`/api/v1/calendar_entries/ical?id=${entry.id}`)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    ical - download
+                  </a>
+                </div>
+              ) : null}
             </div>
-          ) : null }
-          {this.navigationLink(entry, accessible)}
-          <Form className="entryForm">
-            <FormGroup className="entryGroup" controlId="calendarTitle">
-              <ControlLabel>Title*</ControlLabel>
-              <FormControl
-                disabled={!editable || notAccessible}
-                inputRef={(ref) => { this.titleInput = ref; }}
-                type="text"
-                value={entry.title || ''}
-                onChange={(ev) => updateEntry('title', ev.target.value)}
-                autoComplete="off"
-              />
-            </FormGroup>
-            <FormGroup className="entryGroup" controlId="calendarDescription">
-              <ControlLabel>Description</ControlLabel>
-              <FormControl
-                disabled={!editable || notAccessible}
-                type="text"
-                componentClass="textarea"
-                value={entry.description || ''}
-                onChange={(ev) => updateEntry('description', ev.target.value)}
-                style={{
-                  height: 100,
-                  resize: 'none'
-                }}
-              />
-            </FormGroup>
-
-            <FormGroup className="entryGroup" controlId="calendarEntryType">
-              <ControlLabel>Type</ControlLabel>
-              <Select
-                disabled={!editable || notAccessible}
-                // key={entry.kind || ""}
-                value={entry.kind || ''}
-                onChange={(ev) => updateEntry('kind', ev?.value || '')}
-                options={calendarTypes}
-              />
-            </FormGroup>
-
-            <FormGroup
-              className="entryGroup"
-              controlId="calendarEntryEmailNotification"
-              style={{ display: (notifyUserList.length > 0 ? 'block' : 'none') }}
-            >
-              <ControlLabel>Notify Users</ControlLabel>
-              <Select
-                disabled={!editable || notAccessible}
-                clearable
-                searchable
-                multi
-                value={entry.notifyUsers || ''}
-                onChange={(list) => updateEntry('notifyUsers', list || '')}
-                options={notifyUserList}
-              />
-            </FormGroup>
-
-            <FormGroup
-              className="entryGroup"
-              controlId="calendarEntryNotifiedUsers"
-              style={{ display: (entry.notified_users ? 'block' : 'none') }}
-            >
-              <ControlLabel>Notified Users</ControlLabel>
-              <FormControl
-                disabled
-                type="text"
-                componentClass="textarea"
-                value={entry.notified_users}
-                style={{
-                  height: 100,
-                }}
-              />
-            </FormGroup>
-
-            <FormGroup className="entryGroup" controlId="calendarStartEntry">
-              <ControlLabel>Start*</ControlLabel>
-              <DateTimePicker
-                disabled={!editable || notAccessible}
-                clearIcon={null}
-                value={entry.start}
-                onChange={(date) => updateEntry('start', date)}
-                format="dd-MM-y H:mm"
-                style={{
-                  alignItems: 'baseline',
-                }}
-              />
-            </FormGroup>
-
-            <FormGroup className="entryGroup" controlId="calendarEndEntry">
-              <ControlLabel>End*</ControlLabel>
-              {/* https://www.npmjs.com/package/react-datetime-picker */}
-              <DateTimePicker
-                disabled={!editable || notAccessible}
-                clearIcon={null}
-                value={entry.end}
-                onChange={(date) => updateEntry('end', date)}
-                format="dd-MM-y H:mm"
-              />
-            </FormGroup>
-            {notAccessible ? (
-              <Alert variant="danger">
-                Your access to
-                &nbsp;
-                {entry.element_name}
-                &nbsp;
-                was removed.
-              </Alert>
-            ) : null}
-            <ButtonToolbar
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ flexGrow: 20 }}>
-                { (entry.eventableType && accessible && entry.id !== undefined) ? (
-                  <div>
-                    <a
-                      href={`/api/v1/calendar_entries/ical?id=${entry.id}`}
-                      onClick={() => window.open(`/api/v1/calendar_entries/ical?id=${entry.id}`)}
-                      style={{ marginLeft: '8px' }}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      ical - download
-                    </a>
-                  </div>
-                ) : null }
-              </div>
-              <Button variant="primary" onClick={closeModal}>Cancel</Button>
-              { entry.id !== undefined && editable ? (
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    // eslint-disable-next-line no-restricted-globals, no-alert
-                    if (confirm('Are you sure you want to delete the calendar entry?')) {
-                      deleteEntry();
-                    }
-                  }}
-                >
-                  Delete
-                </Button>
-              ) : null }
-              { (editable && accessible) ? <Button variant="warning" onClick={saveEntry}>Save</Button> : null }
-            </ButtonToolbar>
-          </Form>
-        </section>
-      </div>
-    ) : null;
-  }
+            <Button variant="primary" onClick={closeEditor}>Cancel</Button>
+            {deleteEntryButton()}
+            {(editable && accessible) ? <Button variant="warning" onClick={saveEntry}>Save</Button> : null}
+          </ButtonToolbar>
+        </Form>
+      </Modal.Body>
+    </Modal >
+  );
 }
+
+export default observer(CalendarEntryEditor);
 
 CalendarEntryEditor.defaultProps = {
   entry: undefined,
 };
 
 CalendarEntryEditor.propTypes = {
-  show: PropTypes.bool.isRequired,
-  closeModal: PropTypes.func.isRequired,
-  onShowLink: PropTypes.func.isRequired,
-  updateEntry: PropTypes.func.isRequired,
-  saveEntry: PropTypes.func.isRequired,
-  deleteEntry: PropTypes.func.isRequired,
-  editable: PropTypes.bool.isRequired,
+  resizeEditor: PropTypes.func.isRequired,
   entry: PropTypes.shape({
     accessible: PropTypes.bool,
     id: PropTypes.number,
-    eventableType: PropTypes.string,
+    eventable_type: PropTypes.string,
     user_email: PropTypes.string,
     user_name_abbreviation: PropTypes.string,
     title: PropTypes.string,
@@ -318,7 +295,7 @@ CalendarEntryEditor.propTypes = {
     kind: PropTypes.string,
     notified_users: PropTypes.string,
     element_name: PropTypes.string,
-    notifyUsers: PropTypes.arrayOf(PropTypes.string),
+    notify_users: PropTypes.arrayOf(PropTypes.string),
     start: PropTypes.instanceOf(Date),
     end: PropTypes.instanceOf(Date),
   }),

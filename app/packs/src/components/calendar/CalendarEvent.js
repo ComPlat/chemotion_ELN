@@ -1,57 +1,61 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { capitalizeWords } from 'src/utilities/textHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-let currentView = '';
-
-export function setCurrentViewForEventRenderer(view) {
-  currentView = view;
-}
-
-function capitalize(s) {
-  return s[0].toUpperCase() + s.slice(1);
-}
-
-export function getEventableIcon(entry) {
-  if (entry.element_klass_icon) return entry.element_klass_icon;
-  return null;
-}
-
-export default function CalendarEvent(props) {
+const CalendarEvent = (props) => {
+  const calendarStore = useContext(StoreContext).calendar;
   const { event } = props;
-  const shortTitle = currentView === 'month';
+  const shortTitle = calendarStore.current_view === 'month';
+
+  const klassIcon = (event) => {
+    if (!event.element_klass_icon) { return null; }
+
+    return (
+      <>
+        <i className={`${event.element_klass_icon} me-2`} />
+        {event.element_klass_name}
+      </>
+    );
+  }
+
+  const eventKind = (event) => {
+    if (!event.kind) { return null; }
+
+    return ` - ${capitalizeWords(event.kind)}`;
+  }
+
+  const eventDetail = (event) => {
+    if (shortTitle) { return null; }
+
+    let detail = eventKind(event);
+    if (event.element_klass_name) {
+      detail = (
+        <span className="d-block my-2">
+          {klassIcon(event)}
+          {eventKind(event)}
+        </span>
+      );
+    }
+    return detail;
+  }
 
   return (
     <div>
-      <div style={{ marginBottom: !shortTitle ? 6 : 0, marginTop: !shortTitle ? 6 : 0 }}>
+      <div className={shortTitle ? 'my-2' : 'my-0'}>
         {event.title}
-      </div>
-      { !shortTitle ? (
-        <div>
-          <div style={{ fontStyle: 'italic', marginBottom: !shortTitle ? 6 : 0 }}>
-            {event.element_klass_name ? (
-              <span>
-                <span className={getEventableIcon(event)}>
-                  &nbsp;
-                  {event.element_klass_name}
-                </span>
-                <span>
-                  {event.kind ? ` - ${capitalize(event.kind)}` : null}
-                </span>
-              </span>
-            ) : (
-              <span>
-                {event.kind ? capitalize(event.kind) : null}
-              </span>
-            )}
-          </div>
-          <div>
+        {!shortTitle ? (
+          <span className="fst-italic">
+            {eventDetail(event)}
             {event.element_short_label}
-          </div>
-        </div>
-      ) : null }
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
+
+export default CalendarEvent;
 
 CalendarEvent.propTypes = {
   event: PropTypes.shape({

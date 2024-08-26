@@ -1,100 +1,35 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Calendar as BaseCalendar, Views, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { OverlayTrigger, Button, ButtonGroup, Tooltip, Modal, Stack } from 'react-bootstrap';
 import Draggable from "react-draggable";
 import moment from 'moment';
 
-import CalendarStore from 'src/stores/alt/stores/CalendarStore';
-import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import CalendarEntryEditor from 'src/components/calendar/CalendarEntryEditor';
+import CalendarEvent from 'src/components/calendar/CalendarEvent';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import CalendarEvent, { setCurrentViewForEventRenderer } from 'src/components/calendar/CalendarEvent';
+
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const AllViews = Object.keys(Views).map((k) => Views[k]);
 
 const formats = {
-  agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  agendaHeaderFormat: ({ start, end }, culture, localizer) =>
+    `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
   agendaDateFormat: 'ddd DD MMMM YYYY',
   dayFormat: 'dddd DD',
-  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
+    `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
   monthHeaderFormat: 'MMMM YYYY',
   dayHeaderFormat: 'dddd DD MMMM YYYY',
   weekdayFormat: 'dddd',
 };
 
+// see:
+//  https://jquense.github.io/react-big-calendar/examples/?path=/docs/props-full-prop-list--page
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(BaseCalendar);
-
-const ColorCache = {};
-const DragThreshold = 25;
-
-// cached vars
-let currentUserId;
-
-const WindowPreviewNone = 0;
-const WindowPreviewRight = 1;
-const WindowPreviewLeft = 2;
-const WindowPreviewFullScreen = 3;
-
-function getPreviewStyleArgs(state) {
-  switch (state) {
-    case WindowPreviewNone:
-      return {
-        width: 0,
-        height: 0,
-        left: window.innerWidth / 2,
-        top: window.innerHeight / 2
-      };
-    case WindowPreviewRight:
-      return {
-        width: ModalWidth,
-        height: window.innerHeight,
-        left: window.innerWidth - ModalWidth,
-        top: 0
-      };
-    case WindowPreviewLeft:
-      return {
-        width: ModalWidth,
-        height: window.innerHeight,
-        left: 0,
-        top: 0
-      };
-    case WindowPreviewFullScreen:
-      return {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        left: 0,
-        top: 0
-      };
-    default:
-      throw new Error('Not implemented');
-  }
-}
-
-function getWindowStyleOffsets(state) {
-  switch (state) {
-    case WindowPreviewNone:
-      return null;
-    case WindowPreviewRight:
-      return {
-        x: window.innerWidth - ModalWidth,
-        y: 0,
-      };
-    case WindowPreviewLeft:
-      return {
-        x: 0,
-        y: 0,
-      };
-    case WindowPreviewFullScreen:
-      return {
-        x: (window.innerWidth - ModalWidth) / 2,
-        y: 0,
-      };
-    default:
-      throw new Error('Not implemented');
-  }
-}
 
 const allDayAccessor = (event) => {
   if ((event.start && event.start.getHours() === 0 && event.start.getMinutes() === 0)
@@ -105,146 +40,23 @@ const allDayAccessor = (event) => {
   return false;
 };
 
-// see:
-//  https://jquense.github.io/react-big-calendar/examples/?path=/docs/props-full-prop-list--page
-
-function idToColorComponent(id) {
-  return (50 + (id % 19) * 10);
-}
-
-function getRed(id) {
-  return `rgb(${idToColorComponent(id)},0,0)`;
-}
-
-function getGreen(id) {
-  return `rgb(0,${idToColorComponent(id)},0)`;
-}
-
-function getRedGreen(id) {
-  const tmp = idToColorComponent(id);
-  return `rgb(${tmp},${tmp},0)`;
-}
-
-function getRedBlue(id) {
-  const tmp = idToColorComponent(id);
-  return `rgb(${tmp},0,${tmp})`;
-}
-
-function getGreenBlue(id) {
-  const tmp = idToColorComponent(id);
-  return `rgb(0,${tmp},${tmp})`;
-}
-
-function getEntryColor(entry) {
-  let color;
-
-  if (entry.eventableType) {
-    color = ColorCache[entry.eventableId];
-    if (!color) {
-      if (entry.eventableType === 'Sample') {
-        color = getRed(entry.eventableId);
-      } else if (entry.eventableType === 'Reaction') {
-        color = getGreen(entry.eventableId);
-      } else if (entry.eventableType === 'ResearchPlan') {
-        color = getGreenBlue(entry.eventableId);
-      } else if (entry.eventableType === 'Screen') {
-        color = getRedGreen(entry.eventableId);
-      } else if (entry.eventableType === 'Element') {
-        color = getRedBlue(entry.eventableId);
-      }
-      ColorCache[entry.eventableId] = color;
-    }
-  } else {
-    color = '#265985'; // getRandomBlue();
-  }
-  return color;
-}
-
-function getEntryOpacity(entry, userId) {
-  return entry.created_by === userId ? 1 : 0.3;
-}
-
-function canEditEntry(entry) {
-  const { currentUser } = UserStore.getState();
-  return !entry.created_by || entry.created_by === currentUser.id;
-}
-
-function buildNewEntry(entry) {
-  const { eventableType, eventableId } = CalendarStore.getState();
-  const customEntry = {
-    ...entry,
-    title: '',
-    description: '',
-    kind: '',
-    eventableId,
-    eventableType,
-    accessible: true,
-  };
-
-  return customEntry;
-}
-
-function onHandleTimeUpdate(ev) {
-  const entry = ev.event;
-  if (!entry || !canEditEntry(entry)) return;
-
-  entry.start = ev.start;
-  entry.end = ev.end;
-
-  CalendarActions.updateEntry(entry);
-}
-
-function onSwitchShowSharedCollectionEntries(val) {
-  const {
-    start,
-    end,
-    eventableType,
-    eventableId
-  } = CalendarStore.getState();
-
-  const params = {
-    start,
-    end,
-    eventableType,
-    eventableId,
-    showSharedCollectionEntries: val
-  };
-
-  CalendarActions.setViewParams(params);
-}
-
-function eventStyleGetter(event) {
-  const style = {
-    backgroundColor: getEntryColor(event),
-    opacity: getEntryOpacity(event, currentUserId),
-  };
-  return { style };
-}
-
-
-
-
-
 const Calendar = () => {
+  const calendarStore = useContext(StoreContext).calendar;
+
   const { currentUser } = UserStore.getState();
+  let currentUserId = currentUser?.id;
+
+  const ColorCache = {};
+
   const { clientWidth, clientHeight } = window.document.documentElement;
-  let modalDimensions = { width: 900, height: 700, x: 0, y: 0 }
+  let modalDimensions = { width: 1140, height: 620 }
   let smallScreen = modalDimensions.width >= clientWidth || modalDimensions.height >= clientHeight;
+  const calendarHeight = calendarStore.fullscreen || calendarStore.show_detail ? '95vh' : '620px';
+  const calendarClass = calendarStore.show_detail ? 'show-detail' : (calendarStore.fullscreen ? 'fullscreen' : '');
 
   const scrollTime = new Date();
   scrollTime.setHours(5);
   scrollTime.setMinutes(55);
-
-  const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
-  const [calendarClosed, setCalendarClosed] = useState(true);
-  const [backdrop, setBackdrop] = useState(true);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [currentEntry, setCurrentEntry] = useState(null);
-  const [currentEntryEditable, setCurrentEntryEditable] = useState(false);
-  const [showTimeSlotEditor, setShowTimeSlotEditor] = useState(false);
-  const [showOwnEntries, setShowOwnEntries] = useState(false);
-  const [currentView, setCurrentView] = useState(null);
-  const [calendarStore, setCalendarStore] = useState(CalendarStore.getState());
 
   const handleResize = () => {
     const { clientWidth, clientHeight } = window.document.documentElement;
@@ -252,50 +64,55 @@ const Calendar = () => {
     if (!modal) { return null; }
 
     modalDimensions = modal.getBoundingClientRect();
-    const newPosition = {
+
+    calendarStore.changeModalDimension({
+      width: modalDimensions.width,
+      height: modalDimensions.height
+    });
+    calendarStore.changeDeltaPosition({
       x: (clientWidth - modalDimensions.width) / 2,
       y: (clientHeight - modalDimensions.height) / 2
-    };
-    setDeltaPosition(newPosition);
-    smallScreen = modalDimensions.width >= clientWidth || modalDimensions.height >= clientHeight;
+    });
+    smallScreen = modalDimensions.width >= clientWidth || modalDimensions.height >= clientHeight;    
+  }
+
+  const resizeEditor = () => {
+    const modalEditor = document.querySelector('[data-type="calendar-editor"]');
+    if (!modalEditor) { return null; }
+
+    const editorDimensions = modalEditor.getBoundingClientRect();
+    calendarStore.changeDeltaPositionEditor({
+      x: ((calendarStore.modal_dimension.width - editorDimensions.width) / 2) + calendarStore.delta_position.x,
+      y: ((calendarStore.modal_dimension.height - editorDimensions.height) / 2) + calendarStore.delta_position.y,
+    });
   }
 
   useEffect(() => {
-    CalendarStore.listen(onChangeCalendarState);
     window.addEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
-    if (calendarStore.show) {
+    if (calendarStore.show_calendar) {
       handleResize();
-    }
-
-    if (calendarClosed && calendarStore.show) {
-      setCalendarClosed(false);
-    }
-
-    if (calendarClosed && !calendarStore.show) {
-      CalendarStore.unlisten(onChangeCalendarState());
+    } else {
       window.removeEventListener('resize', handleResize);
     }
-  }, [CalendarStore.getState().show]);
+  }, [calendarStore.show_calendar]);
 
   useEffect(() => {
-    if (fullscreen) {
-      setDeltaPosition({ x: 0, y: 0 });
+    if (calendarStore.fullscreen) {
+      calendarStore.changeDeltaPosition({ x: 0, y: 0 });
+      calendarStore.changeModalDimension({ width: clientWidth, height: clientHeight });
+      resizeEditor();
     } else {
       handleResize();
+      resizeEditor();
     }
-  }, [fullscreen]);
-
-  const onChangeCalendarState = function () {
-    setCalendarStore(CalendarStore.getState());
-    return true;
-  }
+  }, [calendarStore.fullscreen]);
 
   const handleDrag = (e, ui) => {
-    const { x, y } = deltaPosition;
-    setDeltaPosition({
+    const { x, y } = calendarStore.delta_position;
+    calendarStore.changeDeltaPosition({
       x: x + ui.deltaX,
       y: y + ui.deltaY,
     });
@@ -310,191 +127,113 @@ const Calendar = () => {
       case 'Wellplate':
         return 'icon-wellplate';
       case 'ResearchPlan':
-        return 'fa fa-file-text-o';
+        return 'icon-researchplan';
       case 'Screen':
         return 'icon-screen';
     }
   }
 
-  const handleEntryKeyUpdate = (key, value) => {
-    currentEntry = currentEntry || {};
-    currentEntry[key] = value;
-    setCurrentEntry(currentEntry);
+  const idToColorComponent = (id) => {
+    return (50 + (id % 19) * 10);
   }
 
-  const onRangeChange = (range, view) => {
-    let newRange = range;
+  const getRed = (id) => {
+    return `rgb(${idToColorComponent(id)},0,0)`;
+  }
 
-    if (Array.isArray(range)) {
-      if (range.length === 1) {
-        newRange = {
-          start: range[0],
-          end: new Date((new Date(range[0])).setDate(range[0].getDate() + 1))
-        };
-      } else {
-        const lastDate = range[range.length - 1];
-        newRange = {
-          start: range[0],
-          end: new Date((new Date(lastDate)).setDate(lastDate.getDate() + 1))
-        };
+  const getGreen = (id) => {
+    return `rgb(0,${idToColorComponent(id)},0)`;
+  }
+
+  const getRedGreen = (id) => {
+    const tmp = idToColorComponent(id);
+    return `rgb(${tmp},${tmp},0)`;
+  }
+
+  const getRedBlue = (id) => {
+    const tmp = idToColorComponent(id);
+    return `rgb(${tmp},0,${tmp})`;
+  }
+
+  const getGreenBlue = (id) => {
+    const tmp = idToColorComponent(id);
+    return `rgb(0,${tmp},${tmp})`;
+  }
+
+  const getEntryColor = (entry) => {
+    let color;
+
+    if (entry.eventable_type) {
+      color = ColorCache[entry.eventable_id];
+      if (!color) {
+        if (entry.eventable_type === 'Sample') {
+          color = getRed(entry.eventable_id);
+        } else if (entry.eventable_type === 'Reaction') {
+          color = getGreen(entry.eventable_id);
+        } else if (entry.eventable_type === 'ResearchPlan') {
+          color = getGreenBlue(entry.eventable_id);
+        } else if (entry.eventable_type === 'Screen') {
+          color = getRedGreen(entry.eventable_id);
+        } else if (entry.eventable_type === 'Element') {
+          color = getRedBlue(entry.eventable_id);
+        }
+        ColorCache[entry.eventable_id] = color;
       }
+    } else {
+      color = '#265985'; // getRandomBlue();
     }
-
-    const {
-      start,
-      end,
-      eventableType,
-      eventableId,
-      showSharedCollectionEntries
-    } = CalendarStore.getState();
-
-    if (view) {
-      setCurrentView(view);
-    }
-
-    if (start <= newRange.start && end >= newRange.end) return;
-
-    const params = {
-      ...newRange,
-      eventableType,
-      eventableId,
-      showSharedCollectionEntries
-    };
-
-    CalendarActions.setViewParams(params);
+    return color;
   }
 
-  const closeItemEditor = () => {
-    setCurrentEntry({});
-    setShowTimeSlotEditor(false);
-    setCurrentEntryEditable(false);
+  const getEntryOpacity = (entry, userId) => {
+    return entry.created_by === userId ? 1 : 0.5;
+  }
+
+  const eventStyleGetter = (event) => {
+    const style = {
+      backgroundColor: getEntryColor(event),
+      opacity: getEntryOpacity(event, currentUserId),
+    };
+    return { style };
+  }
+
+  const onHandleTimeUpdate = (event) => {
+    const entry = { ...event.event };
+    if (!entry || !calendarStore.canEditEntry(entry)) { return; }
+
+    entry.start = event.start;
+    entry.end = event.end;
+
+    calendarStore.updateEntry(entry);
   }
 
   const selectEntry = (entry) => {
-    if (entry.eventableType) {
-      CalendarActions.getEventableUsers({
-        eventable_type: entry.eventableType,
-        eventable_id: entry.eventableId
-      });
-    } else {
-      CalendarActions.clearEventableUsers();
-    }
-
-    setCurrentEntry(entry);
-    setShowTimeSlotEditor(true);
-    setCurrentEntryEditable(canEditEntry(entry));
+    calendarStore.getOrClearCollectionUsers(entry.eventable_type, entry.eventable_id);
+    calendarStore.setEditorValues(entry);
+    resizeEditor();
   }
 
   const selectSlotEvent = (entry) => {
-    const { eventableType, eventableId } = CalendarStore.getState();
-
-    if (eventableType) {
-      CalendarActions.getEventableUsers({
-        eventable_type: eventableType,
-        eventable_id: eventableId
-      });
-    } else {
-      CalendarActions.clearEventableUsers();
-    }
-
-    setCurrentEntry(buildNewEntry(entry));
-    setShowTimeSlotEditor(true);
-    setCurrentEntryEditable(canEditEntry(entry));
+    calendarStore.getOrClearCollectionUsers(calendarStore.eventable_type, calendarStore.eventable_id);
+    calendarStore.setEditorValues(calendarStore.buildNewEntry(entry));
+    resizeEditor();
   }
 
-  const saveEntry = () => {
-    const { title } = currentEntry;
-    if (!title) {
-      // eslint-disable-next-line no-alert
-      alert('Please enter a title.');
-      return;
-    }
-    if (currentEntry.id) {
-      CalendarActions.updateEntry(currentEntry);
-    } else {
-      CalendarActions.createEntry(currentEntry);
-    }
-    closeItemEditor();
-  }
+  const filteredEntries = (entries) => {
+    if (!calendarStore.eventable_type || calendarStore.show_own_entries) { return entries; }
 
-  const deleteEntry = () => {
-    CalendarActions.deleteEntry(currentEntry.id);
-    closeItemEditor();
-  }
-
-  const closeCalendar = () => {
-    setCurrentEntry(null);
-    setShowTimeSlotEditor(false);
-    setCalendarClosed(true);
-    CalendarActions.hideCalendar();
-  }
-
-  const filterEntries = (entries, options) => {
-    if (options.eventableType) {
-      // eventable calendar
-      if (showOwnEntries) {
-        return entries;
-      }
-
-      return entries.filter((e) => (
-        e.eventableId === options.eventableId && e.eventableType === options.eventableType
-      ));
-    }
-
-    // privat calendar
-    return entries;
-  }
-
-  const filteredEntries = filterEntries(calendarStore.entries, {
-    eventableType: calendarStore.eventableType,
-    eventableId: calendarStore.eventableId,
-    showSharedCollectionEntries: calendarStore.showSharedCollectionEntries
-  });
-
-  const toggleEntries = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (calendarStore.eventableType) {
-      setShowOwnEntries(!showOwnEntries);
-    } else {
-      const {
-        start,
-        end,
-        eventableType,
-        eventableId
-      } = CalendarStore.getState();
-
-      const params = {
-        start,
-        end,
-        eventableType,
-        eventableId,
-        showSharedCollectionEntries: !calendarStore.showSharedCollectionEntries
-      };
-
-      CalendarActions.setViewParams(params);
-    }
-  }
-
-  const toggleFullscreen = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setFullscreen(!fullscreen);
-  }
-
-  const toggleBackdrop = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setBackdrop(!backdrop);
+    return entries.filter((e) => (
+      e.eventable_id === calendarStore.eventable_id && e.eventable_type === calendarStore.eventable_type
+    ));
   }
 
   const headerDescription = () => {
-    if (!calendarStore.eventableType) { return 'Calendar'; }
+    if (!calendarStore.eventable_type) { return 'Calendar'; }
 
     return (
       <>
-        <i className={`${getEventableIcon(calendarStore.eventableType)} me-2`} />
-        {calendarStore.eventableType} - Calendar
+        <i className={`${getEventableIcon(calendarStore.eventable_type)} me-2`} />
+        {calendarStore.eventable_type} - Calendar
       </>
     );
   }
@@ -509,8 +248,8 @@ const Calendar = () => {
           overlay={<Tooltip id="toggle-fullscreen">FullScreen</Tooltip>}
         >
           <Button
-            variant={fullscreen ? 'success' : 'light'}
-            onClick={(e) => { toggleFullscreen(e) }}
+            variant={calendarStore.fullscreen ? 'success' : 'light'}
+            onClick={(e) => { calendarStore.toggleFullScreen(e) }}
           >
             <i className="fa fa-expand" />
           </Button>
@@ -521,20 +260,28 @@ const Calendar = () => {
         >
           <Button
             type="button"
-            variant={backdrop ? 'light' : 'info'}
-            onClick={(e) => { toggleBackdrop(e) }}
+            variant={calendarStore.backdrop ? 'light' : 'info'}
+            onClick={(e) => { calendarStore.toggleBackdrop(e) }}
           >
-            {backdrop ? <i className="fa fa-unlock" /> : <i className="fa fa-lock" />}
+            {calendarStore.backdrop ? <i className="fa fa-unlock" /> : <i className="fa fa-lock" />}
           </Button>
         </OverlayTrigger>
       </>
     );
   }
 
+  const variantForEntriesButton = () => {
+    let variant = 'light';
+    if ((calendarStore.show_own_entries && calendarStore.eventable_type) ||
+      (calendarStore.show_shared_collection_entries && !calendarStore.eventable_type)) {
+      variant = 'success'
+    }
+    return variant;
+  }
+
   const showEntriesButton = () => {
-    const tooltip = calendarStore.eventableType ? 'Show my entries' : 'Show shared collection entries';
-    const variant = showOwnEntries || calendarStore.showSharedCollectionEntries ? 'success' : 'light';
-    const icon = calendarStore.eventableType ? 'fa fa-user-plus' : 'fa fa-files-o';
+    const tooltip = calendarStore.eventable_type ? 'Show my entries' : 'Show shared collection entries';
+    const icon = calendarStore.eventable_type ? 'fa fa-user-plus' : 'fa fa-files-o';
 
     return (
       <OverlayTrigger
@@ -542,9 +289,9 @@ const Calendar = () => {
         overlay={<Tooltip id={tooltip.replace(' ', '-')}>{tooltip}</Tooltip>}
       >
         <Button
-          variant={variant}
+          variant={variantForEntriesButton()}
           onKeyUp={() => {}}
-          onClick={(e) => { toggleEntries(e) }}
+          onClick={(e) => { calendarStore.toggleEntries(e) }}
         >
           <i className={icon} />
         </Button>
@@ -557,16 +304,16 @@ const Calendar = () => {
       <div>
         <Modal
           size="xl"
-          show={calendarStore.show}
-          onHide={() => closeCalendar()}
-          backdrop={backdrop}
-          fullscreen={fullscreen}
-          className="draggable-modal-dialog calendar"
+          show={calendarStore.show_calendar}
+          onHide={() => calendarStore.closeCalendar()}
+          backdrop={calendarStore.backdrop}
+          fullscreen={calendarStore.fullscreen}
+          className={`draggable-modal-dialog calendar ${calendarClass}`}
           dialogClassName="draggable-modal"
           contentClassName="draggable-modal-content calendar"
           data-type="calendar-modal"
           style={{
-            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
+            transform: `translate(${calendarStore.delta_position.x}px, ${calendarStore.delta_position.y}px)`,
           }}
         >
      
@@ -583,21 +330,21 @@ const Calendar = () => {
           </Modal.Header>
         
           <Modal.Body>
-            <div className="overflow-y-auto" style={{ height: fullscreen ? '95vh' : '620px' }}>
+            <div className="overflow-y-auto" style={{ height: calendarHeight }}>
               <DragAndDropCalendar
                 components={{
                   event: CalendarEvent
                 }}
                 localizer={localizer}
-                events={filteredEntries}
+                events={filteredEntries(calendarStore.calendarEntries)}
                 views={AllViews}
-                view={currentView || 'month'}
+                view={calendarStore.current_view || 'month'}
                 startAccessor="start"
                 endAccessor="end"
                 style={{ height: 'inherit' }}
                 selectable
                 resizable
-                onRangeChange={onRangeChange}
+                onRangeChange={calendarStore.onRangeChange}
                 onView={() => {}} // prevent warning message in browser
                 onSelectEvent={selectEntry}
                 onSelectSlot={selectSlotEvent}
@@ -609,36 +356,15 @@ const Calendar = () => {
                 showMultiDayTimes={false}
                 formats={formats}
                 allDayAccessor={allDayAccessor}
-              // enableAutoScroll={true}
               />
 
-              <CalendarEntryEditor
-                show={showTimeSlotEditor}
-                closeModal={closeItemEditor}
-                entry={currentEntry}
-                updateEntry={handleEntryKeyUpdate}
-                saveEntry={saveEntry}
-                deleteEntry={deleteEntry}
-                editable={currentEntryEditable}
-                onShowLink={() => {
-                  //this.onLockBackgroundClose(false);
-                  //this.setState({
-                  //  startDrag: false,
-                  //  partialWindow: true,
-                  //  windowPreviewState: WindowPreviewNone,
-                  //  windowPreviewStateLast: WindowPreviewLeft,
-                  //  windowPreviewArgs: getPreviewStyleArgs(WindowPreviewNone),
-                  //  windowStyleArgs: getPreviewStyleArgs(WindowPreviewLeft),
-                  //  windowOffsets: { x: 0, y: 0 }
-                  //});
-                }}
-              />
+              <CalendarEntryEditor entry={calendarStore.current_entry} resizeEditor={resizeEditor} />
             </div>
           </Modal.Body>
         </Modal>
       </div>
-    </Draggable>
+    </Draggable >
   );
 };
 
-export default Calendar;
+export default observer(Calendar);

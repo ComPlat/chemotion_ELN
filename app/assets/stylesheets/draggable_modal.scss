@@ -8,8 +8,15 @@
 
 .modal.draggable-modal-dialog.calendar {
   width: inherit;
+  max-width: 1140px;
   top: 0;
   left: 0;
+  &.fullscreen {
+    max-width: 100%;
+  }
+  &.show-detail {
+    width: 48%;
+  }
 }
 
 .modal.draggable-modal-dialog-xxxl {
