@@ -3,9 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal, Table, Col, Badge, ButtonGroup, Button,
-  Form, InputGroup,
-  ButtonToolbar
+  Modal, Table, Badge, Button, Form, InputGroup, ButtonToolbar
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
@@ -149,11 +147,11 @@ class UserLabelModal extends Component {
       }
       return (
         <tr key={`row_${g.id}`}>
-          <td md={3}><Badge bg="custom" style={badgeStyle}>{g.title}</Badge></td>
-          <td md={3}>{accessLabel}</td>
-          <td md={3}>{g.description}</td>
-          <td md={3}>{g.color}</td>
-          <td md={3}>
+          <td sm={3}><Badge bg="custom" style={badgeStyle}>{g.title}</Badge></td>
+          <td sm={3}>{accessLabel}</td>
+          <td sm={3}>{g.description}</td>
+          <td sm={3}>{g.color}</td>
+          <td sm={3}>
             <Button
               size="sm"
               disabled={g.access_level === 2}
@@ -176,7 +174,7 @@ class UserLabelModal extends Component {
     return (
       <div>
         <h3 className="p-3 bg-gray-300">
-          <Button variant="primary" size="sm" onClick={() => this.handelNewLabel()}>
+          <Button variant="primary" size="md" onClick={() => this.handelNewLabel()}>
             Create
             <i className="fa fa-plus ms-1" />
           </Button>
@@ -230,48 +228,42 @@ class UserLabelModal extends Component {
           <Form.Label>
             Title
           </Form.Label>
-          <Col sm={10}>
-            <Form.Control
-              type="text"
-              ref={(m) => { this.titleInput = m; }}
-              defaultValue={label.title || ''}
-            />
-          </Col>
+
+          <Form.Control
+            type="text"
+            ref={(m) => { this.titleInput = m; }}
+            defaultValue={label.title || ''}
+          />
         </Form.Group>
 
         <Form.Group controlId="descInput" className="mb-2">
           <Form.Label>
             Description
           </Form.Label>
-          <Col sm={10}>
-            <Form.Control
-              type="text"
-              ref={(m) => { this.descInput = m; }}
-              defaultValue={label.description || ''}
-            />
-          </Col>
+
+          <Form.Control
+            type="text"
+            ref={(m) => { this.descInput = m; }}
+            defaultValue={label.description || ''}
+          />
         </Form.Group>
 
         <Form.Group controlId="colorInput" className="mb-2">
           <Form.Label>
             Background Color
           </Form.Label>
-          <Col sm={10}>
-            <InputGroup>
-              <InputGroup.Text style={bcStyle} />
-              <Form.Control
-                type="text"
-                readOnly
-                ref={(m) => { this.colorInput = m; }}
-                value={label.color || this.state.defaultColor}
-              />
-            </InputGroup>
-          </Col>
+          <InputGroup className="mb-3">
+            <InputGroup.Text style={bcStyle} />
+            <Form.Control
+              type="text"
+              readOnly
+              ref={(m) => { this.colorInput = m; }}
+              value={label.color || this.state.defaultColor}
+            />
+          </InputGroup>
         </Form.Group>
-        <Form.Group controlId="formHorizontalPicker" className="mb-2">
-          <Col sm={12}>
-            <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
-          </Col>
+        <Form.Group controlId="formHorizontalPicker" className="m-2">
+          <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
         </Form.Group>
       </Form>
     );
