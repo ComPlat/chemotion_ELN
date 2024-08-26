@@ -427,14 +427,13 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'CollectionTPATokens', type: :request do
     describe 'GET /collection_tpa_tokens' do
-      let(:cache) { Rails.cache }
+      let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: TPA_EXPIRATION) }
 
       context 'when the user has cached tokens' do
         let(:token_keys) { %w[token_1 token_2 token_3] }
         let(:cached_values) { %w[value_1 value_2 value_3] }
 
         before do
-          allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
           cache.write(user.id, token_keys)
           token_keys.each_with_index do |token_key, index|
             cache.write(token_key, cached_values[index])
