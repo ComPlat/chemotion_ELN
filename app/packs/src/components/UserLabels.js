@@ -43,7 +43,7 @@ class UserLabelModal extends Component {
     this.setState({ showDetails: true, label });
   }
 
-  handleColorPicker(color, event) {
+  handleColorPicker(color) {
     const { label } = this.state;
     label.color = color.hex;
     this.setState({
@@ -229,26 +229,22 @@ class UserLabelModal extends Component {
           <Form.Label>
             Title
           </Form.Label>
-
           <Form.Control
             type="text"
             ref={(m) => { this.titleInput = m; }}
             defaultValue={label.title || ''}
           />
         </Form.Group>
-
         <Form.Group controlId="descInput" className="mb-2">
           <Form.Label>
             Description
           </Form.Label>
-
           <Form.Control
             type="text"
             ref={(m) => { this.descInput = m; }}
             defaultValue={label.description || ''}
           />
         </Form.Group>
-
         <Form.Group controlId="colorInput" className="mb-2">
           <Form.Label>
             Background Color
@@ -392,20 +388,18 @@ class EditUserLabels extends React.Component {
       })) || [];
 
     return (
-      <div>
-        <Form.Group>
-          <Form.Label>My Labels</Form.Label>
-          <Select
-            className="status-select"
-            name="sampleUserLabels"
-            clearable={false}
-            multi
-            options={labelOptions}
-            value={selectedLabels}
-            onChange={(e) => this.handleSelectChange(e)}
-          />
-        </Form.Group>
-      </div>
+      <Form.Group>
+        <Form.Label>My Labels</Form.Label>
+        <Select
+          className="status-select"
+          name="sampleUserLabels"
+          clearable={false}
+          multi
+          options={labelOptions}
+          value={selectedLabels}
+          onChange={(e) => this.handleSelectChange(e)}
+        />
+      </Form.Group>
     );
   }
 }
