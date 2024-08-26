@@ -192,6 +192,7 @@ export default class CurationModal extends Component {
           console.log("us used")
         }
         for (let i = 0; i < word_array.length; i++){
+        
           var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:]/g;
           word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
           var double_space_regex= /\s\s/g
@@ -209,17 +210,17 @@ export default class CurationModal extends Component {
               // console.log(/'/.test( word_array[i]))
               // console.log(word_array[i])
                 if(/'/.test( word_array[i])){
-                  console.log(word_array[i])
+           
                   var sliceIndex = word_array[i].indexOf("\'")
-                  console.log(sliceIndex)
+           
                   word_array[i] = word_array[i].substring(0 ,sliceIndex) 
                 }
                 if(/—/.test(word_array[i])){
                   var sliceIndex = word_array[i].indexOf("—")
-                  console.log[word_array[i]]
+             
                   word_array[i] = word_array[i].substring(0,sliceIndex)
                   word_array.push(word_array[i].slice(sliceIndex))
-                  console.log(word_array)
+             
                 }
 
                 var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
@@ -264,39 +265,49 @@ export default class CurationModal extends Component {
     }
 
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
-      var splitMispelledWords = mispelledWords.join(" , ")
-      mispelledWords = splitMispelledWords.split(",")
+      // mispelledWords = mispelledWords.join(",")
 
     //  console.log(mispelledWords)
+      for (var entry of mispelledWords){
+        var index = mispelledWords.indexOf(entry)
+        mispelledWords[index] = entry.replaceAll(" ","")
+      }
       if(text !== undefined){
         var combined_array = mispelledWords.concat(subscriptList)
+        for (var entry of combined_array){
+          var index = combined_array.indexOf(entry)
+          combined_array[index] = entry.replaceAll(" ","")
+        }
         var highlight = combined_array.join("|")
-        console.log(new RegExp(`${highlight}`, "gi"))
-        var parts = text.split(new RegExp(`(${highlight})`, "gi"));
+        highlight = highlight.replaceAll(" ","")
+        highlight = "\\b(" + highlight + ")\\b"
+        var regexHighlight = new RegExp(highlight, "gi")
+        var parts = text.split(regexHighlight);
       
         var output_div
         var list_items = parts.map((part, index) => (
           <React.Fragment key={index}>
             {(()=> {
-              {/* part = part.replaceAll(" ", "") */}
-              var miss_spelled_words_wo_current_word = mispelledWords.toSpliced(ms_index, 1)
+              var highlight_current = mispelledWords[ms_index]
+              highlight_current = "\\b(" + highlight_current + ")\\b"
+              var regexHighlightCurrent = new RegExp(highlight_current, "gi")
+              var highlightWithOutCurrent = mispelledWords.toSpliced(ms_index, 1)
+              highlightWithOutCurrent = highlightWithOutCurrent.join("|")
+              highlightWithOutCurrent = "\\b(" + highlightWithOutCurrent + ")\\b"
+              var regexHighlightWithOutCurrent = new RegExp(highlightWithOutCurrent, "gi")
               if(subscriptList.includes(part)){
                 output_div =  this.checkSubScript(part)   
               }
-              else if(part === mispelledWords[ms_index])
+              else if(regexHighlightCurrent.test(part))
                 {
-                  {/* part = part.replace(" ","") */}
-                  output_div = (<span> <b style={{backgroundColor:"#32a852"}}>{part.replaceAll(/\s+/g,"")}</b> </span>) 
+                  output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
                 }
-              else if(miss_spelled_words_wo_current_word.includes(part)) 
+              else if(regexHighlightWithOutCurrent.test(part)) 
                 {
-                  {/* console.log(miss_spelled_words_wo_current_word)
-                  console.log(part) */}
-                  {/* part = part.replace(" ","") */}
-                  output_div = (<span> <b style={{backgroundColor:"#e8bb49"}}>{part.replaceAll(/\s+/g,"")}</b> </span>)
+                  output_div = (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
                 }
               })()
-          }
+            }
           {combined_array.includes(part)
             ? (output_div)
             : (part)} 
@@ -381,8 +392,6 @@ export default class CurationModal extends Component {
              </div>  
         ));}
         else if (suggestionIndex >= this.state.mispelledWords.length ){
-          // this.spell_check(this.state.desc)
-          // this.setState({mispelledWords:[]})
         return(
         <div>
           <h5>No corrections detected</h5>
