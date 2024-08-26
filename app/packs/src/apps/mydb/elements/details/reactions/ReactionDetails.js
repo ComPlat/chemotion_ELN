@@ -603,7 +603,7 @@ export default class ReactionDetails extends Component {
 
     return (
       <Card className="eln-panel-detail">
-        <Card.Header className={` p-2 text-bg-${reaction.isPendingToSave ? 'light' : 'primary'}`}>
+        <Card.Header className={`p-2 text-bg-${reaction.isPendingToSave ? 'light' : 'primary'}`}>
           {this.reactionHeader(reaction)}
         </Card.Header>
         <Card.Body>
