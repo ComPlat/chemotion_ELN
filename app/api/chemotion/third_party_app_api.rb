@@ -98,8 +98,8 @@ module Chemotion
       get 'token' do
         prepare_payload
         parse_payload
-        encode_and_cache_token_user_collection_with_type
-        encode_and_cache_token_attachment_app
+        update_cached_user_tokens
+        encode_and_cache_token
         return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint

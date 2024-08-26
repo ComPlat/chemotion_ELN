@@ -93,7 +93,7 @@ module ThirdPartyAppHelpers
     { message: 'File uploaded successfully' }
   end
 
-  def encode_and_cache_token_user_collection_with_type
+  def update_cached_user_tokens
     current_state = cache.read(cache_key[0])
     new_state = if current_state
                   idx = current_state.index(cache_key[1])
@@ -104,7 +104,7 @@ module ThirdPartyAppHelpers
     cache.write(cache_key[0], new_state)
   end
 
-  def encode_and_cache_token_attachment_app(payload = @payload)
+  def encode_and_cache_token(payload = @payload)
     @token = JsonWebToken.encode(payload, expiry_time)
     cache.write(
       cache_key[1],
