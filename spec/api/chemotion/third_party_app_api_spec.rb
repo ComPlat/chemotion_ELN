@@ -275,7 +275,7 @@ describe Chemotion::ThirdPartyAppAPI do
         end
 
         before do
-          cache.write(cache_key, { token: token, upload: allowed_uploads, download: 1 }, expires_in: 1.hour)
+          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
           post "/api/v1/public/third_party_apps/#{token}", params: params
         end
 

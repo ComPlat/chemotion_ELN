@@ -46,9 +46,7 @@ module ThirdPartyAppHelpers
 
   # desc: decrement the counters / check if token permission is expired
   def update_cache(key)
-    download_count = cached_token[:download].to_i
-    upload_count = cached_token[:upload].to_i
-    if cached_token.nil? || (download_count < 1 && upload_count < 1)
+    if cached_token.nil?
       cache.delete(cache_key[1])
       error!('Invalid token', 403)
     elsif cached_token[key].to_i < 1
