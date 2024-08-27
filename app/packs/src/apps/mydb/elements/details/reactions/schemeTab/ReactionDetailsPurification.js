@@ -152,7 +152,9 @@ export default class ReactionDetailsPurification extends Component {
                 }
               </div>
             </Form.Group>
-            <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
+            <div className="mt-2">
+              <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
+            </div>
           </Col>
         </Row>
       </div>
