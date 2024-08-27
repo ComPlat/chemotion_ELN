@@ -6,7 +6,6 @@ var uid = uuid.v4()
 export default class AutomticCurationFetcher {
     
     static amendFetch(new_word){
-        
         fetch(`http://localhost:3000/api/v1/dictionary/amend?new_word=${new_word}&junk=${uid}`)
     }
     static removeFetch(old_word){

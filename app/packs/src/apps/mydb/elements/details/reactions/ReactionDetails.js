@@ -179,7 +179,7 @@ export default class ReactionDetails extends Component {
     const { reaction } = this.state;
     const { newReaction, options } = setReactionByType(reaction, type, value);
     this.handleReactionChange(newReaction, options);
-    console.log( event)
+    // console.log( event)
   }
 
   handleProductClick(product) {

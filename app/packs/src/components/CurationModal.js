@@ -49,7 +49,6 @@ export default class CurationModal extends Component {
     }
 
     updateDescription(){
-      console.log(this.props.description)
       this.setState({desc: this.cleanData(this.props.description) }, (() => {this.spellCheck(this.state.desc );
         
       }))
@@ -86,7 +85,9 @@ export default class CurationModal extends Component {
       };
       output_object = {"ops" : new_array}
       output_object["ops"] = output_object["ops"].filter((x)=> x["insert"] != "" )
-      this.setState({descriptionObject:output_object});
+      this.setState({descriptionObject:output_object},()=>{      
+        this.props.onChange(this.state.descriptionObject);
+                 });
       return output_object
     }
 
@@ -181,7 +182,7 @@ export default class CurationModal extends Component {
         var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
         var ms_words = [];
         var ss_list = []
-        var word_array = description.split(/[\s]|[\n]/g)
+        var word_array = description.split(/[\s]|[\n]|[\b]/g)
         // console.log(word_array)
         if (this.state.dictionaryLanguage === "UK"){
           var en_dictionary = uk_dictionary
@@ -192,7 +193,6 @@ export default class CurationModal extends Component {
           console.log("us used")
         }
         for (let i = 0; i < word_array.length; i++){
-        
           var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:]/g;
           word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
           var double_space_regex= /\s\s/g
@@ -205,7 +205,9 @@ export default class CurationModal extends Component {
             }
             else{
               if(/[a-z]*\-[a-z]*/.test(word_array[i]))
-                {console.log("help " +word_array[i])}
+                {
+                  // console.log("help " +word_array[i])
+                }
               else{
               // console.log(/'/.test( word_array[i]))
               // console.log(word_array[i])
@@ -217,12 +219,9 @@ export default class CurationModal extends Component {
                 }
                 if(/—/.test(word_array[i])){
                   var sliceIndex = word_array[i].indexOf("—")
-             
                   word_array[i] = word_array[i].substring(0,sliceIndex)
                   word_array.push(word_array[i].slice(sliceIndex))
-             
                 }
-
                 var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
               }
           }}
@@ -232,13 +231,15 @@ export default class CurationModal extends Component {
             else{
               var spell_checked_word = true; }
             }
-          if (spell_checked_word == false){
+          if(spell_checked_word == false){
             ms_words.push(word_array[i]);
             // console.log(word_array[i])
           } 
         }
         ms_words = ms_words.filter((x)=> x != "" )
-        this.setState({mispelledWords: ms_words, subscriptList:ss_list}, ()=>{console.log(this.state.mispelledWords)})
+        this.setState({mispelledWords: ms_words, subscriptList:ss_list}, ()=>{
+          // console.log(this.state.mispelledWords)
+        })
         this.handleSuggest(ms_words, 0)
         }
       else{}}
@@ -264,10 +265,15 @@ export default class CurationModal extends Component {
       this.setState({correctWord: ""})
     }
 
-    getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
-      // mispelledWords = mispelledWords.join(",")
+    removeSpaces(introarray){
+      for(var entry of introarray){
+        var index = introarray.indexOf(entry)
+        introarray[index] = entry.replaceAll(" ","")
+      }
+      return introarray
+    }
 
-    //  console.log(mispelledWords)
+    getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
       for (var entry of mispelledWords){
         var index = mispelledWords.indexOf(entry)
         mispelledWords[index] = entry.replaceAll(" ","")
@@ -283,18 +289,20 @@ export default class CurationModal extends Component {
         highlight = "\\b(" + highlight + ")\\b"
         var regexHighlight = new RegExp(highlight, "gi")
         var parts = text.split(regexHighlight);
-      
         var output_div
         var list_items = parts.map((part, index) => (
           <React.Fragment key={index}>
-            {(()=> {
+            {(()=> 
+            {
               var highlight_current = mispelledWords[ms_index]
               highlight_current = "\\b(" + highlight_current + ")\\b"
               var regexHighlightCurrent = new RegExp(highlight_current, "gi")
+
               var highlightWithOutCurrent = mispelledWords.toSpliced(ms_index, 1)
               highlightWithOutCurrent = highlightWithOutCurrent.join("|")
               highlightWithOutCurrent = "\\b(" + highlightWithOutCurrent + ")\\b"
               var regexHighlightWithOutCurrent = new RegExp(highlightWithOutCurrent, "gi")
+
               if(subscriptList.includes(part)){
                 output_div =  this.checkSubScript(part)   
               }
@@ -492,10 +500,12 @@ export default class CurationModal extends Component {
                 {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
                 this.convertStringToObject(this.state.desc)}}>Correct</Button>
                 {/* <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button> */}
-                <div className='pull-right'><Button onClick={()=> {this.props.onChange(this.state.descriptionObject);
-                  console.log(this.state.descriptionObject);
+                {/* save issue is here */}
+                <div className='pull-right'><Button onClick={()=> {
+            
                   this.convertStringToObject(this.state.desc); 
-                  this.handleClose()}}> 
+                  this.handleClose()
+                  }}> 
                   <i class="fa fa-floppy-o"></i> </Button>
                 </div>
               </ButtonToolbar> 
