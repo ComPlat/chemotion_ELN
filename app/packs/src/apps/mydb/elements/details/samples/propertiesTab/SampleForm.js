@@ -20,7 +20,6 @@ import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class SampleForm extends React.Component {
@@ -410,7 +409,7 @@ export default class SampleForm extends React.Component {
               className="btn btn-sm"
               onClick={() => this.handleMassCalculation(sumFormula)}
             >
-              <Glyphicon glyph="cog" />
+              <i className="fa fa-cog" />
             </Button>
           </OverlayTrigger>
         </div>
@@ -435,7 +434,7 @@ export default class SampleForm extends React.Component {
               className="btn btn-sm"
               onClick={this.markSumFormulaUndefined}
             >
-              <Glyphicon glyph="tag" />
+              <i className="fa fa-tag" />
             </Button>
           </OverlayTrigger>
         </div>
@@ -538,7 +537,7 @@ export default class SampleForm extends React.Component {
             onClick={this.fetchNextInventoryLabel}
             disabled={sample.isNew}
           >
-            <Glyphicon glyph="tag" />
+            <i className="fa fa-tag" />
           </Button>
         </OverlayTrigger>
       </div>
