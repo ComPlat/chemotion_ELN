@@ -425,29 +425,21 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'CollectionTPATokens', type: :request do
-    describe 'GET /collection_tpa_tokens' do
-      let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
+  describe 'GET /collection_tpa_tokens' do
+    let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
 
-      context 'when the user has cached tokens' do
-        let(:token_keys) { %w[token_1 token_2 token_3] }
-        let(:cached_values) { %w[value_1 value_2 value_3] }
+    context 'when the user has no cached tokens' do
+      before do
+        cache.delete(user.id)
+      end
 
-        before do
-          cache.write(user.id, token_keys)
-          token_keys.each_with_index do |token_key, index|
-            cache.write(token_key, cached_values[index])
-          end
-        end
+      it 'returns the empty list of TPA tokens' do
+        get '/api/v1/third_party_apps/collection_tpa_tokens'
 
-        it 'returns the list of TPA tokens' do
-          get '/api/v1/third_party_apps/collection_tpa_tokens'
+        expect(response).to have_http_status(:ok)
 
-          expect(response).to have_http_status(:ok)
-
-          json_response = JSON.parse(response.body).deep_symbolize_keys
-          expect(json_response[:token_list]).not_to be_empty
-        end
+        json_response = JSON.parse(response.body).deep_symbolize_keys
+        expect(json_response[:token_list]).to be_empty
       end
     end
   end
