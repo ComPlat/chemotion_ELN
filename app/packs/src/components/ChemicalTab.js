@@ -824,7 +824,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div>
-        <ListGroup>{mappedSafetySheets}</ListGroup>
+        <ListGroup className="my-3">{mappedSafetySheets}</ListGroup>
       </div>
     );
   };
