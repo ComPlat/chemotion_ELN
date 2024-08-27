@@ -430,27 +430,24 @@ export default class SampleDetails extends React.Component {
     const { sample, startExport } = this.state;
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
-    const downloadAnalysesBtn = (sample.isNew || !hasAnalyses) ? null : (
-      <Button variant="info" disabled={!this.sampleIsValid()} onClick={() => this.handleExportAnalyses(sample)}>
-        Download Analysis
-        {' '}
-        {startExport ? (
-          <span>
-            <i className="fa fa-spin fa-spinner" />
-          </span>
-        ) : null}
-      </Button>
-    );
 
-    const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (
       <div className="d-flex gap-1">
         <Button variant="primary" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}
-        {saveAndCloseBtn}
-        {downloadAnalysesBtn}
+        {!sample.isNew && belongToReaction && this.saveBtn(sample, true)}
+        {!sample.isNew && hasAnalyses && (
+          <Button
+            variant="info"
+            disabled={!this.sampleIsValid()}
+            onClick={() => this.handleExportAnalyses(sample)}
+          >
+            Download Analysis
+            {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
+          </Button>
+        )}
       </div>
     );
   }
@@ -759,9 +756,15 @@ export default class SampleDetails extends React.Component {
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
         />
-        {this.chemicalIdentifiersItem(sample)}
+        <div className="my-2">
+          {this.chemicalIdentifiersItem(sample)}
+        </div>
         <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
-        {sample.molecule_formula && this.elementalPropertiesItem(sample)}
+        {sample.molecule_formula && (
+          <div className="mt-2">
+            {this.elementalPropertiesItem(sample)}
+          </div>
+        )}
         <div className="mt-2">
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>
@@ -1521,17 +1524,11 @@ export default class SampleDetails extends React.Component {
           <div className="tabs-container--with-borders">
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {tabContents}
-              {/* {this.samplePropertiesTab('properties')}
-              {this.sampleContainerTab('analyses')}
-              {this.sampleLiteratureTab()}
-              {this.sampleImportReadoutTab('results')}
-              {this.qualityCheckTab('qc_curation')}
-              {this.measurementsTab('measurements')} */}
             </Tabs>
-            {this.sampleFooter()}
-            {this.structureEditorModal(sample)}
-            {this.renderMolfileModal()}
           </div>
+          {this.sampleFooter()}
+          {this.structureEditorModal(sample)}
+          {this.renderMolfileModal()}
           <CommentModal element={sample} />
         </Card.Body>
       </Card>
