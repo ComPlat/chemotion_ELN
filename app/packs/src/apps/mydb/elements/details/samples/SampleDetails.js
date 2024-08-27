@@ -379,18 +379,6 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  handleElementalSectionToggle() {
-    this.setState({
-      showElementalComposition: !this.state.showElementalComposition
-    });
-  }
-
-  handleChemIdentSectionToggle() {
-    this.setState({
-      showChemicalIdentifiers: !this.state.showChemicalIdentifiers
-    });
-  }
-
   handleSubmitInventory() {
     this.setState({ saveInventoryAction: true });
   }
@@ -703,26 +691,29 @@ export default class SampleDetails extends React.Component {
     }
 
     const { showElementalComposition, materialGroup } = this.state;
+    const paneKey = 'elemental-comp';
 
     return (
-      <Accordion className="polymer-section">
-        <Accordion.Item eventKey="0">
+      <Accordion
+        className="polymer-section"
+        activeKey={showElementalComposition && paneKey}
+        onSelect={(key) => this.setState({ showElementalComposition: key === paneKey })}
+      >
+        <Accordion.Item eventKey={paneKey}>
           <Accordion.Header>{label}</Accordion.Header>
           <Accordion.Body>
-            {showElementalComposition && (
-              sample.contains_residues ? (
-                <PolymerSection
-                  sample={sample}
-                  parent={this}
-                  show={sample.contains_residues}
-                  materialGroup={materialGroup}
-                />
-              ) : (
-                <ElementalCompositionGroup
-                  handleSampleChanged={(s) => this.handleSampleChanged(s)}
-                  sample={sample}
-                />
-              )
+            {sample.contains_residues ? (
+              <PolymerSection
+                sample={sample}
+                parent={this}
+                show={sample.contains_residues}
+                materialGroup={materialGroup}
+              />
+            ) : (
+              <ElementalCompositionGroup
+                handleSampleChanged={(s) => this.handleSampleChanged(s)}
+                sample={sample}
+              />
             )}
           </Accordion.Body>
         </Accordion.Item>
@@ -731,9 +722,16 @@ export default class SampleDetails extends React.Component {
   }
 
   chemicalIdentifiersItem(sample) {
+    const { showChemicalIdentifiers } = this.state;
+    const paneKey = 'chem-identifiers';
+
     return (
-      <Accordion className="chem-identifiers-section">
-        <Accordion.Item eventKey="0">
+      <Accordion
+        className="chem-identifiers-section"
+        activeKey={showChemicalIdentifiers && paneKey}
+        onSelect={(key) => this.setState({ showChemicalIdentifiers: key === paneKey })}
+      >
+        <Accordion.Item eventKey={paneKey}>
           <Accordion.Header>
             Chemical identifiers
             {sample.decoupled && <span className="text-danger ms-1">[decoupled]</span>}
@@ -763,7 +761,7 @@ export default class SampleDetails extends React.Component {
         />
         <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
         {sample.molecule_formula && this.elementalPropertiesItem(sample)}
-        {this.state.showChemicalIdentifiers && this.chemicalIdentifiersItem(sample)}
+        {this.chemicalIdentifiersItem(sample)}
         <div className="mt-2">
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>
