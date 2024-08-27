@@ -8,6 +8,7 @@ import { hgroup } from 'react-dom-factories';
 
 export default class CurationModal extends Component {
     constructor(props) {
+      var Typo = require("typo-js");
       super(props);
       this.handleShow = this.handleShow.bind(this);
       this.handleClose = this.handleClose.bind(this);
@@ -30,7 +31,11 @@ export default class CurationModal extends Component {
         subscriptList : [],
         dictionaryLanguage: "US",
         showPrompt : false,
-        descriptionObject : {}
+        descriptionObject : {},
+       cus_dictionary : new Typo("custom", false, false, { dictionaryPath: "/typojs" }),
+       uk_dictionary : new Typo("en_UK", false, false, { dictionaryPath: "/typojs" }),
+       us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" })
+
     }}
 
     handlePromptDismiss() {
@@ -176,12 +181,14 @@ export default class CurationModal extends Component {
 
     spellCheck(description){
       if(description !== undefined){
-        var Typo = require("typo-js");
-        var us_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
-        var cus_dictionary = new Typo("custom", false, false, { dictionaryPath: "/typojs" });
-        var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
+        // var Typo = require("typo-js");
+        var cus_dictionary = this.state.cus_dictionary
+        var  uk_dictionary = this.state.uk_dictionary
+        var  us_dictionary = this.state.us_dictionary
+       console.log(cus_dictionary.dictionaryTable)
         var ms_words = [];
         var ss_list = []
+        var italics_array =[]
         var word_array = description.split(/[\s]|[\n]|[\b]/g)
         // console.log(word_array)
         if (this.state.dictionaryLanguage === "UK"){
@@ -203,6 +210,11 @@ export default class CurationModal extends Component {
             if(word_array[i].includes("°") ){
               var spell_checked_word = true
             }
+            if(/\/.+\//gi.test(word_array[i])){
+             
+              italics_array.push(word_array[i])
+              var spell_checked_word = true
+            }
             else{
               if(/[a-z]*\-[a-z]*/.test(word_array[i]))
                 {
@@ -222,6 +234,7 @@ export default class CurationModal extends Component {
                   word_array[i] = word_array[i].substring(0,sliceIndex)
                   word_array.push(word_array[i].slice(sliceIndex))
                 }
+                
                 var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
               }
           }}
@@ -260,6 +273,7 @@ export default class CurationModal extends Component {
           else {
             index = 0
       }
+      
       this.setState({suggestionIndex : index,desc :fixed_description});
       this.handleSuggest(ms_words, index);
       this.setState({correctWord: ""})
@@ -368,6 +382,14 @@ export default class CurationModal extends Component {
       // throw Error('data is not in correct format')
     }
 
+    amendUpdate(input){
+      var Typo = require("typo-js");
+      AutomticCurationFetcher.amendFetch(input)
+      this.setState({cus_dictionary: new Typo("custom", false, false, { dictionaryPath: "/typojs" })})
+
+
+    }
+
     render() {
       var CustomPopover = () =>  (
           <Grid className="customPopover">
@@ -422,7 +444,7 @@ export default class CurationModal extends Component {
             <Button 
             bsStyle="success" 
             onClick= {() => { 
-            AutomticCurationFetcher.amendFetch(this.state.correctWord); this.handlePromptShow()
+            this.amendUpdate(this.state.correctWord); this.handlePromptShow()
             }}>
                 add to dictionary {state}
             </Button>
@@ -482,7 +504,7 @@ export default class CurationModal extends Component {
                   <Row>
                   <Col md={7}>
                  <h5> Suggestions for : <b>{this.state.mispelledWords[this.state.suggestionIndex]}
-                  </b>  </h5></Col><Col md={5}><Button onClick={()=> {AutomticCurationFetcher.amendFetch(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add Selected Word
+                  </b>  </h5></Col><Col md={5}><Button onClick={()=> {this.amendUpdate(this.state.mispelledWords[this.state.suggestionIndex]);this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}}>Add Selected Word
                     </Button></Col>
                     </Row>
                   </Panel.Heading>
