@@ -2,9 +2,6 @@ import React, { Component , useState} from 'react';
 import { Grid,Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row, ControlLabel} from 'react-bootstrap';
 import PropTypes, { array } from 'prop-types';
 import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
-import { hgroup } from 'react-dom-factories';
-import { includes } from 'lodash';
-
 
 
 export default class CurationModal extends Component {
@@ -136,6 +133,7 @@ export default class CurationModal extends Component {
 
     handleShow() {
       this.setState({ show: true }, this.updateDescription);
+    
    
     }
 
@@ -333,14 +331,14 @@ export default class CurationModal extends Component {
               }
               else if(regexHighlightCurrent.test(part) && !correctedArray.includes(part) )
                 {
-                  output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
+                  output_div = (<b id={index} style={{backgroundColor:"#32a852"}}>{part}</b>) 
                 }
               else if(regexHighlightWithOutCurrent.test(part) && !correctedArray.includes(part) ) 
                 {
-                  output_div = (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+                  output_div = (<b id={index} style={{backgroundColor:"#e8bb49"}}>{part}</b>)
                 }
               else if(correctedArray.includes(part)){
-                  output_div =<span> {part} </span>
+                  output_div =<span id={index}> {part} </span>
                 }
               })()
             }
@@ -406,6 +404,13 @@ export default class CurationModal extends Component {
 
 
     }
+
+    scrollToId(){
+      var element = document.querySelector('#\\31') 
+      console.log(element)
+      if(element !== null){
+      element.scrollIntoView({behavior :"smooth"})
+    }}
 
     render() {
       var CustomPopover = () =>  (
@@ -533,6 +538,7 @@ export default class CurationModal extends Component {
                     </Col>
                   </Panel.Body>
               <Panel.Footer><ButtonToolbar>
+              <Button onClick={this.scrollToId}></Button>
                 <Button onClick={()=>this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Ignore</Button>
                 <Button onClick={()=>this.reverseSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Go Back</Button>
                 <Button onClick={()=>
