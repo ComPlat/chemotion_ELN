@@ -40,7 +40,6 @@ import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
 import PolymerSection from 'src/apps/mydb/elements/details/samples/propertiesTab/PolymerSection';
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup';
-import ToggleSection from 'src/components/common/ToggleSection';
 import SampleName from 'src/components/common/SampleName';
 import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
@@ -233,20 +232,6 @@ export default class SampleDetails extends React.Component {
     this.setState({
       sample,
     }, cb);
-  }
-
-  handleAmountChanged(amount) {
-    const { sample } = this.state;
-    sample.setAmountAndNormalizeToGram(amount);
-    this.setState({ sample });
-  }
-
-  handleImportedReadoutChanged(e) {
-    const { sample } = this.state;
-    sample.imported_readout = e.target.value;
-    this.setState({
-      sample
-    });
   }
 
   handleFastInput(smi, cas) {
