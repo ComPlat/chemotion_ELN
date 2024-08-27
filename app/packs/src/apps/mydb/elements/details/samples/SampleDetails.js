@@ -444,7 +444,7 @@ export default class SampleDetails extends React.Component {
 
     const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (
-      <div className='d-flex gap-1'>
+      <div className="d-flex gap-1">
         <Button variant="primary" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
@@ -817,7 +817,7 @@ export default class SampleDetails extends React.Component {
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
     const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
-      <div className='my-4'>
+      <div className="my-4">
         <InputGroup>
           <InputGroup.Text>CAS</InputGroup.Text>
           <Select.Creatable
@@ -964,8 +964,8 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     return (
-      <div className='d-flex align-items-center justify-content-between'>
-        <div className='d-flex align-items-center gap-2'>
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span>
               <i className="icon-sample me-1" />
@@ -980,7 +980,7 @@ export default class SampleDetails extends React.Component {
           <HeaderCommentSection element={sample} />
           {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
         </div>
-        <div className='d-flex align-items-center gap-1'>
+        <div className="d-flex align-items-center gap-1">
           {decoupleCb}
           {inventorySample}
           {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
@@ -1047,7 +1047,7 @@ export default class SampleDetails extends React.Component {
           {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
-        <Col md={8} className='position-relative'>
+        <Col md={8} className="position-relative">
           {this.svgOrLoading(sample)}
         </Col>
       </Row>
@@ -1518,7 +1518,7 @@ export default class SampleDetails extends React.Component {
             addInventoryTab={sample.inventory_sample}
           />
           {this.state.sfn && <ScifinderSearch el={sample} />}
-          <div className='tabs-container--with-borders'>
+          <div className="tabs-container--with-borders">
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {tabContents}
               {/* {this.samplePropertiesTab('properties')}
