@@ -25,44 +25,7 @@ function RndNoAnalyses({ addButton }) {
   );
 }
 
-function renderCommentButton(handleCommentButtonClick, disableMode = true) {
-  return (
-    <OverlayTrigger
-      placement="top"
-      overlay={(
-        <Tooltip id="analysisCommentBox">
-          general remarks that relate to all analytical data
-        </Tooltip>
-      )}
-    >
-      <Button
-        size="xsm"
-        variant="primary"
-        onClick={handleCommentButtonClick}
-        disabled={disableMode}
-      >
-        Add comment
-      </Button>
-    </OverlayTrigger>
-  );
-}
-
-function renderCommentBox(sample, handleCommentTextChange) {
-  const { container } = sample;
-  return (
-    <Form.Group>
-      <Form.Control
-        componentClass="textarea"
-        style={{ marginTop: '10px', marginBottom: '10px' }}
-        rows={2}
-        value={container.description}
-        onChange={handleCommentTextChange}
-      />
-    </Form.Group>
-  );
-}
-
-function RndOrder({
+function ReactionsDisplay({
   sample,
   mode,
   readOnly,
@@ -75,56 +38,9 @@ function RndOrder({
   toggleMode,
   orderContainers,
   addButton,
-}) {
-  return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        {AnalysisModeBtn(mode, toggleMode, isDisabled)}
-        <ButtonToolbar className="gap-2">
-          {renderCommentButton()}
-          {addButton()}
-        </ButtonToolbar>
-      </div>
-      <div>
-        {orderContainers.map((container, i) => {
-          const id = container.id || `fake_${i}`;
-          return (
-            <ContainerRow
-              sample={sample}
-              mode={mode}
-              container={container}
-              readOnly={readOnly}
-              isDisabled={isDisabled}
-              key={`${id}CRowOrder`}
-              addButton={addButton}
-              handleMove={handleMove}
-              handleRemove={handleRemove}
-              handleSubmit={handleSubmit}
-              handleUndo={handleUndo}
-              toggleAddToReport={toggleAddToReport}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function RndEdit({
-  sample,
-  mode,
-  handleRemove,
-  handleSubmit,
   handleAccordionOpen,
-  toggleAddToReport,
-  toggleMode,
   activeAnalysis,
-  orderContainers,
-  readOnly,
-  isDisabled,
-  addButton,
   handleChange,
-  handleUndo,
   handleCommentTextChange,
 }) {
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
@@ -137,9 +53,42 @@ function RndEdit({
     }
   }, [sample.container.description]);
 
-  const handleCommentButtonClick = () => {
-    setCommentBoxVisible(!commentBoxVisible);
-  };
+  const renderCommentButton = (disable = false) => {
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={(
+          <Tooltip id="analysisCommentBox">
+            general remarks that relate to all analytical data
+          </Tooltip>
+        )}
+      >
+        <Button
+          size="xsm"
+          variant="primary"
+          onClick={() => {setCommentBoxVisible(!commentBoxVisible)}}
+          disabled={disable}
+        >
+          Add comment
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+  
+  const renderCommentBox = (sample, handleCommentTextChange) => {
+    const { container } = sample;
+    return (
+      <Form.Group>
+        <Form.Control
+          as="textarea"
+          style="height: 100px"
+          value={container.description}
+          onChange={handleCommentTextChange}
+          className="my-3"
+        />
+      </Form.Group>
+    );
+  }
 
   return (
     <div>
@@ -148,50 +97,74 @@ function RndEdit({
         <ButtonToolbar className="gap-2">
           {renderCommentButton()}
           {addButton()}
-          {commentBoxVisible && renderCommentBox(sample, handleCommentTextChange)}
         </ButtonToolbar>
       </div>
-      <Accordion
-        id="editable-analysis-list"
-        onSelect={handleAccordionOpen}
-        activeKey={activeAnalysis}
-      >
-        {orderContainers.map((container, i) => {
-          const id = container.id || `fake_${i}`;
-          return (
-            <Accordion.Item eventKey={id} key={`${id}CRowEdit`}>
-              <Accordion.Header>
-                <AnalysesHeader
-                  sample={sample}
-                  container={container}
-                  mode={mode}
-                  handleUndo={handleUndo}
-                  readOnly={readOnly}
-                  isDisabled={isDisabled}
-                  handleRemove={handleRemove}
-                  handleSubmit={handleSubmit}
-                  toggleAddToReport={toggleAddToReport}
-                />
-              </Accordion.Header>
-              {!container.is_deleted && (
-                <Accordion.Body>
-                  <ContainerComponent
-                    templateType="sample"
-                    readOnly={readOnly}
+      {commentBoxVisible && renderCommentBox(sample, handleCommentTextChange)}
+      {mode === 'edit' ? (
+        <Accordion
+          id="editable-analysis-list"
+          onSelect={handleAccordionOpen}
+          activeKey={activeAnalysis}
+        >
+          {orderContainers.map((container, i) => {
+            const id = container.id || `fake_${i}`;
+            return (
+              <Accordion.Item eventKey={id} key={`${id}CRowEdit`}>
+                <Accordion.Header>
+                  <AnalysesHeader
+                    sample={sample}
                     container={container}
-                    disabled={isDisabled}
-                    onChange={handleChange}
+                    mode={mode}
+                    handleUndo={handleUndo}
+                    readOnly={readOnly}
+                    isDisabled={isDisabled}
+                    handleRemove={handleRemove}
+                    handleSubmit={handleSubmit}
+                    toggleAddToReport={toggleAddToReport}
                   />
-                </Accordion.Body>
-)}
-            </Accordion.Item>
-          );
-        })}
-      </Accordion>
+                </Accordion.Header>
+                {!container.is_deleted && (
+                  <Accordion.Body>
+                    <ContainerComponent
+                      templateType="sample"
+                      readOnly={readOnly}
+                      container={container}
+                      disabled={isDisabled}
+                      onChange={handleChange}
+                    />
+                  </Accordion.Body>
+                )}
+              </Accordion.Item>
+            );
+          })}
+        </Accordion>
+      ) : (
+        <div>
+          {orderContainers.map((container, i) => {
+            const id = container.id || `fake_${i}`;
+            return (
+              <ContainerRow
+                sample={sample}
+                mode={mode}
+                container={container}
+                readOnly={readOnly}
+                isDisabled={isDisabled}
+                key={`${id}CRowOrder`}
+                addButton={addButton}
+                handleMove={handleMove}
+                handleRemove={handleRemove}
+                handleSubmit={handleSubmit}
+                handleUndo={handleUndo}
+                toggleAddToReport={toggleAddToReport}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
 export {
-  RndNotAvailable, RndNoAnalyses, RndOrder, RndEdit
+  RndNotAvailable, RndNoAnalyses, ReactionsDisplay
 };
