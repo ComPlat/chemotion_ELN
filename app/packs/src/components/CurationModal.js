@@ -3,6 +3,7 @@ import { Grid,Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popov
 import PropTypes, { array } from 'prop-types';
 import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
 import { hgroup } from 'react-dom-factories';
+import { includes } from 'lodash';
 
 
 
@@ -25,6 +26,7 @@ export default class CurationModal extends Component {
         desc : this.cleanData(this.props.description),
         show : false, 
         mispelledWords : [],
+        correctedWords: [],
         suggestion : [],
         suggestionIndex : 0,
         correctWord : "",
@@ -32,12 +34,17 @@ export default class CurationModal extends Component {
         dictionaryLanguage: "US",
         showPrompt : false,
         descriptionObject : {},
-       cus_dictionary : new Typo("custom", false, false, { dictionaryPath: "/typojs" }),
-       uk_dictionary : new Typo("en_UK", false, false, { dictionaryPath: "/typojs" }),
-       us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" })
+        cus_dictionary : new Typo("custom", false, false, { dictionaryPath: "/typojs" }),
+        uk_dictionary : new Typo("en_UK", false, false, { dictionaryPath: "/typojs" }),
+        us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" })
 
     }}
 
+    // componentDidUpdate(prevState){
+    //   if (this.state.correctedWords !== prevState.correctedWords){
+    //     console.log("array modified")
+    //   }
+    // }
     handlePromptDismiss() {
       this.setState({ showPrompt: false });
     }
@@ -101,15 +108,21 @@ export default class CurationModal extends Component {
       this.setState({correctWord:new_word})
     }
 
-    advanceSuggestion(input,miss_spelled_words){
-      if (input < miss_spelled_words.length ){
-      input = input +1 }
+    advanceSuggestion(index,miss_spelled_words){
+      var correctedArray = this.state.correctedWords
+      if (index < miss_spelled_words.length ){
+      index = index +1 }
       else {
-        input = 0
+        index = 0
       }
-      this.handleSuggest(miss_spelled_words, input)
-      this.setState( {suggestionIndex : input} ) 
+      correctedArray.push(miss_spelled_words[index - 1])
+      this.handleSuggest(miss_spelled_words, index)
+      this.setState( {suggestionIndex : index,
+        correctedArray: correctedArray
+      } ) 
     }
+
+
 
     reverseSuggestion(input,miss_spelled_words){
       if (input < miss_spelled_words.length){
@@ -273,8 +286,11 @@ export default class CurationModal extends Component {
           else {
             index = 0
       }
-      
-      this.setState({suggestionIndex : index,desc :fixed_description});
+      var correctedWords = this.state.correctedWords
+      correctedWords.push(ms_words[index - 1])
+      this.setState({suggestionIndex : index, 
+        desc :fixed_description,
+        correctedWords: correctedWords});
       this.handleSuggest(ms_words, index);
       this.setState({correctWord: ""})
     }
@@ -288,6 +304,7 @@ export default class CurationModal extends Component {
     }
 
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
+      var correctedArray = this.state.correctedWords
       for (var entry of mispelledWords){
         var index = mispelledWords.indexOf(entry)
         mispelledWords[index] = entry.replaceAll(" ","")
@@ -308,6 +325,8 @@ export default class CurationModal extends Component {
           <React.Fragment key={index}>
             {(()=> 
             {
+              {/* console.log("part "+ part)
+              console.log("corrected " + correctedArray) */}
               var highlight_current = mispelledWords[ms_index]
               highlight_current = "\\b(" + highlight_current + ")\\b"
               var regexHighlightCurrent = new RegExp(highlight_current, "gi")
@@ -316,20 +335,25 @@ export default class CurationModal extends Component {
               highlightWithOutCurrent = highlightWithOutCurrent.join("|")
               highlightWithOutCurrent = "\\b(" + highlightWithOutCurrent + ")\\b"
               var regexHighlightWithOutCurrent = new RegExp(highlightWithOutCurrent, "gi")
-
               if(subscriptList.includes(part)){
                 output_div =  this.checkSubScript(part)   
               }
-              else if(regexHighlightCurrent.test(part))
+              else if(regexHighlightCurrent.test(part) && !correctedArray.includes(part) )
                 {
                   output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
                 }
-              else if(regexHighlightWithOutCurrent.test(part)) 
+              else if(regexHighlightWithOutCurrent.test(part) && !correctedArray.includes(part) ) 
                 {
                   output_div = (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
                 }
+              else if(correctedArray.includes(part)){
+                  output_div =<span> {part} </span>
+                  console.log(part)
+     
+                }
               })()
             }
+            
           {combined_array.includes(part)
             ? (output_div)
             : (part)} 
@@ -520,7 +544,7 @@ export default class CurationModal extends Component {
                 <Button onClick={()=>this.reverseSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Go Back</Button>
                 <Button onClick={()=>
                 {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
-                this.convertStringToObject(this.state.desc)}}>Correct</Button>
+                this.convertStringToObject(this.state.desc); console.log(this.state.correctedWords)}}>Correct</Button>
                 {/* <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button> */}
                 {/* save issue is here */}
                 <div className='pull-right'><Button onClick={()=> {
