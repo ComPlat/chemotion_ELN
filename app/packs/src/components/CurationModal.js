@@ -36,15 +36,11 @@ export default class CurationModal extends Component {
         descriptionObject : {},
         cus_dictionary : new Typo("custom", false, false, { dictionaryPath: "/typojs" }),
         uk_dictionary : new Typo("en_UK", false, false, { dictionaryPath: "/typojs" }),
-        us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" })
+        us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" }),
+        showCorrectButton: true
 
     }}
 
-    // componentDidUpdate(prevState){
-    //   if (this.state.correctedWords !== prevState.correctedWords){
-    //     console.log("array modified")
-    //   }
-    // }
     handlePromptDismiss() {
       this.setState({ showPrompt: false });
     }
@@ -150,10 +146,9 @@ export default class CurationModal extends Component {
      
       if (typeof mispelled_word === "string" )
       {  
-        // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
         if (/(.)\1{4,}/.test(mispelled_word))
         {
-          // console.log(mispelled_word)
+
           var repeatedCharacter = mispelled_word.match(/(.)\1{4,}/)
           var newMisspeled = mispelled_word.replace(/(.)\1{4,}/, repeatedCharacter[0].charAt(0)  ) 
           var ms_suggestion = [newMisspeled]
@@ -198,12 +193,12 @@ export default class CurationModal extends Component {
         var cus_dictionary = this.state.cus_dictionary
         var  uk_dictionary = this.state.uk_dictionary
         var  us_dictionary = this.state.us_dictionary
-       console.log(cus_dictionary.dictionaryTable)
+  
         var ms_words = [];
         var ss_list = []
         var italics_array =[]
         var word_array = description.split(/[\s]|[\n]|[\b]/g)
-        // console.log(word_array)
+  
         if (this.state.dictionaryLanguage === "UK"){
           var en_dictionary = uk_dictionary
           console.log("uk used")
@@ -231,11 +226,10 @@ export default class CurationModal extends Component {
             else{
               if(/[a-z]*\-[a-z]*/.test(word_array[i]))
                 {
-                  // console.log("help " +word_array[i])
+             
                 }
               else{
-              // console.log(/'/.test( word_array[i]))
-              // console.log(word_array[i])
+       
                 if(/'/.test( word_array[i])){
            
                   var sliceIndex = word_array[i].indexOf("\'")
@@ -259,12 +253,12 @@ export default class CurationModal extends Component {
             }
           if(spell_checked_word == false){
             ms_words.push(word_array[i]);
-            // console.log(word_array[i])
+    
           } 
         }
         ms_words = ms_words.filter((x)=> x != "" )
         this.setState({mispelledWords: ms_words, subscriptList:ss_list}, ()=>{
-          // console.log(this.state.mispelledWords)
+    
         })
         this.handleSuggest(ms_words, 0)
         }
@@ -292,7 +286,7 @@ export default class CurationModal extends Component {
         desc :fixed_description,
         correctedWords: correctedWords});
       this.handleSuggest(ms_words, index);
-      this.setState({correctWord: ""})
+      this.setState({correctWord: "", showCorrectButton: true})
     }
 
     removeSpaces(introarray){
@@ -325,8 +319,7 @@ export default class CurationModal extends Component {
           <React.Fragment key={index}>
             {(()=> 
             {
-              {/* console.log("part "+ part)
-              console.log("corrected " + correctedArray) */}
+   
               var highlight_current = mispelledWords[ms_index]
               highlight_current = "\\b(" + highlight_current + ")\\b"
               var regexHighlightCurrent = new RegExp(highlight_current, "gi")
@@ -348,8 +341,6 @@ export default class CurationModal extends Component {
                 }
               else if(correctedArray.includes(part)){
                   output_div =<span> {part} </span>
-                  console.log(part)
-     
                 }
               })()
             }
@@ -376,7 +367,9 @@ export default class CurationModal extends Component {
     }
 
     changeCorectWord(changeEvent) {
-      this.setState({correctWord: changeEvent.target.value}) 
+      this.setState({correctWord: changeEvent.target.value,
+        showCorrectButton:false
+      }) 
     }
 
     cleanData(description){
@@ -544,7 +537,9 @@ export default class CurationModal extends Component {
                 <Button onClick={()=>this.reverseSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Go Back</Button>
                 <Button onClick={()=>
                 {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
-                this.convertStringToObject(this.state.desc); console.log(this.state.correctedWords)}}>Correct</Button>
+                this.convertStringToObject(this.state.desc)}}
+                disabled={this.state.showCorrectButton}>
+                Correct</Button>
                 {/* <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button> */}
                 {/* save issue is here */}
                 <div className='pull-right'><Button onClick={()=> {
