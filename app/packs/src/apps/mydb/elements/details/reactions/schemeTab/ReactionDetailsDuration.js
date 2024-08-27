@@ -60,7 +60,7 @@ export default class ReactionDetailsDuration extends Component {
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
     return (
-      <Row className='p-2'>
+      <Row className="ms-1 me-3">
         <Col md={3} sm={6}>
           <Form.Group>
             <Form.Label>Start</Form.Label>

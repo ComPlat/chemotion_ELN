@@ -82,10 +82,7 @@ function MaterialGroup({
 
 const switchEquivTooltip = () => (
   <Tooltip id="assign_button">
-    Lock/unlock Equiv
-    <br />
-    {' '}
-    for target amounts
+    Lock/unlock Equiv for target amounts
   </Tooltip>
 );
 
@@ -94,7 +91,7 @@ function SwitchEquivButton(lockEquivColumn, switchEquiv) {
     <OverlayTrigger placement="top" overlay={switchEquivTooltip()}>
       <Button
         id="lock_equiv_column_btn"
-        size="sm"
+        size="xsm"
         variant={lockEquivColumn ? 'warning' : 'light'}
         onClick={switchEquiv}
       >
@@ -197,17 +194,15 @@ function GeneralMaterialGroup({
       </colgroup>
       <thead>
         <tr>
-          <th className>{addSampleButton}</th>
+          <th>{addSampleButton}</th>
           <th>{headers.group}</th>
-          {isReactants
-             && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
-          {!isReactants
-             && <th>{refTHead}</th>}
-          <th>{headers.show_label}</th>
-          {!isReactants
-           && <th>{headers.tr}</th>}
-          {!isReactants
-            && (
+          {isReactants ? (
+            <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>
+          ) : (
+            <>
+              <th className="text-center">{refTHead}</th>
+              <th className="text-center">{headers.show_label}</th>
+              <th className="text-center">{headers.tr}</th>
               <th>
                 <OverlayTrigger
                   placement="top"
@@ -218,24 +213,21 @@ function GeneralMaterialGroup({
                   <span>{headers.reaction_coefficient}</span>
                 </OverlayTrigger>
               </th>
-            )}
-          {!isReactants
-             && <th>{headers.amount}</th>}
-          {!isReactants
-             && <th />}
-          {!isReactants
-             && <th />}
-          {showLoadingColumn
-             && !isReactants && <th>{headers.loading}</th>}
-          {!isReactants
-             && <th>{headers.concn}</th>}
-          {!isReactants && permitOn(reaction)
-            && (
-            <th>
-              {headers.eq}
-              {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}
-            </th>
-            )}
+              <th className="text-center">{headers.reaction_coefficient}</th>
+              <th className="text-center">{headers.amount}</th>
+              <th /><th />
+              {showLoadingColumn && <th className="text-center">{headers.loading}</th>}
+              <th className="text-center">{headers.concn}</th>
+              {permitOn(reaction) && (
+                <th className="text-center">
+                  <div className="d-flex align-items-center justify-content-center gap-2">
+                    {headers.eq}
+                    {materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}
+                  </div>
+                </th>
+              )}
+            </>
+          )}
         </tr>
       </thead>
       <tbody>
