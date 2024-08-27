@@ -427,7 +427,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'CollectionTPATokens', type: :request do
     describe 'GET /collection_tpa_tokens' do
-      let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: TPA_EXPIRATION) }
+      let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
 
       context 'when the user has cached tokens' do
         let(:token_keys) { %w[token_1 token_2 token_3] }
