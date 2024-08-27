@@ -129,7 +129,7 @@ export default class SampleDetails extends React.Component {
       trackMolfile: props.sample.molfile,
       smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
         || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
-      smiles: props.sample.molecule_cano_smiles || '',
+      smilesInput: '',
       molfile: props.sample.molfile || '',
       inchiString: props.sample.molecule_inchistring || '',
       quickCreator: false,
@@ -189,23 +189,18 @@ export default class SampleDetails extends React.Component {
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
-    if (
-      (nextProps.sample.isNew
-       && (typeof (nextProps.sample.molfile) === 'undefined'
-        || (nextProps.sample.molfile || '').length === 0)
+    const { sample } = nextProps;
+    const smileReadonly = !(
+      (sample.isNew
+       && (typeof (sample.molfile) === 'undefined'
+        || (sample.molfile || '').length === 0)
       )
-      || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey === 'DUMMY')
-    ) {
-      this.setState({
-        smileReadonly: false,
-      });
-    } else {
-      this.setState({
-        smileReadonly: true,
-      });
-    }
+      || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
+    );
+
     this.setState({
-      sample: nextProps.sample,
+      sample,
+      smileReadonly,
       loadingMolecule: false,
       isCasLoading: false,
     });
@@ -235,20 +230,20 @@ export default class SampleDetails extends React.Component {
   }
 
   handleFastInput(smi, cas) {
-    this.setState({ showChemicalIdentifiers: true, smiles: smi }, () => {
+    this.setState({ showChemicalIdentifiers: true, smilesInput: smi }, () => {
       this.handleMoleculeBySmile(cas);
     });
   }
 
   handleMoleculeBySmile(cas) {
-    const { sample } = this.state;
+    const { sample, smilesInput } = this.state;
     // const casObj = {};
-    MoleculesFetcher.fetchBySmi(this.state.smiles)
+    MoleculesFetcher.fetchBySmi(smilesInput)
       .then((result) => {
         if (!result || result == null) {
           NotificationActions.add({
             title: 'Error on Sample creation',
-            message: `Cannot create molecule with entered Smiles/CAS! [${this.state.smiles}]`,
+            message: `Cannot create molecule with entered Smiles/CAS! [${smilesInput}]`,
             level: 'error',
             position: 'tc'
           });
@@ -1108,27 +1103,26 @@ export default class SampleDetails extends React.Component {
   }
 
   moleculeCanoSmiles(sample) {
-    if (
-      this.state.smileReadonly
-      && typeof (sample.molecule_cano_smiles) !== 'undefined'
-      && sample.molecule_cano_smiles
-    ) {
-      this.setState({ smiles: sample.molecule_cano_smiles });
-    }
+    const { smileReadonly, smilesInput } = this.state;
     return (
       <InputGroup className="mb-3">
         <InputGroup.Text>Canonical Smiles</InputGroup.Text>
         <Form.Control
           type="text"
-          value={this.state.smiles}
-          disabled={this.state.smileReadonly}
-          readOnly={this.state.smileReadonly}
+          value={smileReadonly ? sample.molecule_cano_smiles || '' : smilesInput}
+          disabled={smileReadonly}
+          readOnly={smileReadonly}
+          onChange={(e) => {
+            if (!smileReadonly) {
+              this.setState({ smilesInput: e.target.value });
+            }
+          }}
         />
         <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
           <Button
             variant="light"
             className="clipboardBtn"
-            data-clipboard-text={sample.molecule_cano_smiles || ' '}
+            data-clipboard-text={sample.molecule_cano_smiles || ''}
           >
             <i className="fa fa-clipboard" />
           </Button>
@@ -1137,8 +1131,8 @@ export default class SampleDetails extends React.Component {
           <Button
             variant="light"
             id="smile-create-molecule"
-            disabled={this.state.smileReadonly}
-            readOnly={this.state.smileReadonly}
+            disabled={smileReadonly}
+            readOnly={smileReadonly}
             onClick={() => this.handleMoleculeBySmile()}
           >
             <i className="fa fa-save" />
