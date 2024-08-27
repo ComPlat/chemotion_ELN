@@ -127,7 +127,7 @@ const Calendar = () => {
       case 'Wellplate':
         return 'icon-wellplate';
       case 'ResearchPlan':
-        return 'icon-researchplan';
+        return 'icon-research_plan';
       case 'Screen':
         return 'icon-screen';
     }
