@@ -165,6 +165,7 @@ export default class SampleDetails extends React.Component {
     this.decoupleChanged = this.decoupleChanged.bind(this);
     this.handleFastInput = this.handleFastInput.bind(this);
     this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
+    this.showStructureEditor = this.showStructureEditor.bind(this);
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
@@ -1260,7 +1261,7 @@ export default class SampleDetails extends React.Component {
   structureEditorButton(isDisabled) {
     return (
       // eslint-disable-next-line react/jsx-no-bind
-      <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
+      <Button onClick={this.showStructureEditor} disabled={isDisabled}>
         <i className="fa fa-pencil" />
       </Button>
     );
@@ -1280,7 +1281,7 @@ export default class SampleDetails extends React.Component {
           <>
             <div
               className={className}
-              onClick={this.showStructureEditor.bind(this)}
+              onClick={this.showStructureEditor}
               onKeyPress
               role="button"
               tabIndex="0"
@@ -1528,13 +1529,11 @@ export default class SampleDetails extends React.Component {
               {this.sampleImportReadoutTab('results')}
               {this.qualityCheckTab('qc_curation')}
               {this.measurementsTab('measurements')} */}
-             
             </Tabs>
             {this.sampleFooter()}
             {this.structureEditorModal(sample)}
             {this.renderMolfileModal()}
           </div>
-         
           <CommentModal element={sample} />
         </Card.Body>
       </Card>
