@@ -81,7 +81,7 @@ function ReactionsDisplay({
       <Form.Group>
         <Form.Control
           as="textarea"
-          style="height: 100px"
+          style={{ height: '80px' }}
           value={container.description}
           onChange={handleCommentTextChange}
           className="my-3"
