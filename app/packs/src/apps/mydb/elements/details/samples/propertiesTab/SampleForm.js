@@ -525,22 +525,19 @@ export default class SampleForm extends React.Component {
        + ' if sample belongs to a collection with a predefined label'
       : 'click to assign next inventory label';
     return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <ControlLabel> &nbsp; </ControlLabel>
-        <OverlayTrigger
-          placement="top"
-          overlay={
-            <Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>
-          }
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>
+        }
+      >
+        <Button
+          onClick={this.fetchNextInventoryLabel}
+          disabled={sample.isNew}
         >
-          <Button
-            onClick={this.fetchNextInventoryLabel}
-            disabled={sample.isNew}
-          >
-            <i className="fa fa-tag" />
-          </Button>
-        </OverlayTrigger>
-      </div>
+          <i className="fa fa-tag" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 
@@ -827,7 +824,7 @@ export default class SampleForm extends React.Component {
         <Row className="align-items-end mb-4">
           <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
           <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
-          <Col>
+          <Col className="d-flex align-items-end gap-1">
             {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
             {this.nextInventoryLabel(sample)}
           </Col>
