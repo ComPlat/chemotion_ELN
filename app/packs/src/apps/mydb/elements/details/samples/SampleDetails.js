@@ -949,6 +949,7 @@ export default class SampleDetails extends React.Component {
     const inventorySample = (
       <Form.Check
         type="checkbox"
+        id="sample-inventory-header"
         className="mx-3 sample-inventory-header"
         checked={sample.inventory_sample}
         onChange={(e) => this.handleInventorySample(e)}
@@ -959,6 +960,7 @@ export default class SampleDetails extends React.Component {
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Form.Check
         type="checkbox"
+        id="sample-header-decouple"
         className="mx-3 sample-header-decouple"
         checked={sample.decoupled}
         onChange={(e) => this.decoupleChanged(e)}

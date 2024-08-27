@@ -139,9 +139,9 @@ export default class SampleForm extends React.Component {
     if (sample.can_update) {
       return (
         <Form.Check
+          id={`sample-dry-solvent-${sample.id}`}
           checked={sample.dry_solvent}
           onChange={(e) => this.handleFieldChanged('dry_solvent', e.target.checked)}
-
           label="Anhydrous"
           className="my-2"
         />
@@ -155,7 +155,7 @@ export default class SampleForm extends React.Component {
     if (sample.can_update) {
       return (
         <Form.Check
-          ref={(ref) => { this.decoupledInput = ref; }}
+          id={`sample-decoupled-${sample.id}`}
           checked={sample.decoupled}
           onChange={(e) => this.handleFieldChanged('decoupled', e.target.checked)}
           label="Decoupled"
