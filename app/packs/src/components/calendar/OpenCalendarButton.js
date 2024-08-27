@@ -57,6 +57,7 @@ export default class OpenCalendarButton extends Component {
         variant="light"
         onClick={this.onClick}
         style={{ width: '60px' }}
+        id="navigationCalendarButton"
       >
         <i className="fa fa-calendar indicator" />
       </Button>
