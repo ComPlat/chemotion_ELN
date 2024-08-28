@@ -378,7 +378,7 @@ export default class SampleForm extends React.Component {
       if (!sample[field]) {
         sample.sum_formula = '';
       } else {
-        if (sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+        if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
         if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
           sample.residues[0].custom_info.polymer_type = 'self_defined';
           delete sample.residues[0].custom_info.surface_type;
