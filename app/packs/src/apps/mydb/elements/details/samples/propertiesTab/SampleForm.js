@@ -703,29 +703,34 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  densityMolarityInput(sample, isPolymer, molarityBlocked, densityBlocked) {
+  densityMolarityInput(sample) {
+    const { densityMolarity } = this.state;
+    const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
+    const isDisabled = !sample.can_update;
+    const polyDisabled = isPolymer || isDisabled;
+
     return (
       <>
         <ButtonGroup className="mb-2">
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'density' })}
-            active={this.state.densityMolarity === 'density'}
+            active={densityMolarity === 'density'}
             size="xxsm"
           >
             Density
           </ButtonGroupToggleButton>
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'molarity' })}
-            active={this.state.densityMolarity === 'molarity'}
+            active={densityMolarity === 'molarity'}
             size="xxsm"
           >
             Molarity
           </ButtonGroupToggleButton>
         </ButtonGroup>
-        {this.state.densityMolarity === 'density' ? (
-          this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', densityBlocked, '', false, isPolymer)
+        {densityMolarity === 'density' ? (
+          this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
         ) : (
-          this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', molarityBlocked, '', false, isPolymer)
+          this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
         )}
       </>
     );
