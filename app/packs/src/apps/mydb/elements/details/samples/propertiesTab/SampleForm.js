@@ -517,8 +517,10 @@ export default class SampleForm extends React.Component {
        + ' if sample belongs to a collection with a predefined label'
       : 'click to assign next inventory label';
     return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <ControlLabel> &nbsp; </ControlLabel>
+      <div
+      style={{ display: 'flex', flexDirection: 'column' }}
+      >
+        <Form.Label>  </Form.Label>
         <OverlayTrigger
           placement="top"
           overlay={
@@ -528,8 +530,10 @@ export default class SampleForm extends React.Component {
           <Button
             onClick={this.fetchNextInventoryLabel}
             disabled={sample.isNew}
+            variant="light"
+            className="mt-4"
           >
-            <Glyphicon glyph="tag" />
+            <i className="fa fa-tag" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
       </div>
@@ -819,9 +823,12 @@ export default class SampleForm extends React.Component {
         <Row className="align-items-end mb-4">
           <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
           <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
-          <Col>
-            {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-            {this.nextInventoryLabel(sample)}
+          <Col sm={3}>
+            <InputGroup>
+              {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+              {this.nextInventoryLabel(sample)}
+            </InputGroup>
+            
           </Col>
           <Col>{this.textInput(sample, 'location', 'Location')}</Col>
           <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
