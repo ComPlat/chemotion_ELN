@@ -3,12 +3,16 @@ import ElementalComposition from 'src/apps/mydb/elements/details/samples/propert
 import ElementalCompositionCustom from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionCustom';
 
 export default class ElementalCompositionGroup extends React.Component {
-  handleElementalChanged(el_composition) {
+  handleElementalChanged() {
     this.props.handleSampleChanged(this.props.sample);
   }
 
   render() {
     const { sample } = this.props;
+    if (!sample.molecule_formula) {
+      return null;
+    }
+
     const { elemental_compositions } = sample;
 
     let display_error = true;
@@ -51,29 +55,21 @@ export default class ElementalCompositionGroup extends React.Component {
       );
     }
 
-    const custom = sample.can_update
-      ? (
-        <ElementalCompositionCustom
-          handleElementalChanged={(el) => this.handleElementalChanged(el)}
-          elemental_composition={el_composition_custom}
-          hideLoading={!sample.contains_residues}
-          concat_formula={sample.concat_formula}
-          key="elem_composition_found"
-        />
-      )
-      : null;
-
-    if (!sample.molecule_formula) {
-      return false;
-    }
-
-    const label = sample.contains_residues ? <label>Elemental composition</label> : false;
-
     return (
       <div>
-        {label}
-        {data}
-        {custom}
+        {sample.contains_residues && 'Elemental composition'}
+        <div className="d-flex flex-column gap-3">
+          {data}
+          {sample.can_update && (
+            <ElementalCompositionCustom
+              handleElementalChanged={() => this.handleElementalChanged()}
+              elemental_composition={el_composition_custom}
+              hideLoading={!sample.contains_residues}
+              concat_formula={sample.concat_formula}
+              key="elem_composition_found"
+            />
+          )}
+        </div>
       </div>
     );
   }
