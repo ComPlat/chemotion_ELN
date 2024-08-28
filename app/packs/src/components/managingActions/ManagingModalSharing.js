@@ -13,7 +13,6 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { elementNames } from 'src/apps/generic/Utils';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ManagingModalSharing extends React.Component {
 

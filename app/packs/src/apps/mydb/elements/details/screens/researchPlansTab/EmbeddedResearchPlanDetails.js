@@ -16,8 +16,6 @@ import ResearchPlanDetailsBody from
 import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-import Label from 'src/components/legacyBootstrap/Label'
 
 function InfoButton({ iconClass, text, style, tooltip }) {
   style ||= 'info';
