@@ -21,7 +21,6 @@ import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDe
 import {
   Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
-import Label from 'src/components/legacyBootstrap/Label'
 
 const tabInfoHash = {
   metadata: {

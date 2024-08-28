@@ -13,7 +13,6 @@ import Serials from 'src/apps/mydb/elements/details/reports/Serials';
 import Archives from 'src/apps/mydb/elements/details/reports/Archives';
 import Config from 'src/apps/mydb/elements/details/reports/Config';
 import { CloseBtn, ResetBtn, GenerateReportBtn } from 'src/apps/mydb/elements/details/reports/ReportComponent';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const fetchPreviewTabs = [3, 4];
 

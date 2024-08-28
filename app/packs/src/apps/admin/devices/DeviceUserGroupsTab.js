@@ -6,7 +6,6 @@ import { selectUserOptionFormater, selectedUserFormater } from 'src/utilities/se
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceUserGroupsTab = () => {
   const devicesStore = useContext(StoreContext).devices;

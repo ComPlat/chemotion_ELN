@@ -5,7 +5,6 @@ import { formatDate } from 'src/utilities/timezoneHelper';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceMetadataTab = () => {
   const devicesStore = useContext(StoreContext).devices;

@@ -72,8 +72,6 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';

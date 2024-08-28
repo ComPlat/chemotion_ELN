@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Badge } from 'react-bootstrap';
 
 import Aviator from 'aviator';
-import Label from 'src/components/legacyBootstrap/Label'
 
 const statusMap = {
   not_computed: 'pending'

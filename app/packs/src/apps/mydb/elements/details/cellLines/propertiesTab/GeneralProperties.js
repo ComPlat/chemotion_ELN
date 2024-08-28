@@ -10,9 +10,6 @@ import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement

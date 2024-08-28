@@ -33,8 +33,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const Cite = require('citation-js');
 
