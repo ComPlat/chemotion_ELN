@@ -19,7 +19,6 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class SampleForm extends React.Component {
@@ -92,7 +91,7 @@ export default class SampleForm extends React.Component {
       <Button
         onClick={this.showStructureEditor}
         disabled={isDisabled}
-        variant='light'
+        variant="light"
       >
         <i className="fa fa-pencil" />
       </Button>
@@ -279,7 +278,7 @@ export default class SampleForm extends React.Component {
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
-        <InputGroup className='w-100'>
+        <InputGroup className="w-100">
           <Select.Creatable
             name="moleculeName"
             multi={false}
@@ -291,7 +290,7 @@ export default class SampleForm extends React.Component {
             value={!newMolecule && mno && mno.value}
             onNewOptionClick={this.addMolName}
             clearable={false}
-            className='flex-grow-1'
+            className="flex-grow-1"
           />
           {this.structureEditorButton(!sample.can_update)}
         </InputGroup>
@@ -325,7 +324,7 @@ export default class SampleForm extends React.Component {
           } else {
             NotificationActions.add({
               message: 'Could not find next inventory label. '
-              + 'Please assign a prefix and a counter for a valid collection first.',
+                + 'Please assign a prefix and a counter for a valid collection first.',
               level: 'error'
             });
           }
@@ -506,7 +505,7 @@ export default class SampleForm extends React.Component {
   nextInventoryLabel(sample) {
     const overlayMessage = sample.isNew
       ? 'Inventory label will be auto generated on sample create,'
-       + ' if sample belongs to a collection with a predefined label'
+      + ' if sample belongs to a collection with a predefined label'
       : 'click to assign next inventory label';
     return (
       <OverlayTrigger
@@ -709,7 +708,7 @@ export default class SampleForm extends React.Component {
         {sample.isMethodDisabled('amount_value') ? (
           <FormControl type="text" disabled defaultValue="***" readOnly />
         ) : (
-          <div className='d-flex gap-2'>
+          <div className="d-flex gap-2">
             {this.numInput(sample, 'amount_g', 'g', ['m', 'n', 'u'], 4, null, 'massMgInput', isDisabled, '')}
             {this.numInput(sample, 'amount_l', 'l', ['m', 'u', 'n'], 5, null, 'l', isDisabled, '', volumeBlocked)}
             {this.numInput(sample, 'amount_mol', 'mol', ['m', 'n'], 4, null, 'amountInput', isDisabled, '')}
@@ -778,13 +777,11 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const sample = this.props.sample || {};
+    const { enableSampleDecoupled, sample = {} } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
-
-    const { enableSampleDecoupled } = this.props;
 
     if (sample.belongTo !== undefined && sample.belongTo !== null) {
       // assign amount type for product samples of reaction to real
@@ -794,7 +791,7 @@ export default class SampleForm extends React.Component {
     return (
       <Form>
         <h5>Basic Properties:</h5>
-        <Row className='align-items-end mb-4'>
+        <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
           <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
           <Col>{this.stereoAbsInput()}</Col>
@@ -829,7 +826,7 @@ export default class SampleForm extends React.Component {
           </Row>
         )}
 
-        <Row className='align-items-center g-2 mb-4'>
+        <Row className="align-items-center g-2 mb-4">
           <Col xs={6} className="d-flex align-items-end gap-2">
             {this.infoButton()}
             {this.sampleAmount(sample)}
