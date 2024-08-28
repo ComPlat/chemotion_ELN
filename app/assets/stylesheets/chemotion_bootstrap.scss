@@ -40,6 +40,10 @@ $theme-colors: map-merge($theme-colors, $gray-tones);
 .btn {
   --bs-btn-border-color: rgba(0,0,0,0.1);
   --bs-btn-disabled-border-color: rgba(0,0,0,0.1);
+  &.btn-link {
+    --bs-btn-border-color: transparent;
+    --bs-btn-disabled-border-color: transparent;
+  }
 }
 
 
