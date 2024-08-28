@@ -81,13 +81,13 @@ export default function PrintCodeButton({ element, analyses }) {
           variant="light"
           disabled={element.isNew}
           size="xxsm"
-          onToggle={(isOpen, event) => { if (event) { event.stopPropagation(); } }}
+          onClick={(event) => {event.stopPropagation()}}
           title={<i className="fa fa-barcode fa-lg" />}
         >
           {menuItems.map((e) => (
             <Dropdown.Item
               key={e.key}
-              onSelect={() => {
+              onClick={() => {
                 setSelectedConfig(e.contents);
                 handleModalShow();
               }}
