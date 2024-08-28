@@ -392,53 +392,37 @@ export default class SampleForm extends React.Component {
     } else { this.props.parent.setState({ sample }); }
   }
 
-  btnCalculateMolecularMass(sample) {
+  btnCalculateMolecularMass() {
     const { sumFormula } = this.state;
 
     return (
-      <div>
-        <ControlLabel> &nbsp; </ControlLabel>
-        <div>
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id="molMass">calculate the molecular mass</Tooltip>
-            }
-          >
-            <Button
-              className="btn btn-sm"
-              onClick={() => this.handleMassCalculation(sumFormula)}
-            >
-              <i className="fa fa-cog" />
-            </Button>
-          </OverlayTrigger>
-        </div>
-      </div>
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id="molMass">calculate the molecular mass</Tooltip>
+        }
+      >
+        <Button onClick={() => this.handleMassCalculation(sumFormula)}>
+          <i className="fa fa-cog" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 
-  markUndefinedButton(sample) {
+  markUndefinedButton() {
     const resetTooltip = 'click to mark as undefined structure - it will reset the Molecular mass';
 
     return (
-      <div>
-        <ControlLabel> &nbsp; </ControlLabel>
-        <div>
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id="markUndefined">{resetTooltip}</Tooltip>
-            }
-          >
-            <Button
-              className="btn btn-sm"
-              onClick={this.markSumFormulaUndefined}
-            >
-              <i className="fa fa-tag" />
-            </Button>
-          </OverlayTrigger>
-        </div>
-      </div>
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id="markUndefined">{resetTooltip}</Tooltip>
+        }
+      >
+        <Button onClick={this.markSumFormulaUndefined}>
+          <i className="fa fa-tag" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 
@@ -833,12 +817,14 @@ export default class SampleForm extends React.Component {
         </Row>
 
         {sample.decoupled && (
-          <Row className='mb-4'>
-            <Col>{this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}</Col>
-            <Col>
-              {this.textInput(sample, 'sum_formula', 'Sum formula')}
-              {this.btnCalculateMolecularMass(sample)}
-              {this.markUndefinedButton(sample)}
+          <Row className="mb-4">
+            <Col xs={7}>
+              {this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}
+            </Col>
+            <Col xs={3}>{this.textInput(sample, 'sum_formula', 'Sum formula')}</Col>
+            <Col xs={2} className="d-flex gap-2 align-items-end">
+              {this.btnCalculateMolecularMass()}
+              {this.markUndefinedButton()}
             </Col>
           </Row>
         )}
