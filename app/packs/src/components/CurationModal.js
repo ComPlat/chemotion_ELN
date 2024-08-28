@@ -19,6 +19,7 @@ export default class CurationModal extends Component {
       this.handlePromptShow = this.handlePromptShow.bind(this);
       this.convertStringToObject = this.convertStringToObject.bind(this);
       this.updateDescription = this.updateDescription.bind(this)
+      this.scrollToId = this.scrollToId.bind(this)
       this.state = {
         desc : this.cleanData(this.props.description),
         show : false, 
@@ -34,9 +35,11 @@ export default class CurationModal extends Component {
         cus_dictionary : new Typo("custom", false, false, { dictionaryPath: "/typojs" }),
         uk_dictionary : new Typo("en_UK", false, false, { dictionaryPath: "/typojs" }),
         us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" }),
-        showCorrectButton: true
-
+        showCorrectButton: true,
+        idKeyArray : []
     }}
+
+    
 
     handlePromptDismiss() {
       this.setState({ showPrompt: false });
@@ -191,7 +194,6 @@ export default class CurationModal extends Component {
         var cus_dictionary = this.state.cus_dictionary
         var  uk_dictionary = this.state.uk_dictionary
         var  us_dictionary = this.state.us_dictionary
-  
         var ms_words = [];
         var ss_list = []
         var italics_array =[]
@@ -297,6 +299,8 @@ export default class CurationModal extends Component {
 
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
       var correctedArray = this.state.correctedWords
+      var idArray = this.state.idKeyArray
+      var idindex = 0
       for (var entry of mispelledWords){
         var index = mispelledWords.indexOf(entry)
         mispelledWords[index] = entry.replaceAll(" ","")
@@ -313,11 +317,11 @@ export default class CurationModal extends Component {
         var regexHighlight = new RegExp(highlight, "gi")
         var parts = text.split(regexHighlight);
         var output_div
+        parts.filter((x)=> x != "" )
         var list_items = parts.map((part, index) => (
           <React.Fragment key={index}>
             {(()=> 
             {
-   
               var highlight_current = mispelledWords[ms_index]
               highlight_current = "\\b(" + highlight_current + ")\\b"
               var regexHighlightCurrent = new RegExp(highlight_current, "gi")
@@ -331,27 +335,40 @@ export default class CurationModal extends Component {
               }
               else if(regexHighlightCurrent.test(part) && !correctedArray.includes(part) )
                 {
-                  output_div = (<b id={index} style={{backgroundColor:"#32a852"}}>{part}</b>) 
+                  output_div = (<b id={idindex} style={{backgroundColor:"#32a852"}}>{part}</b>) 
+                  idArray.push(idindex)
+                  idindex = idindex + 1
                 }
               else if(regexHighlightWithOutCurrent.test(part) && !correctedArray.includes(part) ) 
                 {
-                  output_div = (<b id={index} style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+                  output_div = (<b id={idindex} style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+                  idArray.push(idindex)
+                  idindex = idindex + 1
                 }
               else if(correctedArray.includes(part)){
-                  output_div =<span id={index}> {part} </span>
+                  output_div = <span id={idindex}> {part} </span>
+                  idArray.push(idindex)
+                  idindex = idindex + 1
                 }
-              })()
+                
+              }
+              )
+              ()
             }
-            
+           
           {combined_array.includes(part)
             ? (output_div)
             : (part)} 
-        </React.Fragment>))
+        </React.Fragment>)
+        )
+        
         return (
           <div>
             {list_items}
           </div>
-        );}}
+        );}
+        // console.log(idArray)
+        this.setState({idKeyArray: idArray})}
 
     uniq(a) {
       var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
@@ -406,11 +423,16 @@ export default class CurationModal extends Component {
     }
 
     scrollToId(){
-      var element = document.querySelector('#\\31') 
-      console.log(element)
+      var sugIndex = this.state.suggestionIndex
+      var idArray = this.state.idKeyArray
+      var querryselector = `#\\3${idArray[sugIndex]}`
+      console.log(querryselector)
+      var element = document.querySelector(querryselector) 
+      // console.log(element)
       if(element !== null){
       element.scrollIntoView({behavior :"smooth"})
-    }}
+    }
+  }
 
     render() {
       var CustomPopover = () =>  (
