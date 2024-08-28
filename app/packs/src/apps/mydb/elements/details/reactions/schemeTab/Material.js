@@ -237,6 +237,7 @@ class Material extends Component {
     const purity = refMaterial?.purity || 1;
     const feedstockMolValue = calculateFeedstockMoles(vesselVolume, purity);
     const result = material.amount_mol / feedstockMolValue;
+    if (!result) return 'n.a.';
     return result > 1 ? '100%' : `${(result * 100).toFixed(0)}%`;
   }
 
