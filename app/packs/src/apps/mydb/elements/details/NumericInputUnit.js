@@ -72,8 +72,6 @@ export default function NumericInputUnit(props) {
     setValue(newInput);
   };
 
-  const bsSize = field === 'flash_point' ? 'sm' : null;
-
   return (
     <div className={`numericInputWithUnit_${unit}`}>
       {label
@@ -84,7 +82,6 @@ export default function NumericInputUnit(props) {
           type="text"
           className="px-1"
           disabled={inputDisabled}
-          size={bsSize}
           value={value}
           onChange={(event) => handleInputValueChange(event)}
           name={field}
@@ -94,7 +91,6 @@ export default function NumericInputUnit(props) {
           disabled={inputDisabled}
           active
           onClick={toggleInput}
-          size={bsSize}
         >
           {currentUnit}
         </Button>
