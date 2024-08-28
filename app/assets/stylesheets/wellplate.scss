@@ -25,18 +25,18 @@
 }
 
 .wellplate-well-container {
-  backgroundColor: white;
+  background-color: white;
   border-color: lightgray;
   border-radius: 50%;
   border-style: solid;
   border-width: 4px;
   cursor: move;
-  fontSize: 8;
+  font-size: 8;
   height: 60px;
-  lineHeight: 2;
+  line-height: 2;
   padding-top: 9px;
   text-align: center;
-  verticalAlign: middle;
+  vertical-align: middle;
   width: 60px;
   .active {
     background-color: #337ab7;
