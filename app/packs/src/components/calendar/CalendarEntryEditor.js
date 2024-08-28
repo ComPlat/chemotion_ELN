@@ -272,7 +272,7 @@ const CalendarEntryEditor = (props) => {
           </ButtonToolbar>
         </Form>
       </Modal.Body>
-    </Modal >
+    </Modal>
   );
 }
 

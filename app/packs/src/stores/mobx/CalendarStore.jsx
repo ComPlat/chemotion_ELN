@@ -36,22 +36,16 @@ export const CalendarStore = types
     show_detail: types.optional(types.boolean, false),
 
     collection_users: types.optional(types.array(types.frozen({})), []),
-    delete_entry_loading: types.optional(types.boolean, false),
-    get_entries_loading: types.optional(types.boolean, false),
-    update_entry_loading: types.optional(types.boolean, false),
     calendar_types: types.optional(types.frozen({}), CalendarTypes),
-
     start: types.optional(types.maybeNull(types.Date)),
     end: types.optional(types.maybeNull(types.Date)),
     entries: types.optional(types.array(types.frozen({})), []),
-    error: types.optional(types.string, ''),
     eventable_id: types.optional(types.maybeNull(types.number)),
     eventable_type: types.optional(types.maybeNull(types.string)),
     showSharedCollectionEntries: types.optional(types.boolean, false),
   })
   .actions(self => ({
     getEntries: flow(function* getEntries() {
-      self.get_entries_loading = true;
       const params = {
         start_time: self.start.toISOString(),
         end_time: self.end.toISOString(),
@@ -65,7 +59,6 @@ export const CalendarStore = types
       if (result) {
         if (self.entries.length >= 1) { self.entries = []; }
         result.forEach(entry => self.entries.push(self.transformEntryFromApi(entry)));
-        self.get_entries_loading = false;
       }
     }),
     getCollectionUsers: flow(function* getCollectionUsers(params) {
@@ -75,28 +68,21 @@ export const CalendarStore = types
       }
     }),
     createEntry: flow(function* createEntry(entry) {
-      self.update_entry_loading = true;
       let result = yield CalendarEntryFetcher.create(self.transformEntryForApi(entry));
       if (result) {
-        self.update_entry_loading = false;
         if (result.error) {
-          self.changeErrorMessage(result.error);
-          console.log(self.error);
+          console.log(result);
         } else {
           self.entries.push(self.transformEntryFromApi(result));
-          self.changeErrorMessage('');
           self.getEntries();
         }
       }
     }),
     updateEntry: flow(function* updateEntry(entry) {
-      self.update_entry_loading = true;
       let result = yield CalendarEntryFetcher.update(self.transformEntryForApi(entry));
       if (result) {
-        self.update_entry_loading = false;
         if (result.error) {
-          self.changeErrorMessage(result.error);
-          console.log(self.error);
+          console.log(result);
         } else {
           const index = self.entries.findIndex(entry => entry.id === result.id);
           let entries = [...self.entries];
@@ -105,25 +91,20 @@ export const CalendarStore = types
           } else {
             self.entries.push(self.transformEntryFromApi(result));
           }
-          self.changeErrorMessage('');
           self.getEntries();
         }
       }
     }),
     deleteEntry: flow(function* deleteEntry(entry_id) {
-      self.delete_entry_loading = true;
       let result = yield CalendarEntryFetcher.deleteById(entry_id);
       if (result) {
-        self.delete_entry_loading = false;
         if (result.error) {
-          self.changeErrorMessage(result.error);
-          console.log(self.error);
+          console.log(result);
         } else {
           const index = self.entries.findIndex(entry => entry.id === result.id);
           if (index !== -1) {
             self.entries.splice(index, 1);
           }
-          self.changeErrorMessage('');
           self.getEntries();
         }
       }
@@ -131,20 +112,10 @@ export const CalendarStore = types
     showCalendar() {
       self.show_calendar = true;
     },
-    hideCalendar() {
-      self.show_calendar = false;
-    },
-    showTimeSlotEditor() {
-      self.show_time_slot_editor = true;
-    },
-    hideTimeSlotEditor() {
-      self.show_time_slot_editor = false;
-    },
     closeCalendar() {
       self.current_entry = {};
-      self.hideTimeSlotEditor();
-      self.calendar_closed = true;
-      self.hideCalendar();
+      self.show_time_slot_editor = false;
+      self.show_calendar = false;
     },
     toggleBackdrop(event) {
       event.stopPropagation();
@@ -168,9 +139,6 @@ export const CalendarStore = types
     },
     changeEditorDimension(dimension) {
       self.editor_dimension = dimension;
-    },
-    changeErrorMessage(message) {
-      self.error = message;
     },
     changeCurrentView(view) {
       self.current_view = view;
@@ -222,12 +190,12 @@ export const CalendarStore = types
     },
     setEditorValues(entry) {
       self.current_entry = entry;
-      self.showTimeSlotEditor();
+      self.show_time_slot_editor = true;
       self.current_entry_editable = self.canEditEntry(entry);
     },
     resetEditorValues() {
       self.current_entry = {};
-      self.hideTimeSlotEditor();
+      self.show_time_slot_editor = false;
       self.current_entry_editable = false;
     },
     toggleEntries(event) {

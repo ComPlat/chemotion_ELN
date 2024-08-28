@@ -12,6 +12,9 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
+// see:
+//  https://jquense.github.io/react-big-calendar/examples/?path=/docs/props-full-prop-list--page
+
 const AllViews = Object.keys(Views).map((k) => Views[k]);
 
 const formats = {
@@ -26,8 +29,6 @@ const formats = {
   weekdayFormat: 'dddd',
 };
 
-// see:
-//  https://jquense.github.io/react-big-calendar/examples/?path=/docs/props-full-prop-list--page
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(BaseCalendar);
 
@@ -180,7 +181,7 @@ const Calendar = () => {
         ColorCache[entry.eventable_id] = color;
       }
     } else {
-      color = '#265985'; // getRandomBlue();
+      color = 'var(--bs-primary)'; // getRandomBlue();
     }
     return color;
   }
@@ -332,9 +333,7 @@ const Calendar = () => {
           <Modal.Body>
             <div className="overflow-y-auto" style={{ height: calendarHeight }}>
               <DragAndDropCalendar
-                components={{
-                  event: CalendarEvent
-                }}
+                components={{ event: CalendarEvent }}
                 localizer={localizer}
                 events={filteredEntries(calendarStore.calendarEntries)}
                 views={AllViews}
@@ -357,13 +356,12 @@ const Calendar = () => {
                 formats={formats}
                 allDayAccessor={allDayAccessor}
               />
-
               <CalendarEntryEditor entry={calendarStore.current_entry} resizeEditor={resizeEditor} />
             </div>
           </Modal.Body>
         </Modal>
       </div>
-    </Draggable >
+    </Draggable>
   );
 };
 
