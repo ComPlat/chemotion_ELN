@@ -114,7 +114,7 @@ const SampleTaskInbox = ({}) => {
             transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
           }}
         >
-          <Modal.Header closeButton>
+          <Modal.Header className="py-3 border-bottom border-gray-600 bg-gray-300" closeButton>
             <Modal.Title className="handle draggable-modal-stack-title">
               <SampleTaskReloadButton />
               {openSampleTaskCount()} open SampleTasks

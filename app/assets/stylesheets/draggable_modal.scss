@@ -51,13 +51,8 @@
 }
 
 .draggable-modal-content .modal-header {
-  background-color: var(--bs-gray-300);
-  border-bottom: 1px solid var(--bs-gray-600);
-  padding: 0.75rem 1rem 0.75rem 0;
-}
-
-.draggable-modal-content.calendar .modal-header {
-  padding: 0.75rem 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 .draggable-modal-content .modal-header:hover {
@@ -117,12 +112,8 @@
   font-size: 1.5em;
 }
 
-.draggable-modal-content .modal-body {
-  padding: 0;
-}
-
 .draggable-modal-content.calendar .modal-body {
-  padding: 0.75rem 1rem;
+  padding-top: 0.75rem;
 }
 
 .draggable-modal-form-container {

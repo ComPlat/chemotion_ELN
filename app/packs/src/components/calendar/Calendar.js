@@ -89,11 +89,8 @@ const Calendar = () => {
   }
 
   useEffect(() => {
-    window.addEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
     if (calendarStore.show_calendar) {
+      window.addEventListener('resize', handleResize);
       handleResize();
     } else {
       window.removeEventListener('resize', handleResize);
@@ -318,7 +315,7 @@ const Calendar = () => {
           }}
         >
      
-          <Modal.Header closeButton>
+          <Modal.Header className="py-3 border-bottom border-gray-600 bg-gray-300" closeButton>
             <Stack direction="horizontal" className="draggable-modal-stack" gap={3}>
               <Modal.Title className="draggable-modal-stack-title">
                 {headerDescription()}

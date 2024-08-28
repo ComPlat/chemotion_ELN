@@ -44,12 +44,12 @@ const CalendarEvent = (props) => {
     <div>
       <div className={shortTitle ? 'my-2' : 'my-0'}>
         {event.title}
-        {!shortTitle ? (
+        {!shortTitle && (
           <span className="fst-italic">
             {eventDetail(event)}
             {event.element_short_label}
           </span>
-        ) : null}
+        )}
       </div>
     </div>
   );

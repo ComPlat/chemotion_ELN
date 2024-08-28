@@ -86,7 +86,7 @@ const CalendarEntryEditor = (props) => {
         <div className="d-flex justify-content-end mb-2">
           <Button
             variant="link"
-            className="ms-2 border-0 text-decoration-none"
+            className="ms-2 text-decoration-none"
             onClick={() => showDetails()}
           >
             {entry.element_name}
@@ -102,13 +102,10 @@ const CalendarEntryEditor = (props) => {
         </div>
       );
     }
-
-    return null;
   }
 
   const deleteEntryButton = () => {
-    if (entry.id === undefined) { return null; }
-    if (!editable) { return null; }
+    if (entry.id === undefined || !editable) { return null; }
 
     const popover = (
       <Popover id="popover-delete-entry">
