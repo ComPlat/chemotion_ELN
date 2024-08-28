@@ -341,7 +341,7 @@ export default class LiteratureDetails extends Component {
       literature
     } = this.state;
     const { currentUser } = UserStore.getState();
-    const label = currentCollection ? currentCollection.label : null
+    const label = currentCollection ? currentCollection.label : null;
     let contentSamples = '';
     sampleRefs.forEach((citation) => {
       contentSamples = `${contentSamples}\n${literatureContent(citation, true)}`;

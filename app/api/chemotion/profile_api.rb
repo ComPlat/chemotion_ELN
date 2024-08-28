@@ -24,6 +24,7 @@ module Chemotion
         data = profile.data || {}
         layout = {}
         layout = Rails.configuration.profile_default&.layout if Rails.configuration.respond_to?(:profile_default)
+        templates_list = []
 
         layout&.each_key do |ll|
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
@@ -64,12 +65,26 @@ module Chemotion
           data[dt] = sorted_layout
         end
 
+        folder_path = "user_templates/#{current_user.id}"
+        user_templates_path = Rails.root.join('uploads', Rails.env, folder_path)
+        Dir.glob("#{user_templates_path}/*.txt") do |file|
+          next unless file
+
+          if File.file?(file)
+            content = File.read(file)
+            content = JSON(content)
+            content['props']['path'] = file
+            templates_list.push(content)
+          end
+        end
+
         {
           data: data,
           show_external_name: profile.show_external_name,
           show_sample_name: profile.show_sample_name,
           show_sample_short_label: profile.show_sample_short_label,
           curation: profile.curation,
+          user_templates: templates_list,
         }
       end
 
@@ -98,7 +113,6 @@ module Chemotion
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
       end
-
       put do
         declared_params = declared(params, include_missing: false)
         available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
@@ -125,16 +139,111 @@ module Chemotion
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
         data['default_structure_editor'] = 'ketcher' if data['default_structure_editor'].nil?
-
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
         }
-
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)
+      end
+
+      desc 'post user template'
+      params do
+        requires :content, type: String, desc: 'ketcher file content'
+      end
+      post do
+        error_messages = []
+
+        error!({ error_messages: ['Content cannot be blank'] }, 422) if params[:content].blank?
+
+        folder_path = "user_templates/#{current_user.id}"
+        complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
+        file_path = "#{complete_folder_path}/#{SecureRandom.alphanumeric(10)}.txt"
+        begin
+          FileUtils.mkdir_p(complete_folder_path) unless File.directory?(complete_folder_path)
+          File.new(file_path, 'w') unless File.exist?(file_path)
+          File.write(file_path, params[:content])
+
+          template_attachment = Attachment.new(
+            bucket: 1,
+            filename: file_path,
+            key: 'user_template',
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: 'text/html',
+            file_path: file_path,
+          )
+          begin
+            template_attachment.save
+          rescue StandardError
+            error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+          end
+          { template_details: template_attachment, error_messages: error_messages }
+        rescue Errno::EACCES
+          error!('Save files error!', 500)
+        end
+      end
+
+      desc 'delete user template'
+      params do
+        requires :path, type: String, desc: 'file path of user template'
+      end
+      delete do
+        path = params[:path]
+        error!({ error_messages: ['path cannot be blank'] }, 422) if path.empty? || !File.exist?(path)
+        FileUtils.rm_f(path)
+        { status: true }
+      end
+
+      desc 'get user profile editor ketcher 2 setting options'
+      get 'editors/ketcher2-options' do
+        file_path = "ketcher-optns/#{current_user.id}.json"
+        complete_folder_path = Rails.root.join('uploads', Rails.env, file_path)
+        error_messages = []
+
+        begin
+          JSON(File.read(complete_folder_path))
+        rescue StandardError
+          error_messages.push('Issues with reading settings file')
+          error!({ status: false, error_messages: error_messages.flatten }, 500)
+        end
+      end
+
+      desc 'update user profile editor ketcher 2 setting options'
+      params do
+        requires :data, type: Hash, desc: 'data structure for ketcher options'
+      end
+      put 'editors/ketcher2-options' do
+        error_messages = []
+        folder_path = 'ketcher-optns'
+        complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
+        file_path = "#{complete_folder_path}/#{current_user.id}.json"
+        begin
+          FileUtils.mkdir_p(complete_folder_path) unless File.directory?(complete_folder_path)
+          File.new(file_path, 'w') unless File.exist?(file_path)
+          File.write(file_path, JSON(params[:data]))
+
+          template_attachment = Attachment.new(
+            bucket: 1,
+            filename: file_path,
+            key: 'ketcher-optns',
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: 'application/json',
+            file_path: file_path,
+          )
+          if template_attachment.save
+            { status: true, message: 'Ketcher options updated successfully' }
+          else
+            error_messages.push('Attachment could not be saved')
+            error!({ status: false, error_messages: error_messages.flatten }, 422)
+          end
+        rescue StandardError => e
+          error_messages.push(e.message)
+          error!({ status: false, error_messages: error_messages.flatten }, 500)
+        end
       end
     end
   end
