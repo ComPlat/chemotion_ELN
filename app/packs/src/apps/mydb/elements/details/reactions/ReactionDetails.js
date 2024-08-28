@@ -451,9 +451,33 @@ export default class ReactionDetails extends Component {
     this.handleInputChange('gaseous', !reaction.gaseous);
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  updateReactionVesselSize(reaction) {
+    Promise.resolve().then(() => {
+      const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
+
+      if (vesselSize) {
+        GasPhaseReactionActions.setReactionVesselSize(vesselSize);
+      }
+
+      if (catalystMoles) {
+        GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+      }
+
+      if (!vesselSize) {
+        GasPhaseReactionActions.setReactionVesselSize(null);
+      }
+
+      if (!catalystMoles) {
+        GasPhaseReactionActions.setCatalystReferenceMole(null);
+      }
+    });
+  }
+
   render() {
     const { reaction } = this.state;
     const { visible } = this.state;
+    this.updateReactionVesselSize(reaction);
     const schemeTitle = reaction ? (
       <div style={{ display: 'flex' }}>
         <div style={{ paddingRight: '2px' }}>
