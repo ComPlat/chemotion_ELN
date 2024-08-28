@@ -13,8 +13,6 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
-import { solventOptions } from 'src/components/staticDropdownOptions/options';
-import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -101,36 +99,20 @@ export default class SampleForm extends React.Component {
   // Info button display info message when one hover over it
   infoButton() {
     return (
-      <OverlayTrigger placement="top" overlay={this.infoMessage()}>
+      <OverlayTrigger
+        placement="top"
+        overlay={(
+          <Tooltip id="assignButton">
+            Information mirrored to the reaction table describing the content of pure
+            compound or amount of pure compound in a given solution
+          </Tooltip>
+        )}
+      >
         <Button>
           <i className="fa fa-info" />
         </Button>
       </OverlayTrigger>
     );
-  }
-
-  infoMessage = () => (
-    <Tooltip id="assignButton">
-      Information mirrored to the reaction table describing the content of pure
-      compound or amount of pure compound in a given solution
-    </Tooltip>
-  );
-
-  // Input components of sample details should be disabled if detail level
-  // does not allow to read their content
-  topSecretCheckbox(sample) {
-    if (sample.can_update) {
-      return (
-        <Form.Check
-          ref={(ref) => { this.topSecretInput = ref; }}
-          checked={sample.is_top_secret}
-          onChange={(e) => this.handleFieldChanged('is_top_secret', e.target.checked)}
-          label="Top secret"
-        />
-      );
-    }
-
-    return (<span />);
   }
 
   drySolventCheckbox(sample) {
@@ -690,7 +672,7 @@ export default class SampleForm extends React.Component {
       <Form.Group className="flex-grow-1">
         <Form.Label>Amount</Form.Label>
         {sample.isMethodDisabled('amount_value') ? (
-          <FormControl type="text" disabled defaultValue="***" readOnly />
+          <Form.Control type="text" disabled defaultValue="***" readOnly />
         ) : (
           <div className="d-flex gap-2">
             {this.numInput(sample, 'amount_g', 'g', ['m', 'n', 'u'], 4, null, 'massMgInput', isDisabled, '')}
@@ -742,7 +724,6 @@ export default class SampleForm extends React.Component {
         <Form.Label>Description</Form.Label>
         <Form.Control
           as="textarea"
-          ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
           onChange={(e) => this.handleFieldChanged('description', e.target.value)}
@@ -766,7 +747,7 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const { enableSampleDecoupled, sample = {} } = this.props;
+    const { enableSampleDecoupled, sample = {}, customizableField } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -832,7 +813,6 @@ export default class SampleForm extends React.Component {
 
         <h5 className="py-2">Additional properties of the pure compound:</h5>
         <Row className="mb-4">
-
           <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
           <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
           <Col>{this.textInput(sample, 'xref_solubility', 'Solubile in')}</Col>
@@ -866,7 +846,7 @@ export default class SampleForm extends React.Component {
         </Row>
 
         {this.sampleDescription(sample)}
-        {this.props.customizableField()}
+        {customizableField()}
       </Form>
     );
   }
