@@ -58,7 +58,6 @@ export default class CurationModal extends Component {
 
     updateDescription(){
       this.setState({desc: this.cleanData(this.props.description) }, (() => {this.spellCheck(this.state.desc );
-        
       }))
     }
 
@@ -135,6 +134,7 @@ export default class CurationModal extends Component {
     }
 
     handleShow() {
+     
       this.setState({ show: true }, this.updateDescription);
     
    
@@ -430,7 +430,7 @@ export default class CurationModal extends Component {
       var element = document.querySelector(querryselector) 
       // console.log(element)
       if(element !== null){
-      element.scrollIntoView({behavior :"smooth"})
+      element.scrollIntoView({behavior :"smooth", alignToTop: true})
     }
   }
 
@@ -518,7 +518,7 @@ export default class CurationModal extends Component {
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
     
-          <Modal show={this.state.show} onHide={this.handleClose}  >
+          <Modal show={this.state.show} onHide={this.handleClose} onEntered={this.scrollToId} >
             <Modal.Header closeButton>
               <Modal.Title>
                 <Col md={6}><span style={{paddingRight:10}}>Spell Check: English {this.state.dictionaryLanguage}   </span>
@@ -561,11 +561,12 @@ export default class CurationModal extends Component {
                   </Panel.Body>
               <Panel.Footer><ButtonToolbar>
               <Button onClick={this.scrollToId}></Button>
-                <Button onClick={()=>this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Ignore</Button>
+                <Button onClick={()=>{this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords); this.scrollToId()}}>Ignore</Button>
                 <Button onClick={()=>this.reverseSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Go Back</Button>
                 <Button onClick={()=>
                 {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
-                this.convertStringToObject(this.state.desc)}}
+                this.convertStringToObject(this.state.desc)
+                this.scrollToId()}}
                 disabled={this.state.showCorrectButton}>
                 Correct</Button>
                 {/* <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button> */}
