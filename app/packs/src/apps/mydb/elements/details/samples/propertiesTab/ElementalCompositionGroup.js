@@ -1,16 +1,15 @@
 import React from 'react';
-import ElementalComposition from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalComposition'
-import ElementalCompositionCustom from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionCustom'
+import ElementalComposition from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalComposition';
+import ElementalCompositionCustom from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionCustom';
 
 export default class ElementalCompositionGroup extends React.Component {
-
   handleElementalChanged(el_composition) {
-    this.props.handleSampleChanged(this.props.sample)
+    this.props.handleSampleChanged(this.props.sample);
   }
 
   render() {
-    let { sample, show } = this.props;
-    let elemental_compositions = sample.elemental_compositions;
+    const { sample } = this.props;
+    const { elemental_compositions } = sample;
 
     let display_error = true;
     let data = [];
@@ -19,19 +18,17 @@ export default class ElementalCompositionGroup extends React.Component {
     if (elemental_compositions.length == 1) {
       data = '';
       display_error = false;
-    }
-    else if (sample.formulaChanged) {
+    } else if (sample.formulaChanged) {
       data = (
         <p>
           Formula has been changed. Please save sample to calculate the
           elemental compositon.
         </p>
-      )
+      );
     }
 
-    elemental_compositions.map((elemental_composition, key) => {
-      if (Object.keys(elemental_composition.data).length)
-        display_error = false;
+    elemental_compositions.map((elemental_composition) => {
+      if (Object.keys(elemental_composition.data).length) { display_error = false; }
 
       if (elemental_composition.composition_type == 'found') {
         el_composition_custom = elemental_composition;
@@ -39,7 +36,8 @@ export default class ElementalCompositionGroup extends React.Component {
         data.push(
           <ElementalComposition
             elemental_composition={elemental_composition}
-            key={elemental_composition.id} />
+            key={elemental_composition.id}
+          />
         );
       }
     });
@@ -50,23 +48,26 @@ export default class ElementalCompositionGroup extends React.Component {
           Sorry, it was not possible to calculate the elemental
           compositon. Check data please.
         </p>
-      )
+      );
     }
 
     const custom = sample.can_update
-      ? (<ElementalCompositionCustom
-        handleElementalChanged={(el) => this.handleElementalChanged(el)}
-        elemental_composition={el_composition_custom}
-        hideLoading={!sample.contains_residues}
-        concat_formula={sample.concat_formula}
-        key={'elem_composition_found'} />)
+      ? (
+        <ElementalCompositionCustom
+          handleElementalChanged={(el) => this.handleElementalChanged(el)}
+          elemental_composition={el_composition_custom}
+          hideLoading={!sample.contains_residues}
+          concat_formula={sample.concat_formula}
+          key="elem_composition_found"
+        />
+      )
       : null;
 
     if (!sample.molecule_formula) {
       return false;
     }
 
-    const label = sample.contains_residues ? <label>Elemental composition</label> : false
+    const label = sample.contains_residues ? <label>Elemental composition</label> : false;
 
     return (
       <div>
@@ -74,7 +75,6 @@ export default class ElementalCompositionGroup extends React.Component {
         {data}
         {custom}
       </div>
-    )
-
+    );
   }
 }
