@@ -5,26 +5,15 @@ import { Modal } from 'react-bootstrap';
 import { MolViewer } from 'react-molviewer';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-
-const basicCommands = (
-  <>
-    <div>
-      <strong>Zoom In / Out: </strong>Use mouse wheel or Shift + Left-click and
-      drag Vertically <strong>Rotate: </strong>Click and hold the left mouse
-      button, then drag to rotate
-    </div>
-    <div>
-      <strong>More Functions:</strong> Right-click on the molecule view to open
-      the JSmol menu and access more functions, such as saving as PNG file.
-    </div>
-  </>
-);
+import MolViewerSet from 'src/components/viewer/MolViewerSet';
 
 function MolViewerModal(props) {
-  const { fileContent, handleModalOpen, viewType, show } = props;
+  const {
+    fileContent, handleModalOpen, viewType, show
+  } = props;
   const [newContent] = useState(fileContent);
   const config = UIStore.getState().moleculeViewer;
-  if (!config?.featureEnabled || !config.chembox) return <span />;
+  if (!config?.featureEnabled || !fileContent) return <span />;
 
   if (show) {
     const viewer = (
@@ -45,7 +34,7 @@ function MolViewerModal(props) {
       >
         <Modal.Header closeButton>
           <Modal.Title style={{ fontSize: '12pt' }}>
-            {basicCommands}
+            {MolViewerSet.INFO}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
