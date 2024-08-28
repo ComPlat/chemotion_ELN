@@ -541,23 +541,7 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  sampleSolvent(sample) {
-    return (
-      <Select
-        ref={(input) => { this.solventInput = input; }}
-        id="solventInput"
-        name="solvents"
-        style={{ marginBottom: '15px' }}
-        multi={false}
-        options={solventOptions}
-        value={sample.solvent}
-        disabled={!sample.can_update}
-        onChange={(e) => this.handleFieldChanged('solvent', e)}
-      />
-    );
-  }
-
-  attachedAmountInput(sample, size) {
+  attachedAmountInput(sample) {
     if (!sample.contains_residues) return false;
 
     return this.numInput(
