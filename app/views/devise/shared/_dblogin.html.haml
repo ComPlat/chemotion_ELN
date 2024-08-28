@@ -1,19 +1,14 @@
 - if !(resource.extra_rules['disable_db_login'] == true)
-  %h3 Log in with registered account
-
-- if !(resource.extra_rules['disable_db_login'] == true)
-  = form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
-    .form-group.field
-      = f.label :login, "Email or name abbreviation(case-sensitive)"
-      %br/
+  %h3.mb-3 Log in with registered account
+  = form_for(resource, as: resource_name, url: session_path(resource_name), class: 'mb-3') do |f|
+    .form-group.mb-3
+      = f.label :login, "Email or name abbreviation (case-sensitive)", class: "form-label"
       = f.text_field :login, autofocus: true, class: 'form-control'
-    .form-group.field
-      = f.label :password
-      %br/
+    .form-group.mb-3
+      = f.label :password, class: 'form-label'
       = f.password_field :password, autocomplete: "off", class: 'form-control'
     - if devise_mapping.rememberable?
-      .form-group.field
-        = f.check_box :remember_me
-        = f.label :remember_me
-    .form-group.actions
-      = f.submit "Log in", class: 'btn btn-primary'
+      .form-check.mb-3
+        = f.check_box :remember_me, class: 'form-check-input'
+        = f.label :remember_me, class: 'form-check-label'
+    = f.submit "Log in", class: 'btn btn-primary'

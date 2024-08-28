@@ -1,22 +1,15 @@
-
-.container
-  %h2
+.container.my-5
+  %h1.mb-3
     Chemotion ELN - About
 
-  %br/
-  - Chemotion::Application.config.version.each do |k, v|
-    - next if v.to_s == '0'
-    %h4= "#{k.humanize}: #{v}"
-  %br/
-  %br/
-  %span
+  .row.mb-3
+    - Chemotion::Application.config.version.each do |k, v|
+      - next if v.to_s == '0'
+      %h4= "#{k.humanize}: #{v}"
+
+  %p
     See
     = link_to "CHANGELOG.md", "https://github.com/ComPlat/chemotion_ELN/blob/main/CHANGELOG.md#v#{Chemotion::Application.config.version["version"]&.gsub(/\./,'')}"
     for more details.
-  %br/
-  %br/
-  %br/
-
-
 
   = link_to "Back", root_path
