@@ -65,7 +65,7 @@ export default class TextRangeWithAddon extends Component {
             type="text"
             disabled={disabled}
             value={value}
-            inputRef={(ref) => { this.input = ref; }}
+            ref={(ref) => { this.input = ref; }}
             onChange={(event) => this.handleInputChange(event)}
             onFocus={() => this.handleInputFocus()}
             onBlur={() => this.handleInputBlur()}
