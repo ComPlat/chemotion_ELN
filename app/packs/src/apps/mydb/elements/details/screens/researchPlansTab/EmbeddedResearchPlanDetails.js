@@ -137,6 +137,8 @@ export default class EmbeddedResearchPlanDetails extends Component {
   handleCopyToMetadata(id, fieldName) {
     const { researchPlan } = this.state;
     const researchPlanMetadata = researchPlan.research_plan_metadata;
+    if (!researchPlanMetadata) { return null; }
+
     const args = { research_plan_id: researchPlanMetadata.research_plan_id };
     const index = researchPlan.body.findIndex((field) => field.id === id);
     const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';

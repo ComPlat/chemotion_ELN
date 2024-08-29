@@ -14,7 +14,8 @@ export default class ScreenDetailsContainers extends Component {
     super();
     const { screen } = props;
     this.state = {
-      screen
+      screen,
+      activeContainer: 0
     };
     this.analysesContainer = screen.container.children.filter(element => ~element.container_type.indexOf('analyses'));
   }
@@ -39,12 +40,14 @@ export default class ScreenDetailsContainers extends Component {
     let container = Container.buildEmpty();
     container.container_type = "analysis";
 
-    this.analysesContainer[0].children.push(container);
-    const newKey = this.analysesContainer[0].children.length - 1;
+    screen.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+
+    const newKey =
+      screen.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
 
-    this.props.parent.setState({ screen: screen })
+    this.props.parent.setState({ screen: screen });
   }
 
   handleRemove(container) {
@@ -65,6 +68,10 @@ export default class ScreenDetailsContainers extends Component {
     container.is_deleted = false;
 
     this.props.parent.setState({ screen: screen })
+  }
+
+  handleAccordionOpen(key) {
+    this.setState({ activeContainer: key });
   }
 
   stopToggleAccordion(event) {
@@ -106,15 +113,15 @@ export default class ScreenDetailsContainers extends Component {
   }
 
   containerHeader(container) {
-    const { readOnly } = this.props;
+    const { readOnly, screen } = this.props;
 
     return (
-      <div className="d-flex justify-content-between w-100 mb-0">
+      <div className="d-flex justify-content-between align-items-start w-100 mb-0">
         <div>
           {this.headerValues(container)}
         </div>
-        <div onClick={this.stopToggleAccordion}>
-          <PrintCodeButton element={screen} analyses={[container]} ident={container.id} />
+        <div className="d-flex" onClick={this.stopToggleAccordion}>
+          <PrintCodeButton element={screen} analyses={[container]} />
           <Button
             size="xxsm"
             variant="danger"
