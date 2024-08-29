@@ -1,16 +1,19 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Alert, Button, Modal, SplitButton,
-  FormGroup, FormControl, MenuItem
-} from 'react-bootstrap';
-import 'whatwg-fetch';
 import Quagga from 'quagga';
+import React from 'react';
+import {
+  Alert, Button,
+  FormControl,
+  FormGroup,
+  MenuItem,
+  Modal, SplitButton
+} from 'react-bootstrap';
 import QrReader from 'react-qr-reader';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import Utils from 'src/utilities/Functions';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import Utils from 'src/utilities/Functions';
+import 'whatwg-fetch';
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
@@ -78,10 +81,10 @@ export default class ScanCodeButton extends React.Component {
       decoder: {
         readers: ["code_128_reader"],
       }
-    }, function (err) {
+    }, function(err) {
       if (err) {
         console.log(err);
-        return
+        return;
       }
       console.log("Initialization finished. Ready to start");
       Quagga.start();
@@ -138,14 +141,14 @@ export default class ScanCodeButton extends React.Component {
       return;
     }
 
-    stopQuagga && Quagga.stop()
+    stopQuagga && Quagga.stop();
     fetch(`/api/v1/code_logs/generic?code=${data}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())
       .then(this.checkJSONResponse)
       .then((json) => {
-        code_log = json.code_log
+        code_log = json.code_log;
         if (code_log.source === 'container') {
           // open active analysis
           UIActions.selectTab({ tabKey: 1, type: code_log.root_code.source });
@@ -257,7 +260,6 @@ export default class ScanCodeButton extends React.Component {
 
   render() {
     const { json } = this.state;
-    console.log(json);
     const ids = this.state.checkedIds.toArray();
     const disabledPrint = !(ids.length > 0);
     const menuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
