@@ -98,12 +98,12 @@ module Chemotion
           optional :layout_detail_wellplate, type: Hash, profile_layout_hash: true
           optional :layout_detail_screen, type: Hash, profile_layout_hash: true
           optional :export_selection, type: Hash do
-            optional :sample, type: Array[Boolean]
-            optional :reaction, type: Array[Boolean]
-            optional :wellplate, type: Array[Boolean]
+            optional :sample, type: [Boolean]
+            optional :reaction, type: [Boolean]
+            optional :wellplate, type: [Boolean]
           end
           optional :computed_props, type: Hash do
-            optional :graph_templates, type: Array[Hash]
+            optional :graph_templates, type: [Hash]
             optional :cur_template_idx, type: Integer
           end
           optional :default_structure_editor, type: String
@@ -203,11 +203,16 @@ module Chemotion
         complete_folder_path = Rails.root.join('uploads', Rails.env, file_path)
         error_messages = []
 
-        begin
-          JSON(File.read(complete_folder_path))
-        rescue StandardError
-          error_messages.push('Issues with reading settings file')
-          error!({ status: false, error_messages: error_messages.flatten }, 500)
+        if File.exist?(complete_folder_path)
+          begin
+            settings = JSON.parse(File.read(complete_folder_path))
+            { status: true, settings: settings }
+          rescue StandardError => e
+            error_messages.push('Issues with reading settings file', e.message)
+            { status: false, error_messages: error_messages.flatten }
+          end
+        else
+          { status: true, settings: {}, message: 'Settings file not found, using default settings' }
         end
       end
 
