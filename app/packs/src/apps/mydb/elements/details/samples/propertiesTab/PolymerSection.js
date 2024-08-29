@@ -106,7 +106,6 @@ export default class PolymerSection extends React.Component {
         <FormControl type="text"
           value={residue.custom_info.formula || ''}
           name="formula"
-          key={'polymer_formula_input' + sample.id.toString()}
           onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
         />
       </FormGroup>
@@ -126,7 +125,6 @@ export default class PolymerSection extends React.Component {
             metricPrefix='n'
             metricPrefixes={['n']}
             precision={3}
-            key={'polymer_loading_input' + sample.id.toString()}
             name="polymer_loading"
             // TODO: enable again
             //variant={this.checkInputStatus(sample, 'loading')}
@@ -150,7 +148,6 @@ export default class PolymerSection extends React.Component {
             <Radio onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
               checked={residue.custom_info.loading_type == value}
               name="loading_type"
-              key={value + sample.id.toString() + 'loading_type'}
               value={value}
               disabled={value != 'external' && !rel_loading}
             >{label}</Radio>
@@ -166,7 +163,7 @@ export default class PolymerSection extends React.Component {
       return false;
 
     return (
-      <table width="100%" key={'polymer_loading' + sample.id.toString()}>
+      <table width="100%">
         <thead>
           <tr>
             <th>
@@ -187,7 +184,6 @@ export default class PolymerSection extends React.Component {
                 metricPrefix='n'
                 metricPrefixes={['n']}
                 precision={3}
-                key={'polymer_loading_input' + sample.id.toString()}
                 name="polymer_loading"
                 variant={this.checkInputStatus(sample, 'loading')}
                 onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
@@ -212,7 +208,6 @@ export default class PolymerSection extends React.Component {
       <Select
         options={selectOptions}
         simpleValue
-        key={"polymer_type" + sample.id.toString()}
         name="polymer_type"
         value={residue.custom_info.polymer_type}
         clearable={false}
@@ -232,7 +227,6 @@ export default class PolymerSection extends React.Component {
       <Select
         options={selectOptions}
         simpleValue
-        key={`surface_type_${sample.id}`}
         name="surface_type"
         value={residue.custom_info.surface_type}
         clearable={false}
@@ -248,7 +242,6 @@ export default class PolymerSection extends React.Component {
         <FormControl type="text"
           value={residue.custom_info.cross_linkage || ''}
           name="cross_linkage"
-          key={'cross_linkage' + sample.id.toString()}
           onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
         />
       </FormGroup>
