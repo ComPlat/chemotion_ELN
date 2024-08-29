@@ -12,6 +12,7 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
+import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -1014,9 +1015,15 @@ export default class SampleForm extends React.Component {
               </div>
             </ListGroupItem>
           </ListGroup>
-          {/* <tr> */}
-            {this.additionalProperties(sample)}
-          {/* </tr> */}
+          {this.additionalProperties(sample)}
+          <tr>
+            <td colSpan="4">
+              <SampleDetailsSolvents
+                sample={sample}
+                onChange={this.handleSolventChanged}
+              />
+            </td>
+          </tr>
           <tr style={{ paddingTop: '15px' }}>
             <td colSpan="4">{this.sampleDescription(sample)}</td>
           </tr>

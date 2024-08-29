@@ -854,10 +854,12 @@ export default class SampleDetails extends React.Component {
             decoupleMolecule={this.decoupleMolecule}
           />
         </ListGroupItem>
-        <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
-        {this.elementalPropertiesItem(sample)}
         {this.chemicalIdentifiersItem(sample)}
-        <div style={{marginTop: '10px'}}>
+        <div style={{ marginTop: '10px' }}>
+          <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
+        </div>
+        {this.elementalPropertiesItem(sample)}
+        <div style={{ marginTop: '10px' }}>
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>
       </Tab>
