@@ -234,7 +234,7 @@ const SearchResult = ({ handleClear }) => {
     if (searchStore.searchResultsCount === 0) { return null }
 
     return (
-      <ButtonToolbar className="advanced-search-buttons">
+      <ButtonToolbar className="advanced-search-buttons results">
         <Button variant="warning" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>

@@ -86,7 +86,7 @@ const SearchModal = () => {
           }}
         >
      
-          <Modal.Header closeButton>
+          <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" closeButton>
             <Stack direction="horizontal" className="draggable-modal-stack" gap={3}>
               <Modal.Title className="draggable-modal-stack-title">
                 <i className="fa fa-arrows move" />
@@ -126,7 +126,7 @@ const SearchModal = () => {
             </Stack>
           </Modal.Header>
         
-          <Modal.Body>
+          <Modal.Body className="p-0">
             <React.Suspense fallback={<Spinner />}>
               <div className={`draggable-modal-form-container${minimizedClass}`}>
                 {FormComponent(searchStore.searchModalSelectedForm)}

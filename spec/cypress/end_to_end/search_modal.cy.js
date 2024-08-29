@@ -11,11 +11,10 @@ describe('Text search', () => {
     cy.visit('users/sign_in');
     cy.login('cu1', 'user_password');
 
-    cy.get('#tabList-pane-0 > .list-container > .list-elements', { timeout: 4000 })
+    cy.get('#tabList-tabpane-0 > .list-container > .list-elements', { timeout: 4000 })
       .should('be.visible')
       .then(() => {
         cy.wait(4000);
-        cy.get('#tree-id-Col1').click();
         cy.get('#open-search-modal').click();
       });
   });
@@ -26,7 +25,7 @@ describe('Text search', () => {
       .find('[id^=react-select-][id$=-option-1]')
       .click({ force: true });
     cy.get('.value-select').first().type('te');
-    cy.get('.adv-search-row').should('have.length', 2);
+    cy.get('.advanced-search-row').should('have.length', 2);
     cy.get('#advanced-search-button').click();
     cy.contains('0 results');
     cy.get('.collapsed').click();
@@ -34,8 +33,8 @@ describe('Text search', () => {
     cy.get('.value-select').first().type('Sample');
     cy.get('#advanced-search-button').click();
     cy.contains('1 results').then(() => {
-      cy.get('.result-button-toolbar > .btn-primary').click();
-      cy.get('.alert button').contains('Remove search result');
+      cy.get('.advanced-search-buttons.results > .btn-primary').click();
+      cy.get('button.btn-info').contains('Remove search result');
     });
   });
 
@@ -46,10 +45,10 @@ describe('Text search', () => {
     cy.get('#input_name').type('Sample');
     cy.get('#advanced-search-button').click();
     cy.contains('1 results').then(() => {
-      cy.get('.result-button-toolbar > .btn-info').click();
+      cy.get('.advanced-search-buttons.results > .btn-info').click();
       cy.get('#input_name').should('not.have.value', 'Sample');
       cy.get('#advanced-cancel-button').click();
-      cy.get('[dialogas="full-search"]').should('not.be.visible');
+      cy.get('[role="dialog"]').should('not.exist');
     });
   });
 });
