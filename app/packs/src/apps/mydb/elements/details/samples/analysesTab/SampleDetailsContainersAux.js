@@ -296,13 +296,16 @@ const HeaderNormal = ({
   const { comparable_info } = container;
   let is_comparison = false;
   let layout = '';
-  let list_attachments = [];
   let list_analyses = [];
   let list_dataset = [];
+  let list_spectra_name = '';
   if (comparable_info) {
     is_comparison = comparable_info.is_comparison;
     layout = comparable_info.layout;
-    list_attachments = comparable_info.list_attachments;
+    const list_attachments_name = comparable_info.list_attachments.map((att) => {
+      return att.filename.split('.')[0];
+    });
+    list_spectra_name = list_attachments_name.join(', ');
     list_analyses = comparable_info.list_analyses;
     list_dataset = comparable_info.list_dataset;
   }
@@ -339,14 +342,7 @@ const HeaderNormal = ({
             is_comparison ? (
               <>
                 <div className="sub-title">Layout: { layout }</div>
-                <div className="desc sub-title">Spectra: 
-                {
-                  (list_attachments && list_attachments.length > 0) ? list_attachments.map((spectra, idx) => (
-                    // <p>{`-File: ${spectra.file.name}, dataset: ${spectra.dataset.name}, analysis: ${spectra.analysis.name}`}</p>
-                    <p>{`-File: ${spectra.filename}, dataset: ${list_dataset[idx].name}, analysis: ${list_analyses[idx].name}`}</p>
-                  )) : ''
-                }
-                </div>
+                <div className="desc sub-title">Spectra: { list_spectra_name }</div>
               </>
             ) : (
               <>
