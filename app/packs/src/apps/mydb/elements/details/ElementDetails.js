@@ -14,7 +14,7 @@ import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContai
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
 import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails';
-import StickyDiv from 'react-stickydiv';
+import Sticky from 'react-sticky-el';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
@@ -267,37 +267,45 @@ export default class ElementDetails extends Component {
     const {
       fullScreen, selecteds, activeKey, offsetTop
     } = this.state;
-    const fScrnClass = fullScreen ? 'full-screen' : 'normal-screen';
 
-    const selectedElements = selecteds.map((el, i) => {
-      if (!el) return (<span />);
-      const key = `${el.type}-${el.id}`;
-      return (
+    const selectedElements = selecteds
+      .filter((el) => !!el)
+      .map((el, i) => (
         <Tab
-          key={key}
+          key={`${el.type}-${el.id}`}
           eventKey={i}
           unmountOnExit
           title={this.tabTitle(el, i)}
         >
           {this.content(el)}
         </Tab>
-      );
-    });
+      ));
 
-    return (
-      <div>
-        <StickyDiv zIndex={fullScreen ? 9 : 2} offsetTop={offsetTop}>
-          <div className={fScrnClass}>
-            <Tabs
-              id="elements-tabs"
-              activeKey={activeKey}
-              onSelect={DetailActions.select}
-            >
-              {selectedElements}
-            </Tabs>
-          </div>
-        </StickyDiv>
-      </div>
+    const contents = (
+      <Tabs
+        id="elements-tabs"
+        activeKey={activeKey}
+        onSelect={DetailActions.select}
+      >
+        {selectedElements}
+      </Tabs>
     );
+
+    return fullScreen
+      ? (
+        <div className="full-screen">
+          {contents}
+        </div>
+      )
+      : (
+        <Sticky
+          topOffset={-1 * offsetTop}
+          stickyStyle={{ top: offsetTop }}
+        >
+          <div className="normal-screen">
+            {contents}
+          </div>
+        </Sticky>
+      );
   }
 }
