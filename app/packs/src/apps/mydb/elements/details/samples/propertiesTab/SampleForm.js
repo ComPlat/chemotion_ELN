@@ -35,9 +35,7 @@ export default class SampleForm extends React.Component {
     this.updateStereoAbs = this.updateStereoAbs.bind(this);
     this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
-    this.showStructureEditor = this.showStructureEditor.bind(this);
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
-    this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.fetchNextInventoryLabel = this.fetchNextInventoryLabel.bind(this);
     this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
@@ -74,20 +72,10 @@ export default class SampleForm extends React.Component {
     this.props.sample.setMolecularMass(mass);
   }
 
-  handleSolventChanged(sample) {
-    this.props.parent.setState({ sample });
-  }
-
-  showStructureEditor() {
-    this.props.parent.setState({
-      showStructureEditor: true,
-    });
-  }
-
   structureEditorButton(isDisabled) {
     return (
       <Button
-        onClick={this.showStructureEditor}
+        onClick={this.props.showStructureEditor}
         disabled={isDisabled}
         variant="light"
       >
@@ -160,21 +148,21 @@ export default class SampleForm extends React.Component {
   updateMolName(e) {
     const { sample } = this.props;
     sample.molecule_name = e;
-    this.props.parent.setState({ sample });
+    this.props.handleSampleChanged(sample);
   }
 
   updateStereoAbs(e) {
     const { sample } = this.props;
     if (!sample.stereo) sample.stereo = {};
     sample.stereo.abs = e.value;
-    this.props.parent.setState({ sample });
+    this.props.handleSampleChanged(sample);
   }
 
   updateStereoRel(e) {
     const { sample } = this.props;
     if (!sample.stereo) sample.stereo = {};
     sample.stereo.rel = e.value;
-    this.props.parent.setState({ sample });
+    this.props.handleSampleChanged(sample);
   }
 
   switchDensityMolarity(e) {
@@ -283,7 +271,7 @@ export default class SampleForm extends React.Component {
   handleRangeChanged(field, lower, upper) {
     const { sample } = this.props;
     sample.updateRange(field, lower, upper);
-    this.props.parent.setState({ sample });
+    this.props.handleSampleChanged(sample);
   }
 
   /* eslint-disable camelcase */
@@ -323,7 +311,7 @@ export default class SampleForm extends React.Component {
   }
 
   handleFieldChanged(field, e, unit = null) {
-    const { sample } = this.props;
+    const { sample, handleSampleChanged } = this.props;
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
@@ -366,11 +354,11 @@ export default class SampleForm extends React.Component {
         }
       }
       if (!sample[field] && ((sample.molfile || '') === '')) {
-        this.props.parent.setState({ sample });
+        handleSampleChanged(sample);
       } else {
-        this.props.parent.setState({ sample }, this.props.decoupleMolecule);
+        handleSampleChanged(sample, this.props.decoupleMolecule);
       }
-    } else { this.props.parent.setState({ sample }); }
+    } else { handleSampleChanged(sample); }
   }
 
   btnCalculateMolecularMass() {
@@ -854,7 +842,8 @@ export default class SampleForm extends React.Component {
 
 SampleForm.propTypes = {
   sample: PropTypes.object,
-  parent: PropTypes.object,
+  handleSampleChanged: PropTypes.func.isRequired,
+  showStructureEditor: PropTypes.func.isRequired,
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,

@@ -751,7 +751,8 @@ export default class SampleDetails extends React.Component {
         {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}
         <SampleForm
           sample={sample}
-          parent={this}
+          handleSampleChanged={this.handleSampleChanged}
+          showStructureEditor={this.showStructureEditor}
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
