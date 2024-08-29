@@ -928,8 +928,8 @@ export default class SampleForm extends React.Component {
                       <div style={{ flex:  '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
-                      <div style={{ flex: '1', paddingLeft: '10px', paddingRight: '5px', display: 'flex', alignItems: 'flex-center' }}>
-                        <div style={{ flex: 1 }}>
+                      <div style={{ flex: '1 1 0', paddingLeft: '10px', paddingRight: '5px', display: 'flex', alignItems: 'flex-center', flexWrap: 'nowrap', }}>
+                        <div style={{ flex: 1, minWidth: '150px' }}>
                           {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
                         </div>
                         <div style={{ marginLeft: 0 }}>
@@ -939,7 +939,7 @@ export default class SampleForm extends React.Component {
                       <div style={{ flex:  '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'location', 'Location')}
                       </div>
-                      <div style={{ width: '10%', paddingLeft: '5px' }} className="top-secret-checkbox">
+                      <div style={{ display: 'flex', width: 'auto', paddingLeft: '5px' }} className="top-secret-checkbox">
                         {this.drySolventCheckbox(sample)}
                       </div>
                     </div>
@@ -963,47 +963,31 @@ export default class SampleForm extends React.Component {
 
                 <tr className="visible-hd">
                   <td colSpan="6">
-                    <table>
-                      <tbody>
-                      <tr style={{marginLeft:'5px'}}>
-                          <td style={{ width: '3%' }}>
-                            <div style={{ marginBottom: '15px' }}>
-                              {/* eslint-disable-next-line jsx-a11y/label-has-for */}
-                              <label style={{ height: '14px' }} />
-                              <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
-                                {this.infoButton()}
-                              </InputGroup.Button>
-                            </div>
-                          </td>
-                          {this.sampleAmount(sample)}
-                          <td style={{ width: '47%' }}>
-                            <div className="name-form" style={{ marginBottom: '15px' }}>
-                              <Tabs
-                                style={{ width: '60%' }}
-                                id="tab-density-molarity"
-                                defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
-                              >
-                                <Tab eventKey="density" title="Density">
-                                  {
-                                    this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                                  }
-                                </Tab>
-                                <Tab eventKey="molarity" title="Molarity">
-                                  {
-                                    this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                                  }
-                                </Tab>
-                              </Tabs>
-                              <div style={{ width: '40%', paddingLeft: '5px' }}>
-                                {
-                                  this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
-                                }
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <div className="input-wrapper" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginTop: '12px' }}>
+                        {this.infoButton()}
+                      </div>
+                      <div style={{ flex: '1 1 0', paddingLeft: '5px', paddingRight: '5px', marginTop: '14px'}}>
+                        {this.sampleAmount(sample)}
+                      </div>
+                      <div style={{ flex: '1 1 0', marginBottom: '15px', paddingLeft: '10px', paddingRight: '5px', display: 'flex', flexWrap: 'wrap' }}>
+                        <Tabs
+                          style={{ flex: '1 1 0' }}
+                          id="tab-density-molarity"
+                          defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
+                        >
+                          <Tab eventKey="density" title="Density">
+                            {this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)}
+                          </Tab>
+                          <Tab eventKey="molarity" title="Molarity">
+                            {this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)}
+                          </Tab>
+                        </Tabs>
+                        <div style={{ flex: '1 1 0', paddingLeft: '5px' }}>
+                          {this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)}
+                        </div>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               </div>
