@@ -3,8 +3,8 @@ import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import alt from 'src/stores/alt/alt';
-
 import DocumentHelper from 'src/utilities/DocumentHelper';
+import { templateParser } from '../../../utilities/Ketcher2SurfaceChemistryUtils';
 
 class UserActions {
   fetchOlsRxno() {
@@ -83,11 +83,13 @@ class UserActions {
     };
   }
 
+
   setUsertemplates() {
     const storageKey = 'ketcher-tmpls';
     UsersFetcher.fetchProfile().then((res) => {
       if (res?.user_templates) {
         localStorage.setItem(storageKey, '');
+        res.user_templates.push(...templateParser());
         localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
       }
     });

@@ -993,9 +993,11 @@ class Material extends Component {
     };
 
     const idCheck = /^\d+$/;
+    const truncatedSampleName = material.molecule_iupac_name?.length > 20 && materialGroup === 'reactants'
+      ? material.molecule_iupac_name?.substring(1, 25) : material.molecule_iupac_name;
 
     if (skipIupacName) {
-      let materialDisplayName = material.molecule_iupac_name || material.name;
+      let materialDisplayName = truncatedSampleName || material.name;
       if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
         materialDisplayName = material.external_label || materialDisplayName;
       }
