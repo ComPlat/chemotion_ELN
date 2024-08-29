@@ -84,167 +84,46 @@ export default class PolymerSection extends React.Component {
     this.props.handleSampleChanged(sample);
   }
 
-
-  checkInputStatus(sample, key) {
-    if (sample['error_' + key]) {
-      return 'error';
-    } else {
-      return 'success';
-    }
-  }
-
-  polymerFormula(sample, residue) {
-    return (
-      <Form.Group>
-        <Form.Label>Formula</Form.Label>
-        <Form.Control
-          type="text"
-          value={residue.custom_info.formula || ''}
-          name="formula"
-          onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
-        />
-      </Form.Group>
-    )
-  }
-
   customInfoRadio(label, value, residue, sample) {
-    let additionalLoadingInput = false;
-
-    if (value == 'external') {
-      let disabled = !(residue.custom_info.loading_type == value);
-      additionalLoadingInput = (
-        <td width="50%" className="loading-input visible-hd">
-          <NumeralInputWithUnitsCompo
-            value={sample.loading}
-            unit='mmol/g'
-            metricPrefix='n'
-            metricPrefixes={['n']}
-            precision={3}
-            name="polymer_loading"
-            // TODO: enable again
-            //variant={this.checkInputStatus(sample, 'loading')}
-            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
-            disabled={disabled}
-            readOnly={disabled}
-          />
-        </td>
-      )
-    }
-
-    let rel_composition = sample.elemental_compositions.find(function (item) {
-      return item.composition_type == value
-    });
-    let rel_loading = rel_composition && rel_composition.loading;
+    const relComposition = sample.elemental_compositions
+      .find((item) => item.composition_type === value);
+    const relLoading = relComposition?.loading;
 
     return (
-      <tr>
-        <td>
-          <Form.Group>
-            <Form.Check
-              type="radio"
-              onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
-              checked={residue.custom_info.loading_type == value}
-              name="loading_type"
-              value={value}
-              disabled={value != 'external' && !rel_loading}
-              label={label}
-            />
-          </Form.Group>
-        </td>
-        {additionalLoadingInput}
-      </tr>
-    )
+      <Form.Check
+        type="radio"
+        id={`polymer-loading_type-${value}`}
+        onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
+        checked={residue.custom_info.loading_type === value}
+        name="loading_type"
+        value={value}
+        disabled={value !== 'external' && !relLoading}
+        label={label}
+      />
+    );
   }
 
   polymerLoading(sample, residue) {
-    if (sample.reaction_product)
-      return false;
-
     return (
-      <table width="100%">
-        <thead>
-          <tr>
-            <th>
-              <label>Loading according to:</label>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {this.customInfoRadio("Mass difference", "mass_diff", residue, sample)}
-          {this.customInfoRadio("100% conversion", "full_conv", residue, sample)}
-          {this.customInfoRadio("Elemental analyses", "found", residue, sample)}
-          {this.customInfoRadio("External estimation", "external", residue, sample)}
-          <tr className="hidden-hd">
-            <td>
-              <NumeralInputWithUnitsCompo
-                value={sample.loading}
-                unit='mmol/g'
-                metricPrefix='n'
-                metricPrefixes={['n']}
-                precision={3}
-                name="polymer_loading"
-                variant={this.checkInputStatus(sample, 'loading')}
-                onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
-                disabled={residue.custom_info.loading_type != 'external'}
-                readOnly={residue.custom_info.loading_type != 'external'}
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    )
-  }
-
-  polymerType(sample, residue) {
-    let selectOptions = [
-      { label: 'Polystyrene', value: 'polystyrene' },
-      { label: 'Polyethyleneglycol', value: 'polyethyleneglycol' },
-      { label: 'Self-defined', value: 'self_defined' }
-    ];
-
-    return (
-      <Select
-        options={selectOptions}
-        simpleValue
-        name="polymer_type"
-        value={residue.custom_info.polymer_type}
-        clearable={false}
-        onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
-      />
-    )
-  }
-
-  surfaceType(sample, residue) {
-    let selectOptions = [
-      { label: 'Glass', value: 'glass' },
-      { label: 'Si native oxide', value: 'si Native Oxide' },
-      { label: 'Si, 5nm Ti, 100nm Au', value: 'si, 5nm Ti, 100nm Au' }
-    ];
-
-    return (
-      <Select
-        options={selectOptions}
-        simpleValue
-        name="surface_type"
-        value={residue.custom_info.surface_type}
-        clearable={false}
-        onChange={(v) => this.handleSurfaceTypeSelectChanged(v, residue, sample)}
-      />
-    )
-  }
-
-  polymerCrossLinkage(sample, residue) {
-    return (
-      <Form.Group>
-        <Form.Label>Cross-linkage</Form.Label>
-        <Form.Control
-          type="text"
-          value={residue.custom_info.cross_linkage || ''}
-          name="cross_linkage"
-          onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+      <div>
+        <h5>Loading according to:</h5>
+        {this.customInfoRadio('Mass difference', 'mass_diff', residue, sample)}
+        {this.customInfoRadio('100% conversion', 'full_conv', residue, sample)}
+        {this.customInfoRadio('Elemental analyses', 'found', residue, sample)}
+        {this.customInfoRadio('External estimation', 'external', residue, sample)}
+        <NumeralInputWithUnitsCompo
+          value={sample.loading}
+          unit="mmol/g"
+          metricPrefix="n"
+          metricPrefixes={['n']}
+          precision={3}
+          name="polymer_loading"
+          variant="success"
+          onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
+          disabled={residue.custom_info.loading_type !== 'external'}
         />
-      </Form.Group>
-    )
+      </div>
+    );
   }
 
   render() {
@@ -255,36 +134,77 @@ export default class PolymerSection extends React.Component {
       <div className="polymer-section">
         <Row>
           <Col md={6}>
-            <label>Polymer type</label>
-            {this.polymerType(sample, residue)}
+            <Form.Label>Polymer type</Form.Label>
+            <Select
+              options={[
+                { label: 'Polystyrene', value: 'polystyrene' },
+                { label: 'Polyethyleneglycol', value: 'polyethyleneglycol' },
+                { label: 'Self-defined', value: 'self_defined' },
+              ]}
+              simpleValue
+              name="polymer_type"
+              value={residue.custom_info.polymer_type}
+              clearable={false}
+              onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
+            />
           </Col>
           <Col md={6}>
-            <label>Surface type</label>
-            {this.surfaceType(sample, residue)}
+            <Form.Label>Surface type</Form.Label>
+            <Select
+              options={[
+                { label: 'Glass', value: 'glass' },
+                { label: 'Si native oxide', value: 'si Native Oxide' },
+                { label: 'Si, 5nm Ti, 100nm Au', value: 'si, 5nm Ti, 100nm Au' },
+              ]}
+              simpleValue
+              name="surface_type"
+              value={residue.custom_info.surface_type}
+              clearable={false}
+              onChange={(v) => this.handleSurfaceTypeSelectChanged(v, residue, sample)}
+            />
           </Col>
         </Row>
-        <br />
-        <Row>
+
+        <Row className="mt-3">
           <Col md={6}>
-            {this.polymerCrossLinkage(sample, residue)}
+            <Form.Group>
+              <Form.Label>Cross-linkage</Form.Label>
+              <Form.Control
+                type="text"
+                value={residue.custom_info.cross_linkage || ''}
+                name="cross_linkage"
+                onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+              />
+            </Form.Group>
           </Col>
           <Col md={6}>
-            {this.polymerFormula(sample, residue)}
+            <Form.Group>
+              <Form.Label>Formula</Form.Label>
+              <Form.Control
+                type="text"
+                value={residue.custom_info.formula || ''}
+                name="formula"
+                onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+              />
+            </Form.Group>
           </Col>
         </Row>
-        <Row>
-          <Col md={8}>
+
+        <Row className="mt-3">
+          <Col xs={8}>
             <ElementalCompositionGroup
               handleSampleChanged={handleSampleChanged}
               sample={sample}
             />
           </Col>
-          <Col md={4}>
-            {this.polymerLoading(sample, residue)}
-          </Col>
+          {!sample.reaction_product && (
+            <Col xs={4}>
+              {this.polymerLoading(sample, residue)}
+            </Col>
+          )}
         </Row>
       </div>
-    )
+    );
   }
 }
 
