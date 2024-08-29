@@ -1,8 +1,8 @@
 /* eslint-disable class-methods-use-this */
-import alt from 'src/stores/alt/alt';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
-import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
+import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import alt from 'src/stores/alt/alt';
 
 import DocumentHelper from 'src/utilities/DocumentHelper';
 
@@ -185,8 +185,10 @@ class UserActions {
     return () => {
       UsersFetcher.fetchUserKetcher2Options()
         .then((result) => {
-          if (result) {
-            localStorage.setItem('ketcher-opts', JSON.stringify(result));
+          if (result && result?.settings) {
+            if (Object.keys(result?.settings).length) {
+              localStorage.setItem('ketcher-opts', JSON.stringify(result.settings));
+            }
           }
         })
         .catch((errorMessage) => { console.log(errorMessage); });
