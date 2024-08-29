@@ -47,7 +47,6 @@ module Import
       rescue StandardError => e
         return error_required_fields(e.message)
       end
-
       xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
 
       begin
@@ -336,6 +335,14 @@ module Import
 
     def get_data_from_smiles(row, index)
       check = determine_sheet(xlsx)
+      smiles = (check['smiles'] && row_value_case_insensitive(row, 'smiles').presence) ||
+               (check['cano_smiles'] && row_value_case_insensitive(row, 'cano_smiles').presence) ||
+               (check['canonical_smiles'] && row_value_case_insensitive(row, 'canonical_smiles').presence) ||
+               (check['canonical smiles'] && row_value_case_insensitive(row, 'canonical smiles').presence)
+      smiles = sanitize_smiles_for_ob(smiles)
+      if smiles.blank?
+        return
+      end
 
       smiles = (check['smiles'] && row_value_case_insensitive(row, 'smiles').presence) ||
                (check['cano_smiles'] && row_value_case_insensitive(row, 'cano_smiles').presence) ||
@@ -356,6 +363,56 @@ module Import
       return nil if inchikey.blank?
 
       assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
+    end
+
+    # Remove control chars and BOM so Open Babel accepts the SMILES string (e.g. from Excel).
+    def sanitize_smiles_for_ob(smiles)
+      return nil if smiles.nil?
+      s = smiles.to_s.encode('UTF-8', invalid: :replace, undef: :replace)
+      s = s.gsub(/\p{C}+/, ' ').strip
+      s.presence
+    end
+
+    # Keep only the CTAB (up to and including M  END). Strip SDF blocks (e.g. > <PolymersList>,
+    # > <TextNode>) that can cause molecule_info_from_molfile to return blank inchikey.
+    def sanitize_molfile_for_import(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s.force_encoding('UTF-8')
+      lines = molfile.lines
+      m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
+      if m_end_index
+        lines[0..m_end_index].join.rstrip
+      elsif (idx = molfile.index(/\sM\s+END\s/i))
+        # Single-line molfile: cut at M  END (include it)
+        end_marker = molfile.match(/\sM\s+END\s/i)[0]
+        molfile[0..(idx + end_marker.length - 1)].rstrip
+      else
+        molfile
+      end
+    end
+
+    # Restore Unicode in TextNode labels: Excel/export can turn e.g. ∀ into literal \342\210\200
+    # (octal UTF-8 byte sequences). Convert them back to the actual UTF-8 characters.
+    def unescape_textnode_octal_in_molfile(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s
+      return molfile unless molfile.include?('> <TextNode>')
+
+      # Match the entire TextNode block (works for both multi-line and single-line molfiles)
+      molfile.gsub(/> <TextNode>\s*([\s\S]*?)\s*> <\/TextNode>/i) do
+        content = Regexp.last_match(1)
+
+        # Collect consecutive octal escapes (e.g. \342\210\200) into one UTF-8 character.
+        # Integer#chr only works for 0-127 in ASCII; pack('C*') handles bytes > 127 correctly.
+        converted = content.gsub(/(?:\\[0-7]{1,3})+/) do |seq|
+          bytes = seq.scan(/\\([0-7]{1,3})/).flatten.map { |o| o.to_i(8) }
+          bytes.pack('C*').force_encoding('UTF-8')
+        end
+
+        "> <TextNode>\n#{converted}\n> </TextNode>"
+      end
     end
 
     def included_fields

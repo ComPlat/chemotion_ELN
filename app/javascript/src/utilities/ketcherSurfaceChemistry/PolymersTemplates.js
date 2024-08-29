@@ -9,15 +9,15 @@ import { imagesList } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 // generating images for ket2 format from molfile polymers list
 const addPolymerTags = async (polymerTag, data) => {
   try {
-    if (polymerTag && polymerTag.length) {
-      const processedResponse = await addingPolymersToKetcher(polymerTag, data, imageNodeCounter);
-      processedResponse.molfileData?.root?.nodes.push(...processedResponse.c_images);
-      return {
-        collected_images: processedResponse.c_images,
-        molfileData: processedResponse.molfileData
-      };
+    if (!polymerTag || !polymerTag.length) {
+      return { collected_images: [], molfileData: data };
     }
-    throw new Error('No polymer tags found');
+    const processedResponse = await addingPolymersToKetcher(polymerTag, data, imageNodeCounter);
+    processedResponse.molfileData?.root?.nodes.push(...processedResponse.c_images);
+    return {
+      collected_images: processedResponse.c_images,
+      molfileData: processedResponse.molfileData
+    };
   } catch (err) {
     console.error('addPolymerTags', err);
     return { collectedImages: [], molfileData: data };

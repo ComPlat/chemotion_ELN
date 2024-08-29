@@ -32,7 +32,6 @@ import {
   textList,
   textListSetter,
   textNodeStruct,
-  textNodeStructSetter,
   deletedAtomsSetter,
   reloadCanvasSetter,
   imageListCopyContainer,
@@ -53,6 +52,15 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
+// Use only CTAB (up to and including M  END) so we never duplicate > <PolymersList> when
+// the editor's molfile already contains a PolymersList section from a previous load.
+const ctabLinesOnly = (molfileString) => {
+  if (!molfileString || typeof molfileString !== 'string') return [];
+  const lines = molfileString.trim().split('\n');
+  const endIdx = lines.findIndex((line) => line && /^M\s+END/.test(line));
+  return endIdx >= 0 ? lines.slice(0, endIdx + 1) : lines;
+};
+
 // function when a canvas is saved using main "SAVE" button
 const arrangePolymers = async (canvasData, editor) => {
   // Do not add PolymersList tag when no polymer images are present
@@ -70,7 +78,8 @@ const arrangePolymers = async (canvasData, editor) => {
   // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
   const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
-  return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
+  const ctabLines = ctabLinesOnly(canvasData);
+  return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
 
 // helper function to arrange text nodes for formula
@@ -118,6 +127,22 @@ const arrangeTextNodes = async (ket2Molfile) => {
     KET_TAGS.textNodeIdentifierClose
   );
 
+  return ket2Molfile;
+};
+
+// Appends a TextNodeMeta block containing the raw Draft.js content string for each
+// text node. One content entry per line, preserving the same order as TextNode lines.
+const arrangeTextNodeMeta = (ket2Molfile) => {
+  if (!textList?.length) return ket2Molfile;
+
+  const contentLines = textList.map((textItem) => textItem.data?.content).filter(Boolean);
+  if (!contentLines.length) return ket2Molfile;
+
+  ket2Molfile.push(
+    KET_TAGS.textNodeMeta,
+    ...contentLines,
+    KET_TAGS.textNodeMetaClose
+  );
   return ket2Molfile;
 };
 
@@ -237,7 +262,16 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       return false;
     }
 
-    if (!textContent || !textContent.trim()) {
+    // Normalize: accept Draft content (object or JSON string) or plain string
+    const isEmpty = (v) => {
+      if (typeof v === 'string' && !isDraftContent(v)) return !v.trim();
+      if (isDraftContent(v)) {
+        const c = typeof v === 'string' ? JSON.parse(v) : v;
+        return !(c.blocks[0]?.text || '').trim();
+      }
+      return true;
+    };
+    if (isEmpty(textContent)) {
       return false;
     }
 
@@ -265,11 +299,19 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         });
 
         if (existingNodeIndex !== -1) {
-          // Update the existing text node content
+          // Update the existing text node content (full Draft content, preserve key)
           const existingNode = updatedTextList[existingNodeIndex];
           const existingContent = JSON.parse(existingNode.data.content);
-          existingContent.blocks[0].text = textContent.trim();
-          existingNode.data.content = JSON.stringify(existingContent);
+          const existingKey = existingContent.blocks[0].key;
+          if (isDraftContent(textContent)) {
+            const newContent = typeof textContent === 'string' ? JSON.parse(textContent) : textContent;
+            newContent.blocks[0].key = existingKey;
+            existingNode.data.content = JSON.stringify(newContent);
+          } else {
+            existingContent.blocks[0].text = textContent.trim();
+            existingContent.blocks[0].inlineStyleRanges = existingContent.blocks[0].inlineStyleRanges || [];
+            existingNode.data.content = JSON.stringify(existingContent);
+          }
           textKey = existingKey;
           newTextNode = existingNode;
           textListSetter(updatedTextList);
@@ -383,23 +425,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         ];
       }
 
-      // Save and update canvas - this will trigger onTemplateMove which handles positioning
-      // IMPORTANT: Store textList before saveMoveCanvas because fetchKetcherData might overwrite it
-      // if Ketcher hasn't processed the text node yet
-      const textListBeforeSave = [...textList];
-      const textNodeStructBeforeSave = { ...textNodeStruct };
-
       await saveMoveCanvas(editor, latestData, true, true, false);
-
-      // Restore textList if it was lost during fetchKetcherData
-      // This can happen if Ketcher hasn't processed the text node yet
-      if (textList.length < textListBeforeSave.length) {
-        textListSetter(textListBeforeSave);
-        textNodeStructSetter(textNodeStructBeforeSave);
-      }
-
-      // Ensure ImagesToBeUpdated is set to trigger rendering
-      // onTemplateMove already sets this, but we ensure it's set here too
       ImagesToBeUpdatedSetter(true);
     }
 
@@ -520,6 +546,24 @@ const removeAllColors = (svgElement) => {
       }
       element.setAttribute('style', updatedTextStyle);
     }
+  });
+};
+
+/**
+ * Dispatches a synthetic mousedown → mouseup → click sequence on the Ketcher
+ * intermediate canvas SVG so that any pending pointer-driven render flush is
+ * triggered before we read the canvas content.
+ * Must target the iframe's document, not the host page's document.
+ */
+const flushIntermediateCanvas = (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  if (!iframeDocument) return;
+
+  const svg = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws svg');
+  if (!svg) return;
+
+  ['mousedown', 'mouseup', 'click'].forEach((type) => {
+    svg.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
   });
 };
 
@@ -679,7 +723,7 @@ const saveMoveCanvas = async (
   recenter = false,
   moveOptions = {}
 ) => {
-  const dataCopy = data || latestData;
+  let dataCopy = data || latestData;
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
@@ -689,21 +733,18 @@ const saveMoveCanvas = async (
     return;
   }
 
+  // Text nodes are non-standard and never returned by getKet(). Always inject the local
+  // textList into the payload so the editor renders them visually.
+  if (textList.length > 0) {
+    dataCopy = JSON.parse(JSON.stringify(dataCopy));
+    const nonText = (dataCopy.root?.nodes || []).filter((n) => n.type !== 'text');
+    dataCopy.root.nodes = [...nonText, ...textList];
+  }
+
   if (isMoveRequired) {
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
-
-    // IMPORTANT: Preserve textList from dataCopy before fetching
-    // Ketcher might not have processed the text node yet when we fetch back
-    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text') || [];
-    const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
-
     if (isFetchRequired) {
       await fetchKetcherData(editor);
-
-      // Restore textList from dataCopy if it was lost during fetchKetcherData
-      if (preservedTextList.length > textList.length) {
-        textListSetter(preservedTextList);
-      }
     }
     await onTemplateMove(editor, recenter, moveOptions);
     return;
@@ -784,7 +825,20 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
     .filter((n) => n.$ref && jsonData[n.$ref]?.type === 'molecule')
     .map((n) => n.$ref);
 
-  nodeRefs.forEach((ref, molIndex) => {
+  // Sort mol refs by their highest aliased-atom y value (descending) so visually
+  // higher molecules produce their connString earlier, giving the correct global order.
+  const sortedNodeRefs = nodeRefs.slice().sort((refA, refB) => {
+    const getMaxY = (ref) => {
+      const atoms = jsonData[ref]?.atoms || [];
+      const ys = atoms
+        .filter((a) => a.alias && a.alias.split('_').length >= 3)
+        .map((a) => a.location[1]);
+      return ys.length ? Math.max(...ys) : -Infinity;
+    };
+    return getMaxY(refB) - getMaxY(refA);
+  });
+
+  sortedNodeRefs.forEach((ref, molIndex) => {
     const mol = jsonData[ref];
     if (!mol || !mol.atoms) {
       result.push(`Mol ${molIndex + 1}: (no atoms)`);
@@ -956,6 +1010,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
     ket2Lines = await arrangeTextNodes(ket2Lines); // text node
+    ket2Lines = arrangeTextNodeMeta(ket2Lines); // text node raw content metadata
     if (imagesList.length > 0) {
       ket2Lines = replaceAtomSymbolAWithRHashInAtomBlock(ket2Lines);
     }
@@ -969,6 +1024,8 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
+
+    if (imagesList.length > 0) flushIntermediateCanvas(iframeRef);
 
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
@@ -1032,6 +1089,7 @@ export {
   onAddAtom,
   onDeleteText,
   arrangeTextNodes,
+  arrangeTextNodeMeta,
   onAddText,
   onAddTextFromEditor,
   createTextNodeFromContent,
