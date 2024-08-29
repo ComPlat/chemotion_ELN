@@ -83,7 +83,7 @@ const removeMoleculeFromData = (data, molKey) => data.root.nodes.filter((node) =
 const removeImagesFromData = (data) => data.root.nodes.filter((node) => node.type !== 'image');
 
 // filter images from nodes
-const removeTextFromData = (data) => data.root.nodes
+const removeTextFromData = (data) => data.root.nodes.filter((node) => node.type !== 'text');
 
 // helper function to remove bonds by atom id
 const updateBondList = async (indexList, bondList, atomList) => {
