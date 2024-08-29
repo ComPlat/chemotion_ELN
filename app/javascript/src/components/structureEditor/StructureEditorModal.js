@@ -35,9 +35,7 @@ const notifyError = (message) => {
   });
 };
 
-const key = 'ketcher-tmpls';
-
-const loadEditor = (editor, scripts) => {
+export const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
       es: scripts,
@@ -50,16 +48,18 @@ const loadEditor = (editor, scripts) => {
   }
 };
 
-const createEditorInstance = (editor, available, configs) => ({
-  [editor]: new StructureEditor({
-    ...EditorAttrs[editor],
-    ...available,
-    ...configs,
-    id: editor,
-  }),
-});
+const createEditorInstance = (editor, available, configs) => {
+  return ({
+    [editor]: new StructureEditor({
+      ...EditorAttrs[editor],
+      ...available,
+      ...configs,
+      id: editor,
+    }),
+  });
+};
 
-const createEditor = (configs, availableEditors) => {
+export const createEditor = (configs, availableEditors) => {
   if (!availableEditors) return null;
   const available = availableEditors[configs.editor];
   if (available) {
@@ -90,13 +90,12 @@ const createEditors = (_state = {}) => {
   return editors;
 };
 
-function Editor({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb
-}) {
+const Editor = ({ type, editor, molfile, iframeHeight, iframeStyle, forwardedRef }) => {
   switch (type) {
     case 'ketcher2':
       return (
         <KetcherEditor
+          ref={forwardedRef} // Forwarding the ref to the KetcherEditor
           editor={editor}
           molfile={molfile}
           iH={iframeHeight}
@@ -135,7 +134,7 @@ function Editor({
         </div>
       );
   }
-}
+};
 
 Editor.propTypes = {
   type: PropTypes.string.isRequired,
@@ -205,7 +204,7 @@ WarningBox.propTypes = {
   hideWarning: PropTypes.func.isRequired
 };
 
-const initEditor = () => {
+export const initEditor = () => {
   const userProfile = UserStore.getState().profile;
   const eId = userProfile?.data?.default_structure_editor || 'ketcher';
   const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
@@ -230,6 +229,7 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
+    this.ketcher2Ref = React.createRef();
   }
 
   componentDidMount() {
@@ -254,7 +254,7 @@ export default class StructureEditorModal extends React.Component {
     if (onCancel) { onCancel(); }
   }
 
-  handleSaveBtn() {
+  async handleSaveBtn() {
     const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
@@ -265,18 +265,18 @@ export default class StructureEditorModal extends React.Component {
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
     } else if (editor.id === 'ketcher2') {
-      structure.editor.getMolfile().then((molfile) => {
-        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
-          imgfile.text().then((text) => {
-            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
-          });
-        });
-      });
+      if (this.ketcher2Ref.current && typeof this.ketcher2Ref.current.onSaveFileK2SC === 'function') {
+        const { ket2Molfile, svgElement } = await this.ketcher2Ref.current.onSaveFileK2SC();
+        this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, svgElement, { smiles: '' }, editor.id); } });
+      } else {
+        console.error("onSaveFileK2SC is not a function");
+      }
     } else {
       try {
         const { molfile, info } = structure;
         if (!molfile) throw new Error('No molfile');
         structure.fetchSVG().then((svg) => {
+          console.log({ railssvg: svg });
           this.setState({
             showModal: false,
             showWarning: this.props.hasChildren || this.props.hasParent
@@ -355,6 +355,7 @@ export default class StructureEditorModal extends React.Component {
         iframeHeight={iframeHeight}
         iframeStyle={iframeStyle}
         fnCb={this.updateEditor}
+        forwardedRef={this.ketcher2Ref}
       />
     );
     const editorOptions = Object.keys(this.editors).map((e) => ({

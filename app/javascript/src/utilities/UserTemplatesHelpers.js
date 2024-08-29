@@ -31,11 +31,11 @@ const removeUserTemplate = async (listOfLocalid, oldValue) => {
 
 const updateUserTemplateDetails = async (oldValue, newValue) => {
   const listOfLocalNames = newValue.map(
-    (item) => JSON.parse(item.struct).header.moleculeName
+    (item) => JSON.parse(item.struct)?.header?.moleculeName
   );
   for (let i = 0; i < oldValue.length; i++) {
     const localItem = JSON.parse(oldValue[i].struct);
-    const exists = listOfLocalNames.indexOf(localItem.header.moleculeName) !== -1;
+    const exists = listOfLocalNames.indexOf(localItem?.header?.moleculeName) !== -1;
     if (!exists) {
       await ProfilesFetcher.deleteUserTemplate({
         path: oldValue[i].props.path,
@@ -50,7 +50,7 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
 
 const onEventListen = async (event) => {
   let { newValue, oldValue } = event;
-  if (newValue.length && oldValue.length) {
+  if (newValue && oldValue && newValue.length && oldValue.length) {
     newValue = JSON.parse(newValue);
     oldValue = JSON.parse(oldValue);
     if (event.key === key) { // matching key && deleteAllowed
