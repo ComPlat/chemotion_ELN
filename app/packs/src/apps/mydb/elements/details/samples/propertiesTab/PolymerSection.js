@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Form, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
@@ -6,17 +7,13 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions'
 import Select from 'react-select'
 
 export default class PolymerSection extends React.Component {
-  handleAmountChanged(amount) {
-    this.props.parent.handleAmountChanged(amount);
-  }
-
   handleCustomInfoNumericChanged(e, name, residue, sample) {
+    const { handleSampleChanged, handleAmountChanged } = this.props;
     residue.custom_info[name] = e.value;
 
     // make calculations if loading was changed
     if (name == 'loading') {
-
-      this.handleAmountChanged(sample.amount);
+      handleAmountChanged(sample.amount);
       if (residue.custom_info.loading_type == 'external')
         sample.external_loading = e.value;
 
@@ -39,7 +36,7 @@ export default class PolymerSection extends React.Component {
         });
 
     } else {
-      this.props.parent.handleSampleChanged(sample);
+      handleSampleChanged(sample);
     }
   }
 
@@ -52,7 +49,7 @@ export default class PolymerSection extends React.Component {
       }
     }
 
-    this.props.parent.handleSampleChanged(sample);
+    this.props.handleSampleChanged(sample);
   }
 
   handlePRadioChanged(e, residue, sample) {
@@ -70,21 +67,21 @@ export default class PolymerSection extends React.Component {
         sample.loading = e_compositon.loading;
     }
 
-    this.props.parent.handleSampleChanged(sample);
+    this.props.handleSampleChanged(sample);
   }
 
   handlePolymerTypeSelectChanged(value, residue, sample) {
     residue.custom_info['polymer_type'] = value;
     delete residue.custom_info['surface_type'];
 
-    // tell parent (SampleDetails) component about changes
-    this.props.parent.handleSampleChanged(sample);
+    this.props.handleSampleChanged(sample);
   }
 
   handleSurfaceTypeSelectChanged(value, residue, sample) {
     residue.custom_info['surface_type'] = value;
     delete residue.custom_info['polymer_type'];
-    this.props.parent.handleSampleChanged(sample);
+
+    this.props.handleSampleChanged(sample);
   }
 
 
@@ -251,8 +248,8 @@ export default class PolymerSection extends React.Component {
   }
 
   render() {
-    let sample = this.props.sample || {}
-    let residue = sample.residues[0];
+    const { sample = {}, handleSampleChanged } = this.props;
+    const residue = sample.residues[0];
 
     return (
       <div className="polymer-section">
@@ -278,8 +275,9 @@ export default class PolymerSection extends React.Component {
         <Row>
           <Col md={8}>
             <ElementalCompositionGroup
-              handleSampleChanged={(s) => this.props.parent.handleSampleChanged(s)}
-              sample={sample} />
+              handleSampleChanged={handleSampleChanged}
+              sample={sample}
+            />
           </Col>
           <Col md={4}>
             {this.polymerLoading(sample, residue)}
@@ -289,3 +287,9 @@ export default class PolymerSection extends React.Component {
     )
   }
 }
+
+PolymerSection.propTypes = {
+  sample: PropTypes.object.isRequired,
+  handleAmountChanged: PropTypes.func.isRequired,
+  handleSampleChanged: PropTypes.func.isRequired,
+};

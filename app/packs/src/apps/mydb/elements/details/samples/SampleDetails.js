@@ -154,6 +154,7 @@ export default class SampleDetails extends React.Component {
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
+    this.handleAmountChanged = this.handleAmountChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.toggleInchi = this.toggleInchi.bind(this);
@@ -228,6 +229,12 @@ export default class SampleDetails extends React.Component {
     this.setState({
       sample,
     }, cb);
+  }
+
+  handleAmountChanged(amount) {
+    const { sample } = this.state;
+    sample.setAmountAndNormalizeToGram(amount);
+    this.setState({ sample });
   }
 
   handleFastInput(smi, cas) {
@@ -696,12 +703,13 @@ export default class SampleDetails extends React.Component {
             {sample.contains_residues ? (
               <PolymerSection
                 sample={sample}
-                parent={this}
+                handleAmountChanged={this.handleAmountChanged}
+                handleSampleChanged={this.handleSampleChanged}
                 materialGroup={materialGroup}
               />
             ) : (
               <ElementalCompositionGroup
-                handleSampleChanged={(s) => this.handleSampleChanged(s)}
+                handleSampleChanged={this.handleSampleChanged}
                 sample={sample}
               />
             )}
