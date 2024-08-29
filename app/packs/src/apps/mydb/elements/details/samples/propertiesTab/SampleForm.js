@@ -213,7 +213,7 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.abs : 'any';
 
     return (
-      <FormGroup style={{ width: '100%', paddingRight: '10px' }}>
+      <FormGroup>
         <ControlLabel>Stereo Abs</ControlLabel>
         <Select
           name="stereoAbs"
@@ -247,7 +247,7 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.rel : 'any';
 
     return (
-      <FormGroup style={{ width: '100%' }}>
+      <FormGroup>
         <ControlLabel>Stereo Rel</ControlLabel>
         <Select
           name="stereoRel"
@@ -270,7 +270,7 @@ export default class SampleForm extends React.Component {
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
     const onOpenMolName = () => this.openMolName(sample);
     return (
-      <FormGroup style={{ width: '100%', paddingRight: '10px' }}>
+      <FormGroup>
         <ControlLabel>Molecule name</ControlLabel>
         <InputGroup>
           <Select.Creatable
@@ -485,10 +485,12 @@ export default class SampleForm extends React.Component {
   }
 
   textInput(sample, field, label, disabled = false, readOnly = false) {
-    const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
+    const condition = field !== 'external_label' && field !== 'xref_inventory_label'
+      && field !== 'name' && field !== 'location' && field !== 'short_label';
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
     const onBlurHandler = field === 'sum_formula' ? this.handleMassCalculation : null;
+    const formControlStyle = field === 'name' ? { height: '38px', width: '100%' } : {};
 
     return (
       <FormGroup bsSize={condition ? 'small' : null}>
@@ -504,6 +506,7 @@ export default class SampleForm extends React.Component {
           }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
+          style={formControlStyle}          
         />
       </FormGroup>
     );
@@ -890,64 +893,55 @@ export default class SampleForm extends React.Component {
       <Table responsive className="sample-form">
         <tbody>
           <ListGroup fill="true">
-            <h5 style={{ fontWeight: 'bold' }}>Basic Properties:</h5>
+            <h5 style={{ fontWeight: 'bold' }}>Basic properties:</h5>
             <ListGroupItem style={{ padding: '4px 4px 4px 4px', border: 'none' }}>
               <div className="properties-form" style={{ width: '100%' }}>
                 <tr>
-                  <td colSpan="3">
+                  <td colSpan="4">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div
-                        style={{ width: '100%', display: 'flex' }}
-                      >
+                      <div style={{ flex:  '2 1 0',  paddingRight: '5px' }}>
                         {this.moleculeInput()}
-                        <div style={{ width: '100%', display: 'flex' }}>
-                          {this.textInput(sample, 'name', 'Sample name')}
-                        </div>
+                      </div>
+                      <div style={{ flex:  '2 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
+                        {this.textInput(sample, 'name', 'Sample name')}
+                      </div>
+                      <div style={{ flex:  '1 1 0',  marginRight: '5px',paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.stereoAbsInput()}
+                      </div>
+                      <div style={{ flex:  '1 1 0', paddingLeft: '10px', marginRight: '5px' }}>
                         {this.stereoRelInput()}
                       </div>
-                      {/* <div style={{ paddingLeft: '10px' }} className="top-secret-checkbox">
-                  {this.topSecretCheckbox(sample)}
-                </div> */}
-                      {
-                        enableSampleDecoupled && (
-                          <div
-                            style={{ paddingLeft: '10px' }}
-                            className="decoupled-checkbox"
-                          >
-                            {this.decoupledCheckbox(sample)}
-                          </div>
-                        )
-                      }
+                      {enableSampleDecoupled && (
+                        <div style={{ paddingLeft: '10px' }} className="decoupled-checkbox">
+                          {this.decoupledCheckbox(sample)}
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
                 <tr>
                   <td colSpan="4">
-                    <div className="name-form">
-                      <div style={{ width: '30%' }}>
+                    <div style={{ display: 'flex' }}>
+                      <div style={{ flex: '1 1 0', paddingRight: '5px' }}>
                         {this.textInput(sample, 'short_label', 'Short label', true)}
                       </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
+                      <div style={{ flex:  '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
-                      <div style={{
-                        maxWidth: '26%', paddingLeft: '5px', display: 'flex', justifyContent: 'space-between'
-                      }}
-                      >
-                        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-                        {this.nextInventoryLabel(sample)}
+                      <div style={{ flex: '1', paddingLeft: '10px', paddingRight: '5px', display: 'flex', alignItems: 'flex-center' }}>
+                        <div style={{ flex: 1 }}>
+                          {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                        </div>
+                        <div style={{ marginLeft: 0 }}>
+                          {this.nextInventoryLabel(sample)}
+                        </div>
                       </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
+                      <div style={{ flex:  '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'location', 'Location')}
                       </div>
-                      <div style={{ width: '10%', paddingLeft: '10px' }} className="top-secret-checkbox">
+                      <div style={{ width: '10%', paddingLeft: '5px' }} className="top-secret-checkbox">
                         {this.drySolventCheckbox(sample)}
                       </div>
-                      {/* <div style={{ width: '40%' }}>
-                  <label htmlFor="solventInput">Solvent</label>
-                  {this.sampleSolvent(sample)}
-                </div> */}
                     </div>
                   </td>
                 </tr>
@@ -971,7 +965,7 @@ export default class SampleForm extends React.Component {
                   <td colSpan="6">
                     <table>
                       <tbody>
-                      <tr>
+                      <tr style={{marginLeft:'5px'}}>
                           <td style={{ width: '3%' }}>
                             <div style={{ marginBottom: '15px' }}>
                               {/* eslint-disable-next-line jsx-a11y/label-has-for */}
@@ -983,7 +977,7 @@ export default class SampleForm extends React.Component {
                           </td>
                           {this.sampleAmount(sample)}
                           <td style={{ width: '47%' }}>
-                            <div className="name-form" style={{ marginBottom: '10px' }}>
+                            <div className="name-form" style={{ marginBottom: '15px' }}>
                               <Tabs
                                 style={{ width: '60%' }}
                                 id="tab-density-molarity"
