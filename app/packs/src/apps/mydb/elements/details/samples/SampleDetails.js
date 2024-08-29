@@ -677,15 +677,9 @@ export default class SampleDetails extends React.Component {
   }
 
   elementalPropertiesItem(sample) {
-    let label;
-    if (sample.contains_residues) {
-      label = 'Polymer section';
-      if (!this.state.showElementalComposition) {
-        label += ' / Elemental composition';
-      }
-    } else {
-      label = 'Elemental composition';
-    }
+    const label = sample.contains_residues
+      ? 'Polymer section / Elemental composition'
+      : 'Elemental composition';
 
     const { showElementalComposition, materialGroup } = this.state;
     const paneKey = 'elemental-comp';
