@@ -159,7 +159,6 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
     }
   }
 };
-
 // helper function to handle ketcher undo DOM element
 const undoKetcher = (editor) => {
   try {
