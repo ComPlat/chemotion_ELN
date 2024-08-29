@@ -1,14 +1,11 @@
 import React from 'react';
-import { FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { Form, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
 import Select from 'react-select'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Radio from 'src/components/legacyBootstrap/Radio'
 
 export default class PolymerSection extends React.Component {
-
   handleAmountChanged(amount) {
     this.props.parent.handleAmountChanged(amount);
   }
@@ -101,14 +98,15 @@ export default class PolymerSection extends React.Component {
 
   polymerFormula(sample, residue) {
     return (
-      <FormGroup>
-        <ControlLabel>Formula</ControlLabel>
-        <FormControl type="text"
+      <Form.Group>
+        <Form.Label>Formula</Form.Label>
+        <Form.Control
+          type="text"
           value={residue.custom_info.formula || ''}
           name="formula"
           onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
         />
-      </FormGroup>
+      </Form.Group>
     )
   }
 
@@ -144,14 +142,17 @@ export default class PolymerSection extends React.Component {
     return (
       <tr>
         <td>
-          <FormGroup>
-            <Radio onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
+          <Form.Group>
+            <Form.Check
+              type="radio"
+              onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
               checked={residue.custom_info.loading_type == value}
               name="loading_type"
               value={value}
               disabled={value != 'external' && !rel_loading}
-            >{label}</Radio>
-          </FormGroup>
+              label={label}
+            />
+          </Form.Group>
         </td>
         {additionalLoadingInput}
       </tr>
@@ -237,14 +238,15 @@ export default class PolymerSection extends React.Component {
 
   polymerCrossLinkage(sample, residue) {
     return (
-      <FormGroup>
-        <ControlLabel>Cross-linkage</ControlLabel>
-        <FormControl type="text"
+      <Form.Group>
+        <Form.Label>Cross-linkage</Form.Label>
+        <Form.Control
+          type="text"
           value={residue.custom_info.cross_linkage || ''}
           name="cross_linkage"
           onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
         />
-      </FormGroup>
+      </Form.Group>
     )
   }
 
