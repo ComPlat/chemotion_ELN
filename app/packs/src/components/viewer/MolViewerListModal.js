@@ -26,17 +26,12 @@ function MolViewerListModal(props) {
   const [modalBody, setModalBody] = useState(null);
 
   useEffect(() => {
-    const fetchMolContent = async () => {
-      if (selected?.id) {
-        const url = isPublic
-          ? `${window.location.origin}/api/v1/public/download/attachment?id=${selected?.id}`
-          : `${window.location.origin}/api/v1/attachments/${selected?.id}`;
-        const response = await fetch(url);
-        const data = await response.text();
-        setMolContent(new Blob([data], { type: 'text/plain' }));
-      }
-    };
-    fetchMolContent();
+    if (selected?.id) {
+      const url = isPublic
+        ? `${window.location.origin}/api/v1/public/download/attachment?id=${selected?.id}`
+        : `${window.location.origin}/api/v1/attachments/${selected?.id}`;
+      setMolContent(url);
+    }
   }, [selected?.id, isPublic]);
 
   useEffect(() => {
