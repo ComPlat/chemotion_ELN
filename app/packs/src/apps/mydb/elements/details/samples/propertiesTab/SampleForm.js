@@ -666,7 +666,6 @@ export default class SampleForm extends React.Component {
             {this.numInput(sample, 'amount_g', 'g', ['m', 'n', 'u'], 4, null, 'massMgInput', isDisabled, '')}
             {this.numInput(sample, 'amount_l', 'l', ['m', 'u', 'n'], 5, null, 'l', isDisabled, '', volumeBlocked)}
             {this.numInput(sample, 'amount_mol', 'mol', ['m', 'n'], 4, null, 'amountInput', isDisabled, '')}
-            {sample.contains_residues && this.attachedAmountInput(sample)}
           </div>
         )}
       </Form.Group>
@@ -789,6 +788,9 @@ export default class SampleForm extends React.Component {
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>
+          {sample.contains_residues && (
+            <Col>{this.attachedAmountInput(sample)}</Col>
+          )}
           <Col>
             {this.densityMolarityInput(sample)}
           </Col>
