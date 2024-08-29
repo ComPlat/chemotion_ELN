@@ -1,6 +1,4 @@
-#FROM ptrxyz/chemotion:eln-2.0.1
-FROM complat/chemotion_eln_stage:main-v2.0.1-67-g109bb63fc
-
+FROM ptrxyz/chemotion:eln-2.0.1
 
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 ARG BUNDLER_VERSION=2.4.22

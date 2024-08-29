@@ -200,12 +200,12 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return; }
+    if (sample === prevProps.sample) { return };
 
     const smileReadonly = !(
       (sample.isNew
-        && (typeof (sample.molfile) === 'undefined'
-          || (sample.molfile || '').length === 0)
+       && (typeof (sample.molfile) === 'undefined'
+        || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -305,7 +305,8 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
-    sample.contains_residues = molfile.indexOf(' R# ') > -1;
+    sample.contains_residues = molfile?.indexOf(' R# ') > -1;
+    sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
