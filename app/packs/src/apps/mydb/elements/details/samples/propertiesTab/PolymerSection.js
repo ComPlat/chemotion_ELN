@@ -254,9 +254,6 @@ export default class PolymerSection extends React.Component {
     let sample = this.props.sample || {}
     let residue = sample.residues[0];
 
-    if (!this.props.show)
-      return false;
-
     return (
       <div className="polymer-section">
         <Row>

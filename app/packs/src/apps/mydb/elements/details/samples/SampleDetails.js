@@ -697,7 +697,6 @@ export default class SampleDetails extends React.Component {
               <PolymerSection
                 sample={sample}
                 parent={this}
-                show={sample.contains_residues}
                 materialGroup={materialGroup}
               />
             ) : (
