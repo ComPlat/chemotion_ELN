@@ -50,8 +50,7 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
 
 const onEventListen = async (event) => {
   let { newValue, oldValue } = event;
-  const bothArrayHaveItems = Array.isArray(newValue) && newValue.length && Array.isArray(oldValue) && oldValue.length;
-  if (bothArrayHaveItems) {
+  if (newValue && oldValue && newValue.length && oldValue.length) {
     newValue = JSON.parse(newValue);
     oldValue = JSON.parse(oldValue);
     if (event.key === key) { // matching key && deleteAllowed
