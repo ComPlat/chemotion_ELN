@@ -25,7 +25,6 @@ export default class MolViewerListBtn extends Component {
 
   renderBtn(disabled) {
     const { disabled: propsDisabled } = this.props;
-    const btnStyle = disabled ? 'warning' : 'info';
     const tipDesc = disabled ? ' (No supported format)' : '';
     const onClick = disabled
       ? e => e.stopPropagation()
@@ -42,8 +41,8 @@ export default class MolViewerListBtn extends Component {
         }
       >
         <Button
-          bsSize="xs"
-          bsStyle={btnStyle}
+          size="xxsm"
+          variant={disabled ? 'warning' : 'info'}
           onClick={onClick}
           disabled={disabled || propsDisabled}
         >

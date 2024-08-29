@@ -133,7 +133,8 @@ function MoleculeHeader({
 
   return (
     <tr
-      style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
+      className="bg-gray-100"
+      role="button"
       onClick={onClick}
     >
       {isNoStructureSample
@@ -329,7 +330,7 @@ export default class ElementsTableSampleEntries extends Component {
 
       return (
         <tr key={sample.id} className={applyHighlight && 'bg-primary'}>
-          <td width="30px" className={applyHighlight && 'text-white'}>
+          <td width="30px">
             <ElementCheckbox
               element={sample}
               key={sample.id}
@@ -337,8 +338,9 @@ export default class ElementsTableSampleEntries extends Component {
             />
           </td>
           <td
-            style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+            className={applyHighlight && ' text-white'}
             onClick={() => showDetails(sample.id)}
+            role="button"
           >
             <div className="d-flex justify-content-between">
               {sample.title(selected)}
@@ -365,13 +367,11 @@ export default class ElementsTableSampleEntries extends Component {
     if (numSamples < length) {
       const showMoreSamples = (
         <tr key={`${index}_showMore`}>
-          <td colSpan="3" style={{ padding: 0 }}>
+          <td colSpan="3" className="p-0">
             <Button
               variant="info"
               onClick={() => this.showMoreSamples(index)}
-              style={{
-                fontSize: '14px', width: '100%', float: 'left', borderRadius: '0px'
-              }}
+              className="w-100"
             >
               Show more samples
             </Button>

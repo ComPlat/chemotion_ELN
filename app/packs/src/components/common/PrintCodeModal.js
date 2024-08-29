@@ -108,30 +108,34 @@ export default function PrintCodeModal({ element, showModal, handleModalClose, s
           <Modal.Title>Print a QR Code/Bar Code</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div>
-            <h3 style={{ marginLeft: '10px' }}>Preview</h3>
-            <div style={{ marginLeft: '10px' }}>{displayUrlErrorMessage()}</div>
-            <div style={{
-              flexDirection: 'column',
-              display: 'flex',
-              marginLeft: '10px',
-              paddingRight: '10px',
-              height: '400px'
-            }}
-            >
-              {preview && (
-                <embed src={`${preview}#view=FitV`} style={{ width: '100%', height: '100%' }} />
-              )}
-            </div>
+          <h3>Preview</h3>
+          {displayUrlErrorMessage()}
+          <div style={{
+            height: '400px'
+          }}
+          >
+            {preview && (
+              <embed src={`${preview}#view=FitV`} style={{ width: '100%', height: '100%' }} />
+            )}
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button bsStyle="primary" onClick={handleModalClose} className="pull-left">Close</Button>
+          <Button
+            variant="primary"
+            onClick={(event) => {
+              event.stopPropagation()
+              handleModalClose()
+            }}
+          >
+            Close
+          </Button>
           <Button
             id="submit-copy-element-btn"
-            bsStyle="success"
-            onClick={() => Utils.downloadFile({ contents: preview, name: `print_codes_${element.id}.pdf` })}
-            className="pull-left"
+            variant="success"
+            onClick={(event) => {
+              event.stopPropagation()
+              Utils.downloadFile({ contents: preview, name: `print_codes_${element.id}.pdf` })
+            }}
           >
             Print
           </Button>

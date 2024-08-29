@@ -11,7 +11,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import {
   RndNotAvailable, RndNoAnalyses,
-  RndOrder, RndEdit
+  ReactionsDisplay
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersCom';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -45,9 +45,6 @@ export default class SampleDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates('sample');
   }
 
-  // componentWillReceiveProps(nextProps) {
-  // }
-
   componentWillUnmount() {
     UIStore.unlisten(this.onUIStoreChange);
   }
@@ -60,16 +57,6 @@ export default class SampleDetailsContainers extends Component {
 
   handleChange(container) {
     const { sample } = this.props;
-    // const analyses = sample.container.children.find(child => (
-    //   child.container_type === 'analyses'
-    // ));
-    // analyses.children.map((child, ind) => {
-    //   if (child.container_type === 'analysis' && child.id === container.id) {
-    //     analyses.children[ind] = container;
-    //   }
-    //   return null;
-    // });
-
     this.props.handleSampleChanged(sample);
   }
 
@@ -162,7 +149,7 @@ export default class SampleDetailsContainers extends Component {
     }
     return (
       <Button
-        size="sm"
+        size="xsm"
         variant="success"
         onClick={this.handleAdd}
         disabled={!sample.can_update}
@@ -200,11 +187,9 @@ export default class SampleDetailsContainers extends Component {
 
     if (analyContainer.length === 1 && analyContainer[0].children.length > 0) {
       const orderContainers = ArrayUtils.sortArrByIndex(analyContainer[0].children);
-      let content = null;
-
-      if (mode === 'order') {
-        content = (
-          <RndOrder
+      return (
+        <div>
+          <ReactionsDisplay
             sample={sample}
             mode={mode}
             orderContainers={orderContainers}
@@ -218,33 +203,10 @@ export default class SampleDetailsContainers extends Component {
             handleUndo={this.handleUndo}
             toggleAddToReport={this.toggleAddToReport}
             toggleMode={this.toggleMode}
-          />
-        );
-      } else {
-        content = (
-          <RndEdit
-            sample={sample}
-            mode={mode}
-            orderContainers={orderContainers}
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
-            handleUndo={this.handleUndo}
-            handleRemove={this.handleRemove}
-            handleSubmit={handleSubmit}
-            handleAccordionOpen={this.handleAccordionOpen}
-            toggleAddToReport={this.toggleAddToReport}
-            readOnly={readOnly}
-            isDisabled={isDisabled}
-            addButton={this.addButton}
-            toggleMode={this.toggleMode}
           />
-        );
-      }
-
-      return (
-        <div>
-          {content}
           <ViewSpectra
             sample={sample}
             handleSampleChanged={handleSampleChanged}
@@ -255,15 +217,15 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
-          
         </div>
       );
+    } else {
+      return (
+        <RndNoAnalyses
+          addButton={this.addButton}
+        />
+      );
     }
-    return (
-      <RndNoAnalyses
-        addButton={this.addButton}
-      />
-    );
   }
 }
 

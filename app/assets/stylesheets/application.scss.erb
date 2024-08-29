@@ -38,8 +38,6 @@
 @import "react-clock/dist/Clock.css";
 @import "react-datetime-picker/dist/DateTimePicker.css";
 
-
-
 html,
 body,
 #AdminHome {
@@ -63,8 +61,18 @@ label.required:after {
   position: absolute;
 }
 
-.drop-zone-style {
-  border: 3px dashed lightgray;
+.dnd-zone {
+  @extend .border;
+  @extend .border-dashed;
+  @extend .border-3;
+}
+
+.dnd-zone-over {
+  @extend .border-primary;
+}
+
+.dnd-dragging {
+  @extend .opacity-25;
 }
 
 #app {
@@ -153,7 +161,6 @@ span.pseudo-link:hover {
   min-height: 350px;
 }
 
-
 .full-main {
   width: 99%;
 }
@@ -186,7 +193,6 @@ $font-icons-research_plan: "\f0f6";
   width: 98%;
   height: 97%;
   top: 47%;
-
 
   .modal-dialog {
     top: 47%;

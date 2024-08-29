@@ -1,8 +1,7 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -17,20 +16,15 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const qCheckPass = () => (
-  <div style={{ display: 'inline', color: 'green' }}>
-    &nbsp;
-    <i className="fa fa-check" />
-  </div>
+  <i className="fa fa-check ms-1 text-success"/>
 );
 
 const qCheckFail = (msg, kind, atomNum = '') => (
-  <div style={{ display: 'inline', color: 'red' }}>
-    &nbsp;
-    (<sup>{atomNum}</sup>{kind} {msg})
-  </div>
+  <span className="ms-1 text-danger">
+    <sup>{atomNum}</sup>{kind} {msg})
+  </span>
 );
 
 const qCheckMsg = (sample, container) => {
@@ -58,88 +52,24 @@ const qCheckMsg = (sample, container) => {
   return '';
 };
 
-const editModeBtn = (toggleMode, isDisabled) => (
-  <Button
-    size="sm"
-    variant="primary"
-    onClick={toggleMode}
-    disabled={isDisabled}
-  >
-    <span>
-      <i className="fa fa-edit" />&nbsp;
-      Edit mode
-    </span>
-  </Button>
-);
-
-const orderModeBtn = (toggleMode, isDisabled) => (
-  <Button
-    size="sm"
-    variant="success"
-    onClick={toggleMode}
-    disabled={isDisabled}
-  >
-    <span>
-      <i className="fa fa-reorder" />&nbsp;
-      Order mode
-    </span>
-  </Button>
-);
-
 const AnalysisModeBtn = (mode, toggleMode, isDisabled) => {
-  switch (mode) {
-    case 'order':
-      return orderModeBtn(toggleMode, isDisabled);
-    default:
-      return editModeBtn(toggleMode, isDisabled);
-  }
-};
-
-const undoBtn = (container, mode, handleUndo) => {
-  const clickUndo = () => handleUndo(container);
-
-  if (mode === 'edit') {
-    return (
-      <Button
-        className="pull-right"
-        size="sm"
-        variant="danger"
-        onClick={clickUndo}
-      >
-        <i className="fa fa-undo" />
-      </Button>
-    );
-  }
-  return null;
-};
-
-const HeaderDeleted = ({ container, handleUndo, mode }) => {
-  const mKind = container.extended_metadata.kind;
-  const mStatus = container.extended_metadata.status;
-  const kind = (mKind && mKind !== '') ? ` - Type: ${(mKind.split('|')[1] || mKind).trim()}` : '';
-  const status = (mStatus && mStatus !== '') ? ` - Status: ${mStatus}` : '';
-
   return (
-    <div className="analysis-header-delete">
-      <strike>
-        {container.name}
-        {kind}
-        {status}
-      </strike>
-      <div className="undo-middle">
-        {undoBtn(container, mode, handleUndo)}
-      </div>
-    </div>
-  );
+    <Button
+      size="xsm"
+      variant={mode === 'order' ? 'success' : 'primary'}
+      onClick={toggleMode}
+      disabled={isDisabled}
+    >
+      <i className={"fa me-1 " + (mode === 'order' ? 'fa-reorder' : 'fa-edit')}  />
+      {mode.charAt(0).toUpperCase() + mode.slice(1)} mode
+    </Button>
+  )
 };
 
 const headerBtnGroup = (
-  container, sample, mode, handleRemove, handleSubmit,
-  toggleAddToReport, isDisabled, readOnly,
+  deleted, container, sample, handleRemove, handleSubmit,
+  toggleAddToReport, isDisabled, readOnly, handleUndo
 ) => {
-  if (mode !== 'edit') {
-    return null;
-  }
 
   const inReport = container.extended_metadata.report;
   const confirmDelete = (e) => {
@@ -196,21 +126,23 @@ const headerBtnGroup = (
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
-  return (
-    <div className="upper-btn">
-      <Button
-        size="sm"
-        variant="danger"
-        disabled={readOnly || isDisabled}
-        onClick={confirmDelete}
-      >
-        <i className="fa fa-trash" />
-      </Button>
-      <PrintCodeButton
-        element={sample}
-        analyses={[container]}
-        ident={container.id}
+  return (deleted ?
+    <Button
+      size="xxsm"
+      variant="danger"
+      onClick={() => {handleUndo(container)}}
+    >
+      <i className="fa fa-undo" />
+    </Button> :
+    <div className="d-flex gap-1 align-items-center">
+      <Form.Check
+        type="checkbox"
+        onClick={onToggleAddToReport}
+        defaultChecked={inReport}
+        label="Add to Report"
+        className="mx-2"
       />
+      <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
       <SpectraEditorButton
         element={sample}
         hasJcamp={hasJcamp}
@@ -223,32 +155,30 @@ const headerBtnGroup = (
         toggleNMRDisplayerModal={toggleNMRDisplayerModal}
         hasNMRium={hasNMRium}
       />
-      <span className="button-right">
-        <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
-      </span>
-      <span
-        className="add-to-report"
-        onClick={stopBubble}
+      <PrintCodeButton
+        element={sample}
+        analyses={[container]}
+        ident={container.id}
+      />
+      <Button
+        size="xxsm"
+        variant="danger"
+        disabled={readOnly || isDisabled}
+        onClick={confirmDelete}
       >
-        <Checkbox
-          onClick={onToggleAddToReport}
-          defaultChecked={inReport}
-        >
-          <span>Add to Report</span>
-        </Checkbox>
-      </span>
+        <i className="fa fa-trash" />
+      </Button>
     </div>
   );
 };
 
-const HeaderNormal = ({
-  sample, container, mode, readOnly, isDisabled, serial,
-  handleRemove, handleSubmit, handleAccordionOpen, toggleAddToReport,
+const AnalysesHeader = ({
+  sample, container, mode, readOnly, isDisabled, handleRemove, handleUndo, handleSubmit, toggleAddToReport,
 }) => {
-  const clickToOpen = () => handleAccordionOpen(serial);
 
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
+  const deleted = container.is_deleted;
   const insText = instrumentText(container);
   const status = container.extended_metadata.status || '';
   const previewImg = previewContainerImage(container);
@@ -271,46 +201,51 @@ const HeaderNormal = ({
   }
   return (
     <div
-      className={`analysis-header ${mode === 'edit' ? '' : 'order'}`}
-      onClick={clickToOpen}
+      className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}
     >
-      <div className="preview">
-        <ImageModal
-          hasPop={hasPop}
-          previewObject={{
-            src: previewImg
-          }}
-          popObject={{
-            title: container.name,
-            src: previewImg,
-            fetchNeeded,
-            fetchId
-          }}
-        />
+      <div className="preview border d-flex align-items-center">
+        {deleted ?
+          <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :
+          <ImageModal
+            hasPop={hasPop}
+            previewObject={{
+              src: previewImg
+            }}
+            popObject={{
+              title: container.name,
+              src: previewImg,
+              fetchNeeded,
+              fetchId
+            }}
+          />
+    }  
       </div>
-      <div className="abstract">
-        {
-          headerBtnGroup(
-            container, sample, mode, handleRemove, handleSubmit,
-            toggleAddToReport, isDisabled, readOnly,
-          )
-        }
-        <div className="lower-text">
-          <div className="main-title">{container.name}</div>
-          <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">
-            Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
-          </div>
-          <div className="desc sub-title">
-            <span style={{ float: 'left', marginRight: '5px' }}>
-              Content:
-            </span>
-            <QuillViewer value={contentOneLine} />
-          </div>
+      <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
+        <div className="d-flex justify-content-between align-items-center">
+          <h4 className={"flex-grow-1" + (deleted ? " text-decoration-line-through" : "")}>{container.name}</h4>
+          {(mode === 'edit') &&
+            headerBtnGroup(
+              deleted, container, sample, handleRemove, handleSubmit,
+              toggleAddToReport, isDisabled, readOnly, handleUndo
+            )
+          }
         </div>
+        <div className={deleted ? "text-body-tertiary" : ""}>
+          Type: {kind}
+          <br />
+          Status: <span className='me-4'>{status} {qCheckMsg(sample, container)}</span>{insText}
+        </div>
+        {!deleted &&
+          <div className="d-flex gap-2">
+            <span>Content:</span>
+            <div className="flex-grow-1">
+              <QuillViewer value={contentOneLine} className="p-0"/>
+            </div>
+          </div>
+        }
       </div>
     </div>
   );
 };
 
-export { HeaderDeleted, HeaderNormal, AnalysisModeBtn };
+export { AnalysesHeader, AnalysisModeBtn };

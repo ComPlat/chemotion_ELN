@@ -66,7 +66,7 @@ export default class ConfirmClose extends Component {
         >
           <Button
             variant="danger"
-            size="xsm"
+            size="xxsm"
             onClick={() => this.onClickButton(el)}
             ref={(button) => { this.target = button; }}
           >

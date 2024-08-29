@@ -30,7 +30,7 @@ describe('ResearchPlanDetailsContainers', () => {
       const expectedValue = shallow(
         <div
           style={{ marginBottom: '10px' }}
-          className="noAnalyses-warning"
+          className="m-4"
         >
           There are currently no Analyses.
           <span />
@@ -44,7 +44,7 @@ describe('ResearchPlanDetailsContainers', () => {
       const expectedValue = shallow(
         <div
           style={{ marginBottom: '10px' }}
-          className="noAnalyses-warning"
+          className="m-4"
         >
           There are currently no Analyses.
           <Button
