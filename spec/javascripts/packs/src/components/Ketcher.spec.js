@@ -49,12 +49,27 @@ import {
 import templates from '../../../../../public/json/surfaceChemistryShapes.json';
 
 describe('Ketcher', () => {
+  let originalFetch;
+
   beforeEach(async () => {
     resetStore();
     templateListSetter(templates);
+    // Mock fetch for tests that trigger SVG/template loading (e.g. handleAddAtom, addPolymerTags with new images)
+    originalFetch = global.fetch;
+    global.fetch = (url) => {
+      if (typeof url === 'string' && (url.includes('surfaceChemistryShapes') || url.includes('.svg'))) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(Array.isArray(templates) ? templates : []),
+          text: () => Promise.resolve('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
+        });
+      }
+      return originalFetch ? originalFetch(url) : Promise.reject(new Error('No fetch mock'));
+    };
   });
 
   afterEach(() => {
+    if (originalFetch) global.fetch = originalFetch;
     resetStore();
   });
 

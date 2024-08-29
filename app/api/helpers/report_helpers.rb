@@ -268,6 +268,11 @@ module ReportHelpers
     when :components
       sheet_name = :"#{table}_components"
       export.generate_components_sheet_with_samples(sheet_name, result, columns_params)
+      if columns_params.include?('composition_table')
+        Rails.logger.info("Generating composition table for components sheet, #{columns_params}")
+        sheet_name = "#{table}_composition_table"
+        export.generate_composition_table_components_sheet_with_samples(sheet_name, result)
+      end
     else
       export.generate_sheet_with_samples(table, result)
     end
@@ -464,10 +469,8 @@ module ReportHelpers
           SELECT
             #{component_columns}
           FROM components comp
-          #{if needs_molecule_join
-              "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer"
-            end}
-          WHERE comp.sample_id = s.id
+          #{needs_molecule_join ? "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer" : ''}
+          WHERE comp.sample_id = s.id AND comp.deleted_at IS NULL
           ORDER BY comp.position
         ) AS component_row
       ) AS components ON TRUE
@@ -854,7 +857,7 @@ module ReportHelpers
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
         real_amount_unit: ['s.real_amount_unit', '"real unit"', 0],
         description: ['s.description', '"description"', 0],
-        molfile: ["encode(s.molfile, 'escape')", 'molfile', 1],
+        molfile: ["convert_from(s.molfile, 'UTF8')", 'molfile', 1],
         purity: ['s.purity', '"purity"', 0],
         solvent: ['s.solvent', '"solvent"', 0],
         # impurities: ['s.impurities', nil, 0],
@@ -882,6 +885,13 @@ module ReportHelpers
         solubility: ['s."solubility"', '"solubility"', 0],
         color: ['s."color"', '"color"', 0],
         form: ['s."form"', '"form"', 0],
+        height: ['s."height"', '"height"', 0],
+        width: ['s."width"', '"width"', 0],
+        length: ['s."length"', '"length"', 0],
+        storage_condition: ['s."storage_condition"', '"storage condition"', 0],
+        state: ['s."state"', '"state"', 0],
+        residue_type: ["res.residue_type", '"residue_type"', 1],
+        polymer_type: ["res.custom_info->>'polymer_type'", '"polymer_type"', 1],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -972,7 +982,6 @@ module ReportHelpers
       'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
       'flash_point' => "s.xref->>'flash_point' as flash_point",
       'solubility' => "s.xref->>'solubility' as solubility",
-      'color' => "s.xref->>'color' as color",
       'form' => "s.xref->>'form' as form",
     }
 
@@ -985,6 +994,8 @@ module ReportHelpers
 
   def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
     selection = []
+    # 'name' is required so the export can filter for HierarchicalMaterial components
+    composition_table_properties = %w[name source molar_mass molecule_id weight_ratio_exp template_category].freeze
     attrs.each_key do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|
         custom_column_query(table, col, selection, user_id, attrs)
@@ -993,7 +1004,14 @@ module ReportHelpers
 
     selection = Export::ExportChemicals.build_chemical_column_query(selection, sel) if sel[:chemicals].present?
 
-    return Export::ExportComponents.build_component_column_query(selection, sel) if sel[:components].present?
+    if sel[:components].present?
+      if sel[:components].include?('composition_table')
+        composition_table_properties.each do |field|
+          sel[:components] << field unless sel[:components].include?(field)
+        end
+      end
+      return Export::ExportComponents.build_component_column_query(selection, sel)
+    end
 
     sel[:chemicals].present? ? selection : selection.join(',')
   end

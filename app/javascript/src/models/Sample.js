@@ -24,6 +24,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
+export const SAMPLE_TYPE_HIERARCHICAL_MATERIAL = 'HierarchicalMaterial';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -241,6 +242,12 @@ export default class Sample extends Element {
       components: [],
       ancestor_ids: [],
       literatures: {},
+      state: '',
+      color: '',
+      height: '',
+      width: '',
+      length: '',
+      storage_condition: '',
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -268,6 +275,18 @@ export default class Sample extends Element {
    */
   isMixture() {
     return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
+  }
+
+  /**
+   * Determines whether the sample is of type "HierarchicalMaterial".
+   *
+   * Checks the `sample_type` property against the constant
+   * `SAMPLE_TYPE_HIERARCHICAL_MATERIAL`.
+   *
+   * @returns {boolean} True if the sample type matches "HierarchicalMaterial"; otherwise false.
+   */
+  isHierarchicalMaterial() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_HIERARCHICAL_MATERIAL;
   }
 
   /**
@@ -438,6 +457,12 @@ export default class Sample extends Element {
       sample_type: this.sample_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
+      state: this.state,
+      color: this.color || '',
+      height: this.height || '',
+      width: this.width || '',
+      length: this.length || '',
+      storage_condition: this.storage_condition || '',
     });
 
     return serialized;
@@ -1511,7 +1536,7 @@ export default class Sample extends Element {
       return '';
     }
 
-    if (this.contains_residues) {
+    if (this.contains_residues && this.polymer_formula) {
       return this.molecule_formula + this.polymer_formula;
     }
 
