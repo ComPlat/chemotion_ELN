@@ -201,7 +201,7 @@ const AnalysesHeader = ({
   }
   return (
     <div
-      className={`analysis-header w-100 pe-3 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order'}`}
+      className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}
     >
       <div className="preview border d-flex align-items-center">
         {deleted ?
@@ -220,7 +220,7 @@ const AnalysesHeader = ({
           />
     }  
       </div>
-      <div className={"flex-grow-1" + ((mode === 'edit') ? " pe-3 border-end" : "") + (deleted ? "" : " analysis-header-fade")}>
+      <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
         <div className="d-flex justify-content-between align-items-center">
           <h4 className={"flex-grow-1" + (deleted ? " text-decoration-line-through" : "")}>{container.name}</h4>
           {(mode === 'edit') &&

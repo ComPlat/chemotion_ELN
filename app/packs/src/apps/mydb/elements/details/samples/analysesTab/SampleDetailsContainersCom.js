@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import {
-  Button, Form, OverlayTrigger, Tooltip, ButtonToolbar, Accordion
+  Button, Form, OverlayTrigger, Tooltip, ButtonToolbar, Accordion, Card
 } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
@@ -9,6 +9,7 @@ import {
   AnalysesHeader,
   AnalysisModeBtn,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
 
 function RndNotAvailable() {
   return (
@@ -105,36 +106,46 @@ function ReactionsDisplay({
           id="editable-analysis-list"
           onSelect={handleAccordionOpen}
           activeKey={activeAnalysis}
+          className='border rounded overflow-hidden'
         >
           {orderContainers.map((container, i) => {
             const id = container.id || `fake_${i}`;
+            const isActiveTab = activeAnalysis === id;
+            const isFirstTab = i === 0;
             return (
-              <Accordion.Item eventKey={id} key={`${id}CRowEdit`}>
-                <Accordion.Header>
-                  <AnalysesHeader
-                    sample={sample}
-                    container={container}
-                    mode={mode}
-                    handleUndo={handleUndo}
-                    readOnly={readOnly}
-                    isDisabled={isDisabled}
-                    handleRemove={handleRemove}
-                    handleSubmit={handleSubmit}
-                    toggleAddToReport={toggleAddToReport}
-                  />
-                </Accordion.Header>
-                {!container.is_deleted && (
-                  <Accordion.Body>
-                    <ContainerComponent
-                      templateType="sample"
-                      readOnly={readOnly}
+              <Card
+                key={`${id}CRowEdit`}
+                className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
+              >
+                <Card.Header className={"rounded-0 py-3" + (isActiveTab ? " bg-gray-200 border-bottom" : " bg-gray-100 border-bottom-0")}>
+                  <AccordionHeaderWithButtons eventKey={id}>
+                    <AnalysesHeader
+                      sample={sample}
                       container={container}
-                      disabled={isDisabled}
-                      onChange={handleChange}
+                      mode={mode}
+                      handleUndo={handleUndo}
+                      readOnly={readOnly}
+                      isDisabled={isDisabled}
+                      handleRemove={handleRemove}
+                      handleSubmit={handleSubmit}
+                      toggleAddToReport={toggleAddToReport}
                     />
-                  </Accordion.Body>
+                  </AccordionHeaderWithButtons> 
+                </Card.Header>
+                {!container.is_deleted && (
+                  <Accordion.Collapse eventKey={id}>
+                    <Card.Body>
+                      <ContainerComponent
+                        templateType="sample"
+                        readOnly={readOnly}
+                        container={container}
+                        disabled={isDisabled}
+                        onChange={handleChange}
+                      />
+                    </Card.Body>
+                  </Accordion.Collapse>
                 )}
-              </Accordion.Item>
+              </Card>
             );
           })}
         </Accordion>
