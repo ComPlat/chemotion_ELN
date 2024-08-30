@@ -82,6 +82,27 @@
     }
   }
 
+  @media (max-width: 768px) {
+  .checkbox-label,
+  .purity-label {
+    font-size: 12px;
+  }
+
+  .name-form {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .name-form > div {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .tab-density-molarity {
+    width: 50%;
+  }
+}
+
   .top-secret-checkbox,
   .decoupled-checkbox {
     margin-top: 22px;
