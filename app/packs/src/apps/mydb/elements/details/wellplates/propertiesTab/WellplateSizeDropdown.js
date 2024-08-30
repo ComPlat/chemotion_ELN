@@ -11,7 +11,11 @@ class Option {
   }
 
   get label() {
-    return `${this.height * this.width} (${this.width}x${this.height})`;
+    const size = this.height * this.width;
+    if(size==0){
+      return "not yet chosen";
+    }
+    return `${size} (${this.width}x${this.height})`;
   }
 }
 
