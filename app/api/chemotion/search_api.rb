@@ -42,6 +42,7 @@ module Chemotion
             requires :value, type: String
             optional :smiles, type: String
             optional :sub_values, type: Array
+            optional :available_options, type: Array
           end
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
