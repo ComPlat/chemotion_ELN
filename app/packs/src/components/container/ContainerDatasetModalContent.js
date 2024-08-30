@@ -90,6 +90,22 @@ export class ContainerDatasetModalContent extends Component {
     this.setState({
       attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
     });
+    if (this.context.attachmentNotificationStore) {
+      // Combine attachments using the context store
+      const combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(
+this.state.filteredAttachments, 'Container', this.props.datasetContainer);
+
+      // Optionally, deduplicate combinedAttachments if necessary
+      const uniqueAttachments = combinedAttachments.filter(
+        (attachment, index, self) =>
+          index === self.findIndex((a) => a.id === attachment.id)
+      );
+
+      // Update the state with combined attachments
+      this.setState({
+        filteredAttachments: uniqueAttachments,
+      });
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -549,13 +565,23 @@ export class ContainerDatasetModalContent extends Component {
     } = this.state;
     const { datasetContainer } = this.props;
 
-    let combinedAttachments = filteredAttachments;
-    if (this.context.attachmentNotificationStore) {
-      // eslint-disable-next-line max-len
-      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Container', datasetContainer);
-    }
+    // let combinedAttachments = filteredAttachments;
+    // if (this.context.attachmentNotificationStore) {
+    //   // eslint-disable-next-line max-len
+    //   combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Container', datasetContainer);
+    //   // this.setState({ filteredAttachments: combinedAttachments });
+     
+    // }
 
-    const renderGroup = (attachments, title, key) => (
+    // this.setState({ filteredAttachments: combinedAttachments });
+
+    // console.log('Combined Attachments', combinedAttachments);
+
+
+    const renderGroup = (attachments, title, key) => {
+      
+      console.log(attachments);
+      return(
       <div key={key} style={{ marginTop: '10px' }}>
         <div style={{
           backgroundColor: '#D3D3D3',
@@ -567,9 +593,10 @@ export class ContainerDatasetModalContent extends Component {
         >
           {title}
         </div>
-        {combinedAttachments.map((attachment) => this.renderAttachmentRow(attachment))}
+          {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
       </div>
-    );
+      );
+  }
 
     const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
       (groupName) => attachmentGroups.Processed[groupName].length > 0
@@ -593,16 +620,16 @@ export class ContainerDatasetModalContent extends Component {
               )}
           </div>
         </div>
-        {combinedAttachments.length === 0 ? (
+        {filteredAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (
           <div style={{ marginBottom: '20px' }}>
             {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
-            && renderGroup(attachmentGroups.Pending, 'Pending')}
-            {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
-            {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
+            && renderGroup( attachmentGroups.Pending, 'Pending')}
+            {attachmentGroups.Original.length > 0 && renderGroup( attachmentGroups.Original, 'Original')}
+            {attachmentGroups.BagitZip.length > 0 && renderGroup( attachmentGroups.BagitZip, 'Bagit / Zip')}
             {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
               .map((groupName) => attachmentGroups.Processed[groupName].length > 0
             && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
