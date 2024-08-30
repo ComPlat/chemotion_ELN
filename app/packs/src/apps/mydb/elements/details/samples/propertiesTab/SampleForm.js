@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/sort-comp */
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
@@ -214,7 +215,17 @@ export default class SampleForm extends React.Component {
 
     return (
       <FormGroup>
-        <ControlLabel>Stereo Abs</ControlLabel>
+        <ControlLabel
+          style={{
+            display: 'block',
+            marginBottom: '5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          Stereo Abs
+        </ControlLabel>
         <Select
           name="stereoAbs"
           clearable={false}
@@ -248,7 +259,17 @@ export default class SampleForm extends React.Component {
 
     return (
       <FormGroup>
-        <ControlLabel>Stereo Rel</ControlLabel>
+        <ControlLabel
+          style={{
+            display: 'block',
+            marginBottom: '5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          Stereo Rel
+        </ControlLabel>
         <Select
           name="stereoRel"
           clearable={false}
@@ -494,7 +515,17 @@ export default class SampleForm extends React.Component {
 
     return (
       <FormGroup bsSize={condition ? 'small' : null}>
-        <ControlLabel>{label}</ControlLabel>
+        <ControlLabel
+          style={{
+            display: 'block',
+            marginBottom: '5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {label}
+        </ControlLabel>
         <FormControl
           id={`txinput_${field}`}
           type="text"
@@ -506,7 +537,7 @@ export default class SampleForm extends React.Component {
           }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
-          style={formControlStyle}          
+          style={{ ...formControlStyle, width: '100%' }}
         />
       </FormGroup>
     );
@@ -899,16 +930,16 @@ export default class SampleForm extends React.Component {
                 <tr>
                   <td colSpan="4">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ flex:  '2 1 0',  paddingRight: '5px' }}>
+                      <div style={{ flex: '2 1 0', paddingRight: '5px' }}>
                         {this.moleculeInput()}
                       </div>
-                      <div style={{ flex:  '2 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
+                      <div style={{ flex: '2 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'name', 'Sample name')}
                       </div>
-                      <div style={{ flex:  '1 1 0',  marginRight: '5px',paddingLeft: '10px', paddingRight: '5px' }}>
+                      <div style={{ flex: '1 1 0', marginRight: '5px', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.stereoAbsInput()}
                       </div>
-                      <div style={{ flex:  '1 1 0', paddingLeft: '10px', marginRight: '5px' }}>
+                      <div style={{ flex: '1 1 0', paddingLeft: '10px', marginRight: '5px' }}>
                         {this.stereoRelInput()}
                       </div>
                       {enableSampleDecoupled && (
@@ -925,10 +956,19 @@ export default class SampleForm extends React.Component {
                       <div style={{ flex: '1 1 0', paddingRight: '5px' }}>
                         {this.textInput(sample, 'short_label', 'Short label', true)}
                       </div>
-                      <div style={{ flex:  '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
+                      <div style={{ flex: '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
-                      <div style={{ flex: '1 1 0', paddingLeft: '10px', paddingRight: '5px', display: 'flex', alignItems: 'flex-center', flexWrap: 'nowrap', }}>
+                      <div
+                        style={{
+                          flex: '1 1 0',
+                          paddingLeft: '10px',
+                          paddingRight: '5px',
+                          display: 'flex',
+                          alignItems: 'flex-center',
+                          flexWrap: 'nowrap',
+                        }}
+                      >
                         <div style={{ flex: 1, minWidth: '150px' }}>
                           {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
                         </div>
@@ -936,10 +976,12 @@ export default class SampleForm extends React.Component {
                           {this.nextInventoryLabel(sample)}
                         </div>
                       </div>
-                      <div style={{ flex:  '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
+                      <div style={{ flex: '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'location', 'Location')}
                       </div>
-                      <div style={{ display: 'flex', width: 'auto', paddingLeft: '5px' }} className="top-secret-checkbox">
+                      <div
+                        style={{ display: 'flex', width: 'auto', paddingLeft: '5px' }}
+                        className="top-secret-checkbox">
                         {this.drySolventCheckbox(sample)}
                       </div>
                     </div>
@@ -963,14 +1005,17 @@ export default class SampleForm extends React.Component {
 
                 <tr className="visible-hd">
                   <td colSpan="6">
-                    <div className="input-wrapper" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                    <div
+                      className="input-wrapper"
+                      style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', marginTop: '12px' }}>
                         {this.infoButton()}
                       </div>
-                      <div style={{ flex: '1 1 0', paddingLeft: '5px', paddingRight: '5px', marginTop: '14px'}}>
+                      <div style={{ flex: '1 1 0', paddingLeft: '5px', paddingRight: '5px', marginTop: '14px' }}>
                         {this.sampleAmount(sample)}
                       </div>
-                      <div style={{ flex: '1 1 0', marginBottom: '15px', paddingLeft: '10px', paddingRight: '5px', display: 'flex', flexWrap: 'wrap' }}>
+                      <div style={{ flex: '1 1 auto', marginBottom: '15px', paddingLeft: '10px', paddingRight: '5px', display: 'flex', flexWrap: 'wrap' }}>
                         <Tabs
                           style={{ flex: '1 1 0' }}
                           id="tab-density-molarity"
