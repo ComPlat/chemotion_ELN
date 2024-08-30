@@ -7,6 +7,7 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
+    this.originalSize = this.width * this.height;
     this.#initEmptyWells();
   }
 
@@ -106,7 +107,6 @@ export default class Wellplate extends Element {
 
   changeSize(width, height) {
     // change actual dimensions
-    this.oldWidth=this.width;
     this.width = Number(width);
     this.height = Number(height);
 
@@ -131,9 +131,8 @@ export default class Wellplate extends Element {
   }
 
   #initEmptyWells() {
+    if (!this.isNew && this.originalSize > 0) return;
 
-    if (!this.isNew && this.oldWidth>0 ) return
-    
     this.wells = Array(this.size).fill({});
     this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));
     this._checksum = this.checksum();

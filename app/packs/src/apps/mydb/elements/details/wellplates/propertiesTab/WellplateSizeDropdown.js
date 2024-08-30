@@ -21,7 +21,7 @@ export default class WellplateSizeDropdown extends Component {
 
     const rawOptions = [
       new Option(0, 0),
-      new Option(24, 16), 
+      new Option(24, 16),
       new Option(12, 8),
       new Option(6, 4),
       new Option(4, 3)];
@@ -59,7 +59,7 @@ export default class WellplateSizeDropdown extends Component {
   render() {
     const { wellplate } = this.props;
 
-    const shouldBeDisabled = !wellplate.is_new && wellplate.oldWidth>0 ;
+    const shouldBeDisabled = !wellplate.is_new && wellplate.originalSize > 0;
     const { options } = this.state;
 
     return (
