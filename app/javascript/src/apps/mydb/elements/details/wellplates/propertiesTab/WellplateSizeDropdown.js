@@ -6,7 +6,8 @@ import Wellplate from 'src/models/Wellplate';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
 
 const Option = (width, height) => {
-  const label = `${height * width} (${width}x${height})`
+  const size = height * width
+  const label = size === 0 ? 'not yet chosen' : `${size} (${width}x${height})`
   const value = `${width} ${height}`
 
   return (<option key={`${label}-${value}`} label={label} value={value} />)
