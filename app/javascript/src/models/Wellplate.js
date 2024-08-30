@@ -11,7 +11,7 @@ export default class Wellplate extends Element {
     this.#initEmptyWells();
   }
 
-  static buildEmpty(collectionId, width = 12, height = 8) {
+  static buildEmpty(collectionId, width = 0, height = 0) {
     return new Wellplate(
       {
         collection_id: collectionId,
