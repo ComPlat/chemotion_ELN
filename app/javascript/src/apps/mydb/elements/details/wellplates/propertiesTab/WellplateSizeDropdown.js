@@ -15,7 +15,7 @@ const Option = (width, height) => {
 const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
   const size = `${wellplate.width} ${wellplate.height}`
   const [showCustomSizeModal, setShowCustomSizeModal] = useState(false)
-  const shouldBeDisabled = !wellplate.is_new && wellplate.oldWidth > 0
+  const shouldBeDisabled = !wellplate.is_new && wellplate.originalSize > 0
 
   const onChange = (event) => {
     const values = event.target.value.split(" ").map(x => parseInt(x, 10))
