@@ -254,8 +254,8 @@ const inlineNotation = (layout, data, metadata) => {
           isRef, e12, max, min,
         } = item;
         const e12Str = e12 ? FN.strNumberFixedLength(e12, 3) : '0';
-        let scanRateStr = scanRate ? FN.strNumberFixedLength(scanRate, 3) : '0';
-        scanRateStr = scanRateStr === '0' && cvScanRate ? cvScanRate : scanRateStr;
+        let scanRateStr = cvScanRate ? cvScanRate : '0';
+        scanRateStr = scanRateStr === '0' && scanRate ? FN.strNumberFixedLength(scanRate, 3) : scanRateStr;
         if (isRef) {
           const posNegString = x[0] > x[1] ? 'neg.' : 'pos.';
           const concentrationStr = cvConc || '<conc. of sample>';
