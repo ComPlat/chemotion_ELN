@@ -1,56 +1,84 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-function modifyMolString(molString) {
-  // Split the string into an array of lines
-  let lines = molString.split('\n');
-
-  // Find the index of "M  END"
-  let endIndex = lines.findIndex(line => line.trim() === 'M  END');
-
-  if (endIndex === -1) {
-    console.error('M  END not found in the string');
-    return molString; // Return the original string if "M  END" is not found
+function addElementAtIndex(array, index, newElement) {
+  // Check if the index is within bounds
+  if (index >= 0 && index <= array.length) {
+    // Use splice to insert the new element at the specified index
+    array.splice(index, 0, newElement);
+  } else {
+    console.error("Index out of bounds");
   }
 
-  // Key-value pairs to insert
-  const keyValuePairs = [
-    '1 2',
-    '2 1',
-    '3 1'
-  ];
-
-  // Insert the key-value pairs before the "M  END" line
-  lines.splice(endIndex, 0, ...keyValuePairs);
-
-  // Join the lines back into a single string
-  let modifiedMolString = lines.join('\n');
-
-  return modifiedMolString;
+  return array;
 }
+
+function modifyMolString(molfile, type, newElement) {
+  // list of lines in molfile
+  const line = molfile.split("\n");
+  const atomStart = 3;
+  // console.log(line);
+  // file header type i.e INDIGO
+  const fileType = line[1];
+
+  // file atoms & bonds info
+  const fileInfo = line[3].trim().split(" ");
+
+  // number of atoms in a file
+  const numberOfAtoms = parseInt(fileInfo[0].trim());
+  const positionToAddNewAtom = 3 + numberOfAtoms + 1;
+  // number of bonds in a file
+  const numberOfBonds = parseInt(fileInfo[1].trim());
+
+  // adding numberOfAtoms, numberOfBonds you get a line number to place extra content
+  const rowNumToStartAdding = numberOfAtoms + numberOfBonds + 1;
+  let newLines = [];
+  if (type === 'elementEdit') {
+    // temp
+    newLines = addElementAtIndex(line, positionToAddNewAtom, newElement);
+    if (newLines[line.length - 2].indexOf("RGP") !== -1) newLines[line.length - 2] += `1  ${numberOfAtoms}  1`;
+    else {
+      newLines = addElementAtIndex(line, line.length - 2, `M  RGP  1  ${numberOfAtoms}  1`);
+    }
+    // increment atoms numbers
+    fileInfo[0] = numberOfAtoms + 1;
+    line[3] = " " + fileInfo.join(" ");
+
+    // add alias
+    newLines = addElementAtIndex(line, numberOfAtoms + numberOfBonds + atomStart + 2, `A   ${numberOfAtoms + 1}`);
+    newLines = addElementAtIndex(line, numberOfAtoms + numberOfBonds + atomStart + 2 + 1, `My alias`);
+  }
+  console.log({ newLines });
+
+  return newLines.join("\n");
+}
+
+// const R_elements_template = ({ x, y }) => "    " + x + "   " + y + "   0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0";
+const R_elements_template = ({ }) => "    4.4750   -4.4750    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0";
 
 function KetcherEditor(props) {
   const iframeRef = useRef();
+  const [editorS, setEditor] = useState(props.editor);
   let {
-    editor, iH, iS, molfile
+    iH, iS, molfile
   } = props;
 
-  const initMol = modifyMolString(molfile)
+  const initMol = molfile
     || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
+
+
 
   const loadContent = (event) => {
     if (event.data.eventType === 'init') {
-      editor.structureDef.editor.setMolecule(initMol);
-      // console.log("__", editor._structureDef);
-      // setTimeout(() => {
+      window.editor = editorS;
+      editorS.structureDef.editor.setMolecule(initMol);
+
       // editor.structureDef.editor.editor.renderAndRecoordinateStruct();
       // editor.structureDef.editor.setMolecule(initMol);
-      // }, 5000);
-      // console.log(editor.structureDef.editor.editor.findItem(list, "images"), "ds");
       const list = [
-        "elementEdit",
+        // "elementEdit",
         "bondEdit",
         "rgroupEdit",
         "sgroupEdit",
@@ -59,14 +87,6 @@ function KetcherEditor(props) {
         "attachEdit",
         "removeFG",
         "change",
-        // "selectionChange",
-        "aromatizeStruct",
-        "dearomatizeStruct",
-        "enhancedStereoEdit",
-        "confirm",
-        "cursor",
-        "apiSettings",
-        // "updateFloatingTools",
         "quickEdit",
         // "click"
         // "dblclick",
@@ -76,21 +96,40 @@ function KetcherEditor(props) {
         // "mouseleave",
         // "mouseover",
         // "showInfo",
-        "message",
+        // "message",
       ];
 
       // Function to handle each event
       function handleEvent(eventName, data) {
-        // console.log(`${eventName} event triggered with data:`, data);
-        if (data[0]?.operation === "Move image") {
-          console.log("__LAST CURSOR POSITION", editor._structureDef.editor.editor.lastCursorPosition);
-          console.log("__SELCTION", editor._structureDef.editor.editor._selection);
-        }
+        // console.log(`${eventName} event triggered with data:`, data, molfile);
+        data.forEach(async (item) => {
+          switch (item?.operation) {
+            case "Move image":
+            case "Upsert image":
+              const R_temp = R_elements_template({ x: "-1.2990", y: "-1.2500" });
+              const updatedContent = modifyMolString(molfile, "elementEdit", R_temp);
+              // console.log(await editor.structureDef.editor.getMolfile(), "editor?");
+              editorS._structureDef.editor.setMolecule(updatedContent);
+              // setEditor(editorS);
+              break;
+            case "Calculate implicit hydrogen":
+              console.log("R: LAST CURSOR POSITION", editorS._structureDef.editor.editor.lastCursorPosition);
+              console.log("R:__SELCTION", editorS._structureDef.editor.editor._selection);
+              break;
+            case "Add atom":
+              console.log("ADD ATOM: LAST CURSOR POSITION", editorS._structureDef.editor.editor.lastCursorPosition);
+              console.log("ADD ATOM:__SELCTION", editorS._structureDef.editor.editor._selection);
+              break;
+            default:
+              console.log("ELEMENT DETAILS:__NEW", item);
+          }
+        });
       }
+
 
       // Subscribe to each event in the list
       list.forEach(eventName => {
-        editor._structureDef.editor.editor.subscribe(eventName, async (eventData) => {
+        editorS._structureDef.editor.editor.subscribe(eventName, async (eventData) => {
           const result = await eventData;
           handleEvent(eventName, result);
         });
@@ -109,16 +148,16 @@ function KetcherEditor(props) {
     <div>
       <iframe
         ref={iframeRef}
-        id={editor.id}
-        src={editor.extSrc}
-        title={editor.label}
+        id={editorS.id}
+        src={editorS.extSrc}
+        title={editorS.label}
         height={iH}
         width="100%"
         style={iS}
       />
     </div>
   );
-}
+};
 
 KetcherEditor.propTypes = {
   molfile: PropTypes.string,
