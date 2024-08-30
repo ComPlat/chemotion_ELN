@@ -5,28 +5,17 @@ import { Col, Modal, Nav, NavItem } from 'react-bootstrap';
 import { MolViewer } from 'react-molviewer';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import Panel from 'src/components/legacyBootstrap/Panel';
 import PanelGroup from 'src/components/legacyBootstrap/PanelGroup';
 
-const basicCommands = (
-  <>
-    <div>
-      <strong>Zoom In / Out: </strong>Use mouse wheel or Shift + Left-click and
-      drag Vertically <strong>Rotate: </strong>Click and hold the left mouse
-      button, then drag to rotate
-    </div>
-    <div>
-      <strong>More Functions:</strong> Right-click on the molecule view to open
-      the JSmol menu and access more functions, such as saving as PNG file.
-    </div>
-  </>
-);
-
 function MolViewerListModal(props) {
   const config = UIStore.getState().moleculeViewer;
-  if (!config?.featureEnabled || !config.chembox) return <span />;
+  if (!config?.featureEnabled) return <span />;
 
-  const { datasetContainer, handleModalOpen, isPublic, show } = props;
+  const {
+    datasetContainer, handleModalOpen, isPublic, show
+  } = props;
   const [molContent, setMolContent] = useState(null);
   const [activeKey, setActiveKey] = useState(1);
   const [selected, setSelected] = useState(() => {
@@ -37,17 +26,12 @@ function MolViewerListModal(props) {
   const [modalBody, setModalBody] = useState(null);
 
   useEffect(() => {
-    const fetchMolContent = async () => {
-      if (selected?.id) {
-        const url = isPublic
-          ? `${window.location.origin}/api/v1/public/download/attachment?id=${selected?.id}`
-          : `${window.location.origin}/api/v1/attachments/${selected?.id}`;
-        const response = await fetch(url);
-        const data = await response.text();
-        setMolContent(new Blob([data], { type: 'text/plain' }));
-      }
-    };
-    fetchMolContent();
+    if (selected?.id) {
+      const url = isPublic
+        ? `${window.location.origin}/api/v1/public/download/attachment?id=${selected?.id}`
+        : `${window.location.origin}/api/v1/attachments/${selected?.id}`;
+      setMolContent(url);
+    }
   }, [selected?.id, isPublic]);
 
   useEffect(() => {
@@ -91,28 +75,29 @@ function MolViewerListModal(props) {
           overflow: 'auto',
         }}
       >
-        {datasetContainer.map(ds => {
+        {datasetContainer.map((ds) => {
           const { attachments } = ds;
           return (
             <Panel
               key={ds.id}
               eventKey={ds.id}
-              onClick={e => handleSelect(e, ds.id)}
+              onClick={(e) => handleSelect(e, ds.id)}
             >
               <Panel.Heading>
                 <Panel.Title toggle>{`Dataset: ${ds.name}`}</Panel.Title>
               </Panel.Heading>
               <Panel.Body style={{ padding: '0px' }} collapsible>
                 <Nav bsStyle="pills" stacked activeKey={activeKey}>
-                  {attachments.map(attachment => (
+                  {attachments.map((attachment) => (
                     <NavItem
                       key={attachment.id}
                       eventKey={attachment.id}
                       active={attachment.id === selected?.id}
-                      onClick={e => handleFile(e, attachment, ds)}
+                      onClick={(e) => handleFile(e, attachment, ds)}
                     >
                       <i className="fa fa-file" aria-hidden="true" />
-                      &nbsp;{attachment.filename}
+                      &nbsp;
+                      {attachment.filename}
                     </NavItem>
                   ))}
                 </Nav>
@@ -133,13 +118,13 @@ function MolViewerListModal(props) {
         show={show}
         onHide={handleModalOpen}
       >
-        <Modal.Header onClick={e => e.stopPropagation()} closeButton>
+        <Modal.Header onClick={(e) => e.stopPropagation()} closeButton>
           <Modal.Title>
-            Dataset: {selected.dsName} / File: {selected?.filename}
-            {basicCommands}
+            {`Dataset: ${selected.dsName} / File: ${selected?.filename}`}
+            {MolViewerSet.INFO}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body onClick={e => e.stopPropagation()}>
+        <Modal.Body onClick={(e) => e.stopPropagation()}>
           <Col md={2} sm={2} lg={2}>
             {list()}
           </Col>

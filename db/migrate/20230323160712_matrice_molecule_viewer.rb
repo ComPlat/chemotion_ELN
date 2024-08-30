@@ -2,7 +2,7 @@ class MatriceMoleculeViewer < ActiveRecord::Migration[6.1]
   def change
     Matrice.create(
       name: 'moleculeViewer',
-      enabled: false,
+      enabled: true,
       label: 'moleculeViewer',
       include_ids: [],
       exclude_ids: []

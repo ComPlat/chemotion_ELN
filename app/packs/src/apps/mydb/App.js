@@ -15,6 +15,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Calendar from 'src/components/calendar/Calendar';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
+import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 
 class App extends Component {
   constructor(_props) {
@@ -38,21 +39,40 @@ class App extends Component {
     UserActions.fetchOlsChmo();
     UserActions.fetchOlsBao();
     UserActions.fetchProfile();
+    UserActions.setUsertemplates();
     UserActions.fetchUserLabels();
     UserActions.fetchGenericEls();
     UserActions.fetchSegmentKlasses();
     UserActions.fetchDatasetKlasses();
     UserActions.fetchUnitsSystem();
     UserActions.fetchEditors();
+    UserActions.fetchKetcher2Options();
     UIActions.initialize.defer();
-    document.addEventListener('keydown', this.documentKeyDown);
-
     this.patchExternalLibraries();
+
+    document.addEventListener('keydown', this.documentKeyDown);
+    window.addEventListener('storage', this.handleStorageChange);
+
+    // user templates
+    this.removeLocalStorageEventListener();
+    this.storageListener();
   }
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUiStoreChange);
     document.removeEventListener('keydown', this.documentKeyDown);
+  }
+
+  removeLocalStorageEventListener() {
+    window.removeEventListener('storage', this.storageListener);
+  }
+
+  storageListener() {
+    window.addEventListener(
+      'storage',
+      OnEventListen,
+      false
+    );
   }
 
   handleUiStoreChange(state) {

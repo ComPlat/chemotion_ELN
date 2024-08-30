@@ -8,7 +8,7 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const DEFAULT_EDITOR = 'ketcher';
 
-const UserSetting = () => {
+function UserSetting() {
   const [editors, setEditors] = useState([]);
   const [editor, setEditor] = useState({ default: DEFAULT_EDITOR, selected: DEFAULT_EDITOR, changing: false });
 
@@ -88,7 +88,7 @@ const UserSetting = () => {
       </Card.Body>
     </Card>
   );
-};
+}
 
 export default UserSetting;
 

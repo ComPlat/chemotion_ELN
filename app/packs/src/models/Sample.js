@@ -84,7 +84,15 @@ export default class Sample extends Element {
     if (sample.elemental_compositions) {
       newSample.elemental_compositions = sample.elemental_compositions;
     }
-    
+
+    if (sample.gas_type) {
+      newSample.gas_type = sample.gas_type;
+    }
+
+    if (sample.gas_phase_data) {
+      newSample.gas_phase_data = sample.gas_phase_data;
+    }
+
     newSample.filterElementalComposition();
     newSample.segments = Segment.buildCopy(sample.segments);
     return newSample;
@@ -547,7 +555,7 @@ export default class Sample extends Element {
       this.amount_unit = amount.unit;
     }
   }
-  
+
   setUnitMetrics(unit, metricPrefix) {
     const mp = metricPrefix || 'm';
     if (unit === 'l') {

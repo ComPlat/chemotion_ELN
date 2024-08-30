@@ -44,14 +44,12 @@ export default class ReactionDetailsScheme extends Component {
     const { reaction } = props;
 
     const textTemplate = TextTemplateStore.getState().reactionDescription;
-    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     this.state = {
       reaction,
       lockEquivColumn: false,
       cCon: false,
       reactionDescTemplate: textTemplate.toJS(),
       open: true,
-      vesselVolume
     };
 
     this.reactQuillRef = React.createRef();
@@ -89,6 +87,7 @@ export default class ReactionDetailsScheme extends Component {
 
   componentWillUnmount() {
     TextTemplateStore.unlisten(this.handleTemplateChange);
+    this.resetGasPhaseStore();
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -271,6 +270,12 @@ export default class ReactionDetailsScheme extends Component {
 
   onReactionChange(reaction, options = {}) {
     this.props.onReactionChange(reaction, options);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  resetGasPhaseStore() {
+    GasPhaseReactionActions.setReactionVesselSize(null);
+    GasPhaseReactionActions.setCatalystReferenceMole(null);
   }
 
   handleTemplateChange(state) {
@@ -496,7 +501,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff) {
-    const { vesselVolume } = this.state;
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     if (sample.gas_type === 'gas') {
       const result = this.calculateEquivalentForGasProduct(sample, vesselVolume);
       const equivalent = result > 1 ? 1 : result;
@@ -581,9 +586,9 @@ export default class ReactionDetailsScheme extends Component {
           break;
       }
       if (field === 'temperature' || field === 'part_per_million') {
-        const { vesselVolume } = this.state;
+        const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
         updatedSample.amount_value = updatedSample.updateGasMoles(vesselVolume);
-        const equivalent = this.calculateEquivalentForGasProduct(updatedSample, vesselVolume);
+        const equivalent = this.calculateEquivalentForGasProduct(updatedSample);
         updatedSample.equivalent = equivalent;
         if (equivalent > 1) {
           updatedSample.equivalent = 1;
@@ -619,8 +624,10 @@ export default class ReactionDetailsScheme extends Component {
     } else if (field === 'turnover_frequency') {
       convertedValues = convertTurnoverFrequency(value, unit);
     }
-    updatedSample.gas_phase_data[field].value = convertedValues[0];
-    updatedSample.gas_phase_data[field].unit = convertedValues[1];
+    if (convertedValues) {
+      updatedSample.gas_phase_data[field].value = convertedValues[0];
+      updatedSample.gas_phase_data[field].unit = convertedValues[1];
+    }
 
     return this.updatedReactionWithSample(
       this.updatedSamplesForGasProductFieldsChange.bind(this),
@@ -749,7 +756,8 @@ export default class ReactionDetailsScheme extends Component {
 
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
     const { referenceMaterial } = this.props.reaction;
-    const { lockEquivColumn, vesselVolume } = this.state;
+    const { lockEquivColumn } = this.state;
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     let stoichiometryCoeff = 1.0;
 
     return samples.map((sample) => {
@@ -842,14 +850,16 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-  calculateEquivalentForGasProduct(sample, vesselVolume) {
-    const { reaction } = this.props;
+  calculateEquivalentForGasProduct(sample, reactionVesselSize = null) {
+    const { reaction } = this.state;
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+    const volume = reactionVesselSize || vesselVolume;
     const refMaterial = reaction.findFeedstockMaterial();
-    if (!refMaterial || !vesselVolume) {
+    if (!refMaterial || !volume) {
       return null;
     }
     const { purity } = refMaterial;
-    const feedstockMolValue = calculateFeedstockMoles(vesselVolume, purity);
+    const feedstockMolValue = calculateFeedstockMoles(volume, purity || 1);
     return (sample.amount_mol / feedstockMolValue);
   }
 
@@ -960,7 +970,6 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForGasTypeChange(samples, updatedSample) {
-    const { vesselVolume } = this.state;
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.gas_type = updatedSample.gas_type;
@@ -971,7 +980,7 @@ export default class ReactionDetailsScheme extends Component {
           sample.gas_type = 'off';
         }
         if (sample.gas_type === 'gas') {
-          const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
+          const equivalent = this.calculateEquivalentForGasProduct(sample);
           sample.equivalent = equivalent;
         }
       }
@@ -1150,7 +1159,6 @@ export default class ReactionDetailsScheme extends Component {
     }
 
     const headReactants = reaction.starting_materials.length ?? 0;
-
     return (
       <div className="border">
         <div>

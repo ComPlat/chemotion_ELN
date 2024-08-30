@@ -1,0 +1,36 @@
+.ketcher-template-item {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.ketcher-template-item:hover {
+  background-color: #ebf5ff;
+  cursor: pointer;
+}
+
+.ketcher-select-common-template {
+  background-color: #fff;
+  border-color: #d9d9d9 #ccc #b3b3b3;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  color: #333;
+  cursor: default;
+  display: table;
+  height: 36px;
+  width: 100%;
+  padding: 7px 0 5px 5px;
+  position: relative;
+}
+
+.select-template-badge {
+  position: absolute;
+  right: 10px;
+  top: 5px;
+}
+
+.common-template-header {
+  display: flex;
+  align-items: center;
+}
