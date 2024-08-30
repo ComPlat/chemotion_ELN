@@ -41,8 +41,8 @@ export default class MolViewerBtn extends Component {
         >
           <Button
             className={className}
-            bsSize="xsmall"
-            bsStyle="info"
+            size="xxsm"
+            variant="info"
             disabled={disabled}
             onClick={(e) => this.handleModalOpen(e)}
           >
