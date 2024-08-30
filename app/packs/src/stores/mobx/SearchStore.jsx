@@ -31,6 +31,7 @@ const defaultSearchValues = [{
   smiles: '',
   sub_values: [],
   unit: '',
+  available_options: [],
   validationState: null
 }];
 

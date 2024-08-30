@@ -383,6 +383,9 @@ module Usecases
             @conditions[:additional_condition] +=
               " AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{unit}')"
           end
+          if filter['available_options'].present? && field.include?('temperature')
+            # TODO: add conditional options for all temperature options
+          end
         end
       end
 

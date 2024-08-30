@@ -11,6 +11,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
+import { convertTemperature } from 'src/utilities/UnitsConversion';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
 
 const DetailSearch = () => {
@@ -45,6 +46,7 @@ const DetailSearch = () => {
     smiles: '',
     sub_values: [],
     unit: '',
+    available_options: [],
     validationState: null
   }];
 
@@ -632,8 +634,9 @@ const DetailSearch = () => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
 
     if (optionField.value_system) {
-      let valueSystem =
-        searchValue.sub_values.length >= 1 && searchValue.sub_values[0][id] ? searchValue.sub_values[0][id].value_system : optionField.value_system;
+      let valueSystem = searchValue.sub_values.length >= 1 && searchValue.sub_values[0][id]
+        ? searchValue.sub_values[0][id].value_system
+        : optionField.value_system;
       subValue = { id: id, value: { value: value, value_system: valueSystem } };
     } else {
       subValue = { id: id, value: value };
@@ -674,10 +677,16 @@ const DetailSearch = () => {
       let units = optionsForSelect(option);
       searchValue.unit = units[0].label;
     }
+
+    if (column.indexOf('temperature') !== -1 && value !== '' && value !== 0) {
+      searchValue = availableOptionsForTemperature(searchValue, value, searchValue.unit);
+    }
+
     let searchSubValuesLength = searchValue.sub_values.length >= 1 ? Object.keys(searchValue.sub_values[0]).length : 0;
     let typesWithSubValues = ['input-group', 'table'];
 
-    if (((value === '' || value === false) && !typesWithSubValues.includes(type)) || (searchSubValuesLength === 0 && typesWithSubValues.includes(type) && value === '')) {
+    if (((value === '' || value === false) && !typesWithSubValues.includes(type))
+      || (searchSubValuesLength === 0 && typesWithSubValues.includes(type) && value === '')) {
       searchStore.removeDetailSearchValue(column);
     } else {
       searchStore.addDetailSearchValue(column, searchValue);
@@ -701,6 +710,18 @@ const DetailSearch = () => {
     return subValues;
   }
 
+  const availableOptionsForTemperature = (searchValue, startValue, startUnit) => {
+    searchValue.available_options = [];
+    searchValue.available_options.push({ value: startValue, unit: startUnit });
+
+    let [convertedValue, convertedUnit] = convertTemperature(startValue, startUnit);
+    searchValue.available_options.push({ value: convertedValue, unit: convertedUnit });
+
+    [convertedValue, convertedUnit] = convertTemperature(convertedValue, convertedUnit);
+    searchValue.available_options.push({ value: convertedValue, unit: convertedUnit });
+    return searchValue;
+  }
+
   const changeUnit = (units, value, column, option, subFieldId) => (e) => {
     let activeUnitIndex = units.findIndex((f) => { return f.label.replace('°', '') === value || f.label === value });
     let nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
@@ -717,7 +738,12 @@ const DetailSearch = () => {
       }
     }
 
+    if (column.indexOf('temperature') !== -1 && searchValue.value !== '') {
+      const nextValue = searchValue.available_options.find((v) => newUnit.indexOf(v.unit) !== -1);
+      searchValue.value = nextValue.value;
+    }
     searchValue.unit = newUnit;
+
     searchStore.addDetailSearchValue(column, searchValue);
   }
 
