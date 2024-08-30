@@ -81,7 +81,7 @@ export default function PrintCodeButton({ element, analyses }) {
           variant="light"
           disabled={element.isNew}
           size="xxsm"
-          onClick={(event) => {event.stopPropagation()}}
+          onClick={(event) => { event.stopPropagation() }}
           title={<i className="fa fa-barcode fa-lg" />}
         >
           {menuItems.map((e) => (

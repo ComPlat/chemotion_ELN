@@ -36,7 +36,7 @@ export default function PrintCodeModal({ element, showModal, handleModalClose, s
         if (key === 'code_type') {
           if (value !== 'bar_code' && value !== 'qr_code' && value !== 'data_matrix_code') {
             tmpUrlError.push('Invalid code type.'
-               + ' correct values: bar_code, qr_code, data_matrix_code. Value have been overwrite');
+              + ' correct values: bar_code, qr_code, data_matrix_code. Value have been overwrite');
           }
         }
         if (key === 'code_image_size') {
@@ -103,39 +103,32 @@ export default function PrintCodeModal({ element, showModal, handleModalClose, s
   return (
     <>
       {/* Modal for the PDF options */}
-      <Modal show={showModal} onHide={handleModalClose}>
+      <Modal
+        centered
+        size="lg"
+        show={showModal}
+        onHide={handleModalClose}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Print a QR Code/Bar Code</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <h3>Preview</h3>
-          {displayUrlErrorMessage()}
-          <div style={{
-            height: '400px'
-          }}
-          >
-            {preview && (
-              <embed src={`${preview}#view=FitV`} style={{ width: '100%', height: '100%' }} />
-            )}
+          <div>
+            <h3>Preview</h3>
+            <div>{displayUrlErrorMessage()}</div>
+            <div style={{ height: '400px' }}>
+              {preview && (
+                <embed src={`${preview}#view=FitV`} className="w-100 h-100" />
+              )}
+            </div>
           </div>
         </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="primary"
-            onClick={(event) => {
-              event.stopPropagation()
-              handleModalClose()
-            }}
-          >
-            Close
-          </Button>
+        <Modal.Footer className="justify-content-start">
+          <Button variant="primary" onClick={handleModalClose}>Close</Button>
           <Button
             id="submit-copy-element-btn"
             variant="success"
-            onClick={(event) => {
-              event.stopPropagation()
-              Utils.downloadFile({ contents: preview, name: `print_codes_${element.id}.pdf` })
-            }}
+            onClick={() => Utils.downloadFile({ contents: preview, name: `print_codes_${element.id}.pdf` })}
           >
             Print
           </Button>
