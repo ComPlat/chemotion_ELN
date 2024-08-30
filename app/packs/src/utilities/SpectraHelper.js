@@ -235,7 +235,7 @@ const inlineNotation = (layout, data, metadata) => {
     scanRate, voltaData, sampleName
   } = data;
   const {
-    cvConc, cvSolvent, cvRef, cvRefOthers, cvScanRate,
+    cvConc, cvSolvent, cvSolventOthers, cvRef, cvRefOthers, cvScanRate,
   } = metadata;
 
   switch (layout) {
@@ -259,7 +259,7 @@ const inlineNotation = (layout, data, metadata) => {
         if (isRef) {
           const posNegString = x[0] > x[1] ? 'neg.' : 'pos.';
           const concentrationStr = cvConc || '<conc. of sample>';
-          const solventStr = cvSolvent || '<solvent>';
+          const solventStr = (cvSolvent === 'others' ? cvSolventOthers : cvSolvent) || '<solvent>';
           let internalRefStr = "(Fc+/Fc)";
           refOps = [
             { insert: `CV (${concentrationStr} in ${solventStr} vs. Ref ` },
