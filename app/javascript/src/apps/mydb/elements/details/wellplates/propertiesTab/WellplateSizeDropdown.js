@@ -15,6 +15,7 @@ const Option = (width, height) => {
 const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
   const size = `${wellplate.width} ${wellplate.height}`
   const [showCustomSizeModal, setShowCustomSizeModal] = useState(false)
+  const shouldBeDisabled = !wellplate.is_new && wellplate.oldWidth > 0
 
   const onChange = (event) => {
     const values = event.target.value.split(" ").map(x => parseInt(x, 10))
@@ -25,6 +26,7 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
   }
 
   const options = [
+    Option(0, 0),
     Option(24, 16),
     Option(12, 8),
     Option(6, 4),
@@ -45,13 +47,13 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
           required={true}
           value={size}
           onChange={onChange}
-          disabled={!wellplate.is_new}
+          disabled={shouldBeDisabled}
         >
           {options}
         </Form.Select>
         <Button
           className="create-own-size-button"
-          disabled={!wellplate.is_new}
+          disabled={shouldBeDisabled}
           onClick={() => setShowCustomSizeModal(true)}
         >
           <i className="fa fa-braille" />
