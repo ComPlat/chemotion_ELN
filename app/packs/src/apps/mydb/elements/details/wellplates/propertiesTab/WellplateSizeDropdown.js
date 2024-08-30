@@ -19,7 +19,12 @@ export default class WellplateSizeDropdown extends Component {
   constructor(props) {
     super(props);
 
-    const rawOptions = [new Option(24, 16), new Option(12, 8), new Option(6, 4), new Option(4, 3)];
+    const rawOptions = [
+      new Option(0, 0),
+      new Option(24, 16), 
+      new Option(12, 8),
+      new Option(6, 4),
+      new Option(4, 3)];
 
     const options = rawOptions.map((option) => (
       { value: option, label: option.label }
@@ -54,7 +59,7 @@ export default class WellplateSizeDropdown extends Component {
   render() {
     const { wellplate } = this.props;
 
-    const isNew = wellplate.is_new;
+    const shouldBeDisabled = !wellplate.is_new && wellplate.oldWidth>0 ;
     const { options } = this.state;
 
     return (
@@ -63,7 +68,7 @@ export default class WellplateSizeDropdown extends Component {
         value={this.selectOptionOfWellplate(wellplate)}
         onChange={(option) => this.changeSizeOption(option)}
         options={options}
-        disabled={!isNew}
+        disabled={shouldBeDisabled}
       />
     );
   }
