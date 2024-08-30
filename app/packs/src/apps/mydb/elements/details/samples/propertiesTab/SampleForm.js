@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/sort-comp */
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
@@ -216,8 +217,18 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.abs : 'any';
 
     return (
-      <FormGroup style={{ width: '100%', paddingRight: '10px' }}>
-        <ControlLabel>Stereo Abs</ControlLabel>
+      <FormGroup>
+        <ControlLabel
+          style={{
+            display: 'block',
+            marginBottom: '5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          Stereo Abs
+        </ControlLabel>
         <Select
           name="stereoAbs"
           clearable={false}
@@ -250,8 +261,18 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.rel : 'any';
 
     return (
-      <FormGroup style={{ width: '100%' }}>
-        <ControlLabel>Stereo Rel</ControlLabel>
+      <FormGroup>
+        <ControlLabel
+          style={{
+            display: 'block',
+            marginBottom: '5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          Stereo Rel
+        </ControlLabel>
         <Select
           name="stereoRel"
           clearable={false}
@@ -273,7 +294,7 @@ export default class SampleForm extends React.Component {
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
     const onOpenMolName = () => this.openMolName(sample);
     return (
-      <FormGroup style={{ width: '100%', paddingRight: '10px' }}>
+      <FormGroup>
         <ControlLabel>Molecule name</ControlLabel>
         <InputGroup>
           <Select.Creatable
@@ -488,14 +509,26 @@ export default class SampleForm extends React.Component {
   }
 
   textInput(sample, field, label, disabled = false, readOnly = false) {
-    const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
+    const condition = field !== 'external_label' && field !== 'xref_inventory_label'
+      && field !== 'name' && field !== 'location' && field !== 'short_label';
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
     const onBlurHandler = field === 'sum_formula' ? this.handleMassCalculation : null;
+    const formControlStyle = field === 'name' ? { height: '38px', width: '100%' } : {};
 
     return (
       <FormGroup bsSize={condition ? 'small' : null}>
-        <ControlLabel>{label}</ControlLabel>
+        <ControlLabel
+          style={{
+            display: 'block',
+            marginBottom: '5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {label}
+        </ControlLabel>
         <FormControl
           id={`txinput_${field}`}
           type="text"
@@ -507,6 +540,7 @@ export default class SampleForm extends React.Component {
           }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
+          style={{ ...formControlStyle, width: '100%' }}
         />
       </FormGroup>
     );
@@ -898,64 +932,66 @@ export default class SampleForm extends React.Component {
       <Table responsive className="sample-form">
         <tbody>
           <ListGroup fill="true">
-            <h5 style={{ fontWeight: 'bold' }}>Basic Properties:</h5>
+            <h5 style={{ fontWeight: 'bold' }}>Basic properties:</h5>
             <ListGroupItem style={{ padding: '4px 4px 4px 4px', border: 'none' }}>
               <div className="properties-form" style={{ width: '100%' }}>
                 <tr>
-                  <td colSpan="3">
+                  <td colSpan="4">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div
-                        style={{ width: '100%', display: 'flex' }}
-                      >
+                      <div style={{ flex: '2 1 0', paddingRight: '5px' }}>
                         {this.moleculeInput()}
-                        <div style={{ width: '100%', display: 'flex' }}>
-                          {this.textInput(sample, 'name', 'Sample name')}
-                        </div>
+                      </div>
+                      <div style={{ flex: '2 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
+                        {this.textInput(sample, 'name', 'Sample name')}
+                      </div>
+                      <div style={{ flex: '1 1 0', marginRight: '5px', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.stereoAbsInput()}
+                      </div>
+                      <div style={{ flex: '1 1 0', paddingLeft: '10px', marginRight: '5px' }}>
                         {this.stereoRelInput()}
                       </div>
-                      {/* <div style={{ paddingLeft: '10px' }} className="top-secret-checkbox">
-                  {this.topSecretCheckbox(sample)}
-                </div> */}
-                      {
-                        enableSampleDecoupled && (
-                          <div
-                            style={{ paddingLeft: '10px' }}
-                            className="decoupled-checkbox"
-                          >
-                            {this.decoupledCheckbox(sample)}
-                          </div>
-                        )
-                      }
+                      {enableSampleDecoupled && (
+                        <div style={{ paddingLeft: '10px' }} className="decoupled-checkbox">
+                          {this.decoupledCheckbox(sample)}
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
                 <tr>
                   <td colSpan="4">
-                    <div className="name-form">
-                      <div style={{ width: '30%' }}>
+                    <div style={{ display: 'flex' }}>
+                      <div style={{ flex: '1 1 0', paddingRight: '5px' }}>
                         {this.textInput(sample, 'short_label', 'Short label', true)}
                       </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
+                      <div style={{ flex: '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
-                      <div style={{
-                        maxWidth: '26%', paddingLeft: '5px', display: 'flex', justifyContent: 'space-between'
-                      }}
+                      <div
+                        style={{
+                          flex: '1 1 0',
+                          paddingLeft: '10px',
+                          paddingRight: '5px',
+                          display: 'flex',
+                          alignItems: 'flex-center',
+                          flexWrap: 'nowrap',
+                        }}
                       >
-                        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-                        {this.nextInventoryLabel(sample)}
+                        <div style={{ flex: 1, minWidth: '150px' }}>
+                          {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                        </div>
+                        <div style={{ marginLeft: 0 }}>
+                          {this.nextInventoryLabel(sample)}
+                        </div>
                       </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
+                      <div style={{ flex: '1 1 0', paddingLeft: '10px', paddingRight: '5px' }}>
                         {this.textInput(sample, 'location', 'Location')}
                       </div>
-                      <div style={{ width: '10%', paddingLeft: '10px' }} className="top-secret-checkbox">
+                      <div
+                        style={{ display: 'flex', width: 'auto', paddingLeft: '5px' }}
+                        className="top-secret-checkbox">
                         {this.drySolventCheckbox(sample)}
                       </div>
-                      {/* <div style={{ width: '40%' }}>
-                  <label htmlFor="solventInput">Solvent</label>
-                  {this.sampleSolvent(sample)}
-                </div> */}
                     </div>
                   </td>
                 </tr>
@@ -977,47 +1013,34 @@ export default class SampleForm extends React.Component {
 
                 <tr className="visible-hd">
                   <td colSpan="6">
-                    <table>
-                      <tbody>
-                      <tr>
-                          <td style={{ width: '3%' }}>
-                            <div style={{ marginBottom: '15px' }}>
-                              {/* eslint-disable-next-line jsx-a11y/label-has-for */}
-                              <label style={{ height: '14px' }} />
-                              <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
-                                {this.infoButton()}
-                              </InputGroup.Button>
-                            </div>
-                          </td>
-                          {this.sampleAmount(sample)}
-                          <td style={{ width: '47%' }}>
-                            <div className="name-form" style={{ marginBottom: '10px' }}>
-                              <Tabs
-                                style={{ width: '60%' }}
-                                id="tab-density-molarity"
-                                defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
-                              >
-                                <Tab eventKey="density" title="Density">
-                                  {
-                                    this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                                  }
-                                </Tab>
-                                <Tab eventKey="molarity" title="Molarity">
-                                  {
-                                    this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                                  }
-                                </Tab>
-                              </Tabs>
-                              <div style={{ width: '40%', paddingLeft: '5px' }}>
-                                {
-                                  this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
-                                }
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <div
+                      className="input-wrapper"
+                      style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', marginTop: '12px' }}>
+                        {this.infoButton()}
+                      </div>
+                      <div style={{ flex: '1 1 0', paddingLeft: '5px', paddingRight: '5px', marginTop: '14px' }}>
+                        {this.sampleAmount(sample)}
+                      </div>
+                      <div style={{ flex: '1 1 auto', marginBottom: '15px', paddingLeft: '10px', paddingRight: '5px', display: 'flex', flexWrap: 'wrap' }}>
+                        <Tabs
+                          style={{ flex: '1 1 0' }}
+                          id="tab-density-molarity"
+                          defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
+                        >
+                          <Tab eventKey="density" title="Density">
+                            {this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)}
+                          </Tab>
+                          <Tab eventKey="molarity" title="Molarity">
+                            {this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)}
+                          </Tab>
+                        </Tabs>
+                        <div style={{ flex: '1 1 0', paddingLeft: '5px' }}>
+                          {this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)}
+                        </div>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               </div>
