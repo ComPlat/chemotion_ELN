@@ -46,9 +46,7 @@ export default class MolViewerBtn extends Component {
             disabled={disabled}
             onClick={(e) => this.handleModalOpen(e)}
           >
-            <i className="fa fa-cube" aria-hidden="true" />
-            {' '}
-            View in 3D
+            <i className="fa fa-cube me-1" aria-hidden="true" />View in 3D
           </Button>
         </OverlayTrigger>
         {show ? (

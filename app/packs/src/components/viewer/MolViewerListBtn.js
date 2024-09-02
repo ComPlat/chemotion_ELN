@@ -47,9 +47,7 @@ export default class MolViewerListBtn extends Component {
           onClick={onClick}
           disabled={disabled || propsDisabled}
         >
-          <i className="fa fa-cube" aria-hidden="true" />
-          {' '}
-          View in 3D
+          <i className="fa fa-cube me-1" aria-hidden="true" />View in 3D
         </Button>
       </OverlayTrigger>
     );
