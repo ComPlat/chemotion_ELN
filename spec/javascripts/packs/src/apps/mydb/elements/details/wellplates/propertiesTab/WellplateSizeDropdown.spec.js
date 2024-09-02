@@ -22,7 +22,7 @@ describe('WellplateSizeDropdown', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       const wrapper = shallow(<WellplateSizeDropdown
         wellplate={wellplate}
-        triggerUIUpdate={()=>{}}
+        triggerUIUpdate={() => {}}
       />);
 
       it('the current state has correct currentSize property', async () => {
@@ -33,7 +33,7 @@ describe('WellplateSizeDropdown', async () => {
       const wellplate = new Wellplate(wellplate8x12EmptyJson);
       const wrapper = shallow(<WellplateSizeDropdown
         wellplate={wellplate}
-        triggerUIUpdate={()=>{}}
+        triggerUIUpdate={() => {}}
       />);
 
       it('the current state has correct currentSize property', async () => {
@@ -46,7 +46,7 @@ describe('WellplateSizeDropdown', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       const wrapper = shallow(<WellplateSizeDropdown
         wellplate={wellplate}
-        triggerUIUpdate={()=>{}}
+        triggerUIUpdate={() => {}}
       />);
       wrapper.instance().changeSizeOption({ value: '4;3', label: '12 (4x3)' });
 
@@ -67,7 +67,7 @@ describe('WellplateSizeDropdown', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       const wrapper = shallow(<WellplateSizeDropdown
         wellplate={wellplate}
-        triggerUIUpdate={()=>{}}
+        triggerUIUpdate={() => {}}
       />);
       wrapper.instance().changeSizeOption({ value: '1;2', label: '2 (1x2)' });
 

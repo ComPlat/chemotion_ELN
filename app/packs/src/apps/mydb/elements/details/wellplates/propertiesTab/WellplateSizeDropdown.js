@@ -12,8 +12,8 @@ class Option {
 
   get label() {
     const size = this.height * this.width;
-    if(size==0){
-      return "not yet chosen";
+    if (size === 0) {
+      return 'not yet chosen';
     }
     return `${size} (${this.width}x${this.height})`;
   }
