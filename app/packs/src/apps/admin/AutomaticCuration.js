@@ -3,7 +3,7 @@ import { Grid, Row, Col, Nav, NavItem , Button, Form, FormGroup,ControlLabel,For
 import { a, search } from 'react-dom-factories';
 import Dropzone from 'react-dropzone';
 import AutomticCurationFetcher from 'src/fetchers/AutomaticCurationFetcher.js';
-
+import BatchCuration from '../../utilities/BatchCuration';
 
 export default class DictionaryCuration extends Component  {
     constructor(props) {
@@ -333,6 +333,7 @@ export default class DictionaryCuration extends Component  {
             {this.dropzoneOrfilePreview()}
             <Button onClick={()=> this.checkCvEstDictionary(this.state.customValue)}>Check Custom Dictionary</Button>
             <Button onClick={()=> this.saveFile()}>Save dictionary</Button>
+            <BatchCuration></BatchCuration>
             {/* <Button onClick={()=> this.applyAffix()}>load affix</Button> */}
             {/* <Button onClick={()=> this.creatDictionaryFromString()}>Create dictionary</Button> */}
             <Row>

@@ -58,6 +58,7 @@ export default class CurationModal extends Component {
 
     updateDescription(){
       this.setState({desc: this.cleanData(this.props.description) }, (() => {this.spellCheck(this.state.desc );
+        this.scrollToId()
       }))
     }
 
@@ -114,7 +115,7 @@ export default class CurationModal extends Component {
       this.handleSuggest(miss_spelled_words, index)
       this.setState( {suggestionIndex : index,
         correctedArray: correctedArray
-      } ) 
+      },()=>this.scrollToId() ) 
     }
 
 
@@ -197,7 +198,7 @@ export default class CurationModal extends Component {
         var ms_words = [];
         var ss_list = []
         var italics_array =[]
-        var word_array = description.split(/[\s]|[\n]|[\b]/g)
+        var word_array = description.split(/\b/g)
   
         if (this.state.dictionaryLanguage === "UK"){
           var en_dictionary = uk_dictionary
@@ -211,8 +212,8 @@ export default class CurationModal extends Component {
           var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:]/g;
           word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
           var double_space_regex= /\s\s/g
-          word_array[i] = word_array[i].replace(punctuation, " ");
-          word_array[i] = word_array[i].replace(double_space_regex, " ")
+          // word_array[i] = word_array[i].replace(punctuation, " ");
+          // word_array[i] = word_array[i].replace(double_space_regex, " ")
           // check if word has a number in it
           if (/\b[\p{Script=Latin}]+\b/giu.test(word_array[i])){
             if(word_array[i].includes("°") ){
@@ -298,6 +299,7 @@ export default class CurationModal extends Component {
     }
 
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
+      console.log(mispelledWords)
       var correctedArray = this.state.correctedWords
       var idArray = this.state.idKeyArray
       var idindex = 0
@@ -314,7 +316,7 @@ export default class CurationModal extends Component {
         var highlight = combined_array.join("|")
         highlight = highlight.replaceAll(" ","")
         highlight = "\\b(" + highlight + ")\\b"
-        var regexHighlight = new RegExp(highlight, "gi")
+        var regexHighlight = new RegExp(highlight, )
         var parts = text.split(regexHighlight);
         var output_div
         parts.filter((x)=> x != "" )
@@ -324,12 +326,11 @@ export default class CurationModal extends Component {
             {
               var highlight_current = mispelledWords[ms_index]
               highlight_current = "\\b(" + highlight_current + ")\\b"
-              var regexHighlightCurrent = new RegExp(highlight_current, "gi")
-
+              var regexHighlightCurrent = new RegExp(highlight_current)
               var highlightWithOutCurrent = mispelledWords.toSpliced(ms_index, 1)
               highlightWithOutCurrent = highlightWithOutCurrent.join("|")
               highlightWithOutCurrent = "\\b(" + highlightWithOutCurrent + ")\\b"
-              var regexHighlightWithOutCurrent = new RegExp(highlightWithOutCurrent, "gi")
+              var regexHighlightWithOutCurrent = new RegExp(highlightWithOutCurrent)
               if(subscriptList.includes(part)){
                 output_div =  this.checkSubScript(part)   
               }
@@ -350,7 +351,6 @@ export default class CurationModal extends Component {
                   idArray.push(idindex)
                   idindex = idindex + 1
                 }
-                
               }
               )
               ()

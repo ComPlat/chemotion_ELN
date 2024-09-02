@@ -48,6 +48,18 @@ module Chemotion
         file.close
       end
     end
-  end
+    
+    namespace :load do
+      desc "loadBatchDescription"
+      params do
+          # requires :new_word, type: String
+      end
+      get do
+        file_path =  "public/published_reaction_description_290824.xlsx"
+        f = File.open(file_path, "r")
+        # submitted_words = []
+      end
+    end
+end
 end
 end

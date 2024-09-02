@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import uuid from 'uuid';
+import { read, utils, writeFile } from 'xlsx';
 
 var uid = uuid.v4()
 
@@ -17,6 +18,15 @@ export default class AutomticCurationFetcher {
     static async dictionaryFetch(dictionary_lang, dictionary_affix){
         const res = await fetch(`/typojs/${dictionary_lang}/${dictionary_affix}`)
         return res.text()
+    }
+    static async fetchBatchData(){
+        const res = await fetch(`/published_reaction_description_290824.xlsx`);
+        const ab = await res.arrayBuffer();
+        const wb = read(ab);
+         /* generate array of objects from first worksheet */
+        const ws = wb.Sheets[wb.SheetNames[0]]; // get the first worksheet
+        const data = utils.sheet_to_json(ws); // generate objects
+       return data
     }
 
 }
