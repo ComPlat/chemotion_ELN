@@ -39,7 +39,7 @@ export default class CurationModal extends Component {
         idKeyArray : []
     }}
 
-    
+  
 
     handlePromptDismiss() {
       this.setState({ showPrompt: false });
@@ -135,10 +135,7 @@ export default class CurationModal extends Component {
     }
 
     handleShow() {
-     
       this.setState({ show: true }, this.updateDescription);
-    
-   
     }
 
     handleSuggest(miss_spelled_words, index){
@@ -518,7 +515,7 @@ export default class CurationModal extends Component {
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
     
-          <Modal show={this.state.show} onHide={this.handleClose} onEntered={this.scrollToId} >
+          <Modal show={this.state.show} onHide={this.handleClose} onEntered={this.scrollToId} onExit={this.props.onExit}>
             <Modal.Header closeButton>
               <Modal.Title>
                 <Col md={6}><span style={{paddingRight:10}}>Spell Check: English {this.state.dictionaryLanguage}   </span>
@@ -592,6 +589,7 @@ export default class CurationModal extends Component {
 CurationModal.propTypes = {
     reaction: PropTypes.object,
     onChange: PropTypes.func,
-    ref: PropTypes.string
+    ref: PropTypes.string,
+    onExit : PropTypes.func
   };
   

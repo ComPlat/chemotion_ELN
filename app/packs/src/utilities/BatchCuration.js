@@ -27,22 +27,32 @@ export default class BatchCuration extends Component {
     }
 
     handleEntries(){
-        console.log(this.state.descArray)
-        console.log(this.state.selectionIndex)
         this.setState({selectionData: this.state.descArray[this.state.selectionIndex].plain_text_description
-
-        },()=> console.log(this.state.selectionData))
+        })
     }
 
     handleAdvSelection(){
-        var selectionIndex = this.state.selectionIndex + 1
-        
+        if(this.state.selectionIndex != this.state.descArray.length)
+        {var selectionIndex = this.state.selectionIndex + 1}
         this.setState({selectionIndex: selectionIndex},()=> this.handleEntries())
     }
 
     handleRevSelection(){
-        var selectionIndex = this.state.selectionIndex - 1
-        this.setState({selectionIndex: selectionIndex}, ()=> this.handleEntries())
+        if(this.state.selectionIndex != 0)
+            {var selectionIndex = this.state.selectionIndex - 1
+        this.setState({selectionIndex: selectionIndex}, ()=> this.handleEntries())}
+    }
+
+    handleChange(event){
+        var newDescArray = this.state.descArray;
+        console.log(event.ops)
+        var newSelectedEntry =""
+        for (var segment of event.ops ){
+            segment  = segment.insert
+            newSelectedEntry = newSelectedEntry + segment
+        }
+        newDescArray[this.state.selectionIndex].plain_text_description = newSelectedEntry
+        this.setState({descArray: newDescArray } )
     }
 
     render(){
@@ -51,8 +61,9 @@ export default class BatchCuration extends Component {
         <Button onClick={this.handleRevSelection}>press here to reverse selection</Button>
         <CurationModal 
                 description= {this.state.selectionData} 
-                // onChange = {( event) => this.handleEntries(event)}
+                onChange = {( event) => this.handleChange(event)}
                 ref = {this.reactQuillRef}
+                onExit = {this.handleEntries}
                 />
         <div>{this.state.selectionIndex}</div>
         <div>{this.state.selectionData}</div>

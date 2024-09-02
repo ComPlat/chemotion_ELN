@@ -227,7 +227,6 @@ export default class DictionaryCuration extends Component  {
         newDictString = newDictString + dictionaryArray[countValue] + "\n"
       }
       this.setState({customValue: newDictString})
-      // this.setState({ establishedSearch: e.target.value });
       }
 
     handleChangeEstablishedSearch(e) {
