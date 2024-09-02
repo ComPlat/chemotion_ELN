@@ -12,6 +12,7 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { stopBubble } from 'src/utilities/DomHelper';
 
+
 const clickDownloadReport = (e, archiveId, template) => {
   e.stopPropagation();
   ReportActions.downloadReport(archiveId, template);

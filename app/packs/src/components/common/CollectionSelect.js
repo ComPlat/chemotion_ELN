@@ -85,7 +85,7 @@ export default class CollectionSelect extends React.Component {
         id="modal-collection-id-select"
         options={options}
         value={value}
-        className="status-select"
+        className="flex-grow-1"
         onChange={this.onColSelectChange}
       />
     );

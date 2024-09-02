@@ -91,7 +91,7 @@ export default class ReactionDetailsMainProperties extends Component {
 
     return (
       <>
-        <Row className=" ms-1 me-3">
+        <Row className="ms-1 me-3">
           <Col sm={6}>
             <Form.Group className="my-2">
               <Form.Label className="fs-6">Name</Form.Label>

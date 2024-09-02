@@ -10,7 +10,7 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import { Button } from 'react-bootstrap';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';

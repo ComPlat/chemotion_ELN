@@ -33,10 +33,8 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import { parseNumericString } from 'src/utilities/MathUtils';
-
-
+import CollapseButton from "../../../../../../components/common/CollapseButton";
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
@@ -200,7 +198,7 @@ export default class ReactionDetailsScheme extends Component {
     return (
       <div>
         <Col sm={4} className="ps-1 w-100">
-          <Form.Group className="flex-grow-1">
+          <Form.Group className="flex-grow-1 my-3">
             <Form.Label>Role</Form.Label>
             {this.renderRoleSelect()}
           </Form.Group>
@@ -1034,35 +1032,23 @@ export default class ReactionDetailsScheme extends Component {
 
   solventCollapseBtn() {
     const { open } = this.state;
-    const arrow = open
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
-    return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-          onClick={() => this.setState({ open: !open })}
-      >
-        {arrow} Solvents
-      </Button>
+    return(
+    <CollapseButton
+      openTab={open}
+      setOpenTab={() => this.setState({ open: !open })}
+      name="Solvents"
+    />
     );
   }
-
+    
   conditionsCollapseBtn() {
     const { cCon } = this.state;
-    const arrow = cCon
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
     return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-        onClick={() => this.setState({ cCon: !cCon })}
-      >
-        {arrow} Conditions
-      </Button>
+      <CollapseButton
+        openTab={open}
+        setOpenTab={() => this.setState({ cCon: !cCon })}
+        name="Conditions"
+      />
     );
   }
 
@@ -1092,7 +1078,7 @@ export default class ReactionDetailsScheme extends Component {
     const { reaction } = this.props;
     return (
       <>
-        <Form.Group className="pe-2">
+        <Form.Group className="pe-2 my-3">
           <Form.Label>Vessel size</Form.Label>
           <InputGroup>
             <Form.Control
@@ -1216,6 +1202,7 @@ export default class ReactionDetailsScheme extends Component {
             <hr className="mt-0" />
           </div>
           <div>
+
             {this.solventCollapseBtn()}
             <Collapse in={this.state.open}>
               <div>
@@ -1273,9 +1260,9 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               onInputChange={(type, event) => this.props.onInputChange(type, event)}
             />
-            <Row>
+            <Row className="ms-1 me-3">
               <Col sm={4}>
-                <Form.Group className="ms-2">
+                <Form.Group className="my-3">
                   <Form.Label>Type (Name Reaction Ontology)</Form.Label>
                   <OlsTreeSelect
                     selectName="rxno"
@@ -1292,28 +1279,24 @@ export default class ReactionDetailsScheme extends Component {
                 {this.reactionVesselSize()}
               </Col>
             </Row>
-            <Row>
-              <Col sm={12}>
-                <Form.Group className="p-3">
-                  <Form.Label>Description</Form.Label>
-                  <div className="quill-resize">
-                    {
-                      permitOn(reaction)
-                        ? (
-                          <ReactionDescriptionEditor
-                            height="100%"
-                            reactQuillRef={this.reactQuillRef}
-                            template={reactionDescTemplate}
-                            value={reaction.description}
-                            updateTextTemplates={this.updateTextTemplates}
-                            onChange={(event) => this.props.onInputChange('description', event)}
-                          />
-                        ) : <QuillViewer value={reaction.description} />
-                    }
-                  </div>
-                </Form.Group>
-              </Col>
-            </Row>
+            <Form.Group className="p-3">
+              <Form.Label>Description</Form.Label>
+              <div className="quill-resize">
+                {
+                  permitOn(reaction)
+                    ? (
+                      <ReactionDescriptionEditor
+                        height="100%"
+                        reactQuillRef={this.reactQuillRef}
+                        template={reactionDescTemplate}
+                        value={reaction.description}
+                        updateTextTemplates={this.updateTextTemplates}
+                        onChange={(event) => this.props.onInputChange('description', event)}
+                      />
+                    ) : <QuillViewer value={reaction.description} />
+                }
+              </div>
+            </Form.Group>
             <ReactionDetailsPurification
               reaction={reaction}
               onReactionChange={(r) => this.onReactionChange(r)}

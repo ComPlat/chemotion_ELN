@@ -89,19 +89,17 @@ export default class CopyElementModal extends React.Component {
             <Modal.Title>Copy</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <span className="select-collection">
-              <b>Copy to Collection</b>
-              <span className="select-component">
+            <div className="d-flex align-items-center">
+              <b className="ps-1 pe-2">Copy to Collection</b>
                 <CollectionSelect
                   value={selectedCol}
                   onChange={this.onColSelectChange}
                 />
-              </span>
-            </span>
+            </div>
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>
-            <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement} className="pull-left">Copy</Button>
+          <Modal.Footer className="border-0">
+            <Button variant="light" onClick={this.handleModalClose}>Close</Button>
+            <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement}>Copy</Button>
           </Modal.Footer>
         </Modal>
       </>
