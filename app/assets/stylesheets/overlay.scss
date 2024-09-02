@@ -6,7 +6,8 @@
   overflow: hidden;
   white-space: nowrap;
 }
-.wellplate-overlay:hover{
+
+.wellplate-overlay:hover {
   overflow: visible;
   white-space: normal;
   height: auto;
@@ -14,6 +15,7 @@
 
 .well-overlay-select {
   margin-top: 20px;
+
   .Select-menu-outer {
     z-index: 10;
   }

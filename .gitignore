@@ -104,6 +104,7 @@
 !/public/ontologies/rxno.default.json
 !/public/ontologies/rxno.default.edited.json
 
+/public/jsmol
 /public/jsmol/*
 !/public/jsmol/.keep
 

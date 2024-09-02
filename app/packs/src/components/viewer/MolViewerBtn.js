@@ -21,36 +21,40 @@ export default class MolViewerBtn extends Component {
   }
 
   render() {
-    const { disabled, fileContent, isPublic, viewType, className } = this.props;
+    const {
+      disabled, fileContent, isPublic, viewType, className
+    } = this.props;
     const { show } = this.state;
     const config = UIStore.getState().moleculeViewer;
     if (isPublic && !config?.featureEnabled) return null;
-    if (!config.chembox) return null;
+    if (!fileContent) return null;
 
     return (
       <>
         <OverlayTrigger
           placement="top"
-          overlay={
+          overlay={(
             <Tooltip id="tooltip_molviewer" style={{ pointerEvents: 'none' }}>
               Click to see structure in Viewer
             </Tooltip>
-          }
+          )}
         >
           <Button
             className={className}
-            bsSize="xsmall"
-            bsStyle="info"
+            size="xxsm"
+            variant="info"
             disabled={disabled}
-            onClick={e => this.handleModalOpen(e)}
+            onClick={(e) => this.handleModalOpen(e)}
           >
-            <i className="fa fa-cube" aria-hidden="true" /> View in 3D
+            <i className="fa fa-cube" aria-hidden="true" />
+            {' '}
+            View in 3D
           </Button>
         </OverlayTrigger>
         {show ? (
           <MolViewerModal
             fileContent={fileContent}
-            handleModalOpen={e => this.handleModalOpen(e)}
+            handleModalOpen={(e) => this.handleModalOpen(e)}
             isPublic={isPublic}
             show={show}
             viewType={viewType}

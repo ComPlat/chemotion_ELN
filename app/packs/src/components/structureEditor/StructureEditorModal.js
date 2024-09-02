@@ -1,4 +1,6 @@
 /* eslint-disable react/function-component-definition */
+/* eslint-disable react/jsx-no-bind */
+/* eslint-disable max-len */
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -19,6 +21,8 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
+import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
+import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -31,6 +35,8 @@ const notifyError = (message) => {
   });
 };
 
+const key = 'ketcher-tmpls';
+
 const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
@@ -39,7 +45,7 @@ const loadEditor = (editor, scripts) => {
       cbError: () => notifyError(
         `The ${editor} failed to initialize! Please contact your system administrator!`
       ),
-      cbLoaded: () => {},
+      cbLoaded: () => { },
     });
   }
 };
@@ -161,23 +167,31 @@ function EditorList(props) {
   );
 }
 
+function copyContentToClipboard(content) {
+  if (navigator.clipboard) {
+    const data = typeof content === 'object' ? JSON.stringify(content) : content;
+    navigator.clipboard.writeText(data).then(() => {
+      // alert('Please click on canvas and press CTRL+V to use the template.');
+    }).catch((err) => {
+      console.error('Failed to copy text: ', err);
+    });
+  }
+}
+
 EditorList.propTypes = {
   value: PropTypes.string.isRequired,
   fnChange: PropTypes.func.isRequired,
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show
-  && (
+const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (
   <Card variant="info">
     <Card.Header>
       Parents/Descendants will not be changed!
     </Card.Header>
     <Card.Body>
-      <span className="mb-5">
-        This sample has parents or descendants, and they will not be changed.
-        Are you sure?
-      </span>
+      <p>This sample has parents or descendants, and they will not be changed.</p>
+      <p>Are you sure?</p>
     </Card.Body>
     <Card.Footer className="d-flex justify-content-end">
       <ButtonToolbar className="gap-1">
@@ -190,13 +204,11 @@ const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show
       </ButtonToolbar>
     </Card.Footer>
   </Card>
-  )
 );
 
 WarningBox.propTypes = {
   handleCancelBtn: PropTypes.func.isRequired,
-  hideWarning: PropTypes.func.isRequired,
-  show: PropTypes.bool.isRequired,
+  hideWarning: PropTypes.func.isRequired
 };
 
 const initEditor = () => {
@@ -215,6 +227,10 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
+      commonTemplatesList: [],
+      selectedShape: null,
+      selectedCommonTemplate: null,
+      deleteAllowed: true
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -224,6 +240,7 @@ export default class StructureEditorModal extends React.Component {
 
   componentDidMount() {
     this.resetEditor(this.editors);
+    this.fetchCommonTemplates();
   }
 
   componentDidUpdate(prevProps) {
@@ -308,12 +325,20 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
+  async fetchCommonTemplates() {
+    const list = await CommonTemplatesFetcher.fetchCommonTemplates();
+    this.setState({ commonTemplatesList: list?.templates });
+  }
+
   render() {
-    const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
-    const { cancelBtnText, submitBtnText } = this.props;
+    const { cancelBtnText, submitBtnText, onSave } = this.props;
+    const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
+
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const { editor, showWarning, molfile } = this.state;
-    const iframeHeight = showWarning ? '0px' : '730px';
+    const {
+      editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal
+    } = this.state;
+    const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
 
     let useEditor = (
@@ -343,11 +368,12 @@ export default class StructureEditorModal extends React.Component {
       name: this.editors[e].label,
       label: this.editors[e].label,
     }));
+
     return (
       <Modal
         centered
         className={!this.state.showWarning && 'modal-xxxl'}
-        show={this.state.showModal}
+        show={showModal}
         onLoad={this.initializeEditor.bind(this)}
         onHide={this.handleCancelBtn.bind(this)}
       >
@@ -359,16 +385,33 @@ export default class StructureEditorModal extends React.Component {
               options={editorOptions}
             />
           </Modal.Title>
+          {
+            editor.id === 'ketcher2'
+            && (
+              <div style={{ flex: 1, margin: '0 10px' }}>
+                <CommonTemplatesList
+                  options={commonTemplatesList}
+                  value={selectedCommonTemplate?.name}
+                  selectedItem={selectedCommonTemplate}
+                  onClickHandle={(value) => {
+                    this.setState({ selectedCommonTemplate: value });
+                    copyContentToClipboard(value?.molfile);
+                  }}
+                />
+              </div>
+            )
+          }
         </Modal.Header>
         <Modal.Body>
-          <WarningBox
-            handleCancelBtn={this.handleCancelBtn.bind(this)}
-            hideWarning={this.hideWarning.bind(this)}
-            show={!!showWarning}
-          />
+          {showWarning &&
+            <WarningBox
+              handleCancelBtn={this.handleCancelBtn.bind(this)}
+              hideWarning={this.hideWarning.bind(this)}
+            />
+          }
           {useEditor}
         </Modal.Body>
-        {!this.state.showWarning &&
+        {!showWarning &&
           (
             <Modal.Footer className="modal-footer border-0">
               <ButtonToolbar className="gap-1">
@@ -405,8 +448,8 @@ StructureEditorModal.defaultProps = {
   showModal: false,
   hasChildren: false,
   hasParent: false,
-  onCancel: () => {},
-  onSave: () => {},
+  onCancel: () => { },
+  onSave: () => { },
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
 };

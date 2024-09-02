@@ -1,9 +1,10 @@
+/* eslint-disable max-len */
 /* eslint-disable react/sort-comp */
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Form, FormControl, InputGroup,
+  Button, Form, InputGroup,
   OverlayTrigger, Tooltip, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
@@ -13,6 +14,7 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
+import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -219,7 +221,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label>Stereo Abs</Form.Label>
+        <Form.Label className="text-truncate">Stereo Abs</Form.Label>
         <Select
           name="stereoAbs"
           clearable={false}
@@ -252,8 +254,8 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.rel : 'any';
 
     return (
-      <Form.Group style={{ width: '100%' }}>
-        <Form.Label>Stereo Rel</Form.Label>
+      <Form.Group className="w-100">
+        <Form.Label className="text-truncate">Stereo Rel</Form.Label>
         <Select
           name="stereoRel"
           clearable={false}
@@ -489,15 +491,17 @@ export default class SampleForm extends React.Component {
   }
 
   textInput(sample, field, label, disabled = false, readOnly = false) {
-    const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
+    const condition = field !== 'external_label' && field !== 'xref_inventory_label'
+      && field !== 'name' && field !== 'location' && field !== 'short_label';
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
     const onBlurHandler = field === 'sum_formula' ? this.handleMassCalculation : null;
+    const formControlStyle = field === 'name' ? { height: '38px'} : {};
 
     return (
       <Form.Group bsSize={condition ? 'small' : null}>
-        <Form.Label>{label}</Form.Label>
-        <FormControl
+        <Form.Label className="text-truncate">{label}</Form.Label>
+        <Form.Control
           id={`txinput_${field}`}
           type="text"
           value={updateValue}
@@ -508,6 +512,8 @@ export default class SampleForm extends React.Component {
           }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
+          className="w-100"
+          style={formControlStyle}
         />
       </Form.Group>
     );

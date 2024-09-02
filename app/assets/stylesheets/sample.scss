@@ -7,7 +7,7 @@
   width: 100%;
   height: 100%;
 
-  span.glyphicon {
+  .fa {
     margin-top: -1px;
     visibility: hidden;
     border: thick solid transparent;
@@ -17,7 +17,7 @@
 .svg-container:hover, .svg-container-empty {
   border-color: powderblue;
 
-  span.glyphicon {
+  .fa {
     border-color: powderblue;
     visibility: visible;
     background-color: powderblue;
@@ -81,6 +81,27 @@
       font-size: 13px;
     }
   }
+
+  @media (max-width: 768px) {
+  .checkbox-label,
+  .purity-label {
+    font-size: 12px;
+  }
+
+  .name-form {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .name-form > div {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .tab-density-molarity {
+    width: 50%;
+  }
+}
 
   .top-secret-checkbox,
   .decoupled-checkbox {

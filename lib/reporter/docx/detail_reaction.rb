@@ -1,6 +1,8 @@
 module Reporter
   module Docx
     class DetailReaction < Detail
+      include Reactable
+
       def initialize(args)
         super
         @obj = args[:reaction]
@@ -290,10 +292,35 @@ module Reporter
         output
       end
 
+      def calculate_amount_mmol(sample)
+        return sample.real_amount_mmol unless sample.gas_type == 'gas'
+
+        vessel_size = @obj.vessel_size
+        return unless vessel_size
+
+        vessel_volume = case vessel_size['unit']
+                        when 'ml'
+                          vessel_size['amount'] * 0.001
+                        when 'l'
+                          vessel_size['amount']
+                        else
+                          0
+                        end
+        return unless vessel_volume
+
+        mole_value = calculate_mole_gas_product(
+          sample.gas_phase_data['part_per_million'],
+          sample.gas_phase_data['temperature'],
+          vessel_volume,
+        )
+
+        mole_value * 1000
+      end
+
       def assigned_amount(s, is_product = false)
         mass = s.real_amount_g == 0.0 && !is_product ? s.amount_g : s.real_amount_g
         vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
-        mmol = s.real_amount_mmol == 0.0 && !is_product ? s.amount_mmol : s.real_amount_mmol
+        mmol = s.real_amount_mmol == 0.0 && !is_product ? s.amount_mmol : calculate_amount_mmol(s)
 
         mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
         vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1))

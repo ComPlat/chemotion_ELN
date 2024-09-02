@@ -235,7 +235,7 @@ const inlineNotation = (layout, data, metadata) => {
     scanRate, voltaData, sampleName
   } = data;
   const {
-    cvConc, cvSolvent, cvRef, cvRefOthers, cvScanRate,
+    cvConc, cvSolvent, cvSolventOthers, cvRef, cvRefOthers, cvScanRate,
   } = metadata;
 
   switch (layout) {
@@ -254,11 +254,12 @@ const inlineNotation = (layout, data, metadata) => {
           isRef, e12, max, min,
         } = item;
         const e12Str = e12 ? FN.strNumberFixedLength(e12, 3) : '0';
-        const scanRateStr = scanRate ? FN.strNumberFixedLength(scanRate, 3) : '0';
+        let scanRateStr = cvScanRate ? cvScanRate : '0';
+        scanRateStr = scanRateStr === '0' && scanRate ? FN.strNumberFixedLength(scanRate, 3) : scanRateStr;
         if (isRef) {
           const posNegString = x[0] > x[1] ? 'neg.' : 'pos.';
           const concentrationStr = cvConc || '<conc. of sample>';
-          const solventStr = cvSolvent || '<solvent>';
+          const solventStr = (cvSolvent === 'others' ? cvSolventOthers : cvSolvent) || '<solvent>';
           let internalRefStr = "(Fc+/Fc)";
           refOps = [
             { insert: `CV (${concentrationStr} in ${solventStr} vs. Ref ` },
@@ -281,7 +282,14 @@ const inlineNotation = (layout, data, metadata) => {
               { insert: `= ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):` },
             ];
           }
-          refString = `CV (${concentrationStr} mM in ${solventStr} vs. Ref ${internalRefStr} = ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):`;
+          else if (cvRefOthers) {
+            internalRefStr = `(${cvRefOthers})`;
+            refOps = [
+              { insert: `CV (${concentrationStr} in ${solventStr} vs. Ref ${internalRefStr} ` },
+              { insert: `= ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):` },
+            ];
+          }
+          refString = `CV (${concentrationStr} in ${solventStr} vs. Ref ${internalRefStr} = ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):`;
 
         } else {
           const delta = (max && min) ? FN.strNumberFixedLength(Math.abs(max.x - min.x) * 1000, 3) : '0';

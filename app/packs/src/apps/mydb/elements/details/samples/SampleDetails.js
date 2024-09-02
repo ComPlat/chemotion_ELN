@@ -759,9 +759,9 @@ export default class SampleDetails extends React.Component {
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
         />
+        {this.chemicalIdentifiersItem(sample)}
         <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
         {sample.molecule_formula && this.elementalPropertiesItem(sample)}
-        {this.chemicalIdentifiersItem(sample)}
         <div className="mt-2">
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>
@@ -1047,7 +1047,7 @@ export default class SampleDetails extends React.Component {
           {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
-        <Col md={8}>
+        <Col md={8} className='position-relative'>
           {this.svgOrLoading(sample)}
         </Col>
       </Row>
@@ -1272,7 +1272,7 @@ export default class SampleDetails extends React.Component {
     } else {
       svgPath = sample.svgPath;
     }
-    const className = svgPath ? 'svg-container' : 'svg-container-empty';
+    const className = 'position-relative ' + (svgPath ? 'svg-container' : 'svg-container-empty');
     return (
       sample.can_update
         ? (
@@ -1284,7 +1284,7 @@ export default class SampleDetails extends React.Component {
               role="button"
               tabIndex="0"
             >
-              <i className="fa fa-pencil" />
+              <i className="fa fa-pencil position-absolute end-0" />
               <SVG key={svgPath} src={svgPath} className="molecule-mid" />
             </div>
             <MolViewerBtn
