@@ -268,7 +268,7 @@ export default class WellplateDetails extends Component {
           iconClass="fa fa-print"
           header={false}
           onClick={() => this.handlePrint()}
-          disabled={wellplate.width > 12}
+          disabled={wellplate.width > 12 || wellplate.size === 0}
         />
       </>
     );
