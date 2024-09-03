@@ -62,7 +62,7 @@ class WellContainer extends Component {
     if (active) classes.push('active')
     if (isDragging) classes.push('is-dragging')
     if (well.sample) classes.push('has-sample')
-    if (canDrop) classes.push('can-drop')
+    if (canDrop) classes.push('border-dashed')
     if (isOver) classes.push('is-over')
 
     return (

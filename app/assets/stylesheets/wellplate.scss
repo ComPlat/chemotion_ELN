@@ -48,12 +48,9 @@
   .has-sample {
     border-color: gray;
   }
-  .can-drop {
-    border-style: dashed;
-    .is-over {
-      border-color: #337ab7;
-      opacity: 0
-    }
+  .is-over {
+    border-color: #337ab7;
+    opacity: 0
   }
 }
 
