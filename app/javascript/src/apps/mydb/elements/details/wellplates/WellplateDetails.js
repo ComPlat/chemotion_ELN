@@ -158,6 +158,7 @@ export default class WellplateDetails extends Component {
     if (type == 'readoutTitles') wellplate.readout_titles = value;
     if (type == 'size') wellplate.changeSize(value.width, value.height);
 
+
     this.setState({ wellplate });
   }
 
