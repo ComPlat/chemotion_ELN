@@ -157,6 +157,9 @@ export default class WellplateDetails extends Component {
       case 'readoutTitles':
         wellplate.readout_titles = value;
         break;
+      case 'size':
+        if (wellplate.size !== wellplate.originalSize) wellplate.changed = !wellplate.changed;
+        break;
       default:
         break;
     }
@@ -242,6 +245,15 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited || wellplate.isNew ? '' : 'none';
     const datetp = formatTimeStampsOfElement(wellplate || {});
+    const saveTooltip = (
+      <Tooltip placement="left" className="in" id="tooltip-bottom">
+        Save Wellplate
+        <br />
+        {wellplate.size !== 0 && (wellplate.isNew || wellplate.originalSize === 0)
+          ? 'The size of this wellplate cannot be changed after saving.'
+          : ''}
+      </Tooltip>
+    );
 
     return (
       <div>
@@ -256,7 +268,7 @@ export default class WellplateDetails extends Component {
         <ElementCollectionLabels element={wellplate} placement="right" />
         <HeaderCommentSection element={wellplate} />
         <ConfirmClose el={wellplate} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={saveTooltip}>
           <Button
             bsStyle="warning"
             bsSize="xsmall"
