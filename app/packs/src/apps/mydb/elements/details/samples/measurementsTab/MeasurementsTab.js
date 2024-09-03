@@ -35,7 +35,7 @@ class MeasurementsTab extends Component {
   }
 
   renderDisplaySwitcher() {
-    return (<ButtonGroup>
+    return (<ButtonGroup className="mb-3">
       <ButtonGroupToggleButton
         size="xsm"
         active={this.state.displayMode == 'table'}
