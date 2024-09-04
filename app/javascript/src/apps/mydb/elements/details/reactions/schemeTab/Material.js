@@ -248,6 +248,7 @@ class Material extends Component {
           <option value="CRUDE">Crude</option>
           <option value="MIXTURE">Mixture</option>
           <option value="INTERMEDIATE">Intermediate</option>
+          <option value="PURE">Pure</option>
         </FormControl>
       </td>
     );
