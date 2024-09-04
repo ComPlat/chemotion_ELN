@@ -60,6 +60,8 @@ export class ContainerDatasetModalContent extends Component {
       extension: null,
       imageEditModalShown: false,
       filteredAttachments: [...props.datasetContainer.attachments],
+      prevMessages: [],
+      newMessages:[],
       filterText: '',
       attachmentGroups: {
         Original: [],
@@ -83,41 +85,59 @@ export class ContainerDatasetModalContent extends Component {
     this.classifyAttachments = this.classifyAttachments.bind(this);
     this.state.attachmentGroups = this.classifyAttachments(props.datasetContainer.attachments);
   }
-
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
     this.setState({
       attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
     });
-    if (this.context.attachmentNotificationStore) {
-      // Combine attachments using the context store
-      const combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(
-this.state.filteredAttachments, 'Container', this.props.datasetContainer);
+  }
+  componentDidUpdate(prevProps, prevState) {
+    
 
-      // Optionally, deduplicate combinedAttachments if necessary
-      const uniqueAttachments = combinedAttachments.filter(
-        (attachment, index, self) =>
-          index === self.findIndex((a) => a.id === attachment.id)
-      );
+    const { prevMessages, newMessages } = this.state;
+    const { attachments } = this.props.datasetContainer;
 
-      // Update the state with combined attachments
+    let prevAttachments = [...attachments];
+
+    if (prevMessages.length !== newMessages.length) {
       this.setState({
-        filteredAttachments: uniqueAttachments,
+        prevMessages: newMessages
+      });
+
+      this.updateAttachmentsFromContext();
+    }
+
+ 
+    if (prevAttachments.length !== prevProps.datasetContainer.attachments.length) {
+  
+      this.setState({
+        filteredAttachments: [...attachments],
+        attachmentGroups: this.classifyAttachments(attachments)
+      }, () => {
+        this.props.onChange({ ...this.state.datasetContainer });
+        this.createAttachmentPreviews();
+        this.filterAttachments();
       });
     }
   }
 
-  componentDidUpdate(prevProps) {
-    const { attachments } = this.props.datasetContainer;
-    if (attachments !== prevProps.datasetContainer.attachments) {
-      this.createAttachmentPreviews();
-      this.setState({
-        filteredAttachments: [...attachments],
-        attachmentGroups: this.classifyAttachments(attachments)
-      }, this.filterAttachments);
+  updateAttachmentsFromContext = () => {
+    const { datasetContainer } = this.props;
+    const { filteredAttachments } = this.state;
+    
+    console.log('inside');
+    let combinedAttachments = [...filteredAttachments];
+
+    if (this.context.attachmentNotificationStore) {
+
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(
+        filteredAttachments, 'Container', datasetContainer);
+
     }
-  }
+    return combinedAttachments;
+  };
+
 
   handleInputChange(type, event) {
     const { datasetContainer } = this.state;
@@ -163,8 +183,8 @@ this.state.filteredAttachments, 'Container', this.props.datasetContainer);
         attachmentGroups: this.classifyAttachments(updatedAttachments),
       };
     }, () => {
-      this.props.onChange({ ...this.state.datasetContainer });
-      this.createAttachmentPreviews();
+      // this.props.onChange({ ...this.state.datasetContainer });
+      // this.createAttachmentPreviews();
     });
   }
 
@@ -565,86 +585,74 @@ this.state.filteredAttachments, 'Container', this.props.datasetContainer);
     } = this.state;
     const { datasetContainer } = this.props;
 
-    // let combinedAttachments = filteredAttachments;
-    // if (this.context.attachmentNotificationStore) {
-    //   // eslint-disable-next-line max-len
-    //   combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Container', datasetContainer);
-    //   // this.setState({ filteredAttachments: combinedAttachments });
-     
-    // }
 
-    // this.setState({ filteredAttachments: combinedAttachments });
-
-    // console.log('Combined Attachments', combinedAttachments);
-
-
-    const renderGroup = (attachments, title, key) => {
+    const renderGroup = (attachments, title, key) => {    
+        console.log(attachments, title, key);
+        return (
+          <div key={key} style={{ marginTop: '10px' }}>
+            <div style={{
+              backgroundColor: '#D3D3D3',
+              fontWeight: 'bold',
+              marginBottom: '5px',
+              borderRadius: '5px',
+              padding: '5px'
+            }}
+            >
+              {title}
+            </div>
+            {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
+          </div>
+        );
       
-      console.log(attachments);
-      return(
-      <div key={key} style={{ marginTop: '10px' }}>
-        <div style={{
-          backgroundColor: '#D3D3D3',
-          fontWeight: 'bold',
-          marginBottom: '5px',
-          borderRadius: '5px',
-          padding: '5px'
-        }}
-        >
-          {title}
-        </div>
-          {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
-      </div>
+      };
+
+      const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
+        (groupName) => attachmentGroups.Processed[groupName].length > 0
       );
-  }
 
-    const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
-      (groupName) => attachmentGroups.Processed[groupName].length > 0
-    );
-
-    return (
-      <div className="attachment-main-container">
-        {this.renderImageEditModal()}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: '1', alignSelf: 'center' }}>
-            {this.customDropzone()}
+      return (
+        <div className="attachment-main-container">
+          {this.renderImageEditModal()}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ flex: '1', alignSelf: 'center' }}>
+              {this.customDropzone()}
+            </div>
+            <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
+              {datasetContainer.attachments.length > 0
+                && sortingAndFilteringUI(
+                  sortDirection,
+                  this.handleSortChange,
+                  this.toggleSortDirection,
+                  this.handleFilterChange,
+                  false
+                )}
+            </div>
           </div>
-          <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
-            {datasetContainer.attachments.length > 0
-              && sortingAndFilteringUI(
-                sortDirection,
-                this.handleSortChange,
-                this.toggleSortDirection,
-                this.handleFilterChange,
-                false
-              )}
-          </div>
+          {filteredAttachments.length === 0 ? (
+            <div className="no-attachments-text">
+              There are currently no attachments.
+            </div>
+          ) : (
+            <div style={{ marginBottom: '20px' }}>
+              {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
+                && renderGroup(attachmentGroups.Pending, 'Pending')}
+              {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
+              {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
+              {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
+                .map((groupName) => attachmentGroups.Processed[groupName].length > 0
+                  && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
+              {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
+            </div>
+          )}
+          <HyperLinksSection
+            data={this.state.datasetContainer.extended_metadata.hyperlinks}
+            onAddLink={this.handleAddLink}
+            onRemoveLink={this.handleRemoveLink}
+            disabled={this.props.disabled}
+          />
         </div>
-        {filteredAttachments.length === 0 ? (
-          <div className="no-attachments-text">
-            There are currently no attachments.
-          </div>
-        ) : (
-          <div style={{ marginBottom: '20px' }}>
-            {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
-            && renderGroup( attachmentGroups.Pending, 'Pending')}
-            {attachmentGroups.Original.length > 0 && renderGroup( attachmentGroups.Original, 'Original')}
-            {attachmentGroups.BagitZip.length > 0 && renderGroup( attachmentGroups.BagitZip, 'Bagit / Zip')}
-            {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
-              .map((groupName) => attachmentGroups.Processed[groupName].length > 0
-            && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
-            {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
-          </div>
-        )}
-        <HyperLinksSection
-          data={this.state.datasetContainer.extended_metadata.hyperlinks}
-          onAddLink={this.handleAddLink}
-          onRemoveLink={this.handleRemoveLink}
-          disabled={this.props.disabled}
-        />
-      </div>
-    );
-  }
+      );
+    }
 
   renderMetadata() {
     const { datasetContainer, showInstruments } = this.state;
@@ -718,7 +726,16 @@ this.state.filteredAttachments, 'Container', this.props.datasetContainer);
 
   render() {
     const { mode } = this.props;
+    const { prevMessages } = this.state;
+    
+    const newMessages = this.context?.attachmentNotificationStore.getAttachmentsOfMessages();
 
+    if (prevMessages.length !== newMessages.length) {
+      this.setState({
+        newMessages
+      });
+    }
+    
     return (
       <div>
         {mode === 'attachments' && this.renderAttachments()}
