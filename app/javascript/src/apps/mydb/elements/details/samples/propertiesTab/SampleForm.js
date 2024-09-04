@@ -24,7 +24,6 @@ export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
       sumFormula: null,
@@ -54,25 +53,29 @@ export default class SampleForm extends React.Component {
   }
 
   formulaChanged() {
-    return this.props.sample.molecule_formula !== this.state.moleculeFormulaWas;
+    const { sample } = this.props;
+    const { moleculeFormulaWas } = this.state;
+    return sample.molecule_formula !== moleculeFormulaWas;
   }
 
   handleAmountChanged(amount) {
-    this.props.sample.setAmount(amount);
+    const { sample } = this.props;
+    sample.setAmount(amount);
   }
 
   handleMolarityChanged(molarity) {
-    this.props.sample.setMolarity(molarity);
-    this.setState({ molarityBlocked: false });
+    const { sample } = this.props;
+    sample.setMolarity(molarity);
   }
 
   handleDensityChanged(density) {
-    this.props.sample.setDensity(density);
-    this.setState({ molarityBlocked: true });
+    const { sample } = this.props;
+    sample.setDensity(density);
   }
 
   handleMolecularMassChanged(mass) {
-    this.props.sample.setMolecularMass(mass);
+    const { sample } = this.props;
+    sample.setMolecularMass(mass);
   }
 
   structureEditorButton(isDisabled) {
@@ -105,6 +108,14 @@ export default class SampleForm extends React.Component {
       </OverlayTrigger>
     );
   }
+
+  // eslint-disable-next-line class-methods-use-this
+  infoMessage = () => (
+    <Tooltip id="assignButton">
+      Information mirrored to the reaction table describing the content of pure
+      compound or amount of pure compound in a given solution
+    </Tooltip>
+  );
 
   drySolventCheckbox(sample) {
     if (sample.can_update) {
@@ -144,13 +155,14 @@ export default class SampleForm extends React.Component {
   }
 
   addMolName(moleculeName) {
+    const { sample } = this.props;
     this.setState({ isMolNameLoading: true });
-    DetailActions.updateMoleculeNames(this.props.sample, moleculeName);
+    DetailActions.updateMoleculeNames(sample, moleculeName.label);
   }
 
   updateMolName(e) {
     const { sample } = this.props;
-    sample.molecule_name = e.value;
+    sample.molecule_name = e;
     this.props.handleSampleChanged(sample);
   }
 
@@ -238,8 +250,10 @@ export default class SampleForm extends React.Component {
 
   moleculeInput() {
     const { sample } = this.props;
+    const { isMolNameLoading } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
+    // eslint-disable-next-line no-underscore-dangle
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
@@ -254,10 +268,10 @@ export default class SampleForm extends React.Component {
             options={moleculeNames}
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
-            isLoading={this.state.isMolNameLoading}
-            value={moleculeNames.find(({ value }) => value == mno?.value)}
-            onCreateOption={this.addMolName}
-            className="flex-grow-1"
+            isLoading={isMolNameLoading}
+            value={!newMolecule && mno && mno.value}
+            onNewOptionClick={this.addMolName}
+            clearable={false}
           />
           {this.structureEditorButton(!sample.can_update)}
         </InputGroup>
@@ -525,7 +539,8 @@ export default class SampleForm extends React.Component {
   }
 
   handleMetricsChange(e) {
-    this.props.sample.setUnitMetrics(e.metricUnit, e.metricPrefix);
+    const { sample } = this.props;
+    sample.setUnitMetrics(e.metricUnit, e.metricPrefix);
   }
 
   numInput(
@@ -542,7 +557,7 @@ export default class SampleForm extends React.Component {
     notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
-    const value = !isNaN(sample[field]) ? sample[field] : null;
+    const value = !Number.isNaN(sample[field]) ? sample[field] : null;
     const metricPrefixes = ['m', 'n', 'u'];
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
     const gasSample = sample.gas_type === 'gas' && disableFieldsForGasTypeSample.includes(field);
@@ -620,7 +635,7 @@ export default class SampleForm extends React.Component {
     notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
-    const value = !isNaN(sample[field]) ? sample[field] : null;
+    const value = !Number.isNaN(sample[field]) ? sample[field] : null;
 
     let mpx;
     if (unit === 'l') {
@@ -850,7 +865,7 @@ export default class SampleForm extends React.Component {
 }
 
 SampleForm.propTypes = {
-  sample: PropTypes.object,
+  sample: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
   showStructureEditor: PropTypes.func.isRequired,
   customizableField: PropTypes.func.isRequired,
