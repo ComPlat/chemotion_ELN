@@ -32,7 +32,8 @@ function SyncBtn(props) {
           onClick={fnModalOpen}
         >
           <i className="fa fa-refresh" aria-hidden="true" />
-&nbsp;Fetch from LabIMotion Hub
+          {' '}
+          Fetch from LabIMotion Hub
         </Button>
       </OverlayTrigger>
       <RepoNewModal
