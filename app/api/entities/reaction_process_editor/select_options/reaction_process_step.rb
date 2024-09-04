@@ -115,7 +115,7 @@ module Entities
         end
 
         def saved_sample_with_solvents_options(reaction_process_step)
-          save_actions = reaction_process_step.reaction_process_activities.select do |activity|
+          save_actions = reaction_process_step.reaction_process_activities.order(:position).select do |activity|
             activity.activity_name == 'SAVE'
           end
 

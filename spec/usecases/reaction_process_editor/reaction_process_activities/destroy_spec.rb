@@ -16,13 +16,15 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessActivities::Destr
   end
 
   it 'updates siblings positions' do
-    expect { destroy_activity }.to change { process_step.reload.reaction_process_activities.map(&:position) }
+    expect { destroy_activity }.to change {
+                                     process_step.reload.reaction_process_activities.order(:position).map(&:position)
+                                   }
       .from((0..3).to_a)
       .to((0..2).to_a)
   end
 
   it 'reorders siblings' do
-    expect { destroy_activity }.to change { process_step.reload.reaction_process_activities }.from(
+    expect { destroy_activity }.to change { process_step.reload.reaction_process_activities.order(:position) }.from(
       existing_activities,
     ).to(
       [existing_activities[0], existing_activities[1], existing_activities[3]],

@@ -77,6 +77,7 @@ module Entities
       expose! :sample_type
       expose! :sample_details
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
+      expose! :reaction_step
     end
     # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
 
@@ -150,6 +151,16 @@ module Entities
 
     def weight_percentage
       object.reactions_samples.pick(:weight_percentage)
+    end
+
+    def reaction_step
+      # Enhancement for IntermediateSamples as saved by the ReactionProcessEditor
+      # We want to present the position of the ReactionProcessStep in which the object (Sample) was saved.
+      intermediate = ReactionsIntermediateSample.find_by(sample_id: object.id)
+
+      return unless intermediate
+
+      ::ReactionProcessEditor::ReactionProcessStep.find_by(id: intermediate.reaction_process_step_id)&.step_number
     end
   end
 end
