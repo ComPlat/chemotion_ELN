@@ -62,14 +62,6 @@ class CnC extends React.Component {
     window.addEventListener("resize", this.handleScreenSizeChanging);
   }
 
-  shouldComponentUpdate(nextState) {
-    return this.state.connected !== nextState.connected
-      || this.state.rfb !== nextState.rfb
-      || this.state.selected.id !== nextState.selected.id
-      || this.state.isNotFocused !== nextState.isNotFocused
-      || this.state.isForcedScreenResizing !== nextState.isForcedScreenResizing;
-  }
-
   componentWillUnmount() {
     DeviceStore.unlisten(this.UserStoreChange);
     this.disconnect();
