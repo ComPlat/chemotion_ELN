@@ -9,7 +9,6 @@ import DeviceStore from 'src/stores/alt/stores/UserStore';
 import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
 import Navigation from 'src/apps/commandAndControl/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import { ConnectedBtn, DisconnectedBtn } from 'src/apps/commandAndControl/NovncStatus';
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;
@@ -281,8 +280,21 @@ class CnC extends React.Component {
               {device.name}
               {selectedId === device.id && (
                 connected
-                  ? <ConnectedBtn />
-                  : <DisconnectedBtn />
+                  ? (
+                    <i
+                      className="fa fa-check-circle-o"
+                      aria-hidden="true"
+                      style={{ color: '#90ee90', float: 'right', fontSize: '20px' }}
+                    />
+
+                  )
+                  : (
+                    <i
+                      className="fa fa-times-circle-o"
+                      aria-hidden="true"
+                      style={{ color: 'red', float: 'right', fontSize: '20px' }}
+                    />
+                  )
               )}
             </div>
           </div>
