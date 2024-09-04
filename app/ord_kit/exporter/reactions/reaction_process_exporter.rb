@@ -7,7 +7,9 @@ module OrdKit
         def to_ord
           start_times = process_steps.inject([0]) { |starts, rps| starts << (starts.last + rps.duration.to_i) }
 
-          process_steps.map.with_index do |rps, idx|
+          process_steps.includes([:reaction_process_vessel])
+                       .map
+                       .with_index do |rps, idx|
             ReactionProcessStepExporter.new(rps).to_ord(starts_at: start_times[idx])
           end
         end

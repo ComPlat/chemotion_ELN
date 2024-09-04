@@ -169,7 +169,7 @@ class Reaction < ApplicationRecord
 
   has_one :container, as: :containable
 
-  has_one :reaction_process, -> { includes(:reaction_process_steps) },
+  has_one :reaction_process,
           class_name: 'ReactionProcessEditor::ReactionProcess',
           inverse_of: :reaction, dependent: :destroy
 
