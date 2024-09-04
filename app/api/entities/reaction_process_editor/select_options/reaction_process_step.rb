@@ -15,26 +15,6 @@ module Entities
           }
         end
 
-        # def added_materials(material_type)
-        #   material_ids = reaction_process.reaction_process_steps.where(position: ..position).map do |process_step|
-        #     process_step.added_material_ids(material_type)
-        #   end.flatten.uniq
-        # end
-
-        # def added_material_ids(material_type)
-        #   activities_adding_sample_acting_as(material_type).map { |activity| activity.workup['sample_id'] }
-        # end
-
-        # def activities_adding_sample_acting_as(material_type)
-        #   activities_adding_sample.select { |activity| activity.workup['acts_as'] == material_type }
-        # end
-
-        # def activities_adding_sample
-        #   @activities_adding_sample ||= reaction_process_activities.select do |activity|
-        #     activity.activity_name == 'ADD'
-        #   end
-        # end
-
         def added_materials(reaction_process_step)
           add_activity_names = ['ADD']
           # For the ProcessStepHeader in the UI, in order of actions.
@@ -47,7 +27,6 @@ module Entities
           end.uniq
         end
 
-        # TODO: Rewrite scoped to Remove origin type
         def removable_samples(reaction_process_step)
           {
             FROM_REACTION: all_reaction_samples_options(reaction_process_step),
@@ -65,7 +44,7 @@ module Entities
 
         def transferable_samples(reaction_process_step)
           Sample.where(id: transferable_sample_ids(reaction_process_step))
-                .includes(%i[molecule molecule_name residues])
+                .includes(%i[molecule residues])
                 .map do |sample|
             sample_info_option(sample, 'SAMPLE')
           end
@@ -85,7 +64,7 @@ module Entities
 
         def save_sample_origins(reaction_process_step)
           reaction_process_step
-            .reaction_process_activities
+            .reaction_process_activities.includes([:reaction_process_vessel])
             .where(activity_name: 'PURIFY')
             .order(:position)
             .map do |purification|
@@ -115,7 +94,10 @@ module Entities
         end
 
         def saved_sample_with_solvents_options(reaction_process_step)
-          save_actions = reaction_process_step.reaction_process_activities.order(:position).select do |activity|
+          save_actions = reaction_process_step.reaction_process_activities
+                                              .includes([:reaction_process_vessel])
+                                              .order(:position)
+                                              .select do |activity|
             activity.activity_name == 'SAVE'
           end
 
