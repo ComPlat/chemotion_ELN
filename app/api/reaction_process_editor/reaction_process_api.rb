@@ -9,7 +9,12 @@ module ReactionProcessEditor
     namespace :reaction_processes do
       route_param :id do
         before do
-          @reaction_process = ::ReactionProcessEditor::ReactionProcess.find(params[:id])
+          @reaction_process = ::ReactionProcessEditor::ReactionProcess.includes([:reaction_process_vessels,
+                                                                                 { reaction_process_steps:
+                                                                                 [reaction_process_activities:
+                                                                                  [:reaction_process_vessel]] }])
+                                                                      .find(params[:id])
+
           error!('404 Not Found', 404) unless @reaction_process&.creator == current_user
         end
 
@@ -21,7 +26,7 @@ module ReactionProcessEditor
         end
 
         get :ord do
-          reaction = ::ReactionProcessEditor::ReactionProcess.find(params[:id]).reaction
+          reaction = @reaction_process.reaction
 
           filename = "#{Time.zone.today.iso8601}-Reaction-#{reaction.id}-#{reaction.short_label}.kit-ord.json"
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{filename}"

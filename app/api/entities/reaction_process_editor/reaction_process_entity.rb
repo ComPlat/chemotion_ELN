@@ -22,11 +22,13 @@ module Entities
       delegate :reaction, to: :object
 
       def reaction_process_steps
-        @reaction_process_steps ||= object.reaction_process_steps.order('position')
+        @reaction_process_steps ||= object.reaction_process_steps
+                                          .includes(%i[reaction_process_activities reaction_process_vessel])
+                                          .order('position')
       end
 
       def samples_preparations
-        object.samples_preparations.includes([:sample]).order('created_at')
+        object.samples_preparations.includes([sample: %i[residues]]).order('created_at')
       end
 
       def provenance
