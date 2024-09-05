@@ -291,7 +291,7 @@ class Material extends Component {
       <td colSpan={colSpan} style={style}>
         <NumeralInputWithUnitsCompo
           precision={4}
-          bsStyle="success"
+          variant="success"
           value={updateValue}
           disabled={readOnly}
           onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
@@ -629,7 +629,7 @@ class Material extends Component {
             }
             onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
             onMetricsChange={this.handleMetricsChange}
-            bsStyle={material.error_mass ? 'error' : massBsStyle}
+            variant={material.error_mass ? 'error' : massBsStyle}
             name="molecular-weight"
           />
         </div>
@@ -712,7 +712,7 @@ class Material extends Component {
               disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
-              bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
+              variant={material.amount_unit === 'mol' ? 'success' : 'default'}
             />
           </td>
 
