@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
-import { ConfirmModal } from 'src/components/common/ConfirmModal';
+import ConfirmModal from 'src/components/common/ConfirmModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 const MeasurementsList = ({ sample }) => {
