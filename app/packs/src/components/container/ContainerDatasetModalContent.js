@@ -42,7 +42,9 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 
 export class ContainerDatasetModalContent extends Component {
+  // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const datasetContainer = { ...props.datasetContainer };
@@ -85,6 +87,7 @@ export class ContainerDatasetModalContent extends Component {
     this.classifyAttachments = this.classifyAttachments.bind(this);
     this.state.attachmentGroups = this.classifyAttachments(props.datasetContainer.attachments);
   }
+
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
@@ -92,13 +95,12 @@ export class ContainerDatasetModalContent extends Component {
       attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
     });
   }
-  componentDidUpdate(prevProps, prevState) {
-    
 
+  componentDidUpdate(prevProps) {
     const { prevMessages, newMessages } = this.state;
     const { attachments } = this.props.datasetContainer;
 
-    let prevAttachments = [...attachments];
+    const prevAttachments = [...attachments];
 
     if (prevMessages.length !== newMessages.length) {
       this.setState({
@@ -108,9 +110,7 @@ export class ContainerDatasetModalContent extends Component {
       this.updateAttachmentsFromContext();
     }
 
- 
     if (prevAttachments.length !== prevProps.datasetContainer.attachments.length) {
-  
       this.setState({
         filteredAttachments: [...attachments],
         attachmentGroups: this.classifyAttachments(attachments)
@@ -122,22 +122,19 @@ export class ContainerDatasetModalContent extends Component {
     }
   }
 
+  // eslint-disable-next-line react/sort-comp
   updateAttachmentsFromContext = () => {
     const { datasetContainer } = this.props;
     const { filteredAttachments } = this.state;
-    
-    console.log('inside');
+
     let combinedAttachments = [...filteredAttachments];
 
     if (this.context.attachmentNotificationStore) {
-
       combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(
         filteredAttachments, 'Container', datasetContainer);
-
     }
     return combinedAttachments;
   };
-
 
   handleInputChange(type, event) {
     const { datasetContainer } = this.state;
@@ -183,8 +180,7 @@ export class ContainerDatasetModalContent extends Component {
         attachmentGroups: this.classifyAttachments(updatedAttachments),
       };
     }, () => {
-      // this.props.onChange({ ...this.state.datasetContainer });
-      // this.createAttachmentPreviews();
+      this.createAttachmentPreviews();
     });
   }
 
@@ -585,74 +581,69 @@ export class ContainerDatasetModalContent extends Component {
     } = this.state;
     const { datasetContainer } = this.props;
 
-
-    const renderGroup = (attachments, title, key) => {    
-        console.log(attachments, title, key);
-        return (
-          <div key={key} style={{ marginTop: '10px' }}>
-            <div style={{
-              backgroundColor: '#D3D3D3',
-              fontWeight: 'bold',
-              marginBottom: '5px',
-              borderRadius: '5px',
-              padding: '5px'
-            }}
-            >
-              {title}
-            </div>
-            {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
-          </div>
-        );
-      
-      };
-
-      const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
-        (groupName) => attachmentGroups.Processed[groupName].length > 0
-      );
-
-      return (
-        <div className="attachment-main-container">
-          {this.renderImageEditModal()}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ flex: '1', alignSelf: 'center' }}>
-              {this.customDropzone()}
-            </div>
-            <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
-              {datasetContainer.attachments.length > 0
-                && sortingAndFilteringUI(
-                  sortDirection,
-                  this.handleSortChange,
-                  this.toggleSortDirection,
-                  this.handleFilterChange,
-                  false
-                )}
-            </div>
-          </div>
-          {filteredAttachments.length === 0 ? (
-            <div className="no-attachments-text">
-              There are currently no attachments.
-            </div>
-          ) : (
-            <div style={{ marginBottom: '20px' }}>
-              {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
-                && renderGroup(attachmentGroups.Pending, 'Pending')}
-              {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
-              {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
-              {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
-                .map((groupName) => attachmentGroups.Processed[groupName].length > 0
-                  && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
-              {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
-            </div>
-          )}
-          <HyperLinksSection
-            data={this.state.datasetContainer.extended_metadata.hyperlinks}
-            onAddLink={this.handleAddLink}
-            onRemoveLink={this.handleRemoveLink}
-            disabled={this.props.disabled}
-          />
+    const renderGroup = (attachments, title, key) => (
+      <div key={key} style={{ marginTop: '10px' }}>
+        <div style={{
+          backgroundColor: '#D3D3D3',
+          fontWeight: 'bold',
+          marginBottom: '5px',
+          borderRadius: '5px',
+          padding: '5px'
+        }}
+        >
+          {title}
         </div>
-      );
-    }
+        {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
+      </div>
+    );
+
+    const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
+      (groupName) => attachmentGroups.Processed[groupName].length > 0
+    );
+
+    return (
+      <div className="attachment-main-container">
+        {this.renderImageEditModal()}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ flex: '1', alignSelf: 'center' }}>
+            {this.customDropzone()}
+          </div>
+          <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
+            {datasetContainer.attachments.length > 0
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                false
+              )}
+          </div>
+        </div>
+        {filteredAttachments.length === 0 ? (
+          <div className="no-attachments-text">
+            There are currently no attachments.
+          </div>
+        ) : (
+          <div style={{ marginBottom: '20px' }}>
+            {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
+              && renderGroup(attachmentGroups.Pending, 'Pending')}
+            {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
+            {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
+            {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
+              .map((groupName) => attachmentGroups.Processed[groupName].length > 0
+                && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
+            {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
+          </div>
+        )}
+        <HyperLinksSection
+          data={this.state.datasetContainer.extended_metadata.hyperlinks}
+          onAddLink={this.handleAddLink}
+          onRemoveLink={this.handleRemoveLink}
+          disabled={this.props.disabled}
+        />
+      </div>
+    );
+  }
 
   renderMetadata() {
     const { datasetContainer, showInstruments } = this.state;
@@ -727,7 +718,6 @@ export class ContainerDatasetModalContent extends Component {
   render() {
     const { mode } = this.props;
     const { prevMessages } = this.state;
-    
     const newMessages = this.context?.attachmentNotificationStore.getAttachmentsOfMessages();
 
     if (prevMessages.length !== newMessages.length) {
@@ -735,7 +725,6 @@ export class ContainerDatasetModalContent extends Component {
         newMessages
       });
     }
-    
     return (
       <div>
         {mode === 'attachments' && this.renderAttachments()}
