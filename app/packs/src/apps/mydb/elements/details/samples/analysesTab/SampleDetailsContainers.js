@@ -33,7 +33,7 @@ export default class SampleDetailsContainers extends Component {
     this.handleAdd = this.handleAdd.bind(this);
     this.handleMove = this.handleMove.bind(this);
     this.toggleAddToReport = this.toggleAddToReport.bind(this);
-    this.toggleMode = this.toggleMode.bind(this);
+    this.handleToggleMode = this.handleToggleMode.bind(this);
     this.isEqCId = this.isEqCId.bind(this);
     this.indexedContainers = this.indexedContainers.bind(this);
     this.buildEmptyAnalyContainer = this.buildEmptyAnalyContainer.bind(this);
@@ -165,13 +165,8 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
-  toggleMode() {
-    const { mode } = this.state;
-    if (mode === 'edit') {
-      this.setState({ mode: 'order' });
-    } else {
-      this.setState({ mode: 'edit' });
-    }
+  handleToggleMode(mode) {
+    this.setState({mode: mode});
   }
 
   render() {
@@ -202,7 +197,7 @@ export default class SampleDetailsContainers extends Component {
             handleAccordionOpen={this.handleAccordionOpen}
             handleUndo={this.handleUndo}
             toggleAddToReport={this.toggleAddToReport}
-            toggleMode={this.toggleMode}
+            handleToggleMode={this.handleToggleMode}
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}

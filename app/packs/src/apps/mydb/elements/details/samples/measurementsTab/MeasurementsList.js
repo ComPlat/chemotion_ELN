@@ -1,30 +1,23 @@
 import Aviator from 'aviator';
-import React, { Component } from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
-import ConfirmDeletionModal from 'src/apps/mydb/elements/details/samples/measurementsTab/ConfirmDeletionModal';
+import { ConfirmModal } from 'src/components/common/ConfirmModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
-class MeasurementsList extends Component {
-  static propTypes = {
-    sample: PropTypes.object.isRequired
-  };
-  static contextType = StoreContext;
+const MeasurementsList = ({ sample }) => {
+  const context = useContext(StoreContext);
+  const [measurementToDelete, setMeasurementToDelete] = useState(null);
+  const measurementsStore = context.measurements;
+  const sampleIds = [...sample.ancestor_ids, sample.id].filter(a => a);
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      measurementToDelete: null
-    }
-  };
 
   // currently only research plan is supported as source
-  navigateToSource(measurement) {
+  const navigateToSource = (measurement) => {
     const { uri } = Aviator.getCurrentRequest();
     Aviator.navigate(`${uri}/${measurement.source_type}/${measurement.source_id}`, { silent: true });
     if (measurement.source_type == 'research_plan') {
@@ -32,45 +25,44 @@ class MeasurementsList extends Component {
     }
   }
 
-  deleteMeasurement() {
-    const measurement = this.state.measurementToDelete;
-    if (measurement == null) { return; }
-
-    LoadingActions.start();
-    this.context.measurements.deleteMeasurement(
-      measurement.id,
-      () => {
-        this.hideConfirmationModal();
-        LoadingActions.stop();
-      }
-    );
+  const handleDeleteConfirmation = (confirm) => {
+    if (confirm) {
+      LoadingActions.start();
+      context.measurements.deleteMeasurement(
+        measurementToDelete.id,
+        () => {
+          setMeasurementToDelete(null);
+          LoadingActions.stop();
+        }
+      )
+    } else {
+      setMeasurementToDelete(null);
+    }
   }
 
-  hideConfirmationModal() {
-    this.setState({ measurementToDelete: null });
-  }
-
-  renderDeleteButton(measurement) {
+  const renderDeleteButton = (measurement) =>{
     return (
       <Button
         variant="danger"
         size="sm"
         key={`Measurement${measurement.id}-DeleteButton`}
-        onClick={() => { this.setState({ measurementToDelete: measurement }) }}
+        onClick={() => {
+          setMeasurementToDelete(measurement)
+        }}
       >
-        <Glyphicon glyph="trash" />
+        <i className="fa fa-trash" />
       </Button>
     );
   }
 
-  renderEntry(sampleHeader, measurements) {
+  const renderEntry = (sampleHeader, measurements) => {
     measurements = measurements.map(measurement => {
       let measurementDisplay;
       if (measurement.source_id) {
         measurementDisplay = (
           <a
             key={`Measurement${measurement.id}-SourceLink`}
-            onClick={() => this.navigateToSource(measurement)}
+            onClick={() => navigateToSource(measurement)}
             role="button"
           >
             {measurement.description}: {measurement.value}{measurement.unit}
@@ -90,7 +82,7 @@ class MeasurementsList extends Component {
             {measurementDisplay}
           </td>
           <td>
-            {this.renderDeleteButton(measurement)}
+            {renderDeleteButton(measurement)}
           </td>
         </tr>
       );
@@ -101,45 +93,43 @@ class MeasurementsList extends Component {
         <h4 key={`MeasurementListEntry${sampleHeader.id}-SampleName`}>
           {sampleHeader.short_label} {sampleHeader.name}
         </h4>
-        <table className="table striped condensed hover">
+        <table className="table table-sm table-hover">
           <thead>
             <tr>
               <th>Measurement</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="table-group-divider">
             {measurements}
           </tbody>
         </table>
-        <ConfirmDeletionModal
-          show={this.state.measurementToDelete != null}
-          onConfirm={this.deleteMeasurement.bind(this)}
-          onCancel={this.hideConfirmationModal.bind(this)}
-          confirmationText="Are you sure you want to delete this measurement?"
-        />
       </div>
     );
   }
-
-  render() {
-    const measurementsStore = this.context.measurements;
-    let sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(a => a);
-    const entries = sampleIds.map(sampleId => {
-      if (!measurementsStore.dataForSampleAvailable(sampleId)) { return null; }
-
-      return this.renderEntry(
-        measurementsStore.sampleHeader(sampleId),
-        measurementsStore.measurementsForSample(sampleId)
-      );
-    });
-
-    return (
-      <div className="measurementList">
-        {entries}
-      </div>
-    );
-  }
+  
+  return (
+    <div className="measurementList">
+      {sampleIds.map(sampleId => {
+        if (measurementsStore.dataForSampleAvailable(sampleId)) {
+          return renderEntry(
+            measurementsStore.sampleHeader(sampleId),
+            measurementsStore.measurementsForSample(sampleId)
+          );
+        }
+      })}
+      <ConfirmModal
+        showModal={measurementToDelete != null}
+        onClick={handleDeleteConfirmation}
+        title="Delete Measurement"
+        content={measurementToDelete ? ("Are you sure you want to delete " + measurementToDelete.description + "?") : ""}
+      />
+    </div>
+  );
 }
+
+MeasurementsList.propTypes = {
+  sample: PropTypes.object.isRequired
+};
 
 export default observer(MeasurementsList);

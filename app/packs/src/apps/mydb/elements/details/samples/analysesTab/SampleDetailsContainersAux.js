@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Form } from 'react-bootstrap';
+import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ImageModal from 'src/components/common/ImageModal';
@@ -16,6 +16,7 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 const qCheckPass = () => (
   <i className="fa fa-check ms-1 text-success"/>
@@ -52,17 +53,28 @@ const qCheckMsg = (sample, container) => {
   return '';
 };
 
-const AnalysisModeBtn = (mode, toggleMode, isDisabled) => {
+const AnalysisModeToggle = (mode, handleToggleMode, isDisabled) => {
   return (
-    <Button
-      size="xsm"
-      variant={mode === 'order' ? 'success' : 'primary'}
-      onClick={toggleMode}
-      disabled={isDisabled}
-    >
-      <i className={"fa me-1 " + (mode === 'order' ? 'fa-reorder' : 'fa-edit')}  />
-      {mode.charAt(0).toUpperCase() + mode.slice(1)} mode
-    </Button>
+    <ButtonGroup>
+      <ButtonGroupToggleButton
+        size="xsm"
+        active={mode === 'edit'}
+        onClick={() => handleToggleMode('edit')}
+        disabled={isDisabled}
+      >
+        <i className="fa fa-edit me-1" />
+        Edit mode
+      </ButtonGroupToggleButton>
+      <ButtonGroupToggleButton
+        size="xsm"
+        active={mode === 'order'}
+        onClick={() => handleToggleMode('order')}
+        disabled={isDisabled}
+      >
+        <i className="fa fa-reorder me-1" />
+        Order mode
+      </ButtonGroupToggleButton>
+    </ButtonGroup>
   )
 };
 
@@ -248,4 +260,4 @@ const AnalysesHeader = ({
   );
 };
 
-export { AnalysesHeader, AnalysisModeBtn };
+export { AnalysesHeader, AnalysisModeToggle };

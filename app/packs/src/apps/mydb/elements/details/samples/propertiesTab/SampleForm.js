@@ -21,6 +21,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -743,20 +744,20 @@ export default class SampleForm extends React.Component {
     return (
       <>
         <ButtonGroup className="mb-2">
-          <Button
+          <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'density' })}
-            variant={this.state.densityMolarity === 'density' ? 'info' : 'light'}
+            active={this.state.densityMolarity === 'density'}
             size="xxsm"
           >
             Density
-          </Button>
-          <Button
+          </ButtonGroupToggleButton>
+          <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'molarity' })}
-            variant={this.state.densityMolarity === 'molarity' ? 'info' : 'light'}
+            active={this.state.densityMolarity === 'molarity'}
             size="xxsm"
           >
             Molarity
-          </Button>
+          </ButtonGroupToggleButton>
         </ButtonGroup>
         {this.state.densityMolarity === 'density' ? (
           this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', densityBlocked, '', false, isPolymer)
