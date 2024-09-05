@@ -1,20 +1,22 @@
 import React, { Component } from 'react';
 import {
-  FormGroup, InputGroup, FormControl, Button, ButtonGroup, Overlay, OverlayTrigger, Tooltip
+  Col, Container, Form, InputGroup, Button, Overlay, OverlayTrigger, Row, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import QuillEditor from 'src/components/QuillEditor';
 import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
-import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
+
 import Wellplate from 'src/models/Wellplate';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import ConfirmModal from 'src/components/common/ConfirmModal'
 
 export default class WellplateProperties extends Component {
   constructor(props) {
     super(props);
     this.deleteButtonRefs = [];
-    this.state = { showDeleteReadoutConfirm: [], showCustomSizeModal: false };
+    this.state = {
+      selectedReadoutIndex: null
+    };
   }
 
   handleInputChange(type, event) {
@@ -23,22 +25,10 @@ export default class WellplateProperties extends Component {
     changeProperties({ type, value });
   }
 
-  showDeleteReadoutTitleConfirm(index) {
-    const { showDeleteReadoutConfirm } = this.state;
-    showDeleteReadoutConfirm[index] = true;
-    this.setState({ showDeleteReadoutConfirm });
-  }
-
-  hideDeleteReadoutTitleConfirm(index) {
-    const { showDeleteReadoutConfirm } = this.state;
-    showDeleteReadoutConfirm[index] = false;
-    this.setState({ showDeleteReadoutConfirm });
-  }
-
   addReadoutTitle() {
     const { readoutTitles, changeProperties, handleAddReadout } = this.props;
     const currentTitles = readoutTitles || [];
-    const newTitles = currentTitles.concat('Readout');
+    const newTitles = currentTitles.concat(`Readout ${currentTitles.length + 1}`);
     changeProperties({ type: 'readoutTitles', value: newTitles });
     handleAddReadout();
   }
@@ -59,167 +49,77 @@ export default class WellplateProperties extends Component {
     changeProperties({ type: 'readoutTitles', value: currentTitles });
   }
 
-  showCustomSizeModal() {
-    this.setState({ showCustomSizeModal: true });
-  }
-
-  renderDeleteReadoutTitleButton(index) {
-    const { showDeleteReadoutConfirm } = this.state;
-    const show = showDeleteReadoutConfirm[index];
-
-    const confirmTooltip = (
-      <Tooltip className="in" id="tooltip-bottom">
-        Delete Readout Title? This will also delete the respective well readouts.
-        <br />
-        <ButtonGroup>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => this.deleteReadoutTitle(index)}
-          >
-            Yes
-          </Button>
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => this.hideDeleteReadoutTitleConfirm(index)}
-          >
-            No
-          </Button>
-        </ButtonGroup>
-      </Tooltip>
-    );
-
-    return (
-      <InputGroup.Button>
-        <OverlayTrigger
-          placement="top"
-          overlay={<Tooltip id="delete_readout_title_tooltip">Delete Readout Title</Tooltip>}
-        >
-          <Button
-            variant="danger"
-            ref={(ref) => { this.deleteButtonRefs[index] = ref; }}
-            onClick={() => this.showDeleteReadoutTitleConfirm(index)}
-          >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
-        <Overlay
-          show={show}
-          placement="bottom"
-          rootClose
-          onHide={() => this.hideDeleteReadoutTitleConfirm(index)}
-          target={this.deleteButtonRefs[index]}
-        >
-          { confirmTooltip }
-        </Overlay>
-      </InputGroup.Button>
-    );
-  }
-
   render() {
     const {
       readoutTitles, wellplate, changeProperties
     } = this.props;
-
     const { name, description } = wellplate;
-
-    const { showCustomSizeModal } = this.state;
+    const { selectedReadoutIndex } = this.state;
+    const showDeletionConfirmationModal = selectedReadoutIndex != null;
 
     return (
-      <div>
-        <CustomSizeModal
-          showCustomSizeModal={showCustomSizeModal}
-          wellplate={wellplate}
-          triggerUIUpdate={changeProperties}
-          handleClose={() => { this.setState({ showCustomSizeModal: false }); }}
+      <div className="mt-2">
+        <ConfirmModal
+          showModal={showDeletionConfirmationModal}
+          title={"Delete Readout Title"}
+          content={"Delete Readout Title? This will also delete the respective well readouts."}
+          onClick={(deletionConfirmed) => {
+            if (deletionConfirmed) this.deleteReadoutTitle(this.state.selectedReadoutIndex)
+            this.setState({selectedReadoutIndex: null})
+          }}
         />
-        <table width="100%">
-          <tbody>
-            <tr>
-              <td width="70%" className="padding-right">
-                <FormGroup>
-                  <ControlLabel>Name</ControlLabel>
-                  <FormControl
-                    type="text"
-                    value={name || ''}
-                    onChange={(event) => this.handleInputChange('name', event)}
-                    disabled={name === '***'}
-                  />
-                </FormGroup>
-              </td>
-              <td width="30%">
+        <Row className="">
+          <Col xs="9">
+            <Form.Group>
+              <Form.Label>Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={name || ''}
+                onChange={(event) => this.handleInputChange('name', event)}
+                disabled={name === '***'}
+              />
+            </Form.Group>
+          </Col>
+          <Col xs="3">
+            <Form.Label>Size</Form.Label>
+            <div className="custom-size-dropdown">
+              <WellplateSizeDropdown
+                updateWellplate={changeProperties}
+                wellplate={wellplate}
+              />
+            </div>
+          </Col>
+        </Row>
 
-                <div>Size</div>
-                <div className="custom-size-dropdown">
-                  <WellplateSizeDropdown
-                    triggerUIUpdate={changeProperties}
-                    wellplate={wellplate}
-                  />
-                </div>
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip id="create-custom-tooltip-id">Create custom wellplate size</Tooltip>}
-                >
-                  <Button
-                    className="create-own-size-button"
-                    disabled={!wellplate.is_new}
-                    onClick={() => this.showCustomSizeModal()}
-                  >
-                    <i className="fa fa-braille" />
-                  </Button>
-                </OverlayTrigger>
+        <Row className="gy-1 mt-3">
+          <Form.Label>Readouts</Form.Label>
+          {readoutTitles && readoutTitles.map((readoutTitle, index) => (
+            <InputGroup key={`wellplate-${wellplate.id}-readout-${index}`}>
+              <Form.Control
+                type="text"
+                value={readoutTitle}
+                onChange={(event) => this.updateReadoutTitle(index, event.target.value)}
+              />
+              <Button variant="danger" onClick={() => this.setState({selectedReadoutIndex: index})}>
+                <i className="fa fa-trash-o" />
+              </Button>
+            </InputGroup>
+          ))}
+          <Button variant="success" className="mt-2 mx-3 w-auto" onClick={() => this.addReadoutTitle()}>
+            Add Readouts
+          </Button>
+        </Row>
 
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={2}>
-                <ControlLabel>Readout Titles</ControlLabel>
-              </td>
-            </tr>
-            {readoutTitles && readoutTitles.map((readoutTitle, index) => (
-            // eslint-disable-next-line react/no-array-index-key
-              <tr key={index}>
-                <td colSpan={2}>
-                  <FormGroup>
-                    <InputGroup>
-                      <FormControl
-                        type="text"
-                        value={readoutTitle}
-                        onChange={(event) => this.updateReadoutTitle(index, event.target.value)}
-                      />
-                      { this.renderDeleteReadoutTitleButton(index) }
-                    </InputGroup>
-                  </FormGroup>
-                </td>
-              </tr>
-            ))}
-            <tr>
-              <td colSpan={2}>
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip id="add_readout_title_tooltip">Add Readout Title</Tooltip>}
-                >
-                  <Button variant="success" onClick={() => this.addReadoutTitle()}>
-                    Add Readouts
-                  </Button>
-                </OverlayTrigger>
-              </td>
-            </tr>
-            <tr>
-              <td colSpan="2">
-                <FormGroup>
-                  <ControlLabel>Description</ControlLabel>
-                  <QuillEditor
-                    value={description}
-                    onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
-                    disabled={description === '***'}
-                  />
-                </FormGroup>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <Row className="mt-3">
+          <Form.Group>
+            <Form.Label>Description</Form.Label>
+            <QuillEditor
+              value={description}
+              onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
+              disabled={description === '***'}
+            />
+          </Form.Group>
+        </Row>
       </div>
     );
   }

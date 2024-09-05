@@ -1,13 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Accordion, Button, Row } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {
@@ -81,88 +79,51 @@ export default class WellplateDetailsContainers extends Component {
     const { wellplate, activeContainer } = this.state;
     const { readOnly } = this.props;
 
-    let containerHeader = (container) => <div style={{ width: '100%' }}>
-      {container.name}
-      {(container.extended_metadata['kind'] &&
-        container.extended_metadata['kind'] != '')
-        ? (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
-      {(container.extended_metadata['status'] &&
-        container.extended_metadata['status'] != '')
-        ? (' - Status: ' + container.extended_metadata['status']) : ''}
-      <Button size="sm" variant="danger"
-        disabled={readOnly}
-        onClick={() => {
-          if (confirm('Delete the container?')) {
-            this.handleRemove(container)
-          }
-        }}>
-        <i className="fa fa-trash"></i>
-      </Button>
-      <PrintCodeButton element={wellplate} analyses={[container]}
-        ident={container.id} />
+    let containerHeader = (container) => <div className="d-flex justify-content-between w-100">
+      <div>
+        {container.name}
+        {(container.extended_metadata['kind'] &&
+          container.extended_metadata['kind'] != '')
+          ? (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
+        {(container.extended_metadata['status'] &&
+          container.extended_metadata['status'] != '')
+          ? (' - Status: ' + container.extended_metadata['status']) : ''}
+      </div>
+      <div className="d-flex justify-content-end gap-2 me-2">
+        <PrintCodeButton
+          element={wellplate}
+          analyses={[container]}
+          ident={container.id}
+        />
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={readOnly}
+          onClick={() => {
+            if (confirm('Delete the container?')) this.handleRemove(container)
+          }}>
+          <i className="fa fa-trash"></i>
+        </Button>
+      </div>
     </div>
 
-    let containerHeaderDeleted = (container) => <p style={{ width: '100%' }}><strike>{container.name}
-      {(container.extended_metadata['kind'] &&
-        container.extended_metadata['kind'] != '')
-        ? (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
-      {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) : ''}
-    </strike>
-      <Button className="pull-right" size="sm" variant="danger" onClick={() => this.handleUndo(container)}>
-        <i className="fa fa-undo"></i>
-      </Button>
-    </p>
+    let containerHeaderDeleted = (container) => (
+      <div className="d-flex justify-content-between w-100">
+        <strike>{container.name}
+          {(container.extended_metadata['kind'] &&
+            container.extended_metadata['kind'] != '')
+            ? (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
+          {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) : ''}
+        </strike>
+        <div className="d-flex justify-content-end gap-2 me-2">
+          <Button size="sm" variant="danger" onClick={() => this.handleUndo(container)}>
+            <i className="fa fa-undo"></i>
+          </Button>
+        </div>
+      </div>
+    );
 
-    if (wellplate.container != null) {
-
-      var analyses_container = wellplate.container.children.filter(element => ~element.container_type.indexOf('analyses'));
-
-      if (analyses_container.length == 1 && analyses_container[0].children.length > 0) {
-        return (
-          <div>
-            <p>&nbsp;{this.addButton()}</p>
-            <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-              {analyses_container[0].children.map((container, key) => {
-                if (container.is_deleted) {
-                  return (
-                    <Panel eventKey={key}
-                      key={key} >
-                      <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
-                    </Panel>
-                  );
-                } else {
-                  return (
-                    <Panel eventKey={key}
-                      key={key} onClick={() => this.handleAccordionOpen(key)}>
-                      <Panel.Heading>{containerHeader(container)}</Panel.Heading>
-                      <Panel.Body collapsible="true">
-                        <ContainerComponent
-                          templateType="wellplate"
-                          readOnly={readOnly}
-                          container={container}
-                          onChange={container => this.handleChange(container)}
-                        />
-                      </Panel.Body>
-                    </Panel>
-                  );
-                }
-
-              }
-              )}
-            </PanelGroup>
-          </div>
-        )
-      } else {
-        return (
-          <div className='d-flex justify-content-between align-items-center'>
-            <p className='m-0'>There are currently no Analyses.</p>
-            {addButton()}
-          </div>
-        )
-      }
-
-    } else {
-
+    if (wellplate.container == null) {
       return (
         <div>
           <p className='m-4'>
@@ -172,8 +133,51 @@ export default class WellplateDetailsContainers extends Component {
       )
     }
 
-  }
+    var analyses_container = wellplate.container.children.filter(element => ~element.container_type.indexOf('analyses'));
 
+    if (analyses_container.length != 1 || analyses_container[0].children.length == 0) {
+      return (
+        <div className='d-flex justify-content-between align-items-center'>
+          <p className='m-0'>
+            There are currently no Analyses.
+            {this.addButton()}
+          </p>
+        </div>
+      )
+    }
+
+    return (
+      <div>
+        <div className="my-3">
+          {this.addButton()}
+        </div>
+        <Accordion defaultActiveKey={0}>
+          {
+            analyses_container[0].children.map((container, key) => {
+              return (
+                <Accordion.Item eventKey={key} key={key}>
+                  <Accordion.Header>
+                    {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
+                  </Accordion.Header>
+                  {
+                    !container.is_deleted &&
+                      <Accordion.Body>
+                        <ContainerComponent
+                          templateType="wellplate"
+                          readOnly={readOnly}
+                          container={container}
+                          onChange={container => this.handleChange(container)}
+                        />
+                      </Accordion.Body>
+                  }
+                </Accordion.Item>
+              )
+            })
+          }
+        </Accordion>
+      </div>
+    )
+  }
 }
 
 WellplateDetailsContainers.propTypes = {

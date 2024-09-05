@@ -3,8 +3,7 @@ import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
-  ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger
+  Card, ListGroup, ListGroupItem, Button, ButtonToolbar, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -38,8 +37,6 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import Well from 'src/components/legacyBootstrap/Well'
 
 export default class WellplateDetails extends Component {
   constructor(props) {
@@ -148,19 +145,12 @@ export default class WellplateDetails extends Component {
   handleChangeProperties(change = {}) {
     const { wellplate } = this.state;
     const { type, value } = change;
-    switch (type) {
-      case 'name':
-        wellplate.name = value === '' ? 'New Wellplate' : value;
-        break;
-      case 'description':
-        wellplate.description = value;
-        break;
-      case 'readoutTitles':
-        wellplate.readout_titles = value;
-        break;
-      default:
-        break;
-    }
+
+    if (type == 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
+    if (type == 'description') wellplate.description = value;
+    if (type == 'readoutTitles') wellplate.readout_titles = value;
+    if (type == 'size') wellplate.changeSize(value.width, value.height);
+
     this.setState({ wellplate });
   }
 
@@ -241,66 +231,48 @@ export default class WellplateDetails extends Component {
   }
 
   wellplateHeader(wellplate) {
-    const saveBtnDisplay = wellplate.isEdited || wellplate.isNew ? '' : 'none';
+    const displaySaveButton = wellplate.isEdited || wellplate.isNew
     const datetp = formatTimeStampsOfElement(wellplate || {});
 
     return (
-      <div>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
-          <span>
-            <i className="icon-wellplate" />
-            &nbsp;&nbsp;
-            <span>{wellplate.name}</span>
-            &nbsp;&nbsp;
-          </span>
-        </OverlayTrigger>
-        <ElementCollectionLabels element={wellplate} placement="right" />
-        <HeaderCommentSection element={wellplate} />
-        <ConfirmClose el={wellplate} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => this.handleSubmit()}
-            style={{ display: saveBtnDisplay }}
-          >
-            <i className="fa fa-floppy-o " />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-          <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        <PrintCodeButton element={wellplate} />
+      <div className="d-flex justify-content-between">
+        <div className="d-flex justify-content-start gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
+            <span>
+              <i className="icon-wellplate" />
+              <span className="mx-2">{wellplate.name}</span>
+            </span>
+          </OverlayTrigger>
+          <ElementCollectionLabels element={wellplate} placement="right" />
+          <HeaderCommentSection element={wellplate} />
+        </div>
+        <div className="d-flex justify-content-end gap-2">
+          <PrintCodeButton element={wellplate} />
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
+            <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          { displaySaveButton &&
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => this.handleSubmit()}
+              >
+                <i className="fa fa-floppy-o " />
+              </Button>
+            </OverlayTrigger>
+          }
+          <ConfirmClose el={wellplate} />
+        </div>
       </div>
     );
   }
 
-  renderAttachmentsTab(wellplate) { /* eslint-disable react/jsx-no-bind */
-    return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <WellplateDetailsAttachments
-            wellplate={wellplate}
-            attachments={wellplate.attachments}
-            onDrop={this.handleAttachmentDrop.bind(this)}
-            onDelete={this.handleAttachmentDelete.bind(this)}
-            onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            onDownload={this.handleAttachmentDownload.bind(this)}
-            onImport={this.handleAttachmentImport.bind(this)}
-            onEdit={this.handleAttachmentEdit.bind(this)}
-            readOnly={false}
-          />
-        </ListGroupItem>
-      </ListGroup>
-    );
-  } /* eslint-enable */
 
   render() {
-    const {
-      wellplate, showWellplate, visible
-    } = this.state;
+    const { wellplate, showWellplate, visible } = this.state;
     const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
     const exportButton = (wellplate && wellplate.isNew)
@@ -312,17 +284,14 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_designer" element={wellplate} />
           }
-          <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
-            <Wellplate
-              show={showWellplate}
-              size={wellplate.size}
-              readoutTitles={readoutTitles}
-              wells={wellplate.wells}
-              handleWellsChange={(w) => this.handleWellsChange(w)}
-              cols={wellplate.width}
-              width={60}
-            />
-          </Well>
+          <Card id="wellplate-designer" className="overflow-scroll">
+            <Card.Body>
+              <Wellplate
+                wellplate={wellplate}
+                handleWellsChange={(wells) => this.handleWellsChange(wells)}
+              />
+            </Card.Body>
+          </Card>
         </Tab>
       ),
       list: (
@@ -330,13 +299,15 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
-          <Well style={{ overflow: 'scroll', height: '100%', maxHeight: 'calc(100vh - 375px)' }}>
-            <WellplateList
-              wells={wellplate.wells}
-              readoutTitles={readoutTitles}
-              handleWellsChange={(w) => this.handleWellsChange(w)}
-            />
-          </Well>
+          <Card className="overflow-scroll h-100">
+            <Card.Body>
+              <WellplateList
+                wells={wellplate.wells}
+                readoutTitles={readoutTitles}
+                handleWellsChange={(w) => this.handleWellsChange(w)}
+              />
+            </Card.Body>
+          </Card>
         </Tab>
       ),
       properties: (
@@ -361,7 +332,7 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_analyses" element={wellplate} />
           }
-          <ListGroupItem style={{ paddingBottom: 20 }}>
+          <ListGroupItem className="pb-2">
             <WellplateDetailsContainers
               wellplate={wellplate}
               parent={this}
@@ -371,7 +342,21 @@ export default class WellplateDetails extends Component {
       ),
       attachments: (
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${wellplate.id}`}>
-          {this.renderAttachmentsTab(wellplate)}
+          <ListGroup fill="true">
+            <ListGroupItem>
+              <WellplateDetailsAttachments
+                wellplate={wellplate}
+                attachments={wellplate.attachments}
+                onDrop={this.handleAttachmentDrop.bind(this)}
+                onDelete={this.handleAttachmentDelete.bind(this)}
+                onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+                onDownload={this.handleAttachmentDownload.bind(this)}
+                onImport={this.handleAttachmentImport.bind(this)}
+                onEdit={this.handleAttachmentEdit.bind(this)}
+                readOnly={false}
+              />
+            </ListGroupItem>
+          </ListGroup>
         </Tab>
       ),
 
@@ -390,9 +375,9 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
-        <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
-        <Panel.Body>
+      <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
+        <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
+        <Card.Body>
           <ElementDetailSortTab
             type="wellplate"
             availableTabs={Object.keys(tabContentsMap)}
@@ -402,7 +387,7 @@ export default class WellplateDetails extends Component {
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             {tabContents}
           </Tabs>
-          <ButtonToolbar>
+          <ButtonToolbar className='gap-1'>
             <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
             {
               wellplate.changed ? (
@@ -421,8 +406,8 @@ export default class WellplateDetails extends Component {
             </Button>
           </ButtonToolbar>
           <CommentModal element={wellplate} />
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   }
 }

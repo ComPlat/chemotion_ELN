@@ -1,134 +1,94 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import {
-  Button, Modal, FormGroup, FormControl, Col, Row
+  Button, Modal, Form, Col, Row
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
-export default class CustomSizeModal extends Component {
-  static isInteger(value) {
-    return !Number.isNaN(value) && Number.isInteger(Number(value));// && Number(value) > 0;
-  }
+const isInteger = (value) =>{
+  if (Number.isNaN(value)) return false
 
-  static propertyIsInvalid(value) {
-    return value > Wellplate.MAX_DIMENSION || value <= 0;
-  }
+  return Number.isInteger(Number(value))
+}
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      width: props.wellplate.width,
-      height: props.wellplate.height
-    };
-  }
+const dimensionIsValid = (value) => {
+  if (value <= 0) return false
+  if (value > Wellplate.MAX_DIMENSION) return false
 
-  updateDimensionsFromWellplate() {
-    const { wellplate } = this.props;
-    this.setState({
-      width: wellplate.width,
-      height: wellplate.height
-    });
-  }
+  return true
+}
 
-  applySizeChange() {
-    const { handleClose, wellplate, triggerUIUpdate } = this.props;
-    const { height, width } = this.state;
-    wellplate.changeSize(width, height);
-    triggerUIUpdate();
-    handleClose();
-  }
+const errorMessage = (label) => {
+  return (
+    <div class="invalid-wellplate-size-text">
+      {label} must be between 1 and 100
+    </div>
+  )
+}
 
-  updateDimension(dimension, value) {
-    if (!CustomSizeModal.isInteger(value)) {
-      return; // state is not updated if value is not an integer
-    }
-    this.setState({ [dimension]: value });
-  }
 
-  renderApplyButton() {
-    const { height, width } = this.state;
-    const disabled = CustomSizeModal.propertyIsInvalid(height) || CustomSizeModal.propertyIsInvalid(width);
-    return (
-      <Button
-        onClick={() => this.applySizeChange()}
-        disabled={disabled}
-      >
-        Apply
-      </Button>
-    );
-  }
+const CustomSizeModal = ({show, wellplate, updateWellplate, handleClose}) => {
+  const [width, setWidth] = useState(wellplate.width)
+  const [height, setHeight] = useState(wellplate.height)
 
-  renderProperty(value, label, propertyName) {
-    const invalidStyleClass = CustomSizeModal.propertyIsInvalid(value)
-      ? 'invalid-wellplate-size' : 'size-without-error';
-    const errorMessage = CustomSizeModal.propertyIsInvalid(value)
-      ? (
-        <div className="invalid-wellplate-size-text">
-          {label}
-          {' '}
-          must be between 0 and 100.
-        </div>
-      )
-      : null;
-    return (
-      <div className="floating-left">
-        <FormGroup>
-          <ControlLabel>{label}</ControlLabel>
-          <FormControl
-            type="text"
-            value={value}
-            className={invalidStyleClass}
-            onChange={(event) => this.updateDimension(propertyName, event.target.value)}
-          />
-          {errorMessage}
-        </FormGroup>
-      </div>
-    );
-  }
+  const widthIsValid = dimensionIsValid(width)
+  const heightIsValid = dimensionIsValid(height)
+  const widthChanged = width != wellplate.width
+  const heightChanged = height != wellplate.height
+  const canSubmit = widthIsValid && heightIsValid && (widthChanged || heightChanged)
 
-  renderSize() {
-    const { height, width } = this.state;
-    return (
-      <FormGroup>
-        <ControlLabel>Size</ControlLabel>
-        <FormControl.Static>{height * width}</FormControl.Static>
-      </FormGroup>
-    );
-  }
-
-  render() {
-    const { showCustomSizeModal, handleClose } = this.props;
-    const { height, width } = this.state;
-    return (
-      <Modal
-        centered
-        show={showCustomSizeModal}
-        onHide={handleClose}
-        onShow={() => this.updateDimensionsFromWellplate()}
-      >
-        <Modal.Header closeButton>Wellplate Dimensions</Modal.Header>
-        <Modal.Body>
-          <Row>
-            <Col xs={4}>
-              {this.renderProperty(width, 'Width', 'width') }
-            </Col>
-            <Col xs={4}>
-              {this.renderProperty(height, 'Height', 'height') }
-            </Col>
-            <Col xs={4}>
-              {this.renderSize() }
-            </Col>
-          </Row>
-          <Row>
-            <Col xs={1} xsOffset={10}>
-              {this.renderApplyButton()}
-            </Col>
-          </Row>
-        </Modal.Body>
-      </Modal>
-    );
-  }
+  return (
+    <Modal centered show={show} onHide={handleClose}>
+      <Modal.Header closeButton>Wellplate Dimensions</Modal.Header>
+      <Modal.Body>
+        <Row>
+          <Col xs={5}>
+            <Form.Group>
+              <Form.Label>Width</Form.Label>
+              <Form.Control
+                type="text"
+                value={width}
+                className={widthIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
+                onChange={event => setWidth(event.target.value)}
+              />
+              {!widthIsValid && errorMessage('Width')}
+            </Form.Group>
+          </Col>
+          <Col xs={5}>
+            <Form.Group>
+              <Form.Label>Height</Form.Label>
+              <Form.Control
+                type="text"
+                value={height}
+                className={heightIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
+                onChange={event => setHeight(event.target.value)}
+              />
+              {!heightIsValid && errorMessage('Height')}
+            </Form.Group>
+          </Col>
+          <Col xs={2}>
+            <Form.Group>
+              <Form.Label>Size</Form.Label>
+              <Form.Control type="text" disabled value={height * width} />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col xs={{span: 1, offset: 10}}>
+            <Button
+              onClick={() => {
+                updateWellplate({ type: 'size', value: { width: width, height: height }})
+                handleClose()
+              }}
+              disabled={!canSubmit}
+            >
+              Apply
+            </Button>
+          </Col>
+        </Row>
+      </Modal.Body>
+    </Modal>
+  )
 }
 
 CustomSizeModal.propTypes = {
@@ -136,4 +96,6 @@ CustomSizeModal.propTypes = {
   showCustomSizeModal: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   triggerUIUpdate: PropTypes.func.isRequired,
-};
+}
+
+export default CustomSizeModal

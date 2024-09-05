@@ -2,10 +2,6 @@
   padding-right: 10px;
 }
 
-.no-margin {
-  margin: 0 !important;
-}
-
 .full-screen {
   position: fixed;
   z-index: 6;
