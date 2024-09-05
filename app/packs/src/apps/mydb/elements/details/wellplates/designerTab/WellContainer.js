@@ -60,14 +60,12 @@ class WellContainer extends Component {
 
     const classes = ['wellplate-well-container']
     if (active) classes.push('active')
-    if (isDragging) classes.push('is-dragging')
     if (well.sample) classes.push('has-sample')
     if (canDrop) classes.push('border-dashed')
-    if (isOver) classes.push('is-over')
 
     return (
       connectDragSource(connectDropTarget(
-        <div className={classes} style={{ ...styleOverrides }}>
+        <div className={classes.join(' ')} style={{ ...styleOverrides }}>
           <Well
             active={active}
             label={well.label}
