@@ -1010,37 +1010,49 @@ export default class SampleForm extends React.Component {
                       </td>
                     </tr>
                   )}
-
                 <tr className="visible-hd">
                   <td colSpan="6">
-                    <div
-                      className="input-wrapper"
-                      style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', marginTop: '12px' }}>
-                        {this.infoButton()}
-                      </div>
-                      <div style={{ flex: '1 1 0', paddingLeft: '5px', paddingRight: '5px', marginTop: '14px' }}>
-                        {this.sampleAmount(sample)}
-                      </div>
-                      <div style={{ flex: '1 1 auto', marginBottom: '15px', paddingLeft: '10px', paddingRight: '5px', display: 'flex', flexWrap: 'wrap' }}>
-                        <Tabs
-                          style={{ flex: '1 1 0' }}
-                          id="tab-density-molarity"
-                          defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
-                        >
-                          <Tab eventKey="density" title="Density">
-                            {this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)}
-                          </Tab>
-                          <Tab eventKey="molarity" title="Molarity">
-                            {this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)}
-                          </Tab>
-                        </Tabs>
-                        <div style={{ flex: '1 1 0', paddingLeft: '5px' }}>
-                          {this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)}
-                        </div>
-                      </div>
-                    </div>
+                    <table>
+                      <tbody>
+                        <tr>
+                          <td style={{ width: '3%' }}>
+                            <div style={{ marginBottom: '15px' }}>
+                              {/* eslint-disable-next-line jsx-a11y/label-has-for */}
+                              <label style={{ height: '14px' }} />
+                              <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
+                                {this.infoButton()}
+                              </InputGroup.Button>
+                            </div>
+                          </td>
+                          {this.sampleAmount(sample)}
+                          <td style={{ width: '47%' }}>
+                            <div className="name-form" style={{ marginBottom: '15px' }}>
+                              <Tabs
+                                style={{ width: '60%' }}
+                                id="tab-density-molarity"
+                                defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
+                              >
+                                <Tab eventKey="density" title="Density">
+                                  {
+                                    this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                                  }
+                                </Tab>
+                                <Tab eventKey="molarity" title="Molarity">
+                                  {
+                                    this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                                  }
+                                </Tab>
+                              </Tabs>
+                              <div style={{ width: '45%', paddingLeft: '5px' }}>
+                                {
+                                  this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+                                }
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
               </div>
