@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import Immutable from 'immutable';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -40,6 +41,7 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
 
 export default class WellplateDetails extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     const { wellplate } = props;
@@ -94,6 +96,7 @@ export default class WellplateDetails extends Component {
 
   handleSubmit() {
     const { wellplate } = this.state;
+    this.context.attachmentNotificationStore.clearMessages();
     LoadingActions.start();
     if (wellplate.isNew) {
       ElementActions.createWellplate(wellplate);
