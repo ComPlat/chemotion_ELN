@@ -4,6 +4,7 @@ import { DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Sample from 'src/models/Sample';
 import { SampleSolventGroup } from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
+import classnames from 'classnames';
 
 const target = {
   drop(tagProps, monitor) {
@@ -42,17 +43,14 @@ class SampleDetailsSolventsDnd extends React.Component {
       addDefaultSolvent, dropMaterial, switchEquiv,
       isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent
     } = this.props;
-    const style = {
-      padding: '0px 0px',
-    };
-    if (isOver && canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderColor = '#337ab7';
-    } else if (canDrop) {
-      style.borderStyle = 'dashed';
-    }
+
     return connectDropTarget(
-      <div style={style}>
+      <div
+        className={classnames({
+          'dnd-zone': canDrop,
+          'dnd-zone-over': isOver,
+        })}
+      >
         <SampleSolventGroup
           sample={sample}
           dropSample={dropSample}

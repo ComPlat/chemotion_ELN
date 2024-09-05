@@ -154,6 +154,7 @@ export default class SampleDetails extends React.Component {
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
+    this.handleAmountChanged = this.handleAmountChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.toggleInchi = this.toggleInchi.bind(this);
@@ -228,6 +229,12 @@ export default class SampleDetails extends React.Component {
     this.setState({
       sample,
     }, cb);
+  }
+
+  handleAmountChanged(amount) {
+    const { sample } = this.state;
+    sample.setAmountAndNormalizeToGram(amount);
+    this.setState({ sample });
   }
 
   handleFastInput(smi, cas) {
@@ -430,27 +437,24 @@ export default class SampleDetails extends React.Component {
     const { sample, startExport } = this.state;
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
-    const downloadAnalysesBtn = (sample.isNew || !hasAnalyses) ? null : (
-      <Button variant="info" disabled={!this.sampleIsValid()} onClick={() => this.handleExportAnalyses(sample)}>
-        Download Analysis
-        {' '}
-        {startExport ? (
-          <span>
-            <i className="fa fa-spin fa-spinner" />
-          </span>
-        ) : null}
-      </Button>
-    );
 
-    const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (
-      <div className='d-flex gap-1'>
+      <div className="d-flex gap-1">
         <Button variant="primary" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}
-        {saveAndCloseBtn}
-        {downloadAnalysesBtn}
+        {!sample.isNew && belongToReaction && this.saveBtn(sample, true)}
+        {!sample.isNew && hasAnalyses && (
+          <Button
+            variant="info"
+            disabled={!this.sampleIsValid()}
+            onClick={() => this.handleExportAnalyses(sample)}
+          >
+            Download Analysis
+            {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
+          </Button>
+        )}
       </div>
     );
   }
@@ -680,15 +684,9 @@ export default class SampleDetails extends React.Component {
   }
 
   elementalPropertiesItem(sample) {
-    let label;
-    if (sample.contains_residues) {
-      label = 'Polymer section';
-      if (!this.state.showElementalComposition) {
-        label += ' / Elemental composition';
-      }
-    } else {
-      label = 'Elemental composition';
-    }
+    const label = sample.contains_residues
+      ? 'Polymer section / Elemental composition'
+      : 'Elemental composition';
 
     const { showElementalComposition, materialGroup } = this.state;
     const paneKey = 'elemental-comp';
@@ -705,13 +703,13 @@ export default class SampleDetails extends React.Component {
             {sample.contains_residues ? (
               <PolymerSection
                 sample={sample}
-                parent={this}
-                show={sample.contains_residues}
+                handleAmountChanged={this.handleAmountChanged}
+                handleSampleChanged={this.handleSampleChanged}
                 materialGroup={materialGroup}
               />
             ) : (
               <ElementalCompositionGroup
-                handleSampleChanged={(s) => this.handleSampleChanged(s)}
+                handleSampleChanged={this.handleSampleChanged}
                 sample={sample}
               />
             )}
@@ -754,14 +752,21 @@ export default class SampleDetails extends React.Component {
         {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}
         <SampleForm
           sample={sample}
-          parent={this}
+          handleSampleChanged={this.handleSampleChanged}
+          showStructureEditor={this.showStructureEditor}
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
         />
-        {this.chemicalIdentifiersItem(sample)}
+        <div className="my-2">
+          {this.chemicalIdentifiersItem(sample)}
+        </div>
         <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
-        {sample.molecule_formula && this.elementalPropertiesItem(sample)}
+        {sample.molecule_formula && (
+          <div className="mt-2">
+            {this.elementalPropertiesItem(sample)}
+          </div>
+        )}
         <div className="mt-2">
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>
@@ -817,7 +822,7 @@ export default class SampleDetails extends React.Component {
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
     const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
-      <div className='my-4'>
+      <div className="my-4">
         <InputGroup>
           <InputGroup.Text>CAS</InputGroup.Text>
           <Select.Creatable
@@ -946,6 +951,7 @@ export default class SampleDetails extends React.Component {
     const inventorySample = (
       <Form.Check
         type="checkbox"
+        id="sample-inventory-header"
         className="mx-3 sample-inventory-header"
         checked={sample.inventory_sample}
         onChange={(e) => this.handleInventorySample(e)}
@@ -956,6 +962,7 @@ export default class SampleDetails extends React.Component {
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Form.Check
         type="checkbox"
+        id="sample-header-decouple"
         className="mx-3 sample-header-decouple"
         checked={sample.decoupled}
         onChange={(e) => this.decoupleChanged(e)}
@@ -964,10 +971,10 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     return (
-      <div className='d-flex align-items-center justify-content-between'>
-        <div className='d-flex align-items-center gap-2'>
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-            <span>
+            <span className="flex-shrink-0">
               <i className="icon-sample me-1" />
               {sample.title()}
             </span>
@@ -980,7 +987,7 @@ export default class SampleDetails extends React.Component {
           <HeaderCommentSection element={sample} />
           {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
         </div>
-        <div className='d-flex align-items-center gap-1'>
+        <div className="d-flex align-items-center gap-1">
           {decoupleCb}
           {inventorySample}
           {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
@@ -1047,7 +1054,7 @@ export default class SampleDetails extends React.Component {
           {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
-        <Col md={8} className='position-relative'>
+        <Col md={8} className="position-relative">
           {this.svgOrLoading(sample)}
         </Col>
       </Row>
@@ -1373,7 +1380,7 @@ export default class SampleDetails extends React.Component {
       sample.sum_formula = '';
       sample.molecular_mass = null;
     } else {
-      if (sample.sum_formula?.trim() === '') sample.sum_formula = 'undefined structure';
+      if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
       if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
         sample.residues[0].custom_info.polymer_type = 'self_defined';
         delete sample.residues[0].custom_info.surface_type;
@@ -1518,20 +1525,14 @@ export default class SampleDetails extends React.Component {
             addInventoryTab={sample.inventory_sample}
           />
           {this.state.sfn && <ScifinderSearch el={sample} />}
-          <div className='tabs-container--with-borders'>
+          <div className="tabs-container--with-borders">
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {tabContents}
-              {/* {this.samplePropertiesTab('properties')}
-              {this.sampleContainerTab('analyses')}
-              {this.sampleLiteratureTab()}
-              {this.sampleImportReadoutTab('results')}
-              {this.qualityCheckTab('qc_curation')}
-              {this.measurementsTab('measurements')} */}
             </Tabs>
-            {this.sampleFooter()}
-            {this.structureEditorModal(sample)}
-            {this.renderMolfileModal()}
           </div>
+          {this.sampleFooter()}
+          {this.structureEditorModal(sample)}
+          {this.renderMolfileModal()}
           <CommentModal element={sample} />
         </Card.Body>
       </Card>

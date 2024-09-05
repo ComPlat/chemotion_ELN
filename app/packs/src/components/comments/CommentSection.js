@@ -36,7 +36,7 @@ export default class CommentSection extends Component {
 
     if (showCommentSection && MatrixCheck(currentUser.matrix, commentActivation)) {
       return (
-        <div>
+        <div className="d-flex flex-column gap-2 align-items-start">
           <CommentButton section={section} element={element} />
           <CommentList section={section} />
         </div>
