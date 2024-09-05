@@ -1,20 +1,20 @@
+import { FlowViewerModal } from 'chem-generic-ui';
 import React, { Component } from 'react';
 import { Col, Grid, Row } from 'react-bootstrap';
-import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 import Elements from 'src/apps/mydb/elements/Elements';
 import InboxModal from 'src/apps/mydb/inbox/InboxModal';
-import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
+import Calendar from 'src/components/calendar/Calendar';
 import LoadingModal from 'src/components/common/LoadingModal';
+import ProgressModal from 'src/components/common/ProgressModal';
 import Navigation from 'src/components/navigation/Navigation';
 import Notifications from 'src/components/Notifications';
-import ProgressModal from 'src/components/common/ProgressModal';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
-import Calendar from 'src/components/calendar/Calendar';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
+import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 
 class App extends Component {
@@ -61,6 +61,7 @@ class App extends Component {
   componentWillUnmount() {
     UIStore.unlisten(this.handleUiStoreChange);
     document.removeEventListener('keydown', this.documentKeyDown);
+    this.removeLocalStorageEventListener();
   }
 
   removeLocalStorageEventListener() {
