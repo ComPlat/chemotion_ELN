@@ -3,9 +3,7 @@ import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
-  Card,
-  ListGroup, ListGroupItem, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger
+  Card, ListGroup, ListGroupItem, Button, ButtonToolbar, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -389,7 +387,7 @@ export default class WellplateDetails extends Component {
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             {tabContents}
           </Tabs>
-          <div className='d-flex gap-1'>
+          <ButtonToolbar className='gap-1'>
             <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
             {
               wellplate.changed ? (
@@ -406,7 +404,7 @@ export default class WellplateDetails extends Component {
             >
               Print Wells
             </Button>
-          </div>
+          </ButtonToolbar>
           <CommentModal element={wellplate} />
         </Card.Body>
       </Card>
