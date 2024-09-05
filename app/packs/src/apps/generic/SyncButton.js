@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { RepoNewModal, Constants } from 'chem-generic-ui';
 
-const SyncBtn = props => {
+function SyncBtn(props) {
   const {
     data,
     fnCreate,
@@ -19,11 +19,11 @@ const SyncBtn = props => {
       <OverlayTrigger
         placement="top"
         delayShow={500}
-        overlay={
+        overlay={(
           <Tooltip id="_tooltip_fetch_from_hub">
             Fetch public templates from Hub
           </Tooltip>
-        }
+        )}
       >
         <Button
           style={{ float: 'left' }}
@@ -31,7 +31,9 @@ const SyncBtn = props => {
           bsSize="sm"
           onClick={fnModalOpen}
         >
-          <i className="fa fa-refresh" aria-hidden="true" />&nbsp;Fetch from LabIMotion Hub
+          <i className="fa fa-refresh" aria-hidden="true" />
+          {' '}
+          Fetch from LabIMotion Hub
         </Button>
       </OverlayTrigger>
       <RepoNewModal
@@ -44,7 +46,7 @@ const SyncBtn = props => {
       />
     </>
   );
-};
+}
 
 SyncBtn.propTypes = {
   data: PropTypes.array,
