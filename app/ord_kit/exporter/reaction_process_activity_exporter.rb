@@ -8,6 +8,7 @@ module OrdKit
         REMOVE: OrdKit::Exporter::Actions::RemoveActionExporter,
         CONDITION: OrdKit::Exporter::Actions::ConditionsActionExporter,
         PURIFY: OrdKit::Exporter::Actions::PurifyActionExporter,
+        MEASUREMENT: OrdKit::Exporter::Actions::MeasurementActionExporter,
         TRANSFER: OrdKit::Exporter::Actions::TransferActionExporter,
         ANALYSIS: OrdKit::Exporter::Actions::AnalysisActionExporter,
         PAUSE: OrdKit::Exporter::Actions::WaitActionExporter,
