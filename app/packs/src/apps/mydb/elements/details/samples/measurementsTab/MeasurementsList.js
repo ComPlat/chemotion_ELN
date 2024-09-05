@@ -47,7 +47,6 @@ const MeasurementsList = ({ sample }) => {
         size="sm"
         key={`Measurement${measurement.id}-DeleteButton`}
         onClick={() => {
-          console.log('setMeasurementToDelete', measurement.id, measurement.description);
           setMeasurementToDelete(measurement)
         }}
       >
