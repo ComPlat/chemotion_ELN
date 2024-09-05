@@ -5,7 +5,7 @@ import SVG from 'react-inlinesvg';
 export default class Well extends Component {
   render() {
     const { sample, active, label } = this.props;
-    if (!sample) return (<div></div>);
+    if (!sample) return null;
 
     const className = (active) ? "well-molecule molecule-selected" : "well-molecule";
     const svg = (<div><SVG className={className} key={sample.id} src={sample.svgPath}/></div>);
@@ -26,5 +26,7 @@ export default class Well extends Component {
 }
 
 Well.propTypes = {
-  sample: PropTypes.object
+  sample: PropTypes.object,
+  active: PropTypes.bool,
+  label: PropTypes.string
 };
