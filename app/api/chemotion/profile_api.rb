@@ -192,7 +192,7 @@ module Chemotion
       end
       delete do
         path = params[:path]
-        error!({ error_messages: ['path cannot be blank'] }, 422) if path.empty? || !File.exist?(path)
+        error!({ error_messages: ['path cannot be blank'] }, 422) if path.empty?
         FileUtils.rm_f(path)
         { status: true }
       end
