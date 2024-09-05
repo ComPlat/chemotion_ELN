@@ -15,43 +15,43 @@ export default class BatchCuration extends Component {
             descArray:[],
             selectionIndex: 0,
             selectionData : ""
-        }}
+    }}
 
     componentDidMount(){
         this.readPubRxDesc()  
     }
 
     readPubRxDesc(){  
-    var xlxsPromise = AutomticCurationFetcher.fetchBatchData()
-    xlxsPromise.then((value)=> {this.setState({descArray: value}, ()=> this.handleEntries()) });
+    var xlxsPromise = AutomticCurationFetcher.fetchBatchData();
+    xlxsPromise.then((value) => {this.setState({descArray: value}, ()=> this.handleEntries()) });
     }
 
     handleEntries(){
         this.setState({selectionData: this.state.descArray[this.state.selectionIndex].plain_text_description
-        })
+        });
     }
 
     handleAdvSelection(){
         if(this.state.selectionIndex != this.state.descArray.length)
-        {var selectionIndex = this.state.selectionIndex + 1}
-        this.setState({selectionIndex: selectionIndex},()=> this.handleEntries())
+        {var selectionIndex = this.state.selectionIndex + 1;
+        this.setState({selectionIndex: selectionIndex},()=> this.handleEntries());};
     }
 
     handleRevSelection(){
         if(this.state.selectionIndex != 0)
-            {var selectionIndex = this.state.selectionIndex - 1
-        this.setState({selectionIndex: selectionIndex}, ()=> this.handleEntries())}
+            {var selectionIndex = this.state.selectionIndex - 1;
+        this.setState({selectionIndex: selectionIndex}, ()=> this.handleEntries());}
     }
 
     handleChange(event){
         var newDescArray = this.state.descArray;
-        console.log(event.ops)
-        var newSelectedEntry =""
+        console.log(event.ops);
+        var newSelectedEntry ="";
         for (var segment of event.ops ){
-            segment  = segment.insert
-            newSelectedEntry = newSelectedEntry + segment
+            segment  = segment.insert;
+            newSelectedEntry = newSelectedEntry + segment;
         }
-        newDescArray[this.state.selectionIndex].plain_text_description = newSelectedEntry
+        newDescArray[this.state.selectionIndex].plain_text_description = newSelectedEntry;
         this.setState({descArray: newDescArray } )
     }
 

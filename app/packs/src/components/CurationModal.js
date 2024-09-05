@@ -411,12 +411,15 @@ export default class CurationModal extends Component {
       // throw Error('data is not in correct format')
     }
 
-    amendUpdate(input){
+    async amendUpdate(input){
       var Typo = require("typo-js");
-      AutomticCurationFetcher.amendFetch(input)
-      this.setState({cus_dictionary: new Typo("custom", false, false, { dictionaryPath: "/typojs" })})
-
-
+      var uuid = require("uuid") 
+      var uid = uuid.v4()
+      
+      Typo.prototype._readFile.path = Typo.prototype._readFile.path + `?t=` + uid	
+      console.log(Typo.prototype._readFile)
+      await AutomticCurationFetcher.amendFetch(input),
+        this.setState({cus_dictionary: new Typo("custom",false,false,{ dictionaryPath: "/typojs" })})
     }
 
     scrollToId(){
@@ -557,7 +560,7 @@ export default class CurationModal extends Component {
                     </Col>
                   </Panel.Body>
               <Panel.Footer><ButtonToolbar>
-              <Button onClick={this.scrollToId}></Button>
+              {/* <Button onClick={this.scrollToId}></Button> */}
                 <Button onClick={()=>{this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords); this.scrollToId()}}>Ignore</Button>
                 <Button onClick={()=>this.reverseSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Go Back</Button>
                 <Button onClick={()=>

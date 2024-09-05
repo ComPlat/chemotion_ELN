@@ -28,5 +28,22 @@ export default class AutomticCurationFetcher {
         const data = utils.sheet_to_json(ws); // generate objects
        return data
     }
+//    static async query(data) {
+//         const response = await fetch(
+//             "https://api-inference.huggingface.co/models/vennify/t5-base-grammar-correction",
+//             {
+//                 headers: {
+//                     Authorization: "Bearer hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+//                     "Content-Type": "application/json",
+//                 },
+//                 method: "POST",
+//                 body: JSON.stringify(data),
+//             }
+//         );
+//         const result = await response.json();
+//         return result;
+//     }
+    
+  
 
 }
