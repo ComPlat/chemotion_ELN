@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (enhancing but incompatible in either direction to the original ORD Schema).
 //
-// v0.6.3
-// (draft, 05.08.2024)
+// v0.6.4
+// (draft, 05.09.2024)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -210,10 +210,11 @@ message ReactionProcessAction {
     ActionRemove removal = 9;
     ReactionConditions conditions = 10;
     ActionPurify purify = 11;
-    ActionTransfer transfer = 12;
-    ActionWait wait = 13;
-    ActionSaveSample save_sample = 14;
-    Analysis analysis = 15;
+    ActionPurify measurement = 12;
+    ActionTransfer transfer = 13;
+    ActionWait wait = 14;
+    ActionSaveSample save_sample = 15;
+    Analysis analysis = 16;
   }
 
   message ActionAdd {
@@ -1518,7 +1519,6 @@ message TimeSpan {
     DAY = 4;
   }
   optional float value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional float precision = 2;
   TimeUnit units = 3;
 }
@@ -1531,7 +1531,6 @@ message Mass {
     MICROGRAM = 4;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   MassUnit units = 3;
 }
@@ -1544,7 +1543,6 @@ message Moles {
     NANOMOLE = 4;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   MolesUnit units = 3;
 }
@@ -1557,7 +1555,6 @@ message Volume {
     NANOLITER = 4;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   VolumeUnit units = 3;
 }
@@ -1569,7 +1566,6 @@ message Concentration {
     MICROMOLAR = 3;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   ConcentrationUnit units = 3;
 }
@@ -1587,7 +1583,6 @@ message Pressure {
     MBAR = 9;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   PressureUnit units = 3;
 }
@@ -1599,7 +1594,6 @@ message Temperature {
     KELVIN = 3;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   TemperatureUnit units = 3;
 }
@@ -1610,7 +1604,6 @@ message Current {
     MILLIAMPERE = 2;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   CurrentUnit units = 3;
 }
@@ -1621,7 +1614,6 @@ message Power {
     MILLIWATT = 2;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   PowerUnit units = 3;
 }
@@ -1632,7 +1624,6 @@ message Voltage {
     MILLIVOLT = 2;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   VoltageUnit units = 3;
 }
@@ -1646,7 +1637,6 @@ message Length {
     FOOT = 5;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   LengthUnit units = 3;
 }
@@ -1657,7 +1647,6 @@ message Wavelength {
     WAVENUMBER = 2; // cm^{-1}
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   WavelengthUnit units = 3;
 }
@@ -1671,20 +1660,17 @@ message FlowRate {
     MICROLITER_PER_HOUR = 5;
   }
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
   FlowRateUnit units = 3;
 }
 // Used for things like conversion and yield.
 message Percentage {
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
 }
 // Wrapper for floats to include a precision.
 message FloatValue {
   optional double value = 1;
-  // Precision of the measurement (with the same units as `value`).
   optional double precision = 2;
 }
 
