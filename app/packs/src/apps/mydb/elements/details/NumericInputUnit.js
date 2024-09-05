@@ -80,7 +80,6 @@ export default function NumericInputUnit(props) {
       <InputGroup>
         <Form.Control
           type="text"
-          className="px-1"
           disabled={inputDisabled}
           value={value}
           onChange={(event) => handleInputValueChange(event)}

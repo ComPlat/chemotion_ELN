@@ -223,7 +223,7 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.rel : 'any';
 
     return (
-      <Form.Group className="w-100">
+      <Form.Group>
         <Form.Label className="text-truncate">Stereo Rel</Form.Label>
         <Select
           name="stereoRel"
@@ -248,7 +248,7 @@ export default class SampleForm extends React.Component {
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
-        <InputGroup className="w-100">
+        <InputGroup>
           <Select.Creatable
             name="moleculeName"
             multi={false}
@@ -444,15 +444,12 @@ export default class SampleForm extends React.Component {
   }
 
   textInput(sample, field, label, disabled = false, readOnly = false) {
-    const condition = field !== 'external_label' && field !== 'xref_inventory_label'
-      && field !== 'name' && field !== 'location' && field !== 'short_label';
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
-    const onBlurHandler = field === 'sum_formula' ? this.handleMassCalculation : null;
     const formControlStyle = field === 'name' ? { height: '38px'} : {};
 
     return (
-      <Form.Group bsSize={condition ? 'small' : null}>
+      <Form.Group>
         <Form.Label className="text-truncate">{label}</Form.Label>
         <Form.Control
           id={`txinput_${field}`}
@@ -465,7 +462,6 @@ export default class SampleForm extends React.Component {
           }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
-          className="w-100"
           style={formControlStyle}
         />
       </Form.Group>
@@ -807,7 +803,7 @@ export default class SampleForm extends React.Component {
           <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
           <Col>{this.textInput(sample, 'xref_solubility', 'Solubile in')}</Col>
         </Row>
-        <Row className="mb-4">
+        <Row className="align-items-end mb-4">
           <Col>
             <TextRangeWithAddon
               field="melting_point"
