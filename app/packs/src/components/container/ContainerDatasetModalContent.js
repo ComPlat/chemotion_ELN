@@ -42,7 +42,9 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 
 export class ContainerDatasetModalContent extends Component {
+  // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const datasetContainer = { ...props.datasetContainer };
@@ -60,6 +62,8 @@ export class ContainerDatasetModalContent extends Component {
       extension: null,
       imageEditModalShown: false,
       filteredAttachments: [...props.datasetContainer.attachments],
+      prevMessages: [],
+      newMessages:[],
       filterText: '',
       attachmentGroups: {
         Original: [],
@@ -93,15 +97,44 @@ export class ContainerDatasetModalContent extends Component {
   }
 
   componentDidUpdate(prevProps) {
+    const { prevMessages, newMessages } = this.state;
     const { attachments } = this.props.datasetContainer;
-    if (attachments !== prevProps.datasetContainer.attachments) {
-      this.createAttachmentPreviews();
+
+    const prevAttachments = [...attachments];
+
+    if (prevMessages.length !== newMessages.length) {
+      this.setState({
+        prevMessages: newMessages
+      });
+
+      this.updateAttachmentsFromContext();
+    }
+
+    if (prevAttachments.length !== prevProps.datasetContainer.attachments.length) {
       this.setState({
         filteredAttachments: [...attachments],
         attachmentGroups: this.classifyAttachments(attachments)
-      }, this.filterAttachments);
+      }, () => {
+        this.props.onChange({ ...this.state.datasetContainer });
+        this.createAttachmentPreviews();
+        this.filterAttachments();
+      });
     }
   }
+
+  // eslint-disable-next-line react/sort-comp
+  updateAttachmentsFromContext = () => {
+    const { datasetContainer } = this.props;
+    const { filteredAttachments } = this.state;
+
+    let combinedAttachments = [...filteredAttachments];
+
+    if (this.context.attachmentNotificationStore) {
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(
+        filteredAttachments, 'Container', datasetContainer);
+    }
+    return combinedAttachments;
+  };
 
   handleInputChange(type, event) {
     const { datasetContainer } = this.state;
@@ -147,7 +180,6 @@ export class ContainerDatasetModalContent extends Component {
         attachmentGroups: this.classifyAttachments(updatedAttachments),
       };
     }, () => {
-      this.props.onChange({ ...this.state.datasetContainer });
       this.createAttachmentPreviews();
     });
   }
@@ -183,6 +215,7 @@ export class ContainerDatasetModalContent extends Component {
   handleSave() {
     const { datasetContainer } = this.state;
     const { onChange, onModalHide } = this.props;
+    this.context.attachmentNotificationStore.clearMessages();
     onChange(datasetContainer);
     onModalHide();
   }
@@ -549,12 +582,6 @@ export class ContainerDatasetModalContent extends Component {
     } = this.state;
     const { datasetContainer } = this.props;
 
-    let combinedAttachments = filteredAttachments;
-    if (this.context.attachmentNotificationStore) {
-      // eslint-disable-next-line max-len
-      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Container', datasetContainer);
-    }
-
     const renderGroup = (attachments, title, key) => (
       <div key={key} style={{ marginTop: '10px' }}>
         <div style={{
@@ -567,7 +594,7 @@ export class ContainerDatasetModalContent extends Component {
         >
           {title}
         </div>
-        {combinedAttachments.map((attachment) => this.renderAttachmentRow(attachment))}
+        {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
       </div>
     );
 
@@ -593,19 +620,19 @@ export class ContainerDatasetModalContent extends Component {
               )}
           </div>
         </div>
-        {combinedAttachments.length === 0 ? (
+        {filteredAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (
           <div style={{ marginBottom: '20px' }}>
             {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
-            && renderGroup(attachmentGroups.Pending, 'Pending')}
+              && renderGroup(attachmentGroups.Pending, 'Pending')}
             {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
             {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
             {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
               .map((groupName) => attachmentGroups.Processed[groupName].length > 0
-            && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
+                && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
             {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
           </div>
         )}
@@ -691,7 +718,14 @@ export class ContainerDatasetModalContent extends Component {
 
   render() {
     const { mode } = this.props;
+    const { prevMessages } = this.state;
+    const newMessages = this.context?.attachmentNotificationStore.getAttachmentsOfMessages();
 
+    if (prevMessages.length !== newMessages.length) {
+      this.setState({
+        newMessages
+      });
+    }
     return (
       <div>
         {mode === 'attachments' && this.renderAttachments()}
