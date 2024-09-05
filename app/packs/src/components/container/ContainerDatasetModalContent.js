@@ -215,6 +215,7 @@ export class ContainerDatasetModalContent extends Component {
   handleSave() {
     const { datasetContainer } = this.state;
     const { onChange, onModalHide } = this.props;
+    this.context.attachmentNotificationStore.clearMessages();
     onChange(datasetContainer);
     onModalHide();
   }
