@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { Button, Tooltip, Overlay, OverlayTrigger, ButtonToolbar } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
@@ -12,7 +12,6 @@ export default class ConfirmClose extends Component {
     };
 
     this.onClickButton = this.onClickButton.bind(this);
-    this.getTargetButton = this.getTargetButton.bind(this);
   }
 
   onClickButton(el) {
@@ -20,10 +19,6 @@ export default class ConfirmClose extends Component {
       prevState => ({ ...prevState, showTooltip: !prevState.showTooltip }),
       () => DetailActions.close(el, this.props.forceClose)
     );
-  }
-
-  getTargetButton() {
-    return this.target;
   }
 
   render() {
@@ -49,12 +44,8 @@ export default class ConfirmClose extends Component {
         </ButtonToolbar>
       </Tooltip>
     );
-    const sharedProps = {
-      containter: this,
-      target: this.getTargetButton,
-      show: this.state.showTooltip,
-      placement: 'bottom',
-    };
+
+    const buttonRef = createRef(null);
 
     return (
       <>
@@ -68,13 +59,15 @@ export default class ConfirmClose extends Component {
             variant="danger"
             size="xxsm"
             onClick={() => this.onClickButton(el)}
-            ref={(button) => { this.target = button; }}
+            ref={buttonRef}
           >
             <i className="fa fa-times" />
           </Button>
         </OverlayTrigger>
         <Overlay
-          {...sharedProps}
+          target={buttonRef.current}
+          show={this.state.showTooltip}
+          placement= "bottom"
           rootClose
           onHide={() => this.setState({ showTooltip: false })}
         >
