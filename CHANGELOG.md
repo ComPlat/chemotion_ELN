@@ -159,7 +159,6 @@
   * admin can restore deleted user account  ([#1845](https://github.com/ComPlat/chemotion_ELN/pull/1845))
   * admin can delete single user account  ([#1883](https://github.com/ComPlat/chemotion_ELN/pull/1883))
 
-
 * Bug fixes
   * lock screen spinner on select close and save function in chemspectra  ([#1879](https://github.com/ComPlat/chemotion_ELN/pull/1879))
   * instrument suggestion dropdown position in analyses metadata  ([#1887](https://github.com/ComPlat/chemotion_ELN/pull/1887))
