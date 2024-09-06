@@ -18,6 +18,22 @@ function Affiliations({ show, onHide }) {
 
   const currentEntries = affiliations.filter((entry) => entry.current);
 
+  const getAllAffiliations = () => {
+    UserSettingsFetcher.getAllAffiliations()
+      .then((data) => {
+        setAffiliations(data.map((item) => (
+          {
+            ...item,
+            disabled: true,
+            current: item.from !== null && item.to === null
+
+          }
+        )));
+      });
+    setErrorMsg('');
+    setInputError({});
+  };
+
   useEffect(() => {
     UserSettingsFetcher.getAutoCompleteSuggestions('countries')
       .then((data) => {
@@ -58,22 +74,6 @@ function Affiliations({ show, onHide }) {
     getAllAffiliations();
   }, []);
 
-  const getAllAffiliations = () => {
-    UserSettingsFetcher.getAllAffiliations()
-      .then((data) => {
-        setAffiliations(data.map((item) => (
-          {
-            ...item,
-            disabled: true,
-            current: item.from !== null && item.to === null
-
-          }
-        )));
-      });
-    setErrorMsg('');
-    setInputError({});
-  };
-
   const handleCreateOrUpdateAffiliation = (index) => {
     const params = affiliations[index];
     const callFunction = params.id ? UserSettingsFetcher.updateAffiliation : UserSettingsFetcher.createAffiliation;
@@ -87,7 +87,6 @@ function Affiliations({ show, onHide }) {
 
   const handleDeleteAffiliation = (index) => {
     const { id } = affiliations[index];
-    console.log(id);
     if (id) {
       UserSettingsFetcher.deleteAffiliation(id)
         .then((result) => {
@@ -293,13 +292,13 @@ function Affiliations({ show, onHide }) {
                 </td>
                 <td>
                   <DatePicker
-                    placeholderText={inputError[index] && inputError[index].from ? errorMsg : ''}
+                    placeholderText={inputError[index] ? inputError[index].from ? errorMsg : '' : 'Required'}
                     isClearable
                     clearButtonTitle="Clear"
                     className={inputError[index] && inputError[index].from ? 'error-control' : ''}
                     showPopperArrow={false}
                     disabled={item.disabled}
-		    showMonthYearPicker
+                    showMonthYearPicker
                     dateFormat="yyyy-MM"
                     value={item.from}
                     onChange={(date) => onChangeHandler(index, 'from', moment(date).format('YYYY-MM'))}
@@ -313,9 +312,9 @@ function Affiliations({ show, onHide }) {
                     className={inputError[index] && inputError[index].to ? 'error-control' : ''}
                     showPopperArrow={false}
                     disabled={item.disabled}
-                	    showMonthYearPicker
+                    showMonthYearPicker
                     dateFormat="yyyy-MM"
-                  value={item.to}
+                    value={item.to}
                     onChange={(date) => onChangeHandler(index, 'to', date ? moment(date).format('YYYY-MM') : date)}
                   />
                 </td>
@@ -338,7 +337,7 @@ function Affiliations({ show, onHide }) {
                       : (
                         <Button
                           bsSize="small"
-                          bsStyle="success"
+                          bsStyle="warning"
                           onClick={() => handleSaveButtonClick(index)}
                         >
                           <i className="fa fa-save" />
