@@ -205,7 +205,7 @@ class Material extends Component {
             checked={material.reference}
             onChange={e => this.handleReferenceChange(e)}
             size="sm"
-            className='m-1'
+            className="m-1"
           />
         </td>
     );
@@ -215,7 +215,7 @@ class Material extends Component {
     return (
       <Button
         active
-        className='p-1'
+        className="p-1"
         onClick={e => this.handleShowLabelChange(e)}
         variant={material.show_label ? 'success' : 'primary'}
         size="sm"
@@ -288,7 +288,9 @@ class Material extends Component {
     const updateValue = this.getFormattedValue(value);
 
     return (
-      <td colSpan={colSpan} style={style}>
+      <td colSpan={colSpan}
+        // className="mw-100 pe-1"
+        style={style}>
         <NumeralInputWithUnitsCompo
           precision={4}
           bsStyle="success"
@@ -661,7 +663,7 @@ class Material extends Component {
 
     return (
       <tbody>
-        <tr className="general-material">
+        <tr className="p-1">
           {compose(connectDragSource, connectDropTarget)(
             <td className={`drag-source ${permitCls(reaction)}`} style={style}>
               <span className="text-info fa fa-arrows" />
@@ -716,30 +718,7 @@ class Material extends Component {
             />
           </td>
 
-          <td>
-            <OverlayTrigger
-              delay="100"
-              placement="top"
-              overlay={
-                <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material, reaction)}</Tooltip>
-              }>
-              <div>
-                <NumeralInputWithUnitsCompo
-                  key={material.id}
-                  value={material.amount_g}
-                  unit="g"
-                  metricPrefix={metric}
-                  metricPrefixes={metricPrefixes}
-                  precision={4}
-                  disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
-                  onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
-                  onMetricsChange={this.handleMetricsChange}
-                  variant={material.error_mass ? 'error' : massBsStyle}
-                  name="molecular-weight"
-                />
-              </div>
-            </OverlayTrigger>
-          </td>
+          {this.materialLoading(material, showLoadingColumn)}
 
           <td style={{ maxWidth: '4%' }}>
             <NumeralInputWithUnitsCompo
@@ -755,38 +734,7 @@ class Material extends Component {
             />
           </td>
 
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.amount_mol}
-              unit="mol"
-              metricPrefix={metricMol}
-              metricPrefixes={metricPrefixesMol}
-              precision={4}
-              disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
-              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'success' : 'light'}
-            />
-          </td>
-
-          {this.materialLoading(material, showLoadingColumn)}
-
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.concn}
-              unit="mol/l"
-              metricPrefix={metricMolConc}
-              metricPrefixes={metricPrefixesMolConc}
-              precision={4}
-              disabled
-              onChange={e => this.handleAmountUnitChange(e, material.concn)}
-              onMetricsChange={this.handleMetricsChange}
-            />
-          </td>
-
-          <td>
+          <td style={{ minWidth: '35px' }}>
             {this.equivalentOrYield(material)}
           </td>
           <td>
@@ -843,7 +791,7 @@ class Material extends Component {
         <td>
           <OverlayTrigger placement="top" overlay={drySolvTooltip}>
             <Form.Check
-              type='checkbox'
+              type="checkbox"
               checked={material.dry_solvent}
               onChange={(event) => this.handleDrySolventChange(event)}
             />
@@ -1027,10 +975,9 @@ class Material extends Component {
 
       if (material.isNew) { materialName = materialDisplayName; }
     }
-    let br = <br />;
+
     if (moleculeIupacName === '') {
       iupacStyle.display = 'none';
-      br = '';
     }
     const serialCode = SampleCode(index, materialGroup);
 
@@ -1040,12 +987,12 @@ class Material extends Component {
     };
 
     return (
-      <div style={{ display: 'inline-block', maxWidth: '100%' }}>
-        <div className="inline-inside">
+      <div>
+        <div className="d-inline-block mw-100">
           {reaction.gaseous && materialGroup !== 'solvents'
             ? this.gasType(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-            <Button variant="primary" size="sm" className='me-1' onClick={addToDesc} disabled={!permitOn(reaction)}>
+            <Button variant="primary" size="sm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
               {serialCode}
             </Button>
           </OverlayTrigger>

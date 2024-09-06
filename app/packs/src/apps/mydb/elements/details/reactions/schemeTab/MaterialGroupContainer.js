@@ -5,7 +5,6 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { MaterialGroup } from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
 import Reaction from 'src/models/Reaction';
 
-
 const target = {
   drop(tagProps, monitor) {
     const { dropSample, dropMaterial } = tagProps;
