@@ -157,8 +157,8 @@
   * LabIMotion 1.3.0 ([docs](https://github.com/LabIMotion/labimotion/blob/v1.3.0/CHANGELOG.md))([#1881](https://github.com/ComPlat/chemotion_ELN/pull/1881))
   * datacollector device config sftp port  ([#1885](https://github.com/ComPlat/chemotion_ELN/pull/1885))
   * admin can restore deleted user account  ([#1845](https://github.com/ComPlat/chemotion_ELN/pull/1845))
-  * admin can delete single user account  ([#1883](https://github.com/ComPlat/chemotion_ELN/pull/1883))
-
+  * admin can delete single user account  ([#1883](https://github.com/ComPlat/chemotion_ELN/pull/1883)) 
+  
 
 * Bug fixes
   * lock screen spinner on select close and save function in chemspectra  ([#1879](https://github.com/ComPlat/chemotion_ELN/pull/1879))
