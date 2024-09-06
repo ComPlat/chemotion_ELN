@@ -6,19 +6,17 @@
 
 * Features and enhancements
   * Ketcher2 Common Templates, User Templates & User settings ([#2061](https://github.com/ComPlat/chemotion_ELN/pull/2061))
-  * Structure viewer  ([#2098](https://github.com/ComPlat/chemotion_ELN/pull/2098))
   * collect metadata other solvent for cv ([#2121](https://github.com/ComPlat/chemotion_ELN/pull/2121))
-  * search common templates in Ketcher2  ([#2127](https://github.com/ComPlat/chemotion_ELN/pull/2127))
+  * search common templates in Ketcher2 ([#2127](https://github.com/ComPlat/chemotion_ELN/pull/2127))
+  * Structure viewer ([#2098](https://github.com/ComPlat/chemotion_ELN/pull/2098))
 
 * UX/UI
   * Reaction UI enhancements ([#2100](https://github.com/ComPlat/chemotion_ELN/pull/2100))
   * Sample layout UI enhancements ([#2111](https://github.com/ComPlat/chemotion_ELN/pull/2111))
   * Sample properties UI changes ([#2116](https://github.com/ComPlat/chemotion_ELN/pull/2116))
-  * disable dataset metadata search  ([#2129](https://github.com/ComPlat/chemotion_ELN/pull/2129))
-  * restore old density-molarity styling  ([#2134](https://github.com/ComPlat/chemotion_ELN/pull/2134))
   * affiliations-change color of the save button and add required placeholder  ([#2137](https://github.com/ComPlat/chemotion_ELN/pull/2137))
-  * display toggle button for default/gaseous scheme only in reaction scheme tab  ([#2136](https://github.com/ComPlat/chemotion_ELN/pull/2136))
-  * align style of the analysis section  ([#2102](https://github.com/ComPlat/chemotion_ELN/pull/2102))
+  * display toggle button for default/gaseous scheme only in reaction scheme tab ([#2136](https://github.com/ComPlat/chemotion_ELN/pull/2136))
+  * align style of the analysis section ([#2102](https://github.com/ComPlat/chemotion_ELN/pull/2102))
 
 * Bug fixes
   * missing other internal ref for CV ([#2110](https://github.com/ComPlat/chemotion_ELN/pull/2110))
@@ -28,7 +26,9 @@
   * fix cannot get scan rate from metadata  ([#2120](https://github.com/ComPlat/chemotion_ELN/pull/2120))
   * handle empty input for viewer ([#2105](https://github.com/ComPlat/chemotion_ELN/pull/2105))
   * truncate sample name for reactant materials in reaction scheme  ([#2125](https://github.com/ComPlat/chemotion_ELN/pull/2125))
-  * handling empty sample names during truncation.  ([#2126](https://github.com/ComPlat/chemotion_ELN/pull/2126))
+  * handling empty sample names during truncation  ([#2126](https://github.com/ComPlat/chemotion_ELN/pull/2126))
+  * restore old density-molarity styling  ([#2134](https://github.com/ComPlat/chemotion_ELN/pull/2134))
+  * disable dataset metadata search  ([#2129](https://github.com/ComPlat/chemotion_ELN/pull/2129))
   * user template duplicate tab crash  ([#2131](https://github.com/ComPlat/chemotion_ELN/pull/2131))
   * duplicate attachments in analyses  ([#2130](https://github.com/ComPlat/chemotion_ELN/pull/2130))
   * coefficient is set to null due to missing coefficient parameter  ([#2135](https://github.com/ComPlat/chemotion_ELN/pull/2135))
@@ -158,6 +158,7 @@
   * datacollector device config sftp port  ([#1885](https://github.com/ComPlat/chemotion_ELN/pull/1885))
   * admin can restore deleted user account  ([#1845](https://github.com/ComPlat/chemotion_ELN/pull/1845))
   * admin can delete single user account  ([#1883](https://github.com/ComPlat/chemotion_ELN/pull/1883))
+
 
 * Bug fixes
   * lock screen spinner on select close and save function in chemspectra  ([#1879](https://github.com/ComPlat/chemotion_ELN/pull/1879))
