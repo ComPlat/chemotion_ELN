@@ -194,7 +194,7 @@ const DetailSearch = () => {
         }
         if (value[0] === 'analyses') {
           fieldsByTab.push(...analysesData);
-          pushDatasetsToAnalysesFields();
+          // pushDatasetsToAnalysesFields();
         }
         if (value[0] === 'inventory') {
           fieldsByTab.push(...inventoryData);
@@ -438,7 +438,7 @@ const DetailSearch = () => {
         let subValue = selectedValue && selectedValue[column].sub_values[0][field.id] !== undefined ? selectedValue[column].sub_values[0][field.id] : '';
         subFields.push(
           <FormControl
-            className="g_input_group" 
+            className="g_input_group"
             key={field.id}
             type={field.type}
             name={field.id}
@@ -467,7 +467,7 @@ const DetailSearch = () => {
         selectedValue && selectedValue[column].sub_values !== undefined
         && selectedValue[column].sub_values[0][field.id] !== undefined;
       let selectedFieldValue = condition ? selectedValue[column].sub_values[0][field.id] : '';
-      let selectedUnitValue = typeof selectedFieldValue === 'object' ? selectedFieldValue.value_system : field.value_system;      
+      let selectedUnitValue = typeof selectedFieldValue === 'object' ? selectedFieldValue.value_system : field.value_system;
       selectedFieldValue = typeof selectedFieldValue === 'object' ? selectedFieldValue.value : selectedFieldValue;
       let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
       let units = optionsForSelect(field);

@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import { values } from 'lodash';
+// import { v4 as uuidv4 } from 'uuid';
+import uuid from 'uuid';
+import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -48,7 +52,7 @@ export const attachmentThumbnail = (attachment) => (
         popObject={
         attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
           ? {
-            fetchNeeded:true,
+            fetchNeeded: true,
             src: `/api/v1/attachments/${attachment.id}/annotated_image`,
           }
           : {
@@ -93,6 +97,21 @@ const handleDownloadOriginal = (attachment) => {
   });
 };
 
+const handleOpenLocally = (attachment, option = 0) => {
+  ThirdPartyAppFetcher.getHandlerUrl(attachment.id, option).then((url) => {
+    const link = document.createElement('a');
+    link.download = attachment.filename;
+    console.log('url', url);
+    link.href = url;
+    const event = new window.MouseEvent('click', {
+      view: window,
+      bubbles: true,
+      cancelable: true
+    });
+    link.dispatchEvent(event);
+  });
+};
+
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
@@ -108,6 +127,13 @@ export const downloadButton = (attachment) => (
         disabled={!isImageFile(attachment.filename) || attachment.isNew}
       >
         Download Annotated
+      </MenuItem>
+      <MenuItem
+        eventKey="3"
+        onClick={() => handleOpenLocally(attachment, 1)}
+        disabled={attachment.isNew}
+      >
+        Open locally
       </MenuItem>
     </Dropdown.Menu>
   </Dropdown>
@@ -314,3 +340,61 @@ export const sortingAndFilteringUI = (
     </div>
   </div>
 );
+
+// validate id as uuid
+// TODO replace with uuid.validate after upgrade to uuid 10
+const isUUID = (id) => {
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-6][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+  return uuidRegex.test(id);
+};
+
+const filterOptions = (contentType, options) => {
+  const [itemType, itemSubtype] = (contentType || '').split('/');
+  return (options || [])
+    .filter((option) => {
+      if (!option.fileTypes || option.fileTypes.length === 0) { return false; }
+      return option.fileTypes.split(',').some((filter) => {
+        const [type, subtype] = filter.split('/');
+        return (type === '*' || type === itemType) && (!subtype || subtype === '*' || subtype === itemSubtype);
+      });
+    });
+};
+
+const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
+
+export function ThirdPartyAppButton({ attachment, options = [] }) {
+  const [menuItems, setMenuItems] = useState([]);
+  const contentType = mime.contentType(attachment.content_type) ? attachment.content_type : mime.lookup(attachment.filename);
+
+  useEffect(() => {
+    const generatedMenuItems = () => {
+      if (isUUID(attachment?.id)) { return noChoice; }
+      const filteredOptions = filterOptions(contentType, options);
+      if (filteredOptions.length === 0) { return noChoice; }
+      return filteredOptions.map((option) => (
+        <MenuItem
+          key={uuid.v4()}
+          eventKey={option.id}
+          onClick={() => {
+            ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+              .then((result) => window.open(result, '_blank'));
+          }}
+        >
+          {option.name}
+        </MenuItem>
+      ));
+    };
+    setMenuItems(generatedMenuItems());
+  }, [attachment, options]);
+
+  return (
+    <Dropdown id={`dropdown-TPA-attachment${attachment?.id || uuid.v4()}`} style={{ float: 'right' }}>
+      <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+        <i className="fa fa-external-link" aria-hidden="true" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        {menuItems}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+}

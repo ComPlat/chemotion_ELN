@@ -94,7 +94,7 @@ describe Chemotion::ChemicalsService do
 
     context 'when construct_pictograms for Thermofischer is called' do
       it 'constructs pictograms from the health section' do
-        pictograms_array = %w[Explosive.gif Gases.gif]
+        pictograms_array = %w[GHS01 GHS04]
         expected = %w[GHS01 GHS04]
         pictograms = described_class.construct_pictograms(pictograms_array)
         expect(pictograms).to be_a(Array)

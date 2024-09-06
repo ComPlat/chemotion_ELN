@@ -2,6 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
@@ -20,9 +21,12 @@ import {
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
-  attachmentThumbnail
+  attachmentThumbnail,
+  ThirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
 
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
@@ -40,13 +44,17 @@ const templateInfo = (
   </Popover>
 );
 
-export default class WellplateDetailsAttachments extends Component {
+export class WellplateDetailsAttachments extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
     const {
       onImport
     } = props;
+    const { thirdPartyApps } = UIStore.getState() || [];
+    this.thirdPartyApps = thirdPartyApps;
 
     this.state = {
       onImport,
@@ -267,7 +275,12 @@ export default class WellplateDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const { onUndoDelete, attachments } = this.props;
+    const { onUndoDelete, attachments,wellplate } = this.props;
+
+    let combinedAttachments = filteredAttachments;
+    if(this.context.attachmentNotificationStore ){
+      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"Wellplate",wellplate);
+    }
 
     return (
       <div className="attachment-main-container">
@@ -288,12 +301,12 @@ export default class WellplateDetailsAttachments extends Component {
         )}
           </div>
         </div>
-        {filteredAttachments.length === 0 ? (
+        {combinedAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (
-          filteredAttachments.map((attachment) => (
+          combinedAttachments.map((attachment) => (
             <div className="attachment-row" key={attachment.id}>
               {attachmentThumbnail(attachment)}
 
@@ -330,6 +343,7 @@ export default class WellplateDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
+                    <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
                     {editButton(
                       attachment,
                       extension,
@@ -422,3 +436,5 @@ WellplateDetailsAttachments.propTypes = {
 WellplateDetailsAttachments.defaultProps = {
   attachments: [],
 };
+
+export default observer(WellplateDetailsAttachments);

@@ -27,9 +27,9 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
-import MatrixCheck from 'src/components/common/MatrixCheck';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import Affiliations from '../../apps/userSettings/Affiliations';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -42,6 +42,7 @@ export default class UserAuth extends Component {
       currentDevices: [],
       selectedUsers: null,
       showSubscription: false,
+      showAffiliations: false,
       currentSubscriptions: [],
       showDeviceMetadataModal: false,
       device: {},
@@ -59,6 +60,9 @@ export default class UserAuth extends Component {
     this.handleSubscriptionClose = this.handleSubscriptionClose.bind(this);
     this.handleDeviceMetadataModalShow = this.handleDeviceMetadataModalShow.bind(this);
     this.handleDeviceMetadataModalClose = this.handleDeviceMetadataModalClose.bind(this);
+    this.handleAffiliationsShow = this.handleAffiliationsShow.bind(this);
+    this.handleAffiliationsHide = this.handleAffiliationsHide.bind(this);
+    this.renderAffiliations = this.renderAffiliations.bind(this);
 
     this.promptTextCreator = this.promptTextCreator.bind(this);
 
@@ -300,6 +304,22 @@ export default class UserAuth extends Component {
       this.setState({ currentGroups });
     });
   };
+
+  handleAffiliationsShow() {
+    this.setState({ showAffiliations: true });
+  }
+  handleAffiliationsHide = () => {
+    this.setState({ showAffiliations: false });
+  };
+
+  renderAffiliations() {
+    return this.state.showAffiliations ? (
+      <Affiliations
+        show={this.state.showAffiliations}
+        onHide={this.handleAffiliationsHide} />
+    ) : null;
+
+  }
 
   // render modal
   renderModal() {
@@ -651,11 +671,6 @@ export default class UserAuth extends Component {
       </MenuItem>
     );
 
-    let userLabel = <span />;
-    if (MatrixCheck(this.state.currentUser.matrix, 'userLabel')) {
-      userLabel = <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>;
-    }
-
     return (
       <div>
         <Nav navbar pullRight>
@@ -672,11 +687,15 @@ export default class UserAuth extends Component {
             <MenuItem eventKey="3" href="/users/edit">
               Change Password
             </MenuItem>
-            <MenuItem eventKey="5" href="/pages/affiliations">
+            {/* <MenuItem eventKey="5" href="/pages/affiliations">
+              My Affiliations
+            </MenuItem> */}
+            <MenuItem
+              onClick={this.handleAffiliationsShow}>
               My Affiliations
             </MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
-            {userLabel}
+            <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
             <MenuItem eventKey="7" href="/command_n_control">
@@ -698,6 +717,7 @@ export default class UserAuth extends Component {
           </NavItem>
         </Nav>
         {this.renderModal()}
+        {this.renderAffiliations()}
         <UserLabelModal
           showLabelModal={this.state.showLabelModal}
           onHide={() => this.handleLabelClose()}

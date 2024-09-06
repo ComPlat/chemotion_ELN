@@ -117,6 +117,27 @@
     }
   }
 
+  @media (max-width: 768px) {
+  .checkbox-label,
+  .purity-label {
+    font-size: 12px;
+  }
+
+  .name-form {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .name-form > div {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .tab-density-molarity {
+    width: 40%;
+  }
+}
+
   .top-secret-checkbox,
   .decoupled-checkbox {
     margin-top: 22px;
@@ -221,6 +242,7 @@
 
       .sub-title {
         font-size: 14px;
+        font-weight: normal;
         margin-left: 10px;
         margin-top: 3px;
       }
@@ -228,6 +250,7 @@
       .desc {
         // font-size: 12px;
         // display: inline-flex;
+        font-weight: normal;
         margin-left: 10px;
         margin-right: 0px;
         // overflow: hidden;

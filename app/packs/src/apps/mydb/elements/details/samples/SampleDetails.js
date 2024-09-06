@@ -77,6 +77,9 @@ import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
+import MolViewerSet from 'src/components/viewer/MolViewerSet';
+
 
 const MWPrecision = 6;
 
@@ -145,6 +148,7 @@ export default class SampleDetails extends React.Component {
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
     this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
+    this.enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -852,13 +856,12 @@ export default class SampleDetails extends React.Component {
         </ListGroupItem>
         {this.chemicalIdentifiersItem(sample)}
         <div style={{ marginTop: '10px' }}>
-          <EditUserLabels element={sample} />
+          <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
         </div>
         {this.elementalPropertiesItem(sample)}
-        <div style={{marginTop: '10px'}}>
+        <div style={{ marginTop: '10px' }}>
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>
-        
       </Tab>
     );
   }
@@ -1413,21 +1416,37 @@ export default class SampleDetails extends React.Component {
     return (
       sample.can_update
         ? (
-          <div
-            className={className}
-            onClick={this.showStructureEditor.bind(this)}
-            onKeyPress
-            role="button"
-            tabIndex="0"
-
-          >
-            <Glyphicon className="pull-right" glyph="pencil" />
-            <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-          </div>
+          <>
+            <div
+              className={className}
+              style={{ position: 'relative' }}
+              onClick={this.showStructureEditor.bind(this)}
+              onKeyPress={this.showStructureEditor.bind(this)}
+              role="button"
+              tabIndex="0"
+            >
+              <Glyphicon className="pull-right" glyph="pencil" />
+              <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+            </div>
+            <MolViewerBtn
+              className="structure-editor-container"
+              disabled={sample.isNew || !this.enableMoleculeViewer}
+              fileContent={sample.molfile}
+              isPublic={false}
+              viewType={`mol_${sample.id}`}
+            />
+          </>
         )
         : (
           <div className={className}>
             <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+            <MolViewerBtn
+              className="structure-editor-container"
+              disabled={sample.isNew || !this.enableMoleculeViewer}
+              fileContent={sample.molfile}
+              isPublic={false}
+              viewType={`mol_${sample.id}`}
+            />
           </div>
         )
     );

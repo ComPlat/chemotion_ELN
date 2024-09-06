@@ -9,6 +9,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers LiteratureHelpers
     helpers ProfileHelpers
+    helpers UserLabelHelpers
 
     resource :reactions do
       desc 'Return serialized reactions'
@@ -17,6 +18,7 @@ module Chemotion
         optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
+        optional :user_label, type: Integer, desc: 'user label'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :sort_column, type: String, desc: 'sort by created_at, updated_at, rinchi_short_key, or rxno',
                                values: %w[created_at updated_at rinchi_short_key rxno],
@@ -52,17 +54,19 @@ module Chemotion
 
         from = params[:from_date]
         to = params[:to_date]
+        user_label = params[:user_label]
         by_created_at = params[:filter_created_at] || false
 
         sort_column = params[:sort_column].presence || 'created_at'
         sort_direction = params[:sort_direction].presence ||
                          (%w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC')
 
-        scope = scope.includes_for_list_display.order("#{sort_column} #{sort_direction}")
+        scope = scope.includes_for_list_display.order("reactions.#{sort_column} #{sort_direction}")
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
         scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.by_user_label(user_label) if user_label
 
         reset_pagination_page(scope)
 
@@ -162,8 +166,10 @@ module Chemotion
         optional :duration, type: String
         optional :rxno, type: String
         optional :segments, type: Array
+        optional :user_labels, type: Array
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
+        optional :gaseous, type: Boolean
       end
       route_param :id do
         after_validation do
@@ -175,6 +181,8 @@ module Chemotion
         put do
           reaction = @reaction
           attributes = declared(params, include_missing: false)
+          update_element_labels(reaction, attributes[:user_labels], current_user.id)
+          attributes.delete(:user_labels)
           materials = attributes.delete(:materials)
           attributes.delete(:literatures)
           attributes.delete(:id)
@@ -185,7 +193,12 @@ module Chemotion
 
           reaction.update!(attributes)
           reaction.touch
-          reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
+          reaction_vessel_size = attributes[:vessel_size]
+          reaction = Usecases::Reactions::UpdateMaterials.new(
+            reaction, materials,
+            current_user,
+            reaction_vessel_size
+          ).execute!
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -224,6 +237,7 @@ module Chemotion
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String
         optional :segments, type: Array
+        optional :user_labels, type: Array
         requires :materials, type: Hash
         optional :literatures, type: Hash
         requires :container, type: Hash
@@ -231,6 +245,7 @@ module Chemotion
         optional :rxno, type: String
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
+        optional :gaseous, type: Boolean
       end
 
       post do
@@ -242,6 +257,7 @@ module Chemotion
         container_info = params[:container]
         attributes.delete(:container)
         attributes.delete(:segments)
+        attributes.delete(:user_labels)
 
         collection = current_user.collections.where(id: collection_id).take
         attributes[:created_by] = current_user.id
@@ -276,6 +292,7 @@ module Chemotion
         end
         reaction.container = update_datamodel(container_info)
         reaction.save!
+        update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
         CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
 
@@ -306,8 +323,14 @@ module Chemotion
               prod
             end
           end
+          reaction_vessel_size = attributes[:vessel_size]
 
-          reaction = Usecases::Reactions::UpdateMaterials.new(reaction, materials, current_user).execute!
+          reaction = Usecases::Reactions::UpdateMaterials.new(
+            reaction,
+            materials,
+            current_user,
+            reaction_vessel_size,
+          ).execute!
           reaction.reload
 
           # save to profile

@@ -366,7 +366,7 @@ describe('SpectraHelper', () => {
         const layouts = Object.assign({}, allLayouts);
         delete layouts.CYCLIC_VOLTAMMETRY;
         Object.keys(layouts).forEach((layout) => {
-          const formattedData = inlineNotation(allLayouts[layout], '');
+          const formattedData = inlineNotation(allLayouts[layout], '', { cvConc: '10 mM', cvSolvent: 'MeCN', cvRef: null });
           const { formattedString, quillData } = formattedData;
           expect(formattedString).toEqual('');
           expect(quillData).toEqual([]);
@@ -374,8 +374,8 @@ describe('SpectraHelper', () => {
       });
 
       it('Inline notation for Cyclic voltammetry layout without concentration', () => {
-        const expectedString = "CV (<conc. of sample> mM in <solvent> vs. Ref (Fc+/Fc) = -0.72 V, v = 0.10 V/s, to neg.):\nE1/2 = ([Cu(TMGqu)] , ΔEp) = -0.73 V (1650 mV)"
-        const expectedQuillData = [{insert:"CV (<conc. of sample> mM in <solvent> vs. Ref "},{insert:"(Fc"},{insert:"+",attributes:{script:'super'}},{insert:"/Fc) "},{insert:"= -0.72 V, v = 0.10 V/s, to neg.):"},{insert:"\nE"},{insert:"1/2",attributes:{script:'sub'}},{insert:" = ([Cu(TMGqu)] , ΔE"},{insert:"p",attributes:{script:'sub'}},{insert:") = -0.73 V (1650 mV)"},]
+        const expectedString = "CV (<conc. of sample> in <solvent> vs. Ref (Fc+/Fc) = -0.72 V, v = 0.10 V/s, to neg.):\nE1/2 = ([Cu(TMGqu)] , ΔEp) = -0.73 V (1650 mV)"
+        const expectedQuillData = [{insert:"CV (<conc. of sample> in <solvent> vs. Ref "},{insert:"(Fc"},{insert:"+",attributes:{script:'super'}},{insert:"/Fc) "},{insert:"= -0.72 V, v = 0.10 V/s, to neg.):"},{insert:"\nE"},{insert:"1/2",attributes:{script:'sub'}},{insert:" = ([Cu(TMGqu)] , ΔE"},{insert:"p",attributes:{script:'sub'}},{insert:") = -0.73 V (1650 mV)"},]
         const layout = allLayouts.CYCLIC_VOLTAMMETRY
         const data = {
           scanRate: 0.1,
@@ -385,7 +385,7 @@ describe('SpectraHelper', () => {
           },
           sampleName: 'Cu(TMGqu)',
         };
-        const formattedData = inlineNotation(layout, data);
+        const formattedData = inlineNotation(layout, data, { cvConc: null, cvSolvent: null, cvRef: null });
         const { formattedString, quillData } = formattedData;
         expect(formattedString).toEqual(expectedString);
         expect(quillData).toEqual(expectedQuillData);
@@ -404,7 +404,7 @@ describe('SpectraHelper', () => {
           sampleName: 'Cu(TMGqu)',
           concentration: 10,
         };
-        const formattedData = inlineNotation(layout, data);
+        const formattedData = inlineNotation(layout, data, { cvConc: '10 mM', cvSolvent: null, cvRef: null });
         const { formattedString, quillData } = formattedData;
         expect(formattedString).toEqual(expectedString);
         expect(quillData).toEqual(expectedQuillData);
@@ -424,7 +424,7 @@ describe('SpectraHelper', () => {
           concentration: 10,
           solvent: 'MeCN',
         };
-        const formattedData = inlineNotation(layout, data);
+        const formattedData = inlineNotation(layout, data, { cvConc: '10 mM', cvSolvent: 'MeCN', cvRef: null });
         const { formattedString, quillData } = formattedData;
         expect(formattedString).toEqual(expectedString);
         expect(quillData).toEqual(expectedQuillData);
@@ -467,11 +467,29 @@ describe('SpectraHelper', () => {
 
           const expectedString = `CV (10 mM in MeCN vs. Ref ${formatedStr} = -0.72 V, v = 0.10 V/s, to neg.):\nE1/2 = ([Cu(TMGqu)] , ΔEp) = -0.73 V (1650 mV)`
           const expectedQuillData = [{insert:"CV (10 mM in MeCN vs. Ref "},...deltaVal,{insert:"= -0.72 V, v = 0.10 V/s, to neg.):"},{insert:"\nE"},{insert:"1/2",attributes:{script:'sub'}},{insert:" = ([Cu(TMGqu)] , ΔE"},{insert:"p",attributes:{script:'sub'}},{insert:") = -0.73 V (1650 mV)"},]
-          const formattedData = inlineNotation(layout, data);
+          const formattedData = inlineNotation(layout, data, { cvConc: '10 mM', cvSolvent: 'MeCN', cvRef: refKey });
           const { formattedString, quillData } = formattedData;
           expect(formattedString).toEqual(expectedString);
           expect(quillData).toEqual(expectedQuillData);
         }
+      });
+
+      it('Inline notation for Cyclic voltammetry layout custom scan rate', () => {
+        const expectedString = "CV (<conc. of sample> in <solvent> vs. Ref (Fc+/Fc) = -0.72 V, v = 0.51 V/s, to neg.):\nE1/2 = ([Cu(TMGqu)] , ΔEp) = -0.73 V (1650 mV)"
+        const expectedQuillData = [{insert:"CV (<conc. of sample> in <solvent> vs. Ref "},{insert:"(Fc"},{insert:"+",attributes:{script:'super'}},{insert:"/Fc) "},{insert:"= -0.72 V, v = 0.51 V/s, to neg.):"},{insert:"\nE"},{insert:"1/2",attributes:{script:'sub'}},{insert:" = ([Cu(TMGqu)] , ΔE"},{insert:"p",attributes:{script:'sub'}},{insert:") = -0.73 V (1650 mV)"},]
+        const layout = allLayouts.CYCLIC_VOLTAMMETRY
+        const data = {
+          scanRate: 0.1,
+          voltaData: {
+            listPeaks: [{"min":{"x":-1.5404,"y":-0.00000307144},"max":{"x":0.10003,"y":0.00000285434},"isRef":true,"e12":-0.720185,"createdAt":1716803991732,"updatedAt":1716803991733,"pecker":{"x":0.380242,"y":0.00000164361}},{"max":{"x":0.10002,"y":0.00000283434},"e12":-0.72519,"updatedAt":1716803991733,"min":{"x":-1.5504,"y":-0.00000317144},"pecker":{"x":0.480242,"y":0.00000174361},"isRef":false}],
+            xyData: {x:[1.49048,1.48049],y:[0.00000534724,0.00000481545],},
+          },
+          sampleName: 'Cu(TMGqu)',
+        };
+        const formattedData = inlineNotation(layout, data, { cvConc: null, cvSolvent: null, cvRef: null, cvScanRate: 0.51 });
+        const { formattedString, quillData } = formattedData;
+        expect(formattedString).toEqual(expectedString);
+        expect(quillData).toEqual(expectedQuillData);
       });
     });
   });

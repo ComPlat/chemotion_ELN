@@ -34,9 +34,22 @@ const formatTimeStampsOfElement = (element) => {
   return `Created ${formattedCreatedAt} - Updated ${formattedUpdatedAt}`;
 };
 
+// convert date to unix timestamp
+// @param {string} dateString - date string
+// @return {number, null} - unix timestamp
+// false if dateString is not a valid date
+const dateToUnixTimestamp = (dateString) => {
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    return Math.floor(date.getTime() / 1000);
+  }
+  return null;
+};
+
 export {
   elnTimestampFormat,
   parseDate,
   formatDate,
   formatTimeStampsOfElement,
+  dateToUnixTimestamp,
 };

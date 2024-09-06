@@ -1,8 +1,9 @@
 import 'whatwg-fetch';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CellLine from 'src/models/cellLine/CellLine'
+import CellLine from 'src/models/cellLine/CellLine';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
 export default class BaseFetcher {
   /**
@@ -52,12 +53,13 @@ export default class BaseFetcher {
     const perPage = queryParams.per_page || UIStore.getState().number_of_results;
     const filterCreatedAt = queryParams.filterCreatedAt === true
       ? '&filter_created_at=true' : '&filter_created_at=false';
-    const fromDate = queryParams.fromDate ? `&from_date=${queryParams.fromDate.unix()}` : '';
-    const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
+    const fromDate = queryParams.fromDate ? `&from_date=${dateToUnixTimestamp(queryParams.fromDate)}` : '';
+    const toDate = queryParams.toDate ? `&to_date=${dateToUnixTimestamp(queryParams.toDate)}` : '';
+    const userLabel = queryParams.userLabel ? `&user_label=${queryParams.userLabel}` : '';
     const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
       + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-      + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
+      + `${fromDate}${toDate}${userLabel}${filterCreatedAt}${productOnly}`;
     let addQuery = '';
     let userState;
     let group;

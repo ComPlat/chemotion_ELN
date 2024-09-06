@@ -133,7 +133,6 @@ module Export
     end
 
     def self.format_link(value, row, next_index, indexes_to_delete)
-      # binding.pry
       if next_index && row[next_index].present?
         value += "-#{row[next_index]}"
         indexes_to_delete.push(next_index)

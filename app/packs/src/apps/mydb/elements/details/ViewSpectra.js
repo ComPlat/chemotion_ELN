@@ -5,6 +5,7 @@ import { Modal, Well, Button } from 'react-bootstrap';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
+import { InlineMetadata } from 'chem-generic-ui';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
@@ -361,7 +362,7 @@ class ViewSpectra extends React.Component {
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
     } else if (FN.isCyclicVoltaLayout(layout)) {
-      ops = this.notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample);
+      ops = this.notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample, si?.idDt);
     } else {
       ops = this.formatPks({
         peaks,
@@ -401,13 +402,14 @@ class ViewSpectra extends React.Component {
     handleSampleChanged(sample, cb);
   }
 
-  notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample) {
+  notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample, idDt) {
     const { spectraList } = cyclicvoltaSt;
     const { curveIdx, listCurves } = curveSt;
     const selectedVolta = spectraList[curveIdx];
     const selectedCurve = listCurves[curveIdx];
     const { feature } = selectedCurve;
     const { scanRate } = feature;
+    const metadata = InlineMetadata(sample?.datasetContainers(), idDt);
     const data = {
       scanRate,
       voltaData: {
@@ -415,11 +417,8 @@ class ViewSpectra extends React.Component {
         xyData: feature.data[0],
       },
       sampleName: sample.name,
-      concentration: null,
-      solvent: null,
-      internalRef: null,
     };
-    const desc = inlineNotation(layout, data);
+    const desc = inlineNotation(layout, data, metadata);
     const { quillData } = desc;
     return quillData;
   }
@@ -455,7 +454,7 @@ class ViewSpectra extends React.Component {
     const selectedIntegration = integrations[curveIdx];
     const { multiplicities } = multiplicity;
     const selectedMutiplicity = multiplicities[curveIdx];
-  
+
     const isSaveCombined = FN.isCyclicVoltaLayout(layout);
     const { spcInfos, arrSpcIdx } = this.state;
     const previousSpcInfos = spcInfos.filter((spc) => (spc.idDt === si.idDt && arrSpcIdx.includes(spc.idx)));

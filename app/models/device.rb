@@ -173,9 +173,10 @@ class Device < ApplicationRecord
   def datacollector_key_dir_path
     return if datacollector_key_name.blank?
 
-    keydir = Rails.configuration.datacollectors.keydir
+    keydir = Rails.configuration.datacollectors&.keydir
+    return if keydir.blank?
 
-    if keydir.start_with?('/')
+    if keydir&.start_with?('/')
       Pathname.new(keydir).join(datacollector_key_name)
     else
       Rails.root.join(keydir, datacollector_key_name)

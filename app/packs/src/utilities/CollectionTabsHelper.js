@@ -10,7 +10,7 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
 
   if (addInventoryTab && layout) {
     // eslint-disable-next-line no-param-reassign
-    layout.inventory = layoutKeys.length + 1;
+    layout.inventory = layout.inventory || layoutKeys.length + 1;
   }
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
   const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
