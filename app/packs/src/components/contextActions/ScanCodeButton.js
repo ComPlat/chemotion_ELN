@@ -12,7 +12,6 @@ import QrReader from 'react-qr-reader';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import { PDFDocument } from 'pdf-lib'; // <-- Added import
 
 export default class ScanCodeButton extends React.Component {
