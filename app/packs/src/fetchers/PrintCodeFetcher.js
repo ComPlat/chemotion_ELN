@@ -16,4 +16,19 @@ export default class PrintCodeFetcher {
         console.log(errorMessage);
       });
   }
+
+  static fetchMergedPrintCodes(url) {
+    // Request options for fetching the PDF.
+    const requestOptions = {
+      credentials: 'same-origin',
+      method: 'GET',
+    };
+    // Fetch the PDF
+    return fetch(url, requestOptions)
+      .then((response) => response.blob())
+      .then((result) => result.arrayBuffer())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }
