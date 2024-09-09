@@ -101,7 +101,6 @@ const handleOpenLocally = (attachment, option = 0) => {
   ThirdPartyAppFetcher.getHandlerUrl(attachment.id, option).then((url) => {
     const link = document.createElement('a');
     link.download = attachment.filename;
-    console.log('url', url);
     link.href = url;
     const event = new window.MouseEvent('click', {
       view: window,
@@ -130,7 +129,7 @@ export const downloadButton = (attachment) => (
       </MenuItem>
       <MenuItem
         eventKey="3"
-        onClick={() => handleOpenLocally(attachment, 1)}
+        onClick={() => handleOpenLocally(attachment, 0)}
         disabled={attachment.isNew}
       >
         Open locally
