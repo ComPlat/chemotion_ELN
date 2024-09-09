@@ -21,22 +21,23 @@ export default class CurationModal extends Component {
       this.updateDescription = this.updateDescription.bind(this)
       this.scrollToId = this.scrollToId.bind(this)
       this.state = {
-        desc : this.cleanData(this.props.description),
-        show : false, 
-        mispelledWords : [],
-        correctedWords: [],
-        suggestion : [],
-        suggestionIndex : 0,
-        correctWord : "",
-        subscriptList : [],
-        dictionaryLanguage: "US",
-        showPrompt : false,
-        descriptionObject : {},
-        cus_dictionary : new Typo("custom", false, false, { dictionaryPath: "/typojs" }),
-        uk_dictionary : new Typo("en_UK", false, false, { dictionaryPath: "/typojs" }),
-        us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" }),
-        showCorrectButton: true,
-        idKeyArray : []
+        desc : this.cleanData(this.props.description), // description text is stored here
+        show : false,  // variable for show modal
+        mispelledWords : [], // array with misspelled words
+        correctedWords: [], // array with words that have been corrected
+        suggestion : [], // aray that contains the sugestions from selected word
+        suggestionIndex : 0, //int that determines what entry from misspelled words state suggestions are generated
+        correctWord : "", //string that contains word after correction 
+        subscriptList : [], // array that contains each word that needs to have subscript applied
+        dictionaryLanguage: "US", //string that determines what version of english is selected
+        showPrompt : false, // booloon that determines if new word prompts shows
+        descriptionObject : {}, // object that contains description and formatting properties
+        cus_dictionary : new Typo("custom", false, false, { dictionaryPath: "/typojs" }), // dictionary object for custom dictionary
+        uk_dictionary : new Typo("en_UK", false, false, { dictionaryPath: "/typojs" }), // dictionary object for EN UK dictionary
+        us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" }),  // dictionary object for EN US dictionary
+        showCorrectButton: true, // booloon that determines if correct button is disabled
+        idKeyArray : [], //ID Key array that stores highlighter index used by the autoscroll
+        showNewWordButton: true // booloon that determines if add new word button is disabled
     }}
 
   
@@ -62,7 +63,8 @@ export default class CurationModal extends Component {
       }))
     }
 
-    convertStringToObject(input_string){
+    convertStringToObject(input_string){  // function is used to convert description string into a description object
+     
       var word_with_subscript = input_string.match(/\b[a-z]\w*\d[a-z]*/gi);
       var regex_string = '';
       var new_array = [];
@@ -138,7 +140,7 @@ export default class CurationModal extends Component {
       this.setState({ show: true }, this.updateDescription);
     }
 
-    handleSuggest(miss_spelled_words, index){
+    handleSuggest(miss_spelled_words, index){ //handles generating the suggestion list
       var Typo = require("typo-js");
       var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
       var mispelled_word = miss_spelled_words[index]
@@ -161,7 +163,7 @@ export default class CurationModal extends Component {
       }
     }
 
-    useAllDicitonary(en_dictionary,custom_dictionary, word){
+    useAllDicitonary(en_dictionary,custom_dictionary, word){ // function to use both Custom and English dictionarys to check word
       var is_word_correct = false ;
       if (en_dictionary.check(word)){
         is_word_correct = true}
@@ -171,7 +173,7 @@ export default class CurationModal extends Component {
       return is_word_correct
     }
 
-    checkSubScript(input_text){
+    checkSubScript(input_text){ // find instances that need subscript property applied to it Ex molecular formula
       if(/\b[a-z]\w*\d[a-z]*/gi.test(input_text)){
       var potential_mol_form = input_text.match(/\b[a-z]\w*\d[a-z]*/gi)
       var split_form = potential_mol_form[0].split(/(\d)/g) 
@@ -186,7 +188,7 @@ export default class CurationModal extends Component {
         )) 
     }}
 
-    spellCheck(description){
+    spellCheck(description){ // function takes description string and updates misspelled words state with misspellings
       if(description !== undefined){
         // var Typo = require("typo-js");
         var cus_dictionary = this.state.cus_dictionary
@@ -206,12 +208,7 @@ export default class CurationModal extends Component {
           console.log("us used")
         }
         for (let i = 0; i < word_array.length; i++){
-          var punctuation = /[\.\,\?\!\(\)\"\;\`\*\[\]\:]/g;
           word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
-          var double_space_regex= /\s\s/g
-          // word_array[i] = word_array[i].replace(punctuation, " ");
-          // word_array[i] = word_array[i].replace(double_space_regex, " ")
-          // check if word has a number in it
           if (/\b[\p{Script=Latin}]+\b/giu.test(word_array[i])){
             if(word_array[i].includes("°") ){
               var spell_checked_word = true
@@ -223,23 +220,17 @@ export default class CurationModal extends Component {
             }
             else{
               if(/[a-z]*\-[a-z]*/.test(word_array[i]))
-                {
-             
-                }
+                {}
               else{
-       
                 if(/'/.test( word_array[i])){
-           
                   var sliceIndex = word_array[i].indexOf("\'")
-           
                   word_array[i] = word_array[i].substring(0 ,sliceIndex) 
                 }
                 if(/—/.test(word_array[i])){
                   var sliceIndex = word_array[i].indexOf("—")
                   word_array[i] = word_array[i].substring(0,sliceIndex)
                   word_array.push(word_array[i].slice(sliceIndex))
-                }
-                
+                } 
                 var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
               }
           }}
@@ -262,13 +253,13 @@ export default class CurationModal extends Component {
         }
       else{}}
 
-    cleanMisspelledArray(input_array){
+    cleanMisspelledArray(input_array){ // removes empty values from misspelled words array
       const counts = {};
       input_array.forEach(function (x) { counts[x] = (counts[x] || 0) + 1; });
       return counts
     }
 
-    changeMisspelling(description,selected_choice,ms_words,index){
+    changeMisspelling(description,selected_choice,ms_words,index){ // function used to change misspelled word to correcct word choice
       if (selected_choice !== ""){
         var fixed_description = description.replace(ms_words[index], selected_choice);}
       else{
@@ -287,7 +278,7 @@ export default class CurationModal extends Component {
       this.setState({correctWord: "", showCorrectButton: true})
     }
 
-    removeSpaces(introarray){
+    removeSpaces(introarray){ // removes double spaces in description ** TOBE remove
       for(var entry of introarray){
         var index = introarray.indexOf(entry)
         introarray[index] = entry.replaceAll(" ","")
@@ -295,7 +286,7 @@ export default class CurationModal extends Component {
       return introarray
     }
 
-    getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
+    getHighlightedText(text, mispelledWords,ms_index,subscriptList) { // renders description text with misspelled words hihlighted and subscript applied
       console.log(mispelledWords)
       var correctedArray = this.state.correctedWords
       var idArray = this.state.idKeyArray
@@ -367,7 +358,7 @@ export default class CurationModal extends Component {
         // console.log(idArray)
         this.setState({idKeyArray: idArray})}
 
-    uniq(a) {
+    uniq(a) { // removes duplicates in array
       var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
       return a.filter(function(item) {
           var type = typeof item;
@@ -378,13 +369,19 @@ export default class CurationModal extends Component {
       });
     }
 
-    changeCorectWord(changeEvent) {
+    changeCorectWord(changeEvent) { 
       this.setState({correctWord: changeEvent.target.value,
         showCorrectButton:false
       }) 
     }
 
-    cleanData(description){
+    changeNewWord() { //updates state for newword button
+      this.setState({
+        showNewWordButton:false
+      }) 
+    }
+
+    cleanData(description){ //converts description object to string
       if (description !== undefined){
         var newDescription = ""
         if(typeof description === "string"){
@@ -411,7 +408,7 @@ export default class CurationModal extends Component {
       // throw Error('data is not in correct format')
     }
 
-    async amendUpdate(input){
+    async amendUpdate(input){ //updates custom dictionary with user input word and reloads dictionary
       var Typo = require("typo-js");
       var uuid = require("uuid") 
       var uid = uuid.v4()
@@ -422,7 +419,7 @@ export default class CurationModal extends Component {
         this.setState({cus_dictionary: new Typo("custom",false,false,{ dictionaryPath: "/typojs" })})
     }
 
-    scrollToId(){
+    scrollToId(){ // autoscrolls to incorrect word selection 
       var sugIndex = this.state.suggestionIndex
       var idArray = this.state.idKeyArray
       var querryselector = `#\\3${idArray[sugIndex]}`
@@ -487,6 +484,7 @@ export default class CurationModal extends Component {
           return(
             <Button 
             bsStyle="success" 
+            disabled={this.state.showNewWordButton}
             onClick= {() => { 
             this.amendUpdate(this.state.correctWord); this.handlePromptShow()
             }}>
@@ -502,7 +500,7 @@ export default class CurationModal extends Component {
               type="text"
               value={this.state.value}
               placeholder="Enter text"
-              onChange={this.handleSuggestChange}
+              onChange={() => {this.handleSuggestChange; this.changeNewWord}}
               maxLength={30}
               /> 
           </form>;
