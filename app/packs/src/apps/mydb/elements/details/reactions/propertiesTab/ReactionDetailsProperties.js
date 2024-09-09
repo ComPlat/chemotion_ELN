@@ -122,7 +122,6 @@ export default class ReactionDetailsProperties extends Component {
               <InputGroup className="z-0">
                 <DropdownButton
                   disabled={!permitOn(reaction)}
-                  componentClass={InputGroup.Button}
                   id="solvents_dd"
                   onSelect={this.handleOnSolventSelect}
                 >

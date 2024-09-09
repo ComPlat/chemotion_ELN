@@ -40,7 +40,6 @@ function LiteralType({
 }) {
   return (
     <Form.Select
-      componentClass="select"
       onChange={(event) => handleInputChange('litype', event)}
       placeholder="type"
       value={val}

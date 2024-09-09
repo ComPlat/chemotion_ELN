@@ -154,7 +154,7 @@ function NoteCellEditor({
       </Modal.Header>
       <Modal.Body>
         <FormControl
-          componentClass="textarea"
+          as="textarea"
           placeholder="Start typing your note..."
           value={note}
           onChange={(event) => setNote(event.target.value)}
