@@ -184,15 +184,16 @@ export default class ManagingModalSharing extends React.Component {
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    elementNames(false).forEach((klass) => {
-      filterParams[`${klass}`] = {
-        all: uiState[`${klass}`].checkedAll,
-        included_ids: uiState[`${klass}`].checkedIds,
-        excluded_ids: uiState[`${klass}`].uncheckedIds,
-        collection_id: collectionId
-      };
+    elementNames(false).then((klassArray) => {
+      klassArray.forEach((klass) => {
+        filterParams[`${klass}`] = {
+          all: uiState[`${klass}`].checkedAll,
+          included_ids: uiState[`${klass}`].checkedIds,
+          excluded_ids: uiState[`${klass}`].uncheckedIds,
+          collection_id: collectionId
+        };
+      });
     });
-    console.log(filterParams);
 
     return filterParams;
   }
