@@ -159,6 +159,9 @@ export default class BaseFetcher {
 
   static updateAnnotationsOfAttachments(element) {
     const updateTasks = [];
+    if(!element.attachments){
+      return Promise.resolve();
+    }
     element.attachments
       .filter(((attach) => attach.hasOwnProperty('updatedAnnotation')))
       .forEach((attach) => {
