@@ -730,7 +730,7 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const { enableSampleDecoupled, sample = {}, customizableField } = this.props;
+    const { enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -835,7 +835,7 @@ export default class SampleForm extends React.Component {
         <Row>
           <SampleDetailsSolvents
             sample={sample}
-            onChange={this.handleSolventChanged}
+            onChange={handleSampleChanged}
           />
         </Row>
 
