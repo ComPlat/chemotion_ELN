@@ -1,6 +1,6 @@
 import ProfilesFetcher from 'src/fetchers/ProfilesFetcher';
-const key = 'ketcher-tmpls';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+const key = 'ketcher-tmpls';
 
 const createAddAttachmentidToNewUserTemplate = async (newValue, newItem, deleteIdx) => {
   const res = await ProfilesFetcher.uploadUserTemplates({
@@ -50,20 +50,22 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
 
 const onEventListen = async (event) => {
   let { newValue, oldValue } = event;
-  newValue = JSON.parse(newValue);
-  oldValue = JSON.parse(oldValue);
-  if (event.key === key) { // matching key && deleteAllowed
-    if (newValue.length > oldValue.length) { // when a new template is added
-      let newItem = newValue[newValue.length - 1];
-      createAddAttachmentidToNewUserTemplate(newValue, newItem);
-    } else if (newValue.length < oldValue.length) { // when a template is deleted
-      const listOfLocalid = newValue.map((item) => item.props.path);
-      removeUserTemplate(listOfLocalid, oldValue);
-    } else if (newValue.length == oldValue.length) { // when a template is update atom id, bond id
-      updateUserTemplateDetails(oldValue, newValue);
+  if (newValue.length && oldValue.length) {
+    newValue = JSON.parse(newValue);
+    oldValue = JSON.parse(oldValue);
+    if (event.key === key) { // matching key && deleteAllowed
+      if (newValue.length > oldValue.length) { // when a new template is added
+        let newItem = newValue[newValue.length - 1];
+        createAddAttachmentidToNewUserTemplate(newValue, newItem);
+      } else if (newValue.length < oldValue.length) { // when a template is deleted
+        const listOfLocalid = newValue.map((item) => item.props.path);
+        removeUserTemplate(listOfLocalid, oldValue);
+      } else if (newValue.length == oldValue.length) { // when a template is update atom id, bond id
+        updateUserTemplateDetails(oldValue, newValue);
+      }
+    } else if (event.key === 'ketcher-opts') {
+      UsersFetcher.updateUserKetcher2Options(event.newValue);
     }
-  } else if (event.key === 'ketcher-opts') {
-    UsersFetcher.updateUserKetcher2Options(event.newValue);
   }
 };
 

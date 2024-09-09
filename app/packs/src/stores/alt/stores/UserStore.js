@@ -75,7 +75,8 @@ class UserStore {
     this.state.profile = result;
     const { layout } = this.state.profile.data;
     if (this.state.currentType === '') {
-      const { currentTab } = this.state;const type = Object.keys(layout).filter((e) => {
+      const { currentTab } = this.state;
+      const type = Object.keys(layout).filter((e) => {
         return layout[e] === currentTab + 1;
       })[0];
       this.state.currentType = type;

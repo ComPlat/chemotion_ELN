@@ -13,6 +13,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
+import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -447,7 +448,6 @@ export default class SampleForm extends React.Component {
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
     const formControlStyle = field === 'name' ? { height: '38px'} : {};
-
     return (
       <Form.Group>
         <Form.Label className="text-truncate">{label}</Form.Label>
@@ -755,6 +755,7 @@ export default class SampleForm extends React.Component {
             )
           }
         </Row>
+
         <Row className="align-items-end mb-4">
           <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
           <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
@@ -829,6 +830,12 @@ export default class SampleForm extends React.Component {
           </Col>
           <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash Point')}</Col>
           <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}</Col>
+        </Row>
+
+        <Row>
+          <SampleDetailsSolvents
+            sample={sample}
+            onChange={this.handleSolventChanged}
         </Row>
 
         {this.sampleDescription(sample)}
