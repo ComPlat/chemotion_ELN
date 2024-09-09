@@ -1,17 +1,19 @@
 import PropTypes from 'prop-types';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, {
+  memo, useCallback, useEffect, useState
+} from 'react';
 import {
   Modal,
   OverlayTrigger,
   Tooltip,
+  Card,
+  Form,
 } from 'react-bootstrap';
 import CommonTemplateItem from 'src/components/ketcher-templates/CommonTemplateItem';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel';
-import Panel from 'src/components/legacyBootstrap/Panel';
 
 const debounce = (func, delay) => {
   let timeoutId;
-  return function(...args) {
+  return (...args) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func.apply(this, args), delay);
   };
@@ -31,9 +33,7 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
   const handleSearch = useCallback(
     debounce((query) => {
       const lowerCaseQuery = query.toLowerCase();
-      const filtered = options.filter((item) =>
-        item.name.toLowerCase().includes(lowerCaseQuery)
-      );
+      const filtered = options.filter((item) => item.name.toLowerCase().includes(lowerCaseQuery));
       setFilteredOptions(filtered);
     }, 300),
     [options]
@@ -44,11 +44,9 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
   }, [searchQuery, handleSearch]);
 
   return (
-    <div>
-      <div className="common-template-header">
-        <div style={{ width: '95%' }}>
-          <ControlLabel>Common Templates:</ControlLabel>
-        </div>
+    <div className="w-25">
+      <div className="d-flex align-items-baseline justify-content-between gap-2">
+        <Form.Label>Common Templates:</Form.Label>
         <OverlayTrigger placement="top" overlay={<Tooltip id="commontemplates">{toolTip}</Tooltip>}>
           <i className="fa fa-info" />
         </OverlayTrigger>
@@ -63,37 +61,33 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
         </div>
       </div>
 
-      <Modal show={commonTemplateModal} onHide={() => setCommonTemplateModal(false)}>
-        <Modal.Header closeButton >
+      <Modal
+        centered
+        show={commonTemplateModal}
+        onHide={() => setCommonTemplateModal(false)}
+      >
+        <Modal.Header closeButton>
           {toolTip}
         </Modal.Header>
         <Modal.Body>
-          <Panel style={{ height: 300 }}>
-            <Panel.Heading>
-              <Panel.Title>
-                Common Template list:
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body style={{ height: '80%', overflow: 'auto' }}>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Search templates by Name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className='common-template-search'
-                />
-                {filteredOptions.length != options.length &&
-                  <div style={{ marginVertical: '10px' }}>
-                    {filteredOptions.length} out of {options.length} templates found
-                  </div>
-                }
-                {filteredOptions.map((item, idx) => (
-                  <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />
-                ))}
-              </div>
-            </Panel.Body>
-          </Panel>
+          <Form.Control
+            type="text"
+            placeholder="Search templates by Name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {filteredOptions.length != options.length && (
+            <div className="my-2">
+              {filteredOptions.length} out of {options.length} templates found
+            </div>
+          )}
+          <Card className="mt-2">
+            <Card.Body className="overflow-y-scroll vh-50">
+              {filteredOptions.map((item, idx) => (
+                <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />
+              ))}
+            </Card.Body>
+          </Card>
         </Modal.Body>
       </Modal>
     </div>

@@ -110,6 +110,10 @@ $theme-colors: map-merge($theme-colors, $gray-tones);
   width: 90vw;
 }
 
+.vh-50 {
+  height: 50vh;
+}
+
 .vh-70 {
   height: 70vh;
 }
