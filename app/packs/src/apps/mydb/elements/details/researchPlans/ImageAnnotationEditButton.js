@@ -7,7 +7,19 @@ import Attachment from 'src/models/Attachment';
 export default class ImageAnnotationEditButton extends Component {
   allowedFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
 
-  renderButton(isActive, tooltipText) {
+  render() {
+    if (!this.props.attachment || !this.props.attachment.filename) {
+      return null;
+    }
+
+    const extension = this.props.attachment.filename.split('.').pop();
+    const isAllowedFileType = this.allowedFileTypes.includes(extension);
+    const isActive = isAllowedFileType && !this.props.attachment.isNew;
+
+    const tooltipText = isActive
+      ? 'Annotate image'
+      : 'Cannot annotate - invalid file type or the image is new';
+
     return (
       <OverlayTrigger
         placement="top"
@@ -32,22 +44,6 @@ export default class ImageAnnotationEditButton extends Component {
         </Button>
       </OverlayTrigger>
     );
-  }
-
-  render() {
-    if (!this.props.attachment || !this.props.attachment.filename) {
-      return null;
-    }
-
-    const extension = this.props.attachment.filename.split('.').pop();
-    const isAllowedFileType = this.allowedFileTypes.includes(extension);
-    const isActive = isAllowedFileType && !this.props.attachment.isNew;
-
-    const tooltipText = isActive
-      ? 'Annotate image'
-      : 'Cannot annotate - invalid file type or the image is new';
-
-    return this.renderButton(isActive, tooltipText);
   }
 }
 
