@@ -1044,6 +1044,7 @@ export default class Sample extends Element {
       reference: this.reference || false,
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
+      coefficient: this.coefficient,
       gas_type: this.gas_type || false,
       gas_phase_data: this.gas_phase_data,
     };

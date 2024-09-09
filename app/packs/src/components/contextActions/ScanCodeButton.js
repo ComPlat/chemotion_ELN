@@ -9,6 +9,7 @@ import QrReader from 'react-qr-reader';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import { PDFDocument } from 'pdf-lib'; // <-- Added import
 import Utils from 'src/utilities/Functions';
 import 'whatwg-fetch';
 
@@ -231,23 +232,44 @@ export default class ScanCodeButton extends React.Component {
   /**
    * Downloads a PDF file with the print codes for the given element
    */
-  downloadPrintCodesPDF(id, selectedConfig) {
+  async downloadPrintCodesPDF(ids, selectedConfig) {
+    // Create a new PDFDocument to merge PDFs into
+    const mergedPdf = await PDFDocument.create();
+
     const { json } = this.state;
-    let newUrl = `/api/v1/code_logs/print_codes?element_type=sample&ids[]=${id}`;
-    // build the URL by adding the selected config parameters
-    Object.entries(json).forEach(([configKey, configValue]) => {
-      if (configKey === selectedConfig) {
+
+    // Fetch PDFs and merge them
+    const pdfPromises = ids.map(async (id) => {
+      let newUrl = `/api/v1/code_logs/print_codes?element_type=sample&ids[]=${id}`;
+
+      // Append the selected config parameters to the URL
+      if (selectedConfig in json) {
+        const configValue = json[selectedConfig];
         Object.entries(configValue).forEach(([key, value]) => {
           newUrl += `&${key}=${value}`;
         });
       }
+
+      // Fetch and load the PDF
+      const pdfBytes = await PrintCodeFetcher.fetchMergedPrintCodes(newUrl);
+      const pdfToMerge = await PDFDocument.load(pdfBytes);
+      const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
+
+      // Add the pages to the merged PDF
+      copiedPages.forEach((page) => mergedPdf.addPage(page));
     });
-    // fetch the PDF and download it
-    PrintCodeFetcher.fetchPrintCodes(newUrl).then((result) => {
-      if (result != null) {
-        Utils.downloadFile({ contents: result, name: `print_codes_${id}.pdf` });
-      }
-    });
+
+    // Wait for all PDFs to be processed
+    await Promise.all(pdfPromises);
+
+    // Serialize the merged PDF to bytes
+    const mergedPdfBytes = await mergedPdf.save();
+    // Create a Blob from the bytes
+    const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    // Download the merged PDF
+    Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
   }
 
   render() {
@@ -279,7 +301,8 @@ export default class ScanCodeButton extends React.Component {
               disabled={disabledPrint}
               onClick={(event) => {
                 event.stopPropagation();
-                ids.map((id) => this.downloadPrintCodesPDF(id, e.name));
+                this.downloadPrintCodesPDF(ids, e.name);
+
               }}
             >
               {e.name}
