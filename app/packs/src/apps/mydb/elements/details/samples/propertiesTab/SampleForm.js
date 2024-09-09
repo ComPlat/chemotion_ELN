@@ -836,6 +836,7 @@ export default class SampleForm extends React.Component {
           <SampleDetailsSolvents
             sample={sample}
             onChange={this.handleSolventChanged}
+          />
         </Row>
 
         {this.sampleDescription(sample)}
