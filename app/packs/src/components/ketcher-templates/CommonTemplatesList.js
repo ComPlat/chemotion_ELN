@@ -1,13 +1,13 @@
 import PropTypes from 'prop-types';
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import {
-  ControlLabel,
   Modal,
   OverlayTrigger,
-  Panel,
   Tooltip,
 } from 'react-bootstrap';
 import CommonTemplateItem from 'src/components/ketcher-templates/CommonTemplateItem';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel';
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 const debounce = (func, delay) => {
   let timeoutId;
