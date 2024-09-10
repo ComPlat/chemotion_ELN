@@ -7,12 +7,9 @@ import {
 } from 'mocha';
 
 import {
-  PanelGroup,
-  Panel,
+  Accordion,
   Button,
 } from 'react-bootstrap';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import Container from 'src/models/Container';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -27,51 +24,20 @@ describe('ResearchPlanDetailsContainers', () => {
     const researchPlan = ResearchPlan.buildEmpty();
     it('Render without any analysis and readonly', () => {
       const wrapper = shallow(<ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly />);
-      const expectedValue = shallow(
-        <div
-          style={{ marginBottom: '10px' }}
-          className="m-4"
-        >
-          There are currently no Analyses.
-          <span />
-        </div>
-      );
-      expect(wrapper.html()).toEqual(expectedValue.html());
+      expect(wrapper.text()).toEqual(expect.stringContaining('There are currently no Analyses.'));
+      expect(wrapper.find(Button)).toHaveLength(0);
     });
 
     it('Render without any analysis', () => {
       const wrapper = shallow(<ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} />);
-      const expectedValue = shallow(
-        <div
-          style={{ marginBottom: '10px' }}
-          className="m-4"
-        >
-          There are currently no Analyses.
-          <Button
-            size="sm"
-            variant="success"
-          >
-            Add analysis
-          </Button>
-        </div>
-      );
-      expect(wrapper.html()).toEqual(expectedValue.html());
+      expect(wrapper.text()).toEqual(expect.stringContaining('There are currently no Analyses.'));
+      const button = wrapper.find(Button);
+      expect(button.text()).toEqual('Add analysis');
     });
   });
 
   describe('when it has analyses', () => {
     let researchPlan = null;
-
-    const btnAdd = (
-      <div style={{ marginBottom: '10px' }}>
-        &nbsp;<Button
-          size="sm"
-          variant="success"
-        >
-          Add analysis
-        </Button>
-      </div>
-    );
 
     beforeEach(() => {
       researchPlan = ResearchPlan.buildEmpty();
@@ -87,35 +53,23 @@ describe('ResearchPlanDetailsContainers', () => {
       researchPlan.container.children[0].children.push(analysis);
 
       const wrapper = shallow(
-        <DndProvider backend={HTML5Backend}>
-          <ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} />
-        </DndProvider>
+        <ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} />
       );
-      const expectedValue = shallow(
-        <div>
-          {btnAdd}
-          <PanelGroup id="research_plan-analyses-panel" defaultActiveKey={0} activeKey={0} accordion>
-            <Panel
-              eventKey={0}
-              key={`research_plan_container_deleted_${analysis.id}`}
-            >
-              <Panel.Heading>
-                <div style={{ width: '100%' }}>
-                  <strike>
-                    {analysis.name}
-                    {` - Type: ${analysis.extended_metadata.kind}`}
 
-                  </strike>
-                  <Button className="pull-right" size="sm" variant="danger">
-                    <i className="fa fa-undo" />
-                  </Button>
-                </div>
-              </Panel.Heading>
-            </Panel>
-          </PanelGroup>
-        </div>
-      );
-      expect(wrapper.html()).toEqual(expectedValue.html());
+      expect(wrapper.text()).toEqual(expect.stringContaining(
+        `${analysis.name} - Type: ${analysis.extended_metadata.kind}`
+      ));
+
+      const button = wrapper.find(Accordion.Header).find(Button);
+      expect(button.html()).toEqual(shallow(
+        <Button
+          className="ml-auto"
+          size="sm"
+          variant="danger"
+        >
+          <i className="fa fa-undo" />
+        </Button>
+      ).html());
     });
   });
 });
