@@ -230,7 +230,7 @@ const AnalysesHeader = ({
               fetchId
             }}
           />
-    }  
+    }
       </div>
       <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
         <div className="d-flex justify-content-between align-items-center">
