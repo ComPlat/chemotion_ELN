@@ -149,20 +149,16 @@ Editor.propTypes = {
 function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
-    <Form.Group>
-      <div>
-        <Form.Label>Structure Editor</Form.Label>
-      </div>
-      <div>
-        <Select
-          className="status-select"
-          name="editor selection"
-          clearable={false}
-          options={options}
-          onChange={fnChange}
-          value={value}
-        />
-      </div>
+    <Form.Group className="w-100">
+      <Form.Label>Structure Editor</Form.Label>
+      <Select
+        className="status-select"
+        name="editor selection"
+        clearable={false}
+        options={options}
+        onChange={fnChange}
+        value={value}
+      />
     </Form.Group>
   );
 }
@@ -377,56 +373,48 @@ export default class StructureEditorModal extends React.Component {
         onLoad={this.initializeEditor.bind(this)}
         onHide={this.handleCancelBtn.bind(this)}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <EditorList
-              value={editor.id}
-              fnChange={this.handleEditorSelection}
-              options={editorOptions}
+        <Modal.Header closeButton className="gap-3">
+          <EditorList
+            value={editor.id}
+            fnChange={this.handleEditorSelection}
+            options={editorOptions}
+          />
+          {editor.id === 'ketcher2' && (
+            <CommonTemplatesList
+              options={commonTemplatesList}
+              value={selectedCommonTemplate?.name}
+              selectedItem={selectedCommonTemplate}
+              onClickHandle={(value) => {
+                this.setState({ selectedCommonTemplate: value });
+                copyContentToClipboard(value?.molfile);
+              }}
             />
-          </Modal.Title>
-          {
-            editor.id === 'ketcher2'
-            && (
-              <div style={{ flex: 1, margin: '0 10px' }}>
-                <CommonTemplatesList
-                  options={commonTemplatesList}
-                  value={selectedCommonTemplate?.name}
-                  selectedItem={selectedCommonTemplate}
-                  onClickHandle={(value) => {
-                    this.setState({ selectedCommonTemplate: value });
-                    copyContentToClipboard(value?.molfile);
-                  }}
-                />
-              </div>
-            )
-          }
+          )}
         </Modal.Header>
         <Modal.Body>
-          {showWarning &&
+          {showWarning && (
             <WarningBox
               handleCancelBtn={this.handleCancelBtn.bind(this)}
               hideWarning={this.hideWarning.bind(this)}
             />
-          }
+          )}
           {useEditor}
         </Modal.Body>
-        {!showWarning &&
-          (
-            <Modal.Footer className="modal-footer border-0">
-              <ButtonToolbar className="gap-1">
-                <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
-                  {cancelBtnText}
+        {!showWarning && (
+          <Modal.Footer className="modal-footer border-0">
+            <ButtonToolbar className="gap-1">
+              <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
+                {cancelBtnText}
+              </Button>
+              {handleSaveBtn && (
+                <Button variant="primary" onClick={handleSaveBtn}>
+                  {submitBtnText}
                 </Button>
-                {handleSaveBtn && (
-                  <Button variant="primary" onClick={handleSaveBtn}>
-                    {submitBtnText}
-                  </Button>
-                )}
-                {handleSaveBtn && submitAddons}
-              </ButtonToolbar>
-            </Modal.Footer>
-          )}
+              )}
+              {handleSaveBtn && submitAddons}
+            </ButtonToolbar>
+          </Modal.Footer>
+        )}
       </Modal>
     );
   }
