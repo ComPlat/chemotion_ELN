@@ -71,6 +71,8 @@ import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElemen
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const MWPrecision = 6;
 
@@ -600,6 +602,27 @@ export default class SampleDetails extends React.Component {
         eventKey={index}
         title="Versions"
         key={`Versions_Sample_${sample.id.toString()}`}
+      >
+        <ListGroupItem>
+          <VersionsTable
+            type="samples"
+            id={sample.id}
+            element={sample}
+            parent={this}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
+  versioningTable(index) {
+    const { sample } = this.state;
+
+    return (
+      <Tab
+        eventKey={index}
+        title="All Versions"
+        key={`All_Versions_Sample_${sample.id.toString()}`}
       >
         <ListGroupItem>
           <VersionsTable
