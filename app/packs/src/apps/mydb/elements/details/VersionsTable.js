@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Pager } from 'react-bootstrap';
@@ -7,8 +8,14 @@ import VersionsTableTime from 'src/apps/mydb/elements/details/VersionsTableTime'
 import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableChanges';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
 
-export default class VersionsTable extends Component {
+export class VersionsTable extends Component {
+  // eslint-disable-next-line react/static-property-placement
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
 
@@ -36,8 +43,20 @@ export default class VersionsTable extends Component {
   };
 
   reloadEntity = () => {
-    const { id, type, element } = this.props;
+    const {
+      id, type, element, parent
+    } = this.props;
+    const { versions } = this.state;
+    const { VersioningStore } = this.context;
     const entityType = type.slice(0, -1);
+
+    if (entityType === 'sample') {
+      SamplesFetcher.fetchById(id).then((result) => {
+        parent.setState({ sample: result });
+      });
+    }
+
+    VersioningStore.updateVersions(JSON.stringify(versions));
 
     if (entityType === 'reaction') {
       DetailActions.close(element, true);
@@ -72,6 +91,8 @@ export default class VersionsTable extends Component {
 
   render() {
     const { versions, page, pages } = this.state;
+    const { VersioningStore } = this.context;
+    VersioningStore.updateVersions(JSON.stringify(versions));
 
     const pagination = () => (
       <Pager>
@@ -148,7 +169,7 @@ export default class VersionsTable extends Component {
         </ul>
         <BootstrapTable
           keyField="id"
-          data={versions}
+          data={JSON.parse(VersioningStore.versions)}
           columns={columns}
           expandRow={expandRow}
           hover
@@ -161,12 +182,11 @@ export default class VersionsTable extends Component {
   }
 }
 
+export default observer(VersionsTable);
+
 VersionsTable.propTypes = {
   type: PropTypes.string.isRequired,
   id: PropTypes.number.isRequired,
-  element: PropTypes.object,
-};
-
-VersionsTable.defaultProps = {
-  element: {}
+  element: PropTypes.object.isRequired,
+  parent: PropTypes.object.isRequired,
 };
