@@ -140,17 +140,17 @@ export default class CurationModal extends Component {
       this.setState({ show: true }, this.updateDescription);
     }
 
-    handleSuggest(miss_spelled_words, index){ //handles generating the suggestion list
+    handleSuggest(miss_spelled_words, index){ //handles generating the suggestion list (Right now Typo js suggest feature is quite weak and it would be better if this was handled by the AI modal in the future)
       var Typo = require("typo-js");
-      var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
-      var mispelled_word = miss_spelled_words[index]
+      var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" }); // generates the en_US dictionary
+      var mispelled_word = miss_spelled_words[index] // word from misspelled word array
      
       if (typeof mispelled_word === "string" )
       {  
-        if (/(.)\1{4,}/.test(mispelled_word))
+        if (/(.)\1{4,}/.test(mispelled_word)) // detects if the word is a long string of the same character. This causes the suggestion to function to run for a long time and can lead to crashes
         {
 
-          var repeatedCharacter = mispelled_word.match(/(.)\1{4,}/)
+          var repeatedCharacter = mispelled_word.match(/(.)\1{4,}/) 
           var newMisspeled = mispelled_word.replace(/(.)\1{4,}/, repeatedCharacter[0].charAt(0)  ) 
           var ms_suggestion = [newMisspeled]
         }
@@ -191,15 +191,16 @@ export default class CurationModal extends Component {
     spellCheck(description){ // function takes description string and updates misspelled words state with misspellings
       if(description !== undefined){
         // var Typo = require("typo-js");
+        // dictionary objects are called from state
         var cus_dictionary = this.state.cus_dictionary
         var  uk_dictionary = this.state.uk_dictionary
         var  us_dictionary = this.state.us_dictionary
         var ms_words = [];
         var ss_list = []
         var italics_array =[]
-        var word_array = description.split(/\b/g)
-  
-        if (this.state.dictionaryLanguage === "UK"){
+        var word_array = description.split(/\b/g) // word_array is the description split by word breaks 
+
+        if (this.state.dictionaryLanguage === "UK"){ // if stament here determines what version of English is used
           var en_dictionary = uk_dictionary
           console.log("uk used")
         }
@@ -207,51 +208,52 @@ export default class CurationModal extends Component {
           var en_dictionary = us_dictionary
           console.log("us used")
         }
-        for (let i = 0; i < word_array.length; i++){
-          word_array[i] = word_array[i].replace(/\[\d+\]/g, "")
-          if (/\b[\p{Script=Latin}]+\b/giu.test(word_array[i])){
-            if(word_array[i].includes("°") ){
+        for (let i = 0; i < word_array.length; i++){ // loops along each word in the word array
+          word_array[i] = word_array[i].replace(/\[\d+\]/g, "") //removes citation brackets
+          if (/\b[\p{Script=Latin}]+\b/giu.test(word_array[i])){ // tests if the word is in latin characters aka no numbers, this is done to account for accented characters
+            if(word_array[i].includes("°") ){ // if the degree sign is used it defults to the word is spelled correctly
               var spell_checked_word = true
             }
-            if(/\/.+\//gi.test(word_array[i])){
+            if(/\/.+\//gi.test(word_array[i])){ // tests looking for italics if true pushes the word to the ittalics array and marks the word as corrrect
              
               italics_array.push(word_array[i])
               var spell_checked_word = true
             }
             else{
-              if(/[a-z]*\-[a-z]*/.test(word_array[i]))
+              if(/[a-z]*\-[a-z]*/.test(word_array[i])) // hyphanted words are processed here currently it ignores words with hyphans
                 {}
               else{
-                if(/'/.test( word_array[i])){
+                if(/'/.test( word_array[i])){  // removes any leading quotation marks and returns the modified word
                   var sliceIndex = word_array[i].indexOf("\'")
                   word_array[i] = word_array[i].substring(0 ,sliceIndex) 
                 }
-                if(/—/.test(word_array[i])){
+                if(/—/.test(word_array[i])){ // if a hyphan is detected it splits them by the hyphan and enters both new words  to the word array
                   var sliceIndex = word_array[i].indexOf("—")
                   word_array[i] = word_array[i].substring(0,sliceIndex)
                   word_array.push(word_array[i].slice(sliceIndex))
                 } 
-                var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);
+                var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]); //  here the processed word string is then checked against the entries in the custom and UK or US dictionary
               }
           }}
           else
-            {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
+            {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i])) // this regex string is used to detect any words with numbers with the molecular forumula scheme
               {ss_list.push(word_array[i])}
-            else{
+            else{ // if not a molecular formula the word with a number in it is marked as correct and the next word is processed
               var spell_checked_word = true; }
             }
-          if(spell_checked_word == false){
+          if(spell_checked_word == false){ 
+            // if the word is not found in either dictionarys spell_checked_word is set to false and the word is then pushed to the missspelled words array
             ms_words.push(word_array[i]);
     
           } 
         }
-        ms_words = ms_words.filter((x)=> x != "" )
-        this.setState({mispelledWords: ms_words, subscriptList:ss_list}, ()=>{
+        ms_words = ms_words.filter((x)=> x != "" ) // any empty strings are filtered out of the array
+        this.setState({mispelledWords: ms_words, subscriptList:ss_list}, ()=>{// the states are then set here
     
         })
-        this.handleSuggest(ms_words, 0)
+        this.handleSuggest(ms_words, 0) // handled sugest is called to generate the list when spellCheck is run on opening the modal
         }
-      else{}}
+      else{}} // here is the return if the descritption input is undefined
 
     cleanMisspelledArray(input_array){ // removes empty values from misspelled words array
       const counts = {};
@@ -412,27 +414,23 @@ export default class CurationModal extends Component {
       var Typo = require("typo-js");
       var uuid = require("uuid") 
       var uid = uuid.v4()
-      
-      Typo.prototype._readFile.path = Typo.prototype._readFile.path + `?t=` + uid	
-      console.log(Typo.prototype._readFile)
+      Typo.prototype._readFile.path = Typo.prototype._readFile.path + `?t=` + uid	// addes random unique ID to xmlHttprequest for dictionary retrieval
       await AutomticCurationFetcher.amendFetch(input),
         this.setState({cus_dictionary: new Typo("custom",false,false,{ dictionaryPath: "/typojs" })})
     }
 
-    scrollToId(){ // autoscrolls to incorrect word selection 
+    scrollToId(){ // autoscrolls to incorrect word selection (slightly buggy if a misspelled word is repeated)
       var sugIndex = this.state.suggestionIndex
       var idArray = this.state.idKeyArray
       var querryselector = `#\\3${idArray[sugIndex]}`
-      console.log(querryselector)
       var element = document.querySelector(querryselector) 
-      // console.log(element)
       if(element !== null){
       element.scrollIntoView({behavior :"smooth", alignToTop: true})
     }
   }
 
     render() {
-      var CustomPopover = () =>  (
+      var CustomPopover = () =>  ( // prompt to confirm if you want to send the word to the custom dictionary or remove the last entered
           <Grid className="customPopover">
             <Col md={3} style={{paddingLeft: 0, marginLeft: "-15px"}}>
               <h4><b>{this.state.correctWord} </b> added To dictionary
@@ -448,11 +446,11 @@ export default class CurationModal extends Component {
         );
      
     
-      const Compo = ({ text, mispelledWords,index ,subscriptList}) => {
+      const Compo = ({ text, mispelledWords,index ,subscriptList}) => { // componet that renders the highlighted description
         return <div>{this.getHighlightedText(text, mispelledWords,index, subscriptList )}</div>;
       };
 
-      const SuggestBox = ({suggest_array, suggestionIndex}) =>{
+      const SuggestBox = ({suggest_array, suggestionIndex}) =>{ // componet for loading the sugestion array
         if (suggestionIndex <  this.state.mispelledWords.length ){
           return suggest_array.map((suggestion,id) =>  (
             <div key={id}>
@@ -476,7 +474,7 @@ export default class CurationModal extends Component {
         }
       };
 
-      const DictionaryButton = ({state})=>{
+      const DictionaryButton = ({state})=>{ // add to dictionary componet if button is clicked form and button are changed to a confirmation prompt called CustomPopover
         if (state == true){
           return(<></>)
         }
@@ -511,7 +509,7 @@ export default class CurationModal extends Component {
 
       return (
         <span>
-          <Button  onClick={() => {this.handleShow()}} style={{float:"none"}}  
+          <Button  onClick={() => {this.handleShow()}} style={{float:"none"}}  // spell check button
           id={this.props.ref}>
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
@@ -562,15 +560,15 @@ export default class CurationModal extends Component {
                 <Button onClick={()=>{this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords); this.scrollToId()}}>Ignore</Button>
                 <Button onClick={()=>this.reverseSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Go Back</Button>
                 <Button onClick={()=>
-                {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
-                this.convertStringToObject(this.state.desc)
-                this.scrollToId()}}
-                disabled={this.state.showCorrectButton}>
-                Correct</Button>
+                  {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
+                  this.convertStringToObject(this.state.desc)
+                  this.scrollToId()}}
+                  disabled={this.state.showCorrectButton}>
+                  Correct
+                </Button>
                 {/* <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button> */}
                 {/* save issue is here */}
                 <div className='pull-right'><Button onClick={()=> {
-            
                   this.convertStringToObject(this.state.desc); 
                   this.handleClose()
                   }}> 
