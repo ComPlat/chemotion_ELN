@@ -1,6 +1,5 @@
-/* global describe, it */
-
 import React from 'react';
+import { Card } from 'react-bootstrap';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
@@ -8,61 +7,59 @@ import { SampleSolventGroup, SolventDetails }
   from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
 import SampleFactory from 'factories/SampleFactory';
 
+import {
+  describe, it
+} from 'mocha';
+
 Enzyme.configure({
   adapter: new Adapter(),
 });
 
-describe('SampleSolventGroup.render()', async () => {
+describe('SampleSolventGroup', () => {
   const dropSample = () => {};
   const deleteSolvent = () => {};
   const onChangeSolvent = () => {};
-  const sample = await SampleFactory.build('SampleFactory.water_100g');
   const materialGroup = 'none';
 
-  describe('when sample has no solvents', async () => {
-    const wrapper = shallow(
-      <SampleSolventGroup
-        dropSample={dropSample}
-        deleteSolvent={deleteSolvent}
-        onChangeSolvent={onChangeSolvent}
-        sample={sample}
-        materialGroup={materialGroup}
-      />
-    );
-
+  describe('when sample has no solvents', () => {
     it('renders a blank solvent area', async () => {
-      const html = wrapper.html();
-      expect(html.includes('<h5 style="font-weight:bold">Solvents:</h5>')).toEqual(true);
-      expect(html.includes('<td style="width:50%;font-weight:bold">Label:</td>')).toEqual(false);
-      expect(html.includes('<td style="width:50%;font-weight:bold">Ratio:</td>')).toEqual(false);
+      const sample = await SampleFactory.build('SampleFactory.water_100g');
+      const wrapper = shallow(
+        <SampleSolventGroup
+          dropSample={dropSample}
+          deleteSolvent={deleteSolvent}
+          onChangeSolvent={onChangeSolvent}
+          sample={sample}
+          materialGroup={materialGroup}
+        />
+      );
+
+      expect(wrapper.contains(<Card.Header>Solvents</Card.Header>)).toBeTruthy();
     });
   });
 
-  describe('when sample has two solvents', async () => {
-    const sampleWithSolvents = await SampleFactory.build('SampleFactory.water_100g');
-    sampleWithSolvents.solvent = [{ label: 'water', ratio: 1.0 }, { label: 'ethanol', ratio: 2.0 }];
-    const wrapper = shallow(
-      <SampleSolventGroup
-        dropSample={dropSample}
-        deleteSolvent={deleteSolvent}
-        onChangeSolvent={onChangeSolvent}
-        sample={sampleWithSolvents}
-        materialGroup={materialGroup}
-      />
-    );
-    it('renders a solvent area with header and two entries', () => {
-      const html = wrapper.html();
+  describe('when sample has two solvents', () => {
+    it('renders a solvent area with header and two entries', async () => {
+      const sample = await SampleFactory.build('SampleFactory.water_100g');
+      sample.solvent = [{ label: 'water', ratio: 1.0 }, { label: 'ethanol', ratio: 2.0 }];
 
-      expect(html.includes('<h5 style="font-weight:bold">Solvents:</h5>')).toEqual(true);
-      expect(html.includes('<td style="width:50%;font-weight:bold">Label:</td>')).toEqual(true);
-      expect(html.includes('<td style="width:50%;font-weight:bold">Ratio:</td>')).toEqual(true);
-      expect(html.includes('value="water"')).toEqual(true);
-      expect(html.includes('value="ethanol"')).toEqual(true);
+      const wrapper = shallow(
+        <SampleSolventGroup
+          dropSample={dropSample}
+          deleteSolvent={deleteSolvent}
+          onChangeSolvent={onChangeSolvent}
+          sample={sample}
+          materialGroup={materialGroup}
+        />
+      );
+
+      expect(wrapper.contains(<Card.Header>Solvents</Card.Header>)).toBeTruthy();
+      expect(wrapper.find(SolventDetails)).toHaveLength(2);
     });
   });
 });
 
-describe('SolventDetails.render()', () => {
+describe('SolventDetails', () => {
   const deleteSolvent = () => {};
   const onChangeSolvent = () => {};
 
