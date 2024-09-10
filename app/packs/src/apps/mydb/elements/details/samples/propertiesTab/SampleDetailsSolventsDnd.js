@@ -38,9 +38,7 @@ const collect = (connect, monitor) => ({
 class SampleDetailsSolventsDnd extends React.Component {
   render() {
     const {
-      sample,
-      headIndex, materialGroup, deleteMaterial, onChange,
-      addDefaultSolvent, dropMaterial, switchEquiv,
+      sample, materialGroup,
       isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent
     } = this.props;
 
@@ -56,13 +54,7 @@ class SampleDetailsSolventsDnd extends React.Component {
           dropSample={dropSample}
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
-          headIndex={headIndex ?? 0}
           materialGroup={materialGroup ?? ''}
-          deleteMaterial={deleteMaterial ?? (() => true)}
-          onChange={onChange ?? (() => true)}
-          addDefaultSolvent={addDefaultSolvent ?? (() => true)}
-          dropMaterial={dropMaterial ?? (() => true)}
-          switchEquiv={switchEquiv ?? (() => true)}
         />
       </div>
     );
@@ -77,7 +69,6 @@ export default DropTarget(
 
 SampleDetailsSolventsDnd.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
-  headIndex: PropTypes.number,
   onChangeSolvent: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
   isOver: PropTypes.bool.isRequired,
