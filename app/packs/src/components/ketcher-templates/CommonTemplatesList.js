@@ -8,8 +8,8 @@ import {
   Tooltip,
   Card,
   Form,
+  Button,
 } from 'react-bootstrap';
-import CommonTemplateItem from 'src/components/ketcher-templates/CommonTemplateItem';
 
 const debounce = (func, delay) => {
   let timeoutId;
@@ -51,15 +51,14 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
           <i className="fa fa-info" />
         </OverlayTrigger>
       </div>
-      <div
-        className="ketcher-select-common-template"
+      <Button
+        className="w-100 text-left d-flex justify-content-between align-items-baseline"
+        variant="light"
         onClick={() => setCommonTemplateModal(true)}
       >
         {selectedItem ? selectedItem?.name : 'Select Template'}
-        <div className="select-template-badge">
-          <i className="fa fa-caret-down" />
-        </div>
-      </div>
+        <i className="fa fa-caret-down" />
+      </Button>
 
       <Modal
         centered
@@ -78,13 +77,21 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
           />
           {filteredOptions.length != options.length && (
             <div className="my-2">
-              {filteredOptions.length} out of {options.length} templates found
+              {`${filteredOptions.length} out of ${options.length} templates found`}
             </div>
           )}
           <Card className="mt-2">
-            <Card.Body className="overflow-y-scroll vh-50">
+            <Card.Body className="d-flex flex-column gap-2 overflow-y-scroll vh-50">
               {filteredOptions.map((item, idx) => (
-                <CommonTemplateItem key={idx} item={item} onClickItem={(value) => onSelectItem(value)} />
+                <Button
+                  key={idx}
+                  className="d-flex gap-2 w-100 align-items-baseline"
+                  variant="light"
+                  onClick={() => onSelectItem(item)}
+                >
+                  <i className="fa fa-arrows-alt" />
+                  {item?.name}
+                </Button>
               ))}
             </Card.Body>
           </Card>
