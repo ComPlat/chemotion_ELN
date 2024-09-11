@@ -65,9 +65,9 @@ export default class ConfirmClose extends Component {
           </Button>
         </OverlayTrigger>
         <Overlay
-          target={buttonRef.current}
+          target={() => buttonRef.current}
           show={this.state.showTooltip}
-          placement= "bottom"
+          placement="bottom"
           rootClose
           onHide={() => this.setState({ showTooltip: false })}
         >
