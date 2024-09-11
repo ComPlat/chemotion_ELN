@@ -55,26 +55,6 @@
         }
     }
 
-    .research-plan-field-drop-target {
-        height: 20px;
-
-        .indicator {
-            height: 10px;
-        }
-
-        &.can-drop {
-            .indicator {
-                border-bottom: 4px dashed lightgray;
-            }
-        }
-
-        &.is-over {
-            .indicator {
-                border-bottom: 4px solid lightgray;
-            }
-        }
-    }
-
     .research-plan-field-drop-add-field {
         button {
             width: 60px;

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import classnames from 'classnames';
 
 const spec = {
   drop(props) {
@@ -17,23 +18,21 @@ const collect = (connect, monitor) => ({
   canDrop: monitor.canDrop()
 });
 
-
 class ResearchPlanDetailsDropTarget extends Component {
   render() {
-    const {
-      index, connectDropTarget, isOver, canDrop
-    } = this.props;
+    const { connectDropTarget, isOver, canDrop } = this.props;
 
-    let className = 'research-plan-field-drop-target';
+    const className = classnames(
+      'p-2',
+      {
+        'dnd-zone': canDrop,
+        'dnd-zone-over': isOver,
+      }
+    );
 
-    if (isOver) {
-      className += ' is-over';
-    }
-    if (canDrop) {
-      className += ' can-drop';
-    }
-
-    return connectDropTarget(<div className={className}><div className="indicator" /></div>);
+    return connectDropTarget(
+      <div className={className} />
+    );
   }
 }
 
