@@ -180,7 +180,7 @@ function GeneralMaterialGroup({
   );
 
   return (
-    <Table responsive className="w-100 borderless">
+    <Table responsive className="w-100 borderless" size="sm">
       <colgroup>
         <col style={{ width: '4%' }} />
         <col

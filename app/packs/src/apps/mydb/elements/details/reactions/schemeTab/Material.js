@@ -161,6 +161,7 @@ class Material extends Component {
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
               variant={material.amount_unit === 'l' ? 'success' : 'light'}
+              size="sm"
             />
           </div>
         </OverlayTrigger>
@@ -185,6 +186,7 @@ class Material extends Component {
           metricPrefix="n"
           metricPrefixes={['n']}
           variant={material.error_loading ? 'error' : 'success'}
+          size="sm"
           precision={3}
           disabled={!permitOn(this.props.reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
           onChange={loading => this.handleLoadingChange(loading)}
@@ -269,6 +271,7 @@ class Material extends Component {
     }
     return (
       <NumeralInputWithUnitsCompo
+        size="sm"
         precision={4}
         value={material.equivalent}
         disabled={!permitOn(this.props.reaction) || ((((material.reference || false) && material.equivalent) !== false) || this.props.lockEquivColumn)}
@@ -290,6 +293,7 @@ class Material extends Component {
     return (
       <td colSpan={colSpan} style={style}>
         <NumeralInputWithUnitsCompo
+          size="sm"
           precision={4}
           variant="success"
           value={updateValue}
@@ -630,6 +634,7 @@ class Material extends Component {
             onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.error_mass ? 'error' : massBsStyle}
+            size="sm"
             name="molecular-weight"
           />
         </div>
@@ -689,6 +694,7 @@ class Material extends Component {
               overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
               <div>
                 <NumeralInputWithUnitsCompo
+                  size="sm"
                   key={material.id}
                   value={material.coefficient ?? 1}
                   onChange={this.handleCoefficientChange}
@@ -713,6 +719,7 @@ class Material extends Component {
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
               variant={material.amount_unit === 'mol' ? 'success' : 'default'}
+              size="sm"
             />
           </td>
 
@@ -729,6 +736,7 @@ class Material extends Component {
               disabled
               onChange={e => this.handleAmountUnitChange(e, material.concn)}
               onMetricsChange={this.handleMetricsChange}
+              size="sm"
             />
           </td>
 

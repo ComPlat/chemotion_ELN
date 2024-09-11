@@ -147,7 +147,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      variant, disabled, label, unit, name
+      size, variant, disabled, label, unit, name
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -175,6 +175,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           active
           onClick={() => { this.togglePrefix(unit); }}
           variant={variantBtnAfter}
+          size={size}
         >
           {mp + unit}
         </Button>
@@ -190,6 +191,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
               type="text"
               disabled={inputDisabled}
               variant={variant}
+              size={size}
               value={val() || ''}
               onChange={event => this._handleInputValueChange(event)}
               onFocus={event => this._handleInputValueFocus(event)}
@@ -209,6 +211,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             type="text"
             disabled={inputDisabled}
             variant={variant}
+            size={size}
             value={val() || ''}
             onChange={event => this._handleInputValueChange(event)}
             onFocus={event => this._handleInputValueFocus(event)}
@@ -233,6 +236,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   disabled: PropTypes.bool,
   label: PropTypes.node,
   variant: PropTypes.string,
+  size: PropTypes.string,
   name: PropTypes.string
 };
 
@@ -242,7 +246,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   units: [],
   disabled: false,
   block: false,
-  bsSize: 'small',
   variant: 'light',
   name: ''
 };
