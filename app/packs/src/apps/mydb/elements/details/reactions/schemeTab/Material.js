@@ -716,60 +716,6 @@ class Material extends Component {
             />
           </td>
 
-          <td>
-            <OverlayTrigger
-              delay="100"
-              placement="top"
-              overlay={
-                <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material, reaction)}</Tooltip>
-              }>
-              <div>
-                <NumeralInputWithUnitsCompo
-                  key={material.id}
-                  value={material.amount_g}
-                  unit="g"
-                  metricPrefix={metric}
-                  metricPrefixes={metricPrefixes}
-                  precision={4}
-                  disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
-                  onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
-                  onMetricsChange={this.handleMetricsChange}
-                  variant={material.error_mass ? 'error' : massBsStyle}
-                  name="molecular-weight"
-                />
-              </div>
-            </OverlayTrigger>
-          </td>
-
-          <td style={{ maxWidth: '4%' }}>
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.concn}
-              unit="mol/l"
-              metricPrefix={metricMolConc}
-              metricPrefixes={metricPrefixesMolConc}
-              precision={4}
-              disabled
-              onChange={(e) => this.handleAmountUnitChange(e, material.concn)}
-              onMetricsChange={this.handleMetricsChange}
-            />
-          </td>
-
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.amount_mol}
-              unit="mol"
-              metricPrefix={metricMol}
-              metricPrefixes={metricPrefixesMol}
-              precision={4}
-              disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
-              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'success' : 'light'}
-            />
-          </td>
-
           {this.materialLoading(material, showLoadingColumn)}
 
           <td>
