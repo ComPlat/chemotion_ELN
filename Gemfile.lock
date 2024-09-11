@@ -637,7 +637,7 @@ GEM
       railties (>= 5.2)
     reverse_markdown (2.1.1)
       nokogiri
-    rexml (3.3.5)
+    rexml (3.3.6)
       strscan
     rmagick (5.5.0)
       observer (~> 0.1)
