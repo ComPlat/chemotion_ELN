@@ -427,7 +427,7 @@ export default class ChemicalTab extends React.Component {
         <FormGroup>
           {checkLabel}
           <FormControl
-            componentClass={componentClass}
+            as={componentClass}
             id={`textInput_${label}`}
             type="text"
             value={value}
@@ -496,7 +496,6 @@ export default class ChemicalTab extends React.Component {
           <InputGroup.Text>{subLabel}</InputGroup.Text>
           <FormGroup controlId="subLabel">
             <FormControl
-              componentClass="input"
               value={value}
               onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
             />
@@ -1140,7 +1139,7 @@ export default class ChemicalTab extends React.Component {
             <div className="properties-modal-dev">
               <FormGroup controlId="propertiesModal">
                 <FormControl
-                  componentClass="textarea"
+                  as="textarea"
                   className="properties-modal"
                   readOnly
                   disabled

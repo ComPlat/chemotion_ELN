@@ -133,7 +133,7 @@ const Config = (props) => {
       <Form.Group>
         <Form.Label>File description</Form.Label>
         <Form.Control
-          componentClass="textarea"
+          as="textarea"
           onChange={ReportActions.updateFileDescription}
           rows={2}
           value={fileDescription}

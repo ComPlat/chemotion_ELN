@@ -266,7 +266,7 @@ export default class ThirdPartyApp extends React.Component {
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
             <FormGroup controlId="formControlName">
-              <Col componentClass={ControlLabel} sm={3}>
+              <Col as={ControlLabel} sm={3}>
                 Name:
               </Col>
               <Col sm={9}>
@@ -281,7 +281,7 @@ export default class ThirdPartyApp extends React.Component {
             </FormGroup>
 
             <FormGroup controlId="formControlIPAdress">
-              <Col componentClass={ControlLabel} sm={3}>
+              <Col as={ControlLabel} sm={3}>
                 IP address:
               </Col>
               <Col sm={9}>
@@ -296,7 +296,7 @@ export default class ThirdPartyApp extends React.Component {
             </FormGroup>
 
             <FormGroup controlId="formControlFileType">
-              <Col componentClass={ControlLabel} sm={3}>
+              <Col as={ControlLabel} sm={3}>
                 Compatible File types (MIME):
               </Col>
               <Col sm={9}>
@@ -356,7 +356,7 @@ export default class ThirdPartyApp extends React.Component {
           <div className="col-md-12">
 
             <FormGroup controlId="formControlName">
-              <Col componentClass={ControlLabel} sm={3}>
+              <Col as={ControlLabel} sm={3}>
                 Name:
               </Col>
               <Col sm={9}>
@@ -365,7 +365,7 @@ export default class ThirdPartyApp extends React.Component {
             </FormGroup>
 
             <FormGroup controlId="formControlIPAdress">
-              <Col componentClass={ControlLabel} sm={3}>
+              <Col as={ControlLabel} sm={3}>
                 IP address:
               </Col>
               <Col sm={9}>
@@ -374,7 +374,7 @@ export default class ThirdPartyApp extends React.Component {
             </FormGroup>
 
             <FormGroup controlId="formControlFileTypes">
-              <Col componentClass={ControlLabel} sm={3}>
+              <Col as={ControlLabel} sm={3}>
                 File types (MIME):
               </Col>
               <Col sm={9}>

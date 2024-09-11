@@ -7,11 +7,12 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import Attachment from 'src/models/Attachment';
 
+import { Button } from 'react-bootstrap';
+
 Enzyme.configure({ adapter: new Adapter() });
 
 describe('ImageAnnotationEditButton', () => {
   const pngAttachment = new Attachment({ filename: 'example.png' });
-  const gifAttachment = new Attachment({ filename: 'example.gif' });
   const parent = {};
 
   describe('.render()', () => {
@@ -20,9 +21,10 @@ describe('ImageAnnotationEditButton', () => {
       const wrapper = shallow(<ImageAnnotationEditButton attachment={pngAttachment} parent={parent} />);
 
       it('button is rendered but disabled', () => {
-        expect(wrapper.html())
-          .toEqual('<span><button disabled="" type="button" '
-           + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></button></span>');
+        const button = wrapper.find(Button);
+        expect(button.prop('disabled')).toBeTruthy();
+
+        expect(wrapper.containsMatchingElement(<i className="fa fa-pencil-square-o text-white" />)).toBeTruthy();
       });
     });
 
@@ -31,9 +33,10 @@ describe('ImageAnnotationEditButton', () => {
       const wrapper = shallow(<ImageAnnotationEditButton attachment={pngAttachment} parent={parent} />);
 
       it('button is rendered and not disabled', () => {
-        expect(wrapper.html())
-          .toEqual('<span><button type="button" class="btn btn-xs btn-warning">'
-           + '<i class="fa fa-pencil-square-o" aria-hidden="true"></i></button></span>');
+        const button = wrapper.find(Button);
+        expect(button.prop('disabled')).toBeFalsy();
+
+        expect(wrapper.containsMatchingElement(<i className="fa fa-pencil-square-o text-white" />)).toBeTruthy();
       });
     });
 

@@ -227,7 +227,7 @@ class UserLabelModal extends Component {
     return (
       <Form horizontal>
         <FormGroup controlId="accessLevelInput">
-          <Col componentClass={ControlLabel} sm={2}>
+          <Col as={ControlLabel} sm={2}>
             Public?
           </Col>
           <Col sm={10}>
@@ -242,7 +242,7 @@ class UserLabelModal extends Component {
           </Col>
         </FormGroup>
         <FormGroup controlId="titleInput">
-          <Col componentClass={ControlLabel} sm={2}>
+          <Col as={ControlLabel} sm={2}>
             Title
           </Col>
           <Col sm={10}>
@@ -255,7 +255,7 @@ class UserLabelModal extends Component {
         </FormGroup>
 
         <FormGroup controlId="descInput">
-          <Col componentClass={ControlLabel} sm={2}>
+          <Col as={ControlLabel} sm={2}>
             Description
           </Col>
           <Col sm={10}>
@@ -268,7 +268,7 @@ class UserLabelModal extends Component {
         </FormGroup>
 
         <FormGroup controlId="colorInput">
-          <Col componentClass={ControlLabel} sm={2}>
+          <Col as={ControlLabel} sm={2}>
             Background Color
           </Col>
           <Col sm={10}>

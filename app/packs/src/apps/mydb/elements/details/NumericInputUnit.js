@@ -101,7 +101,7 @@ export default function NumericInputUnit(props) {
 NumericInputUnit.propTypes = {
   onInputChange: PropTypes.func,
   unit: PropTypes.string,
-  numericValue: PropTypes.number,
+  numericValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   label: PropTypes.node,
   field: PropTypes.string,
   inputDisabled: PropTypes.bool,

@@ -138,21 +138,11 @@ function SampleSolventGroup({
 }
 
 SampleSolventGroup.propTypes = {
-  materialGroup: PropTypes.string.isRequired,
-  headIndex: PropTypes.number.isRequired,
-  deleteMaterial: PropTypes.func.isRequired,
-  onChange: PropTypes.func.isRequired,
-  showLoadingColumn: PropTypes.bool,
-  addDefaultSolvent: PropTypes.func.isRequired,
-  dropMaterial: PropTypes.func.isRequired,
+  sample: PropTypes.object.isRequired,
   dropSample: PropTypes.func.isRequired,
-  switchEquiv: PropTypes.func.isRequired,
-  lockEquivColumn: PropTypes.bool
-};
-
-SampleSolventGroup.defaultProps = {
-  showLoadingColumn: false,
-  lockEquivColumn: false
+  deleteSolvent: PropTypes.func.isRequired,
+  onChangeSolvent: PropTypes.func.isRequired,
+  materialGroup: PropTypes.string.isRequired,
 };
 
 export { SampleSolventGroup, SolventDetails };

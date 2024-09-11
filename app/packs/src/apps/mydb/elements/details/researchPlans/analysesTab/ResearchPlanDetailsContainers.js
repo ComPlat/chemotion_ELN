@@ -240,11 +240,11 @@ export default class ResearchPlanDetailsContainers extends Component {
 
       return (
         <div className="d-flex w-100 mb-0 bg-gray-200 p-4 align-items-center">
-          <strike className="flex-grow-1">
+          <span className="flex-grow-1 text-decoration-line-through">
             {container.name}
             {titleKind}
             {titleStatus}
-          </strike>
+          </span>
           <Button
             className="ml-auto"
             size="sm"

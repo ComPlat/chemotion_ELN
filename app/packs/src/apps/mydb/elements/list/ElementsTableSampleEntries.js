@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import {
   Table, Button, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
+import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -329,7 +330,7 @@ export default class ElementsTableSampleEntries extends Component {
       const applyHighlight = selected || keyboardSeletectedElementId === sample.id
 
       return (
-        <tr key={sample.id} className={applyHighlight && 'bg-primary'}>
+        <tr key={sample.id} className={classnames({ 'bg-primary': applyHighlight })}>
           <td width="30px">
             <ElementCheckbox
               element={sample}
@@ -338,7 +339,7 @@ export default class ElementsTableSampleEntries extends Component {
             />
           </td>
           <td
-            className={applyHighlight && ' text-white'}
+            className={classnames({ 'text-white': applyHighlight })}
             onClick={() => showDetails(sample.id)}
             role="button"
           >

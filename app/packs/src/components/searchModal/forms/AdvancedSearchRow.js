@@ -169,7 +169,7 @@ const AdvancedSearchRow = ({ idx }) => {
               <Form.Control
                 type="text"
                 value={selection.value}
-                componentClass="textarea"
+                as="textarea"
                 rows={1}
                 className="value-select-unit"
                 placeholder="Search value"
@@ -195,7 +195,7 @@ const AdvancedSearchRow = ({ idx }) => {
               <Form.Control
                 type="text"
                 value={selection.value}
-                componentClass="textarea"
+                as="textarea"
                 rows={1}
                 className="value-select-unit"
                 placeholder="Search value"

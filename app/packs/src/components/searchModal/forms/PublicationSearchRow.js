@@ -59,7 +59,7 @@ const PublicationSearchRow = ({ idx }) => {
     <Form.Control
       type="text"
       value={selection.value}
-      componentClass="textarea"
+      as="textarea"
       rows={1}
       className="value-select"
       placeholder="Search value"

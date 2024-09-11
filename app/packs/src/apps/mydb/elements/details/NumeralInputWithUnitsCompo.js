@@ -147,7 +147,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      bsSize, variant, disabled, label, unit, name
+      variant, disabled, label, unit, name
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -175,7 +175,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
           active
           onClick={() => { this.togglePrefix(unit); }}
           variant={variantBtnAfter}
-          size={bsSize}
         >
           {mp + unit}
         </Button>
@@ -190,7 +189,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
             <Form.Control
               type="text"
               disabled={inputDisabled}
-              bsSize={bsSize}
               variant={variant}
               value={val() || ''}
               onChange={event => this._handleInputValueChange(event)}
@@ -210,7 +208,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
           <Form.Control
             type="text"
             disabled={inputDisabled}
-            bsSize={bsSize}
             variant={variant}
             value={val() || ''}
             onChange={event => this._handleInputValueChange(event)}
@@ -235,7 +232,6 @@ NumeralInputWithUnitsCompo.propTypes = {
   precision: PropTypes.number,
   disabled: PropTypes.bool,
   label: PropTypes.node,
-  bsSize: PropTypes.string,
   variant: PropTypes.string,
   name: PropTypes.string
 };
