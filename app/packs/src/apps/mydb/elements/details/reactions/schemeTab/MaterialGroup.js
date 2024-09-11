@@ -238,9 +238,7 @@ function GeneralMaterialGroup({
             )}
         </tr>
       </thead>
-      <tbody>
-        {contents.map((item) => item)}
-      </tbody>
+      {contents}
     </Table>
   );
 }
