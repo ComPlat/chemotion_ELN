@@ -1,11 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Alert } from 'react-bootstrap';
+import { Alert, Accordion } from 'react-bootstrap';
 
 import QcMolView from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/QcMolView';
 import { iconByMargin } from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/icon';
 import { tableIr } from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/ir';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const emptyBlock = () => (
   <div className="card-qc">
@@ -66,23 +65,18 @@ const BlockIr = ({ ansIr }) => {
           {`${(negOwn90)}/${(posOwn90 + negOwn90)}`}
           {iconByMargin(ansOwnF90, 0)}
         </div>
-        <Panel
-          className="qc-detail-panel"
-          id="qc-detail-panel-ir"
-          defaultExpanded={false}
-        >
-          <Panel.Heading>
-            <Panel.Title className="qc-detail-panel-title" toggle>
+
+        <Accordion id="qc-detail-panel-ir">
+          <Accordion.Item eventKey="qc-detail-panel-ir">
+            <Accordion.Header>
               IR Prediction Detail
-            </Panel.Title>
-          </Panel.Heading>
-          <Panel.Collapse>
-            <Panel.Body>
+            </Accordion.Header>
+            <Accordion.Body>
               <QcMolView svg={svg} />
               {tableIr(fgs)}
-            </Panel.Body>
-          </Panel.Collapse>
-        </Panel>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
       </div>
     </div>
   );
