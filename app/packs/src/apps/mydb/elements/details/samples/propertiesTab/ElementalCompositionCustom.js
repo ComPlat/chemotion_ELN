@@ -42,7 +42,7 @@ export default class ElementalCompositionCustom extends React.Component {
 
     // add new key to custom composition, so that we have new input
     keys.forEach((key) => {
-      newData[key] = parseFloat(el_composition.data[key]) || 0.0;
+      newData[key] = (el_composition.data[key] || 0.0);
       elements.push(
         <Form.Group key={key} className="d-flex align-items-baseline gap-2">
           <Form.Label>{key}</Form.Label>
