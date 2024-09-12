@@ -13,11 +13,8 @@ export default class ElementWellplateLabels extends React.Component {
       clicked: false
     }
 
-    let { element } = props;
-
     this.handleOnClick = this.handleOnClick.bind(this)
     this.closeWarning = this.closeWarning.bind(this)
-
     this.onStoreChange = this.onStoreChange.bind(this)
   }
 
