@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Navbar } from 'react-bootstrap';
+import { Nav, Navbar } from 'react-bootstrap';
 
 const contentComponents = {
   GenericElements: 'Generic Elements Designer',
@@ -11,9 +11,9 @@ const contentComponents = {
 export function FunctionLocation({ name }) {
   const text = contentComponents[name];
   return (
-    <span style={{ float: 'right' }}>
+    <span className="float-end">
       <span>You&apos;re in the </span>
-      <span style={{ fontWeight: 'bold' }}>{text}</span>
+      <span className="fw-bold">{text}</span>
     </span>
   );
 }
@@ -21,27 +21,29 @@ export function FunctionLocation({ name }) {
 FunctionLocation.propTypes = { name: PropTypes.string.isRequired };
 
 const createMenu = (text, type) => {
-  let menu = (
-    <a href={`/${type.split(/(?=[A-Z])/).join('_').toLowerCase()}_admin`}>
+  const href = `/${type.split(/(?=[A-Z])/).join('_').toLowerCase()}_admin`;
+  return (
+    <Nav.Link
+      key={type}
+      href={href}
+      active={text === type}
+    >
       {contentComponents[type]}
-    </a>
+    </Nav.Link>
   );
-  menu = text === type ? <b>{menu}</b> : menu;
-  return <Navbar.Text key={type}>{menu}</Navbar.Text>;
 };
 
 export function GenericMenu({ userName, text }) {
   return (
-    <Navbar staticTop>
-      <Navbar.Header>
-        <Navbar.Brand>
-          <a href="/">Back to MyDB</a>
-        </Navbar.Brand>
-        <Navbar.Toggle />
-      </Navbar.Header>
-      <Navbar.Collapse>
-        {['GenericElements', 'GenericSegments', 'GenericDatasets'].map((e) => createMenu(text, e))}
-        <Navbar.Text pullRight>{`Login as: ${userName}`}</Navbar.Text>
+    <Navbar className="bg-gray-200 px-4">
+      <Navbar.Brand href="/">
+        Back to MyDB
+      </Navbar.Brand>
+      <Nav>
+        {Object.keys(contentComponents).map((e) => createMenu(text, e))}
+      </Nav>
+      <Navbar.Collapse className="justify-content-end">
+        <Navbar.Text>{`Login as: ${userName}`}</Navbar.Text>
       </Navbar.Collapse>
     </Navbar>
   );
