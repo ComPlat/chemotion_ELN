@@ -5,6 +5,8 @@ require 'grape-entity'
 require 'grape-swagger'
 
 class API < Grape::API
+  include LogidzeModule
+
   format :json
   prefix :api
   version 'v1'

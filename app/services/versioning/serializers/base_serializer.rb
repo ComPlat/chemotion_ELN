@@ -15,8 +15,8 @@ module Versioning
           base = {} # track current version data
           return [] unless log_data
 
-          log_data.versions.group_by { |version| version.data['v'] }.each do |uuid, versions|
-            user_id = versions.first.data.dig('c', 'user_id')
+          log_data.versions.group_by { |version| version.data.dig('m', 'uuid') }.each do |uuid, versions|
+            user_id = versions.first.data.dig('m', '_r')
             time = versions.first.data['ts'] / 1000
             changes = versions.each_with_object({}) do |version, hash|
               hash.merge!(version.changes)
