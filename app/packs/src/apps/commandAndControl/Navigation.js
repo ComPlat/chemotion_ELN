@@ -42,7 +42,7 @@ export default class Navigation extends React.Component {
     const { currentUser } = this.state;
 
     return (
-      <Navbar className="navbar-custom justify-content-between px-4">
+      <Navbar className="navbar-custom justify-content-between gap-4 px-4">
         <Navbar.Text>
           <i
             className="fa fa-list"
