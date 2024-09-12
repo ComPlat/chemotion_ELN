@@ -102,7 +102,7 @@ export default class Navigation extends React.Component {
     const { isHidden } = this.props;
 
     return (
-      <>
+      <div className="d-flex gap-4">
         {!isHidden && (
           <Navbar.Text>
             <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
@@ -115,7 +115,7 @@ export default class Navigation extends React.Component {
           </Navbar.Text>
         )}
         <NavHead />
-      </>
+      </div>
     );
   }
 

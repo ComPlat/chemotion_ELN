@@ -4,8 +4,8 @@ import { NavDropdown, Navbar, Dropdown } from 'react-bootstrap';
 function NavHead() {
   const isOnMydb = window.location.href.match(/\/mydb/);
   return (
-    <Navbar.Brand className="ms-5 fs-2">
-      <NavDropdown title="Chemotion" id="bg-nested-dropdown-brand">
+    <Navbar.Brand className="fs-5">
+      <NavDropdown title="Chemotion">
         <NavDropdown.Item as="a" eventKey="11" href="https://chemotion.net/docs/eln/ui" target="_blank">
           Documentation
           <i className="fa fa-external-link float-end" aria-hidden="true" />
