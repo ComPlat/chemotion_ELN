@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -14,7 +13,7 @@ const ComputedPropLabel = ({ cprops }) => {
 
   let statusIcon = '';
   const style = {};
-  if (['success','completed'].includes(status)) {
+  if (['success', 'completed'].includes(status)) {
     statusIcon = 'fa-calculator';
     style.color = 'green';
   } else if (status === 'pending') {
