@@ -16,32 +16,6 @@
   }
 }
 
-@media only screen and (min-width: 1366px) and (min-height: 500px) {
-  .card-navigation {
-    /* position: fixed;
-    width: 100%; */
-    top: 0;
-    z-index: 5;
-  }
-
-  .card-content {
-    /* margin-top: 70px; */
-  }
-}
-
-@media only screen and (min-width: 1144px) and (max-width: 1365px) and (min-height: 500px) {
-  .card-navigation {
-    /* position: fixed;
-    width: 100%; */
-    top: 0;
-    z-index: 5;
-  }
-
-  .card-content {
-    /* margin-top: 120px; */
-  }
-}
-
 @mixin check-box-list-common($i) {
   list-style-type: none;
   -moz-column-gap: 20px;
