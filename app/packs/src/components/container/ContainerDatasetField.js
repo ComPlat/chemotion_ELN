@@ -81,7 +81,7 @@ class ContainerDatasetField extends Component {
           </OverlayTrigger>
           {this.removeButton(datasetContainer)}
         </div>
-        {isOver && canDrop && ColoredOverlay({color: 'green'})}
+        {isOver && canDrop && <ColoredOverlay color="green" />}
       </div>
     );
   }
