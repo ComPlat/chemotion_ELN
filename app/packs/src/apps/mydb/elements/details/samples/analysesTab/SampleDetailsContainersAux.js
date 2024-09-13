@@ -1,12 +1,14 @@
 import React from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import {
+  Button, Checkbox,
+} from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
+import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind, BuildSpectraComparedInfos } from 'src/utilities/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -17,6 +19,8 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import SpectraCompareButton from 'src/components/common/SpectraCompareButton';
+import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>
@@ -194,6 +198,14 @@ const headerBtnGroup = (
   const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
+  const spcCompareInfo = BuildSpectraComparedInfos(sample, container);
+  const toggleCompareModal = (e) => {
+    e.stopPropagation();
+    SpectraActions.ToggleCompareModal(container);
+    SpectraActions.LoadSpectraCompare.defer(spcCompareInfo); // going to fetch files base on spcInfos
+  };
+
+  const { spectraCompare } = SpectraStore.getState();
 
   return (
     <div className="upper-btn">
@@ -211,21 +223,32 @@ const headerBtnGroup = (
         analyses={[container]}
         ident={container.id}
       />
-      <SpectraEditorButton
-        element={sample}
-        hasJcamp={hasJcamp}
-        spcInfos={spcInfos}
-        hasChemSpectra={hasChemSpectra}
-        hasEditedJcamp={hasEditedJcamp}
-        toggleSpectraModal={toggleSpectraModal}
-        confirmRegenerate={confirmRegenerate}
-        confirmRegenerateEdited={confirmRegenerateEdited}
-        toggleNMRDisplayerModal={toggleNMRDisplayerModal}
-        hasNMRium={hasNMRium}
-      />
       <span className="button-right">
         <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
       </span>
+      {
+        container.extended_metadata.is_comparison ? (
+          <SpectraCompareButton
+            sample={sample}
+            spectraCompare={spectraCompare}
+            spcInfos={spcCompareInfo}
+            toggleSpectraModal={toggleCompareModal}
+          />
+        ): (
+          <SpectraEditorButton
+            element={sample}
+            hasJcamp={hasJcamp}
+            spcInfos={spcInfos}
+            hasChemSpectra={hasChemSpectra}
+            hasEditedJcamp={hasEditedJcamp}
+            toggleSpectraModal={toggleSpectraModal}
+            confirmRegenerate={confirmRegenerate}
+            confirmRegenerateEdited={confirmRegenerateEdited}
+            toggleNMRDisplayerModal={toggleNMRDisplayerModal}
+            hasNMRium={hasNMRium}
+          />
+        )
+      }
       <span
         className="button-right add-to-report"
         onClick={stopBubble}
@@ -269,6 +292,24 @@ const HeaderNormal = ({
   } else {
     hasPop = false;
   }
+
+  const { comparable_info } = container;
+  let is_comparison = false;
+  let layout = '';
+  let list_analyses = [];
+  let list_dataset = [];
+  let list_spectra_name = '';
+  if (comparable_info) {
+    is_comparison = comparable_info.is_comparison;
+    layout = comparable_info.layout;
+    const list_attachments_name = comparable_info.list_attachments.map((att) => {
+      return att.filename.split('.')[0];
+    });
+    list_spectra_name = list_attachments_name.join(', ');
+    list_analyses = comparable_info.list_analyses;
+    list_dataset = comparable_info.list_dataset;
+  }
+  
   return (
     <div
       className={`analysis-header ${mode === 'edit' ? '' : 'order'}`}
@@ -297,16 +338,27 @@ const HeaderNormal = ({
         }
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
-          <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">
-            Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
-          </div>
-          <div className="desc sub-title">
-            <span style={{ float: 'left', marginRight: '5px' }}>
-              Content:
-            </span>
-            <QuillViewer value={contentOneLine} />
-          </div>
+          {
+            is_comparison ? (
+              <>
+                <div className="sub-title">Layout: { layout }</div>
+                <div className="desc sub-title">Spectra: { list_spectra_name }</div>
+              </>
+            ) : (
+              <>
+                <div className="sub-title">Type: {kind}</div>
+                <div className="sub-title">
+                  Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
+                </div>
+                <div className="desc sub-title">
+                  <span style={{ float: 'left', marginRight: '5px' }}>
+                    Content:
+                  </span>
+                  <QuillViewer value={contentOneLine} />
+                </div>
+              </>
+            )
+          }
         </div>
       </div>
     </div>

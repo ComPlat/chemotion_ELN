@@ -4,6 +4,7 @@ import {
   PanelGroup, Panel, Button, FormGroup, FormControl, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
+import ContainerCompareAnalyses from 'src/components/container/ContainerCompareAnalyses';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
 import {
   HeaderDeleted,
@@ -19,10 +20,25 @@ function RndNotAvailable() {
   );
 }
 
-function RndNoAnalyses({ addButton }) {
+function RndNoAnalyses({ sample,
+  mode,
+  readOnly,
+  isDisabled,
+  handleRemove,
+  handleSubmit,
+  handleMove,
+  handleUndo,
+  handleAccordionOpen,
+  toggleAddToReport,
+  toggleMode,
+  orderContainers,
+  addButton}) {
   return (
     <div>
-      <p>{addButton()}</p>
+      <p>
+        {AnalysisModeBtn(mode, toggleMode, isDisabled)}
+        {addButton()}
+      </p>
       <p className="noAnalyses-warning">There are currently no Analyses.</p>
     </div>
   );
@@ -217,16 +233,34 @@ function RndEdit({
           }
 
           return (
-            <Panel eventKey={id} key={`${id}CRowEdit`}>
+            <Panel
+              bsStyle={container.extended_metadata.is_comparison ? "success" : ""}
+              eventKey={id}
+              key={`${id}CRowEdit`}
+            >
               <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
               <Panel.Body collapsible>
-                <ContainerComponent
-                  templateType="sample"
-                  readOnly={readOnly}
-                  container={container}
-                  disabled={isDisabled}
-                  onChange={handleChange}
-                />
+                {
+                  container.extended_metadata.is_comparison ? (
+                    <ContainerCompareAnalyses 
+                      templateType="sample"
+                      readOnly={readOnly}
+                      sample={sample}
+                      container={container}
+                      disabled={isDisabled}
+                      onChange={handleChange} />
+                  ) :
+                  (
+                    <ContainerComponent
+                      templateType="sample"
+                      readOnly={readOnly}
+                      container={container}
+                      disabled={isDisabled}
+                      onChange={handleChange}
+                    />
+                  )
+                }
+               
               </Panel.Body>
             </Panel>
           );

@@ -679,4 +679,36 @@ export default class AttachmentFetcher {
 
     return promise;
   }
+
+  static combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra) {
+    const promise = fetch(
+      '/api/v1/chemspectra/file/combine_spectra',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+          {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify({
+          spectra_ids: jcampIds,
+          front_spectra_idx: curveIdx,
+          container_id: containerId,
+          edited_data_spectra: editedDataSpectra,
+        }),
+      },
+    )
+      .then((response) => {
+        return response.json();
+      })
+      .then((json) => {
+        return json;
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
 }

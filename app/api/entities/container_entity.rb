@@ -11,6 +11,7 @@ module Entities
       :extended_metadata,
     )
     expose :preview_img, if: ->(object, _options) { object.container_type == 'analysis' }
+    expose :comparable_info, if: ->(object, _options) { object.container_type == 'analysis' }
 
     expose :attachments, using: 'Entities::AttachmentEntity'
     expose :code_log, using: 'Entities::CodeLogEntity'
@@ -36,6 +37,10 @@ module Entities
           metadata[:hyperlinks] =
             JSON.parse(object.extended_metadata['hyperlinks'])
         end
+        if object.extended_metadata['is_comparison'].present?
+          metadata[:is_comparison] = object.extended_metadata['is_comparison'] == 'true'
+        end
+        metadata[:analyses_compared] = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':')) if object.extended_metadata['analyses_compared'].present?
       end
     end
 
@@ -53,6 +58,21 @@ module Entities
         attachable_type: 'Container',
         attachable_id: object.children.where(container_type: :dataset),
       )
+
+      comparison_thumbnail = Attachment.where(
+        thumb: true,
+        attachable_type: 'Container',
+        attachable_id: object.id,
+      )
+
+      unless attachments_with_thumbnail.exists?
+        build_preview_image(comparison_thumbnail)
+      else
+        build_preview_image(attachments_with_thumbnail)
+      end
+    end
+
+    def build_preview_image(attachments_with_thumbnail)
       return no_preview_image_available unless attachments_with_thumbnail.exists?
 
       atts_with_thumbnail = attachments_with_thumbnail.where(
@@ -79,6 +99,37 @@ module Entities
 
     def no_preview_image_available
       { preview: 'not available', id: nil, filename: nil }
+    end
+
+    def comparable_info
+      return unless object.container_type == 'analysis'
+
+      is_comparison = object.extended_metadata['is_comparison'].present? && object.extended_metadata['is_comparison'] == 'true'
+
+      list_attachments = []
+      list_dataset = []
+      list_analyses = []
+      layout = ''
+      if object.extended_metadata['analyses_compared'].present?
+        analyses_compared = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':'))
+        analyses_compared.each do |attachment_info|
+          layout = attachment_info['layout']
+          attachment = Attachment.find_by(id: attachment_info['file']['id'])
+          dataset = Container.find_by(id: attachment_info['dataset']['id'])
+          analyis = Container.find_by(id: attachment_info['analysis']['id'])
+          list_attachments.push(attachment) if attachment.nil? == false
+          list_dataset.push(dataset)
+          list_analyses.push(analyis)
+        end
+      end
+
+      {
+        is_comparison: is_comparison,
+        list_attachments: list_attachments,
+        list_dataset: list_dataset,
+        list_analyses: list_analyses,
+        layout: layout,
+      }
     end
   end
 end
