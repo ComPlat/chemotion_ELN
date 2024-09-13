@@ -191,7 +191,7 @@ export default class ScreenDetailsContainers extends Component {
                     key={`screen_container_${container.id}`}
                     className="rounded-0"
                   >
-                    <Card.Header className="bg-gray-200 py-3 rounded-0">
+                    <Card.Header className="rounded-0 p-0">
                       <AccordionHeaderWithButtons eventKey={key}>
                         {container.is_deleted
                           ? this.containerHeaderDeleted(container)

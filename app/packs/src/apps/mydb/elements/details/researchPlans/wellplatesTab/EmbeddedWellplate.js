@@ -276,7 +276,7 @@ export default class EmbeddedWellplate extends Component {
     const eventKey = this.props.wellplateIndex.toString()
     return (
       <Card className="rounded-0 border-0 eln-panel-detail wellplate-details">
-        <Card.Header className="rounded-0">
+        <Card.Header className="rounded-0 p-0">
           <AccordionHeaderWithButtons eventKey={eventKey}>
             {this.renderPanelHeading(this.props.wellplate)}
           </AccordionHeaderWithButtons>
