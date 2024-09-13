@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table
+  Accordion, Button, ButtonGroup, Card, Tooltip, Overlay, OverlayTrigger, Table
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -11,13 +11,11 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
+import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {
     super(props);
-    this.cellStyle = { padding: 0 };
 
     this.state = {
       expanded: false,
@@ -56,12 +54,12 @@ export default class EmbeddedWellplate extends Component {
       readoutTitles && readoutTitles.map((title) => {
         const key = title.id;
         return ([
-          <th style={this.cellStyle} key={`v_${key}`} width="15%">
+          <th className="p-0" key={`v_${key}`} width="15%">
             {title}
             &nbsp;
             Value
           </th>,
-          <th style={this.cellStyle} key={`u_${key}`} width="10%">
+          <th className="p-0" key={`u_${key}`} width="10%">
             {title}
             &nbsp;
             Unit
@@ -102,7 +100,7 @@ export default class EmbeddedWellplate extends Component {
           ref={(button) => { this.target = button; }}
           onClick={() => this.showImportConfirm()}
         >
-          <Glyphicon glyph="import" />
+          <i className="fa fa-download" aria-hidden="true" />
         </Button>
       </OverlayTrigger>,
       <Overlay
@@ -126,10 +124,10 @@ export default class EmbeddedWellplate extends Component {
       readouts && readouts.map((readout) => {
         const key = readout.id;
         return ([
-          <td key={`v_${key}`} style={this.cellStyle}>
+          <td key={`v_${key}`} className="p-0">
             {readout.value || ''}
           </td>,
-          <td key={`u_${key}`} style={this.cellStyle}>
+          <td key={`u_${key}`} className="p-0">
             {readout.unit || ''}
           </td>,
         ]);
@@ -148,28 +146,24 @@ export default class EmbeddedWellplate extends Component {
     }
 
     return (
-      <Table striped bordered hover responsive style={{ fontSize: 12 }}>
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th style={this.cellStyle} width="5%">Position</th>
-            <th style={this.cellStyle} width="10%">Sample</th>
+            <th className="p-0" width="5%">Position</th>
+            <th className="p-0" width="10%">Sample</th>
             {this.renderReadoutHeaders()}
           </tr>
         </thead>
         <tbody>
           {wells.map((well) => {
-            const { sample, position } = well;
             let sample_title = '';
-            if (sample) {
-              sample_title = `${sample.short_label} ${sample.name}`;
+            if (well.sample) {
+              sample_title = `${well.sample.short_label} ${well.sample.name}`;
             }
-            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-            const positionY = alphabet[position.y - 1];
-            const positions = positionY + position.x;
             return (
               <tr key={well.id}>
-                <td style={this.cellStyle}>{positions}</td>
-                <td style={this.cellStyle}>{sample_title}</td>
+                <td className="p-0">{well.alphanumericPosition}</td>
+                <td className="p-0">{sample_title}</td>
                 {this.renderReadoutFields(well)}
               </tr>
             );
@@ -201,82 +195,98 @@ export default class EmbeddedWellplate extends Component {
       </Tooltip>
     );
 
+    const removeButton = (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id="remove_wellplate">Remove Wellplate from Screen</Tooltip>}
+      >
+        <Button
+          ref={(button) => { this.target = button; }}
+          variant="danger"
+          size="sm"
+          onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
+        >
+          <i className="fa fa-trash-o" aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
+    );
+
+    const removeConfirmationOverlay = (
+      <Overlay
+        rootClose
+        target={this.target}
+        show={this.state.confirmRemove}
+        placement="bottom"
+        onHide={() => this.setState({ confirmRemove: false })}
+      >
+        {popover}
+      </Overlay>
+    );
+
+    const openInTabButton = (
+      <OverlayTrigger placement="bottom" overlay={<Tooltip id="open_wellplate">Open Wellplate in Tab</Tooltip>}>
+        <Button variant="info" size="sm" onClick={() => this.openWellplate()}>
+          <i className="fa fa-window-maximize" aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
+    );
+
+    const toggleWellplateContentsButton = (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id="expand_wellplate">Show/hide Wellplate details</Tooltip>}
+      >
+        <Button
+          variant="info"
+          size="sm"
+          onClick={() => this.setState({ expanded: !this.state.expanded })}
+        >
+          <i className={expandIconClass} aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
+    );
+
     return (
-      <Panel.Heading>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="WellplateDatesx">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="icon-wellplate" />
-            &nbsp;&nbsp;
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="WellplateDatesx">{titleTooltip}</Tooltip>}>
             <span>
-              {wellplate.short_label}
-              &nbsp;
-              {wellplate.name}
+              <i className="icon-wellplate" />
+              &nbsp;&nbsp;
+              <span>
+                {wellplate.short_label}
+                &nbsp;
+                {wellplate.name}
+              </span>
+              &nbsp;&nbsp;
             </span>
-            &nbsp;&nbsp;
-          </span>
-        </OverlayTrigger>
-        <ElementCollectionLabels element={wellplate} placement="right" />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="remove_wellplate">Remove Wellplate from Screen</Tooltip>}
-        >
-          <Button
-            ref={(button) => { this.target = button; }}
-            variant="danger"
-            size="sm"
-            onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
-          >
-            <i className="fa fa-trash-o" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <Overlay
-          rootClose
-          target={this.target}
-          show={this.state.confirmRemove}
-          placement="bottom"
-          onHide={() => this.setState({ confirmRemove: false })}
-        >
-          {popover}
-        </Overlay>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="open_wellplate">Open Wellplate in Tab</Tooltip>}>
-          <Button variant="info" size="sm" onClick={() => this.openWellplate()}>
-            <i className="fa fa-window-maximize" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="expand_wellplate">Show/hide Wellplate details</Tooltip>}
-        >
-          <Button
-            variant="info"
-            size="sm"
-            onClick={() => this.setState({ expanded: !this.state.expanded })}
-          >
-            <i className={expandIconClass} aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        {this.renderImportWellplateButton()}
-      </Panel.Heading>
+          </OverlayTrigger>
+          <ElementCollectionLabels element={wellplate} placement="right" />
+        </div>
+        <div className="d-flex align-items-center gap-1">
+          {this.renderImportWellplateButton()}
+          {toggleWellplateContentsButton}
+          {openInTabButton}
+        </div>
+      </div>
     );
   }
 
   render() {
-    const { wellplate } = this.props;
-
+    const eventKey = this.props.wellplateIndex.toString()
     return (
-      <Panel
-        expanded={this.state.expanded}
-        onToggle={() => {}}
-        variant="primary"
-        className="eln-panel-detail wellplate-details"
-      >
-        {this.renderPanelHeading(wellplate)}
-        <Panel.Collapse>
-          <Panel.Body>
-            {this.renderWellplateMain(wellplate)}
-          </Panel.Body>
-        </Panel.Collapse>
-      </Panel>
+      <Card className="rounded-0 border-0 eln-panel-detail wellplate-details">
+        <Card.Header className="rounded-0">
+          <AccordionHeaderWithButtons eventKey={eventKey}>
+            {this.renderPanelHeading(this.props.wellplate)}
+          </AccordionHeaderWithButtons>
+        </Card.Header>
+        <Accordion.Collapse eventKey={eventKey}>
+          <Card.Body>
+            {this.renderWellplateMain(this.props.wellplate)}
+          </Card.Body>
+        </Accordion.Collapse>
+      </Card>
     );
   }
 }
@@ -284,6 +294,7 @@ export default class EmbeddedWellplate extends Component {
 EmbeddedWellplate.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
+  wellplateIndex: PropTypes.number.isRequired,
   importWellplate: PropTypes.func.isRequired,
   deleteWellplate: PropTypes.func.isRequired,
 };

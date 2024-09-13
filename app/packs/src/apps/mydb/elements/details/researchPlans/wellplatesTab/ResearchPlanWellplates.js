@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Accordion } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
@@ -50,20 +51,22 @@ class ResearchPlanWellplates extends Component {
 
   render() {
     const { wellplates, deleteWellplate, importWellplate } = this.props;
-
     return (
       <div>
         {this.renderDropZone()}
 
-        {wellplates && wellplates.map(wellplate => (
-          <EmbeddedWellplate
-            key={`${wellplate.short_label}-${wellplate.id}`}
-            researchPlan={this.props.researchPlan}
-            wellplate={wellplate}
-            deleteWellplate={deleteWellplate}
-            importWellplate={importWellplate}
-          />
-        ))}
+        <Accordion className="border rounded overflow-hidden">
+          {wellplates && wellplates.map((wellplate, wellplateIndex) => (
+            <EmbeddedWellplate
+              key={`${wellplate.short_label}-${wellplate.id}`}
+              researchPlan={this.props.researchPlan}
+              wellplate={wellplate}
+              wellplateIndex={wellplateIndex}
+              deleteWellplate={deleteWellplate}
+              importWellplate={importWellplate}
+            />
+          ))}
+        </Accordion>
       </div>);
   }
 }
