@@ -11,7 +11,7 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {

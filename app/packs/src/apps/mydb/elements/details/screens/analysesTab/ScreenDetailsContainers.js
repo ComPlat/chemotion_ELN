@@ -5,7 +5,7 @@ import { Button, Accordion, Card } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 

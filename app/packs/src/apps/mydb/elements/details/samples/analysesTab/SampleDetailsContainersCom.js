@@ -9,7 +9,7 @@ import {
   AnalysesHeader,
   AnalysisModeToggle,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
-import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 function RndNotAvailable() {
   return (
