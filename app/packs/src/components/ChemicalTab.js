@@ -2,8 +2,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Collapse, Modal
+  Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
+  ListGroup, ListGroupItem, InputGroup, Collapse, Modal, Row, Col,
+  ButtonGroup
 } from 'react-bootstrap';
 import Select from 'react-select';
 import SVG from 'react-inlinesvg';
@@ -12,7 +13,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import CollapseButton from 'src/components/common/CollapseButton';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
@@ -34,6 +34,7 @@ export default class ChemicalTab extends React.Component {
       openInventoryInformationTab: true,
       openSafetyTab: true,
       openLocationTab: true,
+      switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewModalForVendor: ''
     };
@@ -247,12 +248,12 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div>
-        <p className="safety-phrases">Pictograms: </p>
+        <p className="fw-bold m-3">Pictograms: </p>
         {(str.pictograms !== undefined && str.pictograms.length !== 0)
           ? pictogramsArray : <p>Could not find pictograms</p>}
-        <p className="safety-phrases">Hazard Statements: </p>
+        <p className="fw-bold m-3">Hazard Statements: </p>
         {HazardPhrases}
-        <p className="safety-phrases">Precautionary Statements: </p>
+        <p className="fw-bold m-3">Precautionary Statements: </p>
         {precautionaryPhrases}
       </div>
     );
@@ -315,6 +316,7 @@ export default class ChemicalTab extends React.Component {
     <Button
       id="safetyPhrases-btn"
       onClick={() => this.fetchSafetyPhrases(vendor)}
+      variant="light"
     >
       fetch Safety Phrases
     </Button>
@@ -387,9 +389,8 @@ export default class ChemicalTab extends React.Component {
       { label: 'Ordered', value: 'Ordered' }
     ];
     return (
-      <FormGroup>
-        <ControlLabel>{label}</ControlLabel>
-        <InputGroup id="chemical-status">
+      <Form.Group>
+        <Form.Label>{label}</Form.Label>
           <Select.Creatable
             name="chemicalStatus"
             multi={false}
@@ -398,8 +399,7 @@ export default class ChemicalTab extends React.Component {
             value={val}
             clearable={false}
           />
-        </InputGroup>
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -420,13 +420,13 @@ export default class ChemicalTab extends React.Component {
     } else {
       conditionalOverlay = null;
     }
-    const checkLabel = label !== 'Date' && <ControlLabel>{label}</ControlLabel>;
+    const checkLabel = label !== 'Date' && <Form.Label>{label}</Form.Label>;
 
     return (
       <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
-        <FormGroup>
+        <Form.Group>
           {checkLabel}
-          <FormControl
+          <Form.Control
             as={componentClass}
             id={`textInput_${label}`}
             type="text"
@@ -434,7 +434,7 @@ export default class ChemicalTab extends React.Component {
             onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
             rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
           />
-        </FormGroup>
+        </Form.Group>
       </OverlayTrigger>
     );
   }
@@ -469,7 +469,7 @@ export default class ChemicalTab extends React.Component {
     }
     return (
       <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip(value)}>
-        <Button active size="sm">
+        <Button active size="xsm" variant="light">
           <a href={value} target="_blank" rel="noreferrer">
             <i className="fa fa-external-link" />
           </a>
@@ -485,21 +485,20 @@ export default class ChemicalTab extends React.Component {
     const modifyStr = string.charAt(0).toUpperCase() + string.slice(1);
     const ParentLabelCondition = ['host_building', 'current_building', 'host_group', 'current_group'];
     const ParentLabel = ParentLabelCondition.includes(parameter)
-      ? <ControlLabel>{modifyStr}</ControlLabel> : <ControlLabel className="location-input"> </ControlLabel>;
+      ? <Form.Label>{modifyStr}</Form.Label> : <Form.Label className="pt-3"> </Form.Label>;
     const paramsObj = {};
     paramsObj[domain] = parameter;
 
     return (
       <div>
         {ParentLabel}
-        <InputGroup className="location-chemicalTab">
+        <InputGroup>
           <InputGroup.Text>{subLabel}</InputGroup.Text>
-          <FormGroup controlId="subLabel">
-            <FormControl
-              value={value}
-              onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
-            />
-          </FormGroup>
+          <Form.Control
+            type="text"
+            value={value}
+            onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
+          />
         </InputGroup>
       </div>
     );
@@ -560,7 +559,7 @@ export default class ChemicalTab extends React.Component {
   removeButton(index, document) {
     return (
       <Button
-        size="sm"
+        size="xsm"
         variant="danger"
         onClick={() => this.handleRemove(index, document)}
       >
@@ -670,7 +669,7 @@ export default class ChemicalTab extends React.Component {
     return (
       <Button
         id="saveSafetySheetButton"
-        size="sm"
+        size="xsm"
         variant="warning"
         disabled={checkMark}
         onClick={() => this.saveSdsFile(productInfo)}
@@ -695,8 +694,8 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <FormGroup>
-        <ControlLabel>Vendor</ControlLabel>
+      <Form.Group>
+        <Form.Label>Vendor</Form.Label>
         <Select
           name="chemicalVendor"
           clearable={false}
@@ -704,7 +703,7 @@ export default class ChemicalTab extends React.Component {
           onChange={(e) => this.handleVendorOption(e.value)}
           value={vendorValue}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
@@ -719,10 +718,10 @@ export default class ChemicalTab extends React.Component {
     const conditionalOverlay = 'Assign a cas number using the cas field in labels section for better search results using cas number';
 
     return (
-      <OverlayTrigger placement="top" overlay={cas && cas !== '' ? <div /> : <Tooltip id="sds-query-message">{conditionalOverlay}</Tooltip>}>
+      <OverlayTrigger placement="top" overlay={cas && cas !== '' ? null : <Tooltip id="sds-query-message">{conditionalOverlay}</Tooltip>}>
 
-        <FormGroup>
-          <ControlLabel>Query SDS using</ControlLabel>
+        <Form.Group>
+          <Form.Label>Query SDS using</Form.Label>
           <Select
             name="queryOption"
             clearable={false}
@@ -730,9 +729,8 @@ export default class ChemicalTab extends React.Component {
             onChange={(e) => this.handleQueryOption(e.value)}
             value={queryOption}
           />
-        </FormGroup>
+        </Form.Group>
       </OverlayTrigger>
-
     );
   }
 
@@ -745,8 +743,8 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <FormGroup>
-        <ControlLabel>Choose Language of SDS</ControlLabel>
+      <Form.Group>
+        <Form.Label>Choose Language of SDS</Form.Label>
         <Select
           name="languageOption"
           clearable={false}
@@ -754,32 +752,29 @@ export default class ChemicalTab extends React.Component {
           onChange={(e) => this.handleLanguageOption(e.value)}
           value={safetySheetLanguage}
         />
-      </FormGroup>
+      </Form.Group>
     );
   }
 
   renderChildElements = (document, index) => (
-    <div className="render-childs">
-      <div className="child-elements">
-        <div className="link-wrapper">
-          <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" rel="noreferrer">
-            {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
-            { this.checkMarkButton(document) }
-          </a>
-        </div>
-        <div className="button-toolbar-wrapper">
-          <ButtonToolbar>
-            {this.copyButton(document)}
-            {this.saveSafetySheetsButton(document, index)}
-            {this.removeButton(index, document)}
-          </ButtonToolbar>
-        </div>
-        <div className="chemical-properties">
-          { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
-        </div>
-        <div className="query-safety-phrases-button">
-          { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
-        </div>
+    <div className="d-flex gap-3 align-items-center">
+      <div className=" d-flex me-auto gap-3">
+        <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" rel="noreferrer">
+          {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
+          {this.checkMarkButton(document)}
+        </a>
+        <ButtonToolbar className="gap-1">
+          {this.copyButton(document)}
+          {this.saveSafetySheetsButton(document, index)}
+          {this.removeButton(index, document)}
+        </ButtonToolbar>
+      </div>
+      <div className="me-auto">
+        {document.alfa_link !== undefined
+          ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck')}
+      </div>
+      <div className="justify-content-end">
+        {document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck')}
       </div>
     </div>
   );
@@ -789,22 +784,26 @@ export default class ChemicalTab extends React.Component {
     if (!chemical || !chemical._chemical_data || !chemical._chemical_data.length) {
       return null;
     }
-    const savedSds = chemical._chemical_data[0].safetySheetPath;
+    const savedSds = chemical._chemical_data[0]?.safetySheetPath;
     const sdsStatus = safetySheets.length ? safetySheets : savedSds;
+    if (!Array.isArray(sdsStatus)) {
+      console.error('sdsStatus is not an array', sdsStatus);
+      return null;
+    }
     const mappedSafetySheets = sdsStatus?.map((document, index) => {
       const key = (document.alfa_product_number || document.merck_product_number) || index;
       const isValidDocument = document !== 'Could not find safety data sheet from Thermofisher'
         && document !== 'Could not find safety data sheet from Merck';
       return (
-        <div className="safety-sheets-form" key={key}>
+        <div className="mt-3 w-100" key={key}>
           {isValidDocument ? (
-            <ListGroupItem key={`${key}-file`}>
+            <ListGroupItem key={`${key}-file`} className="p-3">
               {this.renderChildElements(document, index)}
             </ListGroupItem>
           ) : (
             <ListGroupItem key={`${key}-no-document`}>
               <div>
-                <p className="safety-sheets-paragraph">
+                <p className="pt-2">
                   {document}
                 </p>
               </div>
@@ -816,7 +815,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div>
-        <ListGroup>{mappedSafetySheets}</ListGroup>
+        <ListGroup className="my-3">{mappedSafetySheets}</ListGroup>
       </div>
     );
   };
@@ -829,7 +828,7 @@ export default class ChemicalTab extends React.Component {
       fetchedSafetyPhrases = (phrases !== undefined) ? this.stylePhrases(phrases) : '';
     }
     return (
-      <div className="render-safety-phrases">
+      <div className="pt-2 w-100">
         {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
       </div>
     );
@@ -846,32 +845,38 @@ export default class ChemicalTab extends React.Component {
     const { loadingQuerySafetySheets, loadChemicalProperties } = this.state;
 
     return (
-      <div className="render-chemical-properties">
-        <InputGroup.Button>
+      <div className="w-100 mt-0 ms-2">
+        <InputGroup>
           <OverlayTrigger placement="top" overlay={<Tooltip id="renderChemProp">Info, if any found, will be copied to properties fields in sample properties tab</Tooltip>}>
             <Button
               id="fetch-properties"
               onClick={() => this.fetchChemicalProperties(vendor)}
               disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties.loading}
-              className="fetch-properties-button"
+              variant="light"
             >
               {loadChemicalProperties.loading === true && loadChemicalProperties.vendor === vendor
                 ? (
                   <div>
                     <i className="fa fa-spinner fa-pulse fa-fw" />
-                    <span className="visually-hidden">
-                      Loading...
-                    </span>
+                    <span>Loading...</span>
                   </div>
 
                 ) : 'fetch Chemical Properties'}
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}>
-            <Button active className="show-properties-modal" onClick={() => this.handlePropertiesModal(vendor)}><i className="fa fa-file-text" /></Button>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}
+          >
+            <Button
+              active
+              onClick={() => this.handlePropertiesModal(vendor)}
+              variant="light"
+            >
+              <i className="fa fa-file-text" />
+            </Button>
           </OverlayTrigger>
-        </InputGroup.Button>
-
+        </InputGroup>
       </div>
     );
   };
@@ -912,50 +917,61 @@ export default class ChemicalTab extends React.Component {
   }
 
   inventoryInformationTab(data) {
-    const { openInventoryInformationTab } = this.state;
+    const { openInventoryInformationTab, switchRequiredOrderedDate } = this.state;
     return (
-      <div className="inventory-tab">
+      <div>
         {this.inventoryCollapseBtn()}
         <Collapse in={openInventoryInformationTab} key="inventory-Information-collapse-list">
-          <div className="inventory-tab">
-            <div className="inventory-information">
-              <div className="inventory-information-status">
+          <div>
+            <Row className="my-3">
+              <Col>
                 {this.chemicalStatus(data, 'Status', 'status')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col>
                 {this.textInput(data, 'Vendor', 'vendor')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col>
                 {this.textInput(data, 'Order number', 'order_number')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col>
                 {this.numInputWithoutTable(data, 'Amount', 'amount')}
-              </div>
-              <div className="inventory-text-input">
+              </Col>
+              <Col className="pt-2">
                 {this.numInputWithoutTable(data, '', 'volume')}
-              </div>
-            </div>
-            <div className="text-input-group">
-              <div className="inventory-text-input">
+              </Col>
+            </Row>
+            <Row>
+              <Col sm={3}>
                 {this.textInput(data, 'Price', 'price')}
-              </div>
-              <div className="text-input-person">
+              </Col>
+              <Col sm={3}>
                 {this.textInput(data, 'Person', 'person')}
-              </div>
-              <div className="text-input-date">
-                <Tabs id="tab-date">
-                  <Tab eventKey="required" title="Required date">
-                    {this.textInput(data, 'Date', 'required_date')}
-                  </Tab>
-                  <Tab eventKey="ordered" title="Ordered date">
-                    {this.textInput(data, 'Date', 'ordered_date')}
-                  </Tab>
-                </Tabs>
-              </div>
-              <div className="text-input-required-by">
+              </Col>
+              <Col sm={3}>
+                <ButtonGroup className="mb-2">
+                  <Button
+                    onClick={() => this.setState({ switchRequiredOrderedDate: 'required' })}
+                    variant={switchRequiredOrderedDate === 'required' ? 'secondary' : 'light'}
+                    size="xxsm"
+                  >
+                    Required date
+                  </Button>
+                  <Button
+                    onClick={() => this.setState({ switchRequiredOrderedDate: 'ordered' })}
+                    variant={switchRequiredOrderedDate === 'ordered' ? 'secondary' : 'light'}
+                    size="xxsm"
+                  >
+                    Ordered date
+                  </Button>
+                </ButtonGroup>
+                {switchRequiredOrderedDate === 'required'
+                  ? this.textInput(data, 'Date', 'required_date')
+                  : this.textInput(data, 'Date', 'ordered_date')}
+              </Col>
+              <Col sm={3}>
                 {this.textInput(data, 'Required by', 'required_by')}
-              </div>
-            </div>
+              </Col>
+            </Row>
           </div>
         </Collapse>
       </div>
@@ -968,55 +984,50 @@ export default class ChemicalTab extends React.Component {
       <div>
         {this.locationCollapseBtn()}
         <Collapse in={openLocationTab} key="location-tab-collapse-list">
-          <div className="location-tab">
-            <div className="location-input-group">
-              <div>
+          <div>
+            <Row className="my-3">
+              <Col>
                 {this.locationInput(data, 'host_building', 'host_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_room', 'host_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_cabinet', 'host_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_group', 'host_group')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'host_owner', 'host_group')}
-              </div>
-            </div>
-            <div className="location-input-group">
-              <div>
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col>
                 {this.locationInput(data, 'current_building', 'current_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'current_room', 'current_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'current_cabinet', 'current_location')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'current_group', 'current_group')}
-              </div>
-              <div>
+              </Col>
+              <Col>
                 {this.locationInput(data, 'borrowed_by', 'current_group')}
-              </div>
+              </Col>
+            </Row>
+            <div>
+              {this.textInput(data, 'Disposal information', 'disposal_info')}
             </div>
-            <div className="disposal-info">
-              <div>
-                {this.textInput(data, 'Disposal information', 'disposal_info')}
-              </div>
-            </div>
-            <div className="important-notes">
-              <div>
-                {this.textInput(data, 'Important notes', 'important_notes')}
-              </div>
+            <div className="mt-2">
+              {this.textInput(data, 'Important notes', 'important_notes')}
             </div>
           </div>
         </Collapse>
       </div>
-
     );
   }
 
@@ -1043,17 +1054,17 @@ export default class ChemicalTab extends React.Component {
       <Button
         id="submit-sds-btn"
         onClick={() => this.querySafetySheets()}
+        variant="light"
         disabled={!!loadingQuerySafetySheets || checkSavedSds}
       >
         {loadingQuerySafetySheets === false ? 'Search for SDS'
           : (
             <div>
               <i className="fa fa-spinner fa-pulse fa-fw" />
-              <span className="visually-hidden">
+              <span>
                 Loading...
               </span>
             </div>
-
           )}
       </Button>
     );
@@ -1063,7 +1074,7 @@ export default class ChemicalTab extends React.Component {
     );
 
     const buttonElement = (
-      <div className="button-container">
+      <div className="mt-4">
         {button}
         {checkSavedSds && (
           <OverlayTrigger placement="top" overlay={overlay}>
@@ -1081,21 +1092,21 @@ export default class ChemicalTab extends React.Component {
       <div>
         {this.safetyCollapseBtn()}
         <Collapse in={openSafetyTab} key="inventory-safety-tab-collapse-list">
-          <div className="safety-tab">
-            <div className="parent-element-safety">
-              <div className="choose-vendor">
+          <div className="mt-3">
+            <Row>
+              <Col>
                 {this.chooseVendor()}
-              </div>
-              <div className="query-option">
+              </Col>
+              <Col>
                 {this.queryOption()}
-              </div>
-              <div className="safety-sheet-language">
+              </Col>
+              <Col>
                 {this.safetySheetLanguage()}
-              </div>
-              <div className="query-safety-sheet-button">
+              </Col>
+              <Col className="pt-2">
                 {this.querySafetySheetButton()}
-              </div>
-            </div>
+              </Col>
+            </Row>
             <div>
               { displayWell && (
                 <div>
@@ -1121,44 +1132,44 @@ export default class ChemicalTab extends React.Component {
         ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n') : fetchedChemicalProperties;
     } else if (viewModalForVendor === 'merck') {
       const condition = chemical._chemical_data[0].merckProductInfo
-      && chemical._chemical_data[0].merckProductInfo.properties;
+        && chemical._chemical_data[0].merckProductInfo.properties;
       fetchedChemicalProperties = condition
         ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n') : fetchedChemicalProperties;
     }
-    if (viewChemicalPropertiesModal) {
+    if (!viewChemicalPropertiesModal) {
+      return null;
+    }
       return (
         <Modal
           centered
           show={viewChemicalPropertiesModal}
           onHide={() => this.closePropertiesModal()}
+          size="lg"
         >
           <Modal.Header closeButton>
             <Modal.Title>Fetched Chemical Properties</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div className="properties-modal-dev">
-              <FormGroup controlId="propertiesModal">
-                <FormControl
+              <Form.Group controlId="propertiesModal">
+                <Form.Control
                   as="textarea"
-                  className="properties-modal"
+                  className="w-100"
                   readOnly
                   disabled
                   type="text"
+                  rows={10}
                   value={fetchedChemicalProperties}
                 />
-              </FormGroup>
-            </div>
-            <div>
+              </Form.Group>
+          </Modal.Body>
+          <Modal.Footer className="border-0">
               <Button variant="warning" onClick={() => this.closePropertiesModal()}>
                 Close
               </Button>
-            </div>
-          </Modal.Body>
+          </Modal.Footer>
         </Modal>
       );
     }
-    return (<div />);
-  }
 
   renderWarningMessage() {
     const { warningMessage } = this.state;
@@ -1176,32 +1187,20 @@ export default class ChemicalTab extends React.Component {
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
-      <table className="table table-borderless table-responsive">
-        <tbody>
-          <tr>
-            <td className="chemical-table-cells">
-              {this.inventoryInformationTab(data)}
-            </td>
-          </tr>
-          <tr>
-            <td className="chemical-table-cells">
-              {this.safetyTab()}
-            </td>
-          </tr>
-          <tr>
-            <td className="chemical-table-cells">
-              {this.locationTab(data)}
-            </td>
-          </tr>
-          <tr>
-            <td className="chemical-table-cells">
-              <div>
-                {this.renderPropertiesModal()}
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="container-fluid">
+        <div className="mb-3">
+          {this.inventoryInformationTab(data)}
+        </div>
+        <div className="mb-3">
+          {this.safetyTab()}
+        </div>
+        <div className="mb-3">
+          {this.locationTab(data)}
+        </div>
+        <div>
+          {this.renderPropertiesModal()}
+        </div>
+      </div>
     );
   }
 }
