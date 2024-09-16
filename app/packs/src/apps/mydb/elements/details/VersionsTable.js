@@ -82,7 +82,7 @@ export default class VersionsTable extends Component {
 
   render() {
     const { versions, page, pages } = this.state;
-    const { parent: { state: { sample: { isEdited } } } } = this.props;
+    const { isEdited } = this.props;
 
     const pagination = () => (
       <Pager>
@@ -178,4 +178,5 @@ VersionsTable.propTypes = {
   id: PropTypes.number.isRequired,
   element: PropTypes.object.isRequired,
   parent: PropTypes.object.isRequired,
+  isEdited: PropTypes.bool.isRequired,
 };
