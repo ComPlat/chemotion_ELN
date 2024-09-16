@@ -53,6 +53,8 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -60,7 +62,7 @@ export default class ReactionDetails extends Component {
 
     const { reaction } = props;
     this.state = {
-      reaction: reaction,
+      reaction,
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
@@ -116,23 +118,23 @@ export default class ReactionDetails extends Component {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
     } = this.state;
     return (
-      reactionFromNextProps.id !== reactionFromCurrentState.id ||
-      reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
-      reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
-      !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
-      nextActiveTab !== activeTab || nextVisible !== visible ||
-      nextActiveAnalysisTab !== activeAnalysisTab
+      reactionFromNextProps.id !== reactionFromCurrentState.id
+      || reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at
+      || reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file
+      || !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample
+      || nextActiveTab !== activeTab || nextVisible !== visible
+      || nextActiveAnalysisTab !== activeAnalysisTab
       || reactionFromNextState !== reactionFromCurrentState
     );
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
   onUIStoreChange(state) {
-    if (state.reaction.activeTab != this.state.activeTab ||
-      state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
+    if (state.reaction.activeTab != this.state.activeTab
+      || state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
       this.setState({
         activeTab: state.reaction.activeTab,
         activeAnalysisTab: state.reaction.activeAnalysisTab
@@ -199,28 +201,30 @@ export default class ReactionDetails extends Component {
   }
 
   handleProductChange(product, cb) {
-    let { reaction } = this.state
+    const { reaction } = this.state;
 
-    reaction.updateMaterial(product)
-    reaction.changed = true
+    reaction.updateMaterial(product);
+    reaction.changed = true;
 
-    this.setState({ reaction }, cb)
+    this.setState({ reaction }, cb);
   }
 
   productLink(product) {
     return (
       <span>
         Analysis:
-        <span className="pseudo-link"
+        <span
+          className="pseudo-link"
           onClick={() => this.handleProductClick(product)}
           role="button"
-          title="Open sample window">
+          title="Open sample window"
+        >
           <i className="icon-sample" />
           &nbsp;
           {product.title()}
         </span>
       </span>
-    )
+    );
   }
 
   handleSelect = (key) => {
@@ -268,12 +272,12 @@ export default class ReactionDetails extends Component {
     return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
-  productData() {
-    const { reaction } = this.state;
+  productData(reaction) {
+    const { products } = reaction;
     const { activeAnalysisTab } = this.state;
 
-    const tabs = reaction.products.map((product, key) => {
-      const title = this.productLink(product);
+    const tabs = products.map((product, key) => {
+      const title = productLink(product);
       const setState = () => this.handleProductChange(product);
       const handleSampleChanged = (_, cb) => this.handleProductChange(product, cb);
 
@@ -383,8 +387,7 @@ export default class ReactionDetails extends Component {
           <ButtonToolbar className="gap-1 justify-content-end">
             <PrintCodeButton element={reaction} />
             {!reaction.isNew
-              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />
-            }
+              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
             <OverlayTrigger
               placement="bottom"
               overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
@@ -647,6 +650,21 @@ export default class ReactionDetails extends Component {
             isActive={activeTab === REACTION_VARIATIONS_TAB_KEY}
           />
         </Tab>
+      ),
+      versions: (
+        <Tab
+          eventKey="versioning"
+          title="Versions"
+          key={`Versions_Reaction_${reaction.id.toString()}`}
+        >
+          <VersionsTable
+            type="reactions"
+            id={reaction.id}
+            element={reaction}
+            parent={this}
+            isEdited={reaction.changed}
+          />
+        </Tab>
       )
     };
 
@@ -668,7 +686,7 @@ export default class ReactionDetails extends Component {
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <Card className={"detail-card" + (reaction.isPendingToSave ? " detail-card--unsaved" : "")}>
+      <Card className={`detail-card${reaction.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.reactionHeader(reaction)}
         </Card.Header>
@@ -682,7 +700,13 @@ export default class ReactionDetails extends Component {
           />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
           <div className="tabs-container--with-borders">
-            <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
+            <Tabs
+              mountOnEnter
+              activeKey={currentActiveTab}
+              onSelect={this.handleSelect}
+              id="reaction-detail-tab"
+              unmountOnExit
+            >
               {tabContents}
             </Tabs>
             <CommentModal element={reaction} />

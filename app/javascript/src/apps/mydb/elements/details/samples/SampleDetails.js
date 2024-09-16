@@ -609,6 +609,7 @@ export default class SampleDetails extends React.Component {
             id={sample.id}
             element={sample}
             parent={this}
+            isEdited={sample.isEdited}
           />
         </ListGroupItem>
       </Tab>
