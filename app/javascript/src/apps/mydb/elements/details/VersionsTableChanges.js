@@ -6,11 +6,13 @@ import { Alert } from 'react-bootstrap';
 
 function VersionsTableChanges(props) {
   const {
-    id, changes, handleRevert
+    id, changes, handleRevert, isEdited
   } = props;
 
-  const revertable = () => {
+  const revertibleFields = () => {
     let filteredFields = [];
+
+    if (isEdited) return -1;
 
     changes.forEach(({ fields }) => {
       filteredFields = filteredFields.concat(
@@ -18,7 +20,7 @@ function VersionsTableChanges(props) {
       );
     });
 
-    return filteredFields.length > 0;
+    return filteredFields.length;
   };
 
   const change = changes.map(({ name, fields }, index) => (
@@ -35,18 +37,30 @@ function VersionsTableChanges(props) {
     </React.Fragment>
   ));
 
+  const alertText = revertibleFields() < 0
+    ? 'You cannot undo changes. You have unsaved data which would be lost.'
+    : `You cannot undo these changes.
+       Either the changes are up to date, it is the first version or all changes are irreversible.`;
+
   return (
     <>
       {change}
-      {revertable() ? <VersionsTableModal name={`# ${id}`} changes={changes} handleRevert={handleRevert} /> : <Alert bsStyle="warning" className="history-alert">You cannot undo these changes. Either the changes are up to date, it is the first version or all changes are irreversible.</Alert>}
+      {revertibleFields() > 0 ? <VersionsTableModal name={`# ${id}`} changes={changes} handleRevert={handleRevert} />
+        : (
+          <Alert bsStyle="warning" className="history-alert">
+            {alertText}
+          </Alert>
+        )}
     </>
   );
 }
 
 VersionsTableChanges.propTypes = {
   id: PropTypes.number.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   changes: PropTypes.arrayOf(PropTypes.object).isRequired,
   handleRevert: PropTypes.func.isRequired,
+  isEdited: PropTypes.bool.isRequired,
 };
 
 export default VersionsTableChanges;

@@ -1432,7 +1432,7 @@ export default class SampleDetails extends React.Component {
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
 
     return (
-      <Card className={"detail-card" + (pendingToSave ? " detail-card--unsaved" : "")}>
+      <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.sampleHeader(sample)}
           {messageBlock}
