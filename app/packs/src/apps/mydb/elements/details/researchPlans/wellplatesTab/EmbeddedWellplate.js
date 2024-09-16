@@ -176,7 +176,6 @@ export default class EmbeddedWellplate extends Component {
   renderPanelHeading(wellplate) {
     const { deleteWellplate } = this.props;
     const titleTooltip = formatTimeStampsOfElement(wellplate || {});
-    const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
 
     const popover = (
       <Tooltip placement="left" className="in" id="tooltip-bottom">
@@ -231,21 +230,6 @@ export default class EmbeddedWellplate extends Component {
       </OverlayTrigger>
     );
 
-    const toggleWellplateContentsButton = (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={<Tooltip id="expand_wellplate">Show/hide Wellplate details</Tooltip>}
-      >
-        <Button
-          variant="info"
-          size="sm"
-          onClick={() => this.setState({ expanded: !this.state.expanded })}
-        >
-          <i className={expandIconClass} aria-hidden="true" />
-        </Button>
-      </OverlayTrigger>
-    );
-
     return (
       <div className="d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center gap-2">
@@ -265,7 +249,6 @@ export default class EmbeddedWellplate extends Component {
         </div>
         <div className="d-flex align-items-center gap-1">
           {this.renderImportWellplateButton()}
-          {toggleWellplateContentsButton}
           {openInTabButton}
         </div>
       </div>
