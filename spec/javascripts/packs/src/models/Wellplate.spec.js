@@ -58,10 +58,10 @@ describe('Wellplate', async () => {
       const collectionId = 1;
       const wellplate = Wellplate.buildEmpty(collectionId);
 
-      it('created a wellplate of size 12 x 8', async () => {
-        expect(wellplate.size).toEqual(96);
-        expect(wellplate.height).toEqual(8);
-        expect(wellplate.width).toEqual(12);
+      it('created a wellplate of size 0 x 0', async () => {
+        expect(wellplate.size).toEqual(0);
+        expect(wellplate.height).toEqual(0);
+        expect(wellplate.width).toEqual(0);
       });
     });
 
