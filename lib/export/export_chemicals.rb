@@ -3,11 +3,11 @@
 module Export
   class ExportChemicals
     CHEMICAL_FIELDS = %w[
-      chemical_sample_id cas status vendor order_number amount price person required_date
-      ordered_date expiration_date storage_temperature required_by pictograms h_statements p_statements safety_sheet_link_merck
-      safety_sheet_link_thermofischer product_link_merck product_link_thermofischer
-      host_building host_room host_cabinet host_group owner borrowed_by current_building
-      current_room current_cabinet current_group disposal_info important_notes
+      chemical_sample_id cas status vendor order_number amount price person required_date owner
+      ordered_date expiration_date storage_temperature required_by pictograms h_statements
+      p_statements safety_sheet_link_merck safety_sheet_link_thermofischer product_link_merck
+      product_link_thermofischer host_building host_room host_cabinet host_group important_notes
+      borrowed_by current_building current_room current_cabinet current_group disposal_info
     ].freeze
     MERCK_SDS_LINK = 'c."chemical_data"->0->\'merckProductInfo\'->\'sdsLink\''
     ALFA_SDS_LINK = 'c."chemical_data"->0->\'alfaProductInfo\'->\'sdsLink\''
