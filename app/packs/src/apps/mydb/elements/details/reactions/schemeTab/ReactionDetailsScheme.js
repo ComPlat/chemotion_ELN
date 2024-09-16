@@ -33,8 +33,8 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import { parseNumericString } from 'src/utilities/MathUtils';
+import CollapseButton from "src/components/common/CollapseButton.js";
 
 
 export default class ReactionDetailsScheme extends Component {
@@ -163,7 +163,7 @@ export default class ReactionDetailsScheme extends Component {
     return (
       <span>
         <i className={className} />
-        <span className="spacer-10" />
+        <span className="my-0 mx-2" />
         {opt.label}
       </span>
     );
@@ -189,31 +189,27 @@ export default class ReactionDetailsScheme extends Component {
     const { reaction } = this.props;
     const { role } = reaction;
     let accordTo;
-    let width;
     if (role === 'parts') {
       accordTo = 'According to';
-      width = 2;
-    } else {
-      accordTo = null;
-      width = 4;
     }
+
     return (
-      <div>
-        <Col sm={4} className="ps-1 w-100">
-          <Form.Group className="flex-grow-1">
+      <Row className="d-flex align-items-center">
+        <Col sm={6}>
+          <Form.Group className="flex-grow-1 mt-2">
             <Form.Label>Role</Form.Label>
             {this.renderRoleSelect()}
           </Form.Group>
         </Col>
         {role === 'parts' && (
-          <Col sm={3} className="ps-1">
-            <Form.Group>
+          <Col sm={6}>
+            <Form.Group className="mt-2">
               <Form.Label>{accordTo}</Form.Label>
               {this.renderGPDnD()}
             </Form.Group>
           </Col>
         )}
-        </div>
+      </Row>
     );
   }
 
@@ -1034,35 +1030,23 @@ export default class ReactionDetailsScheme extends Component {
 
   solventCollapseBtn() {
     const { open } = this.state;
-    const arrow = open
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
     return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-          onClick={() => this.setState({ open: !open })}
-      >
-        {arrow} Solvents
-      </Button>
+      <CollapseButton
+        openTab={open}
+        setOpenTab={() => this.setState({ open: !open })}
+        name="Solvents"
+      />
     );
   }
 
   conditionsCollapseBtn() {
     const { cCon } = this.state;
-    const arrow = cCon
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
     return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-        onClick={() => this.setState({ cCon: !cCon })}
-      >
-        {arrow} Conditions
-      </Button>
+      <CollapseButton
+        openTab={open}
+        setOpenTab={() => this.setState({ cCon: !cCon })}
+        name="Conditions"
+      />
     );
   }
 
@@ -1092,7 +1076,7 @@ export default class ReactionDetailsScheme extends Component {
     const { reaction } = this.props;
     return (
       <>
-        <Form.Group className="pe-2">
+        <Form.Group className="pe-4 mt-2">
           <Form.Label>Vessel size</Form.Label>
           <InputGroup>
             <Form.Control
@@ -1275,7 +1259,7 @@ export default class ReactionDetailsScheme extends Component {
             />
             <Row>
               <Col sm={4}>
-                <Form.Group className="ms-2">
+                <Form.Group className="ms-2 mt-2">
                   <Form.Label>Type (Name Reaction Ontology)</Form.Label>
                   <OlsTreeSelect
                     selectName="rxno"

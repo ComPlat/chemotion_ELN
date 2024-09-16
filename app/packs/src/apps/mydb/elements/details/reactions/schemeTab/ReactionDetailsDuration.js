@@ -122,7 +122,7 @@ export default class ReactionDetailsDuration extends Component {
         <Col md={3} sm={6}>
           <Form.Group>
             <Form.Label />
-            <InputGroup className="mt-2">
+            <InputGroup className="mt-2 pe-3">
               <Form.Control
                 disabled={!permitOn(reaction) || reaction.gaseous}
                 type="text"
