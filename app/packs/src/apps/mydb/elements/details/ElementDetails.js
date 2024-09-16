@@ -7,7 +7,7 @@ import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
-import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
+//import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import React, { Component } from 'react';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
 import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
@@ -214,7 +214,8 @@ export default class ElementDetails extends Component {
       case 'report':
         return <ReportContainer report={el} />;
       case 'prediction':
-        return <PredictionContainer prediction={el} />;
+        //return <PredictionContainer prediction={el} />;
+        console.warn('Attempting to show outdated PredictionContainer')
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':
