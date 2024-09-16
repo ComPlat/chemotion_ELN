@@ -10,7 +10,6 @@
  * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
  * file per style scope.
  *
- *= require components/CommentButton/CommentButton.scss
  *= require components/CommentModal/CommentModal.scss
  *= require components/inbox/AttachmentContainer.css
  *= require components/inbox/inbox.scss
@@ -51,17 +50,13 @@
  *= require common.scss
  *= require converter.scss
  *= require CustomHeader.scss
- *= require device.scss
  *= require dnd.scss
  *= require draggable_modal.scss
- *= require elemental_composition.scss
  *= require elements_details.css
  *= require elements_table.scss
  *= require export-collections.scss
  *= require format-container.scss
  *= require generic_element.scss
- *= require inventory-label-settings.scss
- *= require ketcher.scss
  *= require material.scss
  *= require measurement_export_modal.scss
  *= require metadata.scss
@@ -70,7 +65,6 @@
  *= require mozilla.scss
  *= require navigation.scss
  *= require omniauth.scss
- *= require overlay.scss
  *= require polymer_section.scss
  *= require prediction.scss
  *= require qc.scss
@@ -82,9 +76,7 @@
  *= require report.scss
  *= require research-plan-table-context-menu.scss
  *= require research-plan.scss
- *= require sample-details.scss
  *= require sample.scss
- *= require search.scss
  *= require search_modal.scss
  *= require search_results.scss
  *= require spectra.scss
