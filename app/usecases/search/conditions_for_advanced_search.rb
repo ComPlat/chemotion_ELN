@@ -372,7 +372,7 @@ module Usecases
         prop = "prop_#{key}_#{number}"
         datasets_joins(filter, prop, key)
 
-        if filter['field']['column'] == 'datasets_type'
+        if filter['field']['column'] == 'datasets_type' && filter['field']['field'].blank?
           @conditions[:field] = ''
         else
           field = filter['field']['column'].remove('datasets_')
@@ -395,7 +395,7 @@ module Usecases
 
         @conditions[:joins] << datasets_join if @conditions[:joins].exclude?(datasets_join)
 
-        if filter['field']['column'] == 'datasets_type'
+        if filter['field']['column'] == 'datasets_type' && filter['field']['field'].blank?
           @conditions[:joins] <<
             "INNER JOIN dataset_klasses ON dataset_klasses.id = datasets.dataset_klass_id
             AND dataset_klasses.ols_term_id = '#{filter['value']}'"
