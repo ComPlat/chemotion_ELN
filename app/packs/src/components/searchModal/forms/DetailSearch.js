@@ -196,7 +196,7 @@ const DetailSearch = () => {
         }
         if (value[0] === 'analyses') {
           fieldsByTab.push(...analysesData);
-          // pushDatasetsToAnalysesFields();
+          pushDatasetsToAnalysesFields();
         }
         if (value[0] === 'inventory') {
           fieldsByTab.push(...inventoryData);
