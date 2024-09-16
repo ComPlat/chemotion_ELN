@@ -117,9 +117,33 @@ module Versioning
             },
             {
               name: 'xref.flash_point',
-              label: 'Flash point',
+              label: 'Flash Point',
               revert: %i[xref.flash_point],
               formatter: jsonb_formatter('flash_point', 'value'),
+            },
+            {
+              name: 'xref.form',
+              label: 'Form',
+              revert: %i[xref.form],
+              formatter: jsonb_formatter('form'),
+            },
+            {
+              name: 'xref.color',
+              label: 'Color',
+              revert: %i[xref.color],
+              formatter: jsonb_formatter('color'),
+            },
+            {
+              name: 'xref.solubility',
+              label: 'Solubility',
+              revert: %i[xref.solubility],
+              formatter: jsonb_formatter('solubility'),
+            },
+            {
+              name: 'xref.refractive_index',
+              label: 'Refractive Index',
+              revert: %i[xref.refractive_index],
+              formatter: jsonb_formatter('refractive_index'),
             },
           ],
           solvent: {
