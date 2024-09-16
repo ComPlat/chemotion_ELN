@@ -146,8 +146,12 @@ const headerBtnGroup = (
     >
       <i className="fa fa-undo" />
     </Button> :
-    <div className="d-flex gap-1 align-items-center">
+    <div
+      className="d-flex gap-1 align-items-center"
+      onClick={(e) => e.stopPropagation()}
+    >
       <Form.Check
+        id={`add-sample-${sample.id}-to-report`}
         type="checkbox"
         onClick={onToggleAddToReport}
         defaultChecked={inReport}

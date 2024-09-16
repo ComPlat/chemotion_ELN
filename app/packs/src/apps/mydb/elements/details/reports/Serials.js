@@ -2,15 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import Formula from 'src/components/common/Formula';
-import CommonInput from 'src/components/common/CommonInput';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
-import { Table } from 'react-bootstrap';
+import { Table, Form } from 'react-bootstrap';
 
 const Serial = ({ serial, counter }) => {
   if (!serial) return null;
 
   const { mol, value } = serial;
-  const onCompleteEdit = (val) => ReportActions.updMSVal(mol.id, val);
+  const onCompleteEdit = (e) => {
+    const val = e.target.value;
+    ReportActions.updMSVal(mol.id, val);
+  };
 
   return (
     <tr className="report-serial">
@@ -23,11 +25,10 @@ const Serial = ({ serial, counter }) => {
         <div className="mt-3">{mol.iupacName}</div>
       </td>
       <td valign="middle">
-        <CommonInput
+        <Form.Control
           value={value}
-          key={mol.id}
           placeholder="xx"
-          onCompleteEdit={onCompleteEdit}
+          onChange={onCompleteEdit}
         />
       </td>
     </tr>
