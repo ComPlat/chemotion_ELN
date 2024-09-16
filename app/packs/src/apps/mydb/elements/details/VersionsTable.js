@@ -9,13 +9,8 @@ import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableCh
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import { StoreContext } from 'src/stores/mobx/RootStore';
-import { observer } from 'mobx-react';
 
-export class VersionsTable extends Component {
-  // eslint-disable-next-line react/static-property-placement
-  static contextType = StoreContext;
-
+export default class VersionsTable extends Component {
   constructor(props) {
     super(props);
 
@@ -46,8 +41,6 @@ export class VersionsTable extends Component {
     const {
       id, type, element, parent
     } = this.props;
-    const { versions } = this.state;
-    const { VersioningStore } = this.context;
     const entityType = type.slice(0, -1);
 
     if (entityType === 'sample') {
@@ -55,8 +48,6 @@ export class VersionsTable extends Component {
         parent.setState({ sample: result });
       });
     }
-
-    VersioningStore.updateVersions(JSON.stringify(versions));
 
     if (entityType === 'reaction') {
       DetailActions.close(element, true);
@@ -91,8 +82,7 @@ export class VersionsTable extends Component {
 
   render() {
     const { versions, page, pages } = this.state;
-    const { VersioningStore } = this.context;
-    VersioningStore.updateVersions(JSON.stringify(versions));
+    const { parent: { state: { sample: { isEdited } } } } = this.props;
 
     const pagination = () => (
       <Pager>
@@ -149,6 +139,7 @@ export class VersionsTable extends Component {
           id={row.id}
           changes={row.changes}
           handleRevert={this.handleRevert}
+          isEdited={isEdited}
         />
       ),
     };
@@ -169,7 +160,7 @@ export class VersionsTable extends Component {
         </ul>
         <BootstrapTable
           keyField="id"
-          data={JSON.parse(VersioningStore.versions)}
+          data={versions}
           columns={columns}
           expandRow={expandRow}
           hover
@@ -181,8 +172,6 @@ export class VersionsTable extends Component {
     );
   }
 }
-
-export default observer(VersionsTable);
 
 VersionsTable.propTypes = {
   type: PropTypes.string.isRequired,
