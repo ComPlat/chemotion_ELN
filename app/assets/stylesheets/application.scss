@@ -10,7 +10,89 @@
  * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
  * file per style scope.
  *
- *= require_tree .
+ *= require components/CommentButton/CommentButton.scss
+ *= require components/CommentModal/CommentModal.scss
+ *= require components/inbox/AttachmentContainer.css
+ *= require components/inbox/inbox.scss
+ *= require components/affiliations.scss
+ *= require components/custom.css
+ *= require components/select.css
+ *
+ * =================================================================================================
+ * In preparation for the bootstrap upgrade, we require the files within this directory manually,
+ * instead of using `require_tree .`
+ *
+ * This is because require_tree is used by the asset pipeline to compile every JS file in this
+ * directory to an independent JS output file (you can see this in dev mode where each JS in in the)
+ * HTML <head> individually.
+ *
+ * This has the disadvantage, that you can not really use Sass Imports properly, which we want to
+ * do for the Bootstrap styling. As the asset pipeline compiles every file that you require to an
+ * individual output file, you could use a sass import there, but that would duplicate the imported
+ * sass file's code into every file where it is imported, which defeats the point.
+ *
+ * You can just continue to write your CSS directly into a file, which you then have to require
+ * manually below.
+ *
+ * If you want to take advantage of the upcoming Bootstrap global styling updates, use a Sass import
+ * instead (see branch `update-react-bootstrap-library` at https://github.com/ComPlat/chemotion_ELN/pull/1930/files)
+ * for further information. This comment will be updated when the Bootstrap upgrade has been merged.
+ *
+ * =================================================================================================
+ *
+ *= require _icons.scss
+ *= require attachment-list.scss
+ *= require calendar.scss
+ *= require cellLines.scss
+ *= require chemical-tab.scss
+ *= require chemspectra.scss
+ *= require collection_management.scss
+ *= require collection_tree.css
+ *= require common.scss
+ *= require converter.scss
+ *= require CustomHeader.scss
+ *= require device.scss
+ *= require dnd.scss
+ *= require draggable_modal.scss
+ *= require elemental_composition.scss
+ *= require elements_details.css
+ *= require elements_table.scss
+ *= require export-collections.scss
+ *= require format-container.scss
+ *= require generic_element.scss
+ *= require inventory-label-settings.scss
+ *= require ketcher.scss
+ *= require material.scss
+ *= require measurement_export_modal.scss
+ *= require metadata.scss
+ *= require molecules.scss
+ *= require molviewer.scss
+ *= require mozilla.scss
+ *= require navigation.scss
+ *= require omniauth.scss
+ *= require overlay.scss
+ *= require polymer_section.scss
+ *= require prediction.scss
+ *= require qc.scss
+ *= require qr.scss
+ *= require quill.snow.css
+ *= require quill_toolbar_template.scss
+ *= require quill_viewer.scss
+ *= require reaction.scss
+ *= require report.scss
+ *= require research-plan-table-context-menu.scss
+ *= require research-plan.scss
+ *= require sample-details.scss
+ *= require sample.scss
+ *= require search.scss
+ *= require search_modal.scss
+ *= require search_results.scss
+ *= require spectra.scss
+ *= require structur_editor.css
+ *= require switch.scss
+ *= require tab_layout_container.scss
+ *= require wellplate.scss
+ *
  *= require_self
  */
 
@@ -118,12 +200,6 @@ label.required:after {
   background-color: $gray-600;
   border-color: $gray-700;
 }
-
-<%# @media screen and (max-width: 1366px) { %>
-<%#   .visible-hd { %>
-<%#     display: none !important; %>
-<%#   } %>
-<%# } %>
 
 span.pseudo-link {
   cursor:pointer;
