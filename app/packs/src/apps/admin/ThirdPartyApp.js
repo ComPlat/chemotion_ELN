@@ -1,13 +1,12 @@
 import React from 'react';
 import {
-  Table, Button, Modal, Form, Col, Tooltip, OverlayTrigger, Card,
-  ButtonToolbar
+  Table, Button, Modal, Form, Tooltip, OverlayTrigger, ButtonToolbar
 } from 'react-bootstrap';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
-const editTip = <Tooltip id="inchi_tooltip">edit third party app</Tooltip>;
-const newTip = <Tooltip id="inchi_tooltip">create new third party app</Tooltip>;
-const deleteTip = <Tooltip id="inchi_tooltip">delete third party app</Tooltip>;
+const editTip = <Tooltip id="edit_tpa_tooltip">edit third party app</Tooltip>;
+const newTip = <Tooltip id="new_tpa_tooltip">create new third party app</Tooltip>;
+const deleteTip = <Tooltip id="delete_tpa_tooltip">delete third party app</Tooltip>;
 
 export default class ThirdPartyApp extends React.Component {
   constructor(props) {
@@ -187,26 +186,23 @@ export default class ThirdPartyApp extends React.Component {
         show={showMsgModalDelete}
         onHide={this.closeDeleteThirdPartyAppModal}
         centered
-        backdrop="static"
       >
         <Modal.Header closeButton>
           <Modal.Title>Delete third party app</Modal.Title>
         </Modal.Header>
         <Modal.Body className="overflow-auto" >
-          <div className="col-md-12">
-            <p>
-              <strong>
-                {` Do you really want to delete ${currentName}?`}
-              </strong>
-            </p>
+          <p>
+            <strong>
+              {` Do you really want to delete ${currentName}?`}
+            </strong>
+          </p>
 
-            <OverlayTrigger placement="bottom" overlay={deleteTip}>
-              <Button variant="danger" size="sm" onClick={() => this.delete(currentID)}>
-                Delete
-                <i className="fa fa ms-1" />
-              </Button>
-            </OverlayTrigger>
-          </div>
+          <OverlayTrigger placement="bottom" overlay={deleteTip}>
+            <Button variant="danger" size="sm" onClick={() => this.delete(currentID)}>
+              Delete
+              <i className="fa fa ms-1" />
+            </Button>
+          </OverlayTrigger>
         </Modal.Body>
       </Modal>
     );
@@ -228,7 +224,7 @@ export default class ThirdPartyApp extends React.Component {
             this.closeEditThirdPartyAppModal();
             this.thirdPartyApps();
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     };
 
@@ -267,70 +263,64 @@ export default class ThirdPartyApp extends React.Component {
         <Modal.Header closeButton>
           <Modal.Title>Edit third party app</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}> 
-            <Form.Group controlId="formControlName">
-              <Form.Label>
-                Name:
-              </Form.Label>
-              <Col sm={9}>
-                <Form.Control
-                  type="text"
-                  name="Name"
-                  value={this.state.currentName}
-                  onChange={handleNameChange}
-                  ref={(ref) => { nameRef = ref; }}
-                />
-              </Col>
-            </Form.Group>
+        <Modal.Body className="overflow-auto">
+          <Form.Group controlId="formControlName" className="mb-2">
+            <Form.Label>
+              Name:
+            </Form.Label>
+            <Form.Control
+              type="text"
+              name="Name"
+              value={this.state.currentName}
+              onChange={handleNameChange}
+              ref={(ref) => { nameRef = ref; }}
+            />
+          </Form.Group>
 
-          <Form.Group controlId="formControlIPAdress">
+          <Form.Group controlId="formControlIPAdress" className="mb-2">
             <Form.Label>
               IP address:
             </Form.Label>
-            <Col sm={9}>
-              <Form.Control
-                type="text"
-                name="IP address"
-                value={this.state.currentIP}
-                onChange={handleIPChange}
-                ref={(ref) => { urlRef = ref; }}
-              />
-            </Col>
+            <Form.Control
+              type="text"
+              name="IP address"
+              value={this.state.currentIP}
+              onChange={handleIPChange}
+              ref={(ref) => { urlRef = ref; }}
+            />
           </Form.Group>
 
-            <Form.Group controlId="formControlFileType">
-             <Form.Label>
-                Compatible File types (MIME):
-              </Form.Label>
-              <Col sm={9}>
-                <Form.Control
-                  type="text"
-                  name="Mime types list"
-                  value={this.state.currentFileTypes}
-                  onChange={handleFileTypesChange}
-                  ref={(ref) => { fileTypesRef = ref; }}
-                  placeholder="* or comma separated list: image/png,text..."
-                />
-              </Col>
-            </Form.Group>
+          <Form.Group controlId="formControlFileType" className="mb-2">
+            <Form.Label>
+              Compatible File types (MIME):
+            </Form.Label>
+            <Form.Control
+              type="text"
+              name="Mime types list"
+              value={this.state.currentFileTypes}
+              onChange={handleFileTypesChange}
+              ref={(ref) => { fileTypesRef = ref; }}
+              placeholder="* or comma separated list: image/png,text..."
+            />
+          </Form.Group>
 
-            <OverlayTrigger placement="bottom" overlay={editTip}>
-              <Button variant="primary" size="sm" onClick={handleEdit}>
-                Update
-                <i className="fa fa ms-1" />
-              </Button>
-            </OverlayTrigger>
+          <OverlayTrigger placement="bottom" overlay={editTip}>
+            <Button variant="primary" size="sm" onClick={handleEdit} className="mb-2">
+              Update
+              <i className="fa fa ms-1" />
+            </Button>
+          </OverlayTrigger>
         </Modal.Body>
-            <Modal.Footer>
-              <Form.Group controlId="formControlMessage" className="w-100">
-                <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.errorMessage} />
-              </Form.Group>
-            </Modal.Footer>
+        <Modal.Footer>
+          <Form.Group controlId="formControlMessage" className="w-100">
+            <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.errorMessage} />
+          </Form.Group>
+        </Modal.Footer>
       </Modal>
     );
   }
 
-  renderMessageModal() {
+  renderNewThirdPartyAppModal() {
     let nameRef = null;
     let urlRef = null;
     let fileTypesRef = null;
@@ -405,7 +395,7 @@ export default class ThirdPartyApp extends React.Component {
           New ThirdPartyApp
           <i className="fa fa-plus ms-1" />
         </Button>
-        {this.renderMessageModal()}
+        {this.renderNewThirdPartyAppModal()}
 
         <Table>
           <thead>
@@ -422,19 +412,19 @@ export default class ThirdPartyApp extends React.Component {
               <tr key={entry.id}>
                 <td>
                   <ButtonToolbar className="gap-1">
-                  <OverlayTrigger placement="bottom" overlay={editTip}>
-                    <Button variant="info" size="sm" onClick={() => this.showEditThirdPartyAppModal(entry.id)}>
-                      Edit
-                    </Button>
-                  </OverlayTrigger>
-                  {this.renderEditThirdPartyAppModal()}
-                  <OverlayTrigger placement="bottom" overlay={deleteTip}>
-                    <Button variant="danger" size="sm" onClick={() => this.showDeleteThirdPartyAppModal(entry.id)}>
-                      <i className="fa fa-trash-o" aria-hidden="true" />
-                    </Button>
+                    <OverlayTrigger placement="bottom" overlay={editTip}>
+                      <Button variant="info" size="sm" onClick={() => this.showEditThirdPartyAppModal(entry.id)}>
+                        Edit
+                      </Button>
+                    </OverlayTrigger>
+
+                    <OverlayTrigger placement="bottom" overlay={deleteTip}>
+                      <Button variant="danger" size="sm" onClick={() => this.showDeleteThirdPartyAppModal(entry.id)}>
+                        <i className="fa fa-trash-o" aria-hidden="true" />
+                      </Button>
                     </OverlayTrigger>
                   </ButtonToolbar>
-                  {this.renderDeleteThirdPartyAppModal()}
+
                 </td>
                 <td>{entry.name}</td>
                 <td>{entry.url}</td>
@@ -444,7 +434,8 @@ export default class ThirdPartyApp extends React.Component {
             ))}
           </tbody>
         </Table>
-
+        {this.renderEditThirdPartyAppModal()}
+        {this.renderDeleteThirdPartyAppModal()}
         <h2>{this.state.messageNewThirdPartyAppModal}</h2>
 
       </div>
