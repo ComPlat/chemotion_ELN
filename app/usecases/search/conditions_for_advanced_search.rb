@@ -378,15 +378,41 @@ module Usecases
           field = filter['field']['column'].remove('datasets_')
           @conditions[:field] = "(#{prop} ->> 'value')::TEXT"
           @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{field}'"
-          if filter['unit'].present?
-            unit = filter['unit'].remove('°').remove(/ \(.*\)/).tr('/', '_')
-            @conditions[:additional_condition] +=
-              " AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{unit}')"
-          end
-          if filter['available_options'].present? && field.include?('temperature')
-            # TODO: add conditional options for all temperature options
+
+          if filter['unit'].present? || filter['available_options'].present?
+            unit_and_available_options_conditions(filter, prop, field)
           end
         end
+      end
+
+      def remove_degree_from_unit(filter)
+        filter['unit'].remove('°').remove(/ \(.*\)/).tr('/', '_')
+      end
+
+      def unit_and_available_options_conditions(filter, prop, field)
+        if filter['unit'].present?
+          @conditions[:additional_condition] +=
+            " AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{remove_degree_from_unit(filter)}')"
+        end
+
+        return if filter['available_options'].blank?
+
+        conditions = ''
+        filter['available_options'].each do |option|
+          if field.include?('temperature')
+            next if option[:unit] == filter['unit']
+
+            @conditions[:additional_condition] +=
+              " OR ((#{prop} ->> 'value')::TEXT >= '#{option[:value]}'
+                 AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{remove_degree_from_unit(filter)}'))"
+          else
+            conditions += " AND (#{prop} ->> 'value')::TEXT NOT ILIKE '%#{option[:value]}%'"
+          end
+        end
+
+        return if field.include?('temperature')
+
+        @conditions[:additional_condition] += " OR ((#{prop} ->> 'field')::TEXT = '#{field}'#{conditions})"
       end
 
       def datasets_joins(filter, prop, key)
