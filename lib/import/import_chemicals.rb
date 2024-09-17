@@ -184,7 +184,7 @@ module Import
 
     def self.set_storage_temperature(chemical, value)
       unit_is_celsius = value.gsub(/\d+(\.\d+)?/, '') == '°C'
-      return chemical unless unit_is_celsius == '°C'
+      return chemical unless unit_is_celsius
 
       if chemical['chemical_data'][0]['storage_temperature'].nil?
         chemical['chemical_data'][0]['storage_temperature'] = {}
