@@ -683,8 +683,17 @@ const DetailSearch = () => {
       searchValue.unit = units[0].label;
     }
 
-    if (column.indexOf('temperature') !== -1 && value !== '' && value !== 0) {
+    if (column.indexOf('temperature') !== -1 && value !== '' && value !== 0 && value !== "0") {
       searchValue = availableOptionsForTemperature(searchValue, value, searchValue.unit);
+    }
+
+    if (value === 'others' && option.type === 'select') {
+      searchValue.available_options = [];
+      optionsForSelect(option).map((object) => {
+        if (object.value !== '' && object.value !== 'others') {
+          searchValue.available_options.push(object);
+        }
+      });
     }
 
     let searchSubValuesLength = searchValue.sub_values.length >= 1 ? Object.keys(searchValue.sub_values[0]).length : 0;
@@ -716,14 +725,17 @@ const DetailSearch = () => {
   }
 
   const availableOptionsForTemperature = (searchValue, startValue, startUnit) => {
+    startValue = startValue.replace(/,/g, '.');
+    startValue = startValue.slice(-1) === '.' ? `${startValue}0` : startValue;
+
     searchValue.available_options = [];
     searchValue.available_options.push({ value: startValue, unit: startUnit });
 
     let [convertedValue, convertedUnit] = convertTemperature(startValue, startUnit);
-    searchValue.available_options.push({ value: convertedValue, unit: convertedUnit });
+    searchValue.available_options.push({ value: convertedValue.trim(), unit: convertedUnit });
 
     [convertedValue, convertedUnit] = convertTemperature(convertedValue, convertedUnit);
-    searchValue.available_options.push({ value: convertedValue, unit: convertedUnit });
+    searchValue.available_options.push({ value: convertedValue.trim(), unit: convertedUnit });
     return searchValue;
   }
 
