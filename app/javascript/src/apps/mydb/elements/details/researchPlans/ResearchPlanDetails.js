@@ -42,9 +42,12 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 export default class ResearchPlanDetails extends Component {
   static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const { researchPlan } = props;
@@ -206,6 +209,7 @@ export default class ResearchPlanDetails extends Component {
     // update only this attachment
     researchPlan.attachments.map((currentAttachment) => {
       if (currentAttachment.id === attachment.id) return attachment;
+      return null;
     });
     this.setState({ researchPlan });
     this.forceUpdate();
@@ -246,6 +250,7 @@ export default class ResearchPlanDetails extends Component {
 
     ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
       if (result.error) {
+        // eslint-disable-next-line no-alert
         alert(result.error);
       }
     });
@@ -257,6 +262,13 @@ export default class ResearchPlanDetails extends Component {
 
   onTabPositionChanged(visible) {
     this.setState({ visible });
+  }
+
+  toggleFullScreen() {
+    this.props.toggleFullScreen();
+
+    // toogle update prop to notify react data grid for view change
+    this.setState((prevState) => ({ update: !prevState.update }));
   }
 
   dropWellplate(wellplate) {
@@ -443,12 +455,12 @@ export default class ResearchPlanDetails extends Component {
 
   renderAnalysesTab(researchPlan) {
     return (
-          <ResearchPlanDetailsContainers
-            handleSubmit={this.handleSubmit}
-            handleResearchPlanChange={this.handleResearchPlanChange}
-            researchPlan={researchPlan}
-            readOnly={false}
-          />
+      <ResearchPlanDetailsContainers
+        handleSubmit={this.handleSubmit}
+        handleResearchPlanChange={this.handleResearchPlanChange}
+        researchPlan={researchPlan}
+        readOnly={false}
+      />
     );
   }
 
@@ -574,6 +586,21 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanMetadata researchPlan={researchPlan} />
         </Tab>
       ),
+      versions: (
+        <Tab
+          eventKey="versioning"
+          title="Versions"
+          key={`Versions_ResearchPlan_${researchPlan.id.toString()}`}
+        >
+          <VersionsTable
+            type="research_plans"
+            id={researchPlan.id}
+            element={researchPlan}
+            parent={this}
+            isEdited={researchPlan.changed}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -605,7 +632,13 @@ export default class ResearchPlanDetails extends Component {
             onTabPositionChanged={this.onTabPositionChanged}
           />
           <div className="tabs-container--with-borders">
-            <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key)}
+              id="screen-detail-tab"
+            >
               {tabContents}
             </Tabs>
           </div>

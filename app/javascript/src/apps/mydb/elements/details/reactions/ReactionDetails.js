@@ -665,7 +665,7 @@ export default class ReactionDetails extends Component {
             isEdited={reaction.changed}
           />
         </Tab>
-      )
+      ),
     };
 
     const tabTitlesMap = {
