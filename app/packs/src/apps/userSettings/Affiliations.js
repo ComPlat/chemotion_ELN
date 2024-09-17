@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import CreatableSelect from 'react-select/lib/Creatable';
-import { Button, Modal, Table } from 'react-bootstrap';
+import { Button, Modal, OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
-import uuid from 'uuid';
 
 import UserSettingsFetcher from 'src/fetchers/UserSettingsFetcher';
 
@@ -26,7 +25,6 @@ function Affiliations({ show, onHide }) {
             ...item,
             disabled: true,
             current: item.from !== null && item.to === null
-
           }
         )));
       });
@@ -105,10 +103,13 @@ function Affiliations({ show, onHide }) {
     const newInputErrors = { ...inputError };
     if (field === 'from' && (updatedAffiliations[index].from === null || updatedAffiliations[index].from === '')) {
       newInputErrors[index] = { ...newInputErrors[index], from: true };
-      setErrorMsg('Required');
+      setErrorMsg('From date is Required');
     } else if (field === 'to' && updatedAffiliations[index].from > value) {
       newInputErrors[index] = { ...newInputErrors[index], to: true };
       setErrorMsg('Invalid date');
+    } else if (field === 'organization' && !value) {
+      newInputErrors[index] = { ...newInputErrors[index], organization: true };
+      setErrorMsg('Organization is required');
     } else if (newInputErrors[index]) {
       delete newInputErrors[index][field];
       if (Object.keys(newInputErrors[index]).length === 0) {
@@ -122,10 +123,17 @@ function Affiliations({ show, onHide }) {
   const handleSaveButtonClick = (index) => {
     const updatedAffiliations = [...affiliations];
     const newInputErrors = { ...inputError };
+
+    if (!updatedAffiliations[index].organization) {
+      newInputErrors[index] = { ...newInputErrors[index], organization: true };
+      setInputError(newInputErrors);
+      setErrorMsg('Organization is required');
+      return;
+    }
     if (!updatedAffiliations[index].from) {
       newInputErrors[index] = { ...newInputErrors[index], from: true };
       setInputError(newInputErrors);
-      setErrorMsg('Required');
+      setErrorMsg('From date is required');
       return;
     }
 
@@ -138,11 +146,11 @@ function Affiliations({ show, onHide }) {
 
   return (
     <Modal
-      bsSize="lg"
-      dialogClassName="importChemDrawModal"
+      fullscreen
       show={show}
       onHide={onHide}
       backdrop="static"
+      centered
     >
       <Modal.Header closeButton onHide={onHide}>
         <Modal.Title>
@@ -151,34 +159,33 @@ function Affiliations({ show, onHide }) {
       </Modal.Header>
 
       <Modal.Body>
-        <div className="current-container">
-          <h4 className="align-title"> Current affiliations</h4>
-          <div className="entry-container">
+        <div>
+          <h4 className="fs-5 mb-3"> Current affiliations</h4>
+          <div className="d-flex flex-wrap gap-2">
             {currentEntries.map((entry) => (
-              <div key={uuid.v4()} className="entry-box">
+              <div
+                key={entry.id}
+                className="border border-gray-300 rounded-2 p-2 shadow-sm mw-40 flex-grow-1"
+                style={{ minWidth: '200px', maxWidth: '350px' }}
+              >
                 <p>
-                  <strong>Country:</strong>
-                  {' '}
+                  <strong className="me-1">Country:</strong>
                   {entry.country}
                 </p>
                 <p>
-                  <strong>Organization:</strong>
-                  {' '}
+                  <strong className="me-1">Organization:</strong>
                   {entry.organization}
                 </p>
                 <p>
-                  <strong>Department:</strong>
-                  {' '}
+                  <strong className="me-1">Department:</strong>
                   {entry.department}
                 </p>
                 <p>
-                  <strong>Group:</strong>
-                  {' '}
+                  <strong className="me-1">Group:</strong>
                   {entry.group}
                 </p>
                 <p>
-                  <strong>From:</strong>
-                  {' '}
+                  <strong className="me-1">From:</strong>
                   {entry.from}
                 </p>
               </div>
@@ -186,12 +193,9 @@ function Affiliations({ show, onHide }) {
           </div>
         </div>
 
-        <div style={{
-          display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', marginTop: '1rem'
-        }}
-        >
+        <div className="d-flex justify-content-end my-1">
           <Button
-            bsStyle="primary"
+            variant="primary"
             onClick={() => {
               setAffiliations((prev) => [...prev, {
                 country: '',
@@ -204,18 +208,24 @@ function Affiliations({ show, onHide }) {
               }]);
             }}
           >
-            Add affiliation &nbsp;
-            <i className="fa fa-plus" />
+            Add affiliation
+            <i className="fa fa-plus ms-1" />
           </Button>
         </div>
         <Table striped bordered hover>
           <thead>
             <tr>
               <th>Country</th>
-              <th>Organization</th>
+              <th>
+                Organization
+                <span className="text-danger ms-1">*</span>
+              </th>
               <th>Department</th>
               <th>Working Group</th>
-              <th>From</th>
+              <th>
+                From
+                <span className="text-danger ms-1">*</span>
+              </th>
               <th>To</th>
               <th />
             </tr>
@@ -231,6 +241,7 @@ function Affiliations({ show, onHide }) {
                         isCreatable
                         disabled={item.disabled}
                         placeholder="Select or enter a new option"
+                        // className={${inputError[index] && inputError[index].from ? 'error-control' : ''}}
                         components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                         options={countryOptions}
                         value={item.country || ''}
@@ -243,17 +254,23 @@ function Affiliations({ show, onHide }) {
                 <td>
                   {item.disabled ? item.organization
                     : (
-                      <CreatableSelect
-                        required
-                        components={{ DropdownIndicator: () => null }}
-                        disabled={item.disabled}
-                        placeholder="Select or enter a new option"
-                        isCreatable
-                        options={orgOptions}
-                        value={item.organization}
-                        isClearable
-                        onChange={(choice) => onChangeHandler(index, 'organization', !choice ? '' : choice.value)}
-                      />
+                      <>
+                        <CreatableSelect
+                          required
+                          components={{ DropdownIndicator: () => null }}
+                          disabled={item.disabled}
+                          placeholder="Select or enter a new option"
+                          className={inputError[index] && inputError[index].organization ? 'is-invalid' : ''}
+                          isCreatable
+                          options={orgOptions}
+                          value={item.organization}
+                          isClearable
+                          onChange={(choice) => onChangeHandler(index, 'organization', !choice ? '' : choice.value)}
+                        />
+                        {inputError[index] && inputError[index].organization && (
+                          <div className="invalid-feedback">Organization is required</div>
+                        )}
+                      </>
                     )}
                 </td>
                 <td>
@@ -291,66 +308,109 @@ function Affiliations({ show, onHide }) {
                     )}
                 </td>
                 <td>
-                  <DatePicker
-                    placeholderText={inputError[index] ? inputError[index].from ? errorMsg : '' : 'Required'}
-                    isClearable
-                    clearButtonTitle="Clear"
-                    className={inputError[index] && inputError[index].from ? 'error-control' : ''}
-                    showPopperArrow={false}
-                    disabled={item.disabled}
-                    showMonthYearPicker
-                    dateFormat="yyyy-MM"
-                    value={item.from}
-                    onChange={(date) => onChangeHandler(index, 'from', moment(date).format('YYYY-MM'))}
-                  />
+                  {item.disabled ? item.from
+                    : (
+                      <>
+                        <DatePicker
+                          placeholderText={inputError[index] ? inputError[index].from ? errorMsg : '' : 'Required'}
+                          isClearable
+                          clearButtonTitle="Clear"
+                          className={`Select-control ${inputError[index] && inputError[index].from ? 'border-danger' : ''}`}
+                          showPopperArrow={false}
+                          disabled={item.disabled}
+                          showMonthYearPicker
+                          dateFormat="yyyy-MM"
+
+                          selected={item.from}
+                          onChange={(date) => onChangeHandler(index, 'from', moment(date).format('YYYY-MM'))}
+                        />
+                        {inputError[index] && inputError[index].from && (
+                          <div className="invalid-feedback">From is required</div>
+                        )}
+                      </>
+                    )}
                 </td>
                 <td>
-                  <DatePicker
-                    placeholderText={inputError[index] && inputError[index].to ? errorMsg : ''}
-                    isClearable
-                    clearButtonTitle="Clear"
-                    className={inputError[index] && inputError[index].to ? 'error-control' : ''}
-                    showPopperArrow={false}
-                    disabled={item.disabled}
-                    showMonthYearPicker
-                    dateFormat="yyyy-MM"
-                    value={item.to}
-                    onChange={(date) => onChangeHandler(index, 'to', date ? moment(date).format('YYYY-MM') : date)}
-                  />
+                  {item.disabled ? item.to
+                    : (
+                      <DatePicker
+                        placeholderText={inputError[index] && inputError[index].to ? errorMsg : ''}
+                        isClearable
+                        clearButtonTitle="Clear"
+                        className={`Select-control ${inputError[index] && inputError[index].to ? 'border-danger' : ''}`}
+                        showPopperArrow={false}
+                        disabled={item.disabled}
+                        showMonthYearPicker
+                        dateFormat="yyyy-MM"
+                        selected={inputError[index] && inputError[index].to ? null : item.to}
+                        onChange={(date) => onChangeHandler(index, 'to', date ? moment(date).format('YYYY-MM') : date)}
+                      />
+                    )}
                 </td>
                 <td>
-                  <div className="pull-right">
+                  <div className="d-flex ms-auto">
                     {item.disabled
                       ? (
-                        <Button
-                          bsSize="small"
-                          bsStyle="primary"
-                          onClick={() => {
-                            const updatedAffiliations = [...affiliations];
-                            updatedAffiliations[index].disabled = false;
-                            setAffiliations(updatedAffiliations);
-                          }}
+                        <OverlayTrigger
+                          placement="top"
+                          overlay={
+                            <Tooltip id='affiliation_edit_tooltip'>
+                              Edit affiliation
+                          </Tooltip>
+                        }
                         >
-                          <i className="fa fa-edit" />
-                        </Button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            className="d-flex ms-auto"
+                            onClick={() => {
+                              const updatedAffiliations = [...affiliations];
+                              updatedAffiliations[index].disabled = false;
+                              setAffiliations(updatedAffiliations);
+                            }}
+                          >
+                            <i className="fa fa-edit" />
+                          </Button>
+
+                        </OverlayTrigger>     
                       )
                       : (
+                        <OverlayTrigger
+                          placement="top"
+                          overlay={
+                            <Tooltip id='affiliation_save_tooltip'>
+                              Save changes
+                            </Tooltip>
+                          }
+                        >
                         <Button
-                          bsSize="small"
-                          bsStyle="warning"
+                          size="sm"
+                            variant="warning"
+                            className="d-flex ms-auto"
                           onClick={() => handleSaveButtonClick(index)}
                         >
                           <i className="fa fa-save" />
-                        </Button>
+                          </Button>
+                        </OverlayTrigger>
                       )}
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={
+                        <Tooltip id='affiliation_delete_tooltip'>
+                          Delete affiliation
+                        </Tooltip>
+                      }
+                    >
                     <Button
-                      style={{ marginLeft: '1rem' }}
-                      bsSize="small"
-                      bsStyle="danger"
+                      // className="ms-1"
+                        size="sm"
+                        className="d-flex ms-auto"
+                      variant="danger"
                       onClick={() => handleDeleteAffiliation(index)}
                     >
                       <i className="fa fa-trash-o" />
-                    </Button>
+                      </Button>
+                    </OverlayTrigger>
                   </div>
                 </td>
               </tr>
