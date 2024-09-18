@@ -3,6 +3,9 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 
+
+
+
 function addElementAtIndex(array, index, newElement) {
   // Check if the index is within bounds
   if (index >= 0 && index <= array.length) {
@@ -78,7 +81,7 @@ function KetcherEditor(props) {
       // editor.structureDef.editor.editor.renderAndRecoordinateStruct();
       // editor.structureDef.editor.setMolecule(initMol);
       const list = [
-        // "elementEdit",
+        "elementEdit",
         "bondEdit",
         "rgroupEdit",
         "sgroupEdit",
@@ -100,8 +103,10 @@ function KetcherEditor(props) {
       ];
 
       // Function to handle each event
-      function handleEvent(eventName, data) {
+      async function handleEvent(eventName, data) {
         // console.log(`${eventName} event triggered with data:`, data, molfile);
+        console.log(await editor.structureDef.editor.getKet(), "editor?");
+        return;
         data.forEach(async (item) => {
           switch (item?.operation) {
             case "Move image":
