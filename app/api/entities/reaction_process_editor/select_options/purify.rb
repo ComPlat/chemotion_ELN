@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class Purify < Base
-        def select_options(reaction_process)
+        def select_options_for(reaction_process)
           { CRYSTALLIZATION: {
               modes: crystallization_modes,
               automation_modes: SelectOptions::Custom.instance.automation_modes,
@@ -20,15 +20,12 @@ module Entities
               modes: filtration_modes,
               solvent_options: material_options(reaction_process)['FILTRATION'],
             },
-            CHROMATOGRAPHY: SelectOptions::Chromatography.instance.select_options.merge(
-              solvent_options: material_options(reaction_process)['CHROMATOGRAPHY'],
-            ) }
+            CHROMATOGRAPHY: SelectOptions::Chromatography.instance.select_options }
         end
 
         def material_options(reaction_process)
           {
             CRYSTALLIZATION: crystallization_options,
-            CHROMATOGRAPHY: chromatography_options,
             EXTRACTION: solvent_options(reaction_process),
             FILTRATION: solvent_options(reaction_process),
           }.deep_stringify_keys
@@ -59,11 +56,6 @@ module Entities
 
           sample_minimal_options(solvents,
                                  'SOLVENT') + sample_minimal_options(Medium::DiverseSolvent.all, 'DIVERSE_SOLVENT')
-        end
-
-        def chromatography_options
-          sample_minimal_options(Medium::Modifier.all,
-                                 'MODIFIER') + sample_minimal_options(Medium::DiverseSolvent.all, 'DIVERSE_SOLVENT')
         end
 
         def crystallization_options

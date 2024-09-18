@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class ReactionProcessStep < Base
-        def all(reaction_process_step)
+        def select_options_for(reaction_process_step)
           {
             added_materials: added_materials(reaction_process_step),
             removable_samples: removable_samples(reaction_process_step),
