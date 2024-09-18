@@ -15,7 +15,7 @@ module Entities
       private
 
       def select_options
-        SelectOptions::ReactionProcessStep.instance.all(object)
+        SelectOptions::ReactionProcessStep.instance.select_options_for(object)
       end
 
       def reaction

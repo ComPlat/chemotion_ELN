@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class Materials < Base
-        def all_for(reaction_process)
+        def select_options_for(reaction_process)
           # We assemble the material options as required in the Frontend.
           # It's a hodgepodge of samples of different origin merged assigned to certain keys, where the differing
           # materials also have differing attributes to cope with.

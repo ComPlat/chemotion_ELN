@@ -1,19 +1,22 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/AbcSize
+
 module Entities
   module ReactionProcessEditor
     module SelectOptions
       class ReactionProcess < Base
-        def all(reaction_process)
+        def select_options_for(reaction_process)
           {
             samples_preparations: sample_preparation_options(reaction_process),
             vessel_preparations: SelectOptions::Vessels.instance.preparations,
             step_name_suggestions: step_name_suggestions(reaction_process),
             activity_type_equipment: SelectOptions::Equipment.instance.per_activity_type,
-            purify: SelectOptions::Purify.instance.select_options(reaction_process),
+            measurement: SelectOptions::Measurement.instance.select_options,
+            purify: SelectOptions::Purify.instance.select_options_for(reaction_process),
             condition_additional_information: SelectOptions::Conditions.instance.additional_information,
             addition_speed_types: SelectOptions::Custom.instance.addition_speed_types,
-            materials: SelectOptions::Materials.instance.all_for(reaction_process),
+            materials: SelectOptions::Materials.instance.select_options_for(reaction_process),
             equipment: SelectOptions::Equipment.instance.all,
             automation_modes: SelectOptions::Custom.instance.automation_modes,
             motion_types: SelectOptions::Custom.instance.motion_types,
@@ -66,3 +69,4 @@ module Entities
     end
   end
 end
+# rubocop:enable Metrics/AbcSize
