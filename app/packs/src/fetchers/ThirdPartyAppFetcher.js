@@ -1,5 +1,5 @@
-import 'whatwg-fetch';
 import { ThirdPartyAppServices } from 'src/endpoints/ApiServices';
+import 'whatwg-fetch';
 
 const { TPA_ENDPOINT } = ThirdPartyAppServices;
 const TPA_ENDPOINT_ADMIN = `${TPA_ENDPOINT}/admin`;
@@ -46,6 +46,15 @@ export default class ThirdPartyAppFetcher {
     }).then((response) => response.json())
 
       .then((json) => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static fetchCollectionAttachmentTokensByCollectionId() {
+    const url = `${TPA_ENDPOINT}/collection_tpa_tokens`;
+    return fetch(url, {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+      .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 

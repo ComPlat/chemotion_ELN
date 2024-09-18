@@ -6,6 +6,7 @@ require 'rails_helper'
 describe Chemotion::ThirdPartyAppAPI do
   include_context 'api request authorization context'
   let!(:admin1) { create(:admin) }
+  let(:user) { create(:user) }
 
   before do
     allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin1) # rubocop:disable RSpec/AnyInstance
@@ -256,7 +257,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
     let(:third_party_app) { create(:third_party_app) }
     let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
-    let(:cache_key) { "#{attachment.id}/#{user.id}/#{third_party_app.id}" }
+    let(:cache_key) { "#{attachment.id}/#{third_party_app.id}" }
     let(:secret) { Rails.application.secrets.secret_key_base }
     let(:token) { JWT.encode(payload, secret, 'HS256') }
     let(:allowed_uploads) { 1 }
@@ -303,7 +304,7 @@ describe Chemotion::ThirdPartyAppAPI do
         end
 
         before do
-          cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          cache.write(cache_key, { token: token, upload: allowed_uploads, download: 1 }, expires_in: 1.hour)
           post "/api/v1/public/third_party_apps/#{token}", params: params
         end
 
@@ -365,7 +366,7 @@ describe Chemotion::ThirdPartyAppAPI do
       end
 
       context 'when amount of uploads exceeded' do
-        let(:allowed_uploads) { -1 }
+        let(:allowed_uploads) { 0 }
 
         before do
           cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
@@ -385,7 +386,7 @@ describe Chemotion::ThirdPartyAppAPI do
       parts.split('/').last
     end
 
-    let(:tpa) { create((:third_party_app)) }
+    let(:tpa) { create(:third_party_app) }
 
     let!(:research_plan) do
       create(:research_plan, creator: admin1, collections: [collection], attachments: [attachment])
@@ -420,6 +421,25 @@ describe Chemotion::ThirdPartyAppAPI do
 
       it 'status of get request 403?' do
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe 'GET /collection_tpa_tokens' do
+    let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
+
+    context 'when the user has no cached tokens' do
+      before do
+        cache.delete(user.id)
+      end
+
+      it 'returns the empty list of TPA tokens' do
+        get '/api/v1/third_party_apps/collection_tpa_tokens'
+
+        expect(response).to have_http_status(:ok)
+
+        json_response = JSON.parse(response.body).deep_symbolize_keys
+        expect(json_response[:token_list]).to be_empty
       end
     end
   end

@@ -15,12 +15,14 @@ module ThirdPartyAppHelpers
 
   # desc: fetch the token and download/upload counters from the cache
   def cached_token
-    @cached_token ||= cache.read(cache_key)
+    @cached_token ||= cache.read(cache_key[1])
   end
 
   # desc: define the cache key based on the attachment/user/app ids
   def cache_key
-    @cache_key ||= "#{@attachment&.id}/#{@user&.id}/#{@app&.id}"
+    @user_key ||= @user&.id
+    @cache_key_attachment_app ||= "#{@attachment&.id}/#{@app&.id}"
+    [@user_key, @cache_key_attachment_app]
   end
 
   # desc: prepare the token payload from the params
@@ -44,14 +46,15 @@ module ThirdPartyAppHelpers
 
   # desc: decrement the counters / check if token permission is expired
   def update_cache(key)
-    return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
-
-    # TODO: expire token when both counters reach 0
-    # IDEA: split counters into two caches?
-    return error!("Token #{key} permission expired", 403) if cached_token[key].negative?
-
-    cached_token[key] -= 1
-    cache.write(cache_key, cached_token)
+    if cached_token.nil?
+      cache.delete(cache_key[1])
+      error!('Invalid token', 403)
+    elsif cached_token[key].to_i < 1
+      error!("Token #{key} permission expired", 403)
+    else
+      cached_token[key] -= 1
+      cache.write(cache_key[1], cached_token)
+    end
   end
 
   # desc: return file for download to third party app
@@ -90,10 +93,21 @@ module ThirdPartyAppHelpers
     { message: 'File uploaded successfully' }
   end
 
+  def update_cached_user_tokens
+    current_state = cache.read(cache_key[0])
+    new_state = if current_state
+                  idx = current_state.index(cache_key[1])
+                  idx.nil? ? current_state.push(cache_key[1]) : current_state
+                else
+                  [cache_key[1]]
+                end
+    cache.write(cache_key[0], new_state)
+  end
+
   def encode_and_cache_token(payload = @payload)
     @token = JsonWebToken.encode(payload, expiry_time)
     cache.write(
-      cache_key,
+      cache_key[1],
       { token: @token, download: 3, upload: 10 },
       expires_at: expiry_time,
     )

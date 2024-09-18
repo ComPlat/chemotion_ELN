@@ -98,12 +98,29 @@ module Chemotion
       get 'token' do
         prepare_payload
         parse_payload
+        update_cached_user_tokens
         encode_and_cache_token
         return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
         "#{@app.url}?url=#{url}"
+      end
+
+      desc 'list of TPA token in a collection'
+      get 'collection_tpa_tokens' do
+        token_list = []
+        cache_user_keys = cache.read(current_user.id)
+        return { token_list: [] } if cache_user_keys.blank?
+
+        cache_user_keys&.each do |token_key|
+          cached_value = cache.read(token_key)
+          token_list
+            .push({
+                    "#{token_key}": cached_value,
+                  })
+        end
+        { token_list: token_list }
       end
 
       desc 'get chemotion handler url'
