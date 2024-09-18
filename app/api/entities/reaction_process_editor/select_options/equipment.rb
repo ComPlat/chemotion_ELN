@@ -28,6 +28,7 @@ module Entities
               MOTION: motion_equipment,
             },
             REMOVE: remove_equipment,
+            MEASUREMENT: purify_equipment,
             PURIFY: purify_equipment,
           }.deep_stringify_keys
         end
