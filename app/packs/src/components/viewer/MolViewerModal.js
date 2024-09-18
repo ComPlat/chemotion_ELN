@@ -11,41 +11,34 @@ function MolViewerModal(props) {
   const {
     fileContent, handleModalOpen, viewType, show
   } = props;
-  const [newContent] = useState(fileContent);
   const config = UIStore.getState().moleculeViewer;
-  if (!config?.featureEnabled || !fileContent) return <span />;
 
-  if (show) {
-    const viewer = (
-      <MolViewer
-        molContent={newContent}
-        viewType={viewType}
-        fnInit={() => LoadingActions.start()}
-        fnCb={() => LoadingActions.stop()}
-        src="/api/v1/converter/structure"
-      />
-    );
-    return (
-      <Modal
-        animation
-        dialogClassName="structure-viewer-modal"
-        show={show}
-        onHide={handleModalOpen}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title style={{ fontSize: '12pt' }}>
-            {MolViewerSet.INFO}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div style={{ width: '100%', height: 'calc(100vh - 260px)' }}>
-            {viewer}
-          </div>
-        </Modal.Body>
-      </Modal>
-    );
-  }
-  return <span />;
+  if (!config?.featureEnabled || !fileContent) return null;
+
+  return (
+    <Modal
+      animation
+      centered
+      className="modal-xxxl"
+      show={show}
+      onHide={handleModalOpen}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>
+          {MolViewerSet.INFO}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <MolViewer
+          molContent={fileContent}
+          viewType={viewType}
+          fnInit={() => LoadingActions.start()}
+          fnCb={() => LoadingActions.stop()}
+          src="/api/v1/converter/structure"
+        />
+      </Modal.Body>
+    </Modal>
+  );
 }
 
 MolViewerModal.propTypes = {
