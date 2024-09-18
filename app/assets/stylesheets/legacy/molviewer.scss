@@ -1,17 +1,3 @@
-@mixin viewer-modal {
-  height: 95%;
-  top: 52% !important;
-  margin: unset !important;
-}
-
-.file-viewer-modal {
-  @include viewer-modal;
-  width: 98vw !important;
-  .modal-content {
-    height: 95%;
-  }
-}
-
 .structure-editor-container {
   position: absolute;
   top: 6px;
