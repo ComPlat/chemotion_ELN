@@ -1273,47 +1273,40 @@ export default class SampleDetails extends React.Component {
   }
 
   svgOrLoading(sample) {
-    let svgPath = '';
-    if (this.state.loadingMolecule) {
-      svgPath = '/images/wild_card/loading-bubbles.svg';
-    } else {
-      svgPath = sample.svgPath;
-    }
-    const className = 'position-relative ' + (svgPath ? 'svg-container' : 'svg-container-empty');
-    return (
-      sample.can_update
-        ? (
-          <>
-            <div
-              className={className}
-              onClick={this.showStructureEditor}
-              role="button"
-              tabIndex="0"
-            >
-              <i className="fa fa-pencil position-absolute end-0" />
-              <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-            </div>
-            <MolViewerBtn
-              className="structure-editor-container"
-              disabled={sample.isNew || !this.enableMoleculeViewer}
-              fileContent={sample.molfile}
-              isPublic={false}
-              viewType={`mol_${sample.id}`}
-            />
-          </>
-        )
-        : (
-          <div className={className}>
-            <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-            <MolViewerBtn
-              className="structure-editor-container"
-              disabled={sample.isNew || !this.enableMoleculeViewer}
-              fileContent={sample.molfile}
-              isPublic={false}
-              viewType={`mol_${sample.id}`}
-            />
-          </div>
-        )
+    const svgPath = this.state.loadingMolecule
+      ? '/images/wild_card/loading-bubbles.svg'
+      : sample.svgPath;
+
+    const className = `position-relative ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
+
+    const molViewerBtn = (
+      <MolViewerBtn
+        className="structure-editor-container"
+        disabled={sample.isNew || !this.enableMoleculeViewer}
+        fileContent={sample.molfile}
+        isPublic={false}
+        viewType={`mol_${sample.id}`}
+      />
+    );
+
+    return sample.can_update ? (
+      <>
+        <div
+          className={className}
+          onClick={this.showStructureEditor}
+          role="button"
+          tabIndex="0"
+        >
+          <i className="fa fa-pencil position-absolute end-0" />
+          <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+        </div>
+        {molViewerBtn}
+      </>
+    ) : (
+      <div className={className}>
+        <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+        {molViewerBtn}
+      </div>
     );
   }
 
