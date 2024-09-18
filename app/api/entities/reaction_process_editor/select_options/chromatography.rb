@@ -12,9 +12,11 @@ module Entities
             step_modes: step_modes,
             prod_modes: prod_modes,
             jar_materials: jar_materials,
-            devices: devices,
+            chromatography_types: chromatography_types,
+            measurement_types: measurement_types,
             column_types: column_types,
             detectors: detectors,
+            solvent_options: solvent_options,
           }
         end
 
@@ -41,12 +43,17 @@ module Entities
            { value: 'METAL', label: 'Metal' }]
         end
 
-        def devices
+        def chromatography_types
           [{ value: 'HPLC', label: 'HPLC (LC, SFC, GPC & SEC)' },
            { value: 'MPLC', label: 'MPLC' },
            { value: 'GC', label: 'Gas Chromatography' },
            { value: 'FLASH', label: 'Flash' },
            { value: 'IEC', label: 'Ion Exchange Chromatography' }]
+        end
+
+        def measurement_types
+          [{ value: 'HPLC', label: 'HPLC (MS)' },
+           { value: 'GC', label: 'Gas Chromatography (MS)' }]
         end
 
         def column_types
@@ -108,6 +115,11 @@ module Entities
             { value: 'BARRIER_IONIZATION_DISCHARGE', label: 'BID' },
             { value: 'THERMAL_CONDUCTIVIT', label: 'TCD' },
           ]
+        end
+
+        def solvent_options
+          sample_minimal_options(Medium::Modifier.all,
+                                 'MODIFIER') + sample_minimal_options(Medium::DiverseSolvent.all, 'DIVERSE_SOLVENT')
         end
       end
     end
