@@ -1,322 +1,70 @@
 /*
- * This is a manifest file that'll be compiled into application.css, which will include all the files
- * listed below.
- *
- * Any CSS and SCSS file within this directory, lib/assets/stylesheets, vendor/assets/stylesheets,
- * or any plugin's vendor/assets/stylesheets directory can be referenced here using a relative path.
- *
- * You're free to add application-wide styles to this file and they'll appear at the bottom of the
- * compiled file so the styles you add here take precedence over styles defined in any styles
- * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
- * file per style scope.
- *
- *= require components/CommentModal/CommentModal.scss
- *= require components/inbox/AttachmentContainer.css
- *= require components/inbox/inbox.scss
- *= require components/affiliations.scss
- *= require components/custom.css
- *= require components/select.css
- *
- * =================================================================================================
- * In preparation for the bootstrap upgrade, we require the files within this directory manually,
- * instead of using `require_tree .`
- *
- * This is because require_tree is used by the asset pipeline to compile every JS file in this
- * directory to an independent JS output file (you can see this in dev mode where each JS in in the)
- * HTML <head> individually.
- *
- * This has the disadvantage, that you can not really use Sass Imports properly, which we want to
- * do for the Bootstrap styling. As the asset pipeline compiles every file that you require to an
- * individual output file, you could use a sass import there, but that would duplicate the imported
- * sass file's code into every file where it is imported, which defeats the point.
- *
- * You can just continue to write your CSS directly into a file, which you then have to require
- * manually below.
- *
- * If you want to take advantage of the upcoming Bootstrap global styling updates, use a Sass import
- * instead (see branch `update-react-bootstrap-library` at https://github.com/ComPlat/chemotion_ELN/pull/1930/files)
- * for further information. This comment will be updated when the Bootstrap upgrade has been merged.
- *
- * =================================================================================================
- *
- *= require _icons.scss
- *= require attachment-list.scss
- *= require calendar.scss
- *= require cellLines.scss
- *= require chemical-tab.scss
- *= require chemspectra.scss
- *= require collection_management.scss
- *= require collection_tree.css
- *= require common.scss
- *= require converter.scss
- *= require CustomHeader.scss
- *= require dnd.scss
- *= require draggable_modal.scss
- *= require elements_details.css
- *= require elements_table.scss
- *= require export-collections.scss
- *= require format-container.scss
- *= require generic_element.scss
- *= require material.scss
- *= require measurement_export_modal.scss
- *= require metadata.scss
- *= require molecules.scss
- *= require molviewer.scss
- *= require mozilla.scss
- *= require navigation.scss
- *= require omniauth.scss
- *= require polymer_section.scss
- *= require prediction.scss
- *= require qc.scss
- *= require qr.scss
- *= require quill.snow.css
- *= require quill_toolbar_template.scss
- *= require quill_viewer.scss
- *= require reaction.scss
- *= require report.scss
- *= require research-plan-table-context-menu.scss
- *= require research-plan.scss
- *= require sample.scss
- *= require search_modal.scss
- *= require search_results.scss
- *= require spectra.scss
- *= require structur_editor.css
- *= require switch.scss
- *= require tab_layout_container.scss
- *= require wellplate.scss
+ * In order to control import order and provide access to variables, mixins and utilities, we import
+ * the files within this directory manually via sass `@import`, instead of using `require_tree .`
+ * 
+ * The files in the legacy directory have not yet been aligned with the design system initiative and
+ * will be refactored in the future.
  *
  *= require_self
  */
 
-@import "ag-grid-community/styles/ag-grid.css";
-@import "ag-grid-community/styles/ag-theme-alpine.css";
-@import "ag-grid-community/styles/ag-theme-balham.css";
+@import "global-styles/vendor.scss";
 
+@import "global-styles/bootstrap-config.scss";
+@import "global-styles/bootstrap-mods.scss";
+@import "global-styles/icons.scss";
+// file css rules that are used by multiple components under global-styles/utilities
+@import "global-styles/utilities.scss";
 
-@import "react-datepicker/dist/react-datepicker.css";
-@import "react-select/dist/react-select.css";
-@import "react-virtualized-select/styles.css";
-@import "react-virtualized/styles.css";
-@import "react-vis/dist/style.css";
-@import "reactflow/dist/style.css";
+// file css rules that are targeted at specific components under components
+@import "components/ButtonGroupToggleButton.scss";
 
-@import "chemotion_bootstrap.scss";
-
-@import "icons";
-@import "font-awesome";
-@import "autocomplete";
-@import "react-big-calendar/lib/css/react-big-calendar.css";
-@import "react-big-calendar/lib/addons/dragAndDrop/styles.scss";
-@import "calendar";
-@import "react-calendar/dist/Calendar.css";
-@import "react-clock/dist/Clock.css";
-@import "react-datetime-picker/dist/DateTimePicker.css";
-
-html,
-body,
-#AdminHome {
-  height: 100%;
-  width: 100%;
-}
-
-label.required:after {
-  content: " *";
-}
-
-.custom-modal {
-  width: 100%;
-}
-
-.modal-container {
-  position: relative;
-}
-
-.modal-container .modal, .modal-container .modal-backdrop {
-  position: absolute;
-}
-
-.dnd-zone {
-  @extend .border;
-  @extend .border-dashed;
-  @extend .border-3;
-}
-
-.dnd-zone-over {
-  @extend .border-primary;
-}
-
-.dnd-dragging {
-  @extend .opacity-25;
-}
-
-#app {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-.table.borderless td, .table.borderless th {
-  border: 0;
-}
-
-.panel-fixed {
-  overflow-y: auto;
-  max-height: 100vh;
-
-  button.btn-danger {
-    position: relative;
-    margin-right: 5px;
-  }
-}
-
-.panel-fixed::-webkit-scrollbar {
-  width: 0px;  /* remove scrollbar space */
-  background: transparent;  /* optional: just make scrollbar invisible */
-}
-
-.panel-detail {
-  max-height: calc(100vh - 150px);
-  .wellplate-detail {
-    width: 980px;
-  }
-}
-
-.panel-detail > .panel-body {
-  overflow-y: auto;
-  max-height: calc(100vh - 220px);
-}
-
-.btn-unified, .dropdown > .btn-unified ~ .btn {
-  color: $white;
-  background-color: $gray-600;
-  border-color: $gray-700;
-}
-
-span.pseudo-link {
-  cursor:pointer;
-  color: $link-color;
-}
-
-span.pseudo-link:hover {
-  text-decoration:underline;
-}
-
-.nav-tabs > li > a {
-  margin-right: 0px;
-}
-
-.small-col {
-  float: left;
-  padding-left: 6px !important;
-  padding-right: 0px !important;
-}
-
-.no-pad-col {
-  padding-left: 0px !important;
-  padding-right: 0px !important;
-}
-
-.main-content {
-  float: none;
-  overflow: hidden;
-  min-height: 350px;
-}
-
-.full-main {
-  width: 99%;
-}
-
-.collection-tree {
-  max-width: 15%;
-  margin-left: 3px;
-}
-
-// icon for research plan. just a standard FontAwesome icon
-$font-icons-research_plan: "\f0f6";
-
-.icon-research_plan {
-  font-style: inherit;
-}
-.icon-research_plan:before {
-  font-family: FontAwesome;
-  content: "\f0f6";
-}
-
-.icon-cell_line {
-  font-style: inherit;
-}
-.icon-cell_line:before {
-  font-family: FontAwesome;
-  content: "\f0a3";
-}
-
-.importChemDrawModal {
-  width: 98%;
-  height: 97%;
-  top: 47%;
-
-  .modal-dialog {
-    top: 47%;
-  }
-
-  .modal-content {
-    height: 100%;
-
-    .modal-body {
-      height: 92%;
-    }
-  }
-
-  ::-webkit-scrollbar {
-  background: transparent;
-  overflow: visible;
-  width: 17px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: solid $white;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.8);
-  }
-
-  ::-webkit-scrollbar-thumb:horizontal {
-  border-width: 4px 6px;
-  min-width: 40px;
-  }
-
-  ::-webkit-scrollbar-thumb:vertical {
-  border-width: 6px 4px;
-  min-height: 40px;
-  }
-
-  ::-webkit-scrollbar-track-piece {
-  background-color: $white;
-  }
-
-  ::-webkit-scrollbar-corner {
-  background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-  background-color: $gray-500;
-  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,0.10),inset 0 -1px 0 rgba(0,0,0,0.07);
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-  background-color: $gray-600;
-  }
-}
-
-tr.strokeout  td {
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NkYGCQBAAAIwAbDJgTxgAAAABJRU5ErkJggg==');
-    background-repeat: repeat-x;
-    background-position: 50% 40%;
-}
-
-.force-mouse-pointer > div > canvas {
-    cursor: url('data:image/gif;base64,R0lGODlhEAAQAIQQAAUXJQglPAknPggoQQorRQksSAotSQsyUQw7YA07YQ48Xw08Yg48Yw4+Z6wgIGBYhv///////////////////////////////////////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKABAALAAAAAAQABAAAAU+IAQZi2ieqJCUaAsJzuqmTszOb23juS7PMN3OFRT+aMLa0VRMLnvJGqBxCj4CCoRWixzwRLDCF3wYiwiMcQgAOw=='), auto !important;
-}
+@import "legacy/miscellaneous.scss";
+@import "legacy/affiliations.scss";
+@import "legacy/attachment-list.scss";
+@import "legacy/AttachmentContainer.css";
+@import "legacy/cellLines.scss";
+@import "legacy/chemical-tab.scss";
+@import "legacy/chemspectra.scss";
+@import "legacy/collection_management.scss";
+@import "legacy/collection_tree.css";
+@import "legacy/CommentModal.scss";
+@import "legacy/common.scss";
+@import "legacy/converter.scss";
+@import "legacy/CustomHeader.scss";
+@import "legacy/draggable_modal.scss";
+@import "legacy/elements_details.css";
+@import "legacy/elements_table.scss";
+@import "legacy/export-collections.scss";
+@import "legacy/format-container.scss";
+@import "legacy/generic_element.scss";
+@import "legacy/material.scss";
+@import "legacy/measurement_export_modal.scss";
+@import "legacy/metadata.scss";
+@import "legacy/molecules.scss";
+@import "legacy/molviewer.scss";
+@import "legacy/mozilla.scss";
+@import "legacy/navigation.scss";
+@import "legacy/omniauth.scss";
+@import "legacy/polymer_section.scss";
+@import "legacy/prediction.scss";
+@import "legacy/qc.scss";
+@import "legacy/qr.scss";
+@import "legacy/quill.snow.css";
+@import "legacy/quill_toolbar_template.scss";
+@import "legacy/quill_viewer.scss";
+@import "legacy/reaction.scss";
+@import "legacy/report.scss";
+@import "legacy/research-plan-table-context-menu.scss";
+@import "legacy/research-plan.scss";
+@import "legacy/sample.scss";
+@import "legacy/search_modal.scss";
+@import "legacy/search_results.scss";
+@import "legacy/select.scss";
+@import "legacy/spectra.scss";
+@import "legacy/structur_editor.css";
+@import "legacy/switch.scss";
+@import "legacy/tab_layout_container.scss";
+@import "legacy/wellplate.scss";
+@import "legacy/custom.css";
+@import "legacy/inbox.scss";
