@@ -589,12 +589,25 @@ export default class SampleForm extends React.Component {
         true
       );
     }
+  }
+
+  totalRequiredAmount() {
+    const { sample } = this.props;
+
+    const requiredTotalVolume = sample.calculateRequiredTotalVolume() / 1000;
 
     return (
-      <FormGroup>
-        <ControlLabel>Target Total Volume</ControlLabel>
-        <FormControl type="text" disabled defaultValue="***" readOnly />
-      </FormGroup>
+      <NumeralInputWithUnitsCompo
+        value={requiredTotalVolume}
+        unit="l"
+        label="Required Total Volume"
+        metricPrefix="m"
+        precision={5}
+        title="Required Total Volume'"
+        disabled
+        bsStyle="default"
+        id="numInput_amount_l"
+      />
     );
   }
 
@@ -940,7 +953,10 @@ export default class SampleForm extends React.Component {
               </tr>
 
               <tr style={{ float: 'right' }}>
-                <td style={{ width: '10%', paddingRight: '15px' }}>
+                <td style={{ width: '10%', paddingRight: '15px', verticalAlign: 'middle' }}>
+                  {this.totalRequiredAmount()}
+                </td>
+                <td style={{ width: '10%', paddingRight: '15px', verticalAlign: 'middle' }}>
                   {this.totalAmount(sample)}
                 </td>
               </tr>

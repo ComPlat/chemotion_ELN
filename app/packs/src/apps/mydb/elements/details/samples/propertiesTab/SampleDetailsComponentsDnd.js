@@ -62,9 +62,6 @@ class SampleDetailsComponentsDnd extends React.Component {
       isOver,
       canDrop,
       connectDropTarget,
-      lockAmountColumn,
-      lockAmountColumnSolids,
-      switchAmount,
       materialGroup,
       showModalWithMaterial,
       activeTab,
@@ -94,9 +91,6 @@ class SampleDetailsComponentsDnd extends React.Component {
           isOver={isOver}
           canDrop={canDrop}
           materialGroup={materialGroup}
-          lockAmountColumn={lockAmountColumn}
-          lockAmountColumnSolids={lockAmountColumnSolids}
-          switchAmount={switchAmount}
           showModalWithMaterial={showModalWithMaterial}
           activeTab={activeTab}
           handleTabSelect={handleTabSelect}
