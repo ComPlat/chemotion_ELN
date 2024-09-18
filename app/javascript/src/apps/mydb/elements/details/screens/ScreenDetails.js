@@ -34,6 +34,8 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -123,7 +125,7 @@ export default class ScreenDetails extends Component {
   handleSegmentsChange(se) {
     const { screen } = this.state;
     const { segments } = screen;
-    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
     screen.segments = segments;
     screen.changed = true;
@@ -142,7 +144,7 @@ export default class ScreenDetails extends Component {
 
   deleteResearchPlan(researchPlanID) {
     const { screen } = this.state;
-    const researchPlanIndex = screen.research_plans.findIndex(rp => rp.id === researchPlanID);
+    const researchPlanIndex = screen.research_plans.findIndex((rp) => rp.id === researchPlanID);
     screen.research_plans.splice(researchPlanIndex, 1);
 
     this.setState({ screen });
@@ -150,7 +152,7 @@ export default class ScreenDetails extends Component {
 
   updateResearchPlan(researchPlan) {
     const { screen } = this.state;
-    const researchPlanIndex = screen.research_plans.findIndex(rp => rp.id === researchPlan.id);
+    const researchPlanIndex = screen.research_plans.findIndex((rp) => rp.id === researchPlan.id);
     screen.research_plans[researchPlanIndex] = researchPlan;
   }
 
@@ -160,7 +162,7 @@ export default class ScreenDetails extends Component {
 
     ResearchPlansFetcher.update(researchPlan)
       .then((result) => {
-        const researchPlanIndex = screen.research_plans.findIndex(rp => rp.id === researchPlan.id);
+        const researchPlanIndex = screen.research_plans.findIndex((rp) => rp.id === researchPlan.id);
         screen.research_plans[researchPlanIndex] = result;
         ElementActions.updateEmbeddedResearchPlan(result);
       }).catch((errorMessage) => {
@@ -187,8 +189,8 @@ export default class ScreenDetails extends Component {
     const datetp = formatTimeStampsOfElement(screen || {});
 
     return (
-      <div className='d-flex align-items-center justify-content-between'>
-        <div className='d-flex align-items-center gap-2'>
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
             <span>
               <i className="icon-screen me-1" />
@@ -198,12 +200,12 @@ export default class ScreenDetails extends Component {
           <ElementCollectionLabels element={screen} placement="right" />
           <HeaderCommentSection element={screen} />
         </div>
-        <div className='d-flex align-items-center gap-1'>
+        <div className="d-flex align-items-center gap-1">
           <PrintCodeButton element={screen} />
           {screen.isNew
             ? null
             : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
-          
+
           <OverlayTrigger
             placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
@@ -249,7 +251,7 @@ export default class ScreenDetails extends Component {
               <Form.Control
                 type="text"
                 value={name || ''}
-                onChange={event => this.handleInputChange('name', event)}
+                onChange={(event) => this.handleInputChange('name', event)}
                 disabled={screen.isMethodDisabled('name')}
               />
             </Form.Group>
@@ -260,7 +262,7 @@ export default class ScreenDetails extends Component {
               <Form.Control
                 type="text"
                 value={collaborator || ''}
-                onChange={event => this.handleInputChange('collaborator', event)}
+                onChange={(event) => this.handleInputChange('collaborator', event)}
                 disabled={screen.isMethodDisabled('collaborator')}
               />
             </Form.Group>
@@ -273,7 +275,7 @@ export default class ScreenDetails extends Component {
               <Form.Control
                 type="text"
                 value={requirements || ''}
-                onChange={event => this.handleInputChange('requirements', event)}
+                onChange={(event) => this.handleInputChange('requirements', event)}
                 disabled={screen.isMethodDisabled('requirements')}
               />
             </Form.Group>
@@ -284,7 +286,7 @@ export default class ScreenDetails extends Component {
               <Form.Control
                 type="text"
                 value={conditions || ''}
-                onChange={event => this.handleInputChange('conditions', event)}
+                onChange={(event) => this.handleInputChange('conditions', event)}
                 disabled={screen.isMethodDisabled('conditions')}
               />
             </Form.Group>
@@ -297,7 +299,7 @@ export default class ScreenDetails extends Component {
               <Form.Control
                 type="text"
                 value={result || ''}
-                onChange={event => this.handleInputChange('result', event)}
+                onChange={(event) => this.handleInputChange('result', event)}
                 disabled={screen.isMethodDisabled('result')}
               />
             </Form.Group>
@@ -309,7 +311,7 @@ export default class ScreenDetails extends Component {
               <Form.Label>Description</Form.Label>
               <QuillEditor
                 value={description}
-                onChange={event => this.handleInputChange('description', { target: { value: event } })}
+                onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
                 disabled={screen.isMethodDisabled('description')}
               />
             </Form.Group>
@@ -324,10 +326,10 @@ export default class ScreenDetails extends Component {
         <h4 className="list-group-item-heading">Wellplates</h4>
         <ScreenWellplates
           wellplates={wellplates}
-          dropWellplate={wellplate => this.dropWellplate(wellplate)}
-          deleteWellplate={wellplate => this.deleteWellplate(wellplate)}
+          dropWellplate={(wellplate) => this.dropWellplate(wellplate)}
+          deleteWellplate={(wellplate) => this.deleteWellplate(wellplate)}
         />
-      </Form >
+      </Form>
     );
   }
 
@@ -339,7 +341,7 @@ export default class ScreenDetails extends Component {
   }
 
   updateComponentGraphData(data) {
-    const { screen } = this.state
+    const { screen } = this.state;
     screen.componentGraphData = data;
     this.setState({ screen });
   }
@@ -357,7 +359,6 @@ export default class ScreenDetails extends Component {
   scrollToResearchPlan(researchPlanId) {
 
   }
-
 
   render() {
     const { screen, visible } = this.state;
@@ -388,13 +389,28 @@ export default class ScreenDetails extends Component {
           <ScreenResearchPlans
             researchPlans={screen.research_plans}
             expandedResearchPlanId={this.state.expandedResearchPlanId}
-            dropResearchPlan={researchPlan => this.dropResearchPlan(researchPlan)}
-            deleteResearchPlan={researchPlan => this.deleteResearchPlan(researchPlan)}
-            updateResearchPlan={researchPlan => this.updateResearchPlan(researchPlan)}
-            saveResearchPlan={researchPlan => this.saveResearchPlan(researchPlan)}
+            dropResearchPlan={(researchPlan) => this.dropResearchPlan(researchPlan)}
+            deleteResearchPlan={(researchPlan) => this.deleteResearchPlan(researchPlan)}
+            updateResearchPlan={(researchPlan) => this.updateResearchPlan(researchPlan)}
+            saveResearchPlan={(researchPlan) => this.saveResearchPlan(researchPlan)}
           />
         </Tab>
-      )
+      ),
+      versions: (
+        <Tab
+          eventKey="versioning"
+          title="Versions"
+          key={`Versions_Reaction_${screen.id.toString()}`}
+        >
+          <VersionsTable
+            type="screens"
+            id={screen.id}
+            element={screen}
+            parent={this}
+            isEdited={screen.isEdited}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -416,10 +432,10 @@ export default class ScreenDetails extends Component {
     const flowConfiguration = {
       preview: {
         onNodeDoubleClick: (_mouseEvent, node) => {
-          const researchPlanId = parseInt(node.id)
-          this.switchToResearchPlanTab()
-          this.expandResearchPlan(researchPlanId)
-          this.scrollToResearchPlan(researchPlanId)
+          const researchPlanId = parseInt(node.id);
+          this.switchToResearchPlanTab();
+          this.expandResearchPlan(researchPlanId);
+          this.scrollToResearchPlan(researchPlanId);
         }
       },
       editor: {
@@ -428,7 +444,7 @@ export default class ScreenDetails extends Component {
     };
 
     return (
-      <Card className={"detail-card" + (screen.isPendingToSave ? " detail-card--unsaved" : "")}>
+      <Card className={`detail-card${screen.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.screenHeader(screen)}
         </Card.Header>
@@ -445,7 +461,13 @@ export default class ScreenDetails extends Component {
             onTabPositionChanged={this.onTabPositionChanged}
           />
           <div className="tabs-container--with-borders">
-            <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab" unmountOnExit>
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key)}
+              id="screen-detail-tab"
+            >
               {tabContents}
             </Tabs>
           </div>
