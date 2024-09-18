@@ -20,12 +20,15 @@
 @import "components/ButtonGroupToggleButton.scss";
 
 @import "legacy/miscellaneous.scss";
+@import "legacy/affiliations.scss";
 @import "legacy/attachment-list.scss";
+@import "legacy/AttachmentContainer.css";
 @import "legacy/cellLines.scss";
 @import "legacy/chemical-tab.scss";
 @import "legacy/chemspectra.scss";
 @import "legacy/collection_management.scss";
 @import "legacy/collection_tree.css";
+@import "legacy/CommentModal.scss";
 @import "legacy/common.scss";
 @import "legacy/converter.scss";
 @import "legacy/CustomHeader.scss";
@@ -57,8 +60,11 @@
 @import "legacy/sample.scss";
 @import "legacy/search_modal.scss";
 @import "legacy/search_results.scss";
+@import "legacy/select.scss";
 @import "legacy/spectra.scss";
 @import "legacy/structur_editor.css";
 @import "legacy/switch.scss";
 @import "legacy/tab_layout_container.scss";
 @import "legacy/wellplate.scss";
+@import "legacy/custom.css";
+@import "legacy/inbox.scss";
