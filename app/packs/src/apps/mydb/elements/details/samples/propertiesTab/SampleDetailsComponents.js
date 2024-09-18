@@ -6,22 +6,23 @@ import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/p
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
+import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import {
   ListGroup, ListGroupItem, Button, Modal
 } from 'react-bootstrap';
+import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 
 export default class SampleDetailsComponents extends React.Component {
   constructor(props) {
     super(props);
 
     const { sample } = props;
+    const componentState = ComponentStore.getState();
     this.state = {
       sample,
       showModal: false,
       droppedMaterial: null,
       activeTab: 'concentration',
-      lockAmountColumn: true,
-      lockAmountColumnSolids: false,
     };
 
     this.dropSample = this.dropSample.bind(this);
@@ -30,7 +31,6 @@ export default class SampleDetailsComponents extends React.Component {
     this.onChangeComponent = this.onChangeComponent.bind(this);
     this.updatedSampleForAmountUnitChange = this.updatedSampleForAmountUnitChange.bind(this);
     this.updatedSampleForMetricsChange = this.updatedSampleForMetricsChange.bind(this);
-    this.switchAmount = this.switchAmount.bind(this);
     this.updateComponentName = this.updateComponentName.bind(this);
     this.updateRatio = this.updateRatio.bind(this);
     this.updateSampleForReferenceChanged = this.updateSampleForReferenceChanged.bind(this);
@@ -102,7 +102,9 @@ export default class SampleDetailsComponents extends React.Component {
 
   updatedSampleForAmountUnitChange(changeEvent) {
     const { sample } = this.props;
-    const { sampleID, amount, concType, lockColumn } = changeEvent;
+    const {
+      sampleID, amount, concType, lockColumn
+    } = changeEvent;
     const componentIndex = sample.components.findIndex(
       (component) => component.id === sampleID
     );
@@ -110,15 +112,35 @@ export default class SampleDetailsComponents extends React.Component {
     const totalVolume = sample.amount_l;
 
     if (amount.unit === 'g' || amount.unit === 'l') {
-      sample.components[componentIndex].handleVolumeChange(amount, totalVolume); // volume given, update amount
+      sample.components[componentIndex].handleVolumeChange(amount, totalVolume); // volume/mass given, update amount
     } else if (amount.unit === 'mol') {
-      sample.components[componentIndex].handleAmountChange(amount, totalVolume); // amount given, update volume
+      sample.components[componentIndex].handleAmountChange(amount, totalVolume); // amount given, update volume/mass
+
+      // Check if the component is the reference component
+      const referenceComponent = sample.reference_component;
+
+      if (referenceComponent && referenceComponent.id === sampleID) {
+        // If the amount of the reference component changed, update the other components
+        this.updateNonRefComponentAmounts(referenceComponent, totalVolume);
+      }
     } else if (amount.unit === 'mol/l') {
-      sample.components[componentIndex].setConc(amount, totalVolume, concType, lockColumn); // starting conc. given,
+      // starting conc./target concentration changes,
+      sample.components[componentIndex].handleConcentrationChange(amount, totalVolume, concType, lockColumn);
     }
 
     // update components ratio
-    sample.updateMixtureComponentEquivalent();
+    // sample.updateMixtureComponentEquivalent();
+  }
+
+  updateNonRefComponentAmounts(referenceComponent, totalVolume) {
+    const { sample } = this.props;
+
+    sample.components
+      .filter((component) => component.reference !== true) // Exclude reference component
+      .forEach((component) => {
+        const amount = referenceComponent.amount_mol * (component.equivalent);
+        component.handleAmountChange({ value: amount, unit: 'mol' }, totalVolume);
+      });
   }
 
   updateDensity(changeEvent) {
@@ -247,15 +269,6 @@ export default class SampleDetailsComponents extends React.Component {
     this.props.onChange(sample);
   }
 
-  switchAmount(materialGroup) {
-    const { lockAmountColumn, lockAmountColumnSolids } = this.state;
-    if (materialGroup === 'liquid') {
-      this.setState({ lockAmountColumn: !lockAmountColumn });
-    } else if (materialGroup === 'solid') {
-      this.setState({ lockAmountColumnSolids: !lockAmountColumnSolids });
-    }
-  }
-
   updateRatio(changeEvent) {
     const { sample } = this.props;
     const {
@@ -356,9 +369,6 @@ export default class SampleDetailsComponents extends React.Component {
             dropMaterial={this.dropMaterial}
             deleteMixtureComponent={this.deleteMixtureComponent}
             onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
-            switchAmount={this.switchAmount}
-            lockAmountColumn={this.state.lockAmountColumn}
-            lockAmountColumnSolids={this.state.lockAmountColumnSolids}
             materialGroup="liquid"
             showModalWithMaterial={this.showModalWithMaterial}
             handleTabSelect={this.handleTabSelect}
@@ -375,13 +385,12 @@ export default class SampleDetailsComponents extends React.Component {
             dropMaterial={this.dropMaterial}
             deleteMixtureComponent={this.deleteMixtureComponent}
             onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
-            switchAmount={this.switchAmount}
-            lockAmountColumn={this.state.lockAmountColumn}
-            lockAmountColumnSolids={this.state.lockAmountColumnSolids}
             materialGroup="solid"
             showModalWithMaterial={this.showModalWithMaterial}
             handleTabSelect={this.handleTabSelect}
             activeTab={this.state.activeTab}
+            enableComponentLabel={enableComponentLabel}
+            enableComponentPurity={enableComponentPurity}
           />
         </ListGroupItem>
       </ListGroup>

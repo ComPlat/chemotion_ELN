@@ -2,6 +2,7 @@
 /* eslint-disable camelcase */
 import React from 'react';
 import Sample from 'src/models/Sample';
+import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 
 export default class Component extends Sample {
   constructor(props) {
@@ -46,7 +47,7 @@ export default class Component extends Sample {
   handleVolumeChange(amount, totalVolume) {
     if (!amount.unit || Number.isNaN(amount.value)) return;
 
-    this.setVolume(amount);
+    this.setVolumeOrMass(amount);
 
     const purity = this.purity || 1.0;
 
@@ -56,16 +57,16 @@ export default class Component extends Sample {
       } else if (this.starting_molarity_value && this.starting_molarity_value > 0) {
         this.calculateAmountFromConcentration(totalVolume, purity);
       }
+    } else if (this.material_group === 'solid') {
+      this.calculateAmountFromMass(purity);
     }
 
     if (totalVolume && totalVolume > 0) {
-      const concentration = this.amount_mol / (totalVolume * purity);
-      this.molarity_value = concentration;
-      this.concn = concentration;
+      this.calculateTargetConcentration(totalVolume, purity);
     }
   }
 
-  setVolume(amount) {
+  setVolumeOrMass(amount) {
     if (this.material_group === 'liquid') {
       this.amount_l = amount.value;
     } else if (this.material_group === 'solid') {
@@ -90,82 +91,131 @@ export default class Component extends Sample {
       } else if (this.starting_molarity_value && this.starting_molarity_value > 0) { // if stock concentration is given
         this.calculateVolumeFromConcentration(purity);
       }
+    } else if (this.material_group === 'solid') {
+      this.calculateMassFromAmount(purity)
     }
 
     if (totalVolume && totalVolume > 0) {
-      const concentration = this.amount_mol / (totalVolume * purity);
-      this.molarity_value = concentration;
-      this.concn = concentration;
-      this.molarity_unit = 'M';
+      this.calculateTargetConcentration(totalVolume, purity);
     }
+  }
+
+  // Target Conc. changes, mass is updated for Solid
+  calculateMassFromTargetConc(totalVolume, purity) {
+    this.amount_g = ((this.concn ?? 0) * totalVolume * this.molecule_molecular_weight) / purity;
+  }
+
+  calculateMassFromAmount(purity) {
+    this.amount_g = (this.amount_mol ?? 0) * this.molecule_molecular_weight / purity;
   }
 
   // Amount related codes ends
 
   // Stock related codes
 
-  setConc(amount, totalVolume, concType, lockColumn) {
-    if (!amount.unit || Number.isNaN(amount.value) || amount.unit !== 'mol/l') { return; }
+  handleConcentrationChange(amount, totalVolume, concType, lockColumn) {
+    if (!amount.unit || Number.isNaN(amount.value) || amount.unit !== 'mol/l' || lockColumn) { return; }
 
-    if (this.density && this.density > 0 && concType !== 'startingConc' && this.material_group !== 'solid') {
-      this.setMolarityDensity(amount, totalVolume);
+    if (concType === 'startingConc') {
+      this.handleStartingConcChange(amount);
     } else {
-      this.handleStockChange(amount, totalVolume, concType, lockColumn);
+      this.handleTargetConcChange(amount, totalVolume);
     }
   }
 
-  setMolarityDensity(amount, totalVolume) {
-    const purity = this.purity || 1.0;
-    this.molarity_value = this.concn = amount.value;
+  handleStartingConcChange(amount) {
+    this.setStartingConc(amount)
+    this.resetRowFields();
+  }
+
+  handleTargetConcChange(amount, totalVolume) {
+    this.setTargetConcentration(amount);
+
+    this.handleTargetConcUpdates(totalVolume);
+  }
+
+  setStartingConc(amount) {
+    this.starting_molarity_value = amount.value;
+    this.starting_molarity_unit = amount.unit;
+  }
+
+  setTargetConcentration(amount) {
+    this.concn = amount.value;
+    this.molarity_value = amount.value;
     this.molarity_unit = amount.unit;
-    this.starting_molarity_value = 0;
-
-    this.amount_mol = this.molarity_value * totalVolume * purity;
-    this.amount_g = (this.molecule_molecular_weight * this.amount_mol) / purity;
-    this.amount_l = (this.amount_g / this.density) / 1000;
   }
 
-  handleStockChange(amount, totalVolume, concType, lockColumn) {
-    this.setConcentration(amount, concType, lockColumn);
+  resetRowFields() {
+    this.amount_l = 0;
+    this.amount_mol = 0;
+    this.molarity_value = 0;
+    this.equivalent = 1.0;
+    this.purity = 0;
+  }
+
+  calculateTargetConcentration(totalVolume, purity) {
+    const { lockedComponentID } = ComponentStore.getState();
+    const lockedConcentration = this.id === lockedComponentID;
+
+    if (!lockedConcentration) {
+      const concentration = (this.amount_mol ?? 0) / (totalVolume * purity);
+      this.molarity_value = concentration;
+      this.concn = concentration;
+      this.molarity_unit = 'M';
+    }
+  }
+
+  handleTargetConcUpdates(totalVolume) {
+    if (totalVolume <= 0 || this.concn <= 0) { return; }
 
     const purity = this.purity || 1.0;
 
-    if (this.amount_l && this.amount_l > 0) {
-      this.calculateAmountFromConcentration(totalVolume, purity);
-    } else if (this.amount_mol && this.amount_mol > 0) {
-      this.calculateVolumeFromConcentration(purity);
+    // Calculate Amount (mol): Both solid and liquid
+    this.amount_mol = this.concn * totalVolume * purity;
+
+    // Calculate Volume (L): check code duplication
+    if (this.material_group === 'liquid') {
+      if (this.density && this.density > 0) {
+        // if density is given and target conc. changes
+        this.calculateVolumeFromDensityTargetConc(totalVolume, purity);
+      } else if (this.starting_molarity_value && this.starting_molarity_value > 0) {
+        // if stock concentration is given and target conc. changes
+        this.calculateVolumeFromConcentrationTargetConc(totalVolume, purity);
+      }
+    } else if (this.material_group === 'solid') {
+      this.calculateMassFromTargetConc(totalVolume, purity);
     }
   }
 
-  setConcentration(amount, concType, lockColumn) {
-    if (concType !== 'startingConc') {
-      this.concn = amount.value;
-      this.molarity_value = amount.value;
-      this.molarity_unit = amount.unit;
-    } else if (!lockColumn) {
-      this.starting_molarity_value = amount.value;
-      this.starting_molarity_unit = amount.unit;
-    }
+  // Total Volume changes -> total concentration changes -> amount changes ->volume changes
+  handleTotalVolumeChanges(totalVolume) {
+    const { lockedComponentID } = ComponentStore.getState();
+    const lockedConcentration = this.id === lockedComponentID;
 
-    this.density = 0;
+    const purity = this.purity || 1.0;
+
+    if (lockedConcentration) {
+      // Case 2: Total volume updated; Total Conc. is locked
+      // Amount recalculated
+      // Volume recalculated
+      this.handleTargetConcUpdates(totalVolume);
+    } else {
+      // Case 3: Total volume updated; Total Conc. is not locked
+      // Recalculate the total conc. Amount, Volume stay the same
+      this.calculateTargetConcentration(totalVolume, purity);
+    }
   }
 
   // Stock related codes ends
 
   // Density related codes
 
-  handleDensityChange(amount, lockColumn, totalVolume) {
-    if (!amount.unit || Number.isNaN(amount.value) || amount.unit !== 'g/ml') return;
-
-    const purity = this.purity || 1.0;
+  handleDensityChange(amount, lockColumn) {
+    if (!amount.unit || Number.isNaN(amount.value) || amount.unit !== 'g/ml' || lockColumn) return;
 
     this.setDensity(amount, lockColumn);
 
-    if (this.amount_l && this.amount_l > 0) {
-      this.calculateAmountFromDensity(totalVolume, purity);
-    } else if (this.amount_mol && this.amount_mol > 0) {
-      this.calculateVolumeFromDensity(purity);
-    }
+    this.resetRowFields();
   }
 
   setDensity(amount, lockColumn) {
@@ -191,18 +241,24 @@ export default class Component extends Sample {
   calculateAmountFromConcentration(totalVolume, purity) {
     this.amount_mol = this.starting_molarity_value * this.amount_l * purity;
 
-    if (totalVolume) {
-      const concentration = this.amount_mol / (totalVolume * purity);
-      this.concn = concentration;
-      this.molarity_value = concentration;
-      this.molarity_unit = 'M';
+    if (totalVolume && totalVolume > 0) {
+      this.calculateTargetConcentration(totalVolume, purity);
     }
   }
+
+
 
   // Case 2.1: Calculate Volume from Amount, Density, Molecular Weight, and Purity
   calculateVolumeFromDensity(purity) {
     this.starting_molarity_value = 0;
-    this.amount_l = (this.amount_mol * this.molecule_molecular_weight * purity) / (this.density * 1000);
+    this.amount_l = (this.amount_mol ?? 0) * this.molecule_molecular_weight * purity / (this.density * 1000);
+  }
+
+  // Calculate Volume from Target Concentration, Total Volume, Density, Molecular Weight, and Purity
+  // volume of the component (L) = final conc (mol/L)* total volume (L) * purity * Molar mass (g/mol) / density (g/L)
+  calculateVolumeFromDensityTargetConc(totalVolume, purity) {
+    this.starting_molarity_value = 0;
+    this.amount_l = (this.concn * totalVolume * purity * this.molecule_molecular_weight) / this.density;
   }
 
   // Case 2.2: Calculate Volume from Amount, Concentration, and Purity
@@ -211,29 +267,41 @@ export default class Component extends Sample {
     this.amount_l = this.amount_mol / (this.starting_molarity_value * purity);
   }
 
+  // Calculate Volume from Target Concentration, Starting Concentration, Total Volume and Purity
+  // volume of component (L) = final conc (mol/L)*total volume (L) * purity/ stock concentration (mol/L)
+  calculateVolumeFromConcentrationTargetConc(totalVolume, purity) {
+    this.density = 0;
+    this.amount_l = (this.concn * totalVolume * purity) / this.starting_molarity_value;
+  }
+
+  // Case 4: Ratio changes
   updateRatio(newRatio, materialGroup, totalVolume, referenceMoles) {
     if (this.equivalent === newRatio) { return; }
 
     const purity = this.purity || 1.0;
-    this.amount_mol = newRatio * referenceMoles;
+    this.amount_mol = newRatio * referenceMoles; // Amount (amount = amount of reference component * ratio)
     this.equivalent = newRatio;
 
+    // Volume Calculation (Calculated from the Amount)
     if (materialGroup === 'liquid') {
       if (!this.has_density) {
-        this.amount_l = this.amount_mol / (this.starting_molarity_value * purity);
-        this.molarity_value = this.concn = this.amount_mol / (totalVolume * purity);
-        this.molarity_unit = 'M';
+        this.calculateVolumeFromConcentration(purity);
       } else if (this.has_density) {
-        this.amount_g = (this.amount_mol * this.molecule_molecular_weight) / purity;
-        this.amount_l = this.amount_g / (this.density * 1000);
-        this.molarity_value = this.concn = this.amount_mol / (totalVolume * purity);
-        this.molarity_unit = 'M';
+        this.calculateVolumeFromDensity(purity);
       }
     } else if (materialGroup === 'solid') {
-      this.amount_g = (this.amount_mol * this.molecule_molecular_weight) / purity;
-      this.molarity_value = this.concn = this.amount_mol / (totalVolume * purity);
+      this.calculateMassFromAmount(purity);
     }
+
+    // Total concentration (Calculated from Amount and Volume)
+    this.calculateTargetConcentration(totalVolume, purity);
   }
+
+  // Case 1(Solids): Mass given -> Calculate Amount
+  calculateAmountFromMass = (purity) => {
+    // Formula: amount [mol] = (mass[g] * purity) / molecularMass [g/mol]
+    this.amount_mol = (this.amount_g * purity) / this.molecule_molecular_weight;
+  };
 
   setPurity(purity, totalVolume) {
     if (!isNaN(purity) && purity >= 0 && purity <= 1) {
