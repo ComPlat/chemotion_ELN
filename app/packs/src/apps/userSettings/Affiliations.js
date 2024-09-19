@@ -312,17 +312,20 @@ function Affiliations({ show, onHide }) {
                     : (
                       <>
                         <DatePicker
+                          // eslint-disable-next-line no-nested-ternary
                           placeholderText={inputError[index] ? inputError[index].from ? errorMsg : '' : 'Required'}
                           isClearable
                           clearButtonTitle="Clear"
+                          // eslint-disable-next-line max-len
                           className={`Select-control ${inputError[index] && inputError[index].from ? 'border-danger' : ''}`}
                           showPopperArrow={false}
                           disabled={item.disabled}
                           showMonthYearPicker
                           dateFormat="yyyy-MM"
-
                           selected={item.from}
-                          onChange={(date) => onChangeHandler(index, 'from', moment(date).format('YYYY-MM'))}
+                          onChange={(date) => {
+                            onChangeHandler(index, 'from', date ? moment(date).format('YYYY-MM') : null);
+                          }}
                         />
                         {inputError[index] && inputError[index].from && (
                           <div className="invalid-feedback">From is required</div>
@@ -348,21 +351,21 @@ function Affiliations({ show, onHide }) {
                     )}
                 </td>
                 <td>
-                  <div className="d-flex ms-auto">
+                  <div className="d-flex justify-content-end">
                     {item.disabled
                       ? (
                         <OverlayTrigger
                           placement="top"
-                          overlay={
-                            <Tooltip id='affiliation_edit_tooltip'>
+                          overlay={(
+                            <Tooltip id="affiliation_edit_tooltip">
                               Edit affiliation
-                          </Tooltip>
-                        }
+                            </Tooltip>
+                          )}
                         >
                           <Button
                             size="sm"
                             variant="primary"
-                            className="d-flex ms-auto"
+                            className="ms-auto"
                             onClick={() => {
                               const updatedAffiliations = [...affiliations];
                               updatedAffiliations[index].disabled = false;
@@ -372,43 +375,42 @@ function Affiliations({ show, onHide }) {
                             <i className="fa fa-edit" />
                           </Button>
 
-                        </OverlayTrigger>     
+                        </OverlayTrigger>
                       )
                       : (
                         <OverlayTrigger
                           placement="top"
-                          overlay={
-                            <Tooltip id='affiliation_save_tooltip'>
+                          overlay={(
+                            <Tooltip id="affiliation_save_tooltip">
                               Save changes
                             </Tooltip>
-                          }
+                          )}
                         >
-                        <Button
-                          size="sm"
+                          <Button
+                            size="sm"
                             variant="warning"
-                            className="d-flex ms-auto"
-                          onClick={() => handleSaveButtonClick(index)}
-                        >
-                          <i className="fa fa-save" />
+                            className="ms-auto"
+                            onClick={() => handleSaveButtonClick(index)}
+                          >
+                            <i className="fa fa-save" />
                           </Button>
                         </OverlayTrigger>
                       )}
                     <OverlayTrigger
                       placement="top"
-                      overlay={
-                        <Tooltip id='affiliation_delete_tooltip'>
+                      overlay={(
+                        <Tooltip id="affiliation_delete_tooltip">
                           Delete affiliation
                         </Tooltip>
-                      }
+                      )}
                     >
-                    <Button
-                      // className="ms-1"
+                      <Button
+                        className="ms-1"
                         size="sm"
-                        className="d-flex ms-auto"
-                      variant="danger"
-                      onClick={() => handleDeleteAffiliation(index)}
-                    >
-                      <i className="fa fa-trash-o" />
+                        variant="danger"
+                        onClick={() => handleDeleteAffiliation(index)}
+                      >
+                        <i className="fa fa-trash-o" />
                       </Button>
                     </OverlayTrigger>
                   </div>
