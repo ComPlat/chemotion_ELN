@@ -39,7 +39,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   handleMultiselectChange(type, selectedOptions) {
-    const values = selectedOptions.map(option => option.value);
+    const values =  selectedOptions.map(option => option.value);
     const wrappedEvent = { target: { value: values } };
     this.props.onInputChange(type, wrappedEvent);
   }
@@ -77,46 +77,40 @@ export default class ReactionDetailsProperties extends Component {
     );
 
     return (
-      <Form className="border">
-        <Row className="mt-2 mb-2">
+      <Form className="border pb-3">
+        <Row className="my-3">
           <ReactionDetailsMainProperties
             reaction={reaction}
             onInputChange={(type, event) => this.props.onInputChange(type, event)}
           />
         </Row>
-        <Row className="ms-2">
-          <Form.Group >
-            <Form.Label className="fs-6">Type (Name Reaction Ontology)</Form.Label>
-            <div className="pe-5">
+            <Form.Group className="mx-3">
+              <Form.Label>Type (Name Reaction Ontology)</Form.Label>
               <OlsTreeSelect
                 selectName="rxno"
                 selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
                 onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
                 selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
               />
-            </div>
-          </Form.Group>
-        </Row>
-        <Row className="my-2 ms-2">
-          <Col sm={12}>
-            <div className="fs-6">Dangerous Products</div>
-            <Select
-              name="dangerous_products"
-              multi
-              options={dangerousProductsOptions}
-              value={reaction.dangerous_products}
-              disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
-              onChange={(selectedOptions) => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
-              className="mt-1 rounded-lg me-5"
-            />
-          </Col>
-        </Row>
-        <hr className="mt-4" />
-        <h4 className="my-3 ms-3">TLC-Control</h4>
-        <Row className="mt-2">
+            </Form.Group>
+            <Form.Group className="mx-3 my-3">
+              <Form.Label>Dangerous Products</Form.Label>
+              <Select
+                name="dangerous_products"
+                multi
+                options={dangerousProductsOptions}
+                value={reaction.dangerous_products}
+                disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
+                onChange={(selectedOptions) => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
+                className="mt-1 pb-1"
+              />
+            </Form.Group>
+        <hr className="my-4" />
+        <h4 className="m-3">TLC-Control</h4>
+        <Row className="mx-2 mt-3">
           <Col sm={6}>
-            <Form.Group className="mx-3">
-              <Form.Label className="fs-6">Solvents (parts)</Form.Label>
+            <Form.Group>
+              <Form.Label>Solvents (parts)</Form.Label>
               <InputGroup className="z-0">
                 <DropdownButton
                   disabled={!permitOn(reaction)}
@@ -136,8 +130,8 @@ export default class ReactionDetailsProperties extends Component {
             </Form.Group>
           </Col>
           <Col sm={6}>
-            <Form.Group className="me-5">
-              <Form.Label className="fs-6">Rf-Value</Form.Label>
+            <Form.Group>
+              <Form.Label>Rf-Value</Form.Label>
               <Form.Control
                 type="text"
                 value={reaction.rf_value || ''}
@@ -148,10 +142,8 @@ export default class ReactionDetailsProperties extends Component {
             </Form.Group>
           </Col>
         </Row>
-        <Row className="my-3 ms-2 me-4">
-          <Col sm={12}>
-            <Form.Group>
-              <Form.Label className="fs-6">TLC-Description</Form.Label>
+            <Form.Group className="mx-3 mt-2">
+              <Form.Label>TLC-Description</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={4}
@@ -159,16 +151,11 @@ export default class ReactionDetailsProperties extends Component {
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_description')}
                 placeholder="TLC-Description..."
                 onChange={(event) => this.props.onInputChange('tlcDescription', event)}
-                className="mb-4"
               />
             </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={12}>
+        <div className="m-3">
             <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
-          </Col>
-        </Row>
+        </div>
       </Form>
     );
   }
