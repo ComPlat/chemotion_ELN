@@ -39,7 +39,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   handleMultiselectChange(type, selectedOptions) {
-    const values =  selectedOptions.map(option => option.value);
+    const values = selectedOptions.map(option => option.value);
     const wrappedEvent = { target: { value: values } };
     this.props.onInputChange(type, wrappedEvent);
   }
@@ -84,27 +84,27 @@ export default class ReactionDetailsProperties extends Component {
             onInputChange={(type, event) => this.props.onInputChange(type, event)}
           />
         </Row>
-            <Form.Group className="mx-3">
-              <Form.Label>Type (Name Reaction Ontology)</Form.Label>
-              <OlsTreeSelect
-                selectName="rxno"
-                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
-                selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
-              />
-            </Form.Group>
-            <Form.Group className="mx-3 my-3">
-              <Form.Label>Dangerous Products</Form.Label>
-              <Select
-                name="dangerous_products"
-                multi
-                options={dangerousProductsOptions}
-                value={reaction.dangerous_products}
-                disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
-                onChange={(selectedOptions) => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
-                className="mt-1 pb-1"
-              />
-            </Form.Group>
+        <Form.Group className="mx-3">
+          <Form.Label>Type (Name Reaction Ontology)</Form.Label>
+          <OlsTreeSelect
+            selectName="rxno"
+            selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+            onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
+            selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
+          />
+        </Form.Group>
+        <Form.Group className="mx-3 my-3">
+          <Form.Label>Dangerous Products</Form.Label>
+          <Select
+            name="dangerous_products"
+            multi
+            options={dangerousProductsOptions}
+            value={reaction.dangerous_products}
+            disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
+            onChange={(selectedOptions) => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
+            className="mt-1 pb-1"
+          />
+        </Form.Group>
         <hr className="my-4" />
         <h4 className="m-3">TLC-Control</h4>
         <Row className="mx-2 mt-3">
@@ -142,19 +142,19 @@ export default class ReactionDetailsProperties extends Component {
             </Form.Group>
           </Col>
         </Row>
-            <Form.Group className="mx-3 mt-2">
-              <Form.Label>TLC-Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={4}
-                value={reaction.tlc_description || ''}
-                disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_description')}
-                placeholder="TLC-Description..."
-                onChange={(event) => this.props.onInputChange('tlcDescription', event)}
-              />
-            </Form.Group>
+        <Form.Group className="mx-3 mt-2">
+          <Form.Label>TLC-Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={4}
+            value={reaction.tlc_description || ''}
+            disabled={!permitOn(reaction) || reaction.isMethodDisabled('tlc_description')}
+            placeholder="TLC-Description..."
+            onChange={(event) => this.props.onInputChange('tlcDescription', event)}
+          />
+        </Form.Group>
         <div className="m-3">
-            <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
+          <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
         </div>
       </Form>
     );
