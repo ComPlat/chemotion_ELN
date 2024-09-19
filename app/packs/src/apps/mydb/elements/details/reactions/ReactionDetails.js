@@ -526,8 +526,8 @@ export default class ReactionDetails extends Component {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
     const schemeTitle = reaction && activeTab === 'scheme' ? (
-      <div style={{ display: 'flex' }}>
-        <div style={{ paddingRight: '2px' }}>
+      <div className="d-flex">
+        <div>
           <ToggleButton
             isToggledInitial={reaction.gaseous}
             onToggle={this.handleGaseousChange}

@@ -253,7 +253,7 @@ class ResearchPlanDetailsAttachments extends Component {
     const thirdPartyApps = this.thirdPartyApps;
 
     return (
-      <div className="attachment-main-container">
+      <div className="p-3 border-rounded">
         {this.renderImageEditModal()}
         <div className="d-flex justify-content-between align-items-center">
           <div className="flex-grow-1 align-self-center">

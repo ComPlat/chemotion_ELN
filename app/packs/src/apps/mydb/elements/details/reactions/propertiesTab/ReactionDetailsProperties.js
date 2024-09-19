@@ -13,8 +13,6 @@ import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
 import { EditUserLabels } from 'src/components/UserLabels';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -167,7 +165,7 @@ export default class ReactionDetailsProperties extends Component {
           </Col>
         </Row>
         <Row>
-          <Col md={12}>
+          <Col sm={12}>
             <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
           </Col>
         </Row>
