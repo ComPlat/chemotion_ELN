@@ -797,7 +797,7 @@ class Material extends Component {
         <td>
           <OverlayTrigger placement="top" overlay={drySolvTooltip}>
             <Form.Check
-              type='checkbox'
+              type="checkbox"
               checked={material.dry_solvent}
               onChange={(event) => this.handleDrySolventChange(event)}
             />
@@ -851,7 +851,8 @@ class Material extends Component {
             size="sm"
             onClick={() => deleteMaterial(material)}
             className="mt-1"
-          ><i className="fa fa-trash-o" /></Button>
+          ><i className="fa fa-trash-o" />
+          </Button>
         </td>
       </tr>
     );
@@ -862,11 +863,13 @@ class Material extends Component {
       <Button
         disabled={!permitOn(this.props.reaction)}
         active
-        className='p-1'
+        className="p-1"
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'success' : 'primary'}
         size="sm"
-      >{isTarget ? 't' : 'r'}</Button>
+      >
+        {isTarget ? 't' : 'r'}
+      </Button>
     );
   }
 
@@ -903,14 +906,14 @@ class Material extends Component {
     const feedstockStatus = gasTypeStatus ? '#009a4d' : 'grey';
     const tooltip = <Tooltip id="feedstockGas">{tooltipText}</Tooltip>;
     return (
-      <div style={{ paddingRight: '3px' }}>
+      <div className="pe-1">
         <OverlayTrigger placement="bottom" overlay={tooltip}>
           <Button
-            bsStyle="primary"
-            bsSize="xsmall"
+            variant="primary"
+            size="xsm"
             onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
             disabled={false}
-            style={{ backgroundColor: feedstockStatus, width: '35px' }}
+            style={{ backgroundColor: feedstockStatus }}
           >
             {gasTypeValue}
           </Button>
@@ -995,12 +998,14 @@ class Material extends Component {
     };
 
     return (
-      <div style={{ display: 'inline-block', maxWidth: '100%' }}>
-        <div className="inline-inside">
+      <div className="d-inline-block mw-100">
+        <div
+          className="inline-inside"
+        >
           {reaction.gaseous && materialGroup !== 'solvents'
             ? this.gasType(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-            <Button variant="primary" size="sm" className='me-1' onClick={addToDesc} disabled={!permitOn(reaction)}>
+            <Button variant="primary" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
               {serialCode}
             </Button>
           </OverlayTrigger>
