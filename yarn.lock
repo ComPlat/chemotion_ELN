@@ -5573,10 +5573,10 @@ boolbase@^1.0.0:
   resolved "https://registry.npmjs.org/boolbase/-/boolbase-1.0.0.tgz"
   integrity sha1-aN/1++YMUes3cl6p4+0xDcwed24=
 
-bootstrap@^3.3.7:
-  version "3.4.1"
-  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-3.4.1.tgz#c3a347d419e289ad11f4033e3c4132b87c081d72"
-  integrity sha512-yN5oZVmRCwe5aKwzRj6736nSmKDX7pLYwsXiCj/EYmo16hODaBiT4En5btW/jhBF/seV+XMx3aYwukYC3A49DA==
+bootstrap@^5.3.3:
+  version "5.3.3"
+  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-5.3.3.tgz#de35e1a765c897ac940021900fcbb831602bac38"
+  integrity sha512-8HLCdWgyoMguSO9o+aH+iuZ+aht+mzW0u3HIMzVu7Srrpv7EBBxTnrFlSCskwdY1+EOFQSm7uMJhNQHkdPcmjg==
 
 brace-expansion@^1.1.7:
   version "1.1.11"
@@ -5941,15 +5941,12 @@ chem-units@^1.1.2:
   resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-1.1.2.tgz#38f5c6af67a99e6eb661256c303a570f85df6687"
   integrity sha512-JC4PtdFMlDfzZHYunMaVGiIEkXxqsQqknzDLRvethzhIjE/w3UyVbB93pyYzSnQxxqTpXy10TZTdGN2VdASl5w==
 
-chemotion-converter-client@0.5.0:
+"chemotion-converter-client@https://github.com/ComPlat/chemotion-converter-client.git#update-bootstrap":
   version "0.5.0"
-  resolved "https://registry.yarnpkg.com/chemotion-converter-client/-/chemotion-converter-client-0.5.0.tgz#a5c99b1f7bb215f86a7ebd2d78d5c7c6c92eb1b2"
-  integrity sha512-ysq4UyuTXH+SNmPDlYa9HNimgrvm4DIP6E7k1LVlYyydU255gtcobDXzZqfWKdHNhQieu34WwomUfyM16CjtQQ==
+  resolved "https://github.com/ComPlat/chemotion-converter-client.git#56ccd97308ef1771c1b25046fa7fa505a547f3ca"
   dependencies:
-    bootstrap "^3.3.7"
-    jquery "^3.4.0"
+    bootstrap "^5.3.3"
     lodash "^4.17.21"
-    popper.js "^1.16.0"
     prop-types "^15.8.1"
     react-select "5.2.2"
 
@@ -10017,11 +10014,6 @@ jpeg-js@^0.4.1:
   resolved "https://registry.yarnpkg.com/jpeg-js/-/jpeg-js-0.4.4.tgz#a9f1c6f1f9f0fa80cdb3484ed9635054d28936aa"
   integrity "sha1-qfHG8fnw+oDNs0hO2WNQVNKJNqo= sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg=="
 
-jquery@^3.4.0:
-  version "3.6.3"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.6.3.tgz#23ed2ffed8a19e048814f13391a19afcdba160e6"
-  integrity "sha1-I+0v/tihngSIFPEzkaGa/NuhYOY= sha512-bZ5Sy3YzKo9Fyc8wH2iIQK4JImJ6R0GWI9kL1/k7Z91ZBNgkRXE6U0JfHIizZbort8ZunhSI3jw9I6253ahKfg=="
-
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz"
@@ -12179,11 +12171,6 @@ popper.js@1.16.1-lts:
   version "1.16.1-lts"
   resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.16.1-lts.tgz#cf6847b807da3799d80ee3d6d2f90df8a3f50b05"
   integrity sha512-Kjw8nKRl1m+VrSFCoVGPph93W/qrSO7ZkqPpTf7F4bk/sqcfWK019dWBUpE/fBOsOQY1dks/Bmcbfn1heM/IsA==
-
-popper.js@^1.16.0:
-  version "1.16.1"
-  resolved "https://registry.npmjs.org/popper.js/-/popper.js-1.16.1.tgz"
-  integrity sha512-Wb4p1J4zyFTbM+u6WuO4XstYx4Ky9Cewe4DWrel7B0w6VVICvPwdOpotjzcf6eD8TsckVnIMNONQyPIUFOUbCQ==
 
 portfinder@^1.0.28:
   version "1.0.28"
