@@ -390,7 +390,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
   if (reaction.isNew) {
     return (
-      <Alert bsStyle="info">
+      <Alert variant="info">
         Save the reaction to enable the variations tab.
       </Alert>
     );
