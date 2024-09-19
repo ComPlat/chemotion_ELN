@@ -12,7 +12,6 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -114,7 +113,7 @@ const handleOpenLocally = (attachment, option = 0) => {
 
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
-    <Dropdown.Toggle style={{ height: '30px' }} size="sm" variant="primary">
+    <Dropdown.Toggle size="sm" variant="primary">
       <i className="fa fa-download" aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
@@ -144,7 +143,6 @@ export const removeButton = (attachment, onDelete, readOnly) => (
     <Button
       size="sm"
       variant="danger"
-      className="attachment-button-size"
       onClick={() => onDelete(attachment)}
       disabled={readOnly}
     >
@@ -158,7 +156,6 @@ export const moveBackButton = (attachment, onBack, readOnly) => (
     <Button
       size="sm"
       variant="danger"
-      className="attachment-button-size"
       onClick={() => onBack(attachment)}
       disabled={readOnly}
     >
@@ -172,7 +169,7 @@ export const annotateButton = (attachment, parent) => (
   <ImageAnnotationEditButton
     parent={parent}
     attachment={attachment}
-    className={`attachment-button-size ${!isImageFile(attachment.filename) ? 'attachment-gray-button' : ''}`}
+    className={`${!isImageFile(attachment.filename) ? 'attachment-gray-button' : ''}`}
     disabled={!isImageFile(attachment.filename)}
   />
 );
@@ -203,7 +200,7 @@ export const editButton = (
   return (
     <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
       <Button
-        className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
+        className={`${editDisable ? 'attachment-gray-button' : ''}`}
         size="sm"
         variant="success"
         disabled={editDisable}
@@ -264,7 +261,7 @@ export const importButton = (
             variant="success"
             disabled={importDisabled || extension !== 'xlsx'}
             ref={buttonRef}
-            className={`attachment-button-size ${importDisabled
+            className={`${importDisabled
               || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
             onClick={() => showImportConfirmFunction(attachment.id)}
           >
@@ -298,28 +295,24 @@ export const sortingAndFilteringUI = (
   handleFilterChange,
   isSortingEnabled
 ) => (
-  <div style={{
-    marginBottom: '20px', display: 'flex', justifyContent: 'space-between',
-  }}
-  >
+  <div className="mb-4 d-flex justify-content-between">
     {isSortingEnabled && (
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      <div className="d-flex align-items-center">
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <label style={{ marginRight: '10px' }}>Sort: </label>
-        <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
+        <label className="me-2">Sort: </label>
+        <div className="d-flex justify-content-between align-items-center">
           <select
             onChange={handleSortChange}
-            className="sorting-row-style"
-            style={{ width: '100px', marginRight: '10px' }}
+            className="px-1 py-2 border rounded border-gray-300 w-100 me-2"
           >
             <option value="name">Name</option>
             <option value="size">Size</option>
             <option value="date">Date</option>
           </select>
           <Button
-            style={{ marginRight: '10px', marginLeft: '-15px' }}
+            style={{ marginLeft: '-15px' }}
             onClick={toggleSortDirection}
-            className="sort-icon-style"
+            className="sort-icon-style me-2"
           >
             {sortDirection === 'asc' ? '▲' : '▼'}
           </Button>
@@ -327,14 +320,14 @@ export const sortingAndFilteringUI = (
       </div>
     )}
 
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+    <div className="d-flex align-items-center">
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label style={{ marginRight: '10px' }}>Filter: </label>
+      <label className="me-2">Filter: </label>
       <input
         type="text"
         placeholder="Filter by name..."
         onChange={handleFilterChange}
-        className="sorting-row-style"
+        className="p-2 border rounded border-gray-300"
         style={{ width: '250px' }}
       />
     </div>
@@ -360,7 +353,7 @@ const filterOptions = (contentType, options) => {
     });
 };
 
-const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
+const noChoice = [<Dropdown.Item key={uuid.v4()} disabled>None Available</Dropdown.Item>];
 
 export function ThirdPartyAppButton({ attachment, options = [] }) {
   const [menuItems, setMenuItems] = useState([]);
@@ -372,7 +365,7 @@ export function ThirdPartyAppButton({ attachment, options = [] }) {
       const filteredOptions = filterOptions(contentType, options);
       if (filteredOptions.length === 0) { return noChoice; }
       return filteredOptions.map((option) => (
-        <MenuItem
+        <Dropdown.Item
           key={uuid.v4()}
           eventKey={option.id}
           onClick={() => {
@@ -381,15 +374,15 @@ export function ThirdPartyAppButton({ attachment, options = [] }) {
           }}
         >
           {option.name}
-        </MenuItem>
+        </Dropdown.Item>
       ));
     };
     setMenuItems(generatedMenuItems());
   }, [attachment, options]);
 
   return (
-    <Dropdown id={`dropdown-TPA-attachment${attachment?.id || uuid.v4()}`} style={{ float: 'right' }}>
-      <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+    <Dropdown id={`dropdown-TPA-attachment${attachment?.id || uuid.v4()}`}>
+      <Dropdown.Toggle size="sm" variant="primary">
         <i className="fa fa-external-link" aria-hidden="true" />
       </Dropdown.Toggle>
       <Dropdown.Menu>
