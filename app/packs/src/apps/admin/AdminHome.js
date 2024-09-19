@@ -89,7 +89,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={7}>UI features</NavItem>
             <NavItem eventKey={8}>Text Templates</NavItem>
             <NavItem eventKey={2}>Message Publish</NavItem>
-            <NavItem eventKey={5}>Load OLS Terms</NavItem>
+            <NavItem eventKey={5}>Load Ontology Terms</NavItem>
             {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
             <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>

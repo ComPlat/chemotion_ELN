@@ -166,7 +166,7 @@ export default class OlsTerms extends React.Component {
         <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
           {this.dropzoneOrfilePreview()}
           <ButtonToolbar>
-            <Button bsStyle="warning" onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
+            <Button bsStyle="warning" onClick={() => this.handleClick()}>Import Ontology Terms (the file name will be the OLS_name)</Button>
           </ButtonToolbar>
         </Row>
         <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
@@ -177,6 +177,9 @@ export default class OlsTerms extends React.Component {
               </MenuItem>
               <MenuItem key="chmo" onSelect={() => this.handleSelectName('chmo')}>
                 chmo
+              </MenuItem>
+              <MenuItem key="chmo" onSelect={() => this.handleSelectName('bao')}>
+                bao
               </MenuItem>
             </DropdownButton>
             <div><h3>{this.state.selectName}</h3></div>
