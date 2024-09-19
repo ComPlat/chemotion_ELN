@@ -241,7 +241,6 @@ function Affiliations({ show, onHide }) {
                         isCreatable
                         disabled={item.disabled}
                         placeholder="Select or enter a new option"
-                        // className={${inputError[index] && inputError[index].from ? 'error-control' : ''}}
                         components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                         options={countryOptions}
                         value={item.country || ''}
