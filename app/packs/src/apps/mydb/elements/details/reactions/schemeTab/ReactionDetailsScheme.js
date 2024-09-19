@@ -1,3 +1,4 @@
+/* eslint-disable react/sort-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -34,8 +35,7 @@ import {
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { parseNumericString } from 'src/utilities/MathUtils';
-import CollapseButton from "src/components/common/CollapseButton.js";
-
+import CollapseButton from 'src/components/common/CollapseButton';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -159,11 +159,10 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   renderRolesOptions(opt) {
-    const className = `fa ${opt.icon} ${opt.variant}`;
+    const className = `fa ${opt.icon} ${opt.variant} my-0 mx-2`;
     return (
       <span>
         <i className={className} />
-        <span className="my-0 mx-2" />
         {opt.label}
       </span>
     );
@@ -188,6 +187,7 @@ export default class ReactionDetailsScheme extends Component {
   renderRole() {
     const { reaction } = this.props;
     const { role } = reaction;
+    const isPartsRole = role === 'parts';
     let accordTo;
     if (role === 'parts') {
       accordTo = 'According to';
@@ -195,13 +195,13 @@ export default class ReactionDetailsScheme extends Component {
 
     return (
       <Row className="d-flex align-items-center">
-        <Col sm={6}>
+        <Col sm={isPartsRole ? 6 : 12}>
           <Form.Group className="flex-grow-1 mt-2">
             <Form.Label>Role</Form.Label>
             {this.renderRoleSelect()}
           </Form.Group>
         </Col>
-        {role === 'parts' && (
+        {isPartsRole && (
           <Col sm={6}>
             <Form.Group className="mt-2">
               <Form.Label>{accordTo}</Form.Label>
