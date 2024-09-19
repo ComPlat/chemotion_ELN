@@ -200,7 +200,6 @@ export default class ThirdPartyApp extends React.Component {
           <OverlayTrigger placement="bottom" overlay={deleteTip}>
             <Button variant="danger" size="sm" onClick={() => this.delete(currentID)}>
               Delete
-              <i className="fa fa ms-1" />
             </Button>
           </OverlayTrigger>
         </Modal.Body>
@@ -305,9 +304,8 @@ export default class ThirdPartyApp extends React.Component {
           </Form.Group>
 
           <OverlayTrigger placement="bottom" overlay={editTip}>
-            <Button variant="primary" size="sm" onClick={handleEdit} className="mb-2">
+            <Button variant="primary" size="sm" onClick={handleEdit} className="mt-2">
               Update
-              <i className="fa fa ms-1" />
             </Button>
           </OverlayTrigger>
         </Modal.Body>
