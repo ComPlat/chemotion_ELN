@@ -50,14 +50,14 @@ export const attachmentThumbnail = (attachment) => (
           src: attachment.preview,
         }}
         popObject={
-        attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
-          ? {
-            fetchNeeded: true,
-            src: `/api/v1/attachments/${attachment.id}/annotated_image`,
-          }
-          : {
-            src: attachment.preview,
-          }
+          attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
+            ? {
+              fetchNeeded: true,
+              src: `/api/v1/attachments/${attachment.id}/annotated_image`,
+            }
+            : {
+              src: attachment.preview,
+            }
         }
         disableClick
       />
