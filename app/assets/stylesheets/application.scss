@@ -18,6 +18,8 @@
 
 // file css rules that are targeted at specific components under components
 @import "components/ButtonGroupToggleButton";
+@import "components/search-modal";
+@import "components/search-results";
 
 @import "legacy/miscellaneous";
 @import "legacy/affiliations";
@@ -32,7 +34,6 @@
 @import "legacy/common";
 @import "legacy/converter";
 @import "legacy/CustomHeader";
-@import "legacy/draggable_modal";
 @import "legacy/elements_details";
 @import "legacy/elements_table";
 @import "legacy/export-collections";
@@ -59,8 +60,6 @@
 @import "legacy/research-plan-table-context-menu";
 @import "legacy/research-plan";
 @import "legacy/sample";
-@import "legacy/search_modal";
-@import "legacy/search_results";
 @import "legacy/select";
 @import "legacy/spectra";
 @import "legacy/structur_editor";
