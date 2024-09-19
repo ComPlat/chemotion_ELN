@@ -71,7 +71,7 @@ export default class ReactionDetailsMainProperties extends Component {
     let TempChartRow = <span />;
     if (showTemperatureChart) {
       TempChartRow = (
-        <Row className="mt-4">
+        <Row className="mb-2">
           <Col>
             <LineChartContainer
               data={temperature}
@@ -91,10 +91,10 @@ export default class ReactionDetailsMainProperties extends Component {
 
     return (
       <>
-        <Row className=" ms-1 me-3">
+        <Row className="mb-3">
           <Col sm={6}>
-            <Form.Group className="my-2">
-              <Form.Label className="fs-6">Name</Form.Label>
+            <Form.Group>
+              <Form.Label>Name</Form.Label>
               <Form.Control
                 id={uuid.v4()}
                 name="reaction_name"
@@ -103,13 +103,12 @@ export default class ReactionDetailsMainProperties extends Component {
                 placeholder="Name..."
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
                 onChange={(event) => onInputChange('name', event)}
-                className="py-2"
               />
             </Form.Group>
           </Col>
           <Col sm={3}>
-            <Form.Group className="my-2">
-              <Form.Label className="fs-6">Status</Form.Label>
+            <Form.Group>
+              <Form.Label>Status</Form.Label>
               <Select
                 className="status-select reaction-status-change"
                 name="status"
@@ -128,8 +127,8 @@ export default class ReactionDetailsMainProperties extends Component {
             </Form.Group>
           </Col>
           <Col sm={3}>
-            <Form.Group className="my-2">
-              <Form.Label className="fs-6">Temperature</Form.Label>
+            <Form.Group>
+              <Form.Label>Temperature</Form.Label>
               <InputGroup>
                 <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
                   <Button

@@ -77,13 +77,11 @@ export default class ReactionDetailsProperties extends Component {
     );
 
     return (
-      <Form className="border pb-3">
-        <Row className="my-3">
-          <ReactionDetailsMainProperties
-            reaction={reaction}
-            onInputChange={(type, event) => this.props.onInputChange(type, event)}
-          />
-        </Row>
+      <Form>
+        <ReactionDetailsMainProperties
+          reaction={reaction}
+          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+        />
         <Form.Group className="mx-3">
           <Form.Label>Type (Name Reaction Ontology)</Form.Label>
           <OlsTreeSelect

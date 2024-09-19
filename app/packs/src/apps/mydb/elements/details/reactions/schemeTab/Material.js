@@ -642,7 +642,7 @@ class Material extends Component {
     );
   }
 
-  generalMaterial(props, style) {
+  generalMaterial(props, className) {
     const { material, deleteMaterial, connectDragSource, connectDropTarget,
       showLoadingColumn, reaction } = props;
     const isTarget = material.amountType === 'target';
@@ -668,7 +668,7 @@ class Material extends Component {
       <tbody>
         <tr className="general-material">
           {compose(connectDragSource, connectDropTarget)(
-            <td className={`drag-source ${permitCls(reaction)}`} style={style}>
+            <td className={`drag-source ${permitCls(reaction)} ${className}`}>
               <span className="text-info fa fa-arrows" />
             </td>,
             { dropEffect: 'copy' }
@@ -776,7 +776,7 @@ class Material extends Component {
     }
   }
 
-  solventMaterial(props, style) {
+  solventMaterial(props, className) {
     const { material, deleteMaterial, connectDragSource,
       connectDropTarget, reaction } = props;
     const isTarget = material.amountType === 'target';
@@ -785,7 +785,7 @@ class Material extends Component {
     return (
       <tr className="solvent-material">
         {compose(connectDragSource, connectDropTarget)(
-          <td className={`drag-source ${permitCls(reaction)}`} style={style}>
+          <td className={`drag-source ${permitCls(reaction)} ${className}`}>
             <span className="text-info fa fa-arrows" />
           </td>,
           { dropEffect: 'copy' }
@@ -813,14 +813,13 @@ class Material extends Component {
               placement="top"
               overlay={<Tooltip id="molecular-weight-info">{material.amount_g} g - {mw} g/mol</Tooltip>}
             >
-                <Form.Control
-                  disabled={!permitOn(reaction)}
-                  type="text"
-                  size="sm"
-                  value={material.external_label}
-                  placeholder={material.molecule.iupac_name}
+              <Form.Control
+                disabled={!permitOn(reaction)}
+                type="text"
+                size="sm"
+                value={material.external_label}
+                placeholder={material.molecule.iupac_name}
                 onChange={event => this.handleExternalLabelChange(event)}
-                className="p-2"
               />
             </OverlayTrigger>
             <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
@@ -829,7 +828,9 @@ class Material extends Component {
                   active
                   onClick={e => this.handleExternalLabelCompleted(e)}
                   size="sm"
-                ><i className="fa fa-refresh" /></Button>
+                >
+                  <i className="fa fa-refresh" />
+                </Button>
             </OverlayTrigger>
           </InputGroup>
         </td>
@@ -841,7 +842,6 @@ class Material extends Component {
             size="sm"
             value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
-            className="p-2"
           />
         </td>
         <td>
@@ -850,8 +850,8 @@ class Material extends Component {
             variant="danger"
             size="sm"
             onClick={() => deleteMaterial(material)}
-            className="mt-1"
-          ><i className="fa fa-trash-o" />
+          >
+            <i className="fa fa-trash-o" />
           </Button>
         </td>
       </tr>
@@ -1026,16 +1026,13 @@ class Material extends Component {
     const {
       material, isDragging, canDrop, isOver, materialGroup
     } = this.props;
-    const style = { padding: '0' };
-    if (isDragging) { style.opacity = 0.3; }
+    let className = 'text-center';
+    if (isDragging) { className += ' dnd-dragging'; }
     if (canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderWidth = 2;
-    }
-    if (isOver) {
-      style.borderColor = '#337ab7';
-      style.opacity = 0.6;
-      style.backgroundColor = '#337ab7';
+      className += ' dnd-zone';
+      if (isOver) {
+        className += ' dnd-zone-over';
+      }
     }
 
     if (this.props.materialGroup === 'products') {
@@ -1043,8 +1040,8 @@ class Material extends Component {
     }
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     const component = sp ?
-      this.solventMaterial(this.props, style) :
-      this.generalMaterial(this.props, style);
+      this.solventMaterial(this.props, className) :
+      this.generalMaterial(this.props, className);
 
     return component;
   }

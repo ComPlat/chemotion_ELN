@@ -84,7 +84,6 @@ const switchEquivTooltip = () => (
   <Tooltip id="assign_button">
     Lock/unlock Equiv
     <br />
-    {' '}
     for target amounts
   </Tooltip>
 );
@@ -94,6 +93,7 @@ function SwitchEquivButton(lockEquivColumn, switchEquiv) {
     <OverlayTrigger placement="top" overlay={switchEquivTooltip()}>
       <Button
         id="lock_equiv_column_btn"
+        className="ms-1"
         size="sm"
         variant={lockEquivColumn ? 'warning' : 'light'}
         onClick={switchEquiv}
@@ -148,7 +148,7 @@ function GeneralMaterialGroup({
     reagentDd = (
       <VirtualizedSelect
         disabled={!permitOn(reaction)}
-        className="reagents-select"
+        className="form-control-sm"
         name="Reagents"
         multi={false}
         options={reagentList}
@@ -291,7 +291,7 @@ function SolventsMaterialGroup({
           <th>
             <VirtualizedSelect
               disabled={!permitOn(reaction)}
-              className="solvents-select"
+              className="form-control-sm"
               name="default solvents"
               multi={false}
               options={solventOptions}

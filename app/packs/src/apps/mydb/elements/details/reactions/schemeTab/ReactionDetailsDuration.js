@@ -60,7 +60,7 @@ export default class ReactionDetailsDuration extends Component {
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
     return (
-      <Row className='mx-1'>
+      <Row className='mb-3'>
         <Col md={3} sm={6}>
           <Form.Group>
             <Form.Label>Start</Form.Label>
@@ -119,25 +119,22 @@ export default class ReactionDetailsDuration extends Component {
             </InputGroup>
           </Form.Group>
         </Col>
-        <Col md={3} sm={6}>
-          <Form.Group>
-            <Form.Label />
-            <InputGroup className="mt-2 pe-3">
-              <Form.Control
-                disabled={!permitOn(reaction) || reaction.gaseous}
-                type="text"
-                value={reaction.durationDisplay.dispValue || ''}
-                ref={this.refDuration}
-                placeholder="Input Duration..."
-                onChange={event => this.handleDurationChange(event)}
-              />
-                <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>
-                  <Button disabled={!permitOn(reaction) || reaction.gaseous} variant="success" onClick={() => this.changeDurationUnit()}>
-                    {reaction.durationUnit}
-                  </Button>
-                </OverlayTrigger>
-            </InputGroup>
-          </Form.Group>
+        <Col md={3} sm={6} className="d-flex flex-column justify-content-end">
+          <InputGroup>
+            <Form.Control
+              disabled={!permitOn(reaction) || reaction.gaseous}
+              type="text"
+              value={reaction.durationDisplay.dispValue || ''}
+              ref={this.refDuration}
+              placeholder="Input Duration..."
+              onChange={event => this.handleDurationChange(event)}
+            />
+              <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>
+                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant="success" onClick={() => this.changeDurationUnit()}>
+                  {reaction.durationUnit}
+                </Button>
+              </OverlayTrigger>
+          </InputGroup>
         </Col>
       </Row>
     );

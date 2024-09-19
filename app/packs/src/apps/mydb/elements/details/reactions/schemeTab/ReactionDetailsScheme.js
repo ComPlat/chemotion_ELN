@@ -1075,7 +1075,7 @@ export default class ReactionDetailsScheme extends Component {
   reactionVesselSize() {
     const { reaction } = this.props;
     return (
-      <Form.Group className="pe-4">
+      <Form.Group>
         <Form.Label>Vessel size</Form.Label>
         <InputGroup>
           <Form.Control
@@ -1142,7 +1142,7 @@ export default class ReactionDetailsScheme extends Component {
 
     const headReactants = reaction.starting_materials.length ?? 0;
     return (
-      <div className="border">
+      <>
         <div>
           <div className="border-bottom">
             <MaterialGroupContainer
@@ -1248,7 +1248,7 @@ export default class ReactionDetailsScheme extends Component {
           reaction={reaction}
           onInputChange={(type, event) => this.props.onInputChange(type, event)}
         />
-        <Row className="my-3 ms-1">
+        <Row className="mb-3">
           <Col sm={4}>
             <Form.Group className="">
               <Form.Label>Type (Name Reaction Ontology)</Form.Label>
@@ -1267,7 +1267,7 @@ export default class ReactionDetailsScheme extends Component {
             {this.reactionVesselSize()}
           </Col>
         </Row>
-        <Row className="p-2">
+        <Row className="mb-3">
           <Form.Group>
             <Form.Label>Description</Form.Label>
             <div className="quill-resize">
@@ -1293,7 +1293,7 @@ export default class ReactionDetailsScheme extends Component {
           onInputChange={(type, event) => this.props.onInputChange(type, event)}
           additionQuillRef={this.additionQuillRef}
         />
-      </div>
+      </>
     );
   }
 }
