@@ -35,38 +35,44 @@ function KetcherEditor(props) {
         ketFormat = JSON.parse(ketFormat);
         let allNodes = [...ketFormat.root.nodes];
 
-        const mols = [];
         const images = [];
         allNodes.forEach((item, idx) => {
           if (item?.type === 'image') {
             images.push(allNodes[idx]);
-          } else {
-            mols.push(allNodes[idx]);
           }
         });
 
+
+        const mols = [];
+        Object.keys(ketFormat)?.forEach((item) => {
+          if (ketFormat[item]?.atoms?.length && ketFormat[item]?.atoms[0]?.alias) mols.push(item);
+        });
+
+        console.log({ mols });
         data.forEach(async (item) => {
           switch (item?.operation) {
             case "Upsert image":
               connectionDS = {
-                [`mol_${mols.at(-1).$ref}`]: `img_${images.length - 1}`
+                [`mol_${mols.at(-1)?.$ref}`]: `img_${images.length - 1}`
               };
               break;
             case "Move image":
-              Object.keys(connectionDS).forEach((_) => {
-                const images_list = ketFormat.root.nodes.slice(mols.length, allNodes.length);
-                images_list.forEach((item, idx) => {
-                  const location = {
-                    x: item.boundingBox.x,
-                    y: item.boundingBox.y,
-                    z: -1
-                  };
-                  ketFormat[`mol${idx}`].atoms[0].location = Object.values(location);
-                  ketFormat[`mol${idx}`].atoms[1].location = Object.values(location);
-                  ketFormat[`mol${idx}`].stereoFlagPosition = location;
-                });
-                editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+              const images_list = ketFormat.root.nodes.slice(allNodes.length - mols.length, allNodes.length);
+              console.log(mols.length - allNodes.length, allNodes.length);
+              images_list.forEach((item, idx) => {
+                const location = {
+                  x: item.boundingBox.x + item.boundingBox.width / 2,
+                  y: item.boundingBox.y - item.boundingBox.height / 2,
+                  z: -1
+                };
+                if (ketFormat[mols[idx]].atoms[0].alias) {
+                  ketFormat[mols[idx]].atoms[0].location = Object.values(location);
+                  ketFormat[mols[idx]].atoms[1].location = Object.values(location);
+                  ketFormat[mols[idx]].stereoFlagPosition = location;
+                }
               });
+              editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+              // });
               break;
             case "Move image!":
               const moleculePattern = /^mol\d+/;
