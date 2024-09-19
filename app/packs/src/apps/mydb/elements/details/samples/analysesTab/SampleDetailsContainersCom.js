@@ -9,7 +9,7 @@ import {
   AnalysesHeader,
   AnalysisModeToggle,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
-import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 function RndNotAvailable() {
   return (
@@ -117,7 +117,7 @@ function ReactionsDisplay({
                 key={`${id}CRowEdit`}
                 className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
               >
-                <Card.Header className={"rounded-0 py-3" + (isActiveTab ? " bg-gray-200 border-bottom" : " bg-gray-100 border-bottom-0")}>
+                <Card.Header className="rounded-0 pa-0">
                   <AccordionHeaderWithButtons eventKey={id}>
                     <AnalysesHeader
                       sample={sample}

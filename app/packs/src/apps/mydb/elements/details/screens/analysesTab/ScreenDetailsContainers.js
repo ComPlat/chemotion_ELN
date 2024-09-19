@@ -5,7 +5,7 @@ import { Button, Accordion, Card } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
@@ -191,7 +191,7 @@ export default class ScreenDetailsContainers extends Component {
                     key={`screen_container_${container.id}`}
                     className="rounded-0"
                   >
-                    <Card.Header className="bg-gray-200 py-3 rounded-0">
+                    <Card.Header className="rounded-0 p-0">
                       <AccordionHeaderWithButtons eventKey={key}>
                         {container.is_deleted
                           ? this.containerHeaderDeleted(container)
