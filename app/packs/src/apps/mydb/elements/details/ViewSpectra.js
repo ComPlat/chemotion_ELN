@@ -811,12 +811,6 @@ class ViewSpectra extends React.Component {
       jcamp, predictions, idx, listMuliSpcs, listEntityFiles
     } = this.getContent();
     const dialogClassName = 'spectra-editor-dialog';
-    // WORKAROUND: react-stickydiv duplicates elements.
-    const specElements = Array.from(document.getElementsByClassName(dialogClassName));
-    if (specElements.length > 1) {
-      specElements.slice(1).forEach(el => el.parentNode.style.display = 'none'); // eslint-disable-line
-    }
-    // WORKAROUND: react-stickydiv duplicates elements.
 
     return (
       <div className="spectra-editor">
