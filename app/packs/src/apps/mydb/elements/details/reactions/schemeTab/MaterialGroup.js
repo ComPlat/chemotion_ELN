@@ -93,8 +93,7 @@ function SwitchEquivButton(lockEquivColumn, switchEquiv) {
     <OverlayTrigger placement="top" overlay={switchEquivTooltip()}>
       <Button
         id="lock_equiv_column_btn"
-        className="ms-1"
-        size="xsm"
+        size="sm"
         variant={lockEquivColumn ? 'warning' : 'light'}
         onClick={switchEquiv}
       >
