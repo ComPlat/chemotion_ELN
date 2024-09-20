@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Badge, Modal, FormControl
+  Button, ButtonGroup, Badge, Modal, Form
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
@@ -153,7 +153,7 @@ function NoteCellEditor({
         {`Edit note for ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
       </Modal.Header>
       <Modal.Body>
-        <FormControl
+        <Form.Control
           as="textarea"
           placeholder="Start typing your note..."
           value={note}

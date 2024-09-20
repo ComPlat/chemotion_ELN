@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  SplitButton, Button, ButtonToolbar, FormControl,
-  FormGroup, Modal, Dropdown
+  SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
@@ -12,7 +11,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel';
 
 const elementList = () => {
   const elements = [
@@ -166,14 +164,14 @@ export default class CreateButton extends React.Component {
         <Modal.Body>
           You have selected {modalProps.sampleCount} samples. Please fill in the number of wellplates you would like to create.
           <p />
-          <FormGroup controlId="wellplateInput">
-            <ControlLabel>Number of wellplates</ControlLabel>
-            <FormControl
+          <Form.Group controlId="wellplateInput">
+            <Form.Label>Number of wellplates</Form.Label>
+            <Form.Control
               type="text"
-              inputRef={(input) => { this.wellplateInput = input; }}
+              ref={(input) => { this.wellplateInput = input; }}
               defaultValue={modalProps.wellplateCount || ''}
             />
-          </FormGroup>
+          </Form.Group>
 
           <ButtonToolbar>
             <Button variant="primary" onClick={() => this.handleModalHide()}>Cancel</Button>

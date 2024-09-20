@@ -50,7 +50,6 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class ReactionDetails extends Component {
   constructor(props) {
