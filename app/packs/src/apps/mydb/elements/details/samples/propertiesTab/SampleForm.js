@@ -483,6 +483,7 @@ export default class SampleForm extends React.Component {
         <Button
           onClick={this.fetchNextInventoryLabel}
           disabled={sample.isNew}
+          variant="light"
         >
           <i className="fa fa-tag" />
         </Button>
@@ -759,7 +760,7 @@ export default class SampleForm extends React.Component {
         <Row className="align-items-end mb-4">
           <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
           <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
-          <Col className="d-flex align-items-end gap-1">
+          <Col className="d-flex align-items-end">
             {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
             {this.nextInventoryLabel(sample)}
           </Col>
