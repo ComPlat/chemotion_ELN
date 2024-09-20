@@ -15,6 +15,7 @@ function KetcherEditor(props) {
 
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
+      window.editor = editorS;
       editorS.structureDef.editor.setMolecule(initMol);
       editorS._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
@@ -40,31 +41,31 @@ function KetcherEditor(props) {
       if (ketFormat[item]?.atoms?.length && ketFormat[item]?.atoms[0]?.alias) mols.push(item);
     });
 
+    console.log(editorS._structureDef.editor.editor._selection);
+
     data.forEach(async (item) => {
-      console.log(item);
+      // console.log(item);
       switch (item?.operation) {
         case "Upsert image":
-          console.log("image Added");
-          delete ketFormat[`mol${mols.length - 1}`].sgroups;
-          delete ketFormat[`mol${mols.length - 1}`].bonds;
-          ketFormat[`mol${mols.length - 1}`].atoms.splice(1, 1);
-          editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+          console.log("image Added", editorS._structureDef.editor.editor._selection);
+          // delete ketFormat[`mol${mols.length - 1}`].sgroups;
+          // delete ketFormat[`mol${mols.length - 1}`].bonds;
+          // ketFormat[`mol${mols.length - 1}`].atoms.splice(1, 1);
+          // editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
           break;
         case "Move image":
-          console.log("image moved");
-          const selected_image = editorS._structureDef.editor.editor._selection.images[0];
-          const images_list = ketFormat.root.nodes.slice(allNodes.length - mols.length, allNodes.length);
-
-          const item_image = images_list[selected_image];
+          const selected_image = editorS.structureDef.editor.editor._selection.images[0];
+          const nodes_item = ketFormat.root.nodes[ketFormat.root.nodes.length - selected_image];
+          console.log({ nodes_item, selected_image, s: editorS._structureDef.editor.editor._selection });
           const location = {
-            x: item_image.boundingBox.x + item_image.boundingBox.width / 2,
-            y: item_image.boundingBox.y - item_image.boundingBox.height / 2,
+            x: nodes_item.boundingBox.x + nodes_item.boundingBox.width / 2,
+            y: nodes_item.boundingBox.y - nodes_item.boundingBox.height / 2,
             z: -1
           };
 
-          if (ketFormat[mols[selected_image]].atoms[0].alias) {
+          if (ketFormat[mols[selected_image]]?.atoms[0].alias) {
             ketFormat[mols[selected_image]].atoms[0].location = [...Object.values(location)];
-            if (ketFormat[mols[selected_image]].atoms[1]) {
+            if (ketFormat[mols[selected_image]]?.atoms[1]) {
               ketFormat[mols[selected_image]].atoms[1].location = Object.values(location);
             }
             ketFormat[mols[selected_image]].stereoFlagPosition = location;
@@ -72,10 +73,10 @@ function KetcherEditor(props) {
           editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
           break;
         case "Add atom":
-          console.log("Atom added", data);
-
-          // console.log("ADD ATOM: LAST CURSOR POSITION", editorS._structureDef.editor.editor.lastCursorPosition);
-          // console.log("ADD ATOM:__SELCTION", editorS._structureDef.editor.editor._selection);
+          console.log("Atom added", { selection: editorS._structureDef.editor.editor._selection, data });
+          break;
+        case "Move atom":
+          console.log("Move atom", { selection: editorS._structureDef.editor.editor._selection, data });
           break;
         default:
           break;
