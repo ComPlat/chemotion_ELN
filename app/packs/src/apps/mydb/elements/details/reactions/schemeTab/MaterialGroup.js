@@ -94,7 +94,7 @@ function SwitchEquivButton(lockEquivColumn, switchEquiv) {
       <Button
         id="lock_equiv_column_btn"
         className="ms-1"
-        size="sm"
+        size="xsm"
         variant={lockEquivColumn ? 'warning' : 'light'}
         onClick={switchEquiv}
       >
@@ -199,43 +199,35 @@ function GeneralMaterialGroup({
         <tr>
           <th className>{addSampleButton}</th>
           <th>{headers.group}</th>
-          {isReactants
-             && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
-          {!isReactants
-             && <th>{refTHead}</th>}
-          <th>{headers.show_label}</th>
-          {!isReactants
-           && <th>{headers.tr}</th>}
-          {!isReactants
-            && (
+
+          {isReactants ? (
+            <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>
+          ) : (
+            <>
+              <th>{refTHead}</th>
+              <th>{headers.show_label}</th>
+              <th>{headers.tr}</th>
               <th>
                 <OverlayTrigger
                   placement="top"
-                  overlay={
-                    <Tooltip id="coefficientHeaderTitleReactionScheme">Coefficient</Tooltip>
-                  }
+                  overlay={<Tooltip id="coefficientHeaderTitleReactionScheme">Coefficient</Tooltip>}
                 >
                   <span>{headers.reaction_coefficient}</span>
                 </OverlayTrigger>
               </th>
-            )}
-          {!isReactants
-             && <th>{headers.amount}</th>}
-          {!isReactants
-             && <th />}
-          {!isReactants
-             && <th />}
-          {showLoadingColumn
-             && !isReactants && <th>{headers.loading}</th>}
-          {!isReactants
-             && <th>{headers.concn}</th>}
-          {!isReactants && permitOn(reaction)
-            && (
-            <th>
-              {headers.eq}
-              {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}
-            </th>
-            )}
+              <th>{headers.amount}</th>
+              <th />
+              <th />
+              {showLoadingColumn && <th>{headers.loading}</th>}
+              <th>{headers.concn}</th>
+              {permitOn(reaction) && materialGroup !== 'products' && (
+                <th>
+                  {headers.eq}
+                  {SwitchEquivButton(lockEquivColumn, switchEquiv)}
+                </th>
+              )}
+            </>
+          )}
         </tr>
       </thead>
       {contents}
