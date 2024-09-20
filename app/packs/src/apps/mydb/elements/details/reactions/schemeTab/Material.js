@@ -642,7 +642,7 @@ class Material extends Component {
     );
   }
 
-  generalMaterial(props, style) {
+  generalMaterial(props, className) {
     const { material, deleteMaterial, connectDragSource, connectDropTarget,
       showLoadingColumn, reaction } = props;
     const isTarget = material.amountType === 'target';
@@ -668,7 +668,7 @@ class Material extends Component {
       <tbody>
         <tr className="general-material">
           {compose(connectDragSource, connectDropTarget)(
-            <td className={`drag-source ${permitCls(reaction)}`} style={style}>
+            <td className={`drag-source ${permitCls(reaction)} ${className}`}>
               <span className="text-info fa fa-arrows" />
             </td>,
             { dropEffect: 'copy' }
@@ -776,7 +776,7 @@ class Material extends Component {
     }
   }
 
-  solventMaterial(props, style) {
+  solventMaterial(props, className) {
     const { material, deleteMaterial, connectDragSource,
       connectDropTarget, reaction } = props;
     const isTarget = material.amountType === 'target';
@@ -785,7 +785,7 @@ class Material extends Component {
     return (
       <tr className="solvent-material">
         {compose(connectDragSource, connectDropTarget)(
-          <td className={`drag-source ${permitCls(reaction)}`} style={style}>
+          <td className={`drag-source ${permitCls(reaction)} ${className}`}>
             <span className="text-info fa fa-arrows" />
           </td>,
           { dropEffect: 'copy' }
@@ -797,7 +797,7 @@ class Material extends Component {
         <td>
           <OverlayTrigger placement="top" overlay={drySolvTooltip}>
             <Form.Check
-              type='checkbox'
+              type="checkbox"
               checked={material.dry_solvent}
               onChange={(event) => this.handleDrySolventChange(event)}
             />
@@ -813,14 +813,13 @@ class Material extends Component {
               placement="top"
               overlay={<Tooltip id="molecular-weight-info">{material.amount_g} g - {mw} g/mol</Tooltip>}
             >
-                <Form.Control
-                  disabled={!permitOn(reaction)}
-                  type="text"
-                  size="sm"
-                  value={material.external_label}
-                  placeholder={material.molecule.iupac_name}
+              <Form.Control
+                disabled={!permitOn(reaction)}
+                type="text"
+                size="sm"
+                value={material.external_label}
+                placeholder={material.molecule.iupac_name}
                 onChange={event => this.handleExternalLabelChange(event)}
-                className="p-2"
               />
             </OverlayTrigger>
             <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
@@ -829,7 +828,9 @@ class Material extends Component {
                   active
                   onClick={e => this.handleExternalLabelCompleted(e)}
                   size="sm"
-                ><i className="fa fa-refresh" /></Button>
+                >
+                  <i className="fa fa-refresh" />
+                </Button>
             </OverlayTrigger>
           </InputGroup>
         </td>
@@ -841,7 +842,6 @@ class Material extends Component {
             size="sm"
             value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
-            className="p-2"
           />
         </td>
         <td>
@@ -850,8 +850,9 @@ class Material extends Component {
             variant="danger"
             size="sm"
             onClick={() => deleteMaterial(material)}
-            className="mt-1"
-          ><i className="fa fa-trash-o" /></Button>
+          >
+            <i className="fa fa-trash-o" />
+          </Button>
         </td>
       </tr>
     );
@@ -862,11 +863,13 @@ class Material extends Component {
       <Button
         disabled={!permitOn(this.props.reaction)}
         active
-        className='p-1'
+        className="p-1"
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'success' : 'primary'}
         size="sm"
-      >{isTarget ? 't' : 'r'}</Button>
+      >
+        {isTarget ? 't' : 'r'}
+      </Button>
     );
   }
 
@@ -903,14 +906,14 @@ class Material extends Component {
     const feedstockStatus = gasTypeStatus ? '#009a4d' : 'grey';
     const tooltip = <Tooltip id="feedstockGas">{tooltipText}</Tooltip>;
     return (
-      <div style={{ paddingRight: '3px' }}>
+      <div className="pe-1">
         <OverlayTrigger placement="bottom" overlay={tooltip}>
           <Button
-            bsStyle="primary"
-            bsSize="xsmall"
+            variant="primary"
+            size="xsm"
             onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
             disabled={false}
-            style={{ backgroundColor: feedstockStatus, width: '35px' }}
+            style={{ backgroundColor: feedstockStatus }}
           >
             {gasTypeValue}
           </Button>
@@ -995,12 +998,14 @@ class Material extends Component {
     };
 
     return (
-      <div style={{ display: 'inline-block', maxWidth: '100%' }}>
-        <div className="inline-inside">
+      <div className="d-inline-block mw-100">
+        <div
+          className="inline-inside"
+        >
           {reaction.gaseous && materialGroup !== 'solvents'
             ? this.gasType(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-            <Button variant="primary" size="sm" className='me-1' onClick={addToDesc} disabled={!permitOn(reaction)}>
+            <Button variant="primary" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
               {serialCode}
             </Button>
           </OverlayTrigger>
@@ -1021,16 +1026,13 @@ class Material extends Component {
     const {
       material, isDragging, canDrop, isOver, materialGroup
     } = this.props;
-    const style = { padding: '0' };
-    if (isDragging) { style.opacity = 0.3; }
+    let className = 'text-center';
+    if (isDragging) { className += ' dnd-dragging'; }
     if (canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderWidth = 2;
-    }
-    if (isOver) {
-      style.borderColor = '#337ab7';
-      style.opacity = 0.6;
-      style.backgroundColor = '#337ab7';
+      className += ' dnd-zone';
+      if (isOver) {
+        className += ' dnd-zone-over';
+      }
     }
 
     if (this.props.materialGroup === 'products') {
@@ -1038,8 +1040,8 @@ class Material extends Component {
     }
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     const component = sp ?
-      this.solventMaterial(this.props, style) :
-      this.generalMaterial(this.props, style);
+      this.solventMaterial(this.props, className) :
+      this.generalMaterial(this.props, className);
 
     return component;
   }

@@ -50,7 +50,6 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -259,26 +258,28 @@ export default class ReactionDetails extends Component {
       </span>
     );
     return (
-      <Tabs
-        id="data-detail-tab"
-        className="mt-0 mb-2"
-        unmountOnExit
-        activeKey={activeAnalysisTab}
-        // eslint-disable-next-line react/jsx-no-bind
-        onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
-      >
-        {tabs}
-        <Tab eventKey={4.1} title={reactionTab}>
-          <ListGroupItem style={{ paddingBottom: 20 }}>
-            <ReactionDetailsContainers
-              reaction={reaction}
-              parent={this}
-              readOnly={!permitOn(reaction)}
-              handleSubmit={this.handleSubmit}
-            />
-          </ListGroupItem>
-        </Tab>
-      </Tabs>
+      <div className="tabs-container--with-borders">
+        <Tabs
+          id="data-detail-tab"
+          className="mt-0 mb-2"
+          unmountOnExit
+          activeKey={activeAnalysisTab}
+          // eslint-disable-next-line react/jsx-no-bind
+          onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
+        >
+          {tabs}
+          <Tab eventKey={4.1} title={reactionTab}>
+            <ListGroupItem style={{ paddingBottom: 20 }}>
+              <ReactionDetailsContainers
+                reaction={reaction}
+                parent={this}
+                readOnly={!permitOn(reaction)}
+                handleSubmit={this.handleSubmit}
+              />
+            </ListGroupItem>
+          </Tab>
+        </Tabs>
+      </div>
     );
   }
 
@@ -526,8 +527,8 @@ export default class ReactionDetails extends Component {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
     const schemeTitle = reaction && activeTab === 'scheme' ? (
-      <div style={{ display: 'flex' }}>
-        <div style={{ paddingRight: '2px' }}>
+      <div className="d-flex">
+        <div>
           <ToggleButton
             isToggledInitial={reaction.gaseous}
             onToggle={this.handleGaseousChange}
@@ -639,10 +640,12 @@ export default class ReactionDetails extends Component {
             onTabPositionChanged={this.onTabPositionChanged}
           />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
-          <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
-            {tabContents}
-          </Tabs>
-          <CommentModal element={reaction} />
+          <div className="tabs-container--with-borders">
+            <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
+              {tabContents}
+            </Tabs>
+            <CommentModal element={reaction} />
+          </div>
         </Card.Body>
         <Card.Footer>
           <div className="d-inline-block p-1">

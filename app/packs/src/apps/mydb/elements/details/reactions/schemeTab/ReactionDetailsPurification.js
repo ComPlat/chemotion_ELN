@@ -104,24 +104,26 @@ export default class ReactionDetailsPurification extends Component {
   render() {
     const { reaction, onInputChange, additionQuillRef } = this.props;
     return (
-      <div className="p-2">
-        <Row>
+      <>
+        <Row className='mb-3'>
           <Col md={12}>
-            <div><b>Purification</b></div>
-            <Select
-              className="status-select z-10"
-              name="purification"
-              multi
-              disabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
-              options={purificationOptions}
-              onChange={this.handlePurificationChange}
-              value={reaction.purification}
-            />
+            <Form.Group>
+              <Form.Label>Purification</Form.Label>
+              <Select
+                className="status-select z-10"
+                name="purification"
+                multi
+                disabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
+                options={purificationOptions}
+                onChange={this.handlePurificationChange}
+                value={reaction.purification}
+              />
+            </Form.Group>
           </Col>
         </Row>
-        <Row className='mt-2'>
+        <Row className='mb-3'>
           <Col md={12}>
-            <div><b>Purification Solvents</b></div>
+            <label class="form-label">Purification Solvents</label>
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="purification_solvents"
@@ -135,27 +137,25 @@ export default class ReactionDetailsPurification extends Component {
             />
           </Col>
         </Row>
-        <Row className='mt-2'>
+        <Row className='mb-3'>
           <Col md={12}>
-            <Form.Group>
-              <div><b>Additional information for publication and purification details</b></div>
-              <div className="quill-resize">
-                {
-                  permitOn(reaction) ?
-                    <QuillEditor
-                      ref={additionQuillRef}
-                      value={reaction.observation}
-                      height="100%"
-                      disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
-                      onChange={event => onInputChange('observation', event)}
-                    /> : <QuillViewer value={reaction.observation} />
-                }
-              </div>
-            </Form.Group>
+            <label class="form-label">Additional information for publication and purification details</label>
+            <div className="quill-resize">
+              {
+                permitOn(reaction) ?
+                  <QuillEditor
+                    ref={additionQuillRef}
+                    value={reaction.observation}
+                    height="100%"
+                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
+                    onChange={event => onInputChange('observation', event)}
+                  /> : <QuillViewer value={reaction.observation} />
+              }
+            </div>
             <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
           </Col>
         </Row>
-      </div>
+      </>
     );
   }
 }

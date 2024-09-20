@@ -2,8 +2,7 @@ import PropTypes from 'prop-types';
 import Quagga from 'quagga';
 import React from 'react';
 import {
-  Alert, Button,
-  Form, Modal, SplitButton, Dropdown
+  Alert, Button, Form, Modal, SplitButton, Dropdown
 } from 'react-bootstrap';
 import QrReader from 'react-qr-reader';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
@@ -178,7 +177,7 @@ export default class ScanCodeButton extends React.Component {
               <Form.Control
                 autoFocus
                 type="text"
-                inputRef={(m) => { this.codeInput = m; }}
+                ref={(m) => { this.codeInput = m; }}
                 onKeyPress={this.handleKeyPress}
               />
             </Form.Group>
@@ -216,9 +215,8 @@ export default class ScanCodeButton extends React.Component {
     if (this.state.scanError) {
       return (
         <div>
-          {this.state.scanInfo
-            ? <Alert variant="info">{this.state.scanInfo}</Alert>
-            : null
+          {this.state.scanInfo &&
+            <Alert variant="info">{this.state.scanInfo}</Alert>
           }
           <Alert variant="danger">
             {this.state.scanError}

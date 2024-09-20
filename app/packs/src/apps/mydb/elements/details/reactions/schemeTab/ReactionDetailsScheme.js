@@ -1,3 +1,4 @@
+/* eslint-disable react/sort-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -33,9 +34,8 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import { parseNumericString } from 'src/utilities/MathUtils';
-
+import CollapseButton from 'src/components/common/CollapseButton';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -159,11 +159,10 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   renderRolesOptions(opt) {
-    const className = `fa ${opt.icon} ${opt.variant}`;
+    const className = `fa ${opt.icon} ${opt.variant} my-0 mx-2`;
     return (
       <span>
         <i className={className} />
-        <span className="spacer-10" />
         {opt.label}
       </span>
     );
@@ -188,32 +187,29 @@ export default class ReactionDetailsScheme extends Component {
   renderRole() {
     const { reaction } = this.props;
     const { role } = reaction;
+    const isPartsRole = role === 'parts';
     let accordTo;
-    let width;
     if (role === 'parts') {
       accordTo = 'According to';
-      width = 2;
-    } else {
-      accordTo = null;
-      width = 4;
     }
+
     return (
-      <div>
-        <Col sm={4} className="ps-1 w-100">
+      <Row className="d-flex align-items-center">
+        <Col sm={isPartsRole ? 6 : 12}>
           <Form.Group className="flex-grow-1">
             <Form.Label>Role</Form.Label>
             {this.renderRoleSelect()}
           </Form.Group>
         </Col>
-        {role === 'parts' && (
-          <Col sm={3} className="ps-1">
+        {isPartsRole && (
+          <Col sm={6}>
             <Form.Group>
               <Form.Label>{accordTo}</Form.Label>
               {this.renderGPDnD()}
             </Form.Group>
           </Col>
         )}
-        </div>
+      </Row>
     );
   }
 
@@ -1034,35 +1030,23 @@ export default class ReactionDetailsScheme extends Component {
 
   solventCollapseBtn() {
     const { open } = this.state;
-    const arrow = open
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
     return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-          onClick={() => this.setState({ open: !open })}
-      >
-        {arrow} Solvents
-      </Button>
+      <CollapseButton
+        openTab={open}
+        setOpenTab={() => this.setState({ open: !open })}
+        name="Solvents"
+      />
     );
   }
 
   conditionsCollapseBtn() {
     const { cCon } = this.state;
-    const arrow = cCon
-      ? <i className="fa fa-angle-double-up gap-1" />
-      : <i className="fa fa-angle-double-down gap-1" />;
     return (
-      <Button
-        size="sm"
-        className="w-100 bg-gray-200"
-        variant="light"
-        onClick={() => this.setState({ cCon: !cCon })}
-      >
-        {arrow} Conditions
-      </Button>
+      <CollapseButton
+        openTab={open}
+        setOpenTab={() => this.setState({ cCon: !cCon })}
+        name="Conditions"
+      />
     );
   }
 
@@ -1091,29 +1075,27 @@ export default class ReactionDetailsScheme extends Component {
   reactionVesselSize() {
     const { reaction } = this.props;
     return (
-      <>
-        <Form.Group className="pe-2">
-          <Form.Label>Vessel size</Form.Label>
-          <InputGroup>
-            <Form.Control
-              name="reaction_vessel_size"
-              type="text"
-              value={reaction.vessel_size?.amount || ''}
-              disabled={false}
-              onChange={(event) => this.updateVesselSize(event)}
-              onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
-              className="flex-grow-1"
-            />
-              <Button
-                disabled={false}
-                variant="success"
-                onClick={() => this.changeVesselSizeUnit()}
-              >
-                {reaction.vessel_size?.unit || 'ml'}
-              </Button>
-            </InputGroup>
-        </Form.Group>
-      </>
+      <Form.Group>
+        <Form.Label>Vessel size</Form.Label>
+        <InputGroup>
+          <Form.Control
+            name="reaction_vessel_size"
+            type="text"
+            value={reaction.vessel_size?.amount || ''}
+            disabled={false}
+            onChange={(event) => this.updateVesselSize(event)}
+            onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
+            className="flex-grow-1 Select-control"
+          />
+          <Button
+            disabled={false}
+            variant="success"
+            onClick={() => this.changeVesselSizeUnit()}
+          >
+            {reaction.vessel_size?.unit || 'ml'}
+          </Button>
+        </InputGroup>
+      </Form.Group>
     );
   }
 
@@ -1160,7 +1142,7 @@ export default class ReactionDetailsScheme extends Component {
 
     const headReactants = reaction.starting_materials.length ?? 0;
     return (
-      <div className="border">
+      <>
         <div>
           <div className="border-bottom">
             <MaterialGroupContainer
@@ -1215,29 +1197,26 @@ export default class ReactionDetailsScheme extends Component {
             />
             <hr className="mt-0" />
           </div>
-          <div>
-            {this.solventCollapseBtn()}
-            <Collapse in={this.state.open}>
-              <div>
-                <MaterialGroupContainer
-                  reaction={reaction}
-                  materialGroup="solvents"
-                  materials={reaction.solvents}
-                  dropMaterial={this.dropMaterial}
-                  deleteMaterial={
-                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-                  }
-                  dropSample={this.dropSample}
-                  showLoadingColumn={!!reaction.hasPolymers()}
-                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-                  switchEquiv={this.switchEquiv}
-                  lockEquivColumn={this.state.lockEquivColumn}
-                  headIndex={0}
-                />
-              </div>
-
-            </Collapse>
-          </div>
+          {this.solventCollapseBtn()}
+          <Collapse in={this.state.open}>
+            <div>
+              <MaterialGroupContainer
+                reaction={reaction}
+                materialGroup="solvents"
+                materials={reaction.solvents}
+                dropMaterial={this.dropMaterial}
+                deleteMaterial={
+                  (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+                }
+                dropSample={this.dropSample}
+                showLoadingColumn={!!reaction.hasPolymers()}
+                onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+                switchEquiv={this.switchEquiv}
+                lockEquivColumn={this.state.lockEquivColumn}
+                headIndex={0}
+              />
+            </div>
+          </Collapse>
           <div>
             {this.conditionsCollapseBtn()}
             <Collapse in={this.state.cCon}>
@@ -1261,68 +1240,60 @@ export default class ReactionDetailsScheme extends Component {
             </Collapse>
           </div>
         </div>
-        <div>
-          <div className="mb-3">
-            <div className="reaction-scheme-props">
-              <ReactionDetailsMainProperties
-                reaction={reaction}
-                onInputChange={(type, event) => this.props.onInputChange(type, event)}
+        <ReactionDetailsMainProperties
+          reaction={reaction}
+          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+        />
+        <ReactionDetailsDuration
+          reaction={reaction}
+          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+        />
+        <Row className="mb-3">
+          <Col sm={4}>
+            <Form.Group className="">
+              <Form.Label>Type (Name Reaction Ontology)</Form.Label>
+              <OlsTreeSelect
+                selectName="rxno"
+                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+                onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
+                selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
               />
+            </Form.Group>
+          </Col>
+          <Col sm={4}>
+            {this.renderRole()}
+          </Col>
+          <Col sm={4}>
+            {this.reactionVesselSize()}
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Form.Group>
+            <Form.Label>Description</Form.Label>
+            <div className="quill-resize">
+              {
+                permitOn(reaction)
+                  ? (
+                    <ReactionDescriptionEditor
+                      height="100%"
+                      reactQuillRef={this.reactQuillRef}
+                      template={reactionDescTemplate}
+                      value={reaction.description}
+                      updateTextTemplates={this.updateTextTemplates}
+                      onChange={(event) => this.props.onInputChange('description', event)}
+                    />
+                  ) : <QuillViewer value={reaction.description} />
+              }
             </div>
-            <ReactionDetailsDuration
-              reaction={reaction}
-              onInputChange={(type, event) => this.props.onInputChange(type, event)}
-            />
-            <Row>
-              <Col sm={4}>
-                <Form.Group className="ms-2">
-                  <Form.Label>Type (Name Reaction Ontology)</Form.Label>
-                  <OlsTreeSelect
-                    selectName="rxno"
-                    selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                    onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
-                    selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
-                  />
-                </Form.Group>
-              </Col>
-              <Col sm={4}>
-                {this.renderRole()}
-              </Col>
-              <Col sm={4}>
-                {this.reactionVesselSize()}
-              </Col>
-            </Row>
-            <Row>
-              <Col sm={12}>
-                <Form.Group className="p-3">
-                  <Form.Label>Description</Form.Label>
-                  <div className="quill-resize">
-                    {
-                      permitOn(reaction)
-                        ? (
-                          <ReactionDescriptionEditor
-                            height="100%"
-                            reactQuillRef={this.reactQuillRef}
-                            template={reactionDescTemplate}
-                            value={reaction.description}
-                            updateTextTemplates={this.updateTextTemplates}
-                            onChange={(event) => this.props.onInputChange('description', event)}
-                          />
-                        ) : <QuillViewer value={reaction.description} />
-                    }
-                  </div>
-                </Form.Group>
-              </Col>
-            </Row>
-            <ReactionDetailsPurification
-              reaction={reaction}
-              onReactionChange={(r) => this.onReactionChange(r)}
-              onInputChange={(type, event) => this.props.onInputChange(type, event)}
-              additionQuillRef={this.additionQuillRef}
-            />
-          </div>
-        </div>
-      </div>
+          </Form.Group>
+        </Row>
+        <ReactionDetailsPurification
+          reaction={reaction}
+          onReactionChange={(r) => this.onReactionChange(r)}
+          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+          additionQuillRef={this.additionQuillRef}
+        />
+      </>
     );
   }
 }

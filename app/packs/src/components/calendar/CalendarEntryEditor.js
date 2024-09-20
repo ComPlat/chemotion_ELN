@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import DateTimePicker from 'react-datetime-picker/dist/entry.nostyle';
-import { Form, FormControl, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger } from 'react-bootstrap';
+import { Form, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger } from 'react-bootstrap';
 import Select from 'react-select';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import PropTypes from 'prop-types';
@@ -211,7 +211,7 @@ const CalendarEntryEditor = (props) => {
             className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
           >
             <Form.Label>Notified Users</Form.Label>
-            <FormControl
+            <Form.Control
               disabled
               as="textarea"
               value={entry.notified_users}

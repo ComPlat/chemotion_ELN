@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, FormControl, Modal } from 'react-bootstrap';
+import { Button, ButtonGroup, Form, Modal } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -69,7 +69,7 @@ export default class MyCollections extends React.Component {
   label(node) {
     if (node.id == -1) {
       return (
-        <FormControl
+        <Form.Control
           value="My Collections"
           size="sm"
           type="text"
@@ -79,7 +79,7 @@ export default class MyCollections extends React.Component {
       );
     } else {
       return (
-        <FormControl
+        <Form.Control
           className="ms-3 w-75"
           size="sm"
           type="text"

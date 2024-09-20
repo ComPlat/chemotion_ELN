@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, InputGroup, Form } from 'react-bootstrap';
+import { InputGroup, Form } from 'react-bootstrap';
 
 export default class TextRangeWithAddon extends Component {
   handleInputChange(e) {
@@ -57,7 +57,7 @@ export default class TextRangeWithAddon extends Component {
       addon, disabled, label, tipOnText, value
     } = this.props;
     return (
-      <FormGroup size="sm">
+      <Form.Group size="sm">
         <Form.Label>{label}</Form.Label>
         <InputGroup data-cy={"cy_"+label}>
           <Form.Control
@@ -72,7 +72,7 @@ export default class TextRangeWithAddon extends Component {
           />
           <InputGroup.Text>{addon}</InputGroup.Text>
         </InputGroup>
-      </FormGroup>
+      </Form.Group>
     );
   }
 }

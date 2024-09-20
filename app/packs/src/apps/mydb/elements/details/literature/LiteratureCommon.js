@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, FormControl, OverlayTrigger, Tooltip
+  Form, Button, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import Literature from 'src/models/Literature';
@@ -63,7 +63,7 @@ function LiteratureInput({
   literature, handleInputChange, field, placeholder, readOnly = false
 }) {
   return (
-    <FormControl
+    <Form.Control
       type="text"
       disabled={readOnly}
       onChange={(event) => handleInputChange(field, event)}

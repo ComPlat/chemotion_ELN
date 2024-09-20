@@ -22,11 +22,13 @@ export default function ToggleButton({
     <OverlayTrigger placement="top" overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}>
       <Button
         className={`toggle-button ${isToggled ? 'on' : 'off'}`}
-        bsSize="xs"
+        size="xs"
         onClick={handleChange}
         style={{ backgroundColor: buttonColor, minWidth: '50px', border: 'none' }}
       >
-        <span style={{ fontSize: '13.5px' }}>{isToggled ? onLabel : offLabel}</span>
+        <span className="fs-6">
+          {isToggled ? onLabel : offLabel}
+        </span>
       </Button>
     </OverlayTrigger>
   );

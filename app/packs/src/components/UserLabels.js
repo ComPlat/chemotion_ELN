@@ -3,16 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal,
-  Table,
-  Col,
-  Badge,
-  ButtonGroup,
-  Button,
-  Form,
-  FormGroup,
-  FormControl,
-  InputGroup,
+  Modal, Table, Badge, Button, Form, InputGroup, ButtonToolbar, Col
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
@@ -20,8 +11,6 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 class UserLabelModal extends Component {
   constructor(props) {
@@ -43,6 +32,7 @@ class UserLabelModal extends Component {
 
   componentDidMount() {
     UserStore.listen(this.onChange);
+    UserActions.fetchUserLabels();
   }
 
   componentWillUnmount() {
@@ -53,7 +43,7 @@ class UserLabelModal extends Component {
     this.setState({ showDetails: true, label });
   }
 
-  handleColorPicker(color, event) {
+  handleColorPicker(color) {
     const { label } = this.state;
     label.color = color.hex;
     this.setState({
@@ -137,8 +127,8 @@ class UserLabelModal extends Component {
 
   renderUserLabels() {
     const { labels } = this.state;
-    if (labels == null || labels.length === 0) {
-      return <div />;
+    if (labels === null || labels.length === 0) {
+      return null;
     }
 
     return (labels || []).map(g => {
@@ -158,11 +148,11 @@ class UserLabelModal extends Component {
       }
       return (
         <tr key={`row_${g.id}`}>
-          <td md={3}><Badge bg="custom" style={badgeStyle}>{g.title}</Badge></td>
-          <td md={3}>{accessLabel}</td>
-          <td md={3}>{g.description}</td>
-          <td md={3}>{g.color}</td>
-          <td md={3}>
+          <td sm={3}><Badge bg="custom" style={badgeStyle}>{g.title}</Badge></td>
+          <td sm={3}>{accessLabel}</td>
+          <td sm={3}>{g.description}</td>
+          <td sm={3}>{g.color}</td>
+          <td sm={3}>
             <Button
               size="sm"
               disabled={g.access_level === 2}
@@ -184,32 +174,26 @@ class UserLabelModal extends Component {
     }
     return (
       <div>
-        <Panel variant="success">
-          <Panel.Heading>
-            <div>
-              <ButtonGroup>
-                <Button variant="primary" onClick={() => this.handelNewLabel()}>
-                  Create&nbsp;
-                  <i className="fa fa-plus" />
-                </Button>
-              </ButtonGroup>
-            </div>
-          </Panel.Heading>
-          <Table striped bordered condensed hover>
-            <thead>
-              <tr>
-                <th>Label</th>
-                <th>Access</th>
-                <th>Description</th>
-                <th>Color</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {this.renderUserLabels()}
-            </tbody>
-          </Table>
-        </Panel>
+        <h3 className="p-3 bg-gray-300">
+          <Button variant="primary" size="md" onClick={() => this.handelNewLabel()}>
+            Create
+            <i className="fa fa-plus ms-1" />
+          </Button>
+        </h3>
+        <Table striped bordered condensed hover>
+          <thead>
+            <tr>
+              <th>Label</th>
+              <th>Access</th>
+              <th>Description</th>
+              <th>Color</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {this.renderUserLabels()}
+          </tbody>
+        </Table>
       </div>
     );
   }
@@ -226,10 +210,10 @@ class UserLabelModal extends Component {
 
     return (
       <Form horizontal>
-        <FormGroup controlId="accessLevelInput">
-          <Col as={ControlLabel} sm={2}>
+        <Form.Group controlId="accessLevelInput" className="mb-2">
+          <Form.Label>
             Public?
-          </Col>
+          </Form.Label>
           <Col sm={10}>
             <Select
               style={{ zIndex: 2000 }}
@@ -240,65 +224,52 @@ class UserLabelModal extends Component {
               value={label.access_level}
             />
           </Col>
-        </FormGroup>
-        <FormGroup controlId="titleInput">
-          <Col as={ControlLabel} sm={2}>
+        </Form.Group>
+        <Form.Group controlId="titleInput" className="mb-2">
+          <Form.Label>
             Title
-          </Col>
-          <Col sm={10}>
-            <FormControl
+          </Form.Label>
+            <Form.Control
               type="text"
-              inputRef={(m) => { this.titleInput = m; }}
+              ref={(m) => { this.titleInput = m; }}
               defaultValue={label.title || ''}
             />
-          </Col>
-        </FormGroup>
-
-        <FormGroup controlId="descInput">
-          <Col as={ControlLabel} sm={2}>
+        </Form.Group>
+        <Form.Group controlId="descInput" className="mb-2">
+          <Form.Label>
             Description
-          </Col>
-          <Col sm={10}>
-            <FormControl
+          </Form.Label>
+            <Form.Control
               type="text"
-              inputRef={(m) => { this.descInput = m; }}
+              ref={(m) => { this.descInput = m; }}
               defaultValue={label.description || ''}
             />
-          </Col>
-        </FormGroup>
-
-        <FormGroup controlId="colorInput">
-          <Col as={ControlLabel} sm={2}>
+        </Form.Group>
+        <Form.Group controlId="colorInput" className="mb-2">
+          <Form.Label>
             Background Color
-          </Col>
-          <Col sm={10}>
-            <InputGroup>
+          </Form.Label>
+          <InputGroup className="mb-3">
               <InputGroup.Text style={bcStyle} />
-              <FormControl
+              <Form.Control
                 type="text"
                 readOnly
-                inputRef={(m) => { this.colorInput = m; }}
+                ref={(m) => { this.colorInput = m; }}
                 value={label.color || this.state.defaultColor}
               />
             </InputGroup>
-          </Col>
-        </FormGroup>
-        <FormGroup controlId="formHorizontalPicker">
-          <Col sm={12}>
+        </Form.Group>
+        <Form.Group controlId="formHorizontalPicker" className="m-2">
             <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
-          </Col>
-        </FormGroup>
-
-        <ButtonGroup>
-          <Button onClick={this.handleBackButton}>Back</Button>
-          <Button onClick={this.handleSaveLabel}>Save</Button>
-        </ButtonGroup>
+        </Form.Group>
       </Form>
     );
   }
 
   render() {
     const { showLabelModal } = this.props;
+    const { showDetails } = this.state;
+
     return (
       <Modal
         centered
@@ -311,6 +282,15 @@ class UserLabelModal extends Component {
         <Modal.Body>
           {this.renderLabels()}
         </Modal.Body>
+        {showDetails
+          && (
+            <Modal.Footer>
+              <ButtonToolbar className="gap-1 mt-2">
+                <Button variant="light" onClick={this.handleBackButton}>Back</Button>
+                <Button variant="primary" onClick={this.handleSaveLabel}>Save</Button>
+              </ButtonToolbar>
+            </Modal.Footer>
+          )}
       </Modal>
     );
   }
@@ -408,9 +388,8 @@ class EditUserLabels extends React.Component {
       })) || [];
 
     return (
-      <div>
-        <FormGroup>
-          <ControlLabel>My Labels</ControlLabel>
+        <Form.Group>
+          <Form.Label>My Labels</Form.Label>
           <Select
             className="status-select"
             name="sampleUserLabels"
@@ -420,8 +399,7 @@ class EditUserLabels extends React.Component {
             value={selectedLabels}
             onChange={(e) => this.handleSelectChange(e)}
           />
-        </FormGroup>
-      </div>
+        </Form.Group>
     );
   }
 }
@@ -521,7 +499,7 @@ class SearchUserLabels extends React.Component {
   }
 
   render() {
-    const { currentUser, labels } = this.state;
+    const { labels } = this.state;
     const { className, userLabel } = this.props;
 
     let labelList = [];
