@@ -9,6 +9,8 @@ import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableCh
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 
 export default class VersionsTable extends Component {
   constructor(props) {
@@ -43,14 +45,31 @@ export default class VersionsTable extends Component {
     } = this.props;
     const entityType = type.slice(0, -1);
 
-    if (entityType === 'sample') {
-      SamplesFetcher.fetchById(id).then((result) => {
-        parent.setState({ sample: result });
-      });
-    }
-
-    if (entityType === 'reaction') {
-      DetailActions.close(element, true);
+    switch (entityType) {
+      case 'sample': {
+        SamplesFetcher.fetchById(id).then((result) => {
+          parent.setState({ sample: result });
+        });
+        break;
+      }
+      case 'reaction': {
+        DetailActions.close(element, true);
+        break;
+      }
+      case 'research_plan': {
+        ResearchPlansFetcher.fetchById(id).then((result) => {
+          parent.setState({ researchPlan: result });
+        });
+        break;
+      }
+      case 'screen': {
+        ScreensFetcher.fetchById(id).then((result) => {
+          parent.setState({ screen: result });
+        });
+        break;
+      }
+      default:
+        // do nothing
     }
 
     elementShowOrNew({
