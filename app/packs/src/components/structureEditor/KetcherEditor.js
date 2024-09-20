@@ -68,8 +68,7 @@ function KetcherEditor(props) {
     iH, iS, molfile
   } = props;
 
-  const initMol = molfile
-    || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
+  const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
   const loadContent = (event) => {
     if (event.data.eventType === 'init') {
@@ -182,42 +181,8 @@ function KetcherEditor(props) {
           // editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
           break;
         case "Move image":
-
-
-          const images_list = ketFormat.root.nodes.slice(allNodes.length - mols.length, allNodes.length);
-          images_list.forEach((item, idx) => {
-            const location = {
-              x: item.boundingBox.x + item.boundingBox.width / 2,
-              y: item.boundingBox.y - item.boundingBox.height / 2,
-              z: 0
-            };
-            if (ketFormat[mols[idx]].atoms[0].alias) {
-              ketFormat[mols[idx]].atoms[0].location = [...Object.values(location)];
-              console.log(ketFormat[mols[idx]].atoms[0]);
-              if (ketFormat[mols[idx]].atoms[1]) {
-                ketFormat[mols[idx]].atoms[1].location = Object.values(location);
-              }
-              ketFormat[mols[idx]].stereoFlagPosition = location;
-            }
-          });
-          editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
-          // const selected_image = editorS.structureDef.editor.editor._selection.images[0];
-          // const nodes_item = ketFormat.root.nodes[ketFormat.root.nodes.length - selected_image];
-          // console.log({ nodes_item, selected_image, s: editorS._structureDef.editor.editor._selection });
-          // const location = {
-          //   x: nodes_item.boundingBox.x + nodes_item.boundingBox.width / 2,
-          //   y: nodes_item.boundingBox.y - nodes_item.boundingBox.height / 2,
-          //   z: -1
-          // };
-
-          // if (ketFormat[mols[selected_image]]?.atoms[0].alias) {
-          //   ketFormat[mols[selected_image]].atoms[0].location = [...Object.values(location)];
-          //   if (ketFormat[mols[selected_image]]?.atoms[1]) {
-          //     ketFormat[mols[selected_image]].atoms[1].location = Object.values(location);
-          //   }
-          //   ketFormat[mols[selected_image]].stereoFlagPosition = location;
-          // }
-          // editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+          console.log("Image moved!");
+          moveTemplate(ketFormat, allNodes, mols);
           break;
         case "Add atom":
           console.log("Atom added", { selection: editorS._structureDef.editor.editor._selection, data });
@@ -226,11 +191,11 @@ function KetcherEditor(props) {
           console.log("Move atom", { selection: editorS._structureDef.editor.editor._selection, data });
           break;
         default:
+          console.warn("Unhandled operation:", eventItem.operation);
           break;
       }
-      // editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
-    });
-  }
+    }
+  };
 
 >>>>>>> ce3fa8ee7 (refac: atom location update with selected image without loop)
   useEffect(() => {
