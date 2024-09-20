@@ -41,29 +41,46 @@ function KetcherEditor(props) {
       if (ketFormat[item]?.atoms?.length && ketFormat[item]?.atoms[0]?.alias) mols.push(item);
     });
 
-    console.log(editorS._structureDef.editor.editor._selection);
-
     data.forEach(async (item) => {
       // console.log(item);
       switch (item?.operation) {
         case "Move image":
-          const selected_image = editorS.structureDef.editor.editor._selection.images[0];
-          const nodes_item = ketFormat.root.nodes[ketFormat.root.nodes.length - selected_image];
-          console.log({ nodes_item, selected_image, s: editorS._structureDef.editor.editor._selection });
-          const location = {
-            x: nodes_item.boundingBox.x + nodes_item.boundingBox.width / 2,
-            y: nodes_item.boundingBox.y - nodes_item.boundingBox.height / 2,
-            z: -1
-          };
 
-          if (ketFormat[mols[selected_image]]?.atoms[0].alias) {
-            ketFormat[mols[selected_image]].atoms[0].location = [...Object.values(location)];
-            if (ketFormat[mols[selected_image]]?.atoms[1]) {
-              ketFormat[mols[selected_image]].atoms[1].location = Object.values(location);
+
+          const images_list = ketFormat.root.nodes.slice(allNodes.length - mols.length, allNodes.length);
+          images_list.forEach((item, idx) => {
+            const location = {
+              x: item.boundingBox.x + item.boundingBox.width / 2,
+              y: item.boundingBox.y - item.boundingBox.height / 2,
+              z: 0
+            };
+            if (ketFormat[mols[idx]].atoms[0].alias) {
+              ketFormat[mols[idx]].atoms[0].location = [...Object.values(location)];
+              console.log(ketFormat[mols[idx]].atoms[0]);
+              if (ketFormat[mols[idx]].atoms[1]) {
+                ketFormat[mols[idx]].atoms[1].location = Object.values(location);
+              }
+              ketFormat[mols[idx]].stereoFlagPosition = location;
             }
-            ketFormat[mols[selected_image]].stereoFlagPosition = location;
-          }
+          });
           editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+          // const selected_image = editorS.structureDef.editor.editor._selection.images[0];
+          // const nodes_item = ketFormat.root.nodes[ketFormat.root.nodes.length - selected_image];
+          // console.log({ nodes_item, selected_image, s: editorS._structureDef.editor.editor._selection });
+          // const location = {
+          //   x: nodes_item.boundingBox.x + nodes_item.boundingBox.width / 2,
+          //   y: nodes_item.boundingBox.y - nodes_item.boundingBox.height / 2,
+          //   z: -1
+          // };
+
+          // if (ketFormat[mols[selected_image]]?.atoms[0].alias) {
+          //   ketFormat[mols[selected_image]].atoms[0].location = [...Object.values(location)];
+          //   if (ketFormat[mols[selected_image]]?.atoms[1]) {
+          //     ketFormat[mols[selected_image]].atoms[1].location = Object.values(location);
+          //   }
+          //   ketFormat[mols[selected_image]].stereoFlagPosition = location;
+          // }
+          // editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
           break;
         case "Add atom":
           if (ketFormat[`mol${Object.keys(ketFormat).length - 2}`]?.atoms[1]?.label == "H") {
