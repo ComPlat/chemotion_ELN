@@ -42,13 +42,6 @@ function KetcherEditor(props) {
 
     data.forEach(async (item) => {
       switch (item?.operation) {
-        case "Upsert image":
-          console.log(ketFormat[`mol${mols.length - 1}`]);
-          delete ketFormat[`mol${mols.length - 1}`].sgroups;
-          delete ketFormat[`mol${mols.length - 1}`].bonds;
-          ketFormat[`mol${mols.length - 1}`].atoms.splice(1, 1);
-          editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
-          break;
         case "Move image":
           const images_list = ketFormat.root.nodes.slice(allNodes.length - mols.length, allNodes.length);
           images_list.forEach((item, idx) => {
@@ -69,8 +62,15 @@ function KetcherEditor(props) {
           editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
           break;
         case "Add atom":
-          // console.log("ADD ATOM: LAST CURSOR POSITION", editorS._structureDef.editor.editor.lastCursorPosition);
-          // console.log("ADD ATOM:__SELCTION", editorS._structureDef.editor.editor._selection);
+          if (ketFormat[`mol${Object.keys(ketFormat).length - 2}`]?.atoms[1]?.label == "H") {
+            delete ketFormat[`mol${Object.keys(ketFormat).length - 2}`].sgroups;
+            delete ketFormat[`mol${Object.keys(ketFormat).length - 2}`].bonds;
+            ketFormat[`mol${Object.keys(ketFormat).length - 2}`].atoms.splice(1, 1);
+            editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+          }
+          break;
+        case "Upsert image!":
+
           break;
         default:
           break;
@@ -109,4 +109,4 @@ KetcherEditor.propTypes = {
   iS: PropTypes.object.isRequired,
 };
 
-export default KetcherEditor;
+export default KetcherEditor;;;;
