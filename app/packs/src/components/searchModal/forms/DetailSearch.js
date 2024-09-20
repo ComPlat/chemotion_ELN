@@ -725,13 +725,14 @@ const DetailSearch = () => {
   }
 
   const availableOptionsForTemperature = (searchValue, startValue, startUnit) => {
-    startValue = startValue.replace(/,/g, '.');
-    startValue = startValue.slice(-1) === '.' ? `${startValue}0` : startValue;
+    startValue = startValue.match(/^-?\d+(\.\d+)?$/g);
+
+    if (startValue === null || isNaN(Number(startValue))) { return searchValue; }
 
     searchValue.available_options = [];
-    searchValue.available_options.push({ value: startValue, unit: startUnit });
+    searchValue.available_options.push({ value: startValue[0], unit: startUnit });
 
-    let [convertedValue, convertedUnit] = convertTemperature(startValue, startUnit);
+    let [convertedValue, convertedUnit] = convertTemperature(startValue[0], startUnit);
     searchValue.available_options.push({ value: convertedValue.trim(), unit: convertedUnit });
 
     [convertedValue, convertedUnit] = convertTemperature(convertedValue, convertedUnit);
