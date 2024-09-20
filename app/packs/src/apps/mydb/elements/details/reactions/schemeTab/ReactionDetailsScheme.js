@@ -1085,7 +1085,7 @@ export default class ReactionDetailsScheme extends Component {
             disabled={false}
             onChange={(event) => this.updateVesselSize(event)}
             onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
-            className="flex-grow-1"
+            className="flex-grow-1 Select-control"
           />
           <Button
             disabled={false}
