@@ -46,7 +46,7 @@ export default class Wellplate extends Element {
   }
 
   static get MAX_DIMENSION() {
-    return 99;
+    return 100;
   }
 
   get name() {

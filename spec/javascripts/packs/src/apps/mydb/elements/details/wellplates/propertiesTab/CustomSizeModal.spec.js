@@ -124,7 +124,7 @@ describe('CustomSizeModal', async () => {
   });
 
   describe('render()', async () => {
-    context('when width was set to 100', async () => {
+    context('when width was set to 101', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       const wrapper = mount(<CustomSizeModal
         wellplate={wellplate}
@@ -132,7 +132,7 @@ describe('CustomSizeModal', async () => {
         triggerUIUpdate={() => {}}
         handleClose={() => {}}
       />);
-      wrapper.instance().updateDimension('width', 100);
+      wrapper.instance().updateDimension('width', 101);
 
       it('the apply button is disabled', async () => {
         expect(
@@ -155,7 +155,7 @@ describe('CustomSizeModal', async () => {
       it('an error message appears in the width area', async () => {
         expect(
           wrapper.html()
-            .includes('<div class="invalid-wellplate-size-text">Width must be between 0 and 100.</div>')
+            .includes('<div class="invalid-wellplate-size-text">Width must be between 1 and 100.</div>')
         )
           .toBeTruthy();
       });

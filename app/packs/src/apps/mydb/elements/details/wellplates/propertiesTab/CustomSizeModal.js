@@ -66,7 +66,7 @@ export default class CustomSizeModal extends Component {
         <div className="invalid-wellplate-size-text">
           {label}
           {' '}
-          must be between 0 and 100.
+          must be between 1 and 100.
         </div>
       )
       : null;
