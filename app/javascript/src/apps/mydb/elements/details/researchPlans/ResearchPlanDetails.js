@@ -46,6 +46,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 export default class ResearchPlanDetails extends Component {
+  // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
   constructor(props) {
