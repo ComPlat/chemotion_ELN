@@ -189,12 +189,11 @@ module Usecases
         when 'temperature'
           regex_number = "'^-{0,1}\\d+(\\.\\d+){0,1}\\Z'"
           is_data_valid = "(#{@table}.temperature ->> 'userText' ~ #{regex_number})"
-
-          @conditions[:field] =
-            "CASE WHEN #{is_data_valid} THEN (#{@table}.temperature ->> 'userText')::FLOAT ELSE -30000 END "
-
-          @conditions[:first_condition] += " (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
-          @conditions[:additional_condition] = "AND (#{@table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
+          field = filter['field']['column']
+          @conditions[:field] = "(#{@table}.temperature ->> 'userText')::FLOAT"
+          @conditions[:first_condition] +=
+            " (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND #{is_data_valid} AND "
+          unit_and_available_options_conditions(filter, "#{@table}.temperature", field, 'userText', 'valueUnit')
           @conditions[:condition_table] = ''
         when 'duration'
           time_divisor = duration_interval_by_unit(filter['unit'])
@@ -380,7 +379,7 @@ module Usecases
           @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{field}'"
 
           if filter['unit'].present? || filter['available_options'].present?
-            unit_and_available_options_conditions(filter, prop, field)
+            unit_and_available_options_conditions(filter, prop, field, 'value', 'value_system')
           end
         end
       end
@@ -389,10 +388,14 @@ module Usecases
         filter['unit'].remove('°').remove(/ \(.*\)/).tr('/', '_')
       end
 
-      def unit_and_available_options_conditions(filter, prop, field)
+      def remove_degree_from_property(prop, unit)
+        "LOWER(replace((#{prop} ->> '#{unit}')::TEXT, '°', ''))"
+      end
+
+      def unit_and_available_options_conditions(filter, prop, field, number, unit)
         if filter['unit'].present?
           @conditions[:additional_condition] +=
-            " AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{remove_degree_from_unit(filter)}')"
+            " AND #{remove_degree_from_property(prop, unit)} = LOWER('#{remove_degree_from_unit(filter)}')"
         end
 
         return if filter['available_options'].blank?
@@ -403,10 +406,10 @@ module Usecases
             next if option[:unit] == filter['unit']
 
             @conditions[:additional_condition] +=
-              " OR ((#{prop} ->> 'value')::TEXT >= '#{option[:value]}'
-                 AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{remove_degree_from_unit(filter)}'))"
+              " OR ((#{prop} ->> '#{number}')::TEXT >= '#{option[:value]}'
+              AND #{remove_degree_from_property(prop, unit)} = LOWER('#{remove_degree_from_unit(option)}'))"
           else
-            conditions += " AND (#{prop} ->> 'value')::TEXT NOT ILIKE '%#{option[:value]}%'"
+            conditions += " AND (#{prop} ->> '#{number}')::TEXT NOT ILIKE '%#{option[:value]}%'"
           end
         end
 
