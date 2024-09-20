@@ -1,22 +1,9 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal } from 'react-bootstrap';
 import StructureEditor from 'src/models/StructureEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-
-const LoadingModal = (props) => {
-  const { loading } = props;
-  return (
-    <Modal centered className="chemdraw-loading" animation show={loading}>
-      <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
-      <span className="sr-only">Initializing...</span>
-    </Modal>
-  );
-};
-
-LoadingModal.propTypes = { loading: PropTypes.bool };
-LoadingModal.defaultProps = { loading: false };
+import LoadingEditorModal from './LoadingEditorModal';
 
 class MarvinjsEditor extends React.Component {
   constructor(props) {
@@ -66,7 +53,7 @@ class MarvinjsEditor extends React.Component {
     return (
       <div>
         <iframe title="Marvin JS" id="mvs" src={editor.extSrc} className="sketcher-frame" height={iH} width="100%" />
-        <LoadingModal loading={this.state.loading} />
+        <LoadingEditorModal loading={this.state.loading} />
       </div>
     );
   }

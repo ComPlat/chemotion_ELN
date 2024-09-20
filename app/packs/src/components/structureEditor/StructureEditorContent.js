@@ -9,7 +9,7 @@ class StructureEditorContent extends React.Component {
     this.state = {
       completionCallback, errorCallback
     }
-   this.attachEditor = this.attachEditor.bind(this)
+    this.attachEditor = this.attachEditor.bind(this)
   }
 
   UNSAFE_componentWillReceiveProps({ isScriptLoaded, isScriptLoadSucceed }) {
@@ -32,25 +32,24 @@ class StructureEditorContent extends React.Component {
     const { completionCallback, errorCallback } = this.props;
 
     perkinelmer.ChemdrawWebManager.attach({
-        id: 'chemdrawjs-container',
-        config: window.userConfiguration,
-        element: this.chemdrawcont,
-        callback: ()=> alert('done'),
-        errorCallback: ()=> alert('de'),
-        licenseUrl: 'license.xml',
-        // loadConfigFromUrl: 'cdjs/chemdrawweb/configuration.json',
-        // preservePageInfo: false,
-        // viewonly: true,
-      });
+      id: 'chemdrawjs-container',
+      config: window.userConfiguration,
+      element: this.chemdrawcont,
+      callback: () => alert('done'),
+      errorCallback: () => alert('de'),
+      licenseUrl: 'license.xml',
+      // loadConfigFromUrl: 'cdjs/chemdrawweb/configuration.json',
+      // preservePageInfo: false,
+      // viewonly: true,
+    });
   }
 
 
   render() {
     return (
       <div
-        ref={(input) => {this.chemdrawcont = input }}
-        // id="chemdrawjs-container"
-        style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '70vh' }}
+        ref={(input) => { this.chemdrawcont = input }}
+        className="position-absolute top-0 start-0 w-100 vh-70"
       />
     );
   }
