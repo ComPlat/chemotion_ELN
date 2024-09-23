@@ -1,12 +1,10 @@
 .attachment-dropzone {
   width: 100%;
   padding: 20px;
-  border: 4px dashed #cccccc;
+  @extend .dnd-zone;
   text-align: center;
-  margin-bottom: 20px;
-  background-color: #ffffff;
+  background-color: $body-bg;
   border-radius: 10px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   height: 60px;
   display: flex;
@@ -15,39 +13,18 @@
 }
 
 .attachment-dropzone:hover {
-  border-color: #a0a0a0;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  @extend .dnd-zone-over;
 }
 
 .sorting-row-style {
   padding: 5px;
   border-radius: 5px;
-  border: 1px solid #ccc;
+  @extend .border;
   height: 35px;
 }
 
-.sort-icon-style {
-  margin-left: 5px;
-  cursor: auto;
-  font-size: 20px !important;
-  color: #000;
-  border-radius: 50%;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s;
-  background: none !important;
-  border: none !important;
-  outline: inherit !important;
-}
-
-.sort-icon-style:focus {
-  box-shadow: none !important;
-}
-
 .sort-icon-style:hover {
-  color: #797979 !important;
+  color: $gray-600 !important;
   transform: scale(1.1);
   transition: color 0.3s, transform 0.3s
 }
@@ -57,21 +34,18 @@
   align-items: center;
   justify-content: center;
   border-radius: 5px;
-  transition: box-shadow 0.3s ease, transform 0.2s ease-out;
+  @extend .p-2;
   transform-origin: center;
   position: relative;
 }
 
 .attachment-row:hover {
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+  @extend .bg-gray-200;
 }
 
 .attachment-row-image {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  margin-left: 10px;
-  transition: transform 0.6s ease-in-out;
+  @extend .border;
+  @extend .rounded;
 }
 
 .attachment-row-image .large-preview-modal {
@@ -81,9 +55,9 @@
   width: 400px;
   height: 400px;
   border-radius: 5px;
-  background-color: #FFF;
+  background-color: $body-bg;
   object-fit: contain;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  @extend .border;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.8s ease, visibility 0s linear 0.8s;
@@ -102,13 +76,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #333;
+  color: $body-color;
   font-size: 16px;
 }
 
 .attachment-row-subtext {
   font-size: 12px;
-  color: #777;
+  color: $gray-600;
   display: flex;
 }
 
@@ -125,23 +99,17 @@
 }
 
 .attachment-gray-button {
-  background-color: #c0c0c0 !important;
-  border-color: #c0c0c0 !important;
+  @extend .btn-gray-400;
 }
 
 .attachment-main-container {
   padding: 10px;
-  background-color: #ffffff;
+  background-color: $body-bg;
   border-radius: 5px;
 }
 
 .no-attachments-text {
   text-align: center;
   font-size: 16px;
-  color: #888;
-}
-
-.sort-container {
-  flex-direction: row;
-  justify-content: space-between;
+  @extend .text-muted;
 }

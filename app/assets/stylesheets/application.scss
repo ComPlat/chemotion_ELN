@@ -17,12 +17,12 @@
 @import "global-styles/utilities";
 
 // file css rules that are targeted at specific components under components
+@import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
 @import "components/search-modal";
 @import "components/search-results";
 
 @import "legacy/miscellaneous";
-@import "legacy/attachment-list";
 @import "legacy/AttachmentContainer";
 @import "legacy/cellLines";
 @import "legacy/chemical-tab";

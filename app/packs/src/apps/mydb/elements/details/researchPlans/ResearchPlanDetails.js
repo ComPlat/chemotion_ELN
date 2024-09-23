@@ -628,9 +628,11 @@ export default class ResearchPlanDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
-            {tabContents}
-          </Tabs>
+          <div className='tabs-container--with-borders'>
+            <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
+              {tabContents}
+            </Tabs>
+          </div>
           <CommentModal element={researchPlan} />
         </Card.Body>
         <Card.Footer>
