@@ -17,6 +17,7 @@ import WellplateList from 'src/apps/mydb/elements/details/wellplates/listTab/Wel
 import WellplateProperties from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateProperties';
 import WellplateDetailsContainers from
   'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
+// eslint-disable-next-line import/no-named-as-default
 import WellplateDetailsAttachments from
   'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -38,9 +39,13 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 export default class WellplateDetails extends Component {
+  // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const { wellplate } = props;
@@ -167,15 +172,16 @@ export default class WellplateDetails extends Component {
   handleAttachmentDrop(files) {
     this.setState((prevState) => {
       const newAttachments = files.map((file) => Attachment.fromFile(file));
+      const { wellplate } = prevState;
 
-      prevState.wellplate.attachments = [
-        ...prevState.wellplate.attachments || [],
+      wellplate.attachments = [
+        ...wellplate.attachments || [],
         ...newAttachments
       ];
 
-      prevState.wellplate.changed = true;
+      wellplate.changed = true;
 
-      return { wellplate: prevState.wellplate };
+      return { wellplate };
     });
   }
 
@@ -363,7 +369,21 @@ export default class WellplateDetails extends Component {
           </ListGroup>
         </Tab>
       ),
-
+      versions: (
+        <Tab
+          eventKey="versioning"
+          title="Versions"
+          key={`Versions_Wellplate_${wellplate.id.toString()}`}
+        >
+          <VersionsTable
+            type="wellplates"
+            id={wellplate.id}
+            element={wellplate}
+            parent={this}
+            isEdited={wellplate.isEdited}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {};
@@ -388,7 +408,13 @@ export default class WellplateDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
+          <Tabs
+            mountOnEnter
+            unmountOnExit
+            activeKey={activeTab}
+            onSelect={(event) => this.handleTabChange(event)}
+            id="wellplateDetailsTab"
+          >
             {tabContents}
           </Tabs>
           <ButtonToolbar className='gap-1'>

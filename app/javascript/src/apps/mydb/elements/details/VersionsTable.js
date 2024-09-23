@@ -11,6 +11,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
+import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 
 export default class VersionsTable extends Component {
   constructor(props) {
@@ -65,6 +66,12 @@ export default class VersionsTable extends Component {
       case 'screen': {
         ScreensFetcher.fetchById(id).then((result) => {
           parent.setState({ screen: result });
+        });
+        break;
+      }
+      case 'wellplate': {
+        WellplatesFetcher.fetchById(id).then((result) => {
+          parent.setState({ wellplate: result });
         });
         break;
       }
