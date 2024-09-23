@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
-import { Modal, Button } from 'react-bootstrap';
+import { Alert, Modal, Button } from 'react-bootstrap';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
@@ -13,7 +13,6 @@ import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
 import { inlineNotation } from 'src/utilities/SpectraHelper';
-import Well from 'src/components/legacyBootstrap/Well'
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;
@@ -632,46 +631,42 @@ class ViewSpectra extends React.Component {
     };
   }
 
-  renderEmpty() {
+  renderAlert({icon, title, message, variant}) {
     const { fetched } = this.state;
-    const content = fetched
-      ? (
-        <Well onClick={this.closeOp}>
-          <i className="fa fa-exclamation-triangle fa-3x" />
-          <h3>No Spectra Found!</h3>
-          <h3>Please refresh the page!</h3>
-          <br />
-          <h5>Click here to close the window...</h5>
-        </Well>
-      )
-      : <i className="fa fa-refresh fa-spin fa-3x fa-fw" />;
-
     return (
-      <div className="card-box">
-        {content}
+      <div className="d-flex h-100 justify-content-center align-items-center">
+        {fetched ? (
+          <Alert variant={variant}>
+            <Alert.Heading>
+              <i className={`fa ${icon} me-2`} />
+              {title}
+            </Alert.Heading>
+            <p>{message}</p>
+            <Button variant={variant} onClick={this.closeOp}>Click here to close the window...</Button>
+          </Alert>
+        ) : (
+          <i className="fa fa-refresh fa-spin fa-3x fa-fw" />
+        )}
       </div>
     );
   }
 
-  renderInvalid() {
-    const { fetched } = this.state;
-    const content = fetched
-      ? (
-        <Well onClick={this.closeOp}>
-          <i className="fa fa-chain-broken fa-3x" />
-          <h3>Invalid spectrum!</h3>
-          <h3>Please delete it and upload a valid file!</h3>
-          <br />
-          <h5>Click here to close the window...</h5>
-        </Well>
-      )
-      : <i className="fa fa-refresh fa-spin fa-3x fa-fw" />;
+  renderEmpty() {
+    return this.renderAlert({
+      icon: 'fa-exclamation-triangle',
+      title: 'No Spectra Found!',
+      message: 'Please refresh the page!',
+      variant: 'warning',
+    });
+  }
 
-    return (
-      <div className="card-box">
-        {content}
-      </div>
-    );
+  renderInvalid() {
+    return this.renderAlert({
+      icon: 'fa-chain-broken',
+      title: 'Invalid spectrum!',
+      message: 'Please delete it and upload a valid file!',
+      variant: 'danger',
+    });
   }
 
   renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles) {
@@ -708,28 +703,22 @@ class ViewSpectra extends React.Component {
       predictions,
     };
 
-    return (
-      <Modal.Body>
-        {
-          !isExist && multiEntities.length === 0
-            ? this.renderInvalid()
-            : <SpectraEditor
-                entity={currEntity}
-                multiEntities={multiEntities}
-                entityFileNames={entityFileNames}
-                others={others}
-                operations={operations}
-                forecast={forecast}
-                molSvg={sample.svgPath}
-                theoryMass={sample.molecule_molecular_weight}
-                descriptions={descriptions}
-                canChangeDescription
-                onDescriptionChanged={this.onSpectraDescriptionChanged}
-                userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
-            />
-        }
-      </Modal.Body>
-    );
+    return !isExist && multiEntities.length === 0
+      ? this.renderInvalid()
+      : <SpectraEditor
+          entity={currEntity}
+          multiEntities={multiEntities}
+          entityFileNames={entityFileNames}
+          others={others}
+          operations={operations}
+          forecast={forecast}
+          molSvg={sample.svgPath}
+          theoryMass={sample.molecule_molecular_weight}
+          descriptions={descriptions}
+          canChangeDescription
+          onDescriptionChanged={this.onSpectraDescriptionChanged}
+          userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
+      />
   }
 
   renderTitle(idx) {
@@ -753,11 +742,11 @@ class ViewSpectra extends React.Component {
     const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
 
     return (
-      <div className="spectra-editor-title">
-        <span className="txt-spectra-editor-title">
+      <Modal.Header className="justify-content-between align-items-baseline">
+        <span className="fs-3">
           {modalTitle}
         </span>
-        <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }}>
+        <div className="d-flex gap-1 align-items-center">
           <Select
             options={dsOptions}
             value={si.idDt}
@@ -779,11 +768,10 @@ class ViewSpectra extends React.Component {
           size="sm"
           onClick={this.closeOp}
         >
-          <span>
-            <i className="fa fa-times" /> Close without Save
-          </span>
+          <i className="fa fa-times me-1" />
+          Close without Save
         </Button>
-      </div>
+      </Modal.Header>
     );
   }
 
@@ -807,27 +795,25 @@ class ViewSpectra extends React.Component {
     const {
       jcamp, predictions, idx, listMuliSpcs, listEntityFiles
     } = this.getContent();
-    const dialogClassName = 'spectra-editor-dialog';
 
     return (
-      <div className="spectra-editor">
-        <Modal
-          centered
-          show={showModal}
-          dialogClassName={dialogClassName}
-          animation
-          onHide={this.closeOp}
-        >
-          {
-            this.renderTitle(idx)
-          }
+      <Modal
+        centered
+        size="xxxl"
+        show={showModal}
+        dialogClassName="spectra-editor-dialog"
+        animation
+        onHide={this.closeOp}
+      >
+        {this.renderTitle(idx)}
+        <Modal.Body className="vh-80">
           {
             showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
               ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
               : this.renderEmpty()
           }
-        </Modal>
-      </div>
+        </Modal.Body>
+      </Modal>
     );
   }
 }

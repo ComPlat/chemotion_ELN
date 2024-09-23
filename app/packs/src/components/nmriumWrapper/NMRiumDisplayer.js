@@ -486,18 +486,16 @@ export default class NMRiumDisplayer extends React.Component {
     const { showModalNMRDisplayer, nmriumWrapperHost } = this.state;
 
     return (
-      <div className="spectra-editor">
-        <Modal
-          centered
-          show={showModalNMRDisplayer}
-          dialogClassName="spectra-editor-dialog"
-          animation
-          onHide={this.closeOp}
-        >
-          {this.renderModalTitle()}
-          {this.renderNMRium(nmriumWrapperHost)}
-        </Modal>
-      </div>
+      <Modal
+        centered
+        show={showModalNMRDisplayer}
+        dialogClassName="spectra-editor-dialog"
+        animation
+        onHide={this.closeOp}
+      >
+        {this.renderModalTitle()}
+        {this.renderNMRium(nmriumWrapperHost)}
+      </Modal>
     );
   }
 }
