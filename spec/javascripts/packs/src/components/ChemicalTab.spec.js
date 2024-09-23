@@ -1,5 +1,6 @@
 import React from 'react';
-import Enzyme, { shallow } from 'enzyme';
+import { Modal, Button } from 'react-bootstrap';
+import Enzyme, { mount, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
@@ -25,58 +26,60 @@ const parent = {
   setState: sinon.spy() // Create a mock parent object with a setState function
 };
 
-const createWrapper = (saveInventoryAction, editChemical) => shallow(
-  <ChemicalTab
-    sample={sample}
-    parent={parent}
-    saveInventory={saveInventoryAction}
-    editChemical={editChemical}
-    key="ChemicalTab29"
-  />
-);
-
-describe('ChemicalTab component', () => {
+describe('ChemicalTab basic rendering', () => {
   const editChemicalMock = sinon.stub();
-  const wrapper = createWrapper(false, editChemicalMock);
+  let wrapper = null;
 
-  it('should render without errors', () => {
-    // Assert that the parent element has the specified className;
-    expect(wrapper.find('.table.table-borderless')).toHaveLength(1);
-    // Assert that it renders 4 child elements with same className;
-    expect(wrapper.find('.chemical-table-cells')).toHaveLength(4);
+  beforeEach(() => {
+    wrapper = shallow(
+      <ChemicalTab
+        sample={sample}
+        parent={parent}
+        saveInventory={false}
+        editChemical={editChemicalMock}
+        key="ChemicalTab29"
+      />
+    );
   });
 
-  it('should render child element of inventoryInformationTab', () => {
-    expect(wrapper.find('.inventory-tab')).toHaveLength(2);
-  });
-
-  it('should render child element of safety tab', () => {
-    expect(wrapper.find('.safety-tab')).toHaveLength(1);
-  });
-
-  it('should render child element of location tab', () => {
-    expect(wrapper.find('.location-tab')).toHaveLength(1);
+  it('should render all tabs', () => {
+    expect(wrapper.text()).toEqual(expect.stringContaining('Inventory Information'));
+    expect(wrapper.text()).toEqual(expect.stringContaining('Safety'));
+    expect(wrapper.text()).toEqual(expect.stringContaining('Location and Information'));
   });
 
   it('should render safety query button', () => {
-    expect(wrapper.find('.query-safety-sheet-button')).toHaveLength(1);
+    expect(wrapper.find('#submit-sds-btn')).toHaveLength(1);
   });
 
   it('should render choose vendor list', () => {
-    expect(wrapper.find('.choose-vendor')).toHaveLength(1);
+    expect(wrapper.find('[data-component="chooseVendor"]')).toHaveLength(1);
   });
 
   it('should render query-option list', () => {
-    expect(wrapper.find('.query-option')).toHaveLength(1);
+    expect(wrapper.text()).toEqual(expect.stringContaining('Query SDS using'));
   });
 
   it('should render safety-sheet-language list', () => {
-    expect(wrapper.find('.safety-sheet-language')).toHaveLength(1);
+    expect(wrapper.text()).toEqual(expect.stringContaining('Choose Language of SDS'));
   });
 
   it('should enable clicking on query safety sheet button, if no safety sheet exists', () => {
     expect(wrapper.find('#submit-sds-btn').prop('disabled')).toBe(false);
   });
+});
+
+describe('ChemicalTab component', () => {
+  const editChemicalMock = sinon.stub();
+  const wrapper = shallow(
+    <ChemicalTab
+      sample={sample}
+      parent={parent}
+      saveInventory={false}
+      editChemical={editChemicalMock}
+      key="ChemicalTab29"
+    />
+  );
 
   it('fetches chemical data on componentDidMount', () => {
     const fetchChemicalSpy = sinon.spy(ChemicalTab.prototype, 'fetchChemical');
@@ -93,7 +96,7 @@ describe('ChemicalTab component', () => {
   it('calls querySafetySheets() when submit button is clicked', () => {
     const querySafetySheetsSpy = sinon.spy(wrapper.instance(), 'querySafetySheets');
     wrapper.find('#submit-sds-btn').simulate('click');
-    expect(wrapper.find('.visually-hidden').text()).toBe('Loading...');
+    expect(wrapper.find('.fa-spinner')).toHaveLength(1);
     expect(querySafetySheetsSpy.called).toBe(true);
   });
 
@@ -147,31 +150,21 @@ describe('ChemicalTab component', () => {
       // update state of chemical object with safety sheets
       const chemicalData = [{
         safetySheetPath: [
-          {
-            merck_link: '/safety_sheets/252549_Merck.pdf'
-          }
+          { merck_link: '/safety_sheets/252549_Merck.pdf' },
         ]
       }];
+
       // use chemical factory to create a new chemical object with safety sheets
       const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
+
       // expect elements with class names to be rendered
-      expect(wrapper.find('.safety-sheets-form')).toHaveLength(1);
-      expect(wrapper.find('.button-toolbar-wrapper')).toHaveLength(1);
-      expect(wrapper.find('.chemical-properties')).toHaveLength(1);
-      expect(wrapper.find('.show-properties-modal')).toHaveLength(1);
+      expect(wrapper.find('[data-component="SafetySheets"]')).toHaveLength(1);
     });
 
     it('Simulate clicking on the modal close button ', () => {
-      wrapper.find('.show-properties-modal').simulate('click');
-
-      expect(wrapper.find('Modal')).toHaveLength(1);
-      expect(wrapper.find('.properties-modal-dev')).toHaveLength(1);
       const closePropertiesModalSpy = sinon.spy(instance, 'closePropertiesModal');
-
-      // Simulate clicking on the close button
-      instance.closePropertiesModal();
-      // Expect the closePropertiesModal function to be called
+      wrapper.find(Modal.Footer).find(Button).simulate('click');
       expect(closePropertiesModalSpy.called).toBe(true);
       closePropertiesModalSpy.restore();
     });
