@@ -48,9 +48,6 @@ class ViewSpectra extends React.Component {
     this.closeOp = this.closeOp.bind(this);
     this.predictOp = this.predictOp.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
-    this.renderSpectraEditor = this.renderSpectraEditor.bind(this);
-    this.renderEmpty = this.renderEmpty.bind(this);
-    this.renderTitle = this.renderTitle.bind(this);
     this.formatPks = this.formatPks.bind(this);
     this.getContent = this.getContent.bind(this);
     this.getSpcInfo = this.getSpcInfo.bind(this);
