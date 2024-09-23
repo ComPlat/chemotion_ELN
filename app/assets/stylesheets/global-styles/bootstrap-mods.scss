@@ -5,6 +5,11 @@
     --bs-btn-border-color: transparent;
     --bs-btn-disabled-border-color: transparent;
   }
+  &.btn-info, &.btn-danger, &.btn-warning, &.btn-success, &.btn-secondary {
+    --bs-btn-color: #{$white};
+    --bs-btn-disabled-color: #{$white};
+    --bs-btn-hover-color: #{$white};
+  }
 }
 
 @mixin xsm-form-elements {
