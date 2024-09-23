@@ -272,7 +272,7 @@ module Chemotion
           get do
             content_type 'application/octet-stream'
             env['api.format'] = :binary
-            header['Content-Disposition'] = 'attachment; filename=\"wellplate_import_template.xlsx\"'
+            header['Content-Disposition'] = 'attachment; filename=wellplate_import_template.xlsx'
             header['Content-Transfer-Encoding'] = 'binary'
             wellplate = Wellplate.find(params[:id])
             xlsx_template = Usecases::Wellplates::TemplateCreation.new(wellplate).execute!
