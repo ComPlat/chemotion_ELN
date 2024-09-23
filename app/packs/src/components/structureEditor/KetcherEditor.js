@@ -152,14 +152,51 @@ function KetcherEditor(props) {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   async function handleEditorChangeEvent(data) {
     const images = [];
     const mols = [];
+=======
+  // Helper function to move image and update molecule positions
+  const moveTemplate = (ketFormat, allNodes, mols) => {
+    const imagesList = ketFormat.root.nodes.slice(allNodes.length - mols.length);
+    imagesList.forEach((item, idx) => {
+      const location = {
+        x: item.boundingBox.x + item.boundingBox.width / 2,
+        y: item.boundingBox.y - item.boundingBox.height / 2,
+        z: 0,
+      };
+      const molecule = ketFormat[mols[idx]];
+      if (molecule?.atoms[0]?.alias) {
+
+        molecule.atoms[0].location = [...Object.values(location)];
+        molecule.stereoFlagPosition = location;
+      }
+    });
+    editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+  };
+
+  // Handle atom addition logic
+  const handleAddAtom = (ketFormat) => {
+    const lastMoleculeKey = `mol${Object.keys(ketFormat).length - 2}`;
+    const lastMolecule = ketFormat[lastMoleculeKey];
+    if (lastMolecule?.atoms[1]?.label === "H") {
+      delete lastMolecule.sgroups;
+      delete lastMolecule.bonds;
+      lastMolecule.atoms.splice(1, 1); // Remove hydrogen atom
+      editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+    }
+  };
+
+  // Main function to handle different editor change events
+  const handleEditorChangeEvent = async (data) => {
+>>>>>>> e32ef4b73 (chore: template resize)
     let ketFormat = await editorS.structureDef.editor.getKet();
     ketFormat = JSON.parse(ketFormat);
     let allNodes = [...ketFormat.root.nodes];
 
+<<<<<<< HEAD
     allNodes.forEach((item, idx) => {
       if (item?.type === 'image') {
         images.push(allNodes[idx]);
@@ -180,6 +217,23 @@ function KetcherEditor(props) {
           // ketFormat[`mol${mols.length - 1}`].atoms.splice(1, 1);
           // editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
           break;
+=======
+    const allNodes = [...ketFormat.root.nodes];
+    const images = allNodes?.filter(item => item?.type === 'image');
+    const mols = Object.keys(ketFormat).filter(
+      item => ketFormat[item]?.atoms?.[0]?.alias
+    );
+
+    const selection = editorS._structureDef.editor.editor._selection;
+    console.log("Current selection:", selection);
+
+    if (selection?.images) {
+      moveTemplate(ketFormat, allNodes, mols);
+    }
+    // Process each event
+    for (const eventItem of data) {
+      switch (eventItem?.operation) {
+>>>>>>> e32ef4b73 (chore: template resize)
         case "Move image":
           console.log("Image moved!");
           moveTemplate(ketFormat, allNodes, mols);
