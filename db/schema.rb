@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_07_26_064022) do
+ActiveRecord::Schema.define(version: 2024_09_20_154515) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1478,6 +1478,7 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
     t.text "plain_text_description"
     t.integer "width", default: 12
     t.integer "height", default: 8
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_wellplates_on_deleted_at"
   end
 
@@ -2131,6 +2132,9 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
   SQL
   create_trigger :logidze_on_screens, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
