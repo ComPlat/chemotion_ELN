@@ -1,8 +1,6 @@
 import React from 'react';
 import {
   Button,
-  ButtonGroup,
-  Col,
   Form,
   InputGroup,
   Modal,
@@ -14,7 +12,6 @@ import Select from 'react-select';
 import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const navigateToSample = (sample) => {
   const { params, uri } = Aviator.getCurrentRequest();
