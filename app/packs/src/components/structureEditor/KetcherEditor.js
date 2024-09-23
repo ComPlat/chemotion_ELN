@@ -32,10 +32,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       };
       const molecule = ketFormat[mols[idx]];
       if (molecule?.atoms[0]?.alias) {
+
         molecule.atoms[0].location = [...Object.values(location)];
-        if (molecule.atoms[1]) {
-          molecule.atoms[1].location = Object.values(location);
-        }
         molecule.stereoFlagPosition = location;
       }
     });
@@ -60,13 +58,14 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     ketFormat = JSON.parse(ketFormat);
 
     const allNodes = [...ketFormat.root.nodes];
-    const images = allNodes.filter(item => item?.type === 'image');
+    const images = allNodes?.filter(item => item?.type === 'image');
     const mols = Object.keys(ketFormat).filter(
       item => ketFormat[item]?.atoms?.[0]?.alias
     );
 
-    console.log("Current selection:",);
     const selection = editorS._structureDef.editor.editor._selection;
+    console.log("Current selection:", selection);
+
     if (selection?.images) {
       moveTemplate(ketFormat, allNodes, mols);
     }
