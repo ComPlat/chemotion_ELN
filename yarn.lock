@@ -2315,6 +2315,18 @@
     redux-form "^8.3.7"
     redux-saga "^1.1.3"
 
+"@complat/chemotion-converter-client@0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@complat/chemotion-converter-client/-/chemotion-converter-client-0.11.0.tgz#4cbeaf42da5fe34b24f75821a699692cd107790d"
+  integrity sha512-ncQWTKw6je3zY/ulU1qY3YFybXQgfiwU+Q8FTpI8D2jTBQAGyJV5zjIlsvTXJSNyMBkCVi4QOJOBFBrU87Y/8g==
+  dependencies:
+    bootstrap "^3.3.7"
+    jquery "^3.4.0"
+    lodash "^4.17.21"
+    popper.js "^1.16.0"
+    prop-types "^15.8.1"
+    react-select "5.2.2"
+
 "@complat/react-spectra-editor@1.3.2":
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.2.tgz#5545621b4832c96c22a6ac0e64bfc5fc31b018e4"
@@ -5923,18 +5935,6 @@ chem-units@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-1.1.2.tgz#38f5c6af67a99e6eb661256c303a570f85df6687"
   integrity sha512-JC4PtdFMlDfzZHYunMaVGiIEkXxqsQqknzDLRvethzhIjE/w3UyVbB93pyYzSnQxxqTpXy10TZTdGN2VdASl5w==
-
-chemotion-converter-client@0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/chemotion-converter-client/-/chemotion-converter-client-0.5.0.tgz#a5c99b1f7bb215f86a7ebd2d78d5c7c6c92eb1b2"
-  integrity sha512-ysq4UyuTXH+SNmPDlYa9HNimgrvm4DIP6E7k1LVlYyydU255gtcobDXzZqfWKdHNhQieu34WwomUfyM16CjtQQ==
-  dependencies:
-    bootstrap "^3.3.7"
-    jquery "^3.4.0"
-    lodash "^4.17.21"
-    popper.js "^1.16.0"
-    prop-types "^15.8.1"
-    react-select "5.2.2"
 
 chokidar@3.5.3, chokidar@^3.5.3:
   version "3.5.3"
