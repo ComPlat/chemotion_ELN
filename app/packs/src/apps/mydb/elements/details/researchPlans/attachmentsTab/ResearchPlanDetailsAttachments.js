@@ -255,20 +255,18 @@ class ResearchPlanDetailsAttachments extends Component {
     return (
       <div className="p-3 border-rounded">
         {this.renderImageEditModal()}
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="flex-grow-1 align-self-center">
+        <div className="d-flex justify-content-between align-items-center gap-4 mb-4">
+          <div className="flex-grow-1">
             {customDropzone(this.props.onDrop)}
           </div>
-          <div className="ms-3 align-self-center">
-            {attachments.length > 0
-              && sortingAndFilteringUI(
-                sortDirection,
-                this.handleSortChange,
-                this.toggleSortDirection,
-                this.handleFilterChange,
-                true
-              )}
-          </div>
+          {attachments.length > 0
+          && sortingAndFilteringUI(
+            sortDirection,
+            this.handleSortChange,
+            this.toggleSortDirection,
+            this.handleFilterChange,
+            true
+          )}
         </div>
         {combinedAttachments.length === 0 ? (
           <div className="text-center text-gray-500 fs-5">

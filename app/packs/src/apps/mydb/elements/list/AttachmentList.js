@@ -19,11 +19,7 @@ export const attachmentThumbnail = (attachment) => (
       imageStyle={{
         width: '45px',
         height: '45px',
-        borderRadius: '5px',
-        backgroundColor: '#FFF',
         objectFit: 'contain',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
       }}
       alt="thumbnail"
       previewObject={{
@@ -37,11 +33,8 @@ export const attachmentThumbnail = (attachment) => (
         imageStyle={{
           width: '400px',
           height: '400px',
-          borderRadius: '5px',
           backgroundColor: '#FFF',
           objectFit: 'contain',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
         }}
         hasPop
         showPopImage
@@ -200,7 +193,6 @@ export const editButton = (
   return (
     <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
       <Button
-        className={`${editDisable ? 'attachment-gray-button' : ''}`}
         size="sm"
         variant="success"
         disabled={editDisable}
@@ -261,8 +253,6 @@ export const importButton = (
             variant="success"
             disabled={importDisabled || extension !== 'xlsx'}
             ref={buttonRef}
-            className={`${importDisabled
-              || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
             onClick={() => showImportConfirmFunction(attachment.id)}
           >
             <i className="fa fa-plus-circle" />
@@ -295,32 +285,29 @@ export const sortingAndFilteringUI = (
   handleFilterChange,
   isSortingEnabled
 ) => (
-  <div className="mb-4 d-flex justify-content-between">
+  <>
     {isSortingEnabled && (
-      <div className="d-flex align-items-center">
+      <div className="d-flex align-items-center gap-2">
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <label className="me-2">Sort: </label>
-        <div className="d-flex justify-content-between align-items-center">
-          <select
-            onChange={handleSortChange}
-            className="px-1 py-2 border rounded border-gray-300 w-100 me-2"
-          >
-            <option value="name">Name</option>
-            <option value="size">Size</option>
-            <option value="date">Date</option>
-          </select>
-          <Button
-            style={{ marginLeft: '-15px' }}
-            onClick={toggleSortDirection}
-            className="sort-icon-style me-2"
-          >
-            {sortDirection === 'asc' ? '▲' : '▼'}
-          </Button>
-        </div>
+        <label>Sort:</label>
+        <select
+          onChange={handleSortChange}
+          className="sorting-row-style"
+          style={{ width: '100px' }}
+        >
+          <option value="name">Name</option>
+          <option value="size">Size</option>
+          <option value="date">Date</option>
+        </select>
+        <Button
+          onClick={toggleSortDirection}
+          variant="light"
+        >
+          {sortDirection === 'asc' ? '▲' : '▼'}
+        </Button>
       </div>
     )}
-
-    <div className="d-flex align-items-center">
+    <div className="d-flex align-items-center gap-2">
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="me-2">Filter: </label>
       <input
@@ -331,7 +318,7 @@ export const sortingAndFilteringUI = (
         style={{ width: '250px' }}
       />
     </div>
-  </div>
+  </>
 );
 
 // validate id as uuid
