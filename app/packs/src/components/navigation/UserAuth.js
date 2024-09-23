@@ -23,7 +23,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import Affiliations from '../../apps/userSettings/Affiliations';
+import Affiliations from 'src/apps/userSettings/Affiliations';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -608,7 +608,7 @@ export default class UserAuth extends Component {
 
     return (
       <>
-        <Nav className="align-items-center">
+        <Nav className="justify-content-center align-items-center">
           <NavDropdown
             title={`${currentUser.name}`}
             id="bg-nested-dropdown"
@@ -648,7 +648,7 @@ export default class UserAuth extends Component {
           <NavItem
             onClick={() => this.logout()}
             title="Log out"
-            className="ms-2"
+            className="ms-5 me-3"
             role="button"
           >
             <i className="fa fa-sign-out" />
