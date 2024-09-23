@@ -44,6 +44,7 @@
 }
 
 .attachment-row-image {
+  @extend .position-relative;
   @extend .border;
   @extend .rounded;
 }
@@ -52,22 +53,16 @@
   position: absolute;
   left: 1000%;
   top: -300%;
-  width: 400px;
-  height: 400px;
-  border-radius: 5px;
+  @extend .rounded;
   background-color: $body-bg;
   object-fit: contain;
   @extend .border;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.8s ease, visibility 0s linear 0.8s;
+  @extend .invisible;
   z-index: 10;
 }
 
 .attachment-row-image:hover .large-preview-modal {
-  opacity: 1;
-  visibility: visible;
-  transition-delay: 0s;
+  @extend .visible;
 }
 
 .attachment-row-text {
