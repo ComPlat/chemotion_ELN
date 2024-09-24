@@ -1,5 +1,8 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import {
+  Button, ButtonToolbar, ToggleButtonGroup, ToggleButton,
+  Panel, Tooltip, OverlayTrigger, Form, FormGroup, Radio
+} from 'react-bootstrap';
 import { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -49,6 +52,10 @@ const TextSearch = () => {
     searchValues.table = table;
     searchValues.element_id = (genericElement.id || 0);
     searchStore.addAdvancedSearchValue(0, searchValues);
+  }
+
+  const handleNumericMatchChange = (e) => {
+    searchStore.changeNumericMatchValue(e.target.value);
   }
 
   const SelectSearchTable = () => {
@@ -174,18 +181,43 @@ const TextSearch = () => {
                 }
               </div>
             </div>
-            <ButtonToolbar>
-              <Button bsStyle="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
-                Cancel
-              </Button>
-              <Button bsStyle="info" onClick={() => handleClear(searchStore)}>
-                Reset
-              </Button>
-              <Button bsStyle="primary" id="advanced-search-button"
-                onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
-                Search
-              </Button>
-            </ButtonToolbar>
+            <Form style={{ display: 'flex', alignItems: 'flex-start', gap: '3rem' }}>
+              <ButtonToolbar>
+                <Button bsStyle="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
+                  Cancel
+                </Button>
+                <Button bsStyle="info" onClick={() => handleClear(searchStore)}>
+                  Reset
+                </Button>
+                <Button bsStyle="primary" id="advanced-search-button"
+                  onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
+                  Search
+                </Button>
+              </ButtonToolbar>
+              {
+                searchStore.searchType == 'detail' && (
+                  <FormGroup style={{ display: 'flex', alignItems: 'baseline', gap: '3rem' }}>
+                    <span>Change search operator for numeric Fields:</span>
+                    <Radio
+                      name="eqal_higher_or_lower"
+                      value=">="
+                      checked={searchStore.numeric_match === '>='}
+                      onChange={handleNumericMatchChange}
+                    >
+                      {'>='}
+                    </Radio>
+                    <Radio
+                      name="eqal_higher_or_lower"
+                      value="<="
+                      checked={searchStore.numeric_match === '<='}
+                      onChange={handleNumericMatchChange}
+                    >
+                      {'<='}
+                    </Radio>
+                  </FormGroup>
+                )
+              }
+            </Form>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
