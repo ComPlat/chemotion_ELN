@@ -120,8 +120,8 @@ export default class ReactionDetailsPurification extends Component {
             </Form.Group>
           </Col>
         </Row>
-        <Row className='mb-3'>
-          <Col md={12}>
+        <Row className='mb-2'>
+          <Col sm={12}>
             <Form.Label>Purification Solvents</Form.Label>
             <MaterialGroupContainer
               reaction={reaction}
