@@ -595,18 +595,16 @@ const DetailSearch = () => {
       case 'value_measurement':
       case 'solvent_ratio':
       case 'molecular_mass':
-        return '>=';
+        return searchStore.numeric_match;
       case 'unit_measurement':
       case 'solvent_smiles':
         return '=';
       default:
-        return type == 'system-defined' ? '>=' : 'ILIKE';
+        return type == 'system-defined' ? searchStore.numeric_match : 'ILIKE';
     }
   }
 
   const checkValueForNumber = (label, value) => {
-    if (value === '') { return null; }
-
     let validationState = null;
     let message = `${label}: Only numbers are allowed`;
     searchStore.removeErrorMessage(message);
@@ -614,7 +612,7 @@ const DetailSearch = () => {
     const regex = /^[0-9\s\-]+$/;
     let numericCheck = label.includes('point') ? !regex.test(value) : isNaN(Number(value));
 
-    if (numericCheck) {
+    if (numericCheck && value !== '') {
       searchStore.addErrorMessage(message);
       validationState = 'error';
     }
@@ -667,14 +665,14 @@ const DetailSearch = () => {
 
   const setSearchStoreValues = (value, option, column, type, subValue, smiles) => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
-    let cleanedValue = ['>=', '<@'].includes(searchValue.match) ? value.replace(/,/g, '.') : value;
+    let cleanedValue = ['>=', '<=', '<@'].includes(searchValue.match) ? value.replace(/,/g, '.') : value;
     searchValue.field = option;
     searchValue.value = cleanedValue;
     searchValue.sub_values = subValuesForSearchValue(searchValue, subValue, cleanedValue);
     searchValue.match = matchByField(column, type);
     searchValue.smiles = smiles;
 
-    if (['>=', '<@'].includes(searchValue.match)) {
+    if (['>=', '<=', '<@'].includes(searchValue.match)) {
       searchValue.validationState = checkValueForNumber(option.label, cleanedValue);
     }
 
