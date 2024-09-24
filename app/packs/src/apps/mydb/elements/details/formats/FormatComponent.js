@@ -103,10 +103,10 @@ FormatComponentHeader.propTypes = {
 };
 
 const FormatComponent = ({
-  list, variant, onSave, onFormat, onClose
+  list, isSaved, onSave, onFormat, onClose
 }) => (
-  <Card className="eln-panel-detail">
-    <Card.Header className={`text-bg-${variant}`}>
+  <Card className="detail-card">
+    <Card.Header>
       <FormatComponentHeader
         onSave={onSave}
         onFormat={onFormat}
@@ -123,7 +123,7 @@ const FormatComponent = ({
 
 FormatComponent.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object).isRequired,
-  variant: PropTypes.string,
+  isSaved: PropTypes.boolean,
   onSave: PropTypes.func.isRequired,
   onFormat: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired

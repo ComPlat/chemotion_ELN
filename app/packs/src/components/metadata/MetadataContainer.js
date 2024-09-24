@@ -83,7 +83,7 @@ export default class MetadataContainer extends Component {
     const saveBtnDisplay = !!metadata.isEdited;
 
     return (
-      <Card className="eln-panel-detail">
+      <Card className="detail-card">
         <Card.Header>
           <MetadataHeader
             title={title}

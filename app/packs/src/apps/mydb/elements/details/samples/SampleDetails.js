@@ -1499,10 +1499,8 @@ export default class SampleDetails extends React.Component {
       && this.state.activeTab) || visible.get(0);
 
     return (
-      <Card
-        className="eln-panel-detail"
-      >
-        <Card.Header className={"text-bg-" + (sample.isPendingToSave || isChemicalEdited ? 'info' : 'primary')}>
+      <Card className={"detail-card" + ((sample.isPendingToSave || isChemicalEdited) ? " detail-card--unsaved" : "")}>
+        <Card.Header>
           {this.sampleHeader(sample)}
           {messageBlock}
         </Card.Header>

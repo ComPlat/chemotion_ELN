@@ -1,7 +1,10 @@
 .dnd-zone {
+  @extend .w-100;
   @extend .border;
   @extend .border-dashed;
   @extend .border-3;
+  @extend .p-3;
+  @extend .text-center;
 }
 
 .dnd-zone-over {

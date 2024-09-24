@@ -79,7 +79,7 @@ export default class OlsTerms extends React.Component {
     ) : (
       <Dropzone
           onDrop={attach => this.handleFileDrop(attach)}
-          className='d-flex align-items-center justify-content-center py-4 w-100 ms-2 dnd-zone'
+          className='d-flex align-items-center justify-content-center py-4 ms-2 dnd-zone'
       >
           <div className='text-center pt-2 text-secondary fs-4'>
           Drop File, or Click to Select.

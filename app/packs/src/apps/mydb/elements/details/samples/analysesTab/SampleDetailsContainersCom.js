@@ -117,7 +117,7 @@ function ReactionsDisplay({
                 key={`${id}CRowEdit`}
                 className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
               >
-                <Card.Header className="rounded-0 pa-0">
+                <Card.Header className="rounded-0 p-0 border-bottom-0">
                   <AccordionHeaderWithButtons eventKey={id}>
                     <AnalysesHeader
                       sample={sample}

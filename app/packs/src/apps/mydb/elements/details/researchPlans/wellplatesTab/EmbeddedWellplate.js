@@ -54,12 +54,12 @@ export default class EmbeddedWellplate extends Component {
       readoutTitles && readoutTitles.map((title) => {
         const key = title.id;
         return ([
-          <th className="p-0" key={`v_${key}`} width="15%">
+          <th className="py-0" key={`v_${key}`} width="15%">
             {title}
             &nbsp;
             Value
           </th>,
-          <th className="p-0" key={`u_${key}`} width="10%">
+          <th className="py-0" key={`u_${key}`} width="10%">
             {title}
             &nbsp;
             Unit
@@ -77,7 +77,7 @@ export default class EmbeddedWellplate extends Component {
     const importTooltip = <Tooltip id="import_tooltip">{tooltipText}</Tooltip>;
 
     const confirmTooltip = (
-      <Tooltip placement="bottom" className="in" id="tooltip-bottom">
+      <Tooltip placement="bottom" id="tooltip-bottom">
         Import data from Wellplate? This will create a table.
         <br />
         <ButtonGroup>
@@ -124,10 +124,10 @@ export default class EmbeddedWellplate extends Component {
       readouts && readouts.map((readout) => {
         const key = readout.id;
         return ([
-          <td key={`v_${key}`} className="p-0">
+          <td key={`v_${key}`} className="py-0">
             {readout.value || ''}
           </td>,
-          <td key={`u_${key}`} className="p-0">
+          <td key={`u_${key}`} className="py-0">
             {readout.unit || ''}
           </td>,
         ]);
@@ -149,8 +149,8 @@ export default class EmbeddedWellplate extends Component {
       <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th className="p-0" width="5%">Position</th>
-            <th className="p-0" width="10%">Sample</th>
+            <th className="py-0" width="5%">Position</th>
+            <th className="py-0" width="10%">Sample</th>
             {this.renderReadoutHeaders()}
           </tr>
         </thead>
@@ -162,8 +162,8 @@ export default class EmbeddedWellplate extends Component {
             }
             return (
               <tr key={well.id}>
-                <td className="p-0">{well.alphanumericPosition}</td>
-                <td className="p-0">{sample_title}</td>
+                <td className="py-0">{well.alphanumericPosition}</td>
+                <td className="py-0">{sample_title}</td>
                 {this.renderReadoutFields(well)}
               </tr>
             );
@@ -178,7 +178,7 @@ export default class EmbeddedWellplate extends Component {
     const titleTooltip = formatTimeStampsOfElement(wellplate || {});
 
     const popover = (
-      <Tooltip placement="left" className="in" id="tooltip-bottom">
+      <Tooltip placement="left" id="tooltip-bottom">
         Remove&nbsp;
         {wellplate.name}
         &nbsp;from ResearchPlan?
@@ -258,8 +258,8 @@ export default class EmbeddedWellplate extends Component {
   render() {
     const eventKey = this.props.wellplateIndex.toString()
     return (
-      <Card className="rounded-0 border-0 eln-panel-detail wellplate-details">
-        <Card.Header className="rounded-0 p-0">
+      <Card className="rounded-0 border-0">
+        <Card.Header className="rounded-0 p-0 border-bottom-0">
           <AccordionHeaderWithButtons eventKey={eventKey}>
             {this.renderPanelHeading(this.props.wellplate)}
           </AccordionHeaderWithButtons>

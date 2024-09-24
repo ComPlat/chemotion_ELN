@@ -627,8 +627,8 @@ export default class ReactionDetails extends Component {
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <Card className="eln-panel-detail">
-        <Card.Header className={`p-2 text-bg-${reaction.isPendingToSave ? 'info' : 'primary'}`}>
+      <Card className={"detail-card" + (reaction.isPendingToSave ? " detail-card--unsaved" : "")}>
+        <Card.Header>
           {this.reactionHeader(reaction)}
         </Card.Header>
         <Card.Body>

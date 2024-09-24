@@ -23,7 +23,6 @@ class ResearchPlanDetailsDropTarget extends Component {
     const { connectDropTarget, isOver, canDrop } = this.props;
 
     const className = classnames(
-      'p-2',
       {
         'dnd-zone': canDrop,
         'dnd-zone-over': isOver,

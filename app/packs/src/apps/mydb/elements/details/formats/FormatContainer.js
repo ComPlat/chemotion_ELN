@@ -156,7 +156,7 @@ export default class FormatContainer extends React.Component {
       <FormatComponent
         list={selectedObjs}
         onFormat={this.onFormat}
-        variant={isSaved ? 'primary' : 'info'}
+        isSaved={isSaved}
         onSave={this.onSave}
         onClose={this.onClose}
       />

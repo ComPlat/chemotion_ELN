@@ -47,13 +47,13 @@ export default class CellLineItemEntry extends Component {
   render() {
     const { cellLineItem } = this.props;
     const { currentElement } = ElementStore.getState();
-    const backgroundColorClass = currentElement?.id === cellLineItem.id ? 'blue-background' : 'white-background';
+    const backgroundColorClass = currentElement?.id === cellLineItem.id ? 'text-bg-primary' : '';
 
     return (
       <div className="group-entry">
         <Table className="elements" hover>
           <tbody>
-            <tr className={`${backgroundColorClass} top-border`}>
+            <tr className={`${backgroundColorClass} border-top`}>
               <td className="select-checkBox">
                 <ElementCheckbox
                   element={cellLineItem}

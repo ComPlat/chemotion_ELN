@@ -17,25 +17,25 @@
   background: white;
 }
 
-.full-screen .eln-panel-detail > .panel-body {
+.full-screen .detail-card > .panel-body {
   overflow-x: hidden;
   overflow-y: scroll;
   max-height: calc(100vh - 110px);
 }
 
-.normal-screen .eln-panel-detail > .panel-body {
+.normal-screen .detail-card > .panel-body {
   overflow-x: hidden;
   overflow-y: scroll;
   max-height: calc(100vh - 240px);
 }
 
-.full-screen .eln-panel-detail > .card-body {
+.full-screen .detail-card > .card-body {
   overflow-x: hidden;
   overflow-y: scroll;
   max-height: calc(100vh - 110px);
 }
 
-.normal-screen .eln-panel-detail > .card-body {
+.normal-screen .detail-card > .card-body {
   overflow-x: hidden;
   overflow-y: scroll;
   max-height: calc(100vh - 240px);

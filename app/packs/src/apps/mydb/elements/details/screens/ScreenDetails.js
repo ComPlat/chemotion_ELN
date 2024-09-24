@@ -431,8 +431,8 @@ export default class ScreenDetails extends Component {
     };
 
     return (
-      <Card className="eln-panel-detail">
-        <Card.Header className={`p-2 text-bg-${screen.isPendingToSave ? 'info' : 'primary'}`}>
+      <Card className={"detail-card" + (screen.isPendingToSave ? " detail-card--unsaved" : "")}>
+        <Card.Header>
           {this.screenHeader(screen)}
         </Card.Header>
         <Card.Body>
