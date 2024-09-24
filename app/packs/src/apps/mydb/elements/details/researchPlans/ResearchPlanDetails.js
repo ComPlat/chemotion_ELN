@@ -460,9 +460,9 @@ export default class ResearchPlanDetails extends Component {
         <ListGroupItem>
           <ResearchPlanDetailsContainers
             handleSubmit={this.handleSubmit}
+            handleResearchPlanChange={this.handleResearchPlanChange}
             researchPlan={researchPlan}
             readOnly={false}
-            parent={this}
           />
         </ListGroupItem>
       </ListGroup>
