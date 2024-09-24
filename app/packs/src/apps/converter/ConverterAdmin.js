@@ -23,6 +23,7 @@ class ConverterAdmin extends Component {
       deleteModal: false
     };
 
+    this.showListView = this.showListView.bind(this);
     this.showCreateView = this.showCreateView.bind(this);
     this.showUpdateView = this.showUpdateView.bind(this);
     this.showImportView = this.showImportView.bind(this);
@@ -64,6 +65,13 @@ class ConverterAdmin extends Component {
         // eslint-disable-next-line max-len
         profiles: profiles?.profiles || [], datasets, options: options?.options || [], client: options?.client || null
       });
+    });
+  }
+
+  showListView() {
+    this.setState({
+      status: 'list',
+      profile: null
     });
   }
 
