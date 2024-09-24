@@ -36,7 +36,7 @@ export default function SpectraEditorButton({
               >
                 <i className="fa fa-area-chart" />
               </Button>
-              <Dropdown.Toggle split variant="info" id="dropdown-split-basic" />
+              <Dropdown.Toggle split variant="info" id="dropdown-split-basic" size="xxsm" />
               <Dropdown.Menu>
                 <Dropdown.Item
                   id="regenerate-spectra"
