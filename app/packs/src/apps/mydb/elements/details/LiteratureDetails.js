@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import Clipboard from 'clipboard';
 import PropTypes from 'prop-types';
 import {
   Accordion,
@@ -33,6 +32,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { copyToClipboard } from 'src/utilities/clipboard';
 
 const Cite = require('citation-js');
 
@@ -145,7 +145,6 @@ export default class LiteratureDetails extends Component {
     };
     this.onClose = this.onClose.bind(this);
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
-    this.clipboard = new Clipboard('.clipboardBtn');
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
     this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
@@ -168,7 +167,6 @@ export default class LiteratureDetails extends Component {
   }
 
   componentWillUnmount() {
-    this.clipboard.destroy();
     UIStore.unlisten(this.handleUIStoreChange);
   }
 
@@ -330,7 +328,15 @@ export default class LiteratureDetails extends Component {
             <Tooltip id="assign_button">copy to clipboard</Tooltip>
           }
         >
-          <Button size="sm" active className="clipboardBtn me-2" data-clipboard-text={clipboardText}>
+          <Button
+            size="sm"
+            active
+            className="me-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              copyToClipboard(clipboardText);
+            }}
+          >
             <i className="fa fa-clipboard" />
           </Button>
         </OverlayTrigger>

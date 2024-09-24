@@ -5,7 +5,6 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select';
 import 'moment-precise-range-plugin';
-import Clipboard from 'clipboard';
 import { dangerousProductsOptions } from 'src/components/staticDropdownOptions/options';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import StringTag from 'src/apps/mydb/elements/details/reactions/propertiesTab/StringTag';
@@ -19,7 +18,6 @@ export default class ReactionDetailsProperties extends Component {
     super(props);
     props.reaction.convertDurationDisplay();
 
-    this.clipboard = new Clipboard('.clipboardBtn');
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
   }
@@ -28,10 +26,6 @@ export default class ReactionDetailsProperties extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (!nextProps.reaction) { return; }
     nextProps.reaction.convertDurationDisplay();
-  }
-
-  componentWillUnmount() {
-    this.clipboard.destroy();
   }
 
   handleOnReactionChange(reaction) {

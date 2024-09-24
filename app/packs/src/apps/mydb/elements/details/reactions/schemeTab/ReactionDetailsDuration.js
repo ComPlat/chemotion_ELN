@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Button, InputGroup, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
 import 'moment-precise-range-plugin';
-import Clipboard from 'clipboard';
 import { permitOn } from 'src/components/common/uis';
+import { copyToClipboard } from 'src/utilities/clipboard';
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {
@@ -14,18 +14,10 @@ export default class ReactionDetailsDuration extends Component {
     this.handleDurationChange = this.handleDurationChange.bind(this);
   }
 
-  componentDidMount() {
-    this.clipboard = new Clipboard('.clipboardBtn');
-  }
-
   // eslint-disable-next-line camelcase
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (!nextProps.reaction) { return; }
     nextProps.reaction.convertDurationDisplay();
-  }
-
-  componentWillUnmount() {
-    this.clipboard.destroy();
   }
 
   setCurrentTime(type) {
@@ -104,7 +96,12 @@ export default class ReactionDetailsDuration extends Component {
                 placement="bottom"
                 overlay={<Tooltip id="copy_duration_to_clipboard">copy to clipboard</Tooltip>}
               >
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} active variant='secondary' data-clipboard-text={durationCalc || ' '}>
+                <Button
+                  disabled={!permitOn(reaction) || reaction.gaseous}
+                  active
+                  variant="secondary"
+                  onClick={() => copyToClipboard(durationCalc || ' ')}
+                >
                   <i className="fa fa-clipboard" aria-hidden="true" />
                 </Button>
               </OverlayTrigger>

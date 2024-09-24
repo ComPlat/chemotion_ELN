@@ -10,7 +10,6 @@ import {
   Accordion, Dropdown
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import Clipboard from 'clipboard';
 import Select from 'react-select';
 import { cloneDeep, findIndex } from 'lodash';
 import uuid from 'uuid';
@@ -75,6 +74,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
+import { copyToClipboard } from 'src/utilities/clipboard';
 
 const MWPrecision = 6;
 
@@ -149,7 +149,6 @@ export default class SampleDetails extends React.Component {
     this.enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.clipboard = new Clipboard('.clipboardBtn');
     this.isCASNumberValid = this.isCASNumberValid.bind(this);
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
@@ -209,7 +208,6 @@ export default class SampleDetails extends React.Component {
   }
 
   componentWillUnmount() {
-    this.clipboard.destroy();
     UIStore.unlisten(this.onUIStoreChange);
   }
 
@@ -842,8 +840,7 @@ export default class SampleDetails extends React.Component {
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
             <Button
               variant="light"
-              className="clipboardBtn"
-              data-clipboard-text={cas}
+              onClick={() => copyToClipboard(cas)}
             >
               <i className="fa fa-clipboard" />
             </Button>
@@ -1087,9 +1084,12 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
           <Button
             variant="light"
-            className="clipboardBtn"
-            data-clipboard-text={(this.state.showInchikey
-              ? sample.molecule_inchikey : this.state.inchiString) || ' '}
+            onClick={() => copyToClipboard(
+              (this.state.showInchikey
+                ? sample.molecule_inchikey
+                : this.state.inchiString)
+              || ' '
+            )}
           >
             <i className="fa fa-clipboard" />
           </Button>
@@ -1129,8 +1129,7 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
           <Button
             variant="light"
-            className="clipboardBtn"
-            data-clipboard-text={sample.molecule_cano_smiles || ''}
+            onClick={() => copyToClipboard(sample.molecule_cano_smiles || '')}
           >
             <i className="fa fa-clipboard" />
           </Button>
@@ -1163,15 +1162,13 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
           <Button
             variant="light"
-            className="clipboardBtn"
-            data-clipboard-text={sample.molfile || ' '}
+            onClick={() => copyToClipboard(sample.molfile || '')}
           >
             <i className="fa fa-clipboard" />
           </Button>
         </OverlayTrigger>
         <Button
           variant="light"
-          className="clipboardBtn"
           onClick={this.handleMolfileShow}
         >
           <i className="fa fa-file-text" />
