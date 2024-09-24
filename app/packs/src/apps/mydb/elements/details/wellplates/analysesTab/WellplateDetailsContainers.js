@@ -28,11 +28,13 @@ export default class WellplateDetailsContainers extends Component {
   }
 
   handleChange(container) {
+    const { handleWellplateChanged } = this.props;
     const { wellplate } = this.state
-    this.props.parent.handleWellplateChanged(wellplate)
+    handleWellplateChanged(wellplate)
   }
 
   handleAdd() {
+    const { setWellplate } = this.props;
     const { wellplate } = this.state;
     let container = Container.buildEmpty();
     container.container_type = "analysis";
@@ -42,22 +44,21 @@ export default class WellplateDetailsContainers extends Component {
     const newKey = wellplate.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
-
-    this.props.parent.setState({ wellplate: wellplate })
+    setWellplate(wellplate)
   }
 
   handleRemove(container) {
-    let { wellplate } = this.state;
+    const { setWellplate } = this.props;
+    const { wellplate } = this.state;
     container.is_deleted = true;
-
-    this.props.parent.setState({ wellplate: wellplate })
+    setWellplate(wellplate);
   }
 
   handleUndo(container) {
-    let { wellplate } = this.state;
+    const { setWellplate } = this.props;
+    const { wellplate } = this.state;
     container.is_deleted = false;
-
-    this.props.parent.setState({ wellplate: wellplate })
+    setWellplate(wellplate);
   }
 
   handleAccordionOpen(key) {
@@ -182,5 +183,6 @@ export default class WellplateDetailsContainers extends Component {
 
 WellplateDetailsContainers.propTypes = {
   readOnly: PropTypes.bool,
-  parent: PropTypes.object,
+  handleWellplateChanged: PropTypes.func.isRequired,
+  setWellplate: PropTypes.func.isRequired,
 };

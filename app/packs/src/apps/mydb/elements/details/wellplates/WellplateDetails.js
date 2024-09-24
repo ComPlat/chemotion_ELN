@@ -338,7 +338,8 @@ export default class WellplateDetails extends Component {
           <ListGroupItem className="pb-2">
             <WellplateDetailsContainers
               wellplate={wellplate}
-              parent={this}
+              setWellplate={(w) => this.setState({ wellplate: w })}
+              handleWellplateChanged={this.handleWellplateChanged}
             />
           </ListGroupItem>
         </Tab>
