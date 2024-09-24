@@ -1251,7 +1251,7 @@ export default class ReactionDetailsScheme extends Component {
         <Row className="mb-3">
           <Col sm={4}>
             <Form.Group className="">
-              <Form.Label>Type (Name Reaction Ontology)</Form.Label>
+              <Form.Label className="text-nowrap">Type (Name Reaction Ontology)</Form.Label>
               <OlsTreeSelect
                 selectName="rxno"
                 selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
