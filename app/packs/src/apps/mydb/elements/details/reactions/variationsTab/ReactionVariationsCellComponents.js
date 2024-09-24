@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Badge, Modal, Form
+  Button, ButtonGroup, Badge, Modal, Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
@@ -128,6 +128,21 @@ function MaterialParser({
   );
 }
 
+function NoteCellRenderer(props) {
+  return (
+    <OverlayTrigger
+      placement="right"
+      overlay={
+        <Tooltip id={"note-tooltip-" + props.data.id}>
+          double click to edit
+        </Tooltip>
+      }
+    >
+      <span>{props.value ? props.value : '_'}</span>
+    </OverlayTrigger>
+  );
+}
+
 function NoteCellEditor({
   data: variationsRow,
   value,
@@ -185,5 +200,6 @@ export {
   PropertyParser,
   MaterialFormatter,
   MaterialParser,
+  NoteCellRenderer,
   NoteCellEditor
 };
