@@ -34,7 +34,7 @@ module Chemotion
           optional :name, type: String
           optional :advanced_params, type: Array do
             optional :link, type: String, values: ['', 'AND', 'OR'], default: ''
-            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<', '>=', '@>', '<@'], default: 'LIKE'
+            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<', '>=', '<=', '@>', '<@'], default: 'LIKE'
             optional :table, type: String, values: %w[samples reactions wellplates screens research_plans elements segments literatures]
             optional :element_id, type: Integer
             optional :unit, type: String

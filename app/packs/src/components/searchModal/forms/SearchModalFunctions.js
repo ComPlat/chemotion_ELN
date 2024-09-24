@@ -120,7 +120,7 @@ const searchValuesByAvailableOptions = (val, table) => {
       link = i === 0 ? 'OR' : 'AND';
       match = 'NOT LIKE';
     }
-    if (!option.unit || option.unit !== val.unit) {
+    if (!option.unit || option.unit.replace('°', '') !== val.unit.replace('°', '')) {
       searchValues.push([link, table, val.field.label.toLowerCase(), match, option.value, option.unit].join(" "));
     }
   });
