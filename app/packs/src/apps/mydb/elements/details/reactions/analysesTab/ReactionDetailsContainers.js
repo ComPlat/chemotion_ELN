@@ -107,22 +107,26 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   handleChange(container) {
+    const { handleReactionChange } = this.props;
     const { reaction } = this.state;
-    this.props.parent.handleReactionChange(reaction);
+    handleReactionChange(reaction);
   }
 
   handleSpChange(reaction, cb) {
-    this.props.parent.handleReactionChange(reaction);
+    const { handleReactionChange } = this.props;
+    handleReactionChange(reaction);
     cb();
   }
 
   handleUndo(container) {
+    const { handleReactionChange } = this.props;
     const { reaction } = this.state;
     container.is_deleted = false;
-    this.props.parent.handleReactionChange(reaction, { schemaChanged: false });
+    handleReactionChange(reaction, { schemaChanged: false });
   }
 
   handleAdd() {
+    const { handleReactionChange } = this.props;
     const { reaction } = this.state;
     const container = Container.buildEmpty();
     container.container_type = 'analysis';
@@ -143,7 +147,7 @@ export default class ReactionDetailsContainers extends Component {
     ))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
-    this.props.parent.handleReactionChange(reaction, { schemaChanged: false });
+    handleReactionChange(reaction, { schemaChanged: false });
   }
 
   handleOnClickRemove(container) {
@@ -213,10 +217,11 @@ export default class ReactionDetailsContainers extends Component {
 
 
   handleRemove(container) {
+    const { handleReactionChange } = this.props;
     const { reaction } = this.state;
 
     container.is_deleted = true;
-    this.props.parent.handleReactionChange(reaction, { schemaChanged: false });
+    handleReactionChange(reaction, { schemaChanged: false });
   }
 
   handleAccordionOpen(key) {
@@ -421,6 +426,6 @@ export default class ReactionDetailsContainers extends Component {
 
 ReactionDetailsContainers.propTypes = {
   readOnly: PropTypes.bool,
-  parent: PropTypes.object,
-  handleSubmit: PropTypes.func
+  handleSubmit: PropTypes.func,
+  handleReactionChange: PropTypes.func,
 };
