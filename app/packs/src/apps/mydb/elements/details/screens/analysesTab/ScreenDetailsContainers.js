@@ -31,8 +31,9 @@ export default class ScreenDetailsContainers extends Component {
   }
 
   handleChange() {
+    const { handleScreenChanged } = this.props;
     const { screen } = this.state;
-    this.props.parent.handleScreenChanged(screen);
+    handleScreenChanged(screen);
   }
 
   handleAdd() {
@@ -225,5 +226,5 @@ export default class ScreenDetailsContainers extends Component {
 
 ScreenDetailsContainers.propTypes = {
   readOnly: PropTypes.bool,
-  parent: PropTypes.object,
+  handleScreenChanged: PropTypes.func,
 };

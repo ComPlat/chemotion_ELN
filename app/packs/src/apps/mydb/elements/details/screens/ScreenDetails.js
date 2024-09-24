@@ -50,6 +50,7 @@ export default class ScreenDetails extends Component {
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.updateComponentGraphData = this.updateComponentGraphData.bind(this);
+    this.handleScreenChanged = this.handleScreenChanged.bind(this);
   }
 
   componentDidMount() {
@@ -382,7 +383,7 @@ export default class ScreenDetails extends Component {
           }
           <ScreenDetailsContainers
             screen={screen}
-            parent={this}
+            handleScreenChanged={this.handleScreenChanged}
           />
         </Tab>
       ),
