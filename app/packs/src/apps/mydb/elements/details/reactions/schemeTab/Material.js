@@ -725,7 +725,7 @@ class Material extends Component {
 
           {this.materialLoading(material, showLoadingColumn)}
 
-          <td>
+          <td className="text-nowrap">
             <NumeralInputWithUnitsCompo
               key={material.id}
               value={material.concn}
@@ -737,6 +737,7 @@ class Material extends Component {
               onChange={e => this.handleAmountUnitChange(e, material.concn)}
               onMetricsChange={this.handleMetricsChange}
               size="sm"
+              className="w-100"
             />
           </td>
 

@@ -176,15 +176,17 @@ export default class NumeralInputWithUnitsCompo extends Component {
           onClick={() => { this.togglePrefix(unit); }}
           variant={variantBtnAfter}
           size={size}
+          className="px-2"
         >
           {mp + unit}
         </Button>
       );
 
       return (
-        <div className={`numeric-input-unit_${this.props.unit}`}>
-          {label && <Form.Label>{label}</Form.Label>}
+        <div>
+          {label && <Form.Label className="me-2">{label}</Form.Label>}
           <InputGroup
+            className="d-flex flex-nowrap align-items-center w-100"
             onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
             <Form.Control
@@ -197,6 +199,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
               onFocus={event => this._handleInputValueFocus(event)}
               onBlur={event => this._handleInputValueBlur(event)}
               name={name}
+              className="flex-grow-1"
             />
             {prefixSwitch}
           </InputGroup>
@@ -204,8 +207,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
       );
     }
     return (
-      <div className="numeric-input-unit">
-        {label && <Form.Label>{label}</Form.Label>}
+      <div>
+        {label && <Form.Label className="me-2">{label}</Form.Label>}
         <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
           <Form.Control
             type="text"
@@ -218,6 +221,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             onBlur={event => this._handleInputValueBlur(event)}
             onDoubleClick={event => this.handleInputDoubleClick(event)}
             name={name}
+            className="flex-grow-1"
           />
         </div>
       </div>
