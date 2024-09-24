@@ -303,7 +303,6 @@ export default class GenericElDetails extends Component {
         aiComs[ly.key] = (
           <GenericElDetailsContainers
             genericEl={genericEl}
-            parent={this}
             readOnly={false}
             handleElChanged={this.handleElChanged}
             noAct
@@ -354,7 +353,6 @@ export default class GenericElDetails extends Component {
           <GenericElDetailsContainers
             // key={genericEl.id}
             genericEl={genericEl}
-            parent={this}
             readOnly={false}
             handleElChanged={this.handleElChanged}
             handleSubmit={this.handleSubmit}

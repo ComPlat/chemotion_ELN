@@ -161,7 +161,6 @@ export default class GenericElDetailsContainers extends Component {
 
 GenericElDetailsContainers.propTypes = {
   readOnly: PropTypes.bool.isRequired,
-  parent: PropTypes.object,
   genericEl: PropTypes.object.isRequired,
   handleElChanged: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
