@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Form, InputGroup, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
 import Select from 'react-select3';
-import Clipboard from 'clipboard';
 import { startsWith, endsWith } from 'lodash';
 
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { copyToClipboard } from 'src/utilities/clipboard';
 
 const DeviceDataCollectorTab = () => {
   const devicesStore = useContext(StoreContext).devices;
   const [localCollectorValues, setLocalCollectorValues] = useState([]);
   const device = devicesStore.device;
-  let clipboard = new Clipboard('.clipboardBtn');
 
   useEffect(() => {
     AdminFetcher.fetchLocalCollector()
@@ -22,14 +21,8 @@ const DeviceDataCollectorTab = () => {
     devicesStore.changeDevice('datacollector_authentication', 'password');
   }, []);
 
-  useEffect(() => {
-    return () => {
-      clipboard.destroy();
-    }
-  }, [devicesStore.deviceModalVisible]);
-
   const methodOptions = [
-    { value: 'filewatchersftp', label: 'filewatchersftp' }, 
+    { value: 'filewatchersftp', label: 'filewatchersftp' },
     { value: 'filewatcherlocal', label: 'filewatcherlocal' },
     { value: 'folderwatchersftp', label: 'folderwatchersftp' },
     { value: 'folderwatcherlocal', label: 'folderwatcherlocal' }
@@ -60,7 +53,6 @@ const DeviceDataCollectorTab = () => {
   const userLevelSelected = device && device.datacollector_user_level_selected ? device.datacollector_user_level_selected : false;
   const dirValue = userLevelSelected && dir ? `${dir}/{UserSubDirectories}` : (dir ? dir : '');
 
-  const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;
   const userLevelLabel = (<>Enable user level data collection <i className="fa fa-info-circle" /></>);
 
   const onChange = (field, value) => {
@@ -71,37 +63,34 @@ const DeviceDataCollectorTab = () => {
     devicesStore.changeDevice(field, newValue);
   }
 
-  const ListLocalCollector = () => {
-    return (
-      <>
-        <div className="mt-3 p-2 border-1 border-danger border-dashed">
-          {
-            localCollectorValues.map((c, i) => (
-              <div key={`list-collector-${i}`}>
-                <Form.Label className="fw-bold">Local Collector Dir Configurtaion</Form.Label>
-                <Form.Group>
-                  <InputGroup>
-                    <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                      <Button size="sm" variant="secondary" className="clipboardBtn btn-xxsm" data-clipboard-target={`#copy-input-${i}`}>
-                        <i className="fa fa-clipboard" />
-                      </Button>
-                    </OverlayTrigger>
-                    <Form.Control
-                      id={`copy-input-${i}`}
-                      type="text"
-                      value={c.path}
-                      readOnly
-                      className="border-0 h-25"
-                    />
-                  </InputGroup>
-                </Form.Group>
-              </div>
-            ))
-          }
+  const ListLocalCollector = () => (
+    <div className="mt-3 p-2 border-1 border-danger border-dashed">
+      {localCollectorValues.map((c, i) => (
+        <div key={`list-collector-${i}`}>
+          <Form.Label className="fw-bold">Local Collector Dir Configurtaion</Form.Label>
+          <Form.Group>
+            <InputGroup>
+              <OverlayTrigger placement="right" overlay={<Tooltip id="copy_tooltip">copy to clipboard</Tooltip>}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="btn-xxsm"
+                  onClick={() => copyToClipboard(c.path)}
+                >
+                  <i className="fa fa-clipboard" />
+                </Button>
+              </OverlayTrigger>
+              <Form.Control
+                value={c.path}
+                readOnly
+                className="border-0 h-25"
+              />
+            </InputGroup>
+          </Form.Group>
         </div>
-      </>
-    );
-  }
+      ))}
+    </div>
+  );
 
   return (
     <Form className="d-flex justify-content-between flex-wrap">
