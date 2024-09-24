@@ -503,7 +503,8 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem>
           <ChemicalTab
             sample={sample}
-            parent={this}
+            handleUpdateSample={(s) => this.setState({ sample: s })}
+            setSaveInventory={(v) => this.setState({ saveInventoryAction: v })}
             saveInventory={saveInventoryAction}
             editChemical={this.editChemical}
             key={`ChemicalTab${sample.id.toString()}`}
