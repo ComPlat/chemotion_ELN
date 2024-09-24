@@ -123,7 +123,7 @@ export default class ReactionDetailsPurification extends Component {
         </Row>
         <Row className='mb-3'>
           <Col md={12}>
-            <label class="form-label">Purification Solvents</label>
+            <Form.Label>Purification Solvents</Form.Label>
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="purification_solvents"
@@ -139,7 +139,7 @@ export default class ReactionDetailsPurification extends Component {
         </Row>
         <Row className='mb-3'>
           <Col md={12}>
-            <label class="form-label">Additional information for publication and purification details</label>
+            <Form.Label>Additional information for publication and purification details</Form.Label>
             <div className="quill-resize">
               {
                 permitOn(reaction) ?
