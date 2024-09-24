@@ -23,8 +23,7 @@ describe('ImageAnnotationEditButton', () => {
       it('button is rendered but disabled', () => {
         const button = wrapper.find(Button);
         expect(button.prop('disabled')).toBeTruthy();
-
-        expect(wrapper.containsMatchingElement(<i className="fa fa-pencil-square-o text-white" />)).toBeTruthy();
+        expect(button.exists('.fa-pencil-square')).toBeTruthy();
       });
     });
 
@@ -35,8 +34,7 @@ describe('ImageAnnotationEditButton', () => {
       it('button is rendered and not disabled', () => {
         const button = wrapper.find(Button);
         expect(button.prop('disabled')).toBeFalsy();
-
-        expect(wrapper.containsMatchingElement(<i className="fa fa-pencil-square-o text-white" />)).toBeTruthy();
+        expect(button.exists('.fa-pencil-square')).toBeTruthy();
       });
     });
 

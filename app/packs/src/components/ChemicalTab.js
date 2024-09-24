@@ -2,8 +2,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Collapse, Modal, Row, Col,
+  Accordion, Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
+  ListGroup, ListGroupItem, InputGroup, Modal, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
 import Select from 'react-select';
@@ -11,8 +11,8 @@ import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
-import CollapseButton from 'src/components/common/CollapseButton';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
@@ -31,9 +31,6 @@ export default class ChemicalTab extends React.Component {
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: false,
       loadChemicalProperties: { vendor: '', loading: false },
-      openInventoryInformationTab: true,
-      openSafetyTab: true,
-      openLocationTab: true,
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewModalForVendor: ''
@@ -391,14 +388,14 @@ export default class ChemicalTab extends React.Component {
     return (
       <Form.Group>
         <Form.Label>{label}</Form.Label>
-          <Select.Creatable
-            name="chemicalStatus"
-            multi={false}
-            options={statusOptions}
-            onChange={(e) => { this.handleFieldChanged(parameter, e.value); }}
-            value={val}
-            clearable={false}
-          />
+        <Select.Creatable
+          name="chemicalStatus"
+          multi={false}
+          options={statusOptions}
+          onChange={(e) => { this.handleFieldChanged(parameter, e.value); }}
+          value={val}
+          clearable={false}
+        />
       </Form.Group>
     );
   }
@@ -694,7 +691,7 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <Form.Group>
+      <Form.Group data-component="chooseVendor">
         <Form.Label>Vendor</Form.Label>
         <Select
           name="chemicalVendor"
@@ -718,19 +715,24 @@ export default class ChemicalTab extends React.Component {
     const conditionalOverlay = 'Assign a cas number using the cas field in labels section for better search results using cas number';
 
     return (
-      <OverlayTrigger placement="top" overlay={cas && cas !== '' ? null : <Tooltip id="sds-query-message">{conditionalOverlay}</Tooltip>}>
-
-        <Form.Group>
-          <Form.Label>Query SDS using</Form.Label>
-          <Select
-            name="queryOption"
-            clearable={false}
-            options={queryOptions}
-            onChange={(e) => this.handleQueryOption(e.value)}
-            value={queryOption}
-          />
-        </Form.Group>
-      </OverlayTrigger>
+      <Form.Group>
+        <Form.Label>
+          Query SDS using
+          <OverlayTrigger
+            placement="top"
+            overlay={cas && cas !== '' ? null : <Tooltip>{conditionalOverlay}</Tooltip>}
+          >
+            <i className="fa fa-info-circle ms-1" />
+          </OverlayTrigger>
+        </Form.Label>
+        <Select
+          name="queryOption"
+          clearable={false}
+          options={queryOptions}
+          onChange={(e) => this.handleQueryOption(e.value)}
+          value={queryOption}
+        />
+      </Form.Group>
     );
   }
 
@@ -814,7 +816,7 @@ export default class ChemicalTab extends React.Component {
     });
 
     return (
-      <div>
+      <div data-component="SafetySheets">
         <ListGroup className="my-3">{mappedSafetySheets}</ListGroup>
       </div>
     );
@@ -881,153 +883,108 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
-  inventoryCollapseBtn() {
-    const { openInventoryInformationTab } = this.state;
-    return (
-      <CollapseButton
-        openTab={openInventoryInformationTab}
-        setOpenTab={() => this.setState(
-          { openInventoryInformationTab: !openInventoryInformationTab }
-        )}
-        name="Inventory Information"
-      />
-    );
-  }
-
-  safetyCollapseBtn() {
-    const { openSafetyTab } = this.state;
-    return (
-      <CollapseButton
-        openTab={openSafetyTab}
-        setOpenTab={() => this.setState({ openSafetyTab: !openSafetyTab })}
-        name="Safety"
-      />
-    );
-  }
-
-  locationCollapseBtn() {
-    const { openLocationTab } = this.state;
-    return (
-      <CollapseButton
-        openTab={openLocationTab}
-        setOpenTab={() => this.setState({ openLocationTab: !openLocationTab })}
-        name="Location and Information"
-      />
-    );
-  }
-
   inventoryInformationTab(data) {
-    const { openInventoryInformationTab, switchRequiredOrderedDate } = this.state;
+    const { switchRequiredOrderedDate } = this.state;
+
     return (
-      <div>
-        {this.inventoryCollapseBtn()}
-        <Collapse in={openInventoryInformationTab} key="inventory-Information-collapse-list">
-          <div>
-            <Row className="my-3">
-              <Col>
-                {this.chemicalStatus(data, 'Status', 'status')}
-              </Col>
-              <Col>
-                {this.textInput(data, 'Vendor', 'vendor')}
-              </Col>
-              <Col>
-                {this.textInput(data, 'Order number', 'order_number')}
-              </Col>
-              <Col>
-                {this.numInputWithoutTable(data, 'Amount', 'amount')}
-              </Col>
-              <Col className="pt-2">
-                {this.numInputWithoutTable(data, '', 'volume')}
-              </Col>
-            </Row>
-            <Row>
-              <Col sm={3}>
-                {this.textInput(data, 'Price', 'price')}
-              </Col>
-              <Col sm={3}>
-                {this.textInput(data, 'Person', 'person')}
-              </Col>
-              <Col sm={3}>
-                <ButtonGroup className="mb-2">
-                  <Button
-                    onClick={() => this.setState({ switchRequiredOrderedDate: 'required' })}
-                    variant={switchRequiredOrderedDate === 'required' ? 'secondary' : 'light'}
-                    size="xxsm"
-                  >
-                    Required date
-                  </Button>
-                  <Button
-                    onClick={() => this.setState({ switchRequiredOrderedDate: 'ordered' })}
-                    variant={switchRequiredOrderedDate === 'ordered' ? 'secondary' : 'light'}
-                    size="xxsm"
-                  >
-                    Ordered date
-                  </Button>
-                </ButtonGroup>
-                {switchRequiredOrderedDate === 'required'
-                  ? this.textInput(data, 'Date', 'required_date')
-                  : this.textInput(data, 'Date', 'ordered_date')}
-              </Col>
-              <Col sm={3}>
-                {this.textInput(data, 'Required by', 'required_by')}
-              </Col>
-            </Row>
-          </div>
-        </Collapse>
-      </div>
+      <>
+        <Row className="mb-3">
+          <Col>
+            {this.chemicalStatus(data, 'Status', 'status')}
+          </Col>
+          <Col>
+            {this.textInput(data, 'Vendor', 'vendor')}
+          </Col>
+          <Col>
+            {this.textInput(data, 'Order number', 'order_number')}
+          </Col>
+          <Col>
+            {this.numInputWithoutTable(data, 'Amount', 'amount')}
+          </Col>
+          <Col className="pt-2">
+            {this.numInputWithoutTable(data, '', 'volume')}
+          </Col>
+        </Row>
+        <Row>
+          <Col sm={3}>
+            {this.textInput(data, 'Price', 'price')}
+          </Col>
+          <Col sm={3}>
+            {this.textInput(data, 'Person', 'person')}
+          </Col>
+          <Col sm={3}>
+            <ButtonGroup className="mb-2">
+              <ButtonGroupToggleButton
+                onClick={() => this.setState({ switchRequiredOrderedDate: 'required' })}
+                active={switchRequiredOrderedDate === 'required'}
+                size="xxsm"
+              >
+                Required date
+              </ButtonGroupToggleButton>
+              <ButtonGroupToggleButton
+                onClick={() => this.setState({ switchRequiredOrderedDate: 'ordered' })}
+                active={switchRequiredOrderedDate === 'ordered'}
+                size="xxsm"
+              >
+                Ordered date
+              </ButtonGroupToggleButton>
+            </ButtonGroup>
+            {switchRequiredOrderedDate === 'required'
+              ? this.textInput(data, 'Date', 'required_date')
+              : this.textInput(data, 'Date', 'ordered_date')}
+          </Col>
+          <Col sm={3}>
+            {this.textInput(data, 'Required by', 'required_by')}
+          </Col>
+        </Row>
+      </>
     );
   }
 
   locationTab(data) {
-    const { openLocationTab } = this.state;
     return (
-      <div>
-        {this.locationCollapseBtn()}
-        <Collapse in={openLocationTab} key="location-tab-collapse-list">
-          <div>
-            <Row className="my-3">
-              <Col>
-                {this.locationInput(data, 'host_building', 'host_location')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'host_room', 'host_location')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'host_cabinet', 'host_location')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'host_group', 'host_group')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'host_owner', 'host_group')}
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col>
-                {this.locationInput(data, 'current_building', 'current_location')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'current_room', 'current_location')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'current_cabinet', 'current_location')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'current_group', 'current_group')}
-              </Col>
-              <Col>
-                {this.locationInput(data, 'borrowed_by', 'current_group')}
-              </Col>
-            </Row>
-            <div>
-              {this.textInput(data, 'Disposal information', 'disposal_info')}
-            </div>
-            <div className="mt-2">
-              {this.textInput(data, 'Important notes', 'important_notes')}
-            </div>
-          </div>
-        </Collapse>
-      </div>
+      <>
+        <Row className="mb-3">
+          <Col>
+            {this.locationInput(data, 'host_building', 'host_location')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'host_room', 'host_location')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'host_cabinet', 'host_location')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'host_group', 'host_group')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'host_owner', 'host_group')}
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Col>
+            {this.locationInput(data, 'current_building', 'current_location')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'current_room', 'current_location')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'current_cabinet', 'current_location')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'current_group', 'current_group')}
+          </Col>
+          <Col>
+            {this.locationInput(data, 'borrowed_by', 'current_group')}
+          </Col>
+        </Row>
+        <div className="mb-3">
+          {this.textInput(data, 'Disposal information', 'disposal_info')}
+        </div>
+        <div>
+          {this.textInput(data, 'Important notes', 'important_notes')}
+        </div>
+      </>
     );
   }
 
@@ -1073,7 +1030,7 @@ export default class ChemicalTab extends React.Component {
       <Tooltip id="disabledSdsSearchButton">delete saved sheets to enable search button</Tooltip>
     );
 
-    const buttonElement = (
+    return (
       <div className="mt-4">
         {button}
         {checkSavedSds && (
@@ -1083,42 +1040,31 @@ export default class ChemicalTab extends React.Component {
         )}
       </div>
     );
-    return buttonElement;
   }
 
   safetyTab() {
-    const { openSafetyTab, displayWell } = this.state;
+    const { displayWell } = this.state;
     return (
-      <div>
-        {this.safetyCollapseBtn()}
-        <Collapse in={openSafetyTab} key="inventory-safety-tab-collapse-list">
-          <div className="mt-3">
-            <Row>
-              <Col>
-                {this.chooseVendor()}
-              </Col>
-              <Col>
-                {this.queryOption()}
-              </Col>
-              <Col>
-                {this.safetySheetLanguage()}
-              </Col>
-              <Col className="pt-2">
-                {this.querySafetySheetButton()}
-              </Col>
-            </Row>
-            <div>
-              { displayWell && (
-                <div>
-                  {this.renderSafetySheets()}
-                </div>
-              ) }
-            </div>
-            { this.renderWarningMessage() }
-            { this.renderSafetyPhrases() }
-          </div>
-        </Collapse>
-      </div>
+      <>
+        <Row className="mb-3 align-items-end">
+          <Col>
+            {this.chooseVendor()}
+          </Col>
+          <Col>
+            {this.queryOption()}
+          </Col>
+          <Col>
+            {this.safetySheetLanguage()}
+          </Col>
+          <Col>
+            {this.querySafetySheetButton()}
+          </Col>
+        </Row>
+
+        {displayWell && this.renderSafetySheets()}
+        {this.renderWarningMessage()}
+        {this.renderSafetyPhrases()}
+      </>
     );
   }
 
@@ -1129,47 +1075,47 @@ export default class ChemicalTab extends React.Component {
       const condition = chemical._chemical_data[0].alfaProductInfo
       && chemical._chemical_data[0].alfaProductInfo.properties;
       fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n') : fetchedChemicalProperties;
+        ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n')
+        : fetchedChemicalProperties;
     } else if (viewModalForVendor === 'merck') {
       const condition = chemical._chemical_data[0].merckProductInfo
         && chemical._chemical_data[0].merckProductInfo.properties;
       fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n') : fetchedChemicalProperties;
+        ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n')
+        : fetchedChemicalProperties;
     }
-    if (!viewChemicalPropertiesModal) {
-      return null;
-    }
-      return (
-        <Modal
-          centered
-          show={viewChemicalPropertiesModal}
-          onHide={() => this.closePropertiesModal()}
-          size="lg"
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Fetched Chemical Properties</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-              <Form.Group controlId="propertiesModal">
-                <Form.Control
-                  as="textarea"
-                  className="w-100"
-                  readOnly
-                  disabled
-                  type="text"
-                  rows={10}
-                  value={fetchedChemicalProperties}
-                />
-              </Form.Group>
-          </Modal.Body>
-          <Modal.Footer className="border-0">
-              <Button variant="warning" onClick={() => this.closePropertiesModal()}>
-                Close
-              </Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
+
+    return (
+      <Modal
+        centered
+        show={viewChemicalPropertiesModal}
+        onHide={() => this.closePropertiesModal()}
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Fetched Chemical Properties</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group controlId="propertiesModal">
+            <Form.Control
+              as="textarea"
+              className="w-100"
+              readOnly
+              disabled
+              type="text"
+              rows={10}
+              value={fetchedChemicalProperties}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer className="border-0">
+          <Button variant="warning" onClick={() => this.closePropertiesModal()}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  }
 
   renderWarningMessage() {
     const { warningMessage } = this.state;
@@ -1187,20 +1133,39 @@ export default class ChemicalTab extends React.Component {
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
-      <div className="container-fluid">
-        <div className="mb-3">
-          {this.inventoryInformationTab(data)}
-        </div>
-        <div className="mb-3">
-          {this.safetyTab()}
-        </div>
-        <div className="mb-3">
-          {this.locationTab(data)}
-        </div>
-        <div>
-          {this.renderPropertiesModal()}
-        </div>
-      </div>
+      <>
+        <Accordion
+          alwaysOpen
+          defaultActiveKey={[
+            'inventoryInformationTab',
+            'safetyTab',
+            'locationTab',
+          ]}
+        >
+          <Accordion.Item eventKey="inventoryInformationTab">
+            <Accordion.Header>Inventory Information</Accordion.Header>
+            <Accordion.Body>
+              {this.inventoryInformationTab(data)}
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="safetyTab">
+            <Accordion.Header>Safety</Accordion.Header>
+            <Accordion.Body>
+              {this.safetyTab()}
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="locationTab">
+            <Accordion.Header>Location and Information</Accordion.Header>
+            <Accordion.Body>
+              {this.locationTab(data)}
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+
+        {this.renderPropertiesModal()}
+      </>
     );
   }
 }

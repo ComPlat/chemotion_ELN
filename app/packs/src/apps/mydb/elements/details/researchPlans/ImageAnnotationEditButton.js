@@ -40,6 +40,7 @@ export default class ImageAnnotationEditButton extends Component {
           disabled={!isActive}
         >
           <i className="fa fa-pencil-square" aria-hidden="true" />
+          <span className="visualy-hidden">Edit image annotation</span>
         </Button>
       </OverlayTrigger>
     );
