@@ -80,7 +80,7 @@ export default class PrivateNoteElement extends React.Component {
     }
 
     return (
-      <div className="mb-2">
+      <div className="my-2">
         <Form.Group>
           <Form.Label>
             Private Note
