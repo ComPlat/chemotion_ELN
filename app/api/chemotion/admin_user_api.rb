@@ -61,14 +61,10 @@ module Chemotion
           # rubocop:disable Rails/SkipsModelValidations
           elsif existing_user.nil?
             deleted_user.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
-            # create a default user profile
-            deleted_user.has_profile
             { status: 'success',
               message: 'Account successfully restored' }
           elsif existing_user.present?
             deleted_user.update_columns(deleted_at: nil, account_active: false)
-            # create a default user profile
-            deleted_user.has_profile
             { status: 'warning',
               message: 'Account restored. Warning: Abbreviation already exists! Please update the Abbr and Email' }
           end
