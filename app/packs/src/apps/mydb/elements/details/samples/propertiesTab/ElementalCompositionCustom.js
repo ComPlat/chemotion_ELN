@@ -50,7 +50,6 @@ export default class ElementalCompositionCustom extends React.Component {
             numeralFormat="0,0.00"
             label={key}
             value={newData[key]}
-            defaultValue={newData[key]}
             onChange={(v) => this.handleElementsListChanged(v, key, el_composition)}
           />
         </Form.Group>

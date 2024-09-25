@@ -72,7 +72,7 @@ NumeralInput.defaultProps = {
 
 NumeralInput.propTypes = {
   onChange: PropTypes.func.isRequired,
-  value: PropTypes.number.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   numeralFormat: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
   variant: PropTypes.string,
