@@ -106,7 +106,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     await fuelKetcherData();
     mols.forEach((item) => {
       const atom = latestData[item]?.atoms[0];
-      if (atom) {
+      if (atom && atom.alias) {
         const splits_alias = atom.alias.split("_");
         let image_coordinates = imagesList[splits_alias[2]].boundingBox;
         image_coordinates = {
@@ -128,7 +128,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       const molecule = ketFormat[item];
 
       // Check if molecule and atoms exist, and if the alias is formatted correctly
-      if (molecule?.atoms?.[0]?.alias) {
+      if (molecule?.atoms[0]?.alias) {
         const alias = molecule.atoms[0].alias.split("_");
 
         // Check if alias has at least 3 parts
@@ -169,12 +169,12 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     console.log("DATA FUELED!!!!!!!!!");
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
     allNodes = [...latestData.root.nodes];
-    mols = Object.keys(latestData).filter(
-      item => latestData[item]?.atoms?.[0]?.alias
-    );
+
     imagesList = allNodes.length > mols.length ? allNodes.filter(
       item => item.type === 'image'
     ) : imagesList;
+    mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
+    console.log({ imagesList, mols, allNodes, l: allNodes.length - imagesList.length });
   };
   useEffect(() => {
     window.addEventListener('message', loadContent);
