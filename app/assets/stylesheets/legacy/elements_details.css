@@ -17,30 +17,6 @@
   background: white;
 }
 
-.full-screen .detail-card > .panel-body {
-  overflow-x: hidden;
-  overflow-y: scroll;
-  max-height: calc(100vh - 110px);
-}
-
-.normal-screen .detail-card > .panel-body {
-  overflow-x: hidden;
-  overflow-y: scroll;
-  max-height: calc(100vh - 240px);
-}
-
-.full-screen .detail-card > .card-body {
-  overflow-x: hidden;
-  overflow-y: scroll;
-  max-height: calc(100vh - 110px);
-}
-
-.normal-screen .detail-card > .card-body {
-  overflow-x: hidden;
-  overflow-y: scroll;
-  max-height: calc(100vh - 240px);
-}
-
 .center {
   position: absolute;
   top: 50%;
