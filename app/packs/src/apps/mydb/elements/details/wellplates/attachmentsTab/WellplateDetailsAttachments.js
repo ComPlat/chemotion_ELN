@@ -27,6 +27,8 @@ import {
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
+import Wellplate from 'src/models/Wellplate';
+import Attachment from 'src/models/Attachment';
 
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
@@ -384,52 +386,8 @@ export class WellplateDetailsAttachments extends Component {
 }
 
 WellplateDetailsAttachments.propTypes = {
-  wellplate: PropTypes.shape({
-    id: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ]).isRequired,
-    changed: PropTypes.bool.isRequired,
-    body: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    attachments: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.number
-        ]).isRequired,
-        aasm_state: PropTypes.string.isRequired,
-        content_type: PropTypes.string.isRequired,
-        filename: PropTypes.string.isRequired,
-        filesize: PropTypes.number.isRequired,
-        identifier: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.number
-        ]).isRequired,
-        thumb: PropTypes.bool.isRequired
-      })
-    )
-  }).isRequired,
-  attachments: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ]).isRequired,
-    aasm_state: PropTypes.string.isRequired,
-    content_type: PropTypes.string.isRequired,
-    filename: PropTypes.string.isRequired,
-    filesize: PropTypes.number.isRequired,
-    identifier: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ]).isRequired,
-    thumb: PropTypes.bool.isRequired
-  })),
+  wellplate: PropTypes.instanceOf(Wellplate).isRequired,
+  attachments: PropTypes.arrayOf(PropTypes.instanceOf(Attachment)).isRequired,
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
