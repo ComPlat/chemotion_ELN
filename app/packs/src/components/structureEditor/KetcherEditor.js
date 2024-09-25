@@ -8,6 +8,9 @@ const FILOStack = [];
 const uniqueEvents = new Set();
 let latestData = null;
 let imagesList = [];
+let mols = [];
+let allNodes = [];
+
 function KetcherEditor({ editor, iH, iS, molfile }) {
   const iframeRef = useRef();
   // const [editor] = useState(editor);
@@ -32,9 +35,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         case "Load canvas":
           // await editor.structureDef.editor.layout();
           if (uniqueEvents.length > 1) {
-
-            latestData = JSON.parse(await editor.structureDef.editor.getKet());
-            console.log(latestData);
+            await fuelKetcherData();
             addEventToFILOStack("Load canvas");
           }
 
@@ -58,8 +59,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       }
     }
     await editor.structureDef.editor.setMolecule(latestData);
-    latestData = null;
-
     processFILOStack();
   };
 
@@ -71,14 +70,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   };
 
   const processFILOStack = async () => {
-    latestData = JSON.parse(await editor.structureDef.editor.getKet());
-    const allNodes = [...latestData.root.nodes];
-
-    const mols = Object.keys(latestData).filter(
-      item => latestData[item]?.atoms?.[0]?.alias
-    );
-    imagesList = latestData.root.nodes.slice(allNodes?.length - mols?.length);
-
+    await fuelKetcherData();
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
       FILOStack.splice(loadCanvasIndex, 1);
@@ -95,7 +87,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       switch (event) {
         case "Move image":
           console.log("Image moved!");
-          moveTemplate(latestData, mols, allNodes);
+          moveTemplate(latestData, allNodes);
           break;
         case "Add atom":
           handleAddAtom(latestData);
@@ -111,29 +103,28 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   };
 
   const placeImageOnAtoms = async (mols) => {
-    latestData = JSON.parse(await editor.structureDef.editor.getKet());
-    mols.forEach((item, idx) => {
+    await fuelKetcherData();
+    mols.forEach((item) => {
       const atom = latestData[item]?.atoms[0];
       if (atom) {
         const splits_alias = atom.alias.split("_");
-        let boundingBox = imagesList[splits_alias[2]].boundingBox;
-        boundingBox = {
-          ...boundingBox,
-          x: atom.location[0] - boundingBox.width / 2,
-          y: atom.location[1] + boundingBox.height / 2,
+        let image_coordinates = imagesList[splits_alias[2]].boundingBox;
+        image_coordinates = {
+          ...image_coordinates,
+          x: atom.location[0] - image_coordinates.width / 2,
+          y: atom.location[1] + image_coordinates.height / 2,
           z: 0
         };
-        imagesList[splits_alias[2]].boundingBox = boundingBox;
+        imagesList[splits_alias[2]].boundingBox = image_coordinates;
       };
     });
     latestData.root.nodes.push(...imagesList);
-    console.log({ latestData });
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
   };
 
   // Helper function to move image and update molecule positions
-  const moveTemplate = async (ketFormat, mols, allNodes) => {
-    mols.forEach(async (item) => {
+  const moveTemplate = async (ketFormat) => {
+    mols.forEach(async (item, idx) => {
       const molecule = ketFormat[item];
 
       // Check if molecule and atoms exist, and if the alias is formatted correctly
@@ -150,14 +141,14 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
             // Update molecule atom's location and alias
             molecule.atoms[0].location = location;
-            molecule.atoms[0].alias = `${alias[0]}_${alias[1]}_${imagesList.length - 1}`;
+            molecule.atoms[0].alias = `${alias[0]}_${alias[1]}_${idx}`;
           }
         }
       }
     });
-    ketFormat.root.nodes = ketFormat.root.nodes.slice(mols.length - 1, imagesList.length);
+    ketFormat.root.nodes = ketFormat.root.nodes.slice(0, mols.length);
     await editor.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
-    placeImageOnAtoms(mols, allNodes);
+    placeImageOnAtoms(mols);
   };
 
   // Handle atom addition logic
@@ -174,6 +165,17 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     await editor.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
   };
 
+  const fuelKetcherData = async () => {
+    console.log("DATA FUELED!!!!!!!!!");
+    latestData = JSON.parse(await editor.structureDef.editor.getKet());
+    allNodes = [...latestData.root.nodes];
+    mols = Object.keys(latestData).filter(
+      item => latestData[item]?.atoms?.[0]?.alias
+    );
+    imagesList = allNodes.length > mols.length ? allNodes.filter(
+      item => item.type === 'image'
+    ) : imagesList;
+  };
   useEffect(() => {
     window.addEventListener('message', loadContent);
     return () => {
