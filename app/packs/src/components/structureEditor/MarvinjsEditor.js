@@ -28,12 +28,13 @@ class MarvinjsEditor extends React.Component {
 
   attached(mv) {
     this.setState({ loading: false });
+    const { fnCb } = this.props;
     const { editor } = this.props;
     const molfile = this.props.molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
     mv.sketcherInstance.setDisplaySettings({ toolbars: 'reporting' });
     mv.sketcherInstance.importStructure('mol', molfile).then(() => {}, (error) => { alert(error); }).catch((error) => { alert(error); });
     editor.structureDef.getEditorFunction = () => mv;
-    this.props.parent.setState({ editor });
+    fnCb(editor);
   }
 
   attachError(e) {
@@ -61,9 +62,9 @@ class MarvinjsEditor extends React.Component {
 
 MarvinjsEditor.propTypes = {
   editor: PropTypes.instanceOf(StructureEditor).isRequired,
-  parent: PropTypes.object.isRequired,
   molfile: PropTypes.string,
-  iH: PropTypes.string.isRequired
+  iH: PropTypes.string.isRequired,
+  fnCb: PropTypes.func.isRequired,
 };
 
 MarvinjsEditor.defaultProps = { molfile: '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n' };
