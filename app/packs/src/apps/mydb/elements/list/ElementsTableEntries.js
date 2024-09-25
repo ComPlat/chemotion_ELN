@@ -31,21 +31,21 @@ export function reactionRole(element) {
         tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-home c-bs-primary" />
+            <i className="fa fa-home c-bs-primary me-1" />
           </OverlayTrigger>
         );
       case 'parts':
         tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-bookmark c-bs-success" />
+            <i className="fa fa-bookmark c-bs-success me-1" />
           </OverlayTrigger>
         );
       case 'single':
         tooltip = <Tooltip id="roleTp">Single</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-asterisk c-bs-danger" />
+            <i className="fa fa-asterisk c-bs-danger me-1" />
           </OverlayTrigger>
         );
       default:

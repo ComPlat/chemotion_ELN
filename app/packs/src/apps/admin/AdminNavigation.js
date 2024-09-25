@@ -52,7 +52,7 @@ export default class AdminNavigation extends React.Component {
             <NavHead />
           </Navbar.Brand>
           <div className="h1 mb-0 ms-5 ps-5">ELN Administration</div>
-          <Nav className="ms-auto fs-4">
+          <Nav className="ms-auto fs-5">
             {currentUser ? <UserAuth /> : <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />}
           </Nav>
         </Container>

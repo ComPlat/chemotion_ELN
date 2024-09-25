@@ -180,12 +180,10 @@ function GeneralMaterialGroup({
   );
 
   return (
-    <Table responsive className="w-100 borderless" size="sm">
+    <table  className="w-100 m-2">
       <colgroup>
-        <col style={{ width: '4%' }} />
-        <col
-          style={{ width: showLoadingColumn ? '8%' : '15%' }}
-        />
+        <col style={{ width: '4%' }}/>
+        <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
         <col style={{ width: '4%' }} />
         <col style={{ width: '2%' }} />
         <col style={{ width: '2%' }} />
@@ -197,7 +195,7 @@ function GeneralMaterialGroup({
       </colgroup>
       <thead>
         <tr>
-          <th className>{addSampleButton}</th>
+          <th>{addSampleButton}</th>
           <th>{headers.group}</th>
 
           {isReactants ? (
@@ -231,7 +229,7 @@ function GeneralMaterialGroup({
         </tr>
       </thead>
       {contents}
-    </Table>
+    </table>
   );
 }
 

@@ -105,12 +105,11 @@ export default class ReactionDetailsPurification extends Component {
     const { reaction, onInputChange, additionQuillRef } = this.props;
     return (
       <>
-        <Row className='mb-3'>
-          <Col md={12}>
+        <Row className='mb-2'>
+          <Col sm={12}>
             <Form.Group>
               <Form.Label>Purification</Form.Label>
               <Select
-                className="status-select z-10"
                 name="purification"
                 multi
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
@@ -121,8 +120,8 @@ export default class ReactionDetailsPurification extends Component {
             </Form.Group>
           </Col>
         </Row>
-        <Row className='mb-3'>
-          <Col md={12}>
+        <Row className='mb-2'>
+          <Col sm={12}>
             <Form.Label>Purification Solvents</Form.Label>
             <MaterialGroupContainer
               reaction={reaction}
