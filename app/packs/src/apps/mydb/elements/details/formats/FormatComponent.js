@@ -103,9 +103,9 @@ FormatComponentHeader.propTypes = {
 };
 
 const FormatComponent = ({
-  list, isSaved, onSave, onFormat, onClose
+  list, isPendingToSave, onSave, onFormat, onClose
 }) => (
-  <Card className="detail-card">
+  <Card className={"detail-card" + (isPendingToSave ? " detail-card--unsaved" : "")}>
     <Card.Header>
       <FormatComponentHeader
         onSave={onSave}
@@ -123,7 +123,7 @@ const FormatComponent = ({
 
 FormatComponent.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isSaved: PropTypes.boolean,
+  isPendingToSave: PropTypes.boolean,
   onSave: PropTypes.func.isRequired,
   onFormat: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
