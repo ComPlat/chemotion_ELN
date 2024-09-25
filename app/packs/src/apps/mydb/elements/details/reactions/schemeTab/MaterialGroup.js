@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger, Table
 } from 'react-bootstrap';
-import VirtualizedSelect from 'react-virtualized-select';
+import Select from 'react-select3';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -144,11 +144,9 @@ function GeneralMaterialGroup({
     };
 
     reagentDd = (
-      <VirtualizedSelect
-        disabled={!permitOn(reaction)}
+      <Select
+        isDisabled={!permitOn(reaction)}
         className="form-control-sm"
-        name="Reagents"
-        multi={false}
         options={reagentList}
         placeholder="Reagents"
         onChange={createReagentForReaction}
@@ -275,11 +273,8 @@ function SolventsMaterialGroup({
         <tr>
           <th>{addSampleButton}</th>
           <th>
-            <VirtualizedSelect
-              disabled={!permitOn(reaction)}
-              className="form-control-sm"
-              name="default solvents"
-              multi={false}
+            <Select
+              isDisabled={!permitOn(reaction)}
               options={solventOptions}
               placeholder="Default solvents"
               onChange={createDefaultSolventsForReaction}
