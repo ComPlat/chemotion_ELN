@@ -43,7 +43,7 @@ const DeviceUserGroupsTab = () => {
           isLoading={devicesStore.is_loading}
           loadOptions={(input) => loadUserByName(input, 'Person')}
           loadingMessage={() => "Type to search"}
-          value={selectedUserFormater(device.people).options}
+          value={selectedUserFormater(device.people)}
           placeholder="Select ..."
           onChange={(value) => handleUser(value, 'people')}
           onMenuOpen={() => toggleLoading(true)}
@@ -59,7 +59,7 @@ const DeviceUserGroupsTab = () => {
           isLoading={devicesStore.is_loading}
           loadOptions={(input) => loadUserByName(input, 'Group')}
           loadingMessage={() => "Type to search"}
-          value={selectedUserFormater(device.groups).options}
+          value={selectedUserFormater(device.groups)}
           placeholder="Select ..."
           onChange={(value) => handleUser(value, 'groups')}
           onMenuOpen={() => toggleLoading(true)}
