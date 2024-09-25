@@ -109,6 +109,10 @@ module Versioning
         ->(key, value) { default_formatter.call(key, value)&.dig(*attributes) }
       end
 
+      def array_formatter
+        ->(key, value) { default_formatter.call(key, value)&.join("\n") }
+      end
+
       def non_formatter
         ->(_key, value) { value }
       end
