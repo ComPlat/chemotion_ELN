@@ -76,15 +76,6 @@
         td{
             border-width: 0px;
         }
-        .white-background{
-            background:white
-        }
-        .blue-background{
-            background:rgb(51, 122, 183)
-        }
-        .top-border{
-            border-top: 1px solid #ddd;
-        }
     }
 
     .title-panel{
@@ -168,22 +159,6 @@
 #cell-line-details-tab{
     .tab-content{
         margin-top: 20px;
-    }
-}
-
-.tab-content{
-    .eln-panel-detail{
-        .header{
-            margin-top: 3px;
-            margin-right: 10px;
-            color: white;
-        }
-        .panel-heading{
-            min-height: 41px;
-        }
-        .blue-background{
-            background:rgb(51, 122, 183)
-        }
     }
 }
 

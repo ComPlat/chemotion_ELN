@@ -116,19 +116,17 @@ export default class ReportContainer extends Component {
 
     const { report } = this.props;
     return (
-      <Card className="eln-panel-detail">
-        <Card.Header>
-          <div className='d-flex align-items-center justify-content-between'>
-            Report Generation
-            <div className="d-flex gap-1">
-              <ResetBtn key="resetBtn" />
-              <GenerateReportBtn
-                key="generateReportBtn"
-                allState={this.state}
-                updateQueue={this.updateQueue}
-              />
-              <CloseBtn key="closeBtn" report={report} />
-            </div>
+      <Card className="detail-card">
+        <Card.Header className='d-flex align-items-center justify-content-between'>
+          Report Generation
+          <div className="d-flex gap-1">
+            <ResetBtn key="resetBtn" />
+            <GenerateReportBtn
+              key="generateReportBtn"
+              allState={this.state}
+              updateQueue={this.updateQueue}
+            />
+            <CloseBtn key="closeBtn" report={report} />
           </div>
         </Card.Header>
         <Card.Body>

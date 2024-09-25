@@ -176,7 +176,7 @@ export default class TemplateManagement extends React.Component {
         <Dropzone
           accept="application/pdf,.docx,.xlsx,.html,.csv,.erb"
           onDrop={attachment_file => this.handleFileDrop(attachment_file)}
-          className='d-flex align-items-center justify-content-center pb-3 w-100 dnd-zone'
+          className='d-flex align-items-center justify-content-center dnd-zone'
         >
           <div className='text-center pt-3 text-secondary fs-6'>
             Drop File, or Click to Select.

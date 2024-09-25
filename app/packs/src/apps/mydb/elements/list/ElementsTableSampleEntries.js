@@ -330,7 +330,7 @@ export default class ElementsTableSampleEntries extends Component {
       const applyHighlight = selected || keyboardSeletectedElementId === sample.id
 
       return (
-        <tr key={sample.id} className={classnames({ 'bg-primary': applyHighlight })}>
+        <tr key={sample.id} className={classnames({ 'text-bg-primary': applyHighlight })}>
           <td width="30px">
             <ElementCheckbox
               element={sample}
@@ -339,7 +339,6 @@ export default class ElementsTableSampleEntries extends Component {
             />
           </td>
           <td
-            className={classnames({ 'text-white': applyHighlight })}
             onClick={() => showDetails(sample.id)}
             role="button"
           >

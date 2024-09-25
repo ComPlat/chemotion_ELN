@@ -66,8 +66,8 @@ export default class ComputeTaskContainer extends React.Component {
     const { tasks } = this.state;
 
     return (
-      <Card className="eln-panel-detail">
-        <Card.Header className="d-flex text-bg-primary align-items-baseline justify-content-between">
+      <Card className="detail-card">
+        <Card.Header className="d-flex align-items-baseline justify-content-between">
           Task
           <Button
             key="closeBtn"

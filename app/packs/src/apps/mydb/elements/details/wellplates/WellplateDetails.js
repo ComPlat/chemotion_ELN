@@ -379,7 +379,7 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
+      <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="detail-card">
         <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
         <Card.Body>
           <ElementDetailSortTab

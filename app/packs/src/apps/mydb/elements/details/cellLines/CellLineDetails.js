@@ -193,10 +193,8 @@ class CellLineDetails extends React.Component {
     const { readOnly } = this.state;
     const { activeTab } = this.state;
     return (
-      <Card
-        className="eln-panel-detail"
-      >
-        <Card.Header className="text-bg-primary">
+      <Card className="detail-card">
+        <Card.Header>
           {this.renderHeaderContent()}
         </Card.Header>
         <Card.Body>

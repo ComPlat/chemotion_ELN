@@ -1,0 +1,26 @@
+.detail-card {
+  .card-header {
+    @extend .text-bg-primary;
+  }
+  &.detail-card--unsaved .card-header {
+    @extend .text-bg-info;
+  }
+}
+
+.tab-pane > .detail-card, .tab-pane > .detail-card .card-header {
+  @extend .border-top-0;
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
+}
+
+.full-screen .detail-card > .card-body {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: calc(100vh - 110px);
+}
+
+.normal-screen .detail-card > .card-body {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: calc(100vh - 240px);
+}

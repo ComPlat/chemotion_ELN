@@ -1,12 +1,5 @@
 .attachment-dropzone {
-  width: 100%;
-  padding: 20px;
   @extend .dnd-zone;
-  text-align: center;
-  background-color: $body-bg;
-  border-radius: 10px;
-  transition: all 0.3s ease;
-  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;

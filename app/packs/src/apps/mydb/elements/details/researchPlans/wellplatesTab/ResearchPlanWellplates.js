@@ -40,12 +40,9 @@ class ResearchPlanWellplates extends Component {
 
   renderDropZone() {
     const { isOver, connectDropTarget } = this.props;
-    const style = {
-      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '8px'
-    };
-    if (isOver) { style.borderColor = '#337ab7'; }
-
-    return connectDropTarget(<div style={style}>Drop Wellplate here to add.</div>);
+    let className = 'mb-3 dnd-zone';
+    if (isOver) { className += ' dnd-zone-over'; }
+    return connectDropTarget(<div className={className}>Drop Wellplate here to add.</div>);
   }
 
 

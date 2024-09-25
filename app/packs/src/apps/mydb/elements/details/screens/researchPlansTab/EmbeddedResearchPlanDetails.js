@@ -376,10 +376,10 @@ export default class EmbeddedResearchPlanDetails extends Component {
       );
     }
 
-    // className="eln-panel-detail research-plan-details"
+    // className="detail-card research-plan-details"
     return (
-      <Card className="mb-4 eln-panel-detail rounded-0">
-        <Card.Header className={`rounded-0 text-bg-${researchPlan.isPendingToSave ? 'info' : 'primary'}`}>
+      <Card className={"mb-4 detail-card rounded-0" + (researchPlan.isPendingToSave ? " detail-card--unsaved" : "")}>
+        <Card.Header className="rounded-0">
           {this.renderCardHeader(researchPlan)}
         </Card.Header>
         <Collapse in={this.state.expanded}>
