@@ -1,30 +1,24 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
+import { ImageList } from '@material-ui/core';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 
 const FILOStack = [];
 const uniqueEvents = new Set();
 let latestData = null;
-
+let imagesList = [];
 function KetcherEditor({ editor, iH, iS, molfile }) {
   const iframeRef = useRef();
-  const [editorS] = useState(editor);
+  // const [editor] = useState(editor);
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
-
-  const addEventToFILOStack = (event) => {
-    if (!uniqueEvents.has(event)) {
-      FILOStack.push(event);
-      uniqueEvents.add(event);
-    }
-  };
 
   // Load the editor content and set up the molecule
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
-      window.editor = editorS;
-      editorS.structureDef.editor.setMolecule(initMol);
-      editorS._structureDef.editor.editor.subscribe('change', async (eventData) => {
+      window.editor = editor;
+      editor.structureDef.editor.setMolecule(initMol);
+      editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
         handleEventCapture(result);
       });
@@ -32,18 +26,25 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   };
 
   const handleEventCapture = async (data) => {
-
     for (const eventItem of data) {
+      console.log(eventItem);
       switch (eventItem?.operation) {
         case "Load canvas":
-          latestData = JSON.parse(await editorS.structureDef.editor.getKet());
-          addEventToFILOStack("Load canvas");
+          // await editor.structureDef.editor.layout();
+          if (uniqueEvents.length > 1) {
+
+            latestData = JSON.parse(await editor.structureDef.editor.getKet());
+            console.log(latestData);
+            addEventToFILOStack("Load canvas");
+          }
+
           break;
         case "Move image":
           addEventToFILOStack("Move image");
           break;
 
         case "Add atom":
+          console.log("add atom");
           addEventToFILOStack("Add atom");
           break;
 
@@ -56,17 +57,31 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
       }
     }
-    await editorS.structureDef.editor.setMolecule(latestData);
+    await editor.structureDef.editor.setMolecule(latestData);
     latestData = null;
+
     processFILOStack();
   };
 
+  const addEventToFILOStack = (event) => {
+    if (!uniqueEvents.has(event)) {
+      FILOStack.push(event);
+      uniqueEvents.add(event);
+    }
+  };
+
   const processFILOStack = async () => {
-    latestData = JSON.parse(await editorS.structureDef.editor.getKet());
+    latestData = JSON.parse(await editor.structureDef.editor.getKet());
+    const allNodes = [...latestData.root.nodes];
+
+    const mols = Object.keys(latestData).filter(
+      item => latestData[item]?.atoms?.[0]?.alias
+    );
+    imagesList = latestData.root.nodes.slice(allNodes?.length - mols?.length);
+
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
-      console.log(JSON.parse(await editorS.structureDef.editor.getKet()));
-      FILOStack.splice(loadCanvasIndex, 1); // Remove "Load canvas" from the stack
+      FILOStack.splice(loadCanvasIndex, 1);
       uniqueEvents.delete("Load canvas");
     }
     if (!latestData) {
@@ -79,11 +94,11 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
       switch (event) {
         case "Move image":
-          moveTemplate();
           console.log("Image moved!");
+          moveTemplate(latestData, mols, allNodes);
           break;
         case "Add atom":
-          handleAddAtom();
+          handleAddAtom(latestData);
           break;
         case "Move atom":
           console.log("Atom moved!");
@@ -95,75 +110,69 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
-  // Helper function to move image and update molecule positions
-  const moveTemplate = async () => {
-    const ketFormat = latestData;
-    const allNodes = [...ketFormat.root.nodes];
-    const mols = Object.keys(ketFormat).filter(
-      item => ketFormat[item]?.atoms?.[0]?.alias
-    );
-
-    // const selection = editorS._structureDef.editor.editor._selection;
-    // if (selection?.images) {
-    //   moveTemplate(ketFormat, allNodes, mols);
-    // }
-
-    const imagesList = ketFormat.root.nodes.slice(allNodes.length - mols.length);
-    imagesList.forEach((item, idx) => {
-      const location = {
-        x: item.boundingBox.x,
-        y: item.boundingBox.y,
-        z: 0,
+  const placeImageOnAtoms = async (mols) => {
+    latestData = JSON.parse(await editor.structureDef.editor.getKet());
+    mols.forEach((item, idx) => {
+      const atom = latestData[item]?.atoms[0];
+      if (atom) {
+        const splits_alias = atom.alias.split("_");
+        let boundingBox = imagesList[splits_alias[2]].boundingBox;
+        boundingBox = {
+          ...boundingBox,
+          x: atom.location[0] - boundingBox.width / 2,
+          y: atom.location[1] + boundingBox.height / 2,
+          z: 0
+        };
+        imagesList[splits_alias[2]].boundingBox = boundingBox;
       };
-      const molecule = ketFormat[mols[idx]];
-      molecule.atoms[0].location = [...Object.values(location)];
-      if (molecule?.atoms[0]?.alias && molecule?.bonds?.length) {
-        const closest = findClosestAtom([...Object.values(location)], molecule.atoms);
-        item = closest;
-      } else {
-        molecule.atoms[0].location = [...Object.values(location)];
-      }
-      molecule.stereoFlagPosition = location;
     });
-    await editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+    latestData.root.nodes.push(...imagesList);
+    console.log({ latestData });
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+  };
+
+  // Helper function to move image and update molecule positions
+  const moveTemplate = async (ketFormat, mols, allNodes) => {
+    mols.forEach(async (item) => {
+      const molecule = ketFormat[item];
+
+      // Check if molecule and atoms exist, and if the alias is formatted correctly
+      if (molecule?.atoms?.[0]?.alias) {
+        const alias = molecule.atoms[0].alias.split("_");
+
+        // Check if alias has at least 3 parts
+        if (alias.length >= 3) {
+          const image = imagesList[alias[2]];
+
+          if (image?.boundingBox) {
+            const { x, y } = image.boundingBox; // Destructure x, y coordinates from boundingBox
+            const location = [x, y, 0]; // Set location as an array of coordinates
+
+            // Update molecule atom's location and alias
+            molecule.atoms[0].location = location;
+            molecule.atoms[0].alias = `${alias[0]}_${alias[1]}_${imagesList.length - 1}`;
+          }
+        }
+      }
+    });
+    ketFormat.root.nodes = ketFormat.root.nodes.slice(mols.length - 1, imagesList.length);
+    await editor.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+    placeImageOnAtoms(mols, allNodes);
   };
 
   // Handle atom addition logic
-  const handleAddAtom = async () => {
-    const ketFormat = latestData;
-    console.log({ handleAddAtom: latestData });
+  const handleAddAtom = async (ketFormat) => {
     const lastMoleculeKey = `mol${Object.keys(ketFormat).length - 2}`;
     const lastMolecule = ketFormat[lastMoleculeKey];
 
     if (lastMolecule?.atoms[1]?.label === "H") {
       delete lastMolecule.sgroups;
       delete lastMolecule.bonds;
+      lastMolecule.atoms[0].alias += `_${imagesList.length - 1}`;
       lastMolecule.atoms.splice(1, 1);
     }
-    await editorS.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
+    await editor.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
   };
-
-  function calculateDistance(atom1, atom2) {
-    const dx = atom2[0] - atom1[0];
-    const dy = atom2[1] - atom1[1];
-    const dz = atom2[2] - atom1[2];
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-  }
-
-  function findClosestAtom(cursorLocation, atoms) {
-    let closestAtom = null;
-    let minDistance = Infinity;
-    atoms.forEach(atom => {
-      const distance = calculateDistance(cursorLocation, atom.location);
-      if (distance < minDistance) {
-
-        minDistance = distance;
-        console.log({ minDistance });
-        closestAtom = atom;
-      }
-    });
-    return closestAtom;
-  }
 
   useEffect(() => {
     window.addEventListener('message', loadContent);
@@ -176,9 +185,9 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     <div>
       <iframe
         ref={iframeRef}
-        id={editorS.id}
-        src={editorS.extSrc}
-        title={editorS.label}
+        id={editor.id}
+        src={editor.extSrc}
+        title={editor.label}
         height={iH}
         width="100%"
         style={iS}
@@ -195,3 +204,9 @@ KetcherEditor.propTypes = {
 };
 
 export default KetcherEditor;
+
+
+// const selection = editor._structureDef.editor.editor._selection;
+// if (selection?.images) {
+//   moveTemplate(ketFormat, allNodes, mols);
+// }
