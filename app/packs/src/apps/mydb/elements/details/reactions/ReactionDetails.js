@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -49,7 +50,6 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
-import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -76,7 +76,6 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    this.handleGaseousChange = this.handleGaseousChange.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
@@ -489,11 +488,6 @@ export default class ReactionDetails extends Component {
     this.setState({ reaction });
   }
 
-  handleGaseousChange() {
-    const { reaction } = this.state;
-    this.handleInputChange('gaseous', !reaction.gaseous);
-  }
-
   // eslint-disable-next-line class-methods-use-this
   updateReactionVesselSize(reaction) {
     Promise.resolve().then(() => {
@@ -540,6 +534,22 @@ export default class ReactionDetails extends Component {
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }
+          <ButtonGroup className="mb-2">
+            <ButtonGroupToggleButton
+              onClick={() => this.handleInputChange('gaseous', false)}
+              active={!reaction.gaseous}
+              size="xxsm"
+            >
+              Default Scheme
+            </ButtonGroupToggleButton>
+            <ButtonGroupToggleButton
+              onClick={() => this.handleInputChange('gaseous', true)}
+              active={reaction.gaseous}
+              size="xxsm"
+            >
+              Gas Scheme
+            </ButtonGroupToggleButton>
+          </ButtonGroup>
           <ReactionDetailsScheme
             reaction={reaction}
             onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
