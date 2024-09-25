@@ -22,21 +22,17 @@ Enzyme.configure({ adapter: new Adapter() });
 
 const sample = Sample.buildEmpty(2);
 
-const parent = {
-  setState: sinon.spy() // Create a mock parent object with a setState function
-};
-
 describe('ChemicalTab basic rendering', () => {
-  const editChemicalMock = sinon.stub();
   let wrapper = null;
 
   beforeEach(() => {
     wrapper = shallow(
       <ChemicalTab
         sample={sample}
-        parent={parent}
         saveInventory={false}
-        editChemical={editChemicalMock}
+        setSaveInventory={sinon.spy()}
+        handleUpdateSample={sinon.spy()}
+        editChemical={sinon.spy()}
         key="ChemicalTab29"
       />
     );
@@ -70,13 +66,13 @@ describe('ChemicalTab basic rendering', () => {
 });
 
 describe('ChemicalTab component', () => {
-  const editChemicalMock = sinon.stub();
   const wrapper = shallow(
     <ChemicalTab
       sample={sample}
-      parent={parent}
       saveInventory={false}
-      editChemical={editChemicalMock}
+      editChemical={sinon.spy()}
+      setSaveInventory={sinon.spy()}
+      handleUpdateSample={sinon.spy()}
       key="ChemicalTab29"
     />
   );

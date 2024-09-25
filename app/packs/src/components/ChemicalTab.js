@@ -72,7 +72,7 @@ export default class ChemicalTab extends React.Component {
     const { chemical } = this.state;
     const {
       sample,
-      parent,
+      setSaveInventory,
       editChemical,
     } = this.props;
     if (!sample || !chemical) {
@@ -107,7 +107,7 @@ export default class ChemicalTab extends React.Component {
         console.log(errorMessage);
       });
     }
-    parent.setState({ saveInventoryAction: false });
+    setSaveInventory(false);
   }
 
   handleRemove(index, document) {
@@ -334,7 +334,7 @@ export default class ChemicalTab extends React.Component {
 
   /* eslint-disable prefer-destructuring */
   mapToSampleProperties(vendor) {
-    const { sample, parent } = this.props;
+    const { sample, handleUpdateSample } = this.props;
     const { chemical } = this.state;
     const chemicalData = chemical?._chemical_data[0] || [];
     let properties = {};
@@ -373,7 +373,7 @@ export default class ChemicalTab extends React.Component {
     sample.xref.refractive_index = properties.refractive_index || sample.xref.refractive_index;
     sample.xref.solubility = properties.solubility || sample.xref.solubility;
 
-    parent.setState({ sample });
+    handleUpdateSample(sample);
     ElementActions.updateSample(new Sample(sample), false);
   }
 
@@ -1172,6 +1172,8 @@ export default class ChemicalTab extends React.Component {
 
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
+  handleUpdateSample: PropTypes.func.isRequired,
   saveInventory: PropTypes.bool.isRequired,
+  setSaveInventory: PropTypes.func.isRequired,
   editChemical: PropTypes.func.isRequired,
 };

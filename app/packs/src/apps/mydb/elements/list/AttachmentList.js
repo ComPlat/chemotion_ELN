@@ -4,7 +4,6 @@ import {
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import { values } from 'lodash';
-// import { v4 as uuidv4 } from 'uuid';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
@@ -158,12 +157,10 @@ export const moveBackButton = (attachment, onBack, readOnly) => (
 
 );
 
-export const annotateButton = (attachment, parent) => (
+export const annotateButton = (attachment, onClick) => (
   <ImageAnnotationEditButton
-    parent={parent}
+    onClick={onClick}
     attachment={attachment}
-    className={`${!isImageFile(attachment.filename) ? 'attachment-gray-button' : ''}`}
-    disabled={!isImageFile(attachment.filename)}
   />
 );
 

@@ -110,7 +110,7 @@ class AnalysesContainer extends Component {
     const analysisRows = containers.map((container) => (
       <EditModeRow
         key={container.id}
-        parent={this}
+        handleChange={this.handleChange}
         element={currentElement}
         container={container}
         readOnly={readOnly}

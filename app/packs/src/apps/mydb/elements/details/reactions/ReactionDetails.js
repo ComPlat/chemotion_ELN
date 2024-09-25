@@ -272,9 +272,9 @@ export default class ReactionDetails extends Component {
             <ListGroupItem style={{ paddingBottom: 20 }}>
               <ReactionDetailsContainers
                 reaction={reaction}
-                parent={this}
                 readOnly={!permitOn(reaction)}
                 handleSubmit={this.handleSubmit}
+                handleReactionChange={this.handleReactionChange}
               />
             </ListGroupItem>
           </Tab>

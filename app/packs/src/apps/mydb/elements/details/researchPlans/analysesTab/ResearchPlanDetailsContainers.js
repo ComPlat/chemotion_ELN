@@ -38,12 +38,13 @@ export default class ResearchPlanDetailsContainers extends Component {
   }
 
   handleChange() {
-    const { researchPlan } = this.props;
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    const { researchPlan, handleResearchPlanChange } = this.props;
+    handleResearchPlanChange(researchPlan);
   }
 
   handleSpChange(researchPlan, cb) {
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    const { handleResearchPlanChange } = this.props;
+    handleResearchPlanChange(researchPlan);
     cb();
   }
 
@@ -52,19 +53,19 @@ export default class ResearchPlanDetailsContainers extends Component {
   }
 
   handleRemove(container) {
-    const { researchPlan } = this.props;
+    const { researchPlan, handleResearchPlanChange } = this.props;
     container.is_deleted = true;
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    handleResearchPlanChange(researchPlan);
   }
 
   handleUndo(container) {
-    const { researchPlan } = this.props;
+    const { researchPlan, handleResearchPlanChange } = this.props;
     container.is_deleted = false;
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    handleResearchPlanChange(researchPlan);
   }
 
   handleAdd() {
-    const { researchPlan } = this.props;
+    const { researchPlan, handleResearchPlanChange } = this.props;
     const container = Container.buildEmpty();
     container.container_type = 'analysis';
     container.extended_metadata.content = { ops: [{ insert: '' }] };
@@ -84,7 +85,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     ))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    handleResearchPlanChange(researchPlan);
   }
 
   headerBtnGroup(container, readOnly) {
@@ -337,6 +338,6 @@ export default class ResearchPlanDetailsContainers extends Component {
 ResearchPlanDetailsContainers.propTypes = {
   researchPlan: PropTypes.object.isRequired,
   readOnly: PropTypes.bool.isRequired,
-  parent: PropTypes.object.isRequired,
+  handleResearchPlanChange: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func
 };

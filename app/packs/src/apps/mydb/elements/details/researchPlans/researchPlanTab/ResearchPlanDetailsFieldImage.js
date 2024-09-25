@@ -106,8 +106,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             />
             <InputGroup.Text>%</InputGroup.Text>
             <ImageAnnotationEditButton
-              parent={this}
               attachment={currentAttachment}
+              onClick={() => this.setState({
+                imageEditModalShown: true,
+                chosenAttachment: currentAttachment,
+              })}
             />
           </InputGroup>
         </Form.Group>

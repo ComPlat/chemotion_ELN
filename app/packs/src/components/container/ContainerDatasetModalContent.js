@@ -561,7 +561,12 @@ export class ContainerDatasetModalContent extends Component {
                     || attachment.is_new || this.documentType(attachment.filename) === null,
                     this.handleEdit
                   )}
-                  {annotateButton(attachment, this)}
+                  {annotateButton(attachment, () => {
+                    this.setState({
+                      imageEditModalShown: true,
+                      chosenAttachment: attachment,
+                    });
+                  })}
                   {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
                 </ButtonToolbar>
                 <div className="ms-2">

@@ -4,14 +4,14 @@ import ContainerComponent from 'src/components/container/ContainerComponent';
 import PropTypes from 'prop-types';
 import { Accordion } from 'react-bootstrap';
 
-const EditModeRow = ({ container, parent, element, readOnly }) => (
+const EditModeRow = ({ container, handleChange, element, readOnly }) => (
   <Accordion.Item eventKey={container.id}>
     <Accordion.Header as="div">
       <Header
         isEditHeader
         element={element}
         container={container}
-        parent={parent}
+        handleChange={handleChange}
         readOnly={readOnly}
       />
     </Accordion.Header>
@@ -23,7 +23,7 @@ const EditModeRow = ({ container, parent, element, readOnly }) => (
         readOnly={readOnly}
         disabled={false}
         container={container}
-        onChange={() => parent.handleChange(container)}
+        onChange={() => handleChange(container)}
       />
     </Accordion.Body>
   </Accordion.Item>
@@ -33,10 +33,7 @@ EditModeRow.propTypes = {
   container: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   }).isRequired,
-  parent: PropTypes.shape({
-    handleClickOnPanelHeader: PropTypes.func.isRequired,
-    handleChange: PropTypes.func.isRequired
-  }).isRequired,
+  handleChange: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   element: PropTypes.object.isRequired,
   readOnly: PropTypes.bool.isRequired

@@ -7,22 +7,22 @@ import { Button } from 'react-bootstrap';
 
 export default class Header extends React.Component {
   handleUndoDeletionOfContainer(container, e) {
-    const { parent } = this.props;
+    const { handleChange } = this.props;
     e.stopPropagation();
     // eslint-disable-next-line   no-param-reassign
     container.is_deleted = false;
-    parent.handleChange(container);
+    handleChange(container);
   }
 
   handleDeleteContainer(container, e) {
-    const { parent } = this.props;
+    const { handleChange } = this.props;
     e.stopPropagation();
 
     // eslint-disable-next-line no-restricted-globals, no-alert
     if (confirm('Delete the analysis?')) {
       // eslint-disable-next-line no-param-reassign
       container.is_deleted = true;
-      parent.handleChange(container);
+      handleChange(container);
     }
   }
 
@@ -157,8 +157,5 @@ Header.propTypes = {
   }).isRequired,
   readOnly: PropTypes.bool,
   isEditHeader: PropTypes.bool,
-
-  parent: PropTypes.shape({
-    handleChange: PropTypes.func.isRequired
-  }).isRequired,
+  handleChange: PropTypes.func.isRequired,
 };
