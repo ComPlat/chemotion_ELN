@@ -30,6 +30,11 @@ module Versioning
             label: 'Height',
             revert: %i[heigth],
           },
+          readout_titles: {
+            label: 'Readout Title',
+            revert: %i[readout_titles],
+            formatter: array_formatter,
+          },
         }.with_indifferent_access
       end
     end

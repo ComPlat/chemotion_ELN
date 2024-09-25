@@ -37,6 +37,8 @@ module Versioning
           Versioning::Reverters::ScreenReverter.call(change)
         when 'Wellplate'
           Versioning::Reverters::WellplateReverter.call(change)
+        when 'Well'
+          Versioning::Reverters::WellReverter.call(change)
         end
       end
     end
