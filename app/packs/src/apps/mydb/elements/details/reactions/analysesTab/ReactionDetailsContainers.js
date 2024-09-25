@@ -2,7 +2,7 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Accordion } from 'react-bootstrap';
+import { Button, Accordion, Card } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -24,6 +24,7 @@ import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { truncateText } from 'src/utilities/textHelper';
+import AccordionHeaderWithButtons from "../../../../../../components/common/AccordionHeaderWithButtons";
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -354,31 +355,36 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex justify-content-end">
+            <div className="d-flex mb-2 me-1 d-flex justify-content-end">
               {this.addButton()}
             </div>
-            <Accordion>
+            <Accordion className='border rounded overflow-hidden'>
               {analyses_container[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
                     <Accordion.Item
                       eventKey={key}
                       key={`reaction_container_deleted_${container.id}`}
+                      className="border-0"
                     >
                       <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
                     </Accordion.Item>
                   );
                 }
                 return (
-                  <div
+                  <Card
                     ref={(element) => { this.containerRefs[key] = element; }}
                     key={`reaction_container_${container.id}`}
                   >
-                    <Accordion.Item eventKey={key}>
-                      <Accordion.Header>
-                          {containerHeader(container)}
-                      </Accordion.Header>
-                      <Accordion.Body>
+                    <Card.Header className="rounded-0 pa-0">
+                      <AccordionHeaderWithButtons eventKey={id}
+
+                        {containerHeader(container)}
+                    </AccordionHeaderWithButtons> 
+                    </Card.Header>
+                  
+                 <Accordion.Collapse eventKey={key} className="border-0">
+                   <Card.Body>
                         <ContainerComponent
                           disabled={readOnly}
                           readOnly={readOnly}
@@ -396,9 +402,9 @@ export default class ReactionDetailsContainers extends Component {
                           handleSampleChanged={this.handleSpChange}
                           handleSubmit={this.props.handleSubmit}
                         />
-                      </Accordion.Body>
-                    </Accordion.Item>
-                  </div>
+                        </Card.Body>
+                    </Accordion.Collapse>
+                  </Card>
                 );
               })}
             </Accordion>
