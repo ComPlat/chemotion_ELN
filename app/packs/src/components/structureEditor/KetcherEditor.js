@@ -1,5 +1,6 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
+import { ImageList } from '@material-ui/core';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -195,3 +196,9 @@ KetcherEditor.propTypes = {
 };
 
 export default KetcherEditor;
+
+
+// const selection = editor._structureDef.editor.editor._selection;
+// if (selection?.images) {
+//   moveTemplate(ketFormat, allNodes, mols);
+// }
