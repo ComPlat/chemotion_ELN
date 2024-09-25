@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Modal, Button } from 'react-bootstrap';
-import { ProfileList, ProfileForm, FileUploadForm } from 'chemotion-converter-client';
+import { ProfileList, ProfileForm, FileUploadForm } from '@complat/chemotion-converter-client';
 import ConverterApi from 'src/fetchers/ConverterFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 
