@@ -13,10 +13,7 @@ export default class SvgWithPopover extends Component {
   popHover() {
     const { popObject, previewObject } = this.props;
     return (
-      <Popover
-        id="popover-trigger-hover-focus"
-        title={popObject.title}
-      >
+      <Popover>
         {
           popObject.title && <Popover.Header as="h3">{popObject.title}</Popover.Header>
         }
