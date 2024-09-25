@@ -5,7 +5,7 @@ import {
   Nav, NavItem, Alert, Card, Col,
   Row
 } from 'react-bootstrap';
-import Select from 'react-select';
+import AsyncSelect from 'react-select3/async';
 import { CSVReader } from 'react-papaparse';
 import propType from 'prop-types';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -35,7 +35,7 @@ MessageAlert.defaultProps = {
 
 const loadUserByName = (input) => {
   if (!input) {
-    return Promise.resolve({ options: [] });
+    return Promise.resolve([]);
   }
 
   return AdminFetcher.fetchUsersByNameType(input, 'Person')
@@ -315,9 +315,7 @@ export default class UserManagement extends React.Component {
   }
 
   handleSelectUser(val) {
-    if (val) {
-      this.setState({ selectedUsers: val });
-    }
+    this.setState({ selectedUsers: val });
   }
 
   handleConfirmUserAccount(id) {
@@ -731,7 +729,7 @@ export default class UserManagement extends React.Component {
           <Modal.Title>Send Message</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-            <Form>
+          <Form>
             <Form.Group controlId="formControlsTextarea">
               <Form.Label>Message</Form.Label>
               <Form.Control
@@ -742,15 +740,13 @@ export default class UserManagement extends React.Component {
               />
             </Form.Group>
             <Form.Group className='my-3'>
-              <Select.AsyncCreatable
-                  multi
-                isLoading
+              <AsyncSelect
+                isMulti
                 value={selectedUsers}
-                  matchProp="name"
-                  placeholder="Select users"
-                  promptTextCreator={this.promptTextCreator}
-                  loadOptions={loadUserByName}
-                  onChange={this.handleSelectUser}
+                matchProp="name"
+                placeholder="Select users"
+                loadOptions={loadUserByName}
+                onChange={this.handleSelectUser}
               />
             </Form.Group>
           </Form>
