@@ -1497,9 +1497,11 @@ export default class SampleDetails extends React.Component {
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
+    
+    const pendingToSave = sample.isPendingToSave || isChemicalEdited;
 
     return (
-      <Card className={"detail-card" + ((sample.isPendingToSave || isChemicalEdited) ? " detail-card--unsaved" : "")}>
+      <Card className={"detail-card" + (pendingToSave ? " detail-card--unsaved" : "")}>
         <Card.Header>
           {this.sampleHeader(sample)}
           {messageBlock}
