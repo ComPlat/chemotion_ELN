@@ -8,8 +8,9 @@ import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertie
 const Option = (width, height) => {
   const label = `${height * width} (${width}x${height})`
   const value = `${width} ${height}`
+  const key = `${width}x${height}`
 
-  return (<option label={label} value={value} />)
+  return (<option label={label} key={key} value={value} />)
 }
 
 const WellplateSizeDropdown = ({wellplate, updateWellplate}) => {
