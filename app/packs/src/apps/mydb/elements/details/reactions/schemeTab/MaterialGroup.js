@@ -123,28 +123,26 @@ function GeneralMaterialGroup({
     eq: 'Equiv'
   };
 
-  const reagentList = [];
-  let reagentDd = <span />;
-  const createReagentForReaction = (event) => {
-    const smi = event.value;
-    MoleculesFetcher.fetchBySmi(smi)
-      .then((result) => {
-        const molecule = new Molecule(result);
-        molecule.density = molecule.density || 0;
-        addDefaultSolvent(molecule, null, materialGroup, event.label);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  };
-
+  let reagentDd = null;
   if (isReactants) {
     headers = { group: 'Reactants' };
-    Object.keys(reagents_kombi).forEach((x) => {
-      reagentList.push({
-        label: x,
-        value: reagents_kombi[x]
-      });
-    });
+
+    const reagentList = Object.keys(reagents_kombi).map((x) => ({
+      label: x,
+      value: reagents_kombi[x]
+    }));
+
+    const createReagentForReaction = ({ label, value: smi }) => {
+      MoleculesFetcher.fetchBySmi(smi)
+        .then((result) => {
+          const molecule = new Molecule(result);
+          molecule.density = molecule.density || 0;
+          addDefaultSolvent(molecule, null, materialGroup, label);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+
     reagentDd = (
       <VirtualizedSelect
         disabled={!permitOn(reaction)}
@@ -247,9 +245,7 @@ function SolventsMaterialGroup({
     </Button>
   );
 
-  const createDefaultSolventsForReaction = (event) => {
-    const solvent = event.value;
-    // MoleculesFetcher.fetchByMolfile(solvent.molfile)
+  const createDefaultSolventsForReaction = ({ value: solvent }) => {
     const smi = solvent.smiles;
     MoleculesFetcher.fetchBySmi(smi)
       .then((result) => {
