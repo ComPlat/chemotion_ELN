@@ -37,6 +37,7 @@ export default class ScreenDetailsContainers extends Component {
   }
 
   handleAdd() {
+    const { handleScreenChanged } = this.props;
     const { screen } = this.state;
     let container = Container.buildEmpty();
     container.container_type = "analysis";
@@ -48,14 +49,15 @@ export default class ScreenDetailsContainers extends Component {
 
     this.handleAccordionOpen(newKey);
 
-    this.props.parent.setState({ screen: screen });
+    handleScreenChanged(screen);
   }
 
   handleRemove(container) {
+    const { handleScreenChanged } = this.props;
     let { screen } = this.state;
     container.is_deleted = true;
 
-    this.props.parent.setState({ screen: screen })
+    handleScreenChanged(screen);
   }
 
   handleClickToRemoveContainer(container) {
@@ -65,10 +67,11 @@ export default class ScreenDetailsContainers extends Component {
   }
 
   handleUndo(container) {
+    const { handleScreenChanged } = this.props;
     let { screen } = this.state;
     container.is_deleted = false;
 
-    this.props.parent.setState({ screen: screen })
+    handleScreenChanged(screen);
   }
 
   handleAccordionOpen(key) {
@@ -136,7 +139,7 @@ export default class ScreenDetailsContainers extends Component {
       </div>
     );
   }
-    
+
   containerHeaderDeleted(container) {
     return (
       <div className="d-flex justify-content-between w-100 mb-0">
@@ -197,7 +200,7 @@ export default class ScreenDetailsContainers extends Component {
                         {container.is_deleted
                           ? this.containerHeaderDeleted(container)
                           : this.containerHeader(container)}
-                      </AccordionHeaderWithButtons> 
+                      </AccordionHeaderWithButtons>
                     </Card.Header>
                     {this.collapsableBody(container, key)}
                   </Card>
