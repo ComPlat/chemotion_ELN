@@ -132,43 +132,37 @@ export default class ResearchPlanDetailsField extends Component {
 
       if (field.type === 'richtext') {
         copyToMetadataButton = (
-          <OverlayTrigger
-            placement="top"
-            delayShow={500}
-            overlay={<Tooltip id="metadataTooltip">{metadataTooltipText}</Tooltip>}
-          >
-            <ButtonGroup>
-              <Dropdown as={ButtonGroup}>
-                <Dropdown.Toggle
-                  id="copyMetadataButton"
-                  title=""
-                  className="fa fa-laptop"
-                  variant="info"
-                  size="sm"
-                  disabled={isNew}
-                />
-                <Dropdown.Menu>
-                  <Dropdown.Header>Copy to Metadata field:</Dropdown.Header>
-                  <Dropdown.Divider />
-                  {
-                    copyableFields.map((element) => (
-                      <Dropdown.Item
-                        key={element.fieldName}
-                        onClick={() => onCopyToMetadata(field.id, element.fieldName)}
-                      >
-                        {element.title}
-                      </Dropdown.Item>
-                    ))
-                  }
-                </Dropdown.Menu>
-              </Dropdown>
-            </ButtonGroup>
-          </OverlayTrigger>
+          <ButtonGroup>
+            <Dropdown as={ButtonGroup}>
+              <Dropdown.Toggle
+                id="copyMetadataButton"
+                title={metadataTooltipText}
+                variant="info"
+                size="xsm"
+                disabled={isNew}
+              >
+                <i className="fa fa-laptop" aria-hidden="true" />
+              </Dropdown.Toggle>
+
+              <Dropdown.Menu>
+                <Dropdown.Header>Copy to Metadata field:</Dropdown.Header>
+                <Dropdown.Divider />
+                {copyableFields.map((element) => (
+                  <Dropdown.Item
+                    key={element.fieldName}
+                    onClick={() => onCopyToMetadata(field.id, element.fieldName)}
+                  >
+                    {element.title}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </ButtonGroup>
         );
       }
 
       fieldHeader = (
-        <div className="mt-3 d-flex align-items-center">
+        <div className="mt-2 d-flex align-items-center">
           {/* TODO: make label editable */}
           <Form.Label className="me-auto">{label}</Form.Label>
           <div className="ms-auto">
