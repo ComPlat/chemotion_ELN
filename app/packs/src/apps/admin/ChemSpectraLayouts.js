@@ -4,7 +4,7 @@ import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import {
   Table, Button, Form, Modal, Popover, OverlayTrigger, Alert
 } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
 
 export default class ChemSpectraLayouts extends Component {
   constructor(props) {
@@ -27,6 +27,7 @@ export default class ChemSpectraLayouts extends Component {
     this.handleShowNewTypeLayoutModal = this.handleShowNewTypeLayoutModal.bind(this);
     this.handleCloseNewTypeLayoutModal = this.handleCloseNewTypeLayoutModal.bind(this);
     this.getLayoutOptionsAndMapping = this.getLayoutOptionsAndMapping.bind(this);
+    this.handleSelectLayout = this.handleSelectLayout.bind(this)
   }
 
   componentDidMount() {
@@ -217,8 +218,8 @@ export default class ChemSpectraLayouts extends Component {
                 <Form.Label>Layout</Form.Label>
                 <Select
                   name="layout"
-                  value={newDataType.layout}
-                  onChange={(selectedOption) => this.handleSelectLayout(selectedOption)}
+                  value={{ label: newDataType.layout, value: newDataType.layout }}
+                  onChange={this.handleSelectLayout}
                   options={layoutsOptions}
                   placeholder="Select a Layout"
                 />
