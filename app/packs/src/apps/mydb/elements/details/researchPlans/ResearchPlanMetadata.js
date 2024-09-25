@@ -162,14 +162,14 @@ export default class ResearchPlanMetadata extends Component {
   render() {
     const { researchPlanMetadata } = this.state;
     return (
-      <div className="border rounded px-3 pt-3 pb-2">
+      <div className="px-1 py-2">
         <Form>
           <Form.Group className="mb-2" controlId="title">
             <Form.Label>Title</Form.Label>
             <Form.Control
               type="text"
               value={researchPlanMetadata?.title}
-              onChange={event => this.handleFieldChange(event)}
+              onChange={(event) => this.handleFieldChange(event)}
               placeholder="Title"
             />
           </Form.Group>
@@ -178,12 +178,12 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="text"
               value={researchPlanMetadata?.subject}
-              onChange={event => this.handleFieldChange(event)}
+              onChange={(event) => this.handleFieldChange(event)}
               placeholder="Subject"
             />
           </Form.Group>
 
-          <Form.Label>Alternate Identifiers</Form.Label>
+          <Form.Label className="my-3">Alternate Identifiers</Form.Label>
           {researchPlanMetadata?.alternate_identifier && researchPlanMetadata?.alternate_identifier.map((alternateIdentifier, index) => (
             <div key={index}>
               <Row>
@@ -210,7 +210,8 @@ export default class ResearchPlanMetadata extends Component {
                   </Form.Group>
                 </Col>
                 <Col sm={2} className="d-flex align-items-center">
-                  <Form.Label>Action</Form.Label><br />
+                  <Form.Label>Action</Form.Label>
+                  <br />
                   <Button variant="danger" className="ms-auto" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('alternate_identifier', index)}>
                     <i className="fa fa-trash-o" />
                   </Button>
@@ -226,7 +227,7 @@ export default class ResearchPlanMetadata extends Component {
             </Col>
           </Row>
 
-          <Form.Label>Related Identifiers</Form.Label>
+          <Form.Label className="mb-3">Related Identifiers</Form.Label>
           {researchPlanMetadata?.related_identifier && researchPlanMetadata?.related_identifier.map((relatedIdentifier, index) => (
             <div key={index}>
               <Row>

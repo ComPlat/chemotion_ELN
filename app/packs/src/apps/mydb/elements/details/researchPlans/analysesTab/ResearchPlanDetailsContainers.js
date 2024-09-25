@@ -276,6 +276,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                     <Accordion.Item
                       eventKey={key}
                       key={`research_plan_container_deleted_${container.id}`}
+                      className="border-0"
                     >
                       <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
                     </Accordion.Item>
@@ -286,6 +287,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                   <Accordion.Item
                     eventKey={key}
                     key={`research_plan_container_${container.id}`}
+                    className="border-0"
                   >
                     <Accordion.Header>
                         {containerHeader(container)}
