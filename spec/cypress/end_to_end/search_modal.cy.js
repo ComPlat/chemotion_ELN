@@ -11,7 +11,7 @@ describe('Text search', () => {
     cy.visit('users/sign_in');
     cy.login('cu1', 'user_password');
 
-    cy.get('#tabList-tabpane-0 > .list-container > .list-elements', { timeout: 4000 })
+    cy.get('#tabList-tabpane-0 > .list-container > .elements-list', { timeout: 4000 })
       .should('be.visible')
       .then(() => {
         cy.wait(4000);

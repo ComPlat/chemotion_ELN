@@ -21,8 +21,6 @@ label.required:after {
   position: absolute;
 }
 
-
-
 #app {
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -91,27 +89,13 @@ span.pseudo-link:hover {
   padding-right: 0px !important;
 }
 
-.main-content {
-  float: none;
-  overflow: hidden;
-  min-height: 350px;
-}
-
-.full-main {
-  width: 99%;
-}
-
-.collection-tree {
-  max-width: 15%;
-  margin-left: 3px;
-}
-
 // icon for research plan. just a standard FontAwesome icon
 $font-icons-research_plan: "\f0f6";
 
 .icon-research_plan {
   font-style: inherit;
 }
+
 .icon-research_plan:before {
   font-family: FontAwesome;
   content: "\f0f6";
@@ -193,4 +177,126 @@ tr.strokeout  td {
 
 .force-mouse-pointer > div > canvas {
     cursor: url('data:image/gif;base64,R0lGODlhEAAQAIQQAAUXJQglPAknPggoQQorRQksSAotSQsyUQw7YA07YQ48Xw08Yg48Yw4+Z6wgIGBYhv///////////////////////////////////////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKABAALAAAAAAQABAAAAU+IAQZi2ieqJCUaAsJzuqmTszOb23juS7PMN3OFRT+aMLa0VRMLnvJGqBxCj4CCoRWixzwRLDCF3wYiwiMcQgAOw=='), auto !important;
+}
+
+// https://github.com/Hacker0x01/react-datepicker/issues/624#issuecomment-261696513
+
+.react-datepicker {
+  font-size: 1.3rem !important;
+}
+
+.react-datepicker__current-month {
+  font-size: 1.5rem !important;
+}
+
+.react-datepicker__header {
+  padding-top: 6px !important;
+}
+
+.react-datepicker__navigation {
+  top: 13px !important;
+}
+
+.react-datepicker__day-name, .react-datepicker__day {
+  margin: 0.5rem !important;
+}
+// ===================================================================
+
+.pagination {
+  margin-top: 0 !important;
+}
+
+th.check {
+  width: 30px !important;
+}
+
+th.drag {
+  width: 40px !important;
+}
+
+.managing-actions-add-btn {
+  margin-top: 11px;
+}
+
+.scrollable-popover > .popover-body {
+  overflow-y: scroll;
+}
+
+.pubchem-logo {
+  max-height: 22px;
+}
+
+#tabList .active a {
+  border-bottom-color: $gray-100;
+}
+
+@-webkit-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@-moz-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@-webkit-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@-moz-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@-webkit-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+@keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+
+.running-1 {
+  -webkit-animation: blink-1 4s infinite ; /* Safari 4+ */
+  -moz-animation:    blink-1 4s infinite ; /* Fx 5+ */
+  animation:         blink-1 4s infinite ; /* IE 10+, Fx 29+ */
+}
+
+.running-2 {
+  -webkit-animation: blink-2 4s infinite; /* Safari 4+ */
+  -moz-animation:    blink-2 4s infinite; /* Fx 5+ */
+  animation:         blink-2 4s infinite; /* IE 10+, Fx 29+ */;
+}
+
+.running-3 {
+  -webkit-animation: blink-3 4s infinite  ; /* Safari 4+ */
+  -moz-animation:    blink-3 4s infinite  ; /* Fx 5+ */
+  animation:         blink-3 4s infinite  ; /* IE 10+, Fx 29+ */
 }

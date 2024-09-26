@@ -36,7 +36,7 @@ export default class Elements extends Component {
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
-      <Row>
+      <Row className='w-100'>
         <Col xs={listWidth}>
           <ElementsList
             overview={!hasCurrentElement}
