@@ -218,14 +218,14 @@ const SolventContent = ({ show, solvents, solvent }) => {
   const solventsData = () => {
     const last = solvents.length - 1;
     return solvents.map((s, i) => (
-      <pre key={i} className="noBorder display-inline no-padding">
+      <pre key={i} className="border-0 d-inline p-0">
         {s.preferred_label + volume(s) + separator(i, last)}
       </pre>
     ));
   };
 
   const solventData = () => (
-    <pre className="noBorder display-inline no-padding">{solvent}</pre>
+    <pre className="border-0 d-inline p-0">{solvent}</pre>
   );
 
   const displayContent = () => (
@@ -235,7 +235,7 @@ const SolventContent = ({ show, solvents, solvent }) => {
   return (
     show
       ? <div>
-        <h4 className="display-inline"> Solvent(s): </h4>
+        <h4 className="d-inline"> Solvent(s): </h4>
         {displayContent()}
         </div>
       : null
@@ -251,8 +251,8 @@ const PurificationContent = ({ show, puri }) => {
   return (
     show
       ? <div>
-          <h4 className="display-inline"> Type of Purification: </h4>
-          <pre className="noBorder display-inline no-padding">
+          <h4 className="d-inline"> Type of Purification: </h4>
+          <pre className="border-0 d-inline p-0">
             {puriText}
           </pre>
         </div>
@@ -265,8 +265,8 @@ const DangerourProductsContent = ({ show, dang }) => {
   return (
     show
       ? <div>
-          <h4 className="display-inline"> Dangerous Products: </h4>
-          <pre className="noBorder display-inline no-padding">{dangText}</pre>
+          <h4 className="d-inline"> Dangerous Products: </h4>
+          <pre className="border-0 d-inline p-0">{dangText}</pre>
         </div>
       : null
   );
@@ -276,12 +276,12 @@ const TLCContent = ({show, tlcDescription, tlcSolvents, rfValue}) => (
   show
     ? <div>
         <div>
-        <h4 className="display-inline"> TLC - Control </h4>
-          <pre className="noBorder display-inline no-padding">
+        <h4 className="d-inline"> TLC - Control </h4>
+          <pre className="border-0 d-inline p-0">
             Rf-value: {rfValue} (Solvent: {tlcSolvents})
           </pre>
         </div>
-        <div className="g-marginLeft--10">
+        <div className="ms-3">
           {tlcDescription}
         </div>
       </div>
@@ -309,11 +309,11 @@ const AnalysesContent = ({ show, products }) => {
       return (
         analysis
           ? <div key={i * 100 + j}>
-              <div className="noBorder g-marginLeft--20">
+              <div className="border-0 ms-4">
                 <p><u>{product.molecule.sum_formular}</u> ({kind})</p>
-                <div className="noBorder g-marginLeft--20">
+                <div className="border-0 ms-4">
                   <QuillViewer value={content} />
-                  <p className="g-marginLeft--20">{analysis.description}</p>
+                  <p className="ms-4">{analysis.description}</p>
                 </div>
               </div>
               <br/>
@@ -326,7 +326,7 @@ const AnalysesContent = ({ show, products }) => {
     show
       ? <div>
           <h4> Analysis </h4>
-          <div className="noBorder">{analyses}</div>
+          <div className="border-0">{analyses}</div>
         </div>
       : null
   );

@@ -94,7 +94,7 @@ export default class ModalExportCollection extends React.Component {
       <div>
         <input type="checkbox" id="export-collection-check-all"
           checked={this.hasChecked()} onChange={this.handleCheckAll} className="common-checkbox" />
-        <label className="g-marginLeft--10" htmlFor="export-collection-check-all">
+        <label className="ms-3" htmlFor="export-collection-check-all">
           {this.hasChecked() ? "Deselect all" : "Select all"}
         </label>
       </div>
@@ -167,7 +167,7 @@ export default class ModalExportCollection extends React.Component {
               value={root.id}
               onChange={this.handleCheckboxChange}
               checked={this.isChecked(root.id)} />
-            <label className="g-marginLeft--10" htmlFor={"export-collection-" + root.id}>
+            <label className="ms-3" htmlFor={"export-collection-" + root.id}>
               {root.label}
             </label>
 

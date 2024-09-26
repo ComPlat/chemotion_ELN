@@ -32,14 +32,14 @@ const tableHeader = () => (
 
 const rowContent = (r, p, molSerials) => (
   <tr key={`r${r.id}-p${p.id}`}>
-    <td className="one-line">{UserSerial(p.molecule, molSerials)}</td>
-    <td className="one-line" />
-    <td className="one-line">{rlRowCont(p.showedName())}</td>
-    <td className="one-line">{rlRowCont(p.molecule.inchikey)}</td>
-    <td className="one-line">{rlRowCont(p.molecule.inchistring)}</td>
-    <td className="one-line">{rlRowCont(r.rinchi_long_key)}</td>
-    <td className="one-line">{rlRowCont(r.rinchi_short_key)}</td>
-    <td className="one-line">{rlRowCont(r.rinchi_web_key)}</td>
+    <td className="text-nowrap">{UserSerial(p.molecule, molSerials)}</td>
+    <td className="text-nowrap" />
+    <td className="text-nowrap">{rlRowCont(p.showedName())}</td>
+    <td className="text-nowrap">{rlRowCont(p.molecule.inchikey)}</td>
+    <td className="text-nowrap">{rlRowCont(p.molecule.inchistring)}</td>
+    <td className="text-nowrap">{rlRowCont(r.rinchi_long_key)}</td>
+    <td className="text-nowrap">{rlRowCont(r.rinchi_short_key)}</td>
+    <td className="text-nowrap">{rlRowCont(r.rinchi_web_key)}</td>
   </tr>
 );
 
