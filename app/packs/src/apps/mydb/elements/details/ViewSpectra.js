@@ -1,5 +1,5 @@
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { createRef } from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import { Alert, Modal, Button } from 'react-bootstrap';
 import Select from 'react-select3';
@@ -741,12 +741,14 @@ class ViewSpectra extends React.Component {
     const dses = this.getDSList();
     const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
 
+    const treePopupContainer = createRef();
+
     return (
       <Modal.Header className="justify-content-between align-items-baseline">
         <span className="fs-3">
           {modalTitle}
         </span>
-        <div className="d-flex gap-1 align-items-center">
+        <div className="d-flex gap-1 align-items-center" ref={treePopupContainer}>
           <Select
             options={dsOptions}
             value={dsOptions.find(({value}) => value === si.idDt)}
@@ -766,6 +768,7 @@ class ViewSpectra extends React.Component {
             style={{ width: 500 }}
             maxTagCount={1}
             onChange={onSelectChange}
+            getPopupContainer={() => treePopupContainer.current}
           />
         </div>
         <Button
