@@ -3,7 +3,8 @@ import { FormGroup, Modal, Button, ListGroup, ListGroupItem, Panel, ButtonToolba
 import OntologySelect from './OntologySelect';
 import { cloneDeep } from 'lodash';
 import { GenInterface, GenButtonReload } from 'chem-generic-ui';
-import { FlowViewerBtn } from 'src/apps/generic/Utils';
+import { GenFlowViewerBtn } from 'chem-generic-ui';
+import { renderFlowModal } from 'src/apps/generic/Utils';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OntologySortableList from './OntologySortableList';
 
@@ -196,8 +197,8 @@ const setSelectedSegmentId = (segment, store) => {
 const segmentVersionToolbar = (store, segment, segmentKlass, handleSegmentsChange, handleRetrieveRevision, i, j) => {
   return (
     <ButtonToolbar style={{ margin: '5px 0px' }} key={`revisions-buttons-${i}-${j}`}>
-      <FlowViewerBtn generic={segment} />
       <div onClick={() => setSelectedSegmentId(segment, store)}>
+        <GenFlowViewerBtn generic={segment} fnClick={renderFlowModal} />
         <RevisionViewerBtn
           fnRetrieve={handleRetrieveRevision}
           generic={segment}

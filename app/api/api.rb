@@ -147,6 +147,7 @@ class API < Grape::API
     'reaction' => Reaction,
     'sample' => Sample,
     'cell_line' => CelllineSample,
+    'device_description' => DeviceDescription,
   }.freeze
 
   mount Chemotion::LiteratureAPI
