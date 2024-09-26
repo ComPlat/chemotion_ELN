@@ -16,6 +16,7 @@ module Chemotion
     end
   end
 
+  # rubocop: disable Metrics/ClassLength
   class ProfileAPI < Grape::API
     resource :profiles do
       desc 'Return the profile of the current_user'
@@ -254,5 +255,6 @@ module Chemotion
       end
     end
   end
+  # rubocop: enable Metrics/ClassLength
 end
 # rubocop: enable Style/MultilineIfModifier
