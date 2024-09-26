@@ -51,6 +51,7 @@ export const attachmentThumbnail = (attachment) => (
               src: attachment.preview,
             }
         }
+        hasPop={false}
         disableClick
       />
     </div>
