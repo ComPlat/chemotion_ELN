@@ -11,7 +11,7 @@ import {
   Modal,
   Card
 } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -152,12 +152,10 @@ function EditorList(props) {
     <Form.Group className="w-100">
       <Form.Label>Structure Editor</Form.Label>
       <Select
-        className="status-select"
-        name="editor selection"
-        clearable={false}
+        name="editorSelection"
         options={options}
         onChange={fnChange}
-        value={value}
+        value={options.find((opt) => opt.value === value)}
       />
     </Form.Group>
   );
