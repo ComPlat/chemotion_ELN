@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Map } from 'immutable';
 import PropTypes from 'prop-types';
 import { Col, Form, Row } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
 
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -175,16 +175,13 @@ export default class ContainerComponent extends Component {
           </Col>
           <Col sm={4} className='mb-2'>
             <div>
-              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
               <Form.Label>Status</Form.Label>
               <Select
                 name="status"
-                multi={false}
                 options={confirmOptions}
-                value={container.extended_metadata.status}
-                disabled={readOnly || disabled}
-                // eslint-disable-next-line react/jsx-no-bind
-                onChange={this.handleInputChange.bind(this, 'status')}
+                value={confirmOptions.find(({value}) => value === container.extended_metadata.status)}
+                isDisabled={readOnly || disabled}
+                onChange={({value}) => this.handleInputChange('status', value)}
               />
             </div>
           </Col>
