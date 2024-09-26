@@ -2,7 +2,7 @@
 import React from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import { Alert, Modal, Button } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 import { InlineMetadata } from 'chem-generic-ui';
@@ -749,9 +749,14 @@ class ViewSpectra extends React.Component {
         <div className="d-flex gap-1 align-items-center">
           <Select
             options={dsOptions}
-            value={si.idDt}
-            clearable={false}
-            style={{ width: 200 }}
+            value={dsOptions.find(({value}) => value === si.idDt)}
+            isClearable={false}
+            styles={{
+              container: (baseStyles, state) => ({
+                ...baseStyles,
+                width: 200,
+              })
+            }}
             onChange={(e) => this.onDSSelectChange(e)}
           />
           <TreeSelect
