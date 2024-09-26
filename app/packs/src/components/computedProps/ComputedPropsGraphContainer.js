@@ -2,7 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 
-import Select from 'react-select';
+import Select from 'react-select3';
+import CreatableSelect from 'react-select3/creatable';
 import {
   Row, Col, Button, Form, Container, ButtonToolbar
 } from 'react-bootstrap';
@@ -246,20 +247,18 @@ export default class ComputedPropsGraphContainer extends React.Component {
             <Form horizontal className="flex-grow-1 justify-content-end mt-2">
               <Form.Group controlId="formInlineTemplate" className="mb-2">
                 <Form.Label column sm={4}>Template</Form.Label>
-                <Select.Creatable
+                <CreatableSelect
                   onChange={this.onTemplateChange}
-                  value={curTemplateIdx}
+                  value={templateOptions.find(({value}) => value === curTemplateIdx)}
                   options={templateOptions}
-                  clearable={false}
-                  promptTextCreator={(label) => `Create new ${label} template`}
+                  formatCreateLabel={(label) => `Create new '${label}' template`}
                 />
               </Form.Group>
               <Form.Group controlId="formInlineXAxis" className="mb-2">
                 <Form.Label column sm={4}>X Axis</Form.Label>
                 <Select
                   onChange={this.onXAxisChange}
-                  value={xAxisType}
-                  clearable={false}
+                  value={axisSelectOptions.find(({value}) => value === xAxisType)}
                   options={axisSelectOptions}
                 />
               </Form.Group>
@@ -267,8 +266,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
                 <Form.Label column sm={4}>Y Axis</Form.Label>
                 <Select
                   onChange={this.onYAxisChange}
-                  value={yAxisType}
-                  clearable={false}
+                  value={axisSelectOptions.find(({value}) => value === yAxisType)}
                   options={axisSelectOptions}
                 />
               </Form.Group>
