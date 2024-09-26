@@ -9,7 +9,7 @@ import {
   Row,
   Form
 } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
 import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
 import { statusOptions } from 'src/components/staticDropdownOptions/options';
@@ -110,17 +110,13 @@ export default class ReactionDetailsMainProperties extends Component {
             <Form.Group>
               <Form.Label>Status</Form.Label>
               <Select
-                className="status-select reaction-status-change"
                 name="status"
-                key={reaction.status}
-                multi={false}
+                isClearable
                 options={statusOptions}
-                value={reaction.status}
-                disabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
-                onChange={(event) => {
-                  const wrappedEvent = {
-                    target: { value: event && event.value },
-                  };
+                value={statusOptions.find(({value}) => value === reaction.status)}
+                isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
+                onChange={(option) => {
+                  const wrappedEvent = {target: {value: option?.value || null}};
                   onInputChange('status', wrappedEvent);
                 }}
               />
