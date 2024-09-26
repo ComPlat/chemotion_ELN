@@ -62,6 +62,10 @@ module Entities
     expose :measures_to_plan_offline_period
     expose :restart_after_planned_offline_period
 
+    expose_timestamps
+
+    private
+
     def type
       'device_description'
     end

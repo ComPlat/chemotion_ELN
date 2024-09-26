@@ -397,7 +397,7 @@ const mulipleRowInput = (element, store, label, field, rowFields, info) => {
 
 const datePickerInput = (element, store, field, label, info) => {
   const value = elementFieldValue(element, store, field);
-  const selectedDate = value ? moment(value) : null;
+  const selectedDate = value ? value : null;
 
   return (
     <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
@@ -407,7 +407,7 @@ const datePickerInput = (element, store, field, label, info) => {
         onChange={handleFieldChanged(store, field, 'date', element.type)}
         popperPlacement="bottom-start"
         isClearable
-        dateFormat="DD-MM-YY"
+        dateFormat="dd-MM-YY"
       />
     </FormGroup>
   );
@@ -415,7 +415,7 @@ const datePickerInput = (element, store, field, label, info) => {
 
 const timePickerInput = (element, store, field, label, info) => {
   const value = elementFieldValue(element, store, field);
-  const selectedDate = value ? moment(value) : null;
+  const selectedDate = value ? value : null;
 
   return (
     <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
@@ -437,7 +437,7 @@ const timePickerInput = (element, store, field, label, info) => {
 }
 
 const dateTimePickerInput = (element, store, field, label, info) => {
-  const selectedDate = element[field] ? moment(element[field]) : null;
+  const selectedDate = element[field] ? element[field] : null;
 
   return (
     <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
@@ -448,8 +448,8 @@ const dateTimePickerInput = (element, store, field, label, info) => {
         timeFormat="HH:mm"
         timeIntervals={15}
         timeCaption="Time"
-        dateFormat="DD/MM/yyyy HH:mm"
-        placeholderText="DD/MM/YYYY hh:mm"
+        dateFormat="dd/MM/yyyy HH:mm"
+        placeholderText="dd/MM/YYYY HH:mm"
         popperPlacement="bottom-end"
         selected={selectedDate}
         onChange={handleFieldChanged(store, field, 'datetime', element.type)}

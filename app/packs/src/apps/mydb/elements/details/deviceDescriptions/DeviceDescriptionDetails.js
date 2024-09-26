@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Panel, ButtonToolbar, Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
@@ -11,7 +11,11 @@ import MaintenanceForm from './maintenanceTab/MaintenanceForm';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { commentActivation } from 'src/utilities/CommentHelper';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
@@ -44,6 +48,12 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
 
   const submitLabel = deviceDescription.isNew ? 'Create' : 'Save';
   let tabContents = [];
+
+  useEffect(() => {
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !deviceDescription.isNew) {
+      CommentActions.fetchComments(deviceDescription);
+    }
+  }, []);
 
   const tabContentComponents = {
     properties: PropertiesForm,
@@ -78,6 +88,10 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
 
     tabContents.push(
       <Tab eventKey={key} title={title} key={`${key}_${deviceDescription.id}`} disabled={disabled(i)}>
+        {
+          !deviceDescription.isNew &&
+          <CommentSection section={`device_description_${key}`} element={deviceDescription} />
+        }
         {React.createElement(tabContentComponents[key], {
           key: `${deviceDescription.id}-${key}`,
           readonly: isReadOnly()
@@ -135,7 +149,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
 
   const deviceDescriptionHeader = () => {
     const saveBtnDisplay = deviceDescription.isEdited ? '' : 'none';
-    const datetp = formatTimeStampsOfElement(deviceDescription || {});
+    const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
     const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
@@ -148,7 +162,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
 
     return (
       <div>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="deviceDescriptionDates">{titleTooltip}</Tooltip>}>
           <span>
             <i className="icon-device_description" />
             &nbsp; <span>{deviceDescription.name}</span> &nbsp;

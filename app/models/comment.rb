@@ -65,8 +65,10 @@ class Comment < ApplicationRecord
 
   enum device_description_section: {
     properties: 'device_description_properties',
+    detail: 'device_description_detail',
     analyses: 'device_description_analyses',
     attachments: 'device_description_attachments',
+    maintenance: 'device_description_maintenance',
   }, _prefix: true
 
   enum header_section: {
