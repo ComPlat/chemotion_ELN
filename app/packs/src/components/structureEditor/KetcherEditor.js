@@ -87,6 +87,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       uniqueEvents.delete(event);
       switch (event) {
         case "Move image":
+        case "Move atom":
           moveTemplate();
           break;
         case "Add atom":
