@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Form } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
 import 'moment-precise-range-plugin';
 import { purificationOptions } from 'src/components/staticDropdownOptions/options';
 import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
@@ -30,8 +30,8 @@ export default class ReactionDetailsPurification extends Component {
   }
 
   handlePurificationChange(selected) {
-    if (selected.length === 0) {
-      return this.handleMultiselectChange('purification', selected);
+    if (selected == null) {
+      return this.handleMultiselectChange('purification', []);
     }
 
     const obs = observationPurification;
@@ -55,8 +55,6 @@ export default class ReactionDetailsPurification extends Component {
     } else {
       this.handleMultiselectChange('purification', selected);
     }
-
-    return 0;
   }
 
   handlePSolventChange(changeEvent) {
@@ -111,11 +109,11 @@ export default class ReactionDetailsPurification extends Component {
               <Form.Label>Purification</Form.Label>
               <Select
                 name="purification"
-                multi
-                disabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
+                isMulti
+                isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
                 options={purificationOptions}
                 onChange={this.handlePurificationChange}
-                value={reaction.purification}
+                value={purificationOptions.filter(({value}) => reaction.purification.includes(value))}
               />
             </Form.Group>
           </Col>
