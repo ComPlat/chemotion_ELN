@@ -6,7 +6,8 @@ import {
   ListGroup, ListGroupItem, InputGroup, Modal, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
+import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -377,24 +378,16 @@ export default class ChemicalTab extends React.Component {
     ElementActions.updateSample(new Sample(sample), false);
   }
 
-  chemicalStatus(data, label, parameter) {
-    const val = data?.[parameter] ?? '';
-    const statusOptions = [
-      { label: 'Available', value: 'Available' },
-      { label: 'Out of stock', value: 'Out of stock' },
-      { label: 'To be ordered', value: 'To be ordered' },
-      { label: 'Ordered', value: 'Ordered' }
-    ];
+  chemicalStatus(data) {
+    const status = data?.status;
     return (
       <Form.Group>
-        <Form.Label>{label}</Form.Label>
-        <Select.Creatable
+        <Form.Label>Status</Form.Label>
+        <Select
           name="chemicalStatus"
-          multi={false}
-          options={statusOptions}
-          onChange={(e) => { this.handleFieldChanged(parameter, e.value); }}
-          value={val}
-          clearable={false}
+          options={chemicalStatusOptions}
+          onChange={(e) => { this.handleFieldChanged('status', e.value); }}
+          value={chemicalStatusOptions.find(({value}) => value === status)}
         />
       </Form.Group>
     );
@@ -890,7 +883,7 @@ export default class ChemicalTab extends React.Component {
       <>
         <Row className="mb-3">
           <Col>
-            {this.chemicalStatus(data, 'Status', 'status')}
+            {this.chemicalStatus(data)}
           </Col>
           <Col>
             {this.textInput(data, 'Vendor', 'vendor')}
