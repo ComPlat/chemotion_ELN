@@ -20,6 +20,7 @@ export default class CurationModal extends Component {
       this.convertStringToObject = this.convertStringToObject.bind(this);
       this.updateDescription = this.updateDescription.bind(this)
       this.scrollToId = this.scrollToId.bind(this)
+      this.checkGrammar = this.checkGrammar.bind(this)
       this.state = {
         desc : this.cleanData(this.props.description), // description text is stored here
         show : false,  // variable for show modal
@@ -37,7 +38,8 @@ export default class CurationModal extends Component {
         us_dictionary : new Typo("en_US", false, false, { dictionaryPath: "/typojs" }),  // dictionary object for EN US dictionary
         showCorrectButton: true, // booloon that determines if correct button is disabled
         idKeyArray : [], //ID Key array that stores highlighter index used by the autoscroll
-        showNewWordButton: true // booloon that determines if add new word button is disabled
+        showNewWordButton: true, // booloon that determines if add new word button is disabled
+        grammarSuggection : [] // array that contains grammar suggestions
     }}
 
   
@@ -187,6 +189,26 @@ export default class CurationModal extends Component {
           </React.Fragment>
         )) 
     }}
+
+    checkGrammar(){ // using this to test diffrent Ai modals for the abblity to parse technical entries
+      //sending the full description string to the model returns a more coherent and similar collection
+      var description = this.state.desc
+      var punctuation = /[\.\?]/g 
+      var descriptionSentanceArray = description.split(punctuation)
+      descriptionSentanceArray.pop()
+      console.log(descriptionSentanceArray.length)
+      var suggestion = []
+      // for(var sentance of descriptionSentanceArray ){
+        var output = AutomticCurationFetcher.fetchGrammar(description)
+        output.then((response) => {
+          console.log(JSON.stringify(response))
+        // suggestion.push(AutomticCurationFetcher.fetchGrammar(sentance))
+
+      }
+    )
+  // }
+      console.log(output)
+    }
 
     spellCheck(description){ // function takes description string and updates misspelled words state with misspellings
       if(description !== undefined){
@@ -513,6 +535,7 @@ export default class CurationModal extends Component {
           id={this.props.ref}>
             <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
           </Button>
+      
     
           <Modal show={this.state.show} onHide={this.handleClose} onEntered={this.scrollToId} onExit={this.props.onExit}>
             <Modal.Header closeButton>
@@ -530,6 +553,7 @@ export default class CurationModal extends Component {
                   <Row style={{paddingTop:5}}>
                     <Col md={3} sm={3} style={{paddingLeft:0}} > {formWindow}</Col>
                     <Col md={2} style={{paddingLeft:0}}> <DictionaryButton state={this.state.showPrompt}></DictionaryButton></Col>
+                    <Button onClick={this.checkGrammar}>check grammar</Button>
                   </Row>
                 </Grid>
                 </Panel.Heading>
