@@ -24,7 +24,7 @@ import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { truncateText } from 'src/utilities/textHelper';
-import AccordionHeaderWithButtons from "../../../../../../components/common/AccordionHeaderWithButtons";
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -278,10 +278,8 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div
-          className="d-flex w-100 mb-0 bg-gray-200"
-        >
-          <div className="p-3">
+        <div className="w-100 d-flex gap-3 lh-base">
+          <div className="preview border d-flex align-items-center">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -295,30 +293,30 @@ export default class ReactionDetailsContainers extends Component {
               }}
             />
           </div>
-
-          <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
-            <div className="fs-5 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
-            <div className="fs-6 ms-2 mt-2">Type: {kind}</div>
-            <div className="fs-6 ms-2 mt-2">
+          <div className="flex-grow-1 analysis-header-fade">
+            <div className="d-flex justify-content-between align-items-center">
+              <h4 className="flex-grow-1">{container.name}</h4>
+              {
+                this.headerBtnGroup(container, reaction, readOnly)
+              }
+            </div>
+            <div className="text-body-tertiary">
+              Type: {kind}
+              <br />
               Status:
               {status} {nmrMsg(reaction, container)}
               <span className="me-5" />
               {insText}
             </div>
-            <div className="fs-6 ms-2 mt-2 d-flex p-0">
-              <span className="me-2 flex-grow-1 text-truncate">
-                Content:
-                <QuillViewer value={contentOneLine} className="text-truncate" />
-              </span>
-            </div>
+              <div className="d-flex gap-2">
+                <span>Content:</span>
+                <div className="flex-grow-1">
+                  <QuillViewer value={contentOneLine} className="p-0" />
+                </div>
+              </div>
           </div>
-          <div className="d-flex align-items-start justify-content-end me-2 mt-3">
-            {
-                this.headerBtnGroup(container, reaction, readOnly)
-            }
-          </div>
-        </div>
-      );
+        </div> 
+      )
     };
 
     const containerHeaderDeleted = (container) => {
@@ -355,7 +353,7 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="d-flex mb-2 me-1 d-flex justify-content-end">
+            <div className="d-flex justify-content-end align-items-center mb-3">
               {this.addButton()}
             </div>
             <Accordion className='border rounded overflow-hidden'>
@@ -365,7 +363,7 @@ export default class ReactionDetailsContainers extends Component {
                     <Accordion.Item
                       eventKey={key}
                       key={`reaction_container_deleted_${container.id}`}
-                      className="border-0"
+                      className='border rounded overflow-hidden'
                     >
                       <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
                     </Accordion.Item>
@@ -377,13 +375,12 @@ export default class ReactionDetailsContainers extends Component {
                     key={`reaction_container_${container.id}`}
                   >
                     <Card.Header className="rounded-0 pa-0">
-                      <AccordionHeaderWithButtons eventKey={id}
-
+                      <AccordionHeaderWithButtons eventKey={key}>
                         {containerHeader(container)}
                     </AccordionHeaderWithButtons> 
                     </Card.Header>
                   
-                 <Accordion.Collapse eventKey={key} className="border-0">
+                 <Accordion.Collapse eventKey={key}>
                    <Card.Body>
                         <ContainerComponent
                           disabled={readOnly}
@@ -402,12 +399,12 @@ export default class ReactionDetailsContainers extends Component {
                           handleSampleChanged={this.handleSpChange}
                           handleSubmit={this.props.handleSubmit}
                         />
-                        </Card.Body>
+                      </Card.Body>
                     </Accordion.Collapse>
                   </Card>
                 );
               })}
-            </Accordion>
+          </Accordion>
           </div>
         );
       }
