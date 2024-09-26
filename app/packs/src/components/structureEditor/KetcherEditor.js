@@ -10,6 +10,8 @@ let imagesList = [];
 let mols = [];
 let allNodes = [];
 
+
+
 function KetcherEditor({ editor, iH, iS, molfile }) {
   const iframeRef = useRef();
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
@@ -30,7 +32,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     const selection = editor._structureDef.editor.editor._selection;
     if (selection?.images) {
       console.log("Image selected!");
-      // moveTemplate(ketFormat, allNodes, mols);
+      addEventToFILOStack("Move image");
     }
 
     for (const eventItem of data) {
@@ -99,6 +101,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
       }
     }
+    // Run the function to modify matching text elements
+    // modifyMatchingTextElements();
   };
 
   const placeImageOnAtoms = async (mols_) => {
@@ -174,11 +178,52 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       item => item.type === 'image'
     ) : imagesList;
     mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
-    console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
+    // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
+
+  const modifyMatchingTextElements = () => {
+    const regex = /t_\d+_\d+/; // Regex to match t_02_0, etc.
+
+    // Selecting all <tspan> elements inside the SVG
+    const svgElement = document.querySelector('svg[data-testid="ketcher-canvas"]'); // Adjusted to ensure correct SVG element is selected
+
+    if (svgElement) {
+      const tspans = svgElement.querySelectorAll('tspan'); // Selecting all <tspan> within this specific SVG
+
+      tspans.forEach((tspan) => {
+        const trimmedContent = tspan.textContent.trim();
+
+        // Check if the content matches the pattern
+        if (regex.test(trimmedContent)) {
+          console.count("matches!!!");
+
+          // Find the closest <text> element containing the <tspan>
+          const parentText = tspan.closest('text');
+
+          if (parentText) {
+            // Modify the parent <text> element's attributes and styles
+            parentText.setAttribute('fill', 'transparent');
+            parentText.style.fill = 'transparent';
+
+            console.log("Modified element with content: ", trimmedContent);
+          }
+        }
+      });
+    } else {
+      console.error("SVG element not found or not loaded.");
+    }
+  };
+
 
   useEffect(() => {
     window.addEventListener('message', loadContent);
+
+    // Function to search for any <tspan> elements containing the text that matches the regex t_01_0
+    // Function to search for any <tspan> elements containing the text that matches the pattern t_{integer}_{integer}
+
+
+    // Call the function to modify the matching elements
+
     return () => {
       window.removeEventListener('message', loadContent);
     };
