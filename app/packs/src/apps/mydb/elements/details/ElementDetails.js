@@ -1,6 +1,5 @@
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import DeviceDetails from 'src/apps/mydb/elements/details/devices/DeviceDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
@@ -47,15 +46,6 @@ const tabInfoHash = {
     iconEl: (
       <span>
         <i className="fa fa-percent" />
-      </span>
-    )
-  },
-  deviceCtrl: {
-    title: 'Measurement',
-    iconEl: (
-      <span>
-        <i className="fa fa-bar-chart" />
-        <i className="fa fa-cogs" />
       </span>
     )
   },
@@ -176,13 +166,6 @@ export default class ElementDetails extends Component {
         return (
           <ScreenDetails
             screen={el}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
-      case 'deviceCtrl':
-        return (
-          <DeviceDetails
-            device={el}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
