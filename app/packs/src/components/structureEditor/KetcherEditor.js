@@ -1,8 +1,7 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import { ImageList } from '@material-ui/core';
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const FILOStack = [];
 const uniqueEvents = new Set();
@@ -30,7 +29,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   const handleEventCapture = async (data) => {
     for (const eventItem of data) {
-      console.log(eventItem);
       switch (eventItem?.operation) {
         case "Load canvas":
           // await editor.structureDef.editor.layout();
@@ -102,21 +100,24 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
-  const placeImageOnAtoms = async (mols) => {
+  const placeImageOnAtoms = async (mols_) => {
     await fuelKetcherData();
-    mols.forEach((item) => {
-      const atom = latestData[item]?.atoms[0];
-      if (atom && atom.alias) {
-        const splits_alias = atom.alias.split("_");
-        let image_coordinates = imagesList[splits_alias[2]].boundingBox;
-        image_coordinates = {
-          ...image_coordinates,
-          x: atom.location[0] - image_coordinates.width / 2,
-          y: atom.location[1] + image_coordinates.height / 2,
-          z: 0
+    mols_.forEach((item) => {
+      latestData[item]?.atoms.forEach((atom) => {
+        console.log({ atom });
+        if (atom && atom.alias) {
+          const splits_alias = atom.alias.split("_");
+          let image_coordinates = imagesList[splits_alias[2]]?.boundingBox;
+          image_coordinates = {
+            ...image_coordinates,
+            x: atom.location[0] - image_coordinates.width / 2,
+            y: atom.location[1] + image_coordinates.height / 2,
+            z: 0
+          };
+          imagesList[splits_alias[2]].boundingBox = image_coordinates;
         };
-        imagesList[splits_alias[2]].boundingBox = image_coordinates;
-      };
+      });
+
     });
     latestData.root.nodes.push(...imagesList);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
@@ -124,27 +125,31 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   // Helper function to move image and update molecule positions
   const moveTemplate = async (ketFormat) => {
+    let image_counter_alias = -1;
     mols.forEach(async (item, idx) => {
       const molecule = ketFormat[item];
 
       // Check if molecule and atoms exist, and if the alias is formatted correctly
-      if (molecule?.atoms[0]?.alias) {
-        const alias = molecule.atoms[0].alias.split("_");
+      molecule?.atoms?.forEach((item, atom_idx) => {
 
-        // Check if alias has at least 3 parts
-        if (alias.length >= 3) {
-          const image = imagesList[alias[2]];
+        if (item.alias) {
+          const alias = item.alias.split("_");
+          image_counter_alias++;
+          // Check if alias has at least 3 parts
+          if (alias.length >= 3) {
+            const image = imagesList[alias[2]];
 
-          if (image?.boundingBox) {
-            const { x, y } = image.boundingBox; // Destructure x, y coordinates from boundingBox
-            const location = [x, y, 0]; // Set location as an array of coordinates
+            if (image?.boundingBox) {
+              const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
+              const location = [x, y, 0]; // Set location as an array of coordinates
 
-            // Update molecule atom's location and alias
-            molecule.atoms[0].location = location;
-            molecule.atoms[0].alias = `${alias[0]}_${alias[1]}_${idx}`;
+              // Update molecule atom's location and alias
+              molecule.atoms[atom_idx].location = location;
+              molecule.atoms[atom_idx].alias = `${alias[0]}_${alias[1]}_${image_counter_alias}`;
+            }
           }
         }
-      }
+      });
     });
     ketFormat.root.nodes = ketFormat.root.nodes.slice(0, mols.length);
     await editor.structureDef.editor.setMolecule(JSON.stringify(ketFormat));
@@ -174,8 +179,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       item => item.type === 'image'
     ) : imagesList;
     mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
-    console.log({ imagesList, mols, allNodes, l: allNodes.length - imagesList.length });
   };
+
   useEffect(() => {
     window.addEventListener('message', loadContent);
     return () => {
