@@ -33,7 +33,7 @@ export default class MetadataContainer extends Component {
     this.handleClose = this.handleClose.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { metadata } = nextProps;
     this.setState({ metadata });
   }
