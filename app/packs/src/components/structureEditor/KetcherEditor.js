@@ -36,10 +36,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
 
     for (const eventItem of data) {
+      console.log(eventItem);
       switch (eventItem?.operation) {
         case "Load canvas":
           if (uniqueEvents.length > 1) {
-            await fuelKetcherData();
             addEventToFILOStack("Load canvas");
           }
           break;
@@ -53,7 +53,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           addEventToFILOStack("Upsert image");
           break;
         case "Move atom":
-          addEventToFILOStack("Move atom");
+          if (imagesList.length)
+            addEventToFILOStack("Move atom");
           break;
         default:
           console.warn("Unhandled operation:", eventItem.operation);
@@ -76,16 +77,22 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
       FILOStack.splice(loadCanvasIndex, 1);
+      moveTemplate();
       uniqueEvents.delete("Load canvas");
     }
     if (!latestData) {
       alert("data not present!!");
       return;
     }
+
     while (FILOStack.length > 0) {
       const event = FILOStack.pop();
       uniqueEvents.delete(event);
       switch (event) {
+        case "Load canvas":
+          console.log("on clean up?");
+          await fuelKetcherData();
+          break;
         case "Move image":
         case "Move atom":
           moveTemplate();
@@ -93,8 +100,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         case "Add atom":
           handleAddAtom();
           break;
-        case "Move atom":
         case "Upsert image":
+          console.log("upsert?");
           // nothing will happen
           break;
         default:
@@ -173,6 +180,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   };
 
   const fuelKetcherData = async () => {
+
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
     allNodes = [...latestData.root.nodes];
     imagesList = allNodes.length > mols.length ? allNodes.filter(
@@ -218,13 +226,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   useEffect(() => {
     window.addEventListener('message', loadContent);
-
-    // Function to search for any <tspan> elements containing the text that matches the regex t_01_0
-    // Function to search for any <tspan> elements containing the text that matches the pattern t_{integer}_{integer}
-
-
-    // Call the function to modify the matching elements
-
     return () => {
       window.removeEventListener('message', loadContent);
     };
