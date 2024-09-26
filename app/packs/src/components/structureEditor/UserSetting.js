@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import {
   Button, Card, Row, Col
 } from 'react-bootstrap';
-import Select from 'react-select';
+import Select from 'react-select3';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const DEFAULT_EDITOR = 'ketcher';
@@ -49,9 +49,13 @@ function UserSetting() {
     setEditor((prev) => ({ ...prev, selected: e.value }));
   };
 
-  let options = editors
-    .map((e) => ({ value: e.configs.editor, label: `${e.label} (${e.configs.editor})` }));
-  options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }].concat(options);
+  const options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }];
+  editors.forEach((e) => {
+    options.push({
+      value: e.configs.editor,
+      label: `${e.label} (${e.configs.editor})`
+    })
+  });
 
   return (
     <Card>
@@ -68,10 +72,9 @@ function UserSetting() {
           <Col xs={2}>
             <Select
               name="editor selection"
-              clearable={false}
               options={options}
               onChange={onChange}
-              value={editor?.selected}
+              value={options.find(({value}) => value == editor?.selected)}
             />
           </Col>
         </Row>
