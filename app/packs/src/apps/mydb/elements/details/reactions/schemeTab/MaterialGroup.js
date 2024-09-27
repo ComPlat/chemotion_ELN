@@ -179,7 +179,6 @@ function GeneralMaterialGroup({
     </Button>
   );
 
-  console.log(headers);
   return (
     <table className="w-100 m-2">
       <colgroup>

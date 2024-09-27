@@ -446,22 +446,8 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     return (
-      <Modal.Header>
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={() => {
-            SpectraActions.ToggleModalNMRDisplayer.defer();
-          }}
-        >
-          <span>
-            <i className="fa fa-times" />
-            {' '}
-            Close without Save
-          </span>
-        </Button>
-        {
-          hasSpectra && !readOnly ? 
+      <Modal.Header className="gap-2 justify-content-end">
+        {hasSpectra && !readOnly ? 
           (
             <Button
               variant="success"
@@ -470,14 +456,21 @@ export default class NMRiumDisplayer extends React.Component {
                 this.requestDataToBeSaved();
               }}
             >
-              <span>
-                <i className="fa fa-floppy-o" />
-                {' '}
-                Close with Save
-              </span>
+              <i className="fa fa-floppy-o me-1" />
+              Close with Save
             </Button>
           ) : null
         }
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => {
+            SpectraActions.ToggleModalNMRDisplayer.defer();
+          }}
+        >
+          <i className="fa fa-times me-1" />
+          Close without Save
+        </Button>
       </Modal.Header>
     );
   }
@@ -489,7 +482,7 @@ export default class NMRiumDisplayer extends React.Component {
       <Modal
         centered
         show={showModalNMRDisplayer}
-        dialogClassName="spectra-editor-dialog"
+        size="xxxl"
         animation
         onHide={this.closeOp}
       >
