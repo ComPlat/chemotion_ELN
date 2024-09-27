@@ -13421,11 +13421,6 @@ react-shallow-renderer@^16.13.1:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0"
 
-react-sticky-el@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/react-sticky-el/-/react-sticky-el-2.1.1.tgz#6a142a3f766b2a4b71d0014743142696d80bf01e"
-  integrity sha512-likcCH5HN86qQGdOMbvMMJQXJQzelvxuGovFglnBlu8qqgPaee90hO4sws9oSwnsnRPows6Ry7RAd+tazVCS+w==
-
 "react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@1.1.3":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.3.tgz#a3da916005b6d6ee18be2b1bce62745becf082be"
