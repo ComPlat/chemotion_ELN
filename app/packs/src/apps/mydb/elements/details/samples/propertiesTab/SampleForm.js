@@ -16,7 +16,6 @@ import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertie
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import CurationModal from "src/components/CurationModal.js";
 
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';

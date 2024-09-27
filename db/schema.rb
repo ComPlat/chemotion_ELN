@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_07_11_120833) do
+ActiveRecord::Schema.define(version: 2024_07_26_064022) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -924,7 +924,6 @@ ActiveRecord::Schema.define(version: 2024_07_11_120833) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
-    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
@@ -961,8 +960,8 @@ ActiveRecord::Schema.define(version: 2024_07_11_120833) do
     t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
-    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.boolean "gaseous", default: false
+    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1333,9 +1332,9 @@ ActiveRecord::Schema.define(version: 2024_07_11_120833) do
   create_table "third_party_apps", force: :cascade do |t|
     t.string "url"
     t.string "name", limit: 100, null: false
+    t.string "file_types", limit: 100
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.string "file_types", limit: 100
     t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
@@ -1710,8 +1709,8 @@ ActiveRecord::Schema.define(version: 2024_07_11_120833) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
