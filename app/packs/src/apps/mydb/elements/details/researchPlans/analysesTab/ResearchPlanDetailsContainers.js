@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Accordion } from 'react-bootstrap';
+import { Button, Accordion, Card } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
@@ -17,6 +17,7 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import { truncateText } from 'src/utilities/textHelper';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
@@ -191,8 +192,8 @@ export default class ResearchPlanDetailsContainers extends Component {
       }
 
       return (
-        <div className="d-flex w-100 mb-0 bg-gray-200">
-          <div className="p-3">
+        <div className="w-100 d-flex gap-3 lh-base">
+          <div className="border d-flex align-items-center">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -206,27 +207,26 @@ export default class ResearchPlanDetailsContainers extends Component {
               }}
             />
           </div>
-          <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
-            <div className="fs-5 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
-            <div className="fs-6 ms-2 mt-2">Type: {kind}</div>
-            <div className="fs-6 ms-2 mt-2">Status: {status}
+          <div className="flex-grow-1">
+            <div className="d-flex justify-content-between align-items-center">
+              <h4 className="flex-grow-1">{container.name}</h4>
+              {
+                this.headerBtnGroup(container, readOnly)
+              }
+            </div>
+            <div className="text-body-tertiary">
+              Type: {kind}
+              <br />
+              Status: {status}
               <span className="me-5" />
               {insText}
             </div>
-
-            <div className="fs-6 ms-2 mt-2 d-flex p-0">
-              <span className="me-2 flex-grow-1 text-truncate">
-                Content:
-                <QuillViewer value={contentOneLine} preview />
-              </span>
+            <div className="d-flex gap-2">
+              <span>Content:</span>
+              <div className="flex-grow-1">
+                <QuillViewer value={contentOneLine} className="p-0" preview />
+              </div>
             </div>
-
-          </div>
-          <div className="d-flex align-items-start justify-content-end me-2 mt-3">
-            {
-              this.headerBtnGroup(container, readOnly)
-            }
-
           </div>
         </div>
       );
@@ -269,14 +269,14 @@ export default class ResearchPlanDetailsContainers extends Component {
             <div className="mb-2 me-1 d-flex justify-content-end">
               {this.addButton()}
             </div>
-            <Accordion defaultActiveKey={['0']} alwaysOpen>
+            <Accordion className='border rounded overflow-hidden'>
               {analysesContainer[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
                     <Accordion.Item
                       eventKey={key}
                       key={`research_plan_container_deleted_${container.id}`}
-                      className="border-0"
+                      className="border rounded overflow-hidden"
                     >
                       <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
                     </Accordion.Item>
@@ -284,15 +284,18 @@ export default class ResearchPlanDetailsContainers extends Component {
                 }
 
                 return (
-                  <Accordion.Item
+                  <Card
                     eventKey={key}
                     key={`research_plan_container_${container.id}`}
-                    className="border-0"
                   >
-                    <Accordion.Header>
+                  <Card.Header className="rounded-0 pa-0">
+                      <AccordionHeaderWithButtons eventKey={key}>
                         {containerHeader(container)}
-                    </Accordion.Header>
-                    <Accordion.Body>
+                      </AccordionHeaderWithButtons>
+                    </Card.Header>
+
+                    <Accordion.Collapse eventKey={key}>
+                      <Card.Body>
                       <ContainerComponent
                         templateType="researchPlan"
                         readOnly={readOnly}
@@ -310,8 +313,9 @@ export default class ResearchPlanDetailsContainers extends Component {
                         handleSampleChanged={this.handleSpChange}
                         handleSubmit={this.props.handleSubmit}
                       />
-                    </Accordion.Body>
-                  </Accordion.Item>
+                      </Card.Body>
+                    </Accordion.Collapse>
+                    </Card>
                 );
               })}
             </Accordion>
