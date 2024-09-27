@@ -308,15 +308,15 @@ export default class ReactionDetailsContainers extends Component {
               <span className="me-5" />
               {insText}
             </div>
-              <div className="d-flex gap-2">
-                <span>Content:</span>
-                <div className="flex-grow-1">
-                  <QuillViewer value={contentOneLine} className="p-0" />
-                </div>
+            <div className="d-flex gap-2">
+              <span>Content:</span>
+              <div className="flex-grow-1">
+                <QuillViewer value={contentOneLine} className="p-0" />
               </div>
+            </div>
           </div>
-        </div> 
-      )
+        </div>
+      );
     };
 
     const containerHeaderDeleted = (container) => {
@@ -352,67 +352,71 @@ export default class ReactionDetailsContainers extends Component {
 
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
 
-      
+
         return (
           <div>
-          <div>
-            <div className="d-flex justify-content-end align-items-center mb-3">
-              {this.addButton()}
-            </div>
-            <Accordion className='border rounded overflow-hidden'>
-              {analyses_container[0].children.map((container, key) => {
-                const isFirstTab = key === 0;
-                if (container.is_deleted) {
+            <div>
+              <div className="d-flex justify-content-end align-items-center mb-3">
+                {this.addButton()}
+              </div>
+              <Accordion
+                className='border rounded overflow-hidden'
+                onSelect={this.handleAccordionOpen}
+                activeKey={activeContainer}
+              >
+                {analyses_container[0].children.map((container, key) => {
+                  const isFirstTab = key === 0;
+                  if (container.is_deleted) {
+                    return (
+                      <Accordion.Item
+                        eventKey={key}
+                        key={`reaction_container_deleted_${container.id}`}
+                        className='overflow-hidden'
+                      >
+                        <Accordion.Header className="p-2 text-sm">
+                          {containerHeaderDeleted(container)}
+                        </Accordion.Header>
+                      </Accordion.Item>
+                    );
+                  }
                   return (
-                    <Accordion.Item
-                      eventKey={key}
-                      key={`reaction_container_deleted_${container.id}`}
-                      className='overflow-hidden'
+                    <Card
+                      ref={(element) => { this.containerRefs[key] = element; }}
+                      key={`reaction_container_${container.id}`}
+                      className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
                     >
-                      <Accordion.Header className="p-2 text-sm">
-                        {containerHeaderDeleted(container)}
-                      </Accordion.Header>
-                    </Accordion.Item>
+                      <Card.Header className="rounded p-2 text-sm">
+                        <AccordionHeaderWithButtons eventKey={key}>
+                          {containerHeader(container)}
+                        </AccordionHeaderWithButtons>
+                      </Card.Header>
+
+                      <Accordion.Collapse eventKey={key}>
+                        <Card.Body className="p-2">
+                          <ContainerComponent
+                            disabled={readOnly}
+                            readOnly={readOnly}
+                            templateType="reaction"
+                            container={container}
+                            onChange={this.handleChange.bind(this, container)}
+                          />
+                          <ViewSpectra
+                            sample={reaction}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                          <NMRiumDisplayer
+                            sample={reaction}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                        </Card.Body>
+                      </Accordion.Collapse>
+                    </Card>
                   );
-                }
-                return (
-                  <Card
-                    ref={(element) => { this.containerRefs[key] = element; }}
-                    key={`reaction_container_${container.id}`}
-                    className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
-                  >
-                    <Card.Header className="rounded p-2 text-sm">
-                      <AccordionHeaderWithButtons eventKey={key}>
-                        {containerHeader(container)}
-                    </AccordionHeaderWithButtons> 
-                    </Card.Header>
-                  
-                 <Accordion.Collapse eventKey={key}>
-                      <Card.Body className="p-2">
-                        <ContainerComponent
-                          disabled={readOnly}
-                          readOnly={readOnly}
-                          templateType="reaction"
-                          container={container}
-                          onChange={this.handleChange.bind(this, container)}
-                        />
-                        <ViewSpectra
-                          sample={reaction}
-                          handleSampleChanged={this.handleSpChange}
-                          handleSubmit={this.props.handleSubmit}
-                        />
-                        <NMRiumDisplayer
-                          sample={reaction}
-                          handleSampleChanged={this.handleSpChange}
-                          handleSubmit={this.props.handleSubmit}
-                        />
-                      </Card.Body>
-                    </Accordion.Collapse>
-                  </Card>
-                );
-              })}
-          </Accordion>
-            </div>    
+                })}
+              </Accordion>
+            </div>
           </div>
         );
       }
