@@ -14,7 +14,6 @@ import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContai
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
 import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails';
-import Sticky from 'react-sticky-el';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
@@ -108,32 +107,17 @@ export default class ElementDetails extends Component {
       genericEls: UserStore.getState().genericEls || [],
     };
 
-    this.handleResize = this.handleResize.bind(this);
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
     this.onDetailChange = this.onDetailChange.bind(this);
     this.checkSpectraMessage = this.checkSpectraMessage.bind(this);
   }
 
   componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-    window.scrollTo(window.scrollX, window.scrollY + 1);
-    // imitate scroll event to make StickyDiv element visible in current area
     ElementStore.listen(this.onDetailChange);
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
     ElementStore.unlisten(this.onDetailChange);
-  }
-
-  handleResize() {
-    const windowHeight = window.innerHeight || 1;
-    const { fullScreen } = this.state;
-    if (fullScreen || windowHeight < 500) {
-      this.setState({ offsetTop: 0 });
-    } else {
-      this.setState({ offsetTop: 70 });
-    }
   }
 
   onDetailChange(state) {
@@ -299,14 +283,9 @@ export default class ElementDetails extends Component {
         </div>
       )
       : (
-        <Sticky
-          topOffset={-1 * offsetTop}
-          stickyStyle={{ top: offsetTop }}
-        >
-          <div className="normal-screen">
-            {contents}
-          </div>
-        </Sticky>
+        <div className="normal-screen">
+          {contents}
+        </div>
       );
   }
 }

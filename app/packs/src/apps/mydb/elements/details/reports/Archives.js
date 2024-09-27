@@ -193,7 +193,7 @@ const Archives = ({ archives }) => (
         <Card.Body>
           {archive.file_description
             ? <p>{archive.file_description}</p>
-            : <p className="text-comment">No file description</p>}
+            : <p className="text-muted fst-italic">No file description</p>}
         </Card.Body>
       </Card>
     ))}

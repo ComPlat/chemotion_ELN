@@ -19,6 +19,9 @@
 // file css rules that are targeted at specific components under components
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
+@import "components/CollectionTree";
+@import "components/ElementsTable";
+@import "components/Report";
 @import "components/search-modal";
 @import "components/search-results";
 
@@ -34,7 +37,6 @@
 @import "legacy/converter";
 @import "legacy/CustomHeader";
 @import "legacy/elements_details";
-@import "legacy/elements_table";
 @import "legacy/export-collections";
 @import "legacy/format-container";
 @import "legacy/generic_element";
@@ -55,7 +57,6 @@
 @import "legacy/quill_toolbar_template";
 @import "legacy/quill_viewer";
 @import "legacy/reaction";
-@import "legacy/report";
 @import "legacy/research-plan-table-context-menu";
 @import "legacy/research-plan";
 @import "legacy/sample";

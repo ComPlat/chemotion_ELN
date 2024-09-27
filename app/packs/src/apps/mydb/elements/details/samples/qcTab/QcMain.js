@@ -52,7 +52,7 @@ class QcMain extends Component {
         disabled={loading}
       >
         <i className={iconClsName} />
-        <span className="g-marginLeft--10">Refresh</span>
+        <span className="ms-3">Refresh</span>
       </Button>
     );
   }

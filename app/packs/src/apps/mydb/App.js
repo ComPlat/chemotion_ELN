@@ -26,7 +26,6 @@ class App extends Component {
       showCollectionManagement: false,
       indicatorClassName: 'fa fa-chevron-circle-left',
       showCollectionTree: true,
-      mainContentClassName: 'small-col main-content',
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
     this.documentKeyDown = this.documentKeyDown.bind(this);
@@ -132,32 +131,29 @@ class App extends Component {
     const { showCollectionTree } = this.state;
     this.setState({
       showCollectionTree: !showCollectionTree,
-      indicatorClassName: showCollectionTree ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left',
-      mainContentClassName: showCollectionTree ? 'small-col full-main' : 'small-col main-content'
+      indicatorClassName: showCollectionTree ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left'
     });
   }
 
   mainContent() {
-    const { showCollectionManagement, mainContentClassName } = this.state;
-    return (
-      <Col className={mainContentClassName}>
-        {showCollectionManagement ? <CollectionManagement /> : <Elements />}
-      </Col>
-    );
+    const { showCollectionManagement } = this.state;
+    return (showCollectionManagement ? <CollectionManagement /> : <Elements />);
   }
 
   render() {
     const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
     return (
       <Container fluid>
-        <Row className="top-0 bg-light" style={{ zIndex: 5 }}>
+        <Row className="bg-light" style={{ zIndex: 5 }}>
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
         </Row>
-        <Row className="container-fluid pt-3">
-          {showCollectionTree && <CollectionTree />}
+        <div className="d-flex py-3 px-2 gap-3">
+          {showCollectionTree &&
+            <CollectionTree />
+          }
           {this.mainContent()}
-        </Row>
+        </div>
         <Row>
           <Notifications />
           <LoadingModal />

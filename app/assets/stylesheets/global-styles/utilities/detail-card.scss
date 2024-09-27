@@ -1,5 +1,5 @@
 .detail-card {
-  .card-header {
+  > .card-header {
     @extend .text-bg-primary;
   }
   &.detail-card--unsaved .card-header {
@@ -7,7 +7,7 @@
   }
 }
 
-.tab-pane > .detail-card, .tab-pane > .detail-card .card-header {
+.tab-pane > .detail-card, .tab-pane > .detail-card > .card-header {
   @extend .border-top-0;
   border-top-right-radius: 0;
   border-top-left-radius: 0;

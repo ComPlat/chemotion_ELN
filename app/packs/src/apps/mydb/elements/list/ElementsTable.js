@@ -575,7 +575,7 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="table-header">
+      <div className="elements-table-header">
         <div className="select-all">
           <ElementAllCheckbox
             type={type}
@@ -679,7 +679,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div ref={this.elementRef} className="list-elements">
+      <div ref={this.elementRef} className="elements-list">
         {elementsTableEntries}
       </div>
     );
