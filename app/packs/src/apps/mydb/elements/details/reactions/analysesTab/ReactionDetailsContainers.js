@@ -278,7 +278,7 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div className="w-100 d-flex gap-3 lh-base">
+        <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
             <ImageModal
               hasPop={hasPop}
@@ -371,7 +371,7 @@ export default class ReactionDetailsContainers extends Component {
                       <Accordion.Item
                         eventKey={key}
                         key={`reaction_container_deleted_${container.id}`}
-                        className='overflow-hidden'
+                        className='border rounded overflow-hidden'
                       >
                         <Accordion.Header className="p-2 text-sm">
                           {containerHeaderDeleted(container)}

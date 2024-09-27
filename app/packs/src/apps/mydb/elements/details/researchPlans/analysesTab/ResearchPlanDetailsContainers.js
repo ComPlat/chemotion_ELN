@@ -192,8 +192,8 @@ export default class ResearchPlanDetailsContainers extends Component {
       }
 
       return (
-        <div className="w-100 d-flex gap-3 lh-base">
-          <div className="border d-flex align-items-center">
+        <div className="analysis-header w-100 d-flex gap-3 lh-base">
+          <div className="preview border d-flex align-items-center">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -269,7 +269,11 @@ export default class ResearchPlanDetailsContainers extends Component {
             <div className="mb-2 me-1 d-flex justify-content-end">
               {this.addButton()}
             </div>
-            <Accordion className='border rounded overflow-hidden'>
+            <Accordion
+              className='border rounded overflow-hidden'
+              onSelect={this.handleAccordionOpen}
+              activeKey={activeContainer}
+            >
               {analysesContainer[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
