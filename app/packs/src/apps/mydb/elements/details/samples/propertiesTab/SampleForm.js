@@ -191,7 +191,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label className="text-truncate">Stereo Abs</Form.Label>
+        <Form.Label>Stereo Abs</Form.Label>
         <Select
           name="stereoAbs"
           clearable={false}
@@ -225,7 +225,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label className="text-truncate">Stereo Rel</Form.Label>
+        <Form.Label>Stereo Rel</Form.Label>
         <Select
           name="stereoRel"
           clearable={false}
@@ -372,7 +372,10 @@ export default class SampleForm extends React.Component {
           <Tooltip id="molMass">calculate the molecular mass</Tooltip>
         }
       >
-        <Button onClick={() => this.handleMassCalculation(sumFormula)}>
+        <Button
+          onClick={() => this.handleMassCalculation(sumFormula)}
+          variant="light"
+        >
           <i className="fa fa-cog" />
         </Button>
       </OverlayTrigger>
@@ -389,7 +392,10 @@ export default class SampleForm extends React.Component {
           <Tooltip id="markUndefined">{resetTooltip}</Tooltip>
         }
       >
-        <Button onClick={this.markSumFormulaUndefined}>
+        <Button
+          onClick={this.markSumFormulaUndefined}
+          variant="light"
+        >
           <i className="fa fa-tag" />
         </Button>
       </OverlayTrigger>
@@ -447,10 +453,10 @@ export default class SampleForm extends React.Component {
   textInput(sample, field, label, disabled = false, readOnly = false) {
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
-    const formControlStyle = field === 'name' ? { height: '38px'} : {};
+    const formControlStyle = field === 'name' ? { height: '38px' } : {};
     return (
-      <Form.Group>
-        <Form.Label className="text-truncate">{label}</Form.Label>
+      <Form.Group className="w-100">
+        <Form.Label>{label}</Form.Label>
         <Form.Control
           id={`txinput_${field}`}
           type="text"
@@ -770,11 +776,11 @@ export default class SampleForm extends React.Component {
 
         {sample.decoupled && (
           <Row className="mb-4">
-            <Col xs={7}>
+            <Col>
               {this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}
             </Col>
-            <Col xs={3}>{this.textInput(sample, 'sum_formula', 'Sum formula')}</Col>
-            <Col xs={2} className="d-flex gap-2 align-items-end">
+            <Col className="d-flex align-items-end">
+              {this.textInput(sample, 'sum_formula', 'Sum formula')}
               {this.btnCalculateMolecularMass()}
               {this.markUndefinedButton()}
             </Col>
