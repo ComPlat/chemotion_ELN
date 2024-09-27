@@ -9,10 +9,11 @@ let latestData = null;
 let imagesList = [];
 let mols = [];
 let allNodes = [];
-
-
-
+const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
+const two_parts_pattern = /^t_\d{2,3}$/;
+let image_used_counter = 0;
 function KetcherEditor({ editor, iH, iS, molfile }) {
+
   const iframeRef = useRef();
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
@@ -28,20 +29,28 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
+  // helper function to rebase with the ketcher canvas data
+  const fuelKetcherData = async () => {
+    latestData = JSON.parse(await editor.structureDef.editor.getKet());
+    allNodes = [...latestData.root.nodes];
+    imagesList = allNodes.length > mols.length ? allNodes.filter(
+      item => item.type === 'image'
+    ) : imagesList;
+    mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
+    // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
+  };
+
+  // main funcation to capture all events from editor
   const handleEventCapture = async (data) => {
     const selection = editor._structureDef.editor.editor._selection;
     if (selection?.images) {
-      console.log("Image selected!");
       addEventToFILOStack("Move image");
     }
 
     for (const eventItem of data) {
-      console.log(eventItem);
       switch (eventItem?.operation) {
         case "Load canvas":
-          if (uniqueEvents.length > 1) {
-            addEventToFILOStack("Load canvas");
-          }
+          await fuelKetcherData();
           break;
         case "Move image":
           addEventToFILOStack("Move image");
@@ -53,18 +62,17 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           addEventToFILOStack("Upsert image");
           break;
         case "Move atom":
-          if (imagesList.length)
-            addEventToFILOStack("Move atom");
+          addEventToFILOStack("Move atom");
           break;
         default:
           console.warn("Unhandled operation:", eventItem.operation);
           break;
       }
     }
-    await editor.structureDef.editor.setMolecule(latestData);
     processFILOStack();
   };
 
+  // helper function to add event to stack
   const addEventToFILOStack = (event) => {
     if (!uniqueEvents.has(event)) {
       FILOStack.push(event);
@@ -72,12 +80,12 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
+  // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
     await fuelKetcherData();
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
       FILOStack.splice(loadCanvasIndex, 1);
-      moveTemplate();
       uniqueEvents.delete("Load canvas");
     }
     if (!latestData) {
@@ -91,7 +99,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       switch (event) {
         case "Load canvas":
           console.log("on clean up?");
-          await fuelKetcherData();
           break;
         case "Move image":
         case "Move atom":
@@ -101,7 +108,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           handleAddAtom();
           break;
         case "Upsert image":
-          console.log("upsert?");
           // nothing will happen
           break;
         default:
@@ -113,6 +119,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     // modifyMatchingTextElements();
   };
 
+  // helper function to place image on atom location coordinates
   const placeImageOnAtoms = async (mols_) => {
     await fuelKetcherData();
     mols_.forEach((item) => {
@@ -136,23 +143,22 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   // Helper function to move image and update molecule positions
   const moveTemplate = async () => {
-    let image_counter_alias = -1;
     mols.forEach(async (mol) => {
       const molecule = latestData[mol];
       // Check if molecule and atoms exist, and if the alias is formatted correctly
       molecule?.atoms?.forEach((item, atom_idx) => {
         if (item.alias) {
           const alias = item.alias.split("_");
-          image_counter_alias++;
           // Check if alias has at least 3 parts
           if (alias.length >= 3) {
+            alert(alias[2]);
             const image = imagesList[alias[2]];
             if (image?.boundingBox) {
               const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
               const location = [x, y, 0]; // Set location as an array of coordinates
               // Update molecule atom's location and alias
               molecule.atoms[atom_idx].location = location;
-              molecule.atoms[atom_idx].alias = `${alias[0]}_${alias[1]}_${image_counter_alias}`;
+              // molecule.atoms[atom_idx].alias = `${alias[0]}_${alias[1]}_${image_counter_alias}`;
             }
           }
         }
@@ -163,33 +169,73 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     placeImageOnAtoms(mols);
   };
 
-  // Handle atom addition logic
+  // helper function to handle new atoms added to the canvas
   const handleAddAtom = async () => {
     console.log("Atom moved!");
-    const lastMoleculeKey = `mol${Object.keys(latestData).length - 2}`;
-    const lastMolecule = latestData[lastMoleculeKey];
+    let is_h_id = -1;
 
-    if (lastMolecule?.atoms[1]?.label === "H") {
-      delete lastMolecule.sgroups;
-      delete lastMolecule.bonds;
-      lastMolecule.atoms[0].alias += `_${imagesList.length - 1}`;
-      lastMolecule.atoms.splice(1, 1);
-    }
+    mols.forEach((item) => {
+      const molecule = latestData[item];
+      molecule.atoms.map((item, idx) => {
+        if (item?.label === "H") {
+          is_h_id = idx;
+        }
+
+        if (two_parts_pattern.test(item?.alias)) {
+          const part_three = imagesList.length - 1 < 0 ? 0 : image_used_counter++;
+          item.alias += `_${part_three}`;
+        }
+      });
+      latestData[item] = molecule;
+    });
+
+    // molecule.atoms.splice(is_h_id, 1);
+    // molecule.bonds.splice(is_h_id, 1);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    addEventToFILOStack("Move image");
+    postAtomAddImageInsertion();
   };
 
-  const fuelKetcherData = async () => {
-
-    latestData = JSON.parse(await editor.structureDef.editor.getKet());
-    allNodes = [...latestData.root.nodes];
-    imagesList = allNodes.length > mols.length ? allNodes.filter(
-      item => item.type === 'image'
-    ) : imagesList;
-    mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
-    // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
+  // helper function to insert image on direction atom connection or post process for function handleAddAtom
+  const postAtomAddImageInsertion = async () => {
+    console.log("On demand image upsert!");
+    const lastMolecule = latestData[mols.at(-1)];
+    lastMolecule.atoms.forEach(async item => {
+      if (item?.alias) {
+        if (three_parts_patten.test(item?.alias)) {
+          console.log(imagesList.length < image_used_counter, imagesList.length, image_used_counter);
+          if (imagesList.length < image_used_counter) {
+            latestData.root.nodes.push(prepareImageFromTemplateList("afaf", item.location));
+            console.log({ latestData: latestData.root.nodes });
+            await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+            return;
+          }
+        }
+      }
+    });
   };
 
+  // helper function to return a new image in imagesList with a location
+  const prepareImageFromTemplateList = (idx, location) => {
+    idx = 0;
+    const template_list = [
+      {
+        "type": "image",
+        "format": "image/svg+xml",
+        "boundingBox": {
+          "width": 2.125,
+          "height": 0.8249999999999975
+        },
+        "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIHk9IjgwIiByeD0iMjAiIHJ5PSIyMCIKICBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMTAiIGZpbGw9Ijc1NzA3MCIKICAvPgo8L3N2Zz4="
+      }
+    ];
+    template_list[idx].boundingBox.x = location[0];
+    template_list[idx].boundingBox.y = location[1];
+    template_list[idx].boundingBox.z = location[2];
+    return template_list[idx];
+  };
+
+  // helper function to make all t_int_int dom element transparent so they are not visible on the canvase
+  // TODO: not working right now
   const modifyMatchingTextElements = () => {
     const regex = /t_\d+_\d+/; // Regex to match t_02_0, etc.
 
@@ -223,7 +269,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
-
   useEffect(() => {
     window.addEventListener('message', loadContent);
     return () => {
@@ -244,7 +289,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       />
     </div>
   );
-}
+};
 
 KetcherEditor.propTypes = {
   molfile: PropTypes.string,
