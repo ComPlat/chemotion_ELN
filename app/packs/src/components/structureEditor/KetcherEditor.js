@@ -11,7 +11,7 @@ let mols = [];
 let allNodes = [];
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
-let image_used_counter = 0;
+let image_used_counter = -1;
 function KetcherEditor({ editor, iH, iS, molfile }) {
 
   const iframeRef = useRef();
@@ -182,15 +182,18 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   // helper function to handle new atoms added to the canvas
   const handleAddAtom = async () => {
     console.log("Atom moved!");
-    mols.forEach((item) => {
+    mols.forEach((mol) => {
       let is_h_id = -1;
-      const molecule = latestData[item];
+      const molecule = latestData[mol];
       molecule.atoms.map((item, idx) => {
         if (item?.label === "H") is_h_id = idx;
-
         if (two_parts_pattern.test(item?.alias)) {
-          const part_three = imagesList.length - 1 < 0 ? 0 : image_used_counter++;
+          const part_three = ++image_used_counter;
           item.alias += `_${part_three}`;
+          const alias_splits = item.alias.split("_");
+          if (!imagesList[part_three]) { // specifically for direction attachments
+            latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
+          }
         }
       });
       // TODO: understand with example issue of indexs implement this part
@@ -204,32 +207,13 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         //     molecule.atoms.splice(is_h_id, 1);
         //   }
       }
-      latestData[item] = molecule;
-    });
-    postAtomAddImageInsertion(latestData);
-  };
-
-  // helper function to insert image on direction atom connection or post process for function handleAddAtom
-  const postAtomAddImageInsertion = async (latestData) => {
-    console.log("postAtomAddImageInsertion");
-    const lastMolecule = latestData[mols.at(-1)];
-    await lastMolecule.atoms.forEach(async item => {
-      if (item?.alias) {
-        const alias_splits = item.alias.split("_");
-        if (three_parts_patten.test(item?.alias)) {
-          if (!imagesList[alias_splits[2]]) {
-            latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
-            image_used_counter++;
-          }
-        }
-      }
+      latestData[mol] = molecule;
     });
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
   };
 
   // helper function to return a new image in imagesList with a location
   const prepareImageFromTemplateList = (idx, location) => {
-    console.log(idx);
     const template_list = [
       null,
       {
