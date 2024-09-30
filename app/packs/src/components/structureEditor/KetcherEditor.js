@@ -185,7 +185,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     mols.forEach((mol) => {
       let is_h_id = -1;
       const molecule = latestData[mol];
-      molecule.atoms.map((item, idx) => {
+      molecule?.atoms.map((item, idx) => {
         if (item?.label === "H") is_h_id = idx;
         if (two_parts_pattern.test(item?.alias)) {
           const part_three = ++image_used_counter;
