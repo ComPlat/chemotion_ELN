@@ -159,7 +159,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
             if (image?.boundingBox) {
               const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
               const location = [x, y, 0]; // Set location as an array of coordinates
-              molecule.atoms[atom_idx].location = location;
+              // molecule.atoms[atom_idx].location = location;
               molecule.atoms[atom_idx].alias = item.alias.trim();
               if (molecule?.stereoFlagPosition) {
                 molecule.stereoFlagPosition = {
