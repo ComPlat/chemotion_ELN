@@ -227,31 +227,7 @@ export default class ThirdPartyApp extends React.Component {
       }
     };
 
-    const handleNameChange = (event) => {
-      // if current errorMessage start with Name, clear it
-      const newState = { currentName: event.target.value };
-      if (this.state.errorMessage.startsWith('Name')) {
-        newState.errorMessage = '';
-      }
-      this.setState(newState);
-    };
 
-    const handleIPChange = (event) => {
-      const newState = { currentIP: event.target.value };
-      if (this.state.errorMessage.startsWith('URL')) {
-        newState.errorMessage = '';
-      }
-      this.setState(newState);
-    };
-
-    const handleFileTypesChange = (event) => {
-      const newFileTypes = event.target.value;
-      const newState = { currentFileTypes: newFileTypes };
-      if (this.state.errorMessage && this.state.errorMessage.startsWith('FileTypes')) {
-        newState.errorMessage = '';
-      }
-      this.setState(newState);
-    };
 
     return (
       <Modal
@@ -271,8 +247,7 @@ export default class ThirdPartyApp extends React.Component {
                 <FormControl
                   type="text"
                   name="Name"
-                  value={this.state.currentName}
-                  onChange={handleNameChange}
+                  defaultValue={this.state.currentName}
                   inputRef={(ref) => { nameRef = ref; }}
                 />
               </Col>
@@ -286,8 +261,7 @@ export default class ThirdPartyApp extends React.Component {
                 <FormControl
                   type="text"
                   name="IP address"
-                  value={this.state.currentIP}
-                  onChange={handleIPChange}
+                  defaultValue={this.state.currentIP}
                   inputRef={(ref) => { urlRef = ref; }}
                 />
               </Col>
@@ -301,8 +275,7 @@ export default class ThirdPartyApp extends React.Component {
                 <FormControl
                   type="text"
                   name="Mime types list"
-                  value={this.state.currentFileTypes}
-                  onChange={handleFileTypesChange}
+                  defaultValue={this.state.currentFileTypes}
                   inputRef={(ref) => { fileTypesRef = ref; }}
                   placeholder="* or comma separated list: image/png,text..."
                 />
