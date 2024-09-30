@@ -107,7 +107,7 @@ export default class ReactionDetails extends Component {
       nextReaction.changed || nextReaction.editedSample) {
       this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
-    }
+  }
 
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -119,15 +119,15 @@ export default class ReactionDetails extends Component {
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
     } = this.state;
-  return (
-    reactionFromNextProps.id !== reactionFromCurrentState.id ||
-    reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
-    reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
-    !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
-    nextActiveTab !== activeTab || nextVisible !== visible ||
-    nextActiveAnalysisTab !== activeAnalysisTab
-    || reactionFromNextState !== reactionFromCurrentState
-  );
+    return (
+      reactionFromNextProps.id !== reactionFromCurrentState.id ||
+      reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
+      reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
+      !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
+      nextActiveTab !== activeTab || nextVisible !== visible ||
+      nextActiveAnalysisTab !== activeAnalysisTab
+      || reactionFromNextState !== reactionFromCurrentState
+    );
   }
 
   componentWillUnmount() {
@@ -640,7 +640,7 @@ export default class ReactionDetails extends Component {
             onTabPositionChanged={this.onTabPositionChanged}
           />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
-          <div className="tabs-container--with-borders">
+          <div className="tabs-container--with-borders" id="reaction-tab-container">
             <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
               {tabContents}
             </Tabs>

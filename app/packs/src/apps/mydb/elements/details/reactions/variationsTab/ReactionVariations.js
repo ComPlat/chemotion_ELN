@@ -416,7 +416,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             {' '}
             rows.
           </Tooltip>
-  )}
+        )}
       >
         {/* Wrapping button in span necessary in order for OverlayTrigger to work */}
         <span>
@@ -437,7 +437,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}
           domLayout="autoHeight"
-          popupParent={document.getElementById('reaction-detail-tab') || null}
+          popupParent={document.getElementById('reaction-tab-container') || null}
           context={{
             copyRow,
             removeRow,
