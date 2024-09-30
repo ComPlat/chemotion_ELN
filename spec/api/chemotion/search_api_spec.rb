@@ -233,7 +233,7 @@ describe Chemotion::SearchAPI do
               info: 'Only numbers are allowed',
               advanced: true,
             },
-            value: 12,
+            value: '12.0',
             sub_values: [],
             unit: 'Hour(s)',
           },

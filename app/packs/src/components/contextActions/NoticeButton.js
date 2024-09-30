@@ -299,7 +299,7 @@ export default class NoticeButton extends React.Component {
     const remainTime = Math.floor(
       (currentTime - clientLastActivityTime) / 1000
     );
-    if (false && remainTime < idleTimeout) {
+    if (remainTime < idleTimeout) {
       MessagesFetcher.fetchMessages(0).then((result) => {
         result.messages.forEach((message) => {
           if (message.subject === 'Send TPA attachment arrival notification')
