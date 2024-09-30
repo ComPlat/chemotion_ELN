@@ -161,6 +161,13 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
               const location = [x, y, 0]; // Set location as an array of coordinates
               molecule.atoms[atom_idx].location = location;
               molecule.atoms[atom_idx].alias = item.alias.trim();
+              if (molecule?.stereoFlagPosition) {
+                molecule.stereoFlagPosition = {
+                  x: location[0],
+                  y: location[1],
+                  z: location[2]
+                };
+              }
             }
           }
         }
@@ -186,15 +193,16 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           item.alias += `_${part_three}`;
         }
       });
+      // TODO: understand with example issue of indexs implement this part
       if (is_h_id != -1) {
         if (molecule?.bonds?.length <= 1) {
           molecule.atoms.splice(is_h_id, 1);
           molecule.bonds = [];
         }
-        else if (molecule?.bonds) {
-          molecule.bonds.splice(is_h_id, 1);
-          molecule.atoms.splice(is_h_id, 1);
-        }
+        //   else if (molecule?.bonds) {
+        //     molecule.bonds.splice(is_h_id, 1);
+        //     molecule.atoms.splice(is_h_id, 1);
+        //   }
       }
       latestData[item] = molecule;
     });
@@ -210,7 +218,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         const alias_splits = item.alias.split("_");
         if (three_parts_patten.test(item?.alias)) {
           if (!imagesList[alias_splits[2]]) {
-            latestData.root.nodes.push(prepareImageFromTemplateList(alias_splits[2], item.location));
+            latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
             image_used_counter++;
           }
         }
@@ -221,16 +229,26 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   // helper function to return a new image in imagesList with a location
   const prepareImageFromTemplateList = (idx, location) => {
-    idx = 0;
+    console.log(idx);
     const template_list = [
+      null,
       {
         "type": "image",
         "format": "image/svg+xml",
         "boundingBox": {
-          "width": 2.125,
-          "height": 0.8249999999999975
+          "width": 1.8750000000000018,
+          "height": 0.7999999999999936
         },
-        "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIHk9IjgwIiByeD0iMjAiIHJ5PSIyMCIKICBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMTAiIGZpbGw9Ijc1NzA3MCIKICAvPgo8L3N2Zz4="
+        "data": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTAiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIiAgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+Cjwvc3ZnPg=="
+      },
+      {
+        "type": "image",
+        "format": "image/svg+xml",
+        "boundingBox": {
+          "width": 1.1749999999999998,
+          "height": 1.0999999999999943
+        },
+        "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
       }
     ];
     template_list[idx].boundingBox.x = location[0];
