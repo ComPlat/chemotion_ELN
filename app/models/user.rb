@@ -373,23 +373,23 @@ class User < ApplicationRecord
   end
 
   def self.from_omniauth(params)
-    user = find_by(email: params&.email&.downcase)
+    user = find_by(email: params[:email]&.downcase)
     if user.present?
       providers = user.providers || {}
-      providers[params&.provider] = params&.uid
+      providers[params[:provider]] = params[:uid]
       user.providers = providers
       user.save!
     else
       user = User.new(
-        email: params&.email,
-        first_name: params&.first_name,
-        last_name: params&.last_name,
+        email: params[:email]&.downcase,
+        first_name: params[:first_name],
+        last_name: params[:last_name],
         password: Devise.friendly_token[0, 20],
       )
     end
 
-    if params&.groups&.length&.positive?
-      params.groups.each do |group|
+    if (params[:groups] || []).length&.positive?
+      (params[:groups] || []).each do |group|
         name = group.split(':')
         if name.size == 3
           group = Group.find_by(first_name: name[2], last_name: name[1])
