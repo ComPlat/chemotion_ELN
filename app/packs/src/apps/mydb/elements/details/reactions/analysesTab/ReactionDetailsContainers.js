@@ -311,7 +311,7 @@ export default class ReactionDetailsContainers extends Component {
             <div className="d-flex gap-2">
               <span>Content:</span>
               <div className="flex-grow-1">
-                <QuillViewer value={contentOneLine} className="p-0" />
+                <QuillViewer value={contentOneLine} className="p-0" preview />
               </div>
             </div>
           </div>
@@ -354,7 +354,6 @@ export default class ReactionDetailsContainers extends Component {
 
 
         return (
-          <div>
             <div>
               <div className="d-flex justify-content-end align-items-center mb-3">
                 {this.addButton()}
@@ -373,7 +372,7 @@ export default class ReactionDetailsContainers extends Component {
                         key={`reaction_container_deleted_${container.id}`}
                         className='border rounded overflow-hidden'
                       >
-                        <Accordion.Header className="p-2 text-sm">
+                        <Accordion.Header>
                           {containerHeaderDeleted(container)}
                         </Accordion.Header>
                       </Accordion.Item>
@@ -385,14 +384,14 @@ export default class ReactionDetailsContainers extends Component {
                       key={`reaction_container_${container.id}`}
                       className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
                     >
-                      <Card.Header className="rounded p-2 text-sm">
+                      <Card.Header className="rounded-0 p-0 border-bottom-0">
                         <AccordionHeaderWithButtons eventKey={key}>
                           {containerHeader(container)}
                         </AccordionHeaderWithButtons>
                       </Card.Header>
 
                       <Accordion.Collapse eventKey={key}>
-                        <Card.Body className="p-2">
+                        <Card.Body>
                           <ContainerComponent
                             disabled={readOnly}
                             readOnly={readOnly}
@@ -417,7 +416,6 @@ export default class ReactionDetailsContainers extends Component {
                 })}
               </Accordion>
             </div>
-          </div>
         );
       }
 

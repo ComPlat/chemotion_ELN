@@ -216,9 +216,7 @@ const AnalysesHeader = ({
     hasPop = false;
   }
   return (
-    <div
-      className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}
-    >
+    <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
         {deleted ?
           <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :

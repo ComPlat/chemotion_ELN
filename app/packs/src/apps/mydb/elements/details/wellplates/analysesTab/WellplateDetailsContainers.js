@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Accordion, Button, Row } from 'react-bootstrap';
+import { Accordion, Button, Card, Row } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {
@@ -80,7 +81,7 @@ export default class WellplateDetailsContainers extends Component {
     const { wellplate, activeContainer } = this.state;
     const { readOnly } = this.props;
 
-    let containerHeader = (container) => <div className="d-flex justify-content-between w-100">
+    let containerHeader = (container) => <div className="analysis-header d-flex justify-content-between w-100">
       <div>
         {container.name}
         {(container.extended_metadata['kind'] &&
@@ -152,32 +153,45 @@ export default class WellplateDetailsContainers extends Component {
         <div className="my-3">
           {this.addButton()}
         </div>
-        <Accordion defaultActiveKey={0}>
+        <Accordion
+          className="border rounded overflow-hidden"
+          // onSelect={this.handleAccordionOpen}
+          // activeKey={activeContainer}
+        >
           {
             analyses_container[0].children.map((container, key) => {
+              const isFirstTab = key === 0;
               return (
-                <Accordion.Item eventKey={key} key={key}>
-                  <Accordion.Header>
-                    {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
-                  </Accordion.Header>
+                <Card
+                  eventKey={key}
+                  key={`wellplate_container_${key}`}
+                  // className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
+                >
+                  <Card.Header className="rounded-0 p-0 border-bottom-0">
+                    <AccordionHeaderWithButtons eventKey={key}>
+                      {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
+                    </AccordionHeaderWithButtons>
+                  </Card.Header>
                   {
                     !container.is_deleted &&
-                      <Accordion.Body>
+                    <Accordion.Collapse eventKey={key}>
+                      <Card.Body>
                         <ContainerComponent
                           templateType="wellplate"
                           readOnly={readOnly}
                           container={container}
                           onChange={container => this.handleChange(container)}
                         />
-                      </Accordion.Body>
+                      </Card.Body>
+                    </Accordion.Collapse>
                   }
-                </Accordion.Item>
-              )
+                </Card>
+              );
             })
           }
         </Accordion>
       </div>
-    )
+    );
   }
 }
 
