@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Accordion, Button, Card, Row } from 'react-bootstrap';
+import { Accordion, Button, Card } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'
@@ -62,7 +62,7 @@ export default class WellplateDetailsContainers extends Component {
     setWellplate(wellplate);
   }
 
-  handleAccordionOpen(key) {
+  handleAccordionOpen = (key) => {
     this.setState({ activeContainer: key });
   }
 
@@ -70,7 +70,12 @@ export default class WellplateDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
+        <Button
+          size="sm"
+          variant="success"
+          onClick={() => this.handleAdd()}
+          className="ms-auto"
+        >
           Add analysis
         </Button>
       )
@@ -98,7 +103,7 @@ export default class WellplateDetailsContainers extends Component {
           ident={container.id}
         />
         <Button
-          size="sm"
+          size="xxsm"
           variant="danger"
           disabled={readOnly}
           onClick={() => {
@@ -118,7 +123,7 @@ export default class WellplateDetailsContainers extends Component {
           {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) : ''}
         </strike>
         <div className="d-flex justify-content-end gap-2 me-2">
-          <Button size="sm" variant="danger" onClick={() => this.handleUndo(container)}>
+          <Button size="xsm" variant="danger" onClick={() => this.handleUndo(container)}>
             <i className="fa fa-undo"></i>
           </Button>
         </div>
@@ -139,24 +144,27 @@ export default class WellplateDetailsContainers extends Component {
 
     if (analyses_container.length != 1 || analyses_container[0].children.length == 0) {
       return (
-        <div className='d-flex justify-content-between align-items-center'>
+        <div className='d-flex justify-content-between align-items-center my-2 mx-3'>
           <p className='m-0'>
             There are currently no Analyses.
-            {this.addButton()}
           </p>
+          <div>
+            {this.addButton()}
+          </div>
+
         </div>
       )
     }
 
     return (
       <div>
-        <div className="my-3">
+        <div className="d-flex justify-content-end my-2 mx-3">
           {this.addButton()}
         </div>
         <Accordion
           className="border rounded overflow-hidden"
-          // onSelect={this.handleAccordionOpen}
-          // activeKey={activeContainer}
+          onSelect={this.handleAccordionOpen}
+          activeKey={activeContainer}
         >
           {
             analyses_container[0].children.map((container, key) => {
@@ -165,7 +173,7 @@ export default class WellplateDetailsContainers extends Component {
                 <Card
                   eventKey={key}
                   key={`wellplate_container_${key}`}
-                  // className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
+                  className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
                 >
                   <Card.Header className="rounded-0 p-0 border-bottom-0">
                     <AccordionHeaderWithButtons eventKey={key}>

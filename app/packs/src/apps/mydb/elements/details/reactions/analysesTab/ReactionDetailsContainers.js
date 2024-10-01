@@ -188,7 +188,7 @@ export default class ReactionDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className="d-flex justify-content-between align-items-center mb-0">
+      <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
         <AnalysisVariationLink
           reaction={reaction}
           analysisID={container.id}
@@ -327,15 +327,15 @@ export default class ReactionDetailsContainers extends Component {
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
-        <div className="d-flex w-100 mb-0 bg-gray-200 p-4 align-items-center">
+        <div className="d-flex w-100 mb-0 align-items-center">
           <strike className="flex-grow-1">
             {container.name}
             {titleKind}
             {titleStatus}
           </strike>
           <Button
-            className="ml-auto"
-            size="sm"
+            className="ms-auto"
+            size="xsm"
             variant="danger"
             onClick={() => this.handleUndo(container)}
           >
@@ -351,8 +351,6 @@ export default class ReactionDetailsContainers extends Component {
       ));
 
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
-
-
         return (
             <div>
               <div className="d-flex justify-content-end align-items-center mb-3">
@@ -365,19 +363,6 @@ export default class ReactionDetailsContainers extends Component {
               >
                 {analyses_container[0].children.map((container, key) => {
                   const isFirstTab = key === 0;
-                  if (container.is_deleted) {
-                    return (
-                      <Accordion.Item
-                        eventKey={key}
-                        key={`reaction_container_deleted_${container.id}`}
-                        className='border rounded overflow-hidden'
-                      >
-                        <Accordion.Header>
-                          {containerHeaderDeleted(container)}
-                        </Accordion.Header>
-                      </Accordion.Item>
-                    );
-                  }
                   return (
                     <Card
                       ref={(element) => { this.containerRefs[key] = element; }}
@@ -386,31 +371,33 @@ export default class ReactionDetailsContainers extends Component {
                     >
                       <Card.Header className="rounded-0 p-0 border-bottom-0">
                         <AccordionHeaderWithButtons eventKey={key}>
-                          {containerHeader(container)}
+                          {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
                         </AccordionHeaderWithButtons>
                       </Card.Header>
 
-                      <Accordion.Collapse eventKey={key}>
-                        <Card.Body>
-                          <ContainerComponent
-                            disabled={readOnly}
-                            readOnly={readOnly}
-                            templateType="reaction"
-                            container={container}
-                            onChange={this.handleChange.bind(this, container)}
-                          />
-                          <ViewSpectra
-                            sample={reaction}
-                            handleSampleChanged={this.handleSpChange}
-                            handleSubmit={this.props.handleSubmit}
-                          />
-                          <NMRiumDisplayer
-                            sample={reaction}
-                            handleSampleChanged={this.handleSpChange}
-                            handleSubmit={this.props.handleSubmit}
-                          />
-                        </Card.Body>
-                      </Accordion.Collapse>
+                      {!container.is_deleted &&
+                        <Accordion.Collapse eventKey={key}>
+                          <Card.Body>
+                            <ContainerComponent
+                              disabled={readOnly}
+                              readOnly={readOnly}
+                              templateType="reaction"
+                              container={container}
+                              onChange={this.handleChange.bind(this, container)}
+                            />
+                            <ViewSpectra
+                              sample={reaction}
+                              handleSampleChanged={this.handleSpChange}
+                              handleSubmit={this.props.handleSubmit}
+                            />
+                            <NMRiumDisplayer
+                              sample={reaction}
+                              handleSampleChanged={this.handleSpChange}
+                              handleSubmit={this.props.handleSubmit}
+                            />
+                          </Card.Body>
+                        </Accordion.Collapse>
+                      }
                     </Card>
                   );
                 })}

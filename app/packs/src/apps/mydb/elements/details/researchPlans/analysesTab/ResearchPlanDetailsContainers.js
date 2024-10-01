@@ -120,7 +120,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className="d-flex justify-content-between align-items-center mb-0">
+      <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
         <SpectraEditorButton
           element={researchPlan}
           hasJcamp={hasJcamp}
@@ -240,7 +240,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
       return (
-        <div className="d-flex w-100 mb-0 bg-gray-200 p-4 align-items-center">
+        <div className="d-flex w-100 mb-0 align-items-center">
           <span className="flex-grow-1 text-decoration-line-through">
             {container.name}
             {titleKind}
@@ -248,7 +248,7 @@ export default class ResearchPlanDetailsContainers extends Component {
           </span>
           <Button
             className="ml-auto"
-            size="sm"
+            size="xsm"
             variant="danger"
             onClick={() => this.handleUndo(container)}
           >
@@ -266,7 +266,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex justify-content-end">
+            <div className="my-2 mx-3 d-flex justify-content-end">
               {this.addButton()}
             </div>
             <Accordion
@@ -275,18 +275,6 @@ export default class ResearchPlanDetailsContainers extends Component {
               activeKey={activeContainer}
             >
               {analysesContainer[0].children.map((container, key) => {
-                if (container.is_deleted) {
-                  return (
-                    <Accordion.Item
-                      eventKey={key}
-                      key={`research_plan_container_deleted_${container.id}`}
-                      className="border rounded overflow-hidden"
-                    >
-                      <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
-                    </Accordion.Item>
-                  );
-                }
-
                 return (
                   <Card
                     eventKey={key}
@@ -294,10 +282,11 @@ export default class ResearchPlanDetailsContainers extends Component {
                   >
                     <Card.Header className="rounded-0 p-0 border-bottom-0">
                       <AccordionHeaderWithButtons eventKey={key}>
-                        {containerHeader(container)}
+                        {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
                       </AccordionHeaderWithButtons>
                     </Card.Header>
 
+                    {!container.is_deleted &&
                     <Accordion.Collapse eventKey={key}>
                       <Card.Body>
                       <ContainerComponent
@@ -318,7 +307,8 @@ export default class ResearchPlanDetailsContainers extends Component {
                         handleSubmit={this.props.handleSubmit}
                       />
                       </Card.Body>
-                    </Accordion.Collapse>
+                      </Accordion.Collapse>
+                    }
                     </Card>
                 );
               })}
@@ -328,7 +318,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       }
 
       return (
-        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+        <div className="d-flex align-items-center justify-content-between my-2 mx-3">
           <span className="ms-3"> There are currently no Analyses. </span>
           <div>
             {this.addButton()}
