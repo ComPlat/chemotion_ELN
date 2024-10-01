@@ -10,7 +10,7 @@ import {
   Accordion, Dropdown
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import CreatableSelect from 'react-select3/creatable';
+import CreatableSelect from 'react-select/creatable';
 import { cloneDeep, findIndex } from 'lodash';
 import uuid from 'uuid';
 import Immutable from 'immutable';

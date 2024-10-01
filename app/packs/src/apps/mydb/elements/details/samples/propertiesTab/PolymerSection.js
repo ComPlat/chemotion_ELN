@@ -4,7 +4,7 @@ import { Form, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
-import Select from 'react-select3'
+import Select from 'react-select'
 
 export default class PolymerSection extends React.Component {
   handleCustomInfoNumericChanged(e, name, residue, sample) {

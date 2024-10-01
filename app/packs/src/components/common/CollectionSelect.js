@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Select from 'react-select3';
+import Select from 'react-select';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 
 export default class CollectionSelect extends React.Component {

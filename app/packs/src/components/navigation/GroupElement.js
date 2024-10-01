@@ -8,7 +8,7 @@ import {
   Overlay,
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import AsyncSelect from 'react-select3/async';
+import AsyncSelect from 'react-select/async';
 import _ from 'lodash';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 

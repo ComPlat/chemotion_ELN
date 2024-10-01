@@ -6,7 +6,7 @@ import {
   ListGroup, ListGroupItem, InputGroup, Modal, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';

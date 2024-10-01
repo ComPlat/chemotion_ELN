@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Form, Row, Col
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 
 import { subjectAreas } from 'src/components/staticDropdownOptions/radar/subjectAreas';
 

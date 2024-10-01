@@ -5,7 +5,7 @@ import {
   Nav, NavItem, Alert, Card, Col,
   Row
 } from 'react-bootstrap';
-import AsyncSelect from 'react-select3/async';
+import AsyncSelect from 'react-select/async';
 import { CSVReader } from 'react-papaparse';
 import propType from 'prop-types';
 import AdminFetcher from 'src/fetchers/AdminFetcher';

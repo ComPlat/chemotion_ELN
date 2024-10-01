@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ButtonToolbar, Button, Form, Popover } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 // import { template } from 'lodash';
 
 const getIconAndDropdown = (template) => {

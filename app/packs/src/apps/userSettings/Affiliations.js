@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import CreatableSelect from 'react-select/lib/Creatable';
+import CreatableSelect from 'react-select/creatable';
 import { Button, Modal, OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Form } from 'react-bootstrap'
-import Select from 'react-select3';
+import Select from 'react-select';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import PublicationFieldData from './PublicationFieldData';

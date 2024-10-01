@@ -8,8 +8,8 @@ import {
   OverlayTrigger, Tooltip, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
-import Select from 'react-select3';
-import CreatableSelect from 'react-select3/creatable';
+import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';

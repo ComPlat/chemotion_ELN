@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Table, Button, Form, Card } from 'react-bootstrap';
-import AsyncSelect from 'react-select3/async';
+import AsyncSelect from 'react-select/async';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';

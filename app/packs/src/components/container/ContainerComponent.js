@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Map } from 'immutable';
 import PropTypes from 'prop-types';
 import { Col, Form, Row } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';

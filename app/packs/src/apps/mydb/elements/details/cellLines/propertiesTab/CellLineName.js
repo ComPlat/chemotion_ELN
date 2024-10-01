@@ -3,7 +3,7 @@ import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { Col, Row, Form } from 'react-bootstrap';
-import Creatable from 'react-select3/creatable';
+import CreatableSelect from 'react-select/creatable';
 
 export default class CellLineName extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -63,7 +63,7 @@ export default class CellLineName extends React.Component {
       <Form.Group as={Row} className="cell-line-name">
         <Form.Label column sm={3}>Cell line name *</Form.Label>
         <Col sm={9}>
-          <Creatable
+          <CreatableSelect
             className={className}
             onChange={(e) => {
               if (typeof e.value === 'number') {

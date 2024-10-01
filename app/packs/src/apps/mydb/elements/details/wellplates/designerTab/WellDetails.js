@@ -8,7 +8,7 @@ import {
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
-import Select from 'react-select3';
+import Select from 'react-select';
 import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';

@@ -9,7 +9,7 @@ import {
   Row,
   Form
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
 import { statusOptions } from 'src/components/staticDropdownOptions/options';

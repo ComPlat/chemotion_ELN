@@ -6,7 +6,7 @@ import {
   Modal, Table, Badge, Button, Form, InputGroup, ButtonToolbar
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
-import Select from 'react-select3';
+import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';

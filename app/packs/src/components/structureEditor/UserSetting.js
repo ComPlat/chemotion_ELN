@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import {
   Button, Card, Row, Col
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const DEFAULT_EDITOR = 'ketcher';

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Row, Col, Form, InputGroup, DropdownButton, Dropdown
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 import 'moment-precise-range-plugin';
 import { dangerousProductsOptions } from 'src/components/staticDropdownOptions/options';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';

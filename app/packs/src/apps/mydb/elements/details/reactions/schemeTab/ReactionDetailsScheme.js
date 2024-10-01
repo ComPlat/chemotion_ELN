@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Form, Row, Col, Collapse, Button, InputGroup
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import Select from 'react-select';
 import Delta from 'quill-delta';
 import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
 import Sample from 'src/models/Sample';
