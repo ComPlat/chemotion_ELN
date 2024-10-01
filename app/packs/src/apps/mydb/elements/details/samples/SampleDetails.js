@@ -825,7 +825,6 @@ export default class SampleDetails extends React.Component {
           <InputGroup.Text>CAS</InputGroup.Text>
           <CreatableSelect
             name="cas"
-            isMulti={false}
             options={options}
             onChange={(e) => this.updateCas(e)}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}

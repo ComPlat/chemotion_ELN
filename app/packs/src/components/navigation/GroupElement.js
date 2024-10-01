@@ -69,7 +69,7 @@ export default class GroupElement extends React.Component {
         (o) => o.id === group.group.id
       );
       this.props.currentGroup.splice(idx, 1, group.group);
-      this.setState({ selectedUsers: null });
+      this.setState({ selectedUsers: [] });
       this.props.onChangeData(this.props.currentGroup);
     });
   }
@@ -149,7 +149,7 @@ export default class GroupElement extends React.Component {
         (o) => o.id == group.group.id
       );
       this.props.currentGroup.splice(idx, 1, group.group);
-      this.setState({ selectedUsers: null });
+      this.setState({ selectedUsers: [] });
       this.props.onChangeData(this.props.currentGroup);
     });
   }

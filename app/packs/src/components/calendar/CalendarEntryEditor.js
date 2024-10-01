@@ -201,7 +201,7 @@ const CalendarEntryEditor = (props) => {
               isClearable
               isMulti
               value={notifyUserList.filter(({value}) => entry.notify_users?.includes(value))}
-              onChange={(list) => updateEntry('notify_users', list || '')}
+              onChange={(list) => updateEntry('notify_users', list)}
               options={notifyUserList}
             />
           </Form.Group>

@@ -16,8 +16,7 @@ const DeviceUserGroupsTab = () => {
   }
 
   const handleUser = (value, type) => {
-    let newValue = value ? value : [];
-    devicesStore.changeDevice(type, newValue);
+    devicesStore.changeDevice(type, value);
   }
 
   const loadUserByName = (input, type) => {

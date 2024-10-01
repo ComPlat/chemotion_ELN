@@ -66,13 +66,11 @@ export default class ToolbarTemplateCreator extends React.Component {
       tempOnChange[0].name = e.target.value;
     } else {
       const dataValues = [];
-      if (e !== null) {
-        e.forEach((object) => {
-          const tabContent = object.value;
-          if (tabContent) { dataValues.push(tabContent); }
-        });
-        tempOnChange[0].data = dataValues;
-      }
+      e.forEach((object) => {
+        const tabContent = object.value;
+        if (tabContent) { dataValues.push(tabContent); }
+      });
+      tempOnChange[0].data = dataValues;
     }
   }
 

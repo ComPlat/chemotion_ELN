@@ -109,7 +109,7 @@ const labelSelection = (well, onChange) => {
         value={labelOptions.filter(({value}) => wellLabels.includes(value))}
         isOptionDisabled={({disabled}) => disabled}
         onChange={selectedOptions => {
-          const newLabel = selectedOptions?.map(option => option.label).join(',') || ''
+          const newLabel = selectedOptions.map(option => option.label).join(',')
           well.label = newLabel
           onChange(well)
         }}

@@ -33,7 +33,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   handleMultiselectChange(type, selectedOptions) {
-    const values = selectedOptions?.map((option) => option.value) || [];
+    const values = selectedOptions.map((option) => option.value);
     const wrappedEvent = { target: { value: values } };
     this.props.onInputChange(type, wrappedEvent);
   }

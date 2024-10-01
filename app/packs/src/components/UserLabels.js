@@ -336,7 +336,7 @@ class EditUserLabels extends React.Component {
 
   handleSelectChange(val) {
     const { element, fnCb } = this.props;
-    const ids = val?.map((v) => v.id) ?? null;
+    const ids = val.map((v) => v.id);
     element.setUserLabels(ids);
     fnCb(element);
   }
