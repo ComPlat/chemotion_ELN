@@ -3,100 +3,83 @@ import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import Select from 'react-select'
+import CollectionUtils from 'src/models/collection/CollectionUtils';
+import Select from 'react-select3';
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
     super(props);
-    const options = this.collectionOptions();
     this.state = {
       newLabel: null,
-      options: options,
       selected: null,
-    }
+    };
     this.onSelectChange = this.onSelectChange.bind(this);
+    this.onInputChange = this.onInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-  }
-
-  onSelectChange(e) {
-    const selected = e && e.value;
-    this.setState((previousProps, previousState) => {
-      return { ...previousState, selected: selected }
-    });
-  }
-
-  writableColls(colls) {
-    return colls.map(coll => {
-      return coll.permission_level >= 1 ? coll : null;
-    }).filter(r => r != null);
-  }
-
-  collectionEntries() {
-    const cState = CollectionStore.getState();
-    const cUnshared = [...cState.lockedRoots, ...cState.unsharedRoots];
-    let cShared = [];
-    let cSynced = [];
-    if (this.props.listSharedCollections) {
-      cState.sharedRoots.map(sharedR => cShared = [...cShared, ...sharedR.children]);
-      cState.syncInRoots.map(syncInR => cSynced = [...cSynced, ...syncInR.children]);
-      cSynced = this.writableColls(cSynced);
-    }
-
-    if (cShared.length > 0) { cShared[0] = Object.assign(cShared[0], { first: true }); }
-    if (cSynced.length > 0) { cSynced[0] = Object.assign(cSynced[0], { first: true }); }
-
-    const cAll = [...cUnshared, ...cShared, ...cSynced];
-    let cAllTree = [];
-    this.makeTree(cAllTree, cAll, 0);
-    return cAllTree;
-  }
-
-  makeTree(tree, collections, depth) {
-    collections.forEach((collection, index) => {
-      tree.push({
-        id: collection.id,
-        label: collection.label,
-        depth: depth,
-        first: collection.first,
-        is_shared: collection.is_shared,
-        is_sync_to_me: collection.is_sync_to_me
-      });
-      if (collection.children && collection.children.length > 0) {
-        this.makeTree(tree, collection.children, depth + 1)
-      }
-    });
-  }
-
-  collectionOptions() {
-    const cAllTree = this.collectionEntries();
-    if (cAllTree.length === 0) return [];
-    const options = cAllTree.map(leaf => {
-      const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
-      const className = leaf.first ? "separator" : "";
-      return {
-        value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
-        label: indent + leaf.label,
-        className: className
-      };
-    });
-    return options;
   }
 
   handleSubmit() {
     const { selected, newLabel } = this.state;
-    const collection_id = selected && parseInt(selected.split("-")[0]);
-    const is_sync_to_me = selected && selected.split("-")[1] == "is_sync_to_me";
-    const ui_state = UIStore.getState();
+    const { action, onHide } = this.props;
 
-    this.props.action({
-      ui_state, collection_id, is_sync_to_me, newLabel
+    action({
+      ui_state: UIStore.getState(),
+      collection_id: selected?.id,
+      is_sync_to_me: selected?.is_sync_to_me,
+      newLabel
     });
-    this.props.onHide();
+    onHide();
+  }
+
+  onSelectChange(selected) {
+    this.setState({ selected });
+  }
+
+  onInputChange(e) {
+    const val = e.target && e.target.value;
+    this.setState({ newLabel: val });
+  }
+
+  makeList(collections, tree = [], depth = 0) {
+    if (!Array.isArray(collections)) return tree;
+
+    collections.forEach((collection) => {
+      tree.push(collection);
+      this.makeList(collection.children, tree, depth + 1);
+    });
+
+    return tree;
+  }
+
+  collectionOptions() {
+    const cState = CollectionStore.getState();
+    const cUnshared = [...cState.lockedRoots, ...cState.unsharedRoots];
+
+    let cShared = [];
+    let cSynced = [];
+    if (this.props.listSharedCollections) {
+      cShared = cState.sharedRoots.flatMap((sharedR) => sharedR.children);
+      cSynced = cState.syncInRoots
+        .flatMap((syncInR) => syncInR.children)
+        .filter(CollectionUtils.isWritable);
+    }
+
+    return [
+      ...this.makeList(cUnshared),
+      {
+        label: 'Shared Collections',
+        options: this.makeList(cShared),
+      },
+      {
+        label: 'Synced Collections',
+        options: this.makeList(cSynced),
+      }
+    ];
   }
 
   submitButton() {
-    const { newLabel, selected } = this.state
-    const l = newLabel && newLabel.length
+    const { newLabel, selected } = this.state;
+    const l = newLabel && newLabel.length;
     return l && l > 0 ? (
       <Button variant="warning" onClick={this.handleSubmit}>
         Create collection &lsquo;{newLabel}&rsquo; and Submit
@@ -109,13 +92,15 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   render() {
-    const { options, selected } = this.state;
-    const onChange = (e) => {
-      const val = e.target && e.target.value
-      this.setState((previousState) => {
-        return { ...previousState, newLabel: val }
-      });
-    }
+    const { selected } = this.state;
+    const options = this.collectionOptions();
+
+    const optionLabel = ({ label, depth }) => (
+      <span style={{ paddingLeft: `${depth * 10}px` }}>
+        {label}
+      </span>
+    );
+
     return (
       <Form>
         <Form.Group className="mb-3">
@@ -123,8 +108,9 @@ export default class ManagingModalCollectionActions extends React.Component {
           <Select
             options={options}
             value={selected}
+            getOptionValue={(o) => o.id}
+            formatOptionLabel={optionLabel}
             onChange={this.onSelectChange}
-            className="select-assign-collection"
           />
         </Form.Group>
 
@@ -133,7 +119,7 @@ export default class ManagingModalCollectionActions extends React.Component {
           <Form.Control
             type="text"
             placeholder="-- Please insert collection name --"
-            onChange={onChange}
+            onChange={this.onInputChange}
           />
         </Form.Group>
         {this.submitButton()}
@@ -143,7 +129,7 @@ export default class ManagingModalCollectionActions extends React.Component {
 }
 
 ManagingModalCollectionActions.propTypes = {
-  action: PropTypes.func,
-  onHide: PropTypes.func,
-  listSharedCollections: PropTypes.bool,
-}
+  action: PropTypes.func.isRequired,
+  onHide: PropTypes.func.isRequired,
+  listSharedCollections: PropTypes.bool.isRequired,
+};
