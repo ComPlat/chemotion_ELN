@@ -257,9 +257,7 @@ export default class ReactionDetails extends Component {
       </span>
     );
     return (
-      <div
-        // className="tabs-container--with-borders"
-      >
+      <div className="tabs-container--with-borders">
         <Tabs
           id="data-detail-tab"
           unmountOnExit

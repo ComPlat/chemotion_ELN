@@ -154,7 +154,7 @@ export default class SampleDetailsContainers extends Component {
         onClick={this.handleAdd}
         disabled={!sample.can_update}
       >
-        <i className="fa fa-plus" />&nbsp;
+        <i className="fa fa-plus me-1" />
         Add analysis
       </Button>
     );

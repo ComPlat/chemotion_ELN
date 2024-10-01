@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, OverlayTrigger, Tooltip
+  Button, ButtonToolbar, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import ColoredOverlay from 'src/components/common/ColoredOverlay';
@@ -13,10 +13,12 @@ import { GenericDSMisType } from 'src/apps/generic/Utils';
 class ContainerDatasetField extends Component {
   removeButton(datasetContainer) {
     const { readOnly, handleRemove, disabled } = this.props;
-    if (!readOnly) {
+    if (readOnly) {
+      return null;
+    }
       return (
         <Button
-          size="xsm"
+          size="xxsm"
           variant="danger"
           onClick={() => handleRemove(datasetContainer)}
           disabled={disabled}
@@ -24,8 +26,6 @@ class ContainerDatasetField extends Component {
           <i className="fa fa-trash-o" />
         </Button>
       );
-    }
-    return null;
   }
 
   render() {
@@ -35,11 +35,10 @@ class ContainerDatasetField extends Component {
     } = this.props;
     if (datasetContainer.is_deleted) {
       return (
-        <div>
+        <div className="d-flex">
           <strike>{datasetContainer.name}</strike>
-
           <Button
-            className="pull-right"
+            className="ms-auto"
             size="sm"
             variant="danger"
             onClick={() => handleUndo(datasetContainer)}
@@ -47,7 +46,6 @@ class ContainerDatasetField extends Component {
           >
             <i className="fa fa-undo" />
           </Button>
-
         </div>
       );
     }
@@ -55,7 +53,7 @@ class ContainerDatasetField extends Component {
       || typeof datasetContainer.dataset === 'undefined') ? (<span />) : (
         <OverlayTrigger placement="top" overlay={<Tooltip id="download metadata">download metadata</Tooltip>}>
           <Button
-            size="sm"
+            size="xxsm"
             variant="success"
             onClick={() => AttachmentFetcher.downloadDataset(datasetContainer.id)}
           >
@@ -71,15 +69,16 @@ class ContainerDatasetField extends Component {
         <a onClick={() => handleModalOpen(datasetContainer)} role="button">
           {datasetContainer.name || 'new'}
         </a>
-        <div className="ml-auto"
-        >
+        <div className="ml-auto">
           {gdsDownload}
-          <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
-            <Button size="xsm" variant="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
-              <i className="fa fa-download" />
-            </Button>
-          </OverlayTrigger>
-          {this.removeButton(datasetContainer)}
+          <ButtonToolbar className="gap-1">
+            <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
+              <Button size="xxsm" variant="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
+                <i className="fa fa-download" />
+              </Button>
+            </OverlayTrigger>
+            {this.removeButton(datasetContainer)}
+          </ButtonToolbar>
         </div>
         {isOver && canDrop && <ColoredOverlay color="green" />}
       </div>
