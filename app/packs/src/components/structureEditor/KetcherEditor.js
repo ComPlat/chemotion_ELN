@@ -3,19 +3,23 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef } from 'react';
 
-const FILOStack = [];
-const uniqueEvents = new Set();
+let FILOStack = [];
+let uniqueEvents = new Set();
 let latestData = null;
 let imagesList = [];
 let mols = [];
 let allNodes = [];
+let all_atoms = [];
+let image_used_counter = -1;
+
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
-let image_used_counter = -1;
+
 function KetcherEditor({ editor, iH, iS, molfile }) {
 
   const iframeRef = useRef();
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
+
 
   // Load the editor content and set up the molecule
   const loadContent = async (event) => {
@@ -31,24 +35,37 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   // helper function to rebase with the ketcher canvas data
   const fuelKetcherData = async () => {
+    all_atoms = [];
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
     allNodes = [...latestData.root.nodes];
     imagesList = allNodes.length > mols.length ? allNodes.filter(
       item => item.type === 'image'
     ) : imagesList;
     mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
+    await mols.forEach((item) => latestData[item].atoms.map(i => all_atoms.push(i)));
     // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
+  };
+
+  const should_canvas_update = (data) => {
+    const { id } = data[0];
+    const target_atom = all_atoms[id];
+    if (target_atom) {
+      return three_parts_patten.test(target_atom.alias);
+    }
+    return true;
   };
 
   // main funcation to capture all events from editor
   const handleEventCapture = async (data) => {
+    let allowed_to_process = true;
+    await fuelKetcherData();
     const selection = editor._structureDef.editor.editor._selection;
     if (selection?.images) {
       addEventToFILOStack("Move image");
     }
 
     for (const eventItem of data) {
-      // console.log(eventItem);
+      // console.log({ eventData: data });
       switch (eventItem?.operation) {
         case "Load canvas":
           console.log("Load canvas");
@@ -66,6 +83,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
         case "Move atom":
           // if (imagesList.length)
+          allowed_to_process = should_canvas_update(data);
           addEventToFILOStack("Move atom");
           break;
         default:
@@ -73,7 +91,13 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
       }
     }
-    processFILOStack();
+    if (allowed_to_process) {
+      processFILOStack();
+    } else {
+      FILOStack = [];
+      uniqueEvents = new Set();
+      return;
+    }
   };
 
   // helper function to add event to stack
@@ -92,11 +116,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       FILOStack.splice(loadCanvasIndex, 1);
       uniqueEvents.delete("Load canvas");
     }
-    console.log({ FILOStack, uniqueEvents });
-
-    // if (!FILOStack.length && !uniqueEvents.length) {
-    //   addEventToFILOStack("Move image");
-    // }
     if (!latestData) {
       alert("data not present!!");
       return;
@@ -124,8 +143,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
       }
     }
-    // Run the function to modify matching text elements
-    // modifyMatchingTextElements();
   };
 
   // helper function to place image on atom location coordinates
