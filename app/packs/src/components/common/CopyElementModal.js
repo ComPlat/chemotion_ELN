@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Form, Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
@@ -31,9 +31,6 @@ export default class CopyElementModal extends React.Component {
     this.handleModalShow = this.handleModalShow.bind(this);
     this.onColSelectChange = this.onColSelectChange.bind(this);
     this.copyElement = this.copyElement.bind(this);
-  }
-
-  componentDidMount() {
   }
 
   onColSelectChange(e) {
@@ -74,27 +71,29 @@ export default class CopyElementModal extends React.Component {
     const { element } = this.props;
     const { showModal, selectedCol } = this.state;
 
-    return (element.can_copy === false) ? null :
+    if (!element.can_copy) return null;
+
+    return (
       <>
         <OverlayTrigger
           placement="bottom"
-          overlay={<Tooltip id="CopyElement">Copy</Tooltip>}>
+          overlay={<Tooltip id="CopyElement">Copy</Tooltip>}
+        >
           <Button id="copy-element-btn" size="xxsm" variant="success" onClick={this.handleModalShow}>
             <i className="fa fa-clone" />
           </Button>
         </OverlayTrigger>
+
         <Modal centered show={showModal} onHide={this.handleModalClose}>
           <Modal.Header closeButton>
             <Modal.Title>Copy</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div className="d-flex align-items-center">
-              <b className="ps-1 pe-2">Copy to Collection</b>
-                <CollectionSelect
-                  value={selectedCol}
-                  onChange={this.onColSelectChange}
-                />
-            </div>
+            <Form.Label>Copy to Collection</Form.Label>
+            <CollectionSelect
+              value={selectedCol}
+              onChange={this.onColSelectChange}
+            />
           </Modal.Body>
           <Modal.Footer className="border-0">
             <Button variant="light" onClick={this.handleModalClose}>Close</Button>
@@ -102,6 +101,7 @@ export default class CopyElementModal extends React.Component {
           </Modal.Footer>
         </Modal>
       </>
+    );
   }
 }
 
