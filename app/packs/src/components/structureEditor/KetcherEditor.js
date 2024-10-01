@@ -51,6 +51,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       // console.log(eventItem);
       switch (eventItem?.operation) {
         case "Load canvas":
+          console.log("Load canvas");
           await fuelKetcherData();
           break;
         case "Move image":
@@ -91,6 +92,11 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       FILOStack.splice(loadCanvasIndex, 1);
       uniqueEvents.delete("Load canvas");
     }
+    console.log({ FILOStack, uniqueEvents });
+
+    // if (!FILOStack.length && !uniqueEvents.length) {
+    //   addEventToFILOStack("Move image");
+    // }
     if (!latestData) {
       alert("data not present!!");
       return;
@@ -183,10 +189,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   const handleAddAtom = async () => {
     console.log("Atom moved!");
     mols.forEach((mol) => {
-      let is_h_id = -1;
+      let is_h_id_list = [];
       const molecule = latestData[mol];
       molecule?.atoms.map((item, idx) => {
-        if (item?.label === "H") is_h_id = idx;
+        if (item?.label === "H") is_h_id_list.push(idx);
         if (two_parts_pattern.test(item?.alias)) {
           const part_three = ++image_used_counter;
           item.alias += `_${part_three}`;
@@ -196,16 +202,9 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           }
         }
       });
-      // TODO: understand with example issue of indexs implement this part
-      if (is_h_id != -1) {
-        if (molecule?.bonds?.length <= 1) {
-          molecule.atoms.splice(is_h_id, 1);
-          molecule.bonds = [];
-        }
-        //   else if (molecule?.bonds) {
-        //     molecule.bonds.splice(is_h_id, 1);
-        //     molecule.atoms.splice(is_h_id, 1);
-        //   }
+      if (is_h_id_list.length) {
+        molecule.atoms?.splice(molecule.atoms.length - is_h_id_list.length, is_h_id_list.length);
+        molecule.bonds?.splice(molecule.bonds.length - is_h_id_list.length, is_h_id_list.length);
       }
       latestData[mol] = molecule;
     });
