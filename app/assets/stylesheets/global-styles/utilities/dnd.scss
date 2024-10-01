@@ -16,12 +16,12 @@
 }
 
 .dnd-arrow-disable {
-  color: lightgray;
+  @extend .text-muted;
   cursor: not-allowed;
-  font-size: 24px !important;
+  @extend .fs-3;
 }
 
 .dnd-arrow-enable {
   cursor: move;
-  font-size: 24px !important;
+  @extend .fs-3;
 }
