@@ -210,6 +210,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       latestData[mol] = molecule;
     });
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    moveTemplate();
   };
 
   // helper function to return a new image in imagesList with a location
