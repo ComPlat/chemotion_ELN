@@ -93,9 +93,9 @@ const CustomSizeModal = ({show, wellplate, updateWellplate, handleClose}) => {
 
 CustomSizeModal.propTypes = {
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
-  showCustomSizeModal: PropTypes.bool.isRequired,
+  show: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-  triggerUIUpdate: PropTypes.func.isRequired,
+  updateWellplate: PropTypes.func.isRequired,
 }
 
 export default CustomSizeModal

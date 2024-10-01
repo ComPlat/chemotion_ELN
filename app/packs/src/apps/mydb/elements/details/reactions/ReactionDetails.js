@@ -4,8 +4,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroupItem, Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar
+  Button, ButtonGroup, ButtonToolbar, Card, ListGroupItem, OverlayTrigger, Tab, Tabs, Tooltip
 } from 'react-bootstrap';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -47,7 +48,6 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
 
@@ -76,7 +76,6 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    this.handleGaseousChange = this.handleGaseousChange.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
@@ -495,11 +494,6 @@ export default class ReactionDetails extends Component {
     this.setState({ reaction });
   }
 
-  handleGaseousChange() {
-    const { reaction } = this.state;
-    this.handleInputChange('gaseous', !reaction.gaseous);
-  }
-
   // eslint-disable-next-line class-methods-use-this
   updateReactionVesselSize(reaction) {
     Promise.resolve().then(() => {
@@ -526,28 +520,29 @@ export default class ReactionDetails extends Component {
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
-    const schemeTitle = reaction && activeTab === 'scheme' ? (
-      <div className="d-flex">
-        <div>
-          <ToggleButton
-            isToggledInitial={reaction.gaseous}
-            onToggle={this.handleGaseousChange}
-            onLabel="Gas Scheme"
-            offLabel="Default Scheme"
-            onColor="#afcfee"
-            offColor="#d3d3d3"
-            tooltipOn="Click to enable Default mode"
-            tooltipOff="Click to enable Gas mode"
-          />
-        </div>
-      </div>
-    ) : 'Scheme';
+
     const tabContentsMap = {
       scheme: (
-        <Tab eventKey="scheme" title={schemeTitle} key={`scheme_${reaction.id}`}>
+        <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }
+          <ButtonGroup className="mb-2">
+            <ButtonGroupToggleButton
+              onClick={() => this.handleInputChange('gaseous', false)}
+              active={!reaction.gaseous}
+              size="xxsm"
+            >
+              Default Scheme
+            </ButtonGroupToggleButton>
+            <ButtonGroupToggleButton
+              onClick={() => this.handleInputChange('gaseous', true)}
+              active={reaction.gaseous}
+              size="xxsm"
+            >
+              Gas Scheme
+            </ButtonGroupToggleButton>
+          </ButtonGroup>
           <ReactionDetailsScheme
             reaction={reaction}
             onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
@@ -575,7 +570,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsLiteratures
             element={reaction}
-            literatures={reaction.isNew && reaction.literatures}
+            literatures={reaction.literatures}
             onElementChange={(r) => this.handleReactionChange(r)}
           />
         </Tab>

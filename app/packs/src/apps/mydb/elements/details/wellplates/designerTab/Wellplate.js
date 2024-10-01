@@ -63,13 +63,17 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
     // generate first row - empty leading cell + column labels
     const columnLabels = []
     for (let columnIndex = 0; columnIndex <= wellplate.width; columnIndex += 1) {
-      columnLabels.push(<HorizontalHeaderField label={WellplateModel.columnLabel(columnIndex)} />)
+      const label = WellplateModel.columnLabel(columnIndex);
+      const key = `column_header_${columnIndex}`
+      columnLabels.push(<HorizontalHeaderField label={label} key={key} />)
     }
     rows.push(columnLabels)
 
     // generate remaining rows with leading header field
     for (let rowIndex = 1; rowIndex <= wellplate.height; rowIndex += 1) {
-      const row = [<VerticalHeaderField label={WellplateModel.rowLabel(rowIndex)} />]
+      const label = WellplateModel.rowLabel(rowIndex);
+      const key = `row_header_${rowIndex}`
+      const row = [<VerticalHeaderField label={label} key={key} />]
       rows.push(row)
     }
 
@@ -95,7 +99,7 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
   const wellSize = 60
   return(
     <div className="d-inline-flex flex-column">
-      {wellplateRows(wellplate).map(rowContent => (<div className="d-inline-flex flex-row">{rowContent}</div>))}
+      {wellplateRows(wellplate).map((rowContent, index) => (<div className="d-inline-flex flex-row" key={index}>{rowContent}</div>))}
       {selectedWell &&
         <WellDetails
           well={selectedWell}
