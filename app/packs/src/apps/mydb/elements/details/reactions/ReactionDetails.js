@@ -4,7 +4,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -47,9 +47,9 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -520,25 +520,23 @@ export default class ReactionDetails extends Component {
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
-    const schemeTitle = reaction && activeTab === 'scheme' ? (
-      <div className="d-flex">
-        <div>
-          <ToggleButton
-            isToggledInitial={reaction.gaseous}
-            onToggle={this.handleGaseousChange}
-            onLabel="Gas Scheme"
-            offLabel="Default Scheme"
-            onColor="#afcfee"
-            offColor="#d3d3d3"
-            tooltipOn="Click to enable Default mode"
-            tooltipOff="Click to enable Gas mode"
-          />
-        </div>
-      </div>
-    ) : 'Scheme';
     const tabContentsMap = {
       scheme: (
-        <Tab eventKey="scheme" title={schemeTitle} key={`scheme_${reaction.id}`}>
+        <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
+          <ButtonGroup size="sm">
+            <ButtonGroupToggleButton
+              active={!reaction.gaseous}
+              onClick={this.handleGaseousChange}
+            >
+              Default Scheme
+            </ButtonGroupToggleButton>
+            <ButtonGroupToggleButton
+              active={reaction.gaseous}
+              onClick={this.handleGaseousChange}
+            >
+              Gas Scheme
+            </ButtonGroupToggleButton>
+          </ButtonGroup>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }

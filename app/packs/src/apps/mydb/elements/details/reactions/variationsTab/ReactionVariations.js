@@ -418,12 +418,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           </Tooltip>
         )}
       >
-        {/* Wrapping button in span necessary in order for OverlayTrigger to work */}
-        <span>
-          <Button size="sm" variant="success" onClick={addRow}>
-            <i className="fa fa-plus" />
-          </Button>
-        </span>
+        <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+          <i className="fa fa-plus me-1" /> Add Variation
+        </Button>
       </OverlayTrigger>
       <div className="ag-theme-alpine">
         <AgGridReact
