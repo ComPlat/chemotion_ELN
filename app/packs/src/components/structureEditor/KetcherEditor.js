@@ -1,6 +1,5 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import { CodeSharp } from '@material-ui/icons';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef } from 'react';
 
@@ -12,7 +11,7 @@ let mols = [];
 let allNodes = [];
 let all_atoms = [];
 let image_used_counter = -1;
-let force_move_template = true;
+let re_render_canvas = false;
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
@@ -21,17 +20,18 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   const iframeRef = useRef();
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
-
   // Load the editor content and set up the molecule
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
       window.editor = editor;
       await editor.structureDef.editor.setMolecule(initMol);
+
       editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
+        console.log(result[0].operation === "Load canvas", result.length);
         handleEventCapture(result);
       });
-    }
+    };
   };
 
   // helper function to rebase with the ketcher canvas data
@@ -43,7 +43,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       item => item.type === 'image'
     ) : imagesList;
     mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
-    await mols.forEach((item) => latestData[item].atoms.map(i => all_atoms.push(i)));
+    mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
     // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
 
@@ -56,6 +56,14 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     return true;
   };
 
+  // helper function to add event to stack
+  const addEventToFILOStack = (event) => {
+    if (!uniqueEvents.has(event)) {
+      FILOStack.push(event);
+      uniqueEvents.add(event);
+    }
+  };
+
   // main funcation to capture all events from editor
   const handleEventCapture = async (data) => {
     let allowed_to_process = true;
@@ -66,10 +74,11 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
 
     for (const eventItem of data) {
-      // console.log({ eventData: data });
       switch (eventItem?.operation) {
         case "Load canvas":
           await fuelKetcherData();
+          if (re_render_canvas)
+            await moveTemplate(re_render_canvas);
           break;
         case "Move image":
           addEventToFILOStack("Move image");
@@ -98,17 +107,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
-  // helper function to add event to stack
-  const addEventToFILOStack = (event) => {
-    if (!uniqueEvents.has(event)) {
-      FILOStack.push(event);
-      uniqueEvents.add(event);
-    }
-  };
-
   // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
     await fuelKetcherData();
+
     if (!latestData) {
       alert("data not present!!");
       return;
@@ -125,7 +127,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       uniqueEvents.delete(event);
       switch (event) {
         case "Load canvas":
-          // nothing happens
+          // nothing happens because it can lead to infinite canvas render
           break;
         case "Move image":
         case "Move atom":
@@ -166,7 +168,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
   };
 
-  // Helper function to move image and update molecule positions
+  // helper function to move image and update molecule positions
   const moveTemplate = async () => {
     console.log("move template!!");
     mols.forEach(async (mol) => {
@@ -199,6 +201,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     latestData.root.nodes = latestData.root.nodes.slice(0, mols.length);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     placeImageOnAtoms(mols, imagesList);
+    re_render_canvas = false;
   };
 
   // helper function to handle new atoms added to the canvas
@@ -264,6 +267,52 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     };
   }, []);
 
+  const handleClick = (event) => {
+    console.log('Element clicked:', event.target);
+    alert("heard");
+    re_render_canvas = true;
+  };
+
+  const attachClickListener = () => {
+    if (iframeRef.current) {
+      const iframeDocument = iframeRef.current.contentWindow.document;
+
+      // Attach the click event to all buttons with class 'css-uwwqev'
+      const button = iframeDocument.querySelector('[title="Clean Up (Ctrl+Shift+L)"]');
+      if (button) {
+        button.addEventListener('click', handleClick);
+      }
+
+      // Optional: Use MutationObserver to handle dynamically added buttons
+      const observer = new MutationObserver(() => {
+        const button = iframeDocument.querySelector('[title="Clean Up (Ctrl+Shift+L)"]');
+        if (button) {
+          button.addEventListener('click', handleClick);
+        }
+      });
+
+      // Observe the entire document for changes in child elements
+      observer.observe(iframeDocument, {
+        childList: true,
+        subtree: true
+      });
+
+      // Cleanup event listeners and disconnect MutationObserver
+      return () => {
+        observer.disconnect();
+        for (let btn of buttons) {
+          btn.removeEventListener('click', handleClick);
+        }
+      };
+    }
+  };
+
+  // Attach the click listener when the iframe loads
+  const iframe = iframeRef.current;
+  if (iframe) {
+    iframe.addEventListener('load', attachClickListener);
+  }
+
   return (
     <div>
       <iframe
@@ -287,4 +336,3 @@ KetcherEditor.propTypes = {
 };
 
 export default KetcherEditor;
-;;;;;;;;;;;;;;;;;;;
