@@ -137,17 +137,16 @@ export default class GreenMetrics extends React.Component {
     };
 
     return (
-      <div className="green-metrics ag-theme-balham">
-        <AgGridReact
-          enableColResize
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          rowData={data}
-          onGridReady={this.onGridReady}
-          headerHeight={68}
-          domLayout="autoHeight"
-        />
-      </div>
+      <AgGridReact
+        enableColResize
+        columnDefs={columnDefs}
+        autoSizeStrategy={{type: 'fitGridWidth'}}
+        defaultColDef={defaultColDef}
+        rowData={data}
+        onGridReady={this.onGridReady}
+        headerHeight={68}
+        domLayout="autoHeight"
+      />
     );
   }
 }

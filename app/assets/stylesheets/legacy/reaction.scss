@@ -115,13 +115,6 @@ table.reaction-scheme-solvent {
 }
 
 .green-chemistry {
-  border: 1px solid #ddd;
-  border-top: none;
-
-  > div {
-    padding: 10px;
-  }
-
   .purification-head {
     display: flex;
     align-items: center;
@@ -154,7 +147,6 @@ table.reaction-scheme-solvent {
     padding: 10px !important;
 
     .ag-header-cell-label .ag-header-cell-text {
-      color: #018786;
       text-overflow: clip !important;
       overflow: visible !important;
       white-space: normal !important;
@@ -167,14 +159,6 @@ table.reaction-scheme-solvent {
       overflow: visible !important;
       white-space: normal !important;
     }
-  }
-
-  .metrics-refs {
-    display: flex;
-  }
-
-  .metrics-refs > div {
-    margin-right: 5px;
   }
 }
 
