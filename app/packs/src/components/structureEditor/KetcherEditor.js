@@ -1,5 +1,6 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
+import { CodeSharp } from '@material-ui/icons';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef } from 'react';
 
@@ -11,7 +12,7 @@ let mols = [];
 let allNodes = [];
 let all_atoms = [];
 let image_used_counter = -1;
-
+let force_move_template = true;
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
@@ -46,7 +47,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
 
-  const should_canvas_update = (data) => {
+  const should_canvas_update_on_movement = (data) => {
     const { id } = data[0];
     const target_atom = all_atoms[id];
     if (target_atom) {
@@ -68,22 +69,19 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       // console.log({ eventData: data });
       switch (eventItem?.operation) {
         case "Load canvas":
-          console.log("Load canvas");
           await fuelKetcherData();
           break;
         case "Move image":
           addEventToFILOStack("Move image");
           break;
         case "Add atom":
-          // if (imagesList.length)
           addEventToFILOStack("Add atom");
           break;
         case "Upsert image":
           addEventToFILOStack("Upsert image");
           break;
         case "Move atom":
-          // if (imagesList.length)
-          allowed_to_process = should_canvas_update(data);
+          allowed_to_process = should_canvas_update_on_movement(data);
           addEventToFILOStack("Move atom");
           break;
         default:
@@ -111,14 +109,15 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
     await fuelKetcherData();
+    if (!latestData) {
+      alert("data not present!!");
+      return;
+    }
+
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
       FILOStack.splice(loadCanvasIndex, 1);
       uniqueEvents.delete("Load canvas");
-    }
-    if (!latestData) {
-      alert("data not present!!");
-      return;
     }
 
     while (FILOStack.length > 0) {
@@ -256,41 +255,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     template_list[idx].boundingBox.y = location[1];
     template_list[idx].boundingBox.z = location[2];
     return template_list[idx];
-  };
-
-  // helper function to make all t_int_int dom element transparent so they are not visible on the canvase
-  // TODO: not working right now
-  const modifyMatchingTextElements = () => {
-    const regex = /t_\d+_\d+/; // Regex to match t_02_0, etc.
-
-    // Selecting all <tspan> elements inside the SVG
-    const svgElement = document.querySelector('svg[data-testid="ketcher-canvas"]'); // Adjusted to ensure correct SVG element is selected
-
-    if (svgElement) {
-      const tspans = svgElement.querySelectorAll('tspan'); // Selecting all <tspan> within this specific SVG
-
-      tspans.forEach((tspan) => {
-        const trimmedContent = tspan.textContent.trim();
-
-        // Check if the content matches the pattern
-        if (regex.test(trimmedContent)) {
-          console.count("matches!!!");
-
-          // Find the closest <text> element containing the <tspan>
-          const parentText = tspan.closest('text');
-
-          if (parentText) {
-            // Modify the parent <text> element's attributes and styles
-            parentText.setAttribute('fill', 'transparent');
-            parentText.style.fill = 'transparent';
-
-            console.log("Modified element with content: ", trimmedContent);
-          }
-        }
-      });
-    } else {
-      console.error("SVG element not found or not loaded.");
-    }
   };
 
   useEffect(() => {
