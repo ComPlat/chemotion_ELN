@@ -6,7 +6,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import { Button } from 'react-bootstrap';
 
 export default class Header extends React.Component {
-  handleUndoDeletionOfContainer(container, e) {
+  handleUndoDeletionOfContainer = (container, e) => {
     const { handleChange } = this.props;
     e.stopPropagation();
     // eslint-disable-next-line   no-param-reassign
@@ -14,7 +14,7 @@ export default class Header extends React.Component {
     handleChange(container);
   }
 
-  handleDeleteContainer(container, e) {
+  handleDeleteContainer = (container, e) => {
     const { handleChange } = this.props;
     e.stopPropagation();
 
@@ -26,7 +26,7 @@ export default class Header extends React.Component {
     }
   }
 
-  renderDeletedContainer() {
+  renderDeletedContainer = () => {
     const { container, isEditHeader } = this.props;
     const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
     const titleKind = kind
@@ -45,7 +45,7 @@ export default class Header extends React.Component {
         </div>
         {isEditHeader && (
           <Button
-            size="sm"
+            size="xsm"
             variant="danger"
             onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
           >
@@ -56,7 +56,7 @@ export default class Header extends React.Component {
     );
   }
 
-  renderNotDeletedContainer() {
+  renderNotDeletedContainer = () => {
     const { container, readOnly, isEditHeader } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
 
@@ -71,8 +71,8 @@ export default class Header extends React.Component {
     };
 
     return (
-      <div className="d-flex align-items-start flex-grow-1 justify-content-between gap-2 pe-2">
-        <div>{this.renderImagePreview(container)}</div>
+      <div className="analysis-header d-flex align-items-start flex-grow-1 justify-content-between gap-2 pe-2">
+        <div className="preview">{this.renderImagePreview(container)}</div>
         <div className="flex-grow-1">
           <div className="mb-2 fs-4 text-decoration-underline">{container.name}</div>
           <div>
@@ -93,7 +93,7 @@ export default class Header extends React.Component {
         {isEditHeader && (
           <Button
             disabled={readOnly}
-            size="sm"
+            size="xxsm"
             variant="danger"
             onClick={(e) => { this.handleDeleteContainer(container, e); }}
           >
@@ -105,7 +105,7 @@ export default class Header extends React.Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  renderImagePreview() {
+  renderImagePreview = () => {
     const { container, isEditHeader } = this.props;
     const previewImg = previewContainerImage(container);
     const fetchNeeded = false;

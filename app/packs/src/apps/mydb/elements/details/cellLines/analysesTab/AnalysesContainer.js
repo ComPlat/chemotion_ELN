@@ -16,11 +16,9 @@ class AnalysesContainer extends Component {
     this.state = {
       mode: 'edit'
     };
-    this.handleChange.bind(this);
-    this.handleHoverOver.bind(this);
   }
 
-  handleAdd() {
+  handleAdd = () => {
     const { item } = this.props;
     const { cellLineDetailsStore } = this.context;
     const newContainer = cellLineDetailsStore.addEmptyContainer(item.id);
@@ -29,18 +27,18 @@ class AnalysesContainer extends Component {
     this.handleChange(true);
   }
 
-  handleStartDrag(container) {
+  handleStartDrag = (container) => {
     this.setState({ draggingContainer: container.id });
   }
 
-  handleEndDrag() {
+  handleEndDrag = () => {
     this.setState({
       draggingContainer: '',
       lastHoveredContainer: ''
     });
   }
 
-  handleModeToggle() {
+  handleModeToggle = () => {
     const { mode } = this.state;
     if (mode === 'edit') {
       this.setState({ mode: 'order' });
@@ -49,7 +47,7 @@ class AnalysesContainer extends Component {
     }
   }
 
-  handleHoverOver(containerId) {
+  handleHoverOver = (containerId) => {
     const { lastHoveredContainer } = this.state;
     if (lastHoveredContainer !== undefined
        && lastHoveredContainer === containerId) {
@@ -59,7 +57,7 @@ class AnalysesContainer extends Component {
     this.setState({ lastHoveredContainer: containerId });
   }
 
-  handleChange(changed = false) {
+  handleChange = (changed = false) => {
     const { item } = this.props;
     if (changed) {
       const { cellLineDetailsStore } = this.context;
@@ -68,7 +66,7 @@ class AnalysesContainer extends Component {
     this.forceUpdate();
   }
 
-  renderAddButton() {
+  renderAddButton = () => {
     const { readOnly } = this.props;
 
     return (
@@ -83,7 +81,7 @@ class AnalysesContainer extends Component {
     );
   }
 
-  renderModeButton() {
+  renderModeButton = () => {
     const { mode } = this.state;
     const { readOnly } = this.props;
     const buttonText = mode === 'order' ? 'Order mode' : 'Edit mode';
@@ -102,7 +100,7 @@ class AnalysesContainer extends Component {
     );
   }
 
-  renderEditModeContainer() {
+  renderEditModeContainer = () => {
     const { currentElement } = ElementStore.getState();
     const { readOnly } = this.props;
 
@@ -118,13 +116,16 @@ class AnalysesContainer extends Component {
     ));
 
     return (
-      <Accordion id={`cellLineAnalysisPanelGroupOf:${currentElement.id}`}>
+      <Accordion
+        id={`cellLineAnalysisPanelGroupOf:${currentElement.id}`}
+        className='border rounded overflow-hidden'
+      >
         {analysisRows}
       </Accordion>
     );
   }
 
-  renderOrderModeContainer() {
+  renderOrderModeContainer = () => {
     const { currentElement } = ElementStore.getState();
     const { draggingContainer, lastHoveredContainer } = this.state;
     const containers = currentElement.container.children[0].children;
@@ -154,7 +155,7 @@ class AnalysesContainer extends Component {
     );
   }
 
-  renderContainerPanel() {
+  renderContainerPanel = () => {
     const { currentElement } = ElementStore.getState();
     const containers = currentElement.container.children[0].children;
 
