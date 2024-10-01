@@ -4,7 +4,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroupItem, Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -245,7 +245,6 @@ export default class ReactionDetails extends Component {
             setState={setState}
             handleSampleChanged={handleSampleChanged}
             handleSubmit={this.handleSubmit}
-            style={{ marginTop: 10 }}
           />
         </Tab>
       );
@@ -261,7 +260,6 @@ export default class ReactionDetails extends Component {
       <div className="tabs-container--with-borders">
         <Tabs
           id="data-detail-tab"
-          className="mt-0 mb-2"
           unmountOnExit
           activeKey={activeAnalysisTab}
           // eslint-disable-next-line react/jsx-no-bind
@@ -269,14 +267,12 @@ export default class ReactionDetails extends Component {
         >
           {tabs}
           <Tab eventKey={4.1} title={reactionTab}>
-            <ListGroupItem style={{ paddingBottom: 20 }}>
-              <ReactionDetailsContainers
-                reaction={reaction}
-                readOnly={!permitOn(reaction)}
-                handleSubmit={this.handleSubmit}
-                handleReactionChange={this.handleReactionChange}
-              />
-            </ListGroupItem>
+            <ReactionDetailsContainers
+              reaction={reaction}
+              readOnly={!permitOn(reaction)}
+              handleSubmit={this.handleSubmit}
+              handleReactionChange={this.handleReactionChange}
+            />
           </Tab>
         </Tabs>
       </div>
@@ -390,7 +386,6 @@ export default class ReactionDetails extends Component {
                       size="xxsm"
                       onClick={() => this.handleSubmit(true)}
                       disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
-                      style={{ display: hasChanged }}
                     >
                       <i className="fa fa-floppy-o me-1" />
                       <i className="fa fa-times" />
@@ -405,7 +400,6 @@ export default class ReactionDetails extends Component {
                       size="xxsm"
                       onClick={() => this.handleSubmit()}
                       disabled={!permitOn(reaction) || !this.reactionIsValid()}
-                      style={{ display: hasChanged }}
                     >
                       <i className="fa fa-floppy-o " />
                     </Button>
@@ -640,7 +634,7 @@ export default class ReactionDetails extends Component {
             onTabPositionChanged={this.onTabPositionChanged}
           />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
-          <div className="tabs-container--with-borders" id="reaction-tab-container">
+          <div className="tabs-container--with-borders">
             <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
               {tabContents}
             </Tabs>

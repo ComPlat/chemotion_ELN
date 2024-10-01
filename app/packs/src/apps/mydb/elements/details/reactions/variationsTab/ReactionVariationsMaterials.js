@@ -147,75 +147,29 @@ function MaterialOverlay({
   const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
 
   return (
-    <div
-      className="custom-tooltip"
-      style={{
-        padding: '3px 8px',
-        color: '#fff',
-        backgroundColor: '#000',
-        borderRadius: '4px',
-      }}
-    >
-      {entry !== 'equivalent' && (
-        <p>
-          <span>
-            {Number(convertUnit(cellData[entry].value, cellData[entry].unit, displayUnit)).toPrecision(4)}
-            {' '}
-            [
-            {displayUnit}
-            ]
-          </span>
-        </p>
-      )}
-
-      {aux?.isReference ? (
-        <p>
-          <span>Reference</span>
-        </p>
-      ) : null}
-
-      {aux?.equivalent !== null && (
-        <p>
-          <span>
-            Equivalent:
-          </span>
-          {' '}
-          {Number(aux.equivalent).toPrecision(4)}
-        </p>
-      )}
-
-      {aux?.coefficient !== null && (
-        <p>
-          <span>
-            Coefficient:
-          </span>
-          {' '}
-          {Number(aux.coefficient).toPrecision(4)}
-        </p>
-      )}
-
-      {aux?.yield !== null && (
-        <p>
-          <span>
-            Yield:
-          </span>
-          {' '}
-          {Number(aux.yield).toPrecision(4)}
-          %
-        </p>
-      )}
-
-      {aux?.molecularWeight !== null && (
-      <p>
-        <span>
-          Molar mass:
-        </span>
-        {' '}
-        {Number(aux.molecularWeight).toPrecision(2)}
-        {' '}
-        g/mol
-      </p>
-      )}
+    <div className="tooltip show">
+      <div className="tooltip-inner text-start">
+        {entry !== 'equivalent' && (
+          <div>
+            {Number(convertUnit(cellData[entry].value, cellData[entry].unit, displayUnit)).toPrecision(4) + " " + displayUnit}
+          </div>
+        )}
+        {aux?.isReference && (
+          <div>Reference</div>
+        )}
+        {aux?.equivalent !== null && (
+          <div>{"Equivalent: " + Number(aux.equivalent).toPrecision(4)}</div>
+        )}
+        {aux?.coefficient !== null && (
+          <div>{"Coefficient: " + Number(aux.coefficient).toPrecision(4)}</div>
+        )}
+        {aux?.yield !== null && (
+          <div>{"Yield: " + Number(aux.yield).toPrecision(4) + "%"}</div>
+        )}
+        {aux?.molecularWeight !== null && (
+          <div>{"Molar mass: " + Number(aux.molecularWeight).toPrecision(2) + " g/mol"}</div>
+        )}
+      </div>
     </div>
   );
 }

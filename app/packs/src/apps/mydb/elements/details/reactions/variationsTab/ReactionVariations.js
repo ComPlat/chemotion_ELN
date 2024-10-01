@@ -425,7 +425,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           </Button>
         </span>
       </OverlayTrigger>
-      <div style={{ height: '50vh' }} className="ag-theme-alpine">
+      <div className="ag-theme-alpine">
         <AgGridReact
           ref={gridRef}
           rowData={reactionVariations}
@@ -437,7 +437,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}
           domLayout="autoHeight"
-          popupParent={document.getElementById('reaction-tab-container') || null}
           context={{
             copyRow,
             removeRow,
