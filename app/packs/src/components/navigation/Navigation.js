@@ -151,8 +151,10 @@ export default class Navigation extends React.Component {
       <Navbar className="bg-gray-200 justify-content-between px-4">
         {this.navHeader()}
         {!isHidden && (
-          <Nav navbar className="navbar-form gap-2">
-            <Search noSubmit={!!currentUser} />
+          <Nav navbar className="navbar-form gap-2 mx-auto d-flex flex-nowrap">
+            <div className="d-flex align-items-center flex-nowrap">
+              <Search noSubmit={!!currentUser} className="w-auto" />
+            </div>
             {currentUser && (
               <>
                 <ManagingActions

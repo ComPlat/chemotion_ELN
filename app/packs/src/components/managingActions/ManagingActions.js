@@ -171,6 +171,7 @@ export default class ManagingActions extends React.Component {
     return result;
   }
 
+  // eslint-disable-next-line react/sort-comp
   handleButtonClick(type) {
     const modalProps = { show: true, action: '', listSharedCollections: false };
     switch (type) {
@@ -205,7 +206,8 @@ export default class ManagingActions extends React.Component {
         modalProps.component = ManagingModalDelete;
         modalProps.action = ElementActions.deleteElements;
         break;
-    };
+      default:
+    }
 
     this.props.updateModalProps(modalProps);
   }
@@ -224,7 +226,7 @@ export default class ManagingActions extends React.Component {
     const shareDisabled = noSel || !sharing_allowed;
 
     return (
-      <ButtonGroup>
+      <ButtonGroup className="d-flex align-items-center">
         <MoveOrAssignButton
           assignDisabled={assignDisabled}
           moveDisabled={moveDisabled}
