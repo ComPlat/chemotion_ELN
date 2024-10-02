@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, Modal, Badge
+  Form, Button, Modal, Badge, Tooltip
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
@@ -40,22 +40,15 @@ function AnalysisOverlay({ value: analyses }) {
     return ''; // Don't return null, it breaks AG's logic to determine if component is rendered.
   }
   return (
-    <div
-      className="custom-tooltip"
-      style={{
-        padding: '3px 8px',
-        color: '#fff',
-        backgroundColor: '#000',
-        borderRadius: '4px',
-      }}
-    >
-      Linked analyses:
-      <ul style={{ paddingLeft: '15px' }}>
-        {analyses.map((analysis) => (
-          <li key={analysis.id}>{analysis.name}</li>
-        ))}
-      </ul>
-
+    <div className="tooltip show">
+      <div className="tooltip-inner text-start">
+        Linked analyses:
+        <ul style={{ paddingLeft: '15px' }}>
+          {analyses.map((analysis) => (
+            <li key={analysis.id}>{analysis.name}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

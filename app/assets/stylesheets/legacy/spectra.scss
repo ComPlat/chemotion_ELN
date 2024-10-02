@@ -2,19 +2,12 @@
   z-index: 1998;
 }
 
-.modal-open {
-  .spectra-editor-dialog {
-    transform: none !important;
-    top: auto;
-    left: 1vw;
-    width: 98vw;
-    text-align: left;
-  }
+.react-spectrum-editor div[class^='InfoPanel-panelDetail'] {
+  max-width: 22vw;
 }
 
 #ChemSpectra,
-#ChemSpectraEditor,
-.spectra-editor-dialog .modal-dialog {
+#ChemSpectraEditor {
   display: block;
   padding-left: 0px;
   top: 45% !important;

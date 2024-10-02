@@ -105,7 +105,7 @@ export default class GreenMaterialGroup extends React.Component {
     const {
       group, materials
     } = this.props;
-    if (materials && materials.length === 0) return <span />;
+    if (materials && materials.length === 0) return <></>;
 
     const isProduct = group === 'products';
     const contents = [];
@@ -160,16 +160,15 @@ export default class GreenMaterialGroup extends React.Component {
     };
 
     return (
-      <div className="ag-theme-balham">
-        <AgGridReact
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          onGridReady={this.onGridReady}
-          rowData={materials}
-          domLayout="autoHeight"
-          onCellValueChanged={this.onCoefficientChanged}
-        />
-      </div>
+      <AgGridReact
+        columnDefs={columnDefs}
+        autoSizeStrategy={{type: 'fitGridWidth'}}
+        defaultColDef={defaultColDef}
+        onGridReady={this.onGridReady}
+        rowData={materials}
+        domLayout="autoHeight"
+        onCellValueChanged={this.onCoefficientChanged}
+      />
     );
   }
 }

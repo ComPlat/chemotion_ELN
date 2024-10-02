@@ -180,9 +180,9 @@ function GeneralMaterialGroup({
   );
 
   return (
-    <table  className="w-100 m-2">
+    <table className="w-100 m-2">
       <colgroup>
-        <col style={{ width: '4%' }}/>
+        <col style={{ width: '4%' }} />
         <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
         <col style={{ width: '4%' }} />
         <col style={{ width: '2%' }} />
@@ -218,10 +218,10 @@ function GeneralMaterialGroup({
               <th />
               {showLoadingColumn && <th>{headers.loading}</th>}
               <th>{headers.concn}</th>
-              {permitOn(reaction) && materialGroup !== 'products' && (
+              {!isReactants && permitOn(reaction) && (
                 <th>
                   {headers.eq}
-                  {SwitchEquivButton(lockEquivColumn, switchEquiv)}
+                  {materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}
                 </th>
               )}
             </>

@@ -4,7 +4,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroupItem, Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -47,9 +47,9 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -107,7 +107,7 @@ export default class ReactionDetails extends Component {
       nextReaction.changed || nextReaction.editedSample) {
       this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
-    }
+  }
 
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -119,15 +119,15 @@ export default class ReactionDetails extends Component {
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
     } = this.state;
-  return (
-    reactionFromNextProps.id !== reactionFromCurrentState.id ||
-    reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
-    reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
-    !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
-    nextActiveTab !== activeTab || nextVisible !== visible ||
-    nextActiveAnalysisTab !== activeAnalysisTab
-    || reactionFromNextState !== reactionFromCurrentState
-  );
+    return (
+      reactionFromNextProps.id !== reactionFromCurrentState.id ||
+      reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
+      reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
+      !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
+      nextActiveTab !== activeTab || nextVisible !== visible ||
+      nextActiveAnalysisTab !== activeAnalysisTab
+      || reactionFromNextState !== reactionFromCurrentState
+    );
   }
 
   componentWillUnmount() {
@@ -245,7 +245,6 @@ export default class ReactionDetails extends Component {
             setState={setState}
             handleSampleChanged={handleSampleChanged}
             handleSubmit={this.handleSubmit}
-            style={{ marginTop: 10 }}
           />
         </Tab>
       );
@@ -261,7 +260,6 @@ export default class ReactionDetails extends Component {
       <div className="tabs-container--with-borders">
         <Tabs
           id="data-detail-tab"
-          className="mt-0 mb-2"
           unmountOnExit
           activeKey={activeAnalysisTab}
           // eslint-disable-next-line react/jsx-no-bind
@@ -269,14 +267,12 @@ export default class ReactionDetails extends Component {
         >
           {tabs}
           <Tab eventKey={4.1} title={reactionTab}>
-            <ListGroupItem style={{ paddingBottom: 20 }}>
-              <ReactionDetailsContainers
-                reaction={reaction}
-                readOnly={!permitOn(reaction)}
-                handleSubmit={this.handleSubmit}
-                handleReactionChange={this.handleReactionChange}
-              />
-            </ListGroupItem>
+            <ReactionDetailsContainers
+              reaction={reaction}
+              readOnly={!permitOn(reaction)}
+              handleSubmit={this.handleSubmit}
+              handleReactionChange={this.handleReactionChange}
+            />
           </Tab>
         </Tabs>
       </div>
@@ -390,7 +386,6 @@ export default class ReactionDetails extends Component {
                       size="xxsm"
                       onClick={() => this.handleSubmit(true)}
                       disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
-                      style={{ display: hasChanged }}
                     >
                       <i className="fa fa-floppy-o me-1" />
                       <i className="fa fa-times" />
@@ -405,7 +400,6 @@ export default class ReactionDetails extends Component {
                       size="xxsm"
                       onClick={() => this.handleSubmit()}
                       disabled={!permitOn(reaction) || !this.reactionIsValid()}
-                      style={{ display: hasChanged }}
                     >
                       <i className="fa fa-floppy-o " />
                     </Button>
@@ -526,25 +520,23 @@ export default class ReactionDetails extends Component {
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
-    const schemeTitle = reaction && activeTab === 'scheme' ? (
-      <div className="d-flex">
-        <div>
-          <ToggleButton
-            isToggledInitial={reaction.gaseous}
-            onToggle={this.handleGaseousChange}
-            onLabel="Gas Scheme"
-            offLabel="Default Scheme"
-            onColor="#afcfee"
-            offColor="#d3d3d3"
-            tooltipOn="Click to enable Default mode"
-            tooltipOff="Click to enable Gas mode"
-          />
-        </div>
-      </div>
-    ) : 'Scheme';
     const tabContentsMap = {
       scheme: (
-        <Tab eventKey="scheme" title={schemeTitle} key={`scheme_${reaction.id}`}>
+        <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
+          <ButtonGroup size="sm">
+            <ButtonGroupToggleButton
+              active={!reaction.gaseous}
+              onClick={this.handleGaseousChange}
+            >
+              Default Scheme
+            </ButtonGroupToggleButton>
+            <ButtonGroupToggleButton
+              active={reaction.gaseous}
+              onClick={this.handleGaseousChange}
+            >
+              Gas Scheme
+            </ButtonGroupToggleButton>
+          </ButtonGroup>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }

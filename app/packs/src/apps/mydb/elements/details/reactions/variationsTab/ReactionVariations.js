@@ -416,16 +416,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             {' '}
             rows.
           </Tooltip>
-  )}
+        )}
       >
-        {/* Wrapping button in span necessary in order for OverlayTrigger to work */}
-        <span>
-          <Button size="sm" variant="success" onClick={addRow}>
-            <i className="fa fa-plus" />
-          </Button>
-        </span>
+        <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+          <i className="fa fa-plus me-1" /> Add Variation
+        </Button>
       </OverlayTrigger>
-      <div style={{ height: '50vh' }} className="ag-theme-alpine">
+      <div className="ag-theme-alpine">
         <AgGridReact
           ref={gridRef}
           rowData={reactionVariations}
@@ -437,7 +434,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}
           domLayout="autoHeight"
-          popupParent={document.getElementById('reaction-detail-tab') || null}
           context={{
             copyRow,
             removeRow,

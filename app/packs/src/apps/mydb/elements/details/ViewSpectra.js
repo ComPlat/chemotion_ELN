@@ -250,7 +250,7 @@ class ViewSpectra extends React.Component {
       temperature
     });
     let solventDecimal = decimal
-    if (FN.is13CLayout(layout)){
+    if (FN.is13CLayout(layout)) {
       solventDecimal = 2
     }
 
@@ -631,7 +631,7 @@ class ViewSpectra extends React.Component {
     };
   }
 
-  renderAlert({icon, title, message, variant}) {
+  renderAlert({ icon, title, message, variant }) {
     const { fetched } = this.state;
     return (
       <div className="d-flex h-100 justify-content-center align-items-center">
@@ -706,18 +706,18 @@ class ViewSpectra extends React.Component {
     return !isExist && multiEntities.length === 0
       ? this.renderInvalid()
       : <SpectraEditor
-          entity={currEntity}
-          multiEntities={multiEntities}
-          entityFileNames={entityFileNames}
-          others={others}
-          operations={operations}
-          forecast={forecast}
-          molSvg={sample.svgPath}
-          theoryMass={sample.molecule_molecular_weight}
-          descriptions={descriptions}
-          canChangeDescription
-          onDescriptionChanged={this.onSpectraDescriptionChanged}
-          userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
+        entity={currEntity}
+        multiEntities={multiEntities}
+        entityFileNames={entityFileNames}
+        others={others}
+        operations={operations}
+        forecast={forecast}
+        molSvg={sample.svgPath}
+        theoryMass={sample.molecule_molecular_weight}
+        descriptions={descriptions}
+        canChangeDescription
+        onDescriptionChanged={this.onSpectraDescriptionChanged}
+        userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
       />
   }
 
@@ -801,7 +801,6 @@ class ViewSpectra extends React.Component {
         centered
         size="xxxl"
         show={showModal}
-        dialogClassName="spectra-editor-dialog"
         animation
         onHide={this.closeOp}
       >
