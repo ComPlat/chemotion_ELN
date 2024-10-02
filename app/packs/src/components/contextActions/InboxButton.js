@@ -46,7 +46,7 @@ export default class InboxButton extends React.Component {
       <Button
         variant={btnStyle}
         onClick={InboxActions.toggleInboxModal}
-        className="position-relative"
+        className="position-relative" // necessary to display the badge
       >
         <i className={btnClass} />
         {numberOfAttachments > 0 && (
