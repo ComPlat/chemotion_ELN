@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Form } from 'react-bootstrap';
-import AsyncSelect from 'react-select/async';
+import { AsyncSelect } from 'src/components/common/Select';
 import { selectUserOptionFormater, selectedUserFormater } from 'src/utilities/selectHelper';
 
 import AdminFetcher from 'src/fetchers/AdminFetcher';

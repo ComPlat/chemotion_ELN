@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Col, Form, Row
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes';
 import { relationTypes } from 'src/components/staticDropdownOptions/radar/relationTypes';

@@ -2,8 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 
-import Select from 'react-select';
-import CreatableSelect from 'react-select/creatable';
+import { Select, CreatableSelect } from 'src/components/common/Select';
 import {
   Row, Col, Button, Form, Container, ButtonToolbar
 } from 'react-bootstrap';

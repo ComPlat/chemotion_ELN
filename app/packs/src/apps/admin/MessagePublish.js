@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import {
   Form, Button, Row, Col
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 

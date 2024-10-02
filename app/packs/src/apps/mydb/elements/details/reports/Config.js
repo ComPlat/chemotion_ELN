@@ -1,5 +1,5 @@
 import React from 'react';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import {
   Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';

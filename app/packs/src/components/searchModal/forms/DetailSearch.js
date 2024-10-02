@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Button, Form, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
 import SampleInventoryFieldData from './SampleInventoryFieldData';

@@ -2,7 +2,7 @@
 import React, { createRef } from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import { Alert, Modal, Button } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 import { InlineMetadata } from 'chem-generic-ui';

@@ -3,10 +3,9 @@ import {
   Accordion, Col, Row, Form
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import CreatableSelect from 'react-select/creatable';
+import { Select, CreatableSelect } from 'src/components/common/Select';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
-import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Button, Modal, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
-import AsyncSelect from 'react-select/async';
+import { AsyncSelect } from 'src/components/common/Select';
 import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';

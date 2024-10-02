@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
-import AsyncSelect from 'react-select/async';
+import { AsyncSelect } from 'src/components/common/Select';
 
 import SharingShortcuts from 'src/components/managingActions/SharingShortcuts';
 

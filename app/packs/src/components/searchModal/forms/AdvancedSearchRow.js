@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Form } from 'react-bootstrap'
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import TreeSelect from 'antd/lib/tree-select';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';

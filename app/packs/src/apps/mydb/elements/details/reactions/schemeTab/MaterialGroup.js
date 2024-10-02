@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger, Table
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
 import ElementActions from 'src/stores/alt/actions/ElementActions';

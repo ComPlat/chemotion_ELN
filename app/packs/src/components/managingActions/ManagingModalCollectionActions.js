@@ -4,7 +4,7 @@ import { Form, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {

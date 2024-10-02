@@ -4,7 +4,7 @@ import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import {
   Table, Button, Form, Modal, Popover, OverlayTrigger, Alert
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 export default class ChemSpectraLayouts extends Component {
   constructor(props) {

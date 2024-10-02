@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import DateTimePicker from 'react-datetime-picker/dist/entry.nostyle';
 import { Form, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import PropTypes from 'prop-types';
 
