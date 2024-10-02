@@ -104,5 +104,21 @@
         background-color: $input-focus-border-color;
       }
     }
+
+    &__multi-value {
+      @extend .badge;
+      @extend .rounded-pill;
+      @extend .d-flex;
+      @extend .align-items-center;
+      @extend .gap-1;
+      @extend .text-bg-light;
+      @extend .border;
+      @extend .border-opacity-25;
+      @extend .pe-1;
+      &__remove {
+        @extend .text-bg-primary;
+        @extend .rounded-circle;
+      }
+    }
   }
 }
