@@ -15,8 +15,6 @@ let re_render_canvas = false;
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
-
-
 function KetcherEditor({ editor, iH, iS, molfile }) {
 
   const iframeRef = useRef();
@@ -48,6 +46,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
 
+  // all logic implementation if move atom has an alias which passed three part regex
   const should_canvas_update_on_movement = (data) => {
     const { id } = data[0];
     const target_atom = all_atoms[id];
@@ -202,7 +201,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     latestData.root.nodes = latestData.root.nodes.slice(0, mols.length);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     re_render_canvas = false;
-    placeImageOnAtoms(mols, imagesList);
+    imagesList.length && placeImageOnAtoms(mols, imagesList);
   };
 
   // helper function to handle new atoms added to the canvas
@@ -261,27 +260,38 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     return template_list[idx];
   };
 
+  // helper function to add mutation oberservers to DOM elements
   const attachClickListeners = () => {
     const buttonEvents = {
-      'Clean Up (Ctrl+Shift+L)': async () => {
+      "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => {
         await fuelKetcherData();
         re_render_canvas = true;
       },
-      'Clear Canvas (Ctrl+Del)': () => {
+      "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
         image_used_counter = -1;
       },
+      "[title='Undo \\(Ctrl\\+Z\\)']": async () => {
+        // it would take 3 undo's to remove a tempalate
+        // await editor._structureDef.editor.editor.undo();
+        // await editor._structureDef.editor.editor.undo();
+        // await editor._structureDef.editor.editor.undo();
+      },
+      "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": async () => {
+        // await editor._structureDef.editor.editor.redo();
+        // await editor._structureDef.editor.editor.redo();
+        // await editor._structureDef.editor.editor.redo();
+      }
     };
 
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
 
       // Function to attach click listeners based on titles
-      const attachListenerForTitle = (title) => {
-        const button = iframeDocument.querySelector(`[title="${title}"]`);
+      const attachListenerForTitle = (selector) => {
+        const button = iframeDocument.querySelector(selector);
         if (button && !button.hasClickListener) {
-          console.log(`Button found: ${title}`, button);
-          button.addEventListener('click', buttonEvents[title]);
-          button.hasClickListener = true;  // Add a flag to prevent multiple listeners
+          button.addEventListener('click', buttonEvents[selector]);
+          button.hasClickListener = true;
         }
       };
 
@@ -289,8 +299,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
           if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-            Object.keys(buttonEvents).forEach((title) => {
-              attachListenerForTitle(title);
+            Object.keys(buttonEvents).forEach((selector) => {
+              attachListenerForTitle(selector);
             });
           }
         }
@@ -307,12 +317,12 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         Object.keys(buttonEvents).forEach((title) => {
           attachListenerForTitle(title);
         });
-      }, 1000); // Adjust timing as needed
+      }, 1000);
 
       // Cleanup function
       return () => {
-        observer.disconnect(); // Stop observing
-        clearTimeout(debounceAttach); // Clear the debounce
+        observer.disconnect();
+        clearTimeout(debounceAttach);
         Object.keys(buttonEvents).forEach((title) => {
           const button = iframeDocument.querySelector(`[title="${title}"]`);
           if (button) {
@@ -320,16 +330,26 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           }
         });
       };
-    }
+    };
+  };
+
+  const resetStore = () => {
+    FILOStack = [];
+    uniqueEvents = new Set();
+    latestData = null;
+    imagesList = [];
+    mols = [];
+    allNodes = [];
+    image_used_counter = -1;
+    re_render_canvas = false;
   };
 
   useEffect(() => {
-    // Attach the click listener when the iframe loads
+    resetStore();
     const iframe = iframeRef.current;
     if (iframe) {
       iframe.addEventListener('load', attachClickListeners);
     }
-
     window.addEventListener('message', loadContent);
     return () => {
       if (iframe) {
