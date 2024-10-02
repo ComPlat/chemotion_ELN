@@ -2645,6 +2645,14 @@
     "@floating-ui/core" "^1.6.0"
     "@floating-ui/utils" "^0.2.7"
 
+"@floating-ui/dom@^1.0.1":
+  version "1.6.11"
+  resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.11.tgz#8631857838d34ee5712339eb7cbdfb8ad34da723"
+  integrity sha512-qkMCxSR24v2vGkhYDo/UzxfJN3D4syqSjyuTFz6C7XcpU1pASPRieNI0Kj5VP3/503mOfYiGY891ugBX1GlABQ==
+  dependencies:
+    "@floating-ui/core" "^1.6.0"
+    "@floating-ui/utils" "^0.2.8"
+
 "@floating-ui/dom@^1.5.1":
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.5.3.tgz#54e50efcb432c06c23cd33de2b575102005436fa"
@@ -2692,6 +2700,11 @@
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.7.tgz#d0ece53ce99ab5a8e37ebdfe5e32452a2bfc073e"
   integrity sha512-X8R8Oj771YRl/w+c1HqAC1szL8zWQRwFvgDwT129k9ACdBoud/+/rX9V0qiMl6LWUdP9voC2nDVZYPMQQsb6eA==
+
+"@floating-ui/utils@^0.2.8":
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.8.tgz#21a907684723bbbaa5f0974cf7730bd797eb8e62"
+  integrity sha512-kym7SodPp8/wloecOpcmSnWJsK7M0E5Wg8UcFA+uO4B9s5d0ywXOEro/8HM9x0rW+TljRzul/14UYz3TleT3ig==
 
 "@fortawesome/fontawesome-common-types@6.6.0":
   version "6.6.0"
@@ -13067,13 +13080,6 @@ react-input-autosize@1.1.0:
   resolved "https://registry.npmjs.org/react-input-autosize/-/react-input-autosize-1.1.0.tgz"
   integrity sha1-P+GsgyOH2KurhfYFHOqxyeVXCFM=
 
-react-input-autosize@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.npmjs.org/react-input-autosize/-/react-input-autosize-3.0.0.tgz"
-  integrity sha512-nL9uS7jEs/zu8sqwFE5MAPx6pPkNAriACQ2rGLlqmKr2sPGtN7TXTyDdQt4lbNXVx7Uzadb40x8qotIuru6Rhg==
-  dependencies:
-    prop-types "^15.5.8"
-
 "react-is@^16.12.0 || ^17.0.0", "react-is@^16.8.0 || ^17.0.0", react-is@^17.0.0, react-is@^17.0.2:
   version "17.0.2"
   resolved "https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz"
@@ -13261,18 +13267,20 @@ react-select@5.4.0:
     prop-types "^15.6.0"
     react-transition-group "^4.3.0"
 
-react-select@^4.3.1:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/react-select/-/react-select-4.3.1.tgz#389fc07c9bc7cf7d3c377b7a05ea18cd7399cb81"
-  integrity sha512-HBBd0dYwkF5aZk1zP81Wx5UsLIIT2lSvAY2JiJo199LjoLHoivjn9//KsmvQMEFGNhe58xyuOITjfxKCcGc62Q==
+react-select@^5.8.1:
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/react-select/-/react-select-5.8.1.tgz#3284a93b7633b5e893306b2a8007ea0f793e62b9"
+  integrity sha512-RT1CJmuc+ejqm5MPgzyZujqDskdvB9a9ZqrdnVLsvAHjJ3Tj0hELnLeVPQlmYdVKCdCpxanepl6z7R5KhXhWzg==
   dependencies:
     "@babel/runtime" "^7.12.0"
     "@emotion/cache" "^11.4.0"
-    "@emotion/react" "^11.1.1"
-    memoize-one "^5.0.0"
+    "@emotion/react" "^11.8.1"
+    "@floating-ui/dom" "^1.0.1"
+    "@types/react-transition-group" "^4.4.0"
+    memoize-one "^6.0.0"
     prop-types "^15.6.0"
-    react-input-autosize "^3.0.0"
     react-transition-group "^4.3.0"
+    use-isomorphic-layout-effect "^1.1.2"
 
 react-shallow-renderer@^16.13.1:
   version "16.14.1"
@@ -15298,6 +15306,11 @@ urllite@~0.5.0:
   integrity sha1-G3u5yj+w25Ug3hE0ZrvPfMNBRRo=
   dependencies:
     xtend "~4.0.0"
+
+use-isomorphic-layout-effect@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/use-isomorphic-layout-effect/-/use-isomorphic-layout-effect-1.1.2.tgz#497cefb13d863d687b08477d9e5a164ad8c1a6fb"
+  integrity sha512-49L8yCO3iGT/ZF9QttjwLF/ZD9Iwto5LnH5LmEdk/6cFmXddqi2ulF0edxTwjj+7mqvpVVGQWvbXZdn32wRSHA==
 
 use-sync-external-store@1.2.0:
   version "1.2.0"
