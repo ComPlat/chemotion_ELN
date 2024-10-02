@@ -47,7 +47,6 @@ const DeviceUserGroupsTab = () => {
           onChange={(value) => handleUser(value, 'people')}
           onMenuOpen={() => toggleLoading(true)}
           onMenuClose={() => toggleLoading(false)}
-          className="device-multi-select"
         />
       </Form.Group>
       <Form.Group className="mb-4">
@@ -63,7 +62,6 @@ const DeviceUserGroupsTab = () => {
           onChange={(value) => handleUser(value, 'groups')}
           onMenuOpen={() => toggleLoading(true)}
           onMenuClose={() => toggleLoading(false)}
-          className="device-multi-select"
         />
       </Form.Group>
     </Form>

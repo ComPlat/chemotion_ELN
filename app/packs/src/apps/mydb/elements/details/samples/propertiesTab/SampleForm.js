@@ -447,7 +447,6 @@ export default class SampleForm extends React.Component {
   textInput(sample, field, label, disabled = false, readOnly = false) {
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
-    const formControlStyle = field === 'name' ? { height: '38px' } : {};
     return (
       <Form.Group className="w-100">
         <Form.Label>{label}</Form.Label>
@@ -462,7 +461,6 @@ export default class SampleForm extends React.Component {
           }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
-          style={formControlStyle}
         />
       </Form.Group>
     );

@@ -165,7 +165,6 @@ export default class ToolbarTemplateCreator extends React.Component {
           >
             <Form.Control
               className="col"
-              style={{ maxHeight: '38px' }}
               onChange={e => this.onChangeDropdown('DropdownName', e, id)}
               ref={titleRef.ref}
               type="text"
@@ -185,7 +184,6 @@ export default class ToolbarTemplateCreator extends React.Component {
               variant="danger"
               size="sm"
               onClick={removeDropdown}
-              style={{ maxHeight: '38px' }}
             >
               <i className="fa fa-trash" />
             </Button>
@@ -217,7 +215,6 @@ export default class ToolbarTemplateCreator extends React.Component {
             <Form.Control
               type="text"
               className="col"
-              style={{ maxHeight: '38px' }}
               disabled
               defaultValue="Toolbar"
             />
