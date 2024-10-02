@@ -1,3 +1,4 @@
+/* eslint-disable react/sort-comp */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Form, InputGroup, Overlay, ListGroup }
@@ -14,7 +15,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 export default class AutoCompleteInput extends React.Component {
 
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       value: '',
       target: null,
@@ -27,78 +28,78 @@ export default class AutoCompleteInput extends React.Component {
       inputDisabled: false,
       timeoutReference: null,
       keyboardContext: ''
-    }
+    };
 
-    this.onUIChange = this.onUIChange.bind(this)
+    this.onUIChange = this.onUIChange.bind(this);
     this.overlayTarget = React.createRef();
 
-    this.timeout = 6e2 // 600ms timeout for input typing
-    this.doneTyping = this.doneTyping.bind(this)
+    this.timeout = 6e2; // 600ms timeout for input typing
+    this.doneTyping = this.doneTyping.bind(this);
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIChange)
-    this.initInputWidth()
+    UIStore.listen(this.onUIChange);
+    this.initInputWidth();
   }
 
   onUIChange(state) {
-    let inputDisabled = false
-    let value = ''
+    let inputDisabled = false;
+    let value = '';
 
     if (state.currentSearchSelection) {
-      inputDisabled = true
-      let selection = state.currentSearchSelection
+      inputDisabled = true;
+      let selection = state.currentSearchSelection;
 
       if (selection.search_by_method === "substring") {
-        value = selection.name
+        value = selection.name;
       } else {
-        value = selection.search_by_method
+        value = selection.search_by_method;
       }
     }
 
     this.setState({
       value: value,
       inputDisabled: inputDisabled
-    })
+    });
   }
 
   initInputWidth() {
-    const input = ReactDOM.findDOMNode(this.refs.input)
+    const input = ReactDOM.findDOMNode(this.refs.input);
     if (input) {
-      this.setState({ inputWidth: input.offsetWidth })
+      this.setState({ inputWidth: input.offsetWidth });
     }
   }
 
   focusNewSuggestionIndex(direction = 1) {
-    let { suggestions, suggestionFocus } = this.state
-    let length = suggestions.length
-    let sF = suggestionFocus == null ? length - 1 : suggestionFocus
-    let newSuggestionIndex = sF + direction
-    if (newSuggestionIndex >= length) { newSuggestionIndex = 0 }
-    if (newSuggestionIndex < 0) { newSuggestionIndex = length - 1 }
-    this.focusSuggestion(newSuggestionIndex)
+    let { suggestions, suggestionFocus } = this.state;
+    let length = suggestions.length;
+    let sF = suggestionFocus == null ? length - 1 : suggestionFocus;
+    let newSuggestionIndex = sF + direction;
+    if (newSuggestionIndex >= length) { newSuggestionIndex = 0; }
+    if (newSuggestionIndex < 0) { newSuggestionIndex = length - 1; }
+    this.focusSuggestion(newSuggestionIndex);
   }
 
   focusSuggestion(newFocus) {
-    let { suggestions, suggestionFocus, value, valueBeforeFocus } = this.state
-    let newState = {}
-    let sF = !suggestionFocus ? 0 : suggestionFocus
+    let { suggestions, suggestionFocus, value, valueBeforeFocus } = this.state;
+    let newState = {};
+    let sF = !suggestionFocus ? 0 : suggestionFocus;
     if (!valueBeforeFocus) {
-      newState.valueBeforeFocus = value
+      newState.valueBeforeFocus = value;
     }
-    newState.value = suggestions[newFocus].name
+    newState.value = suggestions[newFocus].name;
 
     if (!isString(newState.value)) {
       newState.value = suggestions[newFocus].name.name || suggestions[newFocus].name.value;
     }
 
-    newState.suggestionFocus = newFocus
+    newState.suggestionFocus = newFocus;
     ReactDOM.findDOMNode(this.refs['suggestion_' + sF])
-      .classList.remove('active')
-    let newFocusDom = ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus])
-    newFocusDom.classList.add('active')
+      .classList.remove('active');
+    let newFocusDom = ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus]);
+    newFocusDom.classList.add('active');
 
-    this.setState(newState)
+    this.setState(newState);
 
     const listSuggestions = this.listSuggestions;
 
@@ -118,136 +119,136 @@ export default class AutoCompleteInput extends React.Component {
       suggestions: null,
       suggestionFocus: null,
       error: ''
-    })
+    });
   }
 
   // TODO implement continue fetching in the end of scroll
   fetchSuggestions(value, show = true) {
-    let debounced = debounce(this.props.suggestions, 200)
+    let debounced = debounce(this.props.suggestions, 200);
     debounced(value).then(result => {
-      let newState = {}
+      let newState = {};
       if (result.length > 0) {
-        newState.suggestions = result
-        newState.showSuggestions = show
+        newState.suggestions = result;
+        newState.showSuggestions = show;
       } else {
-        newState.suggestions = null
-        newState.error = "Nothing was found."
-        newState.suggestionFocus = null
-        newState.showSuggestions = false
+        newState.suggestions = null;
+        newState.error = "Nothing was found.";
+        newState.suggestionFocus = null;
+        newState.showSuggestions = false;
       }
-      this.setState(newState)
-    }).catch(error => console.log(error))
+      this.setState(newState);
+    }).catch(error => console.log(error));
   }
 
   doneTyping() {
-    let { value } = this.state
+    let { value } = this.state;
     if (!value) {
-      this.resetComponent()
+      this.resetComponent();
     } else {
       // From https://gist.github.com/lsauer/1312860
       // TODO Validate if the input is InChi, InChiKey or SMILES
-      this.fetchSuggestions(value)
+      this.fetchSuggestions(value);
     }
   }
 
   // Keep chaging the input value until user finish typing
   handleValueChange(event, doneTyping) {
-    let { value } = event.target
-    let { timeoutReference, target } = this.state
+    let { value } = event.target;
+    let { timeoutReference, target } = this.state;
 
     if (!value) {
-      this.resetComponent()
+      this.resetComponent();
     } else {
       if (timeoutReference) {
-        clearTimeout(timeoutReference)
+        clearTimeout(timeoutReference);
       }
 
       this.setState({
         value: value,
         target: event.target,
         timeoutReference: setTimeout(function () {
-          doneTyping()
+          doneTyping();
         }, this.timeout)
-      })
+      });
     }
   }
 
   handleFocus() {
-    let keyboardState = KeyboardStore.getState()
+    let keyboardState = KeyboardStore.getState();
     this.setState({
       keyboardContext: keyboardState.context
-    })
+    });
 
-    KeyboardActions.contextChange("search")
+    KeyboardActions.contextChange("search");
   }
 
   handleBlur() {
-    KeyboardActions.contextChange(this.state.keyboardContext)
+    KeyboardActions.contextChange(this.state.keyboardContext);
   }
 
   handleKeyDown(event) {
     let { value, valueBeforeFocus, showSuggestions, error, suggestions } =
-      this.state
-    let { onSelectionChange } = this.props
-    let newState = {}
+      this.state;
+    let { onSelectionChange } = this.props;
+    let newState = {};
     switch (event.keyCode) {
       case 13: // Enter
-        this.selectSuggestion()
-        event.preventDefault()
-        break
+        this.selectSuggestion();
+        event.preventDefault();
+        break;
       case 27: // ESC
-        this.abortAutoSelection()
-        event.preventDefault()
-        break
+        this.abortAutoSelection();
+        event.preventDefault();
+        break;
       case 38: // Up
         if (showSuggestions && !error) {
-          this.focusNewSuggestionIndex(-1)
+          this.focusNewSuggestionIndex(-1);
         }
-        event.preventDefault()
-        break
+        event.preventDefault();
+        break;
       case 40: // Down
         if (showSuggestions && !error) {
-          this.focusNewSuggestionIndex(+1)
+          this.focusNewSuggestionIndex(+1);
         } else if (suggestions) {
-          newState.showSuggestions = true
+          newState.showSuggestions = true;
         }
-        event.preventDefault()
-        break
+        event.preventDefault();
+        break;
     }
-    this.setState(newState)
+    this.setState(newState);
   }
 
   selectSuggestion() {
-    let { suggestions, suggestionFocus, timeoutReference, value } = this.state
-    let { onSelectionChange } = this.props
+    let { suggestions, suggestionFocus, timeoutReference, value } = this.state;
+    let { onSelectionChange } = this.props;
     this.setState({
       showSuggestions: false,
       valueBeforeFocus: null
-    })
+    });
     if (!isString(value) && value) {
       value = value.name || value.value;
-      this.setState({ value })
+      this.setState({ value });
     }
 
     if (!value || value.trim() === '') {
       this.setState({
         value: ''
-      })
+      });
       let { currentCollection, isSync } = UIStore.getState();
-      currentCollection['clearSearch'] = true
+      currentCollection['clearSearch'] = true;
       isSync ? UIActions.selectSyncCollection(currentCollection)
         : UIActions.selectCollection(currentCollection);
 
-      return 0
+      return 0;
     }
 
     if (UIStore.getState().currentSearchByID) {
       UIActions.clearSearchById();
     }
 
-    let selection = { name: value, search_by_method: 'substring' }
+    let selection = { name: value, search_by_method: 'substring' };
     if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
-      let selectedSuggestion = suggestions[suggestionFocus]
+      let selectedSuggestion = suggestions[suggestionFocus];
       let selectedName = selectedSuggestion.name;
 
       if (!isString(selectedName)) {
@@ -256,29 +257,29 @@ export default class AutoCompleteInput extends React.Component {
 
       if (selectedName && selectedName.trim() != '' && this.state.value == selectedName)
         if (selectedSuggestion.search_by_method == 'element_short_label') {
-          selection = { name: selectedSuggestion.name.name, search_by_method: `element_short_label_${selectedSuggestion.name.klass}` }
+          selection = { name: selectedSuggestion.name.name, search_by_method: `element_short_label_${selectedSuggestion.name.klass}` };
 
         } else {
-          selection = selectedSuggestion
+          selection = selectedSuggestion;
         }
     }
 
-    clearTimeout(timeoutReference)
-    onSelectionChange(selection)
+    clearTimeout(timeoutReference);
+    onSelectionChange(selection);
   }
 
   abortAutoSelection() {
-    let { valueBeforeFocus } = this.state
+    let { valueBeforeFocus } = this.state;
     this.setState({
       showSuggestions: false,
       value: valueBeforeFocus,
       valueBeforeFocus: null,
       suggestionFocus: null
-    })
+    });
   }
 
   renderSuggestions() {
-    let { suggestions, error } = this.state
+    let { suggestions, error } = this.state;
     let types = {
       sample_name: { icon: 'icon-sample', label: 'Sample Name' },
       sample_short_label: { icon: 'icon-sample', label: 'Sample Short Label' },
@@ -301,15 +302,15 @@ export default class AutoCompleteInput extends React.Component {
       element_short_label: { icon: 'icon-element', label: 'Element Short Label' },
       cell_line_material_name: { icon: 'icon-cell_line', label: 'Cell line name' },
       cell_line_sample_name: { icon: 'icon-cell_line', label: 'Cell line sample name' }
-    }
+    };
 
     if (suggestions) {
       return (
         <div>
           {suggestions.map((suggestion, index) => {
-            let suggestionType = types[suggestion.search_by_method]
-            let icon = suggestionType ? suggestionType.icon : ""
-            let typeLabel = suggestionType ? suggestionType.label : ""
+            let suggestionType = types[suggestion.search_by_method];
+            let icon = suggestionType ? suggestionType.icon : "";
+            let typeLabel = suggestionType ? suggestionType.label : "";
             let name = '';
 
             // Remove first "InchI" string in suggestion list
@@ -324,9 +325,9 @@ export default class AutoCompleteInput extends React.Component {
               name = suggestion.name.value;
             } else {
               name = suggestion.name;
-              inchiMatch = suggestion.name.substring(0, inchiString.length)
+              inchiMatch = suggestion.name.substring(0, inchiString.length);
               if (inchiMatch === inchiString) {
-                suggestion.name = suggestion.name.replace(inchiString, "")
+                suggestion.name = suggestion.name.replace(inchiString, "");
               }
             }
 
@@ -341,12 +342,12 @@ export default class AutoCompleteInput extends React.Component {
                 <i className={`pe-1 ${icon}`}></i>
                 {typeLabel}
               </ListGroup.Item>
-            )
+            );
           })}
         </div>
-      )
+      );
     } else if (error) {
-      return <ListGroup.Item>{error}</ListGroup.Item>
+      return <ListGroup.Item>{error}</ListGroup.Item>;
     }
     return <div />;
   }
@@ -361,9 +362,9 @@ export default class AutoCompleteInput extends React.Component {
     }
 
     return (
-      <div className="position-relative">
+      <div className="d-flex flex-column w-100">
         <Form.Group ref={this.overlayTarget}>
-          <InputGroup>
+          <InputGroup className="d-flex flex-nowrap w-100">
             {this.props.buttonBefore}
             <Form.Control
               placeholder="IUPAC, InChI, SMILES, RInChI..."
@@ -389,17 +390,21 @@ export default class AutoCompleteInput extends React.Component {
           rootClose={true}
           target={this.state.target}
         >
-          <div className="position-absolute" style={{ width: inputWidth, zIndex: 20 }} >
+          <div
+            className="position-absolute" style={{ width: inputWidth, zIndex: 20 }}
+          >
             <ListGroup
               className={scrollClass}
               style={{ maxHeight: 400, width: 400 }}
               ref={(alist) => { this.listSuggestions = alist; }}
             >
-              {this.renderSuggestions()}
+              <div className="w-100 bg-white border overflow-auto">
+                {this.renderSuggestions()}
+              </div>
             </ListGroup>
           </div>
         </Overlay>
       </div>
-    )
+    );
   }
 }
