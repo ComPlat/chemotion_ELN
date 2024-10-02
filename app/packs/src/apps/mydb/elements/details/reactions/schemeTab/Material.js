@@ -938,11 +938,9 @@ class Material extends Component {
     };
 
     const idCheck = /^\d+$/;
-    const truncatedSampleName = material.molecule_iupac_name?.length > 20 && materialGroup === 'reactants'
-      ? material.molecule_iupac_name?.substring(1, 25) : material.molecule_iupac_name;
 
     if (skipIupacName) {
-      let materialDisplayName = truncatedSampleName || material.name;
+      let materialDisplayName = material.molecule_iupac_name || material.name;
       if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
         materialDisplayName = material.external_label || materialDisplayName;
       }
@@ -961,7 +959,7 @@ class Material extends Component {
             tabIndex={0}
             onClick={() => this.handleMaterialClick(material)}
             style={{ cursor: 'pointer' }}
-          ><span className="reaction-material-link">{materialDisplayName}</span></a>
+          ><span>{materialDisplayName}</span></a>
         );
       } else {
         materialName = <span>{materialDisplayName}</span>;
@@ -977,7 +975,7 @@ class Material extends Component {
           tabIndex={0}
           onClick={() => this.handleMaterialClick(material)}
           style={{ cursor: 'pointer' }}
-        ><span className="reaction-material-link">{materialDisplayName}</span></a>
+        ><span>{materialDisplayName}</span></a>
       );
 
       if (material.isNew) { materialName = materialDisplayName; }
@@ -1006,7 +1004,7 @@ class Material extends Component {
           </OverlayTrigger>
           &nbsp;
           <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
-            <div>
+            <div className={'reaction-material-link'}>
               {materialName}
             </div>
           </OverlayTrigger>
