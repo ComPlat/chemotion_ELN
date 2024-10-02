@@ -1,6 +1,31 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v1.10.3]
+> (2024-10-02)
+
+* Bug fixes
+  * wellplate template download  ([#2115](https://github.com/ComPlat/chemotion_ELN/pull/2115))
+  * oidc params issue  ([#2190](https://github.com/ComPlat/chemotion_ELN/pull/2190))
+  * admin restore account - rm obsolete has_profile calls  ([#2181](https://github.com/ComPlat/chemotion_ELN/pull/2181))
+  * returning attachment preview when not annotated  ([#2192](https://github.com/ComPlat/chemotion_ELN/pull/2192))
+  * type error when sample has no collection tag data on saving sample  ([#2158](https://github.com/ComPlat/chemotion_ELN/pull/2158))
+
+  ChemSpectra and NMRIUM
+  * internal ref for cv layout  ([#2104](https://github.com/ComPlat/chemotion_ELN/pull/2104))
+
+  UX/UI
+  * reaction scheme - sample names style  ([#2193](https://github.com/ComPlat/chemotion_ELN/pull/2193))
+
+* Chores
+  * Bump express from 4.19.2 to 4.21.0  ([#2154](https://github.com/ComPlat/chemotion_ELN/pull/2154))
+  * Bump dompurify from 2.4.1 to 2.5.6  ([#2157](https://github.com/ComPlat/chemotion_ELN/pull/2157))
+  * bump converter-client 0.11.0  ([#2171](https://github.com/ComPlat/chemotion_ELN/pull/2171))
+  * Bump puma from 5.6.8 to 5.6.9  ([#2168](https://github.com/ComPlat/chemotion_ELN/pull/2168))
+
+* Ci
+  * set postgres to latest 16 for testing  ([#2191](https://github.com/ComPlat/chemotion_ELN/pull/2191))
+
 ## [v1.10.2]
 > (2024-09-13)
 
