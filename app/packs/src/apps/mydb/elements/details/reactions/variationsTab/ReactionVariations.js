@@ -182,14 +182,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const [columnDefinitions, setColumnDefinitions] = useState([
     {
       headerName: 'Tools',
-      field: null,
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
-      editable: false,
       sortable: false,
       minWidth: 140,
-      cellDataType: 'object',
-      headerComponent: null,
+      cellDataType: false,
     },
     {
       headerName: 'Notes',
@@ -198,7 +195,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       sortable: false,
       cellDataType: 'text',
       cellEditor: NoteCellEditor,
-      cellEditorPopup: true,
     },
     {
       headerName: 'Analyses',
@@ -207,9 +203,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       tooltipComponent: AnalysisOverlay,
       cellRenderer: AnalysesCellRenderer,
       cellEditor: AnalysesCellEditor,
-      cellEditorPopup: true,
-      cellEditorPopupPosition: 'under',
-      cellDataType: 'object',
+      cellDataType: false,
       sortable: false,
     },
     {
