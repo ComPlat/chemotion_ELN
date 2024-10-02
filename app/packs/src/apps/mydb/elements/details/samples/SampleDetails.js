@@ -115,7 +115,6 @@ export default class SampleDetails extends React.Component {
       materialGroup: null,
       showStructureEditor: false,
       loadingMolecule: false,
-      showElementalComposition: false,
       showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: '',
@@ -680,16 +679,11 @@ export default class SampleDetails extends React.Component {
       ? 'Polymer section / Elemental composition'
       : 'Elemental composition';
 
-    const { showElementalComposition, materialGroup } = this.state;
-    const paneKey = 'elemental-comp';
+    const { materialGroup } = this.state;
 
     return (
-      <Accordion
-        className="polymer-section"
-        activeKey={showElementalComposition && paneKey}
-        onSelect={(key) => this.setState({ showElementalComposition: key === paneKey })}
-      >
-        <Accordion.Item eventKey={paneKey}>
+      <Accordion className="polymer-section">
+        <Accordion.Item eventKey="elemental-comp">
           <Accordion.Header>{label}</Accordion.Header>
           <Accordion.Body>
             {sample.contains_residues ? (
