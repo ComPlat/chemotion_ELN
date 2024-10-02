@@ -74,6 +74,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
 
     for (const eventItem of data) {
+      console.log({ eventItem });
       switch (eventItem?.operation) {
         case "Load canvas":
           await fuelKetcherData();
@@ -92,6 +93,11 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         case "Move atom":
           allowed_to_process = should_canvas_update_on_movement(data);
           addEventToFILOStack("Move atom");
+          break;
+        case "Delete image":
+          latestData.root.nodes.push(imagesList[imagesList.length - 1]);
+          await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+          // addEventToFILOStack("Delete image");
           break;
         default:
           // console.warn("Unhandled operation:", eventItem.operation);
@@ -138,6 +144,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
         case "Upsert image":
           // postAtomAddImageInsertion();
+          break;
+        case "Delete image":
           break;
         default:
           // console.warn("Unhandled event:", event);
