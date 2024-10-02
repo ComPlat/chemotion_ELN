@@ -167,8 +167,16 @@ function MenuHeader({
 }
 
 MenuHeader.propTypes = {
-  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  column: PropTypes.shape({
+    colDef: PropTypes.object.isRequired,
+    isSortAscending: PropTypes.func.isRequired,
+    isSortDescending: PropTypes.func.isRequired,
+    addEventListener: PropTypes.func.isRequired,
+  }).isRequired,
+  context: PropTypes.shape({
+    columnDefinitions: PropTypes.arrayOf(PropTypes.object).isRequired,
+    setColumnDefinitions: PropTypes.func.isRequired,
+  }).isRequired,
   setSort: PropTypes.func.isRequired,
   names: PropTypes.arrayOf(PropTypes.string).isRequired,
   entries: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
