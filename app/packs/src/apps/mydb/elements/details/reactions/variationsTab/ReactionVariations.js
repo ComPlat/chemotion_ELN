@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useEffect, useMemo, useCallback
+  useRef, useState, useEffect, useCallback
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert
@@ -254,7 +254,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     }))
   ));
 
-  const dataTypeDefinitions = useMemo(() => ({
+  const dataTypeDefinitions = {
     property: {
       extendsDataType: 'object',
       baseDataType: 'object',
@@ -273,9 +273,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       valueFormatter: EquivalentFormatter,
       valueParser: EquivalentParser,
     }
-  }), []);
+  };
 
-  const defaultColumnDefinitions = useMemo(() => ({
+  const defaultColumnDefinitions = {
     editable: true,
     sortable: true,
     resizable: false,
@@ -283,7 +283,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     maxWidth: 200,
     wrapHeaderText: true,
     autoHeaderHeight: true,
-  }), []);
+  };
 
   const setReactionVariations = (updatedReactionVariations) => {
     // Set updated state here and in parent component.
