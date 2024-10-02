@@ -15,6 +15,8 @@ let re_render_canvas = false;
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
+
+
 function KetcherEditor({ editor, iH, iS, molfile }) {
 
   const iframeRef = useRef();
@@ -28,7 +30,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
       editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
-        console.log(result[0].operation === "Load canvas", result.length);
         handleEventCapture(result);
       });
     };
@@ -200,8 +201,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     });
     latestData.root.nodes = latestData.root.nodes.slice(0, mols.length);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    placeImageOnAtoms(mols, imagesList);
     re_render_canvas = false;
+    placeImageOnAtoms(mols, imagesList);
   };
 
   // helper function to handle new atoms added to the canvas
@@ -260,58 +261,83 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     return template_list[idx];
   };
 
-  useEffect(() => {
-    window.addEventListener('message', loadContent);
-    return () => {
-      window.removeEventListener('message', loadContent);
+  const attachClickListeners = () => {
+    const buttonEvents = {
+      'Clean Up (Ctrl+Shift+L)': async () => {
+        await fuelKetcherData();
+        re_render_canvas = true;
+      },
+      'Clear Canvas (Ctrl+Del)': () => {
+        image_used_counter = -1;
+      },
     };
-  }, []);
 
-  const handleClick = (event) => {
-    console.log('Element clicked:', event.target);
-    alert("heard");
-    re_render_canvas = true;
-  };
-
-  const attachClickListener = () => {
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
 
-      // Attach the click event to all buttons with class 'css-uwwqev'
-      const button = iframeDocument.querySelector('[title="Clean Up (Ctrl+Shift+L)"]');
-      if (button) {
-        button.addEventListener('click', handleClick);
-      }
+      // Function to attach click listeners based on titles
+      const attachListenerForTitle = (title) => {
+        const button = iframeDocument.querySelector(`[title="${title}"]`);
+        if (button && !button.hasClickListener) {
+          console.log(`Button found: ${title}`, button);
+          button.addEventListener('click', buttonEvents[title]);
+          button.hasClickListener = true;  // Add a flag to prevent multiple listeners
+        }
+      };
 
-      // Optional: Use MutationObserver to handle dynamically added buttons
-      const observer = new MutationObserver(() => {
-        const button = iframeDocument.querySelector('[title="Clean Up (Ctrl+Shift+L)"]');
-        if (button) {
-          button.addEventListener('click', handleClick);
+      // Attach listeners only for relevant mutations (e.g., when a new button is added)
+      const observer = new MutationObserver((mutationsList) => {
+        for (const mutation of mutationsList) {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            Object.keys(buttonEvents).forEach((title) => {
+              attachListenerForTitle(title);
+            });
+          }
         }
       });
 
-      // Observe the entire document for changes in child elements
+      // Start observing the iframe's document for changes
       observer.observe(iframeDocument, {
         childList: true,
-        subtree: true
+        subtree: true,
       });
 
-      // Cleanup event listeners and disconnect MutationObserver
+      // Fallback: Try to manually find buttons after some time, debounce the function
+      const debounceAttach = setTimeout(() => {
+        Object.keys(buttonEvents).forEach((title) => {
+          attachListenerForTitle(title);
+        });
+      }, 1000); // Adjust timing as needed
+
+      // Cleanup function
       return () => {
-        observer.disconnect();
-        for (let btn of buttons) {
-          btn.removeEventListener('click', handleClick);
-        }
+        observer.disconnect(); // Stop observing
+        clearTimeout(debounceAttach); // Clear the debounce
+        Object.keys(buttonEvents).forEach((title) => {
+          const button = iframeDocument.querySelector(`[title="${title}"]`);
+          if (button) {
+            button.removeEventListener('click', buttonEvents[title]);
+          }
+        });
       };
     }
   };
 
-  // Attach the click listener when the iframe loads
-  const iframe = iframeRef.current;
-  if (iframe) {
-    iframe.addEventListener('load', attachClickListener);
-  }
+  useEffect(() => {
+    // Attach the click listener when the iframe loads
+    const iframe = iframeRef.current;
+    if (iframe) {
+      iframe.addEventListener('load', attachClickListeners);
+    }
+
+    window.addEventListener('message', loadContent);
+    return () => {
+      if (iframe) {
+        iframe.removeEventListener('load', attachClickListeners);
+      }
+      window.removeEventListener('message', loadContent);
+    };
+  }, []);
 
   return (
     <div>
