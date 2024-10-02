@@ -47,7 +47,7 @@ class PagesController < ApplicationController
   end
 
   def profiles
-    @profile = current_user.profile
+    @profile = current_user&.profile
   end
 
   def update_profiles
