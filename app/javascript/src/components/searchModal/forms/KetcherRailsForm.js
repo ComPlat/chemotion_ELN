@@ -169,7 +169,7 @@ function KetcherRailsform() {
                 <Form.Check
                   type="radio"
                   value="sub"
-                  label="Substructure Search"
+                  label={pgCartridge ? `Substructure Search with ${pgCartridge}` : 'Substructure Search'}
                   checked={searchStore.ketcherRailsValues.searchType === 'sub'}
                   onChange={handleSearchTypeChange}
                 />

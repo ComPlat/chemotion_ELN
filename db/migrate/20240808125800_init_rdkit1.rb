@@ -2,7 +2,9 @@
 
 class InitRdkit1 < ActiveRecord::Migration[6.1]
   def up
-    create_schema 'rdk'
+    if Chemotion::Application.config.pg_cartridge == 'RDKit'
+      create_schema 'rdk'
+    end
   end
 
   def down

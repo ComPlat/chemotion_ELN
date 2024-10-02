@@ -397,68 +397,6 @@ describe Chemotion::SearchAPI do
         end
       end
     end
-
-    context 'when search_by_rdkit_sub' do
-      context 'when searching a molfile in samples in correct collection' do
-        let(:molfile) { sample_a.molfile }
-
-        let(:params) do
-          {
-            selection: {
-              elementType: :structure,
-              molfile: molfile,
-              search_type: 'subRDKit',
-              search_by_method: :structure,
-              structure_search: true,
-            },
-            collection_id: collection.id,
-            page: 1,
-            per_page: 15,
-            molecule_sort: true,
-          }
-        end
-
-        it 'returns the sample and all other objects referencing the sample from the requested collection' do
-          result = JSON.parse(response.body)
-          expect(result.dig('reactions', 'totalElements')).to eq 1
-          expect(result.dig('reactions', 'ids')).to eq [reaction.id]
-          expect(result.dig('samples', 'totalElements')).to eq 2
-          expect(result.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
-          expect(result.dig('screens', 'totalElements')).to eq 1
-          expect(result.dig('screens', 'ids')).to eq [screen.id]
-          expect(result.dig('wellplates', 'totalElements')).to eq 1
-          expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
-        end
-      end
-
-      context 'when searching a molfile in samples in wrong collection' do
-        let(:molfile) { mof3000_1 }
-        let(:params) do
-          {
-            selection: {
-              elementType: :structure,
-              molfile: molfile,
-              search_type: 'subRDKit',
-              search_by_method: :structure,
-              structure_search: true,
-            },
-            collection_id: other_collection.id,
-            page: 1,
-            per_page: 15,
-            molecule_sort: true,
-          }
-        end
-
-        it 'returns nothing found' do
-          result = JSON.parse(response.body)
-
-          expect(result.dig('reactions', 'totalElements')).to eq 0
-          expect(result.dig('samples', 'totalElements')).to eq 0
-          expect(result.dig('screens', 'totalElements')).to eq 0
-          expect(result.dig('wellplates', 'totalElements')).to eq 0
-        end
-      end
-    end
   end
 
   describe 'POST /api/v1/search/by_ids' do

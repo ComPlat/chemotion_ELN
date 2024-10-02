@@ -103,8 +103,6 @@ module Chemotion
             Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
           when 'sub'
             Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
-          when 'subRDKit'
-            Sample.by_collection_id(c_id).search_by_rdkit_sub(molfile)
           end
         order_by_molecule(scope)
       end

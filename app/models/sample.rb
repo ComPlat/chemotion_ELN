@@ -169,20 +169,20 @@ class Sample < ApplicationRecord
   }
 
   scope :search_by_fingerprint_sub, lambda { |molfile, as_array = false|
-    fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
-    smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
-    samples = joins(:fingerprint).merge(Fingerprint.screen_sub(fp_vector))
-    samples = samples.select do |sample|
-      Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
+    if Chemotion::Application.config.pg_cartridge == 'RDKit'
+      where("samples.id in (select id from rdk.mols
+        where m operator(@>) mol_from_ctab(encode('#{molfile}', 'escape')::cstring) )")
+    else
+      fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
+      smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
+      samples = joins(:fingerprint).merge(Fingerprint.screen_sub(fp_vector))
+      samples = samples.select do |sample|
+        Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
+      end
+      return samples if as_array
+
+      Sample.where(id: samples.map(&:id))
     end
-    return samples if as_array
-
-    Sample.where(id: samples.map(&:id))
-  }
-
-  scope :search_by_rdkit_sub, lambda { |molfile|
-    where("samples.id in (select id from rdk.mols
-            where m operator(@>) mol_from_ctab(encode('#{molfile}', 'escape')::cstring) )")
   }
 
   before_save :auto_set_molfile_to_molecules_molfile
@@ -373,11 +373,11 @@ class Sample < ApplicationRecord
   # rubocop:disable Style/MethodDefParentheses
   # rubocop:disable Style/OptionalBooleanParameter
   def create_subsample user, collection_ids, copy_ea = false, type = nil
-    subsample = self.dup
+    subsample = dup
     subsample.xref['inventory_label'] = nil
     subsample.skip_inventory_label_update = true
-    subsample.name = self.name if self.name.present?
-    subsample.external_label = self.external_label if self.external_label.present?
+    subsample.name = name if name.present?
+    subsample.external_label = external_label if external_label.present?
 
     # Ex(p|t)ensive method to get a proper counter:
     # take into consideration sample children that have been hard/soft deleted
@@ -456,7 +456,7 @@ class Sample < ApplicationRecord
   def get_svg_path
     if sample_svg_file.present?
       "/images/samples/#{sample_svg_file}"
-    elsif molecule&.molecule_svg_file&.present?
+    elsif molecule&.molecule_svg_file.present?
       "/images/molecules/#{molecule.molecule_svg_file}"
     end
   end
@@ -703,7 +703,6 @@ class Sample < ApplicationRecord
       self.short_label = "#{abbr}-#{creator.counters['samples'].to_i.succ}"
     end
   end
-
 
   # rubocop: enable Metrics/AbcSize
   # rubocop: enable Metrics/CyclomaticComplexity
