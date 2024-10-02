@@ -167,10 +167,6 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
   }
 
-  readableMolFile() {
-    return this.state.molfile.replace(/\r?\n/g, '<br />');
-  }
-
   componentDidMount() {
     const { sample } = this.props;
     const { currentUser } = this.state;
@@ -1271,6 +1267,9 @@ export default class SampleDetails extends React.Component {
   }
 
   renderMolfileModal() {
+    const { molfile } = this.state;
+    const molfileText = molfile.replace(/\r?\n/g, '<br />');
+
     return (
       <Modal
         centered
@@ -1288,7 +1287,7 @@ export default class SampleDetails extends React.Component {
                 as="textarea"
                 readOnly
                 disabled
-                value={this.readableMolFile()}
+                value={molfileText}
               />
             </Form.Group>
           </div>
