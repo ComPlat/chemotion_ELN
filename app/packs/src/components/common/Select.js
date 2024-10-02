@@ -5,14 +5,29 @@ import RCreatableSelect from 'react-select/creatable';
 
 /* eslint-disable react/jsx-props-no-spreading */
 
-export const Select = (props) => (
-  <RSelect {...props} />
+export const Select = ({className, ...props}) => (
+  <RSelect
+    className={["chemotion-select", className].join(' ')}
+    classNamePrefix="chemotion-select"
+    unstyled
+    {...props}
+  />
 );
 
-export const AsyncSelect = (props) => (
-  <RAsyncSelect {...props} />
+export const AsyncSelect = ({className, ...props}) => (
+  <RAsyncSelect
+    className={["chemotion-select", className].join(' ')}
+    classNamePrefix="chemotion-select"
+    unstyled
+    {...props}
+  />
 );
 
-export const CreatableSelect = (props) => (
-  <RCreatableSelect {...props} />
+export const CreatableSelect = ({className, ...props}) => (
+  <RCreatableSelect
+    className={["chemotion-select", className].join(' ')}
+    classNamePrefix="chemotion-select"
+    unstyled
+    {...props}
+  />
 );

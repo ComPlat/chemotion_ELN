@@ -375,7 +375,6 @@ export default class ElementsTable extends React.Component {
           isClearable={false}
           value={options.find(({ value }) => value == moleculeSort)}
           onChange={this.changeSampleSort}
-          className="header-group-select"
         />
         <OverlayTrigger
           placement="top"
