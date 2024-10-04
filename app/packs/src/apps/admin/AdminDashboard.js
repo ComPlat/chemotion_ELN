@@ -30,16 +30,7 @@ export default class AdminDashboard extends React.Component {
 
   renderDiskInfo() {
     const { diskAvailable, diskPercentUsed } = this.state;
-    let style = {};
-    if (diskPercentUsed > 80) {
-      style = {
-        color: 'red',
-      };
-    } else {
-      style = {
-        color: 'black',
-      };
-    }
+    let className = diskPercentUsed > 80 ? 'text-danger' : '';
 
     return (
         <Card>
@@ -54,7 +45,7 @@ export default class AdminDashboard extends React.Component {
               <InputGroup.Text >Disk Percent Used (%)</InputGroup.Text>
               <Form.Control
                 type="text"
-                style={style}
+                className={className}
                 defaultValue={`${diskPercentUsed}%` || ''}
                 readOnly
               />

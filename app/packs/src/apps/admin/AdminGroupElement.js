@@ -137,64 +137,68 @@ export default class AdminGroupElement extends React.Component {
           </td>
           <td>{groupElement.email}</td>
         </tr>
-        <tr className={'collapse' + (showUsers ? 'in' : '')} id={`div_row_${groupElement.id}`}>
-          <td colSpan="7">
-            <Accordion defaultActiveKey='1' >
-              <Accordion.Item eventKey="1">
-                <Accordion.Header>Users in Group: {groupElement.name}</Accordion.Header>
-                <Accordion.Body>
-                  <Table>
-                    <tbody>
-                      {groupElement.users.map((u, i) => (
-                        <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                          <td className="py-3">{i + 1}</td>
-                          <td className="py-3">{u.name}</td>
-                          <td className="py-3">{u.initials}</td>
-                          <td className="py-3">{u.email}</td>
-                          <td className="py-3">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
-                          {this.renderGroupUserButtons(groupElement, u)}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-          </td>
-        </tr>
-        <tr className={'collapse' + (showDevices ? 'in' : '')} id={`div_row_d${groupElement.id}`}>
-          <td colSpan="7">
-            <Accordion defaultActiveKey="1">
-              <Accordion.Item eventKey="1">
-                <Accordion.Header eventKey="1">
-                  Devices in Group: {groupElement.name}
-                </Accordion.Header>
-                <Accordion.Body>
-                  <Table>
-                    <tbody>
-                      {groupElement.devices.map((u, i) => (
-                        <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                          <td className="py-3">{i + 1}</td>
-                          <td className="py-3 m-0">{u.name}</td>
-                          <td className="py-3">{u.initials}</td>
-                          <td className="py-3">{ }</td>
-                          <td className="py-3">{ }</td>
-                          <td className="py-3">
-                            <DeleteGroupDeviceButton rootType={'Group'}
-                              actionType={'Device'}
-                              groupRec={groupElement}
-                              userRec={u}
-                              currentState={this.state}
-                              onChangeGroupData={this.props.onChangeGroupData} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-          </td>
-        </tr>
+        {showUsers &&
+          <tr id={`div_row_${groupElement.id}`}>
+            <td colSpan="6">
+              <Accordion defaultActiveKey='1' >
+                <Accordion.Item eventKey="1">
+                  <Accordion.Header>Users in Group: {groupElement.name}</Accordion.Header>
+                  <Accordion.Body>
+                    <Table>
+                      <tbody>
+                        {groupElement.users.map((u, i) => (
+                          <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`}>
+                            <td className="py-3">{i + 1}</td>
+                            <td className="py-3">{u.name}</td>
+                            <td className="py-3">{u.initials}</td>
+                            <td className="py-3">{u.email}</td>
+                            <td className="py-3">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
+                            {this.renderGroupUserButtons(groupElement, u)}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+            </td>
+          </tr>
+        }
+        {showDevices && 
+          <tr id={`div_row_d${groupElement.id}`}>
+            <td colSpan="6">
+              <Accordion defaultActiveKey="1">
+                <Accordion.Item eventKey="1">
+                  <Accordion.Header eventKey="1">
+                    Devices in Group: {groupElement.name}
+                  </Accordion.Header>
+                  <Accordion.Body>
+                    <Table>
+                      <tbody>
+                        {groupElement.devices.map((u, i) => (
+                          <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`}>
+                            <td className="py-3">{i + 1}</td>
+                            <td className="py-3 m-0">{u.name}</td>
+                            <td className="py-3">{u.initials}</td>
+                            <td className="py-3">{ }</td>
+                            <td className="py-3">{ }</td>
+                            <td className="py-3">
+                              <DeleteGroupDeviceButton rootType={'Group'}
+                                actionType={'Device'}
+                                groupRec={groupElement}
+                                userRec={u}
+                                currentState={this.state}
+                                onChangeGroupData={this.props.onChangeGroupData} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+            </td>
+          </tr>
+        }
       </tbody>
     );
   }
