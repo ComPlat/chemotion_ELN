@@ -6,6 +6,19 @@
 // For detailed documentation on styling react-select see here:
 // https://react-select.com/styles#the-unstyled-prop
 
+@mixin hide-svg {
+  svg {
+    @extend .d-none;
+  }
+}
+
+@mixin fa-based-remove-icon {
+  @include hide-svg;
+  @extend .text-secondary;
+  @extend .fa;
+  @extend .fa-times-circle;
+}
+
 .chemotion-select {
   &.is-invalid {
     .chemotion-select__control, .chemotion-select__control:hover {
@@ -14,8 +27,8 @@
   }
   .chemotion-select {
     &__control, &__menu {
-      display: block;
-      width: 100%;
+      @extend .d-block;
+      @extend .w-100;
       padding: $form-select-padding-y $form-select-padding-x;
       font-family: $form-select-font-family;
       @include font-size($form-select-font-size);
@@ -30,8 +43,10 @@
     }
 
     &__control {
-      display: flex;
-      justify-content: space-between;
+      @extend .d-flex;
+      @extend .justify-content-between;
+      @extend .align-items-center;
+      @extend .gap-1;
       min-height: auto !important;
 
       &:hover {
@@ -67,19 +82,28 @@
     }
 
     &__indicator, &__value-container, &__input-container, &__placeholder, &__single-value, &__indicator-separator {
-      padding: 0;
-      margin: 0;
+      @extend .p-0;
+      @extend .m-0;
+    }
+
+    &__value-container {
+      @extend .gap-1;
+    }
+
+    &__single-value .badge {
+      @extend .d-block
     }
 
     &__indicator {
-      width: 1.75rem;
-      height: 1rem;
 
-      svg {
-        display: none;
+      &-separator {
+        @extend .d-none;
       }
 
       &.chemotion-select__dropdown-indicator {
+        @include hide-svg;
+        width: 1.75rem;
+        height: 1rem;
         background-image: escape-svg($form-select-indicator);
         background-repeat: no-repeat;
         background-position: right center;
@@ -116,9 +140,12 @@
       @extend .border-opacity-25;
       @extend .pe-1;
       &__remove {
-        @extend .text-bg-primary;
-        @extend .rounded-circle;
+        @include fa-based-remove-icon;
       }
+    }
+
+    &__clear-indicator {
+      @include fa-based-remove-icon;
     }
   }
 }
