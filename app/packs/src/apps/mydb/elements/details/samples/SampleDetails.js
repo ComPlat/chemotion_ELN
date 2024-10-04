@@ -10,7 +10,7 @@ import {
   Accordion
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import Select from 'react-select';
+import { CreatableSelect } from 'src/components/common/Select';
 import { cloneDeep, findIndex } from 'lodash';
 import uuid from 'uuid';
 import Immutable from 'immutable';
@@ -391,7 +391,7 @@ export default class SampleDetails extends React.Component {
     this.fetchQcWhenNeeded(eventKey);
   }
 
-  onCasSelectOpen(e, casArr) {
+  onCasSelectOpen(casArr) {
     const { sample } = this.state;
     if (casArr.length === 0) {
       this.setState({ isCasLoading: true });
@@ -802,25 +802,21 @@ export default class SampleDetails extends React.Component {
     let casArr = [];
     casArr = molecule?.cas?.filter((element) => element !== null);
     casArr = cas && casArr && cas !== '' && !casArr.includes(cas) ? [...casArr, cas] : casArr;
-    const onChange = (e) => this.updateCas(e);
-    const onOpen = (e) => this.onCasSelectOpen(e, casArr);
-    const validate = () => this.isCASNumberValid(cas || '', true);
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
     const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
       <div className="my-4">
         <InputGroup>
           <InputGroup.Text>CAS</InputGroup.Text>
-          <Select.Creatable
+          <CreatableSelect
             name="cas"
-            multi={false}
             options={options}
-            onChange={onChange}
-            onOpen={onOpen}
+            onChange={(e) => this.updateCas(e)}
+            onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
-            value={cas}
-            onBlur={validate}
-            disabled={!sample.can_update}
+            value={options.find(({value}) => value === cas)}
+            onBlur={() => this.isCASNumberValid(cas || '', true)}
+            isDisabled={!sample.can_update}
             className="flex-grow-1"
           />
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>

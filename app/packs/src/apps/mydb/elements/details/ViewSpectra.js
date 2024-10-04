@@ -1,8 +1,8 @@
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { createRef } from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import { Alert, Modal, Button } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 import { InlineMetadata } from 'chem-generic-ui';
@@ -741,17 +741,24 @@ class ViewSpectra extends React.Component {
     const dses = this.getDSList();
     const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
 
+    const treePopupContainer = createRef();
+
     return (
       <Modal.Header className="justify-content-between align-items-baseline">
         <span className="fs-3">
           {modalTitle}
         </span>
-        <div className="d-flex gap-1 align-items-center">
+        <div className="d-flex gap-1 align-items-center" ref={treePopupContainer}>
           <Select
             options={dsOptions}
-            value={si.idDt}
-            clearable={false}
-            style={{ width: 200 }}
+            value={dsOptions.find(({value}) => value === si.idDt)}
+            isClearable={false}
+            styles={{
+              container: (baseStyles, state) => ({
+                ...baseStyles,
+                width: 200,
+              })
+            }}
             onChange={(e) => this.onDSSelectChange(e)}
           />
           <TreeSelect
@@ -761,6 +768,7 @@ class ViewSpectra extends React.Component {
             style={{ width: 500 }}
             maxTagCount={1}
             onChange={onSelectChange}
+            getPopupContainer={() => treePopupContainer.current}
           />
         </div>
         <Button

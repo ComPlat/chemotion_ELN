@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Button, Modal, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
-import Select from 'react-select';
+import { AsyncSelect } from 'src/components/common/Select';
 import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -24,6 +24,7 @@ const Notification = (props) =>
 export default class MatrixManagement extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       matrices: [],
       matrice: {},
@@ -33,6 +34,7 @@ export default class MatrixManagement extends React.Component {
       includeUsers: null,
       excludeUsers: null
     };
+
     this.edit = this.edit.bind(this);
     this.editJson = this.editJson.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -67,7 +69,11 @@ export default class MatrixManagement extends React.Component {
 
   edit(matrice) {
     this.setState({
-      showEditModal: true, showJsonModal: false, matrice, includeUsers: null, excludeUsers: null
+      showEditModal: true,
+      showJsonModal: false,
+      matrice,
+      includeUsers: matrice.include_users,
+      excludeUsers: matrice.exclude_users,
     });
   }
 
@@ -86,11 +92,11 @@ export default class MatrixManagement extends React.Component {
   }
 
   handleIncludeUser(val) {
-    if (val) { this.setState({ includeUsers: val }); }
+    this.setState({ includeUsers: val });
   }
 
   handleExcludeUser(val) {
-    if (val) { this.setState({ excludeUsers: val }); }
+     this.setState({ excludeUsers: val });
   }
 
   loadUserByName(input) {
@@ -113,13 +119,8 @@ export default class MatrixManagement extends React.Component {
       enabled: matrice.enabled,
     };
 
-    if (includeUsers != null) {
-      params.include_ids = includeUsers && includeUsers.map(u => u.value);
-    }
-
-    if (excludeUsers != null) {
-      params.exclude_ids = excludeUsers && excludeUsers.map(u => u.value);
-    }
+    params.include_ids = (includeUsers ?? []).map(u => u.value);
+    params.exclude_ids = (excludeUsers ?? []).map(u => u.value);
 
     AdminFetcher.updateMatrice(params)
       .then((result) => {
@@ -222,22 +223,14 @@ export default class MatrixManagement extends React.Component {
 
   renderEditModal() {
     const { matrice, includeUsers, excludeUsers } = this.state;
-    let defaultIncludeUsers = [];
-    let defaultExcludeUsers = [];
-
-    if (includeUsers == null) {
-      defaultIncludeUsers = matrice.include_users;
-    } else {
-      defaultIncludeUsers = includeUsers;
-    }
-    if (excludeUsers == null) {
-      defaultExcludeUsers = matrice.exclude_users;
-    } else {
-      defaultExcludeUsers = excludeUsers;
-    }
 
     return (
-      <Modal centered show={this.state.showEditModal} onHide={this.handleClose} backdrop='static'>
+      <Modal
+        centered
+        show={this.state.showEditModal}
+        onHide={this.handleClose}
+        backdrop='static'
+      >
         <Modal.Header closeButton>
           <Modal.Title>Edit Permisson</Modal.Title>
         </Modal.Header>
@@ -276,40 +269,30 @@ export default class MatrixManagement extends React.Component {
                 when [unchecked], only allowed users can see/use this function)
               </p>
             </Form.Group>
-            <InputGroup>
-              <InputGroup.Text>Include Users</InputGroup.Text>
-              <Select.Async
-                multi
-                isLoading
-                backspaceRemoves
-                value={defaultIncludeUsers}
-                defaultValue={defaultIncludeUsers}
-                valueKey="value"
-                labelKey="label"
+            <Form.Group>
+              <Form.Label>Include Users</Form.Label>
+              <AsyncSelect
+                isMulti
+                value={includeUsers}
                 matchProp="name"
-                placeholder="Select ..."
+                placeholder="Select..."
                 loadOptions={this.loadUserByName}
                 onChange={this.handleIncludeUser}
-                className='flex-grow-1 fs-6'
+                menuPosition="fixed"
               />
-            </InputGroup>
-            <InputGroup>
-              <InputGroup.Text>Exclude Users</InputGroup.Text>
-              <Select.Async
-                multi
-                isLoading
-                backspaceRemoves
-                value={defaultExcludeUsers}
-                defaultValue={defaultExcludeUsers}
-                valueKey="value"
-                labelKey="label"
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Exclude Users</Form.Label>
+              <AsyncSelect
+                isMulti
+                value={excludeUsers}
                 matchProp="name"
-                placeholder="Select ..."
+                placeholder="Select..."
                 loadOptions={this.loadUserByName}
                 onChange={this.handleExcludeUser}
-                className='flex-grow-1 fs-6'
+                menuPosition="fixed"
               />
-            </InputGroup>
+            </Form.Group>
           </Form>
         </Modal.Body>
 

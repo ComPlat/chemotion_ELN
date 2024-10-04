@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger, Table
 } from 'react-bootstrap';
-import VirtualizedSelect from 'react-virtualized-select';
+import { Select } from 'src/components/common/Select';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -123,34 +123,30 @@ function GeneralMaterialGroup({
     eq: 'Equiv'
   };
 
-  const reagentList = [];
-  let reagentDd = <span />;
-  const createReagentForReaction = (event) => {
-    const smi = event.value;
-    MoleculesFetcher.fetchBySmi(smi)
-      .then((result) => {
-        const molecule = new Molecule(result);
-        molecule.density = molecule.density || 0;
-        addDefaultSolvent(molecule, null, materialGroup, event.label);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  };
-
+  let reagentDd = null;
   if (isReactants) {
     headers = { group: 'Reactants' };
-    Object.keys(reagents_kombi).forEach((x) => {
-      reagentList.push({
-        label: x,
-        value: reagents_kombi[x]
-      });
-    });
+
+    const reagentList = Object.keys(reagents_kombi).map((x) => ({
+      label: x,
+      value: reagents_kombi[x]
+    }));
+
+    const createReagentForReaction = ({ label, value: smi }) => {
+      MoleculesFetcher.fetchBySmi(smi)
+        .then((result) => {
+          const molecule = new Molecule(result);
+          molecule.density = molecule.density || 0;
+          addDefaultSolvent(molecule, null, materialGroup, label);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+
     reagentDd = (
-      <VirtualizedSelect
-        disabled={!permitOn(reaction)}
+      <Select
+        isDisabled={!permitOn(reaction)}
         className="form-control-sm"
-        name="Reagents"
-        multi={false}
         options={reagentList}
         placeholder="Reagents"
         onChange={createReagentForReaction}
@@ -247,9 +243,7 @@ function SolventsMaterialGroup({
     </Button>
   );
 
-  const createDefaultSolventsForReaction = (event) => {
-    const solvent = event.value;
-    // MoleculesFetcher.fetchByMolfile(solvent.molfile)
+  const createDefaultSolventsForReaction = ({ value: solvent }) => {
     const smi = solvent.smiles;
     MoleculesFetcher.fetchBySmi(smi)
       .then((result) => {
@@ -279,11 +273,8 @@ function SolventsMaterialGroup({
         <tr>
           <th>{addSampleButton}</th>
           <th>
-            <VirtualizedSelect
-              disabled={!permitOn(reaction)}
-              className="form-control-sm"
-              name="default solvents"
-              multi={false}
+            <Select
+              isDisabled={!permitOn(reaction)}
               options={solventOptions}
               placeholder="Default solvents"
               onChange={createDefaultSolventsForReaction}

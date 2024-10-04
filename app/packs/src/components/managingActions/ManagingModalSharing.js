@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
-import Select from 'react-select';
+import { AsyncSelect } from 'src/components/common/Select';
 
 import SharingShortcuts from 'src/components/managingActions/SharingShortcuts';
 
@@ -36,7 +36,6 @@ export default class ManagingModalSharing extends React.Component {
     this.onUserChange = this.onUserChange.bind(this);
     this.handleSelectUser = this.handleSelectUser.bind(this);
     this.handleSharing = this.handleSharing.bind(this);
-    this.promptTextCreator = this.promptTextCreator.bind(this);
 
     this.loadUserByName = this.loadUserByName.bind(this);
   }
@@ -217,7 +216,6 @@ export default class ManagingModalSharing extends React.Component {
     };
 
     if (this.props.collAction === "Create") {
-      const userIds = this.state.selectedUsers;
       const uiState = UIStore.getState();
       const currentCollection = uiState.currentCollection;
       const filterParams =
@@ -227,7 +225,7 @@ export default class ManagingModalSharing extends React.Component {
       const fullParams = {
         ...params,
         elements_filter: filterParams,
-        user_ids: userIds,
+        user_ids: this.state.selectedUsers,
         currentCollection
       };
       CollectionActions.createSharedCollections(fullParams);
@@ -289,16 +287,14 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   handleSelectUser(val) {
-    if (val) {
-      this.setState({ selectedUsers: val })
-    }
+    this.setState({ selectedUsers: val })
   }
 
   loadUserByName(input) {
     let { selectedUsers } = this.state;
 
     if (!input) {
-      return Promise.resolve({ options: [] });
+      return Promise.resolve([]);
     }
 
     return UsersFetcher.fetchUsersByName(input, 'Person,Group')
@@ -309,10 +305,6 @@ export default class ManagingModalSharing extends React.Component {
       });
   }
 
-  promptTextCreator(label) {
-    return ("Share with \"" + label + "\"");
-  }
-
   selectUsers() {
     let style = this.props.selectUsers ? {} : { display: 'none' };
     let { selectedUsers } = this.state;
@@ -320,10 +312,11 @@ export default class ManagingModalSharing extends React.Component {
     return (
       <Form.Group className="mb-3" style={style}>
         <Form.Label>Select Users to share with</Form.Label>
-        <Select.AsyncCreatable id="share-users-select" multi={true} isLoading={true}
-          backspaceRemoves={true} value={selectedUsers}
-          valueKey="value" labelKey="label" matchProp="name"
-          promptTextCreator={this.promptTextCreator}
+        <AsyncSelect
+          id="share-users-select"
+          isMulti
+          value={selectedUsers}
+          matchProp="name"
           loadOptions={this.loadUserByName}
           onChange={this.handleSelectUser}
         />
@@ -333,6 +326,10 @@ export default class ManagingModalSharing extends React.Component {
 
   render() {
     const displayWarning = (this.state.permissionLevel || '') === '5' ? 'inline-block' : 'none';
+
+    const { selectedUsers } = this.state;
+    const hasSelectedUsers = selectedUsers != null && selectedUsers.length > 0
+
     return (
       <Form>
         <Form.Group className="mb-3" controlId="shortcutSelect">
@@ -417,7 +414,14 @@ export default class ManagingModalSharing extends React.Component {
           </Form.Select>
         </Form.Group>
         {this.selectUsers()}
-        <Button id="create-sync-shared-col-btn" variant="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
+        <Button
+          id="create-sync-shared-col-btn"
+          variant="warning"
+          disabled={!hasSelectedUsers}
+          onClick={this.handleSharing}
+        >
+          {this.props.collAction} Shared Collection
+        </Button>
       </Form>
     )
   }

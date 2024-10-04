@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Row, Col, Form, InputGroup, DropdownButton, Dropdown
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import 'moment-precise-range-plugin';
 import { dangerousProductsOptions } from 'src/components/staticDropdownOptions/options';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
@@ -33,7 +33,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   handleMultiselectChange(type, selectedOptions) {
-    const values = selectedOptions.map(option => option.value);
+    const values = selectedOptions.map((option) => option.value);
     const wrappedEvent = { target: { value: values } };
     this.props.onInputChange(type, wrappedEvent);
   }
@@ -89,12 +89,11 @@ export default class ReactionDetailsProperties extends Component {
           <Form.Label>Dangerous Products</Form.Label>
           <Select
             name="dangerous_products"
-            multi
+            isMulti
             options={dangerousProductsOptions}
-            value={reaction.dangerous_products}
-            disabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
+            value={dangerousProductsOptions.filter((o) => reaction.dangerous_products?.includes(o.value))}
+            isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
             onChange={(selectedOptions) => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
-            className="mt-1 pb-1"
           />
         </Form.Group>
         <hr className="my-4" />

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ButtonToolbar, Button, Form, Popover } from 'react-bootstrap';
-import Select from 'react-select3';
+import { Select } from 'src/components/common/Select';
 // import { template } from 'lodash';
 
 const getIconAndDropdown = (template) => {
@@ -66,13 +66,11 @@ export default class ToolbarTemplateCreator extends React.Component {
       tempOnChange[0].name = e.target.value;
     } else {
       const dataValues = [];
-      if (e !== null) {
-        e.forEach((object) => {
-          const tabContent = object.value;
-          if (tabContent) { dataValues.push(tabContent); }
-        });
-        tempOnChange[0].data = dataValues;
-      }
+      e.forEach((object) => {
+        const tabContent = object.value;
+        if (tabContent) { dataValues.push(tabContent); }
+      });
+      tempOnChange[0].data = dataValues;
     }
   }
 
@@ -167,7 +165,6 @@ export default class ToolbarTemplateCreator extends React.Component {
           >
             <Form.Control
               className="col"
-              style={{ maxHeight: '38px' }}
               onChange={e => this.onChangeDropdown('DropdownName', e, id)}
               ref={titleRef.ref}
               type="text"
@@ -187,7 +184,6 @@ export default class ToolbarTemplateCreator extends React.Component {
               variant="danger"
               size="sm"
               onClick={removeDropdown}
-              style={{ maxHeight: '38px' }}
             >
               <i className="fa fa-trash" />
             </Button>
@@ -219,7 +215,6 @@ export default class ToolbarTemplateCreator extends React.Component {
             <Form.Control
               type="text"
               className="col"
-              style={{ maxHeight: '38px' }}
               disabled
               defaultValue="Toolbar"
             />

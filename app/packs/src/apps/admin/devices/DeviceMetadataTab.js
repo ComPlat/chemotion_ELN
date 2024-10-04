@@ -1,6 +1,6 @@
 import React, { useEffect, useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import Select from 'react-select3';
+import { Select } from 'src/components/common/Select';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
 import { observer } from 'mobx-react';

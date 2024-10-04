@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import Dropzone from 'react-dropzone';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 const editTooltip = <Tooltip id="inchi_tooltip">Edit this template</Tooltip>;
 

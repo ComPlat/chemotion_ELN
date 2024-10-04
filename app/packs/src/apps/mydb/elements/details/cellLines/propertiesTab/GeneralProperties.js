@@ -3,10 +3,9 @@ import {
   Accordion, Col, Row, Form
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import Creatable from 'react-select3/creatable';
+import { Select, CreatableSelect } from 'src/components/common/Select';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
-import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
@@ -70,10 +69,10 @@ class GeneralProperties extends React.Component {
         <Form.Label column sm={3}>Biosafety level</Form.Label>
         <Col sm={9}>
           <Select
-            disabled={readOnly}
+            isDisabled={readOnly}
             options={options}
-            clearable={false}
-            value={item.bioSafetyLevel}
+            isClearable={false}
+            value={options.find(({value}) => value === item.bioSafetyLevel)}
             onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
           />
         </Col>
@@ -99,7 +98,7 @@ class GeneralProperties extends React.Component {
         onChange={() => {}}
       />
     ) : (
-      <Creatable
+      <CreatableSelect
         className={styleClassUnit}
         onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
         onInputChange={(e, action) => {

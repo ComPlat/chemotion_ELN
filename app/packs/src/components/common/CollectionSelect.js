@@ -1,91 +1,67 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Select from 'react-select';
-import { findIndex } from 'lodash';
+import { Select } from 'src/components/common/Select';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+
 export default class CollectionSelect extends React.Component {
   constructor(props) {
     super(props);
+
+    const { unsharedRoots } = CollectionStore.getState();
     this.state = {
-      unsharedRoots: CollectionStore.getState().unsharedRoots || [],
-      value: props.value,
-      options: []
+      unsharedRoots: unsharedRoots || [],
     };
+
     this.onColChange = this.onColChange.bind(this);
     this.onColSelectChange = this.onColSelectChange.bind(this);
-    this.ColOptions = this.ColOptions.bind(this);
   }
 
   componentDidMount() {
     CollectionStore.listen(this.onColChange);
-    this.ColOptions();
   }
 
   onColChange(state) {
     if (state.unsharedRoots != this.state.unsharedRoots) {
       this.setState({
-        unsharedRoots: state.unsharedRoots
+        unsharedRoots: state.unsharedRoots || [],
       });
     }
   }
 
-  onColSelectChange(e, reset = false) {
-    const val = reset === false ? (e && e.value) : null;
-    this.setState({
-      value: val
-    });
-    this.props.onChange(val);
+  onColSelectChange({ value }) {
+    this.props.onChange(value);
   }
 
-  makeTree(tree, collections, depth) {
+  makeTree(collections, tree = [], depth = 0) {
+    if (!Array.isArray(collections)) return tree;
+
     collections.forEach((collection) => {
-      if (collection.label == 'All') {
-        return;
-      }
-      tree.push({ id: collection.id, label: collection.label, depth, first: collection.first });
-      if (collection.children && collection.children.length > 0) {
-        this.makeTree(tree, collection.children, depth + 1);
-      }
+      if (collection.label === 'All') return;
+
+      tree.push({ value: collection.id, label: collection.label, depth });
+      this.makeTree(collection.children, tree, depth + 1);
     });
-  }
 
-  ColOptions() {
-    const { unsharedRoots } = this.state;
-    const cAllTree = [];
-    this.makeTree(cAllTree, unsharedRoots || [], 0);
-
-    if (cAllTree.length === 0) {
-      this.setState({
-        options: []
-      });
-    } else {
-      const newOptions = cAllTree.map((leaf) => {
-        const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
-        const className = leaf.first ? "separator" : "";
-        return {
-          value: leaf.id,
-          label: indent + leaf.label,
-          className
-        };
-      }) || [];
-      this.setState({
-        options: newOptions
-      });
-    }
+    return tree;
   }
 
   render() {
-    const { options, value } = this.state;
-    if (value != null && options != null && options.length > 0
-      && findIndex(options, ['value', value]) < 0) {
-      this.onColSelectChange(null, true);
-    }
+    const { value } = this.props;
+    const { unsharedRoots } = this.state;
+    const options = this.makeTree(unsharedRoots);
+
+    const optionLabel = ({ label, depth }) => (
+      <span style={{ paddingLeft: `${depth * 10}px` }}>
+        {label}
+      </span>
+    );
+
     return (
       <Select
         id="modal-collection-id-select"
         options={options}
-        value={value}
-        className="flex-grow-1"
+        formatOptionLabel={optionLabel}
+        value={options.find((o) => o.value === value)}
         onChange={this.onColSelectChange}
       />
     );
@@ -98,5 +74,5 @@ CollectionSelect.propTypes = {
 };
 
 CollectionSelect.defaultProps = {
-  value: 0
+  value: null,
 };

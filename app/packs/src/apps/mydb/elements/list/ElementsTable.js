@@ -20,7 +20,7 @@ import { SearchUserLabels } from 'src/components/UserLabels';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
@@ -224,7 +224,7 @@ export default class ElementsTable extends React.Component {
     });
   };
 
-  changeElementsGroup = (elementsGroup) => {
+  changeElementsGroup = ({ value: elementsGroup }) => {
     const { elementsSort, sortDirection } = this.state;
 
     this.setState({
@@ -371,13 +371,10 @@ export default class ElementsTable extends React.Component {
     return (
       <>
         <Select
-          simpleValue
           options={options}
-          clearable={false}
-          searchable
-          value={moleculeSort}
+          isClearable={false}
+          value={options.find(({ value }) => value == moleculeSort)}
           onChange={this.changeSampleSort}
-          className="header-group-select"
         />
         <OverlayTrigger
           placement="top"
@@ -429,6 +426,7 @@ export default class ElementsTable extends React.Component {
       value: option[0],
       label: option[1].label
     }));
+
     const { sortColumn } = optionsHash[elementsGroup];
     const sortDirectionText = sortDirection === 'ASC' ? 'ascending' : 'descending';
     const sortTitle = elementsSort
@@ -462,7 +460,7 @@ export default class ElementsTable extends React.Component {
           options={options}
           clearable={false}
           searchable={false}
-          value={elementsGroup}
+          value={options.find(({ value }) => value == elementsGroup)}
           onChange={this.changeElementsGroup}
           className="header-group-select"
         />
@@ -534,11 +532,9 @@ export default class ElementsTable extends React.Component {
     return (
       <>
         <Select
-          simpleValue
           options={options}
-          clearable={false}
-          searchable
-          value={elementsGroup}
+          isClearable={false}
+          value={options.find(({ value }) => value == elementsGroup)}
           onChange={this.changeElementsGroup}
           className="header-group-select"
         />

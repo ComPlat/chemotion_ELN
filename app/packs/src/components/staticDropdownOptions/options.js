@@ -568,17 +568,17 @@ export const rolesOptions = [{
   label: 'General Procedure',
   value: 'gp',
   icon: 'fa-home',
-  variant: 'c-bs-primary',
+  variant: 'primary',
 }, {
   label: 'Parts of GP',
   value: 'parts',
   icon: 'fa-bookmark',
-  variant: 'c-bs-success',
+  variant: 'success',
 }, {
   label: 'Single',
   value: 'single',
   icon: 'fa-asterisk',
-  variant: 'c-bs-danger',
+  variant: 'danger',
 }];
 
 export const conditionsOptions = [{

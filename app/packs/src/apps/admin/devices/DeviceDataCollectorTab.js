@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Form, InputGroup, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
-import Select from 'react-select3';
+import { Select } from 'src/components/common/Select';
 import { startsWith, endsWith } from 'lodash';
 
 import AdminFetcher from 'src/fetchers/AdminFetcher';

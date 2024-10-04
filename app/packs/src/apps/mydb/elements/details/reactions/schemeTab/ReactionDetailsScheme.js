@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Accordion, Form, Row, Col, Button, InputGroup
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
 import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
 import Sample from 'src/models/Sample';
@@ -155,27 +155,26 @@ export default class ReactionDetailsScheme extends Component {
     );
   }
 
-  renderRolesOptions(opt) {
-    const className = `fa ${opt.icon} ${opt.variant} my-0 mx-2`;
+  renderRolesOption({icon, label, variant}) {
     return (
-      <span>
-        <i className={className} />
-        {opt.label}
-      </span>
+      <>
+        <i className={`fa ${icon} text-${variant} me-2`} />
+        {label}
+      </>
     );
   }
 
   renderRoleSelect() {
     const { role } = this.props.reaction;
+
     return (
       <Select
-        disabled={!permitOn(this.props.reaction)}
+        isDisabled={!permitOn(this.props.reaction)}
         name="role"
         options={rolesOptions}
-        optionRenderer={this.renderRolesOptions}
-        multi={false}
-        clearable
-        value={role}
+        formatOptionLabel={this.renderRolesOption}
+        isClearable
+        value={rolesOptions.find(({value}) => value === role)}
         onChange={this.onChangeRole}
       />
     );

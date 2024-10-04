@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Form } from 'react-bootstrap';
-import Select from 'react-select3';
+import { Select } from 'src/components/common/Select';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';

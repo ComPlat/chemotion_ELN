@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import DateTimePicker from 'react-datetime-picker/dist/entry.nostyle';
 import { Form, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import PropTypes from 'prop-types';
 
@@ -183,8 +183,9 @@ const CalendarEntryEditor = (props) => {
           <Form.Group controlId="calendarEntryType" className="mb-3">
             <Form.Label>Type</Form.Label>
             <Select
-              disabled={disabled}
-              value={entry.kind || ''}
+              isDisabled={disabled}
+              isClearable
+              value={calendarTypes.find(({value}) => value === entry.kind)}
               onChange={(ev) => updateEntry('kind', ev?.value || '')}
               options={calendarTypes}
             />
@@ -196,12 +197,11 @@ const CalendarEntryEditor = (props) => {
           >
             <Form.Label>Notify Users</Form.Label>
             <Select
-              disabled={disabled}
-              clearable
-              searchable
-              multi
-              value={entry.notify_users || ''}
-              onChange={(list) => updateEntry('notify_users', list || '')}
+              isDisabled={disabled}
+              isClearable
+              isMulti
+              value={notifyUserList.filter(({value}) => entry.notify_users?.includes(value))}
+              onChange={(list) => updateEntry('notify_users', list)}
               options={notifyUserList}
             />
           </Form.Group>

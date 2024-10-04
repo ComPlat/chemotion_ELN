@@ -40,9 +40,3 @@
 .check-box-list-3 {
   @include check-box-list-common(3);
 }
-
-.select-assign-collection {
-  .separator {
-    border-top: 1px solid #ccc;
-  }
-}

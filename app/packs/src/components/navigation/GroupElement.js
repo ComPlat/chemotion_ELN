@@ -8,7 +8,7 @@ import {
   Overlay,
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import Select from 'react-select';
+import { AsyncSelect } from 'src/components/common/Select';
 import _ from 'lodash';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
@@ -27,14 +27,8 @@ export default class GroupElement extends React.Component {
     this.toggleUsers = this.toggleUsers.bind(this);
     this.toggleRowAdd = this.toggleRowAdd.bind(this);
     this.loadUserByName = this.loadUserByName.bind(this);
-    this.handleSelectUser = this.handleSelectUser.bind(this);
     this.hideAdminAlert = this.hideAdminAlert.bind(this);
     this.setGroupAdmin = this.setGroupAdmin.bind(this);
-  }
-
-  handleSelectUser(val) {
-    const selectedUsers = (val && val.length > 0) ? val : null;
-    this.setState({ selectedUsers });
   }
 
   setGroupAdmin(groupRec, userRec, setAdmin = true) {
@@ -75,7 +69,7 @@ export default class GroupElement extends React.Component {
         (o) => o.id === group.group.id
       );
       this.props.currentGroup.splice(idx, 1, group.group);
-      this.setState({ selectedUsers: null });
+      this.setState({ selectedUsers: [] });
       this.props.onChangeData(this.props.currentGroup);
     });
   }
@@ -98,7 +92,7 @@ export default class GroupElement extends React.Component {
 
   loadUserByName(input) {
     if (!input) {
-      return Promise.resolve({ options: [] });
+      return Promise.resolve([]);
     }
 
     return UsersFetcher.fetchUsersByName(input, 'Person')
@@ -155,7 +149,7 @@ export default class GroupElement extends React.Component {
         (o) => o.id == group.group.id
       );
       this.props.currentGroup.splice(idx, 1, group.group);
-      this.setState({ selectedUsers: null });
+      this.setState({ selectedUsers: [] });
       this.props.onChangeData(this.props.currentGroup);
     });
   }
@@ -263,24 +257,14 @@ export default class GroupElement extends React.Component {
         </div>
         {isAdmin && showRowAdd && (
           <div className="d-flex mt-2 align-items-center gap-2">
-            <Select.AsyncCreatable
+            <AsyncSelect
               className="w-50"
-              multi
-              isLoading
-              backspaceRemoves
+              isMulti
               value={selectedUsers}
-              valueKey="value"
-              labelKey="label"
               matchProp="name"
               placeholder="Select users"
-              promptTextCreator={this.promptTextCreator}
               loadOptions={this.loadUserByName}
-              onChange={this.handleSelectUser}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && selectedUsers) {
-                  this.addUser(groupElement);
-                }
-              }}
+              onChange={(selectedUsers) => this.setState({ selectedUsers })}
             />
             <Button
               size="sm"

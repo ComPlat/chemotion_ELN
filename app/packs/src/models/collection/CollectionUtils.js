@@ -1,13 +1,20 @@
-export default class CollectionUtils {
-  static isReadOnly(currentCollection, userId, isSync) {
-    if (currentCollection.permission_level > 0) { return false; }
+function isReadOnly(collection, userId, isSync) {
+  if (collection.permission_level > 0) { return false; }
 
-    const isShared = currentCollection.is_shared
-            && currentCollection.shared_by_id !== userId;
+  const isShared = collection.is_shared
+          && collection.shared_by_id !== userId;
 
-    const isSynced = isSync
-            && currentCollection.shared_by_id !== userId;
+  const isSynced = isSync
+          && collection.shared_by_id !== userId;
 
-    return isSynced || isShared;
-  }
+  return isSynced || isShared;
 }
+
+function isWritable(collection) {
+  return collection.permission_level >= 1;
+}
+
+export default {
+  isReadOnly,
+  isWritable,
+};

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import {
   Form, Button, Row, Col
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
@@ -24,9 +24,7 @@ export default class MessagePublish extends React.Component {
   }
 
   handleChannelChange(selectedChannel) {
-    if (selectedChannel) {
-      this.setState({ selectedChannel });
-    }
+    this.setState({ selectedChannel });
   }
 
   toggleChannelList() {

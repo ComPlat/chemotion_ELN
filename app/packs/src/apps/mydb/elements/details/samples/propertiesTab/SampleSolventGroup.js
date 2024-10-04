@@ -4,7 +4,7 @@ import {
   Button, Form, Table, Card
 } from 'react-bootstrap';
 import Molecule from 'src/models/Molecule';
-import Select from 'react-select3';
+import { Select } from 'src/components/common/Select';
 import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';

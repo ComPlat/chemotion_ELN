@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Form
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import { Select } from 'src/components/common/Select';
 
 import { controlledRightsList } from 'src/components/staticDropdownOptions/radar/controlledRightsList';
 

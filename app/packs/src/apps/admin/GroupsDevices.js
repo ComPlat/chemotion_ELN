@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Table, Button, Form, Card } from 'react-bootstrap';
-import Select from 'react-select';
+import { AsyncSelect } from 'src/components/common/Select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
@@ -114,13 +114,13 @@ export default class GroupsDevices extends React.Component {
   }
 
   handleSelectUser(val) {
-    if (val) { this.setState({ selectedUsers: val }); }
+    this.setState({ selectedUsers: val });
   }
 
   loadUserByNameType(input) {
     const { actionType } = this.state;
     if (!input) {
-      return Promise.resolve({ options: [] });
+      return Promise.resolve([]);
     }
 
     if (actionType == 'Device') {
@@ -135,7 +135,7 @@ export default class GroupsDevices extends React.Component {
         .catch((errorMessage) => {
           console.log(errorMessage);
         });
-    }    
+    }
   }
 
   createGroup() {
@@ -233,11 +233,7 @@ export default class GroupsDevices extends React.Component {
       actionType
     } = this.state;
 
-    const userIds = [];
-    selectedUsers.map((g) => {
-      userIds.push(g.value);
-      return true;
-    });
+    const userIds = (selectedUsers ?? []).map((g) => g.value);
 
     const params = {
       action: 'NodeAdd',
@@ -296,19 +292,19 @@ export default class GroupsDevices extends React.Component {
           </Card.Title>
         </Card.Header>
         <Card.Body>
-        <Table responsive condensed hover>
-          <thead>
-            <tr className='bg-gray-200 '>
-              <th className="py-3">#</th>
-              <th className="w-25 py-3">Actions</th>
-              <th className="py-3">Name</th>
-              <th className="py-3">Kürzel</th>
-              <th className="py-3">Admin by</th>
-              <th className="py-3">Email</th>
-            </tr>
-          </thead>
-          {tbody}
-        </Table>
+          <Table responsive condensed hover>
+            <thead>
+              <tr className='bg-gray-200 '>
+                <th className="py-3">#</th>
+                <th className="w-25 py-3">Actions</th>
+                <th className="py-3">Name</th>
+                <th className="py-3">Kürzel</th>
+                <th className="py-3">Admin by</th>
+                <th className="py-3">Email</th>
+              </tr>
+            </thead>
+            {tbody}
+          </Table>
         </Card.Body>
       </Card>
     );
@@ -412,20 +408,22 @@ export default class GroupsDevices extends React.Component {
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-              <Select.Async
-                multi
-                isLoading
-                backspaceRemoves
-                value={selectedUsers}
-                valueKey="value"
-                labelKey="label"
-                matchProp="name"
-                placeholder="Select ..."
-                promptTextCreator={this.promptTextCreator}
-                loadOptions={this.loadUserByNameType}
-                onChange={this.handleSelectUser}
-              />
-          <Button size="md" type="button" variant="warning" className='mt-3' onClick={() => this.addToRoot(root)}>Add</Button>
+          <AsyncSelect
+            isMulti
+            value={selectedUsers}
+            matchProp="name"
+            placeholder="Select ..."
+            loadOptions={this.loadUserByNameType}
+            onChange={this.handleSelectUser}
+          />
+          <Button
+            size="md"
+            variant="warning"
+            className='mt-3'
+            onClick={() => this.addToRoot(root)}
+          >
+            Add
+          </Button>
         </Modal.Body>
       </Modal>
     );

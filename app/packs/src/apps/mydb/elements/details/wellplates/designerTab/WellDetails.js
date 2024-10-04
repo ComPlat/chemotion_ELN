@@ -8,7 +8,7 @@ import {
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
@@ -93,7 +93,7 @@ const labelSelection = (well, onChange) => {
   const labelsIncludesMolecularStructure = wellLabels.some(item => item === 'Molecular structure')
   const labelsIncludeNonMolecularStructure = wellLabels.some(item => item !== 'Molecular structure')
 
-  const labels = [
+  const labelOptions = [
     { label: 'Name', value: 'Name', disabled: labelsIncludesMolecularStructure },
     { label: 'External label', value: 'External label', disabled: labelsIncludesMolecularStructure },
     { label: 'Molecular structure', value: 'Molecular structure', disabled: labelsIncludeNonMolecularStructure }
@@ -103,14 +103,13 @@ const labelSelection = (well, onChange) => {
     <div class="mt-3">
       <h4>Select label type</h4>
       <Select
-        className="well-overlay-select"
-        id="label"
         name="label"
-        multi
-        options={labels}
-        value={well.label}
+        isMulti
+        options={labelOptions}
+        value={labelOptions.filter(({value}) => wellLabels.includes(value))}
+        isOptionDisabled={({disabled}) => disabled}
         onChange={selectedOptions => {
-          const newLabel = selectedOptions.map(option => option.label).toString()
+          const newLabel = selectedOptions.map(option => option.label).join(',')
           well.label = newLabel
           onChange(well)
         }}

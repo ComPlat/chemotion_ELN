@@ -8,7 +8,7 @@ import {
   OverlayTrigger, Tooltip, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
@@ -143,12 +143,12 @@ export default class SampleForm extends React.Component {
 
   addMolName(moleculeName) {
     this.setState({ isMolNameLoading: true });
-    DetailActions.updateMoleculeNames(this.props.sample, moleculeName.label);
+    DetailActions.updateMoleculeNames(this.props.sample, moleculeName);
   }
 
   updateMolName(e) {
     const { sample } = this.props;
-    sample.molecule_name = e;
+    sample.molecule_name = e.value;
     this.props.handleSampleChanged(sample);
   }
 
@@ -172,6 +172,7 @@ export default class SampleForm extends React.Component {
 
   stereoAbsInput() {
     const { sample } = this.props;
+    const absValue = sample.stereo ? sample.stereo.abs : 'any';
 
     const absOptions = [
       { label: 'any', value: 'any' },
@@ -187,18 +188,15 @@ export default class SampleForm extends React.Component {
       { label: '(Ra)', value: '(Ra)' },
     ];
 
-    const value = sample.stereo ? sample.stereo.abs : 'any';
-
     return (
       <Form.Group>
         <Form.Label>Stereo Abs</Form.Label>
         <Select
           name="stereoAbs"
-          clearable={false}
-          disabled={!sample.can_update}
+          isDisabled={!sample.can_update}
           options={absOptions}
           onChange={this.updateStereoAbs}
-          value={value}
+          value={absOptions.find(({value}) => value === absValue)}
         />
       </Form.Group>
     );
@@ -206,6 +204,7 @@ export default class SampleForm extends React.Component {
 
   stereoRelInput() {
     const { sample } = this.props;
+    const relValue = sample.stereo ? sample.stereo.rel : 'any';
 
     const relOptions = [
       { label: 'any', value: 'any' },
@@ -221,18 +220,15 @@ export default class SampleForm extends React.Component {
       { label: 'mer', value: 'mer' },
     ];
 
-    const value = sample.stereo ? sample.stereo.rel : 'any';
-
     return (
       <Form.Group>
         <Form.Label>Stereo Rel</Form.Label>
         <Select
           name="stereoRel"
-          clearable={false}
-          disabled={!sample.can_update}
+          isDisabled={!sample.can_update}
           options={relOptions}
           onChange={this.updateStereoRel}
-          value={value}
+          value={relOptions.find(({value}) => value === relValue)}
         />
       </Form.Group>
     );
@@ -245,22 +241,20 @@ export default class SampleForm extends React.Component {
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
-    const onOpenMolName = () => this.openMolName(sample);
+
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
         <InputGroup>
-          <Select.Creatable
+          <CreatableSelect
             name="moleculeName"
-            multi={false}
-            disabled={!sample.can_update}
+            isDisabled={!sample.can_update}
             options={moleculeNames}
-            onOpen={onOpenMolName}
+            onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
             isLoading={this.state.isMolNameLoading}
-            value={!newMolecule && mno && mno.value}
-            onNewOptionClick={this.addMolName}
-            clearable={false}
+            value={moleculeNames.find(({value}) => value == mno?.value)}
+            onCreateOption={this.addMolName}
             className="flex-grow-1"
           />
           {this.structureEditorButton(!sample.can_update)}
@@ -453,7 +447,6 @@ export default class SampleForm extends React.Component {
   textInput(sample, field, label, disabled = false, readOnly = false) {
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
-    const formControlStyle = field === 'name' ? { height: '38px' } : {};
     return (
       <Form.Group className="w-100">
         <Form.Label>{label}</Form.Label>
@@ -468,7 +461,6 @@ export default class SampleForm extends React.Component {
           }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
-          style={formControlStyle}
         />
       </Form.Group>
     );

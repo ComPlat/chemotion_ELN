@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Form } from 'react-bootstrap';
-import AsyncSelect from 'react-select3/async';
+import { AsyncSelect } from 'src/components/common/Select';
 import { selectUserOptionFormater, selectedUserFormater } from 'src/utilities/selectHelper';
 
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -16,8 +16,7 @@ const DeviceUserGroupsTab = () => {
   }
 
   const handleUser = (value, type) => {
-    let newValue = value ? value : [];
-    devicesStore.changeDevice(type, newValue);
+    devicesStore.changeDevice(type, value);
   }
 
   const loadUserByName = (input, type) => {
@@ -43,12 +42,11 @@ const DeviceUserGroupsTab = () => {
           isLoading={devicesStore.is_loading}
           loadOptions={(input) => loadUserByName(input, 'Person')}
           loadingMessage={() => "Type to search"}
-          value={selectedUserFormater(device.people).options}
+          value={selectedUserFormater(device.people)}
           placeholder="Select ..."
           onChange={(value) => handleUser(value, 'people')}
           onMenuOpen={() => toggleLoading(true)}
           onMenuClose={() => toggleLoading(false)}
-          className="device-multi-select"
         />
       </Form.Group>
       <Form.Group className="mb-4">
@@ -59,12 +57,11 @@ const DeviceUserGroupsTab = () => {
           isLoading={devicesStore.is_loading}
           loadOptions={(input) => loadUserByName(input, 'Group')}
           loadingMessage={() => "Type to search"}
-          value={selectedUserFormater(device.groups).options}
+          value={selectedUserFormater(device.groups)}
           placeholder="Select ..."
           onChange={(value) => handleUser(value, 'groups')}
           onMenuOpen={() => toggleLoading(true)}
           onMenuClose={() => toggleLoading(false)}
-          className="device-multi-select"
         />
       </Form.Group>
     </Form>

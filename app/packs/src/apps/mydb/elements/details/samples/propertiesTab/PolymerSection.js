@@ -4,7 +4,7 @@ import { Form, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
-import Select from 'react-select'
+import { Select } from 'src/components/common/Select';
 
 export default class PolymerSection extends React.Component {
   handleCustomInfoNumericChanged(e, name, residue, sample) {
@@ -130,37 +130,37 @@ export default class PolymerSection extends React.Component {
     const { sample = {}, handleSampleChanged } = this.props;
     const residue = sample.residues[0];
 
+    const polymerTypeOptions = [
+      { label: 'Polystyrene', value: 'polystyrene' },
+      { label: 'Polyethyleneglycol', value: 'polyethyleneglycol' },
+      { label: 'Self-defined', value: 'self_defined' },
+    ];
+
+    const surfaceTypeOptions = [
+      { label: 'Glass', value: 'glass' },
+      { label: 'Si native oxide', value: 'si Native Oxide' },
+      { label: 'Si, 5nm Ti, 100nm Au', value: 'si, 5nm Ti, 100nm Au' },
+    ];
+
     return (
       <div className="polymer-section">
         <Row>
           <Col md={6}>
             <Form.Label>Polymer type</Form.Label>
             <Select
-              options={[
-                { label: 'Polystyrene', value: 'polystyrene' },
-                { label: 'Polyethyleneglycol', value: 'polyethyleneglycol' },
-                { label: 'Self-defined', value: 'self_defined' },
-              ]}
-              simpleValue
+              options={polymerTypeOptions}
               name="polymer_type"
-              value={residue.custom_info.polymer_type}
-              clearable={false}
-              onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
+              value={polymerTypeOptions.find(({value}) => value === residue.custom_info.polymer_type)}
+              onChange={(v) => this.handlePolymerTypeSelectChanged(v.value, residue, sample)}
             />
           </Col>
           <Col md={6}>
             <Form.Label>Surface type</Form.Label>
             <Select
-              options={[
-                { label: 'Glass', value: 'glass' },
-                { label: 'Si native oxide', value: 'si Native Oxide' },
-                { label: 'Si, 5nm Ti, 100nm Au', value: 'si, 5nm Ti, 100nm Au' },
-              ]}
-              simpleValue
+              options={surfaceTypeOptions}
               name="surface_type"
-              value={residue.custom_info.surface_type}
-              clearable={false}
-              onChange={(v) => this.handleSurfaceTypeSelectChanged(v, residue, sample)}
+              value={surfaceTypeOptions.find(({value}) => value === residue.custom_info.surface_type)}
+              onChange={(v) => this.handleSurfaceTypeSelectChanged(v.value, residue, sample)}
             />
           </Col>
         </Row>

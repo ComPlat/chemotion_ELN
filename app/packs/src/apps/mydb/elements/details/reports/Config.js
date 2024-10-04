@@ -1,5 +1,5 @@
 import React from 'react';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import {
   Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
@@ -22,9 +22,10 @@ const ImgFormat = ({ imgFormat }) => (
     <Form.Label>Images format</Form.Label>
     <Select
       options={imgFormatOpts}
-      value={imgFormat}
-      clearable={false}
+      value={imgFormatOpts.find(({value}) => value == imgFormat)}
+      isClearable={false}
       onChange={onImgFormatChange}
+      menuPortalTarget={document.body}
     />
     {imgFormat === 'eps' && (
       <Form.Text>
@@ -37,7 +38,7 @@ const ImgFormat = ({ imgFormat }) => (
 );
 
 const onTemplateChange = (e) => {
-  ReportActions.updateTemplate(e);
+  ReportActions.updateTemplate(e.value);
 };
 
 const toggleConfigs = (text, checked) => {
@@ -105,8 +106,9 @@ const Config = (props) => {
         <Select
           options={templateOpts}
           value={template}
-          clearable={false}
+          isClearable={false}
           onChange={onTemplateChange}
+          menuPortalTarget={document.body}
         />
       </Form.Group>
 
