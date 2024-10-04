@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Row, Col, Collapse, Button, InputGroup
+  Accordion, Form, Row, Col, Button, InputGroup
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
@@ -35,7 +35,6 @@ import {
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { parseNumericString } from 'src/utilities/MathUtils';
-import CollapseButton from 'src/components/common/CollapseButton';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -47,9 +46,7 @@ export default class ReactionDetailsScheme extends Component {
     this.state = {
       reaction,
       lockEquivColumn: false,
-      cCon: false,
       reactionDescTemplate: textTemplate.toJS(),
-      open: true,
     };
 
     this.reactQuillRef = React.createRef();
@@ -1027,28 +1024,6 @@ export default class ReactionDetailsScheme extends Component {
     return reaction;
   }
 
-  solventCollapseBtn() {
-    const { open } = this.state;
-    return (
-      <CollapseButton
-        openTab={open}
-        setOpenTab={() => this.setState({ open: !open })}
-        name="Solvents"
-      />
-    );
-  }
-
-  conditionsCollapseBtn() {
-    const { cCon } = this.state;
-    return (
-      <CollapseButton
-        openTab={open}
-        setOpenTab={() => this.setState({ cCon: !cCon })}
-        name="Conditions"
-      />
-    );
-  }
-
   updateVesselSize(e) {
     const { onInputChange } = this.props;
     const { value } = e.target;
@@ -1178,7 +1153,7 @@ export default class ReactionDetailsScheme extends Component {
               headIndex={headReactants}
             />
           </div>
-          <div className="border-bottom">
+          <div className="mb-3">
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="products"
@@ -1194,32 +1169,36 @@ export default class ReactionDetailsScheme extends Component {
               lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
             />
-            <hr className="mt-0" />
           </div>
-          {this.solventCollapseBtn()}
-          <Collapse in={this.state.open}>
-            <div>
-              <MaterialGroupContainer
-                reaction={reaction}
-                materialGroup="solvents"
-                materials={reaction.solvents}
-                dropMaterial={this.dropMaterial}
-                deleteMaterial={
-                  (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-                }
-                dropSample={this.dropSample}
-                showLoadingColumn={!!reaction.hasPolymers()}
-                onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-                switchEquiv={this.switchEquiv}
-                lockEquivColumn={this.state.lockEquivColumn}
-                headIndex={0}
-              />
-            </div>
-          </Collapse>
-          <div>
-            {this.conditionsCollapseBtn()}
-            <Collapse in={this.state.cCon}>
-              <div>
+
+          <Accordion
+            alwaysOpen
+            defaultActiveKey={['solvents']}
+          >
+            <Accordion.Item eventKey="solvents">
+              <Accordion.Header>Solvents</Accordion.Header>
+              <Accordion.Body>
+                <MaterialGroupContainer
+                  reaction={reaction}
+                  materialGroup="solvents"
+                  materials={reaction.solvents}
+                  dropMaterial={this.dropMaterial}
+                  deleteMaterial={
+                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+                  }
+                  dropSample={this.dropSample}
+                  showLoadingColumn={!!reaction.hasPolymers()}
+                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+                  switchEquiv={this.switchEquiv}
+                  lockEquivColumn={this.state.lockEquivColumn}
+                  headIndex={0}
+                />
+              </Accordion.Body>
+            </Accordion.Item>
+
+            <Accordion.Item eventKey="conditions">
+              <Accordion.Header>Conditions</Accordion.Header>
+              <Accordion.Body>
                 <Select
                   disabled={!permitOn(reaction)}
                   name="default_conditions"
@@ -1229,16 +1208,18 @@ export default class ReactionDetailsScheme extends Component {
                 />
                 <Form.Control
                   as="textarea"
+                  className="mt-2"
                   rows="4"
                   value={reaction.conditions || ''}
                   disabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
                   placeholder="Conditions..."
                   onChange={(event) => this.props.onInputChange('conditions', event)}
                 />
-              </div>
-            </Collapse>
-          </div>
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
         </div>
+
         <ReactionDetailsMainProperties
           reaction={reaction}
           onInputChange={(type, event) => this.props.onInputChange(type, event)}

@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useEffect, useMemo, useCallback
+  useRef, useState, useEffect, useCallback
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert
@@ -167,8 +167,16 @@ function MenuHeader({
 }
 
 MenuHeader.propTypes = {
-  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  column: PropTypes.shape({
+    colDef: PropTypes.object.isRequired,
+    isSortAscending: PropTypes.func.isRequired,
+    isSortDescending: PropTypes.func.isRequired,
+    addEventListener: PropTypes.func.isRequired,
+  }).isRequired,
+  context: PropTypes.shape({
+    columnDefinitions: PropTypes.arrayOf(PropTypes.object).isRequired,
+    setColumnDefinitions: PropTypes.func.isRequired,
+  }).isRequired,
   setSort: PropTypes.func.isRequired,
   names: PropTypes.arrayOf(PropTypes.string).isRequired,
   entries: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
@@ -182,14 +190,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const [columnDefinitions, setColumnDefinitions] = useState([
     {
       headerName: 'Tools',
-      field: null,
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
-      editable: false,
       sortable: false,
       minWidth: 140,
-      cellDataType: 'object',
-      headerComponent: null,
+      cellDataType: false,
     },
     {
       headerName: 'Notes',
@@ -198,7 +203,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       sortable: false,
       cellDataType: 'text',
       cellEditor: NoteCellEditor,
-      cellEditorPopup: true,
     },
     {
       headerName: 'Analyses',
@@ -207,9 +211,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       tooltipComponent: AnalysisOverlay,
       cellRenderer: AnalysesCellRenderer,
       cellEditor: AnalysesCellEditor,
-      cellEditorPopup: true,
-      cellEditorPopupPosition: 'under',
-      cellDataType: 'object',
+      cellDataType: false,
       sortable: false,
     },
     {
@@ -254,7 +256,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     }))
   ));
 
-  const dataTypeDefinitions = useMemo(() => ({
+  const dataTypeDefinitions = {
     property: {
       extendsDataType: 'object',
       baseDataType: 'object',
@@ -273,9 +275,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       valueFormatter: EquivalentFormatter,
       valueParser: EquivalentParser,
     }
-  }), []);
+  };
 
-  const defaultColumnDefinitions = useMemo(() => ({
+  const defaultColumnDefinitions = {
     editable: true,
     sortable: true,
     resizable: false,
@@ -283,7 +285,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     maxWidth: 200,
     wrapHeaderText: true,
     autoHeaderHeight: true,
-  }), []);
+  };
 
   const setReactionVariations = (updatedReactionVariations) => {
     // Set updated state here and in parent component.
