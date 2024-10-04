@@ -71,31 +71,14 @@ export default class QuillEditor extends React.Component {
     this.initQuill();
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const nextVal = nextProps.value;
-    const oldContents = this.editor ? this.getContents() : null;
+  componentDidUpdate(prevProps) {
+    const { value } = this.props;
+    if (value?.ops === prevProps.value?.ops) return;
 
-    if (oldContents && nextVal &&
-      !_.isEqual(nextVal.ops, oldContents.ops)) {
-      this.setState({ value: nextVal });
-      const sel = this.editor.getSelection();
-      this.editor.setContents(nextVal);
-      if (sel) this.editor.setSelection(sel);
-    }
-  }
-
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillUpdate() {
-    this.componentWillUnmount();
-  }
-
-  componentDidUpdate() {
-    this.componentDidMount();
-  }
-
-  componentWillUnmount() {
-    // Don't set the state to null, it would generate a loop.
+    this.setState({ value });
+    const sel = this.editor.getSelection();
+    this.editor.setContents(value);
+    if (sel) this.editor.setSelection(sel);
   }
 
   onChange(val) {
