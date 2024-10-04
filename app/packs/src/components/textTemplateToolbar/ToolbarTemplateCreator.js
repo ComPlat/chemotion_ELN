@@ -43,8 +43,11 @@ export default class ToolbarTemplateCreator extends React.Component {
     this.saveUserTemplates = this.saveUserTemplates.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(newProps) {
-    const [iconTemplates, dropdownTemplates] = getIconAndDropdown(newProps.template);
+  componentDidUpdate(prevProps) {
+    const { template } = this.props;
+    if (template === prevProps.template) return;
+
+    const [iconTemplates, dropdownTemplates] = getIconAndDropdown(template);
     this.toolbarDdSelectRefs = dropdownTemplates.map(dd => ({
       id: dd.id,
       ref: React.createRef()
