@@ -15,7 +15,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
-import ReactionDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
@@ -565,9 +565,9 @@ export default class ReactionDetails extends Component {
           {
             !reaction.isNew && <CommentSection section="reaction_references" element={reaction} />
           }
-          <ReactionDetailsLiteratures
+          <DetailsTabLiteratures
             element={reaction}
-            literatures={reaction.isNew && reaction.literatures}
+            literatures={reaction.isNew ? reaction.literatures : null}
             onElementChange={(r) => this.handleReactionChange(r)}
           />
         </Tab>

@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, Modal, Alert, Card, Form,
-  Accordion, Dropdown
+  Accordion
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Select from 'react-select';
@@ -16,7 +16,6 @@ import uuid from 'uuid';
 import Immutable from 'immutable';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
@@ -36,7 +35,6 @@ import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/anal
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
 import Sample from 'src/models/Sample';
-import Container from 'src/models/Container';
 import PolymerSection from 'src/apps/mydb/elements/details/samples/propertiesTab/PolymerSection';
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup';
 import SampleName from 'src/components/common/SampleName';
@@ -44,12 +42,10 @@ import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
 import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsContainer';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
-import { chmoConversions } from 'src/components/OlsComponent';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 import CopyElementModal from 'src/components/common/CopyElementModal';
@@ -119,7 +115,6 @@ export default class SampleDetails extends React.Component {
       materialGroup: null,
       showStructureEditor: false,
       loadingMolecule: false,
-      showElementalComposition: false,
       showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: '',
@@ -169,10 +164,6 @@ export default class SampleDetails extends React.Component {
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
-  }
-
-  readableMolFile() {
-    return this.state.molfile.replace(/\r?\n/g, '<br />');
   }
 
   componentDidMount() {
@@ -422,7 +413,6 @@ export default class SampleDetails extends React.Component {
 
   /* eslint-disable camelcase */
 
-
   sampleFooter() {
     const { sample, startExport } = this.state;
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
@@ -599,7 +589,7 @@ export default class SampleDetails extends React.Component {
     const title = (
       <span>
         <ComputedPropLabel cprops={sample.molecule_computed_props} />
-         Computed Properties
+        Computed Properties
       </span>
     );
 
@@ -689,16 +679,11 @@ export default class SampleDetails extends React.Component {
       ? 'Polymer section / Elemental composition'
       : 'Elemental composition';
 
-    const { showElementalComposition, materialGroup } = this.state;
-    const paneKey = 'elemental-comp';
+    const { materialGroup } = this.state;
 
     return (
-      <Accordion
-        className="polymer-section"
-        activeKey={showElementalComposition && paneKey}
-        onSelect={(key) => this.setState({ showElementalComposition: key === paneKey })}
-      >
-        <Accordion.Item eventKey={paneKey}>
+      <Accordion className="polymer-section">
+        <Accordion.Item eventKey="elemental-comp">
           <Accordion.Header>{label}</Accordion.Header>
           <Accordion.Body>
             {sample.contains_residues ? (
@@ -1011,22 +996,6 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  transferToDeviceButton(sample) {
-    return (
-      <Button
-        size="sm"
-        onClick={() => {
-          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices;
-          const device = devices.find((d) => d.id === selectedDeviceId);
-          ElementActions.addSampleToDevice(sample, device, { save: true });
-        }}
-        style={{ marginLeft: 25 }}
-      >
-        Transfer to Device
-      </Button>
-    );
-  }
-
   sampleInfo(sample) {
     const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
@@ -1178,100 +1147,6 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  initiateAnalysisButton(sample) {
-    return (
-      <Dropdown className="d-inline-block">
-        <Dropdown.Toggle variant="info" size="sm" id="InitiateAnalysis">
-          Initiate Analysis
-        </Dropdown.Toggle>
-        <Dropdown.Menu>
-          <Dropdown.Item
-            eventKey="1"
-            onClick={() => this.initiateAnalysisWithKind(sample, chmoConversions.nmr_1h.termId)}
-          >
-            {chmoConversions.nmr_1h.label}
-          </Dropdown.Item>
-          <Dropdown.Item
-            eventKey="2"
-            onClick={() => this.initiateAnalysisWithKind(sample, chmoConversions.nmr_13c.termId)}
-          >
-            {chmoConversions.nmr_13c.label}
-          </Dropdown.Item>
-          <Dropdown.Item eventKey="3" onClick={() => this.initiateAnalysisWithKind(sample, 'Others')}>others</Dropdown.Item>
-          <Dropdown.Item eventKey="4" onClick={() => this.initiateAnalysisWithKind(sample, 'Others2x')}>others 2x</Dropdown.Item>
-          <Dropdown.Item eventKey="5" onClick={() => this.initiateAnalysisWithKind(sample, 'Others3x')}>others 3x</Dropdown.Item>
-        </Dropdown.Menu>
-      </Dropdown>
-    );
-  }
-
-  initiateAnalysisWithKind(sample, kind) {
-    let analysis = '';
-    const a1 = Container.buildAnalysis(chmoConversions.others.value);
-    const a2 = Container.buildAnalysis(chmoConversions.others.value);
-    const a3 = Container.buildAnalysis(chmoConversions.others.value);
-    switch (kind) {
-      case chmoConversions.nmr_1h.termId:
-        analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value);
-        sample.addAnalysis(analysis);
-        ElementActions.updateSample(sample);
-        Utils.downloadFile({
-          contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
-        });
-        break;
-      case chmoConversions.nmr_13c.termId:
-        analysis = Container.buildAnalysis(chmoConversions.nmr_13c.value);
-        sample.addAnalysis(analysis);
-        ElementActions.updateSample(sample);
-        Utils.downloadFile({
-          contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-          + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
-        });
-        break;
-      case 'Others':
-        sample.addAnalysis(a1);
-        ElementActions.updateSample(sample);
-        Utils.downloadFile({
-          contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${a1.id}&type=analysis&size=small`
-        });
-        break;
-      case 'Others2x':
-        sample.addAnalysis(a1);
-        sample.addAnalysis(a2);
-        ElementActions.updateSample(sample);
-        Utils.downloadFile({
-          contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&type=analysis&size=small`
-        });
-        break;
-      case 'Others3x':
-        sample.addAnalysis(a1);
-        sample.addAnalysis(a2);
-        sample.addAnalysis(a3);
-        ElementActions.updateSample(sample);
-        Utils.downloadFile({
-          contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-              + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&analyses_ids[]=${a3.id}&type=analysis&size=small`
-        });
-        break;
-      default:
-        // Console warning if no case matching
-        console.warn(`Unknown analysis kind: ${kind}`);
-        break;
-    }
-  }
-
-  structureEditorButton(isDisabled) {
-    return (
-      // eslint-disable-next-line react/jsx-no-bind
-      <Button onClick={this.showStructureEditor} disabled={isDisabled}>
-        <i className="fa fa-pencil" />
-      </Button>
-    );
-  }
-
   svgOrLoading(sample) {
     const svgPath = this.state.loadingMolecule
       ? '/images/wild_card/loading-bubbles.svg'
@@ -1386,6 +1261,9 @@ export default class SampleDetails extends React.Component {
   }
 
   renderMolfileModal() {
+    const { molfile } = this.state;
+    const molfileText = molfile.replace(/\r?\n/g, '<br />');
+
     return (
       <Modal
         centered
@@ -1403,7 +1281,7 @@ export default class SampleDetails extends React.Component {
                 as="textarea"
                 readOnly
                 disabled
-                value={this.readableMolFile()}
+                value={molfileText}
               />
             </Form.Group>
           </div>
@@ -1498,7 +1376,7 @@ export default class SampleDetails extends React.Component {
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
-    
+
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
 
     return (

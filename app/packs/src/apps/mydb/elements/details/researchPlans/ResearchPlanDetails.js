@@ -15,7 +15,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
-import ResearchPlansLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ResearchPlanWellplates from 'src/apps/mydb/elements/details/researchPlans/wellplatesTab/ResearchPlanWellplates';
 import ResearchPlanMetadata from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanMetadata';
 import Attachment from 'src/models/Attachment';
@@ -573,7 +573,7 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_references" element={researchPlan} />
           }
-          <ResearchPlansLiteratures element={researchPlan} />
+          <DetailsTabLiteratures element={researchPlan} />
         </Tab>
       ),
       wellplates: (

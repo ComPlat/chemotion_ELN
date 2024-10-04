@@ -54,7 +54,10 @@ function AnalysisOverlay({ value: analyses }) {
 }
 
 AnalysisOverlay.propTypes = {
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  value: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  })).isRequired,
 };
 
 function AnalysisVariationLink({ reaction, analysisID }) {
@@ -88,7 +91,7 @@ function AnalysesCellRenderer({ value: analysesIDs }) {
 }
 
 AnalysesCellRenderer.propTypes = {
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  value: PropTypes.array.isRequired,
 };
 
 function AnalysesCellEditor({
@@ -161,11 +164,16 @@ function AnalysesCellEditor({
 }
 
 AnalysesCellEditor.propTypes = {
-  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  data: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+  }).isRequired,
+  value: PropTypes.arrayOf(PropTypes.number).isRequired,
   onValueChange: PropTypes.func.isRequired,
-  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  stopEditing: PropTypes.func.isRequired,
+  context: PropTypes.shape({
+    reactionShortLabel: PropTypes.string.isRequired,
+    allReactionAnalyses: PropTypes.array.isRequired,
+  }).isRequired,
 };
 
 export {

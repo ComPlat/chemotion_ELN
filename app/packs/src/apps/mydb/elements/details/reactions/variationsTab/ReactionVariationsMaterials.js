@@ -175,8 +175,16 @@ function MaterialOverlay({
 }
 
 MaterialOverlay.propTypes = {
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
-  colDef: PropTypes.instanceOf(AgGridReact.colDef).isRequired,
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    currentEntryWithDisplayUnit: PropTypes.shape({
+      entry: PropTypes.number.isRequired,
+      displayUnit: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
 };
 
 function getMaterialColumnGroupChild(material, materialType, headerComponent) {

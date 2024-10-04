@@ -35,8 +35,14 @@ function RowToolsCellRenderer({
 }
 
 RowToolsCellRenderer.propTypes = {
-  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  data: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+  }).isRequired,
+  context: PropTypes.shape({
+    reactionShortLabel: PropTypes.string.isRequired,
+    copyRow: PropTypes.func.isRequired,
+    removeRow: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 function EquivalentFormatter({ value: cellData }) {
@@ -185,11 +191,15 @@ function NoteCellEditor({
 }
 
 NoteCellEditor.propTypes = {
-  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  data: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+  }).isRequired,
+  value: PropTypes.string.isRequired,
   onValueChange: PropTypes.func.isRequired,
-  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  stopEditing: PropTypes.func.isRequired,
+  context: PropTypes.shape({
+    reactionShortLabel: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export {
