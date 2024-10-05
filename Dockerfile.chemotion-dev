@@ -7,38 +7,57 @@ FROM --platform=linux/amd64 ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
-RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
-      imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
-      build-essential sudo postgresql-client libappindicator1 swig \
-      gconf-service libasound2 libgconf-2-4 cmake \
-      libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils tzdata libpq-dev \
-      gtk2-engines-pixbuf \
-      libssl-dev libreadline-dev\
-      unzip openssh-client \
-      libsqlite3-dev libboost-all-dev p7zip-full \
-      xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
-      fonts-crosextra-caladea fonts-crosextra-carlito \
-      fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
-      fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
-      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape \
-      libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 xauth xvfb
+RUN set -xe \
+    && apt-get update -yqqq --fix-missing \
+    && apt-get upgrade -y
+
+# Install basic dependencies
+RUN apt-get install -yqq --fix-missing \
+        bash ca-certificates wget apt-transport-https git gpg \
+        imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev \
+        curl gnupg2 build-essential sudo postgresql-client \
+        libappindicator1 swig gconf-service libasound2 \
+        libgconf-2-4 cmake libnspr4 libnss3 libpango1.0-0 \
+        libxss1 xdg-utils tzdata libpq-dev gtk2-engines-pixbuf \
+        libssl-dev libreadline-dev unzip openssh-client \
+        libsqlite3-dev libboost-all-dev p7zip-full \
+        xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base \
+        xfonts-scalable fonts-crosextra-caladea fonts-crosextra-carlito \
+        fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 \
+        fonts-liberation fonts-linuxlibertine fonts-noto-core \
+        fonts-noto-extra fonts-noto-ui-core fonts-opensymbol \
+        fonts-sil-gentium fonts-sil-gentium-basic inkscape \
+        libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 xauth xvfb jq
+
+# Set up environment variables for gem installation
+ENV GEM_HOME=/home/chemotion-dev/.gem
+ENV PATH=$GEM_HOME/bin:$PATH:/usr/local/bin:/usr/bin:/bin
+
+# Install Ruby and Bundler
+RUN apt-get install -y ruby-full \
+    && gem install bundler --user-install
+
+# Clean up
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-RUN useradd -ms /bin/bash chemotion-dev \
-    && echo "chemotion-dev ALL=NOPASSWD: ALL" >> /etc/sudoers
 
-USER chemotion-dev
-WORKDIR /home/chemotion-dev
+# Create a user and set permissions
+RUN useradd -ms /bin/bash chemotion-dev && \
+       echo "chemotion-dev ALL=NOPASSWD: ALL" >> /etc/sudoers
 
 # Create node modules folder OUTSIDE of application directory
-RUN mkdir /home/chemotion-dev/node_modules
+RUN mkdir /home/chemotion-dev/node_modules && \
+    chown -R chemotion-dev:chemotion-dev /home/chemotion-dev
+
+# Switch to the new user
+USER chemotion-dev
+WORKDIR /home/chemotion-dev
 
 SHELL ["/bin/bash", "-c"]
 
 # Even if asdf and the related tools are only installed by running run-ruby-dev.sh, we set the PATH variables here, so when we enter the container via docker exec, we have the path set correctly
 ENV ASDF_DIR=/home/chemotion-dev/.asdf
-ENV PATH=/home/chemotion-dev/.asdf/shims:/home/chemotion-dev/.asdf/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=/home/chemotion-dev/.asdf/shims:/home/chemotion-dev/.asdf/bin:$GEM_HOME/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 RUN echo 'network-timeout 600000' > /home/chemotion-dev/.yarnrc
 # use node modules from outside the application directory
