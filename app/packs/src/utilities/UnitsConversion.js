@@ -52,6 +52,7 @@ const convertTemperature = (valueToFormat, currentUnit) => {
   }
   const conversions = {
     K: { convertedUnit: TEMPERATURE_UNITS.CELSIUS, conversionFunc: kelvinToCelsius },
+    '°K': { convertedUnit: TEMPERATURE_UNITS.CELSIUS, conversionFunc: kelvinToCelsius },
     '°C': { convertedUnit: TEMPERATURE_UNITS.FAHRENHEIT, conversionFunc: celsiusToFahrenheit },
     '°F': { convertedUnit: TEMPERATURE_UNITS.KELVIN, conversionFunc: fahrenheitToKelvin },
   };
@@ -132,7 +133,7 @@ const calculateVolumeForFeedstockOrGas = (amountGram, molecularWeight, purity, g
 };
 
 const calculateGasMoles = (volume, ppm, temperatureInKelvin) => (ppm * volume)
- / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR);
+  / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR);
 
 const calculateFeedstockMoles = (volume, purity) => (volume * purity) / (
   IDEAL_GAS_CONSTANT * DEFAULT_TEMPERATURE_IN_KELVIN);
