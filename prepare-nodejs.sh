@@ -44,7 +44,12 @@ else
   echo "Node.js updated to version: $REQUIRED_NODE_VERSION"
   asdf reshim nodejs
 fi
+
+# Update package.json engines field to enforce correct Node.js version for yarn installation
+echo ">>> Updating package.json engines field with required Node.js version: $REQUIRED_NODE_VERSION"
+jq ".engines.node = \"^$REQUIRED_NODE_VERSION\"" package.json > tmp.json && mv tmp.json package.json
+
 export REQUIRED_NODE_VERSION
-echo $REQUIRED_NODE_VERSION
+echo "Required Node Version: $REQUIRED_NODE_VERSION"
 
 

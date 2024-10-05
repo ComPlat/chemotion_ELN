@@ -23,6 +23,6 @@ else
 fi
 
 echo '>>> Installing JS packages...'
-yarn install --production=false
-yarn install
+yarn install --production=false || { echo 'yarn install failed'; exit 1; }
+yarn install || { echo 'yarn install second run failed'; exit 1; }
 
