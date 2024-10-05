@@ -1,1 +1,5 @@
+# Ensure all shell scripts have LF line endings
 *.sh text eol=lf
+
+# Ensure .tool-versions has LF line endings
+.tool-versions text eol=lf
