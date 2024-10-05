@@ -1,5 +1,6 @@
-# Ensure all shell scripts have LF line endings
+# Ensure all shell and ruby scripts have LF line endings
 *.sh text eol=lf
+*.rb text eol=lf
 
 # Ensure .tool-versions has LF line endings
 .tool-versions text eol=lf
