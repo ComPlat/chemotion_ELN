@@ -42,7 +42,15 @@ services:
       - 'homedir:/home/chemotion-dev/'
       - '.:/home/chemotion-dev/app'
     working_dir: "/home/chemotion-dev/app"
-    command: "./run-ruby-dev.sh"
+    # Ensure correct LF ending for shell scripts expected by Docker
+    command: >
+      sh -c "
+      {
+        if ! grep -Iq '\r' run-ruby-dev.sh; then
+          echo 'Fixing CRLF line endings';
+          sed -i 's/\r$//' *.sh;
+        fi
+      } && { ./run-ruby-dev.sh; }"
 
   webpacker:
     build:
