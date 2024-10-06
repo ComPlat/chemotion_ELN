@@ -42,7 +42,15 @@ services:
       - 'homedir:/home/chemotion-dev/'
       - '.:/home/chemotion-dev/app'
     working_dir: "/home/chemotion-dev/app"
-    command: "./run-ruby-dev.sh"
+    # Ensure correct LF ending for shell scripts expected by Docker
+    command: >
+      sh -c "
+      {
+        if ! grep -Iq '\r' run-ruby-dev.sh; then
+          echo 'Fixing CRLF line endings';
+          sed -i 's/\r$//' *.sh;
+        fi
+      } && { ./run-ruby-dev.sh; }"
 
   webpacker:
     build:
@@ -56,7 +64,7 @@ services:
       - 'WEBPACKER_DEV_SERVER_PORT=3035'
       - 'NODE_MODULES_PATH=/home/chemotion-dev/node_modules/' # required for the asset pipeline to find the node modules
       - 'WEBPACKER_NODE_MODULES_BIN_PATH=/node_modules/.bin' # required for webpacker to find the yarn binary
-    env_file: ./.env
+    env_file: ./.env.development
     volumes:
       - 'homedir:/home/chemotion-dev/'
       - '.:/home/chemotion-dev/app'
