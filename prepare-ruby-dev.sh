@@ -20,8 +20,8 @@ echo '>>> check nodejs version as set in package.json: install if mismatch, and 
 # prepare rails server
 rm -f tmp/pids/server.pid
 
-# prepare database configuration files
-source ./rename_config.sh
+# prepare database
+source ./prepare_database.sh
 
 if [ "$( psql -h postgres -U postgres -XtAc "SELECT 1 FROM pg_database WHERE datname='chemotion_dev'" )" = '1' ]
 then
@@ -34,11 +34,19 @@ else
     echo "================================================"
 
     if rename_config_files; then
-        echo "Configuration files renamed successfully. Running rake db:setup."
+        echo "Configuration DB files renamed successfully."
         bundle exec rake db:setup
     else
         echo "Failed to rename configuration files. Skipping database setup."
+        exit 1
     fi
 fi
 
+# Any pending migrations after setup?
+if pending_migrations; then
+    echo "Pending migrations found. Running db:migrate..."
+    bundle exec rails db:migrate RAILS_ENV=development
+else
+    echo "No pending migrations."
+fi
 
