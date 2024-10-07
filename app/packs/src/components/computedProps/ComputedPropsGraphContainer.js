@@ -62,18 +62,14 @@ export default class ComputedPropsGraphContainer extends React.Component {
 
   componentDidMount() {
     UserStore.listen(this.onUserChange);
-  }
-
-  UNSAFE_componentWillReceiveProps() {
-    this.onUserChange();
+    this.onUserChange(UserStore.getState());
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onUserChange);
   }
 
-  onUserChange() {
-    const userState = UserStore.getState();
+  onUserChange(userState) {
     const profileData = _.get(userState, 'profile.data', {});
     const graphTemplates = _.get(
       profileData,
