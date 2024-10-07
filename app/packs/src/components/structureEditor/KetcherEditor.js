@@ -47,13 +47,13 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   };
 
   // all logic implementation if move atom has an alias which passed three part regex
-  const should_canvas_update_on_movement = (data) => {
-    const { id } = data[0];
+  const should_canvas_update_on_movement = (eventItem) => {
+    const { id } = eventItem;
     const target_atom = all_atoms[id];
     if (target_atom) {
-      return three_parts_patten.test(target_atom.alias);
+      return { exists: three_parts_patten.test(target_atom.alias), atom: target_atom };
     }
-    return true;
+    return { exists: true, atom: target_atom };
   };
 
   // helper function to add event to stack
@@ -74,12 +74,12 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
 
     for (const eventItem of data) {
-      console.log({ eventItem });
+      // console.log({ eventItem });
       switch (eventItem?.operation) {
         case "Load canvas":
           await fuelKetcherData();
           if (re_render_canvas)
-            await moveTemplate(re_render_canvas);
+            await moveTemplate();
           break;
         case "Move image":
           addEventToFILOStack("Move image");
@@ -91,14 +91,28 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           addEventToFILOStack("Upsert image");
           break;
         case "Move atom":
-          allowed_to_process = should_canvas_update_on_movement(data);
+          const { exists } = should_canvas_update_on_movement(eventItem);
+          allowed_to_process = exists;
           addEventToFILOStack("Move atom");
           break;
         case "Delete image":
-          latestData.root.nodes.push(imagesList[imagesList.length - 1]);
-          await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-          // addEventToFILOStack("Delete image");
+          console.log("delete image");
+          await editor._structureDef.editor.editor.undo();
           break;
+        case 'Delete atom': {
+          if (eventItem.label == "Br") {
+            console.log("DELETE ATOM!!", eventItem);
+            await fuelKetcherData();
+            mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
+            const molfile_data = await onEventDeleteAtom(eventItem);
+            await editor.structureDef.editor.setMolecule(JSON.stringify(molfile_data));
+            await fuelKetcherData();
+            await moveTemplate();
+          }
+        } break;
+        case 'Update': {
+          // console.log({ Update: eventItem });
+        } break;
         default:
           // console.warn("Unhandled operation:", eventItem.operation);
           break;
@@ -266,6 +280,35 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     template_list[idx].boundingBox.y = location[1];
     template_list[idx].boundingBox.z = location[2];
     return template_list[idx];
+  };
+
+  // helper function to delete a template and reset the counter, assign new alias to all atoms
+  const onEventDeleteAtom = async (eventItem) => {
+    let viewed_atoms = 0;
+    let max_at = true;
+    for (let m = 0; m < mols.length; m++) {
+      const mol = mols[m];
+      const atoms = latestData[mol].atoms;
+      for (let a = 0; a < atoms.length; a++) {
+        const item = atoms[a];
+        if (viewed_atoms >= eventItem.id && item.alias) {
+          const splits = item.alias.split("_");
+          if (parseInt(splits[2]) != 0) {
+            const step_back = parseInt(splits[2]) - 1;
+            const new_alias = `${splits[0]}_${splits[1]}_${step_back}`;
+            item.alias = new_alias;
+            image_used_counter = step_back;
+            console.log(image_used_counter);
+            max_at = false;
+          }
+        } else {
+          console.log("nothing");
+        }
+        viewed_atoms += 1;
+      }
+    }
+    max_at && image_used_counter--;
+    return latestData;
   };
 
   // helper function to add mutation oberservers to DOM elements
