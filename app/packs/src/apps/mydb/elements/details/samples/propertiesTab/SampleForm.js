@@ -46,9 +46,11 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps() {
-    this.setState({ isMolNameLoading: false });
+  componentDidUpdate(prevProps) {
+    const { isMolNameLoading } = this.state;
+    if (this.props != prevProps && isMolNameLoading) {
+      this.setState({ isMolNameLoading: false });
+    }
   }
 
   formulaChanged() {
