@@ -13,12 +13,13 @@ export default class NumeralInput extends Component {
     };
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { value } = nextProps;
-    this.setState({
-      numeralValue: this._convertValueToNumeralValue(value)
-    });
+  componentDidUpdate(prevProps) {
+    const { value } = this.props;
+    if (value !== prevProps.value) {
+      this.setState({
+        numeralValue: this._convertValueToNumeralValue(value)
+      });
+    }
   }
 
   _convertValueToNumeralValue(value) {
