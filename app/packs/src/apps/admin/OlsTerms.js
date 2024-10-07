@@ -79,9 +79,9 @@ export default class OlsTerms extends React.Component {
     ) : (
       <Dropzone
           onDrop={attach => this.handleFileDrop(attach)}
-          className='d-flex align-items-center justify-content-center py-4 ms-2 dnd-zone'
+          className='d-flex align-items-center justify-content-center dnd-zone'
       >
-          <div className='text-center pt-2 text-secondary fs-4'>
+        <div className='text-secondary fs-4'>
           Drop File, or Click to Select.
         </div>
       </Dropzone>
@@ -164,7 +164,7 @@ export default class OlsTerms extends React.Component {
       <React.Fragment>
           {this.dropzoneOrfilePreview()}
         <Button variant="warning" size='md' className='mt-3' onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
-        <Row className="mx-auto mt-4"
+        <Row className="mt-4"
         >
           <Col md={6}>
             <DropdownButton variant='light' className='mb-3' id="dropdown-basic-button" title={this.state.selectName === '' ? 'Ols Terms' : this.state.selectName}>
@@ -201,7 +201,7 @@ export default class OlsTerms extends React.Component {
             />
           </Col>
           <Col md={6}>
-            <div style={{ whiteSpace: 'pre' }}>
+            <div className="white-space-pre">
               <h3>enable list</h3>
               {this.state.enableIds.join('\n')}
               <h3>disable list</h3>

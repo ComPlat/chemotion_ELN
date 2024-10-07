@@ -16,6 +16,7 @@
 @import "global-styles/utilities";
 
 // file css rules that are targeted at specific components under components
+@import "components/MydbApp";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
 @import "components/CollectionTree";

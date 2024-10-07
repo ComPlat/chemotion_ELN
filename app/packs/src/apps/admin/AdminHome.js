@@ -132,27 +132,14 @@ class AdminHome extends React.Component {
           <Row className="mb-3">
             <AdminNavigation toggleTree={this.toggleTree} />
           </Row>
-          <Row className='flex-grow-1'>
-            <Col
-              xs={2}
-              className={`sidebar ${this.state.showTree ? '' : 'collapsed'}`}
-              style={{
-                overflow: 'hidden',
-                maxWidth: this.state.showTree ? '25rem' : '0',
-                transition: 'none'
-              }}
-            >
-              {this.state.showTree && this.renderTree()}
-            </Col >
-            <Col className="flex-grow-1"
-              style={{
-                transition: 'none',
-                width: this.state.showTree ? 'calc(100% - 25rem)' : '100%',
-                maxWidth: this.state.showTree ? 'calc(100% - 25rem)' : '100%',
-              }}>
+          <div className="d-flex gap-4">
+            {this.state.showTree && 
+              this.renderTree()
+            }
+            <div className="flex-grow-1">
               {this.mainContent()}
-            </Col>
-          </Row>
+            </div>
+          </div>
           <Row>
             <Col>
               <Notifications />

@@ -143,7 +143,7 @@ class App extends Component {
   render() {
     const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
     return (
-      <Container fluid>
+      <Container fluid className="mydb-app">
         <Row className="bg-light" style={{ zIndex: 5 }}>
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
