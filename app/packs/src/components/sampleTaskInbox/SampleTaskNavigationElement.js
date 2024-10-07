@@ -3,7 +3,7 @@ import { observer } from 'mobx-react';
 import { Button, Badge } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-function SampleTaskNavigationElement() {
+const SampleTaskNavigationElement = ({}) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
 
   const loadSampleTasks = () => {

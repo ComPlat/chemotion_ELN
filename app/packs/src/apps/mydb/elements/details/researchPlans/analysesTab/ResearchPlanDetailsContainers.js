@@ -279,6 +279,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                   <Card
                     eventKey={key}
                     key={`research_plan_container_${container.id}`}
+                    className="border-0 rounded-0"
                   >
                     <Card.Header className="rounded-0 p-0 border-bottom-0">
                       <AccordionHeaderWithButtons eventKey={key}>

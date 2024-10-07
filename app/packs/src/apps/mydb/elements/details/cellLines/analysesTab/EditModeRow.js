@@ -6,7 +6,7 @@ import { Accordion, Card } from 'react-bootstrap';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 const EditModeRow = ({ container, handleChange, element, readOnly }) => (
-  <Card eventKey={container.id}>
+  <Card eventKey={container.id} className="border-0 rounded-0">
     <Card.Header className="rounded-0 p-0 border-bottom-0">
       <AccordionHeaderWithButtons as="div">
         <Header
