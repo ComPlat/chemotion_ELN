@@ -33,9 +33,11 @@ export default class MetadataContainer extends Component {
     this.handleClose = this.handleClose.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
-    const { metadata } = nextProps;
-    this.setState({ metadata });
+  componentDidUpdate(prevProps) {
+    const { metadata } = this.props;
+    if (metadata !== prevProps.metadata) {
+      this.setState({ metadata });
+    }
   }
 
   handleAdd(field, index, subfield) {
