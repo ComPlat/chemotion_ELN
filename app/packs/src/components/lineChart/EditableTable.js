@@ -24,13 +24,15 @@ export default class EditableTable extends React.Component {
     this.handleNewTemperatureInput = this.handleNewTemperatureInput.bind(this)
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    let data = nextProps.temperature.data
-    data.sort((a, b) => (
-      Date.parse("01/01/2016 " + a.time) - Date.parse("01/01/2016 " + b.time)
-    ))
+  componentDidUpdate(prevProps) {
+    const { temperature: { data } } = this.props;
+    if (data !== prevProps.temperature.data) {
+      data.sort((a, b) => (
+        Date.parse("01/01/2016 " + a.time) - Date.parse("01/01/2016 " + b.time)
+      ));
 
-    this.setState({ data: data })
+      this.setState({ data });
+    }
   }
 
   handleTimeOnchange(oldVal, newVal) {
