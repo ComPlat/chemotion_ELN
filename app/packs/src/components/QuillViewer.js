@@ -16,12 +16,10 @@ export default class QuillViewer extends React.Component {
     this.initQuill();
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const oldVal = this.props.value;
-    const newVal = nextProps.value;
-    if (oldVal && newVal && !_.isEqual(newVal, oldVal)) {
-      this.viewer.setContents(newVal);
+  componentDidUpdate(prevProps) {
+    const { value } = this.props;
+    if (value && prevProps.value && value !== prevProps.value) {
+      this.viewer.setContents(value);
     }
   }
 
