@@ -78,73 +78,74 @@
       background-color: $form-select-disabled-bg;
       border-color: $form-select-disabled-border-color;
     }
+  }
 
 
-    &__indicator, &__value-container, &__input-container, &__placeholder, &__single-value, &__indicator-separator {
-      @extend .p-0;
-      @extend .m-0;
+  &__indicator, &__value-container, &__input-container, &__placeholder, &__single-value, &__indicator-separator {
+    @extend .p-0;
+    @extend .m-0;
+  }
+
+  &__value-container {
+    @extend .gap-1;
+  }
+
+  &__single-value .badge {
+    @extend .d-block
+  }
+
+  &__indicator {
+
+    &-separator {
+      @extend .d-none;
     }
 
-    &__value-container {
-      @extend .gap-1;
+    &.chemotion-select__dropdown-indicator {
+      @include hide-svg;
+      width: 1.75rem;
+      height: 1rem;
+      background-image: escape-svg($form-select-indicator);
+      background-repeat: no-repeat;
+      background-position: right center;
+      background-size: $form-select-bg-size;
+    }
+  }
+
+  &__menu {
+    padding: $form-select-padding-y 0;
+    box-shadow: none;
+    z-index: 10;
+  }
+
+  &__option {
+    padding: $form-select-padding-y $form-select-padding-x;
+
+    &--is-selected, &--is-selected.chemotion-select__option--is-focused {
+      background-color: color("primary");
     }
 
-    &__single-value .badge {
-      @extend .d-block
+    &--is-focused {
+      background-color: $input-focus-border-color;
     }
+  }
 
-    &__indicator {
-
-      &-separator {
-        @extend .d-none;
-      }
-
-      &.chemotion-select__dropdown-indicator {
-        @include hide-svg;
-        width: 1.75rem;
-        height: 1rem;
-        background-image: escape-svg($form-select-indicator);
-        background-repeat: no-repeat;
-        background-position: right center;
-        background-size: $form-select-bg-size;
-      }
-    }
-
-    &__menu {
-      padding: $form-select-padding-y 0;
-      box-shadow: none;
-      z-index: 10;
-    }
-
-    &__option {
-      padding: $form-select-padding-y $form-select-padding-x;
-
-      &--is-selected, &--is-selected.chemotion-select__option--is-focused {
-        background-color: color("primary");
-      }
-
-      &--is-focused {
-        background-color: $input-focus-border-color;
-      }
-    }
-
-    &__multi-value {
-      @extend .badge;
-      @extend .rounded-pill;
-      @extend .d-flex;
-      @extend .align-items-center;
-      @extend .gap-1;
-      @extend .text-bg-light;
-      @extend .border;
-      @extend .border-opacity-25;
-      @extend .pe-1;
-      &__remove {
-        @include fa-based-remove-icon;
-      }
-    }
-
-    &__clear-indicator {
+  &__multi-value {
+    @extend .badge;
+    @extend .rounded-pill;
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .gap-1;
+    @extend .text-bg-light;
+    @extend .border;
+    @extend .border-opacity-25;
+    @extend .pe-1;
+    &__remove {
       @include fa-based-remove-icon;
     }
   }
+
+  &__clear-indicator {
+    @include fa-based-remove-icon;
+  }
+
 }
