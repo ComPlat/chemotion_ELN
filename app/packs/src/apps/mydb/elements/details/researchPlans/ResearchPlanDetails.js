@@ -579,10 +579,7 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_metadata" element={researchPlan} />
           }
-          <ResearchPlanMetadata
-            parentResearchPlan={researchPlan}
-            parentResearchPlanMetadata={researchPlan.research_plan_metadata}
-          />
+          <ResearchPlanMetadata researchPlan={researchPlan} />
         </Tab>
       ),
     };
