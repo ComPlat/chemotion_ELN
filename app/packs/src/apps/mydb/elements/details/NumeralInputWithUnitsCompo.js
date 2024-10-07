@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { isEqual } from 'lodash';
 import { Form, InputGroup, Button } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
@@ -22,9 +23,12 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.forceUpdate();
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { value, block } = nextProps;
-    this.setState({ value, block });
+  componentDidUpdate(prevProps) {
+    const { value, block } = this.props;
+    // isEqual considers NaN to be equal to NaN
+    if (!isEqual(value, prevProps.value) || block !== prevProps.block) {
+      this.setState({ value, block });
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
