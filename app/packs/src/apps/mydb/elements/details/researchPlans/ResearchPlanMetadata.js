@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { defaultsDeep } from 'lodash';
 import {
   Form, Button, Row, Col
 } from 'react-bootstrap';
@@ -7,79 +8,70 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 
 require('@citation-js/plugin-isbn');
 
+const emptyMetadata = {
+  title: '',
+  subject: '',
+  format: '',
+  version: '',
+  state: '',
+  url: '',
+  landing_page: '',
+  alternate_identifier: [],
+  related_identifier: [],
+  description: [],
+  dates: [],
+  geo_location: [],
+  funding_reference: []
+};
+
 export default class ResearchPlanMetadata extends Component {
   constructor(props) {
     super(props);
+    const { researchPlan } = props;
     this.state = {
-      researchPlan: {},
-      researchPlanMetadata: {
-        title: '',
-        subject: '',
-        format: '',
-        version: '',
-        state: '',
-        url: '',
-        landing_page: '',
-        alternate_identifier: [],
-        related_identifier: [],
-        description: [],
-        dates: [],
-        geo_location: [],
-        funding_reference: []
-      }
+      researchPlanMetadata: defaultsDeep({}, researchPlan.research_plan_metadata, emptyMetadata),
     };
   }
 
-
-  componentDidMount() {
-    const { parentResearchPlan, parentResearchPlanMetadata } = this.props;
-    this.setState({
-      researchPlan: parentResearchPlan
-    });
-    if (parentResearchPlanMetadata) {
+  componentDidUpdate(prevProps) {
+    const { researchPlan } = this.props;
+    if (researchPlan !== prevProps.researchPlan) {
       this.setState({
-        researchPlanMetadata: parentResearchPlanMetadata
-      });
+        researchPlanMetadata: defaultsDeep({}, researchPlan.research_plan_metadata, emptyMetadata),
+      })
     }
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { parentResearchPlan, parentResearchPlanMetadata } = nextProps;
+  handleFieldChange(key, value) {
+    const { researchPlanMetadata } = this.state;
+
     this.setState({
-      researchPlan: parentResearchPlan,
-      researchPlanMetadata: parentResearchPlanMetadata
+      researchPlanMetadata: {
+        ...researchPlanMetadata,
+        [key]: value,
+      }
     });
   }
 
-  handleFieldChange(event) {
+  saveResearchPlanMetadata() {
+    const { researchPlan } = this.props;
     const { researchPlanMetadata } = this.state;
 
-    researchPlanMetadata[event.target.id] = event.target.value;
-
-    this.setState({ researchPlanMetadata });
-  }
-
-  saveResearchPlanMetadata() {
-    const { researchPlan, researchPlanMetadata } = this.state;
-
     ResearchPlansFetcher.postResearchPlanMetadata({
-
       research_plan_id: researchPlan.id,
-      title: researchPlanMetadata.title.trim(),
-      subject: researchPlanMetadata.subject.trim(),
+      title: researchPlanMetadata.title?.trim(),
+      subject: researchPlanMetadata.subject?.trim(),
       alternate_identifier: researchPlanMetadata.alternate_identifier,
       related_identifier: researchPlanMetadata.related_identifier,
       description: researchPlanMetadata.description,
 
-      format: this.format.value.trim(),
-      version: this.version.value.trim(),
-      geo_location: this.state.researchPlanMetadata.geo_location,
-      funding_reference: this.state.researchPlanMetadata.funding_reference,
+      format: researchPlanMetadata.format?.trim(),
+      version: researchPlanMetadata.version?.trim(),
+      geo_location: researchPlanMetadata.geo_location,
+      funding_reference: researchPlanMetadata.funding_reference,
 
-      url: this.url.value.trim(),
-      landing_page: this.landing_page.value.trim()
-
+      url: researchPlanMetadata.url?.trim(),
+      landing_page: researchPlanMetadata.landing_page?.trim()
     }).then((result) => {
       if (result.error) {
         alert(result.error);
@@ -126,7 +118,7 @@ export default class ResearchPlanMetadata extends Component {
       const newCollection = currentCollection.concat(newItem);
       researchPlanMetadata[type] = newCollection;
 
-      return researchPlanMetadata;
+      return { ...state, researchPlanMetadata };
     });
   }
 
@@ -135,10 +127,8 @@ export default class ResearchPlanMetadata extends Component {
       const researchPlanMetadata = state.researchPlanMetadata;
       const currentCollection = researchPlanMetadata[type] ? researchPlanMetadata[type] : [];
       currentCollection.splice(index, 1);
-
       researchPlanMetadata[type] = currentCollection;
-
-      return researchPlanMetadata;
+      return { ...state, researchPlanMetadata };
     });
   }
 
@@ -146,8 +136,7 @@ export default class ResearchPlanMetadata extends Component {
     this.setState(state => {
       const researchPlanMetadata = state.researchPlanMetadata;
       researchPlanMetadata[type][index][fieldname] = value;
-
-      return researchPlanMetadata;
+      return { ...state, researchPlanMetadata };
     });
   }
 
@@ -155,7 +144,7 @@ export default class ResearchPlanMetadata extends Component {
     this.setState(state => {
       const researchPlanMetadata = state.researchPlanMetadata;
       researchPlanMetadata.geo_location[index]['geoLocationPoint'][fieldname] = value;
-      return researchPlanMetadata;
+      return { ...state, researchPlanMetadata };
     });
   }
 
@@ -169,7 +158,7 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="text"
               value={researchPlanMetadata?.title}
-              onChange={(event) => this.handleFieldChange(event)}
+              onChange={(e) => this.handleFieldChange('title', e.target.value)}
               placeholder="Title"
             />
           </Form.Group>
@@ -178,7 +167,7 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="text"
               value={researchPlanMetadata?.subject}
-              onChange={(event) => this.handleFieldChange(event)}
+              onChange={(e) => this.handleFieldChange('subject', e.target.value)}
               placeholder="Subject"
             />
           </Form.Group>
@@ -318,7 +307,7 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="text"
               defaultValue={researchPlanMetadata?.format}
-              ref={(m) => { this.format = m; }}
+              onChange={(e) => this.handleFieldChange('format', e.target.value)}
               placeholder="Format"
             />
           </Form.Group>
@@ -327,7 +316,7 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="text"
               defaultValue={researchPlanMetadata?.version}
-              ref={(m) => { this.version = m; }}
+              onChange={(e) => this.handleFieldChange('version', e.target.value)}
               placeholder="Version"
             />
           </Form.Group>
@@ -425,7 +414,6 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Select
               value={researchPlanMetadata?.data_cite_state}
               onChange={event => this.updateResearchPlanMetadataDataCiteState(event.target.value)}
-              ref={(m) => { this.dataCiteState = m; }}
             >
               <option value="draft">Draft</option>
               <option value="registered">Registered</option>
@@ -437,7 +425,7 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="text"
               defaultValue={researchPlanMetadata?.url}
-              ref={(m) => { this.url = m; }}
+              onChange={(e) => this.handleFieldChange('url', e.target.value)}
               placeholder="https://<researchplanmetadata.url>"
             />
           </Form.Group>
@@ -446,7 +434,7 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="text"
               defaultValue={researchPlanMetadata?.landing_page}
-              ref={(m) => { this.landing_page = m; }}
+              onChange={(e) => this.handleFieldChange('landing_page', e.target.value)}
               placeholder="https://<researchplanmetadata.landing.page>"
             />
           </Form.Group>
@@ -466,7 +454,6 @@ export default class ResearchPlanMetadata extends Component {
             <Form.Control
               type="number"
               defaultValue={researchPlanMetadata?.publication_year}
-              ref={(m) => { this.publication_year = m; }}
               placeholder="Publication Year"
               readOnly
             />
@@ -513,7 +500,7 @@ export default class ResearchPlanMetadata extends Component {
 }
 
 ResearchPlanMetadata.propTypes = {
-  parentResearchPlan: PropTypes.object.isRequired,
-  parentResearchPlanMetadata: PropTypes.object
+  researchPlan: PropTypes.object.isRequired,
+  researchPlanMetadata: PropTypes.object
 };
 
