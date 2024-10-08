@@ -60,15 +60,13 @@ const nmrMsg = (reaction, container) => {
 
 export default class ReactionDetailsContainers extends Component {
   constructor(props) {
-    super();
-    const { reaction } = props;
+    super(props);
+
     this.state = {
-      reaction,
       activeContainer: UIStore.getState().reaction.activeAnalysis
     };
     this.containerRefs = {};
 
-    this.handleChange = this.handleChange.bind(this);
     this.handleAdd = this.handleAdd.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
@@ -100,16 +98,8 @@ export default class ReactionDetailsContainers extends Component {
     }
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      reaction: nextProps.reaction,
-    });
-  }
-
   handleChange = () => {
-    const { handleReactionChange } = this.props;
-    const { reaction } = this.state;
+    const { reaction, handleReactionChange } = this.props;
     handleReactionChange(reaction);
   };
 
@@ -120,15 +110,13 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   handleUndo(container) {
-    const { handleReactionChange } = this.props;
-    const { reaction } = this.state;
+    const { reaction, handleReactionChange } = this.props;
     container.is_deleted = false;
     handleReactionChange(reaction, { schemaChanged: false });
   }
 
   handleAdd() {
-    const { handleReactionChange } = this.props;
-    const { reaction } = this.state;
+    const { reaction, handleReactionChange } = this.props;
     const container = Container.buildEmpty();
     container.container_type = 'analysis';
     container.extended_metadata.content = { ops: [{ insert: '' }] };
@@ -218,9 +206,7 @@ export default class ReactionDetailsContainers extends Component {
 
 
   handleRemove(container) {
-    const { handleReactionChange } = this.props;
-    const { reaction } = this.state;
-
+    const { reaction, handleReactionChange } = this.props;
     container.is_deleted = true;
     handleReactionChange(reaction, { schemaChanged: false });
   }
@@ -249,8 +235,8 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   render() {
-    const { reaction, activeContainer } = this.state;
-    const { readOnly } = this.props;
+    const { activeContainer } = this.state;
+    const { reaction, readOnly } = this.props;
 
     const containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
@@ -371,7 +357,9 @@ export default class ReactionDetailsContainers extends Component {
                   >
                     <Card.Header className="rounded-0 p-0 border-bottom-0">
                       <AccordionHeaderWithButtons eventKey={key}>
-                        {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
+                        {container.is_deleted
+                          ? containerHeaderDeleted(container)
+                          : containerHeader(container)}
                       </AccordionHeaderWithButtons>
                     </Card.Header>
 
