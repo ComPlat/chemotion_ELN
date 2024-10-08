@@ -1,103 +1,158 @@
 import React from 'react';
 
+import { Container, Col, Row } from 'react-bootstrap';
+
 import TextTemplatesFetcher from 'src/fetchers/TextTemplatesFetcher';
-import TextTemplate from 'src/apps/admin/textTemplates/TextTemplate';
+import TextTemplateForm from 'src/apps/admin/textTemplates/TextTemplateForm';
+import TextTemplateSelector from 'src/apps/admin/textTemplates/TextTemplateSelector';
+
 
 export default class TextTemplateContainer extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      predefinedTemplateNames: [],
-      fetchedTemplates: [],
+      templateNames: [],
+      fetchedTemplates: {},
+      selectedTemplateName: null,
     };
 
     this.addTemplate = this.addTemplate.bind(this);
-    this.fetchTemplate = this.fetchTemplate.bind(this);
+    this.renameTemplate = this.renameTemplate.bind(this);
     this.removeTemplate = this.removeTemplate.bind(this);
     this.updateTemplate = this.updateTemplate.bind(this);
+    this.selectTemplate = this.selectTemplate.bind(this);
   }
 
   componentDidMount() {
     TextTemplatesFetcher.fetchPredefinedTemplateNames().then((res) => {
-      const templateNames = res.map(n => ({ name: n }));
-      this.setState({ predefinedTemplateNames: templateNames });
+      this.setState({ templateNames: res });
     });
   }
 
   addTemplate(gridApi) {
-    const { predefinedTemplateNames, fetchedTemplates } = this.state;
+    const { templateNames, fetchedTemplates } = this.state;
 
     this.setState({
-      predefinedTemplateNames: [{ name: '' }, ...predefinedTemplateNames],
-      fetchedTemplates: [
-        { name: '', data: {} },
-        ...fetchedTemplates
-      ]
+      templateNames: ['', ...templateNames],
+      fetchedTemplates: {
+        ...fetchedTemplates,
+        '': { name: '', data: {} },
+      },
+      selectedTemplateName: '',
     }, () => {
-      if (!gridApi) return;
-
-      gridApi.startEditingCell({ rowIndex: 0, colKey: 'name' });
+      if (gridApi) {
+        gridApi.startEditingCell({ rowIndex: 0, colKey: 'name' });
+      }
     });
   }
 
-  fetchTemplate(name) {
-    TextTemplatesFetcher.fetchPredefinedTemplateByNames([name]).then((res) => {
-      if (!res) return;
+  selectTemplate(name) {
+    const { fetchedTemplates, selectedTemplateName } = this.state;
+    if (name === selectedTemplateName && fetchedTemplates[name]) return;
 
-      const { fetchedTemplates } = this.state;
-      this.setState({
-        fetchedTemplates: [...fetchedTemplates].concat(res),
+    if (fetchedTemplates[name]) {
+      this.setState({ selectedTemplateName: name });
+    } else {
+      TextTemplatesFetcher.fetchPredefinedTemplateByNames([name]).then((res) => {
+        if (!res) return;
+
+        const newTemplates = {};
+        res.forEach((r) => newTemplates[r.name] = r);
+
+        this.setState({
+          fetchedTemplates: {
+            ...fetchedTemplates,
+            ...newTemplates,
+          },
+          selectedTemplateName: name,
+        });
       });
-    });
+    }
   }
 
   removeTemplate(name) {
     TextTemplatesFetcher.deletePredefinedTemplateByName(name).then((res) => {
       if (!res) return;
 
-      const { fetchedTemplates, predefinedTemplateNames } = this.state;
+      const { templateNames, fetchedTemplates, selectedTemplateName } = this.state;
+      const newFetchedTemplates = { ...fetchedTemplates };
+      delete newFetchedTemplates[name];
+
       this.setState({
-        fetchedTemplates: fetchedTemplates.filter(t => t.name !== name),
-        predefinedTemplateNames: predefinedTemplateNames.filter(t => (
-          t.name !== name
-        ))
+        templateNames: templateNames.filter((n) => n !== name),
+        fetchedTemplates: newFetchedTemplates,
+        selectedTemplateName: selectedTemplateName === name ? null : selectedTemplateName,
+      });
+    });
+  }
+
+  renameTemplate(oldName, newName) {
+    const { templateNames, fetchedTemplates, selectedTemplateName } = this.state;
+    const template = fetchedTemplates[oldName];
+
+    const newTemplate = {...template, name: newName};
+    const newFetchedTemplates = { ...fetchedTemplates, [newName]: newTemplate };
+    delete newFetchedTemplates[oldName];
+
+    TextTemplatesFetcher.updatePredefinedTemplates(newTemplate).then((res) => {
+      if (!res) return;
+
+      this.setState({
+        templateNames: templateNames.with(templateNames.indexOf(oldName), newName),
+        fetchedTemplates: newFetchedTemplates,
+        selectedTemplateName: selectedTemplateName === oldName ? newName : selectedTemplateName,
       });
     });
   }
 
   updateTemplate(template) {
     const { fetchedTemplates } = this.state;
-    const selectedNameIdx = fetchedTemplates.findIndex(t => (
-      t.id === template.id
-    ));
-    if (selectedNameIdx < 0) return;
-
     TextTemplatesFetcher.updatePredefinedTemplates(template).then((res) => {
       if (!res) return;
 
-      const newTemplates = fetchedTemplates.map((t, idx) => (
-        (idx === selectedNameIdx) ? res : t
-      ));
-      this.setState({ fetchedTemplates: newTemplates });
+      this.setState({
+        fetchedTemplates: {
+          ...fetchedTemplates,
+          [template.name]: template
+        }
+      });
     });
   }
 
   render() {
     const {
-      predefinedTemplateNames,
+      templateNames,
       fetchedTemplates,
+      selectedTemplateName,
     } = this.state;
 
+    const selectedTemplate = fetchedTemplates[selectedTemplateName];
+
     return (
-      <TextTemplate
-        predefinedTemplateNames={predefinedTemplateNames}
-        fetchedTemplates={fetchedTemplates}
-        fetchTemplate={this.fetchTemplate}
-        addTemplate={this.addTemplate}
-        removeTemplate={this.removeTemplate}
-        updateTemplate={this.updateTemplate}
-      />
+      <Container fluid className="vh-100">
+        <Row className="vh-100">
+          <Col md={3}>
+            <TextTemplateSelector
+              templateNames={templateNames}
+              addTemplate={this.addTemplate}
+              selectTemplate={this.selectTemplate}
+              renameTemplate={this.renameTemplate}
+              removeTemplate={this.removeTemplate}
+            />
+          </Col>
+          <Col md={9}>
+            {selectedTemplate ? (
+              <TextTemplateForm
+                selectedTemplate={selectedTemplate}
+                updateTemplate={this.updateTemplate}
+              />
+            ) : (
+              <h3>Select a template to edit</h3>
+            )}
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }
