@@ -188,14 +188,15 @@ export default class ScreenDetailsContainers extends Component {
             <div className="mb-2 me-1 d-flex flex-row-reverse">
               {this.addButton()}
             </div>
-            <Accordion>
+            <Accordion className="border rounded overflow-hidden">
               {this.analysesContainer[0].children.map((container, key) => {
+                const isFirstTab = key === 0;
                 return (
                   <Card
                     key={`screen_container_${container.id}`}
-                    className="rounded-0"
+                    className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
                   >
-                    <Card.Header className="rounded-0 p-0">
+                    <Card.Header className="rounded-0 p-0 border-bottom-0">
                       <AccordionHeaderWithButtons eventKey={key}>
                         {container.is_deleted
                           ? this.containerHeaderDeleted(container)
