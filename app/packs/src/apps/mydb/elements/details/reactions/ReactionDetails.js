@@ -96,19 +96,12 @@ export default class ReactionDetails extends Component {
     }
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { reaction } = this.state;
-    const nextReaction = nextProps.reaction;
-
-    if (nextReaction.id !== reaction.id ||
-      nextReaction.updated_at !== reaction.updated_at ||
-      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
-      nextReaction.changed || nextReaction.editedSample) {
-      this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
+  componentDidUpdate(prevProps) {
+    const { reaction } = this.props;
+    if (reaction.id !== prevProps.reaction.id) {
+      this.setState({ reaction });
     }
   }
-
 
   shouldComponentUpdate(nextProps, nextState) {
     const reactionFromNextProps = nextProps.reaction;
