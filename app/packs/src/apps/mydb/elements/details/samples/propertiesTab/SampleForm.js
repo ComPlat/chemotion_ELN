@@ -196,7 +196,7 @@ export default class SampleForm extends React.Component {
           isDisabled={!sample.can_update}
           options={absOptions}
           onChange={this.updateStereoAbs}
-          value={absOptions.find(({value}) => value === absValue)}
+          value={absOptions.find(({ value }) => value === absValue)}
         />
       </Form.Group>
     );
@@ -228,7 +228,7 @@ export default class SampleForm extends React.Component {
           isDisabled={!sample.can_update}
           options={relOptions}
           onChange={this.updateStereoRel}
-          value={relOptions.find(({value}) => value === relValue)}
+          value={relOptions.find(({ value }) => value === relValue)}
         />
       </Form.Group>
     );
@@ -253,7 +253,7 @@ export default class SampleForm extends React.Component {
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
             isLoading={this.state.isMolNameLoading}
-            value={moleculeNames.find(({value}) => value == mno?.value)}
+            value={moleculeNames.find(({ value }) => value == mno?.value)}
             onCreateOption={this.addMolName}
             className="flex-grow-1"
           />
@@ -801,7 +801,7 @@ export default class SampleForm extends React.Component {
         <Row className="mb-4">
           <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
           <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
-          <Col>{this.textInput(sample, 'xref_solubility', 'Solubile in')}</Col>
+          <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
         </Row>
         <Row className="align-items-end mb-4">
           <Col>
