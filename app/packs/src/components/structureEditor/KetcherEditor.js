@@ -67,7 +67,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   // main funcation to capture all events from editor
   const handleEventCapture = async (data) => {
     let allowed_to_process = true;
-    await fuelKetcherData();
+    // await fuelKetcherData();
     const selection = editor._structureDef.editor.editor._selection;
     if (selection?.images) {
       addEventToFILOStack("Move image");
@@ -97,17 +97,17 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
         case "Delete image":
           console.log("delete image");
-          await editor._structureDef.editor.editor.undo();
+          // await editor._structureDef.editor.editor.undo();
           break;
         case 'Delete atom': {
+          // mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
+          console.log("DELETE ATOM!!");
           if (eventItem.label == "Br") {
-            console.log("DELETE ATOM!!", eventItem);
-            await fuelKetcherData();
-            mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
-            const molfile_data = await onEventDeleteAtom(eventItem);
-            await editor.structureDef.editor.setMolecule(JSON.stringify(molfile_data));
-            await fuelKetcherData();
-            await moveTemplate();
+            const { atom } = should_canvas_update_on_movement(eventItem);
+            const molfile_data = await onEventDeleteAtom(atom);
+            console.log({ molfile_data });
+            // await editor.structureDef.editor.setMolecule(JSON.stringify(molfile_data));
+            // await moveTemplate();
           }
         } break;
         case 'Update': {
@@ -282,32 +282,55 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     return template_list[idx];
   };
 
+  const removeMolecule = async (atoms, atom, mol) => {
+    delete latestData[mol];
+    latestData.root.nodes = latestData.root.nodes.filter(mol_ref => mol_ref.$ref != mol);
+  };
+
+  const removeBonds = (bonds, atom_idx) => {
+    return bonds?.filter(bond => bond.atoms[0] != atom_idx && bond.atoms[1] != atom_idx);
+    console.log({ removeBond: bonds, atom_idx });
+  };
+
   // helper function to delete a template and reset the counter, assign new alias to all atoms
-  const onEventDeleteAtom = async (eventItem) => {
-    let viewed_atoms = 0;
-    let max_at = true;
-    for (let m = 0; m < mols.length; m++) {
+  const onEventDeleteAtom = async (atom) => {
+    // return latestData;
+    let atoms_viewed = -1;
+    let is_reduced = false;
+    for (let m = 0; m < mols?.length; m++) {
       const mol = mols[m];
-      const atoms = latestData[mol].atoms;
-      for (let a = 0; a < atoms.length; a++) {
+      const atoms = latestData[mol]?.atoms;
+      for (let a = 0; a < atoms?.length; a++) {
         const item = atoms[a];
-        if (viewed_atoms >= eventItem.id && item.alias) {
-          const splits = item.alias.split("_");
-          if (parseInt(splits[2]) != 0) {
-            const step_back = parseInt(splits[2]) - 1;
-            const new_alias = `${splits[0]}_${splits[1]}_${step_back}`;
-            item.alias = new_alias;
-            image_used_counter = step_back;
-            console.log(image_used_counter);
-            max_at = false;
-          }
+        item?.alias && three_parts_patten.test(atom.alias) && atoms_viewed++;
+        const splits = item?.alias?.split("_");
+        if (splits && parseInt(splits[2]) <= atoms_viewed) continue;
+
+        if (atoms?.length == 1) {
+          // remove atom completely
+          console.log("completely");
+          await removeMolecule(atoms, atom, mol);
+          is_reduced = true;
         } else {
-          console.log("nothing");
+          // remove bond
+          console.log("specific atom!!");
+          atoms.splice(a, 1);
+          is_reduced = true;
         }
-        viewed_atoms += 1;
+        // remove image
+        if (splits) {
+          latestData.root.nodes.splice(mol.length + parseInt(splits[2]), 1);
+          // reduce count for others
+          const step_back = parseInt(splits[2]) - 1;
+          const new_alias = `${splits[0]}_${splits[1]}_${step_back}`;
+          item.alias = new_alias;
+          console.log({ splits, alias: item.alias });
+        }
       }
-    }
-    max_at && image_used_counter--;
+    };
+    console.log({ is_reduced });
+    is_reduced && image_used_counter--;
+    console.log("-----------------------------------------------------------");
     return latestData;
   };
 
