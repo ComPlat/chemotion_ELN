@@ -241,13 +241,13 @@ export default class ResearchPlanDetailsContainers extends Component {
 
       return (
         <div className="d-flex w-100 mb-0 align-items-center">
-          <span className="flex-grow-1 text-decoration-line-through">
+          <strike className="flex-grow-1">
             {container.name}
             {titleKind}
             {titleStatus}
-          </span>
+          </strike>
           <Button
-            className="ml-auto"
+            className="ms-auto"
             size="xsm"
             variant="danger"
             onClick={() => this.handleUndo(container)}
@@ -270,16 +270,17 @@ export default class ResearchPlanDetailsContainers extends Component {
               {this.addButton()}
             </div>
             <Accordion
-              className='border rounded overflow-hidden'
+              className="border rounded overflow-hidden"
               onSelect={this.handleAccordionOpen}
               activeKey={activeContainer}
             >
               {analysesContainer[0].children.map((container, key) => {
+                const isFirstTab = key === 0;
                 return (
                   <Card
                     eventKey={key}
                     key={`research_plan_container_${container.id}`}
-                    className="border-0 rounded-0"
+                    className={`rounded-0 border-0 ${isFirstTab ? '' : ' border-top'}`}
                   >
                     <Card.Header className="rounded-0 p-0 border-bottom-0">
                       <AccordionHeaderWithButtons eventKey={key}>
@@ -287,30 +288,30 @@ export default class ResearchPlanDetailsContainers extends Component {
                       </AccordionHeaderWithButtons>
                     </Card.Header>
 
-                    {!container.is_deleted &&
-                    <Accordion.Collapse eventKey={key}>
-                      <Card.Body>
-                      <ContainerComponent
-                        templateType="researchPlan"
-                        readOnly={readOnly}
-                        disabled={readOnly}
-                        container={container}
-                        onChange={this.handleChange}
-                      />
-                      <ViewSpectra
-                        sample={this.props.researchPlan}
-                        handleSampleChanged={this.handleSpChange}
-                        handleSubmit={this.props.handleSubmit}
-                      />
-                      <NMRiumDisplayer
-                        sample={this.props.researchPlan}
-                        handleSampleChanged={this.handleSpChange}
-                        handleSubmit={this.props.handleSubmit}
-                      />
-                      </Card.Body>
+                    {!container.is_deleted && (
+                      <Accordion.Collapse eventKey={key}>
+                        <Card.Body>
+                          <ContainerComponent
+                            templateType="researchPlan"
+                            readOnly={readOnly}
+                            disabled={readOnly}
+                            container={container}
+                            onChange={this.handleChange}
+                          />
+                          <ViewSpectra
+                            sample={this.props.researchPlan}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                          <NMRiumDisplayer
+                            sample={this.props.researchPlan}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                        </Card.Body>
                       </Accordion.Collapse>
-                    }
-                    </Card>
+                    )}
+                  </Card>
                 );
               })}
             </Accordion>
