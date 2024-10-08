@@ -11,7 +11,7 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 export default class ScreenDetailsContainers extends Component {
   constructor(props) {
-    super();
+    super(props);
     const { screen } = props;
     this.state = {
       screen,
@@ -24,10 +24,11 @@ export default class ScreenDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates('screen');
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      screen: nextProps.screen
-    })
+  componentDidUpdate(prevProps) {
+    const { screen } = this.props;
+    if (screen !== prevProps.screen) {
+      this.setState({ screen });
+    }
   }
 
   handleChange() {
