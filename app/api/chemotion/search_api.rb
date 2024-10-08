@@ -27,7 +27,7 @@ module Chemotion
             All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements cell_lines by_ids advanced structure
           ]
           optional :molfile, type: String
-          optional :search_type, type: String, values: %w[similar sub subRDKit]
+          optional :search_type, type: String, values: %w[similar sub]
           optional :tanimoto_threshold, type: Float
           optional :page_size, type: Integer
           optional :structure_search, type: Boolean

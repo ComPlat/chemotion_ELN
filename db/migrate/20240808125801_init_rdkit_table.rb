@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InitRdkit2 < ActiveRecord::Migration[6.1]
+class InitRdkitTable < ActiveRecord::Migration[6.1]
   def up
     if Chemotion::Application.config.pg_cartridge == 'RDKit'
       create_table 'rdk.mols', as:

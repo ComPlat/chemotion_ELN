@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InitRdkit3 < ActiveRecord::Migration[6.1]
+class InitRdkitFunctions < ActiveRecord::Migration[6.1]
   def change
     if Chemotion::Application.config.pg_cartridge == 'RDKit'
       create_function :set_samples_mol_rdkit

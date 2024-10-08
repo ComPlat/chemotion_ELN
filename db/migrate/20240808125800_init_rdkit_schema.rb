@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InitRdkit1 < ActiveRecord::Migration[6.1]
+class InitRdkitSchema < ActiveRecord::Migration[6.1]
   def up
     if Chemotion::Application.config.pg_cartridge == 'RDKit'
       create_schema 'rdk'
