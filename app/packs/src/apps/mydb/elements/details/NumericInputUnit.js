@@ -62,8 +62,10 @@ export default function NumericInputUnit(props) {
         convertedValue = parseFloat(value);
         break;
     }
-    onInputChange(convertedValue, convertedUnit);
-    setUnit(convertedUnit);
+    if (!Number.isNaN(convertedValue)) {
+      onInputChange(convertedValue, convertedUnit);
+      setUnit(convertedUnit);
+    }
   };
 
   const handleInputValueChange = (event) => {

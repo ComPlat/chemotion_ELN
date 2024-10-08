@@ -403,7 +403,8 @@ export default class ChemicalTab extends React.Component {
   }
 
   textInput(data, label, parameter) {
-    const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
+    const componentClass = parameter !== 'important_notes'
+      && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
     && parameter !== 'solubility' ? 'input' : 'textarea';
     let value = '';
     if (parameter !== 'cas') {
@@ -411,18 +412,23 @@ export default class ChemicalTab extends React.Component {
     } else {
       value = data || '';
     }
-    let conditionalOverlay;
-    if (parameter === 'date') {
-      conditionalOverlay = 'please enter the name of the person who orders/ordered the substance';
+    let conditionalOverlay = null;
+    if (parameter === 'person') {
+      conditionalOverlay = 'please enter the name of the person who ordered the substance';
     } else if (parameter === 'required_by') {
       conditionalOverlay = 'please enter the name of the person who requires the substance';
-    } else {
-      conditionalOverlay = null;
+    } else if (parameter === 'expiration_date') {
+      conditionalOverlay = 'please enter the expiration date of the substance';
     }
     const checkLabel = label !== 'Date' && <ControlLabel>{label}</ControlLabel>;
+    const dateArray = ['person', 'required_by', 'expiration_date'];
 
     return (
-      <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
+      <OverlayTrigger
+        placement="top"
+        overlay={dateArray.includes(parameter)
+          ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}
+      >
         <FormGroup>
           {checkLabel}
           <FormControl
@@ -506,7 +512,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   numInputWithoutTable(data, label, parameter) {
-    const value = data?.[parameter]?.value ?? 0;
+    const value = data?.[parameter]?.value;
     let unit; let field;
     if (parameter === 'amount') {
       unit = data?.[parameter]?.unit ?? 'mg';
@@ -514,6 +520,9 @@ export default class ChemicalTab extends React.Component {
     } else if (parameter === 'volume') {
       unit = data?.[parameter]?.unit ?? 'ml';
       field = 'chemical_amount_in_l';
+    } else if (parameter === 'storage_temperature') {
+      unit = data?.[parameter]?.unit ?? '°C';
+      field = 'storage_temperature';
     }
     return (
       <NumericInputUnit
@@ -928,17 +937,11 @@ export default class ChemicalTab extends React.Component {
               <div className="inventory-text-input">
                 {this.textInput(data, 'Order number', 'order_number')}
               </div>
-              <div className="inventory-text-input">
-                {this.numInputWithoutTable(data, 'Amount', 'amount')}
-              </div>
-              <div className="inventory-text-input">
-                {this.numInputWithoutTable(data, '', 'volume')}
+              <div className="text-input-price">
+                {this.textInput(data, 'Price', 'price')}
               </div>
             </div>
             <div className="text-input-group">
-              <div className="inventory-text-input">
-                {this.textInput(data, 'Price', 'price')}
-              </div>
               <div className="text-input-person">
                 {this.textInput(data, 'Person', 'person')}
               </div>
@@ -950,10 +953,24 @@ export default class ChemicalTab extends React.Component {
                   <Tab eventKey="ordered" title="Ordered date">
                     {this.textInput(data, 'Date', 'ordered_date')}
                   </Tab>
+                  <Tab eventKey="expired" title="Expiration date">
+                    {this.textInput(data, 'Date', 'expiration_date')}
+                  </Tab>
                 </Tabs>
               </div>
               <div className="text-input-required-by">
                 {this.textInput(data, 'Required by', 'required_by')}
+              </div>
+            </div>
+            <div className="inventory-information">
+              <div className="inventory-text-input">
+                {this.numInputWithoutTable(data, 'Amount', 'amount')}
+              </div>
+              <div className="inventory-text-input">
+                {this.numInputWithoutTable(data, '', 'volume')}
+              </div>
+              <div className="text-input-storage-temperature">
+                {this.numInputWithoutTable(data, 'Storage Temperature', 'storage_temperature')}
               </div>
             </div>
           </div>
