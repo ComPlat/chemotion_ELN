@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, Container, Button, } from 'react-bootstrap';
+import { Nav, Navbar, Container, Button } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -43,17 +43,25 @@ export default class AdminNavigation extends React.Component {
   render() {
     const { currentUser } = this.state;
     return (
-      <Navbar bg="grey" expand="lg" className="bg-gray-200 py-4" >
+      <Navbar bg="grey" expand="lg" className="bg-gray-200 py-4">
         <Container fluid>
           <Navbar.Brand className="d-flex align-items-center">
-            <Button variant="light" className="me-2 p-0 border-0 bg-transparent" onClick={this.toggleTree} aria-label="Toggle Tree">
-              <i className='fa fa-list' size="lg" />
+            <Button
+              variant="light"
+              className="me-2 p-0 border-0 bg-transparent"
+              onClick={this.toggleTree}
+              aria-label="Toggle Tree"
+            >
+              <i className="fa fa-list" size="lg" />
             </Button>
             <NavHead />
           </Navbar.Brand>
           <div className="h1 mb-0 ms-5 ps-5">ELN Administration</div>
           <Nav className="ms-auto fs-5">
-            {currentUser ? <UserAuth /> : <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />}
+            {currentUser
+              ? <UserAuth />
+              : <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
+            }
           </Nav>
         </Container>
       </Navbar>

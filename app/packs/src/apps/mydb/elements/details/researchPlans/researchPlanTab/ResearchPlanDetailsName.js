@@ -12,17 +12,19 @@ export default class ResearchPlanDetailsName extends Component {
     return (
       <OverlayTrigger
         placement="top"
-        delayShow={500}
+        delay={{ show: 500, hide: 100 }}
         overlay={<Tooltip id="metadataTooltip">{metadataTooltipText}</Tooltip>}
       >
         <Button
           id="copyMetadataButton"
-          className="fa fa-laptop ms-auto"
           variant="info"
           size="xsm"
           onClick={() => onCopyToMetadata(null, 'name')}
           disabled={isNew}
-        />
+          className="ms-auto"
+        >
+          <i className="fa fa-laptop" />
+        </Button>
       </OverlayTrigger>
     );
   }
@@ -37,7 +39,7 @@ export default class ResearchPlanDetailsName extends Component {
           <Col sm={8}>
             <Form.Group className="mt-2">
               <div className="d-flex align-items-center">
-                <Form.Label className="mb-1 me-2">Name</Form.Label>
+                <Form.Label className="mb-1 me-2 d-flex">Name</Form.Label>
                 {this.renderCopyToMetadataButton()}
               </div>
               <Form.Control
@@ -55,7 +57,7 @@ export default class ResearchPlanDetailsName extends Component {
     }
     return (
       <div className="my-3">
-        <h1>{value}</h1>
+        <h2>{value}</h2>
       </div>
     );
   }

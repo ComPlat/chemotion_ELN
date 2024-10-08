@@ -8,11 +8,11 @@ const SampleTaskNavigationElement = ({}) => {
 
   const loadSampleTasks = () => {
     sampleTasksStore.load();
-  }
+  };
 
-  useEffect(loadSampleTasks, []) // do this once at the creation of the component
+  useEffect(loadSampleTasks, []); // do this once at the creation of the component
 
-  const title = `${sampleTasksStore.openSampleTaskCount} open Sample Tasks`
+  const title = `${sampleTasksStore.openSampleTaskCount} open Sample Tasks`;
 
   return (
     <Button

@@ -2,31 +2,36 @@ import React from 'react';
 import Header from 'src/apps/mydb/elements/details/cellLines/analysesTab/Header';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PropTypes from 'prop-types';
-import { Accordion } from 'react-bootstrap';
+import { Accordion, Card } from 'react-bootstrap';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 const EditModeRow = ({ container, handleChange, element, readOnly }) => (
-  <Accordion.Item eventKey={container.id}>
-    <Accordion.Header as="div">
-      <Header
-        isEditHeader
-        element={element}
-        container={container}
-        handleChange={handleChange}
-        readOnly={readOnly}
-      />
-    </Accordion.Header>
-    <Accordion.Body>
-      <ContainerComponent
-        analysisMethodTitle="Type (BioAssay Ontology)"
-        ontologyName="bao"
-        templateType="researchPlan"
-        readOnly={readOnly}
-        disabled={false}
-        container={container}
-        onChange={() => handleChange(container)}
-      />
-    </Accordion.Body>
-  </Accordion.Item>
+  <Card eventKey={container.id} className="border-0 rounded-0">
+    <Card.Header className="rounded-0 p-0 border-bottom-0">
+      <AccordionHeaderWithButtons as="div">
+        <Header
+          isEditHeader
+          element={element}
+          container={container}
+          handleChange={handleChange}
+          readOnly={readOnly}
+        />
+      </AccordionHeaderWithButtons>
+    </Card.Header>
+    <Accordion.Collapse>
+      <Card.Body>
+        <ContainerComponent
+          analysisMethodTitle="Type (BioAssay Ontology)"
+          ontologyName="bao"
+          templateType="researchPlan"
+          readOnly={readOnly}
+          disabled={false}
+          container={container}
+          onChange={() => handleChange(container)}
+        />
+      </Card.Body>
+    </Accordion.Collapse>
+  </Card>
 );
 
 EditModeRow.propTypes = {

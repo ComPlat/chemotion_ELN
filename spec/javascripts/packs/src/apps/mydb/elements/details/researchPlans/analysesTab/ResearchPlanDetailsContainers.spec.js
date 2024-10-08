@@ -6,13 +6,11 @@ import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
 
-import {
-  Accordion,
-  Button,
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import Container from 'src/models/Container';
 import ResearchPlan from 'src/models/ResearchPlan';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 import ResearchPlanDetailsContainers
   from 'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
@@ -56,15 +54,14 @@ describe('ResearchPlanDetailsContainers', () => {
         <ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} />
       );
 
-      expect(wrapper.text()).toEqual(expect.stringContaining(
-        `${analysis.name} - Type: ${analysis.extended_metadata.kind}`
-      ));
+      const deletedHeader = wrapper.find(AccordionHeaderWithButtons).shallow().find('strike');
+      expect(deletedHeader.text()).toContain(analysis.name);
 
-      const button = wrapper.find(Accordion.Header).find(Button);
+      const button = wrapper.find(AccordionHeaderWithButtons).find(Button);
       expect(button.html()).toEqual(shallow(
         <Button
-          className="ml-auto"
-          size="sm"
+          className="ms-auto"
+          size="xsm"
           variant="danger"
         >
           <i className="fa fa-undo" />

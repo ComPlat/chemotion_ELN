@@ -148,7 +148,7 @@ class ResearchPlanDetailsFieldSample extends Component {
     return connectDropTarget(
       <div
         className={`p-3 text-center mb-3 ${(isOver || canDrop)
-          ? 'border border-gray-300 border-3' : 'border-dashed border-3 border-gray-300'}`}
+          ? 'dnd-zone dnd-zone-over' : 'dnd-zone'}`}
       >
         {content}
       </div>

@@ -136,7 +136,7 @@ export default class UnsortedDataset extends React.Component {
     return (
       <Dropzone
         onDrop={(files) => this.handleFileDrop(files)}
-        className="border-dashed border-gray-200 border-3">
+        className="dnd-zone">
         <div className="text-center p-3 text-gray-500">
           Drop Files, or Click to Select.
         </div>

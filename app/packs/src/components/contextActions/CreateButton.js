@@ -229,7 +229,8 @@ export default class CreateButton extends React.Component {
     }
     return (
       <div>
-        <i className={`${iconClass}`}></i> &nbsp; <i className="fa fa-plus"></i>
+        <i className={`${iconClass} me-1`} />
+        <i className="fa fa-plus" />
       </div>
     )
   }

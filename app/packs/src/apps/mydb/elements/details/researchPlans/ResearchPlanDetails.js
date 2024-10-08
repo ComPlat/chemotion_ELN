@@ -3,8 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup, Card
+  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup, Card
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -406,85 +405,73 @@ export default class ResearchPlanDetails extends Component {
     );
 
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <div className="d-flex justify-content-between align-items-start">
-            <div className="flex-fill">
-              <ResearchPlanDetailsName
-                value={name}
-                disabled={researchPlan.isMethodDisabled('name')}
-                onChange={this.handleNameChange}
-                edit={edit}
-                onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-              />
-            </div>
-            <div className="d-flex justify-content-center align-items-end">
-              <div className="mt-3">
-                {btnMode}
-              </div>
-              {this.renderExportButton(changed)}
-            </div>
+      <>
+        <div className="d-flex justify-content-between align-items-start">
+          <div className="flex-fill">
+            <ResearchPlanDetailsName
+              value={name}
+              disabled={researchPlan.isMethodDisabled('name')}
+              onChange={this.handleNameChange}
+              edit={edit}
+              onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+            />
           </div>
+          <ButtonToolbar className="d-flex justify-content-center align-items-end gap-1">
+            {btnMode}
+            {this.renderExportButton(changed)}
+          </ButtonToolbar>
+        </div>
 
-          <ResearchPlanDetailsBody
-            body={body}
-            attachments={attachments}
-            disabled={researchPlan.isMethodDisabled('body')}
-            onChange={this.handleBodyChange}
-            onDrop={this.handleBodyDrop.bind(this)}
-            onAdd={this.handleBodyAdd}
-            onDelete={this.handleBodyDelete.bind(this)}
-            onExport={this.handleExportField.bind(this)}
-            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-            update={update}
-            edit={edit}
-            copyableFields={[
-              { title: 'Subject', fieldName: 'subject' },
-              {
-                title: 'Alternate Identifier',
-                fieldName: 'alternate_identifier',
-              },
-              { title: 'Related Identifier', fieldName: 'related_identifier' },
-              { title: 'Description', fieldName: 'description' },
-            ]}
-            researchPlan={researchPlan}
-          />
-        </ListGroupItem>
-      </ListGroup>
+        <ResearchPlanDetailsBody
+          body={body}
+          attachments={attachments}
+          disabled={researchPlan.isMethodDisabled('body')}
+          onChange={this.handleBodyChange}
+          onDrop={this.handleBodyDrop.bind(this)}
+          onAdd={this.handleBodyAdd}
+          onDelete={this.handleBodyDelete.bind(this)}
+          onExport={this.handleExportField.bind(this)}
+          onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+          update={update}
+          edit={edit}
+          copyableFields={[
+            { title: 'Subject', fieldName: 'subject' },
+            {
+              title: 'Alternate Identifier',
+              fieldName: 'alternate_identifier',
+            },
+            { title: 'Related Identifier', fieldName: 'related_identifier' },
+            { title: 'Description', fieldName: 'description' },
+          ]}
+          researchPlan={researchPlan}
+        />
+      </>
     );
   } /* eslint-enable */
 
   renderAnalysesTab(researchPlan) {
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
           <ResearchPlanDetailsContainers
             handleSubmit={this.handleSubmit}
             handleResearchPlanChange={this.handleResearchPlanChange}
             researchPlan={researchPlan}
             readOnly={false}
           />
-        </ListGroupItem>
-      </ListGroup>
     );
   }
 
   renderAttachmentsTab(researchPlan) { /* eslint-disable react/jsx-no-bind */
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <ResearchPlanDetailsAttachments
-            researchPlan={researchPlan}
-            attachments={researchPlan.attachments}
-            onDrop={this.handleAttachmentDrop.bind(this)}
-            onDelete={this.handleAttachmentDelete.bind(this)}
-            onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
-            onEdit={this.handleAttachmentEdit.bind(this)}
-            readOnly={false}
-          />
-        </ListGroupItem>
-      </ListGroup>
+      <ResearchPlanDetailsAttachments
+        researchPlan={researchPlan}
+        attachments={researchPlan.attachments}
+        onDrop={this.handleAttachmentDrop.bind(this)}
+        onDelete={this.handleAttachmentDelete.bind(this)}
+        onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+        onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
+        onEdit={this.handleAttachmentEdit.bind(this)}
+        readOnly={false}
+      />
     );
   } /* eslint-enable */
 
@@ -628,7 +615,7 @@ export default class ResearchPlanDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <div className='tabs-container--with-borders'>
+          <div className="tabs-container--with-borders">
             <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
               {tabContents}
             </Tabs>

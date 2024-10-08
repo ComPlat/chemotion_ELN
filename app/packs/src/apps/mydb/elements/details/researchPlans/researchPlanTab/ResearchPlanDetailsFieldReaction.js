@@ -28,7 +28,7 @@ const hasAuth = (id) => {
 };
 
 const noAuth = (el) => (
-  <div className="text-center border-gray-300 border-dashed">
+  <div className="text-center dnd-zone">
     <h4>
       {el.id.split(':')[2]}
       <i className="fa fa-eye-slash ms-1" aria-hidden="true" />
@@ -143,9 +143,8 @@ class ResearchPlanDetailsFieldReaction extends Component {
       content = 'Drop reaction here.';
     }
     return connectDropTarget(
-      <div
-        className={`p-3 text-center mb-3 ${(isOver || canDrop)
-          ? 'border border-gray-300 border-3' : 'border-dashed border-gray-300 border-3'} `}
+      <div className={`p-3 text-center mb-3 ${(isOver || canDrop)
+          ? 'dnd-zone dnd-zone-over' : 'dnd-zone'} `}
       >
         {content}
       </div>

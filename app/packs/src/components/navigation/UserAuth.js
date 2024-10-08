@@ -612,6 +612,7 @@ export default class UserAuth extends Component {
           <NavDropdown
             title={`${currentUser.name}`}
             id="bg-nested-dropdown"
+            className="me-3"
           >
             <NavDropdown.Item eventKey="1" href="/pages/settings">
               Account &amp; Profile
@@ -648,7 +649,7 @@ export default class UserAuth extends Component {
           <NavItem
             onClick={() => this.logout()}
             title="Log out"
-            className="ms-5 me-3"
+            className="ms-auto"
             role="button"
           >
             <i className="fa fa-sign-out" />

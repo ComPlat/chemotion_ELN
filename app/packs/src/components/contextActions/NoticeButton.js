@@ -1,7 +1,7 @@
 import React from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Button, Modal, Card, Row, Col
+  Button, Modal, Card, Row, Col, Badge
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -365,8 +365,8 @@ export default class NoticeButton extends React.Component {
                   key={`notice-button-ack-${not.id}`}
                   onClick={() => this.messageAck(not.id, false)}
                 >
-                  <i className="fa fa-check" aria-hidden="true" />
-                  &nbsp;Got it
+                  <i className="fa fa-check me-1" aria-hidden="true" />
+                  Got it
                 </Button>
               </Col>
               <Col>{newText}</Col>
@@ -422,32 +422,18 @@ export default class NoticeButton extends React.Component {
           id="notice-button"
           variant={btnStyle}
           onClick={this.handleShow}
-          style={{
-            width: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '.04px',
-          }}
+          className="position-relative" // necessary to display the badge
         >
-          <i
-            className={btnClass}
-            style={{
-              left: '20px'
-            }}
-          />
+          <i className={btnClass} />
           {noticeNum > 0 && (
-            <span
-              className="badge badge-pill"
-              style={{
-                top: '25px',
-                left: '25px',
-                fontSize: '8px',
-                position: 'absolute'
-              }}
+            <Badge
+              pill
+              text="warning"
+              bg="light"
+              className="position-absolute top-100 start-100 translate-middle"
             >
               {noticeNum}
-            </span>
+            </Badge>
           )}
         </Button>
         {this.renderModal()}

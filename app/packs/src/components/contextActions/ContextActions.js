@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup } from 'react-bootstrap';
+import { ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CreateButton from 'src/components/contextActions/CreateButton';
 import SplitElementButton from 'src/components/contextActions/SplitElementButton';
@@ -56,12 +56,12 @@ export default class ContextActions extends React.Component {
   render() {
     const { updateModalProps, customClass } = this.props;
     return (
-      <div className="d-flex gap-2">
-        <ButtonGroup>
+      <div className="d-flex flex-wrap align-items-center gap-2">
+        <ButtonGroup className="d-flex align-items-center">
           <SplitElementButton />
           <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
         </ButtonGroup>
-        <ButtonGroup>
+        <ButtonGroup className="d-flex align-items-center">
           <ExportImportButton
             isDisabled={this.isDisabled()}
             updateModalProps={updateModalProps}
@@ -69,10 +69,13 @@ export default class ContextActions extends React.Component {
           />
           <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
-        <ScanCodeButton customClass={customClass} />
-        <InboxButton />
-        <SampleTaskNavigationElement />
-        <NoticeButton />
+        <ButtonToolbar className="d-flex flex-nowrap gap-2 align-items-center">
+          <ScanCodeButton customClass={customClass} />
+          <InboxButton />
+          <SampleTaskNavigationElement />
+          <NoticeButton />
+        </ButtonToolbar>
+        
       </div>
     );
   }

@@ -2,7 +2,7 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Accordion } from 'react-bootstrap';
+import { Button, Accordion, Card } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -24,6 +24,7 @@ import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { truncateText } from 'src/utilities/textHelper';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -106,11 +107,11 @@ export default class ReactionDetailsContainers extends Component {
     });
   }
 
-  handleChange(container) {
+  handleChange = () => {
     const { handleReactionChange } = this.props;
     const { reaction } = this.state;
     handleReactionChange(reaction);
-  }
+  };
 
   handleSpChange(reaction, cb) {
     const { handleReactionChange } = this.props;
@@ -187,7 +188,7 @@ export default class ReactionDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className="d-flex justify-content-between align-items-center mb-0">
+      <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
         <AnalysisVariationLink
           reaction={reaction}
           analysisID={container.id}
@@ -277,10 +278,8 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div
-          className="d-flex w-100 mb-0 bg-gray-200"
-        >
-          <div className="p-3">
+        <div className="analysis-header w-100 d-flex gap-3 lh-base">
+          <div className="preview border d-flex align-items-center">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -294,27 +293,27 @@ export default class ReactionDetailsContainers extends Component {
               }}
             />
           </div>
-
-          <div className="d-flex flex-column justify-content-start ms-1 my-3 flex-grow-1">
-            <div className="fs-5 fw-bold ms-2 text-truncate text-decoration-underline">{container.name}</div>
-            <div className="fs-6 ms-2 mt-2">Type: {kind}</div>
-            <div className="fs-6 ms-2 mt-2">
+          <div className="flex-grow-1">
+            <div className="d-flex justify-content-between align-items-center">
+              <h4 className="flex-grow-1">{container.name}</h4>
+              {
+                this.headerBtnGroup(container, reaction, readOnly)
+              }
+            </div>
+            <div className="text-body-tertiary">
+              Type: {kind}
+              <br />
               Status:
               {status} {nmrMsg(reaction, container)}
               <span className="me-5" />
               {insText}
             </div>
-            <div className="fs-6 ms-2 mt-2 d-flex p-0">
-              <span className="me-2 flex-grow-1 text-truncate">
-                Content:
-                <QuillViewer value={contentOneLine} className="text-truncate" />
-              </span>
+            <div className="d-flex gap-2">
+              <span>Content:</span>
+              <div className="flex-grow-1">
+                <QuillViewer value={contentOneLine} className="p-0" preview />
+              </div>
             </div>
-          </div>
-          <div className="d-flex align-items-start justify-content-end me-2 mt-3">
-            {
-                this.headerBtnGroup(container, reaction, readOnly)
-            }
           </div>
         </div>
       );
@@ -328,15 +327,15 @@ export default class ReactionDetailsContainers extends Component {
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
-        <div className="d-flex w-100 mb-0 bg-gray-200 p-4 align-items-center">
+        <div className="d-flex w-100 mb-0 align-items-center">
           <strike className="flex-grow-1">
             {container.name}
             {titleKind}
             {titleStatus}
           </strike>
           <Button
-            className="ml-auto"
-            size="sm"
+            className="ms-auto"
+            size="xsm"
             variant="danger"
             onClick={() => this.handleUndo(container)}
           >
@@ -354,51 +353,52 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex justify-content-end">
+            <div className="d-flex justify-content-end align-items-center mb-3">
               {this.addButton()}
             </div>
-            <Accordion>
+            <Accordion
+              className='border rounded overflow-hidden'
+              onSelect={this.handleAccordionOpen}
+              activeKey={activeContainer}
+            >
               {analyses_container[0].children.map((container, key) => {
-                if (container.is_deleted) {
-                  return (
-                    <Accordion.Item
-                      eventKey={key}
-                      key={`reaction_container_deleted_${container.id}`}
-                    >
-                      <Accordion.Header>{containerHeaderDeleted(container)}</Accordion.Header>
-                    </Accordion.Item>
-                  );
-                }
+                const isFirstTab = key === 0;
                 return (
-                  <div
+                  <Card
                     ref={(element) => { this.containerRefs[key] = element; }}
                     key={`reaction_container_${container.id}`}
+                    className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
                   >
-                    <Accordion.Item eventKey={key}>
-                      <Accordion.Header>
-                          {containerHeader(container)}
-                      </Accordion.Header>
-                      <Accordion.Body>
-                        <ContainerComponent
-                          disabled={readOnly}
-                          readOnly={readOnly}
-                          templateType="reaction"
-                          container={container}
-                          onChange={this.handleChange.bind(this, container)}
-                        />
-                        <ViewSpectra
-                          sample={reaction}
-                          handleSampleChanged={this.handleSpChange}
-                          handleSubmit={this.props.handleSubmit}
-                        />
-                        <NMRiumDisplayer
-                          sample={reaction}
-                          handleSampleChanged={this.handleSpChange}
-                          handleSubmit={this.props.handleSubmit}
-                        />
-                      </Accordion.Body>
-                    </Accordion.Item>
-                  </div>
+                    <Card.Header className="rounded-0 p-0 border-bottom-0">
+                      <AccordionHeaderWithButtons eventKey={key}>
+                        {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
+                      </AccordionHeaderWithButtons>
+                    </Card.Header>
+
+                    {!container.is_deleted && (
+                      <Accordion.Collapse eventKey={key}>
+                        <Card.Body>
+                          <ContainerComponent
+                            disabled={readOnly}
+                            readOnly={readOnly}
+                            templateType="reaction"
+                            container={container}
+                            onChange={() => this.handleChange(container)}
+                          />
+                          <ViewSpectra
+                            sample={reaction}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                          <NMRiumDisplayer
+                            sample={reaction}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                        </Card.Body>
+                      </Accordion.Collapse>
+                    )}
+                  </Card>
                 );
               })}
             </Accordion>

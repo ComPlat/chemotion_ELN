@@ -45,9 +45,8 @@ class ResearchPlanWellplates extends Component {
     return connectDropTarget(<div className={className}>Drop Wellplate here to add.</div>);
   }
 
-
   render() {
-    const { wellplates, deleteWellplate, importWellplate } = this.props;
+    const { wellplates, deleteWellplate, importWellplate, researchPlan } = this.props;
     return (
       <div>
         {this.renderDropZone()}
@@ -56,7 +55,7 @@ class ResearchPlanWellplates extends Component {
           {wellplates && wellplates.map((wellplate, wellplateIndex) => (
             <EmbeddedWellplate
               key={`${wellplate.short_label}-${wellplate.id}`}
-              researchPlan={this.props.researchPlan}
+              researchPlan={researchPlan}
               wellplate={wellplate}
               wellplateIndex={wellplateIndex}
               deleteWellplate={deleteWellplate}
@@ -64,7 +63,8 @@ class ResearchPlanWellplates extends Component {
             />
           ))}
         </Accordion>
-      </div>);
+      </div>
+    );
   }
 }
 

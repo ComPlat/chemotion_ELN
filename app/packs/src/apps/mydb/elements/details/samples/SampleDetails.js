@@ -509,7 +509,7 @@ export default class SampleDetails extends React.Component {
         {
           !sample.isNew && <CommentSection section="sample_analyses" element={sample} />
         }
-        <ListGroupItem style={{ paddingBottom: 20 }}>
+        <ListGroupItem className="pb-4">
           <SampleDetailsContainers
             sample={sample}
             setState={(newSample) => { this.setState(newSample); }}

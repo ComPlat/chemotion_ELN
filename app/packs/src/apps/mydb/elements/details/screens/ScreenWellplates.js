@@ -41,10 +41,10 @@ class ScreenWellplates extends Component {
 
   renderDropZone() {
     const { isOver, canDrop, connectDropTarget } = this.props;
-    const borderColor = isOver && canDrop ? 'border-primary' : 'border-gray-400';
+    const borderColor = isOver && canDrop ? 'dnd-zone-over' : '';
 
     return connectDropTarget( // eslint-disable-line function-paren-newline
-      <div className={`p-2 mb-4 border-dashed border-3 text-center text-gray-600 ${borderColor}`}>
+      <div className={`p-2 mb-4 dnd-zone text-center text-gray-600 ${borderColor}`}>
         Drop Wellplate here to add.
       </div>);
   }
