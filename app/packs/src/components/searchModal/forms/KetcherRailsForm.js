@@ -1,13 +1,15 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel } from 'react-bootstrap';
-import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
+import {
+  Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel
+} from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import StructureEditor from 'src/models/StructureEditor';
-import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { togglePanel, showErrorMessage, panelVariables } from 'src/components/searchModal/forms/SearchModalFunctions';
+import SearchResult from 'src/components/searchModal/forms/SearchResult';
 
-const KetcherRailsform = () => {
+function KetcherRailsform() {
   const ketcherStructure = {
     structure: {
       path: 'ketcher',
@@ -18,55 +20,17 @@ const KetcherRailsform = () => {
       getSVGFuncName: 'getSVG',
       getSVGWithCallback: false
     }
-  }
+  };
   const editor = new StructureEditor({ ...ketcherStructure, id: 'ketcher' });
 
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
+  const { pgCartridge } = UIStore.getState();
   let iframe;
-  
-  useEffect(() => {
-    iframe = document.getElementById('ketcher');
-    iframe.onload = () => {
-      if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
-        editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
-      }
-    }
-  }, [iframe]);
- 
-  const handleSearchTypeChange = (e) => {
-    searchStore.changeKetcherRailsValue('searchType', e.target.value);
-  }
 
-  const handleTanimotoChange = (e) => {
-    const val = e.target && e.target.value;
-    if (!isNaN(val - val)) {
-      searchStore.changeKetcherRailsValue('tanimotoThreshold', e.target.value);
-    }
-  }
-
-  const handleSearch = () => {
-    const structure = editor.structureDef;
-    const { molfile } = structure;
-    handleStructureEditorSave(molfile);
-  }
-
-  const handleStructureEditorSave = (molfile) => {
-    if (molfile) {
-      searchStore.changeKetcherRailsValue('queryMolfile', molfile);
-    }
-    let message = 'Please add a drawing. The drawing is empty';
-    searchStore.addErrorMessage(message);
-
-    //// Check if blank molfile
-    const molfileLines = molfile.match(/[^\r\n]+/g);
-    //// If the first character ~ num of atoms is 0, we will not search
-    if (molfileLines[1].trim()[0] != 0) {
-      searchStore.showSearchResults();
-      searchStore.removeErrorMessage(message);
-      structureSearch(molfile);
-    }
-  }
+  const searchValuesByMolfile = () => {
+    searchStore.changeSearchValues([searchStore.ketcherRailsValues.queryMolfile]);
+  };
 
   const structureSearch = (molfile) => {
     const uiState = UIStore.getState();
@@ -90,18 +54,57 @@ const KetcherRailsform = () => {
     });
     searchStore.clearSearchAndTabResults();
     searchValuesByMolfile();
-  }
+  };
+
+  useEffect(() => {
+    iframe = document.getElementById('ketcher');
+    iframe.onload = () => {
+      if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
+        editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
+      }
+    };
+  }, [iframe]);
+
+  const handleSearchTypeChange = (e) => {
+    searchStore.changeKetcherRailsValue('searchType', e.target.value);
+  };
+
+  const handleTanimotoChange = (e) => {
+    const val = e.target && e.target.value;
+    if (!Number.isNaN(val - val)) {
+      searchStore.changeKetcherRailsValue('tanimotoThreshold', e.target.value);
+    }
+  };
+
+  const handleStructureEditorSave = (molfile) => {
+    if (molfile) {
+      searchStore.changeKetcherRailsValue('queryMolfile', molfile);
+    }
+    const message = 'Please add a drawing. The drawing is empty';
+    searchStore.addErrorMessage(message);
+
+    /// / Check if blank molfile
+    const molfileLines = molfile.match(/[^\r\n]+/g);
+    /// / If the first character ~ num of atoms is 0, we will not search
+    if (molfileLines[1].trim()[0] !== 0) {
+      searchStore.showSearchResults();
+      searchStore.removeErrorMessage(message);
+      structureSearch(molfile);
+    }
+  };
+
+  const handleSearch = () => {
+    const structure = editor.structureDef;
+    const { molfile } = structure;
+    handleStructureEditorSave(molfile);
+  };
 
   const handleClear = () => {
     searchStore.clearSearchResults();
 
     const iframe = document.querySelector('#ketcher').contentWindow;
     iframe.document.querySelector('#new').click();
-  }
-
-  const searchValuesByMolfile = () => {
-    searchStore.changeSearchValues([searchStore.ketcherRailsValues.queryMolfile]);
-  }
+  };
 
   return (
     <>
@@ -134,7 +137,7 @@ const KetcherRailsform = () => {
                     <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
                       Cancel
                     </Button>
-                    <Button bsStyle="primary" onClick={handleSearch} style={{ marginRight: '20px' }} >
+                    <Button bsStyle="primary" onClick={handleSearch} style={{ marginRight: '20px' }}>
                       Search
                     </Button>
                   </ButtonToolbar>
@@ -163,7 +166,7 @@ const KetcherRailsform = () => {
                     checked={searchStore.ketcherRailsValues.searchType === 'sub'}
                     onChange={handleSearchTypeChange}
                   >
-                    Substructure Search
+                    {pgCartridge ? `Substructure Search with ${pgCartridge}` : 'Substructure Search'}
                   </Radio>
                 </Col>
               </Row>
