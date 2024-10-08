@@ -386,8 +386,9 @@ export default class ChemicalTab extends React.Component {
         <Select
           name="chemicalStatus"
           options={chemicalStatusOptions}
-          onChange={(e) => { this.handleFieldChanged('status', e.value); }}
-          value={chemicalStatusOptions.find(({value}) => value === status)}
+          onChange={(selectedOption) => { this.handleFieldChanged('status', selectedOption?.value); }}
+          value={chemicalStatusOptions.find(({ value }) => value === status)}
+          isClearable={false}
         />
       </Form.Group>
     );
@@ -688,10 +689,10 @@ export default class ChemicalTab extends React.Component {
         <Form.Label>Vendor</Form.Label>
         <Select
           name="chemicalVendor"
-          clearable={false}
+          isClearable={false}
           options={vendorOptions}
-          onChange={(e) => this.handleVendorOption(e.value)}
-          value={vendorValue}
+          onChange={(selectedOption) => this.handleVendorOption(selectedOption)}
+          value={vendorOptions.find((option) => option.value === vendorValue)}
         />
       </Form.Group>
     );
@@ -720,10 +721,10 @@ export default class ChemicalTab extends React.Component {
         </Form.Label>
         <Select
           name="queryOption"
-          clearable={false}
+          isClearable={false}
           options={queryOptions}
-          onChange={(e) => this.handleQueryOption(e.value)}
-          value={queryOption}
+          onChange={(selectedOption) => this.handleQueryOption(selectedOption?.value)}
+          value={queryOptions.find(({ value }) => value === queryOption)}
         />
       </Form.Group>
     );
@@ -742,10 +743,10 @@ export default class ChemicalTab extends React.Component {
         <Form.Label>Choose Language of SDS</Form.Label>
         <Select
           name="languageOption"
-          clearable={false}
+          isClearable={false}
           options={languageOptions}
-          onChange={(e) => this.handleLanguageOption(e.value)}
-          value={safetySheetLanguage}
+          onChange={(selectedOption) => this.handleLanguageOption(selectedOption?.value)}
+          value={languageOptions.find(({ value }) => value === safetySheetLanguage)}
         />
       </Form.Group>
     );
