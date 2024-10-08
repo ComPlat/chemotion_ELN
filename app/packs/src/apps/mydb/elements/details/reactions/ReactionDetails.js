@@ -47,7 +47,8 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
-
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import IndigoServiceFetcher from 'src/fetchers/InidigoFetcher';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -128,7 +129,7 @@ export default class ReactionDetails extends Component {
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
   onUIStoreChange(state) {
@@ -200,12 +201,12 @@ export default class ReactionDetails extends Component {
   }
 
   handleProductChange(product, cb) {
-    let { reaction } = this.state
+    let { reaction } = this.state;
 
-    reaction.updateMaterial(product)
-    reaction.changed = true
+    reaction.updateMaterial(product);
+    reaction.changed = true;
 
-    this.setState({ reaction }, cb)
+    this.setState({ reaction }, cb);
   }
 
   productLink(product) {
@@ -220,7 +221,7 @@ export default class ReactionDetails extends Component {
           <i className="icon-sample" />&nbsp;{product.title()}
         </span>
       </span>
-    )
+    );
   }
 
   productData(reaction) {
@@ -276,14 +277,14 @@ export default class ReactionDetails extends Component {
     if (!reaction.svgPath) {
       return false;
     } else {
-      const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
+      const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file };
       if (reaction.hasMaterials()) {
         return (
           <SvgFileZoomPan
             duration={300}
             resize={true}
             {...svgProps}
-          />)
+          />);
       }
     }
   }
@@ -408,13 +409,41 @@ export default class ReactionDetails extends Component {
     this.setState({ visible });
   }
 
+  generateMoleculeImagePath(moleculeSvgFile) {
+    return `/images/molecules/${moleculeSvgFile}`;
+  }
+
+  fetchIndigoSvg(material) {
+    if (material.already_processed) {
+      return Promise.resolve(this.generateMoleculeImagePath(material.sample_svg_file));
+    }
+
+    return IndigoServiceFetcher.rendertMolfileToSvg({ struct: material.molfile })
+      .then((indigoSVG) => {
+        if (indigoSVG.error) {
+          throw new Error('Failed to generate Indigo SVG.');
+        }
+        return MoleculesFetcher.fetchByMolfile(material.molfile, indigoSVG, 'ketcher2');
+      })
+      .then((mofileresponse) => {
+        if (!mofileresponse || !mofileresponse.molecule_svg_file) {
+          throw new Error('Failed to fetch molecule from Molfile.');
+        }
+        material.already_processed = true;
+        material.sample_svg_file = mofileresponse.molecule_svg_file;
+        return this.generateMoleculeImagePath(material.sample_svg_file);
+      })
+      .catch(() => Promise.resolve(material.svgPath || null));
+  }
+
+
   updateReactionSvg() {
     const { reaction } = this.state;
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map(material => material.svgPath),
-      reactants: reaction.reactants.map(material => material.svgPath),
-      products: reaction.products.map(material => [material.svgPath, material.equivalent])
-    };
+    const materialsPromise = Promise.all([
+      Promise.all(reaction.starting_materials.map(material => this.fetchIndigoSvg(material))),
+      Promise.all(reaction.reactants.map(material => this.fetchIndigoSvg(material))),
+      Promise.all(reaction.products.map(async material => [await this.fetchIndigoSvg(material), material.equivalent]))
+    ]);
 
     const solvents = reaction.solvents.map((s) => {
       const name = s.preferred_label;
@@ -426,10 +455,30 @@ export default class ReactionDetails extends Component {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
 
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions).then((result) => {
-      reaction.reaction_svg_file = result.reaction_svg;
-      this.setState(reaction);
-    });
+    materialsPromise
+      .then(([starting_materials_svg, reactants_svg, products_svg]) => {
+        const materialsSvgPaths = {
+          starting_materials: starting_materials_svg,
+          reactants: reactants_svg,
+          products: products_svg
+        };
+
+        return ReactionSvgFetcher.fetchByMaterialsSvgPaths(
+          materialsSvgPaths,
+          temperature,
+          solvents,
+          reaction.duration,
+          reaction.conditions
+        );
+      })
+      .then((result) => {
+        // Update the reaction's svg file with the result
+        reaction.reaction_svg_file = result.reaction_svg;
+        this.setState({ reaction }); // Correctly update the state
+      })
+      .catch((error) => {
+        console.error("Error fetching reaction SVG:", error);
+      });
   }
 
   handleSegmentsChange(se) {
@@ -538,7 +587,7 @@ export default class ReactionDetails extends Component {
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction}/>
+            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction} />
           }
           <GreenChemistry
             reaction={reaction}
@@ -558,7 +607,7 @@ export default class ReactionDetails extends Component {
 
     const tabTitlesMap = {
       green_chemistry: 'Green Chemistry'
-    }
+    };
 
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 

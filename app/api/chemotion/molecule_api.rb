@@ -1,6 +1,7 @@
 module Chemotion
   class MoleculeAPI < Grape::API
     include Grape::Kaminari
+    helpers IndigoServiceHelpers
 
     resource :molecules do
       namespace :sf do
@@ -8,7 +9,8 @@ module Chemotion
         params do
           requires :str, type: String, desc: 'escaped structure string'
           requires :search, type: String, desc: 'search for'
-          requires :ctype, type: String, desc: 'content Type of structure being searched', values: %w[x-cdxml x-mdl-molfile x-mdl-rxnfile]
+          requires :ctype, type: String, desc: 'content Type of structure being searched',
+                           values: %w[x-cdxml x-mdl-molfile x-mdl-rxnfile]
         end
         post do
           sfc = ScifinderNCredential.find_by(created_by: current_user.id)
@@ -59,6 +61,7 @@ module Chemotion
               molfile = rd_mol
             end
             return {} unless molfile
+
             molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
             molecule = Molecule.find_or_create_dummy if molecule.blank?
           end
@@ -80,7 +83,8 @@ module Chemotion
               end
             end
           end
-          molecule.attributes.merge(temp_svg: File.exist?(svg_process[:svg_file_path]) && svg_process[:svg_file_name], ob_log: babel_info[:ob_log])
+          molecule.attributes.merge(temp_svg: File.exist?(svg_process[:svg_file_path]) && svg_process[:svg_file_name],
+                                    ob_log: babel_info[:ob_log])
 
           present molecule, with: Entities::MoleculeEntity
         end
@@ -115,12 +119,12 @@ module Chemotion
               body: {
                 hmac_secret: cconfig.hmac_secret,
                 smiles: sample.molecule_cano_smiles,
-                compute_id: cp.id
-              }.to_json
+                compute_id: cp.id,
+              }.to_json,
             }
 
             req = HTTParty.post(cconfig.server, options)
-            cp.task_id = req.parsed_response["taskID"] if req.created?
+            cp.task_id = req.parsed_response['taskID'] if req.created?
             cp.status = 'pending'
           end
 
@@ -158,6 +162,30 @@ module Chemotion
           molecule&.attributes&.merge(temp_svg: svg_name, ob_log: ob)
 
           present molecule, with: Entities::MoleculeEntity
+        end
+      end
+
+      namespace :indigo do
+        desc 'Convert Molfile structure'
+        params do
+          requires :struct, type: String, desc: 'molfile'
+          optional :output_format, type: String, desc: 'output_format options from indigo service',
+                                   default: 'chemical/x-mdl-molfile'
+        end
+        post 'structure/convert' do
+          request_data = request_indigo_service(params[:struct], params[:output_format])
+          indigo_call_validate("#{request_data[0]}v2/indigo/convert", request_data[1])
+        end
+
+        desc 'render Molfile structure'
+        params do
+          requires :struct, type: String, desc: 'molfile'
+          optional :output_format, type: String, desc: 'output format for molfile',
+                                   default: 'image/svg+xml'
+        end
+        post 'structure/render' do
+          request_data = request_indigo_service(params[:struct], params[:output_format])
+          indigo_call_validate("#{request_data[0]}v2/indigo/render", request_data[1])
         end
       end
 
@@ -275,7 +303,8 @@ module Chemotion
         error!('Unauthorized to delete molecule name!', 401) unless current_user&.molecule_editor
 
         if params[:name_id] == -1
-          molecule_name = MoleculeName.create(molecule_id: params[:id], user_id: current_user.id, description: "#{params[:description]} #{current_user.id}", name: params[:name])
+          molecule_name = MoleculeName.create(molecule_id: params[:id], user_id: current_user.id,
+                                              description: "#{params[:description]} #{current_user.id}", name: params[:name])
         else
           molecule_name = MoleculeName.find(params[:name_id])
           molecule_name.update!(name: params[:name]) if molecule_name.present?
@@ -314,7 +343,10 @@ module Chemotion
         molecule = Molecule.find(params[:id])
         babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(params[:molfile])
         inchikey = babel_info && babel_info[:inchikey]
-        return { msg: { level: 'error', message: 'The InChIKey will be changed to ' + inchikey.to_s + ' . Record update failed!' } } unless inchikey.present? && molecule.inchikey == inchikey
+        unless inchikey.present? && molecule.inchikey == inchikey
+          return { msg: { level: 'error',
+                          message: 'The InChIKey will be changed to ' + inchikey.to_s + ' . Record update failed!' } }
+        end
 
         molecule.molfile = params[:molfile]
         molecule.molecule_svg_file = params[:svg_file]

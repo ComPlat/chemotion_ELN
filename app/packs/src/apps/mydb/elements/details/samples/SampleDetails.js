@@ -2,87 +2,99 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-param-reassign */
-import React from 'react';
+import classNames from 'classnames';
+import Clipboard from 'clipboard';
+import Immutable from 'immutable';
+import { cloneDeep, findIndex } from 'lodash';
 import PropTypes from 'prop-types';
+import React from 'react';
 import {
+  Alert,
   Button, ButtonToolbar,
-  InputGroup, FormGroup, FormControl,
-  Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, DropdownButton, MenuItem,
-  ControlLabel, Modal, Alert, Checkbox
+  Checkbox,
+  Col,
+  ControlLabel,
+  DropdownButton,
+  FormControl,
+  FormGroup,
+  Glyphicon,
+  InputGroup,
+  ListGroup, ListGroupItem,
+  MenuItem,
+  Modal,
+  OverlayTrigger,
+  Panel,
+  Row,
+  Tab,
+  Tabs,
+  Tooltip
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import Clipboard from 'clipboard';
 import Select from 'react-select';
-import { cloneDeep, findIndex } from 'lodash';
-import uuid from 'uuid';
-import classNames from 'classnames';
-import Immutable from 'immutable';
-
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import uuid from 'uuid';
 
+import QcActions from 'src/stores/alt/actions/QcActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import QcStore from 'src/stores/alt/stores/QcStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import QcActions from 'src/stores/alt/actions/QcActions';
-import QcStore from 'src/stores/alt/stores/QcStore';
 
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
+import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
-import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
-import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
-import Sample from 'src/models/Sample';
-import Container from 'src/models/Container';
-import PolymerSection from 'src/apps/mydb/elements/details/samples/propertiesTab/PolymerSection';
-import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup';
-import ToggleSection from 'src/components/common/ToggleSection';
-import SampleName from 'src/components/common/SampleName';
-import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
-import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
-import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsContainer';
-import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import Utils from 'src/utilities/Functions';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import SampleDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
-import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
-import { chmoConversions } from 'src/components/OlsComponent';
-import ConfirmClose from 'src/components/common/ConfirmClose';
-import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
-import CopyElementModal from 'src/components/common/CopyElementModal';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import MatrixCheck from 'src/components/common/MatrixCheck';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
-import FastInput from 'src/apps/mydb/elements/details/samples/FastInput';
-import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
-import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
-import { validateCas } from 'src/utilities/CasValidation';
-import ChemicalTab from 'src/components/ChemicalTab';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
-import CommentSection from 'src/components/comments/CommentSection';
-import CommentActions from 'src/stores/alt/actions/CommentActions';
-import CommentModal from 'src/components/common/CommentModal';
-import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import SampleDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import FastInput from 'src/apps/mydb/elements/details/samples/FastInput';
+import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
+import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
+import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup';
+import PolymerSection from 'src/apps/mydb/elements/details/samples/propertiesTab/PolymerSection';
+import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
+import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
+import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
+import ChemicalTab from 'src/components/ChemicalTab';
+import { chmoConversions } from 'src/components/OlsComponent';
+import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import CommentSection from 'src/components/comments/CommentSection';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
+import CommentModal from 'src/components/common/CommentModal';
+import ConfirmClose from 'src/components/common/ConfirmClose';
+import CopyElementModal from 'src/components/common/CopyElementModal';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import SampleName from 'src/components/common/SampleName';
+import ToggleSection from 'src/components/common/ToggleSection';
+import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsContainer';
+import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import Container from 'src/models/Container';
+import Sample from 'src/models/Sample';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { validateCas } from 'src/utilities/CasValidation';
+import { commentActivation } from 'src/utilities/CommentHelper';
+import Utils from 'src/utilities/Functions';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 
 const MWPrecision = 6;
-
 const decoupleCheck = (sample) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
     NotificationActions.add({
@@ -115,9 +127,7 @@ const rangeCheck = (field, sample) => {
 export default class SampleDetails extends React.Component {
   constructor(props) {
     super(props);
-
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-
     this.state = {
       sample: props.sample,
       reaction: null,
@@ -189,8 +199,8 @@ export default class SampleDetails extends React.Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (
       (nextProps.sample.isNew
-       && (typeof (nextProps.sample.molfile) === 'undefined'
-        || (nextProps.sample.molfile || '').length === 0)
+        && (typeof (nextProps.sample.molfile) === 'undefined'
+          || (nextProps.sample.molfile || '').length === 0)
       )
       || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey === 'DUMMY')
     ) {
@@ -299,7 +309,7 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
-    sample.contains_residues = molfile.indexOf(' R# ') > -1;
+    sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
@@ -800,9 +810,9 @@ export default class SampleDetails extends React.Component {
           <b>Chemical identifiers</b>
           {sample.decoupled
             && (
-            <span className="text-danger">
-              &nbsp;[decoupled]
-            </span>
+              <span className="text-danger">
+                &nbsp;[decoupled]
+              </span>
             )}
         </Col>
         <div className="col-md-6">
@@ -1024,8 +1034,8 @@ export default class SampleDetails extends React.Component {
     return (
       <div>
         <ConfirmClose el={sample} />
-        { isChemicalTab ? null : saveAndClose }
-        { isChemicalTab ? saveForChemical : save}
+        {isChemicalTab ? null : saveAndClose}
+        {isChemicalTab ? saveForChemical : save}
       </div>
     );
   }
@@ -1072,9 +1082,9 @@ export default class SampleDetails extends React.Component {
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span>
               <i className="icon-sample" />
-            &nbsp;&nbsp;
+              &nbsp;&nbsp;
               {sample.title()}
-            &nbsp;&nbsp;
+              &nbsp;&nbsp;
             </span>
           </OverlayTrigger>
           <ShowUserLabels element={sample} />
@@ -1352,7 +1362,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
+            + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
         });
         break;
       case chmoConversions.nmr_13c.termId:
@@ -1361,7 +1371,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-          + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
+            + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
         });
         break;
       case 'Others':
@@ -1369,7 +1379,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${a1.id}&type=analysis&size=small`
+            + `&analyses_ids[]=${a1.id}&type=analysis&size=small`
         });
         break;
       case 'Others2x':
@@ -1378,7 +1388,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&type=analysis&size=small`
+            + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&type=analysis&size=small`
         });
         break;
       case 'Others3x':
@@ -1388,7 +1398,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-              + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&analyses_ids[]=${a3.id}&type=analysis&size=small`
+            + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&analyses_ids[]=${a3.id}&type=analysis&size=small`
         });
         break;
       default:
@@ -1415,15 +1425,18 @@ export default class SampleDetails extends React.Component {
       svgPath = sample.svgPath;
     }
     const className = svgPath ? 'svg-container' : 'svg-container-empty';
+
     return (
       sample.can_update
         ? (
-          <>
+          <div
+            className={className}
+            style={{ position: 'relative' }}
+
+          >
             <div
-              className={className}
-              style={{ position: 'relative' }}
               onClick={this.showStructureEditor.bind(this)}
-              onKeyPress={this.showStructureEditor.bind(this)}
+              onKeyPress
               role="button"
               tabIndex="0"
             >
@@ -1431,16 +1444,17 @@ export default class SampleDetails extends React.Component {
               <SVG key={svgPath} src={svgPath} className="molecule-mid" />
             </div>
             <MolViewerBtn
-              className="structure-editor-container"
+              className={classNames("structure-editor-container", "structure-editor-container-without-convert-button")}
               disabled={sample.isNew || !this.enableMoleculeViewer}
               fileContent={sample.molfile}
               isPublic={false}
               viewType={`mol_${sample.id}`}
             />
-          </>
+          </div>
+
         )
         : (
-          <div className={className}>
+          <div>
             <SVG key={svgPath} src={svgPath} className="molecule-mid" />
             <MolViewerBtn
               className="structure-editor-container"
@@ -1631,29 +1645,29 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-          <strong>Structure Alert</strong>
-          &nbsp;
-          <Button
-            bsSize="xsmall"
-            bsStyle="warning"
-            onClick={() => this.setState({ pageMessage: null })}
-          >
-            Close Alert
-          </Button>
-          <br />
-          {
+      <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <strong>Structure Alert</strong>
+        &nbsp;
+        <Button
+          bsSize="xsmall"
+          bsStyle="warning"
+          onClick={() => this.setState({ pageMessage: null })}
+        >
+          Close Alert
+        </Button>
+        <br />
+        {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-          {
+        {
           pageMessage.warning.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-        </Alert>
-      ) : null;
+      </Alert>
+    ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
