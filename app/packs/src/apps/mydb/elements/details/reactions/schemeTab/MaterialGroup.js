@@ -156,22 +156,28 @@ function GeneralMaterialGroup({
     );
   }
 
-  const yieldConversionRateFields = () => (
-    <div>
-      <ToggleButton
-        isToggledInitial={displayYieldField}
-        onToggle={switchYield}
-        onLabel="Yield"
-        offLabel="C.R."
-        onColor="transparent"
-        offColor="transparent"
-        tooltipOn="Click to switch to conversion rate field"
-        tooltipOff="Click to switch to yield field"
-        fontSize="14px"
-        fontWeight="bold"
-      />
-    </div>
-  );
+  const yieldConversionRateFields = () => {
+    const conversionText = 'Click to switch to conversion field.'
+    + ' The conversion will not be displayed as part of the reaction scheme';
+    const yieldText = 'Click to switch to yield field.'
+    + ' The yield will be displayed as part of the reaction scheme';
+    return (
+      <div>
+        <ToggleButton
+          isToggledInitial={displayYieldField}
+          onToggle={switchYield}
+          onLabel="Yield"
+          offLabel="Conv."
+          onColor="transparent"
+          offColor="transparent"
+          tooltipOn={conversionText}
+          tooltipOff={yieldText}
+          fontSize="14px"
+          fontWeight="bold"
+        />
+      </div>
+    );
+  };
 
   if (materialGroup === 'products') {
     headers.group = 'Products';
