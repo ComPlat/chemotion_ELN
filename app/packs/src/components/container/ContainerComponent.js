@@ -79,7 +79,7 @@ export default class ContainerComponent extends Component {
         break;
       }
       case 'status':
-        container.extended_metadata.status = ev ? ev.value : undefined;
+        container.extended_metadata.status = ev;
         isChanged = true;
         break;
       case 'content':
@@ -182,6 +182,7 @@ export default class ContainerComponent extends Component {
                 value={confirmOptions.find(({value}) => value === container.extended_metadata.status)}
                 isDisabled={readOnly || disabled}
                 onChange={({value}) => this.handleInputChange('status', value)}
+                menuPortalTarget={document.body}
               />
             </div>
           </Col>
