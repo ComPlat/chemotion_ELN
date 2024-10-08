@@ -74,9 +74,11 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { researchPlan } = nextProps;
-    this.setState({ researchPlan });
+  componentDidUpdate(prevProps) {
+    const { researchPlan } = this.props;
+    if (researchPlan !== prevProps.researchPlan) {
+      this.setState({ researchPlan });
+    }
   }
 
   handleResearchPlanChange(el) {
