@@ -1,0 +1,90 @@
+.search-value-list {
+  position: relative;
+  max-height: 12vh;
+  min-height: 92px;
+  overflow-y: auto;
+}
+
+.search-result-tabs {
+  flex: 1 1 auto;
+  margin-bottom: 1.5rem;
+}
+
+.tab-spinner {
+  color: var(--bs-gray-400);
+  position: relative;
+  top: 1rem;
+  left: 1rem;
+}
+
+.search-result-tab-content-container {
+  overflow-y: auto;
+  min-height: 150px;
+  max-height: calc(85vh - 470px);
+  height: 100vh;
+  position: relative;
+  border: 1px solid var(--bs-gray-600);
+  border-top: none;
+}
+
+.search-result-tab-content-list {
+  background-color: var(--bs-gray-200);
+  padding: 0 1rem 1rem 1rem;
+  border-bottom: 1px solid var(--bs-gray-500);
+  border-top: 1px solid var(--bs-gray-200);
+}
+
+.search-result-tab-content-list:first-child {
+  border-top: none;
+}
+
+.search-result-tab-content-list p {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.search-result-tab-content-list p:first-child {
+  margin-top: 1rem;
+}
+
+.search-result-tab-content-list-white {
+  background-color: var(--bs-white);
+  padding: 1rem;
+  border-bottom: 1px solid var(--bs-gray-200);
+  border-top: 1px solid var(--bs-gray-100);
+}
+
+.search-result-tab-content-list-white:last-child {
+  border-bottom: none;
+}
+
+.search-result-molecule {
+  display: flex;
+}
+
+.search-result-molecule .preview-table {
+  max-width: 100px;
+  min-height: 100px;
+  margin-right: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.search-result-molecule.reaction .preview-table {
+  max-width: 300px;
+}
+
+.search-result-tab-content-list-name {
+  display: block;
+  margin: -1rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--bs-white);
+}
+
+.search-result-tab-content-list-name:hover, .search-result-tab-content-list-white div:hover {
+  cursor: pointer;
+}
+
+.search-result-pagination.pagination {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0;
+}
