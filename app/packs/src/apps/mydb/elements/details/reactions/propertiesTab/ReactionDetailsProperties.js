@@ -76,7 +76,7 @@ export default class ReactionDetailsProperties extends Component {
           reaction={reaction}
           onInputChange={(type, event) => this.props.onInputChange(type, event)}
         />
-        <Form.Group className="mx-2">
+        <Form.Group className="mx-1">
           <Form.Label>Type (Name Reaction Ontology)</Form.Label>
           <OlsTreeSelect
             selectName="rxno"
@@ -85,7 +85,7 @@ export default class ReactionDetailsProperties extends Component {
             selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
           />
         </Form.Group>
-        <Form.Group className="mx-2 my-3">
+        <Form.Group className="mx-1 my-3">
           <Form.Label>Dangerous Products</Form.Label>
           <Select
             name="dangerous_products"
@@ -94,11 +94,12 @@ export default class ReactionDetailsProperties extends Component {
             value={dangerousProductsOptions.filter((o) => reaction.dangerous_products?.includes(o.value))}
             isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('dangerous_products')}
             onChange={(selectedOptions) => this.handleMultiselectChange('dangerousProducts', selectedOptions)}
+            className="rounded"
           />
         </Form.Group>
         <hr className="my-4" />
-        <h4 className="m-2">TLC-Control</h4>
-        <Row className="mx-1 mt-3">
+        <h4 className="m-0">TLC-Control</h4>
+        <Row className="mt-3">
           <Col sm={6}>
             <Form.Group>
               <Form.Label>Solvents (parts)</Form.Label>
@@ -107,6 +108,7 @@ export default class ReactionDetailsProperties extends Component {
                   disabled={!permitOn(reaction)}
                   id="solvents_dd"
                   onSelect={this.handleOnSolventSelect}
+                  variant="light"
                 >
                   {solventsItems}
                 </DropdownButton>
@@ -133,7 +135,7 @@ export default class ReactionDetailsProperties extends Component {
             </Form.Group>
           </Col>
         </Row>
-        <Form.Group className="mx-2 mt-2">
+        <Form.Group className="mx-0 mt-2">
           <Form.Label>TLC-Description</Form.Label>
           <Form.Control
             as="textarea"
@@ -144,7 +146,7 @@ export default class ReactionDetailsProperties extends Component {
             onChange={(event) => this.props.onInputChange('tlcDescription', event)}
           />
         </Form.Group>
-        <div className="m-2">
+        <div className="mx-0 mt-2">
           <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
         </div>
       </Form>
