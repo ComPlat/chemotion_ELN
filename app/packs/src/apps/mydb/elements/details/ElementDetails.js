@@ -88,7 +88,6 @@ export default class ElementDetails extends Component {
     super(props);
     const { selecteds, activeKey, deletingElement } = ElementStore.getState();
     this.state = {
-      offsetTop: 70,
       fullScreen: false,
       selecteds,
       activeKey,
@@ -233,7 +232,7 @@ export default class ElementDetails extends Component {
 
   render() {
     const {
-      fullScreen, selecteds, activeKey, offsetTop
+      fullScreen, selecteds, activeKey
     } = this.state;
 
     const selectedElements = selecteds
@@ -249,26 +248,16 @@ export default class ElementDetails extends Component {
         </Tab>
       ));
 
-    const contents = (
-      <Tabs
-        id="elements-tabs"
-        activeKey={activeKey}
-        onSelect={DetailActions.select}
-      >
-        {selectedElements}
-      </Tabs>
+    return (
+      <div className={fullScreen ? "full-screen" : "normal-screen"}>
+        <Tabs
+          id="elements-tabs"
+          activeKey={activeKey}
+          onSelect={DetailActions.select}
+        >
+          {selectedElements}
+        </Tabs>
+      </div>
     );
-
-    return fullScreen
-      ? (
-        <div className="full-screen">
-          {contents}
-        </div>
-      )
-      : (
-        <div className="normal-screen">
-          {contents}
-        </div>
-      );
   }
 }
