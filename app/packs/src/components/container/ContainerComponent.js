@@ -27,7 +27,6 @@ export default class ContainerComponent extends Component {
       textTemplate: textTemplate && textTemplate.toJS()
     };
 
-    this.onChange = this.onChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
@@ -90,7 +89,8 @@ export default class ContainerComponent extends Component {
         break;
     }
 
-    if (isChanged) this.onChange(container);
+    const { onChange } = this.props
+    if (isChanged) onChange(container);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -127,10 +127,6 @@ export default class ContainerComponent extends Component {
     this.setState({ container });
   }
 
-  onChange(container) {
-    this.props.onChange(container);
-  }
-
   updateTextTemplates(textTemplate) {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
@@ -138,7 +134,7 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate } = this.state;
-    const { readOnly, disabled } = this.props;
+    const { readOnly, disabled, onChange } = this.props;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -223,7 +219,7 @@ export default class ContainerComponent extends Component {
             container={container}
             readOnly={readOnly}
             disabled={disabled}
-            onChange={this.onChange}
+            onChange={onChange}
           />
         </Col>
         <Col sm={12}>
@@ -244,7 +240,7 @@ ContainerComponent.propTypes = {
   ontologyName: PropTypes.string,
   analysisMethodTitle: PropTypes.string,
   templateType: PropTypes.string,
-  onChange: PropTypes.func,
+  onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   container: PropTypes.object
@@ -254,7 +250,6 @@ ContainerComponent.defaultProps = {
   ontologyName: 'chmo',
   analysisMethodTitle: 'Type (Chemical Methods Ontology)',
   templateType: '',
-  onChange: () => {},
   readOnly: false,
   disabled: false,
   container: {}
