@@ -130,13 +130,24 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       return;
     }
 
-    if (atoms_to_be_deleted.length) {
-      console.log("something to delete!");
-      // await fuelKetcherData();
+    if (atoms_to_be_deleted.length) { // reduce template indentifier based on the deleted templates
+      console.log(atoms_to_be_deleted);
+      // if (atoms_to_be_deleted.length >= 2) { // reduce counter by 1 if 2 consecutive delete atoms
+      //   for (let i = 0; i < atoms_to_be_deleted.length; i++) {
+      //     if (atoms_to_be_deleted[i + 1]) {
+      //       const split_current = atoms_to_be_deleted[i].alias.split("_");
+      //       const split_next = atoms_to_be_deleted[i + 1].alias.split("_");
+      //       if (parseInt(split_current[2]) - parseInt(split_next[2]) == 0) {
+      //         image_used_counter--;
+      //       }
+      //     }
+      //   }
+      // }
       atoms_to_be_deleted.forEach(async (item) => {
         await onEventDeleteAtom(item);
       });
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+      image_used_counter = image_used_counter - atoms_to_be_deleted.length;
       atoms_to_be_deleted = [];
     }
 
@@ -288,27 +299,28 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   // helper function to delete a template and reset the counter, assign new alias to all atoms
   const onEventDeleteAtom = async (atom) => {
+    console.log({ atom, mols });
     try {
-      let is_reduced = false;
       for (let m = 0; m < mols?.length; m++) {
         const mol = mols[m];
         const atoms = latestData[mol]?.atoms;
         for (let a = 0; a < atoms?.length; a++) {
+          let is_reduced = false;
           const item = atoms[a];
           if (three_parts_patten.test(item.alias)) {
             const atom_splits = atom?.alias?.split("_");
             const item_splits = item?.alias?.split("_");
-            if (parseInt(atom_splits[2]) < parseInt(item_splits[2])) {
+            if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
               console.log("should be updated", item);
               const step_back = parseInt(item_splits[2]) - 1;
               const new_alias = `${item_splits[0]}_${item_splits[1]}_${step_back}`;
               atoms[a].alias = new_alias;
               is_reduced = true;
+              // is_reduced && image_used_counter--;
             }
           }
         }
       };
-      is_reduced && image_used_counter--;
     } catch (err) {
       console.log({ err });
     };
