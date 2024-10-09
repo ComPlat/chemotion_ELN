@@ -54,7 +54,7 @@ module Chemotion
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id)
                              .for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
-          Sample.where(id: sample_ids).find_each do |sample|
+          Sample.where(id: sample_ids).each do |sample|
             subsample = sample.create_subsample(current_user, col_id, true, 'sample')
           end
 
@@ -319,7 +319,7 @@ module Chemotion
         optional :description, type: String, desc: 'Sample description'
         optional :metrics, type: String, desc: 'Sample metric units'
         optional :purity, type: Float, desc: 'Sample purity'
-        optional :solvent, type: [Hash], desc: 'Sample solvent'
+        optional :solvent, type: Array[Hash], desc: 'Sample solvent'
         optional :location, type: String, desc: 'Sample location'
         optional :molfile, type: String, desc: 'Sample molfile'
         optional :sample_svg_file, type: String, desc: 'Sample SVG file'
@@ -382,14 +382,14 @@ module Chemotion
             next if prop_value.blank?
 
             attributes.merge!(
-              "#{prop}_attributes": prop_value,
+              "#{prop}_attributes".to_sym => prop_value,
             )
           end
 
-          boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY
-          boiling_point_upperbound = params['boiling_point_upperbound'].presence || Float::INFINITY
-          melting_point_lowerbound = params['melting_point_lowerbound'].presence || -Float::INFINITY
-          melting_point_upperbound = params['melting_point_upperbound'].presence || Float::INFINITY
+          boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
+          boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
+          melting_point_lowerbound = (params['melting_point_lowerbound'].presence || -Float::INFINITY)
+          melting_point_upperbound = (params['melting_point_upperbound'].presence || Float::INFINITY)
           attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
           attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
           attributes.delete(:boiling_point_lowerbound)
@@ -452,7 +452,7 @@ module Chemotion
         requires :purity, type: Float, desc: 'Sample purity'
         optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
         # requires :solvent, type: String, desc: "Sample solvent"
-        optional :solvent, type: [Hash], desc: 'Sample solvent', default: []
+        optional :solvent, type: Array[Hash], desc: 'Sample solvent', default: []
         requires :location, type: String, desc: 'Sample location'
         optional :molfile, type: String, desc: 'Sample molfile'
         optional :sample_svg_file, type: String, desc: 'Sample SVG file'
@@ -519,10 +519,10 @@ module Chemotion
           sum_formula: params[:sum_formula],
         }
 
-        boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY
-        boiling_point_upperbound = params['boiling_point_upperbound'].presence || Float::INFINITY
-        melting_point_lowerbound = params['melting_point_lowerbound'].presence || -Float::INFINITY
-        melting_point_upperbound = params['melting_point_upperbound'].presence || Float::INFINITY
+        boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
+        boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
+        melting_point_lowerbound = (params['melting_point_lowerbound'].presence || -Float::INFINITY)
+        melting_point_upperbound = (params['melting_point_upperbound'].presence || Float::INFINITY)
         attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
         attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
 
@@ -543,7 +543,7 @@ module Chemotion
           next if prop_value.blank?
 
           attributes.merge!(
-            "#{prop}_attributes": prop_value,
+            "#{prop}_attributes".to_sym => prop_value,
           )
         end
         attributes.delete(:segments)
@@ -552,13 +552,13 @@ module Chemotion
         sample = Sample.new(attributes)
 
         if params[:collection_id]
-          collection = current_user.collections.find_by(id: params[:collection_id])
+          collection = current_user.collections.where(id: params[:collection_id]).take
           sample.collections << collection if collection.present?
         end
 
         is_shared_collection = false
         if collection.blank?
-          sync_collection = current_user.all_sync_in_collections_users.find_by(id: params[:collection_id])
+          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
           if sync_collection.present?
             is_shared_collection = true
             sample.collections << Collection.find(sync_collection['collection_id'])

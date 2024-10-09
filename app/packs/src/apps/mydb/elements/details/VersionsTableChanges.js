@@ -10,15 +10,21 @@ function VersionsTableChanges(props) {
   } = props;
 
   const revertibleFields = () => {
-    let filteredFields = [];
-
     if (isEdited) return -1;
+
+    let filteredFields = [];
 
     changes.forEach(({ fields }) => {
       filteredFields = filteredFields.concat(
-        fields.filter((field) => (field.currentValue !== field.oldValue && field.revert.length > 0))
+        fields.filter((field) => (field.revert.length > 0))
       );
     });
+
+    if (filteredFields.length === 0) {
+      return -2;
+    }
+
+    filteredFields = filteredFields.filter((field) => (field.currentValue !== field.oldValue));
 
     return filteredFields.length;
   };
@@ -37,15 +43,20 @@ function VersionsTableChanges(props) {
     </React.Fragment>
   ));
 
-  const alertText = revertibleFields() < 0
-    ? 'You cannot undo changes. You have unsaved data which would be lost.'
-    : `You cannot undo these changes.
-       Either the changes are up to date, it is the first version or all changes are irreversible.`;
+  const isRevertible = revertibleFields();
+  let alertText = 'You cannot undo changes. ';
+  if (isRevertible === 0) {
+    alertText += 'Every change is either up to date or irreversible';
+  } else if (isRevertible === -1) {
+    alertText += 'You have unsaved data which would be lost.';
+  } else {
+    alertText += 'Either it is the first version or all changes are irreversible.';
+  }
 
   return (
     <>
       {change}
-      {revertibleFields() > 0 ? <VersionsTableModal name={`# ${id}`} changes={changes} handleRevert={handleRevert} />
+      {isRevertible > 0 ? <VersionsTableModal name={`# ${id}`} changes={changes} handleRevert={handleRevert} />
         : (
           <Alert bsStyle="warning" className="history-alert">
             {alertText}
