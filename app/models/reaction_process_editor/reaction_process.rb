@@ -37,7 +37,7 @@ module ReactionProcessEditor
     end
 
     def initial_conditions
-      Entities::ReactionProcessEditor::SelectOptions::Conditions::GLOBAL_DEFAULTS
+      Entities::ReactionProcessEditor::SelectOptions::Forms::Condition::GLOBAL_DEFAULTS
         .merge(user_default_conditions)
         .merge(reaction_default_conditions)
     end
