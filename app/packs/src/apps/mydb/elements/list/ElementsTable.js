@@ -1,29 +1,38 @@
 /* eslint-disable camelcase */
 import React from 'react';
 
+import deepEqual from 'deep-equal';
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger
+  Col,
+  Form,
+  FormControl,
+  FormGroup,
+  Glyphicon,
+  InputGroup,
+  OverlayTrigger,
+  Pagination,
+  Row,
+  Tooltip
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
-import deepEqual from 'deep-equal';
 
-import UIStore from 'src/stores/alt/stores/UIStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import { SearchUserLabels } from 'src/components/UserLabels';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
-import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
-import Select from 'react-select';
 import PropTypes from 'prop-types';
-import CellLineGroup from 'src/models/cellLine/CellLineGroup';
+import Select from 'react-select';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
+import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
+import CellLineGroup from 'src/models/cellLine/CellLineGroup';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -43,6 +52,7 @@ export default class ElementsTable extends React.Component {
       elementsGroup: 'none',
       elementsSort: true,
       sortDirection: 'DESC',
+      showEmpty: false
     };
 
     this.onChange = this.onChange.bind(this);
@@ -83,6 +93,7 @@ export default class ElementsTable extends React.Component {
       });
     }
   }
+
   handleScrollToElement = () => {
     if (this.elementRef.current) {
       this.elementRef.current.scrollTo({ top: 0, left: 0, behavior: "smooth", });
@@ -258,10 +269,11 @@ export default class ElementsTable extends React.Component {
     );
   };
 
+
+
   collapseButton = () => {
     const { collapseAll } = this.state;
     const collapseIcon = collapseAll ? 'chevron-right' : 'chevron-down';
-
     return (
       <Glyphicon
         glyph={collapseIcon}
@@ -367,7 +379,7 @@ export default class ElementsTable extends React.Component {
           {items}
         </Pagination>
       </div>
-    )
+    );
   }
 
   renderSamplesHeader = () => {
@@ -651,7 +663,6 @@ export default class ElementsTable extends React.Component {
       moleculeSort,
       elementsGroup,
     } = this.state;
-
     const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
 
@@ -681,7 +692,7 @@ export default class ElementsTable extends React.Component {
           type={type}
         />
       );
-    } else if (type === 'cell_line'){
+    } else if (type === 'cell_line') {
       elementsTableEntries = (
         <CellLineContainer
         cellLineGroups={CellLineGroup.buildFromElements(elements)}
@@ -707,6 +718,7 @@ export default class ElementsTable extends React.Component {
       </div>
     );
   }
+
 
   render() {
     return (

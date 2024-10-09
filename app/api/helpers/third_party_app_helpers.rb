@@ -55,6 +55,7 @@ module ThirdPartyAppHelpers
   end
 
   # desc: return file for download to third party app
+
   def download_attachment_to_third_party_app
     update_cache(:download)
     return error!('No read access to attachment', 403) unless read_access?(@attachment, @user)

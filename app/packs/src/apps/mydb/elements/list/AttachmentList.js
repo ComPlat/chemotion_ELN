@@ -3,8 +3,7 @@ import {
   Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import { values } from 'lodash';
-// import { v4 as uuidv4 } from 'uuid';
+import {values} from 'lodash';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
@@ -12,6 +11,7 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -113,7 +113,7 @@ const handleOpenLocally = (attachment, option = 0) => {
 
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
-    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+    <Dropdown.Toggle style={{height: '30px'}} bsSize="xs" bsStyle="primary">
       <i className="fa fa-download" aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
@@ -256,13 +256,13 @@ export const importButton = (
   return (
     <div>
       <OverlayTrigger placement="top" overlay={importTooltip}>
-        <div style={{ float: 'right' }}>
+        <div style={{float: 'right'}}>
           <Button
             bsSize="xs"
             bsStyle="success"
             disabled={importDisabled || extension !== 'xlsx'}
             // eslint-disable-next-line no-param-reassign
-            ref={(ref) => { importButtonRefs[attachment.id] = ref; }}
+            ref={(ref) => {importButtonRefs[attachment.id] = ref;}}
             className={`attachment-button-size ${importDisabled
               || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
             onClick={() => showImportConfirmFunction(attachment.id)}
@@ -302,21 +302,21 @@ export const sortingAndFilteringUI = (
   }}
   >
     {isSortingEnabled && (
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <label style={{ marginRight: '10px' }}>Sort: </label>
-        <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
+        <label style={{marginRight: '10px'}}>Sort: </label>
+        <div className="sort-container" style={{display: 'flex', alignItems: 'center'}}>
           <select
             onChange={handleSortChange}
             className="sorting-row-style"
-            style={{ width: '100px', marginRight: '10px' }}
+            style={{width: '100px', marginRight: '10px'}}
           >
             <option value="name">Name</option>
             <option value="size">Size</option>
             <option value="date">Date</option>
           </select>
           <Button
-            style={{ marginRight: '10px', marginLeft: '-15px' }}
+            style={{marginRight: '10px', marginLeft: '-15px'}}
             onClick={toggleSortDirection}
             className="sort-icon-style"
           >
@@ -326,15 +326,15 @@ export const sortingAndFilteringUI = (
       </div>
     )}
 
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+    <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label style={{ marginRight: '10px' }}>Filter: </label>
+      <label style={{marginRight: '10px'}}>Filter: </label>
       <input
         type="text"
         placeholder="Filter by name..."
         onChange={handleFilterChange}
         className="sorting-row-style"
-        style={{ width: '250px' }}
+        style={{width: '250px'}}
       />
     </div>
   </div>

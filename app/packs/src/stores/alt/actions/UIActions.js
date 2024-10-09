@@ -24,11 +24,11 @@ class UIActions {
   }
 
   showDeviceManagement() {
-    return null
+    return null;
   }
 
   closeDeviceManagement() {
-    return null
+    return null;
   }
 
   selectTab(params) {
@@ -44,15 +44,15 @@ class UIActions {
   }
 
   toggleAdvancedSearch(show) {
-    return show
+    return show;
   }
 
   selectCollection(collection) {
-    return collection
+    return collection;
   }
 
   selectSyncCollection(syncCollection) {
-    return syncCollection
+    return syncCollection;
   }
 
   checkAllElements(params) {
@@ -91,6 +91,10 @@ class UIActions {
     return null;
   }
 
+  deSelectAttachmentTokens() {
+    return [];
+  }
+
   setPagination(pagination) {
     return pagination;
   }
@@ -120,11 +124,11 @@ class UIActions {
   }
 
   updateModalProps(params) {
-    return params
+    return params;
   }
 
   hideModal() {
-    return null
+    return null;
   }
 
   setFilterCreatedAt(filterCreatedAt) {

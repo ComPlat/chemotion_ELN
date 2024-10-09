@@ -5,7 +5,7 @@ import ManagingModalSharing from 'src/components/managingActions/ManagingModalSh
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
-import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons'
+import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
 
 export default class MyCollections extends React.Component {
   constructor(props) {
@@ -29,18 +29,18 @@ export default class MyCollections extends React.Component {
         selectUsers: true,
         isChange: false
       }
-    }
-    this.addSubcollection=this.addSubcollection.bind(this);
+    };
+    this.addSubcollection = this.addSubcollection.bind(this);
     this.onStoreChange = this.onStoreChange.bind(this);
   }
 
   componentDidMount() {
-    CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchUnsharedCollectionRoots()
+    CollectionStore.listen(this.onStoreChange);
+    CollectionActions.fetchUnsharedCollectionRoots();
   }
 
   componentWillUnmount() {
-    CollectionStore.unlisten(this.onStoreChange)
+    CollectionStore.unlisten(this.onStoreChange);
   }
 
   onStoreChange(state) {
@@ -67,26 +67,26 @@ export default class MyCollections extends React.Component {
   }
 
   hasChildren(node) {
-    return node.children && node.children.length > 0
+    return node.children && node.children.length > 0;
   }
 
   label(node) {
     if (node.id == -1) {
       return (
-        <FormControl 
-        value ="My Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
+        <FormControl
+          value="My Collections"
+          type="text"
+          className="root-label"
+          disabled />);
     } else {
       return (
         <FormControl
           className="collection-label"
           type="text"
           value={node.label || ''}
-          onChange={(e) => { this.handleLabelChange(e, node) }}
+          onChange={(e) => { this.handleLabelChange(e, node); }}
         />
-      )
+      );
     }
   }
 
@@ -101,13 +101,13 @@ export default class MyCollections extends React.Component {
   bulkUpdate() {
     // filter empty objects
     let collections = this.state.tree.children.filter((child) => {
-      return child.label
+      return child.label;
     });
 
     let params = {
       collections: collections,
       deleted_ids: this.state.deleted_ids
-    }
+    };
 
     CollectionActions.bulkUpdateUnsharedCollections(params);
   }
@@ -117,15 +117,15 @@ export default class MyCollections extends React.Component {
       const { isChange } = this.state;
       return (
         <div className="root-actions">
-          {isChange && <Button 
-          id="save-collections-button" 
-          bsSize="xsmall" 
-          bsStyle="warning" 
-          onMouseDown={(e)=>{e.stopPropagation();}}
-          onClick={this.bulkUpdate.bind(this)}> Save </Button>}
+          {isChange && <Button
+            id="save-collections-button"
+            bsSize="xsmall"
+            bsStyle="warning"
+            onMouseDown={(e) => { e.stopPropagation(); }}
+            onClick={this.bulkUpdate.bind(this)}> Save </Button>}
           {this.addCollectionButton(node)}
         </div>
-      )
+      );
     } else {
       return (
         <ButtonGroup className="actions">
@@ -150,7 +150,7 @@ export default class MyCollections extends React.Component {
             <i className="fa fa-trash-o"></i>
           </Button>
         </ButtonGroup>
-      )
+      );
     }
   }
 
@@ -180,27 +180,27 @@ export default class MyCollections extends React.Component {
 
 
           </div>
-        )
-      })
+        );
+      });
     }
     return (
       <div>{users.map(u => u)}</div>
-    )
+    );
   }
 
   doSync(node, action) {
-    let { modalProps, active } = this.state
+    let { modalProps, active } = this.state;
     modalProps.title = action == "CreateSync"
       ? "Synchronize '" + node.label + "'"
-      : "Edit Synchronization"
-    modalProps.show = true
-    modalProps.action = action
-    modalProps.collection = node
+      : "Edit Synchronization";
+    modalProps.show = true;
+    modalProps.action = action;
+    modalProps.collection = node;
     modalProps.selectUsers = action == "CreateSync"
       ? true
-      : false
-    active = node
-    this.setState({ modalProps, active })
+      : false;
+    active = node;
+    this.setState({ modalProps, active });
   }
 
   addCollectionButton(node) {
@@ -209,12 +209,12 @@ export default class MyCollections extends React.Component {
         id="add-new-collection-button"
         bsSize="xsmall"
         bsStyle="success"
-        onClick={(e)=>{this.addSubcollection(node);}}
-        onMouseDown={(e)=>{e.stopPropagation();}}
+        onClick={(e) => { this.addSubcollection(node); }}
+        onMouseDown={(e) => { e.stopPropagation(); }}
       >
         <i className="fa fa-plus"></i>
       </Button>
-    )
+    );
   }
 
   addSubcollectionButton(node) {
@@ -227,7 +227,7 @@ export default class MyCollections extends React.Component {
       >
         <i className="fa fa-plus"></i>
       </Button>
-    )
+    );
   }
 
   addSubcollection(node) {
@@ -250,15 +250,15 @@ export default class MyCollections extends React.Component {
     let children = node.children || [];
     let parent = this.findParentById(this.state.tree, node.id);
 
-    this.removeNodeById(parent, node.id)
-    this.appendChildrenToParent(parent, children)
+    this.removeNodeById(parent, node.id);
+    this.appendChildrenToParent(parent, children);
 
     if (!node.isNew) {
-      let deleted_ids = this.state.deleted_ids.concat([node.id])
+      let deleted_ids = this.state.deleted_ids.concat([node.id]);
 
       this.setState({
         deleted_ids: deleted_ids
-      })
+      });
     }
   }
 
@@ -286,7 +286,7 @@ export default class MyCollections extends React.Component {
       } else {
         let parent = this.findParentById(children[i], id);
         if (parent) {
-          return parent
+          return parent;
         }
       }
     }
@@ -294,7 +294,7 @@ export default class MyCollections extends React.Component {
 
   removeNodeById(parent, id) {
     parent.children = parent.children.filter((child) => {
-      return child.id != id
+      return child.id != id;
     });
   }
 
@@ -337,8 +337,8 @@ export default class MyCollections extends React.Component {
     }
   }
   render() {
-    let mPs = this.state.modalProps
-    let mPsC = mPs.collection
+    let mPs = this.state.modalProps;
+    let mPsC = mPs.collection;
     return (
       <div className="tree">
         <Tree
@@ -363,6 +363,6 @@ export default class MyCollections extends React.Component {
           </Modal.Body>
         </Modal>
       </div>
-    )
+    );
   }
 }

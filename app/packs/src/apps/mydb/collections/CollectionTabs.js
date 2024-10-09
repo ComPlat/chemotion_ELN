@@ -128,11 +128,11 @@ export default class CollectionTabs extends React.Component {
   label(node) {
     if (node.label === 'My Collections') {
       return (
-        <FormControl 
-        value ="My Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
+        <FormControl
+          value="My Collections"
+          type="text"
+          className="root-label"
+          disabled />);
     }
     return (
       <FormControl className="collection-label" type="text" value={node.label || ''} disabled />
@@ -168,7 +168,7 @@ export default class CollectionTabs extends React.Component {
                   onClick={this.onClickCollection.bind(this, node)}
                   title='Click to edit collection tab sorting'
                 >
-                  <i className='glyphicon glyphicon-pencil'/>
+                  <i className='glyphicon glyphicon-pencil' />
                 </Button>
               </ButtonGroup>
             </td>

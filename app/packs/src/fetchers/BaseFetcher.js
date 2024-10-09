@@ -68,7 +68,6 @@ export default class BaseFetcher {
     let filters;
     let reaction;
     let sortColumn;
-
     switch (type) {
       case 'samples':
         addQuery = `&product_only=${queryParams.productOnly || false}`
@@ -129,7 +128,6 @@ export default class BaseFetcher {
     Array.prototype.push.apply(attachments, container.attachments);
     container.children
       .forEach((child) => BaseFetcher.getAttachments(child, attachments));
-
     return attachments;
   }
 

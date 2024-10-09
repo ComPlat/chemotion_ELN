@@ -215,6 +215,7 @@ export default class ThirdPartyApp extends React.Component {
     const handleEdit = () => {
       const url = urlRef.value?.trim();
       const name = nameRef.value?.trim();
+
       const fileTypes = fileTypesRef.value?.trim();
 
       if (this.checkInput(name, url, fileTypes)) {
@@ -295,6 +296,7 @@ export default class ThirdPartyApp extends React.Component {
 
             <FormGroup controlId="formControlFileType">
               <Col componentClass={ControlLabel} sm={3}>
+
                 Compatible File types (MIME):
               </Col>
               <Col sm={9}>

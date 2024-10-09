@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import { Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -21,11 +22,11 @@ export default class CollectionSubtree extends React.Component {
       selected: false,
       root: props.root,
       visible: false
-    }
+    };
 
-    this.onChange = this.onChange.bind(this)
-    this.toggleExpansion = this.toggleExpansion.bind(this)
-    this.handleClick = this.handleClick.bind(this)
+    this.onChange = this.onChange.bind(this);
+    this.toggleExpansion = this.toggleExpansion.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
 
@@ -48,7 +49,7 @@ export default class CollectionSubtree extends React.Component {
 
   onChange(state) {
     if (state.currentCollection) {
-      const visible = this.isVisible(this.state.root, state)
+      const visible = this.isVisible(this.state.root, state);
       const { root } = this.state;
 
       const selectedCol = (
@@ -57,7 +58,7 @@ export default class CollectionSubtree extends React.Component {
       ) || (
           state.currentCollection.id == root.id &&
           state.currentCollection.isRemote == root.isRemote
-        )
+        );
 
       if (selectedCol) {
         this.setState({
@@ -75,12 +76,12 @@ export default class CollectionSubtree extends React.Component {
 
   isVisible(node, uiState) {
     if (node.descendant_ids) {
-      let currentCollectionId = parseInt(uiState.currentCollection.id)
-      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true
+      let currentCollectionId = parseInt(uiState.currentCollection?.id);
+      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true;
     }
 
     let { visibleRootsIds } = CollectionStore.getState();
-    return (visibleRootsIds.indexOf(node.id) > -1)
+    return (visibleRootsIds.indexOf(node.id) > -1);
   }
 
   selectedCssClass() {
@@ -135,7 +136,7 @@ export default class CollectionSubtree extends React.Component {
         <div className="take-ownership-btn">
           <i className="fa fa-exchange" onClick={e => this.handleTakeOwnership(e)} />
         </div>
-      )
+      );
     }
     return (<div />);
   }
@@ -171,6 +172,8 @@ export default class CollectionSubtree extends React.Component {
     collectionID = this.state.root.id;
     const collShow = this.props.root.sharer ? scollectionShow : collectionShow;
     collShow({ params: { collectionID } });
+    UIActions.deselectAllElements();
+    UIActions.deSelectAttachmentTokens();
   }
 
   urlForCurrentElement() {
@@ -185,36 +188,36 @@ export default class CollectionSubtree extends React.Component {
   }
 
   toggleExpansion(e) {
-    e.stopPropagation()
-    let { visible, root } = this.state
-    visible = !visible
-    this.setState({ visible: visible })
+    e.stopPropagation();
+    let { visible, root } = this.state;
+    visible = !visible;
+    this.setState({ visible: visible });
 
-    let { visibleRootsIds } = CollectionStore.getState()
+    let { visibleRootsIds } = CollectionStore.getState();
     if (visible) {
-      visibleRootsIds.push(root.id)
+      visibleRootsIds.push(root.id);
     } else {
       let descendantIds = root.descendant_ids
         ? root.descendant_ids
-        : root.children.map(function (s) { return s.id })
-      descendantIds.push(root.id)
-      visibleRootsIds = visibleRootsIds.filter(x => descendantIds.indexOf(x) == -1)
+        : root.children.map(function (s) { return s.id; });
+      descendantIds.push(root.id);
+      visibleRootsIds = visibleRootsIds.filter(x => descendantIds.indexOf(x) == -1);
     }
 
     // Remove duplicate
-    let newIds = Array.from(new Set(visibleRootsIds))
-    CollectionActions.updateCollectrionTree(newIds)
+    let newIds = Array.from(new Set(visibleRootsIds));
+    CollectionActions.updateCollectrionTree(newIds);
   }
 
   synchronizedIcon() {
-    let sharedUsers = this.state.root.sync_collections_users
+    let sharedUsers = this.state.root.sync_collections_users;
     return (
       sharedUsers && sharedUsers.length > 0
         ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers })}>
           <i className="fa fa-share-alt" style={{ float: "right" }}></i>
         </OverlayTrigger>
         : null
-    )
+    );
   }
 
 
@@ -265,7 +268,7 @@ export default class CollectionSubtree extends React.Component {
           {this.subtrees()}
         </ul>
       </div>
-    )
+    );
   }
 }
 
