@@ -785,7 +785,7 @@
   background-color: $black;
 }
 .ql-toolbar.ql-snow {
-  border: var(--bs-border-width) solid var(--bs-border-color);
+  @extend .border;
   box-sizing: border-box;
   font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
   padding: 8px;
@@ -825,7 +825,7 @@
 }
 .ql-snow .ql-tooltip input[type=text] {
   display: none;
-  border: var(--bs-border-width) solid var(--bs-border-color);
+  @extend .border;
   font-size: 13px;
   height: 26px;
   margin: 0px;
