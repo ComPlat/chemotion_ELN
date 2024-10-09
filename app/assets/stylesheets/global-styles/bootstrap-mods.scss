@@ -1,14 +1,51 @@
-.btn {
-  --bs-btn-border-color: rgba(0,0,0,0.1);
-  --bs-btn-disabled-border-color: rgba(0,0,0,0.1);
-  &.btn-link {
-    --bs-btn-border-color: transparent;
-    --bs-btn-disabled-border-color: transparent;
-  }
-  &.btn-info, &.btn-danger, &.btn-warning, &.btn-success, &.btn-secondary {
-    --bs-btn-color: #{$white};
-    --bs-btn-disabled-color: #{$white};
-    --bs-btn-hover-color: #{$white};
+$button-variant-colors: (
+  "primary": (
+    "bg-default": $chemstrap-blue,
+    "text-default": $white,
+    "bg-hover": $chemstrap-blue-light,
+    "text-hover": $white,
+    "bg-active": $chemstrap-blue-dark,
+    "text-active": $white,
+  ),
+  "secondary": (
+    "bg-default": $chemstrap-interaction-grey1,
+    "text-default": $chemstrap-grey4,
+    "bg-hover": $chemstrap-interaction-grey2,
+    "text-hover": $chemstrap-grey4,
+    "bg-active": $chemstrap-interaction-grey5,
+    "text-active": $white,
+  ),
+  "knock-out": (
+    "bg-default": transparent,
+    "text-default": $chemstrap-grey4,
+    "bg-hover": transparent,
+    "text-hover": $black,
+    "bg-active": transparent,
+    "text-active": $chemstrap-blue-dark,
+  ),
+);
+
+@mixin chemstrap-button-variant($name) {
+  @include button-variant(
+    map-get(map-get($button-variant-colors, $name), "bg-default"),
+    map-get(map-get($button-variant-colors, $name), "bg-default"),
+    map-get(map-get($button-variant-colors, $name), "text-default"),
+    map-get(map-get($button-variant-colors, $name), "bg-hover"),
+    map-get(map-get($button-variant-colors, $name), "bg-hover"),
+    map-get(map-get($button-variant-colors, $name), "text-hover"),
+    map-get(map-get($button-variant-colors, $name), "bg-active"),
+    map-get(map-get($button-variant-colors, $name), "bg-active"),
+    map-get(map-get($button-variant-colors, $name), "text-active"),
+    map-get(map-get($button-variant-colors, $name), "bg-default"),
+    map-get(map-get($button-variant-colors, $name), "bg-default"),
+    map-get(map-get($button-variant-colors, $name), "text-default"),
+  );
+}
+
+// custom chemstrap button variants
+@each $name, $colors in $button-variant-colors {
+  .btn-#{$name} {
+    @include chemstrap-button-variant($name);
   }
 }
 
