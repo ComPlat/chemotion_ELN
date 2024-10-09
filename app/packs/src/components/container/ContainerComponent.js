@@ -148,8 +148,7 @@ export default class ContainerComponent extends Component {
           template={textTemplate}
           analysis={container}
           updateTextTemplates={this.updateTextTemplates}
-          // eslint-disable-next-line react/jsx-no-bind
-          onChangeContent={this.handleInputChange.bind(this, 'content')}
+          onChangeContent={(e) => this.handleInputChange('content', e)}
         />
       );
     }
@@ -164,8 +163,7 @@ export default class ContainerComponent extends Component {
               type="text"
               label="Name"
               value={container.name}
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={this.handleInputChange.bind(this, 'name')}
+              onChange={(e) => this.handleInputChange('name', e)}
               disabled={readOnly || disabled}
             />
           </Col>
@@ -207,8 +205,7 @@ export default class ContainerComponent extends Component {
               label="Description"
               value={container.description || ''}
               disabled={readOnly || disabled}
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={this.handleInputChange.bind(this, 'description')}
+              onChange={(e) => this.handleInputChange('description', e)}
             />
           </Form.Group>
         </Col>
