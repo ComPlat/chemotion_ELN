@@ -27,7 +27,6 @@ export default class ContainerComponent extends Component {
       textTemplate: textTemplate && textTemplate.toJS()
     };
 
-    this.onChange = this.onChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
@@ -79,7 +78,7 @@ export default class ContainerComponent extends Component {
         break;
       }
       case 'status':
-        container.extended_metadata.status = ev ? ev.value : undefined;
+        container.extended_metadata.status = ev;
         isChanged = true;
         break;
       case 'content':
@@ -90,10 +89,9 @@ export default class ContainerComponent extends Component {
         break;
     }
 
-    if (isChanged) this.onChange(container);
+    const { onChange } = this.props
+    if (isChanged) onChange(container);
   }
-
-  // eslint-disable-next-line class-methods-use-this
 
   handleAddLink(link) {
     const { container } = this.state;
@@ -127,10 +125,6 @@ export default class ContainerComponent extends Component {
     this.setState({ container });
   }
 
-  onChange(container) {
-    this.props.onChange(container);
-  }
-
   updateTextTemplates(textTemplate) {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
@@ -138,7 +132,7 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate } = this.state;
-    const { readOnly, disabled } = this.props;
+    const { readOnly, disabled, onChange } = this.props;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -152,8 +146,7 @@ export default class ContainerComponent extends Component {
           template={textTemplate}
           analysis={container}
           updateTextTemplates={this.updateTextTemplates}
-          // eslint-disable-next-line react/jsx-no-bind
-          onChangeContent={this.handleInputChange.bind(this, 'content')}
+          onChangeContent={(e) => this.handleInputChange('content', e)}
         />
       );
     }
@@ -161,34 +154,33 @@ export default class ContainerComponent extends Component {
     return (
       <div>
         <Row>
-          <Col sm={8} className='mb-2'>
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          <Col sm={8} className="mb-2">
             <Form.Label>Name</Form.Label>
-            < Form.Control
+            <Form.Control
               type="text"
               label="Name"
               value={container.name}
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={this.handleInputChange.bind(this, 'name')}
+              onChange={(e) => this.handleInputChange('name', e)}
               disabled={readOnly || disabled}
             />
           </Col>
-          <Col sm={4} className='mb-2'>
+          <Col sm={4} className="mb-2">
             <div>
               <Form.Label>Status</Form.Label>
               <Select
                 name="status"
                 options={confirmOptions}
-                value={confirmOptions.find(({value}) => value === container.extended_metadata.status)}
+                value={confirmOptions.find(({ value }) => value === container.extended_metadata.status)}
                 isDisabled={readOnly || disabled}
-                onChange={({value}) => this.handleInputChange('status', value)}
+                onChange={({ value }) => this.handleInputChange('status', value)}
+                menuPortalTarget={document.body}
               />
             </div>
           </Col>
         </Row>
-        <Col sm={12} className='mb-2'>
-          <div className='mb-3'>
-            < Form.Label>{this.props.analysisMethodTitle}</Form.Label>
+        <Col sm={12} className="mb-2">
+          <div className="mb-3">
+            <Form.Label>{this.props.analysisMethodTitle}</Form.Label>
             <OlsTreeSelect
               selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
@@ -197,12 +189,12 @@ export default class ContainerComponent extends Component {
             />
           </div>
         </Col>
-        <Col sm={12} className='mb-2'>
+        <Col sm={12} className="mb-2">
           <Form.Group>
             <Form.Label>Content</Form.Label>
             {quill}
           </Form.Group>
-          <Form.Group className='my-3'>
+          <Form.Group className="my-3">
             <Form.Label>Description</Form.Label>
             <Form.Control
               as="textarea"
@@ -210,19 +202,17 @@ export default class ContainerComponent extends Component {
               label="Description"
               value={container.description || ''}
               disabled={readOnly || disabled}
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={this.handleInputChange.bind(this, 'description')}
+              onChange={(e) => this.handleInputChange('description', e)}
             />
           </Form.Group>
         </Col>
         <Col sm={12} >
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <Form.Label>Datasets</Form.Label>
           <ContainerDatasets
             container={container}
             readOnly={readOnly}
             disabled={disabled}
-            onChange={this.onChange}
+            onChange={onChange}
           />
         </Col>
         <Col sm={12}>
@@ -243,7 +233,7 @@ ContainerComponent.propTypes = {
   ontologyName: PropTypes.string,
   analysisMethodTitle: PropTypes.string,
   templateType: PropTypes.string,
-  onChange: PropTypes.func,
+  onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   container: PropTypes.object
@@ -253,7 +243,6 @@ ContainerComponent.defaultProps = {
   ontologyName: 'chmo',
   analysisMethodTitle: 'Type (Chemical Methods Ontology)',
   templateType: '',
-  onChange: () => {},
   readOnly: false,
   disabled: false,
   container: {}

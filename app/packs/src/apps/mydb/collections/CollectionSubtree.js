@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -177,28 +177,18 @@ export default class CollectionSubtree extends React.Component {
       <div className="tree-view" key={root.id}>
         <div
           id={`tree-id-${root.label}`}
-          className={`title ${selected ? 'selected' : ''} d-flex align-items-baseline`}
+          className={`title ${selected ? 'selected' : ''} d-flex align-items-baseline gap-1`}
           onClick={this.handleClick}
         >
           {showGatePushButton && (<GatePushButton collectionId={root.id} />)}
           <span className="me-auto">{label}</span>
           {inventoryPrefix && (
-            <div style={{ position: 'relative', float: 'right', paddingRight: '5px' }}>
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip id="collection_inventory_label">Inventory Label</Tooltip>}
-              >
-                <i
-                  className="collection-inventory-prefix"
-                >
-                  <span
-                    className="collection-inventory-prefix-span"
-                  >
-                    {inventoryPrefix}
-                  </span>
-                </i>
-              </OverlayTrigger>
-            </div>
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="collection_inventory_label">Inventory Label</Tooltip>}
+            >
+              <Badge>{inventoryPrefix}</Badge>
+            </OverlayTrigger>
           )}
           {this.canTakeOwnership() && (
             <i
@@ -213,7 +203,7 @@ export default class CollectionSubtree extends React.Component {
           )}
           {this.hasChildren() && (
             <i
-              className={`fa fa-${visible ? 'minus' : 'plus'} ms-1`}
+              className={`fa fa-${visible ? 'minus' : 'plus'}`}
               onClick={this.toggleExpansion}
             />
           )}
