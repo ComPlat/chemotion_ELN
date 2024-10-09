@@ -1,8 +1,9 @@
-$primary: #337ab7;
-$success: #5cb85c;
-$info: #5bc0de;
-$warning: #f0ad4e;
-$danger: #d9534f;
+$primary: $chemstrap-blue;
+$secondary: $chemstrap-interaction-grey1;
+$success: $chemstrap-green;
+$info: #5bc0de; // to be removed application wide
+$warning: $chemstrap-yellow;
+$danger: $chemstrap-red;
 
 $zindex-levels: (
   n1: -1,
@@ -18,6 +19,7 @@ $zindex-levels: (
 @import "bootstrap/variables";
 @import "bootstrap/mixins";
 
+$font-family-sans-serif: 'Roboto', sans-serif;
 $font-size-root: 14px;
 $font-size-base: 1rem;
 $h1-font-size: $font-size-base * 2;
