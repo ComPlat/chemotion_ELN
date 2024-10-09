@@ -204,6 +204,10 @@ export default class ResearchPlan extends Element {
       (attachmentInResearchPlan) => attachmentInResearchPlan.identifier
     );
 
+    if (!attachmentsToAdd) {
+      return
+    }
+
     attachmentsToAdd
       .filter((attachment) => idsOfAttachmentsInResearchPlan.includes(attachment.identifier))
       .map((source) => {
@@ -233,11 +237,14 @@ export default class ResearchPlan extends Element {
   removeFieldFromBody(fieldId) {
     const index = this.body.findIndex((field) => field.id === fieldId);
     if (index === -1) { return; }
-    let { identifier } = this.body[index].value;
-    if (!identifier) {
-      identifier = this.body[index].value.public_name;
+
+    if (this.body[index].value) {
+      let { identifier } = this.body[index].value;
+      if (!identifier) {
+        identifier = this.body[index].value.public_name;
+      }
+      this.markAttachmentAsDeleted(identifier);
     }
-    this.markAttachmentAsDeleted(identifier);
     this.body.splice(index, 1);
     this.changed = true;
   }

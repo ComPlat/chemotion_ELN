@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
+import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
   Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
-import { findIndex } from 'lodash';
+import { findIndex, isEmpty } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
@@ -17,7 +18,8 @@ import ReactionDetailsLiteratures from 'src/apps/mydb/elements/details/literatur
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
-import ReactionDetailsProperties from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
+import ReactionDetailsProperties from
+  'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
 import GreenChemistry from 'src/apps/mydb/elements/details/reactions/greenChemistryTab/GreenChemistry';
 import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -47,15 +49,39 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
+const handleProductClick = (product) => {
+  const uri = Aviator.getCurrentURI();
+  const uriArray = uri.split(/\//);
+  Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
+  sampleShowOrNew({ params: { sampleID: product.id } });
+};
 
+const productLink = (product) => (
+  <span>
+    Analysis: &nbsp;
+    <span
+      aria-hidden="true"
+      className="pseudo-link"
+      onClick={() => handleProductClick(product)}
+      style={{ cursor: 'pointer' }}
+      title="Open sample window"
+    >
+      <i className="icon-sample" />
+      &nbsp;
+      {product.title()}
+    </span>
+  </span>
+);
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
 
     const { reaction } = props;
     this.state = {
-      reaction: reaction,
+      reaction,
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
@@ -99,11 +125,14 @@ export default class ReactionDetails extends Component {
     const { reaction } = this.state;
     const nextReaction = nextProps.reaction;
 
-    if (nextReaction.id !== reaction.id ||
-      nextReaction.updated_at !== reaction.updated_at ||
-      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
-      nextReaction.changed || nextReaction.editedSample) {
-      this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
+    if (
+      nextReaction.id !== reaction.id
+      || nextReaction.updated_at !== reaction.updated_at
+      || nextReaction.reaction_svg_file !== reaction.reaction_svg_file
+      || nextReaction.changed
+      || nextReaction.editedSample
+    ) {
+      this.setState((prevState) => ({ ...prevState, reaction: nextReaction }));
     }
   }
 
@@ -117,28 +146,18 @@ export default class ReactionDetails extends Component {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
     } = this.state;
     return (
-      reactionFromNextProps.id !== reactionFromCurrentState.id ||
-      reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
-      reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
-      !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
-      nextActiveTab !== activeTab || nextVisible !== visible ||
-      nextActiveAnalysisTab !== activeAnalysisTab
+      reactionFromNextProps.id !== reactionFromCurrentState.id
+      || reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at
+      || reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file
+      || !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample
+      || nextActiveTab !== activeTab || nextVisible !== visible
+      || nextActiveAnalysisTab !== activeAnalysisTab
       || reactionFromNextState !== reactionFromCurrentState
     );
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
-  }
-
-  onUIStoreChange(state) {
-    if (state.reaction.activeTab != this.state.activeTab ||
-      state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
-      this.setState({
-        activeTab: state.reaction.activeTab,
-        activeAnalysisTab: state.reaction.activeAnalysisTab
-      });
-    }
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
   handleSubmit(closeView = false) {
@@ -156,18 +175,14 @@ export default class ReactionDetails extends Component {
     }
   }
 
-  reactionIsValid() {
-    const { reaction } = this.state;
-    return reaction.hasMaterials() && reaction.SMGroupValid();
-  }
-
   handleReactionChange(reaction, options = {}) {
-    reaction.updateMaxAmountOfProducts();
-    reaction.changed = true;
+    const updatedReaction = reaction;
+    updatedReaction.updateMaxAmountOfProducts();
+    updatedReaction.changed = true;
     if (options.schemaChanged) {
-      this.setState({ reaction }, () => this.updateReactionSvg());
+      this.setState({ updatedReaction }, () => this.updateReactionSvg());
     } else {
-      this.setState({ reaction });
+      this.setState({ updatedReaction });
     }
   }
 
@@ -183,7 +198,7 @@ export default class ReactionDetails extends Component {
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
     } else {
-      value = event.target.value;
+      ({ value } = event.target);
     }
 
     const { reaction } = this.state;
@@ -192,43 +207,66 @@ export default class ReactionDetails extends Component {
     this.handleReactionChange(newReaction, options);
   }
 
-  handleProductClick(product) {
-    const uri = Aviator.getCurrentURI();
-    const uriArray = uri.split(/\//);
-    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
-    sampleShowOrNew({ params: { sampleID: product.id } });
-  }
-
   handleProductChange(product, cb) {
-    let { reaction } = this.state
+    const { reaction } = this.state;
 
-    reaction.updateMaterial(product)
-    reaction.changed = true
+    reaction.updateMaterial(product);
+    reaction.changed = true;
 
-    this.setState({ reaction }, cb)
+    this.setState({ reaction }, cb);
   }
 
-  productLink(product) {
-    return (
-      <span>
-        Analysis:
-        &nbsp;
-        <span className="pseudo-link"
-          onClick={() => this.handleProductClick(product)}
-          style={{ cursor: 'pointer' }}
-          title="Open sample window">
-          <i className="icon-sample" />&nbsp;{product.title()}
-        </span>
-      </span>
-    )
+  handleSelect = (key) => {
+    UIActions.selectTab({ tabKey: key, type: 'reaction' });
+    this.setState({
+      activeTab: key
+    });
+  };
+
+  handleSelectActiveAnalysisTab = (key) => {
+    UIActions.selectActiveAnalysisTab(key);
+    this.setState({
+      activeAnalysisTab: key
+    });
+  };
+
+  handleSegmentsChange(se) {
+    const { reaction } = this.state;
+    const { segments } = reaction;
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    reaction.segments = segments;
+    reaction.changed = true;
+    this.setState({ reaction });
+  }
+
+  onUIStoreChange(state) {
+    const { activeTab } = this.state;
+    const { activeAnalysisTab } = this.state;
+    if (state.reaction.activeTab !== activeTab
+      || state.reaction.activeAnalysisTab !== activeAnalysisTab) {
+      this.setState({
+        activeTab: state.reaction.activeTab,
+        activeAnalysisTab: state.reaction.activeAnalysisTab
+      });
+    }
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  reactionIsValid() {
+    const { reaction } = this.state;
+    return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
   productData(reaction) {
-    const { products } = this.state.reaction;
+    const { products } = reaction;
     const { activeAnalysisTab } = this.state;
 
     const tabs = products.map((product, key) => {
-      const title = this.productLink(product);
+      const title = productLink(product);
       const setState = () => this.handleProductChange(product);
       const handleSampleChanged = (_, cb) => this.handleProductChange(product, cb);
 
@@ -248,14 +286,21 @@ export default class ReactionDetails extends Component {
         </Tab>
       );
     });
-    const reactionTab = <span>Analysis:&nbsp;<i className="icon-reaction" />&nbsp;{reaction.short_label}</span>;
+    const reactionTab = (
+      <span>
+        Analysis:&nbsp;
+        <i className="icon-reaction" />
+        &nbsp;
+        {reaction.short_label}
+      </span>
+    );
     return (
       <Tabs
         id="data-detail-tab"
         style={{ marginTop: '10px' }}
         unmountOnExit
         activeKey={activeAnalysisTab}
-        onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
+        onSelect={this.handleSelectActiveAnalysisTab}
       >
         {tabs}
         <Tab eventKey={4.1} title={reactionTab}>
@@ -272,20 +317,17 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  reactionSVG(reaction) {
-    if (!reaction.svgPath) {
+  reactionSVG() {
+    const { reaction } = this.state;
+    if (!reaction.svgPath || !reaction.hasMaterials()) {
       return false;
-    } else {
-      const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
-      if (reaction.hasMaterials()) {
-        return (
-          <SvgFileZoomPan
-            duration={300}
-            resize={true}
-            {...svgProps}
-          />)
-      }
     }
+
+    const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg'
+      ? { svgPath: reaction.svgPath }
+      : { svg: reaction.reaction_svg_file };
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <SvgFileZoomPan duration={300} resize {...svgProps} />;
   }
 
   reactionHeader(reaction) {
@@ -293,9 +335,8 @@ export default class ReactionDetails extends Component {
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
+    const defCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     const copyBtn = (reaction.can_copy === true && !reaction.isNew) ? (
       <CopyElementModal
@@ -308,18 +349,25 @@ export default class ReactionDetails extends Component {
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
-    const rsPlanLabel = (reaction.isNew || _.isEmpty(reaction.research_plans)) ? null : (
+    const rsPlanLabel = (reaction.isNew || isEmpty(reaction.research_plans)) ? null : (
       <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
     );
+    const { toggleFullScreen } = this.props;
 
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-reaction" />&nbsp;{reaction.title()}</span>
+          <span>
+            <i className="icon-reaction" />
+            &nbsp;
+            {reaction.title()}
+          </span>
         </OverlayTrigger>
         <ConfirmClose el={reaction} />
-        <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}
+        >
           <Button
             bsStyle="warning"
             bsSize="xsmall"
@@ -332,13 +380,19 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-times" />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}
+        >
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
             onClick={() => this.handleSubmit()}
             disabled={!permitOn(reaction) || !this.reactionIsValid()}
-            style={{ display: hasChanged }} >
-            <i className="fa fa-floppy-o "></i>
+            style={{ display: hasChanged }}
+          >
+            <i className="fa fa-floppy-o " />
           </Button>
         </OverlayTrigger>
         {copyBtn}
@@ -350,7 +404,7 @@ export default class ReactionDetails extends Component {
             bsStyle="info"
             bsSize="xsmall"
             className="button-right"
-            onClick={() => this.props.toggleFullScreen()}
+            onClick={() => toggleFullScreen()}
           >
             <i className="fa fa-expand" />
           </Button>
@@ -364,22 +418,22 @@ export default class ReactionDetails extends Component {
             bsSize="xsmall"
             className="button-right"
             disabled={reaction.changed || reaction.isNew}
-            title={(reaction.changed || reaction.isNew) ?
-              "Report can be generated after reaction is saved."
-              : "Generate report for this reaction"}
+            title={(reaction.changed || reaction.isNew)
+              ? 'Report can be generated after reaction is saved.'
+              : 'Generate report for this reaction'}
             onClick={() => Utils.downloadFile({
-              contents: "/api/v1/reports/docx?id=" + reaction.id,
+              contents: `/api/v1/reports/docx?id=${reaction.id}`,
               name: reaction.name
             })}
           >
             <i className="fa fa-cogs" />
           </Button>
         </OverlayTrigger>
-        <div style={{ display: "inline-block", marginLeft: "10px" }}>
+        <div style={{ display: 'inline-block', marginLeft: '10px' }}>
           {colLabel}
           {rsPlanLabel}
           <ShowUserLabels element={reaction} />
-          <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
+          <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
           <HeaderCommentSection element={reaction} />
         </div>
         {reaction.isNew
@@ -390,43 +444,31 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  handleSelect(key) {
-    UIActions.selectTab({ tabKey: key, type: 'reaction' });
-    this.setState({
-      activeTab: key
-    });
-  }
-
-  handleSelectActiveAnalysisTab(key) {
-    UIActions.selectActiveAnalysisTab(key);
-    this.setState({
-      activeAnalysisTab: key
-    });
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
   updateReactionSvg() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map(material => material.svgPath),
-      reactants: reaction.reactants.map(material => material.svgPath),
-      products: reaction.products.map(material => [material.svgPath, material.equivalent])
+      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
+      reactants: reaction.reactants.map((material) => material.svgPath),
+      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
     const solvents = reaction.solvents.map((s) => {
       const name = s.preferred_label;
       return name;
-    }).filter(s => s);
+    }).filter((s) => s);
 
     let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+    if (/^[-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
 
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions).then((result) => {
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(
+      materialsSvgPaths,
+      temperature,
+      solvents,
+      reaction.duration,
+      reaction.conditions
+    ).then((result) => {
       reaction.reaction_svg_file = result.reaction_svg;
       this.setState(reaction);
     });
@@ -471,7 +513,7 @@ export default class ReactionDetails extends Component {
   }
 
   render() {
-    const { reaction, visible, activeTab } = this.state;
+    const { reaction, visible, activeTab, sfn } = this.state;
     this.updateReactionVesselSize(reaction);
     const schemeTitle = reaction && activeTab === 'scheme' ? (
       <div style={{ display: 'flex' }}>
@@ -497,7 +539,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsScheme
             reaction={reaction}
-            onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+            onReactionChange={(r, options) => this.handleReactionChange(r, options)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
           />
         </Tab>
@@ -509,7 +551,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsProperties
             reaction={reaction}
-            onReactionChange={r => this.handleReactionChange(r)}
+            onReactionChange={(r) => this.handleReactionChange(r)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
             key={reaction.checksum}
           />
@@ -523,7 +565,7 @@ export default class ReactionDetails extends Component {
           <ReactionDetailsLiteratures
             element={reaction}
             literatures={reaction.isNew === true ? reaction.literatures : null}
-            onElementChange={r => this.handleReactionChange(r)}
+            onElementChange={(r) => this.handleReactionChange(r)}
           />
         </Tab>
       ),
@@ -538,7 +580,7 @@ export default class ReactionDetails extends Component {
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction}/>
+            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction} />
           }
           <GreenChemistry
             reaction={reaction}
@@ -553,12 +595,27 @@ export default class ReactionDetails extends Component {
             onReactionChange={this.handleReactionChange}
           />
         </Tab>
-      )
+      ),
+      versions: (
+        <Tab
+          eventKey="versioning"
+          title="Versions"
+          key={`Versions_Reaction_${reaction.id.toString()}`}
+        >
+          <VersionsTable
+            type="reactions"
+            id={reaction.id}
+            element={reaction}
+            parent={this}
+            isEdited={reaction.changed}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
       green_chemistry: 'Green Chemistry'
-    }
+    };
 
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 
@@ -571,11 +628,13 @@ export default class ReactionDetails extends Component {
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
 
-    const currentTab = (activeTab !== 0 && activeTab) || visible[0];
+    const currentActiveTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <Panel className="eln-panel-detail"
-        bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
+      <Panel
+        className="eln-panel-detail"
+        bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}
+      >
         <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
         <Panel.Body>
           {this.reactionSVG(reaction)}
@@ -585,8 +644,14 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          {this.state.sfn ? <ScifinderSearch el={reaction} /> : null}
-          <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
+          {sfn ? <ScifinderSearch el={reaction} /> : null}
+          <Tabs
+            mountOnEnter
+            activeKey={currentActiveTab}
+            onSelect={this.handleSelect}
+            id="reaction-detail-tab"
+            unmountOnExit
+          >
             {tabContents}
           </Tabs>
           <hr />
@@ -594,7 +659,12 @@ export default class ReactionDetails extends Component {
             <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
               Close
             </Button>
-            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
+            <Button
+              id="submit-reaction-btn"
+              bsStyle="warning"
+              onClick={() => this.handleSubmit()}
+              disabled={!permitOn(reaction) || !this.reactionIsValid()}
+            >
               {submitLabel}
             </Button>
             {exportButton}
@@ -607,6 +677,7 @@ export default class ReactionDetails extends Component {
 }
 
 ReactionDetails.propTypes = {
-  reaction: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
+  // eslint-disable-next-line react/forbid-prop-types
+  reaction: PropTypes.object.isRequired,
+  toggleFullScreen: PropTypes.func.isRequired,
 };
