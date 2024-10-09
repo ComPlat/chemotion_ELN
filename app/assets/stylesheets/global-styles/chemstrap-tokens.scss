@@ -1,0 +1,74 @@
+/* Define a mixin for @font-face */
+@mixin font-face($font-style, $font-weight, $file-name) {
+  @font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Roboto';
+    font-style: $font-style;
+    font-weight: $font-weight;
+    src: url('#{$file-name}.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }
+}
+
+/* Iterate over font weights and styles */
+$font-weights: 400, 500, 600, 700;
+$font-styles: normal, italic;
+
+@each $weight in $font-weights {
+  @each $style in $font-styles {
+    $file-name: 'roboto-v32-latin-#{$weight}';
+    @if $style == italic {
+      $file-name: '#{$file-name}italic';
+    }
+    @include font-face($style, $weight, $file-name);
+  }
+}
+
+/* Colors */
+$chemstrap-blue: #2495CF; //primary
+$chemstrap-blue-light: #009FF0; //primary-hover
+$chemstrap-blue-dark: #015C8E; //primary-active
+$chemstrap-red: #FF5555; //danger
+$chemstrap-green: #7ECA02; //success
+$chemstrap-yellow: #FFB155; //warning
+$chemstrap-grey1: #DEE5E8;
+$chemstrap-grey2: #ACBAC0;
+$chemstrap-grey3: #848E92;
+$chemstrap-grey4: #4F5659; //secondary-text-default
+$chemstrap-grey5: #333C41;
+$chemstrap-interaction-grey0: #EFF6F9;
+$chemstrap-interaction-grey1: #E9F0F3; //secondary
+$chemstrap-interaction-grey2: #E1E8EB; //secondary-hover
+$chemstrap-interaction-grey3: #D9E0E3;
+$chemstrap-interaction-grey4: #D3DADD;
+$chemstrap-interaction-grey5: #4F6F7C; //secondary-active
+$chemstrap-neutral-grey0: #EDEDED;
+$chemstrap-neutral-grey1: #CECECE;
+$chemstrap-neutral-grey2: #9E9E9E;
+$chemstrap-neutral-grey3: #7E7E7E;
+$chemstrap-neutral-grey4: #707070;
+$chemstrap-neutral-grey5: #565656;
+
+/* Text-size styles */
+$text---content--title: 24px;
+$text---headline--lowered: 18px;
+$text---headline: 18px;
+$text---body: 16px;
+$text---body-italic: 16px;
+$text---body--underlined: 16px;
+$text---body-medium: 16px;
+$text---label: 14px;
+$text---label--underlined: 14px;
+$text---label-small: 13px;
+$icon---extra-large: 96px;
+$icon---medium: 24px;
+$icon---regular: 20px;
+$icon---small: 14px;
+$icon---body16: 16px;
+$icon---font-awesome6-pro: 16px;
+
+/* Effect styles */
+$drop--shadow--large:  4px 0px 55px rgba(0, 0, 0, 0.05);
+$drop--shadow--small:  4px 0px 10px rgba(0, 0, 0, 0.07);
+$focus:  0px 0px 4px rgba(47, 127, 214, 1);
+
+
