@@ -93,8 +93,6 @@ export default class ContainerComponent extends Component {
     if (isChanged) onChange(container);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-
   handleAddLink(link) {
     const { container } = this.state;
     let { hyperlinks } = container.extended_metadata;
@@ -156,10 +154,9 @@ export default class ContainerComponent extends Component {
     return (
       <div>
         <Row>
-          <Col sm={8} className='mb-2'>
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          <Col sm={8} className="mb-2">
             <Form.Label>Name</Form.Label>
-            < Form.Control
+            <Form.Control
               type="text"
               label="Name"
               value={container.name}
@@ -167,23 +164,23 @@ export default class ContainerComponent extends Component {
               disabled={readOnly || disabled}
             />
           </Col>
-          <Col sm={4} className='mb-2'>
+          <Col sm={4} className="mb-2">
             <div>
               <Form.Label>Status</Form.Label>
               <Select
                 name="status"
                 options={confirmOptions}
-                value={confirmOptions.find(({value}) => value === container.extended_metadata.status)}
+                value={confirmOptions.find(({ value }) => value === container.extended_metadata.status)}
                 isDisabled={readOnly || disabled}
-                onChange={({value}) => this.handleInputChange('status', value)}
+                onChange={({ value }) => this.handleInputChange('status', value)}
                 menuPortalTarget={document.body}
               />
             </div>
           </Col>
         </Row>
-        <Col sm={12} className='mb-2'>
-          <div className='mb-3'>
-            < Form.Label>{this.props.analysisMethodTitle}</Form.Label>
+        <Col sm={12} className="mb-2">
+          <div className="mb-3">
+            <Form.Label>{this.props.analysisMethodTitle}</Form.Label>
             <OlsTreeSelect
               selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
@@ -192,12 +189,12 @@ export default class ContainerComponent extends Component {
             />
           </div>
         </Col>
-        <Col sm={12} className='mb-2'>
+        <Col sm={12} className="mb-2">
           <Form.Group>
             <Form.Label>Content</Form.Label>
             {quill}
           </Form.Group>
-          <Form.Group className='my-3'>
+          <Form.Group className="my-3">
             <Form.Label>Description</Form.Label>
             <Form.Control
               as="textarea"
@@ -210,7 +207,6 @@ export default class ContainerComponent extends Component {
           </Form.Group>
         </Col>
         <Col sm={12} >
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <Form.Label>Datasets</Form.Label>
           <ContainerDatasets
             container={container}
