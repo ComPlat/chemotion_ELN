@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (enhancing but incompatible in either direction to the original ORD Schema).
 //
-// v0.6.4
-// (draft, 05.09.2024)
+// v0.6.5
+// (draft, 07.10.2024)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -209,8 +209,8 @@ message ReactionProcessAction {
     ActionAdd addition = 8;
     ActionRemove removal = 9;
     ReactionConditions conditions = 10;
-    ActionPurify purify = 11;
-    ActionPurify measurement = 12;
+    ActionPurification purification = 11;
+    ActionPurification measurement = 12;
     ActionTransfer transfer = 13;
     ActionWait wait = 14;
     ActionSaveSample save_sample = 15;
@@ -271,7 +271,7 @@ message ReactionProcessAction {
         STEP_UNSPECIFIED = 0;
         EQUILIBRIUM = 1;
         SEPARATION = 2;
-        POST_RUN = 3;
+        AFTER_RUN = 3;
       }
       enum Prod {
         PROD_UNSPECIFIED = 0;
@@ -315,7 +315,7 @@ message ReactionProcessAction {
 
       Equipment equipment = 1;
       string column_type = 2;
-      repeated ChromatographyStep.Detector detectors = 3;
+      repeated Analysis.AnalysisType detectors = 3;
       WavelengthList wavelengths = 4;
     }
 
@@ -362,7 +362,7 @@ message ReactionProcessAction {
     repeated FiltrationStep steps = 2;
   }
 
-  message ActionPurify {
+  message ActionPurification {
     oneof type {
       ActionFiltration filtration = 1;
       ActionExtraction extraction = 2;
@@ -391,9 +391,9 @@ message ReactionProcessAction {
       PURIFICATION = 3;
     }
 
-    message PurifyOrigin {
+    message PurificationOrigin {
       string origin_action_id = 1;
-      int32 origin_purify_step_position = 2;
+      int32 origin_purification_step_position = 2;
       repeated Compound solvents = 3;
       Amount amount = 4;
       repeated Compound extra_solvents = 5;
@@ -403,7 +403,7 @@ message ReactionProcessAction {
     repeated Compound molecular_entities = 2;
     Vessel vessel = 3;
     OriginType sample_origin_type = 4;
-    optional PurifyOrigin purify_origin = 5;
+    optional PurificationOrigin purification_origin = 5;
   }
 }
 /**

@@ -81,19 +81,19 @@ module OrdKit
         end
 
         def starter_conditions
-          OrdKit::Exporter::Conditions::ReactionConditionsExporter.new(workup['starter_conditions']).to_ord
+          Conditions::ReactionConditionsExporter.new(workup['starter_conditions']).to_ord
         end
 
         def limits_to_ord(limits)
           limits&.map do |limit|
-            OrdKit::Exporter::Conditions::ReactionConditionLimitsExporter.new(limit).to_ord
+            Conditions::ReactionConditionLimitsExporter.new(limit).to_ord
           end
         end
 
         def solvents_with_ratio(solvents)
           solvents&.map do |solvent|
             OrdKit::CompoundWithRatio.new(
-              compound: OrdKit::Exporter::Compounds::PurifySampleOrDiverseSolventExporter.new(solvent['id']).to_ord,
+              compound: Compounds::PurificationSampleOrDiverseSolventExporter.new(solvent['id']).to_ord,
               ratio: solvent['ratio'].to_s,
             )
           end
