@@ -98,19 +98,19 @@ RSpec.describe ReactionProcessEditor::ReactionProcessStep do
     let!(:media) { create_list(:reaction_process_activity_add_medium, 2).map(&:medium) }
 
     it 'Solvents' do
-      expect(process_step.added_materials('SOLVENT')).to eq solvents
+      expect(process_step.added_materials('SOLVENT')).to match_array solvents
     end
 
     it 'Additives' do
-      expect(process_step.added_materials('ADDITIVE')).to eq additives
+      expect(process_step.added_materials('ADDITIVE')).to match_array additives
     end
 
     it 'Diverse Solvents' do
-      expect(process_step.added_materials('DIVERSE_SOLVENT')).to eq diverse_solvents
+      expect(process_step.added_materials('DIVERSE_SOLVENT')).to match_array diverse_solvents
     end
 
     it 'Media' do
-      expect(process_step.added_materials('MEDIUM')).to eq media
+      expect(process_step.added_materials('MEDIUM')).to match_array media
     end
 
     it '[] on nonexisting key' do

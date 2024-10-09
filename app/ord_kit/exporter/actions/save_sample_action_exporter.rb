@@ -13,7 +13,7 @@ module OrdKit
               molecular_entities: molecular_entities,
               vessel: Vessels::ReactionProcessVesselExporter.new(workup['reaction_process_vessel']).to_ord,
               sample_origin_type: sample_origin_type,
-              purify_origin: purify_origin,
+              purification_origin: purification_origin,
             ),
           }
         end
@@ -30,8 +30,8 @@ module OrdKit
           OrdKit::ReactionProcessAction::ActionSaveSample::OriginType::UNSPECIFIED
         end
 
-        def purify_origin
-          SaveSample::PurifyOriginExporter.new(@action).to_ord if workup['sample_origin_type'] == 'PURIFICATION'
+        def purification_origin
+          SaveSample::PurificationOriginExporter.new(@action).to_ord if workup['sample_origin_type'] == 'PURIFICATION'
         end
       end
     end

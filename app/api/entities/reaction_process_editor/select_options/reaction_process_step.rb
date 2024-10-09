@@ -4,14 +4,18 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class ReactionProcessStep < Base
-        def select_options_for(reaction_process_step)
+        def select_options_for(reaction_process_step:)
           {
             added_materials: added_materials(reaction_process_step),
-            removable_samples: removable_samples(reaction_process_step),
             mounted_equipment: mounted_equipment(reaction_process_step),
-            transferable_samples: transferable_samples(reaction_process_step),
-            transfer_targets: transfer_targets(reaction_process_step),
-            save_sample_origins: save_sample_origins(reaction_process_step),
+            FORMS: {
+              REMOVE: { removable_samples: removable_samples(reaction_process_step) },
+              SAVE: { origins: save_sample_origins(reaction_process_step) },
+              TRANSFER: {
+                transferable_samples: transferable_samples(reaction_process_step),
+                targets: transfer_targets(reaction_process_step),
+              },
+            },
           }
         end
 
@@ -65,17 +69,17 @@ module Entities
         def save_sample_origins(reaction_process_step)
           reaction_process_step
             .reaction_process_activities.includes([:reaction_process_vessel])
-            .where(activity_name: 'PURIFY')
+            .where(activity_name: 'PURIFICATION')
             .order(:position)
             .map do |purification|
-            purify_step_options = purification.workup && purification.workup['purify_steps']
+            purification_step_options = purification.workup && purification.workup['purification_steps']
 
             { value: purification.id,
-              label: "#{purification.position + 1} #{purification.workup['purify_type'].titlecase}",
-              purify_type: purification.workup['purify_type'],
-              purify_steps: purify_step_options&.map&.with_index do |purify_step, index|
-                              option_for_purify_step(purify_step, purification, index)
-                            end }
+              label: "#{purification.position + 1} #{purification.workup['purification_type']&.titlecase}",
+              purification_type: purification.workup['purification_type'],
+              purification_steps: purification_step_options&.map&.with_index do |purification_step, index|
+                option_for_purification_step(purification_step, purification, index)
+              end }
           end
         end
 
@@ -109,7 +113,7 @@ module Entities
         def saved_sample_with_solvents_option(action)
           return {} unless action.sample?
 
-          solvents = action.workup.dig('sample_origin_purify_step', 'solvents') || []
+          solvents = action.workup.dig('sample_origin_purification_step', 'solvents') || []
 
           sample_minimal_option(action.sample, 'SAMPLE').merge(
             {
@@ -126,16 +130,16 @@ module Entities
           end
         end
 
-        def option_for_purify_step(purify_step, purification, position)
-          solvents = purify_step['solvents'] || []
+        def option_for_purification_step(purification_step, purification, position)
+          solvents = purification_step['solvents'] || []
 
           solvent_labels = solvents.pluck('label')&.join(', ')
 
-          purify_step.merge({
-                              value: "#{purification.id}-purify-step-#{position + 1}}",
-                              label: "#{purification.position + 1}.#{position + 1} #{solvent_labels}",
-                              position: position + 1,
-                            })
+          purification_step.merge({
+                                    value: "#{purification.id}-purification-step-#{position + 1}}",
+                                    label: "#{purification.position + 1}.#{position + 1} #{solvent_labels}",
+                                    position: position + 1,
+                                  })
         end
       end
     end

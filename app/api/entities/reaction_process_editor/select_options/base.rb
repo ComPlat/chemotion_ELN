@@ -12,12 +12,6 @@ module Entities
           end
         end
 
-        def strings_to_options(values)
-          Array(values).map do |string|
-            { value: string.to_s, label: string.to_s }
-          end
-        end
-
         def samples_info_options(samples, acts_as)
           samples.map do |sample|
             sample_info_option(sample, acts_as)
@@ -48,15 +42,6 @@ module Entities
           )
         end
 
-        def sample_amount_option(sample, acts_as)
-          amount = sample.amount # TODO: samples might need target_amount_value
-          sample_minimal_option(sample, acts_as).merge({ amount: amount })
-          # amount: {
-          #   value: sample.target_amount_value,
-          #   unit: sample.target_amount_unit,
-          # },
-        end
-
         def sample_minimal_option(sample, acts_as)
           {
             id: sample.id,
@@ -66,6 +51,25 @@ module Entities
             label: sample.preferred_label || sample.short_label,
             acts_as: acts_as,
           }
+        end
+
+        def sample_amount_option(sample, acts_as)
+          amount = sample.amount # TODO: samples might need target_amount_value
+          sample_minimal_option(sample, acts_as).merge({ amount: amount })
+          # amount: {
+          #   value: sample.target_amount_value,
+          #   unit: sample.target_amount_unit,
+          # },
+        end
+
+        def solvent_options_for(reaction_process:)
+          reaction = reaction_process.reaction
+
+          solvents = (reaction.solvents + reaction.purification_solvents).uniq
+
+          sample_minimal_options(solvents,
+                                 'SOLVENT') + sample_minimal_options(Medium::DiverseSolvent.all,
+                                                                     'DIVERSE_SOLVENT')
         end
       end
     end

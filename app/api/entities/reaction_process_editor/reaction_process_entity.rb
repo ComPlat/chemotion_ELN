@@ -3,7 +3,7 @@
 module Entities
   module ReactionProcessEditor
     class ReactionProcessEntity < Grape::Entity
-      SELECT_OPTIONS = SelectOptions::Custom
+      SELECT_OPTIONS = SelectOptions::Models::Custom
 
       expose :id, :short_label
 
@@ -43,12 +43,12 @@ module Entities
       end
 
       def user_default_conditions
-        SelectOptions::Conditions::GLOBAL_DEFAULTS
+        SelectOptions::Forms::Condition::GLOBAL_DEFAULTS
           .merge(object.user_default_conditions)
       end
 
       def select_options
-        SelectOptions::ReactionProcess.instance.select_options_for(object)
+        SelectOptions::ReactionProcess.instance.select_options_for(reaction_process: object)
       end
     end
   end

@@ -6,7 +6,7 @@ module ReactionProcessEditor
 
     helpers StrongParamsHelpers
 
-    rescue_from :all
+    # rescue_from :all
 
     desc 'get options for collection Select.'
     get :collection_select_options do
@@ -17,11 +17,10 @@ module ReactionProcessEditor
     desc 'get default_conditions.'
     get :default_conditions do
       { default_conditions: {
-        global: SELECT_OPTIONS::Conditions::GLOBAL_DEFAULTS,
+        global: SELECT_OPTIONS::Forms::Condition::GLOBAL_DEFAULTS,
         user: current_user.reaction_process_defaults&.default_conditions.to_h,
         select_options: {
-          activity_type_equipment: SELECT_OPTIONS::Equipment.instance.per_activity_type,
-          condition_additional_information: SELECT_OPTIONS::Conditions.instance.additional_information,
+          FORMS: { CONDITION: SELECT_OPTIONS::Forms::Condition.instance.select_options },
         },
       }.deep_stringify_keys }
     end

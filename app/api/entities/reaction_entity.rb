@@ -118,7 +118,7 @@ module Entities
 
     def editor_link_target
       # The link to the Reaction Process Editor (external to the ELN).
-      "#{ENV.fetch('HOSTNAME_REACTION_PROCESS_EDITOR')}/reactions/#{object.id}?auth=#{object.creator.jti_auth_token}"
+      "#{ENV.fetch('REACTION_PROCESS_EDITOR_HOSTNAME')}/reactions/#{object.id}?auth=#{object.creator.jti_auth_token}"
     end
   end
 end

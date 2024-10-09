@@ -1,30 +1,34 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize
-
 module Entities
   module ReactionProcessEditor
     module SelectOptions
       class ReactionProcess < Base
-        def select_options_for(reaction_process)
+        def select_options_for(reaction_process:)
           {
             samples_preparations: sample_preparation_options(reaction_process),
-            vessel_preparations: SelectOptions::Vessels.instance.preparations,
+            vessel_preparations: SelectOptions::Models::Vessels.instance.preparations,
             step_name_suggestions: step_name_suggestions(reaction_process),
-            activity_type_equipment: SelectOptions::Equipment.instance.per_activity_type,
-            measurement: SelectOptions::Measurement.instance.select_options,
-            purify: SelectOptions::Purify.instance.select_options_for(reaction_process),
-            condition_additional_information: SelectOptions::Conditions.instance.additional_information,
-            addition_speed_types: SelectOptions::Custom.instance.addition_speed_types,
-            materials: SelectOptions::Materials.instance.select_options_for(reaction_process),
-            equipment: SelectOptions::Equipment.instance.all,
-            automation_modes: SelectOptions::Custom.instance.automation_modes,
-            motion_types: SelectOptions::Custom.instance.motion_types,
-            remove_sample_types: SelectOptions::Samples.instance.remove_sample_types,
-            remove_origin_types: SelectOptions::Remove.instance.origin_types,
-            save_sample_types: SelectOptions::Samples.instance.save_sample_types,
-            save_sample_origin_types: SelectOptions::Samples.instance.save_sample_origin_types,
-            analysis_types: SelectOptions::Custom.instance.analysis_types,
+            materials: SelectOptions::Models::Materials.instance.select_options_for(reaction_process: reaction_process),
+            equipment: SelectOptions::Models::Equipment.instance.all,
+            FORMS: forms_options(reaction_process),
+          }
+        end
+
+        private
+
+        def forms_options(reaction_process)
+          {
+            ADD: SelectOptions::Forms::Add.instance.select_options,
+            ANALYSIS: SelectOptions::Forms::Analysis.instance.select_options,
+            CONDITION: SelectOptions::Forms::Condition.instance.select_options,
+            MOTION: SelectOptions::Forms::Motion.instance.select_options,
+            PURIFICATION: SelectOptions::Forms::Purification.instance
+                                                            .select_options_for(reaction_process: reaction_process),
+            REMOVE: SelectOptions::Forms::Remove.instance.select_options,
+            SAVE: SelectOptions::Forms::SaveSample.instance.select_options,
+            TRANSFER: SelectOptions::Forms::Transfer.instance.select_options,
+            WAIT: SelectOptions::Forms::Wait.instance.select_options,
           }
         end
 
@@ -32,8 +36,8 @@ module Entities
           {
             prepared_samples: samples_info_options(prepared_samples(reaction_process), 'SAMPLE'),
             unprepared_samples: samples_info_options(unprepared_samples(reaction_process), 'SAMPLE'),
-            equipment: SelectOptions::Equipment.instance.all,
-            preparation_types: SelectOptions::Samples.instance.preparation_types,
+            equipment: SelectOptions::Models::Equipment.instance.all,
+            preparation_types: SelectOptions::Models::Samples.instance.preparation_types,
           }
         end
 
@@ -69,4 +73,3 @@ module Entities
     end
   end
 end
-# rubocop:enable Metrics/AbcSize

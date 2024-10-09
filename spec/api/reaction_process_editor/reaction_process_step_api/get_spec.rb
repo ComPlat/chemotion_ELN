@@ -18,17 +18,10 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
       reaction_process_id: anything,
       activities: [],
       reaction_process_vessel: anything,
-      select_options: {
+      select_options: hash_including({
         added_materials: [],
-        removable_samples: {
-          DIVERSE_SOLVENTS: [], FROM_METHOD: [], FROM_REACTION: [],
-          FROM_REACTION_STEP: [], FROM_SAMPLE: [], STEPWISE: []
-        }.stringify_keys,
-        transferable_samples: [],
-        transfer_targets: array_including(hash_including({ value: reaction_process_step.id }.deep_stringify_keys)),
         mounted_equipment: [],
-        save_sample_origins: [],
-      },
+      }.stringify_keys),
     }.deep_stringify_keys
   end
 
@@ -79,7 +72,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
                                STEPWISE: [] }
                              .deep_stringify_keys
 
-      expect(parsed_select_options['removable_samples'])
+      expect(parsed_select_options.dig('FORMS', 'REMOVE', 'removable_samples'))
         .to include(expected_medium_hash)
     end
 
@@ -101,11 +94,13 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
     it 'transferable_samples' do
       expected_samples = { id: saved_sample.id }.deep_stringify_keys
 
-      expect(parsed_select_options['transferable_samples']).to include(hash_including(expected_samples))
+      expect(
+        parsed_select_options.dig('FORMS', 'TRANSFER', 'transferable_samples'),
+      ).to include(hash_including(expected_samples))
     end
 
     it 'transferable_to' do
-      expect(parsed_select_options['transfer_targets']).to include(
+      expect(parsed_select_options.dig('FORMS', 'TRANSFER', 'targets')).to include(
         hash_including({ value: reaction_process_step.id, saved_sample_ids: [saved_sample.id] }.stringify_keys),
         hash_including({ value: other_process_step.id, saved_sample_ids: [] }.stringify_keys),
       )
