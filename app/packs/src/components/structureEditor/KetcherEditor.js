@@ -305,7 +305,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         const mol = mols[m];
         const atoms = latestData[mol]?.atoms;
         for (let a = 0; a < atoms?.length; a++) {
-          let is_reduced = false;
           const item = atoms[a];
           if (three_parts_patten.test(item.alias)) {
             const atom_splits = atom?.alias?.split("_");
@@ -330,6 +329,11 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   const attachClickListeners = () => {
     const buttonEvents = {
       "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => {
+        await fuelKetcherData();
+        re_render_canvas = true;
+      },
+      "[title='Layout \\(Ctrl\\+L\\)']": async () => {
+        alert("Layout");
         await fuelKetcherData();
         re_render_canvas = true;
       },
