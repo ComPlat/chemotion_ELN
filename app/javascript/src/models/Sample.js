@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable array-callback-return */
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable camelcase */
 import React from 'react';
@@ -21,7 +19,7 @@ import {
   determineTONFrequencyValue,
 } from 'src/utilities/UnitsConversion';
 
-const prepareRangeBound = (field, args = {}) => {
+const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
   if (args[field] && typeof args[field] === 'string') {
     const bounds = args[field].split(/\.{2,3}/);
@@ -48,8 +46,8 @@ export default class Sample extends Element {
   
   constructor(args) {
     let argsNew = args;
-    argsNew = prepareRangeBound('boiling_point', argsNew);
-    argsNew = prepareRangeBound('melting_point', argsNew);
+    argsNew = prepareRangeBound(argsNew, 'boiling_point');
+    argsNew = prepareRangeBound(argsNew, 'melting_point');
     super(argsNew);
   }
   
@@ -102,7 +100,7 @@ export default class Sample extends Element {
   
   filterElementalComposition() {
     const elemComp = (this.elemental_compositions || []).find((item) => {
-      if (item.composition_type === 'formula') {
+      if (item.composition_type == 'formula') {
         item.id = null;
         return item;
       }
@@ -355,7 +353,7 @@ export default class Sample extends Element {
       molecular_mass: this.molecular_mass,
       sum_formula: this.sum_formula,
       inventory_sample: this.inventory_sample,
-      segments: this.segments.map((s) => s.serialize())
+      segments: this.segments.map((s) => s.serialize()),
     });
     
     return serialized;
@@ -387,14 +385,14 @@ export default class Sample extends Element {
       }
       
       this.elemental_compositions.map((item) => {
-        if (item.composition_type === 'formula') { item._destroy = true; }
+        if (item.composition_type == 'formula') { item._destroy = true; }
       });
     } else {
       // this.sample_svg_file = '';
       if (this.residues.length) { this.residues[0]._destroy = true; } // delete residue info
       
       this.elemental_compositions.map((item) => {
-        if (item.composition_type === 'loading') { item._destroy = true; }
+        if (item.composition_type == 'loading') { item._destroy = true; }
       });
     }
   }
@@ -552,7 +550,7 @@ export default class Sample extends Element {
   }
   
   setAmount(amount) {
-    if (amount.unit && !Number.isNaN(amount.value)) {
+    if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
     }
@@ -617,7 +615,7 @@ export default class Sample extends Element {
   
   get defined_part_amount() {
     const mw = this.molecule_molecular_weight;
-    return (this.amount_mol * mw) / 1000.0;
+    return this.amount_mol * mw / 1000.0;
   }
   
   // amount proxy
@@ -703,7 +701,7 @@ export default class Sample extends Element {
 
   get amount_l() {
     if (this.amount_unit === 'l') return this.amount_value;
-    return this.convertGramToUnit('l', this.amount_g);
+    return this.convertGramToUnit(this.amount_g, 'l');
   }
 
   get amount_mol() {
@@ -846,7 +844,6 @@ export default class Sample extends Element {
           return amountValue;
       }
     } else {
-      const molecularWeight = this.molecule_molecular_weight;
       switch (amount_unit) {
         case 'g':
           return amount_value;
@@ -861,6 +858,7 @@ export default class Sample extends Element {
             return moles * molecularWeight;
           }
           if (this.has_molarity) {
+            const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
           } if (this.has_density) {
             return amount_value * (this.density || 1.0) * 1000;
@@ -1058,7 +1056,7 @@ export default class Sample extends Element {
   // Container & Analyses routines
   addAnalysis(analysis) {
     this.container.children.filter(
-      (element) => !element.container_type.indexOf('analyses')
+      (element) => ~element.container_type.indexOf('analyses')
     )[0].children.push(analysis);
   }
       

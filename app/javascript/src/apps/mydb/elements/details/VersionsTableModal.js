@@ -129,8 +129,6 @@ function VersionsTableModal(props) {
       }
     });
 
-    console.log(result);
-
     return result;
   };
 

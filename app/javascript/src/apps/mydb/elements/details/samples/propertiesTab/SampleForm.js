@@ -13,6 +13,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
+import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
@@ -24,6 +25,7 @@ export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
       sumFormula: null,
@@ -53,29 +55,25 @@ export default class SampleForm extends React.Component {
   }
 
   formulaChanged() {
-    const { sample } = this.props;
-    const { moleculeFormulaWas } = this.state;
-    return sample.molecule_formula !== moleculeFormulaWas;
+    return this.props.sample.molecule_formula !== this.state.moleculeFormulaWas;
   }
 
   handleAmountChanged(amount) {
-    const { sample } = this.props;
-    sample.setAmount(amount);
+    this.props.sample.setAmount(amount);
   }
 
   handleMolarityChanged(molarity) {
-    const { sample } = this.props;
-    sample.setMolarity(molarity);
+    this.props.sample.setMolarity(molarity);
+    this.setState({ molarityBlocked: false });
   }
 
   handleDensityChanged(density) {
-    const { sample } = this.props;
-    sample.setDensity(density);
+    this.props.sample.setDensity(density);
+    this.setState({ molarityBlocked: true });
   }
 
   handleMolecularMassChanged(mass) {
-    const { sample } = this.props;
-    sample.setMolecularMass(mass);
+    this.props.sample.setMolecularMass(mass);
   }
 
   structureEditorButton(isDisabled) {
@@ -109,13 +107,30 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  // eslint-disable-next-line class-methods-use-this
   infoMessage = () => (
     <Tooltip id="assignButton">
       Information mirrored to the reaction table describing the content of pure
       compound or amount of pure compound in a given solution
     </Tooltip>
   );
+
+  // Input components of sample details should be disabled if detail level
+  // does not allow to read their content
+  topSecretCheckbox(sample) {
+    if (sample.can_update) {
+      return (
+        <Checkbox
+          inputRef={(ref) => { this.topSecretInput = ref; }}
+          checked={sample.is_top_secret}
+          onChange={(e) => this.handleFieldChanged('is_top_secret', e.target.checked)}
+        >
+          Top secret
+        </Checkbox>
+      );
+    }
+
+    return (<span />);
+  }
 
   drySolventCheckbox(sample) {
     if (sample.can_update) {
@@ -155,9 +170,8 @@ export default class SampleForm extends React.Component {
   }
 
   addMolName(moleculeName) {
-    const { sample } = this.props;
     this.setState({ isMolNameLoading: true });
-    DetailActions.updateMoleculeNames(sample, moleculeName.label);
+    DetailActions.updateMoleculeNames(this.props.sample, moleculeName.label);
   }
 
   updateMolName(e) {
@@ -250,10 +264,8 @@ export default class SampleForm extends React.Component {
 
   moleculeInput() {
     const { sample } = this.props;
-    const { isMolNameLoading } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
-    // eslint-disable-next-line no-underscore-dangle
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
@@ -268,7 +280,7 @@ export default class SampleForm extends React.Component {
             options={moleculeNames}
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
-            isLoading={isMolNameLoading}
+            isLoading={this.state.isMolNameLoading}
             value={!newMolecule && mno && mno.value}
             onNewOptionClick={this.addMolName}
             clearable={false}
@@ -522,7 +534,23 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  attachedAmountInput(sample) {
+  sampleSolvent(sample) {
+    return (
+      <Select
+        ref={(input) => { this.solventInput = input; }}
+        id="solventInput"
+        name="solvents"
+        style={{ marginBottom: '15px' }}
+        multi={false}
+        options={solventOptions}
+        value={sample.solvent}
+        disabled={!sample.can_update}
+        onChange={(e) => this.handleFieldChanged('solvent', e)}
+      />
+    );
+  }
+
+  attachedAmountInput(sample, size) {
     if (!sample.contains_residues) return false;
 
     return this.numInput(
@@ -539,8 +567,7 @@ export default class SampleForm extends React.Component {
   }
 
   handleMetricsChange(e) {
-    const { sample } = this.props;
-    sample.setUnitMetrics(e.metricUnit, e.metricPrefix);
+    this.props.sample.setUnitMetrics(e.metricUnit, e.metricPrefix);
   }
 
   numInput(
@@ -557,7 +584,7 @@ export default class SampleForm extends React.Component {
     notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
-    const value = !Number.isNaN(sample[field]) ? sample[field] : null;
+    const value = !isNaN(sample[field]) ? sample[field] : null;
     const metricPrefixes = ['m', 'n', 'u'];
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
     const gasSample = sample.gas_type === 'gas' && disableFieldsForGasTypeSample.includes(field);
@@ -635,7 +662,7 @@ export default class SampleForm extends React.Component {
     notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
-    const value = !Number.isNaN(sample[field]) ? sample[field] : null;
+    const value = !isNaN(sample[field]) ? sample[field] : null;
 
     let mpx;
     if (unit === 'l') {
