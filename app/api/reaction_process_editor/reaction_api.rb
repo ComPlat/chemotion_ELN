@@ -4,7 +4,7 @@ module ReactionProcessEditor
   class ReactionAPI < Grape::API
     helpers StrongParamsHelpers
 
-    rescue_from :all
+    # rescue_from :all
 
     namespace :reactions do
       get do
@@ -16,7 +16,7 @@ module ReactionProcessEditor
                         Reaction.none
                       end
                     else
-                      current_user.collections.map(&:reactions).flatten.uniq
+                      current_user.collections.includes([:reactions]).map(&:reactions).flatten.uniq
                     end.sort_by(&:id)
 
         present reactions, with: Entities::ReactionProcessEditor::ReactionEntity, root: :reactions
