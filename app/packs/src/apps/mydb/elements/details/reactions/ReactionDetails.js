@@ -318,7 +318,7 @@ export default class ReactionDetails extends Component {
     );
 
     const rsPlanLabel = !(reaction.isNew || _.isEmpty(reaction.research_plans)) && (
-      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
+      <ElementResearchPlanLabels plans={reaction.research_plans} placement="right" />
     );
 
     return (

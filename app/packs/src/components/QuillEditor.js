@@ -227,12 +227,12 @@ export default class QuillEditor extends React.Component {
             const templateCreatorPopover = (
               <Popover
                 id="popover-positioned-bottom"
-                title="special characters"
+                title="Special Characters"
               >
                 <Popover.Header>
                   Special Characters
                 </Popover.Header>
-                <Popover.Body className="ql-spec-group">
+                <Popover.Body className="d-flex flex-wrap">
                   {character}
                 </Popover.Body>
               </Popover>
@@ -280,7 +280,8 @@ export default class QuillEditor extends React.Component {
   renderCharacters(e) {
     return (
       <Button
-        className="ql-spec-Charac text-nowrap"
+        className="m-1 flex-shrink-1 flex-grow-1 text-nowrap"
+        style={{ width: '15%' }}
         variant="light"
         key={`btnKey_${e}`}
         value={e}
