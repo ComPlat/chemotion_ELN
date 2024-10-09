@@ -12,6 +12,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
+import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
@@ -22,6 +23,7 @@ export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
       sumFormula: null,
@@ -49,39 +51,33 @@ export default class SampleForm extends React.Component {
   }
 
   formulaChanged() {
-    const { sample } = this.props;
-    const { moleculeFormulaWas } = this.state;
-    return sample.molecule_formula !== moleculeFormulaWas;
+    return this.props.sample.molecule_formula !== this.state.moleculeFormulaWas;
   }
 
   handleAmountChanged(amount) {
-    const { sample } = this.props;
-    sample.setAmount(amount);
+    this.props.sample.setAmount(amount);
   }
 
   handleMolarityChanged(molarity) {
-    const { sample } = this.props;
-    sample.setMolarity(molarity);
+    this.props.sample.setMolarity(molarity);
+    this.setState({ molarityBlocked: false });
   }
 
   handleDensityChanged(density) {
-    const { sample } = this.props;
-    sample.setDensity(density);
+    this.props.sample.setDensity(density);
+    this.setState({ molarityBlocked: true });
   }
 
   handleMolecularMassChanged(mass) {
-    const { sample } = this.props;
-    sample.setMolecularMass(mass);
+    this.props.sample.setMolecularMass(mass);
   }
 
   handleSolventChanged(sample) {
-    const { parent } = this.props;
-    parent.setState({ sample });
+    this.props.parent.setState({ sample });
   }
 
   showStructureEditor() {
-    const { parent } = this.props;
-    parent.setState({
+    this.props.parent.setState({
       showStructureEditor: true,
     });
   }
@@ -112,13 +108,30 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  // eslint-disable-next-line class-methods-use-this
   infoMessage = () => (
     <Tooltip id="assignButton">
       Information mirrored to the reaction table describing the content of pure
       compound or amount of pure compound in a given solution
     </Tooltip>
   );
+
+  // Input components of sample details should be disabled if detail level
+  // does not allow to read their content
+  topSecretCheckbox(sample) {
+    if (sample.can_update) {
+      return (
+        <Checkbox
+          inputRef={(ref) => { this.topSecretInput = ref; }}
+          checked={sample.is_top_secret}
+          onChange={(e) => this.handleFieldChanged('is_top_secret', e.target.checked)}
+        >
+          Top secret
+        </Checkbox>
+      );
+    }
+
+    return (<span />);
+  }
 
   drySolventCheckbox(sample) {
     if (sample.can_update) {
@@ -139,7 +152,7 @@ export default class SampleForm extends React.Component {
     if (sample.can_update) {
       return (
         <Checkbox
-          // inputRef={(ref) => { this.decoupledInput = ref; }}
+          inputRef={(ref) => { this.decoupledInput = ref; }}
           checked={sample.decoupled}
           onChange={(e) => this.handleFieldChanged('decoupled', e.target.checked)}
         >
@@ -157,32 +170,28 @@ export default class SampleForm extends React.Component {
   }
 
   addMolName(moleculeName) {
-    const { sample } = this.props;
     this.setState({ isMolNameLoading: true });
-    DetailActions.updateMoleculeNames(sample, moleculeName.label);
+    DetailActions.updateMoleculeNames(this.props.sample, moleculeName.label);
   }
 
   updateMolName(e) {
     const { sample } = this.props;
-    const { parent } = this.props;
     sample.molecule_name = e;
-    parent.setState({ sample });
+    this.props.parent.setState({ sample });
   }
 
   updateStereoAbs(e) {
     const { sample } = this.props;
-    const { parent } = this.props;
     if (!sample.stereo) sample.stereo = {};
     sample.stereo.abs = e.value;
-    parent.setState({ sample });
+    this.props.parent.setState({ sample });
   }
 
   updateStereoRel(e) {
     const { sample } = this.props;
-    const { parent } = this.props;
     if (!sample.stereo) sample.stereo = {};
     sample.stereo.rel = e.value;
-    parent.setState({ sample });
+    this.props.parent.setState({ sample });
   }
 
   stereoAbsInput() {
@@ -275,10 +284,8 @@ export default class SampleForm extends React.Component {
 
   moleculeInput() {
     const { sample } = this.props;
-    const { isMolNameLoading } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
-    // eslint-disable-next-line no-underscore-dangle
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
@@ -294,7 +301,7 @@ export default class SampleForm extends React.Component {
             options={moleculeNames}
             onOpen={onOpenMolName}
             onChange={this.updateMolName}
-            isLoading={isMolNameLoading}
+            isLoading={this.state.isMolNameLoading}
             value={!newMolecule && mno && mno.value}
             onNewOptionClick={this.addMolName}
             clearable={false}
@@ -309,9 +316,8 @@ export default class SampleForm extends React.Component {
 
   handleRangeChanged(field, lower, upper) {
     const { sample } = this.props;
-    const { parent } = this.props;
     sample.updateRange(field, lower, upper);
-    parent.setState({ sample });
+    this.props.parent.setState({ sample });
   }
 
   /* eslint-disable camelcase */
@@ -352,9 +358,6 @@ export default class SampleForm extends React.Component {
 
   handleFieldChanged(field, e, unit = null) {
     const { sample } = this.props;
-    const { parent } = this.props;
-    const { decoupleMolecule } = this.props;
-
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
@@ -397,11 +400,11 @@ export default class SampleForm extends React.Component {
         }
       }
       if (!sample[field] && ((sample.molfile || '') === '')) {
-        parent.setState({ sample });
+        this.props.parent.setState({ sample });
       } else {
-        parent.setState({ sample }, decoupleMolecule);
+        this.props.parent.setState({ sample }, this.props.decoupleMolecule);
       }
-    } else { parent.setState({ sample }); }
+    } else { this.props.parent.setState({ sample }); }
   }
 
   btnCalculateMolecularMass(sample) {
@@ -582,7 +585,23 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  attachedAmountInput(sample) {
+  sampleSolvent(sample) {
+    return (
+      <Select
+        ref={(input) => { this.solventInput = input; }}
+        id="solventInput"
+        name="solvents"
+        style={{ marginBottom: '15px' }}
+        multi={false}
+        options={solventOptions}
+        value={sample.solvent}
+        disabled={!sample.can_update}
+        onChange={(e) => this.handleFieldChanged('solvent', e)}
+      />
+    );
+  }
+
+  attachedAmountInput(sample, size) {
     if (!sample.contains_residues) return false;
 
     return this.numInput(
@@ -599,8 +618,7 @@ export default class SampleForm extends React.Component {
   }
 
   handleMetricsChange(e) {
-    const { sample } = this.props;
-    sample.setUnitMetrics(e.metricUnit, e.metricPrefix);
+    this.props.sample.setUnitMetrics(e.metricUnit, e.metricPrefix);
   }
 
   numInput(
@@ -617,7 +635,7 @@ export default class SampleForm extends React.Component {
     notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
-    const value = !Number.isNaN(sample[field]) ? sample[field] : null;
+    const value = !isNaN(sample[field]) ? sample[field] : null;
     const metricPrefixes = ['m', 'n', 'u'];
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
     const gasSample = sample.gas_type === 'gas' && disableFieldsForGasTypeSample.includes(field);
@@ -697,7 +715,7 @@ export default class SampleForm extends React.Component {
     notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
-    const value = !Number.isNaN(sample[field]) ? sample[field] : null;
+    const value = !isNaN(sample[field]) ? sample[field] : null;
 
     let mpx;
     if (unit === 'l') {
@@ -796,7 +814,7 @@ export default class SampleForm extends React.Component {
         <ControlLabel>Description</ControlLabel>
         <FormControl
           componentClass="textarea"
-          // ref={(input) => { this.descriptionInput = input; }}
+          ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
           onChange={(e) => this.handleFieldChanged('description', e.target.value)}
@@ -889,7 +907,7 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const { sample } = this.props;
+    const sample = this.props.sample || {};
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -991,7 +1009,7 @@ export default class SampleForm extends React.Component {
                         <tr>
                           <td style={{ width: '3%' }}>
                             <div style={{ marginBottom: '15px' }}>
-                              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                              {/* eslint-disable-next-line jsx-a11y/label-has-for */}
                               <label style={{ height: '14px' }} />
                               <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
                                 {this.infoButton()}
@@ -1055,8 +1073,8 @@ export default class SampleForm extends React.Component {
 }
 
 SampleForm.propTypes = {
-  sample: PropTypes.object.isRequired,
-  parent: PropTypes.object.isRequired,
+  sample: PropTypes.object,
+  parent: PropTypes.object,
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,
