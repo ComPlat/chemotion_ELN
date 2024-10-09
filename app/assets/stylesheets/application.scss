@@ -1,13 +1,14 @@
 /*
  * In order to control import order and provide access to variables, mixins and utilities, we import
  * the files within this directory manually via sass `@import`, instead of using `require_tree .`
- * 
+ *
  * The files in the legacy directory have not yet been aligned with the design system initiative and
  * will be refactored in the future.
  *
  *= require_self
  */
 
+@import "global-styles/chemstrap-tokens";
 @import "global-styles/bootstrap-config";
 @import "global-styles/bootstrap-mods";
 @import "global-styles/vendor";
