@@ -1,6 +1,5 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import { VolumeDownSharp } from '@material-ui/icons';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef } from 'react';
 
@@ -14,6 +13,8 @@ let all_atoms = [];
 let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
+let images_to_be_updated = false;
+const skip_templte_name_hide = true;
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
@@ -27,7 +28,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     if (event.data.eventType === 'init') {
       window.editor = editor;
       await editor.structureDef.editor.setMolecule(initMol);
-
       editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
         handleEventCapture(result);
@@ -80,6 +80,9 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           await fuelKetcherData();
           if (re_render_canvas)
             await moveTemplate();
+          // setTimeout(async () => {
+          //   await updateTemplatesInTheCanvas();
+          // }, [250]);
           break;
         case "Move image":
           addEventToFILOStack("Move image");
@@ -172,9 +175,9 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
       }
     }
-    // setTimeout(async () => {
-    // await updateImagesInTheCanvas();
-    // }, [250]);
+    setTimeout(async () => {
+      await updateImagesInTheCanvas();
+    }, [250]);
   };
 
   // helper function to place image on atom location coordinates
@@ -232,6 +235,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     latestData.root.nodes = latestData.root.nodes.slice(0, mols.length);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     re_render_canvas = false;
+    images_to_be_updated = true;
     imagesList.length && placeImageOnAtoms(mols, imagesList);
   };
 
@@ -323,17 +327,33 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       const iframeDocument = iframeRef.current.contentWindow.document;
       const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
       if (svg) {
-        const images = svg.querySelectorAll('image'); // Select all image tags in SVG
-        console.log({ images });
-        images.forEach((img) => {
+        const imageElements = iframeDocument.querySelectorAll('image'); // Select all text elements
+        imageElements.forEach((img) => {
           svg.removeChild(img);
         });
 
-        images.forEach((img) => {
+        imageElements.forEach((img) => {
           svg.appendChild(img);
         });
       } else {
         console.error("SVG element not found in the iframe.");
+      }
+      images_to_be_updated = false;
+    }
+  };
+
+  const updateTemplatesInTheCanvas = async () => {
+    if (iframeRef.current) {
+      const iframeDocument = iframeRef.current.contentWindow.document;
+      const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+      if (svg) {
+        const textElements = svg.querySelectorAll('text'); // Select all text elements
+        textElements.forEach((textElem) => {
+          const textContent = textElem.textContent; // Get the text content of the <text> element
+          if (three_parts_patten.test(textContent)) { // Check if it matches the pattern
+            textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
+          }
+        });
       }
     }
   };
@@ -361,29 +381,32 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       }
     };
 
+    // Function to attach click listeners based on titles
+    const attachListenerForTitle = (iframeDocument, selector) => {
+      const button = iframeDocument.querySelector(selector);
+      if (button && !button.hasClickListener) {
+        button.addEventListener('click', buttonEvents[selector]);
+        button.hasClickListener = true;
+      }
+    };
 
-    // update observers; nothing to be changed here!!
+    // Main function to attach listeners and observers
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
 
-      // Function to attach click listeners based on titles
-      const attachListenerForTitle = (selector) => {
-        const button = iframeDocument.querySelector(selector);
-        if (button && !button.hasClickListener) {
-          button.addEventListener('click', buttonEvents[selector]);
-          button.hasClickListener = true;
-        }
-      };
-
-      // Attach listeners only for relevant mutations (e.g., when a new button is added)
-      const observer = new MutationObserver((mutationsList) => {
+      // Attach MutationObserver to listen for relevant DOM mutations (e.g., new buttons added)
+      const observer = new MutationObserver(async (mutationsList) => {
         for (const mutation of mutationsList) {
           if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
             Object.keys(buttonEvents).forEach((selector) => {
-              attachListenerForTitle(selector);
+              attachListenerForTitle(iframeDocument, selector);
             });
           }
         }
+        if (images_to_be_updated) {
+          await updateImagesInTheCanvas();
+        }
+        await updateTemplatesInTheCanvas();
       });
 
       // Start observing the iframe's document for changes
@@ -395,13 +418,14 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       // Fallback: Try to manually find buttons after some time, debounce the function
       const debounceAttach = setTimeout(() => {
         Object.keys(buttonEvents).forEach((title) => {
-          attachListenerForTitle(title);
+          attachListenerForTitle(iframeDocument, title);
         });
       }, 1000);
 
       // Cleanup function
       return () => {
         observer.disconnect();
+        pathObserver.disconnect(); // Disconnect the path observer
         clearTimeout(debounceAttach);
         Object.keys(buttonEvents).forEach((title) => {
           const button = iframeDocument.querySelector(`[title="${title}"]`);
@@ -410,8 +434,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           }
         });
       };
-    };
+    }
   };
+
+
 
   const resetStore = () => {
     FILOStack = [];
@@ -431,6 +457,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       iframe.addEventListener('load', attachClickListeners);
     }
     window.addEventListener('message', loadContent);
+
     return () => {
       if (iframe) {
         iframe.removeEventListener('load', attachClickListeners);
