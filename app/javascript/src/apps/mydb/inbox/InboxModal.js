@@ -2,7 +2,7 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Pagination, OverlayTrigger, Tooltip, Dropdown, Card,
+  Badge, Button, Pagination, OverlayTrigger, Tooltip, Dropdown, DropdownButton, Card,
   ButtonToolbar
 } from 'react-bootstrap';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
@@ -312,19 +312,17 @@ export default class InboxModal extends React.Component {
         placement="top"
         overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}
       >
-        <Dropdown>
-          <Dropdown.Toggle id="dropdown-size-button" variant="info" size="sm">
-            Size
-          </Dropdown.Toggle>
-
-          <Dropdown.Menu>
-            {sizes.map((size) => (
-              <Dropdown.Item key={size} eventKey={size} onClick={() => this.handleSizingIconClick(size)}>
-                {size}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
+        <DropdownButton title="Size"
+          variant="info"
+          size="sm"
+          onSelect={(size) => this.handleSizingIconClick(size)}
+        >
+          {sizes.map((size) => (
+            <Dropdown.Item key={size} eventKey={size}>
+              {size}
+            </Dropdown.Item>
+          ))}
+        </DropdownButton>
       </OverlayTrigger>
     );
   };
@@ -378,7 +376,7 @@ export default class InboxModal extends React.Component {
         bounds="body"
       >
         <div
-          className={`small-col col-md-${colMdValue} ${colMdValue === 2 ? 'small-panel' : ''}`}
+          className={`small-col col-md-${colMdValue}`}
           style={{
             zIndex: 10,
             position: 'absolute',
