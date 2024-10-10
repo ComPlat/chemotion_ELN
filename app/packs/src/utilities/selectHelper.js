@@ -23,7 +23,6 @@ const selectUserOptionFormater = ({ data = {}, withType = false, currentUserId =
 };
 
 const selectedUserFormater = (users) => {
-  if (users.length < 1) { return { options: [] }; }
   return users.map((user) => ({
     id: user.id,
     value: user.id,
