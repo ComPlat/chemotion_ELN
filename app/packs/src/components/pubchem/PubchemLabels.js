@@ -3,11 +3,7 @@ import PropTypes from 'prop-types';
 
 const PubchemLabels = ({element}) =>{
   let cid = element.pubchem_tag && element.pubchem_tag.pubchem_cid
-  let labelStyle = {
-    display: 'inline-block',
-    marginLeft: "5px",
-    marginRight: "5px"
-  };
+  let labelStyle = {};
   if (!cid) {labelStyle.WebkitFilter = "grayscale(100%)"}
   const handleOnClick = (e) => {
     if (!!cid){
@@ -16,9 +12,12 @@ const PubchemLabels = ({element}) =>{
     e.stopPropagation()
   }
   return (
-    <span style={labelStyle} onClick={handleOnClick}>
-      <img src="/images/wild_card/pubchem.svg" className="pubchem-logo" />
-    </span>
+    <img
+      src="/images/wild_card/pubchem.svg"
+      className="pubchem-logo"
+      onClick={handleOnClick}
+      style={labelStyle}
+    />
   )
 }
 

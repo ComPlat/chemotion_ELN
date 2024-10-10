@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Tooltip } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxFetcher from 'src/fetchers/InboxFetcher';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -95,11 +95,11 @@ export default class MoveToAnalysisButton extends React.Component {
     return (
       <div align="left" key={`btn_${sample.id}`}>
         <Button
-          bsStyle="success"
-          bsSize="small"
+          variant="success"
+          size="sm"
           onClick={() => this.moveToAnalysis(sample.id, attachment.id)}
         >
-          <i className="fa fa-arrow-circle-right" aria-hidden="true" />&nbsp;
+          <i className="fa fa-arrow-circle-right gap-1" aria-hidden="true" />
           {sample.short_label} {sample.name} {sample.type}
         </Button>
         <br />
@@ -111,28 +111,30 @@ export default class MoveToAnalysisButton extends React.Component {
     const { showTooltip } = this.state;
 
     const abortButton = (
-      <div align="right">
-        <Button
-          bsStyle="warning"
-          bsSize="small"
-          onClick={() => this.toggleTooltip()}
-        >
-          <i className="fa fa-times-circle" aria-hidden="true" />&nbsp;
-          Abort
-        </Button>
-      </div>
+      <Button
+        variant="warning"
+        size="xsm"
+        onClick={() => this.toggleTooltip()}
+      >
+        <i className="fa fa-times-circle gap-1" aria-hidden="true" />
+        Abort
+      </Button>
     );
 
     return (
-      <span>
-        <i className="icon-sample" onClick={() => this.toggleTooltip()} style={{ cursor: "pointer" }}>&nbsp;</i>
-        {showTooltip ? (
+      <OverlayTrigger
+        show={showTooltip}
+        animation
+        trigger="click"
+        placement="bottom"
+        overlay={(
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             {this.renderAnalysesButtons()}
             {abortButton}
           </Tooltip>
-        ) : null}
-      </span>
+        )}>
+        <i className="icon-sample" onClick={() => this.toggleTooltip()} role="button" />
+      </OverlayTrigger>
     );
   }
 }

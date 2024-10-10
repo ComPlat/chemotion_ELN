@@ -1,0 +1,56 @@
+.f-no-select {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.m-tree {
+  position: relative;
+  overflow: hidden;
+  @extend .f-no-select;
+  margin-left: 5px;
+
+  // Fix bootstrap overwriting display for global .collapse class
+  .collapse:not(.show) {
+    display: block;
+  }
+
+  .inner {
+    position: relative;
+  }
+
+  .collapse {
+    position: absolute;
+    left: 0;
+    cursor: pointer;
+    display: block;
+  }
+}
+
+.m-draggable {
+  position: absolute;
+  opacity: 0.8;
+  @extend .f-no-select;
+}
+
+.m-node {
+  &.placeholder > * {
+    visibility: hidden;
+  }
+
+  &.placeholder {
+    border: 1px dashed #1385e5;
+  }
+
+  .caret-right:before {
+    content: "\25B8";
+    font-size: 15px;
+  }
+
+  .caret-down:before {
+    content: "\25BE";
+    font-size: 15px;
+  }
+}

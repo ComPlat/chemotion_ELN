@@ -1,21 +1,22 @@
 import React from 'react';
-import { DropdownButton, MenuItem, Button } from 'react-bootstrap';
+import { Dropdown, DropdownButton, Button, ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 const MoveOrAssignButton = ({ assignDisabled, moveDisabled, onClick, customClass }) => (
   <DropdownButton
-    bsStyle={customClass ? null : 'success'}
+    as={ButtonGroup}
+    variant={customClass ? null : 'success'}
     className={customClass}
     title={<i className="fa fa-arrow-right" />}
     id="move-or-assign-btn"
     disabled={assignDisabled && moveDisabled}
   >
-    <MenuItem onSelect={() => onClick('move')} disabled={moveDisabled}>
+    <Dropdown.Item onClick={() => onClick('move')} disabled={moveDisabled}>
       Move to Collection
-    </MenuItem>
-    <MenuItem onSelect={() => onClick('assign')} disabled={assignDisabled}>
+    </Dropdown.Item>
+    <Dropdown.Item onClick={() => onClick('assign')} disabled={assignDisabled}>
       Assign to Collection
-    </MenuItem>
+    </Dropdown.Item>
   </DropdownButton>
 );
 
@@ -35,18 +36,19 @@ MoveOrAssignButton.defaultProps = {
 
 const RemoveOrDeleteButton = ({ removeDisabled, deleteDisabled, onClick, customClass }) => (
   <DropdownButton
-    bsStyle={customClass ? null : 'warning'}
+    as={ButtonGroup}
+    variant={customClass ? null : 'warning'}
     className={customClass}
     title={<i className="fa fa-minus-square" />}
     id="remove-or-delete-btn"
     disabled={removeDisabled && deleteDisabled}
   >
-    <MenuItem onSelect={() => onClick('remove')} disabled={removeDisabled}>
+    <Dropdown.Item onClick={() => onClick('remove')} disabled={removeDisabled}>
       Remove from current Collection
-    </MenuItem>
-    <MenuItem onSelect={() => onClick('delete')} disabled={deleteDisabled}>
+    </Dropdown.Item>
+    <Dropdown.Item onClick={() => onClick('delete')} disabled={deleteDisabled}>
       Remove from all Collections
-    </MenuItem>
+    </Dropdown.Item>
   </DropdownButton>
 );
 
@@ -66,7 +68,7 @@ RemoveOrDeleteButton.defaultProps = {
 
 const ShareButton = ({ isDisabled, customClass, onClick }) => (
   <Button
-    bsStyle={customClass ? null : 'info'}
+    variant={customClass ? null : 'info'}
     id="share-btn"
     disabled={isDisabled}
     onClick={() => onClick('share')}

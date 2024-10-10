@@ -1,8 +1,10 @@
+/* eslint-disable react/sort-comp */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, OverlayTrigger, Tooltip
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -13,10 +15,11 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
-import ReactionDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+// eslint-disable-next-line max-len
 import ReactionDetailsProperties from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
 import GreenChemistry from 'src/apps/mydb/elements/details/reactions/greenChemistryTab/GreenChemistry';
 import Utils from 'src/utilities/Functions';
@@ -29,7 +32,7 @@ import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
-import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
+import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
@@ -44,10 +47,9 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import ToggleButton from 'src/components/common/ToggleButton';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
-
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -106,6 +108,7 @@ export default class ReactionDetails extends Component {
       this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
   }
+
 
   shouldComponentUpdate(nextProps, nextState) {
     const reactionFromNextProps = nextProps.reaction;
@@ -212,12 +215,11 @@ export default class ReactionDetails extends Component {
     return (
       <span>
         Analysis:
-        &nbsp;
         <span className="pseudo-link"
           onClick={() => this.handleProductClick(product)}
-          style={{ cursor: 'pointer' }}
+          role="button"
           title="Open sample window">
-          <i className="icon-sample" />&nbsp;{product.title()}
+          <i className="icon-sample" />{product.title()}
         </span>
       </span>
     )
@@ -243,48 +245,56 @@ export default class ReactionDetails extends Component {
             setState={setState}
             handleSampleChanged={handleSampleChanged}
             handleSubmit={this.handleSubmit}
-            style={{ marginTop: 10 }}
           />
         </Tab>
       );
     });
-    const reactionTab = <span>Analysis:&nbsp;<i className="icon-reaction" />&nbsp;{reaction.short_label}</span>;
+    const reactionTab = (
+      <span>
+        Analysis:
+        <i className="icon-reaction mx-1" />
+        {reaction.short_label}
+      </span>
+    );
     return (
-      <Tabs
-        id="data-detail-tab"
-        style={{ marginTop: '10px' }}
-        unmountOnExit
-        activeKey={activeAnalysisTab}
-        onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
-      >
-        {tabs}
-        <Tab eventKey={4.1} title={reactionTab}>
-          <ListGroupItem style={{ paddingBottom: 20 }}>
+      <div className="tabs-container--with-borders">
+        <Tabs
+          id="data-detail-tab"
+          unmountOnExit
+          activeKey={activeAnalysisTab}
+          // eslint-disable-next-line react/jsx-no-bind
+          onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
+        >
+          {tabs}
+          <Tab eventKey={4.1} title={reactionTab}>
             <ReactionDetailsContainers
               reaction={reaction}
-              parent={this}
               readOnly={!permitOn(reaction)}
               handleSubmit={this.handleSubmit}
+              handleReactionChange={this.handleReactionChange}
             />
-          </ListGroupItem>
-        </Tab>
-      </Tabs>
+          </Tab>
+        </Tabs>
+      </div>
     );
   }
 
   reactionSVG(reaction) {
     if (!reaction.svgPath) {
       return false;
-    } else {
-      const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg' ? { svgPath: reaction.svgPath } : { svg: reaction.reaction_svg_file }
-      if (reaction.hasMaterials()) {
-        return (
-          <SvgFileZoomPan
-            duration={300}
-            resize={true}
-            {...svgProps}
-          />)
-      }
+    }
+    const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg'
+      ? { svgPath: reaction.svgPath }
+      : { svg: reaction.reaction_svg_file };
+    if (reaction.hasMaterials()) {
+      return (
+        <SvgFileZoomPan
+          duration={300}
+          resize
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...svgProps}
+        />
+      );
     }
   }
 
@@ -293,99 +303,113 @@ export default class ReactionDetails extends Component {
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+    const defCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
-
-    const copyBtn = (reaction.can_copy === true && !reaction.isNew) ? (
+    const copyBtn = (reaction.can_copy === true && !reaction.isNew) && (
       <CopyElementModal
         element={reaction}
         defCol={defCol}
       />
-    ) : null;
+    );
 
-    const colLabel = reaction.isNew ? null : (
+    const colLabel = !reaction.isNew && (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
-    const rsPlanLabel = (reaction.isNew || _.isEmpty(reaction.research_plans)) ? null : (
-      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
+    const rsPlanLabel = !(reaction.isNew || _.isEmpty(reaction.research_plans)) && (
+      <ElementResearchPlanLabels plans={reaction.research_plans} placement="right" />
     );
 
     return (
-      <div>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-reaction" />&nbsp;{reaction.title()}</span>
-        </OverlayTrigger>
-        <ConfirmClose el={reaction} />
-        <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit(true)}
-            disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
-            style={{ display: hasChanged }}
-          >
-            <i className="fa fa-floppy-o" />
-            <i className="fa fa-times" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-            onClick={() => this.handleSubmit()}
-            disabled={!permitOn(reaction) || !this.reactionIsValid()}
-            style={{ display: hasChanged }} >
-            <i className="fa fa-floppy-o "></i>
-          </Button>
-        </OverlayTrigger>
-        {copyBtn}
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.props.toggleFullScreen()}
-          >
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
-        >
-          <Button
-            bsStyle="success"
-            bsSize="xsmall"
-            className="button-right"
-            disabled={reaction.changed || reaction.isNew}
-            title={(reaction.changed || reaction.isNew) ?
-              "Report can be generated after reaction is saved."
-              : "Generate report for this reaction"}
-            onClick={() => Utils.downloadFile({
-              contents: "/api/v1/reports/docx?id=" + reaction.id,
-              name: reaction.name
-            })}
-          >
-            <i className="fa fa-cogs" />
-          </Button>
-        </OverlayTrigger>
-        <div style={{ display: "inline-block", marginLeft: "10px" }}>
+      <div className="d-flex justify-content-between">
+        <div className="d-flex align-items-center gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+            <span>
+              <i className="icon-reaction me-1" />
+              {reaction.title()}
+            </span>
+          </OverlayTrigger>
           {colLabel}
           {rsPlanLabel}
           <ShowUserLabels element={reaction} />
-          <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
+          <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
           <HeaderCommentSection element={reaction} />
         </div>
-        {reaction.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
-        <PrintCodeButton element={reaction} />
+        <div className="d-flex align-items-center gap-1">
+          <ButtonToolbar className="gap-1 justify-content-end">
+            <PrintCodeButton element={reaction} />
+            {!reaction.isNew
+              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />
+            }
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+            >
+              <Button
+                variant="success"
+                size="xxsm"
+                disabled={reaction.changed || reaction.isNew}
+                title={(reaction.changed || reaction.isNew)
+                  ? 'Report can be generated after reaction is saved.'
+                  : 'Generate report for this reaction'}
+                onClick={() => Utils.downloadFile({
+                  contents: `/api/v1/reports/docx?id=${reaction.id}`,
+                  name: reaction.name
+                })}
+              >
+                <i className="fa fa-cogs" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+            >
+              <Button
+                variant="info"
+                size="xxsm"
+                // eslint-disable-next-line react/destructuring-assignment
+                onClick={() => this.props.toggleFullScreen()}
+              >
+                <i className="fa fa-expand" />
+              </Button>
+            </OverlayTrigger>
+            {reaction.changed
+              && (
+                <>
+                  <OverlayTrigger
+                    placement="bottom"
+                    overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}
+                  >
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      onClick={() => this.handleSubmit(true)}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
+                    >
+                      <i className="fa fa-floppy-o me-1" />
+                      <i className="fa fa-times" />
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger
+                    placement="bottom"
+                    overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}
+                  >
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      onClick={() => this.handleSubmit()}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid()}
+                    >
+                      <i className="fa fa-floppy-o " />
+                    </Button>
+                  </OverlayTrigger>
+                </>
+              )}
+            {copyBtn}
+            <ConfirmClose el={reaction} />
+          </ButtonToolbar>
+        </div>
       </div>
     );
   }
@@ -408,34 +432,57 @@ export default class ReactionDetails extends Component {
     this.setState({ visible });
   }
 
+  reactionIsValid() {
+    const { reaction } = this.state;
+    return reaction.hasMaterials() && reaction.SMGroupValid();
+  }
+
+  productLink(product) {
+    return (
+      <span>
+        Analysis:
+        <span
+          className="pseudo-link"
+          onClick={() => this.handleProductClick(product)}
+          role="button"
+          title="Open sample window"
+        >
+          <i className="icon-sample me-1 ms-1" />
+          {product.title()}
+        </span>
+      </span>
+    );
+  }
+
   updateReactionSvg() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map(material => material.svgPath),
-      reactants: reaction.reactants.map(material => material.svgPath),
-      products: reaction.products.map(material => [material.svgPath, material.equivalent])
+      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
+      reactants: reaction.reactants.map((material) => material.svgPath),
+      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
     const solvents = reaction.solvents.map((s) => {
       const name = s.preferred_label;
       return name;
-    }).filter(s => s);
+    }).filter((s) => s);
 
     let temperature = reaction.temperature_display;
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
 
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions).then((result) => {
-      reaction.reaction_svg_file = result.reaction_svg;
-      this.setState(reaction);
-    });
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
+      .then((result) => {
+        reaction.reaction_svg_file = result.reaction_svg;
+        this.setState(reaction);
+      });
   }
 
   handleSegmentsChange(se) {
     const { reaction } = this.state;
     const { segments } = reaction;
-    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
     reaction.segments = segments;
     reaction.changed = true;
@@ -473,25 +520,23 @@ export default class ReactionDetails extends Component {
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
-    const schemeTitle = reaction && activeTab === 'scheme' ? (
-      <div style={{ display: 'flex' }}>
-        <div style={{ paddingRight: '2px' }}>
-          <ToggleButton
-            isToggledInitial={reaction.gaseous}
-            onToggle={this.handleGaseousChange}
-            onLabel="Gas Scheme"
-            offLabel="Default Scheme"
-            onColor="#afcfee"
-            offColor="#d3d3d3"
-            tooltipOn="Click to enable Default mode"
-            tooltipOff="Click to enable Gas mode"
-          />
-        </div>
-      </div>
-    ) : 'Scheme';
     const tabContentsMap = {
       scheme: (
-        <Tab eventKey="scheme" title={schemeTitle} key={`scheme_${reaction.id}`}>
+        <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
+          <ButtonGroup size="sm">
+            <ButtonGroupToggleButton
+              active={!reaction.gaseous}
+              onClick={this.handleGaseousChange}
+            >
+              Default Scheme
+            </ButtonGroupToggleButton>
+            <ButtonGroupToggleButton
+              active={reaction.gaseous}
+              onClick={this.handleGaseousChange}
+            >
+              Gas Scheme
+            </ButtonGroupToggleButton>
+          </ButtonGroup>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }
@@ -509,7 +554,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsProperties
             reaction={reaction}
-            onReactionChange={r => this.handleReactionChange(r)}
+            onReactionChange={(r) => this.handleReactionChange(r)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
             key={reaction.checksum}
           />
@@ -520,10 +565,10 @@ export default class ReactionDetails extends Component {
           {
             !reaction.isNew && <CommentSection section="reaction_references" element={reaction} />
           }
-          <ReactionDetailsLiteratures
+          <DetailsTabLiteratures
             element={reaction}
-            literatures={reaction.isNew === true ? reaction.literatures : null}
-            onElementChange={r => this.handleReactionChange(r)}
+            literatures={reaction.isNew ? reaction.literatures : null}
+            onElementChange={(r) => this.handleReactionChange(r)}
           />
         </Tab>
       ),
@@ -538,7 +583,7 @@ export default class ReactionDetails extends Component {
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction}/>
+            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction} />
           }
           <GreenChemistry
             reaction={reaction}
@@ -558,7 +603,7 @@ export default class ReactionDetails extends Component {
 
     const tabTitlesMap = {
       green_chemistry: 'Green Chemistry'
-    }
+    };
 
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 
@@ -569,15 +614,16 @@ export default class ReactionDetails extends Component {
     });
 
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
+    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
 
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <Panel className="eln-panel-detail"
-        bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
-        <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
-        <Panel.Body>
+      <Card className={"detail-card" + (reaction.isPendingToSave ? " detail-card--unsaved" : "")}>
+        <Card.Header>
+          {this.reactionHeader(reaction)}
+        </Card.Header>
+        <Card.Body>
           {this.reactionSVG(reaction)}
           <ElementDetailSortTab
             type="reaction"
@@ -585,28 +631,38 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          {this.state.sfn ? <ScifinderSearch el={reaction} /> : null}
-          <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
-            {tabContents}
-          </Tabs>
-          <hr />
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
+          {this.state.sfn && <ScifinderSearch el={reaction} />}
+          <div className="tabs-container--with-borders">
+            <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
+              {tabContents}
+            </Tabs>
+            <CommentModal element={reaction} />
+          </div>
+        </Card.Body>
+        <Card.Footer>
+          <div className="d-inline-block p-1">
+            <Button variant="primary" onClick={() => DetailActions.close(reaction)} className="me-1">
               Close
             </Button>
-            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
+            <Button
+              id="submit-reaction-btn"
+              variant="warning"
+              className="me-1"
+              onClick={() => this.handleSubmit()}
+              disabled={!permitOn(reaction) || !this.reactionIsValid()}
+            >
               {submitLabel}
             </Button>
             {exportButton}
-          </ButtonToolbar>
-          <CommentModal element={reaction} />
-        </Panel.Body>
-      </Panel>
+          </div>
+        </Card.Footer>
+      </Card>
     );
   }
 }
 
 ReactionDetails.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
   toggleFullScreen: PropTypes.func,
 };

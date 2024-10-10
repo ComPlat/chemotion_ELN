@@ -1,43 +1,36 @@
-.container
-  %h2
-    Change account log-in
-  %br/
-  = form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f|
-    = devise_error_messages!
-    .form-group.field
-      = f.label :email, "New Email"
-      %i (Leave unchanged if you don't want to change it)
-      %br/
-      = f.email_field :email, autofocus: true, class: 'form-control'
-    - if devise_mapping.confirmable? && resource.pending_reconfirmation?
-      %div
-        Currently waiting confirmation for: #{resource.unconfirmed_email}
-    .form-group.field
-      = f.label :password , "New password"
-      %i (Leave blank if you don't want to change it)
-      %br/
-      = f.password_field :password, autocomplete: "off", class: 'form-control'
-    .form-group.field
-      = f.label :password_confirmation, "Confirm New Password"
-      %br/
-      = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
-    .form-group.field
-      = f.label :current_password
-      %i (We need your current password to confirm your changes)
-      %br/
-      = f.password_field :current_password, autocomplete: "off", class: 'form-control'
-    .actions
+.container.my-5
+  .row
+    %h2.mb-3 Change account log-in
+    = form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f|
+      = devise_error_messages!
+      .form-group.mb-3
+        = f.label :email, "New Email", class: 'form-label'
+        = f.email_field :email, autofocus: true, class: 'form-control'
+        %div.form-text Leave unchanged if you don't want to change it
+      - if devise_mapping.confirmable? && resource.pending_reconfirmation?
+        %div.form-text
+          Currently waiting confirmation for: #{resource.unconfirmed_email}
+
+      .form-group.mb-3
+        = f.label :password , "New password", class: 'form-label'
+        = f.password_field :password, autocomplete: "off", class: 'form-control'
+        %div.form-text Leave blank if you don't want to change it
+
+      .form-group.mb-3
+        = f.label :password_confirmation, "Confirm New Password", class: 'form-label'
+        = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
+
+      .form-group.mb-3
+        = f.label :current_password, class: 'form-label'
+        = f.password_field :current_password, autocomplete: "off", class: 'form-control'
+        %div.form-text We need your current password to confirm your changes
+
       = f.submit "Change Email/Password", class: 'btn btn-primary'
-  %br/    
-  %br/    
-  %br/    
-  %h2 Delete Account
-  %br/
-  %p
-    By clicking this, your account will be permanently deleted#{button_to "Delete Account", registration_path(resource_name), onclick: "return confirm('Are you sure you want to delete your account?')", method: :delete, class: 'btn btn-danger'}
-  %br/
-  %br/
-  %br/
-  %br/
-  %br/
+
+  %hr
+
+  .row.mb-3
+    %h2.mb-3 Delete Account
+    %p By clicking this, your account will be permanently deleted#{button_to "Delete Account", registration_path(resource_name), onclick: "return confirm('Are you sure you want to delete your account?')", method: :delete, class: 'btn btn-danger'}
+
   = link_to "Back", root_path

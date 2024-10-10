@@ -11,7 +11,7 @@ const AreaTitle = ({ curation }) => (
       </span>
     </h4>
     <h4>
-      <span className="underline-qc">
+      <span className="text-decoration-underline">
         {evalCurTitle(curation)}
       </span>
     </h4>

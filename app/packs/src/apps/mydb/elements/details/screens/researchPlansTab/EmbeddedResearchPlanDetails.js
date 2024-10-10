@@ -2,7 +2,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, Label, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem
+  Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown,
+  Card, Collapse, Container, Row, Col
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,27 +17,26 @@ import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
-function InfoLabel({
-  iconClass, text, style, tooltip
-}) {
+function InfoButton({ iconClass, text, style, tooltip }) {
   style ||= 'info';
   if (!(iconClass && text)) { return null; }
-  const icon = (<i className={`fa ${iconClass}`} />);
-  const label = (
-    <Label bsStyle={style} style={{ 'margin-right': '1em' }} tooltip={tooltip}>
-      {icon}
+
+  const button = (
+    <Button variant={style} size="xxsm" tooltip={tooltip}>
+      <i className={`fa ${iconClass}`} />
       {` ${text}`}
-    </Label>
+    </Button>
   );
   if (tooltip) {
     return (
       <OverlayTrigger placement="bottom" overlay={<Tooltip>{tooltip}</Tooltip>}>
-        {label}
+        {button}
       </OverlayTrigger>
     );
   }
-  return label;
+  return button;
 }
+
 
 export default class EmbeddedResearchPlanDetails extends Component {
   constructor(props) {
@@ -56,7 +56,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     let { researchPlan, expanded } = nextProps;
     if (!(researchPlan instanceof ResearchPlan)) {
       const rResearchPlan = new ResearchPlan(researchPlan);
@@ -137,6 +137,8 @@ export default class EmbeddedResearchPlanDetails extends Component {
   handleCopyToMetadata(id, fieldName) {
     const { researchPlan } = this.state;
     const researchPlanMetadata = researchPlan.research_plan_metadata;
+    if (!researchPlanMetadata) { return null; }
+
     const args = { research_plan_id: researchPlanMetadata.research_plan_id };
     const index = researchPlan.body.findIndex((field) => field.id === id);
     const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';
@@ -185,87 +187,88 @@ export default class EmbeddedResearchPlanDetails extends Component {
     const { name, body, changed } = researchPlan;
     const edit = researchPlan.mode === 'edit';
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          {this.renderExportButton(changed)}
-          <ResearchPlanDetailsName
-            value={name}
-            disabled={researchPlan.isMethodDisabled('name')}
-            onChange={this.handleNameChange}
-            edit={edit}
-          />
-          <ResearchPlanDetailsBody
-            body={body}
-            disabled={researchPlan.isMethodDisabled('body')}
-            onChange={this.handleBodyChange}
-            onDrop={this.handleBodyDrop.bind(this)}
-            onAdd={this.handleBodyAdd}
-            onDelete={this.handleBodyDelete.bind(this)}
-            onExport={this.handleExportField.bind(this)}
-            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-            update={update}
-            edit={edit}
-            researchPlan={researchPlan}
-          />
-        </ListGroupItem>
-      </ListGroup>
+      <Container>
+        <Row>
+          <Col>
+            {this.renderExportButton(changed)}
+            <ResearchPlanDetailsName
+              value={name}
+              disabled={researchPlan.isMethodDisabled('name')}
+              onChange={this.handleNameChange}
+              edit={edit}
+              onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+            />
+            <ResearchPlanDetailsBody
+              body={body}
+              disabled={researchPlan.isMethodDisabled('body')}
+              onChange={this.handleBodyChange}
+              onDrop={this.handleBodyDrop.bind(this)}
+              onAdd={this.handleBodyAdd}
+              onDelete={this.handleBodyDelete.bind(this)}
+              onExport={this.handleExportField.bind(this)}
+              onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+              update={update}
+              edit={edit}
+              researchPlan={researchPlan}
+            />
+          </Col>
+        </Row>
+      </Container>
     );
   } /* eslint-enable */
 
   // render functions
   renderExportButton(disabled) {
+    // className="research-plan-export-dropdown dropdown-right pull-right"
     return (
       <Dropdown
         id="research-plan-export-dropdown"
-        className="research-plan-export-dropdown dropdown-right pull-right"
         disabled={disabled}
       >
-        <Dropdown.Toggle>
+        <Dropdown.Toggle variant="outline-dark" className="float-end">
           Export
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <MenuItem onSelect={() => this.handleExport('docx')}>
+          <Dropdown.Item onClick={() => this.handleExport('docx')}>
             as .docx
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('odt')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('odt')}>
             as .odt
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('html')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('html')}>
             as HTML
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('markdown')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('markdown')}>
             as Markdown
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('latex')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('latex')}>
             as LaTeX
-          </MenuItem>
+          </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
     );
   }
 
-  renderPanelHeading(researchPlan) {
+  renderCardHeader(researchPlan) {
     const { deleteResearchPlan, saveResearchPlan } = this.props;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
     const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
 
     const popover = (
       <Tooltip placement="left" className="in" id="tooltip-bottom">
-        Remove&nbsp;
-        {researchPlan.name}
-        &nbsp;from Screen?
+        Remove {researchPlan.name} from Screen?
         <br />
         <ButtonGroup>
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="sm"
             onClick={() => deleteResearchPlan(researchPlan.id)}
           >
             Yes
           </Button>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             onClick={() => this.setState({ confirmRemove: false })}
           >
             No
@@ -275,76 +278,76 @@ export default class EmbeddedResearchPlanDetails extends Component {
     );
 
     return (
-      <Panel.Heading>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="fa fa-file-text-o" />
-            &nbsp;&nbsp;
-            <span>{researchPlan.name}</span>
-            &nbsp;&nbsp;
-          </span>
-        </OverlayTrigger>
-
-        <InfoLabel iconClass="fa-bar-chart" text={this.numberOfAnalyses(researchPlan)} tooltip="Analyses" />
-        <InfoLabel iconClass="fa-file-text-o" text={researchPlan.attachmentCount} tooltip="Attachments" />
-        <ElementCollectionLabels element={researchPlan} placement="right" />
-
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}
-        >
-          <Button
-            ref={(button) => { this.target = button; }}
-            bsStyle="danger"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
+      <div className='d-flex align-items-center justify-content-between'>
+        <div className='d-flex align-items-center gap-2'>
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
+            <span>
+              <i className="fa fa-file-text-o me-1" />
+              {researchPlan.name}
+            </span>
+          </OverlayTrigger>
+          <InfoButton iconClass="fa-bar-chart" text={this.numberOfAnalyses(researchPlan)} tooltip="Analyses" />
+          <InfoButton iconClass="fa-file-text-o" text={researchPlan.attachmentCount} tooltip="Attachments" />
+          <ElementCollectionLabels element={researchPlan} placement="right" />
+        </div>
+        <div className='d-flex align-items-center gap-1'>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="expand_research_plan">Show/hide Research Plan details</Tooltip>}
           >
-            <i className="fa fa-trash-o" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <Overlay
-          rootClose
-          target={this.target}
-          show={this.state.confirmRemove}
-          placement="bottom"
-          onHide={() => this.setState({ confirmRemove: false })}
-        >
-          {popover}
-        </Overlay>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => saveResearchPlan(researchPlan)}
-            style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
+            <Button
+              variant="info"
+              size="xxsm"
+              onClick={() => this.setState({ expanded: !this.state.expanded })}
+            >
+              <i className={expandIconClass} aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="open_research_plan">Open Research Plan in Tab</Tooltip>}
           >
-            <i className="fa fa-floppy-o" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="open_research_plan">Open Research Plan in Tab</Tooltip>}
-        >
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.openResearchPlan()}>
-            <i className="fa fa-window-maximize" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="expand_research_plan">Show/hide Research Plan details</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.setState({ expanded: !this.state.expanded })}
+            <Button
+              variant="info"
+              size="xxsm"
+              onClick={() => this.openResearchPlan()}>
+              <i className="fa fa-window-maximize" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
+            <Button
+              variant="warning"
+              size="xxsm"
+              onClick={() => saveResearchPlan(researchPlan)}
+              style={{ display: (researchPlan.changed || false) ? 'block' : 'none' }}
+            >
+              <i className="fa fa-floppy-o" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          <Overlay
+            rootClose
+            target={this.target}
+            show={this.state.confirmRemove}
+            placement="bottom"
+            onHide={() => this.setState({ confirmRemove: false })}
           >
-            <i className={expandIconClass} aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-      </Panel.Heading>
+            {popover}
+          </Overlay>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}
+          >
+            <Button
+              ref={(button) => { this.target = button; }}
+              variant="danger"
+              size="xxsm"
+              onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
+            >
+              <i className="fa fa-trash-o" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+        </div>
+      </div>
     );
   }
 
@@ -352,34 +355,40 @@ export default class EmbeddedResearchPlanDetails extends Component {
     const { researchPlan, update } = this.state;
     let btnMode = (
       <Button
-        bsSize="xs"
-        bsStyle="success"
+        size="sm"
+        variant="success"
+        className="mb-4"
         onClick={() => this.handleSwitchMode('edit')}
       >
         click to edit
       </Button>
     );
     if (researchPlan.mode !== 'view') {
-      btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
+      btnMode = (
+        <Button
+          size="sm"
+          variant="info"
+          className="mb-4"
+          onClick={() => this.handleSwitchMode('view')}
+        >
+          click to view
+        </Button>
+      );
     }
 
+    // className="detail-card research-plan-details"
     return (
-      <Panel
-        expanded={this.state.expanded}
-        onToggle={() => {}}
-        bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'}
-        className="eln-panel-detail research-plan-details"
-      >
-        {this.renderPanelHeading(researchPlan)}
-        <Panel.Collapse>
-          <Panel.Body>
-            <div style={{ margin: '5px 0px 5px 5px' }}>
-              {btnMode}
-            </div>
+      <Card className={"mb-4 detail-card rounded-0" + (researchPlan.isPendingToSave ? " detail-card--unsaved" : "")}>
+        <Card.Header className="rounded-0">
+          {this.renderCardHeader(researchPlan)}
+        </Card.Header>
+        <Collapse in={this.state.expanded}>
+          <Card.Body>
+            {btnMode}
             {this.renderResearchPlanMain(researchPlan, update)}
-          </Panel.Body>
-        </Panel.Collapse>
-      </Panel>
+          </Card.Body>
+        </Collapse>
+      </Card>
     );
   }
 }

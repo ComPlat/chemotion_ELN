@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
-import { FormGroup, ControlLabel, Form } from 'react-bootstrap';
-import AsyncSelect from 'react-select3/async';
+import { Form } from 'react-bootstrap';
+import { AsyncSelect } from 'src/components/common/Select';
 import { selectUserOptionFormater, selectedUserFormater } from 'src/utilities/selectHelper';
 
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -16,8 +16,7 @@ const DeviceUserGroupsTab = () => {
   }
 
   const handleUser = (value, type) => {
-    let newValue = value ? value : [];
-    devicesStore.changeDevice(type, newValue);
+    devicesStore.changeDevice(type, value);
   }
 
   const loadUserByName = (input, type) => {
@@ -27,7 +26,7 @@ const DeviceUserGroupsTab = () => {
 
     return AdminFetcher.fetchUsersByNameType(input, type)
       .then((result) => {
-        return selectUserOptionFormater({ data: result, withType: false }).options
+        return selectUserOptionFormater({ data: result, withType: false })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -35,38 +34,36 @@ const DeviceUserGroupsTab = () => {
 
   return (
     <Form>
-      <FormGroup>
-        <ControlLabel>Add device permission to users</ControlLabel>
+      <Form.Group className="mb-4">
+        <Form.Label>Add device permission to users</Form.Label>
         <AsyncSelect
           isMulti
           isClearable={false}
           isLoading={devicesStore.is_loading}
           loadOptions={(input) => loadUserByName(input, 'Person')}
           loadingMessage={() => "Type to search"}
-          value={selectedUserFormater(device.people).options}
+          value={selectedUserFormater(device.people)}
           placeholder="Select ..."
           onChange={(value) => handleUser(value, 'people')}
           onMenuOpen={() => toggleLoading(true)}
           onMenuClose={() => toggleLoading(false)}
-          className="device-multi-select"
         />
-      </FormGroup>
-      <FormGroup>
-        <ControlLabel>Add device permission to groups</ControlLabel>
+      </Form.Group>
+      <Form.Group className="mb-4">
+        <Form.Label>Add device permission to groups</Form.Label>
         <AsyncSelect
           isMulti
           isClearable={false}
           isLoading={devicesStore.is_loading}
           loadOptions={(input) => loadUserByName(input, 'Group')}
           loadingMessage={() => "Type to search"}
-          value={selectedUserFormater(device.groups).options}
+          value={selectedUserFormater(device.groups)}
           placeholder="Select ..."
           onChange={(value) => handleUser(value, 'groups')}
           onMenuOpen={() => toggleLoading(true)}
           onMenuClose={() => toggleLoading(false)}
-          className="device-multi-select"
         />
-      </FormGroup>
+      </Form.Group>
     </Form>
   );
 }

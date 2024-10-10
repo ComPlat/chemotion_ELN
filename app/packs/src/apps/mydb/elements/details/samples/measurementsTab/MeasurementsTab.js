@@ -6,6 +6,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import MeasurementsTable from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTable';
 import MeasurementsList from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsList';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 class MeasurementsTab extends Component {
   static propTypes = {
@@ -34,21 +35,23 @@ class MeasurementsTab extends Component {
   }
 
   renderDisplaySwitcher() {
-    return (<ButtonGroup>
-      <Button
+    return (<ButtonGroup className="mb-3">
+      <ButtonGroupToggleButton
+        size="xsm"
         active={this.state.displayMode == 'table'}
-        bsSize="small"
         onClick={() => this.setState({ displayMode: 'table' })}
       >
+        <i className="fa fa-table me-1" />
         Show as Table
-      </Button>
-      <Button
+      </ButtonGroupToggleButton>
+      <ButtonGroupToggleButton
+        size="xsm"
         active={this.state.displayMode == 'list'}
-        bsSize="small"
         onClick={() => this.setState({ displayMode: 'list' })}
       >
+        <i className="fa fa-list me-1" />
         Show as List
-      </Button>
+      </ButtonGroupToggleButton>
     </ButtonGroup>);
   }
 

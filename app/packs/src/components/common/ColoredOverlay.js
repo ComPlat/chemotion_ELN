@@ -2,18 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 function ColoredOverlay({ color }) {
-  console.log('Rendering ColoredOverlay');
   return (
     <div
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: color,
-        opacity: 0.5,
-      }}
+      className="position-absolute top-0 start-0 w-100 h-100 opacity-50"
+      style={{ backgroundColor: color }}
     />
   );
 }

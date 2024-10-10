@@ -13,23 +13,22 @@ export default class SvgWithPopover extends Component {
   popHover() {
     const { popObject, previewObject } = this.props;
     return (
-      <Popover
-        id="popover-trigger-hover-focus"
-        title={popObject.title}
-        style={{ maxWidth: 'none', maxHeight: 'none' }}
-      >
+      <Popover>
         {
-          previewObject.isSVG
-          ? 
-          <div style={{ height: popObject.height, width: popObject.width }}>
+          popObject.title && <Popover.Header as="h3">{popObject.title}</Popover.Header>
+        }
+        <Popover.Body>
+          {
+            previewObject.isSVG
+            ? 
             <SvgFileZoomPan
               svgPath={popObject.src}
               duration={0}
               resize
             />
-          </div>
-          : <img src={popObject.src} style={{ height: popObject.height, width: popObject.width }} alt="" />
-        }
+            : <img src={popObject.src} style={{ height: popObject.height, width: popObject.width }} alt="" />
+          }
+        </Popover.Body>
       </Popover>
     );
   }

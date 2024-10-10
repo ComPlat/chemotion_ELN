@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
-  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab
+  Form, Card, Row, Col, ButtonToolbar, Button,
+  Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -50,6 +50,7 @@ export default class ScreenDetails extends Component {
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.updateComponentGraphData = this.updateComponentGraphData.bind(this);
+    this.handleScreenChanged = this.handleScreenChanged.bind(this);
   }
 
   componentDidMount() {
@@ -186,52 +187,54 @@ export default class ScreenDetails extends Component {
   }
 
   screenHeader(screen) {
-    const saveBtnDisplay = screen.isEdited ? '' : 'none';
+    const saveBtnDisplay = screen.isEdited ? 'block' : 'none';
     const datetp = formatTimeStampsOfElement(screen || {});
-    const { showCommentSection, comments } = this.props;
 
     return (
-      <div>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
-          <span>
-            <i className="icon-screen" />
-            &nbsp;<span>{screen.name}</span> &nbsp;
-          </span>
-        </OverlayTrigger>
-        <ElementCollectionLabels element={screen} placement="right" />
-        <HeaderCommentSection element={screen} />
-        <ConfirmClose el={screen} />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit()}
-            style={{ display: saveBtnDisplay }}
+      <div className='d-flex align-items-center justify-content-between'>
+        <div className='d-flex align-items-center gap-2'>
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
+            <span>
+              <i className="icon-screen me-1" />
+              {screen.name}
+            </span>
+          </OverlayTrigger>
+          <ElementCollectionLabels element={screen} placement="right" />
+          <HeaderCommentSection element={screen} />
+        </div>
+        <div className='d-flex align-items-center gap-1'>
+          <PrintCodeButton element={screen} />
+          {screen.isNew
+            ? null
+            : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
+          
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
           >
-            <i className="fa fa-floppy-o " />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.props.toggleFullScreen()}
+            <Button
+              variant="info"
+              size="xxsm"
+              onClick={() => this.props.toggleFullScreen()}
+            >
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
           >
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        {screen.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
-        <PrintCodeButton element={screen} />
+            <Button
+              variant="warning"
+              size="xxsm"
+              onClick={() => this.handleSubmit()}
+              style={{ display: saveBtnDisplay }}
+            >
+              <i className="fa fa-floppy-o " />
+            </Button>
+          </OverlayTrigger>
+          <ConfirmClose el={screen} />
+        </div>
       </div>
     );
   }
@@ -242,96 +245,93 @@ export default class ScreenDetails extends Component {
     } = screen;
 
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <table width="100%">
-            <tbody>
-              <tr>
-                <td width="50%" className="padding-right">
-                  <FormGroup>
-                    <ControlLabel>Name</ControlLabel>
-                    <FormControl
-                      type="text"
-                      value={name || ''}
-                      onChange={event => this.handleInputChange('name', event)}
-                      disabled={screen.isMethodDisabled('name')}
-                    />
-                  </FormGroup>
-                </td>
-                <td width="50%">
-                  <FormGroup>
-                    <ControlLabel>Collaborator</ControlLabel>
-                    <FormControl
-                      type="text"
-                      value={collaborator || ''}
-                      onChange={event => this.handleInputChange('collaborator', event)}
-                      disabled={screen.isMethodDisabled('collaborator')}
-                    />
-                  </FormGroup>
-                </td>
-              </tr>
-              <tr>
-                <td className="padding-right">
-                  <FormGroup>
-                    <ControlLabel>Requirements</ControlLabel>
-                    <FormControl
-                      type="text"
-                      value={requirements || ''}
-                      onChange={event => this.handleInputChange('requirements', event)}
-                      disabled={screen.isMethodDisabled('requirements')}
-                    />
-                  </FormGroup>
-                </td>
-                <td >
-                  <FormGroup>
-                    <ControlLabel>Conditions</ControlLabel>
-                    <FormControl
-                      type="text"
-                      value={conditions || ''}
-                      onChange={event => this.handleInputChange('conditions', event)}
-                      disabled={screen.isMethodDisabled('conditions')}
-                    />
-                  </FormGroup>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan="2">
-                  <FormGroup>
-                    <ControlLabel>Result</ControlLabel>
-                    <FormControl
-                      type="text"
-                      value={result || ''}
-                      onChange={event => this.handleInputChange('result', event)}
-                      disabled={screen.isMethodDisabled('result')}
-                    />
-                  </FormGroup>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan="2">
-                  <FormGroup>
-                    <ControlLabel>Description</ControlLabel>
-                    <QuillEditor
-                      value={description}
-                      onChange={event => this.handleInputChange('description', { target: { value: event } })}
-                      disabled={screen.isMethodDisabled('description')}
-                    />
-                  </FormGroup>
-                  <PrivateNoteElement element={screen} disabled={screen.can_update} />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </ListGroupItem>
-        <ListGroupItem>
-          <h4 className="list-group-item-heading">Wellplates</h4>
-          <ScreenWellplates
-            wellplates={wellplates}
-            dropWellplate={wellplate => this.dropWellplate(wellplate)}
-            deleteWellplate={wellplate => this.deleteWellplate(wellplate)}
-          />
-        </ListGroupItem>
-      </ListGroup>
+      <Form>
+        <Row className="mb-4">
+          <Col>
+            <Form.Group>
+              <Form.Label>Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={name || ''}
+                onChange={event => this.handleInputChange('name', event)}
+                disabled={screen.isMethodDisabled('name')}
+              />
+            </Form.Group>
+          </Col>
+          <Col>
+            <Form.Group>
+              <Form.Label>Collaborator</Form.Label>
+              <Form.Control
+                type="text"
+                value={collaborator || ''}
+                onChange={event => this.handleInputChange('collaborator', event)}
+                disabled={screen.isMethodDisabled('collaborator')}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row className="mb-4">
+          <Col>
+            <Form.Group>
+              <Form.Label>Requirements</Form.Label>
+              <Form.Control
+                type="text"
+                value={requirements || ''}
+                onChange={event => this.handleInputChange('requirements', event)}
+                disabled={screen.isMethodDisabled('requirements')}
+              />
+            </Form.Group>
+          </Col>
+          <Col>
+            <Form.Group>
+              <Form.Label>Conditions</Form.Label>
+              <Form.Control
+                type="text"
+                value={conditions || ''}
+                onChange={event => this.handleInputChange('conditions', event)}
+                disabled={screen.isMethodDisabled('conditions')}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row className="mb-4">
+          <Col>
+            <Form.Group>
+              <Form.Label>Result</Form.Label>
+              <Form.Control
+                type="text"
+                value={result || ''}
+                onChange={event => this.handleInputChange('result', event)}
+                disabled={screen.isMethodDisabled('result')}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row className="mb-4">
+          <Col>
+            <Form.Group>
+              <Form.Label>Description</Form.Label>
+              <QuillEditor
+                value={description}
+                onChange={event => this.handleInputChange('description', { target: { value: event } })}
+                disabled={screen.isMethodDisabled('description')}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row className="mb-4">
+          <Col>
+            <PrivateNoteElement element={screen} disabled={screen.can_update} />
+          </Col>
+        </Row>
+        <hr />
+        <h4 className="list-group-item-heading">Wellplates</h4>
+        <ScreenWellplates
+          wellplates={wellplates}
+          dropWellplate={wellplate => this.dropWellplate(wellplate)}
+          deleteWellplate={wellplate => this.deleteWellplate(wellplate)}
+        />
+      </Form >
     );
   }
 
@@ -383,7 +383,7 @@ export default class ScreenDetails extends Component {
           }
           <ScreenDetailsContainers
             screen={screen}
-            parent={this}
+            handleScreenChanged={this.handleScreenChanged}
           />
         </Tab>
       ),
@@ -432,12 +432,11 @@ export default class ScreenDetails extends Component {
     };
 
     return (
-      <Panel
-        bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
-        className="eln-panel-detail"
-      >
-        <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
-        <Panel.Body>
+      <Card className={"detail-card" + (screen.isPendingToSave ? " detail-card--unsaved" : "")}>
+        <Card.Header>
+          {this.screenHeader(screen)}
+        </Card.Header>
+        <Card.Body>
           <ResearchplanFlowDisplay
             initialData={screen.componentGraphData}
             researchplans={screen.research_plans}
@@ -449,16 +448,28 @@ export default class ScreenDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
-            {tabContents}
-          </Tabs>
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
-          </ButtonToolbar>
+          <div className="tabs-container--with-borders">
+            <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab" unmountOnExit>
+              {tabContents}
+            </Tabs>
+          </div>
           <CommentModal element={screen} />
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+        <Card.Footer>
+          <ButtonToolbar className="gap-2">
+            <Button variant="primary" onClick={() => DetailActions.close(screen)}>
+              Close
+            </Button>
+            <Button
+              id="submit-screen-btn"
+              variant="warning"
+              onClick={() => this.handleSubmit()}
+            >
+              {submitLabel}
+            </Button>
+          </ButtonToolbar>
+        </Card.Footer>
+      </Card>
     );
   }
 }

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Badge, Modal, FormControl
+  Button, ButtonGroup, Badge, Modal, Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
@@ -21,13 +21,12 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
-      <Badge>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
-      {' '}
+      <Badge bg='secondary' className='me-2'>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
       <ButtonGroup>
-        <Button bsSize="xsmall" bsStyle="success" onClick={() => copyRow(variationsRow)}>
+        <Button size="xsm" variant="success" onClick={() => copyRow(variationsRow)}>
           <i className="fa fa-clone" />
         </Button>
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => removeRow(variationsRow)}>
+        <Button size="xsm" variant="danger" onClick={() => removeRow(variationsRow)}>
           <i className="fa fa-trash-o" />
         </Button>
       </ButtonGroup>
@@ -36,8 +35,14 @@ function RowToolsCellRenderer({
 }
 
 RowToolsCellRenderer.propTypes = {
-  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  data: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+  }).isRequired,
+  context: PropTypes.shape({
+    reactionShortLabel: PropTypes.string.isRequired,
+    copyRow: PropTypes.func.isRequired,
+    removeRow: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 function EquivalentFormatter({ value: cellData }) {
@@ -129,6 +134,21 @@ function MaterialParser({
   );
 }
 
+function NoteCellRenderer(props) {
+  return (
+    <OverlayTrigger
+      placement="right"
+      overlay={
+        <Tooltip id={"note-tooltip-" + props.data.id}>
+          double click to edit
+        </Tooltip>
+      }
+    >
+      <span>{props.value ? props.value : '_'}</span>
+    </OverlayTrigger>
+  );
+}
+
 function NoteCellEditor({
   data: variationsRow,
   value,
@@ -154,8 +174,8 @@ function NoteCellEditor({
         {`Edit note for ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
       </Modal.Header>
       <Modal.Body>
-        <FormControl
-          componentClass="textarea"
+        <Form.Control
+          as="textarea"
           placeholder="Start typing your note..."
           value={note}
           onChange={(event) => setNote(event.target.value)}
@@ -171,11 +191,15 @@ function NoteCellEditor({
 }
 
 NoteCellEditor.propTypes = {
-  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  data: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+  }).isRequired,
+  value: PropTypes.string.isRequired,
   onValueChange: PropTypes.func.isRequired,
-  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  stopEditing: PropTypes.func.isRequired,
+  context: PropTypes.shape({
+    reactionShortLabel: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export {
@@ -186,5 +210,6 @@ export {
   PropertyParser,
   MaterialFormatter,
   MaterialParser,
+  NoteCellRenderer,
   NoteCellEditor
 };

@@ -16,9 +16,9 @@ export default function CommentList(props) {
   if (sectionComments?.length > 0) {
     commentsTbl = sectionComments.map((comment) => (
       <tr key={comment.id}>
-        <td style={{ width: '15%' }}>{formatDate(comment.created_at)}</td>
-        <td style={{ width: '40%' }}>{comment.content}</td>
-        <td style={{ width: '15%' }}>{comment.submitter}</td>
+        <td>{formatDate(comment.created_at)}</td>
+        <td>{comment.content}</td>
+        <td>{comment.submitter}</td>
       </tr>
     ));
   }
@@ -27,19 +27,18 @@ export default function CommentList(props) {
     <div>
       {
         (sectionComments?.length > 0)
-          ? (
+          && (
             <Table striped bordered hover>
               <thead>
                 <tr>
-                  <th width="15%">Date</th>
-                  <th width="40%">Comment</th>
-                  <th width="15%">From User</th>
+                  <th>Date</th>
+                  <th>Comment</th>
+                  <th>From User</th>
                 </tr>
               </thead>
               <tbody>{commentsTbl}</tbody>
             </Table>
           )
-          : null
       }
     </div>
   );

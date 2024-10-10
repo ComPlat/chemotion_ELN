@@ -1,5 +1,5 @@
 import React from 'react';
-import { Label, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, Badge, OverlayTrigger, Popover } from 'react-bootstrap';
 
 export default class ElementAnalysesLabels extends React.Component {
   constructor(props) {
@@ -9,51 +9,16 @@ export default class ElementAnalysesLabels extends React.Component {
     }
   }
 
-  render() {
-
-    return (
-      <div style={{ display: 'inline-block', marginTop: '-5px' }}
-        onClick={(e) => { e.stopPropagation() }}>
-        {this.analysesLabels(this.state.element)}
-      </div>
-    );
-  }
-
-
-
-  analysesLabels(element) {
-    if (!element.tag) return (<span />)
-    if (!element.tag.taggable_data) return (<span />)
-
-    let analyses = element.tag.taggable_data.analyses
-
-    if (!analyses) return (<span />)
-
-    let unconfirmedTitle = 'Unconfirmed Analysis'
-    if (analyses.Unconfirmed && Object.keys(analyses.unconfirmed).length > 1)
-      unconfirmedTitle = 'Unconfirmed Analyses'
-
-    let confirmedTitle = 'Confirmed Analysis'
-    if (analyses.Confirmed && Object.keys(analyses.confirmed).length > 1)
-      confirmedTitle = 'Confirmed Analyses'
-
-    return (
-      <div style={{ display: 'inline-block' }}>
-        {this.labelWithPopover(unconfirmedTitle, analyses.unconfirmed)}
-        {this.labelWithPopover(confirmedTitle, analyses.confirmed)}
-      </div>
-    )
-  }
-
   labelWithPopover(title, labels) {
-    if (!labels) return (<span />)
-
     let { element } = this.state
     let experiment = <i className='fa fa-bar-chart' />
 
     let label_popover = (
-      <Popover title={title} id={'labelpop' + element.id}>
-        {this.formatLabels(labels)}
+      <Popover id={'labelpop' + element.id}>
+        <Popover.Header as="h3">{title}</Popover.Header>
+        <Popover.Body className="d-flex gap-1">
+          {this.formatLabels(labels)}
+        </Popover.Body>
       </Popover>
     )
 
@@ -64,11 +29,9 @@ export default class ElementAnalysesLabels extends React.Component {
 
     return (
       <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>
-        <span className="collection-label" key={element.id}>
-          <Label>
-            {experiment} {total} {status}
-          </Label>
-        </span>
+        <Button variant="light" size="xxsm" key={element.id} onClick={(event) => {event.stopPropagation()}}>
+          {experiment} {total} {status}
+        </Button>
       </OverlayTrigger>
     );
   }
@@ -82,12 +45,28 @@ export default class ElementAnalysesLabels extends React.Component {
       };
 
       return (
-        <span className="collection-label" key={key}>
-          <Label bsStyle='default' bsSize='xs'>
-            {key_syn || "Analysis type Unkown"} - {labels[key]}
-          </Label>
-        </span>
+        <Badge bg="gray-600" key={key}>
+          {key_syn || "Analysis type Unkown"} - {labels[key]}
+        </Badge>
       )
     })
+  }
+
+  render() {
+
+    let { element } = this.state
+    if (!element.tag) return null
+    if (!element.tag.taggable_data) return null
+
+    let analyses = element.tag.taggable_data.analyses
+
+    if (!analyses) return null
+
+    return (
+      <>
+        {analyses.unconfirmed && this.labelWithPopover('Unconfirmed Analysis', analyses.unconfirmed)}
+        {analyses.confirmed && this.labelWithPopover('Confirmed Analyses', analyses.confirmed)}
+      </>
+    )
   }
 }

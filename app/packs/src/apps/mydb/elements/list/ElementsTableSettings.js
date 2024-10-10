@@ -1,7 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Popover, Button, FormGroup, Checkbox, Overlay } from 'react-bootstrap';
-import _ from 'lodash';
+import { Popover, Button, Form, OverlayTrigger } from 'react-bootstrap';
 
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 
@@ -16,39 +14,30 @@ export default class ElementsTableSettings extends React.Component {
     super(props);
 
     this.state = {
-      visible: props.visible,
-      hidden: props.hidden,
       currentType: '',
       showSampleExternalLabel: false,
       showSampleShortLabel: false,
       showSampleName: false,
-      tableSchemePreviews: true,
-      showTabLayoutContainer: false
+      tableSchemePreviews: true
     }
 
-    this.onCloseTabLayoutContainer = this.onCloseTabLayoutContainer.bind(this);
+    this.onToggleTabLayoutContainer = this.onToggleTabLayoutContainer.bind(this);
     this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
     this.handleToggleSampleShortLabel = this.handleToggleSampleShortLabel.bind(this);
     this.handleToggleSampleName = this.handleToggleSampleName.bind(this);
     this.handleToggleScheme = this.handleToggleScheme.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
-    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
   }
-
-  // to force popups to stay anchored to button
-  resize = () => this.forceUpdate()
 
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
     UIStore.listen(this.onChangeUI);
-    window.addEventListener('resize', this.resize);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     UIStore.unlisten(this.onChangeUI);
-    window.removeEventListener('resize', this.resize);
   }
 
   onChangeUI(state) {
@@ -73,34 +62,26 @@ export default class ElementsTableSettings extends React.Component {
     }
   }
 
-  onCloseTabLayoutContainer() {
-    this.toggleTabLayoutContainer();
-    this.updateLayout();
+  onToggleTabLayoutContainer(show) {
+    if (!show) {
+      this.updateLayout();
 
-    if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
-      const show_previews = UIStore.getState().showPreviews;
-      const cur_previews = this.state.tableSchemePreviews;
-      if (cur_previews != show_previews) {
-        UIActions.toggleShowPreviews(cur_previews);
-
+      if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
+        const show_previews = UIStore.getState().showPreviews;
+        const cur_previews = this.state.tableSchemePreviews;
+        if (cur_previews != show_previews) {
+          UIActions.toggleShowPreviews(cur_previews);
+        }
       }
 
+      const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+
+      UserActions.updateUserProfile({
+        show_external_name: showSampleExternalLabel,
+        show_sample_short_label: showSampleShortLabel,
+        show_sample_name: showSampleName
+      });
     }
-
-    const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-    UserActions.updateUserProfile({
-      show_external_name: showSampleExternalLabel,
-      show_sample_short_label: showSampleShortLabel,
-      show_sample_name: showSampleName
-    });
-  }
-
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      visible: nextProps.visible,
-      hidden: nextProps.hidden
-    });
   }
 
   handleToggleScheme() {
@@ -147,61 +128,20 @@ export default class ElementsTableSettings extends React.Component {
     });
 
     const userProfile = UserStore.getState().profile;
-    _.set(userProfile, 'data.layout', layout);
-
+    userProfile.data.layout = layout;
     UserActions.updateUserProfile(userProfile);
   }
 
-  toggleTabLayoutContainer() {
-    this.setState({ showTabLayoutContainer: !this.state.showTabLayoutContainer });
-  }
-
   render() {
+    const { visible, hidden } = this.props;
     const {
-      visible, hidden, currentType,
-      tableSchemePreviews, showSampleExternalLabel, showSampleShortLabel, showSampleName,
+      currentType,
+      tableSchemePreviews,
+      showSampleExternalLabel,
+      showSampleShortLabel,
+      showSampleName,
     } = this.state;
 
-    const wd = 35 + ((visible && visible.size * 50) || 0) + ((hidden && hidden.size * 50) || 0);
-
-    let sampleSettings = (<span />);
-    if (currentType == "sample" || currentType == "reaction") {
-      sampleSettings = (
-        <div>
-          <h3 className="popover-title">Settings</h3>
-          <div className="popover-content">
-            <FormGroup>
-              <Checkbox
-                onChange={this.handleToggleScheme}
-                checked={tableSchemePreviews}
-              >
-                Show schemes images
-              </Checkbox>
-            </FormGroup>
-            <FormGroup>
-              <Checkbox
-                onChange={this.handleToggleSampleExt}
-                checked={showSampleExternalLabel}
-              >
-                Show sample external name on title
-              </Checkbox>
-              <Checkbox
-                onChange={this.handleToggleSampleShortLabel}
-                checked={showSampleShortLabel}
-              >
-                Show sample short label
-              </Checkbox>
-              <Checkbox
-                onChange={this.handleToggleSampleName}
-                checked={showSampleName}
-              >
-                Show sample name
-              </Checkbox>
-            </FormGroup>
-          </div>
-        </div>
-      )
-    }
     const tabLayoutContainerElement = (
       <TabLayoutContainer
         visible={visible}
@@ -210,44 +150,70 @@ export default class ElementsTableSettings extends React.Component {
       />
     );
 
+    const showSettings = (currentType === 'sample' || currentType === 'reaction');
     const popoverSettings = (
       <Popover
-        className="collection-overlay"
+        className="scrollable-popover w-auto mw-100"
         id="popover-layout"
-        style={{ maxWidth: 'none', width: `${wd}px` }}
       >
-        <div>
-          <h3 className="popover-title">Tab Layout</h3>
-          <div className="popover-content">
-            {tabLayoutContainerElement}
-          </div>
-        </div>
-        {sampleSettings}
+        <Popover.Header>
+          Tab Layout
+        </Popover.Header>
+        <Popover.Body>
+          {tabLayoutContainerElement}
+        </Popover.Body>
+        {showSettings && (
+          <>
+            <Popover.Header>Settings</Popover.Header>
+            <Popover.Body>
+              <Form>
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleScheme}
+                  checked={tableSchemePreviews}
+                  label="Show schemes images"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleExt}
+                  checked={showSampleExternalLabel}
+                  label="Show sample external name on title"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleShortLabel}
+                  checked={showSampleShortLabel}
+                  label="Show sample short label"
+                />
+                <Form.Check
+                  type="checkbox"
+                  onChange={this.handleToggleSampleName}
+                  checked={showSampleName}
+                  label="Show sample name"
+                />
+              </Form>
+            </Popover.Body>
+          </>
+        )}
       </Popover>
-    )
+    );
 
     return (
-      <div style={{position: 'relative'}}>
+      <OverlayTrigger
+        trigger="click"
+        placement="bottom"
+        overlay={popoverSettings}
+        onToggle={this.onToggleTabLayoutContainer}
+        rootClose
+      >
         <Button
-          bsSize="xsmall"
-          style={{ margin: '10px 10px 10px 0', float: 'right' }}
-          ref={button => { this.tabLayoutButton = button; }}
-          onClick={this.toggleTabLayoutContainer}
+          size="xsm"
+          variant="light"
+          className="m-2"
         >
           <i className="fa fa-sliders" />
         </Button>
-        <Overlay
-          container={this}
-          onHide={this.onCloseTabLayoutContainer}
-          placement="bottom"
-          rootClose
-          show={this.state.showTabLayoutContainer}
-          target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
-          shouldUpdatePosition // works alongside resize event listener
-        >
-          {popoverSettings}
-        </Overlay>
-      </div>
+      </OverlayTrigger>
     );
   }
 }

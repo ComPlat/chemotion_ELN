@@ -1,75 +1,68 @@
 // eslint-disable-next-line max-classes-per-file
-import React, { Component } from 'react';
-import Select from 'react-select';
+import React, { useState } from 'react';
+import { Button, Form, InputGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
+import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
 
-class Option {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
-  }
+const Option = (width, height) => {
+  const label = `${height * width} (${width}x${height})`
+  const value = `${width} ${height}`
 
-  get label() {
-    return `${this.height * this.width} (${this.width}x${this.height})`;
-  }
+  return (<option label={label} value={value} />)
 }
 
-export default class WellplateSizeDropdown extends Component {
-  constructor(props) {
-    super(props);
+const WellplateSizeDropdown = ({wellplate, updateWellplate}) => {
+  const size = `${wellplate.width} ${wellplate.height}`
+  const [showCustomSizeModal, setShowCustomSizeModal] = useState(false)
 
-    const rawOptions = [new Option(24, 16), new Option(12, 8), new Option(6, 4), new Option(4, 3)];
+  const onChange = (event) => {
+    const values = event.target.value.split(" ").map(x => parseInt(x, 10))
+    const width = values[0]
+    const height = values[1]
 
-    const options = rawOptions.map((option) => (
-      { value: option, label: option.label }
-    ));
-
-    this.state = { options };
-
-    const { wellplate } = this.props;
-    this.state.currentSize = this.selectOptionOfWellplate(wellplate);
+    updateWellplate({ type: 'size', value: { width: width, height: height} });
   }
 
-  changeSizeOption(selectedOption) {
-    const { wellplate, triggerUIUpdate } = this.props;
-    wellplate.edited = true;
-    this.setState({ currentSize: selectedOption });
+  const options = [
+    Option(24, 16),
+    Option(12, 8),
+    Option(6, 4),
+    Option(4,3)
+  ]
 
-    const width = parseInt(selectedOption.value.width, 10);
-    const height = parseInt(selectedOption.value.height, 10);
-
-    wellplate.changeSize(width, height);
-
-    triggerUIUpdate({ type: 'size' });
-  }
-
-  selectOptionOfWellplate(wellplate) {
-    const { options } = this.state;
-
-    const option = options.find((o) => o.width === wellplate.width && o.height === wellplate.height);
-    return option !== undefined ? option : new Option(wellplate.width, wellplate.height);
-  }
-
-  render() {
-    const { wellplate } = this.props;
-
-    const isNew = wellplate.is_new;
-    const { options } = this.state;
-
-    return (
-      <Select
-        clearable={false}
-        value={this.selectOptionOfWellplate(wellplate)}
-        onChange={(option) => this.changeSizeOption(option)}
-        options={options}
-        disabled={!isNew}
+  return (
+    <>
+      <CustomSizeModal
+        show={showCustomSizeModal}
+        wellplate={wellplate}
+        updateWellplate={updateWellplate}
+        handleClose={() => setShowCustomSizeModal(false)}
       />
-    );
-  }
+      <InputGroup>
+        <Form.Select
+          required={true}
+          value={size}
+          onChange={onChange}
+          disabled={!wellplate.is_new}
+        >
+          {options}
+        </Form.Select>
+        <Button
+          className="create-own-size-button"
+          disabled={!wellplate.is_new}
+          onClick={() => setShowCustomSizeModal(true)}
+        >
+          <i className="fa fa-braille" />
+        </Button>
+      </InputGroup>
+    </>
+  );
 }
 
 WellplateSizeDropdown.propTypes = {
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
-  triggerUIUpdate: PropTypes.func.isRequired,
+  updateWellplate: PropTypes.func.isRequired,
 };
+
+export default WellplateSizeDropdown

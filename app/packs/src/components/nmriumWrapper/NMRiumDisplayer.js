@@ -446,40 +446,31 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     return (
-      <Modal.Header>
-        <Button
-          bsStyle="danger"
-          bsSize="small"
-          className="button-right"
-          onClick={() => {
-            SpectraActions.ToggleModalNMRDisplayer.defer();
-          }}
-        >
-          <span>
-            <i className="fa fa-times" />
-            {' '}
-            Close without Save
-          </span>
-        </Button>
-        {
-          hasSpectra && !readOnly ? 
+      <Modal.Header className="gap-2 justify-content-end">
+        {hasSpectra && !readOnly ? 
           (
             <Button
-              bsStyle="success"
-              bsSize="small"
-              className="button-right"
+              variant="success"
+              size="sm"
               onClick={() => {
                 this.requestDataToBeSaved();
               }}
             >
-              <span>
-                <i className="fa fa-floppy-o" />
-                {' '}
-                Close with Save
-              </span>
+              <i className="fa fa-floppy-o me-1" />
+              Close with Save
             </Button>
           ) : null
         }
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => {
+            SpectraActions.ToggleModalNMRDisplayer.defer();
+          }}
+        >
+          <i className="fa fa-times me-1" />
+          Close without Save
+        </Button>
       </Modal.Header>
     );
   }
@@ -488,17 +479,16 @@ export default class NMRiumDisplayer extends React.Component {
     const { showModalNMRDisplayer, nmriumWrapperHost } = this.state;
 
     return (
-      <div className="spectra-editor">
-        <Modal
-          show={showModalNMRDisplayer}
-          dialogClassName="spectra-editor-dialog"
-          animation
-          onHide={this.closeOp}
-        >
-          {this.renderModalTitle()}
-          {this.renderNMRium(nmriumWrapperHost)}
-        </Modal>
-      </div>
+      <Modal
+        centered
+        show={showModalNMRDisplayer}
+        size="xxxl"
+        animation
+        onHide={this.closeOp}
+      >
+        {this.renderModalTitle()}
+        {this.renderNMRium(nmriumWrapperHost)}
+      </Modal>
     );
   }
 }

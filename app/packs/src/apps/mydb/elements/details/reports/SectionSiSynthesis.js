@@ -1,5 +1,4 @@
 import React from 'react';
-import _ from 'lodash';
 import { SVGContent } from 'src/apps/mydb/elements/details/reports/SectionReaction';
 import QuillViewer from 'src/components/QuillViewer';
 import { fixDigit, validDigit } from 'src/utilities/MathUtils';
@@ -30,12 +29,10 @@ const Title = ({ el, counter, molSerials }) => {
       ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
   });
-  title = _.flatten(title).slice(0, -1);
+  title = title.slice(0, -1);
 
   return (
-    <h5>
-      <span>{title}</span>
-    </h5>
+    <h5>{title}</h5>
   );
 };
 
@@ -290,7 +287,7 @@ const DangerBlock = ({ el }) => {
 
 const descContent = (el) => {
   if (['gp', 'parts'].indexOf(el.role) >= 0) return [];
-  let block = rmOpsRedundantSpaceBreak(el.description.ops);
+  let block = rmOpsRedundantSpaceBreak(el.description?.ops ?? []);
   block = [{ insert: '\n' }, ...block, { insert: '\n' }];
   return block;
 };

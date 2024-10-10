@@ -1,17 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormControl } from 'react-bootstrap';
-import Select from 'react-select3';
+import { ButtonToolbar, Button, Form, Popover } from 'react-bootstrap';
+import { Select } from 'src/components/common/Select';
 // import { template } from 'lodash';
-
-const customStyles = {
-  container: ({ marginLeft, ...css }) => ({
-    marginLeft: '100px',
-    marginRight: '35px',
-    ...css
-  }),
-  menu: ({ width, ...css }) => ({ width: '465px', ...css })
-};
 
 const getIconAndDropdown = (template) => {
   const dropdownTemplates = Object.keys(template).filter(k => (
@@ -75,13 +66,11 @@ export default class ToolbarTemplateCreator extends React.Component {
       tempOnChange[0].name = e.target.value;
     } else {
       const dataValues = [];
-      if (e !== null) {
-        e.forEach((object) => {
-          const tabContent = object.value;
-          if (tabContent) { dataValues.push(tabContent); }
-        });
-        tempOnChange[0].data = dataValues;
-      }
+      e.forEach((object) => {
+        const tabContent = object.value;
+        if (tabContent) { dataValues.push(tabContent); }
+      });
+      tempOnChange[0].data = dataValues;
     }
   }
 
@@ -161,76 +150,77 @@ export default class ToolbarTemplateCreator extends React.Component {
       const titleRef = this.toolbarTitleRefs.filter(r => (
         r.id === template.id
       ))[0];
-      if (!selectRef || !titleRef) return <span />;
+      if (!selectRef || !titleRef) { return null; }
 
       const ddSelected = template.data.map(n => ({ label: n, value: n }));
       const removeDropdown = () => this.removeDropdownTemplate(template);
 
       return (
-        <div
-          key={`ttc_dd_${name}_${id}`}
-          style={{ marginTop: '10px' }}
-        >
+        <>
           <hr />
-          <FormControl
-            style={{ float: 'left', width: '90px', marginRight: '10px' }}
-            // inputRef={(ref) => { this.setTitleRef(id, ref); }}
-            onChange={e => this.onChangeDropdown('DropdownName', e, id)}
-            ref={titleRef.ref}
-            type="text"
-            defaultValue={name}
-          />
-          <Button
-            bsStyle="danger"
-            bsSize="xs"
-            onClick={removeDropdown}
-            style={{ float: 'right', width: '25px', marginLeft: '10px' }}
+          <div
+            key={`ttc_dd_${name}_${id}`}
+            className="d-flex gap-2 mt-2"
+            style={{ maxWidth: '775px' }}
           >
-            <i className="fa fa-trash" />
-          </Button>
-          <Select
-            styles={customStyles}
-            ref={selectRef.ref}
-            options={options}
-            defaultValue={ddSelected}
-            onChange={e => this.onChangeDropdown('DropdownData', e, id)}
-            isMulti
-            isSearchable
-            closeMenuOnSelect={false}
-          />
-        </div>
+            <Form.Control
+              className="col"
+              onChange={e => this.onChangeDropdown('DropdownName', e, id)}
+              ref={titleRef.ref}
+              type="text"
+              defaultValue={name}
+            />
+            <Select
+              className="me-2 col-10 f-5"
+              ref={selectRef.ref}
+              options={options}
+              defaultValue={ddSelected}
+              onChange={e => this.onChangeDropdown('DropdownData', e, id)}
+              isMulti
+              isSearchable
+              closeMenuOnSelect={false}
+            />
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={removeDropdown}
+            >
+              <i className="fa fa-trash" />
+            </Button>
+          </div>
+        </>
       );
     });
 
     return (
-      <div style={{ width: '600px' }}>
-        <div>
-          <Button
-            bsStyle="success"
-            onClick={this.saveUserTemplates}
-          >
-            Save
-          </Button>
-          &nbsp;&nbsp;
-          <Button
-            bsStyle="info"
-            onClick={this.createDropdownTemplate}
-          >
-            New dropdown
-          </Button>
-        </div>
-        <hr />
-        <div style={{ marginTop: '10px' }}>
-          <FormControl
-            style={{ float: 'left', marginRight: '10px', width: '90px' }}
-            type="text"
-            disabled
-            defaultValue="Toolbar"
-          />
-          <div style={{ marginRight: '35px' }}>
+      <>
+        <Popover.Header as="h3">Custom toolbar</Popover.Header>
+        <Popover.Body>
+          <ButtonToolbar className="gap-2">
+            <Button
+              variant="success"
+              onClick={this.saveUserTemplates}
+            >
+              Save
+            </Button>
+            <Button
+              variant="info"
+              onClick={this.createDropdownTemplate}
+            >
+              New dropdown
+            </Button>
+          </ButtonToolbar>
+          <hr />
+          <div className="d-flex gap-2 mt-2" style={{ maxWidth: '775px' }}>
+            <Form.Control
+              type="text"
+              className="col"
+              disabled
+              defaultValue="Toolbar"
+            />
             <Select
               ref={this.toolbarSelectRef}
-              styles={customStyles}
+              className="me-5 col-10 f-5"
               defaultValue={iconSelected}
               options={options}
               isMulti
@@ -238,9 +228,9 @@ export default class ToolbarTemplateCreator extends React.Component {
               closeMenuOnSelect={false}
             />
           </div>
-        </div>
-        {dropdownTemplateSelector}
-      </div>
+          {dropdownTemplateSelector}
+        </Popover.Body>
+      </>
     );
   }
 }

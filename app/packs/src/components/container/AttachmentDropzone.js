@@ -10,10 +10,8 @@ class AttachmentDropzone extends Component {
 
     return connectDropTarget(
       <div>
-        <i style={{ color: 'gray', padding: 2, textAlign: 'center' }}>
-          Drop File(s) from the inbox
-          {isOver && canDrop && ColoredOverlay({color: 'green'})}
-        </i>
+        <span className="text-secondary fst-italic p-1">Drop File(s) from the inbox</span>
+        {isOver && canDrop && <ColoredOverlay color="green" />}
       </div>
     );
   }

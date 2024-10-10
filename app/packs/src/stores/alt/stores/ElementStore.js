@@ -182,7 +182,7 @@ class ElementStore {
         ElementActions.tryFetchWellplateById,
         ElementActions.tryFetchGenericElById
       ],
-      handleFetchCellLineById:ElementActions.tryFetchCellLineElById,
+      handleFetchCellLineById: ElementActions.tryFetchCellLineElById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -231,7 +231,6 @@ class ElementStore {
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
           ElementActions.showComputedPropsTasks,
-          ElementActions.showDeviceControl,
           ElementActions.showLiteratureDetail,
           ElementActions.showPredictionContainer
         ],
@@ -822,10 +821,10 @@ class ElementStore {
       UIActions.updateModalProps.defer({
         show: true,
         component: ModalImportConfirm,
-        title: "Sample Import Confirmation",
+        title: 'Sample Import Confirmation',
         action: null,
         listSharedCollections: false,
-        customModal: "custom-modal",
+        customModal: 'modal-xl',
         data: data.data,
         //raw_data: data.raw_data,
         custom_data_keys: data.custom_data_keys,
@@ -966,7 +965,7 @@ class ElementStore {
     }
   }
 
-  handleFetchCellLineById(result){
+  handleFetchCellLineById(result) {
     this.changeCurrentElement(result);
   }
 

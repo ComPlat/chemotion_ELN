@@ -258,40 +258,6 @@ module Chemotion
         end
       end
 
-      namespace :well_label do
-        desc 'update well label'
-        params do
-          requires :id, type: Integer
-          requires :label, type: String
-        end
-        after_validation do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
-                                                                   Well.find(params[:id]).wellplate).update?
-        end
-        post do
-          well = Well.find(params[:id])
-          well.update(label: params[:label])
-          { label: well.label }
-        end
-      end
-
-      namespace :well_color_code do
-        desc 'add or update color code'
-        params do
-          requires :id, type: Integer
-          requires :color_code, type: String
-        end
-        after_validation do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
-                                                                   Well.find(params[:id]).wellplate).update?
-        end
-        post do
-          well = Well.find(params[:id])
-          well.update(color_code: params[:color_code])
-          { color_code: well.color_code }
-        end
-      end
-
       namespace :template do
         desc 'Returns an xlsx template for a wellplate'
         params do

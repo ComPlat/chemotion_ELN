@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  InputGroup, OverlayTrigger, FormGroup, Tooltip, FormControl, Button, Glyphicon
+  InputGroup, OverlayTrigger, Tooltip, Form, Button
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
@@ -12,7 +12,6 @@ import { validateCas } from 'src/utilities/CasValidation';
 
 const apiCall = (cas, src = 'cas') => (src === 'cas' ? `https://commonchemistry.cas.org/api/detail?cas_rn=${cas}` : `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${cas}/property/CanonicalSMILES/JSON`);
 function FastInput(props) {
-  const refInput = useRef(null);
   const [value, setValue] = useState(null);
   const notify = (_params) => {
     NotificationActions.add({
@@ -28,7 +27,7 @@ function FastInput(props) {
 
   const searchSmile = () => {
     LoadingActions.start();
-    props.fnHandle(refInput.current.props.value);
+    props.fnHandle(value);
   };
 
   const searchCas = (cas) => {
@@ -65,7 +64,7 @@ function FastInput(props) {
   };
 
   const searchString = (e) => {
-    const input = refInput.current.props.value;
+    const input = value;
     if (e.key === 'Enter' || e.type === 'click') {
       const getCas = validateCas(input, false);
       if (getCas !== 'smile') {
@@ -81,44 +80,30 @@ function FastInput(props) {
   const updateValue = (e) => {
     setValue(e.target.value);
   };
-  const buttonStyle = {
-    height: '23px', borderRadius: '5px', position: 'absolute', right: '8px', borderColor: 'rgba(16, 10, 13, 0.14)', backgroundColor: 'white', outline: 'none'
-  };
-  const formStyle = {
-    height: '23px', borderRadius: '5px', position: 'relative', right: '30px'
-  };
 
   return (
-    <div style={{ marginLeft: 'auto' }}>
-      <OverlayTrigger
-        placement="top"
-        delayShow={500}
-        overlay={<Tooltip id="_fast_create_btn">Fast create by CAS RN (with dashes) or SMILES</Tooltip>}
-      >
-        <FormGroup bsSize="xsmall" className="fast-input">
-          <InputGroup className="mb-3">
-            <FormControl
-              id="_fast_create_btn_split"
-              type="text"
-              pullRight
-              ref={refInput}
-              onChange={updateValue}
-              value={value}
-              onKeyPress={(e) => searchString(e)}
-              style={formStyle}
-              placeholder="fast create by CAS/Smiles ..."
-            />
-            <Button
-              bsSize="xsmall"
-              style={buttonStyle}
-              onClick={(e) => searchString(e)}
-            >
-              <Glyphicon glyph="glyphicon glyphicon-search" />
-            </Button>
-          </InputGroup>
-        </FormGroup>
-      </OverlayTrigger>
-    </div>
+    <OverlayTrigger
+      placement="top"
+      delayShow={500}
+      overlay={<Tooltip id="_fast_create_btn">Fast create by CAS RN (with dashes) or SMILES</Tooltip>}
+    >
+      <InputGroup size="xxsm" className="fast-input">
+        <Form.Control
+          id="_fast_create_btn_split"
+          type="text"
+          onChange={updateValue}
+          value={value}
+          onKeyPress={(e) => searchString(e)}
+          placeholder="fast create by CAS/Smiles ..."
+        />
+        <Button
+          variant="light"
+          onClick={(e) => searchString(e)}
+        >
+          <i className="fa fa-search" />
+        </Button>
+      </InputGroup>
+    </OverlayTrigger>
   );
 }
 

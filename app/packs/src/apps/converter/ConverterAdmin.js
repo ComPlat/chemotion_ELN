@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Modal, Button } from 'react-bootstrap';
+import { Button, Breadcrumb, Container, Col, Modal, Row } from 'react-bootstrap';
 import { ProfileList, ProfileForm, FileUploadForm } from '@complat/chemotion-converter-client';
 import ConverterApi from 'src/fetchers/ConverterFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
@@ -23,6 +23,7 @@ class ConverterAdmin extends Component {
       deleteModal: false
     };
 
+    this.showListView = this.showListView.bind(this);
     this.showCreateView = this.showCreateView.bind(this);
     this.showUpdateView = this.showUpdateView.bind(this);
     this.showImportView = this.showImportView.bind(this);
@@ -64,6 +65,13 @@ class ConverterAdmin extends Component {
         // eslint-disable-next-line max-len
         profiles: profiles?.profiles || [], datasets, options: options?.options || [], client: options?.client || null
       });
+    });
+  }
+
+  showListView() {
+    this.setState({
+      status: 'list',
+      profile: null
     });
   }
 
@@ -320,90 +328,82 @@ class ConverterAdmin extends Component {
   }
 
   render() {
+    const { client, status, profile, createdModal, deleteModal } = this.state;
+
     return (
-      <div className={['create', 'update'].includes(this.state.status) ? 'container-fluid' : 'container'}>
-        <header>
-          <nav aria-label="breadcrumb">
-            {this.state.status == 'list' &&
-              <ol className="breadcrumb">
-                <li className="breadcrumb-item active" aria-current="page">Chemotion file converter admin</li>
-              </ol>
-            }
-            {['upload', 'create'].includes(this.state.status) &&
-              <ol className="breadcrumb">
-                <li className="breadcrumb-item" aria-current="page"><a href="">Chemotion file converter admin</a></li>
-                <li className="breadcrumb-item active" aria-current="page">{'Create Profile'}</li>
-              </ol>
-            }
-            {this.state.status == 'update' &&
-              <ol className="breadcrumb">
-                <li className="breadcrumb-item" aria-current="page"><a href="">Chemotion file converter admin</a></li>
-                <li className="breadcrumb-item active" aria-current="page">{'Edit Profile: ' + this.state.title}</li>
-              </ol>
-            }
-            {this.state.status == 'import' &&
-              <ol className="breadcrumb">
-                <li className="breadcrumb-item" aria-current="page"><a href="">Chemotion file converter admin</a></li>
-                <li className="breadcrumb-item active" aria-current="page">{'Import Profile'}</li>
-              </ol>
-            }
-          </nav>
+      <Container fluid={['create', 'update'].includes(status)}>
+        <Breadcrumb className="mt-4">
+          <Breadcrumb.Item
+            onClick={this.showListView}
+            active={status === 'list'}
+          >
+            Chemotion file converter admin
+          </Breadcrumb.Item>
 
-          <div>
-            {this.state.status == "list" && this.state.client !== null &&
-              <div className="pull-right">
-                <button type="button" onClick={this.showImportView} className="btn btn-success mr-10">
-                  Import profile
-                </button>
-                <button type="button" onClick={this.showCreateView} className="btn btn-primary">
-                  Create new profile
-                </button>
-              </div>
-            }
+          {['upload', 'create'].includes(status) && (
+            <Breadcrumb.Item active>Create Profile</Breadcrumb.Item>
+          )}
+          {status === 'update' && (
+            <Breadcrumb.Item active>{'Edit Profile: ' + profile.title}</Breadcrumb.Item>
+          )}
+          {status === 'import' && (
+            <Breadcrumb.Item active>Import Profile</Breadcrumb.Item>
+          )}
+        </Breadcrumb>
 
+        <Row className="mb-3">
+          <Col>
             <h2>
-              {this.state.status == 'list' && 'Profiles List' }
-              {['upload', 'create'].includes(this.state.status) && 'Create Profile'}
-              {this.state.status == 'update' && 'Edit Profile'}
-              {this.state.status == 'import' && 'Import Profile'}
+              {status === 'list' && 'Profiles List'}
+              {['upload', 'create'].includes(status) && 'Create Profile'}
+              {status === 'update' && 'Edit Profile'}
+              {status === 'import' && 'Import Profile'}
             </h2>
-          </div>
-        </header>
+          </Col>
+
+          {status === 'list' && client !== null && (
+            <Col md={4} className="d-flex justify-content-end gap-2">
+              <Button variant="success" onClick={this.showImportView}>
+                Import profile
+              </Button>
+              <Button variant="primary" onClick={this.showCreateView}>
+                Create new profile
+              </Button>
+            </Col>
+          )}
+        </Row>
 
         <main>
           {this.dispatchView()}
         </main>
+
         <div>
           <a href="/">Back to MyDB</a>
         </div>
 
-        <Modal show={this.state.createdModal}>
+        <Modal centered show={createdModal}>
           <Modal.Header>
             <Modal.Title>Profile successfully created!</Modal.Title>
           </Modal.Header>
 
           <Modal.Footer>
-            <Button bsStyle="primary" onClick={this.hideCreatedModal}>Great!</Button>
+            <Button variant="primary" onClick={this.hideCreatedModal}>Great!</Button>
           </Modal.Footer>
         </Modal>
 
-        <Modal show={this.state.deleteModal}>
+        <Modal centered show={deleteModal}>
           <Modal.Header>
             <Modal.Title>Do you really want to delete this profile?</Modal.Title>
           </Modal.Header>
           <Modal.Footer>
-            <Button bsStyle="default" onClick={this.hideDeleteModal}>Cancel</Button>
-            <Button bsStyle="danger" onClick={this.deleteProfile}>Delete profile</Button>
+            <Button variant="light" onClick={this.hideDeleteModal}>Cancel</Button>
+            <Button variant="danger" onClick={this.deleteProfile}>Delete profile</Button>
           </Modal.Footer>
         </Modal>
-      </div>
-    )
+      </Container>
+    );
   }
-
 }
-
-export default ConverterAdmin;
-
 
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('ConverterAdmin');

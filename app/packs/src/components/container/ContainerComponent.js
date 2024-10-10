@@ -2,13 +2,8 @@
 import React, { Component } from 'react';
 import { Map } from 'immutable';
 import PropTypes from 'prop-types';
-import {
-  Col,
-  FormControl,
-  FormGroup,
-  ControlLabel
-} from 'react-bootstrap';
-import Select from 'react-select';
+import { Col, Form, Row } from 'react-bootstrap';
+import { Select } from 'src/components/common/Select';
 
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -32,7 +27,6 @@ export default class ContainerComponent extends Component {
       textTemplate: textTemplate && textTemplate.toJS()
     };
 
-    this.onChange = this.onChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
@@ -84,7 +78,7 @@ export default class ContainerComponent extends Component {
         break;
       }
       case 'status':
-        container.extended_metadata.status = ev ? ev.value : undefined;
+        container.extended_metadata.status = ev;
         isChanged = true;
         break;
       case 'content':
@@ -95,10 +89,9 @@ export default class ContainerComponent extends Component {
         break;
     }
 
-    if (isChanged) this.onChange(container);
+    const { onChange } = this.props
+    if (isChanged) onChange(container);
   }
-
-  // eslint-disable-next-line class-methods-use-this
 
   handleAddLink(link) {
     const { container } = this.state;
@@ -132,10 +125,6 @@ export default class ContainerComponent extends Component {
     this.setState({ container });
   }
 
-  onChange(container) {
-    this.props.onChange(container);
-  }
-
   updateTextTemplates(textTemplate) {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
@@ -143,7 +132,7 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate } = this.state;
-    const { readOnly, disabled } = this.props;
+    const { readOnly, disabled, onChange } = this.props;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -153,48 +142,45 @@ export default class ContainerComponent extends Component {
     } else {
       quill = (
         <AnalysisEditor
-          height="120px"
+          height="12em"
           template={textTemplate}
           analysis={container}
           updateTextTemplates={this.updateTextTemplates}
-          // eslint-disable-next-line react/jsx-no-bind
-          onChangeContent={this.handleInputChange.bind(this, 'content')}
+          onChangeContent={(e) => this.handleInputChange('content', e)}
         />
       );
     }
 
     return (
       <div>
-        <Col md={8}>
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label>Name</label>
-          <FormControl
-            type="text"
-            label="Name"
-            value={container.name}
-            // eslint-disable-next-line react/jsx-no-bind
-            onChange={this.handleInputChange.bind(this, 'name')}
-            disabled={readOnly || disabled}
-          />
-        </Col>
-        <Col md={4}>
-          <div style={{ marginBottom: 11 }}>
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label>Status</label>
-            <Select
-              name="status"
-              multi={false}
-              options={confirmOptions}
-              value={container.extended_metadata.status}
+        <Row>
+          <Col sm={8} className="mb-2">
+            <Form.Label>Name</Form.Label>
+            <Form.Control
+              type="text"
+              label="Name"
+              value={container.name}
+              onChange={(e) => this.handleInputChange('name', e)}
               disabled={readOnly || disabled}
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={this.handleInputChange.bind(this, 'status')}
             />
-          </div>
-        </Col>
-        <Col md={12}>
-          <div style={{ marginBottom: 11 }}>
-            <ControlLabel>{this.props.analysisMethodTitle}</ControlLabel>
+          </Col>
+          <Col sm={4} className="mb-2">
+            <div>
+              <Form.Label>Status</Form.Label>
+              <Select
+                name="status"
+                options={confirmOptions}
+                value={confirmOptions.find(({ value }) => value === container.extended_metadata.status)}
+                isDisabled={readOnly || disabled}
+                onChange={({ value }) => this.handleInputChange('status', value)}
+                menuPortalTarget={document.body}
+              />
+            </div>
+          </Col>
+        </Row>
+        <Col sm={12} className="mb-2">
+          <div className="mb-3">
+            <Form.Label>{this.props.analysisMethodTitle}</Form.Label>
             <OlsTreeSelect
               selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
@@ -203,34 +189,33 @@ export default class ContainerComponent extends Component {
             />
           </div>
         </Col>
-        <Col md={12}>
-          <FormGroup>
-            <ControlLabel>Content</ControlLabel>
+        <Col sm={12} className="mb-2">
+          <Form.Group>
+            <Form.Label>Content</Form.Label>
             {quill}
-          </FormGroup>
-          <FormGroup>
-            <ControlLabel>Description</ControlLabel>
-            <FormControl
-              componentClass="textarea"
+          </Form.Group>
+          <Form.Group className="my-3">
+            <Form.Label>Description</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
               label="Description"
               value={container.description || ''}
               disabled={readOnly || disabled}
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={this.handleInputChange.bind(this, 'description')}
+              onChange={(e) => this.handleInputChange('description', e)}
             />
-          </FormGroup>
+          </Form.Group>
         </Col>
-        <Col md={12}>
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label>Datasets</label>
+        <Col sm={12} >
+          <Form.Label>Datasets</Form.Label>
           <ContainerDatasets
             container={container}
             readOnly={readOnly}
             disabled={disabled}
-            onChange={this.onChange}
+            onChange={onChange}
           />
         </Col>
-        <Col md={12}>
+        <Col sm={12}>
           <HyperLinksSection
             data={container.extended_metadata.hyperlinks ?? []}
             onAddLink={this.handleAddLink}
@@ -248,7 +233,7 @@ ContainerComponent.propTypes = {
   ontologyName: PropTypes.string,
   analysisMethodTitle: PropTypes.string,
   templateType: PropTypes.string,
-  onChange: PropTypes.func,
+  onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   container: PropTypes.object
@@ -258,7 +243,6 @@ ContainerComponent.defaultProps = {
   ontologyName: 'chmo',
   analysisMethodTitle: 'Type (Chemical Methods Ontology)',
   templateType: '',
-  onChange: () => {},
   readOnly: false,
   disabled: false,
   container: {}

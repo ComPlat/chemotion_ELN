@@ -3,8 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem, ButtonGroup
+  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup, Card
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -15,7 +14,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
-import ResearchPlansLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ResearchPlanWellplates from 'src/apps/mydb/elements/details/researchPlans/wellplatesTab/ResearchPlanWellplates';
 import ResearchPlanMetadata from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanMetadata';
 import Attachment from 'src/models/Attachment';
@@ -320,34 +319,31 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
-  // render functions
-
   renderExportButton(disabled) {
     return (
       <Dropdown
         id="research-plan-export-dropdown"
-        className="research-plan-export-dropdown dropdown-right pull-right"
         disabled={disabled}
       >
-        <Dropdown.Toggle>
+        <Dropdown.Toggle variant="light">
           Export
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <MenuItem onSelect={() => this.handleExport('docx')}>
+          <Dropdown.Item onClick={() => this.handleExport('docx')}>
             as .docx
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('odt')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('odt')}>
             as .odt
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('html')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('html')}>
             as HTML
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('markdown')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('markdown')}>
             as Markdown
-          </MenuItem>
-          <MenuItem onSelect={() => this.handleExport('latex')}>
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.handleExport('latex')}>
             as LaTeX
-          </MenuItem>
+          </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
     );
@@ -364,7 +360,7 @@ export default class ResearchPlanDetails extends Component {
 
     const EditButton = (
       <Button
-        bsStyle={researchPlan.mode === 'edit' ? 'warning' : 'default'}
+        variant={researchPlan.mode === 'edit' ? 'warning' : 'light'}
         style={{
           pointerEvents: 'none',
           backgroundColor: researchPlan.mode !== 'edit' ? '#E8E8E8' : undefined,
@@ -376,7 +372,7 @@ export default class ResearchPlanDetails extends Component {
 
     const ViewButton = (
       <Button
-        bsStyle={researchPlan.mode === 'view' ? 'info' : 'default'}
+        variant={researchPlan.mode === 'view' ? 'info' : 'light'}
         style={{
           pointerEvents: 'none',
           backgroundColor: researchPlan.mode !== 'view' ? '#E8E8E8' : undefined,
@@ -390,7 +386,6 @@ export default class ResearchPlanDetails extends Component {
       <div
         role="button"
         tabIndex={0}
-        style={{ cursor: 'pointer' }}
         onClick={() => {
           if (researchPlan.mode === 'view') {
             this.handleSwitchMode('edit');
@@ -410,91 +405,80 @@ export default class ResearchPlanDetails extends Component {
     );
 
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
-              <ResearchPlanDetailsName
-                value={name}
-                disabled={researchPlan.isMethodDisabled('name')}
-                onChange={this.handleNameChange}
-                edit={edit}
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-              <div style={{ marginRight: '5px', marginLeft: '5px' }}>
-                {btnMode}
-              </div>
-              {this.renderExportButton(changed)}
-            </div>
+      <>
+        <div className="d-flex justify-content-between align-items-start">
+          <div className="flex-fill">
+            <ResearchPlanDetailsName
+              value={name}
+              disabled={researchPlan.isMethodDisabled('name')}
+              onChange={this.handleNameChange}
+              edit={edit}
+              onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+            />
           </div>
+          <ButtonToolbar className="d-flex justify-content-center align-items-end gap-1">
+            {btnMode}
+            {this.renderExportButton(changed)}
+          </ButtonToolbar>
+        </div>
 
-          <ResearchPlanDetailsBody
-            body={body}
-            attachments={attachments}
-            disabled={researchPlan.isMethodDisabled('body')}
-            onChange={this.handleBodyChange}
-            onDrop={this.handleBodyDrop.bind(this)}
-            onAdd={this.handleBodyAdd}
-            onDelete={this.handleBodyDelete.bind(this)}
-            onExport={this.handleExportField.bind(this)}
-            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-            update={update}
-            edit={edit}
-            copyableFields={[
-              { title: 'Subject', fieldName: 'subject' },
-              {
-                title: 'Alternate Identifier',
-                fieldName: 'alternate_identifier',
-              },
-              { title: 'Related Identifier', fieldName: 'related_identifier' },
-              { title: 'Description', fieldName: 'description' },
-            ]}
-            researchPlan={researchPlan}
-          />
-        </ListGroupItem>
-      </ListGroup>
+        <ResearchPlanDetailsBody
+          body={body}
+          attachments={attachments}
+          disabled={researchPlan.isMethodDisabled('body')}
+          onChange={this.handleBodyChange}
+          onDrop={this.handleBodyDrop.bind(this)}
+          onAdd={this.handleBodyAdd}
+          onDelete={this.handleBodyDelete.bind(this)}
+          onExport={this.handleExportField.bind(this)}
+          onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
+          update={update}
+          edit={edit}
+          copyableFields={[
+            { title: 'Subject', fieldName: 'subject' },
+            {
+              title: 'Alternate Identifier',
+              fieldName: 'alternate_identifier',
+            },
+            { title: 'Related Identifier', fieldName: 'related_identifier' },
+            { title: 'Description', fieldName: 'description' },
+          ]}
+          researchPlan={researchPlan}
+        />
+      </>
     );
   } /* eslint-enable */
 
   renderAnalysesTab(researchPlan) {
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
           <ResearchPlanDetailsContainers
             handleSubmit={this.handleSubmit}
+            handleResearchPlanChange={this.handleResearchPlanChange}
             researchPlan={researchPlan}
             readOnly={false}
-            parent={this}
           />
-        </ListGroupItem>
-      </ListGroup>
     );
   }
 
   renderAttachmentsTab(researchPlan) { /* eslint-disable react/jsx-no-bind */
     return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <ResearchPlanDetailsAttachments
-            researchPlan={researchPlan}
-            attachments={researchPlan.attachments}
-            onDrop={this.handleAttachmentDrop.bind(this)}
-            onDelete={this.handleAttachmentDelete.bind(this)}
-            onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
-            onEdit={this.handleAttachmentEdit.bind(this)}
-            readOnly={false}
-          />
-        </ListGroupItem>
-      </ListGroup>
+      <ResearchPlanDetailsAttachments
+        researchPlan={researchPlan}
+        attachments={researchPlan.attachments}
+        onDrop={this.handleAttachmentDrop.bind(this)}
+        onDelete={this.handleAttachmentDelete.bind(this)}
+        onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+        onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
+        onEdit={this.handleAttachmentEdit.bind(this)}
+        readOnly={false}
+      />
     );
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
     const { currentCollection } = UIStore.getState();
-    const rootCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+    const rootCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
     const copyBtn = (
       <CopyElementModal
@@ -504,39 +488,41 @@ export default class ResearchPlanDetails extends Component {
     );
 
     return (
-      <Panel.Heading>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="fa fa-file-text-o" />
-            &nbsp;&nbsp;
-            <span>{researchPlan.name}</span>
-            &nbsp;&nbsp;
-          </span>
-        </OverlayTrigger>
-        <ElementCollectionLabels element={researchPlan} placement="right" />
-        <HeaderCommentSection element={researchPlan} />
-        <ConfirmClose el={researchPlan} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit()}
-            style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
-          >
-            <i className="fa fa-floppy-o" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={this.toggleFullScreen}>
-            <i className="fa fa-expand" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
-        {researchPlan.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-        {copyBtn}
-      </Panel.Heading>
+      <Card.Header className={`text-bg-${researchPlan.isPendingToSave ? 'info' : 'primary'}`}>
+        <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center gap-2">
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
+              <span>
+                <i className="fa fa-file-text-o" />
+                <span className="mx-1">{researchPlan.name}</span>
+              </span>
+            </OverlayTrigger>
+            <ElementCollectionLabels element={researchPlan} placement="right" />
+            <HeaderCommentSection element={researchPlan} />
+          </div>
+          <div className="d-flex align-items-center gap-1 flex-row-reverse">
+            <ConfirmClose el={researchPlan} />
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
+              <Button
+                variant="warning"
+                size="xxsm"
+                onClick={() => this.handleSubmit()}
+                style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
+              >
+                <i className="fa fa-floppy-o" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
+              <Button variant="info" size="xxsm" onClick={this.toggleFullScreen}>
+                <i className="fa fa-expand" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            {!researchPlan.isNew
+              && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
+            {copyBtn}
+          </div>
+        </div>
+      </Card.Header>
     );
   }
 
@@ -574,7 +560,7 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_references" element={researchPlan} />
           }
-          <ResearchPlansLiteratures element={researchPlan} />
+          <DetailsTabLiteratures element={researchPlan} />
         </Tab>
       ),
       wellplates: (
@@ -620,34 +606,35 @@ export default class ResearchPlanDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel
-        bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'}
-        className="eln-panel-detail research-plan-details"
-      >
+      <Card className="detail-card">
         {this.renderPanelHeading(researchPlan)}
-        <Panel.Body>
+        <Card.Body>
           <ElementDetailSortTab
             type="research_plan"
             availableTabs={Object.keys(tabContentsMap)}
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
-            {tabContents}
-          </Tabs>
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
+          <div className="tabs-container--with-borders">
+            <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
+              {tabContents}
+            </Tabs>
+          </div>
+          <CommentModal element={researchPlan} />
+        </Card.Body>
+        <Card.Footer>
+          <ButtonToolbar className="gap-2">
+            <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              (researchPlan.changed || researchPlan.is_copy) ? (
-                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+              (researchPlan.changed || researchPlan.is_copy) && (
+                <Button variant="warning" onClick={() => this.handleSubmit()}>
                   {researchPlan.isNew ? 'Create' : 'Save'}
                 </Button>
-              ) : <div />
+              )
             }
           </ButtonToolbar>
-          <CommentModal element={researchPlan} />
-        </Panel.Body>
-      </Panel>
+        </Card.Footer>
+      </Card>
     );
   }
 }

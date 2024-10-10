@@ -1,24 +1,25 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Button } from 'react-bootstrap';
 
 const ViewAtNmrdb = ({ is13C, smile }) => {
   const nmrdbLink = is13C
     ? `http://www.nmrdb.org/service.php?name=nmr-13c-prediction&smiles=${smile}`
     : `http://www.nmrdb.org/service.php?name=nmr-1h-prediction&smiles=${smile}`;
   return (
-    <div className="nmr-icon">
-      <i>View directly on </i>
-      <a target="_blank" rel="noreferrer" href={nmrdbLink} className="nmr-icon-border">
-        <img src="/images/nmrdb_logo.jpg" alt="" width="80" />
-      </a>
-    </div>
+    <Button target="_blank" rel="noreferrer" href={nmrdbLink} className="d-flex align-items-center gap-2">
+      <span>View directly on</span>
+      <i className="nmrdb-logo" />
+    </Button>
   );
 };
 
 const LinkToNmrdb = () => (
   <div>
-    <i>Powered by <img src="/images/nmrdb_logo.jpg" alt="" width="80" /></i>
-    <br />
+    <p className="d-flex align-items-center gap-2">
+      <span>Powered by</span>
+      <i className="nmrdb-logo" />
+    </p>
     <h5>References</h5>
     <p>Banfi, D.; Patiny, L. <a target="_blank" rel="noreferrer" href="https://doi.org/10.2533/chimia.2008.280">www.nmrdb.org: Resurrecting and processing NMR spectra on-line Chimia</a>, 2008, 62(4), 280-281.</p>
     <p>Andrés M. Castillo, Luc Patiny and Julien Wist. <a target="_blank" rel="noreferrer" href="https://doi.org/10.1016/j.jmr.2010.12.008">Fast and Accurate Algorithm for the Simulation of NMR spectra of Large Spin Systems</a>. J of Magnetic Resonance 2011.</p>

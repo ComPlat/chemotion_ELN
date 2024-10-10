@@ -11,24 +11,29 @@ const collectSource = (connect, monitor) => ({
 });
 
 const ElementContainer = ({ connectDragSource, sourceType }) => {
-  if (sourceType === DragDropItemTypes.SAMPLE || sourceType === DragDropItemTypes.MOLECULE) {
-    return connectDragSource(
-      <span className="fa fa-arrows dnd-arrow-enable text-info" />,
-      { dropEffect: 'copy' },
-    );
-  } else if (sourceType === DragDropItemTypes.GENERALPROCEDURE) {
-    return connectDragSource(<span className="fa fa-home dnd-arrow-enable text-info" />);
-  } else if (sourceType === DragDropItemTypes.WELLPLATE ||
-             sourceType === DragDropItemTypes.REACTION ||
-             sourceType === DragDropItemTypes.RESEARCH_PLAN) {
-    return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
-  } else if (sourceType === DragDropItemTypes.ELEMENT) {
-    return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
-  }
-  return <span className="fa fa-arrows dnd-arrow-disable" />;
-};
+  switch (sourceType) {
+    case DragDropItemTypes.SAMPLE:
+    case DragDropItemTypes.MOLECULE:
+      return connectDragSource(
+        <span className="fa fa-arrows dnd-arrow-enable text-info" />,
+        { dropEffect: 'copy' },
+      );
 
-export default DragSource(props => props.sourceType, listSource, collectSource)(ElementContainer);
+    case DragDropItemTypes.GENERALPROCEDURE:
+      return connectDragSource(<span className="fa fa-home dnd-arrow-enable text-info" />);
+
+    case DragDropItemTypes.WELLPLATE:
+    case DragDropItemTypes.REACTION:
+    case DragDropItemTypes.RESEARCH_PLAN:
+    case DragDropItemTypes.ELEMENT:
+      return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
+
+    default:
+      return <span className="fa fa-arrows dnd-arrow-disable" />;
+  }
+}
+
+export default DragSource((props) => props.sourceType, listSource, collectSource)(ElementContainer);
 
 ElementContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,

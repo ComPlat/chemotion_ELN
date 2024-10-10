@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Accordion } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
@@ -39,32 +40,31 @@ class ResearchPlanWellplates extends Component {
 
   renderDropZone() {
     const { isOver, connectDropTarget } = this.props;
-    const style = {
-      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '8px'
-    };
-    if (isOver) { style.borderColor = '#337ab7'; }
-
-    return connectDropTarget(<div style={style}>Drop Wellplate here to add.</div>);
+    let className = 'mb-3 dnd-zone';
+    if (isOver) { className += ' dnd-zone-over'; }
+    return connectDropTarget(<div className={className}>Drop Wellplate here to add.</div>);
   }
 
-
   render() {
-    const { wellplates, deleteWellplate, importWellplate } = this.props;
-
+    const { wellplates, deleteWellplate, importWellplate, researchPlan } = this.props;
     return (
       <div>
         {this.renderDropZone()}
 
-        {wellplates && wellplates.map(wellplate => (
-          <EmbeddedWellplate
-            key={`${wellplate.short_label}-${wellplate.id}`}
-            researchPlan={this.props.researchPlan}
-            wellplate={wellplate}
-            deleteWellplate={deleteWellplate}
-            importWellplate={importWellplate}
-          />
-        ))}
-      </div>);
+        <Accordion className="border rounded overflow-hidden">
+          {wellplates && wellplates.map((wellplate, wellplateIndex) => (
+            <EmbeddedWellplate
+              key={`${wellplate.short_label}-${wellplate.id}`}
+              researchPlan={researchPlan}
+              wellplate={wellplate}
+              wellplateIndex={wellplateIndex}
+              deleteWellplate={deleteWellplate}
+              importWellplate={importWellplate}
+            />
+          ))}
+        </Accordion>
+      </div>
+    );
   }
 }
 

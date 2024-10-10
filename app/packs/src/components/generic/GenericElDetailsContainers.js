@@ -76,7 +76,7 @@ export default class GenericElDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+        <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
           <i className="fa fa-plus" aria-hidden="true" />
           {' '}
           Add analysis
@@ -142,7 +142,7 @@ export default class GenericElDetailsContainers extends Component {
       }
       return (
         <div>
-          <p className="noAnalyses-warning generic-add-analysis">
+          <p className="m-4 generic-add-analysis">
             There are currently no Analyses.
             {this.addButton()}
           </p>
@@ -151,7 +151,7 @@ export default class GenericElDetailsContainers extends Component {
     }
     return (
       <div>
-        <p className="noAnalyses-warning">
+        <p className="m-4">
           There are currently no Analyses.
         </p>
       </div>
@@ -161,7 +161,6 @@ export default class GenericElDetailsContainers extends Component {
 
 GenericElDetailsContainers.propTypes = {
   readOnly: PropTypes.bool.isRequired,
-  parent: PropTypes.object,
   genericEl: PropTypes.object.isRequired,
   handleElChanged: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,

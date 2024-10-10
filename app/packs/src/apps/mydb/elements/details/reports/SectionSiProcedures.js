@@ -16,7 +16,7 @@ const ProcedureRow = ({ el, counter }) => {
     <div>
       <Title el={el} counter={counter} />
       <SVGContent
-        show={true}
+        show
         svgPath={el.svgPath}
         products={[]}
         isProductOnly={false}

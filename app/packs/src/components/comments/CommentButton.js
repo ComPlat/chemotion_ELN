@@ -29,8 +29,8 @@ export default function CommentButton(props) {
     >
       <Button
         id="commentBtn"
-        bsStyle={sectionComments.length > 0 ? 'success' : 'default'}
-        bsSize="xsmall"
+        variant={sectionComments.length > 0 ? 'success' : 'light'}
+        size="xsm"
         onClick={() => {
           CommentActions.fetchComments(element);
           CommentActions.toggleCommentModal(true);

@@ -52,7 +52,7 @@ module Entities
       if eventable_type == 'Element'
         element_klass&.icon_name
       elsif eventable_type.present?
-        "icon-#{eventable_type.downcase}"
+        "icon-#{eventable_type.underscore}"
       end
     end
 

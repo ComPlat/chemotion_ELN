@@ -154,36 +154,6 @@ export default class WellplatesFetcher {
     return promise;
   }
 
-  static updateWellLabel(params) {
-    const promise = fetch('/api/v1/wellplates/well_label', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
-  }
-
-  static updateWellColorCode(params) {
-    const promise = fetch('/api/v1/wellplates/well_color_code', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
-  }
-
   static importWellplateSpreadsheet(wellplateId, attachmentId) {
     const promise = fetch(`/api/v1/wellplates/import_spreadsheet/${wellplateId}`, {
       credentials: 'same-origin',

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
+import { Form, InputGroup, Button } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -31,7 +31,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const hasChanged = nextProps.value !== this.props.value
       || nextProps.block !== this.props.block
       || nextProps.metricPrefix !== this.props.metricPrefix
-      || nextProps.bsStyle !== this.props.bsStyle
+      || nextProps.variant !== this.props.variant
       || nextProps.disabled !== this.props.disabled
       || nextState.value !== this.state.value
       || nextState.block !== this.state.block
@@ -103,6 +103,15 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }, () => this._onChangeCallback());
   }
 
+  handleInputDoubleClick() {
+    if (this.state.block) {
+      this.setState({
+        block: false,
+        value: 0,
+      });
+    }
+  }
+
   _onChangeCallback() {
     if (this.props.onChange) {
       this.props.onChange({ ...this.state, unit: this.props.unit });
@@ -138,7 +147,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      bsSize, bsStyle, disabled, label, unit, name
+      size, variant, disabled, label, unit, name
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -158,38 +167,39 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const alwaysAllowDisplayUnit = ['TON', 'TON/h', 'TON/m', 'TON/s', 'g', 'mg', 'μg', 'mol', 'mmol', 'l', 'ml', 'μl'];
     const unitDisplayMode = alwaysAllowDisplayUnit.includes(unit) ? false : inputDisabled;
     // BsStyle-s for Input and buttonAfter have differences
-    const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
-    const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
+    const variantBtnAfter = variant === 'error' ? 'danger' : variant;
     if (unit !== 'n') {
       const prefixSwitch = (
-        <InputGroup.Button>
-          <Button
-            disabled={unitDisplayMode}
-            active
-            onClick={() => { this.togglePrefix(unit); }}
-            bsStyle={bsStyleBtnAfter}
-            bsSize={bsSize}
-          >
-            {mp + unit}
-          </Button>
-        </InputGroup.Button>
+        <Button
+          disabled={inputDisabled}
+          active
+          onClick={() => { this.togglePrefix(unit); }}
+          variant={variantBtnAfter}
+          size={size}
+          className="px-2"
+        >
+          {mp + unit}
+        </Button>
       );
 
       return (
-        <div className={`numeric-input-unit_${this.props.unit}`}>
-          {labelWrap}
-          <InputGroup>
-            <FormControl
+        <div>
+          {label && <Form.Label className="me-2">{label}</Form.Label>}
+          <InputGroup
+            className="d-flex flex-nowrap align-items-center w-100"
+            onDoubleClick={event => this.handleInputDoubleClick(event)}
+          >
+            <Form.Control
               type="text"
-              bsClass="bs-form--compact form-control"
               disabled={inputDisabled}
-              bsSize={bsSize}
-              bsStyle={bsStyle}
+              variant={variant}
+              size={size}
               value={val() || ''}
-              onChange={(event) => this._handleInputValueChange(event)}
-              onFocus={(event) => this._handleInputValueFocus(event)}
-              onBlur={(event) => this._handleInputValueBlur(event)}
+              onChange={event => this._handleInputValueChange(event)}
+              onFocus={event => this._handleInputValueFocus(event)}
+              onBlur={event => this._handleInputValueBlur(event)}
               name={name}
+              className="flex-grow-1"
             />
             {prefixSwitch}
           </InputGroup>
@@ -197,20 +207,21 @@ export default class NumeralInputWithUnitsCompo extends Component {
       );
     }
     return (
-      <div className="numeric-input-unit">
-        {labelWrap}
-        <div>
-          <FormControl
+      <div>
+        {label && <Form.Label className="me-2">{label}</Form.Label>}
+        <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
+          <Form.Control
             type="text"
-            bsClass="bs-form--compact form-control"
             disabled={inputDisabled}
-            bsSize={bsSize}
-            bsStyle={bsStyle}
+            variant={variant}
+            size={size}
             value={val() || ''}
-            onChange={(event) => this._handleInputValueChange(event)}
-            onFocus={(event) => this._handleInputValueFocus(event)}
-            onBlur={(event) => this._handleInputValueBlur(event)}
+            onChange={event => this._handleInputValueChange(event)}
+            onFocus={event => this._handleInputValueFocus(event)}
+            onBlur={event => this._handleInputValueBlur(event)}
+            onDoubleClick={event => this.handleInputDoubleClick(event)}
             name={name}
+            className="flex-grow-1"
           />
         </div>
       </div>
@@ -228,8 +239,8 @@ NumeralInputWithUnitsCompo.propTypes = {
   precision: PropTypes.number,
   disabled: PropTypes.bool,
   label: PropTypes.node,
-  bsSize: PropTypes.string,
-  bsStyle: PropTypes.string,
+  variant: PropTypes.string,
+  size: PropTypes.string,
   name: PropTypes.string
 };
 
@@ -239,7 +250,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   units: [],
   disabled: false,
   block: false,
-  bsSize: 'small',
-  bsStyle: 'default',
+  variant: 'light',
   name: ''
 };

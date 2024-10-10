@@ -1,5 +1,5 @@
 import React from 'react';
-import { Panel, FormControl, InputGroup } from 'react-bootstrap';
+import { InputGroup, Card, Form } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 export default class AdminDashboard extends React.Component {
@@ -30,37 +30,28 @@ export default class AdminDashboard extends React.Component {
 
   renderDiskInfo() {
     const { diskAvailable, diskPercentUsed } = this.state;
-    let style = {};
-    if (diskPercentUsed > 80) {
-      style = {
-        color: 'red',
-      };
-    } else {
-      style = {
-        color: 'black',
-      };
-    }
+    let className = diskPercentUsed > 80 ? 'text-danger' : '';
 
     return (
-      <div>
-        <Panel>
-          <InputGroup>
-            <InputGroup.Addon>Disk Available   (MB)</InputGroup.Addon>
-            <FormControl
-              type="text"
-              defaultValue={diskAvailable || ''}
-              readOnly
-            />
-            <InputGroup.Addon>Disk Percent Used (%)</InputGroup.Addon>
-            <FormControl
-              type="text"
-              style={style}
-              defaultValue={`${diskPercentUsed}%` || ''}
-              readOnly
-            />
-          </InputGroup>
-        </Panel>
-      </div>
+        <Card>
+          <Card.Body className='p-0'>
+            <InputGroup >
+              <InputGroup.Text >Disk Available (MB)</InputGroup.Text>
+              <Form.Control
+                type="text"
+                defaultValue={diskAvailable || ''}
+                readOnly
+              />
+              <InputGroup.Text >Disk Percent Used (%)</InputGroup.Text>
+              <Form.Control
+                type="text"
+                className={className}
+                defaultValue={`${diskPercentUsed}%` || ''}
+                readOnly
+              />
+            </InputGroup>
+          </Card.Body>
+        </Card>
     );
   }
 

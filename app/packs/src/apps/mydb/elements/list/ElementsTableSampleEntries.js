@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import {
-  Table, Button, Tooltip, OverlayTrigger, Label
+  Table, Button, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
+import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -12,7 +13,6 @@ import GenericElementLabels from 'src/apps/mydb/elements/labels/GenericElementLa
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -25,6 +25,7 @@ import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
@@ -60,20 +61,15 @@ const isCurrEleDropType = (sourceType, targetType) => {
   return sourceType && targetType && targets[sourceType].includes(targetType);
 };
 
-const dragColumn = (element, showDragColumn, sourceType, targetType) => {
-  if (showDragColumn) {
-    return (
-      <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
-        <ElementContainer
-          key={element.id}
-          sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
-          element={element}
-        />
-      </td>
-    );
-  }
-  return null;
-};
+const dragColumn = (element, sourceType, targetType) => (
+  <td className="text-center align-middle">
+    <ElementContainer
+      key={element.id}
+      sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
+      element={element}
+    />
+  </td>
+);
 
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
@@ -93,10 +89,7 @@ TopSecretIcon.propTypes = {
 
 function XvialIcon({ label }) {
   return (label || '').match(/^X\d+.*/) ? (
-    <i
-      className="icon-xvial"
-      style={{ marginRight: '5px', fontSize: '20px' }}
-    />
+    <i className="icon-xvial px-1 fs-5" />
   ) : null;
 }
 
@@ -109,90 +102,78 @@ XvialIcon.defaultProps = {
 };
 
 const showDecoupledIcon = (sample) => (sample.decoupled ? (
-  <div className="decoupled-icon" onClick={(e) => e.stopPropagation()}>
-    <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
-      <Label><i className="fa fa-chain-broken" aria-hidden="true" /></Label>
-    </OverlayTrigger>
-  </div>
+  <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
+    <Button size="xxsm" variant="light"><i className="fa fa-chain-broken" aria-hidden="true" /></Button>
+  </OverlayTrigger>
 ) : null);
 
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>;
 
-const svgPreview = (showPreviews, sample) => (
-  <div style={{ float: 'left' }}>
-    {
-      showPreviews
-        ? (
-          <SvgWithPopover
-            hasPop
-            previewObject={{
-              txtOnly: '',
-              isSVG: true,
-              src: sample.svgPath
-            }}
-            popObject={{
-              title: sample.molecule_iupac_name,
-              src: sample.svgPath,
-              height: '26vh',
-              width: '52vw',
-            }}
-          />
-        )
-        : null
-    }
-  </div>
+const svgPreview = (sample) => (
+  <SvgWithPopover
+    hasPop
+    previewObject={{
+      txtOnly: '',
+      isSVG: true,
+      src: sample.svgPath
+    }}
+    popObject={{
+      title: sample.molecule_iupac_name,
+      src: sample.svgPath,
+      height: '26vh',
+      width: '52vw',
+    }}
+  />
 );
 
 function MoleculeHeader({
   sample, show, showDragColumn, onClick, targetType
 }) {
-  const showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right';
-
   const { collId, showPreviews } = UIStore.getState();
+  const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
+
   return (
     <tr
-      style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
+      className="bg-gray-100"
+      role="button"
       onClick={onClick}
     >
-      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null
-        ? (<td colSpan="3" style={{ position: 'relative ' }}><div><h4>(No-structure sample)</h4></div></td>)
+      {isNoStructureSample
+        ? (
+          <td colSpan="3" className="position-relative">
+            <div>
+              <h4>
+                (No-structure sample)
+              </h4>
+            </div>
+          </td>
+        )
         : (
-          <td colSpan="2" style={{ position: 'relative ' }}>
-            {svgPreview(showPreviews, sample)}
-            <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
-              <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-                <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-                  <i className={`glyphicon ${showIndicator}`} />
-                </span>
-              </OverlayTrigger>
-            </div>
-            <div style={{ paddingLeft: 5, wordWrap: 'break-word' }}>
-              <h4><SampleName sample={sample} /></h4>
-            </div>
-            <div style={{
-              position: 'absolute', top: '10px', right: '25px', float: 'right'
-            }}
-            >
-              <ChemrepoLabels chemrepoId={sample.molecule.chem_repo && sample.molecule.chem_repo.id} />
-              <PubchemLabels element={sample} />
-            </div>
-            <div style={{
-              position: 'absolute', bottom: '10px', right: '25px', float: 'right'
-            }}
-            >
-              <ComputedPropLabel cprops={sample.molecule_computed_props} />
+          <td colSpan="2">
+            <div className="d-flex align-items-start gap-1">
+              {showPreviews && svgPreview(sample)}
+              <h4 className="flex-grow-1"><SampleName sample={sample} /></h4>
+              <div className="d-flex align-items-center gap-1">
+                {sample.molecule.chem_repo && sample.molecule.chem_repo.id && <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />}
+                <PubchemLabels element={sample} />
+                <ComputedPropLabel cprops={sample.molecule_computed_props} />
+                <OverlayTrigger placement="bottom" overlay={overlayToggle}>
+                  <ChevronIcon direction={show ? 'down' : 'right'} color="primary"/>
+                </OverlayTrigger>
+              </div>
             </div>
           </td>
         )}
-      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null
-        ? null : dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
+      {!isNoStructureSample
+          && showDragColumn
+          && dragColumn(sample, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
 }
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       displayedMoleculeGroup: [],
       moleculeGroupsShown: [],
@@ -247,6 +228,7 @@ export default class ElementsTableSampleEntries extends Component {
     const {
       collapseAll, showDragColumn, moleculeSort, currentElement, elements, ui
     } = this.props;
+    const { keyboardIndex, keyboardSeletectedElementId } = this.state;
     const { checkedAll, checkedIds, uncheckedIds } = ui;
     const nextUi = nextProps.ui;
     return collapseAll !== nextProps.collapseAll // Bool
@@ -257,8 +239,8 @@ export default class ElementsTableSampleEntries extends Component {
       || checkedAll !== nextUi.checkedAll // Bool
       || checkedIds !== nextUi.checkedIds // Immutable List
       || uncheckedIds !== nextUi.uncheckedIds // Immutable List
-      || this.state.keyboardIndex !== nextState.keyboardIndex // int
-      || this.state.keyboardSeletectedElementId !== nextState.keyboardSeletectedElementId; // int
+      || keyboardIndex !== nextState.keyboardIndex // int
+      || keyboardSeletectedElementId !== nextState.keyboardSeletectedElementId; // int
   }
 
   componentWillUnmount() {
@@ -328,9 +310,8 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   isElementChecked(element) {
-    const { checkedIds, uncheckedIds, checkedAll } = this.props.ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
+    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
   isElementSelected(element) {
@@ -339,19 +320,17 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderSamples(samples, index) {
-    const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
+    const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
     const { showDragColumn } = this.props;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
-    const sampleRows = samples.slice(0, numSamples).map((sample, ind) => {
+    const sampleRows = samples.slice(0, numSamples).map((sample) => {
       const selected = this.isElementSelected(sample);
-      const style = (selected || keyboardSeletectedElementId === sample.id) ? {
-        color: '#fff', background: '#337ab7'
-      } : {};
+      const applyHighlight = selected || keyboardSeletectedElementId === sample.id
 
       return (
-        <tr key={ind} style={style}>
+        <tr key={sample.id} className={classnames({ 'text-bg-primary': applyHighlight })}>
           <td width="30px">
             <ElementCheckbox
               element={sample}
@@ -360,28 +339,27 @@ export default class ElementsTableSampleEntries extends Component {
             />
           </td>
           <td
-            style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-            onClick={showDetails.bind(this, sample.id)}
+            onClick={() => showDetails(sample.id)}
+            role="button"
           >
-            {sample.title(selected)}
+            <div className="d-flex justify-content-between">
+              {sample.title(selected)}
 
-            <div style={{
-              float: 'right', display: 'flex', alignItems: 'center', gap: '5px'
-            }}
-            >
-              <div style={{ marginTop: '1px' }}><CommentIcon commentCount={sample.comment_count} /></div>
-              <div style={{ marginTop: '3px' }}><ShowUserLabels element={sample} /></div>
-              <div style={{ marginTop: '3px' }}><XvialIcon label={sample.external_label} /></div>
-              <div style={{ marginTop: '1px' }}><ElementReactionLabels element={sample} key={`${sample.id}_reactions`} /></div>
-              <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
-              <GenericElementLabels element={sample} key={`${sample.id}_element`} />
-              <ElementCollectionLabels element={sample} key={`${sample.id}`} />
-              <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-              {showDecoupledIcon(sample)}
-              <TopSecretIcon element={sample} />
+              <div className="d-flex align-items-center gap-1">
+                <CommentIcon commentCount={sample.comment_count} />
+                <ShowUserLabels element={sample} />
+                <XvialIcon label={sample.external_label} />
+                <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+                <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
+                <GenericElementLabels element={sample} key={`${sample.id}_element`} />
+                <ElementCollectionLabels element={sample} key={`${sample.id}`} />
+                <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+                {showDecoupledIcon(sample)}
+                <TopSecretIcon element={sample} />
+              </div>
             </div>
           </td>
-          {dragColumn(sample, showDragColumn, DragDropItemTypes.SAMPLE, this.state.targetType)}
+          {showDragColumn && dragColumn(sample, DragDropItemTypes.SAMPLE, targetType)}
         </tr>
       );
     });
@@ -389,13 +367,11 @@ export default class ElementsTableSampleEntries extends Component {
     if (numSamples < length) {
       const showMoreSamples = (
         <tr key={`${index}_showMore`}>
-          <td colSpan="3" style={{ padding: 0 }}>
+          <td colSpan="3" className="p-0">
             <Button
-              bsStyle="info"
+              variant="info"
               onClick={() => this.showMoreSamples(index)}
-              style={{
-                fontSize: '14px', width: '100%', float: 'left', borderRadius: '0px'
-              }}
+              className="w-100"
             >
               Show more samples
             </Button>

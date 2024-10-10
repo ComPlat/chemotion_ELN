@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
@@ -46,46 +46,41 @@ class HeaderCommentSection extends Component {
 
     const sectionComments = getSectionComments(comments, headerSection);
 
-    if (MatrixCheck(currentUser.matrix, commentActivation)) {
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !element?.isNew) {
       return (
-        element?.isNew ? <span /> : (
-          <span className="comments-header-btn">
-            <OverlayTrigger
-              key="ot_comments"
-              placement="top"
-              overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
+        <ButtonToolbar className="gap-1">
+          <OverlayTrigger
+            key="ot_comments"
+            placement="top"
+            overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
+          >
+            <Button
+              size="xsm"
+              variant={sectionComments.length > 0 ? 'success' : 'light'}
+              onClick={() => {
+                CommentActions.setCommentSection(headerSection);
+                CommentActions.fetchComments(element);
+                CommentActions.toggleCommentModal(true);
+              }}
             >
-              <Button
-                bsSize="xsmall"
-                bsStyle={sectionComments.length > 0 ? 'success' : 'default'}
-                onClick={() => {
-                  CommentActions.setCommentSection(headerSection);
-                  CommentActions.fetchComments(element);
-                  CommentActions.toggleCommentModal(true);
-                }}
-              >
-                <i className="fa fa-comments" />
-              </Button>
-            </OverlayTrigger>
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="toggleComments">Show/Hide Section Comments</Tooltip>}
+              <i className="fa fa-comments me-1" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="toggleComments">Show/Hide Section Comments</Tooltip>}
+          >
+            <Button
+              size="xsm"
+              variant="light"
+              onClick={CommentActions.toggleCommentSection}
             >
-              <Button
-                bsSize="xsmall"
-                onClick={CommentActions.toggleCommentSection}
-                style={{ marginLeft: 5 }}
-              >
-                <span>
-                  <i className={showCommentSection ? 'fa fa-angle-down' : 'fa fa-angle-up'} />
-                </span>
-              </Button>
-            </OverlayTrigger>
-          </span>
-        )
+              <i className={showCommentSection ? 'fa fa-angle-down' : 'fa fa-angle-up'} />
+            </Button>
+          </OverlayTrigger>
+        </ButtonToolbar>
       );
     }
-
     return null;
   }
 }

@@ -1,5 +1,8 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Button, Alert } from 'react-bootstrap';
+import {
+  Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip,
+  ButtonToolbar, Button, Alert, Stack, ToggleButtonGroup, ToggleButton,
+} from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
@@ -18,7 +21,7 @@ const SearchResult = ({ handleClear }) => {
   const profile = userState.profile || {};
   const genericElements = userState.genericEls || [];
   const [visibleTabs, setVisibleTabs] = useState([]);
-  const [currentTabIndex, setCurrentTabIndex] = useState(0);
+  let activeTab = searchStore.search_result_active_tab_key;
 
   useEffect(() => {
     if (typeof (profile) !== 'undefined' && profile &&
@@ -37,14 +40,14 @@ const SearchResult = ({ handleClear }) => {
           }
         });
       setVisibleTabs(visible);
-      let activeTab = visible.find((v) => { return v.totalElements != 0 });
-      activeTab = activeTab !== undefined ? activeTab.index : 0;
-      setCurrentTabIndex(activeTab);
+      let activeTabElement = visible.find((v) => { return v.totalElements != 0 });
+      activeTabElement = activeTabElement !== undefined ? activeTabElement.index : 1;
+      handleChangeTab(activeTabElement);
     }
   }, [results]);
 
-  const handleTabSelect = (e) => {
-    setCurrentTabIndex(e);
+  const handleChangeTab = (key) => {
+    searchStore.changeSearchResultActiveTabKey(key);
   }
 
   const handleAdoptResult = () => {
@@ -95,7 +98,7 @@ const SearchResult = ({ handleClear }) => {
 
   const showResultErrorMessage = () => {
     if (searchStore.resultErrorMessage.length >= 1) {
-      return <Alert bsStyle="danger" className="result-error-message">{searchStore.resultErrorMessage.join(', ')}</Alert>;
+      return <Alert variant="danger" className="result-error-message">{searchStore.resultErrorMessage.join(', ')}</Alert>;
     }
   }
 
@@ -157,16 +160,22 @@ const SearchResult = ({ handleClear }) => {
     let itemClass = tabResult.total_elements == 0 ? ' no-result' : '';
 
     return (
-      <NavItem eventKey={list.index} key={`${list.key}_navItem`} className={`elements-list-tab${itemClass}`}>
+      <ToggleButton
+        key={`result-${list.key}`}
+        id={`result-${list.key}`}
+        value={list.index}
+        variant="outline-dark"
+        className={itemClass}
+      >
         <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
-          <div style={{ display: 'flex' }}>
-            <i className={iconClass} />
-            <span style={{ paddingLeft: 5 }}>
+          <div className="d-inline-flex align-items-center">
+            <i className={`${iconClass} pe-1`} />
+            <span class="fs-3">
               ({tabResult.total_elements})
             </span>
           </div>
         </OverlayTrigger>
-      </NavItem>
+      </ToggleButton>
     );
   }
 
@@ -197,24 +206,26 @@ const SearchResult = ({ handleClear }) => {
     return (
       <Tab.Container
         id="tabList"
-        defaultActiveKey={0}
-        activeKey={currentTabIndex}
-        onSelect={handleTabSelect}
+        defaultActiveKey={1}
+        activeKey={activeTab}
       >
-        <Row className="clearfix">
-          <Col sm={12}>
-            <Navbar className="search-result-tab-navbar">
-              <Nav bsStyle="tabs">
-                {navItems}
-              </Nav>
-            </Navbar>
-          </Col>
-          <Col sm={12}>
-            <Tab.Content className="search-result-tab-content" animation>
-              {tabContents}
-            </Tab.Content>
-          </Col>
-        </Row>
+        <div className="search-result-tabs">
+          <Stack direction="horizontal" className="advanced-search-content-header">
+            <ToggleButtonGroup
+              type="radio"
+              name="options"
+              key="result-element-options"
+              value={searchStore.search_result_active_tab_key}
+              onChange={handleChangeTab}
+              className="advanced-search-result-toggle-elements"
+            >
+              {navItems}
+            </ToggleButtonGroup>
+          </Stack>
+          <Tab.Content className="search-result-tab-content">
+            {tabContents}
+          </Tab.Content>
+        </div>
       </Tab.Container>
     );
   }
@@ -223,14 +234,14 @@ const SearchResult = ({ handleClear }) => {
     if (searchStore.searchResultsCount === 0) { return null }
 
     return (
-      <ButtonToolbar className="result-button-toolbar">
-        <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
+      <ButtonToolbar className="advanced-search-buttons results">
+        <Button variant="warning" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>
-        <Button bsStyle="info" onClick={handleClear}>
+        <Button variant="info" onClick={handleClear}>
           Reset
         </Button>
-        <Button bsStyle="primary" onClick={handleAdoptResult} style={{ marginRight: '20px' }} >
+        <Button variant="primary" onClick={handleAdoptResult}>
           Adopt Result
         </Button>
       </ButtonToolbar>
@@ -239,8 +250,10 @@ const SearchResult = ({ handleClear }) => {
 
   return (
     <>
-      <SearchValuesList />
-      <ResultsCount />
+      <div className="result-content-header">
+        <SearchValuesList />
+        <ResultsCount />
+      </div>
       <SearchResultTabContainer />
       <ResultButtons />
     </>

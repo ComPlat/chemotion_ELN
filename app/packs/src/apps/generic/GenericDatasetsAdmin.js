@@ -217,9 +217,9 @@ export default class GenericDatasetsAdmin extends React.Component {
     }
 
     return (
-      <div style={{ width: '90vw', margin: 'auto' }}>
+      <div className="vw-90 my-auto mx-auto">
         <GenericMenu userName={user.name} text={FN_ID} />
-        <div>
+        <div className="mt-5 pt-5">
           <FunctionLocation name={FN_ID} />
           <SyncBtn
             data={this.state.repoData}
@@ -230,7 +230,6 @@ export default class GenericDatasetsAdmin extends React.Component {
             klasses={this.state.klasses}
             showModal={this.state.show.modal === 'NewRepo'}
           />
-          &nbsp;
           {this.renderGrid()}
         </div>
         <Notifications />

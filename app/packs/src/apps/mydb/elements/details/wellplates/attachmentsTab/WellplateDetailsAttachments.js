@@ -49,7 +49,6 @@ export class WellplateDetailsAttachments extends Component {
 
   constructor(props) {
     super(props);
-    this.importButtonRefs = [];
     const {
       onImport
     } = props;
@@ -139,9 +138,9 @@ export class WellplateDetailsAttachments extends Component {
   filterAndSortAttachments() {
     const { filterText, sortBy } = this.state;
 
-    const filteredAttachments = this.props.attachments.filter((
-      attachment
-    ) => attachment.filename.toLowerCase().includes(filterText.toLowerCase()));
+    const filteredAttachments = this.props.attachments.filter(
+      attachment => attachment.filename.toLowerCase().includes(filterText.toLowerCase())
+    );
 
     filteredAttachments.sort((a, b) => {
       let comparison = 0;
@@ -169,7 +168,7 @@ export class WellplateDetailsAttachments extends Component {
 
   createAttachmentPreviews() {
     const { attachments } = this.props;
-    attachments.map((attachment) => {
+    attachments.map(attachment => {
       if (attachment.thumb) {
         AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
           (result) => {
@@ -250,9 +249,9 @@ export class WellplateDetailsAttachments extends Component {
   renderTemplateDownload() {
     return (
       <div>
-        <ButtonGroup style={{ marginBottom: '10px' }}>
+        <ButtonGroup className="mb-1">
           <Button
-            bsStyle="primary"
+            variant="primary"
             onClick={() => this.handleTemplateDownload()}
           >
             <i className="fa fa-download" aria-hidden="true" />
@@ -261,7 +260,7 @@ export class WellplateDetailsAttachments extends Component {
           </Button>
           <OverlayTrigger placement="bottom" overlay={templateInfo}>
             <Button
-              bsStyle="info"
+              variant="info"
             >
               <i className="fa fa-info" aria-hidden="true" />
             </Button>
@@ -286,19 +285,21 @@ export class WellplateDetailsAttachments extends Component {
       <div className="attachment-main-container">
         {this.renderTemplateDownload()}
         {this.renderImageEditModal()}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: '1', alignSelf: 'center' }}>
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="flex-grow-1 align-self-center">
             {customDropzone(this.props.onDrop)}
           </div>
-          <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
-            {attachments.length > 0
-        && sortingAndFilteringUI(
-          sortDirection,
-          this.handleSortChange,
-          this.toggleSortDirection,
-          this.handleFilterChange,
-          true
-        )}
+          <div className="ms-3 align-self-center">
+            {
+              attachments.length > 0
+                && sortingAndFilteringUI(
+                    sortDirection,
+                    this.handleSortChange,
+                    this.toggleSortDirection,
+                    this.handleFilterChange,
+                    true
+                  )
+            }
           </div>
         </div>
         {combinedAttachments.length === 0 ? (
@@ -321,20 +322,20 @@ export class WellplateDetailsAttachments extends Component {
                     Created:&nbsp;
                     {formatDate(attachment.created_at)}
                   </div>
-                  &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+                  <span className="mx-2">|</span>
                   <div>
                     Size:&nbsp;
-                    <span style={{ fontWeight: 'bold', color: '#444' }}>
+                    <strong>
                       {formatFileSize(attachment.filesize)}
-                    </span>
+                    </strong>
                   </div>
                 </div>
               </div>
-              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div className="attachment-row-actions d-flex align-items-center gap-1">
                 {attachment.is_deleted ? (
                   <Button
-                    bsSize="xs"
-                    bsStyle="danger"
+                    size="sm"
+                    variant="danger"
                     className="attachment-button-size"
                     onClick={() => onUndoDelete(attachment)}
                   >
@@ -354,12 +355,16 @@ export class WellplateDetailsAttachments extends Component {
                           || attachment.is_new || this.documentType(attachment.filename) === null,
                       this.handleEdit
                     )}
-                    {annotateButton(attachment, this)}
+                    {annotateButton(attachment, () => {
+                      this.setState({
+                        imageEditModalShown: true,
+                        chosenAttachment: attachment,
+                      });
+                    })}
                     {importButton(
                       attachment,
                       this.state.showImportConfirm,
                       this.props.wellplate.changed,
-                      this.importButtonRefs,
                       this.showImportConfirm,
                       this.hideImportConfirm,
                       this.confirmAttachmentImport

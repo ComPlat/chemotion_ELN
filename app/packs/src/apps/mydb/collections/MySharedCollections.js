@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, FormControl, Modal } from 'react-bootstrap';
+import { Button, ButtonGroup, Form, Modal } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -14,19 +14,20 @@ export default class MySharedCollections extends React.Component {
       deleted_ids: [],
 
       tree: {
-        label: 'My Shared Collections',
-        id: -1,
-        children: [{}]
+        children: []
       },
       modalProps: {
         show: false,
         title: "",
-        component: "",
         action: null
       }
     }
 
     this.onStoreChange = this.onStoreChange.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.bulkUpdate = this.bulkUpdate.bind(this);
+    this.renderNode = this.renderNode.bind(this);
+    this.handleModalHide = this.handleModalHide.bind(this);
   }
 
   componentDidMount() {
@@ -39,64 +40,34 @@ export default class MySharedCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.sharedRoots.length > 0 ? state.sharedRoots : [{}];
-
+    const { tree } = this.state;
     this.setState({
       tree: {
-        label: 'My Shared Collections',
-        children: children
+        ...tree,
+        children: state.sharedRoots,
       }
     });
   }
 
-  handleChange(tree) {
-    let oldTree = this.state.tree
-    let children = oldTree.children
-    children.map((child, i) => {
-      if ('label' in tree && typeof (tree.label) == 'string' && tree.label == child.label) {
-        children[i] = tree
-        return
-      }
-    });
-    oldTree.children = children
+  handleChange(newTree) {
+    const { tree } = this.state;
     this.setState({
-      tree: oldTree
+      tree: {
+        children: tree.children.map((child) => {
+          return (tree.id === child.id)
+            ? newTree
+            : child;
+        })
+      },
     });
-
   }
 
   isActive(node) {
-    return node === this.state.active ? "node is-active" : "node";
+    return node === this.state.active;
   }
 
   hasChildren(node) {
     return node.children && node.children.length > 0
-  }
-
-  label(node) {
-    if (node.label == "My Shared Collections") {
-      return (
-        <FormControl 
-        value ="My Shared Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
-    } else if (node.is_locked) {
-      return (
-        <FormControl className="collection-label" type="text"
-          disabled
-          value={node.label || ''}
-        />
-      )
-
-    } else {
-      return (
-        <FormControl className="collection-label" type="text"
-          value={node.label || ''}
-          onChange={(e) => { this.handleLabelChange(e, node) }}
-        />
-      )
-    }
   }
 
   handleLabelChange(e, node) {
@@ -119,33 +90,6 @@ export default class MySharedCollections extends React.Component {
     }
 
     CollectionActions.bulkUpdateUnsharedCollections(params);
-  }
-
-  actions(node) {
-    if (node.label == "My Shared Collections") {
-      return (
-        <div className="root-actions">
-          <Button bsSize="xsmall" bsStyle="warning"
-            onClick={this.bulkUpdate.bind(this)}
-            onMouseDown={(e)=>{e.stopPropagation();}}
-            >
-            Update
-          </Button>
-        </div>
-      )
-    } else if (!node.is_locked) {
-      return (
-        <ButtonGroup className="actions">
-          <Button bsSize="xsmall" bsStyle="primary"
-            onClick={() => this.editShare(node)}>
-            <i className="fa fa-share-alt"></i>
-          </Button>
-          <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
-            <i className="fa fa-trash-o"></i>
-          </Button>
-        </ButtonGroup>
-      )
-    }
   }
 
   editShare(node) {
@@ -176,8 +120,6 @@ export default class MySharedCollections extends React.Component {
       children.forEach((child) => {
         parent.children.push(child);
       });
-    } else if (parent.label == 'My Shared Collections') {
-      parent.children.push({});
     }
   }
 
@@ -224,31 +166,49 @@ export default class MySharedCollections extends React.Component {
       modalProps: {
         show: false,
         title: "",
-        component: "",
         action: null
       }
     });
   }
 
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
-      if (node.is_locked) {
-        return (
-          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
-            {this.label(node)}
-            {this.actions(node)}
-          </span>
-        )
-      } else {
-        return (
-          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
-            {this.label(node)}
-            {this.actions(node)}
-          </span>
-        );
-
-      }
-
+    if (node.is_locked) {
+      return (
+        <div className="ms-3">
+          <h5 onMouseDown={(e) => e.stopPropagation()}>{node.label}</h5>
+        </div>
+      );
+    } else {
+      return (
+        <div
+          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex justify-content-between mb-2`}
+          onClick={() => this.onClickNode(node)}
+        >
+          <Form.Control
+            className="ms-3 w-75"
+            size="sm"
+            type="text"
+            value={node.label || ''}
+            onChange={(e) => { this.handleLabelChange(e, node) }}
+          />
+          <ButtonGroup>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => this.editShare(node)}
+            >
+              <i className="fa fa-share-alt" />
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => this.deleteCollection(node)}
+            >
+              <i className="fa fa-trash-o" />
+            </Button>
+          </ButtonGroup>
+        </div>
+      );
     }
   }
 
@@ -260,33 +220,35 @@ export default class MySharedCollections extends React.Component {
       return (
         <Tree
           key={i}
-          paddingLeft={20}                         // left padding for children nodes in pixels
-          tree={e}                   // tree object
-          onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
-          renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
+          paddingLeft={20}
+          tree={e}
+          onChange={this.handleChange}
+          renderNode={this.renderNode}
         />
       )
     })
 
     return (
-      <div className="tree">
-        <Tree
-          paddingLeft={20}                         // left padding for children nodes in pixels
-          tree={{
-            label: 'My Shared Collections',
-            id: -1,
-          }}                   // tree object
-          onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
-          renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
-        />
+      <div>
+        <div className="d-flex justify-content-between">
+          <h4>My Shared Collections</h4>
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={this.bulkUpdate}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            Update
+          </Button>
+        </div>
         {trees()}
-        <Modal animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
+        <Modal centered animation show={this.state.modalProps.show} onHide={this.handleModalHide}>
           <Modal.Header closeButton>
             <Modal.Title>{this.state.modalProps.title}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <ManagingModalSharing collectionId={actNode.id}
-              onHide={this.handleModalHide.bind(this)}
+              onHide={this.handleModalHide}
               permissionLevel={actNode.permission_level}
               sampleDetailLevel={actNode.sample_detail_level} reactionDetailLevel={actNode.reaction_detail_level}
               wellplateDetailLevel={actNode.wellplate_detail_level} screenDetailLevel={actNode.screen_detail_level}

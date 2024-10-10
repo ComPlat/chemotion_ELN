@@ -8,7 +8,7 @@ import SyncBtn from 'src/apps/generic/SyncButton';
 import LoadingModal from 'src/components/common/LoadingModal';
 import Notifications from 'src/components/Notifications';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import GenericKlassFetcher from 'src/fetchers/GenericKlassFetcher'; 
+import GenericKlassFetcher from 'src/fetchers/GenericKlassFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { FunctionLocation, GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
@@ -256,7 +256,7 @@ export default class GenericElementsAdmin extends React.Component {
         LoadingActions.stop();
       });
   }
-  
+
   handleDeleteKlass(element) {
     if (element.is_active) {
       notification({
@@ -293,7 +293,7 @@ export default class GenericElementsAdmin extends React.Component {
         });
     }
   }
-  
+
   handleDownloadKlass(e) {
     LoadingActions.start();
     GenericKlassFetcher.downloadKlass(e.id, 'ElementKlass')
@@ -334,7 +334,7 @@ export default class GenericElementsAdmin extends React.Component {
     GenericElsFetcher.uploadKlass(element)
       .then(result => {
         if (result?.status === 'success') {
-          this.fetchElements();          
+          this.fetchElements();
         }
         notification({
           title: 'Upload Element',
@@ -461,9 +461,10 @@ export default class GenericElementsAdmin extends React.Component {
     }
 
     return (
-      <div style={{ width: '90vw', margin: 'auto' }}>
+      <div className="vw-90 my-auto mx-auto">
         <GenericMenu userName={user.name} text={FN_ID} />
-        <div>
+        <hr />
+        <div className="mt-5 pt-5">
           <FunctionLocation name={FN_ID} />
           <SyncBtn
             data={this.state.repoData}
@@ -474,7 +475,6 @@ export default class GenericElementsAdmin extends React.Component {
             klasses={this.state.klasses}
             showModal={this.state.show.modal === 'NewRepo'}
           />
-          &nbsp;
           {this.renderGrid()}
         </div>
         <Notifications />

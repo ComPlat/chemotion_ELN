@@ -11,7 +11,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import {
   RndNotAvailable, RndNoAnalyses,
-  RndOrder, RndEdit
+  ReactionsDisplay
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersCom';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -33,7 +33,7 @@ export default class SampleDetailsContainers extends Component {
     this.handleAdd = this.handleAdd.bind(this);
     this.handleMove = this.handleMove.bind(this);
     this.toggleAddToReport = this.toggleAddToReport.bind(this);
-    this.toggleMode = this.toggleMode.bind(this);
+    this.handleToggleMode = this.handleToggleMode.bind(this);
     this.isEqCId = this.isEqCId.bind(this);
     this.indexedContainers = this.indexedContainers.bind(this);
     this.buildEmptyAnalyContainer = this.buildEmptyAnalyContainer.bind(this);
@@ -44,9 +44,6 @@ export default class SampleDetailsContainers extends Component {
     UIStore.listen(this.onUIStoreChange);
     TextTemplateActions.fetchTextTemplates('sample');
   }
-
-  // componentWillReceiveProps(nextProps) {
-  // }
 
   componentWillUnmount() {
     UIStore.unlisten(this.onUIStoreChange);
@@ -60,16 +57,6 @@ export default class SampleDetailsContainers extends Component {
 
   handleChange(container) {
     const { sample } = this.props;
-    // const analyses = sample.container.children.find(child => (
-    //   child.container_type === 'analyses'
-    // ));
-    // analyses.children.map((child, ind) => {
-    //   if (child.container_type === 'analysis' && child.id === container.id) {
-    //     analyses.children[ind] = container;
-    //   }
-    //   return null;
-    // });
-
     this.props.handleSampleChanged(sample);
   }
 
@@ -162,13 +149,12 @@ export default class SampleDetailsContainers extends Component {
     }
     return (
       <Button
-        className="button-right"
-        bsSize="xsmall"
-        bsStyle="success"
+        size="xsm"
+        variant="success"
         onClick={this.handleAdd}
         disabled={!sample.can_update}
       >
-        <i className="fa fa-plus" />&nbsp;
+        <i className="fa fa-plus me-1" />
         Add analysis
       </Button>
     );
@@ -179,13 +165,8 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
-  toggleMode() {
-    const { mode } = this.state;
-    if (mode === 'edit') {
-      this.setState({ mode: 'order' });
-    } else {
-      this.setState({ mode: 'edit' });
-    }
+  handleToggleMode(mode) {
+    this.setState({mode: mode});
   }
 
   render() {
@@ -201,11 +182,9 @@ export default class SampleDetailsContainers extends Component {
 
     if (analyContainer.length === 1 && analyContainer[0].children.length > 0) {
       const orderContainers = ArrayUtils.sortArrByIndex(analyContainer[0].children);
-      let content = null;
-
-      if (mode === 'order') {
-        content = (
-          <RndOrder
+      return (
+        <div>
+          <ReactionsDisplay
             sample={sample}
             mode={mode}
             orderContainers={orderContainers}
@@ -218,34 +197,11 @@ export default class SampleDetailsContainers extends Component {
             handleAccordionOpen={this.handleAccordionOpen}
             handleUndo={this.handleUndo}
             toggleAddToReport={this.toggleAddToReport}
-            toggleMode={this.toggleMode}
-          />
-        );
-      } else {
-        content = (
-          <RndEdit
-            sample={sample}
-            mode={mode}
-            orderContainers={orderContainers}
+            handleToggleMode={this.handleToggleMode}
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
-            handleUndo={this.handleUndo}
-            handleRemove={this.handleRemove}
-            handleSubmit={handleSubmit}
-            handleAccordionOpen={this.handleAccordionOpen}
-            toggleAddToReport={this.toggleAddToReport}
-            readOnly={readOnly}
-            isDisabled={isDisabled}
-            addButton={this.addButton}
-            toggleMode={this.toggleMode}
           />
-        );
-      }
-
-      return (
-        <div>
-          {content}
           <ViewSpectra
             sample={sample}
             handleSampleChanged={handleSampleChanged}
@@ -256,15 +212,15 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
-          
         </div>
       );
+    } else {
+      return (
+        <RndNoAnalyses
+          addButton={this.addButton}
+        />
+      );
     }
-    return (
-      <RndNoAnalyses
-        addButton={this.addButton}
-      />
-    );
   }
 }
 

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Table, Modal, Button, FormGroup, ControlLabel, FormControl, HelpBlock, InputGroup } from 'react-bootstrap';
+import { Table, Modal, Button, Form, InputGroup, ButtonToolbar } from 'react-bootstrap';
 
 class ResearchPlanDetailsFieldTableSchemasModal extends Component {
   constructor(props) {
@@ -36,64 +36,62 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
 
     let schemaTable = null;
     if (modal.schemas) {
-      schemaTable = modal.schemas.map((schema, index) => {
-        return (
-          <tr key={index}>
-            <td>{schema.name}</td>
-            <td>
-              {schema.value.columns.map(column => column.headerName).join(', ')}
-            </td>
-            <td>
-              {schema.value.rows.length}
-            </td>
-            <td>
-              <Button bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(schema)}>
-                Delete
-              </Button>
-              <Button bsStyle="warning" bsSize="xsmall" onClick={() => onUse(schema)}>
+      schemaTable = modal.schemas.map((schema, index) => (
+        <tr key={index}>
+          <td>{schema.name}</td>
+          <td>
+            {schema.value.columns.map(column => column.headerName).join(', ')}
+          </td>
+          <td className="px-3">
+            {schema.value.rows.length}
+          </td>
+          <td>
+            <ButtonToolbar className=" justify-content-end gap-1">
+              <Button variant="warning" size="sm" onClick={() => onUse(schema)}>
                 Use
               </Button>
-            </td>
-          </tr>
-        );
-      });
+              <Button variant="danger" size="sm" onClick={() => onDelete(schema)}>
+                Delete
+              </Button>
+            </ButtonToolbar>
+          </td>
+        </tr>
+      ));
     }
 
     return (
-      <Modal animation show={modal.show} onHide={onHide}>
+      <Modal centered animation show={modal.show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>
             Table schemas
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body >
-          <div className="research-plan-table-schema-modal-create">
-            <FormGroup validationState={schemaNameError ? 'error' : null}>
-              <ControlLabel>Save current schema</ControlLabel>
+        <Modal.Body>
+          <div className="mb-5">
+            <Form.Group>
+              <Form.Label>Save current schema</Form.Label>
               <InputGroup>
-                <FormControl
+                <Form.Control
                   type="text"
                   value={schemaNameValue}
                   onChange={this.handleSchemaNameChange.bind(this)}
                 />
-                <InputGroup.Button>
-                  <Button bsStyle="success" onClick={this.handleSubmit.bind(this)}>
-                    Save
-                  </Button>
-                </InputGroup.Button>
+                <Button variant="primary" onClick={this.handleSubmit.bind(this)}>
+                  Save
+                </Button>
               </InputGroup>
-              <HelpBlock>{schemaNameError}</HelpBlock>
-            </FormGroup>
+              <Form.Text className="text-danger">{schemaNameError}</Form.Text>
+            </Form.Group>
           </div>
-          <div className="research-plan-table-schema-modal-table">
+          <div>
             <h4>Stored schemas</h4>
             <Table>
               <thead>
                 <tr>
-                  <th style={{ width: '20%' }}>Name</th>
-                  <th style={{ width: '40%' }}>Columns</th>
-                  <th style={{ width: '20%' }}># Rows</th>
-                  <th style={{ width: '20%' }} />
+                  <th>Name</th>
+                  <th>Columns</th>
+                  <th># Rows</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -101,12 +99,12 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
               </tbody>
             </Table>
           </div>
-          <div>
-            <Button bsStyle="default" onClick={onHide}>
-              Close
-            </Button>
-          </div>
         </Modal.Body>
+        <Modal.Footer className="modal-footer border-0">
+          <Button variant="light" onClick={onHide}>
+            Close
+          </Button>
+        </Modal.Footer>
       </Modal>
     );
   }

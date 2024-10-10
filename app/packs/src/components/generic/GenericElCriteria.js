@@ -125,11 +125,11 @@ export default class GenericElCriteria extends Component {
           {layout}
         </div>
         <div className="btn_footer">
-          <Button bsStyle="warning" onClick={this.props.onHide}>
+          <Button variant="warning" onClick={this.props.onHide}>
             Close
           </Button>
           &nbsp;
-          <Button bsStyle="primary" onClick={this.onSearch}>
+          <Button variant="primary" onClick={this.onSearch}>
             Search
           </Button>
           &nbsp;

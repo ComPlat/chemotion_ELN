@@ -8,7 +8,6 @@ import {
   Row,
   Col,
   Tooltip,
-  ControlLabel,
   ListGroup,
   ListGroupItem,
   OverlayTrigger,
@@ -20,6 +19,7 @@ import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import Utils from 'src/utilities/Functions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const editorTooltip = (exts) => (
   <Tooltip id="editor_tooltip">
@@ -92,9 +92,8 @@ export default class GenericAttachments extends Component {
     const { onDelete, readOnly } = this.props;
     return (
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
-        className="button-right"
+        size="sm"
+        variant="danger"
         onClick={() => onDelete(attachment, true)}
         disabled={readOnly}
       >
@@ -140,9 +139,8 @@ export default class GenericAttachments extends Component {
             </Col>
             <Col md={2}>
               <Button
-                bsSize="xsmall"
-                bsStyle="danger"
-                className="button-right"
+                size="sm"
+                variant="danger"
                 onClick={() => onDelete(attachment, false)}
               >
                 <i className="fa fa-undo" aria-hidden="true" />
@@ -183,9 +181,8 @@ export default class GenericAttachments extends Component {
             {this.renderRemoveAttachmentButton(attachment)}
             <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="primary"
+                size="sm"
+                variant="primary"
                 onClick={() => Utils.downloadFile({
                   contents: `/api/v1/attachments/${attachment.id}`,
                   name: attachment.filename,
@@ -200,9 +197,8 @@ export default class GenericAttachments extends Component {
             >
               <Button
                 style={{ display: styleEditor }}
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="success"
+                size="sm"
+                variant="success"
                 disabled={editDisable}
                 onClick={() => this.handleEdit(attachment)}
               >

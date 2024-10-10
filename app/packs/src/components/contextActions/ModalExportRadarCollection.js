@@ -1,8 +1,7 @@
 import React from 'react';
-import {Button, ButtonToolbar} from 'react-bootstrap';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
-import { elementShowOrNew } from 'src/utilities/routesUtils'
 import { subjectAreas } from 'src/components/staticDropdownOptions/radar/subjectAreas'
 import { contributorTypes } from 'src/components/staticDropdownOptions/radar/contributorTypes'
 import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes'
@@ -235,20 +234,19 @@ export default class ModalExportRadarCollection extends React.Component {
     const archiveUrl = `/oauth/radar/archive?collection_id=${currentCollection.id}`
 
     return (
-      <ButtonToolbar>
-        <div className="pull-right">
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
-            <Button onClick={this.handleEdit}>Edit collection metadata</Button>
-            <a href={archiveUrl} target="_blank"
-               className="btn btn-danger"
-               disabled={this.isDisabled()}
-               title="Publish in RADAR"
-               onClick={onHide}>
-              <span><i className="fa fa-file-text-o" />&nbsp;Publish in RADAR</span>
-            </a>
-          </ButtonToolbar>
-        </div>
+      <ButtonToolbar className="justify-content-end gap-1">
+        <Button variant="primary" onClick={onHide}>Cancel</Button>
+        <Button onClick={this.handleEdit}>Edit collection metadata</Button>
+        <a href={archiveUrl} target="_blank"
+          className="btn btn-danger"
+          disabled={this.isDisabled()}
+          title="Publish in RADAR"
+          onClick={onHide}
+        >
+          <i className="fa fa-file-text-o" />
+          {' '}
+          Publish in RADAR
+        </a>
       </ButtonToolbar>
     );
   }
