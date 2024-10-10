@@ -106,12 +106,11 @@ const labelSelection = (well, onChange) => {
         name="label"
         isMulti
         options={labelOptions}
-        value={labelOptions.filter(({value}) => wellLabels.includes(value))}
-        isOptionDisabled={({disabled}) => disabled}
-        onChange={selectedOptions => {
-          const newLabel = selectedOptions.map(option => option.label).join(',')
-          well.label = newLabel
-          onChange(well)
+        value={labelOptions.filter(({ value }) => wellLabels.includes(value))}
+        onChange={(selectedOptions) => {
+          const newLabel = selectedOptions.map(option => option.label).join(',');
+          well.label = newLabel;
+          onChange(well);
         }}
       />
     </div>
@@ -119,7 +118,6 @@ const labelSelection = (well, onChange) => {
 }
 
 const colorPicker = (well, onChange) => {
-  const { sample, readouts } = well;
 
   return (
     <div class="mt-3">
@@ -141,7 +139,7 @@ const colorPicker = (well, onChange) => {
           width="100%"
           onChangeComplete={(color) => {
             well.color_code = color.hex;
-            onChange(well)
+            onChange(well);
           }}
         />
       </Form.Group>
