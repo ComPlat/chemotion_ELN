@@ -1,10 +1,11 @@
 import React from 'react';
 import { Container, Tabs, Tab, Button } from 'react-bootstrap';
+import Sheet from 'src/components/common/Sheet';
 
 const Styleguide = () => {
   const renderTypography = () => {
     return (
-      <>
+      <Sheet>
         <h2>Typography</h2>
         <h1>Heading 1</h1>
         <h2>Heading 2</h2>
@@ -34,13 +35,13 @@ const Styleguide = () => {
         <p><small>This line of text is meant to be treated as fine print.</small></p>
         <p><strong>This line rendered as bold text.</strong></p>
         <p><em>This line rendered as italicized text.</em></p>
-      </>
+      </Sheet>
     )
   }
 
   const renderButtons = () => {
     return (
-      <>
+      <Sheet>
         <h2>Buttons</h2>
         <p className="styleguide-label">Default state</p>
         <div className="d-flex mb-3 gap-3">
@@ -60,7 +61,7 @@ const Styleguide = () => {
           <Button variant="secondary" disabled>secondary Button</Button>
           <Button variant="knock-out" disabled>knock-out Button</Button>
         </div>
-      </>
+      </Sheet>
     )
   }
 
@@ -75,14 +76,11 @@ const Styleguide = () => {
   return (
     <Container className="my-3">
       <h1>ChemStrap Styleguide</h1>
-      <div className="tabs-container--with-borders">
-        <Tabs defaultActiveKey={0} id="collection-management-tab">
-          <Tab eventKey={0} title="Typography">{renderTypography()}</Tab>
-          <Tab eventKey={1} title="Buttons">{renderButtons()}</Tab>
-          <Tab eventKey={2} title="Forms">{renderForms()}</Tab>
-        </Tabs>
-      </div>
-
+      <Tabs defaultActiveKey={0} id="collection-management-tab" className="sheet-tabs">
+        <Tab eventKey={0} title="Typography">{renderTypography()}</Tab>
+        <Tab eventKey={1} title="Buttons">{renderButtons()}</Tab>
+        <Tab eventKey={2} title="Forms">{renderForms()}</Tab>
+      </Tabs>
     </Container>
   )
 }
