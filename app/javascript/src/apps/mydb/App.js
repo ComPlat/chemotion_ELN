@@ -152,7 +152,7 @@ class App extends Component {
           data={propGenericWorkflow || {}}
           fnHide={() => UIActions.showGenericWorkflowModal(false)}
         />
-        <InboxModal showCollectionTree={showCollectionTree} />
+        <InboxModal />
         <Calendar />
       </Container>
     );
