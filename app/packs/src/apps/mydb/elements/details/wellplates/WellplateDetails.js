@@ -18,6 +18,7 @@ import WellplateList from 'src/apps/mydb/elements/details/wellplates/listTab/Wel
 import WellplateProperties from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateProperties';
 import WellplateDetailsContainers from
   'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
+// eslint-disable-next-line import/no-named-as-default
 import WellplateDetailsAttachments from
   'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -159,6 +160,9 @@ export default class WellplateDetails extends Component {
       case 'readoutTitles':
         wellplate.readout_titles = value;
         break;
+      case 'size':
+        if (wellplate.size !== wellplate.originalSize) wellplate.changed = !wellplate.changed;
+        break;
       default:
         break;
     }
@@ -244,6 +248,15 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited || wellplate.isNew ? '' : 'none';
     const datetp = formatTimeStampsOfElement(wellplate || {});
+    const saveTooltip = (
+      <Tooltip placement="left" className="in" id="tooltip-bottom">
+        Save Wellplate
+        <br />
+        {wellplate.size !== 0 && (wellplate.isNew || wellplate.originalSize === 0)
+          ? 'The size of this wellplate cannot be changed after saving.'
+          : ''}
+      </Tooltip>
+    );
 
     return (
       <div>
@@ -258,7 +271,7 @@ export default class WellplateDetails extends Component {
         <ElementCollectionLabels element={wellplate} placement="right" />
         <HeaderCommentSection element={wellplate} />
         <ConfirmClose el={wellplate} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={saveTooltip}>
           <Button
             bsStyle="warning"
             bsSize="xsmall"
@@ -303,7 +316,7 @@ export default class WellplateDetails extends Component {
     const {
       wellplate, showWellplate, visible
     } = this.state;
-    const printButtonDisabled = wellplate.width > 12;
+    const printButtonDisabled = wellplate.width > 12 || wellplate.size === 0;
     const readoutTitles = wellplate.readout_titles;
     const exportButton = (wellplate && wellplate.isNew)
       ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;

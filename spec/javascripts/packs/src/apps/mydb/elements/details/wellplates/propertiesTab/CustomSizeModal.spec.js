@@ -9,7 +9,7 @@ import sinon from 'sinon';
 import Enzyme, { shallow, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
-import { wellplate2x3EmptyJson } from 'fixture/wellplates/wellplate_2_3_empty';
+import wellplate2x3EmptyJson from 'fixture/wellplates/wellplate_2_3_empty';
 import Wellplate from 'src/models/Wellplate';
 
 Enzyme.configure({
@@ -90,41 +90,41 @@ describe('CustomSizeModal', async () => {
       handleClose={() => {}}
     />);
     describe('called with change the width to a valid value', async () => {
-      wrapper.instance().updateDimension('width', 4);
       it('changes the state', async () => {
+        wrapper.instance().updateDimension('width', 4);
         expect(wrapper.instance().state.width).toEqual(4);
       });
     });
     describe('called with something else than a positive integer', async () => {
-      wrapper.instance().updateDimension('width', NaN);
       it('NaN not changes the state', async () => {
+        wrapper.instance().updateDimension('width', NaN);
         expect(wrapper.instance().state.width).toEqual(4);
       });
 
-      wrapper.instance().updateDimension('width', 'abc');
       it('string not changes the state', async () => {
+        wrapper.instance().updateDimension('width', 'abc');
         expect(wrapper.instance().state.width).toEqual(4);
       });
 
-      wrapper.instance().updateDimension('width', 2.4);
       it('2.4 not changes the state', async () => {
+        wrapper.instance().updateDimension('width', 2.4);
         expect(wrapper.instance().state.width).toEqual(4);
       });
 
-      wrapper.instance().updateDimension('width', 0);
-      it('0 not changes the state', async () => {
-        expect(wrapper.instance().state.width).toEqual(4);
+      it('0 changes the state (but cannot apply)', async () => {
+        wrapper.instance().updateDimension('width', 0);
+        expect(wrapper.instance().state.width).toEqual(0);
       });
 
-      wrapper.instance().updateDimension('width', -5);
-      it('-5 not changes the state', async () => {
-        expect(wrapper.instance().state.width).toEqual(4);
+      it('-5 changes the state (but cannot apply)', async () => {
+        wrapper.instance().updateDimension('width', -5);
+        expect(wrapper.instance().state.width).toEqual(-5);
       });
     });
   });
 
   describe('render()', async () => {
-    context('when width was set to 100', async () => {
+    context('when width was set to 101', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       const wrapper = mount(<CustomSizeModal
         wellplate={wellplate}
@@ -132,7 +132,7 @@ describe('CustomSizeModal', async () => {
         triggerUIUpdate={() => {}}
         handleClose={() => {}}
       />);
-      wrapper.instance().updateDimension('width', 100);
+      wrapper.instance().updateDimension('width', 101);
 
       it('the apply button is disabled', async () => {
         expect(
@@ -155,7 +155,7 @@ describe('CustomSizeModal', async () => {
       it('an error message appears in the width area', async () => {
         expect(
           wrapper.html()
-            .includes('<div class="invalid-wellplate-size-text">Size must be smaller than 100.</div>')
+            .includes('<div class="invalid-wellplate-size-text">Width must be between 1 and 100.</div>')
         )
           .toBeTruthy();
       });

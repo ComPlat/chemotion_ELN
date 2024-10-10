@@ -167,6 +167,8 @@ describe Chemotion::WellplateAPI do
         id: wellplate.id,
         name: 'Another Testname',
         wells: [attributes_for(:well).merge(position: { x: 1, y: 1 }, is_new: true)],
+        height: 1,
+        width: 1,
         container: { id: container.id },
       }
     end

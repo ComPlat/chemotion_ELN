@@ -7,10 +7,11 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
+    this.originalSize = this.width * this.height;
     this.#initEmptyWells();
   }
 
-  static buildEmpty(collectionId, width = 12, height = 8) {
+  static buildEmpty(collectionId, width = 0, height = 0) {
     return new Wellplate(
       {
         collection_id: collectionId,
@@ -45,7 +46,7 @@ export default class Wellplate extends Element {
   }
 
   static get MAX_DIMENSION() {
-    return 99;
+    return 100;
   }
 
   get name() {
@@ -130,8 +131,8 @@ export default class Wellplate extends Element {
   }
 
   #initEmptyWells() {
-    if (!this.isNew) return
-    
+    if (!this.isNew && this.originalSize > 0) return;
+
     this.wells = Array(this.size).fill({});
     this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));
     this._checksum = this.checksum();

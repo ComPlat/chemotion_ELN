@@ -125,7 +125,7 @@ export default class WellplateProperties extends Component {
     const { name, description } = wellplate;
 
     const { showCustomSizeModal } = this.state;
-
+    const customModalDisabled = !wellplate.is_new && wellplate.originalSize > 0;
     return (
       <div>
         <CustomSizeModal
@@ -163,7 +163,7 @@ export default class WellplateProperties extends Component {
                 >
                   <Button
                     className="create-own-size-button"
-                    disabled={!wellplate.is_new}
+                    disabled={customModalDisabled}
                     onClick={() => this.showCustomSizeModal()}
                   >
                     <i className="fa fa-braille" />
