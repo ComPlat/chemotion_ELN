@@ -146,7 +146,7 @@ class App extends Component {
           <LoadingModal />
           <ProgressModal />
         </Row>
-        <InboxModal showCollectionTree={showCollectionTree} />
+        <InboxModal />
         <Calendar />
       </Container>
     );
