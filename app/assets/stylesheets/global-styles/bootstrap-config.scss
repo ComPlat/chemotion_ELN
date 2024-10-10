@@ -15,11 +15,17 @@ $zindex-levels: (
   5: 5,
 );
 
+$chemstrap-theme-colors: (
+  "active": $chemstrap-blue-dark,
+);
+
 @import "bootstrap/functions";
 @import "bootstrap/variables";
 @import "bootstrap/mixins";
 
-$font-family-sans-serif: 'Roboto', sans-serif;
+$body-bg: $chemstrap-grey1;
+$body-color: $chemstrap-neutral-grey4;
+$font-family-sans-serif: "Roboto", sans-serif;
 $font-size-root: 14px;
 $font-size-base: 1rem;
 $h1-font-size: $font-size-base * 2;
@@ -51,6 +57,9 @@ $gray-tones: (
 );
 
 // Merge the maps
-$theme-colors: map-merge($theme-colors, $gray-tones);
+$theme-colors: map-merge(
+  map-merge($theme-colors, $chemstrap-theme-colors),
+  $gray-tones
+);
 
 @import "bootstrap";
