@@ -172,7 +172,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
       }
     }
-    console.log("I'm end");
     // setTimeout(async () => {
     // await updateImagesInTheCanvas();
     // }, [250]);
@@ -198,7 +197,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     });
     latestData.root.nodes = [...latestData.root.nodes.slice(0, mols_.length), ...imagesList_];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    console.log("move template end");
   };
 
   // helper function to move image and update molecule positions
@@ -216,7 +214,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
             if (image?.boundingBox) {
               const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
               const location = [x, y, 0]; // Set location as an array of coordinates
-              molecule.atoms[atom_idx].location = location;
+              // molecule.atoms[atom_idx].location = location;
               molecule.atoms[atom_idx].alias = item.alias.trim();
               if (molecule?.stereoFlagPosition) {
                 molecule.stereoFlagPosition = {
@@ -296,6 +294,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
   // helper function to delete a template and reset the counter, assign new alias to all atoms
   const onEventDeleteAtom = async (atom) => {
     try {
+      if (!mols.length) await fuelKetcherData();
       for (let m = 0; m < mols?.length; m++) {
         const mol = mols[m];
         const atoms = latestData[mol]?.atoms;
