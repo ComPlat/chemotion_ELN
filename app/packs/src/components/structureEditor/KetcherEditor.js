@@ -14,7 +14,9 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
-const skip_templte_name_hide = true;
+const skip_template_name_hide = false;
+const skip_image_layering = false;
+
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
@@ -80,9 +82,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           await fuelKetcherData();
           if (re_render_canvas)
             await moveTemplate();
-          // setTimeout(async () => {
-          //   await updateTemplatesInTheCanvas();
-          // }, [250]);
           break;
         case "Move image":
           addEventToFILOStack("Move image");
@@ -175,9 +174,11 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           break;
       }
     }
-    setTimeout(async () => {
-      await updateImagesInTheCanvas();
-    }, [250]);
+    if (images_to_be_updated && !skip_image_layering) {
+      setTimeout(async () => {
+        await updateImagesInTheCanvas();
+      }, [250]);
+    }
   };
 
   // helper function to place image on atom location coordinates
@@ -217,7 +218,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
             if (image?.boundingBox) {
               const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
               const location = [x, y, 0]; // Set location as an array of coordinates
-              // molecule.atoms[atom_idx].location = location;
+              // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images 
               molecule.atoms[atom_idx].alias = item.alias.trim();
               if (molecule?.stereoFlagPosition) {
                 molecule.stereoFlagPosition = {
@@ -403,10 +404,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
             });
           }
         }
-        if (images_to_be_updated) {
-          await updateImagesInTheCanvas();
+
+        if (!skip_template_name_hide) {
+          await updateTemplatesInTheCanvas();
         }
-        await updateTemplatesInTheCanvas();
       });
 
       // Start observing the iframe's document for changes
@@ -436,8 +437,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
       };
     }
   };
-
-
 
   const resetStore = () => {
     FILOStack = [];
