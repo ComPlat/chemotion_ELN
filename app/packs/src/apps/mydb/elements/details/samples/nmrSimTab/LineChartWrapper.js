@@ -10,24 +10,18 @@ export default class LineChartWrapper extends React.Component {
   }
 
   componentDidMount() {
-    const node = this.d3Ref.current;
-
-    LineChart.create({
-      data: this.props.data,
-      type: this.props.type,
-      el: node,
-    });
+    LineChart.create(this.getLineChartData());
   }
 
   // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const node = this.d3Ref.current;
+  componentDidUpdate() {
+    LineChart.update(this.getLineChartData());
+  }
 
-    LineChart.update({
-      data: nextProps.data,
-      type: nextProps.type,
-      el: node,
-    });
+  getLineChartData() {
+    const { data, type } = this.props;
+    const el = this.d3Ref.current;
+    return { data, type, el };
   }
 
   componentWillUnmount() {

@@ -22,10 +22,14 @@ export default class WellplateDetailsContainers extends Component {
     TextTemplateActions.fetchTextTemplates('wellplate');
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      wellplate: nextProps.wellplate
-    })
+  componentDidUpdate() {
+    const { wellplate: wProps } = this.props;
+    const { wellplate: wState } = this.state;
+    if (wProps.id !== wState.id || wProps.updated_at !== wState.updated_at) {
+      this.setState({
+        wellplate: wProps,
+      });
+    }
   }
 
   handleChange(container) {
