@@ -688,7 +688,8 @@ export default class SampleDetails extends React.Component {
 
   saveBtn(sample, closeView = false) {
     let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
-    const hasComponents = sample.sample_type === 'Mixture' && sample.components && sample.components.length > 0;
+    const hasComponents = sample.sample_type !== 'Mixture'
+      || (sample.components && sample.components.length > 0);
     const isDisabled = !sample.can_update || !hasComponents;
     if (closeView) submitLabel += ' and close';
 
@@ -968,8 +969,9 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const hasComponents = sample.sample_type === 'Mixture' && sample.components && sample.components.length > 0;
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents; 
+    const hasComponents = sample.sample_type !== 'Mixture'
+      || (sample.components && sample.components.length > 0);
+    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (
@@ -1420,13 +1422,13 @@ export default class SampleDetails extends React.Component {
 
   sampleAverageMW(sample) {
     let mw;
-    
+
     if (sample.sample_type === 'Mixture' && sample.sample_details) {
       mw = sample.total_molecular_weight;
     } else {
       mw = sample.molecule_molecular_weight;
     }
-  
+
     if (mw) return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
   }
