@@ -1,5 +1,6 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
+import { VolumeDownSharp } from '@material-ui/icons';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef } from 'react';
 
@@ -131,21 +132,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
 
     if (atoms_to_be_deleted.length) { // reduce template indentifier based on the deleted templates
-      console.log(atoms_to_be_deleted);
-      // if (atoms_to_be_deleted.length >= 2) { // reduce counter by 1 if 2 consecutive delete atoms
-      //   for (let i = 0; i < atoms_to_be_deleted.length; i++) {
-      //     if (atoms_to_be_deleted[i + 1]) {
-      //       const split_current = atoms_to_be_deleted[i].alias.split("_");
-      //       const split_next = atoms_to_be_deleted[i + 1].alias.split("_");
-      //       if (parseInt(split_current[2]) - parseInt(split_next[2]) == 0) {
-      //         image_used_counter--;
-      //       }
-      //     }
-      //   }
-      // }
-      atoms_to_be_deleted.forEach(async (item) => {
+      for (let i = 0; i < atoms_to_be_deleted.length; i++) {
+        const item = atoms_to_be_deleted[i];
         await onEventDeleteAtom(item);
-      });
+      }
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       image_used_counter = image_used_counter - atoms_to_be_deleted.length;
       atoms_to_be_deleted = [];
@@ -177,10 +167,15 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         case "Delete image":
           break;
         default:
+          console.log("I'm default");
           // console.warn("Unhandled event:", event);
           break;
       }
     }
+    console.log("I'm end");
+    // setTimeout(async () => {
+    // await updateImagesInTheCanvas();
+    // }, [250]);
   };
 
   // helper function to place image on atom location coordinates
@@ -203,6 +198,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     });
     latestData.root.nodes = [...latestData.root.nodes.slice(0, mols_.length), ...imagesList_];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    console.log("move template end");
   };
 
   // helper function to move image and update molecule positions
@@ -220,13 +216,13 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
             if (image?.boundingBox) {
               const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
               const location = [x, y, 0]; // Set location as an array of coordinates
-              // molecule.atoms[atom_idx].location = location;
+              molecule.atoms[atom_idx].location = location;
               molecule.atoms[atom_idx].alias = item.alias.trim();
               if (molecule?.stereoFlagPosition) {
                 molecule.stereoFlagPosition = {
                   x: location[0],
                   y: location[1],
-                  z: location[2]
+                  z: 10000
                 };
               }
             }
@@ -299,7 +295,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
 
   // helper function to delete a template and reset the counter, assign new alias to all atoms
   const onEventDeleteAtom = async (atom) => {
-    console.log({ atom, mols });
     try {
       for (let m = 0; m < mols?.length; m++) {
         const mol = mols[m];
@@ -309,13 +304,12 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
           if (three_parts_patten.test(item.alias)) {
             const atom_splits = atom?.alias?.split("_");
             const item_splits = item?.alias?.split("_");
+            console.log(parseInt(atom_splits[2]), parseInt(item_splits[2]), parseInt(atom_splits[2]) <= parseInt(item_splits[2]));
             if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
               console.log("should be updated", item);
               const step_back = parseInt(item_splits[2]) - 1;
               const new_alias = `${item_splits[0]}_${item_splits[1]}_${step_back}`;
               atoms[a].alias = new_alias;
-              is_reduced = true;
-              // is_reduced && image_used_counter--;
             }
           }
         }
@@ -323,6 +317,26 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     } catch (err) {
       console.log({ err });
     };
+  };
+
+  const updateImagesInTheCanvas = async () => {
+    if (iframeRef.current) {
+      const iframeDocument = iframeRef.current.contentWindow.document;
+      const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+      if (svg) {
+        const images = svg.querySelectorAll('image'); // Select all image tags in SVG
+        console.log({ images });
+        images.forEach((img) => {
+          svg.removeChild(img);
+        });
+
+        images.forEach((img) => {
+          svg.appendChild(img);
+        });
+      } else {
+        console.error("SVG element not found in the iframe.");
+      }
+    }
   };
 
   // helper function to add mutation oberservers to DOM elements
@@ -341,18 +355,15 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         image_used_counter = -1;
       },
       "[title='Undo \\(Ctrl\\+Z\\)']": async () => {
-        // it would take 3 undo's to remove a tempalate
-        // await editor._structureDef.editor.editor.undo();
-        // await editor._structureDef.editor.editor.undo();
         // await editor._structureDef.editor.editor.undo();
       },
       "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": async () => {
         // await editor._structureDef.editor.editor.redo();
-        // await editor._structureDef.editor.editor.redo();
-        // await editor._structureDef.editor.editor.redo();
       }
     };
 
+
+    // update observers; nothing to be changed here!!
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
 
