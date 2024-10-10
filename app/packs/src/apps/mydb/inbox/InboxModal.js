@@ -37,8 +37,10 @@ export default class InboxModal extends React.Component {
       colMdValue: 4,
     };
 
-    this.onChange = this.onChange.bind(this);
+    this.onInboxStoreChange = this.onInboxStoreChange.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.onUserStoreChange = this.onUserStoreChange.bind(this);
+
     this.onClickInbox = this.onClickInbox.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -46,10 +48,18 @@ export default class InboxModal extends React.Component {
   }
 
   componentDidMount() {
-    InboxStore.listen(this.onChange);
+    InboxStore.listen(this.onInboxStoreChange);
     UIStore.listen(this.onUIStoreChange);
+    UserStore.listen(this.onUserStoreChange);
+    this.onUserStoreChange(UserStore.getState());
+
     InboxActions.fetchInboxCount();
-    this.initState();
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onInboxStoreChange);
+    UIStore.unlisten(this.onUIStoreChange);
+    UserStore.unlisten(this.onUserStoreChange);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -58,10 +68,6 @@ export default class InboxModal extends React.Component {
         || prevState.itemsPerPage !== itemsPerPage) {
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
-  }
-
-  componentWillUnmount() {
-    InboxStore.unlisten(this.onChange);
   }
 
   handlePageChange(pageNumber) {
@@ -73,7 +79,7 @@ export default class InboxModal extends React.Component {
     }
   }
 
-  onChange(state) {
+  onInboxStoreChange(state) {
     this.setState(state);
     this.setState({ visible: state.inboxModalVisible });
   }
@@ -83,6 +89,12 @@ export default class InboxModal extends React.Component {
     if (collectorAddress !== this.state.collectorAddress) {
       this.setState({ collectorAddress });
     }
+  }
+
+  onUserStoreChange(state) {
+    const type = 'inbox';
+    const filters = state?.profile?.data?.filters || {};
+    this.setState({sortColumn: filters[type]?.sort || 'name'});
   }
 
   onClickInbox() {
@@ -128,17 +140,6 @@ export default class InboxModal extends React.Component {
       default:
         return 'Unknown';
     }
-  };
-
-  initState = () => {
-    const type = 'inbox';
-    const userState = UserStore.getState();
-    const filters = userState?.profile?.data?.filters || {};
-
-    // you are not able to use this.setState because this would rerender it again and again ...
-
-    // eslint-disable-next-line react/no-direct-mutation-state
-    this.state.sortColumn = filters[type]?.sort || 'name';
   };
 
   updateFilterAndUserProfile = (type, sort) => {
@@ -340,8 +341,6 @@ export default class InboxModal extends React.Component {
   }
 
   renderSortButton() {
-    this.initState();
-
     const sortTitle = this.state.sortColumn === 'name'
       ? 'click to sort datasets and attachments by creation date (descending) - currently sorted alphabetically'
       : 'click to sort datasets and attachments alphabetically - currently sorted by creation date (descending)';
