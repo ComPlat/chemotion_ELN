@@ -26,7 +26,7 @@ const DeviceUserGroupsTab = () => {
 
     return AdminFetcher.fetchUsersByNameType(input, type)
       .then((result) => {
-        return selectUserOptionFormater({ data: result, withType: false }).options
+        return selectUserOptionFormater({ data: result, withType: false })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

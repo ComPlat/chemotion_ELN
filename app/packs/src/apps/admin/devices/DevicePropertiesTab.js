@@ -75,6 +75,7 @@ const DevicePropertiesTab = () => {
 
       <Form.Group className="mb-4">
         <Form.Check
+          id="device_active"
           type="checkbox"
           checked={device.account_active}
           label="Active"
@@ -84,6 +85,7 @@ const DevicePropertiesTab = () => {
 
       <Form.Group className="mb-4">
         <Form.Check
+          id="device_visible"
           type="checkbox"
           checked={device.visibility}
           label="Visibility"

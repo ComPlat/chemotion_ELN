@@ -66,16 +66,14 @@ const DeviceNovncTab = () => {
         />
       </Form.Group>
 
-      <p className="w-100 mb-3">
-        <i className="fa fa-info-circle">
-          <b className="ps-1">Current Target</b>&nbsp;
-          {renderStoredTarget()}
-        </i>
+      <p className="mb-3">
+        <i className="fa fa-info-circle" />
+        <span className="fw-bold px-1">Current Target:</span>
+        {renderStoredTarget()}
         <br />
-        <i className="fa fa-info-circle" aria-hidden="true">
-          <b className="ps-1">Edited Target</b>&nbsp;
-          {renderCurrentTarget()}
-        </i>
+        <i className="fa fa-info-circle" />
+        <span className="fw-bold px-1">Edited Target:</span>
+        {renderCurrentTarget()}
       </p>
 
       <hr className="w-100" />

@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import RFB from '@novnc/novnc/lib/rfb';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row, Col, ListGroup } from 'react-bootstrap';
 import { uniq } from 'lodash';
-import classnames from 'classnames';
 
 import DeviceActions from 'src/stores/alt/actions/UserActions';
 import DeviceStore from 'src/stores/alt/stores/UserStore';
@@ -52,6 +51,7 @@ class CnC extends React.Component {
     this.clearTimers = this.clearTimers.bind(this);
 
     this.fetchConnections = this.fetchConnections.bind(this);
+    this.canvasRef = createRef();
   }
 
   componentDidMount() {
@@ -178,10 +178,10 @@ class CnC extends React.Component {
   connect() {
     this.disconnect();
     const { id, target, password } = this.state.selected;
-    if (!this.canvas || !id || !target) { return; }
+    if (!this.canvasRef.current || !id || !target) { return; }
 
     const rfb = new RFB(
-      this.canvas,
+      this.canvasRef.current,
       target,
       {
         repeaterID: '',
@@ -247,7 +247,7 @@ class CnC extends React.Component {
 
     // If the device is currently in focus, we want to call handleBlur
     // so that the device is blurred when the device list is toggled.
-    if (!this.state.isNotFocused) {
+    if (!isNotFocused) {
       this.handleBlur();
     }
     this.setState({
@@ -263,66 +263,62 @@ class CnC extends React.Component {
       ));
   }
 
-  tree(devices, selectedId) {
+  renderDeviceList() {
+    const { devices, connected, selected } = this.state;
     const sortedDevices = devices.sort((a, b) => a.name.localCompare(b.name));
-    const { connected } = this.state;
 
     return (
-      <div className="tree-wrapper">
+      <ListGroup>
         {sortedDevices.map((device) => (
-          <div
-            className="tree-view"
+          <ListGroup.Item
+            action
             key={`device${device.id}`}
             onClick={() => this.deviceClick(device)}
-            role="button"
+            active={selected.id == device.id}
           >
-            <div className={classnames('title', { selected: selectedId === device.id })}>
+            <div className="d-flex align-items-center justify-content-between">
               {device.name}
-              {selectedId === device.id && (
-                connected
-                  ? (
-                    <i
-                      className="fa fa-check-circle-o"
-                      aria-hidden="true"
-                      style={{ color: '#90ee90', float: 'right', fontSize: '20px' }}
-                    />
-
-                  )
-                  : (
-                    <i
-                      className="fa fa-times-circle-o"
-                      aria-hidden="true"
-                      style={{ color: 'red', float: 'right', fontSize: '20px' }}
-                    />
-                  )
+              {selected.id === device.id && (
+                <i className={`fa ${connected
+                    ? 'fa-check-circle-o text-success'
+                    : 'fa-times-circle-o text-danger'}`}
+                />
               )}
             </div>
-          </div>
+          </ListGroup.Item>
         ))}
-      </div>
+      </ListGroup>
     );
   }
 
   render() {
     const {
-      devices, selected, showDeviceList,
-      isNotFocused, isForcedScreenResizing, connected, watching, using, forceCursor
+      showDeviceList,
+      isNotFocused,
+      isForcedScreenResizing,
+      connected,
+      watching,
+      using,
+      forceCursor
     } = this.state;
+
+    const showList = showDeviceList && isNotFocused;
 
     return (
       <Container fluid>
         <Navigation toggleDeviceList={this.toggleDeviceList} />
         <Row className="pt-3">
-          {showDeviceList && isNotFocused && (
+          {showList && (
             <Col xs={2}>
-              <div className="d-flex gap-2 align-items-baseline justify-content-start">
+              <div className="d-flex gap-2 align-items-baseline">
                 <i className="fa fa-list" />
                 <span>Devices</span>
               </div>
-              {this.tree(devices, selected.id)}
+
+              {this.renderDeviceList()}
             </Col>
           )}
-          <Col>
+          <Col xs={showList ? 10 : 12} className="d-flex flex-column gap-2">
             <FocusNovnc
               isNotFocused={isNotFocused}
               isForcedScreenResizing={isForcedScreenResizing}
@@ -337,7 +333,7 @@ class CnC extends React.Component {
             />
             <div
               className={forceCursor ? 'force-mouse-pointer' : ''}
-              ref={(ref) => { this.canvas = ref; }}
+              ref={this.canvasRef}
               onMouseEnter={this.handleMouseEnter}
               onMouseLeave={this.handleMouseLeave}
             />

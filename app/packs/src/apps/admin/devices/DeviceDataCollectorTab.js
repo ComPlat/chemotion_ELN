@@ -99,7 +99,7 @@ const DeviceDataCollectorTab = () => {
         <Select
           isClearable
           value={methodValue}
-          classNamePrefix={device.valid_datacollector_method}
+          className={device.valid_datacollector_method}
           options={methodOptions}
           onChange={(event) => onChange('datacollector_method', event)}
         />
@@ -165,29 +165,21 @@ const DeviceDataCollectorTab = () => {
           disabled={userLevelSelected}
         />
 
-        <OverlayTrigger
-          placement="bottom"
-          overlay={(
-            <Tooltip id="enableUserLevel">
-              If you choose this option, the system will gather files and folders from subdirectories within the
-              directory you have specified. These subdirectories must align with user name abbreviations.
-            </Tooltip>
-          )}
-        >
-          <div className="mt-4">
-            <Form.Check
-              type="checkbox"
-              checked={userLevelSelected}
-              label={userLevelLabel}
-              onChange={(event) => onChange('datacollector_user_level_selected', event.target.checked)}
-            >
-            </Form.Check>
-          </div>
-        </OverlayTrigger>
+        <div className="mt-4">
+          <Form.Check
+            id="enable_user_level_data_collection"
+            type="checkbox"
+            checked={userLevelSelected}
+            label="Enable user level data collection"
+            onChange={(event) => onChange('datacollector_user_level_selected', event.target.checked)}
+          />
+          <Form.Text>
+            If you choose this option, the system will gather files and folders from subdirectories within the
+            directory you have specified. These subdirectories must align with user name abbreviations.
+          </Form.Text>
+        </div>
 
-        {
-          endsWith(methodValueCheck, 'local') ? <ListLocalCollector /> : null
-        }
+        {endsWith(methodValueCheck, 'local') && <ListLocalCollector />}
       </Form.Group>
 
       <Form.Group className="w-100 mb-4">
@@ -201,7 +193,7 @@ const DeviceDataCollectorTab = () => {
           readOnly={startsWith(methodValueCheck, 'file')}
           disabled={startsWith(methodValueCheck, 'file')}
         />
-        <i className="fa fa-info-circle"> Folderwatcher: set to 0 for a varying number of files</i>
+        <Form.Text>Folderwatcher: set to 0 for a varying number of files</Form.Text>
       </Form.Group>
     </Form>
   );

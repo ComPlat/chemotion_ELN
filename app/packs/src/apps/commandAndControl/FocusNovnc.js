@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonToolbar, Button, ButtonGroup } from 'react-bootstrap';
+import { Badge, ButtonToolbar, Button, ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 const FocusNovnc = ({
@@ -44,16 +44,6 @@ const FocusNovnc = ({
       <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
     </Button>
 
-    {connected && (
-      <span className="d-flex gap-1">
-        <i className="fa fa-eye">
-          {watching}
-        </i>
-        <i className="fa fa-pencil-square-o">
-          {using}
-        </i>
-      </span>
-    )}
 
     <Button
       size="xxsm"
@@ -65,6 +55,18 @@ const FocusNovnc = ({
       <i className="fa fa-desktop" aria-hidden="true" />
       <i className="fa fa-arrows-alt ms-1" aria-hidden="true" />
     </Button>
+
+    {connected && (
+      <>
+        <Badge>
+          <i className="fa fa-eye" /> {watching}
+        </Badge>
+
+        <Badge>
+          <i className="fa fa-pencil-square-o" /> {using}
+        </Badge>
+      </>
+    )}
   </ButtonToolbar>
 );
 
