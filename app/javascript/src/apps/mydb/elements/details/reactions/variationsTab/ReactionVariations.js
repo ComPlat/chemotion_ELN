@@ -290,6 +290,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     onReactionChange(reaction);
   };
 
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
   const updatedReactionMaterials = getReactionMaterials(reaction);
   if (
     !isEqual(
