@@ -14,14 +14,20 @@ export default class Well extends Component {
     const labels = label.split(',');
     if (labels.some(item => item === 'Molecular structure')) return svg;
 
-    const displayLabel = labels.map(labelPart => {
-      if (labelPart == 'Name') return sample.name;
-      if (labelPart == 'External Label') return sample.external_label;
-      return ''
-    }).join(', ')
+    const displayLabel = labels.map((labelPart) => {
+      if (labelPart === 'Name') return sample.name;
+      if (labelPart === 'External label') return sample.external_label;
+      return '';
+    }).join(', ');
 
-
-    return (<div>{displayLabel}</div>);
+    return (
+      <div
+        className="text-center lh-1"
+        style={{ fontSize: '0.8rem' }}
+      >
+        {displayLabel}
+      </div>
+    );
   }
 }
 
