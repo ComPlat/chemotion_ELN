@@ -393,6 +393,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     );
   }, [reactionVariations, reaction]);
 
+  const fitColumnToContent = (event) => {
+    const { column } = event;
+    gridRef.current.api.autoSizeColumns([column], false);
+  };
+
   if (reaction.isNew) {
     return (
       <Alert variant="info">
@@ -400,11 +405,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       </Alert>
     );
   }
-
-  const fitColumnToContent = (event) => {
-    const { column } = event;
-    gridRef.current.api.autoSizeColumns([column], false);
-  };
 
   return (
     <div>
