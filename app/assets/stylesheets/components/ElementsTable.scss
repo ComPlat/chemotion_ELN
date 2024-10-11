@@ -1,4 +1,5 @@
-.sample-list-from-date, .sample-list-to-date {
+.sample-list-from-date,
+.sample-list-to-date {
   input {
     font-size: 13px;
     border-radius: 4px;
@@ -8,15 +9,6 @@
     padding: 6px 10px 5px;
     width: 95px;
   }
-}
-
-.elements-list {
-  @extend .border;
-  @extend .border-top-0;
-  max-height: calc(100vh - 300px);
-  @extend .mb-3;
-  overflow-x: hidden;
-  overflow-y: scroll;
 }
 
 .elements-table-header {
@@ -35,11 +27,5 @@
     height: auto;
     flex-wrap: wrap;
     overflow: auto;
-  }
-}
-
-@media only screen and (max-width: 1500px) {
-  .elements-list {
-    height: calc(100vh - 350px);
   }
 }
