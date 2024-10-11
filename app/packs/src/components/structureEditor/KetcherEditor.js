@@ -467,8 +467,37 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     };
   }, []);
 
-  const onSaveFileK2SC = () => {
-    console.log();
+  const onSaveFileK2SC = async () => {
+    await fuelKetcherData();
+
+    // molfile disection
+    const canvas_data_Mol = await editor.structureDef.editor.getMolfile();
+    const lines = canvas_data_Mol.split('\n');
+    const elements_info = lines[3];
+    const header_starting_from = 4;
+    const [atoms_count, bonds_count] = elements_info.split("  ").map(i => parseInt(i) ? parseInt(i) : i);
+    const extra_data_start = header_starting_from + atoms_count + bonds_count;
+    const extra_data_end = lines.length - 2;
+    for (let i = extra_data_start; i < extra_data_end; i++) {
+      const alias = lines[i];
+      if (three_parts_patten.test(alias)) {
+        const splits = parseInt(alias.split("_")[2]);
+        if (imagesList[splits]) { // image found
+          const { boundingBox } = imagesList[splits];
+          if (boundingBox) {
+            const { width, height } = boundingBox;
+            lines[i] += `    ${height}    ${width}`;
+          }
+        }
+      }
+    }
+    const iframeDocument = iframeRef.current.contentWindow.document;
+    const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svg);
+    console.log({ svgString });
+    console.log(lines.join("\n"));
+
   };
 
   return (
