@@ -1,0 +1,13 @@
+.tabs-container--with-full-height {
+  @extend .h-100;
+  @extend .d-flex;
+  @extend .flex-column;
+
+  .tab-content {
+    @extend .flex-grow-1;
+
+    .tab-pane {
+      @extend .h-100;
+    }
+  }
+}
