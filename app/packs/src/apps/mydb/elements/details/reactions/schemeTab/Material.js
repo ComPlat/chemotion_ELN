@@ -217,12 +217,13 @@ class Material extends Component {
     return (
       <Button
         active
-        className='p-1'
+        className="p-1 ms-1"
         onClick={e => this.handleShowLabelChange(e)}
         variant={material.show_label ? 'success' : 'primary'}
         size="sm"
         title={material.show_label ? 'Switch to structure' : 'Switch to label'}
-      >{material.show_label ? 'l' : 's'}
+      >
+        {material.show_label ? 'l' : 's'}
       </Button>
     );
   }
@@ -666,7 +667,7 @@ class Material extends Component {
 
     return (
       <tbody>
-        <tr className="general-material">
+        <tr className="m-1 p-1">
           {compose(connectDragSource, connectDropTarget)(
             <td className={`drag-source ${permitCls(reaction)} ${className}`}>
               <span className="text-info fa fa-arrows" />
@@ -715,7 +716,9 @@ class Material extends Component {
               metricPrefix={metricMol}
               metricPrefixes={metricPrefixes}
               precision={4}
-              disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
+              disabled={!permitOn(reaction)
+                || (this.props.materialGroup === 'products'
+                || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
               variant={material.amount_unit === 'mol' ? 'success' : 'default'}
@@ -784,7 +787,7 @@ class Material extends Component {
     const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
     return (
-      <tr className="solvent-material">
+      <tr className="m-1 p-1">
         {compose(connectDragSource, connectDropTarget)(
           <td className={`drag-source ${permitCls(reaction)} ${className}`}>
             <span className="text-info fa fa-arrows" />
@@ -801,6 +804,7 @@ class Material extends Component {
               type="checkbox"
               checked={material.dry_solvent}
               onChange={(event) => this.handleDrySolventChange(event)}
+              className="ms-1"
             />
           </OverlayTrigger>
         </td>
@@ -864,7 +868,7 @@ class Material extends Component {
       <Button
         disabled={!permitOn(this.props.reaction)}
         active
-        className="p-1"
+        className="p-1 ms-1"
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'success' : 'primary'}
         size="sm"
