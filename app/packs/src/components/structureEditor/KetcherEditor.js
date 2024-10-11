@@ -14,7 +14,7 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
-const skip_template_name_hide = false;
+const skip_template_name_hide = true;
 const skip_image_layering = false;
 
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
@@ -104,7 +104,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         case 'Delete atom': {
           console.log("DELETE ATOM!!");
           const { atom } = should_canvas_update_on_movement(eventItem);
-          if (eventItem.label == "Br") atoms_to_be_deleted.push(atom);
+          if (eventItem.label == "A") atoms_to_be_deleted.push(atom);
         } break;
         case 'Update': {
           // console.log({ Update: eventItem });
@@ -224,7 +224,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
                 molecule.stereoFlagPosition = {
                   x: location[0],
                   y: location[1],
-                  z: 10000
+                  z: 0
                 };
               }
             }
@@ -323,6 +323,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     };
   };
 
+  // helper function to update DOM images using layering technique 
   const updateImagesInTheCanvas = async () => {
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
@@ -343,6 +344,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
+  // helper funcation to update text > span > t_###_### fill transparent
   const updateTemplatesInTheCanvas = async () => {
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
@@ -367,7 +369,6 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         re_render_canvas = true;
       },
       "[title='Layout \\(Ctrl\\+L\\)']": async () => {
-        alert("Layout");
         await fuelKetcherData();
         re_render_canvas = true;
       },
@@ -438,6 +439,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     }
   };
 
+  // funcation to reset all data containers
   const resetStore = () => {
     FILOStack = [];
     uniqueEvents = new Set();
@@ -465,6 +467,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     };
   }, []);
 
+  const onSaveFileK2SC = () => {
+    console.log();
+  };
+
   return (
     <div>
       <iframe
@@ -476,6 +482,7 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         width="100%"
         style={iS}
       />
+      <button onClick={onSaveFileK2SC}>Save</button>
     </div>
   );
 };
