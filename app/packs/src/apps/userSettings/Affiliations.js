@@ -243,7 +243,7 @@ function Affiliations({ show, onHide }) {
                         placeholder="Select or enter a new option"
                         components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                         options={countryOptions}
-                        value={item.country || ''}
+                        value={countryOptions.find((option) => option.value === item.country) || null}
                         isSearchable
                         isClearable
                         onChange={(choice) => onChangeHandler(index, 'country', !choice ? '' : choice.value)}
@@ -262,7 +262,7 @@ function Affiliations({ show, onHide }) {
                           className={inputError[index] && inputError[index].organization ? 'is-invalid' : ''}
                           isCreatable
                           options={orgOptions}
-                          value={item.organization}
+                          value={orgOptions.find((option) => option.value === item.organization) || null}
                           isClearable
                           onChange={(choice) => onChangeHandler(index, 'organization', !choice ? '' : choice.value)}
                         />
@@ -281,7 +281,7 @@ function Affiliations({ show, onHide }) {
                         disabled={item.disabled}
                         placeholder="Select or enter a new option"
                         options={deptOptions}
-                        value={item.department}
+                        value={deptOptions.find((option) => option.value === item.department) || null}
                         isSearchable
                         clearable
                         onChange={(choice) => onChangeHandler(index, 'department', !choice ? '' : choice.value)}
@@ -298,7 +298,7 @@ function Affiliations({ show, onHide }) {
                         disabled={item.disabled}
                         allowCreate
                         options={groupOptions}
-                        value={item.group}
+                        value={groupOptions.find((option) => option.value === item.group) || null}
                         isSearchable
                         closeMenuOnSelect
                         isClearable
@@ -316,7 +316,7 @@ function Affiliations({ show, onHide }) {
                           isClearable
                           clearButtonTitle="Clear"
                           // eslint-disable-next-line max-len
-                          className={`Select-control ${inputError[index] && inputError[index].from ? 'border-danger' : ''}`}
+                          className={`py-1 rounded border ${inputError[index] && inputError[index].from ? 'border-danger' : 'border-gray'}`}
                           showPopperArrow={false}
                           disabled={item.disabled}
                           showMonthYearPicker
@@ -339,7 +339,8 @@ function Affiliations({ show, onHide }) {
                         placeholderText={inputError[index] && inputError[index].to ? errorMsg : ''}
                         isClearable
                         clearButtonTitle="Clear"
-                        className={`Select-control ${inputError[index] && inputError[index].to ? 'border-danger' : ''}`}
+                        // eslint-disable-next-line max-len
+                        className={`py-1 rounded border ${inputError[index] && inputError[index].to ? 'border-danger' : 'border-gray'}`}
                         showPopperArrow={false}
                         disabled={item.disabled}
                         showMonthYearPicker
