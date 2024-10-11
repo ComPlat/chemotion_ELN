@@ -264,6 +264,8 @@ export default class ElementsList extends React.Component {
             id="tabList"
             defaultActiveKey={0}
             onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+            mountOnEnter
+            unmountOnExit
           >
             {tabItems}
           </Tabs>
