@@ -29,7 +29,7 @@ const sampleName = (sample) => {
     return sampleNameLabel;
   }
   return (
-    <a onClick={() => navigateToSample(sample)} role="button">
+    <a onClick={() => navigateToSample(sample)} role="button" className="text-primary">
       {sampleNameLabel}
     </a>
   );
@@ -110,6 +110,15 @@ const labelSelection = (well, onChange) => {
         options={labelOptions}
         value={labelOptions.filter(({ value }) => wellLabels.includes(value))}
         isOptionDisabled={(option) => option.disabled}
+        styles={{
+          option: (provided, state) => {
+            const isDisabled = state.data.disabled;
+            return {
+              ...provided,
+              color: isDisabled ? 'gray' : 'black',
+            };
+          }
+        }}
         onChange={(selectedOptions) => {
           const newLabel = selectedOptions.map((option) => option.label).join(',');
           well.label = newLabel;
