@@ -13,13 +13,13 @@ describe('ReactionVariationsCellComponents', async () => {
     });
     it('PropertyFormatter returns number string with correct precision', () => {
       const cellData = { value: 1.2345, unit: 'Second(s)' };
-      const colDef = { currentEntryWithDisplayUnit: { displayUnit: 'Minute(s)' } };
+      const colDef = { entryDefs: { displayUnit: 'Minute(s)' } };
 
       expect(PropertyFormatter({ value: cellData, colDef })).toEqual('0.02057');
     });
     it('MaterialFormatter returns number string with correct precision', () => {
       const cellData = { amount: { value: 1.2345, unit: 'mol' } };
-      const colDef = { currentEntryWithDisplayUnit: { entry: 'amount', displayUnit: 'mmol' } };
+      const colDef = { entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
 
       expect(MaterialFormatter({ value: cellData, colDef })).toEqual('1235');
     });
@@ -49,7 +49,7 @@ describe('ReactionVariationsCellComponents', async () => {
   describe('PropertyParser', async () => {
     it('rejects negative value for duration', () => {
       const cellData = { value: 120, unit: 'Second(s)' };
-      const colDef = { currentEntryWithDisplayUnit: { entry: 'duration', displayUnit: 'Minute(s)' } };
+      const colDef = { entryDefs: { currentEntry: 'duration', displayUnit: 'Minute(s)' } };
       const newValue = '-1';
       const updatedCellData = PropertyParser({ oldValue: cellData, newValue, colDef });
 
@@ -57,7 +57,7 @@ describe('ReactionVariationsCellComponents', async () => {
     });
     it('accepts negative value for temperature', () => {
       const cellData = { value: 120, unit: '°C' };
-      const colDef = { currentEntryWithDisplayUnit: { entry: 'temperature', displayUnit: 'K' } };
+      const colDef = { entryDefs: { currentEntry: 'temperature', displayUnit: 'K' } };
       const newValue = '-1';
       const updatedCellData = PropertyParser({ oldValue: cellData, newValue, colDef });
 
@@ -75,7 +75,7 @@ describe('ReactionVariationsCellComponents', async () => {
       context = { reactionHasPolymers: false };
     });
     it('rejects negative value', () => {
-      const colDef = { field: 'reactants.42', currentEntryWithDisplayUnit: { entry: 'amount', displayUnit: 'mmol' } };
+      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
       const updatedCellData = MaterialParser({
         data: variationsRow, oldValue: cellData, newValue: '-1', colDef, context
       });
@@ -83,7 +83,7 @@ describe('ReactionVariationsCellComponents', async () => {
       expect(updatedCellData.amount.value).toEqual(0);
     });
     it('adapts mass when updating amount', () => {
-      const colDef = { field: 'reactants.42', currentEntryWithDisplayUnit: { entry: 'amount', displayUnit: 'mmol' } };
+      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
 
       expect(cellData.mass.value).toBe(100);
 
@@ -94,7 +94,7 @@ describe('ReactionVariationsCellComponents', async () => {
       expect(updatedCellData.mass.value).toBeCloseTo(0.75, 0.1);
     });
     it('adapts amount when updating mass', () => {
-      const colDef = { field: 'reactants.42', currentEntryWithDisplayUnit: { entry: 'mass', displayUnit: 'g' } };
+      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
 
       expect(cellData.amount.value).toBeCloseTo(5.5, 0.1);
 
