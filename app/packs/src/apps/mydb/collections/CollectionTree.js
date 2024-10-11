@@ -239,7 +239,7 @@ export default class CollectionTree extends React.Component {
     const { ownCollectionVisible } = this.state;
 
     return (
-      <div className="collection-tree">
+      <div>
         <div className="tree-view">
           <div className="take-ownership-btn">
             <Button
