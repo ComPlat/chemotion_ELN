@@ -20,6 +20,7 @@ export default class Elements extends Component {
 
   componentDidMount() {
     ElementStore.listen(this.handleOnChange);
+    this.handleOnChange(ElementStore.getState());
   }
 
   componentWillUnmount() {
@@ -40,7 +41,7 @@ export default class Elements extends Component {
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
-      <Row className='w-100'>
+      <Row className="flex-grow-1">
         <Col xs={listWidth}>
           <ElementsList />
         </Col>

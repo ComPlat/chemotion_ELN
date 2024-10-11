@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import { Col, Row, Container } from 'react-bootstrap';
+
+import Sidebar from 'src/apps/mydb/layout/Sidebar';
+import Topbar from 'src/apps/mydb/layout/Topbar';
+
 import FlowViewerModal from 'src/apps/generic/FlowViewerModal';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
-import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
-import Navigation from 'src/apps/mydb/Navigation';
 import Elements from 'src/apps/mydb/elements/Elements';
 import InboxModal from 'src/apps/mydb/inbox/InboxModal';
 import Calendar from 'src/components/calendar/Calendar';
@@ -17,15 +19,12 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 
 class App extends Component {
-  constructor(_props) {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       showCollectionManagement: false,
-      indicatorClassName: 'fa fa-chevron-circle-left',
-      showCollectionTree: true,
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
-    this.toggleCollectionTree = this.toggleCollectionTree.bind(this);
   }
 
   componentDidMount() {
@@ -93,42 +92,47 @@ class App extends Component {
     });
   }
 
-  toggleCollectionTree() {
-    const { showCollectionTree } = this.state;
-    this.setState({
-      showCollectionTree: !showCollectionTree,
-      indicatorClassName: showCollectionTree ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left'
-    });
-  }
-
   mainContent() {
     const { showCollectionManagement } = this.state;
     return (showCollectionManagement ? <CollectionManagement /> : <Elements />);
   }
 
-  render() {
-    const { showCollectionTree } = this.state;
+  renderContent() {
     return (
-      <Container fluid className="mydb-app">
-        <Row className="bg-light z-5">
-          <Navigation toggleCollectionTree={this.toggleCollectionTree} />
-          <SampleTaskInbox />
+      <Container fluid className="mydb-app vh-100">
+        <Row className="h-100">
+          <Col xs={2}>
+            <Sidebar />
+          </Col>
+          <Col xs={10} className="d-flex flex-column">
+            <Topbar />
+            {this.mainContent()}
+          </Col>
         </Row>
-        <div className="d-flex py-3 px-2 gap-3">
-          {showCollectionTree &&
-            <CollectionTree />
-          }
-          {this.mainContent()}
-        </div>
-        <Row>
-          <Notifications />
-          <LoadingModal />
-          <ProgressModal />
-        </Row>
+      </Container>
+    );
+  }
+
+  renderModals() {
+    return (
+      <>
+        <Notifications />
+        <LoadingModal />
+        <ProgressModal />
         <FlowViewerModal />
         <InboxModal />
+        <SampleTaskInbox />
         <Calendar />
-      </Container>
+      </>
+    );
+  }
+
+  render() {
+    return (
+      <>
+        {this.renderContent()}
+        {this.renderModals()}
+      </>
     );
   }
 }

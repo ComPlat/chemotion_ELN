@@ -253,19 +253,21 @@ export default class ElementsList extends React.Component {
             Remove search result
           </Button>
         )}
-        <div className="position-relative">
-          <Tabs
-            id="tabList"
-            activeKey={currentTab}
-            onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
-          >
-            {tabItems}
-          </Tabs>
+        <div className="position-relative h-100">
           <div className="position-absolute top-0 end-0">
             <ElementsTableSettings
               visible={visible}
               hidden={hidden}
             />
+          </div>
+          <div className="tabs-container--with-full-height">
+            <Tabs
+              id="tabList"
+              activeKey={currentTab}
+              onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+            >
+              {tabItems}
+            </Tabs>
           </div>
         </div>
       </>

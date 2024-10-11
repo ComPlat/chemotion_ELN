@@ -113,7 +113,7 @@ export default class Search extends React.Component {
     return (
       <>
         <SearchModal />
-        <div className="d-flex w-100 align-items-center flex-nowrap">
+        <div className="d-flex w-25 align-items-center flex-nowrap">
           <AutoCompleteInput
             suggestions={input => this.search(input)}
             ref={(input) => { this.autoComplete = input; }}
@@ -127,11 +127,3 @@ export default class Search extends React.Component {
     );
   }
 }
-
-Search.propTypes = {
-  noSubmit: PropTypes.bool
-};
-
-Search.defaultProps = {
-  noSubmit: false,
-};

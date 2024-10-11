@@ -355,7 +355,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return pages > 1 && (
-      <Pagination>
+      <Pagination className="m-0">
         <Pagination.First disabled={page === 1} onClick={() => this.handlePaginationSelect(1)} />
         <Pagination.Prev disabled={page === 1} onClick={() => this.handlePaginationSelect(page - 1)} />
         {items}
@@ -678,21 +678,21 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div ref={this.elementRef} className="elements-list">
+      <div ref={this.elementRef} className="flex-grow-1 h-0 overflow-y-auto pb-3">
         {elementsTableEntries}
+        <div className="mt-2 d-flex flex-row-reverse justify-content-between">
+          {this.renderNumberOfResultsInput()}
+          {this.renderPagination()}
+        </div>
       </div>
     );
   }
 
   render() {
     return (
-      <div className="list-container">
+      <div className="list-container d-flex flex-column h-100">
         {this.renderHeader()}
         {this.renderEntries()}
-        <div className="d-flex flex-row-reverse justify-content-between">
-          {this.renderNumberOfResultsInput()}
-          {this.renderPagination()}
-        </div>
       </div>
     );
   }
