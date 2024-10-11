@@ -69,7 +69,7 @@ class ContainerDatasetField extends Component {
         <a onClick={() => handleModalOpen(datasetContainer)} role="button">
           {datasetContainer.name || 'new'}
         </a>
-        <div className="ml-auto">
+        <div className="ms-auto">
           {gdsDownload}
           <ButtonToolbar className="gap-1">
             <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>

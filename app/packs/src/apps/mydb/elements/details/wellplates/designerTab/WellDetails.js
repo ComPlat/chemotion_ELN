@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import React from 'react';
 import {
   Button,
@@ -28,7 +29,7 @@ const sampleName = (sample) => {
     return sampleNameLabel;
   }
   return (
-    <a onClick={() => navigateToSample(sample)} role="button">
+    <a onClick={() => navigateToSample(sample)} role="button" className="text-primary">
       {sampleNameLabel}
     </a>
   );
@@ -39,8 +40,8 @@ const sampleVisualisation = (well, onChange) => {
   let svg = null;
   let removeButton = null;
   const removeSampleFromWell = () => {
-    well.sample = null
-    onChange(well)
+    well.sample = null;
+    onChange(well);
   }
 
   if (sample) {
@@ -54,7 +55,7 @@ const sampleVisualisation = (well, onChange) => {
   return (
     <>
       {removeButton}
-      <div class="well-details-svg-container">
+      <div className="well-details-svg-container">
         {svg}
       </div>
       <p className="wellplate-overlay text-center">
@@ -67,31 +68,32 @@ const sampleVisualisation = (well, onChange) => {
 };
 
 const readoutSection = (readouts, readoutTitles) => {
-  if (!readouts || readouts.every(readout => readout.unit == '' && readout.value == '')) return null;
+  if (!readouts || readouts.every((readout) => readout.unit == '' && readout.value == '')) return null;
 
-  const readoutListItems = readouts.map((readout, index) => {
-    return (
-      <li key={`readout_${index}`}>
-        <strong>{readoutTitles[index]}:</strong>
-        {readout.value}
-      </li>
-    )
-  })
+  const readoutListItems = readouts.map((readout, index) => (
+    <li key={`readout_${index}`}>
+      <strong>
+        {readoutTitles[index]}
+        :
+      </strong>
+      {readout.value}
+    </li>
+  ));
 
   return (
-    <div class="mt-3">
+    <div className="mt-3">
       <h4>Readouts</h4>
       <ul>
         {readoutListItems}
       </ul>
     </div>
-  )
-}
+  );
+};
 
 const labelSelection = (well, onChange) => {
   const wellLabels = well.label ? well.label.split(',') : [];
-  const labelsIncludesMolecularStructure = wellLabels.some(item => item === 'Molecular structure')
-  const labelsIncludeNonMolecularStructure = wellLabels.some(item => item !== 'Molecular structure')
+  const labelsIncludesMolecularStructure = wellLabels.some((item) => item === 'Molecular structure');
+  const labelsIncludeNonMolecularStructure = wellLabels.some((item) => item !== 'Molecular structure');
 
   const labelOptions = [
     { label: 'Name', value: 'Name', disabled: labelsIncludesMolecularStructure },
@@ -100,61 +102,66 @@ const labelSelection = (well, onChange) => {
   ];
 
   return (
-    <div class="mt-3">
+    <div className="mt-3">
       <h4>Select label type</h4>
       <Select
         name="label"
         isMulti
         options={labelOptions}
-        value={labelOptions.filter(({value}) => wellLabels.includes(value))}
-        isOptionDisabled={({disabled}) => disabled}
-        onChange={selectedOptions => {
-          const newLabel = selectedOptions.map(option => option.label).join(',')
-          well.label = newLabel
-          onChange(well)
+        value={labelOptions.filter(({ value }) => wellLabels.includes(value))}
+        isOptionDisabled={(option) => option.disabled}
+        styles={{
+          option: (provided, state) => {
+            const isDisabled = state.data.disabled;
+            return {
+              ...provided,
+              color: isDisabled ? 'gray' : 'black',
+            };
+          }
+        }}
+        onChange={(selectedOptions) => {
+          const newLabel = selectedOptions.map((option) => option.label).join(',');
+          well.label = newLabel;
+          onChange(well);
         }}
       />
-    </div>
-  )
-}
-
-const colorPicker = (well, onChange) => {
-  const { sample, readouts } = well;
-
-  return (
-    <div class="mt-3">
-      <Form.Group as={Row} controlId="formColorSelectorDisplay">
-        <Form.Label as="h4">Select Color</Form.Label>
-        <InputGroup>
-          <InputGroup.Text style={{backgroundColor: well.color_code}} />
-          <Form.Control
-            className="input-sm"
-            type="text"
-            readOnly
-            value={well.color_code}
-          />
-        </InputGroup>
-      </Form.Group>
-      <Form.Group controlId="formHorizontalPicker" class="my-3">
-        <CirclePicker
-          circleSize={17}
-          width="100%"
-          onChangeComplete={(color) => {
-            well.color_code = color.hex;
-            onChange(well)
-          }}
-        />
-      </Form.Group>
     </div>
   );
 };
 
-const WellDetails = ({ well, readoutTitles, handleClose, onChange}) => {
+const colorPicker = (well, onChange) => (
+  <div className="mt-3">
+    <Form.Group as={Row} controlId="formColorSelectorDisplay">
+      <Form.Label as="h4">Select Color</Form.Label>
+      <InputGroup>
+        <InputGroup.Text style={{ backgroundColor: well.color_code }} />
+        <Form.Control
+          className="input-sm"
+          type="text"
+          readOnly
+          value={well.color_code}
+        />
+      </InputGroup>
+    </Form.Group>
+    <Form.Group controlId="formHorizontalPicker" className="my-3">
+      <CirclePicker
+        circleSize={17}
+        width="100%"
+        onChangeComplete={(color) => {
+          well.color_code = color.hex;
+          onChange(well);
+        }}
+      />
+    </Form.Group>
+  </div>
+);
+
+const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
   return (
     <Modal
       animation
       centered
-      show={() => { well != null }}
+      show={() => { well != null; }}
       onHide={handleClose}
     >
       <Modal.Header closeButton>

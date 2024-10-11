@@ -7,7 +7,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 const ManagingModalRemove = ({ onHide, action }) => {
   const ui_state = UIStore.getState();
   return (
-    <ButtonToolbar>
+    <ButtonToolbar className="gap-1">
       <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
       <Button
         variant="warning"

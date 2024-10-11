@@ -168,7 +168,7 @@ function GeneralMaterialGroup({
     <Button
       disabled={!permitOn(reaction)}
       variant="success"
-      size="sm"
+      size="xsm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
       <i className="fa fa-plus" />
@@ -181,8 +181,8 @@ function GeneralMaterialGroup({
         <col style={{ width: '4%' }} />
         <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
         <col style={{ width: '4%' }} />
-        <col style={{ width: '2%' }} />
-        <col style={{ width: '2%' }} />
+        <col style={{ width: '3%' }} />
+        <col style={{ width: '3%' }} />
         <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
         <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
         {showLoadingColumn && <col style={{ width: '11%' }} />}
@@ -236,7 +236,7 @@ function SolventsMaterialGroup({
     <Button
       disabled={!permitOn(reaction)}
       variant="success"
-      size="sm"
+      size="xsm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
       <i className="fa fa-plus" />
@@ -271,8 +271,8 @@ function SolventsMaterialGroup({
     <Table borderless className="w-100">
       <thead>
         <tr>
-          <th>{addSampleButton}</th>
-          <th>
+          <th className="align-middle">{addSampleButton}</th>
+          <th className="align-middle">
             <Select
               isDisabled={!permitOn(reaction)}
               options={solventOptions}
@@ -280,11 +280,11 @@ function SolventsMaterialGroup({
               onChange={createDefaultSolventsForReaction}
             />
           </th>
-          <th title="Dry Solvent">DS</th>
-          <th>T/R</th>
-          <th>Label</th>
-          <th>Vol</th>
-          <th>Vol ratio</th>
+          <th title="Dry Solvent" className="align-middle">DS</th>
+          <th className="align-middle">T/R</th>
+          <th className="align-middle">Label</th>
+          <th className="align-middle">Vol</th>
+          <th className="align-middle">Vol ratio</th>
         </tr>
       </thead>
       <tbody>
