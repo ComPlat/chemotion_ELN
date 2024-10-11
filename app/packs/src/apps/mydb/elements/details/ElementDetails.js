@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import {
   Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
+import classNames from 'classnames';
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -249,7 +250,10 @@ export default class ElementDetails extends Component {
       ));
 
     return (
-      <div className={fullScreen ? "full-screen" : "normal-screen"}>
+      <div className={classNames(
+        "tabs-container--with-full-height",
+        { "full-screen": fullScreen }
+      )}>
         <Tabs
           id="elements-tabs"
           activeKey={activeKey}
