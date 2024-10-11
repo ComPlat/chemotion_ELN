@@ -78,7 +78,7 @@ function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue })
 }
 
 function PropertyFormatter({ value: cellData, colDef }) {
-  const { displayUnit } = colDef.currentEntryWithDisplayUnit;
+  const { displayUnit } = colDef.entryDefs;
   const valueInDisplayUnit = convertUnit(Number(cellData.value), cellData.unit, displayUnit);
 
   return `${Number(valueInDisplayUnit).toPrecision(4)}`;
@@ -87,9 +87,9 @@ function PropertyFormatter({ value: cellData, colDef }) {
 function PropertyParser({
   oldValue: cellData, newValue, colDef
 }) {
-  const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
+  const { currentEntry, displayUnit } = colDef.entryDefs;
   let value = parseNumericString(newValue);
-  if (entry !== 'temperature' && value < 0) {
+  if (currentEntry !== 'temperature' && value < 0) {
     value = 0;
   }
   value = convertUnit(value, displayUnit, cellData.unit);
@@ -99,8 +99,12 @@ function PropertyParser({
 }
 
 function MaterialFormatter({ value: cellData, colDef }) {
-  const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
-  const valueInDisplayUnit = convertUnit(Number(cellData[entry].value), cellData[entry].unit, displayUnit);
+  const { currentEntry, displayUnit } = colDef.entryDefs;
+  const valueInDisplayUnit = convertUnit(
+    Number(cellData[currentEntry].value),
+    cellData[currentEntry].unit,
+    displayUnit
+  );
 
   return `${Number(valueInDisplayUnit).toPrecision(4)}`;
 }
@@ -109,20 +113,20 @@ function MaterialParser({
   data: variationsRow, oldValue: cellData, newValue, colDef, context
 }) {
   const { field } = colDef;
-  const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
+  const { currentEntry, displayUnit } = colDef.entryDefs;
   const columnGroup = field.split('.')[0];
-  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
+  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
   if (value < 0) {
     value = 0;
   }
-  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
-  if (entry === 'mass') {
+  if (currentEntry === 'mass') {
     // Adapt amount to updated mass.
     const amount = getMolFromGram(value, updatedCellData);
     updatedCellData = { ...updatedCellData, amount: { ...updatedCellData.amount, value: amount } };
   }
-  if (entry === 'amount') {
+  if (currentEntry === 'amount') {
     // Adapt mass to updated amount.
     const mass = getGramFromMol(value, updatedCellData);
     updatedCellData = { ...updatedCellData, mass: { ...updatedCellData.mass, value: mass } };

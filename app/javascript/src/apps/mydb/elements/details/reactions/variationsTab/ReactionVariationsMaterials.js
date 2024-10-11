@@ -144,30 +144,30 @@ function MaterialOverlay({
   value: cellData, colDef
 }) {
   const { aux = null } = cellData;
-  const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
+  const { currentEntry, displayUnit } = colDef.entryDefs;
 
   return (
     <div className="tooltip show">
       <div className="tooltip-inner text-start">
-        {entry !== 'equivalent' && (
+        {currentEntry !== 'equivalent' && (
           <div>
-            {Number(convertUnit(cellData[entry].value, cellData[entry].unit, displayUnit)).toPrecision(4) + " " + displayUnit}
+            {`${Number(convertUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit)).toPrecision(4)} ${displayUnit}`}
           </div>
         )}
         {aux?.isReference && (
           <div>Reference</div>
         )}
         {aux?.equivalent !== null && (
-          <div>{"Equivalent: " + Number(aux.equivalent).toPrecision(4)}</div>
+          <div>{`Equivalent: ${Number(aux.equivalent).toPrecision(4)}`}</div>
         )}
         {aux?.coefficient !== null && (
-          <div>{"Coefficient: " + Number(aux.coefficient).toPrecision(4)}</div>
+          <div>{`Coefficient: ${Number(aux.coefficient).toPrecision(4)}`}</div>
         )}
         {aux?.yield !== null && (
-          <div>{"Yield: " + Number(aux.yield).toPrecision(4) + "%"}</div>
+          <div>{`Yield: ${Number(aux.yield).toPrecision(4)}%`}</div>
         )}
         {aux?.molecularWeight !== null && (
-          <div>{"Molar mass: " + Number(aux.molecularWeight).toPrecision(2) + " g/mol"}</div>
+          <div>{`Molar mass: ${Number(aux.molecularWeight).toPrecision(2)} g/mol`}</div>
         )}
       </div>
     </div>
@@ -180,8 +180,8 @@ MaterialOverlay.propTypes = {
     unit: PropTypes.string.isRequired,
   })).isRequired,
   colDef: PropTypes.shape({
-    currentEntryWithDisplayUnit: PropTypes.shape({
-      entry: PropTypes.number.isRequired,
+    entryDefs: PropTypes.shape({
+      currentEntry: PropTypes.number.isRequired,
       displayUnit: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
@@ -215,12 +215,11 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent) {
     field: `${materialType}.${materialCopy.id}`, // Must be unique.
     tooltipField: `${materialType}.${materialCopy.id}`,
     tooltipComponent: MaterialOverlay,
-    currentEntryWithDisplayUnit: { entry, displayUnit: getStandardUnit(entry) },
+    entryDefs: { currentEntry: entry, displayUnit: getStandardUnit(entry), availableEntriesWithUnits: entries },
     cellDataType: getCellDataType(entry),
     headerComponent,
     headerComponentParams: {
       names,
-      entries
     },
   };
 }

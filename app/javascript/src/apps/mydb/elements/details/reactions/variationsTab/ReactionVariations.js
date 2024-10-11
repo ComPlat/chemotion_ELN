@@ -31,17 +31,18 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
 
 function MenuHeader({
-  column, context, setSort, names, entries
+  column, context, setSort, names
 }) {
-  const { field } = column.colDef;
+  const { field, entryDefs } = column.colDef;
   const { columnDefinitions, setColumnDefinitions } = context;
   const [ascendingSort, setAscendingSort] = useState('inactive');
   const [descendingSort, setDescendingSort] = useState('inactive');
   const [noSort, setNoSort] = useState('inactive');
   const [name, setName] = useState(names[0]);
-  const [entry, setEntry] = useState(Object.keys(entries)[0]);
-  const [units, setUnits] = useState(entries[entry]);
-  const [unit, setUnit] = useState(units[0]);
+  const { currentEntry, displayUnit, availableEntriesWithUnits } = entryDefs;
+  const [entry, setEntry] = useState(currentEntry);
+  const [unit, setUnit] = useState(displayUnit);
+  const [units, setUnits] = useState(availableEntriesWithUnits[currentEntry]);
 
   const onSortChanged = () => {
     setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
@@ -67,8 +68,8 @@ function MenuHeader({
     const newColumnDefinitions = updateColumnDefinitions(
       columnDefinitions,
       field,
-      'currentEntryWithDisplayUnit',
-      { entry, displayUnit: newUnit }
+      'entryDefs',
+      { currentEntry: entry, displayUnit: newUnit, availableEntriesWithUnits }
     );
 
     setUnit(newUnit);
@@ -87,9 +88,9 @@ function MenuHeader({
   );
 
   const onEntryChanged = () => {
-    const entryKeys = Object.keys(entries);
+    const entryKeys = Object.keys(availableEntriesWithUnits);
     const newEntry = entryKeys[(entryKeys.indexOf(entry) + 1) % entryKeys.length];
-    const newUnits = entries[newEntry];
+    const newUnits = availableEntriesWithUnits[newEntry];
     const newUnit = newUnits[0];
     let newColumnDefinitions = updateColumnDefinitions(
       columnDefinitions,
@@ -100,8 +101,8 @@ function MenuHeader({
     newColumnDefinitions = updateColumnDefinitions(
       newColumnDefinitions,
       field,
-      'currentEntryWithDisplayUnit',
-      { entry: newEntry, displayUnit: newUnit }
+      'entryDefs',
+      { currentEntry: newEntry, displayUnit: newUnit, availableEntriesWithUnits }
     );
 
     setEntry(newEntry);
@@ -115,7 +116,7 @@ function MenuHeader({
       className={`entrySelection ${['temperature', 'duration'].includes(entry) ? 'd-none' : 'd-inline'}`}
       variant="light"
       size="sm"
-      disabled={Object.keys(entries).length === 1}
+      disabled={Object.keys(availableEntriesWithUnits).length === 1}
       onClick={onEntryChanged}
     >
       {entry}
@@ -179,7 +180,6 @@ MenuHeader.propTypes = {
   }).isRequired,
   setSort: PropTypes.func.isRequired,
   names: PropTypes.arrayOf(PropTypes.string).isRequired,
-  entries: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
 };
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
@@ -222,27 +222,27 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         {
           field: 'properties.temperature',
           cellDataType: getCellDataType('temperature'),
-          currentEntryWithDisplayUnit: {
-            entry: 'temperature',
-            displayUnit: getStandardUnit('temperature')
+          entryDefs: {
+            currentEntry: 'temperature',
+            displayUnit: getStandardUnit('temperature'),
+            availableEntriesWithUnits: { temperature: temperatureUnits }
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
             names: ['T'],
-            entries: { temperature: temperatureUnits }
           }
         },
         {
           field: 'properties.duration',
           cellDataType: getCellDataType('duration'),
-          currentEntryWithDisplayUnit: {
-            entry: 'duration',
-            displayUnit: getStandardUnit('duration')
+          entryDefs: {
+            currentEntry: 'duration',
+            displayUnit: getStandardUnit('duration'),
+            availableEntriesWithUnits: { duration: durationUnits }
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
             names: ['t'],
-            entries: { duration: durationUnits }
           }
         },
       ]
