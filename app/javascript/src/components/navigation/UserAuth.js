@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import 'whatwg-fetch';
 import {
   Card,
   Nav,
   NavDropdown,
-  NavItem,
   Modal,
   Button,
   Table,
@@ -29,7 +27,7 @@ export default class UserAuth extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentUser: props.currentUser || { name: 'unknown' },
+      currentUser: null,
       showModal: false,
       showLabelModal: false,
       currentGroups: [],
@@ -605,6 +603,9 @@ export default class UserAuth extends Component {
 
   render() {
     const { currentUser, showLabelModal, showSubscription } = this.state;
+    if (!currentUser) {
+      return <i className="fa fa-spinner" />;
+    }
 
     return (
       <>
@@ -646,14 +647,6 @@ export default class UserAuth extends Component {
             </NavDropdown.Item>
             <NavDropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</NavDropdown.Item>
           </NavDropdown>
-          <NavItem
-            onClick={() => this.logout()}
-            title="Log out"
-            className="ms-auto"
-            role="button"
-          >
-            <i className="fa fa-sign-out" />
-          </NavItem>
         </Nav>
         {this.renderModal()}
         {this.renderAffiliations()}
@@ -667,8 +660,3 @@ export default class UserAuth extends Component {
     );
   }
 }
-
-UserAuth.propTypes = {
-  currentUser: PropTypes.object,
-  selectUsers: PropTypes.bool,
-};
