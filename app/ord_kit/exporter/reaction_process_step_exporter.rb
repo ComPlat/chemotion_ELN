@@ -11,7 +11,6 @@ module OrdKit
           duration: duration,
           setup: setup,
           actions: reaction_process_activities,
-          outcomes: outcomes,
         )
       end
 
@@ -40,10 +39,6 @@ module OrdKit
 
       def duration
         OrdKit::Exporter::Metrics::TimeSpanExporter.new(model.duration).to_ord
-      end
-
-      def outcomes
-        # TODO: We might want to collect saved intermediate samples
       end
     end
   end

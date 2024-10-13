@@ -8,7 +8,7 @@ module OrdKit
           Temperature.new(
             value: @value.to_f,
             precision: nil, # hardcoded empty
-            units: temperature_unit,
+            unit: temperature_unit,
           )
         end
 
