@@ -22,10 +22,10 @@ module OrdKit
           end
 
           def crystallization_mode
-            ReactionProcessAction::ActionCrystallization::CrystallizationMode
+            ReactionProcessAction::ActionPurificationCrystallization::CrystallizationMode
               .const_get workup['crystallization_mode'].to_s
           rescue NameError
-            ReactionProcessAction::ActionCrystallization::CrystallizationMode::UNSPECIFIED
+            ReactionProcessAction::ActionPurificationCrystallization::CrystallizationMode::UNSPECIFIED
           end
         end
       end
