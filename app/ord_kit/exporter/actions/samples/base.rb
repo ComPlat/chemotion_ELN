@@ -12,9 +12,7 @@ module OrdKit
           def to_ord
             OrdKit::ReactionInput.new(
               components: components,
-              crude_components: crude_components,
               addition_order: addition_order,
-              addition_device: addition_device,
               addition_duration: addition_duration,
               addition_speed: addition_speed,
               addition_time: addition_time,
@@ -33,17 +31,6 @@ module OrdKit
 
           def components
             raise StandardError, "Don't call #to_ord on abstract OrdKit::Exporter::Actions::Samples::Base"
-          end
-
-          def crude_components
-            nil # n/a. We mostly cope with components in ELN.
-          end
-
-          def addition_device
-            nil
-            # Concept incompatible to ELN. Hardcoded nil.
-            # In ELN equipment is an array (not a single device)
-            # and is stored with the action (not with the Compound added by the action)
           end
 
           def addition_time

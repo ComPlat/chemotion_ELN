@@ -5,21 +5,21 @@ module Entities
     module SelectOptions
       module Forms
         class Analysis
-          class Spectroscopy < Base
+          class Spectrometry < Base
             def select_options
-              { spectroscopy_types: spectroscopy_types_options,
+              { spectrometry_types: spectrometry_types_options,
                 devices: devices }
             end
 
             private
 
-            def spectroscopy_types_options
+            def spectrometry_types_options
               SelectOptions::Models::DeviceTypes.instance.select_options(process_type: 'Analysis',
-                                                                         category: 'Spectroscopy')
+                                                                         category: 'Spectrometry')
             end
 
             def devices
-              spectroscopy_types_options.pluck(:subtypes).flatten.pluck(:devices).flatten.compact
+              spectrometry_types_options.pluck(:subtypes).flatten.pluck(:devices).flatten.compact
             end
           end
         end

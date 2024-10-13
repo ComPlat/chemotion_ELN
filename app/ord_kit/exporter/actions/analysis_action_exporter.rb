@@ -8,13 +8,13 @@ module OrdKit
         ANALYSIS_EXPORTER = {
           CHROMATOGRAPHY: OrdKit::Exporter::Actions::Analysis::ChromatographyExporter,
           SPECTROSCOPY: OrdKit::Exporter::Actions::Analysis::SpectroscopyExporter,
-          SPECTRONOMY: OrdKit::Exporter::Actions::Analysis::SpectronomyExporter,
+          SPECTROMETRY: OrdKit::Exporter::Actions::Analysis::SpectrometryExporter,
         }.stringify_keys
 
         private
 
         def action_type_attributes
-          { measurement: measurement_action }
+          { analysis: analysis_action }
         end
 
         def automation
@@ -23,9 +23,9 @@ module OrdKit
           Automation::AutomationMode::UNSPECIFIED
         end
 
-        def measurement_action
+        def analysis_action
           { automation: automation }.merge(
-            ANALYSIS_EXPORTER[workup['analysis_type']].new(workup).to_ord,
+            ANALYSIS_EXPORTER[workup['analysis_type']]&.new(workup)&.to_ord || {},
           )
         end
       end

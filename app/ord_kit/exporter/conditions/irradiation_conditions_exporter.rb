@@ -32,7 +32,6 @@ module OrdKit
 
         def peak_wavelength
           Exporter::Metrics::WavelengthExporter.new(workup).to_ord
-          # WavelengthExporter.new.to_ord
         end
 
         def color

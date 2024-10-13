@@ -19,7 +19,7 @@ module Entities
           def method_options(method_csv)
             { label: method_label(method_csv),
               value: method_label(method_csv),
-              detectors: SelectOptions::Models::Detectors.instance.to_options(method_csv['Detectors']),
+              detectors: SelectOptions::Models::MethodDetectors.instance.to_options(method_csv['Detectors']),
               mobile_phases: mobile_phases_options(method_csv['Mobile Phase']),
               stationary_phase: stationary_phase_option(method_csv['Stationary Phase']),
               default_volume: { value: method_csv['Def. Inj. Vol.'], unit: 'ml' },
@@ -41,10 +41,10 @@ module Entities
             options = { label: label, value: label }
             return options if analysis_default_value.blank?
 
-            options.merge(analysis_defaults(analysis_default_value))
+            options.merge(stationary_phase_analysis_defaults(analysis_default_value))
           end
 
-          def analysis_defaults(value)
+          def stationary_phase_analysis_defaults(value)
             { analysis_defaults: {
               TEMPERATURE: {
                 value: value,

@@ -15,13 +15,6 @@ module OrdKit
             model.reaction_process.provenance,
           ).to_ord,
           reaction_steps: OrdKit::Exporter::Reactions::ReactionProcessExporter.new(model.reaction_process).to_ord,
-          identifiers: nil,
-          inputs: {},
-          setup: nil,
-          observations: nil,
-          notes: nil,
-          workups: nil,
-          outcomes: nil,
         )
       end
 

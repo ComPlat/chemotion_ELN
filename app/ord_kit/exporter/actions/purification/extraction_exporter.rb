@@ -16,7 +16,7 @@ module OrdKit
 
           def steps
             Array(workup['purification_steps']).map do |extraction_step|
-              OrdKit::ReactionProcessAction::ActionExtraction::ExtractionStep.new(
+              OrdKit::ReactionProcessAction::ActionPurificationExtraction::ExtractionStep.new(
                 solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(extraction_step['solvents']).to_ord,
                 amount: Metrics::AmountExporter.new(extraction_step['amount']).to_ord,
                 flow_rate: Metrics::FlowRateExporter.new(extraction_step['flow_rate']).to_ord,
@@ -26,9 +26,9 @@ module OrdKit
           end
 
           def extraction_phase
-            ReactionProcessAction::ActionExtraction::ExtractionPhase.const_get workup['phase'].to_s
+            ReactionProcessAction::ActionPurificationExtraction::ExtractionPhase.const_get workup['phase'].to_s
           rescue NameError
-            ReactionProcessAction::ActionExtraction::ExtractionPhase::UNSPECIFIED
+            ReactionProcessAction::ActionPurificationExtraction::ExtractionPhase::UNSPECIFIED
           end
         end
       end
