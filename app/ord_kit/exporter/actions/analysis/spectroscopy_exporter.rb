@@ -6,7 +6,7 @@ module OrdKit
       module Analysis
         class SpectroscopyExporter < Purification::ChromatographyExporter
           def to_ord
-            # TODO: NYI
+            { spectroscopy: ReactionProcessAction::ActionSpectroscopy.new({ device: workup['device'] }) }
           end
         end
       end

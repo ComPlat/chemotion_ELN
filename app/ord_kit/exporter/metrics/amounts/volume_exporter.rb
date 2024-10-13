@@ -17,13 +17,13 @@ module OrdKit
             Volume.new(
               value: @value.to_f,
               precision: nil,
-              units: units,
+              unit: unit,
             )
           end
 
           private
 
-          def units
+          def unit
             Volume::VolumeUnit.const_get ORD_UNIT_MAPPING[@unit].to_s
           rescue NameError
             Volume::VolumeUnit::UNSPECIFIED

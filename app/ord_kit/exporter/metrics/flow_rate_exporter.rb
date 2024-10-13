@@ -13,7 +13,7 @@ module OrdKit
           FlowRate.new(
             value: @value.to_f,
             precision: nil,
-            units: flow_rate_unit,
+            unit: flow_rate_unit,
           )
         end
 

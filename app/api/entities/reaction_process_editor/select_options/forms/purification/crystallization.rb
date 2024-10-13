@@ -17,7 +17,7 @@ module Entities
             private
 
             def crystallization_modes
-              titlecase_options_for(OrdKit::ReactionProcessAction::ActionCrystallization::CrystallizationMode.constants)
+              titlecase_options_for(%w[NONE HOT COLD])
             end
 
             def crystallization_solvent_options

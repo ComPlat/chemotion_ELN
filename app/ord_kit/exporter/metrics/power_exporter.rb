@@ -8,13 +8,13 @@ module OrdKit
           Power.new(
             value: @value.to_f,
             precision: nil,
-            units: units,
+            unit: unit,
           )
         end
 
         private
 
-        def units
+        def unit
           Power::PowerUnit.const_get @unit.to_s
         rescue NameError
           Power::PowerUnit::UNSPECIFIED
