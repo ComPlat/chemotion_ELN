@@ -4,7 +4,7 @@ module ReactionProcessEditor
   class ReactionAPI < Grape::API
     helpers StrongParamsHelpers
 
-    # rescue_from :all
+    rescue_from :all
 
     namespace :reactions do
       get do

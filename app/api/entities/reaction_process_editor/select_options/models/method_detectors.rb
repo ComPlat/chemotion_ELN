@@ -4,13 +4,10 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       module Models
-        class Detectors < Base
-          DETECTOR_ANALYSIS_TYPES = { PDA: %w[WAVELENGTHS NM],
-                                      ELSD: %w[TEMPERATURE CELSIUS],
-                                      MS: %w[MS_PARAMETER V] }.stringify_keys
-
-          ANALYSIS_TYPES_WITH_SINGLE_VALUE = %w[TEMPERATURE].freeze
-          ANALYSIS_TYPES_WITH_TEXT = %w[MS_PARAMETER].freeze
+        class MethodDetectors < Base
+          DETECTOR_ANALYSIS_TYPES = { PDA: ['WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
+                                      ELSD: %w[METRIC TEMPERATURE CELSIUS],
+                                      MS: ['TEXT', 'MS_PARAMETER', 'V', 'MS Parameter'] }.stringify_keys
 
           REGEX_NAMES_AND_BRACKET_VALUES = /(.*?) \((.*?)\),*/.freeze
 
@@ -33,17 +30,26 @@ module Entities
           end
 
           def detector_analysis_defaults(detector_type, values)
-            analysis_type, unit = DETECTOR_ANALYSIS_TYPES[detector_type]
+            input_type, analysis_type, unit, label = DETECTOR_ANALYSIS_TYPES[detector_type]
 
-            { "#{analysis_type}": analysis_default_values(analysis_type: analysis_type, values: values, unit: unit) }
+            return {} unless analysis_type
+
+            { detector: detector_type,
+              input_type: input_type,
+              analysis_type: analysis_type,
+              label: label || analysis_type.titlecase,
+              values: analysis_default_values(input_type: input_type, values: values, unit: unit) }
           end
 
-          def analysis_default_values(analysis_type:, values:, unit:)
-            return "#{values} #{unit}" if ANALYSIS_TYPES_WITH_TEXT.include?(analysis_type)
-
-            return { value: values, unit: unit } if ANALYSIS_TYPES_WITH_SINGLE_VALUE.include?(analysis_type)
-
-            { peaks: split_values(values: values, unit: unit) }
+          def analysis_default_values(input_type:, values:, unit:)
+            case input_type
+            when 'TEXT'
+              "#{values} #{unit}"
+            when 'METRIC'
+              { value: values, unit: unit }
+            when 'WAVELENGTHLIST'
+              { peaks: split_values(values: values, unit: unit) }
+            end
           end
 
           def split_values(values:, unit:)

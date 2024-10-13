@@ -11,7 +11,6 @@ module OrdKit
             OrdKit::CompoundPreparation.new(
               type: preparation_type,
               details: details,
-              reaction_id: reaction_id,
               equipment: equipment,
             )
           end
@@ -35,17 +34,13 @@ module OrdKit
             Array(samples_preparation&.equipment).map do |equip|
               OrdKit::Equipment.new(
                 type: OrdKit::Equipment::EquipmentType.const_get(equip),
-                details: nil, # Currently not present in ELN Editor.
+                details: nil,
               )
             end
           end
 
           def details
             samples_preparation.details
-          end
-
-          def reaction_id
-            nil # n/a. Used in original ORD for SYNTHESIZED compounds which we do not have in ELN.
           end
         end
       end

@@ -14,13 +14,13 @@ module OrdKit
           Wavelength.new(
             value: @value.to_f,
             precision: nil,
-            units: units,
+            unit: unit,
           )
         end
 
         private
 
-        def units
+        def unit
           Wavelength::WavelengthUnit.const_get ORD_UNIT_MAPPING[@unit].to_s
         rescue NameError
           Wavelength::WavelengthUnit::UNSPECIFIED

@@ -5,7 +5,7 @@ module OrdKit
     module Actions
       module Analysis
         class ChromatographyExporter < OrdKit::Exporter::Actions::Purification::ChromatographyExporter
-          # Measurment CHromatography is sufficiently similar to Purification that the exporter can be reused for nwo.
+          # Analysis Chromatography is sufficiently similar to Purification to reuse exporter
         end
       end
     end

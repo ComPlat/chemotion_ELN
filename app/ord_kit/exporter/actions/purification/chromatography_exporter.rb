@@ -6,7 +6,7 @@ module OrdKit
       module Purification
         class ChromatographyExporter < Actions::Purification::Base
           def to_ord
-            { chromatography: OrdKit::ReactionProcessAction::ActionChromatography.new(
+            { chromatography: OrdKit::ReactionProcessAction::ActionPurificationChromatography.new(
               { steps: steps }.merge(automation[workup['automation']] || {}),
             ) }
           end
@@ -21,7 +21,7 @@ module OrdKit
 
           def steps
             Array(workup['purification_steps']).map do |chromatography_step|
-              OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep.new(
+              OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep.new(
                 solvents: solvents(chromatography_step),
                 amount: Metrics::AmountExporter.new(chromatography_step['amount']).to_ord,
                 step: ord_step(chromatography_step['step_mode']),
@@ -33,7 +33,7 @@ module OrdKit
           end
 
           def manual_fields
-            OrdKit::ReactionProcessAction::ActionChromatography::Manual.new(
+            OrdKit::ReactionProcessAction::ActionPurificationChromatography::Manual.new(
               material: Materials::MaterialExporter.new(workup['jar_material']).to_ord,
               diameter: Metrics::LengthExporter.new(workup['jar_diameter']).to_ord,
               height: Metrics::LengthExporter.new(workup['jar_height']).to_ord,
@@ -42,37 +42,41 @@ module OrdKit
           end
 
           def automated_fields
-            OrdKit::ReactionProcessAction::ActionChromatography::Automated.new(
-              equipment: equipment_device,
-              column_type: workup['column_type'],
+            OrdKit::ReactionProcessAction::ActionPurificationChromatography::Automated.new(
+              chromatography_type: workup['chromatography_type'],
+              chromatography_subtype: workup['chromatography_subtype'],
+              device: workup['device'],
               detectors: detectors,
-              wavelengths: wavelengths,
+              method: workup['method'],
+              mobile_phases: mobile_phases,
+              stationary_phase: workup['stationary_phase'],
+              stationary_phase_temperature: stationary_phase_temperature,
+              volume: volume,
             )
-          end
-
-          def equipment_device
-            OrdKit::Equipment.new(
-              type: equipment_type(workup['device']),
-              details: '', # Currently n/a in ELN.
-            )
-          end
-
-          def equipment_type(name)
-            OrdKit::Analysis::AnalysisType.const_get name.to_s
-          rescue NameError
-            OrdKit::Analysis::AnalysisType::UNSPECIFIED
           end
 
           def detectors
-            Array(workup['detectors']).map do |detector|
-              OrdKit::Analysis::AnalysisType.const_get detector
-            rescue NameError
-              OrdKit::Analysis::AnalysisType::UNSPECIFIED
-            end
+            DetectorExporter.new(workup).to_ord
+          end
+
+          def mobile_phases
+            workup['mobile_phases']
+          end
+
+          def stationary_phase_temperature
+            return unless workup['stationary_phase_temperature']
+
+            OrdKit::Exporter::Conditions::TemperatureConditionsExporter.new(
+              workup['stationary_phase_temperature'],
+            ).to_ord
+          end
+
+          def volume
+            OrdKit::Exporter::Metrics::Amounts::VolumeExporter.new(workup['VOLUME']).to_ord
           end
 
           def wavelengths
-            OrdKit::ReactionProcessAction::ActionChromatography::Automated::WavelengthList.new(
+            OrdKit::ReactionProcessAction::ActionPurificationChromatography::Automated::WavelengthList.new(
               peaks: Array(workup.dig('wavelengths', 'peaks')).map do |wavelength|
                        Metrics::WavelengthExporter.new(wavelength).to_ord
                      end,
@@ -85,15 +89,17 @@ module OrdKit
           end
 
           def ord_step(stepname)
-            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Step.const_get stepname.to_s
+            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Step
+              .const_get stepname.to_s
           rescue NameError
-            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Step::STEP_UNSPECIFIED
+            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Step::STEP_UNSPECIFIED
           end
 
           def ord_prod(prodname)
-            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Prod.const_get prodname.to_s
+            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Prod
+              .const_get prodname.to_s
           rescue NameError
-            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Prod::PROD_UNSPECIFIED
+            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Prod::PROD_UNSPECIFIED
           end
         end
       end
