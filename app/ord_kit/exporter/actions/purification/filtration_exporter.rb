@@ -7,7 +7,7 @@ module OrdKit
         class FiltrationExporter < OrdKit::Exporter::Actions::Purification::Base
           def to_ord
             {
-              filtration: OrdKit::ReactionProcessAction::ActionFiltration.new(
+              filtration: OrdKit::ReactionProcessAction::ActionPurificationFiltration.new(
                 filtration_mode: filtration_mode,
                 steps: steps,
               ),
@@ -17,14 +17,15 @@ module OrdKit
           private
 
           def filtration_mode
-            OrdKit::ReactionProcessAction::ActionFiltration::FiltrationMode.const_get workup['filtration_mode'].to_s
+            OrdKit::ReactionProcessAction::ActionPurificationFiltration::FiltrationMode
+              .const_get workup['filtration_mode'].to_s
           rescue NameError
-            OrdKit::ReactionProcessAction::ActionFiltration::FiltrationMode::UNSPECIFIED
+            OrdKit::ReactionProcessAction::ActionPurificationFiltration::FiltrationMode::UNSPECIFIED
           end
 
           def steps
             Array(workup['purification_steps']).map do |filtration_step|
-              OrdKit::ReactionProcessAction::ActionFiltration::FiltrationStep.new(
+              OrdKit::ReactionProcessAction::ActionPurificationFiltration::FiltrationStep.new(
                 solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(filtration_step['solvents']).to_ord,
                 amount: Metrics::AmountExporter.new(filtration_step['amount']).to_ord,
                 repetitions: filtration_step['repetitions']['value'],

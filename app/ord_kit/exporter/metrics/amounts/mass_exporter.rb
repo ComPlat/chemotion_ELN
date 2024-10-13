@@ -17,13 +17,13 @@ module OrdKit
             Mass.new(
               value: @value.to_f,
               precision: nil,
-              units: units,
+              unit: unit,
             )
           end
 
           private
 
-          def units
+          def unit
             Mass::MassUnit.const_get ORD_UNIT_MAPPING[@unit].to_s
           rescue NameError
             Mass::MassUnit::UNSPECIFIED
