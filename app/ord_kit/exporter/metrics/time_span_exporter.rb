@@ -16,7 +16,7 @@ module OrdKit
           OrdKit::TimeSpan.new(
             value: @duration.to_i / 1000,
             precision: nil,
-            units: OrdKit::TimeSpan::TimeUnit::SECOND,
+            unit: OrdKit::TimeSpan::TimeUnit::SECOND,
           )
         end
       end

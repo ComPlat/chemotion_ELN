@@ -14,8 +14,9 @@ module OrdKit
             stirring: stirring,
             illumination: illumination,
             electrochemistry: electrochemistry,
-            conditions_are_dynamic: conditions_are_dynamic,
             details: condition_details,
+            wavelengths: wavelengths,
+            generic: generic_conditions,
           )
         end
 
@@ -53,8 +54,16 @@ module OrdKit
           Conditions::PhAdjustConditionsExporter.new(workup['PH']).to_ord
         end
 
-        def conditions_are_dynamic
-          nil # n/a. Unknown in ELN Editor
+        def wavelengths
+          return if workup['WAVELENGTHS'].blank?
+
+          Metrics::WavelengthRangeExporter.new(workup['WAVELENGTHS']).to_ord
+        end
+
+        def generic_conditions
+          return if workup['MS_PARAMETER'].blank?
+
+          [OrdKit::GenericConditions.new(name: 'MS_PARAMETER', conditions: workup['MS_PARAMETER'])]
         end
 
         def condition_details

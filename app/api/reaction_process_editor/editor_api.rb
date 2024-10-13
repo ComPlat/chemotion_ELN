@@ -6,7 +6,7 @@ module ReactionProcessEditor
 
     helpers StrongParamsHelpers
 
-    # rescue_from :all
+    rescue_from :all
 
     desc 'get options for collection Select.'
     get :collection_select_options do

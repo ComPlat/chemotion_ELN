@@ -8,7 +8,7 @@ module OrdKit
           Pressure.new(
             value: @value.to_f,
             precision: nil,
-            units: Pressure::PressureUnit.const_get(@unit.to_s),
+            unit: Pressure::PressureUnit.const_get(@unit.to_s),
           )
         end
       end
