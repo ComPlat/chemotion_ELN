@@ -575,6 +575,7 @@ export default class ReactionDetails extends Component {
           {
             !reaction.isNew && <CommentSection section="reaction_references" element={reaction} />
           }
+          <DetailsTabLiteratures
             element={reaction}
             literatures={reaction.isNew ? reaction.literatures : null}
             onElementChange={(r) => this.handleReactionChange(r)}
