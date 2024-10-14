@@ -219,22 +219,28 @@ export default class DetailsTabLiteratures extends Component {
     NotificationActions.removeByUid('literature');
     LoadingActions.start();
     Cite.async(sanitizeDoi(doi)).then((json) => {
-      if (json.data && json.data.length > 0) {
-        const data = json.data[0];
-        const citation = new Cite(data);
+      if (json?.data?.length == 0) { return null }
 
-        this.setState((prevState) => {
-          let updatedLiterature = prevState.literature;
-          updatedLiterature.doi = doi;
-          updatedLiterature.title = data.title || '';
-          updatedLiterature.year = (data && data.issued && data.issued['date-parts'][0]) || '';
-          updatedLiterature.refs = { citation, bibtex: citation.format('bibtex'), bibliography: json.format('bibliography') };
+      const data = json.data[0];
+      const citation = new Cite(data);
 
-          return ({ literature: updatedLiterature });
-        });
-        const { literature } = this.state;
-        this.handleLiteratureAdd(literature);
-      }
+      this.setState((prevState) => {
+        return {
+          literature: {
+            ...prevState.literature,
+            doi,
+            title: data.title || '',
+            year: data?.issued?.['date-parts']?.[0] || '',
+            refs: {
+              citation,
+              bibtex: citation.format('bibtex'),
+              bibliography: json.format('bibliography')
+            }
+          }
+        }
+      });
+      const { literature } = this.state;
+      this.handleLiteratureAdd(literature);
     }).catch((errorMessage) => {
       NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
     }).finally(() => {
