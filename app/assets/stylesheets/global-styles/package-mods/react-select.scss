@@ -20,6 +20,7 @@
 }
 
 .chemotion-select {
+  position: relative;
   &.is-invalid {
     .chemotion-select__control, .chemotion-select__control:hover {
       border-color: $danger;
@@ -88,6 +89,7 @@
 
   &__value-container {
     @extend .gap-1;
+    @extend .d-flex;
   }
 
   &__single-value .badge {
