@@ -68,7 +68,7 @@ const createEditor = (configs, availableEditors) => {
   return null;
 };
 
-const createEditors = (_state = {}) => {
+export const createEditors = (_state = {}) => {
   const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors || {};
 
@@ -95,6 +95,7 @@ function Editor({
     case 'ketcher2':
       return (
         <KetcherEditor
+          ref={forwardedRef} // Forwarding the ref to the KetcherEditor
           editor={editor}
           molfile={molfile}
           iH={iframeHeight}
@@ -133,7 +134,7 @@ function Editor({
         </div>
       );
   }
-}
+};
 
 Editor.propTypes = {
   type: PropTypes.string.isRequired,
@@ -228,6 +229,7 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
+    this.ketcher2Ref = React.createRef();
   }
 
   componentDidMount() {
@@ -252,7 +254,7 @@ export default class StructureEditorModal extends React.Component {
     if (onCancel) { onCancel(); }
   }
 
-  handleSaveBtn() {
+  async handleSaveBtn() {
     const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
@@ -371,6 +373,7 @@ export default class StructureEditorModal extends React.Component {
         iframeHeight={iframeHeight}
         iframeStyle={iframeStyle}
         fnCb={this.updateEditor}
+        forwardedRef={this.ketcher2Ref}
       />
     );
     const editorOptions = Object.keys(this.editors).map((e) => ({
