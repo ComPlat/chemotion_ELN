@@ -1,7 +1,7 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import PropTypes from 'prop-types';
-import React, { useEffect, useRef } from 'react';
+import PropTypes, { object } from 'prop-types';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
 let FILOStack = [];
 let uniqueEvents = new Set();
@@ -14,14 +14,32 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
-const skip_template_name_hide = true;
+const skip_template_name_hide = false;
 const skip_image_layering = false;
+
+const basic_image_structure = {
+  "type": "image",
+  "format": "image/svg+xml",
+  "boundingBox": {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "width": 0,
+    "height": 0
+  },
+  "data": ""
+};
+
+const list_of_shapes_base = [
+  "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTAiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIiAgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+Cjwvc3ZnPg==",
+  "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
+];
 
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
-function KetcherEditor({ editor, iH, iS, molfile }) {
-
+const KetcherEditor = forwardRef((props, ref) => {
+  const { editor, iH, iS, molfile } = props;
   const iframeRef = useRef();
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
@@ -30,6 +48,8 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     if (event.data.eventType === 'init') {
       window.editor = editor;
       await editor.structureDef.editor.setMolecule(initMol);
+      await fuelKetcherData();
+      await setKetcherData(initMol);
       editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
         handleEventCapture(result);
@@ -37,10 +57,65 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     };
   };
 
+  const setKetcherData = async (canvas_data_Mol) => {
+    // initMol
+    const image_list_init = [];
+    const lines = canvas_data_Mol.split('\n');
+    const elements_info = lines[3];
+    const header_starting_from = 4;
+    let [atoms_count, bonds_count] = elements_info.trim().split("  ");
+    atoms_count = parseInt(atoms_count);
+    bonds_count = parseInt(bonds_count);
+    const extra_data_start = header_starting_from + atoms_count + bonds_count;
+    const extra_data_end = lines.length - 2;
+
+    // loop to add list of images
+    for (let i = extra_data_start; i < extra_data_end; i++) {
+      const alias = lines[i];
+      if (three_parts_patten.test(alias)) {
+        const splits = alias.split("    ");
+        const alias_split = parseInt(splits[0].split("_")[2]);
+        if (list_of_shapes_base[alias_split]) {
+          const bb = basic_image_structure;
+          bb.boundingBox.height = parseFloat(splits[1]);
+          bb.boundingBox.width = parseFloat(splits[2]);
+          bb.data = list_of_shapes_base[alias_split];
+
+          // coping coordination from atom location
+          const atom_info = lines[i - 1].split("   ");
+          if (atom_info[0] == "A") {
+            const coordinates_data = lines[(header_starting_from - 1) + parseInt(atom_info[1])];
+            const [x, y] = coordinates_data.trim().split("   ");
+            bb.boundingBox = { ...bb.boundingBox, x: parseFloat(x), y: parseFloat(y), z: 0 };
+          }
+          image_list_init.push({ ...bb });
+        }
+      }
+    }
+
+    const ket_format = JSON.parse(await editor.structureDef.editor.getKet());
+    ket_format.root.nodes.push(...image_list_init);
+    image_used_counter = image_list_init.length - 1;
+    await editor.structureDef.editor.setMolecule(JSON.stringify(ket_format));
+    await fuelKetcherData();
+    for (let i = 0; i < mols.length; i++) {
+      const item_mol = latestData[mols[i]];
+      for (let a = 0; a < item_mol.atoms.length; a++) {
+        if (three_parts_patten.test(item_mol.atoms[a].alias)) {
+          const item_atom_alias = item_mol.atoms[a].alias.split("    ");
+          latestData[mols[i]].atoms[a].alias = item_atom_alias[0];
+        }
+      }
+    }
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await fuelKetcherData();
+    await moveTemplate();
+  };
+
   // helper function to rebase with the ketcher canvas data
-  const fuelKetcherData = async () => {
+  const fuelKetcherData = async (data) => {
     all_atoms = [];
-    latestData = JSON.parse(await editor.structureDef.editor.getKet());
+    latestData = data ? JSON.parse(await editor.structureDef.editor.getKet(data)) : JSON.parse(await editor.structureDef.editor.getKet());
     allNodes = [...latestData.root.nodes];
     imagesList = allNodes.length > mols.length ? allNodes.filter(
       item => item.type === 'image'
@@ -467,38 +542,45 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
     };
   }, []);
 
-  const onSaveFileK2SC = async () => {
-    await fuelKetcherData();
 
-    // molfile disection
-    const canvas_data_Mol = await editor.structureDef.editor.getMolfile();
-    const lines = canvas_data_Mol.split('\n');
-    const elements_info = lines[3];
-    const header_starting_from = 4;
-    const [atoms_count, bonds_count] = elements_info.split("  ").map(i => parseInt(i) ? parseInt(i) : i);
-    const extra_data_start = header_starting_from + atoms_count + bonds_count;
-    const extra_data_end = lines.length - 2;
-    for (let i = extra_data_start; i < extra_data_end; i++) {
-      const alias = lines[i];
-      if (three_parts_patten.test(alias)) {
-        const splits = parseInt(alias.split("_")[2]);
-        if (imagesList[splits]) { // image found
-          const { boundingBox } = imagesList[splits];
-          if (boundingBox) {
-            const { width, height } = boundingBox;
-            lines[i] += `    ${height}    ${width}`;
+  useImperativeHandle(ref, () => ({
+    getData: () => {
+      return "hallo";
+    },
+    onSaveFileK2SC: async () => {
+      await fuelKetcherData();
+
+      // molfile disection
+      const canvas_data_Mol = await editor.structureDef.editor.getMolfile();
+      const lines = canvas_data_Mol.split('\n');
+      const elements_info = lines[3];
+      const header_starting_from = 4;
+      let [_, atoms_count, bonds_count] = elements_info.split("  ");
+      atoms_count = parseInt(atoms_count);
+      bonds_count = parseInt(bonds_count);
+      const extra_data_start = header_starting_from + atoms_count + bonds_count;
+      const extra_data_end = lines.length - 2;
+
+      for (let i = extra_data_start; i < extra_data_end; i++) {
+        const alias = lines[i];
+        if (three_parts_patten.test(alias)) {
+          const splits = parseInt(alias.split("_")[2]);
+          if (imagesList[splits]) { // image found
+            const { boundingBox } = imagesList[splits];
+            if (boundingBox) {
+              const { width, height } = boundingBox;
+              lines[i] += `    ${height}    ${width}`;
+            }
           }
         }
       }
+      const iframeDocument = iframeRef.current.contentWindow.document;
+      const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+      const serializer = new XMLSerializer();
+      const svgString = "<?xml version=`1.0\`?>" + serializer.serializeToString(svg);
+      return { svgString, ket2Molfile: lines.join("\n") };
     }
-    const iframeDocument = iframeRef.current.contentWindow.document;
-    const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svg);
-    console.log({ svgString });
-    console.log(lines.join("\n"));
-
-  };
+  }));
 
   return (
     <div>
@@ -511,10 +593,10 @@ function KetcherEditor({ editor, iH, iS, molfile }) {
         width="100%"
         style={iS}
       />
-      <button onClick={onSaveFileK2SC}>Save</button>
+      {/* <button onClick={onSaveFileK2SC}>Save</button> */}
     </div>
   );
-};
+});
 
 KetcherEditor.propTypes = {
   molfile: PropTypes.string,

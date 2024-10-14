@@ -35,8 +35,6 @@ const notifyError = (message) => {
   });
 };
 
-const key = 'ketcher-tmpls';
-
 const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
@@ -90,13 +88,12 @@ const createEditors = (_state = {}) => {
   return editors;
 };
 
-function Editor({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb
-}) {
+const Editor = ({ type, editor, molfile, iframeHeight, iframeStyle, forwardedRef }) => {
   switch (type) {
     case 'ketcher2':
       return (
         <KetcherEditor
+          ref={forwardedRef} // Forwarding the ref to the KetcherEditor
           editor={editor}
           molfile={molfile}
           iH={iframeHeight}
@@ -135,7 +132,7 @@ function Editor({
         </div>
       );
   }
-}
+};
 
 Editor.propTypes = {
   type: PropTypes.string.isRequired,
@@ -235,6 +232,7 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
+    this.ketcher2Ref = React.createRef();
   }
 
   componentDidMount() {
@@ -259,7 +257,7 @@ export default class StructureEditorModal extends React.Component {
     if (onCancel) { onCancel(); }
   }
 
-  handleSaveBtn() {
+  async handleSaveBtn() {
     const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
@@ -270,13 +268,20 @@ export default class StructureEditorModal extends React.Component {
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
     } else if (editor.id === 'ketcher2') {
-      structure.editor.getMolfile().then((molfile) => {
-        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
-          imgfile.text().then((text) => {
-            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
+      if (this.ketcher2Ref.current) {
+        const { svgString, ket2Molfile } = await this.ketcher2Ref.current.onSaveFileK2SC();
+        // this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, svgString, { smiles: '' }, editor.id); } });
+        structure.editor.getMolfile().then((molfile) => {
+          structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
+            imgfile.text().then(async (text) => {
+              this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, text, { smiles: '' }, editor.id); } });
+            });
           });
         });
-      });
+      }
+
+      // return;
+
     } else {
       try {
         const { molfile, info } = structure;
@@ -361,6 +366,7 @@ export default class StructureEditorModal extends React.Component {
         iframeHeight={iframeHeight}
         iframeStyle={iframeStyle}
         fnCb={this.updateEditor}
+        forwardedRef={this.ketcher2Ref}
       />
     );
     const editorOptions = Object.keys(this.editors).map((e) => ({
