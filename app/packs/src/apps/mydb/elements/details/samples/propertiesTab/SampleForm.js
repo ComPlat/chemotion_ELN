@@ -745,6 +745,8 @@ export default class SampleForm extends React.Component {
         <h5>Basic Properties:</h5>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
+        </Row>
+        <Row className="align-items-end mb-4">
           <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
           <Col>{this.stereoAbsInput()}</Col>
           <Col>{this.stereoRelInput()}</Col>
