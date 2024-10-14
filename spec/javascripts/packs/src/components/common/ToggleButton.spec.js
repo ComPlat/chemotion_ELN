@@ -27,6 +27,8 @@ describe('<ToggleButton />', () => {
         offColor="#d3d3d3"
         tooltipOn="Click to enable Default mode"
         tooltipOff="Click to enable Gas mode"
+        fontSize="1em"
+        fontWeight="normal"
       />
     );
   });

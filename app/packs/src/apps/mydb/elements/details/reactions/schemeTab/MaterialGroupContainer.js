@@ -55,7 +55,8 @@ class MaterialGroupContainer extends Component {
     const {
       materials, materialGroup, showLoadingColumn, headIndex,
       isOver, canDrop, connectDropTarget,
-      deleteMaterial, onChange, reaction, dropSample, dropMaterial, switchEquiv, lockEquivColumn
+      deleteMaterial, onChange, reaction, dropSample, dropMaterial, switchEquiv, lockEquivColumn,
+      displayYieldField, switchYield,
     } = this.props;
     const style = {
       padding: '2px 5px',
@@ -82,6 +83,8 @@ class MaterialGroupContainer extends Component {
           headIndex={headIndex}
           switchEquiv={switchEquiv}
           lockEquivColumn={lockEquivColumn}
+          displayYieldField={displayYieldField}
+          switchYield={switchYield}
         />
       </div>,
     );
@@ -108,7 +111,9 @@ MaterialGroupContainer.propTypes = {
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired,
   switchEquiv: PropTypes.func,
-  lockEquivColumn: PropTypes.bool
+  lockEquivColumn: PropTypes.bool,
+  displayYieldField: PropTypes.bool.isRequired,
+  switchYield: PropTypes.func.isRequired,
 };
 
 MaterialGroupContainer.defaultProps = {

@@ -485,6 +485,8 @@ export default class ReactionDetails extends Component {
             offColor="#d3d3d3"
             tooltipOn="Click to enable Default mode"
             tooltipOff="Click to enable Gas mode"
+            fontSize="14px"
+            fontWeight="normal"
           />
         </div>
       </div>
