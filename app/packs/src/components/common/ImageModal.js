@@ -200,7 +200,7 @@ export default class ImageModal extends Component {
 
 ImageModal.propTypes = {
   imageStyle: PropTypes.object,
-  hasPop: PropTypes.bool.isRequired,
+  hasPop: PropTypes.bool,
   previewObject: PropTypes.shape({
     src: PropTypes.string,
   }).isRequired,
@@ -217,5 +217,6 @@ ImageModal.propTypes = {
 ImageModal.defaultProps = {
   imageStyle: {},
   disableClick: false,
-  showPopImage: false
+  showPopImage: false,
+  hasPop: false
 };
