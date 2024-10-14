@@ -25,7 +25,8 @@
   stroke-width: 0;
 }
 
-#line-chart .axis path, .axis line {
+#line-chart .axis path,
+.axis line {
   fill: none;
   stroke: #000;
   shape-rendering: crispEdges;
@@ -56,17 +57,20 @@
   margin-bottom: 0px !important;
 }
 
-.editable-table thead > tr > th{
+.editable-table thead>tr>th {
   padding: 0px !important;
   text-align: center !important;
   width: 90px;
 }
 
-.editable-table tbody td:nth-child(1), .editable-table tbody th:nth-child(1) {
+.editable-table tbody td:nth-child(1),
+.editable-table tbody th:nth-child(1) {
   width: 90px;
   text-align: center;
 }
-.editable-table tbody td:nth-child(2), .editable-table tbody th:nth-child(2) {
+
+.editable-table tbody td:nth-child(2),
+.editable-table tbody th:nth-child(2) {
   width: 90px;
 }
 

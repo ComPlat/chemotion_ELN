@@ -36,7 +36,7 @@ const notifyError = (message) => {
   });
 };
 
-const loadEditor = (editor, scripts) => {
+export const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
       es: scripts,
@@ -58,7 +58,7 @@ const createEditorInstance = (editor, available, configs) => ({
   }),
 });
 
-const createEditor = (configs, availableEditors) => {
+export const createEditor = (configs, availableEditors) => {
   if (!availableEditors) return null;
   const available = availableEditors[configs.editor];
   if (available) {
@@ -89,12 +89,13 @@ const createEditors = (_state = {}) => {
   return editors;
 };
 function Editor({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb
+  type, editor, molfile, iframeHeight, iframeStyle, fnCb, forwardedRef
 }) {
   switch (type) {
     case 'ketcher2':
       return (
         <KetcherEditor
+          ref={forwardedRef} // Forwarding the ref to the KetcherEditor
           editor={editor}
           molfile={molfile}
           iH={iframeHeight}
@@ -203,7 +204,7 @@ WarningBox.propTypes = {
   hideWarning: PropTypes.func.isRequired
 };
 
-const initEditor = () => {
+export const initEditor = () => {
   const userProfile = UserStore.getState().profile;
   const eId = userProfile?.data?.default_structure_editor || 'ketcher';
   const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
@@ -228,6 +229,7 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
+    this.ketcher2Ref = React.createRef();
   }
 
   componentDidMount() {
@@ -252,7 +254,7 @@ export default class StructureEditorModal extends React.Component {
     if (onCancel) { onCancel(); }
   }
 
-  handleSaveBtn() {
+  async handleSaveBtn() {
     const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
@@ -371,6 +373,7 @@ export default class StructureEditorModal extends React.Component {
         iframeHeight={iframeHeight}
         iframeStyle={iframeStyle}
         fnCb={this.updateEditor}
+        forwardedRef={this.ketcher2Ref}
       />
     );
     const editorOptions = Object.keys(this.editors).map((e) => ({
