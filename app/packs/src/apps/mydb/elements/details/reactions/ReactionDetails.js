@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -49,7 +50,6 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
-import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -489,11 +489,6 @@ export default class ReactionDetails extends Component {
     this.setState({ reaction });
   }
 
-  handleGaseousChange() {
-    const { reaction } = this.state;
-    this.handleInputChange('gaseous', !reaction.gaseous);
-  }
-
   // eslint-disable-next-line class-methods-use-this
   updateReactionVesselSize(reaction) {
     Promise.resolve().then(() => {
@@ -515,6 +510,11 @@ export default class ReactionDetails extends Component {
         GasPhaseReactionActions.setCatalystReferenceMole(null);
       }
     });
+  }
+
+  handleGaseousChange() {
+    const { reaction } = this.state;
+    this.handleInputChange('gaseous', !reaction.gaseous);
   }
 
   render() {

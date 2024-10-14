@@ -13191,13 +13191,6 @@ react-svg-file-zoom-pan@0.1.5:
     d3 "^3.5.15"
     prop-types "^15.6.2"
 
-react-svg-inline@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.npmjs.org/react-svg-inline/-/react-svg-inline-1.2.0.tgz"
-  integrity sha1-oCv4Gg7XYV4xlKAUtY2YrqVSH9U=
-  dependencies:
-    classnames "^2.2.1"
-
 react-test-renderer@^17.0.0:
   version "17.0.2"
   resolved "https://registry.npmjs.org/react-test-renderer/-/react-test-renderer-17.0.2.tgz"

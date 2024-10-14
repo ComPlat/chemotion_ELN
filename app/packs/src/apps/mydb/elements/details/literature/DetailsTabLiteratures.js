@@ -219,22 +219,28 @@ export default class DetailsTabLiteratures extends Component {
     NotificationActions.removeByUid('literature');
     LoadingActions.start();
     Cite.async(sanitizeDoi(doi)).then((json) => {
-      if (json.data && json.data.length > 0) {
-        const data = json.data[0];
-        const citation = new Cite(data);
-        this.setState((prevState) => ({
-          ...prevState,
+      if (json?.data?.length == 0) { return null }
+
+      const data = json.data[0];
+      const citation = new Cite(data);
+
+      this.setState((prevState) => {
+        return {
           literature: {
             ...prevState.literature,
             doi,
             title: data.title || '',
-            year: (data && data.issued && data.issued['date-parts'][0]) || '',
-            refs: { citation, bibtex: citation.format('bibtex'), bibliography: json.format('bibliography') }
+            year: data?.issued?.['date-parts']?.[0] || '',
+            refs: {
+              citation,
+              bibtex: citation.format('bibtex'),
+              bibliography: json.format('bibliography')
+            }
           }
-        }));
-        const { literature } = this.state;
-        this.handleLiteratureAdd(literature);
-      }
+        }
+      });
+      const { literature } = this.state;
+      this.handleLiteratureAdd(literature);
     }).catch((errorMessage) => {
       NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
     }).finally(() => {
@@ -248,17 +254,16 @@ export default class DetailsTabLiteratures extends Component {
     Cite.async(isbn).then((json) => {
       if (json.data && json.data.length > 0) {
         const data = json.data[0];
-        this.setState((prevState) => ({
-          ...prevState,
-          literature: {
-            ...prevState.literature,
-            isbn,
-            title: data.title || '',
-            year: (data && data.issued && data.issued['date-parts'][0]) || '',
-            url: (data && data.URL) || '',
-            refs: { citation: json, bibtex: json.format('bibtex'), bibliography: json.format('bibliography') }
-          }
-        }));
+        this.setState((prevState) => {
+          let updatedLiterature = prevState.literature;
+          updatedLiterature.isbn = isbn;
+          updatedLiterature.title = data.title || '';
+          updatedLiterature.year = (data && data.issued && data.issued['date-parts'][0]) || '';
+          updatedLiterature.url = (data && data.URL) || '';
+          updatedLiterature.refs = { citation: json, bibtex: json.format('bibtex'), bibliography: json.format('bibliography') }
+
+          return ({ literature: updatedLiterature });
+        });
         const { literature } = this.state;
         this.handleLiteratureAdd(literature);
       }
@@ -369,11 +374,11 @@ DetailsTabLiteratures.propTypes = {
     PropTypes.instanceOf(CellLine),
     PropTypes.instanceOf(Sample)
   ]).isRequired,
-  literatures: PropTypes.array,
+  literatures: PropTypes.object,
   readOnly: PropTypes.bool
 };
 
 DetailsTabLiteratures.defaultProps = {
   readOnly: false,
-  literatures: []
+  literatures: {}
 };

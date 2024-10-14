@@ -63,11 +63,6 @@ export default class ScreenDetails extends Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    const { screen } = nextProps;
-    this.setState({ screen });
-  }
-
   componentWillUnmount() {
     UIStore.unlisten(this.onUIStoreChange);
   }

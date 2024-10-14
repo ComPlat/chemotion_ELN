@@ -112,5 +112,5 @@ export default class PrivateNoteElement extends React.Component {
 
 PrivateNoteElement.propTypes = {
   element: PropTypes.object.isRequired,
-  disabled: PropTypes.bool.isRequired,
+  disabled: PropTypes.bool,
 };
