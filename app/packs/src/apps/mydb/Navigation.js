@@ -14,7 +14,6 @@ import NavNewSession from 'src/components/navigation/NavNewSession';
 import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
-import PropTypes from 'prop-types';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
@@ -99,21 +98,17 @@ export default class Navigation extends React.Component {
   }
 
   navHeader() {
-    const { isHidden } = this.props;
-
     return (
       <div className="d-flex gap-4">
-        {!isHidden && (
-          <Navbar.Text>
-            <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-              <i
-                className="fa fa-list"
-                onClick={this.toggleCollectionTree}
-                role="button"
-              />
-            </OverlayTrigger>
-          </Navbar.Text>
-        )}
+        <Navbar.Text>
+          <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
+            <i
+              className="fa fa-list"
+              onClick={this.toggleCollectionTree}
+              role="button"
+            />
+          </OverlayTrigger>
+        </Navbar.Text>
         <NavHead />
       </div>
     );
@@ -144,43 +139,32 @@ export default class Navigation extends React.Component {
       currentUser,
       modalProps, genericEls, omniauthProviders, extraRules
     } = this.state;
-    const { isHidden } = this.props;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (
       <Navbar className="bg-gray-200 justify-content-between px-4">
         {this.navHeader()}
-        {!isHidden && (
-          <Nav navbar className="navbar-form gap-2 mx-auto d-flex flex-nowrap">
-            <div className="d-flex align-items-center flex-nowrap">
-              <Search noSubmit={!!currentUser} className="w-auto" />
-            </div>
-            {currentUser && (
-              <>
-                <ManagingActions
-                  updateModalProps={this.updateModalProps}
-                  customClass={customClass}
-                  genericEls={genericEls}
-                />
-                <ContextActions
-                  updateModalProps={this.updateModalProps}
-                  customClass={customClass}
-                />
-                <NavigationModal {...modalProps} />
-              </>
-            )}
-          </Nav>
-        )}
+        <Nav navbar className="navbar-form gap-2 mx-auto d-flex flex-nowrap">
+          <div className="d-flex align-items-center flex-nowrap">
+            <Search noSubmit={!!currentUser} className="w-auto" />
+          </div>
+          {currentUser && (
+            <>
+              <ManagingActions
+                updateModalProps={this.updateModalProps}
+                customClass={customClass}
+                genericEls={genericEls}
+              />
+              <ContextActions
+                updateModalProps={this.updateModalProps}
+                customClass={customClass}
+              />
+              <NavigationModal {...modalProps} />
+            </>
+          )}
+        </Nav>
         {this.userSession(omniauthProviders, extraRules)}
       </Navbar>
     );
   }
 }
-
-Navigation.propTypes = {
-  isHidden: PropTypes.bool,
-};
-
-Navigation.defaultProps = {
-  isHidden: false,
-};
