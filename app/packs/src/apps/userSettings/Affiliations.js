@@ -35,39 +35,35 @@ function Affiliations({ show, onHide }) {
   useEffect(() => {
     UserSettingsFetcher.getAutoCompleteSuggestions('countries')
       .then((data) => {
-        data.map((item) => {
-          if (!countryOptions.map((option) => option.value).includes(item)) {
-            setCountryOptions((prevItems) => [...prevItems, { value: item, label: item }]);
-          }
-        });
+        setCountryOptions(data.map(item => ({ value: item.value, label: item.label })));
+      })
+      .catch((error) => {
+        console.log(error);
         setInputError({});
       });
 
     UserSettingsFetcher.getAutoCompleteSuggestions('organizations')
       .then((data) => {
-        data.map((item) => {
-          if (!orgOptions.map((option) => option.value).includes(item)) {
-            setOrgOptions((prevItems) => [...prevItems, { value: item, label: item }]);
-          }
-        });
+        setOrgOptions(data.map(item => ({ value: item.value, label: item.label })));
+      })
+      .catch((error) => {
+        console.log(error);
       });
 
     UserSettingsFetcher.getAutoCompleteSuggestions('departments')
       .then((data) => {
-        data.map((item) => {
-          if (!deptOptions.map((option) => option.value).includes(item)) {
-            setDeptOptions((prevItems) => [...prevItems, { value: item, label: item }]);
-          }
-        });
+        setDeptOptions(data.map(item => ({ value: item.value, label: item.label })));
+      })
+      .catch((error) => {
+        console.log(error);
       });
 
     UserSettingsFetcher.getAutoCompleteSuggestions('groups')
       .then((data) => {
-        data.map((item) => {
-          if (!groupOptions.map((option) => option.value).includes(item)) {
-            setGroupOptions((prevItems) => [...prevItems, { value: item, label: item }]);
-          }
-        });
+        setGroupOptions(data.map(item => ({ value: item.value, label: item.label })));
+      })
+      .catch((error) => {
+        console.log(error);
       });
     getAllAffiliations();
   }, []);
@@ -238,14 +234,15 @@ function Affiliations({ show, onHide }) {
                   {item.disabled ? item.country
                     : (
                       <CreatableSelect
-                        isCreatable
                         disabled={item.disabled}
                         placeholder="Select or enter a new option"
-                        components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                         options={countryOptions}
-                        value={countryOptions.find((option) => option.value === item.country) || null}
-                        isSearchable
-                        isClearable
+                        onCreateOption={(newValue) => {
+                          const newOption = { value: newValue, label: newValue };
+                          setCountryOptions(prev => [...prev, newOption]);
+                          onChangeHandler(index, 'country', newValue);
+                        }}
+                        value={countryOptions.find(option => option.value === item.country) || null}
                         onChange={(choice) => onChangeHandler(index, 'country', !choice ? '' : choice.value)}
                       />
                     )}
@@ -255,15 +252,16 @@ function Affiliations({ show, onHide }) {
                     : (
                       <>
                         <CreatableSelect
-                          required
-                          components={{ DropdownIndicator: () => null }}
                           disabled={item.disabled}
                           placeholder="Select or enter a new option"
                           className={inputError[index] && inputError[index].organization ? 'is-invalid' : ''}
-                          isCreatable
                           options={orgOptions}
-                          value={orgOptions.find((option) => option.value === item.organization) || null}
-                          isClearable
+                          value={orgOptions.find(option => option.value === item.organization) || null} 
+                          onCreateOption={(newValue) => {
+                            const newOption = { value: newValue, label: newValue };
+                            setOrgOptions(prev => [...prev, newOption]);
+                            onChangeHandler(index, 'organization', newValue);
+                          }}
                           onChange={(choice) => onChangeHandler(index, 'organization', !choice ? '' : choice.value)}
                         />
                         {inputError[index] && inputError[index].organization && (
@@ -276,14 +274,15 @@ function Affiliations({ show, onHide }) {
                   {item.disabled ? item.department
                     : (
                       <CreatableSelect
-                        isCreatable
-                        components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                         disabled={item.disabled}
                         placeholder="Select or enter a new option"
                         options={deptOptions}
-                        value={deptOptions.find((option) => option.value === item.department) || null}
-                        isSearchable
-                        clearable
+                        value={deptOptions.find(option => option.value === item.department) || null}
+                        onCreateOption={(newValue) => {
+                          const newOption = { value: newValue, label: newValue };
+                          setDeptOptions(prev => [...prev, newOption]);
+                          onChangeHandler(index, 'department', newValue);
+                        }}
                         onChange={(choice) => onChangeHandler(index, 'department', !choice ? '' : choice.value)}
                       />
                     )}
@@ -292,16 +291,15 @@ function Affiliations({ show, onHide }) {
                   {item.disabled ? item.group
                     : (
                       <CreatableSelect
-                        isCreatable
                         placeholder="Select or enter a new option"
-                        components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                         disabled={item.disabled}
-                        allowCreate
+                        value={groupOptions.find(option => option.value === item.group) || null}
                         options={groupOptions}
-                        value={groupOptions.find((option) => option.value === item.group) || null}
-                        isSearchable
-                        closeMenuOnSelect
-                        isClearable
+                        onCreateOption={(newValue) => {
+                          const newOption = { value: newValue, label: newValue };
+                          setGroupOptions(prev => [...prev, newOption]);
+                          onChangeHandler(index, 'group', newValue);
+                        }}
                         onChange={(choice) => onChangeHandler(index, 'group', !choice ? '' : choice.value)}
                       />
                     )}
