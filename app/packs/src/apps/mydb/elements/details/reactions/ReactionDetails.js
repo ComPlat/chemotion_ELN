@@ -76,6 +76,7 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+    this.handleGaseousChange = this.handleGaseousChange.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }
@@ -511,6 +512,11 @@ export default class ReactionDetails extends Component {
     });
   }
 
+  handleGaseousChange() {
+    const { reaction } = this.state;
+    this.handleInputChange('gaseous', !reaction.gaseous);
+  }
+
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
@@ -534,22 +540,6 @@ export default class ReactionDetails extends Component {
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }
-          <ButtonGroup className="mb-2">
-            <ButtonGroupToggleButton
-              onClick={() => this.handleInputChange('gaseous', false)}
-              active={!reaction.gaseous}
-              size="xxsm"
-            >
-              Default Scheme
-            </ButtonGroupToggleButton>
-            <ButtonGroupToggleButton
-              onClick={() => this.handleInputChange('gaseous', true)}
-              active={reaction.gaseous}
-              size="xxsm"
-            >
-              Gas Scheme
-            </ButtonGroupToggleButton>
-          </ButtonGroup>
           <ReactionDetailsScheme
             reaction={reaction}
             onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
