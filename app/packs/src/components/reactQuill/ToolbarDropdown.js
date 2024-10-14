@@ -50,7 +50,7 @@ export default class ToolbarDropdown extends React.Component {
     });
   }
 
-  UNSAFE_componentWillMount() {
+  componentWillUnmount() {
     try {
       this.sheet.deleteRule(this.ruleId, this.sheet.cssRules.length - 1);
     } catch (err) {
