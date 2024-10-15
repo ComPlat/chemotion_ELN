@@ -156,10 +156,9 @@ export default class ToolbarTemplateCreator extends React.Component {
       const removeDropdown = () => this.removeDropdownTemplate(template);
 
       return (
-        <>
+        <div key={`ttc_dd_${name}_${id}`}>
           <hr />
           <div
-            key={`ttc_dd_${name}_${id}`}
             className="d-flex gap-2 mt-2"
             style={{ maxWidth: '775px' }}
           >
@@ -172,7 +171,6 @@ export default class ToolbarTemplateCreator extends React.Component {
             />
             <Select
               className="me-2 col-10 f-5"
-              ref={selectRef.ref}
               options={options}
               defaultValue={ddSelected}
               onChange={e => this.onChangeDropdown('DropdownData', e, id)}
@@ -188,7 +186,7 @@ export default class ToolbarTemplateCreator extends React.Component {
               <i className="fa fa-trash" />
             </Button>
           </div>
-        </>
+        </div>
       );
     });
 
@@ -219,7 +217,6 @@ export default class ToolbarTemplateCreator extends React.Component {
               defaultValue="Toolbar"
             />
             <Select
-              ref={this.toolbarSelectRef}
               className="me-5 col-10 f-5"
               defaultValue={iconSelected}
               options={options}
