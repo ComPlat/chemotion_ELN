@@ -54,35 +54,34 @@ export default class ContextActions extends React.Component {
   }
 
   render() {
-    const { updateModalProps, customClass } = this.props;
+    const { customClass } = this.props;
     return (
       <div className="d-flex flex-wrap align-items-center gap-2">
         <ButtonGroup className="d-flex align-items-center">
           <SplitElementButton />
           <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
         </ButtonGroup>
+
         <ButtonGroup className="d-flex align-items-center">
           <ExportImportButton
             isDisabled={this.isDisabled()}
-            updateModalProps={updateModalProps}
             customClass={customClass}
           />
           <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
+
         <ButtonToolbar className="d-flex flex-nowrap gap-2 align-items-center">
           <ScanCodeButton customClass={customClass} />
           <InboxButton />
           <SampleTaskNavigationElement />
           <NoticeButton />
         </ButtonToolbar>
-        
       </div>
     );
   }
 }
 
 ContextActions.propTypes = {
-  updateModalProps: PropTypes.func.isRequired,
   customClass: PropTypes.string,
 };
 

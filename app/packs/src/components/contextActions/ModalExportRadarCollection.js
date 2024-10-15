@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, ButtonToolbar } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
 import { subjectAreas } from 'src/components/staticDropdownOptions/radar/subjectAreas'
@@ -229,7 +230,6 @@ export default class ModalExportRadarCollection extends React.Component {
 
   renderButtonBar() {
     const { onHide } = this.props;
-    const { metadata } = this.state;
     const { currentCollection } = UIStore.getState()
     const archiveUrl = `/oauth/radar/archive?collection_id=${currentCollection.id}`
 
@@ -263,21 +263,32 @@ export default class ModalExportRadarCollection extends React.Component {
   }
 
   render() {
-    const { full } = this.props
+    const { onHide } = this.props;
     const { metadata } = this.state
-    const onChange = (v) => this.setState(
-      previousState => {return { ...previousState, value: v }}
-    )
 
-    if (metadata) {
-      return (
-        <div className="export-collections-modal">
-          {this.renderMetadata()}
-          {this.renderButtonBar()}
-        </div>
-      )
-    } else {
-      return <p className="text-center"><i className="fa fa-refresh fa-spin fa-fw" /></p>
-    }
+    return (
+      <Modal show onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>Publish current collection via RADAR</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {!metadata ? (
+            <p className="text-center">
+              <i className="fa fa-refresh fa-spin fa-fw" />
+            </p>
+          ) : (
+            <div className="export-collections-modal">
+              {this.renderMetadata()}
+              {this.renderButtonBar()}
+            </div>
+          )}
+        </Modal.Body>
+      </Modal>
+    );
   }
+}
+
+ModalExportRadarCollection.propTypes = {
+  onHide: PropTypes.func.isRequired,
+  editAction: PropTypes.func.isRequired
 }

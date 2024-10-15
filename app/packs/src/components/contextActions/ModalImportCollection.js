@@ -1,7 +1,9 @@
 import React from 'react';
-import { Button, ButtonToolbar } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import UIStore from 'src/stores/alt/stores/UIStore';
+
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
 export default class ModalImportCollection extends React.Component {
   constructor(props) {
@@ -13,14 +15,13 @@ export default class ModalImportCollection extends React.Component {
   }
 
   handleClick() {
-    const { onHide, action } = this.props;
+    const { onHide } = this.props;
     const { file } = this.state;
-    const ui_state = UIStore.getState();
     this.setState({ processing: true });
     let params = {
       file: file
     }
-    action(params);
+    CollectionActions.importCollectionsFromFile(params);
     setTimeout(() => {
       this.setState({ processing: false });
       onHide();
@@ -73,17 +74,26 @@ export default class ModalImportCollection extends React.Component {
     const bTitle = processing === true ? 'Importing' : 'Import';
 
     return (
-      <div>
-        {this.dropzoneOrfilePreview()}
-        <ButtonToolbar className="mt-2 justify-content-end gap-1">
-          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button variant={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
-            <i className={bClass} />
-            {' '}
-            {bTitle}
-          </Button>
-        </ButtonToolbar>
-      </div>
+      <Modal show onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>Import Collections from ZIP archive</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {this.dropzoneOrfilePreview()}
+          <ButtonToolbar className="mt-2 justify-content-end gap-1">
+            <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+            <Button variant={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
+              <i className={bClass} />
+              {' '}
+              {bTitle}
+            </Button>
+          </ButtonToolbar>
+        </Modal.Body>
+      </Modal>
     )
   }
+}
+
+ModalImportCollection.propTypes = {
+  onHide: PropTypes.func.isRequired,
 }

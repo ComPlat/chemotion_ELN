@@ -147,7 +147,6 @@ export default class Navigation extends React.Component {
                 customClass={customClass}
               />
               <ContextActions
-                updateModalProps={this.updateModalProps}
                 customClass={customClass}
               />
               <NavigationModal {...modalProps} />

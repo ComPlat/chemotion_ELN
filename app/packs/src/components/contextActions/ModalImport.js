@@ -1,8 +1,10 @@
 import React from 'react';
-import { Button, ButtonToolbar } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class ModalImport extends React.Component {
@@ -14,16 +16,15 @@ export default class ModalImport extends React.Component {
   }
 
   handleClick() {
-    const { onHide, action } = this.props;
+    const { onHide, importAsChemical } = this.props;
     const { file } = this.state;
     const uiState = UIStore.getState();
-    const importSampleAs = uiState.modalParams.title === 'Import Chemicals from File' ? 'chemical' : 'sample';
     const params = {
       file,
       currentCollectionId: uiState.currentCollection.id,
-      type: importSampleAs
+      type: importAsChemical ? 'chemical' : 'sample',
     };
-    action(params);
+    ElementActions.importSamplesFromFile(params);
     onHide();
 
     const notification = {
@@ -77,15 +78,33 @@ export default class ModalImport extends React.Component {
   }
 
   render() {
-    const { onHide } = this.props;
+    const { onHide, importAsChemical } = this.props;
     return (
-      <div>
-        {this.dropzoneOrfilePreview()}
-        <ButtonToolbar className="justify-content-end mt-2 gap-1">
-          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
-        </ButtonToolbar>
-      </div>
+      <Modal show onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {importAsChemical
+              ? 'Import Chemicals from File'
+              : 'Import Samples from File'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {this.dropzoneOrfilePreview()}
+          <ButtonToolbar className="justify-content-end mt-2 gap-1">
+            <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+            <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          </ButtonToolbar>
+        </Modal.Body>
+      </Modal>
     );
   }
+}
+
+ModalImport.propTypes = {
+  importAsChemical: PropTypes.bool,
+  onHide: PropTypes.func.isRequired,
+}
+
+ModalImport.defaultProps = {
+  importAsChemical: false,
 }
