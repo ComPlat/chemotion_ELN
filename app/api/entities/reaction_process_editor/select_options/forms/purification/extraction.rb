@@ -10,7 +10,7 @@ module Entities
               {
                 automation_modes: SelectOptions::Models::Custom.instance.automation_modes,
                 phases: extraction_phases,
-                solvent_options: solvent_options_for(reaction_process: reaction_process),
+                solvents: solvent_options_for(reaction_process: reaction_process),
               }
             end
 
