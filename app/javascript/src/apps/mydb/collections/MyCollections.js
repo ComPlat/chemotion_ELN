@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, Form, Modal } from 'react-bootstrap';
+import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -19,13 +19,11 @@ export default class MyCollections extends React.Component {
         id: -1,
         children: []
       },
-      modalProps: {
-        show: false,
-        title: "",
+
+      isChange: false,
+      sharingModal: {
         action: null,
-        collection: {},
-        selectUsers: true,
-        isChange: false
+        show: false
       }
     }
 
@@ -200,18 +198,10 @@ export default class MyCollections extends React.Component {
   }
 
   doSync(node, action) {
-    let { modalProps, active } = this.state
-    modalProps.title = action == "CreateSync"
-      ? "Synchronize '" + node.label + "'"
-      : "Edit Synchronization"
-    modalProps.show = true
-    modalProps.action = action
-    modalProps.collection = node
-    modalProps.selectUsers = action == "CreateSync"
-      ? true
-      : false
-    active = node
-    this.setState({ modalProps, active })
+    this.setState({
+      sharingModal: { show: true, action },
+      active: node,
+    });
   }
 
   addCollectionButton(node) {
@@ -323,12 +313,9 @@ export default class MyCollections extends React.Component {
 
   handleModalHide() {
     this.setState({
-      modalProps: {
+      sharingModal: {
         show: false,
-        title: "",
         action: null,
-        collection: {},
-        selectUsers: true,
       }
     });
   }
@@ -349,8 +336,7 @@ export default class MyCollections extends React.Component {
   }
 
   render() {
-    let mPs = this.state.modalProps
-    let mPsC = mPs.collection
+    let { sharingModal, active } = this.state;
     return (
       <div className="tree">
         <Tree
@@ -360,20 +346,21 @@ export default class MyCollections extends React.Component {
           onChange={this.handleChange}
           renderNode={this.renderNode}
         />
-        <Modal centered animation show={mPs.show} onHide={this.handleModalHide}>
-          <Modal.Header closeButton>
-            <Modal.Title>{mPs.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <ManagingModalSharing collectionId={mPsC.id}
-              onHide={this.handleModalHide}
-              permissionLevel={mPsC.permission_level}
-              sampleDetailLevel={mPsC.sample_detail_level} reactionDetailLevel={mPsC.reaction_detail_level}
-              wellplateDetailLevel={mPsC.wellplate_detail_level} screenDetailLevel={mPsC.screen_detail_level}
-              selectUsers={mPs.selectUsers}
-              collAction={mPs.action} />
-          </Modal.Body>
-        </Modal>
+        {active.id !== null && sharingModal.show && (
+          <ManagingModalSharing
+            title={sharingModal.action === 'CreateSync'
+              ? `Synchronize '${active.label}'`
+              : 'Edit Synchronization'}
+            collectionId={active.id}
+            onHide={this.handleModalHide}
+            permissionLevel={active.permission_level}
+            sampleDetailLevel={active.sample_detail_level}
+            reactionDetailLevel={active.reaction_detail_level}
+            wellplateDetailLevel={active.wellplate_detail_level}
+            screenDetailLevel={active.screen_detail_level}
+            selectUsers={sharingModal.action === 'CreateSync'}
+            collAction={sharingModal.action} />
+        )}
       </div>
     )
   }
