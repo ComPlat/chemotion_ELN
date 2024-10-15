@@ -30,14 +30,6 @@ export default class ToolbarDropdown extends React.Component {
   }
 
   componentDidMount() {
-    const cssRule = ".ql-snow .ql-picker." + this.ddQuillId + " .ql-picker-label::before, ." + this.ddQuillId + " .ql-picker.ql-size .ql-picker-item::before { content: attr(data-label); line-height: 25px; }";
-
-    try {
-      this.ruleId = this.sheet.insertRule(cssRule, this.sheet.cssRules.length);
-    } catch (err) {
-      console.log(err);
-    }
-
     const requiredWidth = this.getTextWidth() + 40;
     this.pickerLabel.current.style.width = `${requiredWidth}px`;
 
@@ -48,14 +40,6 @@ export default class ToolbarDropdown extends React.Component {
         this.pickerSpan.current.classList.remove('ql-expanded');
       }
     });
-  }
-
-  componentWillUnmount() {
-    try {
-      this.sheet.deleteRule(this.ruleId - 1);
-    } catch (err) {
-      console.log(err);
-    }
   }
 
   getTextWidth(font = "500 14px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif") {
