@@ -4,6 +4,7 @@ import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ModalImport from 'src/components/contextActions/ModalImport';
+import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
 import ModalExport from 'src/components/contextActions/ModalExport';
 import ModalReactionExport from 'src/components/contextActions/ModalReactionExport';
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
@@ -125,6 +126,7 @@ function ExportImportButton({ isDisabled, customClass }) {
       </Dropdown>
 
       {modalContent}
+      <ModalImportConfirm />
     </>
   );
 }
