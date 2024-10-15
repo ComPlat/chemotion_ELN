@@ -97,9 +97,10 @@ module Chemotion
 
         # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
         scope =
-          if params[:selection][:search_type] == 'similar'
+          case params[:selection][:search_type]
+          when 'similar'
             Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
-          else
+          when 'sub'
             Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
           end
         order_by_molecule(scope)
@@ -519,12 +520,11 @@ module Chemotion
         end
 
         post do
-          Usecases::Search::StructureSearch.new(
-            collection_id: @c_id,
-            params: params,
-            user: current_user,
-            detail_levels: @dl,
-          ).perform!
+          samples = sample_structure_search
+          serialization_by_elements_and_page(
+            elements_by_scope(samples),
+            params[:page],
+          )
         end
       end
 
