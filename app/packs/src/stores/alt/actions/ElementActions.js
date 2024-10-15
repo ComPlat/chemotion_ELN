@@ -524,6 +524,10 @@ class ElementActions {
     };
   }
 
+  importSamplesFromFileDecline() {
+    return null;
+  }
+
   importSamplesFromFileConfirm(params) {
     return (dispatch) => {
       SamplesFetcher.importSamplesFromFileConfirm(params)
