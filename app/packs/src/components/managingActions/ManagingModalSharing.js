@@ -327,11 +327,11 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   render() {
-    const { permissionLevel = '' } = this.state;
+    const { selectUsers } = this.props;
+    const { selectedUsers, permissionLevel = '' } = this.state;
     const displayWarning = permissionLevel === '5';
 
-    const { selectedUsers } = this.state;
-    const hasSelectedUsers = selectedUsers != null && selectedUsers.length > 0
+    const canSubmit = !selectUsers || selectedUsers != null && selectedUsers.length > 0
 
     return (
       <Form>
@@ -420,7 +420,7 @@ export default class ManagingModalSharing extends React.Component {
         <Button
           id="create-sync-shared-col-btn"
           variant="warning"
-          disabled={!hasSelectedUsers}
+          disabled={!canSubmit}
           onClick={this.handleSharing}
         >
           {this.props.collAction} Shared Collection
