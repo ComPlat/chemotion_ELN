@@ -245,7 +245,7 @@ export default class SampleForm extends React.Component {
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
-        <InputGroup style={{ zIndex: 4 }}>
+        <InputGroup className="z-4">
           <CreatableSelect
             name="moleculeName"
             isDisabled={!sample.can_update}

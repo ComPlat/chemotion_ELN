@@ -806,7 +806,7 @@ export default class SampleDetails extends React.Component {
     const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
       <div className="my-4">
-        <InputGroup style={{zIndex: 4}}>
+        <InputGroup className="z-4">
           <InputGroup.Text>CAS</InputGroup.Text>
           <CreatableSelect
             name="cas"

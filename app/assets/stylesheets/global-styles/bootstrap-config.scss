@@ -38,6 +38,16 @@ $gray-tones: (
   "gray-900": $gray-900,
 );
 
+$zindex-levels: (
+  n1: -1,
+  0: 0,
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+);
+
 // Merge the maps
 $theme-colors: map-merge($theme-colors, $gray-tones);
 
