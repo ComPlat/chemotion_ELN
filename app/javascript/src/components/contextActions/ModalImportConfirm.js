@@ -10,7 +10,7 @@ import SVG from 'react-inlinesvg';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 
-const SvgCellRenderer = ({ value, ...props})=>{
+const SvgCellRenderer = ({ value })=>{
   return <SVG src={"/images/"+value} className="molecule-fixed-data" />
 }
 
@@ -18,8 +18,8 @@ SvgCellRenderer.propTypes = {
   value: PropTypes.string,
 }
 
-const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props }) => {
-  return props.data.inchikey
+const SelectCellRenderer = ({ value, onSelectChange, data, node: { rowIndex }}) => {
+  return data.inchikey
     ? <Form.Check
          onChange={(e)=>onSelectChange(e.target.checked, rowIndex)}
          defaultChecked={value}
@@ -27,54 +27,9 @@ const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props }) => {
     : null;
 }
 
-
-class SelectCellEditor extends React.Component {
-  constructor(props) {
-    super()
-    const value = props.value
-    this.state = {
-      value: value,
-    }
-  }
-
-  getValue() {
-    return this.state.value;
-  }
-
-  afterGuiAttached() {
-    let {node,api,onSelectChange} = this.props
-    let newVal = !this.state.value
-    let rowIndex = node ? node.rowIndex : null
-
-    if (rowIndex != null && rowIndex >= 0) {
-      onSelectChange(newVal,rowIndex)
-      api.setFocusedCell(rowIndex+1, "checked")
-    } else {api.setFocusedCell(0, "checked")}
-  }
-
-  inputField(){
-    let eGC = this.props.eGridCell
-    return eGC ? eGC.getElementsByTagName("INPUT")[0] : null
-  }
-
-  render() {
-    return <input type="text" value={this.state.scaled_value}
-      onChange={e=>this.onChangeListener(e)}
-    />
-  }
-
-}
-
 class CustomHeader extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-    }
-  }
-
-
   render(){
-    let {column,displayName,defaultSelected,mapped_keys}= this.props
+    const {displayName,defaultSelected,mapped_keys} = this.props
 
     return(
         <div className="ag-header-cell-label">
@@ -184,10 +139,12 @@ export default class ModalImportConfirm extends React.Component {
             {headerName: '#', field: 'index', width: 60, pinned: 'left'},
             {headerName: 'Structure', field: 'svg', cellRenderer: SvgCellRenderer, pinned: 'left', autoHeight: true },
             {headerName: 'name', field: 'name', editable:true},
-            {headerName: 'Select', field: 'checked', cellRenderer: SelectCellRenderer,
-              cellRendererParams:{onSelectChange: this.onSelectChange}, width: 30,
-              editable:true, cellEditor: SelectCellEditor,
-              cellEditorParams:{onSelectChange: this.onSelectChange}
+            {
+              headerName: 'Select',
+              field: 'checked',
+              cellRenderer: SelectCellRenderer,
+              cellRendererParams: {onSelectChange: this.onSelectChange},
+              width: 30,
             },
           ],
           defaultColDef: {
@@ -201,7 +158,8 @@ export default class ModalImportConfirm extends React.Component {
 
     custom_data_keys.map((e)=>{columns.columnDefs.push(
       {
-        headerName: e, field: e ,
+        headerName: e,
+        field: e ,
         headerComponent: CustomHeader,
         headerComponentParams:{
           onHeaderSelect: this.onHeaderSelect,
