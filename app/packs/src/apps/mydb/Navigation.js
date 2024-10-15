@@ -7,13 +7,10 @@ import Search from 'src/components/navigation/search/Search';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
 import ContextActions from 'src/components/contextActions/ContextActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import UIActions from 'src/stores/alt/actions/UIActions';
 import NavNewSession from 'src/components/navigation/NavNewSession';
 import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
-import NavigationModal from 'src/components/navigation/NavigationModal';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
@@ -24,23 +21,13 @@ export default class Navigation extends React.Component {
     this.state = {
       currentUser: null,
       genericEls: null,
-      modalProps: {
-        show: false,
-        title: '',
-        component: null,
-        action: null,
-        listSharedCollections: false,
-      },
       omniauthProviders: []
     };
     this.onChange = this.onChange.bind(this);
-    this.onUIChange = this.onUIChange.bind(this);
     this.toggleCollectionTree = this.toggleCollectionTree.bind(this);
-    this.updateModalProps = this.updateModalProps.bind(this);
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIChange);
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
     UserActions.fetchGenericEls();
@@ -48,7 +35,6 @@ export default class Navigation extends React.Component {
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIChange);
     UserStore.unlisten(this.onChange);
   }
 
@@ -78,23 +64,12 @@ export default class Navigation extends React.Component {
     }
   }
 
-  onUIChange(state) {
-    this.setState({
-      modalProps: state.modalParams
-    });
-  }
-
   toggleCollectionTree() {
     this.props.toggleCollectionTree();
   }
 
   token() {
     return DocumentHelper.getMetaContent('csrf-token');
-  }
-
-  updateModalProps(modalProps) {
-    this.setState({ modalProps });
-    UIActions.updateModalProps(modalProps);
   }
 
   navHeader() {
@@ -136,8 +111,7 @@ export default class Navigation extends React.Component {
 
   render() {
     const {
-      currentUser,
-      modalProps, genericEls, omniauthProviders, extraRules
+      currentUser, genericEls, omniauthProviders, extraRules
     } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
@@ -157,7 +131,6 @@ export default class Navigation extends React.Component {
               <ContextActions
                 customClass={customClass}
               />
-              <NavigationModal {...modalProps} />
             </>
           )}
         </Nav>
