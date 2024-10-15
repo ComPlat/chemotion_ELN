@@ -306,11 +306,13 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   selectUsers() {
-    let style = this.props.selectUsers ? {} : { display: 'none' };
+    const { selectUsers } = this.props;
+    if (!selectUsers) return null;
+
     let { selectedUsers } = this.state;
 
     return (
-      <Form.Group className="mb-3" style={style}>
+      <Form.Group className="mb-3">
         <Form.Label>Select Users to share with</Form.Label>
         <AsyncSelect
           id="share-users-select"
@@ -325,7 +327,8 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   render() {
-    const displayWarning = (this.state.permissionLevel || '') === '5' ? 'inline-block' : 'none';
+    const { permissionLevel = '' } = this.state;
+    const displayWarning = permissionLevel === '5';
 
     const { selectedUsers } = this.state;
     const hasSelectedUsers = selectedUsers != null && selectedUsers.length > 0
@@ -358,12 +361,12 @@ export default class ManagingModalSharing extends React.Component {
             <option value='4'>Import Elements</option>
             <option value='5'>Pass ownership</option>
           </Form.Select>
-          <div style={{
-            color: '#d9534f', fontSize: '12px', paddingLeft: '8px', paddingTop: '4px', display: displayWarning
-          }}
-          >
-            <i className="fa fa-exclamation-circle" aria-hidden="true" />&nbsp;Transfering ownership applies for all sub collections.
-          </div>
+          {displayWarning && (
+            <Form.Text>
+              <i className="fa fa-exclamation-circle me-1" aria-hidden="true" />
+              Transfering ownership applies for all sub collections.
+            </Form.Text>
+          )}
         </Form.Group>
         <Form.Group className="mb-3" controlId="sampleDetailLevelSelect">
           <Form.Label>Sample detail level</Form.Label>
