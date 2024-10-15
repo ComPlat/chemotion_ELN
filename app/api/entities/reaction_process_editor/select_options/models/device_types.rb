@@ -5,8 +5,6 @@ module Entities
     module SelectOptions
       module Models
         class DeviceTypes < Base
-          DEVICENAME_PREFIX = ENV.fetch('REACTION_PROCESS_EDITOR_DEVICENAME_PREFIX', '')
-
           def select_options(process_type:, category:)
             process_type_options(devices_csv).dig(process_type, category) || []
           end
@@ -40,27 +38,8 @@ module Entities
               {
                 label: subtype_name,
                 value: subtype_name,
-                devices: devices_options(subtype_devices),
+                devices: Models::Devices.instance.select_options_for(devices_csv: subtype_devices),
               }
-            end
-          end
-
-          def devices_options(devices)
-            devices.map do |device_csv|
-              device_name = device_csv['Device Name']
-                            .delete_prefix(DEVICENAME_PREFIX)
-                            .delete('/')
-
-              { label: device_name,
-                value: device_name,
-                detectors: device_detector_options(device_csv),
-                methods: Models::DeviceMethods.instance.select_options_for(device_name: device_name) }
-            end
-          end
-
-          def device_detector_options(device)
-            Array(device['Detectors']&.split(', ')).map do |detector|
-              { value: detector, label: detector }
             end
           end
 

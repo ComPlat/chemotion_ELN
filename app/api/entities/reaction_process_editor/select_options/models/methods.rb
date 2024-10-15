@@ -17,19 +17,28 @@ module Entities
           private
 
           def method_options(method_csv)
-            { label: method_label(method_csv),
+            {
+              label: method_label(method_csv),
               value: method_label(method_csv),
               detectors: SelectOptions::Models::MethodDetectors.instance.to_options(method_csv['Detectors']),
               mobile_phases: mobile_phases_options(method_csv['Mobile Phase']),
-              stationary_phase: stationary_phase_option(method_csv['Stationary Phase']),
+              stationary_phases: [stationary_phase_option(method_csv['Stationary Phase'])],
               default_volume: { value: method_csv['Def. Inj. Vol.'], unit: 'ml' },
-              description: method_csv['Description'] }
+              description: method_csv['Description'],
+              steps: steps(method_csv),
+            }
+          end
+
+          def steps(method_csv)
+            method_csv['Steps'] ? JSON.parse(method_csv['Steps']) : []
+          rescue JSON::ParserError
+            []
           end
 
           def mobile_phases_options(mobile_phases)
             mobile_phases.scan(REGEX_NAMES_AND_BRACKET_VALUES).map do |phase_match|
-              { label: phase_match[0], value: phase_match[0] }
-            end
+              options_for(phase_match[0])
+            end.flatten
           end
 
           def stationary_phase_option(phase)
@@ -38,10 +47,10 @@ module Entities
             label = phase_data[1].strip
             analysis_default_value = phase_data[2]
 
-            options = { label: label, value: label }
-            return options if analysis_default_value.blank?
+            option = { label: label, value: label }
+            return option if analysis_default_value.blank?
 
-            options.merge(stationary_phase_analysis_defaults(analysis_default_value))
+            option.merge(stationary_phase_analysis_defaults(analysis_default_value))
           end
 
           def stationary_phase_analysis_defaults(value)
