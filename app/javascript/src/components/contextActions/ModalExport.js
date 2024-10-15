@@ -1,6 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
-  Button, ButtonToolbar, Dropdown, DropdownButton
+  Button, ButtonToolbar, Dropdown, DropdownButton, Modal
 } from 'react-bootstrap';
 import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -277,46 +278,56 @@ export default class ModalExport extends React.Component {
   }
 
   render() {
+    const { onHide } = this.props;
     return (
-      <div>
-        <h4>Sample properties</h4>
-        <CheckBoxList items={this.state.columns.sample}
-          toggleCheckbox={this.toggleColumnsSample}
-          toggleCheckAll={this.toggleColumnsAllSample}
-          checkedAll={this.state.checkedAllColumns.sample}
-        />
-        <h4>Molecule properties</h4>
-        <CheckBoxList items={this.state.columns.molecule}
-          toggleCheckbox={this.toggleColumnsMolecule}
-          toggleCheckAll={this.toggleColumnsAllMolecule}
-          checkedAll={this.state.checkedAllColumns.molecule}
-        />
-        <h4>Reaction properties</h4>
-        <CheckBoxList items={this.state.columns.reaction}
-          toggleCheckbox={this.toggleColumnsReaction}
-          toggleCheckAll={this.toggleColumnsAllReaction}
-          checkedAll={this.state.checkedAllColumns.reaction}
-        />
-        <h4>Wellplate and well properties</h4>
-        <CheckBoxList items={this.state.columns.wellplate}
-          toggleCheckbox={this.toggleColumnsWellplate}
-          toggleCheckAll={this.toggleColumnsAllWellplate}
-          checkedAll={this.state.checkedAllColumns.wellplate}
-        />
-        <h4>Analyses</h4>
-        <CheckBoxList items={this.state.columns.analyses}
-          toggleCheckbox={this.toggleColumnsAnalyses}
-          toggleCheckAll={this.toggleColumnsAllAnalyses}
-          checkedAll={this.state.checkedAllColumns.analyses}
-        />
-        <h4>Chemicals</h4>
-        <CheckBoxList items={this.state.columns.chemicals}
-          toggleCheckbox={this.toggleColumnsChemicals}
-          toggleCheckAll={this.toggleColumnsAllChemicals}
-          checkedAll={this.state.checkedAllColumns.chemicals}
-        />
-        {this.buttonBar()}
-      </div>
+      <Modal show onHide={onHide} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Select Data to Export</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <h4>Sample properties</h4>
+          <CheckBoxList items={this.state.columns.sample}
+            toggleCheckbox={this.toggleColumnsSample}
+            toggleCheckAll={this.toggleColumnsAllSample}
+            checkedAll={this.state.checkedAllColumns.sample}
+          />
+          <h4>Molecule properties</h4>
+          <CheckBoxList items={this.state.columns.molecule}
+            toggleCheckbox={this.toggleColumnsMolecule}
+            toggleCheckAll={this.toggleColumnsAllMolecule}
+            checkedAll={this.state.checkedAllColumns.molecule}
+          />
+          <h4>Reaction properties</h4>
+          <CheckBoxList items={this.state.columns.reaction}
+            toggleCheckbox={this.toggleColumnsReaction}
+            toggleCheckAll={this.toggleColumnsAllReaction}
+            checkedAll={this.state.checkedAllColumns.reaction}
+          />
+          <h4>Wellplate and well properties</h4>
+          <CheckBoxList items={this.state.columns.wellplate}
+            toggleCheckbox={this.toggleColumnsWellplate}
+            toggleCheckAll={this.toggleColumnsAllWellplate}
+            checkedAll={this.state.checkedAllColumns.wellplate}
+          />
+          <h4>Analyses</h4>
+          <CheckBoxList items={this.state.columns.analyses}
+            toggleCheckbox={this.toggleColumnsAnalyses}
+            toggleCheckAll={this.toggleColumnsAllAnalyses}
+            checkedAll={this.state.checkedAllColumns.analyses}
+          />
+          <h4>Chemicals</h4>
+          <CheckBoxList items={this.state.columns.chemicals}
+            toggleCheckbox={this.toggleColumnsChemicals}
+            toggleCheckAll={this.toggleColumnsAllChemicals}
+            checkedAll={this.state.checkedAllColumns.chemicals}
+          />
+          {this.buttonBar()}
+        </Modal.Body>
+      </Modal>
     );
   }
 }
+
+ModalExport.propTypes = {
+  onHide: PropTypes.func,
+};

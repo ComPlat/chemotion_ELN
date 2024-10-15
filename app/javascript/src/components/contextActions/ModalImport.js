@@ -1,8 +1,12 @@
 import React from 'react';
-import { Button, ButtonToolbar, Form } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import {
+  Button, ButtonToolbar, Form, Modal
+} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class ModalImport extends React.Component {
@@ -15,16 +19,15 @@ export default class ModalImport extends React.Component {
   }
 
   handleClick() {
-    const { onHide, action } = this.props;
+    const { onHide } = this.props;
     const { file, importAsChemical } = this.state;
     const uiState = UIStore.getState();
-    const importSampleAs = importAsChemical ? 'chemical' : 'sample';
     const params = {
       file,
       currentCollectionId: uiState.currentCollection.id,
-      type: importSampleAs
+      type: importAsChemical ? 'chemical' : 'sample',
     };
-    action(params);
+    ElementActions.importSamplesFromFile(params);
     onHide();
 
     const notification = {
@@ -62,7 +65,7 @@ export default class ModalImport extends React.Component {
     return (
       <>
         <Dropzone
-          onDrop={attachment_file => this.handleFileDrop(attachment_file)}
+          onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
           style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
         >
           <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
@@ -71,6 +74,7 @@ export default class ModalImport extends React.Component {
         </Dropzone>
         <div style={{ paddingTop: 12 }}>
           <Form.Check
+            id="modal-check-import-as-chemical"
             type="checkbox"
             onChange={() => this.setState((prevState) => ({ importAsChemical: !prevState.importAsChemical }))}
             label="Import as a chemical inventory"
@@ -90,13 +94,24 @@ export default class ModalImport extends React.Component {
   render() {
     const { onHide } = this.props;
     return (
-      <div>
-        {this.dropzoneOrfilePreview()}
-        <ButtonToolbar className="justify-content-end mt-2 gap-1">
-          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
-        </ButtonToolbar>
-      </div>
+      <Modal show onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Import samples from file
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {this.dropzoneOrfilePreview()}
+          <ButtonToolbar className="justify-content-end mt-2 gap-1">
+            <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+            <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          </ButtonToolbar>
+        </Modal.Body>
+      </Modal>
     );
   }
 }
+
+ModalImport.propTypes = {
+  onHide: PropTypes.func.isRequired,
+};
