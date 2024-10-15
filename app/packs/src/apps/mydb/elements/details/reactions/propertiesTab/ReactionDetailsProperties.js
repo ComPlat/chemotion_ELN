@@ -103,7 +103,7 @@ export default class ReactionDetailsProperties extends Component {
           <Col sm={6}>
             <Form.Group>
               <Form.Label>Solvents (parts)</Form.Label>
-              <InputGroup className="z-0">
+              <InputGroup>
                 <DropdownButton
                   disabled={!permitOn(reaction)}
                   id="solvents_dd"
