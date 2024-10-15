@@ -13,7 +13,7 @@ module Entities
           private
 
           def devices_methods_options
-            @devices_methods_options = devices_methods_csv.map do |device_methods_csv|
+            devices_methods_csv.map do |device_methods_csv|
               device_name = device_methods_csv[0]['Device Name']
 
               { label: device_name,

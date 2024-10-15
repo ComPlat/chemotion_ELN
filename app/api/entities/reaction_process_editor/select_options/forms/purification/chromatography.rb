@@ -13,7 +13,7 @@ module Entities
                 step_modes: step_modes,
                 prod_modes: prod_modes,
                 jar_materials: jar_material_options,
-                solvent_options: solvent_options,
+                solvents: solvent_options,
                 equipment: equipment_options,
               }
             end
