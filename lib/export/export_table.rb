@@ -110,11 +110,25 @@ module Export
       }
     end
 
+    def flash_point_format(value)
+      return if value.blank?
+
+      flash_point = JSON.parse(value)
+      "#{flash_point['value']} #{flash_point['unit']}"
+    end
+
     def format_headers(headers)
       headers.map! do |header|
-        header.tr('_', ' ')
+        header = header.tr('_', ' ')
+        if header.scan('molarity value').first == 'molarity value'
+          'molarity'
+        elsif header == 'molarity unit'
+          nil
+        else
+          header
+        end
       end
-      headers
+      headers.compact
     end
 
     def generate_headers_sample

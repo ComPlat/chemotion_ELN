@@ -8,6 +8,10 @@ module Import
     attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :unprocessable,
                 :processed, :file_path, :collection_id, :current_user_id, :file_name
 
+    MOLARITY_UNIT = %r{m/L|mol/L|M}i.freeze
+    DENSITY_UNIT = %r{g/mL}i.freeze
+    FLASH_POINT_UNIT = /°C|F|K/i.freeze
+
     def initialize(file_path, collection_id, user_id, file_name, import_type)
       @rows = []
       @unprocessable = []
@@ -209,6 +213,17 @@ module Import
       "[#{lower_bound}, #{upper_bound}]"
     end
 
+    def format_molarity_value(value, type)
+      return if value.empty?
+
+      if type == 'value'
+        value.to_f
+      else
+        molarity_unit_exists = value.match?(MOLARITY_UNIT)
+        molarity_unit_exists ? 'M' : nil
+      end
+    end
+
     def assign_molecule_name_id(sample, value)
       split_names = value.split(';')
       molecule_name_id = MoleculeName.find_by(name: split_names[0]).id
@@ -217,32 +232,134 @@ module Import
 
     def handle_sample_fields(sample, db_column, value)
       case db_column
-      when 'cas'
-        sample['xref']['cas'] = value
+      when 'cas', 'refractive_index'
+        handle_xref_fields(sample, db_column, value)
       when 'mn.name'
         assign_molecule_name_id(sample, value)
+      when 'flash_point'
+        handle_flash_point(sample, value)
+      when 'density'
+        handle_density(sample, value)
+      when 'molarity'
+        handle_molarity(sample, value)
       else
-        sample[db_column] = value || ''
+        handle_default_fields(sample, db_column, value)
       end
     end
 
-    def process_fields(sample, db_column, field, row, molecule)
+    def handle_xref_fields(sample, db_column, value)
+      return sample if value.nil?
+
+      sample['xref'][db_column] ||= {}
+      sample['xref'][db_column] = value
+    end
+
+    def handle_flash_point(sample, value)
+      return sample if value[:unit].nil? || value[:value].nil?
+
+      sample['xref']['flash_point'] ||= {}
+      sample['xref']['flash_point']['value'] = value[:value]
+      sample['xref']['flash_point']['unit'] = value[:unit]
+    end
+
+    def handle_density(sample, value)
+      return sample if value[:unit].nil? || value[:value].nil?
+
+      sample['density'] = value[:value] if value[:unit] == 'g/mL'
+      sample
+    end
+
+    def handle_molarity(sample, value)
+      return sample if value[:unit].nil? || value[:value].nil?
+
+      sample['molarity_value'] = value[:value]
+      sample['molarity_unit'] = value[:unit]
+    end
+
+    def handle_default_fields(sample, db_column, value)
+      sample[db_column] = value || ''
+    end
+
+    # rubocop:disable Style/StringLiterals
+    def process_fields(sample, map_column, field, row, molecule)
+      array = ["\"cas\"", "\"purity\"", "\"density\""]
+      conditions = map_column.nil? || array.include?(map_column[1])
+      db_column = conditions ? field : map_column[0].sub('s.', '').delete!('"')
       molecule.create_molecule_name_by_user(row[field], current_user_id) if field == 'molecule name'
       process_sample_fields(sample, db_column, field, row)
     end
+    # rubocop:enable Style/StringLiterals
+
+    def process_value(value, db_column)
+      fields_with_units = %w[density molarity flash_point].freeze
+      comparison_values = %w[melting_point boiling_point].freeze
+      if comparison_values.include?(db_column)
+        format_to_interval_syntax(value)
+      elsif fields_with_units.include?(db_column)
+        to_value_unit_format(value, db_column)
+      else
+        value
+      end
+    end
+
+    def clean_value(value)
+      string = value&.gsub(/\s+/, ' ')
+      string&.strip
+    end
+
+    def extract_numerical_value(value)
+      cleaned_value = clean_value(value)
+      numerical_match = cleaned_value.scan(/\b\d+(?:\.\d+)?\b/).first if cleaned_value
+      numerical_match&.to_f
+    end
+
+    def unit_regex_pattern(db_column)
+      units = {
+        'density' => DENSITY_UNIT,
+        'molarity' => MOLARITY_UNIT,
+        'flash_point' => FLASH_POINT_UNIT,
+      }
+
+      if db_column == 'flash_point'
+        # Create a regex pattern for matching the unit as a standalone word
+        /(?<!\S)(#{units[db_column]})(?!\S)/
+      else
+        units[db_column]
+      end
+    end
+
+    def normalize_molarity_unit(unit, db_column)
+      molarity_units = %w[m/l mol/L].freeze
+      db_column == 'molarity' && molarity_units.include?(unit) ? 'M' : unit
+    end
+
+    def extract_unit(value, db_column)
+      cleaned_value = clean_value(value)
+      unit_pattern = unit_regex_pattern(db_column)
+      unit = cleaned_value&.match(unit_pattern)&.to_s
+
+      normalize_molarity_unit(unit, db_column)
+    end
+
+    def to_value_unit_format(value, db_column)
+      numerical_value = extract_numerical_value(value)
+      unit_match = extract_unit(value, db_column) || nil
+
+      return { value: nil, unit: nil } if numerical_value.nil? || unit_match.nil?
+
+      { value: numerical_value, unit: unit_match }
+    end
 
     def process_sample_fields(sample, db_column, field, row)
-      additional_columns = %w[cas mn.name].freeze
+      additional_columns = %w[cas mn.name refractive_index molarity flash_point].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
       excluded_column = %w[description solvent location].freeze
-      comparison_values = %w[melting_point boiling_point].freeze
-
-      value = row[field]
-      value = format_to_interval_syntax(value) if comparison_values.include?(db_column)
-      handle_sample_fields(sample, db_column, value)
-      sample[db_column] = '' if excluded_column.include?(db_column) && row[field].nil?
-      sample[db_column] = assign_decoupled_value(row[field]) if %w[decoupled].include?(db_column)
+      val = row[field]
+      value = process_value(val, db_column)
+      handle_sample_fields(sample, db_column, value) unless value.nil?
+      sample[db_column] = '' if excluded_column.include?(db_column) && val.nil?
+      sample[db_column] = assign_decoupled_value(val) if %w[decoupled].include?(db_column)
     end
 
     def assign_decoupled_value(value)
@@ -280,19 +397,16 @@ module Import
       sample
     end
 
-    # rubocop:disable Style/StringLiterals
     def sample_save(row, molfile, molecule)
       sample = create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       stereo = {}
       header.each do |field|
         stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
         map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
-        db_column = map_column.nil? || map_column[1] == "\"cas\"" ? field : map_column[0].sub('s.', '').delete!('"')
-        process_fields(sample, db_column, field, row, molecule)
+        process_fields(sample, map_column, field, row, molecule)
       end
       validate_sample_and_save(sample, stereo, row)
     end
-    # rubocop:enable Style/StringLiterals
 
     def process_all_rows
       (2..xlsx.last_row).each do |data|
