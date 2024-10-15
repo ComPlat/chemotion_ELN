@@ -109,6 +109,7 @@ export default class ReactionDetailsProperties extends Component {
                   id="solvents_dd"
                   onSelect={this.handleOnSolventSelect}
                   variant="light"
+                  title={reaction.tlc_solvents || ""}
                 >
                   {solventsItems}
                 </DropdownButton>
