@@ -146,7 +146,7 @@ function GeneralMaterialGroup({
     reagentDd = (
       <Select
         isDisabled={!permitOn(reaction)}
-        className="form-control-sm"
+        className="mb-2"
         options={reagentList}
         placeholder="Reagents"
         onChange={createReagentForReaction}
