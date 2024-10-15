@@ -31,8 +31,21 @@ const basic_image_structure = {
 };
 
 const list_of_shapes_base = [
-  "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTAiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIiAgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+Cjwvc3ZnPg==",
-  "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
+  null,
+
+];
+
+const template_list = [
+  null,
+  {
+    "type": "image",
+    "format": "image/svg+xml",
+    "boundingBox": {
+      "width": 1.8750000000000018,
+      "height": 0.7999999999999936
+    },
+    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
+  }
 ];
 
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
@@ -74,12 +87,12 @@ const KetcherEditor = forwardRef((props, ref) => {
       const alias = lines[i];
       if (three_parts_patten.test(alias)) {
         const splits = alias.split("    ");
-        const alias_split = parseInt(splits[0].split("_")[2]);
-        if (list_of_shapes_base[alias_split]) {
+        const alias_split = parseInt(splits[0].split("_")[1]);
+        if (template_list[alias_split]) {
           const bb = basic_image_structure;
           bb.boundingBox.height = parseFloat(splits[1]);
           bb.boundingBox.width = parseFloat(splits[2]);
-          bb.data = list_of_shapes_base[alias_split];
+          bb.data = template_list[alias_split].data;
 
           // coping coordination from atom location
           const atom_info = lines[i - 1].split("   ");
@@ -344,27 +357,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to return a new image in imagesList with a location
   const prepareImageFromTemplateList = (idx, location) => {
-    const template_list = [
-      null,
-      {
-        "type": "image",
-        "format": "image/svg+xml",
-        "boundingBox": {
-          "width": 1.8750000000000018,
-          "height": 0.7999999999999936
-        },
-        "data": "PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTAiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIiAgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+Cjwvc3ZnPg=="
-      },
-      {
-        "type": "image",
-        "format": "image/svg+xml",
-        "boundingBox": {
-          "width": 1.1749999999999998,
-          "height": 1.0999999999999943
-        },
-        "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
-      }
-    ];
+
     template_list[idx].boundingBox.x = location[0];
     template_list[idx].boundingBox.y = location[1];
     template_list[idx].boundingBox.z = location[2];
