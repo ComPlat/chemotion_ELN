@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button, ButtonToolbar } from 'react-bootstrap';
+import { Form, Button, ButtonToolbar, Modal } from 'react-bootstrap';
+
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 export default class ManagingModalDelete extends React.Component {
   constructor(props) {
@@ -11,12 +13,11 @@ export default class ManagingModalDelete extends React.Component {
 
     this.handleCheck = this.handleCheck.bind(this);
     this.handleClick = this.handleClick.bind(this);
-    this.onHide = this.onHide.bind(this);
   }
 
   handleClick() {
-    const { onHide, action } = this.props;
-    action(this.state);
+    const { onHide } = this.props;
+    ElementActions.deleteElements(this.state);
     onHide();
   }
 
@@ -28,38 +29,40 @@ export default class ManagingModalDelete extends React.Component {
     });
   }
 
-  onHide() {
-    const { onHide } = this.props;
-    onHide();
-  }
-
   render() {
     const { deleteSubsamples } = this.state;
+    const { onHide } = this.props;
 
     return (
-      <Form>
-        <Form.Group className="mb-3">
-          <Form.Check
-            type="checkbox"
-            onChange={this.handleCheck}
-            checked={deleteSubsamples}
-            label="Also delete reaction associated samples&nbsp;"
-          />
-          <Form.Text>
-            If left unchecked, only the solvent and reactant samples of the selected reactions will be deleted
-          </Form.Text>
-        </Form.Group>
+      <Modal show centered onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete from all Collections?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Check
+                type="checkbox"
+                onChange={this.handleCheck}
+                checked={deleteSubsamples}
+                label="Also delete reaction associated samples&nbsp;"
+              />
+              <Form.Text>
+                If left unchecked, only the solvent and reactant samples of the selected reactions will be deleted
+              </Form.Text>
+            </Form.Group>
 
-        <ButtonToolbar>
-          <Button variant="primary" onClick={this.onHide}>Cancel</Button>
-          <Button variant="warning" onClick={this.handleClick}>Delete</Button>
-        </ButtonToolbar>
-      </Form>
+            <ButtonToolbar>
+              <Button variant="primary" onClick={onHide}>Cancel</Button>
+              <Button variant="warning" onClick={this.handleClick}>Delete</Button>
+            </ButtonToolbar>
+          </Form>
+        </Modal.Body>
+      </Modal>
     );
   }
 }
 
 ManagingModalDelete.propTypes = {
-  action: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired,
 };
