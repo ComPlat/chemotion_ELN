@@ -1,11 +1,6 @@
 import React from 'react';
-import { ButtonGroup } from 'react-bootstrap';
+import { Dropdown, DropdownButton, Button, ButtonGroup, Modal } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import {
-  ShareButton,
-  MoveOrAssignButton,
-  RemoveOrDeleteButton
-} from 'src/components/managingActions/ManagingActionButtons';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -15,7 +10,6 @@ import ManagingModalSharing from 'src/components/managingActions/ManagingModalSh
 import ManagingModalCollectionActions from 'src/components/managingActions/ManagingModalCollectionActions';
 import ManagingModalDelete from 'src/components/managingActions/ManagingModalDelete';
 import ManagingModalRemove from 'src/components/managingActions/ManagingModalRemove';
-import ManagingModalTopSecret from 'src/components/managingActions/ManagingModalTopSecret';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
@@ -24,6 +18,7 @@ export default class ManagingActions extends React.Component {
     super(props);
     const { currentUser, genericEls } = UserStore.getState();
     this.state = {
+      showModalOfType: null,
       currentUser,
       currentCollection: { id: 0 },
       sharing_allowed: false,
@@ -33,11 +28,12 @@ export default class ManagingActions extends React.Component {
       genericEls: genericEls
     };
 
-    this.handleButtonClick = this.handleButtonClick.bind(this);
     this.onChange = this.onChange.bind(this);
-
     this.onUserChange = this.onUserChange.bind(this);
     this.onPermissionChange = this.onPermissionChange.bind(this);
+
+    this.showModal = this.showModal.bind(this);
+    this.hideModal = this.hideModal.bind(this);
   }
 
   componentDidMount() {
@@ -104,45 +100,64 @@ export default class ManagingActions extends React.Component {
       this.state.currentCollection.is_sync_to_me !== is_sync_to_me;
   }
 
-  // eslint-disable-next-line react/sort-comp
-  handleButtonClick(type) {
-    const modalProps = { show: true, action: '', listSharedCollections: false };
-    switch (type) {
-      case 'share':
-        if (!this.state.is_top_secret) {
-          modalProps.title = "Sharing";
-          modalProps.component = ManagingModalSharing;
-        } else {
-          modalProps.title = "Sharing not allowed";
-          modalProps.component = ManagingModalTopSecret;
-        }
-        break;
-      case 'move':
-        modalProps.title = "Move to Collection";
-        modalProps.component = ManagingModalCollectionActions;
-        modalProps.action = ElementActions.updateElementsCollection;
-        modalProps.listSharedCollections = true;
-        break;
-      case 'remove':
-        modalProps.title = "Remove selected elements from this Collection?";
-        modalProps.component = ManagingModalRemove;
-        modalProps.action = ElementActions.removeElementsCollection;
-        break;
-      case 'assign':
-        modalProps.title = "Assign to Collection";
-        modalProps.component = ManagingModalCollectionActions;
-        modalProps.action = ElementActions.assignElementsCollection;
-        modalProps.listSharedCollections = false;
-        break;
-      case 'delete':
-        modalProps.title = "Delete from all Collections?";
-        modalProps.component = ManagingModalDelete;
-        modalProps.action = ElementActions.deleteElements;
-        break;
-      default:
-    }
+  showModal(type) {
+    this.setState({ showModalOfType: type });
+  }
 
-    this.props.updateModalProps(modalProps);
+  hideModal() {
+    this.setState({ showModalOfType: null });
+  }
+
+  renderTopSecretModal() {
+    return (
+      <Modal
+        centered
+        show={true}
+        onHide={this.hideModal}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Sharing not allowed</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          One of the selected elements contains one or several samples marked as top secret.
+        </Modal.Body>
+      </Modal>
+    );
+  }
+
+  renderModal() {
+    const { showModalOfType, is_top_secret } = this.state;
+    switch (showModalOfType) {
+      case 'share':
+        return is_top_secret
+          ? this.renderTopSecretModal()
+          : <ManagingModalSharing onHide={this.hideModal} />;
+
+      case 'move':
+        return <ManagingModalCollectionActions
+          title="Move to Collection"
+          action={ElementActions.updateElementsCollection}
+          listSharedCollections={true}
+          onHide={this.hideModal}
+        />;
+
+      case 'assign':
+        return <ManagingModalCollectionActions
+          title="Assign to Collection"
+          action={ElementActions.assignElementsCollection}
+          listSharedCollections={false}
+          onHide={this.hideModal}
+        />;
+
+      case 'remove':
+        return <ManagingModalRemove onHide={this.hideModal} />;
+
+      case 'delete':
+        return <ManagingModalDelete onHide={this.hideModal} />;
+
+      default:
+        return null;
+    }
   }
 
   render() {
@@ -159,31 +174,70 @@ export default class ManagingActions extends React.Component {
     const shareDisabled = noSel || !sharing_allowed;
 
     return (
-      <ButtonGroup className="d-flex align-items-center">
-        <MoveOrAssignButton
-          assignDisabled={assignDisabled}
-          moveDisabled={moveDisabled}
-          onClick={this.handleButtonClick}
-          customClass={customClass}
-        />
-        <RemoveOrDeleteButton
-          removeDisabled={removeDisabled}
-          deleteDisabled={deleteDisabled}
-          onClick={this.handleButtonClick}
-          customClass={customClass}
-        />
-        <ShareButton
-          isDisabled={shareDisabled}
-          onClick={this.handleButtonClick}
-          customClass={customClass}
-        />
-      </ButtonGroup>
+      <>
+        <ButtonGroup className="d-flex align-items-center">
+          <DropdownButton
+            as={ButtonGroup}
+            variant={customClass ? null : 'success'}
+            className={customClass}
+            title={<i className="fa fa-arrow-right" />}
+            id="move-or-assign-btn"
+            disabled={assignDisabled && moveDisabled}
+          >
+            <Dropdown.Item
+              onClick={() => this.showModal('move')}
+              disabled={moveDisabled}
+            >
+              Move to Collection
+            </Dropdown.Item>
+            <Dropdown.Item
+              onClick={() => this.showModal('assign')}
+              disabled={assignDisabled}
+            >
+              Assign to Collection
+            </Dropdown.Item>
+          </DropdownButton>
+
+          <DropdownButton
+            as={ButtonGroup}
+            variant={customClass ? null : 'warning'}
+            className={customClass}
+            title={<i className="fa fa-minus-square" />}
+            id="remove-or-delete-btn"
+            disabled={removeDisabled && deleteDisabled}
+          >
+            <Dropdown.Item
+              onClick={() => this.showModal('remove')}
+              disabled={removeDisabled}
+            >
+              Remove from current Collection
+            </Dropdown.Item>
+            <Dropdown.Item
+              onClick={() => this.showModal('delete')}
+              disabled={deleteDisabled}
+            >
+              Remove from all Collections
+            </Dropdown.Item>
+          </DropdownButton>
+
+          <Button
+            variant={customClass ? null : 'info'}
+            id="share-btn"
+            disabled={shareDisabled}
+            onClick={() => this.showModal('share')}
+            className={customClass}
+          >
+            <i className="fa fa-share-alt" />
+          </Button>
+        </ButtonGroup>
+
+        {this.renderModal()}
+      </>
     );
   }
 }
 
 ManagingActions.propTypes = {
-  updateModalProps: PropTypes.func.isRequired,
   customClass: PropTypes.string,
 };
 
