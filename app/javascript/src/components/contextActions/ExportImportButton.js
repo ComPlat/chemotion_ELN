@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
@@ -10,6 +10,7 @@ import ModalReactionExport from 'src/components/contextActions/ModalReactionExpo
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 const editMetadataFunction = () => {
@@ -25,9 +26,34 @@ const editMetadataFunction = () => {
   });
 };
 
-function ExportImportButton({ isDisabled, customClass }) {
+function ExportImportButton({ customClass }) {
   const [modal, showModal] = useState(null);
   const hideModal = () => showModal(null);
+
+  const [isDisabled, setIsDisabled] = useState(true);
+
+  const onUIStoreChange = ({ currentCollection }) => {
+    if (!currentCollection) {
+      setIsDisabled(true);
+      return;
+    }
+
+    const {
+      label, is_locked, is_shared, permission_level
+    } = currentCollection;
+    const newIsDisabled = (
+      (label === 'All' && is_locked)
+      || (is_shared === true && permission_level < PermissionConst.ImportElements)
+    );
+
+    setIsDisabled({ isDisabled: newIsDisabled });
+  };
+
+  useEffect(() => {
+    UIStore.listen(onUIStoreChange);
+    onUIStoreChange(UIStore.getState());
+    return () => UIStore.unlisten(onUIStoreChange);
+  }, []);
 
   const modalContent = ((m) => {
     switch (m) {
@@ -117,12 +143,10 @@ function ExportImportButton({ isDisabled, customClass }) {
 }
 
 ExportImportButton.propTypes = {
-  isDisabled: PropTypes.bool,
   customClass: PropTypes.string,
 };
 
 ExportImportButton.defaultProps = {
-  isDisabled: false,
   customClass: null,
 };
 
