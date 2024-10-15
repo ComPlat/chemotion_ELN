@@ -4,6 +4,16 @@ $info: #5bc0de;
 $warning: #f0ad4e;
 $danger: #d9534f;
 
+$zindex-levels: (
+  n1: -1,
+  0: 0,
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+);
+
 @import "bootstrap/functions";
 @import "bootstrap/variables";
 @import "bootstrap/mixins";

@@ -50,3 +50,7 @@
   border-top: var(--bs-popover-border-width) solid var(--bs-popover-border-color);
   border-radius: 0;
 }
+
+.input-group {
+  z-index: 0;
+}
