@@ -13,6 +13,8 @@
 #  waste       :boolean          default(FALSE)
 #  coefficient :float            default(1.0)
 #  show_label  :boolean          default(FALSE), not null
+#  created_at  :datetime         default(LOCALTIMESTAMP), not null
+#  updated_at  :datetime         default(LOCALTIMESTAMP), not null
 #
 # Indexes
 #
@@ -21,6 +23,7 @@
 #
 
 class ReactionsSample < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   belongs_to :reaction, optional: true
   belongs_to :sample, optional: true
