@@ -116,7 +116,7 @@ export default class ToolbarTemplateCreator extends React.Component {
     const { updateTextTemplates } = this.props;
     if (!updateTextTemplates) return;
 
-    const iconTemplates = this.toolbarSelectRef.current.state.value;
+    const iconTemplates = this.toolbarSelectRef.current.state.selectValue;
     const userTemplate = { _toolbar: iconTemplates.map(n => n.value) };
 
     const { dropdownTemplates } = this.state;
@@ -171,6 +171,7 @@ export default class ToolbarTemplateCreator extends React.Component {
             />
             <Select
               className="me-2 col-10 f-5"
+              ref={selectRef.ref}
               options={options}
               defaultValue={ddSelected}
               onChange={e => this.onChangeDropdown('DropdownData', e, id)}
@@ -218,6 +219,7 @@ export default class ToolbarTemplateCreator extends React.Component {
             />
             <Select
               className="me-5 col-10 f-5"
+              ref={this.toolbarSelectRef}
               defaultValue={iconSelected}
               options={options}
               isMulti
