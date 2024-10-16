@@ -24,7 +24,6 @@ export default class Navigation extends React.Component {
     super(props);
     this.state = {
       currentUser: null,
-      genericEls: null,
       modalProps: {
         show: false,
         title: '',
@@ -59,11 +58,6 @@ export default class Navigation extends React.Component {
     if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
-      });
-    }
-    if (this.state.genericEls === null) {
-      this.setState({
-        genericEls: state.genericEls
       });
     }
     if (state.omniauthProviders !== this.state.omniauthProviders) {
@@ -141,8 +135,7 @@ export default class Navigation extends React.Component {
 
   render() {
     const {
-      currentUser,
-      modalProps, genericEls, omniauthProviders, extraRules
+      currentUser, modalProps, omniauthProviders, extraRules
     } = this.state;
     const { isHidden } = this.props;
     const { profile } = UserStore.getState();
@@ -160,7 +153,6 @@ export default class Navigation extends React.Component {
                 <ManagingActions
                   updateModalProps={this.updateModalProps}
                   customClass={customClass}
-                  genericEls={genericEls}
                 />
                 <ContextActions
                   updateModalProps={this.updateModalProps}

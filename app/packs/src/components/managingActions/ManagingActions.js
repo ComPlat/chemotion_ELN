@@ -79,7 +79,7 @@ export default class ManagingActions extends React.Component {
       deletion_allowed: false,
       remove_allowed: false,
       is_top_secret: false,
-      genericEls: []
+      genericEls: genericEls
     };
 
     this.handleButtonClick = this.handleButtonClick.bind(this);
@@ -252,10 +252,8 @@ export default class ManagingActions extends React.Component {
 ManagingActions.propTypes = {
   updateModalProps: PropTypes.func.isRequired,
   customClass: PropTypes.string,
-  genericEls: PropTypes.array
 };
 
 ManagingActions.defaultProps = {
   customClass: null,
-  genericEls: []
 };
