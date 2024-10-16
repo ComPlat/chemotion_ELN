@@ -75,18 +75,6 @@ class App extends Component {
     );
   }
 
-  removeLocalStorageEventListener() {
-    window.removeEventListener('storage', this.storageListener);
-  }
-
-  storageListener() {
-    window.addEventListener(
-      'storage',
-      OnEventListen,
-      false
-    );
-  }
-
   handleUiStoreChange(state) {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
