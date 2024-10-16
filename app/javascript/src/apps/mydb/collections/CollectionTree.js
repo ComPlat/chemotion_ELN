@@ -1,15 +1,9 @@
 import React from 'react';
-import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import Aviator from 'aviator';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
-
-const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
 export default class CollectionTree extends React.Component {
   constructor(props) {
@@ -33,7 +27,6 @@ export default class CollectionTree extends React.Component {
     };
 
     this.onChange = this.onChange.bind(this);
-    this.handleCollectionManagementToggle = this.handleCollectionManagementToggle.bind(this);
   }
 
   componentDidMount() {
@@ -204,55 +197,17 @@ export default class CollectionTree extends React.Component {
     )
   }
 
-  handleCollectionManagementToggle() {
-    UIActions.toggleCollectionManagement();
-    const { showCollectionManagement, currentCollection, isSync } = UIStore.getState();
-    if (showCollectionManagement) {
-      Aviator.navigate('/collection/management');
-    } else {
-      if (currentCollection == null || currentCollection.label == 'All') {
-        Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
-      } else {
-        Aviator.navigate(isSync
-          ? `/scollection/${currentCollection.id}/${this.urlForCurrentElement()}`
-          : `/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
-      }
-    }
-  }
-
-  urlForCurrentElement() {
-    const { currentElement } = ElementStore.getState();
-    if (currentElement) {
-      if (currentElement.isNew) {
-        return `${currentElement.type}/new`;
-      }
-      else {
-        return `${currentElement.type}/${currentElement.id}`;
-      }
-    }
-    else {
-      return '';
-    }
-  }
-
   render() {
     const { ownCollectionVisible } = this.state;
 
     return (
       <div>
         <div className="tree-view">
-          <div className="take-ownership-btn">
-            <Button
-              id="collection-management-button"
-              size="xsm"
-              variant="danger"
-              title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
-              onClick={this.handleCollectionManagementToggle}
-            >
-              <i className="fa fa-cog" />
-            </Button>
-          </div>
-          <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
+          <OverlayTrigger
+            placement="top"
+            delayShow={1000}
+            overlay={<Tooltip>Toggle own collections</Tooltip>}
+          >
             <div
               className="title bg-white"
               onClick={() => this.handleSectionToggle('ownCollectionVisible')}
