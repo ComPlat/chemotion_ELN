@@ -210,24 +210,19 @@ export default class ElementDetails extends Component {
     }
   }
 
-  tabTitle(el, elKey) {
-    const { activeKey } = this.state;
-    const focusing = elKey === activeKey;
-    const variant = el.isPendingToSave ? 'info' : 'primary';
+  tabTitle(el) {
 
     const tab = tabInfoHash[el.type] ?? {};
     const title = tab.title ?? el.title();
 
-    const iconElement = el.element_klass
-      ? (<i className={`${el.element_klass.icon_name}`} />)
-      : tab.iconEl ?? (<i className={`icon-${el.type}`} />);
-    const icon = focusing ? iconElement : (<Badge bg={variant}>{iconElement}</Badge>);
+    const spanClassName = el.isPendingToSave ? 'unsaved' : '';
+    const iconClassName = 'me-1 ' + (el.element_klass ? el.element_klass.icon_name : tab.iconEl ?? 'icon-' + el.type);
 
     return (
-      <div className="d-flex align-items-baseline gap-2">
-        {icon}
+      <span className={spanClassName}>
+        <i className={iconClassName} />
         {title}
-      </div>
+      </span>
     );
   }
 
@@ -243,7 +238,7 @@ export default class ElementDetails extends Component {
           key={`${el.type}-${el.id}`}
           eventKey={i}
           unmountOnExit
-          title={this.tabTitle(el, i)}
+          title={this.tabTitle(el)}
         >
           {this.content(el)}
         </Tab>
@@ -258,6 +253,7 @@ export default class ElementDetails extends Component {
           id="elements-tabs"
           activeKey={activeKey}
           onSelect={DetailActions.select}
+          className="sheet-tabs"
         >
           {selectedElements}
         </Tabs>
