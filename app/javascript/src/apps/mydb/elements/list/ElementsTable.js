@@ -28,6 +28,7 @@ import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineCont
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
+import Sheet from 'src/components/common/Sheet';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -589,8 +590,8 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="elements-table-header">
-        <div className="select-all">
+      <Sheet className="elements-table-header">
+        <div className="d-flex gap-1 align-items-center">
           <ElementAllCheckbox type={type} />
         </div>
         <div
@@ -628,7 +629,7 @@ export default class ElementsTable extends React.Component {
           </div>
           {typeSpecificHeader}
         </div>
-      </div>
+      </Sheet>
     );
   };
 
@@ -680,10 +681,10 @@ export default class ElementsTable extends React.Component {
     return (
       <div ref={this.elementRef} className="flex-grow-1 h-0 overflow-y-auto pb-3">
         {elementsTableEntries}
-        <div className="mt-2 d-flex flex-row-reverse justify-content-between">
-          {this.renderNumberOfResultsInput()}
+        <Sheet className="mt-2 d-flex justify-content-between">
           {this.renderPagination()}
-        </div>
+          {this.renderNumberOfResultsInput()}
+        </Sheet>
       </div>
     );
   }
