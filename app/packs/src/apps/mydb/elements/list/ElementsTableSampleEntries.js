@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Table, Button, Tooltip, OverlayTrigger, Label
+  Table, Button, Tooltip, OverlayTrigger, Label, Badge,
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
@@ -112,6 +112,22 @@ const showDecoupledIcon = (sample) => (sample.decoupled ? (
   <div className="decoupled-icon" onClick={(e) => e.stopPropagation()}>
     <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
       <Label><i className="fa fa-chain-broken" aria-hidden="true" /></Label>
+    </OverlayTrigger>
+  </div>
+) : null);
+
+const showInventoryLabelIcon = (sample) => (sample.inventory_sample && sample.xref.inventory_label ? (
+  <div>
+    <OverlayTrigger
+      placement="top"
+      overlay={<Tooltip id="sample_inventory_label">Inventory Label</Tooltip>}
+    >
+      <Badge
+        className="sample-entries-inventory-label-icon"
+        key={`inventory_label_${sample.xref.inventory_label}`}
+      >
+        {sample.xref.inventory_label}
+      </Badge>
     </OverlayTrigger>
   </div>
 ) : null);
@@ -369,6 +385,7 @@ export default class ElementsTableSampleEntries extends Component {
               float: 'right', display: 'flex', alignItems: 'center', gap: '5px'
             }}
             >
+              {showInventoryLabelIcon(sample)}
               <div style={{ marginTop: '1px' }}><CommentIcon commentCount={sample.comment_count} /></div>
               <div style={{ marginTop: '3px' }}><ShowUserLabels element={sample} /></div>
               <div style={{ marginTop: '3px' }}><XvialIcon label={sample.external_label} /></div>
