@@ -1,3 +1,8 @@
+import React, { Component } from 'react';
+import {
+  Tabs, Tab, Button, Badge
+} from 'react-bootstrap';
+import classNames from 'classnames';
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -7,7 +12,6 @@ import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
 //import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
-import React, { Component } from 'react';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
 import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
@@ -16,9 +20,6 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
-import {
-  Tabs, Tab, Button, Badge
-} from 'react-bootstrap';
 
 const tabInfoHash = {
   metadata: {
@@ -209,24 +210,19 @@ export default class ElementDetails extends Component {
     }
   }
 
-  tabTitle(el, elKey) {
-    const { activeKey } = this.state;
-    const focusing = elKey === activeKey;
-    const variant = el.isPendingToSave ? 'info' : 'primary';
+  tabTitle(el) {
 
     const tab = tabInfoHash[el.type] ?? {};
     const title = tab.title ?? el.title();
 
-    const iconElement = el.element_klass
-      ? (<i className={`${el.element_klass.icon_name}`} />)
-      : tab.iconEl ?? (<i className={`icon-${el.type}`} />);
-    const icon = focusing ? iconElement : (<Badge bg={variant}>{iconElement}</Badge>);
+    const spanClassName = el.isPendingToSave ? 'unsaved' : '';
+    const iconClassName = 'me-1 ' + (el.element_klass ? el.element_klass.icon_name : tab.iconEl ?? 'icon-' + el.type);
 
     return (
-      <div className="d-flex align-items-baseline gap-2">
-        {icon}
+      <span className={spanClassName}>
+        <i className={iconClassName} />
         {title}
-      </div>
+      </span>
     );
   }
 
@@ -242,18 +238,22 @@ export default class ElementDetails extends Component {
           key={`${el.type}-${el.id}`}
           eventKey={i}
           unmountOnExit
-          title={this.tabTitle(el, i)}
+          title={this.tabTitle(el)}
         >
           {this.content(el)}
         </Tab>
       ));
 
     return (
-      <div className={fullScreen ? "full-screen" : "normal-screen"}>
+      <div className={classNames(
+        "tabs-container--with-full-height",
+        { "full-screen": fullScreen }
+      )}>
         <Tabs
           id="elements-tabs"
           activeKey={activeKey}
           onSelect={DetailActions.select}
+          className="sheet-tabs"
         >
           {selectedElements}
         </Tabs>
