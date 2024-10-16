@@ -22,9 +22,11 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      isSidebarCollapsed: false,
       showCollectionManagement: false,
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
+    this.toggleSidebar = this.toggleSidebar.bind(this);
   }
 
   componentDidMount() {
@@ -74,6 +76,12 @@ class App extends Component {
     }
   }
 
+  toggleSidebar() {
+    this.setState((prevState) => ({
+      isSidebarCollapsed: !prevState.isSidebarCollapsed
+    }));
+  }
+
   patchExternalLibraries() {
     const { plugins } = require('@citation-js/core');
     plugins.input.add('@doi/api', {
@@ -98,13 +106,18 @@ class App extends Component {
   }
 
   renderContent() {
+    const { isSidebarCollapsed } = this.state;
+    const sidebarCols = isSidebarCollapsed ? 1 : 2;
     return (
       <Container fluid className="mydb-app vh-100">
         <Row className="h-100">
-          <Col xs={2}>
-            <Sidebar />
+          <Col xs={sidebarCols}>
+            <Sidebar
+              isCollapsed={isSidebarCollapsed}
+              toggleCollapse={this.toggleSidebar}
+            />
           </Col>
-          <Col xs={10} className="d-flex flex-column">
+          <Col xs={12 - sidebarCols} className="d-flex flex-column">
             <Topbar />
             {this.mainContent()}
           </Col>
