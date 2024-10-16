@@ -19,9 +19,6 @@ export default class ToolbarDropdown extends React.Component {
     this.pickerSpan = React.createRef();
     this.pickerLabel = React.createRef();
 
-    const genId = Math.random().toString().substr(2, 10);
-    this.ddQuillId = `ql-dropdown-${genId}`;
-
     const sheets = document.styleSheets;
     this.sheet = sheets[sheets.length - 1];
 
@@ -79,7 +76,7 @@ export default class ToolbarDropdown extends React.Component {
 
     const { expanded } = this.state;
     const expandedClass = expanded ? 'ql-expanded' : '';
-    const className = `${this.ddQuillId} ql-picker ${expandedClass}`;
+    const className = `ql-picker ${expandedClass}`;
 
     return (
       <span className="ql-formats">
