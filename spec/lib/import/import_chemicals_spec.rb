@@ -53,7 +53,7 @@ RSpec.describe Import::ImportChemicals do
     end
 
     it 'add volume value and unit' do
-      described_class.set_chemical_amount_or_volume(chemical, 'volume', '6.4 mg')
+      described_class.set_chemical_amount_or_volume(chemical, 'volume', '6.4 ml')
       expect(chemical['chemical_data'][0]['volume']['value']).to eq(6.4)
       expect(chemical['chemical_data'][0]['volume']['unit']).to eq('ml')
     end
