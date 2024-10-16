@@ -20,7 +20,6 @@ export default class Navigation extends React.Component {
     super(props);
     this.state = {
       currentUser: null,
-      genericEls: null,
       omniauthProviders: []
     };
     this.onChange = this.onChange.bind(this);
@@ -44,11 +43,6 @@ export default class Navigation extends React.Component {
     if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
-      });
-    }
-    if (this.state.genericEls === null) {
-      this.setState({
-        genericEls: state.genericEls
       });
     }
     if (state.omniauthProviders !== this.state.omniauthProviders) {
@@ -111,7 +105,7 @@ export default class Navigation extends React.Component {
 
   render() {
     const {
-      currentUser, genericEls, omniauthProviders, extraRules
+      currentUser, omniauthProviders, extraRules
     } = this.state;
     return (
       <Navbar className="bg-gray-200 justify-content-between px-4">
@@ -122,7 +116,7 @@ export default class Navigation extends React.Component {
           </div>
           {currentUser && (
             <>
-              <ManagingActions genericEls={genericEls} />
+              <ManagingActions />
               <ContextActions />
             </>
           )}
