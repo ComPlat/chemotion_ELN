@@ -43,13 +43,19 @@ RSpec.describe Import::ImportChemicals do
     end
   end
 
-  describe '.sets amount of chemical' do
+  describe '.sets amount and volume of chemical' do
     let(:chemical) { { 'chemical_data' => [{}] } }
 
     it 'add amount value and unit' do
-      described_class.set_amount(chemical, '10mg')
+      described_class.set_chemical_amount_or_volume(chemical, 'amount', '10 mg')
       expect(chemical['chemical_data'][0]['amount']['value']).to eq(10.0)
       expect(chemical['chemical_data'][0]['amount']['unit']).to eq('mg')
+    end
+
+    it 'add volume value and unit' do
+      described_class.set_chemical_amount_or_volume(chemical, 'volume', '6.4 mg')
+      expect(chemical['chemical_data'][0]['volume']['value']).to eq(6.4)
+      expect(chemical['chemical_data'][0]['volume']['unit']).to eq('ml')
     end
   end
 
