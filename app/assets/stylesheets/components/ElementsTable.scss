@@ -12,14 +12,11 @@
 }
 
 .elements-table-header {
-  @extend .border;
-  @extend .border-top-0;
   @extend .p-2;
   @extend .d-flex;
   @extend .align-items-center;
   @extend .justify-content-between;
   min-height: 40px;
-  background-color: $gray-300;
 }
 
 @media (max-width: 600px) {
