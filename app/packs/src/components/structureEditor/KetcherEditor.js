@@ -1,6 +1,6 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import PropTypes, { object } from 'prop-types';
+import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
 let FILOStack = [];
@@ -14,8 +14,9 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
-const skip_template_name_hide = false;
+const skip_template_name_hide = true;
 const skip_image_layering = false;
+const [standard_height, standard_width] = [1.0250000000000006, 1.0749999999999995];
 
 const basic_image_structure = {
   "type": "image",
@@ -36,8 +37,17 @@ const template_list = [
     "type": "image",
     "format": "image/svg+xml",
     "boundingBox": {
-      "width": 1.8750000000000018,
-      "height": 0.7999999999999936
+      "width": standard_width,
+      "height": standard_height
+    },
+    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
+  },
+  {
+    "type": "image",
+    "format": "image/svg+xml",
+    "boundingBox": {
+      "width": standard_width,
+      "height": standard_height
     },
     "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
   }
@@ -45,20 +55,66 @@ const template_list = [
 
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
+const rails_parts_patter = /^\d+s?$/;
 
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
   const iframeRef = useRef();
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
+  const molfileType = async (molfile) => {
+    const lines = molfile.trim().split('\n');
+    if (lines[0].indexOf("Ketcher") != -1) return { type: "ketcher", polymers_list_required: true };
+    return { type: "Indigo", polymers_list_required: false };
+  };
+
+  const hasKetcherData = async (molfile, meta) => {
+    const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
+    if (meta.type === "indigo") return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
+
+    // when ketcher mofile and polymers exists
+    const lines = molfile.trim().split('\n');
+    let rails_polymers_list = -1;
+    for (let i = lines.length - 1; i > -1; i--) {
+      if (lines[i].indexOf("> <PolymersList>") != -1) {
+        rails_polymers_list = lines[i + 1].trim();
+        break;
+      }
+    }
+    if (rails_polymers_list == -1) {
+      return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
+    } else {
+      // polymers list exists
+      return { struct: indigo_converted_ket.struct, rails_polymers_list };
+    }
+
+    // const polymer_with_indigo_structure = [];
+    // const list_of_rails_polymers = lines[polymersList_index + 1].trim().split(" ");
+    // console.log({ list_of_rails_polymers });
+    // for (let i = 0; i < list_of_rails_polymers.length; i++) {
+    //   const split = list_of_rails_polymers[i].split("s");
+    //   const template_num = split[1] ? `t_01_${++max_used_image_count}` : `t_02_${++max_used_image_count}`;
+    //   template_num += "    1.0249999999999992    1.0749999999999982";
+    //   polymer_with_indigo_structure.push(...[`A    ${parseInt(split[0]) + 1}`, template_num]);
+    // }
+    // // lines.splice(end_index - 1, 0, ...polymer_with_indigo_structure);
+
+    // if (lines[0].indexOf("Ketcher") != -1) {
+    //   const { struct } = await editor._structureDef.editor.indigo.convert(molfile);
+    //   console.log(JSON.parse(struct), { polymer_with_indigo_structure });
+    // }
+
+    // return lines.join('\n');
+  };
+
   // Load the editor content and set up the molecule
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
       window.editor = editor;
-      initMol = await hasKetcherData(initMol);
-      await editor.structureDef.editor.setMolecule(initMol);
-      await fuelKetcherData();
-      await setKetcherData(initMol);
+      const meta = await molfileType(initMol);
+      const { struct, rails_polymers_list } = await hasKetcherData(initMol, meta);
+      await editor.structureDef.editor.setMolecule(struct);
+      await setKetcherData({ struct: JSON.parse(struct), rails_polymers_list, meta });
       editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
         handleEventCapture(result);
@@ -66,43 +122,63 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
   };
 
-  const hasKetcherData = async (molfile) => {
-    const lines = molfile.trim().split('\n');
-    let polymersList_index = -1;
-    let GRP_index = -1;
-    let max_used_image_count = -1;
-    let end_index = -1;
-    for (let i = lines.length - 1; i > -1; i--) {
-      if (lines[i].indexOf("> <PolymersList>") != -1) {
-        polymersList_index = i;
-      }
-      if (lines[i].indexOf("M  RGP") != -1) {
-        GRP_index = i;
-      }
+  const adding_polymers_ket_format = () => {
 
-      if (lines[i].indexOf("END") != -1) {
-        end_index = i;
-      }
-      const alias_spliter = lines[i].split("    ");
-      if (three_parts_patten.test(alias_spliter[0])) {
-        const split = alias_spliter[0].split("_");
-        max_used_image_count = parseInt(split[2]);
-        break;
-      }
-    }
-    const polymer_with_indigo_structure = [];
-    const list_of_rails_polymers = lines[polymersList_index + 1].trim().split(" ");
-    for (let i = 0; i < list_of_rails_polymers.length; i++) {
-      const split = list_of_rails_polymers[i].split("s");
-      const template_num = split[1] ? `t_01_${++max_used_image_count}` : `t_02_${++max_used_image_count}`;
-      template_num += "    1.0249999999999992    1.0749999999999982";
-      polymer_with_indigo_structure.push(...[`A    ${parseInt(split[0]) + 1}`, template_num]);
-    }
-    lines.splice(end_index - 1, 0, ...polymer_with_indigo_structure);
-    return lines.join('\n');
   };
 
-  const setKetcherData = async (canvas_data_Mol) => {
+  const adding_polymers_indigo_molfile = () => {
+
+  };
+
+  const setKetcherData = async ({ struct, rails_polymers_list, meta }) => {
+    await fuelKetcherData();
+    const { type, polymers_list_required } = meta;
+    let user_image_counter_temp = image_used_counter;
+    const collected_image = [];
+    if (type == "ketcher" && rails_polymers_list) {
+      console.log("ketcher");
+      const p_items = rails_polymers_list.split(" ");
+      // p_items:  10, 11s, 12, 13s
+      let visited_atoms = 0;
+      for (let m = 0; m < mols.length; m++) {
+        const mol = latestData[mols[m]];
+        for (let a = 0; a < mol.atoms.length; a++) {
+          const atom = mol.atoms[a];
+          const simple_atom = p_items.indexOf(`${visited_atoms}`);
+          const s_atom = p_items.indexOf(`${visited_atoms}s`);
+          if (simple_atom != -1 || s_atom != -1) {
+            const select_template_type = simple_atom != -1 ? "01" : "02";
+            latestData[mols[m]].atoms[a] = {
+              "label": "A",
+              "alias": `t_${select_template_type}_${++user_image_counter_temp}`,
+              "location": atom.location
+            };
+            const bb = template_list[parseInt(select_template_type)];
+            bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
+            collected_image.push(bb);
+          };
+          visited_atoms += 1;
+        }
+      }
+    }
+
+    if (type == "Indigo") {
+      console.log("Indigo");
+      console.log(struct);
+      for (let m = 0; m < mols.length; m++) {
+        const mol = latestData[mols[m]];
+        for (let a = 0; a < mol.atoms.length; a++) {
+          const atom = mol.atoms[a];
+          console.log({ atom });
+        }
+      }
+    }
+    latestData.root.nodes.push(...collected_image);
+    image_used_counter += collected_image.length;
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await fuelKetcherData();
+    await moveTemplate();
+    return;
     // initMol
     const image_list_init = [];
     const lines = canvas_data_Mol.split('\n');
