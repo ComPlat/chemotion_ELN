@@ -1,6 +1,5 @@
 import React from 'react';
 import { Dropdown, DropdownButton, Button, ButtonGroup, Modal } from 'react-bootstrap';
-import PropTypes from 'prop-types';
 import { List } from 'immutable';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -74,7 +73,7 @@ export default class ManagingActions extends React.Component {
       deletion_allowed: false,
       remove_allowed: false,
       is_top_secret: false,
-      genericEls: []
+      genericEls: genericEls
     };
 
     this.onChange = this.onChange.bind(this);
@@ -299,11 +298,3 @@ export default class ManagingActions extends React.Component {
     );
   }
 }
-
-ManagingActions.propTypes = {
-  genericEls: PropTypes.array
-};
-
-ManagingActions.defaultProps = {
-  genericEls: []
-};
