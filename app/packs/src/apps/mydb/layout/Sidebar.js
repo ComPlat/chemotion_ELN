@@ -14,7 +14,7 @@ import NoticeButton from 'src/components/contextActions/NoticeButton';
 
 export default function Sidebar({ isCollapsed, toggleCollapse }) {
   return (
-    <div className="h-100 d-flex flex-column">
+    <div className="h-100 d-flex flex-column bg-white">
       <div className="d-flex flex-column flex-grow-1 overflow-y-auto h-0">
         <div className="d-flex justify-content-center py-3">
           <NavHead />

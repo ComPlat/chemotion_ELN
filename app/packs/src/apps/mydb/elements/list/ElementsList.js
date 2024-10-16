@@ -271,6 +271,7 @@ export default class ElementsList extends React.Component {
               id="tabList"
               defaultActiveKey={0}
               onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+              className="sheet-tabs"
             >
               {tabItems}
             </Tabs>

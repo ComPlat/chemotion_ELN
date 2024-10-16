@@ -35,7 +35,7 @@ export default class Elements extends Component {
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
-      <div className="flex-grow-1 d-flex ps-3">
+      <div className="flex-grow-1 d-flex ps-3 pt-2">
         <Col xs={listWidth} className="pe-3">
           <ElementsList
             overview={!hasCurrentElement}
