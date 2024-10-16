@@ -26,6 +26,7 @@ import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import ChevronIcon from 'src/components/common/ChevronIcon';
+import Sheet from 'src/components/common/Sheet';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -570,8 +571,8 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="elements-table-header">
-        <div className="select-all">
+      <Sheet className="elements-table-header">
+        <div className="d-flex gap-1 align-items-center">
           <ElementAllCheckbox
             type={type}
             checkedAll={checkedAll}
@@ -613,7 +614,7 @@ export default class ElementsTable extends React.Component {
           </div>
           {typeSpecificHeader}
         </div>
-      </div>
+      </Sheet>
     );
   };
 
@@ -676,10 +677,10 @@ export default class ElementsTable extends React.Component {
     return (
       <div ref={this.elementRef} className="elements-list flex-grow-1 h-0 overflow-y-auto pb-3">
         {elementsTableEntries}
-        <div className="mt-2 d-flex flex-row-reverse justify-content-between">
-          {this.renderNumberOfResultsInput()}
+        <Sheet className="mt-2 d-flex justify-content-between">
           {this.renderPagination()}
-        </div>
+          {this.renderNumberOfResultsInput()}
+        </Sheet>
       </div>
     );
   }

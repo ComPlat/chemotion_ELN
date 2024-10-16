@@ -1,4 +1,5 @@
 .detail-card {
+  @extend .sheet-card;
   @extend .h-100;
 
   > .card-header {
@@ -12,7 +13,7 @@
   }
 
   &.detail-card--unsaved .card-header {
-    @extend .text-bg-info;
+    @extend .border-warning;
   }
 }
 

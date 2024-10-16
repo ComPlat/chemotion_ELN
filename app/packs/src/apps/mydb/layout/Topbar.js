@@ -8,7 +8,7 @@ import UserAuth from 'src/components/navigation/UserAuth';
 
 export default function Topbar() {
   return (
-    <div className="d-flex justify-content-between p-3 text-bg-light">
+    <div className="d-flex justify-content-between p-3 bg-white">
       <div className="d-flex align-items-center gap-2">
         <Search />
         <ScanCodeButton />
