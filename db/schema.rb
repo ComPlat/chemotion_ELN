@@ -1848,6 +1848,16 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       end
       $function$
   SQL
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
+         and l.element_type = $1 and l.element_id = $2
+       $function$
+  SQL
   create_function :logidze_snapshot, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.logidze_snapshot(item jsonb, ts_column text DEFAULT NULL::text, columns text[] DEFAULT NULL::text[], include_columns boolean DEFAULT false)
        RETURNS jsonb

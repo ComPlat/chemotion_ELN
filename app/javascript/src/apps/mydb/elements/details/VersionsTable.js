@@ -2,9 +2,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Pager } from 'react-bootstrap';
-import BootstrapTable from 'react-bootstrap-table-next';
+import { AgGridReact } from 'ag-grid-react';
 import VersionsFetcher from 'src/fetchers/VersionsFetcher';
-import VersionsTableTime from 'src/apps/mydb/elements/details/VersionsTableTime';
 import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableChanges';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -12,6 +11,7 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import moment from 'moment';
 
 export default class VersionsTable extends Component {
   constructor(props) {
@@ -133,42 +133,31 @@ export default class VersionsTable extends Component {
 
     const columns = [
       {
-        dataField: 'caret',
-        text: '',
-        isDummyField: true,
-        // eslint-disable-next-line react/no-unstable-nested-components
-        formatter: () => <i className="fa fa-caret-right history-table__caret" />,
+        field: 'details',
+        headerName: 'double click in cell',
+        cellEditor: VersionsTableChanges,
+        cellEditorParams: {
+          handleRevert: this.handleRevert,
+          isEdited
+        },
+        cellEditorPopup: true,
+        editable: true,
       },
       {
-        dataField: 'id',
-        text: '#',
+        field: 'id',
+        headerName: '#',
       },
       {
-        dataField: 'createdAt',
-        text: 'Modified on',
-        // eslint-disable-next-line react/no-unstable-nested-components
-        formatter: (cell) => (
-          <VersionsTableTime dateTime={cell} />
-        ),
+        field: 'createdAt',
+        headerName: 'Modified on',
+        valueFormatter: (p) => moment(p.value).format('YYYY-MM-DD HH:mm:ss'),
+        tooltipValueGetter: (p) => moment(p.value).fromNow(),
       },
       {
-        dataField: 'userName',
-        text: 'Author',
+        field: 'userName',
+        headerName: 'Author',
       },
     ];
-
-    const expandRow = {
-      onlyOneExpanding: true,
-      parentClassName: 'active',
-      renderer: (row) => (
-        <VersionsTableChanges
-          id={row.id}
-          changes={row.changes}
-          handleRevert={this.handleRevert}
-          isEdited={isEdited}
-        />
-      ),
-    };
 
     return (
       <>
@@ -184,16 +173,15 @@ export default class VersionsTable extends Component {
           <li className="history-legend__item history-legend__item--new">after</li>
           <li className="history-legend__item history-legend__item--current">current value</li>
         </ul>
-        <BootstrapTable
-          keyField="id"
-          data={versions}
-          columns={columns}
-          expandRow={expandRow}
-          hover
-          wrapperClasses="history-table"
-          rowClasses="history-table__row"
-        />
-        {pagination()}
+        <div className="ag-theme-balham">
+          <AgGridReact
+            columnDefs={columns}
+            rowData={versions}
+            domLayout="autoHeight"
+            tooltipShowDelay="500"
+          />
+          {pagination()}
+        </div>
       </>
     );
   }
