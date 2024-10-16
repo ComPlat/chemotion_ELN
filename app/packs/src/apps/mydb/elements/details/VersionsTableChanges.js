@@ -2,13 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import VersionsTableFields from 'src/apps/mydb/elements/details/VersionsTableFields';
 import VersionsTableModal from 'src/apps/mydb/elements/details/VersionsTableModal';
-import { Alert } from 'react-bootstrap';
+import { Alert, Modal } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 
 function VersionsTableChanges(props) {
   const {
-    id, changes, handleRevert, isEdited
+    data, stopEditing, handleRevert, isEdited
   } = props;
 
+  const { id, changes } = data;
   const revertibleFields = () => {
     if (isEdited) return -1;
 
@@ -54,22 +56,28 @@ function VersionsTableChanges(props) {
   }
 
   return (
-    <>
-      {change}
-      {isRevertible > 0 ? <VersionsTableModal name={`# ${id}`} changes={changes} handleRevert={handleRevert} />
-        : (
-          <Alert bsStyle="warning" className="history-alert">
-            {alertText}
-          </Alert>
-        )}
-    </>
+    <Modal show bsSize="large" backdrop="static" className="history-modal">
+      <Modal.Header closeButton onHide={() => stopEditing()}>
+        {`# ${id}`}
+      </Modal.Header>
+      <Modal.Body>
+        {change}
+      </Modal.Body>
+      <Modal.Footer>
+        {isRevertible > 0 ? <VersionsTableModal name={`# ${id}`} changes={changes} handleRevert={handleRevert} />
+          : (
+            <Alert bsStyle="warning" className="history-alert">
+              {alertText}
+            </Alert>
+          )}
+      </Modal.Footer>
+    </Modal>
   );
 }
 
 VersionsTableChanges.propTypes = {
-  id: PropTypes.number.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  changes: PropTypes.arrayOf(PropTypes.object).isRequired,
+  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
+  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
   handleRevert: PropTypes.func.isRequired,
   isEdited: PropTypes.bool.isRequired,
 };

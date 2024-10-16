@@ -988,8 +988,8 @@ ActiveRecord::Schema.define(version: 2024_09_20_155000) do
     t.boolean "show_label", default: false, null: false
     t.integer "gas_type", default: 0
     t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
-    t.datetime "created_at", default: "2021-10-01 00:00:00", null: false
-    t.datetime "updated_at", default: "2021-10-01 00:00:00", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.jsonb "log_data"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
@@ -1720,6 +1720,16 @@ ActiveRecord::Schema.define(version: 2024_09_20_155000) do
       end
       $function$
   SQL
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
+         and l.element_type = $1 and l.element_id = $2
+       $function$
+  SQL
   create_function :logidze_snapshot, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.logidze_snapshot(item jsonb, ts_column text DEFAULT NULL::text, columns text[] DEFAULT NULL::text[], include_columns boolean DEFAULT false)
        RETURNS jsonb
@@ -2088,16 +2098,6 @@ ActiveRecord::Schema.define(version: 2024_09_20_155000) do
           RETURN res;
         END;
       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
-         and l.element_type = $1 and l.element_id = $2
-       $function$
   SQL
 
 
