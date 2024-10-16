@@ -1,0 +1,12 @@
+.sheet-card {
+  @extend .border-0;
+
+  > .card-header {
+    @extend .sheet;
+    @extend .state-border;
+  }
+
+  > .card-body {
+    @extend .sheet;
+  }
+}
