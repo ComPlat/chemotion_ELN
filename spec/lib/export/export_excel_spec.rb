@@ -16,6 +16,7 @@ RSpec.describe 'Export::ExportExcel' do
     let(:melting_point) { '[13.0]' }
     let(:refractive_index) { '1' }
     let(:molarity) { '2.45 M' }
+    let(:headers) { '@headers =["melting pt", "flash point", "refractive index", "molarity"]' }
 
     before do
       sample_json['shared_sync'] = 'f'
@@ -24,7 +25,7 @@ RSpec.describe 'Export::ExportExcel' do
       sample_json['refractive_index'] = refractive_index
       sample_json['molarity_value'] = '2.45'
       sample_json['molarity_unit'] = 'M'
-      exporter.instance_eval('@headers =["melting pt", "flash point", "refractive index", "molarity"]', __FILE__, __LINE__)
+      exporter.instance_eval(headers, __FILE__, __LINE__)
     end
 
     context 'with integer melting point' do

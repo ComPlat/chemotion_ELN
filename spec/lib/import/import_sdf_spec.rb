@@ -11,11 +11,6 @@ RSpec.describe Import::ImportSdf do
       collection_id: mock_collection.id,
       current_user_id: mock_user.id,
       mapped_keys: {
-        description: %w[
-          MOLECULE_NAME
-          SAFETY_R_S
-          SMILES_STEREO
-        ],
         short_label: 'EMP_FORMULA_SHORT',
         target_amount: 'AMOUNT',
         real_amount: 'REAL_AMOUNT',
@@ -30,7 +25,6 @@ RSpec.describe Import::ImportSdf do
       rows: [{
         'inchikey' => 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
         'molfile' => Rails.root.join('spec/fixtures/mf_with_data_01.sdf').read,
-        'description' => "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
         'short_label' => 'C9H12ClNO2',
         'target_amount' => '10 g /  g',
         'real_amount' => '15mg/mg',
@@ -51,8 +45,7 @@ RSpec.describe Import::ImportSdf do
     allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(
       { inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
         is_partial: false,
-        molfile_version: 'V2000',
-      }
+        molfile_version: 'V2000' },
     )
     allow(Molecule).to receive(:find_by).with(
       inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N', is_partial: false,
