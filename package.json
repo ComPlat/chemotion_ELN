@@ -40,7 +40,6 @@
     "factory-bot": "^6.3.1",
     "html2pdf.js": "^0.10.1",
     "humps": "^2.0.1",
-    "immutability-helper": "^2.8.1",
     "immutable": "^4.0.0-rc.12",
     "jcampconverter": "^2.11.0",
     "js-yaml": "^3.13.1",
