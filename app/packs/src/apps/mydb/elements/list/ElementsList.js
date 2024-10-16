@@ -188,7 +188,7 @@ export default class ElementsList extends React.Component {
     const {
       visible, hidden, totalCheckedElements, totalElements
     } = this.state;
-    const { overview, showReport } = this.props;
+    const { overview } = this.props;
 
     const constEls = Immutable.Set([
       'sample',
@@ -241,7 +241,6 @@ export default class ElementsList extends React.Component {
         >
           <ElementsTable
             overview={overview}
-            showReport={showReport}
             type={value}
             genericEl={genericEl}
           />
@@ -260,19 +259,21 @@ export default class ElementsList extends React.Component {
             Remove search result
           </Button>
         )}
-        <div className="position-relative">
-          <Tabs
-            id="tabList"
-            defaultActiveKey={0}
-            onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
-          >
-            {tabItems}
-          </Tabs>
+        <div className="position-relative h-100">
           <div className="position-absolute top-0 end-0">
             <ElementsTableSettings
               visible={visible}
               hidden={hidden}
             />
+          </div>
+          <div className="tabs-container--with-full-height">
+            <Tabs
+              id="tabList"
+              defaultActiveKey={0}
+              onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+            >
+              {tabItems}
+            </Tabs>
           </div>
         </div>
       </>
@@ -282,5 +283,4 @@ export default class ElementsList extends React.Component {
 
 ElementsList.propTypes = {
   overview: PropTypes.bool.isRequired,
-  showReport: PropTypes.bool.isRequired,
 };
