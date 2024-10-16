@@ -228,7 +228,6 @@ export default class ManagingActions extends React.Component {
   }
 
   render() {
-    const { customClass } = this.props;
     const { currentCollection, sharing_allowed, deletion_allowed, hasSel } = this.state;
     const { is_locked, label } = currentCollection;
     const isAll = is_locked && label === 'All';
@@ -245,8 +244,7 @@ export default class ManagingActions extends React.Component {
         <ButtonGroup className="d-flex align-items-center">
           <DropdownButton
             as={ButtonGroup}
-            variant={customClass ? null : 'success'}
-            className={customClass}
+            variant="success"
             title={<i className="fa fa-arrow-right" />}
             id="move-or-assign-btn"
             disabled={assignDisabled && moveDisabled}
@@ -267,8 +265,7 @@ export default class ManagingActions extends React.Component {
 
           <DropdownButton
             as={ButtonGroup}
-            variant={customClass ? null : 'warning'}
-            className={customClass}
+            variant="warning"
             title={<i className="fa fa-minus-square" />}
             id="remove-or-delete-btn"
             disabled={removeDisabled && deleteDisabled}
@@ -288,11 +285,10 @@ export default class ManagingActions extends React.Component {
           </DropdownButton>
 
           <Button
-            variant={customClass ? null : 'info'}
+            variant="info"
             id="share-btn"
             disabled={shareDisabled}
             onClick={() => this.showModal('share')}
-            className={customClass}
           >
             <i className="fa fa-share-alt" />
           </Button>
@@ -305,11 +301,9 @@ export default class ManagingActions extends React.Component {
 }
 
 ManagingActions.propTypes = {
-  customClass: PropTypes.string,
   genericEls: PropTypes.array
 };
 
 ManagingActions.defaultProps = {
-  customClass: null,
   genericEls: []
 };

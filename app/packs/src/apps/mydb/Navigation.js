@@ -113,8 +113,6 @@ export default class Navigation extends React.Component {
     const {
       currentUser, genericEls, omniauthProviders, extraRules
     } = this.state;
-    const { profile } = UserStore.getState();
-    const { customClass } = (profile && profile.data) || {};
     return (
       <Navbar className="bg-gray-200 justify-content-between px-4">
         {this.navHeader()}
@@ -124,13 +122,8 @@ export default class Navigation extends React.Component {
           </div>
           {currentUser && (
             <>
-              <ManagingActions
-                customClass={customClass}
-                genericEls={genericEls}
-              />
-              <ContextActions
-                customClass={customClass}
-              />
+              <ManagingActions genericEls={genericEls} />
+              <ContextActions />
             </>
           )}
         </Nav>

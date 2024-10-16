@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 import CreateButton from 'src/components/contextActions/CreateButton';
 import SplitElementButton from 'src/components/contextActions/SplitElementButton';
@@ -12,21 +11,20 @@ import SampleTaskNavigationElement from 'src/components/sampleTaskInbox/SampleTa
 
 export default class ContextActions extends React.Component {
   render() {
-    const { customClass } = this.props;
     return (
       <div className="d-flex flex-wrap align-items-center gap-2">
         <ButtonGroup className="d-flex align-items-center">
           <SplitElementButton />
-          <CreateButton customClass={customClass} />
+          <CreateButton />
         </ButtonGroup>
 
         <ButtonGroup className="d-flex align-items-center">
-          <ExportImportButton customClass={customClass} />
-          <ReportUtilButton customClass={customClass} />
+          <ExportImportButton />
+          <ReportUtilButton />
         </ButtonGroup>
 
         <ButtonToolbar className="d-flex flex-nowrap gap-2 align-items-center">
-          <ScanCodeButton customClass={customClass} />
+          <ScanCodeButton />
           <InboxButton />
           <SampleTaskNavigationElement />
           <NoticeButton />
@@ -35,11 +33,3 @@ export default class ContextActions extends React.Component {
     );
   }
 }
-
-ContextActions.propTypes = {
-  customClass: PropTypes.string,
-};
-
-ContextActions.defaultProps = {
-  customClass: null,
-};
