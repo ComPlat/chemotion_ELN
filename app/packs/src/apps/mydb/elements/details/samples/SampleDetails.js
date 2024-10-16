@@ -1066,6 +1066,8 @@ export default class SampleDetails extends React.Component {
       </Checkbox>
     ) : null;
 
+    const inventoryLabel = sample.inventory_sample && sample.xref.inventory_label ? sample.xref.inventory_label : null;
+
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -1073,7 +1075,7 @@ export default class SampleDetails extends React.Component {
             <span>
               <i className="icon-sample" />
             &nbsp;&nbsp;
-              {sample.title()}
+              {inventoryLabel || sample.title()}
             &nbsp;&nbsp;
             </span>
           </OverlayTrigger>
