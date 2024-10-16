@@ -145,7 +145,6 @@ function MoleculeHeader({ sample, show, showPreviews, showDragColumn, onClick, t
 
   return (
     <tr
-      className="bg-gray-100"
       role="button"
       onClick={onClick}
     >
@@ -428,7 +427,7 @@ export default class ElementsTableSampleEntries extends Component {
     const showGroup = !moleculeGroupsShown.includes(moleculeName) && !collapseAll;
 
     return (
-      <tbody key={index}>
+      <tbody key={index} className="sheet">
         <MoleculeHeader
           sample={moleculeGroup[0]}
           show={showGroup}
