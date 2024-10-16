@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -26,7 +25,7 @@ const editMetadataFunction = () => {
   });
 };
 
-function ExportImportButton({ customClass }) {
+function ExportImportButton() {
   const [modal, showModal] = useState(null);
   const hideModal = () => showModal(null);
 
@@ -76,7 +75,7 @@ function ExportImportButton({ customClass }) {
   return (
     <>
       <Dropdown as={ButtonGroup} id="export-dropdown">
-        <Dropdown.Toggle variant="light" className={customClass}>
+        <Dropdown.Toggle variant="light">
           <i className="fa fa-download" />
           <i className="fa fa-upload ms-1" />
         </Dropdown.Toggle>
@@ -141,13 +140,5 @@ function ExportImportButton({ customClass }) {
     </>
   );
 }
-
-ExportImportButton.propTypes = {
-  customClass: PropTypes.string,
-};
-
-ExportImportButton.defaultProps = {
-  customClass: null,
-};
 
 export default ExportImportButton;
