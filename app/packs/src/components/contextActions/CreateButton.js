@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {
   SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown
 } from 'react-bootstrap';
@@ -270,7 +269,6 @@ export default class CreateButton extends React.Component {
   }
 
   render() {
-    const { customClass } = this.props;
     const { isDisabled, layout } = this.state;
     const type = UserStore.getState().currentType;
     const { elements, genericEls } = elementList();
@@ -289,8 +287,7 @@ export default class CreateButton extends React.Component {
     return (
       <SplitButton
         id="create-split-button"
-        variant={customClass ? null : 'primary'}
-        className={customClass}
+        variant="primary"
         title={this.createBtn(type)}
         disabled={isDisabled}
         onClick={() => this.createElementOfType(type)}
@@ -323,11 +320,3 @@ export default class CreateButton extends React.Component {
     );
   }
 }
-
-CreateButton.propTypes = {
-  customClass: PropTypes.string,
-};
-
-CreateButton.defaultProps = {
-  customClass: null,
-};

@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import Quagga from 'quagga';
 import React from 'react';
 import {
@@ -283,13 +282,11 @@ export default class ScanCodeButton extends React.Component {
       </>
     );
 
-    const { customClass } = this.props;
     return (
       <div>
         <SplitButton
           id="search-code-split-button"
-          variant={customClass ? null : 'light'}
-          className={customClass}
+          variant="light"
           title={title}
           onClick={this.open}
         >
@@ -313,11 +310,3 @@ export default class ScanCodeButton extends React.Component {
     );
   }
 }
-
-ScanCodeButton.propTypes = {
-  customClass: PropTypes.string,
-};
-
-ScanCodeButton.defaultProps = {
-  customClass: null,
-};
