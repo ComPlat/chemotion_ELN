@@ -26,7 +26,7 @@ const showComputedPropsTasks = () => {
   ElementActions.showComputedPropsTasks();
 };
 
-const ReportUtilButton = ({ customClass }) => {
+const ReportUtilButton = () => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
   const enableReactionPredict = MatrixCheck(currentUser.matrix, 'reactionPrediction');
@@ -59,7 +59,7 @@ const ReportUtilButton = ({ customClass }) => {
 
   return (
     <Dropdown as={ButtonGroup} id="format-dropdown">
-      <Dropdown.Toggle className={customClass} variant="success">
+      <Dropdown.Toggle variant="success">
         <i className="fa fa-file-text-o" style={{ marginRight: 4 }} />
         <i className="fa fa-pencil" style={{ marginRight: 4 }} />
         <i className="fa fa-percent" />
@@ -82,14 +82,6 @@ const ReportUtilButton = ({ customClass }) => {
       </Dropdown.Menu>
     </Dropdown>
   );
-};
-
-ReportUtilButton.propTypes = {
-  customClass: PropTypes.string,
-};
-
-ReportUtilButton.defaultProps = {
-  customClass: null,
 };
 
 export default ReportUtilButton;
