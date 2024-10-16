@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import React from 'react';
+import { List } from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
@@ -36,7 +37,11 @@ export default class ElementsTable extends React.Component {
     this.state = {
       elements: [],
       currentElement: null,
-      ui: {},
+      ui: {
+        checkedAll: false,
+        checkedIds: List(),
+        uncheckedIds: List(),
+      },
       collapseAll: false,
       moleculeSort: false,
       searchResult: false,
@@ -552,7 +557,7 @@ export default class ElementsTable extends React.Component {
   renderHeader = () => {
     const { filterCreatedAt, ui } = this.state;
     const { type, genericEl } = this.props;
-    const { fromDate, toDate, userLabel } = ui;
+    const { checkedAll, checkedIds, fromDate, toDate, userLabel } = ui;
 
     let typeSpecificHeader = null;
     if (type === 'sample') {
@@ -580,7 +585,8 @@ export default class ElementsTable extends React.Component {
         <div className="select-all">
           <ElementAllCheckbox
             type={type}
-            ui={ui}
+            checkedAll={checkedAll}
+            checkedIds={checkedIds}
           />
         </div>
         <div
