@@ -25,6 +25,7 @@ import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import ChevronIcon from 'src/components/common/ChevronIcon';
+import ManagingActions from 'src/components/managingActions/ManagingActions';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -566,16 +567,15 @@ export default class ElementsTable extends React.Component {
 
     return (
       <div className="elements-table-header">
-        <div className="select-all">
+        <div className="d-flex gap-1 align-items-center">
           <ElementAllCheckbox
             type={type}
             checkedAll={checkedAll}
             checkedIds={checkedIds}
           />
+          <ManagingActions />
         </div>
-        <div
-          className="header-right d-flex gap-1 align-items-center"
-        >
+        <div className="header-right d-flex gap-1 align-items-center">
           {searchLabel}
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
