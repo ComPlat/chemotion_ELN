@@ -14,22 +14,9 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
-const skip_template_name_hide = true;
+const skip_template_name_hide = false;
 const skip_image_layering = false;
 const [standard_height, standard_width] = [1.0250000000000006, 1.0749999999999995];
-
-const basic_image_structure = {
-  "type": "image",
-  "format": "image/svg+xml",
-  "boundingBox": {
-    "x": 0,
-    "y": 0,
-    "z": 0,
-    "width": 0,
-    "height": 0
-  },
-  "data": ""
-};
 
 const template_list = [
   null,
@@ -40,16 +27,16 @@ const template_list = [
       "width": standard_width,
       "height": standard_height
     },
-    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
+    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjAiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
   },
   {
     "type": "image",
     "format": "image/svg+xml",
     "boundingBox": {
-      "width": standard_width,
-      "height": standard_height
+      "width": 1.5749999999999986,
+      "height": 0.9750000000000001
     },
-    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+CiAgPGNpcmNsZSByPSI3NSIgY3g9IjgwIiBjeT0iODAiIHN0cm9rZT0iI2FjNWIyMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSIjZWQ3ZDMxIiAvPgo8L3N2Zz4="
+    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIHk9IjgwIiByeD0iMjAiIHJ5PSIyMCIKICBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMTAiIGZpbGw9Ijc1NzA3MCIKICAvPgo8L3N2Zz4="
   }
 ];
 
@@ -61,12 +48,14 @@ const KetcherEditor = forwardRef((props, ref) => {
   const iframeRef = useRef();
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
+  // helper function to check file kind coming as source; this handles indigo and ketcherrails molfile
   const molfileType = async (molfile) => {
     const lines = molfile.trim().split('\n');
     if (lines[0].indexOf("Ketcher") != -1) return { type: "ketcher", polymers_list_required: true };
     return { type: "Indigo", polymers_list_required: false };
   };
 
+  // helper function to examine the file coming ketcherrails
   const hasKetcherData = async (molfile, meta) => {
     const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
     if (meta.type === "indigo") return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
@@ -86,24 +75,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       // polymers list exists
       return { struct: indigo_converted_ket.struct, rails_polymers_list };
     }
-
-    // const polymer_with_indigo_structure = [];
-    // const list_of_rails_polymers = lines[polymersList_index + 1].trim().split(" ");
-    // console.log({ list_of_rails_polymers });
-    // for (let i = 0; i < list_of_rails_polymers.length; i++) {
-    //   const split = list_of_rails_polymers[i].split("s");
-    //   const template_num = split[1] ? `t_01_${++max_used_image_count}` : `t_02_${++max_used_image_count}`;
-    //   template_num += "    1.0249999999999992    1.0749999999999982";
-    //   polymer_with_indigo_structure.push(...[`A    ${parseInt(split[0]) + 1}`, template_num]);
-    // }
-    // // lines.splice(end_index - 1, 0, ...polymer_with_indigo_structure);
-
-    // if (lines[0].indexOf("Ketcher") != -1) {
-    //   const { struct } = await editor._structureDef.editor.indigo.convert(molfile);
-    //   console.log(JSON.parse(struct), { polymer_with_indigo_structure });
-    // }
-
-    // return lines.join('\n');
   };
 
   // Load the editor content and set up the molecule
@@ -121,6 +92,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
   };
 
+  // helper function to process ketcherrails files and adding image to ketcher2 canvas
   const adding_polymers_ketcher_format = (rails_polymers_list) => {
     const p_items = rails_polymers_list.split(" ");
     // p_items:  10, 11s, 12, 13s
@@ -136,6 +108,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         const s_atom = p_items.indexOf(`${visited_atoms}s`);
         if (simple_atom != -1 || s_atom != -1) {
           const select_template_type = simple_atom != -1 ? "01" : "02";
+
           latestData[mols[m]].atoms[a] = {
             "label": "A",
             "alias": `t_${select_template_type}_${++user_image_counter_temp}`,
@@ -151,6 +124,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     return collected_images;
   };
 
+  // helper function to process ketcher2 indigo file to add images to ketcher2 canvas
   const adding_polymers_indigo_molfile = () => {
     let collected_images = [];
     for (let m = 0; m < mols.length; m++) {
@@ -162,7 +136,6 @@ const KetcherEditor = forwardRef((props, ref) => {
           atom.label = "A";
           atom.alias = splits[0];
           const alias_splits = splits[0].split("_");
-          console.log(atom);
           const bb = template_list[parseInt(alias_splits[1])];
           bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
           collected_images.push(bb);
@@ -172,6 +145,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     return collected_images;
   };
 
+  // helper function to calculate counters for the ketcher2 setup based on file source type
   const setKetcherData = async ({ rails_polymers_list, meta }) => {
     await fuelKetcherData();
     const { type, } = meta;
@@ -489,7 +463,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         const textElements = svg.querySelectorAll('text'); // Select all text elements
         textElements.forEach((textElem) => {
           const textContent = textElem.textContent; // Get the text content of the <text> element
-          if (three_parts_patten.test(textContent)) { // Check if it matches the pattern
+          if (textContent === "A") { // Check if it matches the pattern
             textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
           }
         });
