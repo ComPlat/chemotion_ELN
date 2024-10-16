@@ -23,7 +23,7 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <div className={"sidebar" + (isCollapsed ? " sidebar--collapsed" : "")} >
+    <div className={"bg-white sidebar" + (isCollapsed ? " sidebar--collapsed" : "")} >
       <div className="sidebar-collapse-button-container">
         <Button
           onClick={UIActions.toggleSidebar}
