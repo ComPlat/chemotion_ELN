@@ -1,4 +1,6 @@
 import React from 'react'
+import PropTypes from 'prop-types'
+import Immutable from 'immutable'
 
 import UIActions from 'src/stores/alt/actions/UIActions'
 
@@ -36,29 +38,24 @@ export default class ElementAllCheckbox extends React.Component {
     if (option == null) option = this.state.currentOption
     let range = this.options[option]
 
-    let newChecked = !this.props.checked
-    let params = {
+    UIActions.checkAllElements({
       type: this.props.type,
       range: range
-    }
-
-    if(newChecked) {
-      UIActions.checkAllElements(params)
-    } else {
-      UIActions.uncheckAllElements(params)
-    }
-
-    this.setState({ showOptions: false, currentOption: option })
+    })
+    this.setState({
+      showOptions: false,
+      currentOption: option
+    })
   }
 
   render() {
     const { showOptions } = this.state;
-    const { ui } = this.props;
+    const { checkedAll, checkedIds } = this.props;
 
     let checkMarkClass = '';
-    if (ui.checkedAll == true) {
+    if (checkedAll == true) {
       checkMarkClass = 'fa-check';
-    } else if (ui.checkedIds && ui.checkedIds.size > 0) {
+    } else if (checkedIds && checkedIds.size > 0) {
       checkMarkClass = 'fa-minus';
     }
 
@@ -80,4 +77,10 @@ export default class ElementAllCheckbox extends React.Component {
       </div>
     )
   }
+}
+
+ElementAllCheckbox.propTypes = {
+  type: PropTypes.string.isRequired,
+  checkedAll: PropTypes.bool.isRequired,
+  checkedIds: PropTypes.instanceOf(Immutable.List),
 }
