@@ -38,13 +38,6 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
         <SampleTaskNavigationElement />
         <OpenCalendarButton />
         <NoticeButton />
-        <Button
-          onClick={() => UserActions.logout()}
-          variant="light"
-          title="Log out"
-        >
-          <i className="fa fa-sign-out" />
-        </Button>
       </div>
     </div>
   );
