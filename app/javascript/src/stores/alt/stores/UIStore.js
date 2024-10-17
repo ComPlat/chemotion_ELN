@@ -92,6 +92,7 @@ class UIStore {
       hasNmriumWrapper: false,
       matrices: {},
       thirdPartyApps: [],
+      version: {},
     };
 
     this.bindListeners({
