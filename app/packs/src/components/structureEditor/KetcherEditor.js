@@ -95,7 +95,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   // helper function to process ketcherrails files and adding image to ketcher2 canvas
   const adding_polymers_ketcher_format = (rails_polymers_list) => {
     const p_items = rails_polymers_list.split(" ");
-    // p_items:  10, 11s, 12, 13s
+    // p_items-example:  10, 11s, 12, 13s
     let visited_atoms = 0;
     let collected_images = [];
     let user_image_counter_temp = image_used_counter;
@@ -103,12 +103,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
       for (let a = 0; a < mol.atoms.length; a++) {
+        // if (p_items.length - 1 == visited_atoms) break;
         const atom = mol.atoms[a];
-        const simple_atom = p_items.indexOf(`${visited_atoms}`);
-        const s_atom = p_items.indexOf(`${visited_atoms}s`);
-        if (simple_atom != -1 || s_atom != -1) {
-          const select_template_type = simple_atom != -1 ? "01" : "02";
-
+        const p_value = p_items[visited_atoms];
+        if (atom.type === "rg-label") {
+          const select_template_type = p_value.includes("s") ? "02" : "01";
           latestData[mols[m]].atoms[a] = {
             "label": "A",
             "alias": `t_${select_template_type}_${++user_image_counter_temp}`,
@@ -117,8 +116,8 @@ const KetcherEditor = forwardRef((props, ref) => {
           const bb = template_list[parseInt(select_template_type)];
           bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
           collected_images.push(bb);
+          visited_atoms += 1;
         };
-        visited_atoms += 1;
       }
     }
     return collected_images;
