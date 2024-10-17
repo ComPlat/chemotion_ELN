@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import 'whatwg-fetch';
 import {
   Card,
-  Nav,
   NavDropdown,
   Modal,
   Button,
@@ -609,45 +608,45 @@ export default class UserAuth extends Component {
 
     return (
       <>
-        <Nav className="justify-content-center align-items-center">
-          <NavDropdown
-            title={`${currentUser.name}`}
-            id="bg-nested-dropdown"
-            className="me-5 ms-3"
-          >
-            <NavDropdown.Item eventKey="1" href="/pages/settings">
-              Account &amp; Profile
+        <NavDropdown title={currentUser.name} align="end" className="mx-2">
+          <NavDropdown.Item eventKey="1" href="/pages/settings">
+            Account &amp; Profile
+          </NavDropdown.Item>
+          {currentUser.is_templates_moderator && (
+            <NavDropdown.Item eventKey="2" href="/ketcher/common_templates">
+              Template Management
             </NavDropdown.Item>
-            {currentUser.is_templates_moderator && (
-              <NavDropdown.Item eventKey="2" href="/ketcher/common_templates">
-                Template Management
-              </NavDropdown.Item>
-            )}
-            <NavDropdown.Item eventKey="3" href="/users/edit">
-              Change Password
-            </NavDropdown.Item>
-            <NavDropdown.Item
-              onClick={this.handleAffiliationsShow}>
-              My Affiliations
-            </NavDropdown.Item>
-            <NavDropdown.Item onClick={this.handleShow}>My Groups & Devices</NavDropdown.Item>
-            <NavDropdown.Item onClick={this.handleLabelShow}>My Labels</NavDropdown.Item>
-            {/* <NavDropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</NavDropdown.Item>
+          )}
+          <NavDropdown.Item eventKey="3" href="/users/edit">
+            Change Password
+          </NavDropdown.Item>
+          <NavDropdown.Item
+            onClick={this.handleAffiliationsShow}>
+            My Affiliations
+          </NavDropdown.Item>
+          <NavDropdown.Item onClick={this.handleShow}>My Groups & Devices</NavDropdown.Item>
+          <NavDropdown.Item onClick={this.handleLabelShow}>My Labels</NavDropdown.Item>
+          {/* <NavDropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</NavDropdown.Item>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            <NavDropdown.Item eventKey="7" href="/command_n_control">
-              My Devices
+          <NavDropdown.Item eventKey="7" href="/command_n_control">
+            My Devices
+          </NavDropdown.Item>
+          {currentUser.molecule_editor && (
+            <NavDropdown.Item eventKey="6" href="/molecule_moderator">
+              Molecule Moderator
             </NavDropdown.Item>
-            {currentUser.molecule_editor && (
-              <NavDropdown.Item eventKey="6" href="/molecule_moderator">
-                Molecule Moderator
-              </NavDropdown.Item>
-            )}
-            <NavDropdown.Item eventKey="12" href="/converter_admin">
-              Converter Profile
-            </NavDropdown.Item>
-            <NavDropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</NavDropdown.Item>
-          </NavDropdown>
-        </Nav>
+          )}
+          <NavDropdown.Item eventKey="12" href="/converter_admin">
+            Converter Profile
+          </NavDropdown.Item>
+          <NavDropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</NavDropdown.Item>
+
+          <NavDropdown.Item onClick={() => UserActions.logout()}>
+            <i className="fa fa-sign-out me-1" />
+            Log out
+          </NavDropdown.Item>
+        </NavDropdown>
+
         {this.renderModal()}
         {this.renderAffiliations()}
         <UserLabelModal
