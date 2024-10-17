@@ -16,16 +16,16 @@ class ContainerDatasetField extends Component {
     if (readOnly) {
       return null;
     }
-      return (
-        <Button
-          size="xxsm"
-          variant="danger"
-          onClick={() => handleRemove(datasetContainer)}
-          disabled={disabled}
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-      );
+    return (
+      <Button
+        size="xxsm"
+        variant="danger"
+        onClick={() => handleRemove(datasetContainer)}
+        disabled={disabled}
+      >
+        <i className="fa fa-trash-o" />
+      </Button>
+    );
   }
 
   render() {
@@ -51,16 +51,16 @@ class ContainerDatasetField extends Component {
     }
     const gdsDownload = (datasetContainer.dataset == null
       || typeof datasetContainer.dataset === 'undefined') ? (<span />) : (
-        <OverlayTrigger placement="top" overlay={<Tooltip id="download metadata">download metadata</Tooltip>}>
-          <Button
-            size="xxsm"
-            variant="success"
-            onClick={() => AttachmentFetcher.downloadDataset(datasetContainer.id)}
-          >
-            <i className="fa fa-download" />
-          </Button>
-        </OverlayTrigger>
-      );
+      <OverlayTrigger placement="top" overlay={<Tooltip id="download metadata">download metadata</Tooltip>}>
+        <Button
+          size="xxsm"
+          variant="success"
+          onClick={() => AttachmentFetcher.downloadDataset(datasetContainer.id)}
+        >
+          <i className="fa fa-download" />
+        </Button>
+      </OverlayTrigger>
+    );
     return connectDropTarget(
       <div className="d-flex justify-content-between">
         {datasetContainer.dataset && datasetContainer.dataset.klass_ols !== absOlsTermId(kind)
@@ -100,7 +100,7 @@ ContainerDatasetField.propTypes = {
     id: PropTypes.number,
   }).isRequired,
   handleUndo: PropTypes.func.isRequired,
-  kind: PropTypes.string.isRequired,
+  kind: PropTypes.string,
   handleModalOpen: PropTypes.func.isRequired,
 };
 

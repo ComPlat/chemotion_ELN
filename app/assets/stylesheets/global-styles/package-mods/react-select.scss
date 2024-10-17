@@ -81,6 +81,15 @@
     }
   }
 
+  &__value-container {
+    @extend .flex-nowrap;
+    @extend .text-nowrap;
+  }
+
+  &__value-container.chemotion-select__value-container--is-multi {
+    @extend .flex-wrap;
+    @extend .text-wrap;
+  }
 
   &__indicator, &__value-container, &__input-container, &__placeholder, &__single-value, &__indicator-separator {
     @extend .p-0;
@@ -149,5 +158,4 @@
   &__clear-indicator {
     @include fa-based-remove-icon;
   }
-
 }

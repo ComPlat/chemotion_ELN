@@ -19,9 +19,6 @@ export default class ToolbarDropdown extends React.Component {
     this.pickerSpan = React.createRef();
     this.pickerLabel = React.createRef();
 
-    const genId = Math.random().toString().substr(2, 10);
-    this.ddQuillId = `ql-dropdown-${genId}`;
-
     const sheets = document.styleSheets;
     this.sheet = sheets[sheets.length - 1];
 
@@ -30,14 +27,6 @@ export default class ToolbarDropdown extends React.Component {
   }
 
   componentDidMount() {
-    const cssRule = ".ql-snow .ql-picker." + this.ddQuillId + " .ql-picker-label::before, ." + this.ddQuillId + " .ql-picker.ql-size .ql-picker-item::before { content: attr(data-label); line-height: 25px; }";
-
-    try {
-      this.ruleId = this.sheet.insertRule(cssRule, this.sheet.cssRules.length);
-    } catch (err) {
-      console.log(err);
-    }
-
     const requiredWidth = this.getTextWidth() + 40;
     this.pickerLabel.current.style.width = `${requiredWidth}px`;
 
@@ -48,14 +37,6 @@ export default class ToolbarDropdown extends React.Component {
         this.pickerSpan.current.classList.remove('ql-expanded');
       }
     });
-  }
-
-  componentWillUnmount() {
-    try {
-      this.sheet.deleteRule(this.ruleId - 1);
-    } catch (err) {
-      console.log(err);
-    }
   }
 
   getTextWidth(font = "500 14px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif") {
@@ -95,7 +76,7 @@ export default class ToolbarDropdown extends React.Component {
 
     const { expanded } = this.state;
     const expandedClass = expanded ? 'ql-expanded' : '';
-    const className = `${this.ddQuillId} ql-picker ${expandedClass}`;
+    const className = `ql-picker ${expandedClass}`;
 
     return (
       <span className="ql-formats">
