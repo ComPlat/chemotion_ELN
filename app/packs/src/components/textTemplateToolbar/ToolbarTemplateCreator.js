@@ -126,7 +126,7 @@ export default class ToolbarTemplateCreator extends React.Component {
       if (selectRefs.length === 0 || titleRefs.length === 0) return;
 
       const selectRef = selectRefs[0].ref;
-      const selectedValue = selectRef.current.state.value;
+      const selectedValue = selectRef.current.state.selectValue;
 
       const tempName = template.name;
       userTemplate[tempName] = selectedValue.map(v => v.value);
