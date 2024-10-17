@@ -3,30 +3,17 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import TreeSelect from 'antd/lib/tree-select';
 import {
-  Button, Panel, Row, Col, FormGroup, FormControl
+  Alert, Button, Card, Row, Col, Form
 } from 'react-bootstrap';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import { find } from 'lodash';
 
-const textInput = (label, value, onChange) => (
-  <FormGroup>
-    <FormControl
-      id={`input_${label}`}
-      type="text"
-      value={value}
-      onChange={onChange}
-      disabled={false}
-      readOnly={false}
-    />
-  </FormGroup>
-);
-
-function InventoryLabelSettings() {
+const InventoryLabelSettings = () => {
   const [prefixValue, setPrefixValue] = useState('');
   const [nameValue, setNameValue] = useState('');
   const [counterValue, setCounterValue] = useState('');
   const [options, setOptions] = useState([]);
-  const [selectedCollections, setSelectedValue] = useState(null);
+  const [selectedCollections, setSelectedValue] = useState([]);
   const [currentInventoryCollection, setInventoryLabels] = useState(null);
   const [spinner, setSpinner] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -182,8 +169,8 @@ function InventoryLabelSettings() {
         }
       });
     } else {
-      const message = 'Please select the desired collection(s) and enter a valid name, prefix,'
-      + 'and counter inputs before updating user settings';
+      const message = 'Please select the desired collection(s) and enter a valid name, prefix, '
+        + 'and counter inputs before updating user settings';
       setErrorMessage(message);
       setSpinner(false);
     }
@@ -232,23 +219,16 @@ function InventoryLabelSettings() {
   const prefixCondition = prefixValue !== undefined && prefixValue !== null && prefixValue !== '';
   const nameCondition = nameValue !== undefined && nameValue !== null && nameValue !== '';
   const nextInventoryLabel = prefixCondition && nameCondition ? `${prefixValue}${nextValue}` : null;
-  const message = (
-    <div className="text-danger">
-      { errorMessage }
-    </div>
-  );
 
   return (
-    <Panel className="inventory-label-settings">
-      <Panel.Heading><Panel.Title>Sample Inventory Label</Panel.Title></Panel.Heading>
-      <Panel.Body>
-        <Row className="select-collection-id">
-          <Col sm={2} className="select-collection-name"><b>Select Collection:</b></Col>
-          <Col sm={3}>
+    <Card>
+      <Card.Header>Sample Inventory Label</Card.Header>
+      <Card.Body>
+        <Row className="mb-3">
+          <Col xs={{ span: 3, offset: 3 }}><Form.Label>Select Collection</Form.Label></Col>
+          <Col xs={3}>
             <TreeSelect
               name="names of collections"
-              className="md:w-20rem w-full"
-              selectionMode="multiple"
               style={{ width: '100%' }}
               multiple
               treeData={options}
@@ -256,43 +236,69 @@ function InventoryLabelSettings() {
               value={selectedCollections}
             />
           </Col>
-          <Col sm={1} className="inventory-counter-prefix-name">
-            <b>name</b>
-          </Col>
-          <Col>{textInput('name', nameValue, handleNameChange)}</Col>
-          <Col sm={1} className="inventory-counter-prefix-name">
-            <b>prefix</b>
-          </Col>
-          <Col>{textInput('prefix', prefixValue, handlePrefixChange)}</Col>
-          <Col sm={2} className="inventory-counter-starts-at"><b>Counter starts at</b></Col>
-          <Col>{textInput('counter', counterValue, handleCounterChange)}</Col>
         </Row>
-        <Row className="update-user-button">
-          <Col sm={8} className="inventory-label-next-counter">
-            <b>Next sample inventory label will be: </b>
+        <Row className="mb-3">
+          <Col xs={{ span: 3, offset: 3 }}>
+            <Form.Label>
+              Name
+            </Form.Label>
+          </Col>
+          <Col xs={2}>
+            <Form.Control type="text" value={nameValue} onChange={handleNameChange} />
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Col xs={{ span: 3, offset: 3 }}>
+            <Form.Label>Prefix</Form.Label>
+          </Col>
+          <Col xs={2}>
+            <Form.Control type="text" value={prefixValue} onChange={handlePrefixChange} />
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Col xs={{ span: 3, offset: 3 }}>
+            <Form.Label>
+              Counter starts at
+            </Form.Label>
+          </Col>
+          <Col xs={2}>
+            <Form.Control type="text" value={counterValue} onChange={handleCounterChange} />
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Col xs={{ offset: 3 }}>
+            <b>Next sample inventory label will be:</b>
             {nextInventoryLabel}
           </Col>
-          <Col sm={4} className="update-inventory-user-button">
+        </Row>
+        <Row>
+          <Col xs={{ offset: 8 }}>
             <Button
-              bsStyle="primary"
-              className="text-center"
+              variant="primary"
               onClick={() => { updateUserSettings(); }}
             >
-              <div>
-                {spinner ? (
+              {spinner
+                ? (
                   <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
                 ) : (
                   'Update user settings'
                 )}
-              </div>
             </Button>
           </Col>
         </Row>
-        { errorMessage !== null ? message : null }
-      </Panel.Body>
-    </Panel>
+        {errorMessage && (
+          <Row className="mt-3">
+            <Col xs={{ span: 6, offset: 3 }}>
+              <Alert variant="danger">
+                {errorMessage}
+              </Alert>
+            </Col>
+          </Row>
+        )}
+      </Card.Body>
+    </Card>
   );
-}
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('InventoryLabelSettings');

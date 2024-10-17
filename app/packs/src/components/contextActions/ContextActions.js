@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup } from 'react-bootstrap';
+import { ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CreateButton from 'src/components/contextActions/CreateButton';
-import SplitElementBtn from 'src/components/contextActions/SplitElementBtn';
+import SplitElementButton from 'src/components/contextActions/SplitElementButton';
 import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 import ScanCodeButton from 'src/components/contextActions/ScanCodeButton';
@@ -56,8 +56,12 @@ export default class ContextActions extends React.Component {
   render() {
     const { updateModalProps, customClass } = this.props;
     return (
-      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
-        <ButtonGroup>
+      <div className="d-flex flex-wrap align-items-center gap-2">
+        <ButtonGroup className="d-flex align-items-center">
+          <SplitElementButton />
+          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
+        </ButtonGroup>
+        <ButtonGroup className="d-flex align-items-center">
           <ExportImportButton
             isDisabled={this.isDisabled()}
             updateModalProps={updateModalProps}
@@ -65,24 +69,13 @@ export default class ContextActions extends React.Component {
           />
           <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
-        <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
-          <ButtonGroup>
-            <SplitElementBtn />
-            <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
-          </ButtonGroup>
-        </div>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
+        <ButtonToolbar className="d-flex flex-nowrap gap-2 align-items-center">
           <ScanCodeButton customClass={customClass} />
-        </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
           <InboxButton />
-        </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
           <SampleTaskNavigationElement />
-        </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '20px' }}>
           <NoticeButton />
-        </ButtonGroup>
+        </ButtonToolbar>
+        
       </div>
     );
   }

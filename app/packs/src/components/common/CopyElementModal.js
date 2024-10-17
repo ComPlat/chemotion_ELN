@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Form, Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
@@ -20,7 +20,6 @@ const Notification = props =>
     })
   );
 
-
 export default class CopyElementModal extends React.Component {
   constructor(props) {
     super(props);
@@ -32,9 +31,6 @@ export default class CopyElementModal extends React.Component {
     this.handleModalShow = this.handleModalShow.bind(this);
     this.onColSelectChange = this.onColSelectChange.bind(this);
     this.copyElement = this.copyElement.bind(this);
-  }
-
-  componentDidMount() {
   }
 
   onColSelectChange(e) {
@@ -74,38 +70,37 @@ export default class CopyElementModal extends React.Component {
   render() {
     const { element } = this.props;
     const { showModal, selectedCol } = this.state;
-    const canCopy = element.can_copy ? '' : 'none';
+
+    if (!element.can_copy) return null;
 
     return (
-      <span>
+      <>
         <OverlayTrigger
           placement="bottom"
-          overlay={<Tooltip id="CopyElement">Copy</Tooltip>}>
-          <Button id="copy-element-btn" style={{ marginLeft: '2px', display: `${canCopy}` }} bsSize="xsmall" className="button-right" bsStyle="success" onClick={this.handleModalShow}>
+          overlay={<Tooltip id="CopyElement">Copy</Tooltip>}
+        >
+          <Button id="copy-element-btn" size="xxsm" variant="success" onClick={this.handleModalShow}>
             <i className="fa fa-clone" />
           </Button>
         </OverlayTrigger>
-        <Modal show={showModal} onHide={this.handleModalClose}>
+
+        <Modal centered show={showModal} onHide={this.handleModalClose}>
           <Modal.Header closeButton>
             <Modal.Title>Copy</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <span className="select-collection">
-              <b>Copy to Collection</b>
-              <span className="select-component">
-                <CollectionSelect
-                  value={selectedCol}
-                  onChange={this.onColSelectChange}
-                />
-              </span>
-            </span>
+            <Form.Label>Copy to Collection</Form.Label>
+            <CollectionSelect
+              value={selectedCol}
+              onChange={this.onColSelectChange}
+            />
           </Modal.Body>
-          <Modal.Footer>
-            <Button bsStyle="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>
-            <Button id="submit-copy-element-btn" bsStyle="success" onClick={this.copyElement} className="pull-left">Copy</Button>
+          <Modal.Footer className="border-0">
+            <Button variant="light" onClick={this.handleModalClose}>Close</Button>
+            <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement}>Copy</Button>
           </Modal.Footer>
         </Modal>
-      </span>
+      </>
     );
   }
 }

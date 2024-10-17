@@ -1,0 +1,192 @@
+@media screen and (max-width: 1366px) {
+  table.reaction-scheme .form-group, table.reaction-scheme button.btn-danger {
+    .form-control {
+      padding: 3px 12px;
+      height: 26px;
+      font-size: 10px;
+    }
+  }
+}
+
+table.reaction-scheme-solvent {
+  td {
+    padding: 2px 0;
+  }
+}
+
+.small-padding > [class*='col-']:first-child {
+  padding-right: 5px;
+}
+
+.small-padding > [class*='col-']:last-child {
+  padding-left: 5px;
+}
+
+.small-padding > [class*='col-']:not(:first-child):not(:last-child) {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+.inline-inside {
+  div {
+    display: inline-block;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.reaction-scheme-props {
+  width: 100%;
+
+  table.table {
+    margin-bottom: 0px;
+
+    tr > div {
+      padding: 0 2px;
+    }
+
+    div.Select-menu-outer {
+      z-index: 5;
+    }
+  }
+}
+
+.gp-drop-zone {
+  background-color: #eee;
+  border-radius: 5px;
+  height: 36px;
+  text-align: center;
+  width: 100%;
+
+  .gp-icon {
+    font-size: 20px;
+    line-height: 36px;
+    vertical-align: middle;
+  }
+
+  .gp-content {
+    font-size: 14px;
+    line-height: 36px;
+    vertical-align: middle;
+  }
+}
+
+.status-select {
+  .Select-menu-outer {
+    z-index: 30;
+  }
+}
+
+.solvents-select {
+  .Select-menu-outer {
+    z-index: 3;
+    width: 250%;
+  }
+}
+
+.Select.form-control-sm {
+  .Select-control {
+    height: 28px;
+  }
+  .Select-placeholder {
+    line-height: 24px;
+  }
+  .Select-value {
+    line-height: 24px;
+  }
+
+  .Select-value-label {
+    line-height: 24px;
+  }
+
+  .Select-input > input {
+    padding-top: 2px;
+  }
+
+  .Select-input {
+    height: 26px;
+  }
+
+  .Select-menu-outer {
+    z-index: 3;
+  }
+}
+
+.green-chemistry {
+  .purification-head {
+    display: flex;
+    align-items: center;
+
+    > div {
+      flex-grow: 1;
+    }
+  }
+
+  .green-material-name {
+    width: 100%;
+    display: flex;
+    align-items: center;
+
+    div:nth-child(2) {
+      flex-grow: 1;
+      button {
+        word-break: break-all;
+        white-space: normal;
+        text-align: left;
+      }
+    }
+  }
+
+  .solvents-select {
+    margin: 5px;
+  }
+
+  .green-metrics {
+    padding: 10px !important;
+
+    .ag-header-cell-label .ag-header-cell-text {
+      text-overflow: clip !important;
+      overflow: visible !important;
+      white-space: normal !important;
+    }
+  }
+
+  .e-factor-refs {
+    .ag-header-cell-label .ag-header-cell-text {
+      text-overflow: clip !important;
+      overflow: visible !important;
+      white-space: normal !important;
+    }
+  }
+}
+
+.menu-outer-top .Select-menu-outer {
+  top: auto;
+  bottom: 35px !important;
+  border-bottom-right-radius: 0px !important;
+  border-bottom-left-radius: 0px !important;
+  border-top-right-radius: 4px !important;
+  border-top-left-radius: 4px !important;
+}
+
+.reaction-status-change {
+  .Select-value {
+
+  -webkit-animation: reaction-status-color-change 3s;  /* Safari 4.0 - 8.0 */
+  -webkit-animation-fill-mode: forwards; /* Safari 4.0 - 8.0 */
+  animation: reaction-status-color-change 3s;
+  }
+
+}
+
+/* Safari 4.0 - 8.0 */
+@-webkit-keyframes reaction-status-color-change {
+  from { background-color: aliceblue;}
+}
+
+@keyframes reaction-status-color-change {
+  //from {top: 0px;}
+  from { background-color: aliceblue;}
+}

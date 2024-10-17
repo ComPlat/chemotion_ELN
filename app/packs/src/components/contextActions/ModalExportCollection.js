@@ -94,7 +94,7 @@ export default class ModalExportCollection extends React.Component {
       <div>
         <input type="checkbox" id="export-collection-check-all"
           checked={this.hasChecked()} onChange={this.handleCheckAll} className="common-checkbox" />
-        <label className="g-marginLeft--10" htmlFor="export-collection-check-all">
+        <label className="ms-3" htmlFor="export-collection-check-all">
           {this.hasChecked() ? "Deselect all" : "Select all"}
         </label>
       </div>
@@ -167,7 +167,7 @@ export default class ModalExportCollection extends React.Component {
               value={root.id}
               onChange={this.handleCheckboxChange}
               checked={this.isChecked(root.id)} />
-            <label className="g-marginLeft--10" htmlFor={"export-collection-" + root.id}>
+            <label className="ms-3" htmlFor={"export-collection-" + root.id}>
               {root.label}
             </label>
 
@@ -191,21 +191,17 @@ export default class ModalExportCollection extends React.Component {
     const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
     const bTitle = processing === true ? 'Exporting' : 'Export ZIP';
     return (
-      <ButtonToolbar>
-        <div className="pull-right">
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
-            <Button
-              bsStyle={bStyle}
-              id="md-export-dropdown"
-              disabled={this.isDisabled()}
-              title="Export as ZIP file (incl. attachments)"
-              onClick={this.handleClick}
-            >
-              <span><i className={bClass} />&nbsp;{bTitle}</span>
-            </Button>
-          </ButtonToolbar>
-        </div>
+      <ButtonToolbar className="justify-content-end gap-1">
+        <Button variant="primary" onClick={onHide}>Cancel</Button>
+        <Button
+          variant={bStyle}
+          id="md-export-dropdown"
+          disabled={this.isDisabled()}
+          title="Export as ZIP file (incl. attachments)"
+          onClick={this.handleClick}
+        >
+          <span><i className={bClass} />&nbsp;{bTitle}</span>
+        </Button>
       </ButtonToolbar>
     );
   }

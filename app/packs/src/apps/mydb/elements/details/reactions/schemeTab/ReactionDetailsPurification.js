@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Row, Col, FormGroup } from 'react-bootstrap';
-import Select from 'react-select';
+import { Row, Col, Form } from 'react-bootstrap';
+import { Select } from 'src/components/common/Select';
 import 'moment-precise-range-plugin';
 import { purificationOptions } from 'src/components/staticDropdownOptions/options';
 import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
@@ -30,8 +30,8 @@ export default class ReactionDetailsPurification extends Component {
   }
 
   handlePurificationChange(selected) {
-    if (selected.length === 0) {
-      return this.handleMultiselectChange('purification', selected);
+    if (selected.lenth == 0) {
+      return this.handleMultiselectChange('purification', []);
     }
 
     const obs = observationPurification;
@@ -55,8 +55,6 @@ export default class ReactionDetailsPurification extends Component {
     } else {
       this.handleMultiselectChange('purification', selected);
     }
-
-    return 0;
   }
 
   handlePSolventChange(changeEvent) {
@@ -104,25 +102,25 @@ export default class ReactionDetailsPurification extends Component {
   render() {
     const { reaction, onInputChange, additionQuillRef } = this.props;
     return (
-      <span>
-        <Row>
-          <Col md={12}>
-            <div><b>Purification</b></div>
-            <Select
-              className="status-select"
-              style={{ zIndex: 10 }}
-              name="purification"
-              multi
-              disabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
-              options={purificationOptions}
-              onChange={this.handlePurificationChange}
-              value={reaction.purification}
-            />
+      <>
+        <Row className='mb-2'>
+          <Col sm={12}>
+            <Form.Group>
+              <Form.Label>Purification</Form.Label>
+              <Select
+                name="purification"
+                isMulti
+                isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
+                options={purificationOptions}
+                onChange={this.handlePurificationChange}
+                value={purificationOptions.filter(({value}) => reaction.purification.includes(value))}
+              />
+            </Form.Group>
           </Col>
         </Row>
-        <Row style={{ marginTop: '10px' }}>
-          <Col md={12}>
-            <div><b>Purification Solvents</b></div>
+        <Row className='mb-2'>
+          <Col sm={12}>
+            <Form.Label>Purification Solvents</Form.Label>
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="purification_solvents"
@@ -136,27 +134,25 @@ export default class ReactionDetailsPurification extends Component {
             />
           </Col>
         </Row>
-        <Row style={{ marginTop: '10px' }}>
+        <Row className='mb-3'>
           <Col md={12}>
-            <FormGroup>
-              <div><b>Additional information for publication and purification details</b></div>
-              <div className="quill-resize">
-                {
-                  permitOn(reaction) ?
-                    <QuillEditor
-                      ref={additionQuillRef}
-                      value={reaction.observation}
-                      height="100%"
-                      disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
-                      onChange={event => onInputChange('observation', event)}
-                    /> : <QuillViewer value={reaction.observation} />
-                }
-              </div>
-            </FormGroup>
+            <Form.Label>Additional information for publication and purification details</Form.Label>
+            <div className="quill-resize">
+              {
+                permitOn(reaction) ?
+                  <QuillEditor
+                    ref={additionQuillRef}
+                    value={reaction.observation}
+                    height="100%"
+                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
+                    onChange={event => onInputChange('observation', event)}
+                  /> : <QuillViewer value={reaction.observation} />
+              }
+            </div>
             <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
           </Col>
         </Row>
-      </span>
+      </>
     );
   }
 }

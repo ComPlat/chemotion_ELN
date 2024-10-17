@@ -1,10 +1,11 @@
 /* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import {
-  Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab,
-  Nav, NavItem, Alert
+  Table, Button, Modal, Form, Tooltip, OverlayTrigger, Tabs, Tab,
+  Nav, NavItem, Alert, Card, Col,
+  Row
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { AsyncSelect } from 'src/components/common/Select';
 import { CSVReader } from 'react-papaparse';
 import propType from 'prop-types';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -15,7 +16,7 @@ import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
 function MessageAlert({ message, onHide }) {
   return (
     message?.length > 0 ? (
-      <Alert bsStyle="info" onDismiss={onHide}>
+      <Alert variant="info" onDismiss={onHide} dismissible>
         <p>
           {message}
         </p>
@@ -34,7 +35,7 @@ MessageAlert.defaultProps = {
 
 const loadUserByName = (input) => {
   if (!input) {
-    return Promise.resolve({ options: [] });
+    return Promise.resolve([]);
   }
 
   return AdminFetcher.fetchUsersByNameType(input, 'Person')
@@ -119,7 +120,7 @@ const accountInActiveTooltip = (
 );
 
 const renderDeletedUsersTable = (deletedUsers) => (
-  <Table striped bordered hover>
+  <Table striped bordered hover className='mt-3'>
     <thead>
       <tr>
         <th>ID</th>
@@ -133,7 +134,6 @@ const renderDeletedUsersTable = (deletedUsers) => (
           <td>{item.deleted_at}</td>
         </tr>
       ))}
-
     </tbody>
   </Table>
 );
@@ -315,9 +315,7 @@ export default class UserManagement extends React.Component {
   }
 
   handleSelectUser(val) {
-    if (val) {
-      this.setState({ selectedUsers: val });
-    }
+    this.setState({ selectedUsers: val });
   }
 
   handleConfirmUserAccount(id) {
@@ -464,7 +462,7 @@ export default class UserManagement extends React.Component {
 
   handleRestoreAccount = () => {
     this.setState({ deletedUsers: [] });
-    // trim the params
+
     this.id.value = this.id.value.trim();
     this.nameAbbreviation.value = this.nameAbbreviation.value.trim();
     if (this.nameAbbreviation.value.trim() === '' && this.id.value.trim() === '') {
@@ -680,11 +678,11 @@ export default class UserManagement extends React.Component {
     return true;
   }
 
-  messageSend() {
+  async messageSend() {
     const { selectedUsers } = this.state;
     if (this.myMessage.value === '') {
       this.handleShowAlert('Please input the message!');
-    } else if (!selectedUsers) {
+    } else if (!selectedUsers || selectedUsers.length === 0) {
       this.handleShowAlert('Please select user(s)!');
     } else {
       const userIds = [];
@@ -692,22 +690,30 @@ export default class UserManagement extends React.Component {
         userIds.push(g.value);
         return true;
       });
-      MessagesFetcher.channelIndividualUsers()
-        .then((result) => {
-          const params = {
-            channel_id: result.id,
-            content: this.myMessage.value,
-            user_ids: userIds
-          };
-          MessagesFetcher.createMessage(params)
-            .then(() => {
-              this.myMessage.value = '';
-              this.setState({
-                selectedUsers: null
-              });
-              this.handleMsgClose();
-            });
-        });
+
+      try {
+        const result = await MessagesFetcher.channelIndividualUsers();
+
+        if (!result || !result.id) {
+          throw new Error('Failed to create or fetch the channel.');
+        }
+
+        const params = {
+          channel_id: result.id,
+          content: this.myMessage.value,
+          user_ids: userIds
+        };
+
+        await MessagesFetcher.createMessage(params);
+
+        this.myMessage.value = '';
+        this.setState({ selectedUsers: null });
+        this.handleMsgClose();
+
+      } catch (error) {
+        console.error('Error sending message:', error);
+        this.handleShowAlert('An error occured: Try again later or contact your system administrator if it persists.');
+      }
     }
   }
 
@@ -715,143 +721,135 @@ export default class UserManagement extends React.Component {
     const { selectedUsers } = this.state;
     return (
       <Modal
+        centered
         show={this.state.showMsgModal}
         onHide={this.handleMsgClose}
       >
         <Modal.Header closeButton>
           <Modal.Title>Send Message</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
-            <Form>
-              <FormGroup controlId="formControlsTextarea">
-                <ControlLabel>Message</ControlLabel>
-                <FormControl
-                  componentClass="textarea"
-                  placeholder="message..."
-                  rows="20"
-                  inputRef={(ref) => { this.myMessage = ref; }}
-                />
-              </FormGroup>
-              <FormGroup>
-                <Select.AsyncCreatable
-                  multi
-                  isLoading
-                  backspaceRemoves
-                  value={selectedUsers}
-                  valueKey="value"
-                  labelKey="label"
-                  matchProp="name"
-                  placeholder="Select users"
-                  promptTextCreator={this.promptTextCreator}
-                  loadOptions={loadUserByName}
-                  onChange={this.handleSelectUser}
-                />
-              </FormGroup>
-              <Button
-                bsStyle="primary"
-                onClick={() => this.messageSend()}
-              >
-                Send&nbsp;
-                <i className="fa fa-paper-plane" />
-              </Button>
-            </Form>
-          </div>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="formControlsTextarea">
+              <Form.Label>Message</Form.Label>
+              <Form.Control
+                as="textarea"
+                placeholder="Message..."
+                rows="20"
+                ref={(ref) => { this.myMessage = ref; }}
+              />
+            </Form.Group>
+            <Form.Group className='my-3'>
+              <AsyncSelect
+                isMulti
+                value={selectedUsers}
+                matchProp="name"
+                placeholder="Select users"
+                loadOptions={loadUserByName}
+                onChange={this.handleSelectUser}
+              />
+            </Form.Group>
+          </Form>
         </Modal.Body>
+        <Modal.Footer className="modal-footer border-0">
+          <Button variant="primary" onClick={() => this.messageSend()}>
+            Send
+            <i className="fa fa-paper-plane ms-1" />
+          </Button>
+        </Modal.Footer>
       </Modal>
     );
   }
 
   renderNewUserModal() {
-    // const { selectedUsers } = this.state;
     return (
       <Modal
+        centered
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
+        size='lg'
+        backdrop='static'
       >
         <Modal.Header closeButton>
           <Modal.Title>New User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tabs id="createUserTabs">
+          <Tabs id="createUserTabs" className='fs-6'>
             <Tab eventKey="singleUser" title="Single user">
-              <Form horizontal>
-                <FormGroup controlId="formControlEmail">
-                  <Col componentClass={ControlLabel} sm={3}>
+              <Form
+                className='ms-2 mt-2'
+              >
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlEmail">
+                  <Form.Label
+                  >
                     Email:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }}
-                      maxLength={120}
-                    />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlPassword">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Password:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlPasswordConfirmation">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Password Confirmation:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlFirstName">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    First name:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlLastName">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Last name:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlAbbr">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Abbr (3) *:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlsType">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Type:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
-                      <option value="Person">Person</option>
-                      <option value="Admin">Admin</option>
-                    </FormControl>
-                  </Col>
-                </FormGroup>
-                <FormGroup>
-                  <Col smOffset={0} sm={10}>
-                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()}>
-                      Create user&nbsp;
-                      <i className="fa fa-plus" />
-                    </Button>
-                  </Col>
-                </FormGroup>
+                  </Form.Label>
+                  <Form.Control type="email" name="email" ref={(ref) => { this.email = ref; }} />
+                </Form.Group>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlPassword">
+                  <Form.Label
+                  >
+                    Password: </Form.Label>
+                  <Form.Control type="password" name="password" ref={(ref) => { this.password = ref; }} />
+                </Form.Group>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlPasswordConfirmation">
+                  <Form.Label
+                  >
+                    Password Confirmation:</Form.Label>
+                  <Form.Control type="password" ref={(ref) => { this.passwordConfirm = ref; }} />
+                </Form.Group>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlFirstName">
+                  <Form.Label
+                  >
+                    First name: </Form.Label>
+                  <Form.Control type="text" name="firstname" ref={(ref) => { this.firstname = ref; }} />
+                </Form.Group>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlLastName">
+                  <Form.Label
+                  > Last name:  </Form.Label>
+                  <Form.Control type="text" name="lastname" ref={(ref) => { this.lastname = ref; }} />
+                </Form.Group>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlAbbr">
+                  <Form.Label
+                  >
+                    Abbr (3) *: </Form.Label>
+                  <Form.Control type="text" name="nameAbbr" ref={(ref) => { this.nameAbbr = ref; }} />
+                </Form.Group>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlsType">
+                  <Form.Label
+                  >
+                    Type:</Form.Label>
+                  <Form.Select ref={(ref) => { this.type = ref; }}>
+                    <option value="Person">Person</option>
+                    <option value="Admin">Admin</option>
+                  </Form.Select>
+                </Form.Group>
               </Form>
+              <Button variant="primary" className='mt-3 ms-2' onClick={() => this.handleCreateNewUser()}>
+                Create user
+                <i className="fa fa-plus ms-1" />
+              </Button>
+
             </Tab>
             <Tab eventKey="multiUser" title="Multiple users from file">
-              <Form>
-                <FormGroup>
-                  <ControlLabel>Please format the user file like the table below.</ControlLabel>
-                  <Table striped bordered hover>
+              <Form className='my-3'>
+                <Form.Group>
+                  <Form.Label>Please format the user file like the table below.</Form.Label>
+                  <Table striped bordered hover className='mt-1'>
                     <thead>
                       <tr>
                         <th>email</th>
@@ -881,49 +879,46 @@ export default class UserManagement extends React.Component {
                       </tr>
                     </tbody>
                   </Table>
-                </FormGroup>
-                <FormGroup id="userFileDragAndDrop">
+                </Form.Group>
+                <Form.Group id="userFileDragAndDrop">
                   <CSVReader
                     onDrop={this.handleOnDropUserFile}
                     onError={this.handleOnErrorUserFile}
-                    style={{}}
                     config={{ header: true, skipEmptyLines: true }}
                     addRemoveButton
                     onRemoveFile={this.handleOnRemoveUserFile}
+                    className='my-1'
                   >
                     <span>
                       Drop a CSV user file here or click to upload.
                       The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
                     </span>
                   </CSVReader>
-                </FormGroup>
-                <FormGroup>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUsersFromFile()}>
-                    Create users&nbsp;
-                    <i className="fa fa-plus" />
-                  </Button>
-                </FormGroup>
-                <FormGroup>
-                  <ControlLabel>Processing Summary</ControlLabel>
-                  <FormControl
+                </Form.Group>
+                <Button variant="primary" className='my-3' onClick={() => this.handleCreateNewUsersFromFile()}>
+                  Create users
+                  <i className="fa fa-plus ms-1" />
+                </Button>
+                <Form.Group>
+                  <Form.Label>Processing Summary</Form.Label>
+                  <Form.Control
                     readOnly
+                    as="textarea"
                     id="processingSummary"
-                    componentClass="textarea"
-                    rows="5"
-                    style={{ whiteSpace: 'pre-wrap', overflowY: 'scroll' }}
+                    rows={5}
                     value={this.state.processingSummaryUserFile}
                   />
-                </FormGroup>
+                </Form.Group>
               </Form>
             </Tab>
           </Tabs>
-          <Modal.Footer>
-            <FormGroup controlId="formControlMessage">
-              <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
-            </FormGroup>
-            <Button bsStyle="warning" onClick={() => this.handleNewUserClose()}>Cancel</Button>
-          </Modal.Footer>
         </Modal.Body>
+        <Modal.Footer className="modal-footer border-0">
+          <Form.Group controlId="formControlMessage" className="flex-grow-1">
+            <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
+          </Form.Group>
+          <Button variant="warning" className='fs-6' onClick={() => this.handleNewUserClose()}>Cancel</Button>
+        </Modal.Footer>
       </Modal>
     );
   }
@@ -933,206 +928,220 @@ export default class UserManagement extends React.Component {
     return (
       <Tab.Container id="tabs-with-dropdown" defaultActiveKey="first">
         <Modal
+          centered
           show={this.state.showEditUserModal}
           onHide={this.handleEditUserClose}
+          backdrop='static'
         >
           <Modal.Header closeButton>
             <Modal.Title>
-              <Nav bsStyle="tabs">
-                <NavItem eventKey="first">
-                  Edit user account
+              <Nav variant="tabs">
+                <NavItem >
+                  <Nav.Link eventKey="first">Edit user account </Nav.Link>
                 </NavItem>
-                <NavItem eventKey="second">Delete User</NavItem>
+                <NavItem >
+                  <Nav.Link eventKey="second">Delete user</Nav.Link>
+                </NavItem>
               </Nav>
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto' }}>
+          <Modal.Body >
             <Tab.Content animation>
               <Tab.Pane eventKey="first">
-                <div className="col-md-10 col-md-offset-1">
-                  <Form horizontal>
-                    <FormGroup controlId="formControlEmail">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Email:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="email"
-                          name="u_email"
-                          defaultValue={user.email}
-                          inputRef={(ref) => { this.u_email = ref; }}
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlFirstName">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        First name:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          name="u_firstname"
-                          defaultValue={user.first_name}
-                          inputRef={(ref) => { this.u_firstname = ref; }}
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlLastName">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Last name:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          name="u_lastname"
-                          defaultValue={user.last_name}
-                          inputRef={(ref) => { this.u_lastname = ref; }}
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlAbbr">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Abbr (3):
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          name="u_abbr"
-                          defaultValue={user.initials}
-                          inputRef={(ref) => { this.u_abbr = ref; }}
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlsType">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Type:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          componentClass="select"
-                          defaultValue={user.type}
-                          inputRef={(ref) => { this.u_type = ref; }}
-                        >
-                          <option value="Person">Person</option>
-                          <option value="Group">Group</option>
-                          <option value="Admin">Admin</option>
-                        </FormControl>
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlMessage">
-                      <Col sm={12}>
-                        <FormControl
-                          type="text"
-                          readOnly
-                          name="messageEditUserModal"
-                          value={this.state.messageEditUserModal}
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup>
-                      <Button className="col-sm-5" onClick={() => this.handleEditUserClose()}>
-                        Cancel&nbsp;
-                      </Button>
-                      <Col sm={2}>&nbsp;</Col>
-                      <Button bsStyle="primary" className="col-sm-5" onClick={() => this.handleUpdateUser(user)}>
-                        Update&nbsp;
-                        <i className="fa fa-save" />
-                      </Button>
-                    </FormGroup>
-                  </Form>
-                </div>
-              </Tab.Pane>
-              <Tab.Pane eventKey="second">
-                <div className="col-md-10 col-md-offset-1">
-
-                  <Form horizontal>
-                    <FormGroup controlId="formControlEmail">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Email:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="email"
-                          name="u_email"
-                          defaultValue={user.email}
-                          disabled
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlFirstName">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        First name:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          name="u_firstname"
-                          defaultValue={user.first_name}
-                          disabled
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlLastName">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Last name:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          name="u_lastname"
-                          defaultValue={user.last_name}
-                          disabled
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlAbbr">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Abbr (3):
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          name="u_abbr"
-                          defaultValue={user.initials}
-                          disabled
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlsType">
-                      <Col componentClass={ControlLabel} sm={3}>
-                        Type:
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          disabled
-                          defaultValue={user.type}
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup controlId="formControlMessage">
-                      <Col sm={12}>
-                        <FormControl
-                          type="text"
-                          readOnly
-                          name="messageEditUserModal"
-                          value="Delete User Account. Are you sure ?"
-                          bsClass="form-control alert-danger text-center"
-                        />
-                      </Col>
-                    </FormGroup>
-
-                    <FormGroup>
-                      <Button className="col-sm-5" onClick={() => this.handleEditUserClose()}>
+                <Form>
+                  <Form.Group as={Row} className="mb-3 ms-5 mt-2" controlId="formControlEmail">
+                    <Form.Label column sm="3" className="fs-6">
+                      Email:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="email"
+                        name="u_email"
+                        defaultValue={user.email}
+                        ref={(ref) => { this.u_email = ref; }}
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
+                    <Form.Label column sm="3" className="fs-6">
+                      First name:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="text"
+                        name="u_firstname"
+                        defaultValue={user.first_name}
+                        ref={(ref) => { this.u_firstname = ref; }}
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
+                    <Form.Label column sm="3" className="fs-6">
+                      Last name:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="text"
+                        name="u_lastname"
+                        defaultValue={user.last_name}
+                        ref={(ref) => { this.u_lastname = ref; }}
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
+                    <Form.Label column sm="3" className="fs-6">
+                      Abbr:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="text"
+                        name="u_abbr"
+                        defaultValue={user.initials}
+                        ref={(ref) => { this.u_abbr = ref; }}
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
+                    <Form.Label column sm="3" className="fs-6">
+                      Type:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Select
+                        defaultValue={user.type}
+                        ref={(ref) => { this.u_type = ref; }}
+                        className='fs-6'
+                      >
+                        <option value="Person">Person</option>
+                        <option value="Group">Group</option>
+                        <option value="Admin">Admin</option>
+                      </Form.Select>
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlMessage">
+                    <Col sm="10">
+                      <Form.Control
+                        type="text"
+                        readOnly
+                        name="messageEditUserModal"
+                        value={this.state.messageEditUserModal}
+                        className="my-3 form-control text-danger text-center fs-6"
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3">
+                    <Col sm="6">
+                      <Button variant="secondary" className="w-100" onClick={() => this.handleEditUserClose()}>
                         Cancel
                       </Button>
-                      <Col sm={2}>&nbsp;</Col>
-                      <Button bsStyle="danger" className="col-sm-5" onClick={() => this.handleDeleteUser(user)}>
-                        Delete &nbsp;
-                        <i className="fa fa-trash" />
+                    </Col>
+                    <Col sm="6">
+                      <Button variant="primary" className="w-100" onClick={() => this.handleUpdateUser(user)}>
+                        Update
+                        <i className="fa fa-save ms-1" />
                       </Button>
-                    </FormGroup>
-                  </Form>
-                </div>
+                    </Col>
+                  </Form.Group>
+                </Form>
+              </Tab.Pane>
+              <Tab.Pane eventKey="second">
+                <Form>
+                  <Form.Group as={Row} className="mb-3 mt-2 ms-5" controlId="formControlEmail">
+                    <Form.Label column sm="3" className="fs-6">
+                      Email:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="email"
+                        name="u_email"
+                        defaultValue={user.email}
+                        disabled
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
+                    <Form.Label column sm="3" className="fs-6">
+                      First name:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="text"
+                        name="u_firstname"
+                        defaultValue={user.first_name}
+                        disabled
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
+                    <Form.Label column sm="3" className="fs-6">
+                      Last name:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="text"
+                        name="u_lastname"
+                        defaultValue={user.last_name}
+                        disabled
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
+                    <Form.Label column sm="3" className="fs-6">
+                      Abbr:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="text"
+                        name="u_abbr"
+                        defaultValue={user.initials}
+                        disabled
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
+                    <Form.Label column sm="3" className="fs-6">
+                      Type:
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        disabled
+                        defaultValue={user.type}
+                        className='fs-6'
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlMessage">
+                    <Col sm="10">
+                      <Form.Control
+                        type="text"
+                        readOnly
+                        name="messageEditUserModal"
+                        value="Delete User Account. Are you sure?"
+                        className="my-3 fs-6 form-control text-danger text-center"
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3">
+                    <Col sm="6">
+                      <Button variant="secondary" className="w-100" onClick={() => this.handleEditUserClose()}>
+                        Cancel
+                      </Button>
+                    </Col>
+                    <Col sm="6">
+                      <Button variant="danger" className="w-100" onClick={() => this.handleDeleteUser(user)}>
+                        Delete
+                        <i className="fa fa-trash ms-1" />
+                      </Button>
+                    </Col>
+                  </Form.Group>
+                </Form>
               </Tab.Pane>
             </Tab.Content>
           </Modal.Body>
@@ -1143,77 +1152,76 @@ export default class UserManagement extends React.Component {
 
   renderRestoreAccountModal() {
     return (
-      <Modal show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
+      <Modal centered show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Restore Account</Modal.Title>
+          <Modal.Title>Restore account</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
-            <Form horizontal>
-              <FormGroup controlId="formControlAbbr">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Abbr:
-                </Col>
+        <Modal.Body className='d-flex justify-content-center align-items-center' >
+          <Form className='w-75'>
+            <Form.Group controlId="formControlAbbr">
+              <Row className="mb-3">
+                <Col column sm={3}>
+                  <Form.Label column sm={3} className=' fs-6'>Abbr: </Form.Label>
+                </Col >
                 <Col sm={9}>
-                  <FormControl
+                  <Form.Control
                     type="text"
                     name="nameAbbreviation"
                     placeholder="Please enter the name abbreviation .."
-                    inputRef={(ref) => {
+                    className='flex-grow-1'
+                    ref={(ref) => {
                       this.nameAbbreviation = ref;
                     }}
                   />
                 </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlAbbr">
-                <Col componentClass={ControlLabel} sm={3}>
-                  ID:
+              </Row>
+            </Form.Group>
+            <Form.Group controlId="formControlID">
+              <Row className="mb-3">
+                <Col column sm={3}>
+                  <Form.Label className='fs-6'>ID:</Form.Label>
                 </Col>
                 <Col sm={9}>
-                  <FormControl
+                  <Form.Control
                     type="text"
                     name="id"
                     placeholder=".. or enter the user ID"
                     defaultValue=""
                     onFocus={() => this.setState({ showError: false, showSuccess: false })}
-                    inputRef={(ref) => {
+                    ref={(ref) => {
                       this.id = ref;
                     }}
                   />
                 </Col>
-              </FormGroup>
-              <FormGroup
-                controlId="formControlMessage"
-                validationState={`${this.state.showError
-                  ? 'error'
-                  : this.state.showSuccess ? 'success' : null}`}
-              >
-                <Col sm={12}>
-                  <FormControl
-                    type="text"
-                    readOnly
-                    name="messageRestoreAccountModal"
-                    value={this.state.messageRestoreAccountModal}
-                  />
-                </Col>
-              </FormGroup>
+              </Row>
+
+            </Form.Group>
+            <Form.Group controlId="formControlMessage" >
+              <Col sm={12}>
+                <Form.Control
+                  className='mt-3'
+                  type="text"
+                  readOnly
+                  name="messageRestoreAccountModal"
+                  value={this.state.messageRestoreAccountModal}
+                  isValid={this.state.showSuccess}
+                  isInvalid={this.state.showError}
+                />
+              </Col>
+            </Form.Group>
               {this.state.deletedUsers.length > 0
                 && renderDeletedUsersTable(this.state.deletedUsers)}
-              <FormGroup>
-                <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleRestoreAccount()}>
-                    Restore&nbsp;
-                    <i className="fa fa-save" />
-                  </Button>
-                  &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleRestoreAccountClose()}>
-                    Cancel&nbsp;
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
-          </div>
+          </Form>
         </Modal.Body>
+        <Modal.Footer className="modal-footer border-0">
+          <Button variant="primary" className='fs-6' onClick={() => this.handleRestoreAccount()}>
+            Restore
+            <i className="fa fa-save ms-1" />
+          </Button>
+          <Button variant="warning" className='fs-6' onClick={() => this.handleRestoreAccountClose()}>
+            Cancel
+          </Button>
+        </Modal.Footer>
       </Modal>
     );
   }
@@ -1238,8 +1246,8 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmUserTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="info"
+              size="sm"
+              variant="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
             >
               <i className="fa fa-check-square" />
@@ -1255,8 +1263,8 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
             <Button
-              bsSize="xsmall"
-              bsStyle="warning"
+              size="sm"
+              variant="warning"
               onClick={() => this.handleReConfirmUserAccount(userId)}
             >
               <i className="fa fa-check-square" />
@@ -1281,222 +1289,195 @@ export default class UserManagement extends React.Component {
     }));
 
     const tcolumn = (
-      <thead style={{
-        position: 'sticky', top: '0px', zIndex: '1', backgroundColor: '#eee'
-      }}
-      >
-        <tr style={{ height: '26px', verticalAlign: 'middle' }}>
-          <th width="1%">#</th>
-          <th width="17%">Actions</th>
-          <th width="12%">Name</th>
-          <th width="6%">Abbr.</th>
-          <th width="8%">Email</th>
-          <th width="7%">Type</th>
-          <th width="10%">Login at</th>
-          <th width="2%">ID</th>
+      <thead className="bg-gray-200">
+        <tr className="align-middle fs-4 py-3">
+          <th className="col-auto fs-4 py-3">#</th>
+          <th className="col-2 col-md-3 fs-4 py-3">Actions</th>
+          <th className="col-3 col-md-2 fs-4 py-3">Name</th>
+          <th className="col-2 fs-4 py-3">Abbr.</th>
+          <th className="col-3 col-md-2 fs-4 py-3">Email</th>
+          <th className="col-2 fs-4 py-3">Type</th>
+          <th className="col-3 col-md-2 fs-4 py-3">Login at</th>
+          <th className="col-1 fs-4 py-3">ID</th>
         </tr>
         <tr>
           <th aria-label="Empty header for the '#' column" />
-          <th>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <FormControl
-                componentClass="select"
-                placeholder="Active-Inactive"
-                onChange={(e) => this.updateDropdownFilter('account_active', e.target.value)}
-              >
-                <option value="">Active & Inactive</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </FormControl>
-              <FormControl
-                componentClass="select"
-                placeholder="Locked-Unlocked"
-                onChange={(e) => this.updateDropdownFilter('locked_at', e.target.value)}
-              >
-                <option value="">Locked & Unlocked</option>
-                <option value="true">Locked</option>
-                <option value="false">Unlocked</option>
-              </FormControl>
+          <th className='fs-6 py-3'>
+            <div className="d-flex justify-content-between">
+              <Col xs={5}>
+                <Form.Select
+                  aria-label="Filter Active-Inactive"
+                  onChange={(e) => this.updateDropdownFilter('account_active', e.target.value)}
+                >
+                  <option value="">Active & Inactive</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </Form.Select>
+              </Col>
+              <Col xs={5}>
+                <Form.Select
+                  aria-label="Filter Locked-Unlocked"
+                  onChange={(e) => this.updateDropdownFilter('locked_at', e.target.value)}
+                >
+                  <option value="">Locked & Unlocked</option>
+                  <option value="true">Locked</option>
+                  <option value="false">Unlocked</option>
+                </Form.Select>
+              </Col>
             </div>
           </th>
-          <th>
-            <FormControl type="text" placeholder="Name" onChange={(e) => this.updateFilter('name', e.target.value)} />
+          <th className='fs-6 py-3'>
+            <Form.Control
+              type="text"
+              placeholder="Name"
+              onChange={(e) => this.updateFilter('name', e.target.value)}
+            />
           </th>
-          <th>
-            <FormControl
+          <th className='fs-6 py-3'>
+            <Form.Control
               type="text"
               placeholder="Abbr."
               onChange={(e) => this.updateFilter('initials', e.target.value)}
             />
           </th>
-          <th>
-            <FormControl type="text" placeholder="Email" onChange={(e) => this.updateFilter('email', e.target.value)} />
+          <th className='fs-6 py-3'>
+            <Form.Control
+              type="text"
+              placeholder="Email"
+              onChange={(e) => this.updateFilter('email', e.target.value)}
+            />
           </th>
-          <th>
-            <FormControl
-              componentClass="select"
-              placeholder="Person-Admin"
+          <th className='fs-6 py-3'>
+            <Form.Select
+              aria-label="Filter Person-Admin"
               onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
             >
               <option value="">All</option>
               <option value="Person">Person</option>
               <option value="Admin">Admin</option>
-            </FormControl>
+            </Form.Select>
           </th>
-          <th aria-label="Empty header for the 'Login at' column" />
-          <th aria-label="Empty header for the 'ID' column" />
+          <th className='fs-6 py-3' aria-label="Empty header for the 'Login at' column" />
+          <th className='fs-6 py-3' aria-label="Empty header for the 'ID' column" />
         </tr>
       </thead>
     );
 
     const tbody = filteredUsers.map((g, idx) => (
-      <tr key={`row_${g.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
-        <td width="2%">
+      <tr key={`row_${g.id}`} className="align-middle" >
+        <td className="col-auto py-3">
           {idx + 1}
         </td>
-        <td width="17%">
+        <td className="col-md-3 col-lg-2">
           <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="info"
+              size="sm"
+              variant="info"
               onClick={() => this.handleEditUserShow(g)}
+              className="me-1"
             >
               <i className="fa fa-user" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
           <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="success"
+              size="sm"
+              variant="success"
               onClick={() => handleResetPassword(g.id, true, this.handleShowAlert)}
+              className="me-1"
             >
               <i className="fa fa-key" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
           <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="primary"
+              size="sm"
+              variant="primary"
               onClick={() => handleResetPassword(g.id, false, this.handleShowAlert)}
+              className="me-1"
             >
               <i className="fa fa-key" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
           <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle={g.locked_at === null ? 'default' : 'warning'}
+              size="sm"
+              variant={g.locked_at === null ? 'light' : 'warning'}
               onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
+              className="me-1"
             >
               <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
             </Button>
           </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(g.converter_admin === null || g.converter_admin === false)
-              ? converterEnableTooltip : converterDisableTooltip}
-          >
+          <OverlayTrigger placement="bottom" overlay={(g.converter_admin === null || g.converter_admin === false) ? converterEnableTooltip : converterDisableTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
+              size="sm"
+              variant={(g.converter_admin === null || g.converter_admin === false) ? 'light' : 'success'}
               onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
+              className="me-1"
             >
               <i className="fa fa-hourglass-half" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(g.is_templates_moderator === null || g.is_templates_moderator
-              === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
-          >
+          <OverlayTrigger placement="bottom" overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.is_templates_moderator === null
-                || g.is_templates_moderator === false) ? 'default' : 'success'}
+              size="sm"
+              variant={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? 'light' : 'success'}
               onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
+              className="me-1"
             >
               <i className="fa fa-book" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(g.molecule_editor == null || g.molecule_editor === false)
-              ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
-          >
+          <OverlayTrigger placement="bottom" overlay={(g.molecule_editor == null || g.molecule_editor === false) ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
+              size="sm"
+              variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'light' : 'success'}
               onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
+              className="me-1"
             >
               <i className="icon-sample" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}
-          >
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}>
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.generic_admin?.elements
-                || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
+              size="sm"
+              variant={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'light'}
               onClick={() => this.handleGenericAdminModal(true, g)}
+              className="me-1"
             >
               <i className="fa fa-empire" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
-          >
+          <OverlayTrigger placement="bottom" overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle={g.account_active === true ? 'default' : 'danger'}
+              size="sm"
+              variant={g.account_active === true ? 'light' : 'danger'}
               onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
             >
               <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          &nbsp;
           {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
           {renderReConfirmButton(g.unconfirmed_email, g.id)}
         </td>
-        <td width="12%">
-          {' '}
+        <td className="col-md-2 py-3">
           {g.name}
-          {' '}
         </td>
-        <td width="6%">
-          {' '}
+        <td className="col-md-1 py-3">
           {g.initials}
-          {' '}
         </td>
-        <td width="8%">
-          {' '}
+        <td className="col-md-2 py-3">
           {g.email}
-          {' '}
         </td>
-        <td width="7%">
-          {' '}
+        <td className="col-md-1 py-3">
           {g.type}
-          {' '}
         </td>
-        <td width="15%">
-          {' '}
+        <td className="col-md-2 py-3">
           {g.current_sign_in_at}
-          {' '}
         </td>
-        <td width="2%">
-          {' '}
+        <td className="col-auto py-3">
           {g.id}
-          {' '}
         </td>
       </tr>
     ));
@@ -1504,37 +1485,36 @@ export default class UserManagement extends React.Component {
     return (
       <div>
         <MessageAlert message={this.state.alertMessage} onHide={this.handleDismissAlert} />
-        <Panel>
-          <Button bsStyle="warning" bsSize="small" onClick={() => this.handleMsgShow()}>
-            Send Message&nbsp;
-            <i className="fa fa-commenting-o" />
-          </Button>
-          &nbsp;
-          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()} data-cy="create-user">
-            New User&nbsp;
-            <i className="fa fa-plus" />
-          </Button>
-          &nbsp;
-          <Button
-            bsStyle="primary"
-            bsSize="small"
-            onClick={() => this.handleRestoreAccountShow()}
-            data-cy="restore-user"
-          >
-            Restore Account&nbsp;
-            <i className="fa fa-undo" />
-          </Button>
-        </Panel>
-        <Panel>
-          <div style={{ maxHeight: '399px', overflowY: 'auto' }} ref={this.tableBodyRef}>
-            <Table>
-              {tcolumn}
-              <tbody>
-                {tbody}
-              </tbody>
-            </Table>
-          </div>
-        </Panel>
+        <Card>
+          <Card.Body>
+            <Button variant="warning" size="md" className='me-1' onClick={() => this.handleMsgShow()}>
+              Send Message
+              <i className="fa fa-commenting-o ms-1" />
+            </Button>
+            <Button variant="primary" size="md" className='me-1' onClick={() => this.handleNewUserShow()} data-cy="create-user">
+              New User
+              <i className="fa fa-plus ms-1" />
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => this.handleRestoreAccountShow()}
+              data-cy="restore-user"
+              className='me-1'
+            >
+              Restore Account
+              <i className="fa fa-undo ms-1" />
+            </Button>
+          </Card.Body>
+        </Card>
+        <div ref={this.tableBodyRef}>
+          <Table responsive className='table border'>
+            {tcolumn}
+            <tbody>
+              {tbody}
+            </tbody>
+          </Table>
+        </div>
         {this.renderMessageModal()}
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}

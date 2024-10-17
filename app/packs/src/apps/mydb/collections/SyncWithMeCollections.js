@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, FormControl, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, ButtonGroup, OverlayTrigger, Popover } from 'react-bootstrap';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
@@ -9,13 +9,12 @@ export default class SyncWithMeCollections extends React.Component {
     super(props);
     this.state = {
       tree: {
-        label: 'Synchronized with me Collections',
-        id: -1,
-        children: [{}],
+        children: [],
       }
     }
     this.onStoreChange = this.onStoreChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.renderNode = this.renderNode.bind(this);
   }
 
   componentDidMount() {
@@ -28,8 +27,9 @@ export default class SyncWithMeCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    const children = state.syncInRoots.length > 0 ? state.syncInRoots : [{}];
-    children.map((child) => {
+    const children = state.syncInRoots
+
+    children.forEach((child) => {
       if (child.is_locked) {
         let label = '';
         if (child.shared_by != null) {
@@ -40,13 +40,11 @@ export default class SyncWithMeCollections extends React.Component {
         }
         child.label = label;
       }
-      return child;
     });
 
     this.setState({
       tree: {
-        label: 'Synchronized with me Collections',
-        children
+        children,
       }
     });
   }
@@ -55,76 +53,72 @@ export default class SyncWithMeCollections extends React.Component {
     this.setState({ show: !this.state.show });
   }
 
-  label(node) {
-    if (node.root) {
-      return (
-        <FormControl 
-        value ="Synchronized with me Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
-    }
-    return (
-      <FormControl
-        className="collection-label"
-        type="text"
-        disabled
-        value={node.label || ''}
-      />
-    )
-  }
-
-  actions(node) {
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        delete collection: <br /> {node.label} ?<br />
-        <ButtonGroup>
-          <Button bsStyle="danger" bsSize="xsmall" onClick={() => CollectionActions.rejectSync({ id: node.id, is_syncd: true })}>
-          Yes
-          </Button>
-          <Button bsStyle="warning" bsSize="xsmall" onClick={this.handleClick} >
-          No
-          </Button>
-        </ButtonGroup>
-      </Popover>
-    );
-    if (!node.is_locked && node.label !== 'Synchronized with me Collections') {
-      if (typeof (node.user) !== 'undefined' && node.user.type === 'Person') {
-        return (
-          <ButtonGroup className="actions">
-            <OverlayTrigger
-              animation
-              placement="bottom"
-              onExit={document.body.click()}
-              root
-              trigger="focus"
-              overlay={popover}
-            >
-              <Button bsSize="xsmall" bsStyle="danger" >
-                <i className="fa fa-trash-o" />
-              </Button>
-            </OverlayTrigger>
-          </ButtonGroup>
-        )
-      }
-    }
-    return (
-      <div />
-    )
-  }
-
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
+    if (node.is_locked) {
       return (
-        <span className="node">
-          {this.label(node)}
-          {this.actions(node)}
-        </span>
+        <h5
+          className="ms-3"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {node.label}
+        </h5>
+      );
+    } else {
+      const shouldRenderActions = typeof (node.user) !== 'undefined' && node.user.type === 'Person'
+      const popover = (
+        <Popover>
+          <Popover.Body>
+            <div>Delete collection?</div>
+            <div>
+              &quot;
+              {node.label}
+              &quot;
+            </div>
+            <div>
+              <ButtonGroup>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => CollectionActions.rejectSync({ id: node.id, is_syncd: true })}
+                >
+                  Yes
+                </Button>
+                <Button
+                  variant="warning"
+                  size="sm"
+                  onClick={this.handleClick}
+                >
+                  No
+                </Button>
+              </ButtonGroup>
+            </div>
+          </Popover.Body>
+        </Popover>
+      );
+
+      return (
+        <div className="d-flex align-items-center justify-content-between bg-dark-subtle mb-2">
+          <div className="ms-3">
+            {node.label}
+          </div>
+          {shouldRenderActions && (
+            <ButtonGroup>
+              <OverlayTrigger
+                animation
+                placement="bottom"
+                root
+                trigger="focus"
+                overlay={popover}
+              >
+                <Button size="sm" variant="danger">
+                  <i className="fa fa-trash-o" />
+                </Button>
+              </OverlayTrigger>
+            </ButtonGroup>
+          )}
+        </div>
       );
     }
-    return (
-      <div />
-    )
   }
 
   render() {
@@ -135,24 +129,14 @@ export default class SyncWithMeCollections extends React.Component {
           draggable={false}
           paddingLeft={20}
           tree={e}
-          renderNode={this.renderNode.bind(this)}
+          renderNode={this.renderNode}
         />
       )
     })
 
     return (
-      <div className="tree">
-        <Tree
-          draggable={false}
-          paddingLeft={20}
-          tree={{
-            label: 'Synchronized with me Collections',
-            root: true,
-            id: -1,
-            path: -1
-          }}
-          renderNode={this.renderNode.bind(this)}
-        />
+      <div>
+        <h4>Collections synchronized with me</h4>
         {trees()}
       </div>
     )

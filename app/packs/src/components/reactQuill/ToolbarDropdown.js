@@ -30,10 +30,10 @@ export default class ToolbarDropdown extends React.Component {
   }
 
   componentDidMount() {
-    const cssRule = ".ql-snow .ql-picker."+this.ddQuillId+" .ql-picker-label::before, ."+this.ddQuillId+" .ql-picker.ql-size .ql-picker-item::before { content: attr(data-label); line-height: 25px; }";
+    const cssRule = ".ql-snow .ql-picker." + this.ddQuillId + " .ql-picker-label::before, ." + this.ddQuillId + " .ql-picker.ql-size .ql-picker-item::before { content: attr(data-label); line-height: 25px; }";
 
     try {
-      this.ruleId = this.sheet.insertRule(cssRule);
+      this.ruleId = this.sheet.insertRule(cssRule, this.sheet.cssRules.length);
     } catch (err) {
       console.log(err);
     }
@@ -52,7 +52,7 @@ export default class ToolbarDropdown extends React.Component {
 
   componentWillUnmount() {
     try {
-      this.sheet.deleteRule(this.ruleId);
+      this.sheet.deleteRule(this.ruleId - 1);
     } catch (err) {
       console.log(err);
     }

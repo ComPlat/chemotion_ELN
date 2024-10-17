@@ -4,43 +4,35 @@ import SVG from 'react-inlinesvg';
 
 export default class Well extends Component {
   render() {
-    const {sample, active, label} = this.props;
-    let displayLabel = '';
+    const { sample, active, label } = this.props;
+    if (!sample) return null;
 
     const className = (active) ? "well-molecule molecule-selected" : "well-molecule";
-    if (sample) {
-      if (label) {
-        const labels = label.split(',');
-        if (labels.some(item => item === 'Molecular structure')){
-          return (
-            <div>
-              <SVG className={className} key={sample.id} src={sample.svgPath}/>
-            </div>
-          );
-        }
-        for (let i = 0; i < labels.length; i++) {
-          if (labels[i] == 'Name') {
-            displayLabel += sample.name + ', ';
-          } else if (labels[i] == 'External label') {
-            displayLabel += sample.external_label + ', ';
-          }
-        }
-        return (
-          <div>{displayLabel}</div>
-        );
-      } else {
-        return (
-          <div>
-            <SVG className={className} key={sample.id} src={sample.svgPath}/>
-          </div>
-        );
-      }
-    } else {
-      return <div></div>
-    }
+    const svg = (<div><SVG className={className} key={sample.id} src={sample.svgPath}/></div>);
+    if (!label) return svg;
+
+    const labels = label.split(',');
+    if (labels.some(item => item === 'Molecular structure')) return svg;
+
+    const displayLabel = labels.map((labelPart) => {
+      if (labelPart === 'Name') return sample.name;
+      if (labelPart === 'External label') return sample.external_label;
+      return '';
+    }).join(', ');
+
+    return (
+      <div
+        className="text-center lh-1"
+        style={{ fontSize: '0.8rem' }}
+      >
+        {displayLabel}
+      </div>
+    );
   }
 }
 
 Well.propTypes = {
-  sample: PropTypes.object
+  sample: PropTypes.object,
+  active: PropTypes.bool,
+  label: PropTypes.string
 };

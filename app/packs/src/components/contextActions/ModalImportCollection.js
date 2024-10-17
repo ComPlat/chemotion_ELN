@@ -39,10 +39,10 @@ export default class ModalImportCollection extends React.Component {
     const { file } = this.state;
     if (file) {
       return (
-        <div>
+        <div className="d-flex justify-content-between">
           {file.name}
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
-            <i className="fa fa-trash-o"></i>
+          <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()}>
+            <i className="fa fa-trash-o" />
           </Button>
         </div>
       );
@@ -75,11 +75,12 @@ export default class ModalImportCollection extends React.Component {
     return (
       <div>
         {this.dropzoneOrfilePreview()}
-        &nbsp;
-        <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
-            <span><i className={bClass} />&nbsp;{bTitle}</span>
+        <ButtonToolbar className="mt-2 justify-content-end gap-1">
+          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+          <Button variant={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
+            <i className={bClass} />
+            {' '}
+            {bTitle}
           </Button>
         </ButtonToolbar>
       </div>

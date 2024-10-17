@@ -1,0 +1,11 @@
+@-moz-document url-prefix() {
+  input[type="checkbox"].common-checkbox  {
+    margin: -2px 0 0 -10px !important;
+    vertical-align: middle;
+  }
+
+  input[type="checkbox"].element-checkbox {
+    margin: -2px 0 0 0 !important;
+    vertical-align: middle;
+  }
+}

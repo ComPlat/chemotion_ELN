@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ALL_TYPES } from 'src/apps/generic/Utils';
 
@@ -17,8 +17,9 @@ export default class GenericAdminModal extends Component {
     return params.map((p, i) => (
       <Button
         key={`_auth_designer_button_${ALL_TYPES[i]}`}
-        bsSize="sm"
-        bsStyle={p ? 'warning' : 'default'}
+        size="sm"
+        variant={p ? 'warning' : 'light'}
+        className='me-2'
         onClick={() =>
           this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)
         }
@@ -31,8 +32,8 @@ export default class GenericAdminModal extends Component {
   renderDescription(_params) {
     const params = _params || [];
     return params.map((p, i) => (
-      <li key={`_description_${ALL_TYPES[i]}`}>
-        Currently {p ? '' : 'NOT'} acting as the Designer of the Generic&nbsp;
+      <li key={`_description_${ALL_TYPES[i]}`} className=' fs-6 ms-3 my-2 align-items-center'>
+        Currently {p ? '' : 'NOT'} acting as the Designer of the Generic
         {ALL_TYPES[i]}
       </li>
     ));
@@ -52,14 +53,14 @@ export default class GenericAdminModal extends Component {
     const { user, fnShowModal } = this.props;
     const { elements, segments, datasets } = user.generic_admin || {};
     return (
-      <Modal show onHide={() => fnShowModal(false)}>
+      <Modal centered show onHide={() => fnShowModal(false)} >
         <Modal.Header closeButton>
-          <Modal.Title>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
+          <Modal.Title className='fs-5'>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ButtonToolbar>
+          <div className="d-flex flex-wrap ms-3">
             {this.renderButton([elements, segments, datasets], user)}
-          </ButtonToolbar>
+          </div>
           <ul>{this.renderDescription([elements, segments, datasets])}</ul>
         </Modal.Body>
       </Modal>

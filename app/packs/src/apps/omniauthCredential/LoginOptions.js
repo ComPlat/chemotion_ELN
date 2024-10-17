@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import {
+  Container,
   Row,
   Col,
-  Grid,
   Button
 } from 'react-bootstrap';
 import uuid from 'uuid';
@@ -45,7 +45,7 @@ export default class LoginOptions extends Component {
   render() {
     const { omniauthProviders } = this.state;
     const keys = Object.keys(omniauthProviders);
-    if (keys.length === 0) return (<span />);
+    if (keys.length === 0) return null;
     const items = keys.map((key) => (
       <Col key={uuid.v1()} md={12 / keys.length} className="login-options">
         <Button href={`/users/auth/${key}`}>
@@ -56,11 +56,11 @@ export default class LoginOptions extends Component {
     ));
 
     return (
-      <Grid>
+      <Container>
         <Row>
           {items}
         </Row>
-      </Grid>
+      </Container>
     );
   }
 }

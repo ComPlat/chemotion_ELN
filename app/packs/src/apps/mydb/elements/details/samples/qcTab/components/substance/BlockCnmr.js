@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Alert } from 'react-bootstrap';
+import { Alert, Accordion } from 'react-bootstrap';
 
 import QuillViewer from 'src/components/QuillViewer';
 import QcMolView from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/QcMolView';
@@ -16,7 +16,7 @@ const emptyBlock = () => (
       <span>2 Analysis of the provided digital NMR spectroscopy data: 13C NMR:</span>
     </h5>
     <div className="card-qc">
-      <Alert bsStyle="danger">
+      <Alert variant="danger">
         No Information. Please upload spectrum & make predictions in Spectra Editor.
       </Alert>
     </div>
@@ -88,23 +88,18 @@ const BlockCnmr = ({ ansCnmr }) => {
             {iconByMargin(ansOwn, 0)}
           </span>
         </div>
-        <Panel
-          className="qc-detail-panel"
-          id="qc-detail-panel-cnmr"
-          defaultExpanded={false}
-        >
-          <Panel.Heading>
-            <Panel.Title className="qc-detail-panel-title" toggle>
+
+        <Accordion id="qc-detail-panel-cnmr">
+          <Accordion.Item eventKey="qc-detail-panel-cnmr">
+            <Accordion.Header>
               13C NMR Prediction Detail
-            </Panel.Title>
-          </Panel.Heading>
-          <Panel.Collapse>
-            <Panel.Body>
+            </Accordion.Header>
+            <Accordion.Body>
               <QcMolView svg={svg} />
               {tableNmr(shifts)}
-            </Panel.Body>
-          </Panel.Collapse>
-        </Panel>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
       </div>
     </div>
   );

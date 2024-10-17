@@ -6,6 +6,7 @@ import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 import Aviator from 'aviator';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -19,15 +20,11 @@ export default class CellLineEntry extends Component {
     };
   }
 
-  componentDidMount() {
-    UIStore.getState();
-  }
-
   getBorderStyle() {
     const { showEntries } = this.state;
     return showEntries
-      ? 'list-container title-panel'
-      : 'list-container title-panel cell-line-group-bottom-border';
+      ? 'list-container title-panel p-3'
+      : 'list-container title-panel p-3 cell-line-group-bottom-border';
   }
 
   renderItemEntries(cellLineItems) {
@@ -38,55 +35,52 @@ export default class CellLineEntry extends Component {
   }
 
   renderNameHeader(firstCellLineItem) {
-    return [
-      this.renderArrow(),
-      this.renderDetailedInfoButton(),
-      this.renderCreateSubSampleButton(),
-      <div
-        key={firstCellLineItem.cellLineName}
-        className="cell-line-group-header-name"
-      >
-        {firstCellLineItem.cellLineName}
-        {' '}
-        -
-        {' '}
-        {firstCellLineItem.source}
-      </div>];
-  }
-
-  renderArrow() {
     const { showEntries } = this.state;
-    const arrowType = showEntries ? 'glyphicon-chevron-right' : 'glyphicon-chevron-down';
     return (
-      <div key="arrow" className="cell-line-group-arrow floating-right">
-        <i className={`glyphicon ${arrowType}`} />
+      <div className="d-flex gap-2 align-items-center">
+        <div className="flex-grow-1 fw-bold fs-5">
+          {`${firstCellLineItem.cellLineName} - ${firstCellLineItem.source}`}
+        </div>
+        {this.renderCreateSubSampleButton()}
+        {this.renderDetailedInfoButton()}
+        <ChevronIcon color="primary" direction={showEntries ? 'down' : 'right'} />
       </div>
-
     );
   }
 
   renderDetailedInfos(firstCellLineItem) {
     const { detailedInformation } = this.state;
-    return !detailedInformation ? [] : [
-      this.renderProperty('Organism', firstCellLineItem.organism),
-      this.renderProperty('Disease', firstCellLineItem.disease),
-      this.renderProperty('Tissue', firstCellLineItem.tissue),
-      this.renderProperty('Mutation', firstCellLineItem.mutation),
-      this.renderProperty('Variant', firstCellLineItem.variant),
-      this.renderProperty('Bio safety level', firstCellLineItem.bioSafetyLevel),
-      this.renderProperty('Cryopreservation medium', firstCellLineItem.cryopreservationMedium),
-      this.renderProperty('Gender', firstCellLineItem.gender)
-    ];
+    return !detailedInformation ? null : (
+      <div className="mt-2">
+        {this.renderProperty('Organism', firstCellLineItem.organism)}
+        {this.renderProperty('Disease', firstCellLineItem.disease)}
+        {this.renderProperty('Tissue', firstCellLineItem.tissue)}
+        {this.renderProperty('Mutation', firstCellLineItem.mutation)}
+        {this.renderProperty('Variant', firstCellLineItem.variant)}
+        {this.renderProperty('Bio safety level', firstCellLineItem.bioSafetyLevel)}
+        {this.renderProperty('Cryopreservation medium', firstCellLineItem.cryopreservationMedium)}
+        {this.renderProperty('Gender', firstCellLineItem.gender)}
+      </div>
+    );
   }
 
   renderDetailedInfoButton() {
     const { detailedInformation } = this.state;
-    const buttonActive = detailedInformation ? 'detailed-info-on' : 'detailed-info-off';
+    const active = !!detailedInformation;
     return (
-      <OverlayTrigger key="detailedInfoButton" placement="top" overlay={<Tooltip id="detailed-info-button">Show detailed information about the material</Tooltip>}>
+      <OverlayTrigger
+        key="detailedInfoButton"
+        placement="top"
+        overlay={(
+          <Tooltip id="detailed-info-button">
+            Show detailed information about the material
+          </Tooltip>
+        )}
+      >
         <Button
-          className={`button-right ${buttonActive}`}
-          bsSize="xsmall"
+          variant="info"
+          className={active ? 'border border-primary' : ''}
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             this.setState({ detailedInformation: !detailedInformation });
@@ -102,13 +96,20 @@ export default class CellLineEntry extends Component {
     const { cellLineItems } = this.props;
     const { currentCollection, isSync } = UIStore.getState();
     if (currentCollection.label === 'All') { return null; }
-    if (currentCollection.is_sync_to_me && currentCollection.permission_level==0){return null;}
-    
+    if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) { return null; }
+
     return (
-      <OverlayTrigger key="subSampleButton" placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
+      <OverlayTrigger
+        key="subSampleButton"
+        placement="top"
+        overlay={(
+          <Tooltip id="detailed-info-button">
+            Create sample of cell line material
+          </Tooltip>
+        )}
+      >
         <Button
-          className="button-right quick-sample"
-          bsSize="xsmall"
+          size="sm"
           onClick={(event) => {
             event.stopPropagation();
 

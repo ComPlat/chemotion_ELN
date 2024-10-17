@@ -6,14 +6,20 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 
 import _ from 'lodash';
-import { ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Popover, Button } from 'react-bootstrap';
+import { Dropdown, DropdownButton, OverlayTrigger, Popover, Button } from 'react-bootstrap';
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],
   [{ list: 'ordered' }, { list: 'bullet' }],
   [{ script: 'sub' }, { script: 'super' }],
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
-  [{ specialCharacters: ['→', '⇌', '⇐', '⇒', '⇑', ' ⇓', '⇠', '⇢', '⇡', '⇣', '⇤', '⇥', '⤒', '⤓', '↨', '∆', 'α', 'β', 'δ', 'Κ', '°C', '°F', '☉', '⬤', 'Ⓤ', '🜚', 'Ω', 'Ā', 'ā', 'Ă', 'ă', '<', '>', '≤', '≥', '–', '—', '¯', '‾', '°', '−', '±', '÷', '⁄', '×', '≈', '≠', '≡', '≅', '∫', '∑', 'φ', '∞', '√', '∼', '∃', '∀', '∗', '∝', '∠'] }],
+  [{
+    specialCharacters: [
+      '→', '⇌', '⇐', '⇒', '⇑', ' ⇓', '⇠', '⇢', '⇡', '⇣', '⇤', '⇥', '⤒', '⤓', '↨', '∆', 'α', 'β', 'δ', 'Κ', '°C', '°F',
+      '☉', '⬤', 'Ⓤ', '🜚', 'Ω', 'Ā', 'ā', 'Ă', 'ă', '<', '>', '≤', '≥', '–', '—', '¯', '‾', '°', '−', '±', '÷', '⁄',
+      '×', '≈', '≠', '≡', '≅', '∫', '∑', 'φ', '∞', '√', '∼', '∃', '∀', '∗', '∝', '∠'
+    ]
+  }],
   // [{ 'color': [] }, { 'background': [] }],
   // [{ 'font': [] }],
   // ['α', 'β', 'π'],
@@ -209,23 +215,26 @@ export default class QuillEditor extends React.Component {
               />
             );
           } else if (Array.isArray(elementValue)) {
-            const options = elementValue.map(function(e) {
-              if(e == false){
+            const options = elementValue.map(function (e) {
+              if (e == false) {
                 return <option value="" key="" />
               }
               return <option value={e} key={`opt_${e}`} />
             });
 
             const character = elementValue.map(e => this.renderCharacters(e));
+
             const templateCreatorPopover = (
               <Popover
                 id="popover-positioned-bottom"
-                title="special characters"
-                // className="analyses-template-creator"
+                title="Special Characters"
               >
-                <span className="ql-spec-group">
+                <Popover.Header>
+                  Special Characters
+                </Popover.Header>
+                <Popover.Body className="d-flex flex-wrap">
                   {character}
-                </span>
+                </Popover.Body>
               </Popover>
             );
 
@@ -236,13 +245,11 @@ export default class QuillEditor extends React.Component {
                   key={`element_overlay_${element}`}
                   trigger="click"
                   placement="bottom"
-                  rootClose
                   overlay={templateCreatorPopover}
+                  rootClose
                 >
                   <span className="ql-formats">
-                    <button>
-                      <span> &#937; </span>
-                    </button>
+                    &#937;
                   </span>
                 </OverlayTrigger>
               );
@@ -258,7 +265,7 @@ export default class QuillEditor extends React.Component {
             );
           }
         }
-        return (<span key={`span_empty_${index}`}/>);
+        return (<span key={`span_empty_${index}`} />);
       });
 
       return (
@@ -273,7 +280,9 @@ export default class QuillEditor extends React.Component {
   renderCharacters(e) {
     return (
       <Button
-        className="ql-spec-Charac"
+        className="m-1 flex-shrink-1 flex-grow-1 text-nowrap"
+        style={{ width: '15%' }}
+        variant="light"
         key={`btnKey_${e}`}
         value={e}
         // eslint-disable-next-line no-shadow
@@ -286,7 +295,7 @@ export default class QuillEditor extends React.Component {
 
   renderCustomToolbar() {
     if (this.theme !== 'snow' || !this.toolbar || this.toolbar.length === 0) {
-      return (<span />);
+      return null;
     }
 
     const customToolbarElement = this.toolbar.map(element => {
@@ -295,19 +304,19 @@ export default class QuillEditor extends React.Component {
       }
 
       return (
-        <span
+        <Button
           key={`${element.name}_key`}
           id={`${element.name}_id`}
-          style={{ marginRight: '10px', cursor: 'pointer' }}
+          className="me-2"
         >
           <i className={`icon-${element.name}`} />
-        </span>
+        </Button>
       )
     });
 
     return (
       <span className="ql-formats custom-toolbar" >
-        { customToolbarElement }
+        {customToolbarElement}
       </span>
     );
   }
@@ -316,17 +325,28 @@ export default class QuillEditor extends React.Component {
     if (this.theme !== 'snow' || !this.toolbar || this.toolbar.length === 0 || this.props.toolbarDropdown.length === 0) {
       return null;
     }
+    
+    const customDropdownElement = this.props.toolbarDropdown.map(element => {
+      return (
+        <Dropdown.Item
+          key={`mi_${element.name}`}
+          eventKey={element.name}
+          onSelect={() => this.handleEditorValue(this.props.toolbarDropdown, element)}
+        >
+          {element.name.toUpperCase()}
+        </Dropdown.Item>
+      );
+    });
+
     return (
       <span className="ql-formats custom-toolbar">
-        <ButtonToolbar>
-          <DropdownButton
-            title="MS"
-            id="quill-cuz-dropdown"
-            className="quill-cuz-dropdown"
-          >
-            {this.props.toolbarDropdown.map(t => <MenuItem key={`mi_${t.name}`} eventKey={t.name} onSelect={() => this.handleEditorValue(this.props.toolbarDropdown, t)}>{t.name.toUpperCase()}</MenuItem>)}
-          </DropdownButton>
-        </ButtonToolbar>
+        <DropdownButton
+          title="MS"
+          id="quill-cuz-dropdown"
+          className="quill-cuz-dropdown"
+        >
+          {customDropdownElement}
+        </DropdownButton>
       </span>
     );
   }
@@ -337,7 +357,7 @@ export default class QuillEditor extends React.Component {
         <div id={`toolbar-${this.id}`}>
           {this.renderQuillToolbarGroup()}
           <span className="ql-formats custom-toolbar">
-            { this.props.customToolbar }
+            {this.props.customToolbar}
           </span>
           {this.renderCustomToolbar()}
           {this.renderCustomDropdown()}

@@ -57,18 +57,16 @@ class MaterialGroupContainer extends Component {
       isOver, canDrop, connectDropTarget,
       deleteMaterial, onChange, reaction, dropSample, dropMaterial, switchEquiv, lockEquivColumn
     } = this.props;
-    const style = {
-      padding: '2px 5px',
-    };
-    if (isOver && canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderColor = '#337ab7';
-    } else if (canDrop) {
-      style.borderStyle = 'dashed';
+    let className='';
+    if (canDrop) {
+      className+=' dnd-zone';
+      if (isOver) {
+        className+=' dnd-zone-over';
+      }
     }
 
     return connectDropTarget(
-      <div style={style}>
+      <div className={className}>
         <MaterialGroup
           reaction={reaction}
           onChange={onChange}
@@ -83,7 +81,7 @@ class MaterialGroupContainer extends Component {
           switchEquiv={switchEquiv}
           lockEquivColumn={lockEquivColumn}
         />
-      </div>,
+      </div>
     );
   }
 }

@@ -1,17 +1,17 @@
+/* eslint-disable react/function-component-definition */
 /* eslint-disable react/jsx-no-bind */
 /* eslint-disable max-len */
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
+  Form,
   Button,
   ButtonToolbar,
   Modal,
-  Panel,
-  FormGroup,
-  ControlLabel,
+  Card
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -149,17 +149,15 @@ Editor.propTypes = {
 function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
-    <FormGroup>
-      <ControlLabel>Structure Editor</ControlLabel>
+    <Form.Group className="w-100">
+      <Form.Label>Structure Editor</Form.Label>
       <Select
-        className="status-select"
-        name="editor selection"
-        clearable={false}
+        name="editorSelection"
         options={options}
         onChange={fnChange}
-        value={value}
+        value={options.find((opt) => opt.value === value)}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -180,34 +178,31 @@ EditorList.propTypes = {
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-function WarningBox({ handleCancelBtn, hideWarning, show }) {
-  return show
-    ? (
-      <Panel bsStyle="info">
-        <Panel.Heading>
-          <Panel.Title>
-            Parents/Descendants will not be changed!
-          </Panel.Title>
-        </Panel.Heading>
-        <Panel.Body>
-          <p>This sample has parents or descendants, and they will not be changed.</p>
-          <p>Are you sure?</p>
-          <br />
-          <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
-            Cancel
-          </Button>
-          <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
-            Continue Editing
-          </Button>
-        </Panel.Body>
-      </Panel>
-    ) : null;
-}
+const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (
+  <Card variant="info">
+    <Card.Header>
+      Parents/Descendants will not be changed!
+    </Card.Header>
+    <Card.Body>
+      <p>This sample has parents or descendants, and they will not be changed.</p>
+      <p>Are you sure?</p>
+    </Card.Body>
+    <Card.Footer className="d-flex justify-content-end">
+      <ButtonToolbar className="gap-1">
+        <Button variant="danger" onClick={handleCancelBtn}>
+          Cancel
+        </Button>
+        <Button variant="warning" onClick={hideWarning}>
+          Continue Editing
+        </Button>
+      </ButtonToolbar>
+    </Card.Footer>
+  </Card>
+);
 
 WarningBox.propTypes = {
   handleCancelBtn: PropTypes.func.isRequired,
-  hideWarning: PropTypes.func.isRequired,
-  show: PropTypes.bool.isRequired,
+  hideWarning: PropTypes.func.isRequired
 };
 
 const initEditor = () => {
@@ -339,7 +334,6 @@ export default class StructureEditorModal extends React.Component {
     } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
-    const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
 
     let useEditor = (
       <div>
@@ -370,64 +364,56 @@ export default class StructureEditorModal extends React.Component {
     }));
 
     return (
-      <div>
-        <Modal
-          dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
-          animation
-          show={showModal}
-          onLoad={this.initializeEditor.bind(this)}
-          onHide={this.handleCancelBtn.bind(this)}
-        >
-          <Modal.Header closeButton>
-            <div style={{ display: 'flex' }}>
-              <div style={{ flex: 3 }}>
-                <EditorList
-                  value={editor.id}
-                  fnChange={this.handleEditorSelection}
-                  options={editorOptions}
-                />
-              </div>
-              {
-                editor.id === 'ketcher2'
-                && (
-                  <div style={{ flex: 1, margin: '0 10px' }}>
-                    <CommonTemplatesList
-                      options={commonTemplatesList}
-                      value={selectedCommonTemplate?.name}
-                      selectedItem={selectedCommonTemplate}
-                      onClickHandle={(value) => {
-                        this.setState({ selectedCommonTemplate: value });
-                        copyContentToClipboard(value?.molfile);
-                      }}
-                    />
-                  </div>
-                )
-              }
-            </div >
-          </Modal.Header >
-          <Modal.Body>
+      <Modal
+        centered
+        className={!this.state.showWarning && 'modal-xxxl'}
+        show={showModal}
+        onLoad={this.initializeEditor.bind(this)}
+        onHide={this.handleCancelBtn.bind(this)}
+      >
+        <Modal.Header closeButton className="gap-3">
+          <EditorList
+            value={editor.id}
+            fnChange={this.handleEditorSelection}
+            options={editorOptions}
+          />
+          {editor.id === 'ketcher2' && (
+            <CommonTemplatesList
+              options={commonTemplatesList}
+              value={selectedCommonTemplate?.name}
+              selectedItem={selectedCommonTemplate}
+              onClickHandle={(value) => {
+                this.setState({ selectedCommonTemplate: value });
+                copyContentToClipboard(value?.molfile);
+              }}
+            />
+          )}
+        </Modal.Header>
+        <Modal.Body>
+          {showWarning && (
             <WarningBox
               handleCancelBtn={this.handleCancelBtn.bind(this)}
               hideWarning={this.hideWarning.bind(this)}
-              show={!!showWarning}
             />
-            {useEditor}
-            <div style={buttonToolStyle}>
-              <ButtonToolbar>
-                <Button bsStyle="warning" onClick={this.handleCancelBtn.bind(this)}>
-                  {cancelBtnText}
+          )}
+          {useEditor}
+        </Modal.Body>
+        {!showWarning && (
+          <Modal.Footer className="modal-footer border-0">
+            <ButtonToolbar className="gap-1">
+              <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
+                {cancelBtnText}
+              </Button>
+              {handleSaveBtn && (
+                <Button variant="primary" onClick={handleSaveBtn}>
+                  {submitBtnText}
                 </Button>
-                {!handleSaveBtn ? null : (
-                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
-                    {submitBtnText}
-                  </Button>
-                )}
-                {!handleSaveBtn ? null : submitAddons}
-              </ButtonToolbar>
-            </div>
-          </Modal.Body>
-        </Modal >
-      </div >
+              )}
+              {handleSaveBtn && submitAddons}
+            </ButtonToolbar>
+          </Modal.Footer>
+        )}
+      </Modal>
     );
   }
 }

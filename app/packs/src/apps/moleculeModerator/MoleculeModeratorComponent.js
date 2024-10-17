@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
-import { Col, Panel, Button, Row, FormControl, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, FormGroup, InputGroup } from 'react-bootstrap';
+import { Card, Container, Col, Button, Row, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, InputGroup } from 'react-bootstrap';
 import { findIndex } from 'lodash';
-
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
@@ -22,10 +21,10 @@ export default class MoleculeModeratorComponent extends Component {
     this.confirmDelete = this.confirmDelete.bind(this);
     this.handleShowModal = this.handleShowModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
+    this.handleMolNameChange = this.handleMolNameChange.bind(this);
     this.onSaveName = this.onSaveName.bind(this);
     this.onAddName = this.onAddName.bind(this);
   }
-
 
   componentDidUpdate(prevProps) {
     if (this.props !== prevProps) {
@@ -35,6 +34,7 @@ export default class MoleculeModeratorComponent extends Component {
       });
     }
   }
+
   onAddName() {
     const molName = {
       id: -1,
@@ -52,20 +52,17 @@ export default class MoleculeModeratorComponent extends Component {
     const { molecule } = this.props;
     const { molNames, molName, isNew } = this.state;
 
-    const name = this.m_name.value.trim();
-    if (name == '') {
+    if (molName.name === '') {
       // eslint-disable-next-line no-alert
       alert('Please input name!');
       return false;
     }
 
-    molName.name = name;
-
     const params = {
       id: molecule.id,
       name_id: molName.id,
       description: molName.description,
-      name
+      name: molName.name,
     };
 
     MoleculesFetcher.saveMoleculeName(params).then((result) => {
@@ -76,7 +73,7 @@ export default class MoleculeModeratorComponent extends Component {
         if (isNew == true) {
           molNames.push(result);
         } else {
-          const idx = findIndex(molNames, o => o.id === molName.id);
+          const idx = findIndex(molNames, (o) => o.id === molName.id);
           molNames.splice(idx, 1, molName);
         }
         this.setState({
@@ -92,8 +89,8 @@ export default class MoleculeModeratorComponent extends Component {
     this.props.handleEditor(false);
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null) {
-    this.props.handleEditorSave(molfile, svg_file, config);
+  handleStructureEditorSave(molfile, svgFile = null, config = null) {
+    this.props.handleEditorSave(molfile, svgFile, config);
   }
 
   handleSave() {
@@ -105,6 +102,19 @@ export default class MoleculeModeratorComponent extends Component {
       show: true,
       isNew,
       molName: nameObj
+    });
+  }
+
+  handleMolNameChange(e) {
+    this.setState((state) => {
+      const { molName } = state;
+      return {
+        ...state,
+        molName: {
+          ...molName,
+          name: e.target.value.trim()
+        }
+      };
     });
   }
 
@@ -122,7 +132,7 @@ export default class MoleculeModeratorComponent extends Component {
         console.log(result);
         alert(result.error);
       } else {
-        const idx = findIndex(molNames, o => o.id === nameObj.id);
+        const idx = findIndex(molNames, (o) => o.id === nameObj.id);
         molNames.splice(idx, 1);
         this.setState({
           molNames
@@ -134,15 +144,17 @@ export default class MoleculeModeratorComponent extends Component {
   renderDeleteButton(nameObj) {
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
-        delete this molecule name <br />
-        <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(nameObj)}>
+        <Popover.Header>
+          Delete this molecule name?
+        </Popover.Header>
+        <Popover.Body className="d-flex gap-2">
+          <Button size="sm" variant="danger" onClick={() => this.confirmDelete(nameObj)}>
             Yes
-          </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          </Button>
+          <Button size="sm" variant="warning" onClick={this.handleClick}>
             No
           </Button>
-        </div>
+        </Popover.Body>
       </Popover>
     );
 
@@ -155,7 +167,7 @@ export default class MoleculeModeratorComponent extends Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button size="sm" variant="danger">
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
@@ -163,151 +175,179 @@ export default class MoleculeModeratorComponent extends Component {
     );
   }
 
-
   renderEditButton(nameObj) {
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Edit molecule name</Tooltip>}>
-        <Button bsSize="xsmall" bsStyle="primary" type="button" onClick={() => this.handleShowModal(nameObj)} >
+        <Button size="sm" variant="primary" type="button" onClick={() => this.handleShowModal(nameObj)}>
           <i className="fa fa-pencil-square-o" />
         </Button>
       </OverlayTrigger>
     );
   }
 
-
   renderModal() {
     const { show, isNew, molName } = this.state;
     return (
-      <Modal show={show} onHide={this.handleCloseModal}>
+      <Modal centered show={show} onHide={this.handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Panel bsStyle="success">
-            <Panel.Heading>
-              <Panel.Title>
-                {isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
-              <Form horizontal className="input-form">
-                <FormGroup controlId="formControlId">
-                  <InputGroup>
-                    <InputGroup.Addon>Attr.</InputGroup.Addon>
-                    <FormControl type="text" defaultValue={molName.description} readOnly />
-                  </InputGroup>
-                </FormGroup>
-                <FormGroup controlId="formControlName">
-                  <InputGroup>
-                    <InputGroup.Addon>Molecule name</InputGroup.Addon>
-                    <FormControl type="text" defaultValue={molName.name} inputRef={(ref) => { this.m_name = ref; }} />
-                  </InputGroup>
-                </FormGroup>
-              </Form>
-              <Button bsSize="small" type="button" bsStyle="warning" onClick={() => this.onSaveName()}>Save</Button>
-            </Panel.Body>
-          </Panel>
+          <Form horizontal className="input-form">
+            <Form.Group className="mb-3" controlId="formControlId">
+              <InputGroup>
+                <InputGroup.Text>Attr.</InputGroup.Text>
+                <Form.Control type="text" defaultValue={molName.description} readOnly />
+              </InputGroup>
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formControlName">
+              <InputGroup>
+                <InputGroup.Text>Molecule name</InputGroup.Text>
+                <Form.Control type="text" value={molName.name} onChange={this.handleMolNameChange} />
+              </InputGroup>
+            </Form.Group>
+          </Form>
+          <Button size="sm" type="button" onClick={() => this.onSaveName()}>Save</Button>
         </Modal.Body>
-
       </Modal>
     );
   }
 
-  render() {
+  renderNameTable() {
     const { molNames } = this.state;
+
+    return (
+      <Table>
+        <thead>
+          <tr>
+            <td width="5%">#</td>
+            <td width="15%">
+              Action
+              <OverlayTrigger
+                placement="top"
+                overlay={(
+                  <Tooltip id="groupUsersAdd">
+                    Add new molecule name
+                  </Tooltip>
+                )}
+              >
+                <Button
+                  className="ms-2"
+                  size="sm"
+                  variant="success"
+                  onClick={() => this.onAddName()}
+                >
+                  <i className="fa fa-plus" />
+                </Button>
+              </OverlayTrigger>
+            </td>
+            <td width="20%">Attr.</td>
+            <td width="60%">Moledule Name</td>
+          </tr>
+        </thead>
+        <tbody>
+          {molNames.map((na, i) => (
+            <tr key={`row_${na.id}`} id={`row_${na.id}`}>
+              <td>{i + 1}</td>
+              <td className="d-flex gap-2">
+                {this.renderDeleteButton(na)}
+                {this.renderEditButton(na)}
+              </td>
+              <td>{na.description}</td>
+              <td>{na.name}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    );
+  }
+
+  render() {
+    const { molecule, handleEditor, showStructureEditor } = this.props;
+
     const componentEditor = (
       <div className="search-structure-draw">
         <StructureEditorModal
-          showModal={this.props.showStructureEditor}
+          showModal={showStructureEditor}
           onSave={this.handleStructureEditorSave}
           onCancel={this.handleStructureEditorCancel}
-          molfile={this.props.molecule.molfile}
+          molfile={molecule.molfile}
         />
       </div>
     );
 
-    const tbodyHeader = (
-      <thead>
-        <tr>
-          <td width="5%">#</td>
-          <td width="15%">Action &nbsp;
-            <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add new molecule name</Tooltip>}>
-              <Button bsSize="xsmall" bsStyle="success" onClick={() => this.onAddName()}>
-                <i className="fa fa-plus" />
-              </Button>
-            </OverlayTrigger>
-          </td>
-          <td width="20%">Attr.</td>
-          <td width="60%">Moledule Name</td>
-        </tr>
-      </thead>
-    );
-
-    const tbodyContent = molNames.map((na, i) => (
-      <tr key={`row_${na.id}`} id={`row_${na.id}`}>
-        <td>{i + 1}</td>
-        <td>
-          {this.renderDeleteButton(na)}
-          &nbsp;
-          {this.renderEditButton(na)}
-        </td>
-        <td>{na.description}</td>
-        <td>{na.name}</td>
-      </tr>
-    ));
-
     return (
-      <div>
+      <>
         {componentEditor}
-        <div className="container">
-          <Panel>
-            <Panel.Heading>
-              <b>InChiKey:</b>&nbsp;{this.props.molecule.inchikey}
-              &nbsp;(<b>Chemotion molecule id:</b>&nbsp;{this.props.molecule.id})
+        <Container>
+          <Card>
+            <Card.Header>
+              <b>InChiKey:</b>
+              {' '}
+              {molecule.inchikey}
+              {' '}
+              (
+              <b>Chemotion molecule id:</b>
+              {' '}
+              {molecule.id}
+              )
               <br />
-              <b>Canonical Smiles:</b>&nbsp;{this.props.molecule.cano_smiles}
-            </Panel.Heading>
-            <Panel.Body>
-              <Row>
-                <Col md={12}>
-                  <Button bsStyle="primary" bsSize="sm" onClick={() => this.props.handleEditor(true)}>Open Editor&nbsp;<i className="fa fa-pencil" aria-hidden="true" /></Button>&nbsp;
-                  <Button bsStyle="warning" bsSize="sm" onClick={() => this.handleSave()}>Update molfile and svg&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" /></Button>
+              <b>Canonical Smiles:</b>
+              {' '}
+              {molecule.cano_smiles}
+            </Card.Header>
+            <Card.Body>
+              <Row className="mb-3">
+                <Col>
+                  <Button variant="primary" size="sm" onClick={() => handleEditor(true)}>
+                    Open Editor
+                    <i className="fa fa-pencil ms-1" aria-hidden="true" />
+                  </Button>
+  &nbsp;
+                  <Button variant="warning" size="sm" onClick={() => this.handleSave()}>
+                    Update molfile and svg
+                    <i className="fa fa-floppy-o ms-1" aria-hidden="true" />
+                  </Button>
                 </Col>
               </Row>
-              <Row>
-                <Col md={4}>
-                  <b>molfile:</b><br />
-                  <FormControl componentClass="textarea" placeholder="textarea" value={this.props.molecule.molfile} readOnly style={{ minHeight: 'calc(50vh)' }} />
+              <Row className="mb-3">
+                <Col xs={4}>
+                  <b>molfile:</b>
+                  <Form.Control
+                    as="textarea"
+                    readOnly
+                    placeholder="textarea"
+                    value={molecule.molfile}
+                    style={{ minHeight: 'calc(50vh)' }}
+                  />
                 </Col>
-                <Col md={8}>
-                  <b>svg:</b><br />
+                <Col xs={8}>
+                  <b>svg:</b>
                   <div className="svg-container">
-                    <SVG key={this.props.molecule.molecule_svg_file} src={`/images/molecules/${this.props.molecule.molecule_svg_file}`} className="molecule-mid" />
+                    <SVG
+                      key={molecule.molecule_svg_file}
+                      src={`/images/molecules/${molecule.molecule_svg_file}`}
+                      className="molecule-mid"
+                    />
                   </div>
                 </Col>
               </Row>
-              &nbsp;
               <Row>
-                <Col md={12}>
-                  <Table>
-                    {tbodyHeader}
-                    <tbody>
-                      {tbodyContent}
-                    </tbody>
-                  </Table>
+                <Col>
+                  {this.renderNameTable()}
                 </Col>
               </Row>
-              {this.renderModal()}
-            </Panel.Body>
-          </Panel>
-        </div>
-      </div>
+            </Card.Body>
+          </Card>
+        </Container>
+        {this.renderModal()}
+      </>
     );
   }
 }
 
 MoleculeModeratorComponent.propTypes = {
-  molecule: PropTypes.object,
+  molecule: PropTypes.object.isRequired,
   showStructureEditor: PropTypes.bool.isRequired,
   handleEditorSave: PropTypes.func.isRequired,
   handleEditor: PropTypes.func.isRequired,

@@ -1,10 +1,6 @@
-/* eslint-disable object-shorthand, no-trailing-spaces,
-object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  FormGroup, ControlLabel, FormControl, OverlayTrigger, Tooltip
-} from 'react-bootstrap';
+import { Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import PrivateNote from 'src/models/PrivateNote';
 
@@ -28,7 +24,7 @@ export default class PrivateNoteElement extends React.Component {
       note = PrivateNote.buildEmpty();
     }
     note.content = value;
-    this.setState({ note: note });
+    this.setState({ note });
   }
 
   fetchNote(element) {
@@ -38,7 +34,7 @@ export default class PrivateNoteElement extends React.Component {
 
     PrivateNoteFetcher.fetchByNoteableId(element.id, element.type).then((note) => {
       if (note != null) {
-        this.setState({ note: note });
+        this.setState({ note });
       }
     }).catch((errorMessage) => {
       console.log(errorMessage);
@@ -51,24 +47,25 @@ export default class PrivateNoteElement extends React.Component {
     if (!element || !note) {
       return;
     }
-    this.setState({ isSaving: true })
+    this.setState({ isSaving: true });
     if (!note.created_at) {
       const params = {
-        content: note.content, noteable_id: element.id,
+        content: note.content,
+        noteable_id: element.id,
         noteable_type: element.type
       };
       PrivateNoteFetcher.create(params).then((newNote) => {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({ isSaving: false })
+        this.setState({ isSaving: false });
       });
     } else {
       PrivateNoteFetcher.update(note).then((newNote) => {
         this.setState({ note: newNote, isSaving: false });
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        this.setState({ isSaving: false })
+        this.setState({ isSaving: false });
       });
     }
   }
@@ -83,40 +80,37 @@ export default class PrivateNoteElement extends React.Component {
     }
 
     return (
-      <div style={{ marginBottom: '10px' }}>
-        <FormGroup>
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id="private-note">Only you can see this note</Tooltip>
-          }
-          >
-            <ControlLabel>
-              Private Note
-              {' '}
-              <span className="glyphicon glyphicon-info-sign" />
-            </ControlLabel>
-          </OverlayTrigger>
+      <div className="my-2">
+        <Form.Group>
+          <Form.Label>
+            Private Note
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id="private-note">Only you can see this note</Tooltip>
+            }
+            >
+              <i className="ms-1 fa fa-info-circle" />
+            </OverlayTrigger>
+          </Form.Label>
 
           <i>{isSaving ? ' saving your note' : ''}</i>
 
-          <FormControl
-            componentClass="textarea"
-            ref={(input) => { this.noteInput = input; }}
-            placeholder={content}
+          <Form.Control
+            as="textarea"
             value={content ?? ''}
             onChange={(e) => this.handleInputChange(e.target.value)}
             rows={2}
             disabled={disabled}
             onBlur={() => this.saveNote()}
           />
-        </FormGroup>
+        </Form.Group>
       </div>
-    )
+    );
   }
 }
 
 PrivateNoteElement.propTypes = {
-  element: PropTypes.object,
-  handlePrivateNoteChanged: PropTypes.func,
+  element: PropTypes.object.isRequired,
+  disabled: PropTypes.bool.isRequired,
 };

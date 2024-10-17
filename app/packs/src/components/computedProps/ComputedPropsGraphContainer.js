@@ -2,9 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 
-import Select from 'react-select';
+import { Select, CreatableSelect } from 'src/components/common/Select';
 import {
-  Grid, Row, Col, Button, ControlLabel, Form, FormGroup, FormControl
+  Row, Col, Button, Form, Container, ButtonToolbar
 } from 'react-bootstrap';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -193,25 +193,25 @@ export default class ComputedPropsGraphContainer extends React.Component {
       defaultTemplate :
       graphTemplates[curTemplateIdx];
 
-    const xAxisType = template.xAxisType || 'lumo';
-    const yAxisType = template.yAxisType || 'mean_abs_potential';
+    const xAxisType = template?.xAxisType || 'lumo';
+    const yAxisType = template?.yAxisType || 'mean_abs_potential';
     const xAxis = graphSettings[xAxisType] || graphSettings.lumo;
     const yAxis = graphSettings[yAxisType] || graphSettings.mean_abs_potential;
 
-    const { referenceDesc } = template;
-    const referencePoints = template.referencePoints || etlReferences;
+    const referenceDesc = template?.referenceDesc ?? defaultTemplate.referenceDesc;
+    const referencePoints = template?.referencePoints || etlReferences;
     if (referencePoints.length === 0) {
       referencePoints.push({ x: '', y: '', type: 'reference' });
     }
 
-    const data = graphData.filter(dat => dat.props).map(dat => ({
+    const data = graphData.filter((dat) => dat.props).map((dat) => ({
       name: dat.name,
       svgPath: dat.svgPath,
       x: _.get(dat, `props.${xAxisType}`, dat.props.lumo),
       y: _.get(dat, `props.${yAxisType}`, dat.props.mean_abs_potential),
     }));
 
-    const axisSelectOptions = Object.keys(graphSettings).map(k => (
+    const axisSelectOptions = Object.keys(graphSettings).map((k) => (
       { label: graphSettings[k].label, value: k }
     ));
     const templateOptions = graphTemplates.map((templ, idx) => (
@@ -219,8 +219,8 @@ export default class ComputedPropsGraphContainer extends React.Component {
     ));
 
     return (
-      <Grid fluid style={style}>
-        <Row className="show-grid">
+      <Container style={style}>
+        <Row>
           <Col xs={18} md={12}>
             <ComputedPropsGraph
               xAxis={xAxis}
@@ -233,8 +233,8 @@ export default class ComputedPropsGraphContainer extends React.Component {
             />
           </Col>
         </Row>
-        <Row>
-          <Col xs={9} md={6}>
+        <Row >
+          <Col xs={9} md={6} >
             <GraphReferenceTable
               xLabel={xAxis.label}
               yLabel={yAxis.label}
@@ -242,78 +242,56 @@ export default class ComputedPropsGraphContainer extends React.Component {
               updateData={this.updateReferences}
             />
           </Col>
-          <Col xs={9} md={6}>
-            <Form horizontal>
-              <FormGroup controlId="formInlineTemplate">
-                <Col componentClass={ControlLabel} sm={4}>
-                  Template
-                </Col>
-                <Col sm={8}>
-                  <Select.Creatable
-                    onChange={this.onTemplateChange}
-                    value={curTemplateIdx}
-                    options={templateOptions}
-                    clearable={false}
-                    promptTextCreator={label => `Create new ${label} template`}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formInlineXAxis">
-                <Col componentClass={ControlLabel} sm={4}>
-                  X Axis
-                </Col>
-                <Col sm={8}>
-                  <Select
-                    onChange={this.onXAxisChange}
-                    value={xAxisType}
-                    clearable={false}
-                    options={axisSelectOptions}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formInlineYAxis">
-                <Col componentClass={ControlLabel} sm={4}>
-                  Y Axis
-                </Col>
-                <Col sm={8}>
-                  <Select
-                    onChange={this.onYAxisChange}
-                    value={yAxisType}
-                    clearable={false}
-                    options={axisSelectOptions}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formInlineRefDesc">
-                <Col componentClass={ControlLabel} sm={4}>
-                  References Description
-                </Col>
-                <Col sm={8}>
-                  <FormControl
-                    componentClass="textarea"
-                    type="description"
-                    placeholder="Description"
-                    value={referenceDesc}
-                    style={{ height: '193px' }}
-                    onChange={e => this.onDescChange(e)}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup style={{ marginBottom: 0 }}>
-                <Col sm={12}>
-                  <Button bsStyle="info" onClick={this.saveTemplate}>
-                    Save Template
-                  </Button>
-                  {' '}
-                  <Button bsStyle="danger" onClick={this.deleteTemplate}>
-                    Delete Template
-                  </Button>
-                </Col>
-              </FormGroup>
+          <Col xs={9} md={6} className="d-flex">
+            <Form horizontal className="flex-grow-1 justify-content-end mt-2">
+              <Form.Group controlId="formInlineTemplate" className="mb-2">
+                <Form.Label column sm={4}>Template</Form.Label>
+                <CreatableSelect
+                  onChange={this.onTemplateChange}
+                  value={templateOptions.find(({value}) => value === curTemplateIdx)}
+                  options={templateOptions}
+                  formatCreateLabel={(label) => `Create new '${label}' template`}
+                />
+              </Form.Group>
+              <Form.Group controlId="formInlineXAxis" className="mb-2">
+                <Form.Label column sm={4}>X Axis</Form.Label>
+                <Select
+                  onChange={this.onXAxisChange}
+                  value={axisSelectOptions.find(({value}) => value === xAxisType)}
+                  options={axisSelectOptions}
+                />
+              </Form.Group>
+              <Form.Group controlId="formInlineYAxis" className="mb-2">
+                <Form.Label column sm={4}>Y Axis</Form.Label>
+                <Select
+                  onChange={this.onYAxisChange}
+                  value={axisSelectOptions.find(({value}) => value === yAxisType)}
+                  options={axisSelectOptions}
+                />
+              </Form.Group>
+              <Form.Group controlId="formInlineRefDesc" className="mb-2">
+                <Form.Label>References Description</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  type="description"
+                  placeholder="Description"
+                  value={referenceDesc}
+                  rows={5}
+                  onChange={e => this.onDescChange(e)}
+                />
+              </Form.Group>
+              <ButtonToolbar className="gap-1 mt-2 justify-content-end">
+                <Button variant="info" size="sm" onClick={this.saveTemplate}>
+                  Save Template
+                </Button>
+                <Button variant="danger" size="sm" onClick={this.deleteTemplate}>
+                  Delete Template
+                </Button>
+              </ButtonToolbar>
             </Form>
           </Col>
         </Row>
-      </Grid>
+      </Container>
     );
   }
 }
@@ -326,4 +304,4 @@ ComputedPropsGraphContainer.propTypes = {
 
 ComputedPropsGraphContainer.defaultProps = {
   style: {}
-}
+};

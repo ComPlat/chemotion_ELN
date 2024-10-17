@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
+  Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import { values } from 'lodash';
-// import { v4 as uuidv4 } from 'uuid';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
@@ -19,11 +18,7 @@ export const attachmentThumbnail = (attachment) => (
       imageStyle={{
         width: '45px',
         height: '45px',
-        borderRadius: '5px',
-        backgroundColor: '#FFF',
         objectFit: 'contain',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
       }}
       alt="thumbnail"
       previewObject={{
@@ -37,11 +32,8 @@ export const attachmentThumbnail = (attachment) => (
         imageStyle={{
           width: '400px',
           height: '400px',
-          borderRadius: '5px',
           backgroundColor: '#FFF',
           objectFit: 'contain',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
         }}
         hasPop
         showPopImage
@@ -50,14 +42,14 @@ export const attachmentThumbnail = (attachment) => (
           src: attachment.preview,
         }}
         popObject={
-        attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
-          ? {
-            fetchNeeded: true,
-            src: `/api/v1/attachments/${attachment.id}/annotated_image`,
-          }
-          : {
-            src: attachment.preview,
-          }
+          attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
+            ? {
+              fetchNeeded: true,
+              src: `/api/v1/attachments/${attachment.id}/annotated_image`,
+            }
+            : {
+              src: attachment.preview,
+            }
         }
         disableClick
       />
@@ -113,27 +105,27 @@ const handleOpenLocally = (attachment, option = 0) => {
 
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
-    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+    <Dropdown.Toggle size="sm" variant="primary">
       <i className="fa fa-download" aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
-      <MenuItem eventKey="1" onClick={() => handleDownloadOriginal(attachment)}>
+      <Dropdown.Item eventKey="1" onClick={() => handleDownloadOriginal(attachment)}>
         Download Original
-      </MenuItem>
-      <MenuItem
+      </Dropdown.Item>
+      <Dropdown.Item
         eventKey="2"
         onClick={() => handleDownloadAnnotated(attachment)}
         disabled={!isImageFile(attachment.filename) || attachment.isNew}
       >
         Download Annotated
-      </MenuItem>
-      <MenuItem
+      </Dropdown.Item>
+      <Dropdown.Item
         eventKey="3"
         onClick={() => handleOpenLocally(attachment, 0)}
         disabled={attachment.isNew}
       >
         Open locally
-      </MenuItem>
+      </Dropdown.Item>
     </Dropdown.Menu>
   </Dropdown>
 );
@@ -141,9 +133,8 @@ export const downloadButton = (attachment) => (
 export const removeButton = (attachment, onDelete, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
     <Button
-      bsSize="xs"
-      bsStyle="danger"
-      className="attachment-button-size"
+      size="sm"
+      variant="danger"
       onClick={() => onDelete(attachment)}
       disabled={readOnly}
     >
@@ -155,9 +146,8 @@ export const removeButton = (attachment, onDelete, readOnly) => (
 export const moveBackButton = (attachment, onBack, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="back_tooltip">Move attachment back to inbox</Tooltip>}>
     <Button
-      bsSize="xs"
-      bsStyle="danger"
-      className="attachment-button-size"
+      size="sm"
+      variant="danger"
       onClick={() => onBack(attachment)}
       disabled={readOnly}
     >
@@ -167,12 +157,10 @@ export const moveBackButton = (attachment, onBack, readOnly) => (
 
 );
 
-export const annotateButton = (attachment, parent) => (
+export const annotateButton = (attachment, onClick) => (
   <ImageAnnotationEditButton
-    parent={parent}
+    onClick={onClick}
     attachment={attachment}
-    className={`attachment-button-size ${!isImageFile(attachment.filename) ? 'attachment-gray-button' : ''}`}
-    disabled={!isImageFile(attachment.filename)}
   />
 );
 
@@ -202,9 +190,8 @@ export const editButton = (
   return (
     <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
       <Button
-        className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
-        bsSize="xs"
-        bsStyle="success"
+        size="sm"
+        variant="success"
         disabled={editDisable}
         onClick={() => handleEdit(attachment)}
       >
@@ -218,7 +205,6 @@ export const importButton = (
   attachment,
   showImportConfirm,
   importDisabled,
-  importButtonRefs,
   showImportConfirmFunction,
   hideImportConfirmFunction,
   confirmAttachmentImportFunction
@@ -236,15 +222,15 @@ export const importButton = (
       <br />
       <ButtonGroup>
         <Button
-          bsStyle="success"
-          bsSize="xs"
+          variant="success"
+          size="sm"
           onClick={() => confirmAttachmentImportFunction(attachment)}
         >
           Yes
         </Button>
         <Button
-          bsStyle="warning"
-          bsSize="xs"
+          variant="warning"
+          size="sm"
           onClick={() => hideImportConfirmFunction(attachment.id)}
         >
           No
@@ -253,30 +239,29 @@ export const importButton = (
     </Tooltip>
   );
 
+  const buttonRef = React.createRef();
   return (
     <div>
       <OverlayTrigger placement="top" overlay={importTooltip}>
-        <div style={{ float: 'right' }}>
+        {/* add span because disabled buttons cannot trigger tooltip overlay */}
+        <span>
           <Button
-            bsSize="xs"
-            bsStyle="success"
+            size="sm"
+            variant="success"
             disabled={importDisabled || extension !== 'xlsx'}
-            // eslint-disable-next-line no-param-reassign
-            ref={(ref) => { importButtonRefs[attachment.id] = ref; }}
-            className={`attachment-button-size ${importDisabled
-              || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
+            ref={buttonRef}
             onClick={() => showImportConfirmFunction(attachment.id)}
           >
-            <Glyphicon glyph="import" />
+            <i className="fa fa-plus-circle" />
           </Button>
-        </div>
+        </span>
       </OverlayTrigger>
       <Overlay
         show={show}
         placement="bottom"
         rootClose
         onHide={() => hideImportConfirmFunction(attachment.id)}
-        target={importButtonRefs[attachment.id]}
+        target={buttonRef}
       >
         {confirmTooltip}
       </Overlay>
@@ -297,47 +282,40 @@ export const sortingAndFilteringUI = (
   handleFilterChange,
   isSortingEnabled
 ) => (
-  <div style={{
-    marginBottom: '20px', display: 'flex', justifyContent: 'space-between',
-  }}
-  >
+  <>
     {isSortingEnabled && (
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      <div className="d-flex align-items-center gap-2">
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <label style={{ marginRight: '10px' }}>Sort: </label>
-        <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
-          <select
-            onChange={handleSortChange}
-            className="sorting-row-style"
-            style={{ width: '100px', marginRight: '10px' }}
-          >
-            <option value="name">Name</option>
-            <option value="size">Size</option>
-            <option value="date">Date</option>
-          </select>
-          <Button
-            style={{ marginRight: '10px', marginLeft: '-15px' }}
-            onClick={toggleSortDirection}
-            className="sort-icon-style"
-          >
-            {sortDirection === 'asc' ? '▲' : '▼'}
-          </Button>
-        </div>
+        <label>Sort:</label>
+        <select
+          onChange={handleSortChange}
+          className="sorting-row-style"
+          style={{ width: '100px' }}
+        >
+          <option value="name">Name</option>
+          <option value="size">Size</option>
+          <option value="date">Date</option>
+        </select>
+        <Button
+          onClick={toggleSortDirection}
+          variant="light"
+        >
+          {sortDirection === 'asc' ? '▲' : '▼'}
+        </Button>
       </div>
     )}
-
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+    <div className="d-flex align-items-center gap-2">
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label style={{ marginRight: '10px' }}>Filter: </label>
+      <label className="me-2">Filter: </label>
       <input
         type="text"
         placeholder="Filter by name..."
         onChange={handleFilterChange}
-        className="sorting-row-style"
+        className="p-2 border rounded border-gray-300"
         style={{ width: '250px' }}
       />
     </div>
-  </div>
+  </>
 );
 
 // validate id as uuid
@@ -359,7 +337,7 @@ const filterOptions = (contentType, options) => {
     });
 };
 
-const noChoice = [<MenuItem key={uuid.v4()} disabled>None Available</MenuItem>];
+const noChoice = [<Dropdown.Item key={uuid.v4()} disabled>None Available</Dropdown.Item>];
 
 export function ThirdPartyAppButton({ attachment, options = [] }) {
   const [menuItems, setMenuItems] = useState([]);
@@ -371,7 +349,7 @@ export function ThirdPartyAppButton({ attachment, options = [] }) {
       const filteredOptions = filterOptions(contentType, options);
       if (filteredOptions.length === 0) { return noChoice; }
       return filteredOptions.map((option) => (
-        <MenuItem
+        <Dropdown.Item
           key={uuid.v4()}
           eventKey={option.id}
           onClick={() => {
@@ -380,15 +358,15 @@ export function ThirdPartyAppButton({ attachment, options = [] }) {
           }}
         >
           {option.name}
-        </MenuItem>
+        </Dropdown.Item>
       ));
     };
     setMenuItems(generatedMenuItems());
   }, [attachment, options]);
 
   return (
-    <Dropdown id={`dropdown-TPA-attachment${attachment?.id || uuid.v4()}`} style={{ float: 'right' }}>
-      <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+    <Dropdown id={`dropdown-TPA-attachment${attachment?.id || uuid.v4()}`}>
+      <Dropdown.Toggle size="sm" variant="primary">
         <i className="fa fa-external-link" aria-hidden="true" />
       </Dropdown.Toggle>
       <Dropdown.Menu>

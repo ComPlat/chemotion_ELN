@@ -1,0 +1,164 @@
+.modal.draggable-modal-dialog {
+  width: fit-content;
+  height: fit-content;
+  top: 10%;
+  left: 10%;
+  padding-right: 0 !important;
+}
+
+.modal.draggable-modal-dialog.calendar {
+  width: inherit;
+  max-width: 1140px;
+  top: 0;
+  left: 0;
+  &.fullscreen {
+    max-width: 100%;
+  }
+  &.show-detail {
+    width: 48%;
+  }
+}
+
+.modal.draggable-modal-dialog-xxxl {
+  width: auto;
+  height: auto;
+  top: calc(100% - 95vh);
+  left: calc((100% - 90vw) / 2);
+  padding-right: 0 !important;
+}
+
+.modal.draggable-modal-dialog.minimized, .modal.draggable-modal-dialog-xxxl.minimized {
+  height: 55px;
+  overflow: hidden;
+}
+
+.modal-dialog.draggable-modal {
+  margin: 0;
+}
+
+.modal-dialog.draggable-modal.modal-xxxl {
+  transform: none !important;
+  width: 90vw;
+  height: 85vh;
+}
+
+.modal-content.draggable-modal-content {
+  height: 100%;
+}
+
+.modal-content.draggable-modal-content.minimized {
+  height: auto;
+}
+
+.draggable-modal-content .modal-header {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.draggable-modal-content .modal-header:hover {
+  cursor: move;
+}
+
+.draggable-modal-content .draggable-modal-stack {
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.draggable-modal-content .draggable-modal-stack-title {
+  order: 0;
+}
+
+.draggable-modal-content .modal-title .move {
+  margin: 0 1rem;
+}
+
+.draggable-modal-content .modal-header .window-minimize {
+  color: var(--bs-black);
+  opacity: 0.4;
+}
+
+.draggable-modal-content .modal-header .window-minimize:hover {
+  color: var(--bs-black);
+  opacity: 0.75;
+}
+
+.draggable-modal-content .modal-header .btn-close {
+  order: 8;
+  padding-top: 1.25rem;
+  align-self: flex-start;
+}
+
+.draggable-modal-content .modal-header .btn-group .btn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--bs-gray-600);
+}
+
+.draggable-modal-content .modal-header .btn-group .btn:hover {
+  color: var(--bs-gray-500);
+}
+
+.draggable-modal-content .modal-header .btn-group .btn.active {
+  background-color: var(--bs-info);
+  color: var(--bs-gray-800);
+}
+
+.draggable-modal-content .modal-header .btn-group .btn.active:hover {
+  color: white;
+}
+
+.draggable-modal-content .modal-header .btn-group .btn .button-icon {
+  margin-right: 0.25rem;
+  font-size: 1.5em;
+}
+
+.draggable-modal-content.calendar .modal-body {
+  padding-top: 0.75rem;
+}
+
+.draggable-modal-form-container {
+  display: block;
+  height: 100%;
+}
+
+.draggable-modal-form-container.minimized {
+  display: none;
+}
+
+.draggable-modal-form-fields {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 1.25rem; 
+}
+
+.draggable-modal-form-fields .device-alert {
+  flex: 0 0 auto;
+  height: 93px;
+  overflow-y: auto;
+  white-space: pre-line;
+}
+
+.draggable-modal-form-fields .form-control {
+  height: 38px;
+}
+.draggable-modal-scrollable-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  max-height: calc(85vh - 125px - 1.5rem);
+  margin-bottom: 1.5rem;
+}
+
+.draggable-modal-scrollable-content.with-alert {
+  max-height: calc(85vh - 232px - 1.5rem);
+}
+
+.draggable-modal-scrollable-content .tab-content {
+  padding: 1rem 0.25rem;
+}
+
+.draggable-modal-scrollable-content .tab-content .is-invalid__control {
+  border-color: var(--bs-danger);
+}
+

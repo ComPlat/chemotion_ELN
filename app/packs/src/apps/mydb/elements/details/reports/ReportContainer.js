@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { Alert, Panel, Tabs, Tab } from 'react-bootstrap';
+import {
+  Alert, Badge, Card, Tabs, Tab
+} from 'react-bootstrap';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
@@ -10,7 +12,6 @@ import Orders from 'src/apps/mydb/elements/details/reports/Orders';
 import Serials from 'src/apps/mydb/elements/details/reports/Serials';
 import Archives from 'src/apps/mydb/elements/details/reports/Archives';
 import Config from 'src/apps/mydb/elements/details/reports/Config';
-import PanelHeader from 'src/components/common/PanelHeader';
 import { CloseBtn, ResetBtn, GenerateReportBtn } from 'src/apps/mydb/elements/details/reports/ReportComponent';
 
 const fetchPreviewTabs = [3, 4];
@@ -23,7 +24,6 @@ export default class ReportContainer extends Component {
     };
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
-    this.panelHeader = this.panelHeader.bind(this);
     this.updateQueue = this.updateQueue.bind(this);
   }
 
@@ -56,22 +56,8 @@ export default class ReportContainer extends Component {
     ReportActions.updateCheckedTags.defer(state);
   }
 
-  panelHeader() {
-    const { report } = this.props;
-    const allState = this.state;
-    const btns = [
-      <CloseBtn key="closeBtn" report={report} />,
-      <GenerateReportBtn
-        key="generateReportBtn"
-        allState={allState}
-        updateQueue={this.updateQueue}
-      />,
-      <ResetBtn key="resetBtn" />,
-    ];
-    return <PanelHeader title="Report Generation" btns={btns} />;
-  }
-
-  selectTab(key) {
+  selectTab(stringKey) {
+    const key = parseInt(stringKey, 10);
     ReportActions.updateActiveKey(key);
     if (fetchPreviewTabs.indexOf(key) >= 0) { // preview
       LoadingActions.start.defer();
@@ -82,23 +68,22 @@ export default class ReportContainer extends Component {
 
   archivesTitle() {
     const unreadIds = this.unreadIds();
-    const unReadBadge = unreadIds.length > 0
-      ? <span className="badge-danger">{unreadIds.length}</span>
-      : null;
 
     return (
-      <span>Archive {unReadBadge}</span>
+      <span className="d-flex align-items-center gap-1">
+        Archive
+        {unreadIds.length > 0 && (
+          <Badge bg="danger">{unreadIds.length}</Badge>
+        )}
+      </span>
     );
   }
 
   unreadIds() {
-    let ids = [];
-    this.state.archives.forEach((a) => {
-      if (a.unread) {
-        ids = [...ids, a.id];
-      }
-    });
-    return ids;
+    const { archives } = this.state;
+    return archives
+      .filter((a) => a.unread)
+      .map((a) => a.id);
   }
 
   updateQueue() {
@@ -129,80 +114,83 @@ export default class ReportContainer extends Component {
       template = { id: templateOpt.id, label: templateOpt.name, value: templateOpt.report_type };
     }
 
-    const archivesTitle = this.archivesTitle();
-    const tabStyle = {padding: "15px", border: "1px solid #ddd", borderRadius: "4px"}
+    const { report } = this.props;
     return (
-      <Panel
-        bsStyle="default"
-      >
-        {alertTemplateNotFound && (
-          <Alert variant="warning">
-            Report Template not found. Set to Standard. Please check your config settings.
-          </Alert>
-        )}
-        <Panel.Heading>{this.panelHeader()}</Panel.Heading>
-        <Tabs
-          activeKey={activeKey}
-          onSelect={this.selectTab}
-          id="report-tabs"
-          style={{padding:"15px"}}
-        >
-          <Tab eventKey={0} title="Config" style={tabStyle}>
-            <Config
-              imgFormat={imgFormat}
-              fileName={fileName}
-              fileDescription={fileDescription}
-              configs={configs}
-              checkedAllConfigs={checkedAllConfigs}
-              template={template}
-              handleTemplateChanged={this.handleTemplateChanged}
-              options={templateOpts}
+      <Card className="detail-card">
+        <Card.Header className='d-flex align-items-center justify-content-between'>
+          Report Generation
+          <div className="d-flex gap-1">
+            <ResetBtn key="resetBtn" />
+            <GenerateReportBtn
+              key="generateReportBtn"
+              allState={this.state}
+              updateQueue={this.updateQueue}
             />
-          </Tab>
-          <Tab eventKey={1} title="Setting" style={tabStyle}>
-            <Setting
-              template={template}
-              splSettings={splSettings}
-              checkedAllSplSettings={checkedAllSplSettings}
-              rxnSettings={rxnSettings}
-              checkedAllRxnSettings={checkedAllRxnSettings}
-              siRxnSettings={siRxnSettings}
-              checkedAllSiRxnSettings={checkedAllSiRxnSettings}
-            />
-          </Tab>
+            <CloseBtn key="closeBtn" report={report} />
+          </div>
+        </Card.Header>
+        <Card.Body>
+          {alertTemplateNotFound && (
+            <Alert variant="warning">
+              Report Template not found. Set to Standard. Please check your config settings.
+            </Alert>
+          )}
+          <div className="tabs-container--with-borders">
+            <Tabs
+              activeKey={activeKey}
+              onSelect={this.selectTab}
+              id="report-tabs"
+            >
+              <Tab eventKey={0} title="Config">
+                <Config
+                  imgFormat={imgFormat}
+                  fileName={fileName}
+                  fileDescription={fileDescription}
+                  configs={configs}
+                  checkedAllConfigs={checkedAllConfigs}
+                  template={template}
+                  handleTemplateChanged={this.handleTemplateChanged}
+                  options={templateOpts}
+                />
+              </Tab>
+              <Tab eventKey={1} title="Setting">
+                <Setting
+                  template={template}
+                  splSettings={splSettings}
+                  checkedAllSplSettings={checkedAllSplSettings}
+                  rxnSettings={rxnSettings}
+                  checkedAllRxnSettings={checkedAllRxnSettings}
+                  siRxnSettings={siRxnSettings}
+                  checkedAllSiRxnSettings={checkedAllSiRxnSettings}
+                />
+              </Tab>
 
-          <Tab eventKey={2} title="Order" style={tabStyle}>
-            <div className="panel-fit-screen">
-              <Orders selectedObjs={selectedObjs} template={template} />
-            </div>
-          </Tab>
-          <Tab eventKey={3} title="Label" style={tabStyle}>
-            <div className="panel-fit-screen">
-              <Serials selMolSerials={selMolSerials} template={template} />
-            </div>
-          </Tab>
-          <Tab eventKey={4} title="Preview" style={tabStyle}>
-            <div className="panel-fit-screen">
-              <Previews
-                previewObjs={previewObjs}
-                splSettings={splSettings}
-                rxnSettings={rxnSettings}
-                siRxnSettings={siRxnSettings}
-                configs={configs}
-                template={template}
-                molSerials={selMolSerials}
-                prdAtts={prdAtts}
-                attThumbNails={attThumbNails}
-              />
-            </div>
-          </Tab>
-          <Tab eventKey={5} title={archivesTitle} style={tabStyle}>
-            <div className="panel-fit-screen">
-              <Archives archives={archives} />
-            </div>
-          </Tab>
-        </Tabs>
-      </Panel>
+              <Tab eventKey={2} title="Order">
+                <Orders selectedObjs={selectedObjs} template={template} />
+              </Tab>
+              <Tab eventKey={3} title="Label">
+                <Serials selMolSerials={selMolSerials} template={template} />
+              </Tab>
+              <Tab eventKey={4} title="Preview">
+                <Previews
+                  previewObjs={previewObjs}
+                  splSettings={splSettings}
+                  rxnSettings={rxnSettings}
+                  siRxnSettings={siRxnSettings}
+                  configs={configs}
+                  template={template}
+                  molSerials={selMolSerials}
+                  prdAtts={prdAtts}
+                  attThumbNails={attThumbNails}
+                />
+              </Tab>
+              <Tab eventKey={5} title={this.archivesTitle()}>
+                <Archives archives={archives} />
+              </Tab>
+            </Tabs>
+          </div>
+        </Card.Body>
+      </Card>
     );
   }
 }

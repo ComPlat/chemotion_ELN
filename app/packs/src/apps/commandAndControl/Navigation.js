@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, MenuItem, NavDropdown } from 'react-bootstrap';
+import { Navbar } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -38,39 +38,26 @@ export default class Navigation extends React.Component {
     this.props.toggleDeviceList();
   }
 
-  navHeader() {
+  render() {
+    const { currentUser } = this.state;
+
     return (
-      <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{ cursor: "pointer" }}>
+      <Navbar className="navbar-custom justify-content-between gap-4 px-4">
+        <Navbar.Text>
           <i
             className="fa fa-list"
-            style={{ fontStyle: "normal" }}
             onClick={this.toggleDeviceList}
+            role="button"
           />
         </Navbar.Text>
-        <Navbar.Text />
         <NavHead />
-      </Navbar.Header>
-    );
-  }
-
-  render() {
-    const { modalProps } = this.state;
-
-    return this.state.currentUser ? (
-      <Navbar fluid className="navbar-custom">
-        {this.navHeader()}
-        <Nav navbar className="navbar-form">
-        </Nav>
-        <UserAuth />
-        <div style={{ clear: 'both' }} />
-      </Navbar>
-    ) : (
-      <Navbar fluid className="navbar-custom" >
-        {this.navHeader()}
-        <Nav navbar className="navbar-form" />
-        <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
-        <div style={{ clear: 'both' }} />
+        <div className="ms-auto">
+          {
+            currentUser
+              ? <UserAuth />
+              : <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
+          }
+        </div>
       </Navbar>
     );
   }

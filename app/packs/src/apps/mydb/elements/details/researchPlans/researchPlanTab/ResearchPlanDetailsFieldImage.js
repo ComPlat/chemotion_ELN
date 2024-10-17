@@ -1,8 +1,9 @@
+/* eslint-disable react/sort-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import {
-  FormControl, FormGroup, InputGroup
+  Form, InputGroup
 } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
@@ -14,7 +15,11 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
-    this.state = { imageEditModalShown: false, attachments: props.attachments };
+    this.state = {
+      imageEditModalShown: false,
+      attachments: props.attachments,
+      zoom: props.field.value.zoom || 100,
+    };
 
     this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
@@ -60,22 +65,27 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   handleResizeChange(event) {
+    const zoom = event.target.value;
+    this.setState({ zoom });
     const { field, onChange } = this.props;
-    field.value.zoom = event.target.value;
+    field.value.zoom = zoom;
     onChange(field.value, field.id);
   }
 
   renderEdit() {
     const { field } = this.props;
     const currentAttachment = this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name);
-    const is_annotationUpdated = currentAttachment != null && currentAttachment.updatedAnnotation;
+    const isAnnotationUpdated = currentAttachment != null && currentAttachment.updatedAnnotation;
+    const { zoom } = this.state;
     let content;
     if (field.value.public_name) {
-      const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
-        || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+      const style = (zoom == null || typeof zoom === 'undefined'
+        || field.value.width === '') ? { width: 'unset' } : { width: `${zoom}%` };
       content = (
-        <div className="image-container">
-          <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
+        <div>
+          <img style={style} src={this.state.imageSrc} alt={field.value.file_name}
+            className="img-fluid"
+          />
         </div>
       );
     } else {
@@ -83,34 +93,34 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     }
     return (
       <div>
-        <FormGroup style={{ width: '30%' }}>
+        <Form.Group className="col col-sm-4">
           <InputGroup>
-            <InputGroup.Addon>Zoom</InputGroup.Addon>
-            <FormControl
+            <InputGroup.Text>Zoom</InputGroup.Text>
+            <Form.Control
               type="number"
               max="100"
               min="1"
               placeholder="image zoom"
-              defaultValue={field.value.zoom}
+              defaultValue={zoom}
               onChange={(event) => this.handleResizeChange(event)}
             />
-            <InputGroup.Addon>%</InputGroup.Addon>
-            <div className="image-annotation-button-researchplan">
-              <ImageAnnotationEditButton
-                parent={this}
-                attachment={currentAttachment}
-              />
-            </div>
+            <InputGroup.Text>%</InputGroup.Text>
+            <ImageAnnotationEditButton
+              attachment={currentAttachment}
+              onClick={() => this.setState({
+                imageEditModalShown: true,
+                chosenAttachment: currentAttachment,
+              })}
+            />
           </InputGroup>
-
-        </FormGroup>
-        <SaveEditedImageWarning visible={is_annotationUpdated} />
+        </Form.Group>
         <Dropzone
           accept="image/*"
           multiple={false}
           onDrop={(files) => this.handleDrop(files)}
-          className="dropzone"
+          className="dnd-zone text-center p-3 my-3"
         >
+          {isAnnotationUpdated && <SaveEditedImageWarning visible />}
           {content}
         </Dropzone>
         {this.renderImageEditModal()}
@@ -145,18 +155,19 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   renderStatic() {
     const { field } = this.props;
+    const { zoom } = this.state;
     if (
       typeof field.value.public_name === 'undefined'
       || field.value.public_name === null
     ) {
       return <div />;
     }
-    const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
-      || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
+    const style = (zoom == null || typeof zoom === 'undefined'
+      || field.value.width === '') ? { width: 'unset' } : { width: `${zoom}%` };
 
     return (
-      <div className="image-container">
-        <img style={style} src={this.state.imageSrc} alt={field.value.file_name} />
+      <div className="text-center mb-0 mw-100 border">
+        <img style={style} src={this.state.imageSrc} alt={field.value.file_name} className="img-fluid" />
       </div>
     );
   }

@@ -129,10 +129,17 @@ export default class ImageModal extends Component {
           <img
             src={showPopImage ? popObject.src : previewObject.src}
             alt=""
-            style={{ cursor: 'pointer', ...imageStyle }}
+            style={{ ...imageStyle }}
+            role="button"
           />
         </div>
-        <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
+        <Modal
+          centered
+          show={this.state.showModal}
+          onHide={this.handleModalClose}
+          dialogClassName="noticeModal"
+          size="xxxl"
+        >
           <Modal.Header closeButton>
             <Modal.Title>{popObject.title}</Modal.Title>
           </Modal.Header>
@@ -181,7 +188,7 @@ export default class ImageModal extends Component {
             )}
           </Modal.Body>
           <Modal.Footer>
-            <Button bsStyle="primary" onClick={this.handleModalClose} className="pull-left">
+            <Button variant="primary" onClick={this.handleModalClose} className="pull-left">
               Close
             </Button>
           </Modal.Footer>

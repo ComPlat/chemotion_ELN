@@ -34,45 +34,32 @@ export default class InboxButton extends React.Component {
 
   render() {
     const { numberOfAttachments } = this.state;
-    let btnStyle = 'default';
-    let btnClass = 'fa fa-inbox fa-lg';
+    let btnStyle = 'light';
+    let btnClass = 'fa fa-inbox';
 
     if (numberOfAttachments > 0) {
       btnStyle = 'warning';
-      btnClass = 'fa fa-inbox fa-lg';
+      btnClass = 'fa fa-inbox';
     }
 
     return (
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        <Button
-          id="inbox-button"
-          bsStyle={btnStyle}
-          onClick={InboxActions.toggleInboxModal}
-          style={{
-            height: '34px',
-            width: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <i className={btnClass} />
-          {numberOfAttachments > 0 && (
-            <span
-              className="badge badge-pill"
-              style={{
-                top: '25px',
-                left: '25px',
-                fontSize: '8px',
-                position: 'absolute',
-                display: 'flex',
-              }}
-            >
-              {numberOfAttachments}
-            </span>
-          )}
-        </Button>
-      </div>
+      <Button
+        variant={btnStyle}
+        onClick={InboxActions.toggleInboxModal}
+        className="position-relative" // necessary to display the badge
+      >
+        <i className={btnClass} />
+        {numberOfAttachments > 0 && (
+          <Badge
+            pill
+            bg="light"
+            text="warning"
+            className="position-absolute top-100 start-100 translate-middle"
+          >
+            {numberOfAttachments}
+          </Badge>
+        )}
+      </Button>
     );
   }
 }

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
 import {
-  Tooltip, OverlayTrigger, Table, Label
+  Tooltip, OverlayTrigger, Table, Badge
 } from 'react-bootstrap';
 import classnames from 'classnames';
 
@@ -9,7 +9,6 @@ import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -32,21 +31,21 @@ export function reactionRole(element) {
         tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-home c-bs-primary" />
+            <i className="fa fa-home c-bs-primary me-1" />
           </OverlayTrigger>
         );
       case 'parts':
         tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-bookmark c-bs-success" />
+            <i className="fa fa-bookmark c-bs-success me-1" />
           </OverlayTrigger>
         );
       case 'single':
         tooltip = <Tooltip id="roleTp">Single</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-asterisk c-bs-danger" />
+            <i className="fa fa-asterisk c-bs-danger me-1" />
           </OverlayTrigger>
         );
       default:
@@ -59,7 +58,7 @@ export function reactionRole(element) {
 function reactionVariations(element) {
   if (element.type === 'reaction' && element.variations && element.variations.length) {
     return (
-      <Label bsStyle="info">{`${element.variations.length} variation(s)`}</Label>
+      <Badge bg="info">{`${element.variations.length} variation(s)`}</Badge>
     );
   }
   return null;
@@ -212,10 +211,8 @@ export default class ElementsTableEntries extends Component {
   }
 
   isElementChecked(element) {
-    const { ui } = this.props;
-    const { checkedIds, uncheckedIds, checkedAll } = ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
+    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
   isElementSelected(element) {
@@ -308,7 +305,7 @@ export default class ElementsTableEntries extends Component {
       if (element.thumb_svg !== 'not available') {
         return (
           <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
-            <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" style={{ cursor: 'pointer' }} />
+            <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" role="button" />
           </td>
         );
       }
@@ -332,20 +329,8 @@ export default class ElementsTableEntries extends Component {
     );
   }
 
-  dragColumn(element) {
-    const { showDragColumn } = this.props;
-    if (showDragColumn) {
-      return (
-        <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
-          {this.dragHandle(element)}
-        </td>
-      );
-    }
-    return <td style={{ display: 'none' }} />;
-  }
-
   render() {
-    const { elements } = this.props;
+    const { elements, showDragColumn } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -378,7 +363,7 @@ export default class ElementsTableEntries extends Component {
                   onClick={() => showDetails(element)}
                   style={{ cursor: 'pointer' }}
                   width={element.type === 'research_plan' ? '280px' : 'unset'}
-                  data-cy={"researchPLanItem-"+ element.id}
+                  data-cy={`researchPLanItem-${element.id}`}
                 >
                   <div>
                     <SvgWithPopover
@@ -409,7 +394,11 @@ export default class ElementsTableEntries extends Component {
                   </div>
                 </td>
                 {this.previewColumn(element)}
-                {this.dragColumn(element)}
+                {showDragColumn && (
+                  <td className="text-center align-middle">
+                    {this.dragHandle(element)}
+                  </td>
+                )}
               </tr>
             );
           })}

@@ -2,19 +2,14 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import 'whatwg-fetch';
 import {
+  Card,
   Nav,
   NavDropdown,
   NavItem,
-  MenuItem,
-  Glyphicon,
   Modal,
   Button,
   Table,
-  Panel,
   Form,
-  FormControl,
-  FormGroup,
-  ControlLabel,
   Col,
   Row,
 } from 'react-bootstrap';
@@ -22,14 +17,13 @@ import _ from 'lodash';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import Affiliations from '../../apps/userSettings/Affiliations';
+import Affiliations from 'src/apps/userSettings/Affiliations';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -250,21 +244,6 @@ export default class UserAuth extends Component {
     });
   }
 
-  renderDeviceButtons(device) {
-    return (
-      <td>
-        <Button
-          bsSize="xsmall"
-          type="button"
-          bsStyle="info"
-          className="fa fa-laptop"
-          onClick={() => this.handleDeviceMetadataModalShow(device)}
-        />
-        &nbsp;&nbsp;
-      </td>
-    );
-  }
-
   handleChange(currentGroups) {
     this.setState({ currentGroups });
   }
@@ -323,165 +302,133 @@ export default class UserAuth extends Component {
 
   // render modal
   renderModal() {
-    const { showModal, currentGroups, currentDevices } = this.state;
+    const { showModal, currentUser, currentGroups, currentDevices } = this.state;
 
-    const modalStyle = {
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflowY: 'auto',
-    };
+    const tBodyGroups = currentGroups.map((g) => (
+      <GroupElement
+        groupElement={g}
+        key={g.id}
+        currentUser={currentUser}
+        currentGroup={currentGroups}
+        onDeleteGroup={this.handleDeleteGroup}
+        onDeleteUser={this.handleDeleteUser}
+        onChangeData={this.handleChange}
+      />
+    ));
 
-    let tBodyGroups = '';
-    let tBodyDevices = '';
-
-    if (Object.keys(currentGroups).length <= 0) {
-      tBodyGroups = '';
-    } else {
-      tBodyGroups = currentGroups
-        ? currentGroups.map((g) => (
-          <GroupElement
-            groupElement={g}
-            key={g.id}
-            currentState={this.state}
-            currentGroup={this.state.currentGroups}
-            onDeleteGroup={this.handleDeleteGroup}
-            onDeleteUser={this.handleDeleteUser}
-            onChangeData={this.handleChange}
-          />
-        ))
-        : '';
-    }
-
-    if (Object.keys(currentDevices).length <= 0) {
-      tBodyDevices = '';
-    } else {
-      tBodyDevices = currentDevices
-        ? currentDevices.map((g) => (
-          <tbody key={`tbody_${g.id}`}>
-            <tr
-              key={`row_${g.id}`}
-              id={`row_${g.id}`}
-              style={{ fontWeight: 'bold' }}
+    const tBodyDevices = currentDevices.map((g) => (
+      <tbody key={`tbody_${g.id}`}>
+        <tr
+          key={`row_${g.id}`}
+          id={`row_${g.id}`}
+          className="fw-bold"
+        >
+          <td>{g.name}</td>
+          <td>{g.name_abbreviation}</td>
+          <td>
+            <Button
+              size="sm"
+              type="button"
+              variant="info"
+              onClick={() => this.handleDeviceMetadataModalShow(g)}
             >
-              <td>{g.name}</td>
-              <td>{g.name_abbreviation}</td>
-              {this.renderDeviceButtons(g)}
-            </tr>
-          </tbody>
-        ))
-        : '';
-    }
+              <i className="fa fa-laptop" />
+            </Button>
+          </td>
+        </tr>
+      </tbody>
+    ));
 
     return (
       <Modal
+        centered
         show={showModal}
-        dialogClassName="importChemDrawModal"
+        size="xl"
         onHide={this.handleClose}
-        style={{
-          maxWidth: '80%',
-          maxHeight: '80%',
-          margin: 'auto',
-          overflowY: 'auto',
-        }}
       >
         <Modal.Header closeButton>
           <Modal.Title>My Groups & Devices</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={modalStyle}>
-          <div>
-            <Panel bsStyle="success">
-              <Panel.Heading>
-                <Panel.Title>Create new group</Panel.Title>
-              </Panel.Heading>
-              <Panel.Body>
-                <Form inline>
-                  <FormGroup controlId="formInlineFname">
-                    <ControlLabel>Name:</ControlLabel>
-                    &nbsp;&nbsp;
-                    <FormControl
+        <Modal.Body className="d-flex flex-column gap-3">
+          <Card border="success">
+            <Card.Header>
+              Create new group
+            </Card.Header>
+            <Card.Body>
+              <Form>
+                <Row className="align-items-end">
+                  <Form.Group as={Col} controlId="formInlineFname">
+                    <Form.Label>Name:</Form.Label>
+                    <Form.Control
                       type="text"
-                      style={{
-                        marginRight: '5px',
-                      }}
                       placeholder="eg: AK"
                       onChange={this.handleInputChange.bind(this, 'first')}
                     />
-                  </FormGroup>
-                  <FormGroup controlId="formInlineLname">
-                    <FormControl
+                  </Form.Group>
+                  <Form.Group as={Col} controlId="formInlineLname">
+                    <Form.Control
                       type="text"
                       placeholder="J. Moriarty"
-                      style={{
-                        marginRight: '20px',
-                      }}
                       onChange={this.handleInputChange.bind(this, 'last')}
                     />
-                  </FormGroup>
-                  &nbsp;&nbsp;
-                  <FormGroup controlId="formInlineNameAbbr">
-                    <ControlLabel>Name abbreviation:</ControlLabel>
-                    &nbsp;&nbsp;
-                    <FormControl
+                  </Form.Group>
+                  <Form.Group as={Col} controlId="formInlineNameAbbr">
+                    <Form.Label>Name abbreviation:</Form.Label>
+                    <Form.Control
                       type="text"
                       placeholder="AK-JM"
-                      style={{
-                        marginRight: '10px',
-                      }}
                       onChange={this.handleInputChange.bind(this, 'abbr')}
                     />
-                  </FormGroup>
-                  &nbsp;&nbsp;
-                  <Button
-                    bsSize="small"
-                    bsStyle="success"
-                    onClick={() => this.createGroup()}
-                    style={{
-                      height: '32px',
-                      fontWeight: 'Bold',
-                      fontSize: '12px',
-                    }}
-                  >
-                    Create new group
-                  </Button>
-                </Form>
-              </Panel.Body>
-            </Panel>
-            <Panel bsStyle="info">
-              <Panel.Heading>
-                <Panel.Title>My Groups</Panel.Title>
-              </Panel.Heading>
-              <Panel.Body>
-                <Table responsive condensed hover>
-                  <thead>
-                    <tr style={{ backgroundColor: '#ddd' }}>
-                      <th width="20%">Name</th>
-                      <th width="10%">Abbreviaton</th>
-                      <th width="20%">Admin by</th>
-                      <th width="50%">&nbsp;</th>
-                    </tr>
-                  </thead>
-                  {tBodyGroups}
-                </Table>
-              </Panel.Body>
-            </Panel>
-            <Panel bsStyle="info">
-              <Panel.Heading>
-                <Panel.Title>My Devices</Panel.Title>
-              </Panel.Heading>
-              <Panel.Body>
-                <Table responsive condensed hover>
-                  <thead>
-                    <tr style={{ backgroundColor: '#ddd' }}>
-                      <th width="40%">Name</th>
-                      <th width="10%">Abbreviation</th>
-                      <th width="50%">&nbsp;</th>
-                    </tr>
-                  </thead>
-                  {tBodyDevices}
-                </Table>
-              </Panel.Body>
-            </Panel>
-          </div>
+                  </Form.Group>
+                  <Col>
+                    <Button
+                      variant="success"
+                      onClick={() => this.createGroup()}
+                    >
+                      Create new group
+                    </Button>
+                  </Col>
+                </Row>
+              </Form>
+            </Card.Body>
+          </Card>
+
+          <Card border="info">
+            <Card.Header>
+              My Groups
+            </Card.Header>
+            <Card.Body>
+              <Table responsive hover>
+                <thead>
+                  <tr>
+                    <th width="20%">Name</th>
+                    <th width="10%">Abbreviation</th>
+                    <th width="20%">Admin by</th>
+                    <th width="50%">&nbsp;</th>
+                  </tr>
+                </thead>
+                {tBodyGroups}
+              </Table>
+            </Card.Body>
+          </Card>
+
+          <Card border="info">
+            <Card.Header>
+              My Devices
+            </Card.Header>
+            <Card.Body>
+              <Table responsive hover>
+                <thead>
+                  <tr>
+                    <th width="40%">Name</th>
+                    <th width="10%">Abbreviation</th>
+                    <th width="50%">&nbsp;</th>
+                  </tr>
+                </thead>
+                {tBodyDevices}
+              </Table>
+            </Card.Body>
+          </Card>
         </Modal.Body>
       </Modal>
     );
@@ -489,43 +436,41 @@ export default class UserAuth extends Component {
 
   // render modal
   renderSubscribeModal() {
-    if (this.state.showSubscription) {
-      const tbody = this.state.currentSubscriptions.map((g) => (
-        <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
-          <td width="10%" style={{ border: 'none' }}>
-            <Button
-              bsSize="xsmall"
-              bsStyle={g.user_id == null ? 'success' : 'default'}
-              onClick={() => this.subscribe(g)}
-            >
-              {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
-            </Button>
-          </td>
-          <td width="90%" style={{ border: 'none' }}>
-            <div>{g.subject}</div>
-          </td>
-        </tr>
-      ));
+    const tbody = this.state.currentSubscriptions.map((g) => (
+      <tr key={`row_${g.id}`} className="fw-bold">
+        <td width="10%" style={{ border: 'none' }}>
+          <Button
+            size="sm"
+            variant={g.user_id == null ? 'success' : 'light'}
+            onClick={() => this.subscribe(g)}
+          >
+            {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
+          </Button>
+        </td>
+        <td width="90%" style={{ border: 'none' }}>
+          <div>{g.subject}</div>
+        </td>
+      </tr>
+    ));
 
-      return (
-        <Modal
-          show={this.state.showSubscription}
-          onHide={this.handleSubscriptionClose}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>My Subscription</Modal.Title>
-          </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto' }}>
-            <div>
-              <Table>
-                <tbody>{tbody}</tbody>
-              </Table>
-            </div>
-          </Modal.Body>
-        </Modal>
-      );
-    }
-    return <div />;
+    return (
+      <Modal
+        centered
+        show={this.state.showSubscription}
+        onHide={this.handleSubscriptionClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>My Subscription</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ overflow: 'auto' }}>
+          <div>
+            <Table>
+              <tbody>{tbody}</tbody>
+            </Table>
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
   }
 
   renderDeviceMetadataModal() {
@@ -533,6 +478,7 @@ export default class UserAuth extends Component {
     const title = 'Device Metadata';
     return (
       <Modal
+        centered
         show={showDeviceMetadataModal}
         onHide={this.handleDeviceMetadataModalClose}
       >
@@ -544,95 +490,93 @@ export default class UserAuth extends Component {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Panel bsStyle="success">
-            <Panel.Heading>
-              <Panel.Title>{title}</Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
+          <Card border="success">
+            <Card.Header>
+              {title}
+            </Card.Header>
+            <Card.Body>
               <Form>
-                <FormGroup controlId="metadataFormDOI">
-                  <ControlLabel>DOI</ControlLabel>
-                  &nbsp;&nbsp;
-                  <FormControl
+                <Form.Group controlId="metadataFormDOI">
+                  <Form.Label>DOI</Form.Label>
+                  <Form.Control
                     type="text"
                     defaultValue={deviceMetadata.doi}
                     readonly="true"
                   />
-                </FormGroup>
-                <FormGroup controlId="metadataFormState">
-                  <ControlLabel>State</ControlLabel>
-                  <FormControl
+                </Form.Group>
+                <Form.Group controlId="metadataFormState">
+                  <Form.Label>State</Form.Label>
+                  <Form.Control
                     type="text"
                     defaultValue={deviceMetadata.data_cite_state}
                     readonly="true"
                   />
-                </FormGroup>
+                </Form.Group>
 
-                <FormGroup controlId="metadataFormURL">
-                  <ControlLabel>URL</ControlLabel>
-                  <FormControl
+                <Form.Group controlId="metadataFormURL">
+                  <Form.Label>URL</Form.Label>
+                  <Form.Control
                     type="text"
                     defaultValue={deviceMetadata.url}
                     readonly="true"
                   />
-                </FormGroup>
+                </Form.Group>
 
-                <FormGroup controlId="metadataFormLandingPage">
-                  <ControlLabel>Landing Page</ControlLabel>
-                  <FormControl
+                <Form.Group controlId="metadataFormLandingPage">
+                  <Form.Label>Landing Page</Form.Label>
+                  <Form.Control
                     type="text"
                     defaultValue={deviceMetadata.landing_page}
                     readonly="true"
                   />
-                </FormGroup>
-                <FormGroup controlId="metadataFormName">
-                  <ControlLabel>Name</ControlLabel>
-                  &nbsp;&nbsp;
-                  <FormControl
+                </Form.Group>
+                <Form.Group controlId="metadataFormName">
+                  <Form.Label>Name</Form.Label>
+                  <Form.Control
                     type="text"
                     defaultValue={deviceMetadata.name}
                     readonly="true"
                   />
-                </FormGroup>
-                <FormGroup controlId="metadataFormPublicationYear">
-                  <ControlLabel>Publication Year</ControlLabel>
-                  <FormControl
+                </Form.Group>
+                <Form.Group controlId="metadataFormPublicationYear">
+                  <Form.Label>Publication Year</Form.Label>
+                  <Form.Control
                     type="number"
                     defaultValue={deviceMetadata.publication_year}
                     readonly="true"
                   />
-                </FormGroup>
-                <FormGroup controlId="metadataFormDescription">
-                  <ControlLabel>Description</ControlLabel>
-                  <FormControl
+                </Form.Group>
+                <Form.Group controlId="metadataFormDescription">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control
                     type="text"
                     defaultValue={deviceMetadata.description}
                     readonly="true"
                   />
-                </FormGroup>
+                </Form.Group>
 
                 {deviceMetadata.dates
                   && deviceMetadata.dates.map((dateItem, index) => (
                     <div key={index}>
                       <Col smOffset={0} sm={6}>
-                        <FormGroup>
-                          <ControlLabel>Date</ControlLabel>
-                          <FormControl
+                        <Form.Group>
+                          <Form.Label>Date</Form.Label>
+                          <Form.Control
                             type="text"
                             defaultValue={dateItem.date}
                             readonly="true"
                           />
-                        </FormGroup>
+                        </Form.Group>
                       </Col>
                       <Col smOffset={0} sm={6}>
-                        <FormGroup>
-                          <ControlLabel>DateType</ControlLabel>
-                          <FormControl
+                        <Form.Group>
+                          <Form.Label>DateType</Form.Label>
+                          <Form.Control
                             type="text"
                             defaultValue={dateItem.dateType}
                             readonly="true"
                           />
-                        </FormGroup>
+                        </Form.Group>
                       </Col>
                     </div>
                   ))}
@@ -652,79 +596,74 @@ export default class UserAuth extends Component {
                   </Col>
                 </Row>
               </Form>
-            </Panel.Body>
-          </Panel>
+            </Card.Body>
+          </Card>
         </Modal.Body>
       </Modal>
     );
   }
 
   render() {
-    const templatesLink = (
-      <MenuItem eventKey="2" href="/ketcher/common_templates">
-        Template Management
-      </MenuItem>
-    );
-    const moderatorLink = (
-      <MenuItem eventKey="6" href="/molecule_moderator">
-        Molecule Moderator
-      </MenuItem>
-    );
+    const { currentUser, showLabelModal, showSubscription } = this.state;
 
     return (
-      <div>
-        <Nav navbar pullRight>
+      <>
+        <Nav className="justify-content-center align-items-center">
           <NavDropdown
-            title={`${this.state.currentUser.name}`}
+            title={`${currentUser.name}`}
             id="bg-nested-dropdown"
+            className="me-3"
           >
-            <MenuItem eventKey="1" href="/pages/settings">
+            <NavDropdown.Item eventKey="1" href="/pages/settings">
               Account &amp; Profile
-            </MenuItem>
-            {this.state.currentUser.is_templates_moderator
-              ? templatesLink
-              : null}
-            <MenuItem eventKey="3" href="/users/edit">
+            </NavDropdown.Item>
+            {currentUser.is_templates_moderator && (
+              <NavDropdown.Item eventKey="2" href="/ketcher/common_templates">
+                Template Management
+              </NavDropdown.Item>
+            )}
+            <NavDropdown.Item eventKey="3" href="/users/edit">
               Change Password
-            </MenuItem>
-            {/* <MenuItem eventKey="5" href="/pages/affiliations">
-              My Affiliations
-            </MenuItem> */}
-            <MenuItem
+            </NavDropdown.Item>
+            <NavDropdown.Item
               onClick={this.handleAffiliationsShow}>
               My Affiliations
-            </MenuItem>
-            <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
-            <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>
-            {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
+            </NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleShow}>My Groups & Devices</NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleLabelShow}>My Labels</NavDropdown.Item>
+            {/* <NavDropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</NavDropdown.Item>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            <MenuItem eventKey="7" href="/command_n_control">
+            <NavDropdown.Item eventKey="7" href="/command_n_control">
               My Devices
-            </MenuItem>
-            {this.state.currentUser.molecule_editor ? moderatorLink : null}
-            <MenuItem eventKey="12" href="/converter_admin">
+            </NavDropdown.Item>
+            {currentUser.molecule_editor && (
+              <NavDropdown.Item eventKey="6" href="/molecule_moderator">
+                Molecule Moderator
+              </NavDropdown.Item>
+            )}
+            <NavDropdown.Item eventKey="12" href="/converter_admin">
               Converter Profile
-            </MenuItem>
-            <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
+            </NavDropdown.Item>
+            <NavDropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</NavDropdown.Item>
           </NavDropdown>
           <NavItem
             onClick={() => this.logout()}
-            style={{ marginRight: '5px' }}
-            className=""
             title="Log out"
+            className="ms-auto"
+            role="button"
           >
-            <Glyphicon glyph="log-out" />
+            <i className="fa fa-sign-out" />
           </NavItem>
         </Nav>
         {this.renderModal()}
         {this.renderAffiliations()}
         <UserLabelModal
-          showLabelModal={this.state.showLabelModal}
+          showLabelModal={showLabelModal}
           onHide={() => this.handleLabelClose()}
         />
-        {this.renderSubscribeModal()}
+        {showSubscription && this.renderSubscribeModal()}
         {this.renderDeviceMetadataModal()}
-      </div>
+      </>
     );
   }
 }

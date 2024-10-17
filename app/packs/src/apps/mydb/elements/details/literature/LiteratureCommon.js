@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, FormControl, OverlayTrigger, Tooltip
+  Form, Button, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import Literature from 'src/models/Literature';
@@ -39,8 +39,7 @@ function LiteralType({
   citationMap = createCitationTypeMap('')
 }) {
   return (
-    <FormControl
-      componentClass="select"
+    <Form.Select
       onChange={(event) => handleInputChange('litype', event)}
       placeholder="type"
       value={val}
@@ -56,7 +55,7 @@ function LiteralType({
           </option>
         )
       )}
-    </FormControl>
+    </Form.Select>
   );
 }
 
@@ -64,7 +63,7 @@ function LiteratureInput({
   literature, handleInputChange, field, placeholder, readOnly = false
 }) {
   return (
-    <FormControl
+    <Form.Control
       type="text"
       disabled={readOnly}
       onChange={(event) => handleInputChange(field, event)}
@@ -83,8 +82,8 @@ function AddButton({
 }) {
   return (
     <Button
-      bsStyle="success"
-      bsSize="small"
+      variant="success"
+      size="sm"
       onClick={() => onLiteratureAdd(literature)}
       style={{ marginTop: 2 }}
       disabled={!isLiteratureValid(literature) || readOnly}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Tooltip, OverlayTrigger, MenuItem, DropdownButton, ButtonGroup } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger, Dropdown, DropdownButton } from 'react-bootstrap';
 import PrintCodeModal from 'src/components/common/PrintCodeModal';
 
 // Component that allows users to print a PDF.
-export default function PrintCodeButton({element, analyses}) {
+export default function PrintCodeButton({ element, analyses }) {
   // State for the modal and preview
   const [showModal, setShowModal] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState('');
@@ -54,8 +54,6 @@ export default function PrintCodeButton({element, analyses}) {
     },
   ];
 
-
-
   // Create the menu items for the split button
   const menuItems = analyses.length > 0
     ? menuItemsAnalyses
@@ -78,29 +76,26 @@ export default function PrintCodeButton({element, analyses}) {
           </Tooltip>
         )}
       >
-        <ButtonGroup className="button-right">
-          <DropdownButton
-            id="print-code"
-            pullRight
-            bsStyle="default"
-            disabled={element.isNew}
-            bsSize="xsmall"
-            onToggle={(isOpen, event) => { if (event) { event.stopPropagation(); } }}
-            title={<i className="fa fa-barcode fa-lg" />}
-          >
-            {menuItems.map((e) => (
-              <MenuItem
-                key={e.key}
-                onSelect={() => {
-                  setSelectedConfig(e.contents);
-                  handleModalShow();
-                }}
-              >
-                {e.text}
-              </MenuItem>
-            ))}
-          </DropdownButton>
-        </ButtonGroup>
+        <DropdownButton
+          id="print-code"
+          variant="light"
+          disabled={element.isNew}
+          size="xxsm"
+          onClick={(event) => { event.stopPropagation() }}
+          title={<i className="fa fa-barcode fa-lg" />}
+        >
+          {menuItems.map((e) => (
+            <Dropdown.Item
+              key={e.key}
+              onClick={() => {
+                setSelectedConfig(e.contents);
+                handleModalShow();
+              }}
+            >
+              {e.text}
+            </Dropdown.Item>
+          ))}
+        </DropdownButton>
       </OverlayTrigger>
 
       {/* Display the modal */}

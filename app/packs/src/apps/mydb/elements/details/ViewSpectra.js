@@ -1,8 +1,8 @@
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { createRef } from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
-import { Modal, Well, Button } from 'react-bootstrap';
-import Select from 'react-select';
+import { Alert, Modal, Button } from 'react-bootstrap';
+import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 import { InlineMetadata } from 'chem-generic-ui';
@@ -47,9 +47,6 @@ class ViewSpectra extends React.Component {
     this.closeOp = this.closeOp.bind(this);
     this.predictOp = this.predictOp.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
-    this.renderSpectraEditor = this.renderSpectraEditor.bind(this);
-    this.renderEmpty = this.renderEmpty.bind(this);
-    this.renderTitle = this.renderTitle.bind(this);
     this.formatPks = this.formatPks.bind(this);
     this.getContent = this.getContent.bind(this);
     this.getSpcInfo = this.getSpcInfo.bind(this);
@@ -253,7 +250,7 @@ class ViewSpectra extends React.Component {
       temperature
     });
     let solventDecimal = decimal
-    if (FN.is13CLayout(layout)){
+    if (FN.is13CLayout(layout)) {
       solventDecimal = 2
     }
 
@@ -634,46 +631,42 @@ class ViewSpectra extends React.Component {
     };
   }
 
-  renderEmpty() {
+  renderAlert({ icon, title, message, variant }) {
     const { fetched } = this.state;
-    const content = fetched
-      ? (
-        <Well onClick={this.closeOp}>
-          <i className="fa fa-exclamation-triangle fa-3x" />
-          <h3>No Spectra Found!</h3>
-          <h3>Please refresh the page!</h3>
-          <br />
-          <h5>Click here to close the window...</h5>
-        </Well>
-      )
-      : <i className="fa fa-refresh fa-spin fa-3x fa-fw" />;
-
     return (
-      <div className="card-box">
-        {content}
+      <div className="d-flex h-100 justify-content-center align-items-center">
+        {fetched ? (
+          <Alert variant={variant}>
+            <Alert.Heading>
+              <i className={`fa ${icon} me-2`} />
+              {title}
+            </Alert.Heading>
+            <p>{message}</p>
+            <Button variant={variant} onClick={this.closeOp}>Click here to close the window...</Button>
+          </Alert>
+        ) : (
+          <i className="fa fa-refresh fa-spin fa-3x fa-fw" />
+        )}
       </div>
     );
   }
 
-  renderInvalid() {
-    const { fetched } = this.state;
-    const content = fetched
-      ? (
-        <Well onClick={this.closeOp}>
-          <i className="fa fa-chain-broken fa-3x" />
-          <h3>Invalid spectrum!</h3>
-          <h3>Please delete it and upload a valid file!</h3>
-          <br />
-          <h5>Click here to close the window...</h5>
-        </Well>
-      )
-      : <i className="fa fa-refresh fa-spin fa-3x fa-fw" />;
+  renderEmpty() {
+    return this.renderAlert({
+      icon: 'fa-exclamation-triangle',
+      title: 'No Spectra Found!',
+      message: 'Please refresh the page!',
+      variant: 'warning',
+    });
+  }
 
-    return (
-      <div className="card-box">
-        {content}
-      </div>
-    );
+  renderInvalid() {
+    return this.renderAlert({
+      icon: 'fa-chain-broken',
+      title: 'Invalid spectrum!',
+      message: 'Please delete it and upload a valid file!',
+      variant: 'danger',
+    });
   }
 
   renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles) {
@@ -710,28 +703,22 @@ class ViewSpectra extends React.Component {
       predictions,
     };
 
-    return (
-      <Modal.Body>
-        {
-          !isExist && multiEntities.length === 0
-            ? this.renderInvalid()
-            : <SpectraEditor
-                entity={currEntity}
-                multiEntities={multiEntities}
-                entityFileNames={entityFileNames}
-                others={others}
-                operations={operations}
-                forecast={forecast}
-                molSvg={sample.svgPath}
-                theoryMass={sample.molecule_molecular_weight}
-                descriptions={descriptions}
-                canChangeDescription
-                onDescriptionChanged={this.onSpectraDescriptionChanged}
-                userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
-            />
-        }
-      </Modal.Body>
-    );
+    return !isExist && multiEntities.length === 0
+      ? this.renderInvalid()
+      : <SpectraEditor
+        entity={currEntity}
+        multiEntities={multiEntities}
+        entityFileNames={entityFileNames}
+        others={others}
+        operations={operations}
+        forecast={forecast}
+        molSvg={sample.svgPath}
+        theoryMass={sample.molecule_molecular_weight}
+        descriptions={descriptions}
+        canChangeDescription
+        onDescriptionChanged={this.onSpectraDescriptionChanged}
+        userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
+      />
   }
 
   renderTitle(idx) {
@@ -754,17 +741,24 @@ class ViewSpectra extends React.Component {
     const dses = this.getDSList();
     const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
 
+    const treePopupContainer = createRef();
+
     return (
-      <div className="spectra-editor-title">
-        <span className="txt-spectra-editor-title">
+      <Modal.Header className="justify-content-between align-items-baseline">
+        <span className="fs-3">
           {modalTitle}
         </span>
-        <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }}>
+        <div className="d-flex gap-1 align-items-center" ref={treePopupContainer}>
           <Select
             options={dsOptions}
-            value={si.idDt}
-            clearable={false}
-            style={{ width: 200 }}
+            value={dsOptions.find(({value}) => value === si.idDt)}
+            isClearable={false}
+            styles={{
+              container: (baseStyles, state) => ({
+                ...baseStyles,
+                width: 200,
+              })
+            }}
             onChange={(e) => this.onDSSelectChange(e)}
           />
           <TreeSelect
@@ -774,19 +768,18 @@ class ViewSpectra extends React.Component {
             style={{ width: 500 }}
             maxTagCount={1}
             onChange={onSelectChange}
+            getPopupContainer={() => treePopupContainer.current}
           />
         </div>
         <Button
-          bsStyle="danger"
-          bsSize="small"
-          className="button-right"
+          variant="danger"
+          size="sm"
           onClick={this.closeOp}
         >
-          <span>
-            <i className="fa fa-times" /> Close without Save
-          </span>
+          <i className="fa fa-times me-1" />
+          Close without Save
         </Button>
-      </div>
+      </Modal.Header>
     );
   }
 
@@ -810,32 +803,24 @@ class ViewSpectra extends React.Component {
     const {
       jcamp, predictions, idx, listMuliSpcs, listEntityFiles
     } = this.getContent();
-    const dialogClassName = 'spectra-editor-dialog';
-    // WORKAROUND: react-stickydiv duplicates elements.
-    const specElements = Array.from(document.getElementsByClassName(dialogClassName));
-    if (specElements.length > 1) {
-      specElements.slice(1).forEach(el => el.parentNode.style.display = 'none'); // eslint-disable-line
-    }
-    // WORKAROUND: react-stickydiv duplicates elements.
 
     return (
-      <div className="spectra-editor">
-        <Modal
-          show={showModal}
-          dialogClassName={dialogClassName}
-          animation
-          onHide={this.closeOp}
-        >
-          {
-            this.renderTitle(idx)
-          }
+      <Modal
+        centered
+        size="xxxl"
+        show={showModal}
+        animation
+        onHide={this.closeOp}
+      >
+        {this.renderTitle(idx)}
+        <Modal.Body className="vh-80">
           {
             showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
               ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
               : this.renderEmpty()
           }
-        </Modal>
-      </div>
+        </Modal.Body>
+      </Modal>
     );
   }
 }

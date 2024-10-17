@@ -1,0 +1,56 @@
+.btn {
+  --bs-btn-border-color: rgba(0,0,0,0.1);
+  --bs-btn-disabled-border-color: rgba(0,0,0,0.1);
+  &.btn-link {
+    --bs-btn-border-color: transparent;
+    --bs-btn-disabled-border-color: transparent;
+  }
+  &.btn-info, &.btn-danger, &.btn-warning, &.btn-success, &.btn-secondary {
+    --bs-btn-color: #{$white};
+    --bs-btn-disabled-color: #{$white};
+    --bs-btn-hover-color: #{$white};
+  }
+}
+
+@mixin xsm-form-elements {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+
+@mixin xxsm-form-elements {
+  padding: 3px 4px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 2.5px;
+}
+
+.btn-xsm {
+  @include xsm-form-elements;
+}
+
+.btn-xxsm {
+  @include xxsm-form-elements;
+}
+
+.input-group-xsm > {
+  .form-control, .form-select, .input-group-text, .btn {
+    @include xsm-form-elements;
+  }
+}
+
+.input-group-xxsm > {
+  .form-control, .form-select, .input-group-text, .btn {
+    @include xxsm-form-elements;
+  }
+}
+
+.popover-header:not(:first-child) {
+  border-top: var(--bs-popover-border-width) solid var(--bs-popover-border-color);
+  border-radius: 0;
+}
+
+.input-group {
+  z-index: 0;
+}

@@ -1,8 +1,7 @@
-import React, {Component} from 'react'
+import React from 'react';
 import SVG from 'react-inlinesvg';
-import {Alert, Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Card, Badge, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
-import { map } from 'lodash';
 
 const SectionReaction = ({reaction, settings, configs}) => {
   const {description, literatures, starting_materials, reactants,
@@ -23,12 +22,12 @@ const SectionReaction = ({reaction, settings, configs}) => {
 
   return (
     <div>
-      <Alert style={{ textAlign: 'center',
-                      backgroundColor: '#428bca',
-                      color:'white',
-                      border:'none'}}> {reaction.short_label}
-        <StatusContent status={status}/>
-      </Alert>
+      <Card bg="primary" text="white" className="mb-3">
+        <Card.Header className="text-center">
+          {reaction.short_label}
+          <StatusContent status={status}/>
+        </Card.Header>
+      </Card>
 
       <SVGContent show={settings.diagram}
                   svgPath={svgPath}
@@ -95,7 +94,7 @@ const SVGContent = ({show, svgPath, products, isProductOnly}) => {
 
 const StatusContent = ({ status }) => {
   let tooltip = null;
-  switch(status) {
+  switch (status) {
     case "Successful":
       tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
       return (
@@ -193,11 +192,11 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="success"> Starting Materials </Label></h4>
+        <h4><Badge bg="success">Starting Materials</Badge></h4>
         <div> {table(rows(starting_materials, false))} </div>
-        <h4><Label bsStyle="warning"> Reactants </Label></h4>
+        <h4><Badge bg="warning">Reactants</Badge></h4>
         <div> {table(rows(reactants, false))} </div>
-        <h4><Label bsStyle="danger"> Products </Label></h4>
+        <h4><Badge bg="danger">Products</Badge></h4>
         <div> {table(rows(products, true))} </div>
       </div>
       : null
@@ -219,14 +218,14 @@ const SolventContent = ({ show, solvents, solvent }) => {
   const solventsData = () => {
     const last = solvents.length - 1;
     return solvents.map((s, i) => (
-      <pre key={i} className="noBorder display-inline no-padding">
+      <pre key={i} className="border-0 d-inline p-0">
         {s.preferred_label + volume(s) + separator(i, last)}
       </pre>
     ));
   };
 
   const solventData = () => (
-    <pre className="noBorder display-inline no-padding">{solvent}</pre>
+    <pre className="border-0 d-inline p-0">{solvent}</pre>
   );
 
   const displayContent = () => (
@@ -236,7 +235,7 @@ const SolventContent = ({ show, solvents, solvent }) => {
   return (
     show
       ? <div>
-        <h4 className="display-inline"> Solvent(s): </h4>
+        <h4 className="d-inline"> Solvent(s): </h4>
         {displayContent()}
         </div>
       : null
@@ -252,8 +251,8 @@ const PurificationContent = ({ show, puri }) => {
   return (
     show
       ? <div>
-          <h4 className="display-inline"> Type of Purification: </h4>
-          <pre className="noBorder display-inline no-padding">
+          <h4 className="d-inline"> Type of Purification: </h4>
+          <pre className="border-0 d-inline p-0">
             {puriText}
           </pre>
         </div>
@@ -266,8 +265,8 @@ const DangerourProductsContent = ({ show, dang }) => {
   return (
     show
       ? <div>
-          <h4 className="display-inline"> Dangerous Products: </h4>
-          <pre className="noBorder display-inline no-padding">{dangText}</pre>
+          <h4 className="d-inline"> Dangerous Products: </h4>
+          <pre className="border-0 d-inline p-0">{dangText}</pre>
         </div>
       : null
   );
@@ -277,12 +276,12 @@ const TLCContent = ({show, tlcDescription, tlcSolvents, rfValue}) => (
   show
     ? <div>
         <div>
-        <h4 className="display-inline"> TLC - Control </h4>
-          <pre className="noBorder display-inline no-padding">
+        <h4 className="d-inline"> TLC - Control </h4>
+          <pre className="border-0 d-inline p-0">
             Rf-value: {rfValue} (Solvent: {tlcSolvents})
           </pre>
         </div>
-        <div className="g-marginLeft--10">
+        <div className="ms-3">
           {tlcDescription}
         </div>
       </div>
@@ -310,11 +309,11 @@ const AnalysesContent = ({ show, products }) => {
       return (
         analysis
           ? <div key={i * 100 + j}>
-              <div className="noBorder g-marginLeft--20">
+              <div className="border-0 ms-4">
                 <p><u>{product.molecule.sum_formular}</u> ({kind})</p>
-                <div className="noBorder g-marginLeft--20">
+                <div className="border-0 ms-4">
                   <QuillViewer value={content} />
-                  <p className="g-marginLeft--20">{analysis.description}</p>
+                  <p className="ms-4">{analysis.description}</p>
                 </div>
               </div>
               <br/>
@@ -327,14 +326,14 @@ const AnalysesContent = ({ show, products }) => {
     show
       ? <div>
           <h4> Analysis </h4>
-          <div className="noBorder">{analyses}</div>
+          <div className="border-0">{analyses}</div>
         </div>
       : null
   );
 };
 
 const LiteratureContent = ({show, literatures}) => {
-  const rows = map(literatures,(literature, i) => {
+  const rows = literatures.map((literature, i) => {
     return (
       <tr key={i}>
         <td>{literature.title}</td>

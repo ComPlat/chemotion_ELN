@@ -1,5 +1,5 @@
 import React from 'react';
-import { Label, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger, Badge } from 'react-bootstrap';
 
 const iconTp = margin => (
   <Tooltip id="ans-tp">
@@ -7,10 +7,10 @@ const iconTp = margin => (
   </Tooltip>
 );
 
-const iconByBool = result => (
+const iconByBool = (result) => (
   result
-    ? <Label bsStyle="success" className="label-qc">Pass</Label>
-    : <Label bsStyle="danger" className="label-qc">Fail</Label>
+    ? <Badge className="mx-2" bg="success">Pass</Badge>
+    : <Badge className="mx-2" bg="danger">Fail</Badge>
 );
 
 const iconByMargin = (result, margin = 0) => (

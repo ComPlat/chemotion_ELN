@@ -7,42 +7,13 @@ import Attachment from 'src/models/Attachment';
 export default class ImageAnnotationEditButton extends Component {
   allowedFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
 
-  renderButton(isActive, tooltipText) {
-    return (
-      <OverlayTrigger
-        placement="top"
-        overlay={<Tooltip id="annotate_tooltip">{tooltipText}</Tooltip>}
-      >
-        <span>
-          <Button
-            bsSize="xs"
-            bsStyle="warning"
-            style={this.props.style}
-            className={this.props.className}
-            onClick={() => {
-              if (isActive) {
-                this.props.parent.setState({
-                  imageEditModalShown: true,
-                  chosenAttachment: this.props.attachment,
-                  imageName: this.props.attachment.filename,
-                });
-              }
-            }}
-            disabled={!isActive}
-          >
-            <i className="fa fa-pencil-square-o" aria-hidden="true" />
-          </Button>
-        </span>
-      </OverlayTrigger>
-    );
-  }
-
   render() {
-    if (!this.props.attachment || !this.props.attachment.filename) {
+    const { attachment, onClick } = this.props;
+    if (!attachment || !attachment.filename) {
       return null;
     }
 
-    const extension = this.props.attachment.filename.split('.').pop();
+    const extension = this.props.attachment.filename.split('.').pop().toLowerCase();
     const isAllowedFileType = this.allowedFileTypes.includes(extension);
     const isActive = isAllowedFileType && !this.props.attachment.isNew;
 
@@ -50,19 +21,32 @@ export default class ImageAnnotationEditButton extends Component {
       ? 'Annotate image'
       : 'Cannot annotate - invalid file type or the image is new';
 
-    return this.renderButton(isActive, tooltipText);
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id="annotate_tooltip">{tooltipText}</Tooltip>}
+      >
+        {/* add div because disabled buttons cannot trigger tooltip overlay */}
+        <div>
+          <Button
+            size="sm"
+            variant={isAllowedFileType ? 'warning' : 'secondary'}
+            onClick={onClick}
+            disabled={!isActive}
+          >
+            <i className="fa fa-pencil-square" aria-hidden="true" />
+          </Button>
+        </div>
+      </OverlayTrigger>
+    );
   }
 }
 
 ImageAnnotationEditButton.propTypes = {
   attachment: PropTypes.instanceOf(Attachment),
-  parent: PropTypes.object.isRequired,
-  style: PropTypes.object,
-  className: PropTypes.string
+  onClick: PropTypes.func.isRequired,
 };
 
 ImageAnnotationEditButton.defaultProps = {
   attachment: null,
-  style: {},
-  className: ''
 };

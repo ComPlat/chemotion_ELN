@@ -1,13 +1,7 @@
 import React, { Component } from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Nav,
-  NavItem,
-} from 'react-bootstrap';
-import CalendarActions from 'src/stores/alt/actions/CalendarActions';
-import CalendarStore from 'src/stores/alt/stores/CalendarStore';
+import { Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 function getDefaultDateTimeRange() {
   const date = new Date();
@@ -17,13 +11,15 @@ function getDefaultDateTimeRange() {
 }
 
 export default class OpenCalendarButton extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.onClick = this.onClick.bind(this);
   }
 
   onClick() {
-    const { start, end, showSharedCollectionEntries } = CalendarStore.getState();
+    const { start, end, show_shared_collection_entries } = this.context.calendar;
     const params = {};
     if (!start || !end) {
       const range = getDefaultDateTimeRange();
@@ -34,11 +30,12 @@ export default class OpenCalendarButton extends Component {
       params.end = end;
     }
     const { eventableType, eventableId } = this.props;
-    params.eventableType = eventableType;
-    params.eventableId = eventableId;
-    params.showSharedCollectionEntries = showSharedCollectionEntries;
+    params.eventable_type = eventableType;
+    params.eventable_id = eventableId;
+    params.showSharedCollectionEntries = show_shared_collection_entries;
 
-    CalendarActions.showCalendar(params);
+    this.context.calendar.showCalendar();
+    this.context.calendar.setViewParams(params);
   }
 
   render() {
@@ -46,8 +43,8 @@ export default class OpenCalendarButton extends Component {
     if (isPanelHeader) {
       return (
         <Button
-          bsSize="xsmall"
-          className="button-right"
+          size="xxsm"
+          variant="light"
           onClick={this.onClick}
         >
           <i className="fa fa-calendar" />
@@ -56,19 +53,14 @@ export default class OpenCalendarButton extends Component {
     }
 
     return (
-      <Nav navbar pullRight>
-        <NavItem eventKey={0} className="navItemCalendar">
-          <ButtonGroup className="navCalendarButton">
-            <Button
-              variant="primary"
-              onClick={this.onClick}
-              style={{ width: '60px' }}
-            >
-              <i className="fa fa-calendar indicator" />
-            </Button>
-          </ButtonGroup>
-        </NavItem>
-      </Nav>
+      <Button
+        variant="light"
+        onClick={this.onClick}
+        size="md"
+        id="navigationCalendarButton"
+      >
+        <i className="fa fa-calendar indicator" />
+      </Button>
     );
   }
 }

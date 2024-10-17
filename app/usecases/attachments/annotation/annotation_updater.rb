@@ -45,6 +45,8 @@ module Usecases
         end
 
         def update_thumbnail(attachment, svg_string)
+          return if attachment.attachment(:thumbnail).blank?
+
           location_of_thumbnail = attachment.attachment(:thumbnail).url
           tmp_thumbnail_location = "#{location_of_thumbnail.split('.')[0]}_thumb.svg"
           xml = replace_link_with_base64(attachment.attachment.url, svg_string, attachment.attachment.mime_type)

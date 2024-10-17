@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { PanelGroup, Panel, Button } from 'react-bootstrap';
+import { Button, Accordion, Card } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
@@ -16,6 +16,8 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import { truncateText } from 'src/utilities/textHelper';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
@@ -37,12 +39,13 @@ export default class ResearchPlanDetailsContainers extends Component {
   }
 
   handleChange() {
-    const { researchPlan } = this.props;
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    const { researchPlan, handleResearchPlanChange } = this.props;
+    handleResearchPlanChange(researchPlan);
   }
 
   handleSpChange(researchPlan, cb) {
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    const { handleResearchPlanChange } = this.props;
+    handleResearchPlanChange(researchPlan);
     cb();
   }
 
@@ -51,19 +54,19 @@ export default class ResearchPlanDetailsContainers extends Component {
   }
 
   handleRemove(container) {
-    const { researchPlan } = this.props;
+    const { researchPlan, handleResearchPlanChange } = this.props;
     container.is_deleted = true;
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    handleResearchPlanChange(researchPlan);
   }
 
   handleUndo(container) {
-    const { researchPlan } = this.props;
+    const { researchPlan, handleResearchPlanChange } = this.props;
     container.is_deleted = false;
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    handleResearchPlanChange(researchPlan);
   }
 
   handleAdd() {
-    const { researchPlan } = this.props;
+    const { researchPlan, handleResearchPlanChange } = this.props;
     const container = Container.buildEmpty();
     container.container_type = 'analysis';
     container.extended_metadata.content = { ops: [{ insert: '' }] };
@@ -83,7 +86,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     ))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
-    this.props.parent.handleResearchPlanChange(researchPlan);
+    handleResearchPlanChange(researchPlan);
   }
 
   headerBtnGroup(container, readOnly) {
@@ -117,16 +120,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
-      <div className="upper-btn">
-        <Button
-          bsSize="xsmall"
-          bsStyle="danger"
-          className="button-right"
-          disabled={readOnly}
-          onClick={() => this.handleRemove(container)}
-        >
-          <i className="fa fa-trash" />
-        </Button>
+      <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
         <SpectraEditorButton
           element={researchPlan}
           hasJcamp={hasJcamp}
@@ -137,6 +131,14 @@ export default class ResearchPlanDetailsContainers extends Component {
           toggleNMRDisplayerModal={toggleNMRDisplayerModal}
           hasNMRium={hasNMRium}
         />
+        <Button
+          size="xxsm"
+          variant="danger"
+          disabled={readOnly}
+          onClick={() => this.handleRemove(container)}
+        >
+          <i className="fa fa-trash" />
+        </Button>
       </div>
     );
   }
@@ -145,18 +147,19 @@ export default class ResearchPlanDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button
-          className="button-right"
-          bsSize="xsmall"
-          bsStyle="success"
-          onClick={this.handleAdd}
-        >
-          Add analysis
-        </Button>
+        <div className="mt-2">
+          <Button
+            size="sm"
+            variant="success"
+            onClick={this.handleAdd}
+          >
+            Add analysis
+          </Button>
+        </div>
       );
     }
 
-    return (<span />);
+    return null;
   }
 
   render() {
@@ -170,10 +173,11 @@ export default class ResearchPlanDetailsContainers extends Component {
       const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
+
       const contentOneLine = {
         ops: content.ops.map((x) => {
           const c = Object.assign({}, x);
-          if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
           return c;
         }),
       };
@@ -188,8 +192,8 @@ export default class ResearchPlanDetailsContainers extends Component {
       }
 
       return (
-        <div className="analysis-header order" style={{ width: '100%' }}>
-          <div className="preview">
+        <div className="analysis-header w-100 d-flex gap-3 lh-base">
+          <div className="preview border d-flex align-items-center">
             <ImageModal
               hasPop={hasPop}
               previewObject={{
@@ -203,22 +207,25 @@ export default class ResearchPlanDetailsContainers extends Component {
               }}
             />
           </div>
-          <div className="abstract">
-            {
-              this.headerBtnGroup(container, readOnly)
-            }
-            <div className="lower-text">
-              <div className="main-title">{container.name}</div>
-              <div className="sub-title">Type: {kind}</div>
-              <div className="sub-title">Status: {status} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
-
-              <div className="desc sub-title">
-                <span style={{ float: 'left', marginRight: '5px' }}>
-                  Content:
-                </span>
-                <QuillViewer value={contentOneLine} preview />
+          <div className="flex-grow-1">
+            <div className="d-flex justify-content-between align-items-center">
+              <h4 className="flex-grow-1">{container.name}</h4>
+              {
+                this.headerBtnGroup(container, readOnly)
+              }
+            </div>
+            <div className="text-body-tertiary">
+              Type: {kind}
+              <br />
+              Status: {status}
+              <span className="me-5" />
+              {insText}
+            </div>
+            <div className="d-flex gap-2">
+              <span>Content:</span>
+              <div className="flex-grow-1">
+                <QuillViewer value={contentOneLine} className="p-0" preview />
               </div>
-
             </div>
           </div>
         </div>
@@ -233,16 +240,16 @@ export default class ResearchPlanDetailsContainers extends Component {
       const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
       return (
-        <div style={{ width: '100%' }}>
-          <strike>
+        <div className="d-flex w-100 mb-0 align-items-center">
+          <strike className="flex-grow-1">
             {container.name}
             {titleKind}
             {titleStatus}
           </strike>
           <Button
-            className="pull-right"
-            bsSize="xsmall"
-            bsStyle="danger"
+            className="ms-auto"
+            size="xsm"
+            variant="danger"
             onClick={() => this.handleUndo(container)}
           >
             <i className="fa fa-undo" />
@@ -259,72 +266,71 @@ export default class ResearchPlanDetailsContainers extends Component {
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <div style={{ marginBottom: '10px' }}>
-              &nbsp;{this.addButton()}
+            <div className="my-2 mx-3 d-flex justify-content-end">
+              {this.addButton()}
             </div>
-            <PanelGroup id="research_plan-analyses-panel" defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
+            <Accordion
+              className="border rounded overflow-hidden"
+              onSelect={this.handleAccordionOpen}
+              activeKey={activeContainer}
+            >
               {analysesContainer[0].children.map((container, key) => {
-                if (container.is_deleted) {
-                  return (
-                    <Panel
-                      eventKey={key}
-                      key={`research_plan_container_deleted_${container.id}`}
-                    >
-                      <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
-                    </Panel>
-                  );
-                }
-
+                const isFirstTab = key === 0;
                 return (
-                  <Panel
+                  <Card
                     eventKey={key}
                     key={`research_plan_container_${container.id}`}
+                    className={`rounded-0 border-0 ${isFirstTab ? '' : ' border-top'}`}
                   >
-                    <Panel.Heading>
-                      <Panel.Title toggle>
-                        {containerHeader(container)}
-                      </Panel.Title>
-                    </Panel.Heading>
-                    <Panel.Body collapsible>
-                      <ContainerComponent
-                        templateType="researchPlan"
-                        readOnly={readOnly}
-                        disabled={readOnly}
-                        container={container}
-                        onChange={this.handleChange}
-                      />
-                      <ViewSpectra
-                        sample={this.props.researchPlan}
-                        handleSampleChanged={this.handleSpChange}
-                        handleSubmit={this.props.handleSubmit}
-                      />
-                      <NMRiumDisplayer
-                        sample={this.props.researchPlan}
-                        handleSampleChanged={this.handleSpChange}
-                        handleSubmit={this.props.handleSubmit}
-                      />
-                    </Panel.Body>
-                  </Panel>
+                    <Card.Header className="rounded-0 p-0 border-bottom-0">
+                      <AccordionHeaderWithButtons eventKey={key}>
+                        {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
+                      </AccordionHeaderWithButtons>
+                    </Card.Header>
+
+                    {!container.is_deleted && (
+                      <Accordion.Collapse eventKey={key}>
+                        <Card.Body>
+                          <ContainerComponent
+                            templateType="researchPlan"
+                            readOnly={readOnly}
+                            disabled={readOnly}
+                            container={container}
+                            onChange={this.handleChange}
+                          />
+                          <ViewSpectra
+                            sample={this.props.researchPlan}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                          <NMRiumDisplayer
+                            sample={this.props.researchPlan}
+                            handleSampleChanged={this.handleSpChange}
+                            handleSubmit={this.props.handleSubmit}
+                          />
+                        </Card.Body>
+                      </Accordion.Collapse>
+                    )}
+                  </Card>
                 );
               })}
-            </PanelGroup>
+            </Accordion>
           </div>
         );
       }
 
       return (
-        <div
-          style={{ marginBottom: '10px' }}
-          className="noAnalyses-warning"
-        >
-          There are currently no Analyses.
-          {this.addButton()}
+        <div className="d-flex align-items-center justify-content-between my-2 mx-3">
+          <span className="ms-3"> There are currently no Analyses. </span>
+          <div>
+            {this.addButton()}
+          </div>
         </div>
       );
     }
 
     return (
-      <div className="noAnalyses-warning">
+      <div className="m-4">
         There are currently no Analyses.
       </div>
     );
@@ -334,6 +340,6 @@ export default class ResearchPlanDetailsContainers extends Component {
 ResearchPlanDetailsContainers.propTypes = {
   researchPlan: PropTypes.object.isRequired,
   readOnly: PropTypes.bool.isRequired,
-  parent: PropTypes.object.isRequired,
+  handleResearchPlanChange: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func
 };

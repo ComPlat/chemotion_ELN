@@ -10,7 +10,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 import {
-  Panel, ButtonToolbar, Button,
+  ButtonToolbar, Button, Card,
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
@@ -27,7 +27,6 @@ class CellLineDetails extends React.Component {
       activeTab: 'tab1',
       readOnly: this.isReadOnly()
     };
-    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
   }
 
   handleSubmit(cellLineItem) {
@@ -58,11 +57,6 @@ class CellLineDetails extends React.Component {
     this.setState({ activeTab: eventKey });
   }
 
-  onTabPositionChanged(visible) {
-    // eslint-disable-next-line react/no-unused-state
-    this.setState({ visible });
-  }
-
   isReadOnly() {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
@@ -78,24 +72,25 @@ class CellLineDetails extends React.Component {
     const { cellLineItem } = this.props;
 
     return (
-      <div>
-
-        <ElementCollectionLabels
-          class="collection-label floating"
-          element={cellLineItem}
-          key={cellLineItem.id}
-          placement="right"
-        />
-        <div className="floating header">
-          {' '}
-          <i className="icon-cell_line" />
-          {cellLineItem.short_label}
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex gap-2">
+          <span>
+            <i className="icon-cell_line me-1" />
+            {cellLineItem.short_label}
+          </span>
+          <ElementCollectionLabels
+            className="collection-label"
+            element={cellLineItem}
+            key={cellLineItem.id}
+            placement="right"
+          />
         </div>
-
-        {this.renderCloseHeaderButton()}
-        {this.renderEnlargenButton()}
-        {this.renderSaveButton()}
-        {this.renderSaveButton(true)}
+        <div className="d-flex gap-1">
+          {this.renderSaveButton(true)}
+          {this.renderSaveButton()}
+          {this.renderEnlargenButton()}
+          {this.renderCloseHeaderButton()}
+        </div>
       </div>
     );
   }
@@ -104,9 +99,8 @@ class CellLineDetails extends React.Component {
     const { toggleFullScreen } = this.props;
     return (
       <Button
-        bsStyle="info"
-        bsSize="xsmall"
-        className="button-right"
+        variant="info"
+        size="xxsm"
         onClick={toggleFullScreen}
       >
         <i className="fa fa-expand" />
@@ -141,7 +135,7 @@ class CellLineDetails extends React.Component {
         placement="bottom"
         overlay={<Tooltip>{toolTipMessage}</Tooltip>}
       >
-        <Button disabled={disabled} bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
+        <Button disabled={disabled} variant="warning" size="xxsm" onClick={action}>
           {icons}
         </Button>
       </OverlayTrigger>
@@ -153,9 +147,8 @@ class CellLineDetails extends React.Component {
 
     return (
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
-        className="button-right"
+        variant="danger"
+        size="xxsm"
         onClick={() => { this.handleClose(cellLineItem); }}
       >
         <i className="fa fa-times" />
@@ -172,7 +165,7 @@ class CellLineDetails extends React.Component {
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
     const disabledButton = (
       <Button
-        bsStyle="warning"
+        variant="warning"
         disabled
         onClick={() => { this.handleSubmit(cellLineItem); }}
       >
@@ -181,7 +174,7 @@ class CellLineDetails extends React.Component {
     );
     const enabledButton = (
       <Button
-        bsStyle="warning"
+        variant="warning"
         onClick={() => { this.handleSubmit(cellLineItem); }}
       >
         {buttonText}
@@ -200,41 +193,42 @@ class CellLineDetails extends React.Component {
     const { readOnly } = this.state;
     const { activeTab } = this.state;
     return (
-      <Panel
-        className="eln-panel-detail"
-      >
-        <Panel.Heading className="blue-background">{this.renderHeaderContent()}</Panel.Heading>
-        <Panel.Body>
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
-            <Tab eventKey="tab1" title="Properties" key="tab1">
-              <GeneralProperties
-                item={cellLineItem}
-                readOnly={readOnly}
-              />
-            </Tab>
-            <Tab eventKey="tab2" title="Analyses" key="tab2">
-              <AnalysesContainer
-                item={cellLineItem}
-                readOnly={readOnly}
-              />
-            </Tab>
-            <Tab eventKey="tab3" title="References" key="tab3" disabled={cellLineItem.is_new}>
-              <DetailsTabLiteratures
-                readOnly={readOnly}
-                element={cellLineItem}
-                literatures={cellLineItem.is_new === true ? cellLineItem.literatures : null}
-              />
-            </Tab>
-          </Tabs>
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => { this.handleClose(cellLineItem); }}>
+      <Card className="detail-card">
+        <Card.Header>
+          {this.renderHeaderContent()}
+        </Card.Header>
+        <Card.Body>
+          <div className="tabs-container--with-borders">
+            <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
+              <Tab eventKey="tab1" title="Properties" key="tab1">
+                <GeneralProperties
+                  item={cellLineItem}
+                  readOnly={readOnly}
+                />
+              </Tab>
+              <Tab eventKey="tab2" title="Analyses" key="tab2">
+                <AnalysesContainer
+                  item={cellLineItem}
+                  readOnly={readOnly}
+                />
+              </Tab>
+              <Tab eventKey="tab3" title="References" key="tab3" disabled={cellLineItem.is_new}>
+                <DetailsTabLiteratures
+                  readOnly={readOnly}
+                  element={cellLineItem}
+                  literatures={cellLineItem.is_new ? cellLineItem.literatures : null}
+                />
+              </Tab>
+            </Tabs>
+          </div>
+          <ButtonToolbar className="d-flex gap-1">
+            <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
               Close
             </Button>
             {this.renderSubmitButton()}
-
           </ButtonToolbar>
-        </Panel.Body>
-      </Panel>
+        </Card.Body>
+      </Card>
     );
   }
 }

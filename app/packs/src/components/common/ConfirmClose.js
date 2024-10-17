@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger } from 'react-bootstrap';
+import React, { Component, createRef } from 'react';
+import { Button, Tooltip, Overlay, OverlayTrigger, ButtonToolbar } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -12,7 +12,6 @@ export default class ConfirmClose extends Component {
     };
 
     this.onClickButton = this.onClickButton.bind(this);
-    this.getTargetButton = this.getTargetButton.bind(this);
   }
 
   onClickButton(el) {
@@ -22,59 +21,59 @@ export default class ConfirmClose extends Component {
     );
   }
 
-  getTargetButton() {
-    return this.target;
-  }
-
   render() {
     const { el } = this.props;
     const popover = (
       <Tooltip placement="left" className="in" id="tooltip-bottom">
         Unsaved data will be lost.<br /> Close {el.type}?<br />
-        <ButtonGroup>
+        <ButtonToolbar className="gap-2 justify-content-center">
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="xxsm"
             onClick={DetailActions.confirmDelete}
-          >Yes
+          >
+            Yes
           </Button>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="xxsm"
             onClick={() => this.setState({ showTooltip: false })}
-          >No
+          >
+            No
           </Button>
-        </ButtonGroup>
+        </ButtonToolbar>
       </Tooltip>
     );
-    const sharedProps = {
-      containter: this,
-      target: this.getTargetButton,
-      show: this.state.showTooltip,
-      placement: 'bottom',
-    };
+
+    const buttonRef = createRef(null);
 
     return (
-      <span>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="closeSample">Close {el.type}</Tooltip>}>
+      <>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={
+            <Tooltip id="closeSample">Close {el.type}</Tooltip>
+          }
+        >
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
-            className="button-right"
+            variant="danger"
+            size="xxsm"
             onClick={() => this.onClickButton(el)}
-            ref={(button) => { this.target = button; }}
+            ref={buttonRef}
           >
             <i className="fa fa-times" />
           </Button>
         </OverlayTrigger>
         <Overlay
-          {...sharedProps}
+          target={() => buttonRef.current}
+          show={this.state.showTooltip}
+          placement="bottom"
           rootClose
           onHide={() => this.setState({ showTooltip: false })}
         >
           { popover }
         </Overlay>
-      </span>
+      </>
     );
   }
 }

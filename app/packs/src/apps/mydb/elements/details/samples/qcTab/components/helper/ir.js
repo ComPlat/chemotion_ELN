@@ -38,7 +38,7 @@ const tableIr = (fgs) => {
   if (!fgs) return null;
 
   return (
-    <Table responsive striped condensed hover>
+    <Table responsive striped size="sm" hover>
       <thead>
         <tr>
           <th>#</th>

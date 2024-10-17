@@ -1,5 +1,5 @@
 import React from 'react';
-import {Label, Modal, Button} from 'react-bootstrap';
+import { Modal, Button } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -53,35 +53,27 @@ export default class ElementReactionLabels extends React.Component {
 
     if (!element.tag || !element.tag.taggable_data ||
         !element.tag.taggable_data.reaction_id)
-      return (<span />);
+      return null;
 
     const { showWarning, clicked } = this.state;
 
-    const reaction = <i className="icon-reaction" />;
-
-
     return (
-      <div style={{ display: 'inline-block', marginTop: '-5px' }}>
-        <div onClick={this.handleOnClick}>
-          <span className="collection-label" key={element.id}>
-            <Label>{reaction}</Label>
-          </span>
-        </div>
-        {/* <div style={{clear: 'both'}} /> */}
-        <div className="center">
-          <Modal show={showWarning && clicked} onHide={this.closeWarning}>
-            <Modal.Header closeButton>
-              <Modal.Title>No Access to Element</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              Sorry, you cannot access this Reaction.
-            </Modal.Body>
-            <Modal.Footer>
-              <Button onClick={this.closeWarning}>Close</Button>
-            </Modal.Footer>
-          </Modal>
-        </div>
-      </div>
+      <>
+        <Button variant="light" size="xxsm" onClick={this.handleOnClick} key={element.id}>
+          <i className="icon-reaction"/>
+        </Button>
+        <Modal centered show={clicked} onHide={this.closeWarning}>
+          <Modal.Header closeButton>
+            <Modal.Title>No Access to Element</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Sorry, you cannot access this Reaction.
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={this.closeWarning}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </>
     )
   }
 }

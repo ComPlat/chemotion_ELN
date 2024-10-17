@@ -1,12 +1,11 @@
 import React from 'react';
-import { Label, Button, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
 
 export default class ElementResearchPlanLabels extends React.Component {
   constructor(props) {
-
     super(props);
     this.state = {
-      research_plans: props.plans
+      researchPlans: props.plans
     };
 
     this.handleOnClick = this.handleOnClick.bind(this);
@@ -16,7 +15,7 @@ export default class ElementResearchPlanLabels extends React.Component {
   handleOnClick(label, e) {
     e.stopPropagation();
 
-    let url = "/research_plan/" + label.id;
+    let url = `/research_plan/${label.id}`;
     Aviator.navigate(url);
   }
 
@@ -25,57 +24,39 @@ export default class ElementResearchPlanLabels extends React.Component {
   }
 
   formatLabels(labels) {
-    return labels.map((label, index) => {
-      return (
-        <span className="collection-label" key={index}>
-          <Button bsStyle="default" bsSize="xs" onClick={e => this.handleOnClick(label, e)}>
-            {label.name}
-          </Button>
-          &nbsp;
-        </span>
-      );
-    });
-  }
-
-  renderCollectionsLabels(research_plans) {
-    if (research_plans == undefined) return <span />;
-
-    return (
-      <div>
-        <h3 className="popover-title">Research Plans</h3>
-        <div className="popover-content">
-          {this.formatLabels(research_plans)}
-        </div>
-      </div>
-    );
+    return labels.map((label, index) => (
+      <span className="d-inline-block m-1" key={index}>
+        <Button variant="light" size="sm" onClick={e => this.handleOnClick(label, e)}>
+          {label.name}
+        </Button>
+      </span>
+    ));
   }
 
   render() {
-    const { research_plans } = this.state;
+    const { researchPlans } = this.state;
 
-    let placement = 'right';
-    let researchPlanOverlay = (
-      <Popover className="collection-overlay" id="element-collections">
-        {this.renderCollectionsLabels(research_plans)}
+    const researchPlanOverlay = (
+      <Popover className="overflow-auto" id="element-collections">
+        <Popover.Header as="h3">Research Plans</Popover.Header>
+        <Popover.Body className="d-flex flex-column">
+          {this.formatLabels(researchPlans)}
+        </Popover.Body>
       </Popover>
     );
 
     return (
-      <div style={{display: "inline-block"}} onClick={this.preventOnClick}>
-        <OverlayTrigger
-          trigger="click"
-          rootClose
-          placement={placement}
-          overlay={researchPlanOverlay}
-        >
-          <span className="collection-label" >
-            <Label>
-              <i className="fa fa-file-text-o" />
-                {" " + research_plans.length}
-            </Label>
-          </span>
-        </OverlayTrigger>
-      </div>
+      <OverlayTrigger
+        trigger="click"
+        rootClose
+        placement="right"
+        overlay={researchPlanOverlay}
+        className="d-inline-block"
+      >
+        <Button size="xxsm" variant="light">
+          <i className="fa fa-file-text-o me-1" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 }

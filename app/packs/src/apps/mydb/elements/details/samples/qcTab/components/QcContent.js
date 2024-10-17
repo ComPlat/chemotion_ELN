@@ -29,7 +29,7 @@ const QcContent = ({ sample, infer, curation }) => {
   const ansIr = evaluateIr(irQc);
 
   return (
-    <div>
+    <div className="d-flex flex-column gap-5">
       <div>
         <AreaTitle
           curation={curation}
@@ -42,8 +42,6 @@ const QcContent = ({ sample, infer, curation }) => {
           ansIr={ansIr}
         />
       </div>
-      <br />
-      <br />
       <div>
         <BlockTitle />
         <BlockHnmr

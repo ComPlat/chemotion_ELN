@@ -28,7 +28,7 @@ export default class ElementAllCheckbox extends React.Component {
     e.stopPropagation()
   }
 
-  showOptions(e) {
+  showOptions() {
     this.setState({ showOptions: !this.state.showOptions })
   }
 
@@ -52,38 +52,31 @@ export default class ElementAllCheckbox extends React.Component {
   }
 
   render() {
-    let {showOptions, currentOption} = this.state
-    let {ui, type} = this.props
+    const { showOptions } = this.state;
+    const { ui } = this.props;
 
-    let checkMarkClass = "fa "
+    let checkMarkClass = '';
     if (ui.checkedAll == true) {
-      checkMarkClass += "fa-check"
+      checkMarkClass = 'fa-check';
     } else if (ui.checkedIds && ui.checkedIds.size > 0) {
-      checkMarkClass += "fa-minus"
-    }
-    let checkMark = (<i className={checkMarkClass}/>)
-
-    let optionStyle = {}
-    if (showOptions) {
-      optionStyle.display = "block"
-    } else {
-      optionStyle.display = "none"
+      checkMarkClass = 'fa-minus';
     }
 
     return (
       <div className="all-checkbox" onClick={this.showOptions}>
         <div className="checkbox-dropdown">
           <span className="span-checkbox" onClick={this.toggleCheckbox}>
-            {checkMark}
+            <i className={`fa ${checkMarkClass}`}/>
           </span>
-          &nbsp;&nbsp;
-          <i className="fa fa-caret-down"/>
+          <i className="fa fa-caret-down ms-2" />
         </div>
-        <div className="checkbox-options" style={optionStyle}>
-          <div onClick={() => this.selectAll(0)}>Current page</div>
-          <div onClick={() => this.selectAll(1)}>All pages</div>
-          <div onClick={() => this.selectAll(2)}>None</div>
-        </div>
+        {showOptions && (
+          <div className="checkbox-options">
+            <div onClick={() => this.selectAll(0)}>Current page</div>
+            <div onClick={() => this.selectAll(1)}>All pages</div>
+            <div onClick={() => this.selectAll(2)}>None</div>
+          </div>
+        )}
       </div>
     )
   }

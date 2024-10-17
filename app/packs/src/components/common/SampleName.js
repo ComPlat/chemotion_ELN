@@ -25,8 +25,8 @@ const SampleName = ({ sample }) => {
     clipText = (decoupled && polymer_type === 'self_defined') ? clipText : `${polymerName} - ${molecule_formula}`;
     return (
       <div>
-        <p>
-          {polymerName}&nbsp;
+        <p className='mb-2'>
+          {polymerName}
           <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
         </p>
         {moleculeName}
@@ -35,7 +35,7 @@ const SampleName = ({ sample }) => {
   }
   return (
     <div>
-      <p><ClipboardCopyText text={sumFormulaCom} clipText={clipText} /></p>
+      <p className='mb-2'><ClipboardCopyText text={sumFormulaCom} clipText={clipText} /></p>
       {moleculeName}
     </div>
   );

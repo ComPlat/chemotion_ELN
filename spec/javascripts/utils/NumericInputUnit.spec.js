@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import React from 'react';
-import { ControlLabel } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
@@ -25,7 +25,7 @@ const createWrapper = (label, unit, value, field, inputDisable) => shallow(
 describe('NumericInputUnit component', () => {
   it('renders correctly', () => {
     const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
-    const expectedHtml = '<div class="numericInputWithUnit_g"><label class="control-label">Amount</label><span class="input-group"><input type="text" value="1" name="chemical_amount_in_g" label="Amount" class="bs-form--compact form-control"/><span class="input-group-btn"><button type="button" class="btn btn-default active">g</button></span></span></div>';
+    const expectedHtml = '<div class="numericInputWithUnit_g"><label class="form-label">Amount</label><div class="input-group"><input type="text" value="1" name="chemical_amount_in_g" label="Amount" class="form-control"/><button type="button" class="btn active btn-primary">g</button></div></div>';
     expect(wrapper.html()).toEqual(expectedHtml);
   });
 
@@ -34,15 +34,15 @@ describe('NumericInputUnit component', () => {
     expect(wrapper.find('.numericInputWithUnit_g')).toHaveLength(1);
   });
 
-  it('renders ControlLabel component', () => {
+  it('renders Form.Label component', () => {
     const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
-    const label = wrapper.find(ControlLabel);
+    const label = wrapper.find(Form.Label);
     expect(label.exists()).toBeTruthy();
   });
 
   it('renders correct label text', () => {
     const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
-    const label = wrapper.find(ControlLabel);
+    const label = wrapper.find(Form.Label);
     expect(label.props().children).toEqual('Amount');
   });
 
@@ -50,7 +50,7 @@ describe('NumericInputUnit component', () => {
     const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     wrapper.setProps({ label: undefined });
     wrapper.update();
-    expect(wrapper.find('ControlLabel').exists()).toBe(true);
+    expect(wrapper.find('FormLabel').exists()).toBe(true);
   });
 
   it('calls the onInputChange function when the value is changed and updates state of value, then convert unit', () => {
@@ -79,7 +79,7 @@ describe('NumericInputUnit component', () => {
   it('toggles input unit for temperature', () => {
     const wrapper = createWrapper('Flash Point', 'K', 300, 'flash_point', false);
     wrapper.find('Button').simulate('click');
-    let convertedUnit = wrapper.find('InputGroupButton Button').children().text();
+    let convertedUnit = wrapper.find('Button').children().text();
     expect(convertedUnit).toBe('°C');
     let inputComponent = wrapper.find('[name="flash_point"]');
     inputComponent.simulate('change', { target: { value: 26.85 } });
@@ -87,7 +87,7 @@ describe('NumericInputUnit component', () => {
     expect(convertedValue).toBe(26.85);
 
     wrapper.find('Button').simulate('click');
-    convertedUnit = wrapper.find('InputGroupButton Button').children().text();
+    convertedUnit = wrapper.find('Button').children().text();
     inputComponent = wrapper.find('[name="flash_point"]');
     inputComponent.simulate('change', { target: { value: 80.33 } });
     convertedValue = wrapper.find('[name="flash_point"]').prop('value');
@@ -102,7 +102,7 @@ describe('NumericInputUnit component', () => {
     inputComponent.simulate('change', { target: { value: 77 } });
     const convertedValue = wrapper.find('[name="flash_point"]').prop('value');
     expect(convertedValue).toBe(77);
-    const convertedUnit = wrapper.find('InputGroupButton Button').children().text();
+    const convertedUnit = wrapper.find('Button').children().text();
     expect(convertedUnit).toBe('°F');
   });
 

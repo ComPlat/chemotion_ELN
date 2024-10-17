@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { useDrop } from 'react-dnd';
-import { Button, Panel } from 'react-bootstrap';
+import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import { ConfirmModal } from 'src/components/common/ConfirmModal';
+import ConfirmModal from 'src/components/common/ConfirmModal';
 
 const SampleTaskCard = ({ sampleTask }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
@@ -102,7 +102,7 @@ const SampleTaskCard = ({ sampleTask }) => {
 
   const deleteButton = () => {
     return (
-      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => setShowDeletionConfirmationDialog(true)}>
+      <Button variant="danger" className="pull-right" size="sm" onClick={() => setShowDeletionConfirmationDialog(true)}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -154,35 +154,41 @@ const SampleTaskCard = ({ sampleTask }) => {
         <p>Deletion of a Scan Task cannot be undone. Please check carefully</p>
         <p>The task is missing the following to be completed:</p>
         <ul>
-          {sampleTaskStillOpenReasons().map((reason) => (<li>{reason}</li>))}
+          {
+            sampleTaskStillOpenReasons().map((reason, index) => (
+              <li key={`missingStepsForSampleTask_${sampleTask.id}_${index}`}>
+                {reason}
+              </li>
+            ))
+          }
         </ul>
       </div>
     );
   }
 
   return (
-    <Panel bsStyle="info">
-      <Panel.Heading>
+    <Card className="w-100 mt-3">
+      <Card.Header>
         {panelHeading()}
         {deleteButton()}
-      </Panel.Heading>
-      <Panel.Body>
-        <div className="row">
-          <div className="col-sm-6">
+      </Card.Header>
+      <Card.Body>
+        <Row className="gx-5">
+          <Col>
             {contentForSample(sampleTask, dropRef)}
-          </div>
-          <div className="col-sm-6">
+          </Col>
+          <Col>
             {contentForSampleTask(sampleTask)}
-          </div>
-        </div>
-      </Panel.Body>
+          </Col>
+        </Row>
+      </Card.Body>
       <ConfirmModal
         showModal={showDeletionConfirmationDialog}
         title="Are you sure?"
         content={deletionConfirmationContent()}
         onClick={deleteSampleTask}
       />
-    </Panel>
+    </Card>
   )
 }
 export default SampleTaskCard;

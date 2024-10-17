@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useEffect, useMemo, useCallback
+  useRef, useState, useEffect, useCallback
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert
@@ -25,7 +25,7 @@ import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
   EquivalentFormatter, EquivalentParser,
-  RowToolsCellRenderer, NoteCellEditor
+  RowToolsCellRenderer, NoteCellRenderer, NoteCellEditor
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
 
 function MenuHeader({
@@ -76,8 +76,8 @@ function MenuHeader({
   const unitSelection = (
     <Button
       className="unitSelection"
-      bsStyle="success"
-      bsSize="xsmall"
+      variant="success"
+      size="sm"
       style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
       onClick={onUnitChanged}
     >
@@ -112,8 +112,8 @@ function MenuHeader({
   const entrySelection = (
     <Button
       className="entrySelection"
-      bsStyle="default"
-      bsSize="xsmall"
+      variant="light"
+      size="sm"
       style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
       disabled={Object.keys(entries).length === 1}
       onClick={onEntryChanged}
@@ -167,8 +167,16 @@ function MenuHeader({
 }
 
 MenuHeader.propTypes = {
-  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  column: PropTypes.shape({
+    colDef: PropTypes.object.isRequired,
+    isSortAscending: PropTypes.func.isRequired,
+    isSortDescending: PropTypes.func.isRequired,
+    addEventListener: PropTypes.func.isRequired,
+  }).isRequired,
+  context: PropTypes.shape({
+    columnDefinitions: PropTypes.arrayOf(PropTypes.object).isRequired,
+    setColumnDefinitions: PropTypes.func.isRequired,
+  }).isRequired,
   setSort: PropTypes.func.isRequired,
   names: PropTypes.arrayOf(PropTypes.string).isRequired,
   entries: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
@@ -182,22 +190,19 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const [columnDefinitions, setColumnDefinitions] = useState([
     {
       headerName: 'Tools',
-      field: null,
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
-      editable: false,
       sortable: false,
       minWidth: 140,
-      cellDataType: 'object',
-      headerComponent: null,
+      cellDataType: false,
     },
     {
       headerName: 'Notes',
       field: 'notes',
+      cellRenderer: NoteCellRenderer,
       sortable: false,
       cellDataType: 'text',
       cellEditor: NoteCellEditor,
-      cellEditorPopup: true,
     },
     {
       headerName: 'Analyses',
@@ -206,9 +211,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       tooltipComponent: AnalysisOverlay,
       cellRenderer: AnalysesCellRenderer,
       cellEditor: AnalysesCellEditor,
-      cellEditorPopup: true,
-      cellEditorPopupPosition: 'under',
-      cellDataType: 'object',
+      cellDataType: false,
       sortable: false,
     },
     {
@@ -253,7 +256,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     }))
   ));
 
-  const dataTypeDefinitions = useMemo(() => ({
+  const dataTypeDefinitions = {
     property: {
       extendsDataType: 'object',
       baseDataType: 'object',
@@ -272,9 +275,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       valueFormatter: EquivalentFormatter,
       valueParser: EquivalentParser,
     }
-  }), []);
+  };
 
-  const defaultColumnDefinitions = useMemo(() => ({
+  const defaultColumnDefinitions = {
     editable: true,
     sortable: true,
     resizable: false,
@@ -282,7 +285,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     maxWidth: 200,
     wrapHeaderText: true,
     autoHeaderHeight: true,
-  }), []);
+  };
 
   const setReactionVariations = (updatedReactionVariations) => {
     // Set updated state here and in parent component.
@@ -390,7 +393,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
   if (reaction.isNew) {
     return (
-      <Alert bsStyle="info">
+      <Alert variant="info">
         Save the reaction to enable the variations tab.
       </Alert>
     );
@@ -415,16 +418,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             {' '}
             rows.
           </Tooltip>
-  )}
+        )}
       >
-        {/* Wrapping button in span necessary in order for OverlayTrigger to work */}
-        <span>
-          <Button bsSize="xsmall" bsStyle="success" onClick={addRow}>
-            <i className="fa fa-plus" />
-          </Button>
-        </span>
+        <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+          <i className="fa fa-plus me-1" /> Add Variation
+        </Button>
       </OverlayTrigger>
-      <div style={{ height: '50vh' }} className="ag-theme-alpine">
+      <div className="ag-theme-alpine">
         <AgGridReact
           ref={gridRef}
           rowData={reactionVariations}
@@ -436,7 +436,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}
           domLayout="autoHeight"
-          popupParent={document.getElementById('reaction-detail-tab') || null}
           context={{
             copyRow,
             removeRow,

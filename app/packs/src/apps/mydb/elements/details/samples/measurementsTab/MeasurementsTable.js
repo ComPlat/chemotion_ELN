@@ -68,14 +68,14 @@ class MeasurementsTable extends Component {
   render() {
     const descriptionColumns = this._uniqueDescriptions().map(description => (<th key={description}>{description}</th>));
     return (
-      <table className="table measurementTable striped condensed hover">
+      <table className="table measurementTable table-sm table-hover">
         <thead>
           <tr>
             <td></td>
             {descriptionColumns}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="table-group-divider">
           {this.rows()}
         </tbody>
       </table>
@@ -106,7 +106,7 @@ class MeasurementsTable extends Component {
         <a
           key={`MeasurementSourceLink${measurement.id}`}
           onClick={() => this.navigateToSource(measurement)}
-          style={{ cursor: 'pointer' }}
+          role="button"
         >
           {measurement.value} {measurement.unit}
         </a>

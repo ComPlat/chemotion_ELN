@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Label } from 'react-bootstrap';
+import { Button, ButtonToolbar, Badge } from 'react-bootstrap';
 
 import Aviator from 'aviator';
 
@@ -52,28 +52,28 @@ export default class ComputeTask extends React.Component {
 
     return (
       <tr>
-        <td style={{ textAlign: 'center' }}>
-          <Button bsStyle="link" onClick={this.navigateSample}>
+        <td className="text-center">
+          <Button variant="link" onClick={this.navigateSample}>
             Sample
           </Button>
         </td>
-        <td style={{ textAlign: 'center' }}>
-          <Label bsStyle="primary">{displayStatus}</Label>
+        <td className="text-center">
+          <Badge bg="primary">{displayStatus}</Badge>
         </td>
-        <td style={{ textAlign: 'center' }}>{task.updatedAt}</td>
-        <td style={{ textAlign: 'center' }}>
-          <Button bsStyle="info" onClick={this.checkState} bsSize="xs" style={{ width: '22px' }}>
-            <i className="fa fa-long-arrow-up" />
-            <i className="fa fa-long-arrow-down" />
-          </Button>
-          &nbsp;&nbsp;
-          <Button bsStyle="warning" onClick={this.revokeTask} bsSize="xs">
-            <i className="fa fa-stop" />
-          </Button>
-          &nbsp;&nbsp;
-          <Button bsStyle="danger" onClick={this.deleteTask} bsSize="xs">
-            <i className="fa fa-trash" />
-          </Button>
+        <td className="text-center">{task.updatedAt}</td>
+        <td className="text-center">
+          <ButtonToolbar className="gap-1">
+            <Button variant="info" onClick={this.checkState} size="xsm" style={{ width: '22px' }}>
+              <i className="fa fa-long-arrow-up" />
+              <i className="fa fa-long-arrow-down" />
+            </Button>
+            <Button variant="warning" onClick={this.revokeTask} size="xsm">
+              <i className="fa fa-stop" />
+            </Button>
+            <Button variant="danger" onClick={this.deleteTask} size="xsm">
+              <i className="fa fa-trash" />
+            </Button>
+          </ButtonToolbar>
         </td>
       </tr>
     );

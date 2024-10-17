@@ -2,7 +2,7 @@
 /* eslint-disable no-shadow */
 import React, { useState, useEffect } from 'react';
 import {
-  FormControl, ControlLabel, InputGroup, Button
+  InputGroup, Button, Form
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
@@ -72,37 +72,27 @@ export default function NumericInputUnit(props) {
     setValue(newInput);
   };
 
-  const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : <ControlLabel style={{ paddingTop: '15px' }} />;
-  const bsSize = field === 'flash_point' ? 'small' : null;
-
-  const unitSwitch = (
-    <InputGroup.Button>
-      <Button
-        disabled={inputDisabled}
-        active
-        onClick={() => { toggleInput(); }}
-        bsSize={bsSize}
-      >
-        {currentUnit}
-      </Button>
-    </InputGroup.Button>
-  );
-
   return (
     <div className={`numericInputWithUnit_${unit}`}>
-      {labelWrap}
+      {label
+        ? <Form.Label>{label}</Form.Label>
+        : <Form.Label className="pt-2" />}
       <InputGroup>
-        <FormControl
+        <Form.Control
           type="text"
-          bsClass="bs-form--compact form-control"
           disabled={inputDisabled}
-          bsSize={bsSize}
           value={value}
           onChange={(event) => handleInputValueChange(event)}
           name={field}
           label={label}
         />
-        {unitSwitch}
+        <Button
+          disabled={inputDisabled}
+          active
+          onClick={toggleInput}
+        >
+          {currentUnit}
+        </Button>
       </InputGroup>
     </div>
   );
@@ -111,7 +101,7 @@ export default function NumericInputUnit(props) {
 NumericInputUnit.propTypes = {
   onInputChange: PropTypes.func,
   unit: PropTypes.string,
-  numericValue: PropTypes.number,
+  numericValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   label: PropTypes.node,
   field: PropTypes.string,
   inputDisabled: PropTypes.bool,

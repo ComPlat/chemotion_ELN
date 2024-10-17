@@ -1,5 +1,4 @@
 import alt from 'src/stores/alt/alt';
-import _ from 'lodash';
 import UserActions from 'src/stores/alt/actions/UserActions';
 
 class UserStore {

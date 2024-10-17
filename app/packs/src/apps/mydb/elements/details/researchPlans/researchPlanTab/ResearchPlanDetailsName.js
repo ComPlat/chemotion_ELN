@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ControlLabel, FormControl, FormGroup, Row, Col, OverlayTrigger, Tooltip, Button
+  Form, Row, Col, OverlayTrigger, Tooltip, Button
 } from 'react-bootstrap';
 
 export default class ResearchPlanDetailsName extends Component {
@@ -12,26 +12,19 @@ export default class ResearchPlanDetailsName extends Component {
     return (
       <OverlayTrigger
         placement="top"
-        delayShow={500}
+        delay={{ show: 500, hide: 100 }}
         overlay={<Tooltip id="metadataTooltip">{metadataTooltipText}</Tooltip>}
       >
         <Button
           id="copyMetadataButton"
-          title=""
-          className="fa fa-laptop pull-right"
-          bsStyle="info"
-          bsSize="xsmall"
-          style={{
-            width: '20px',
-            height: '20px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+          variant="info"
+          size="xsm"
           onClick={() => onCopyToMetadata(null, 'name')}
           disabled={isNew}
-        />
-
+          className="ms-auto"
+        >
+          <i className="fa fa-laptop" />
+        </Button>
       </OverlayTrigger>
     );
   }
@@ -42,28 +35,29 @@ export default class ResearchPlanDetailsName extends Component {
     } = this.props;
     if (edit) {
       return (
-        <div className="research-plan-name">
-          <Row>
-            <Col lg={8}>
-              <FormGroup>
-                <ControlLabel>Name</ControlLabel>
-                { this.renderCopyToMetadataButton() }
-                <FormControl
-                  type="text"
-                  value={value || ''}
-                  onChange={(event) => onChange(event.target.value)}
-                  disabled={disabled}
-                  name="research_plan_name"
-                />
-              </FormGroup>
-            </Col>
-          </Row>
-        </div>
+        <Row>
+          <Col sm={8}>
+            <Form.Group className="mt-2">
+              <div className="d-flex align-items-center">
+                <Form.Label className="mb-1 me-2 d-flex">Name</Form.Label>
+                {this.renderCopyToMetadataButton()}
+              </div>
+              <Form.Control
+                type="text"
+                value={value || ''}
+                onChange={(event) => onChange(event.target.value)}
+                disabled={disabled}
+                name="research_plan_name"
+                className="p-2"
+              />
+            </Form.Group>
+          </Col>
+        </Row>
       );
     }
     return (
-      <div className="research-plan-name static">
-        <h1>{value}</h1>
+      <div className="my-3">
+        <h2>{value}</h2>
       </div>
     );
   }

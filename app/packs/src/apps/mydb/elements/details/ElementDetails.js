@@ -1,26 +1,23 @@
-/* eslint-disable react/destructuring-assignment */
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import DeviceDetails from 'src/apps/mydb/elements/details/devices/DeviceDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
-import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
+//import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import React, { Component } from 'react';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
 import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
 import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails';
-import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import {
-  Tabs, Tab, Label, Button
+  Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
 
 const tabInfoHash = {
@@ -49,15 +46,6 @@ const tabInfoHash = {
     iconEl: (
       <span>
         <i className="fa fa-percent" />
-      </span>
-    )
-  },
-  deviceCtrl: {
-    title: 'Measurement',
-    iconEl: (
-      <span>
-        <i className="fa fa-bar-chart" />
-        <i className="fa fa-cogs" />
       </span>
     )
   },
@@ -100,7 +88,6 @@ export default class ElementDetails extends Component {
     super(props);
     const { selecteds, activeKey, deletingElement } = ElementStore.getState();
     this.state = {
-      offsetTop: 70,
       fullScreen: false,
       selecteds,
       activeKey,
@@ -109,35 +96,17 @@ export default class ElementDetails extends Component {
       genericEls: UserStore.getState().genericEls || [],
     };
 
-    this.handleResize = this.handleResize.bind(this);
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
     this.onDetailChange = this.onDetailChange.bind(this);
     this.checkSpectraMessage = this.checkSpectraMessage.bind(this);
   }
 
   componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-    window.scrollTo(window.scrollX, window.scrollY + 1);
-    // imitate scroll event to make StickyDiv element visible in current area
     ElementStore.listen(this.onDetailChange);
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return true;
-  }
-
   componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
     ElementStore.unlisten(this.onDetailChange);
-  }
-
-  handleResize() {
-    const windowHeight = window.innerHeight || 1;
-    if (this.state.fullScreen || windowHeight < 500) {
-      this.setState({ offsetTop: 0 });
-    } else {
-      this.setState({ offsetTop: 70 });
-    }
   }
 
   onDetailChange(state) {
@@ -199,13 +168,6 @@ export default class ElementDetails extends Component {
             toggleFullScreen={this.toggleFullScreen}
           />
         );
-      case 'deviceCtrl':
-        return (
-          <DeviceDetails
-            device={el}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
       case 'research_plan':
         return (
           <ResearchPlanDetails
@@ -218,7 +180,8 @@ export default class ElementDetails extends Component {
       case 'report':
         return <ReportContainer report={el} />;
       case 'prediction':
-        return <PredictionContainer prediction={el} />;
+        //return <PredictionContainer prediction={el} />;
+        console.warn('Attempting to show outdated PredictionContainer')
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':
@@ -228,7 +191,7 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
-        return <CellLineDetails cellLineItem={el}  toggleFullScreen={this.toggleFullScreen}/>;
+        return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
       default:
         return (
           <div style={{ textAlign: 'center' }}>
@@ -236,7 +199,7 @@ export default class ElementDetails extends Component {
             <h1>{el.id.substring(el.id.indexOf('error:') + 6)}</h1>
             <h3><i className="fa fa-eye-slash fa-5x" /></h3>
             <Button
-              bsStyle="danger"
+              variant="danger"
               onClick={() => DetailActions.close(el, true)}
             >
               Close this window
@@ -247,60 +210,53 @@ export default class ElementDetails extends Component {
   }
 
   tabTitle(el, elKey) {
-    const bsStyle = el.isPendingToSave ? 'info' : 'primary';
-    const focusing = elKey === this.state.activeKey;
+    const { activeKey } = this.state;
+    const focusing = elKey === activeKey;
+    const variant = el.isPendingToSave ? 'info' : 'primary';
 
-    let iconElement = (<i className={`icon-${el.type}`} />);
+    const tab = tabInfoHash[el.type] ?? {};
+    const title = tab.title ?? el.title();
 
-    const tab = tabInfoHash[el.type] || {};
-    const title = tab.title || el.title();
-    if (tab.iconEl) { iconElement = tab.iconEl; }
-    if (el.element_klass) { iconElement = (<i className={`${el.element_klass.icon_name}`} />); }
-    const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
+    const iconElement = el.element_klass
+      ? (<i className={`${el.element_klass.icon_name}`} />)
+      : tab.iconEl ?? (<i className={`icon-${el.type}`} />);
+    const icon = focusing ? iconElement : (<Badge bg={variant}>{iconElement}</Badge>);
+
     return (
-      <div>
+      <div className="d-flex align-items-baseline gap-2">
         {icon}
-        &nbsp;&nbsp;&nbsp;
         {title}
-        &nbsp;
       </div>
     );
   }
 
   render() {
     const {
-      fullScreen, selecteds, activeKey, offsetTop
+      fullScreen, selecteds, activeKey
     } = this.state;
-    const fScrnClass = fullScreen ? 'full-screen' : 'normal-screen';
 
-    const selectedElements = selecteds.map((el, i) => {
-      if (!el) return (<span />);
-      const key = `${el.type}-${el.id}`;
-      return (
+    const selectedElements = selecteds
+      .filter((el) => !!el)
+      .map((el, i) => (
         <Tab
-          key={key}
+          key={`${el.type}-${el.id}`}
           eventKey={i}
           unmountOnExit
           title={this.tabTitle(el, i)}
         >
           {this.content(el)}
         </Tab>
-      );
-    });
+      ));
 
     return (
-      <div>
-        <StickyDiv zIndex={fullScreen ? 9 : 2} offsetTop={offsetTop}>
-          <div className={fScrnClass}>
-            <Tabs
-              id="elements-tabs"
-              activeKey={activeKey}
-              onSelect={DetailActions.select}
-            >
-              {selectedElements}
-            </Tabs>
-          </div>
-        </StickyDiv>
+      <div className={fullScreen ? "full-screen" : "normal-screen"}>
+        <Tabs
+          id="elements-tabs"
+          activeKey={activeKey}
+          onSelect={DetailActions.select}
+        >
+          {selectedElements}
+        </Tabs>
       </div>
     );
   }

@@ -1,12 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import ComputedPropsGraphContainer from 'src/components/computedProps/ComputedPropsGraphContainer';
 import SampleComputedProps from 'src/components/computedProps/SampleComputedProps';
-import { ConfirmModal } from 'src/components/common/ConfirmModal';
+import ConfirmModal from 'src/components/common/ConfirmModal';
 
 export default class ComputedPropsContainer extends React.Component {
   constructor(props) {
@@ -51,38 +51,38 @@ export default class ComputedPropsContainer extends React.Component {
 
     const { compute, showGraph } = this.state;
     let text = 'Show Graph';
-    let arrow = <i className="fa fa-angle-double-down" />;
+    let arrow = <i className="fa fa-angle-double-down ms-2" />;
 
     if (showGraph) {
       text = 'Hide Graph';
-      arrow = <i className="fa fa-angle-double-up" />;
+      arrow = <i className="fa fa-angle-double-up ms-2" />;
     }
     const confirmText = (
-      <ControlLabel>Would you like to simulate this molecule ?</ControlLabel>
+      <h5>Would you like to simulate this molecule ?</h5>
     );
 
     return (
-      <div>
-        <SampleComputedProps cprops={cprops} />
-        <Button
-          bsStyle="success"
-          bsSize="small"
-          className="button-right"
-          onClick={this.onClickComputeBtn}
-          style={{ marginTop: '10px', marginBottom: '10px' }}
-        >
-          <i className="fa fa-paper-plane" />
-          &nbsp;&nbsp; Compute
-        </Button>
-        <ButtonGroup vertical block>
+      <>
+        <div className="d-flex align-items-center">
+          <SampleComputedProps cprops={cprops} />
           <Button
-            bsSize="xsmall"
-            style={{ marginBottom: '20px', backgroundColor: '#ddd' }}
-            onClick={this.toggleGraph}
+            variant="success"
+            size="sm"
+            onClick={this.onClickComputeBtn}
+            className="my-2 ms-auto"
           >
-            {text} &nbsp; {arrow}
+            <i className="fa fa-paper-plane me-1" />
+            Compute
           </Button>
-        </ButtonGroup>
+        </div>
+        <Button
+          size="sm"
+          className="w-100 bg-gray-300 p-0 text-gray-600 mt-3"
+          onClick={this.toggleGraph}
+        >
+          {text}
+          {arrow}
+        </Button>
         <ComputedPropsGraphContainer
           show={showGraph}
           graphData={[{ name: sample.short_label, props: lastCProp }]}
@@ -93,7 +93,7 @@ export default class ComputedPropsContainer extends React.Component {
           content={confirmText}
           onClick={this.computePropsFromSmiles}
         />
-      </div>
+      </>
     );
   }
 }

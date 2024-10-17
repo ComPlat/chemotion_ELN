@@ -2,11 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-
-import {
-  FormGroup, FormControl, ControlLabel, ListGroup,
-  ListGroupItem, Button, Overlay
-} from 'react-bootstrap';
+import { Form, ListGroup, ListGroupItem, Button, Overlay, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -510,7 +506,7 @@ export class ContainerDatasetModalContent extends Component {
     } if (error) {
       return <ListGroupItem>{error}</ListGroupItem>;
     }
-    return <div />;
+    return null;
   }
 
   renderAttachmentRow(attachment) {
@@ -528,47 +524,55 @@ export class ContainerDatasetModalContent extends Component {
           )}
           <div className="attachment-row-subtext">
             <div>
-              Created:&nbsp;
-              {formatDate(attachment.created_at)}
+              Created:
+              <span className="ms-1">{formatDate(attachment.created_at)} </span>
             </div>
-            &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+            <span className="ms-2 me-2">|</span>
             <div>
-              Size:&nbsp;
-              <span style={{ fontWeight: 'bold', color: '#444' }}>
+              Size:
+              <span className="fw-bold text-gray-700 ms-1">
                 {formatFileSize(attachment.filesize)}
               </span>
             </div>
           </div>
         </div>
-        <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div className="attachment-row-actions d-flex justify-content-end align-items-center gap-1">
           {attachment.is_deleted ? (
             <Button
-              bsSize="xs"
-              bsStyle="danger"
+              size="sm"
+              variant="danger"
               className="attachment-button-size"
               onClick={() => this.handleUndo(attachment)}
             >
               <i className="fa fa-undo" aria-hidden="true" />
             </Button>
           ) : (
-            <>
-              {downloadButton(attachment)}
-              <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-              {editButton(
-                attachment,
-                extension,
-                attachmentEditor,
-                attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                  || attachment.is_new || this.documentType(attachment.filename) === null,
-                this.handleEdit
-              )}
-              {annotateButton(attachment, this)}
-              {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
-              &nbsp;
-              {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
-            </>
+              <>
+                <ButtonToolbar className="gap-1">
+                  {downloadButton(attachment)}
+                  <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
+                  {editButton(
+                    attachment,
+                    extension,
+                    attachmentEditor,
+                    attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                    < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                    !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                    || attachment.is_new || this.documentType(attachment.filename) === null,
+                    this.handleEdit
+                  )}
+                  {annotateButton(attachment, () => {
+                    this.setState({
+                      imageEditModalShown: true,
+                      chosenAttachment: attachment,
+                    });
+                  })}
+                  {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
+                </ButtonToolbar>
+                <div className="ms-2">
+                  {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
+                </div>
+              </>
           )}
         </div>
         {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
@@ -583,14 +587,10 @@ export class ContainerDatasetModalContent extends Component {
     const { datasetContainer } = this.props;
 
     const renderGroup = (attachments, title, key) => (
-      <div key={key} style={{ marginTop: '10px' }}>
-        <div style={{
-          backgroundColor: '#D3D3D3',
-          fontWeight: 'bold',
-          marginBottom: '5px',
-          borderRadius: '5px',
-          padding: '5px'
-        }}
+      <div key={key} className='mt-2'>
+        <div
+          className='fw-bold mb-2 border rounded p-1'
+          style={{ backgroundColor: '#D3D3D3' }}
         >
           {title}
         </div>
@@ -603,13 +603,13 @@ export class ContainerDatasetModalContent extends Component {
     );
 
     return (
-      <div className="attachment-main-container">
+      <div className="p-2 border rounded">
         {this.renderImageEditModal()}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: '1', alignSelf: 'center' }}>
+        <div className='d-flex justify-content-between align-items-center'>
+          <div className='d-flex flex-grow-1 align-self-center'>
             {this.customDropzone()}
           </div>
-          <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
+          <div className='ms-4 align-self-center'>
             {datasetContainer.attachments.length > 0
               && sortingAndFilteringUI(
                 sortDirection,
@@ -625,7 +625,7 @@ export class ContainerDatasetModalContent extends Component {
             There are currently no attachments.
           </div>
         ) : (
-          <div style={{ marginBottom: '20px' }}>
+            <div className='mb-5'>
             {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
               && renderGroup(attachmentGroups.Pending, 'Pending')}
             {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
@@ -665,9 +665,9 @@ export class ContainerDatasetModalContent extends Component {
     }
     return (
       <>
-        <FormGroup controlId="datasetInstrument">
-          <ControlLabel>Instrument</ControlLabel>
-          <FormControl
+        <Form.Group controlId="datasetInstrument">
+          <Form.Label>Instrument</Form.Label>
+          <Form.Control
             type="text"
             value={datasetContainer.extended_metadata.instrument || ''}
             disabled={readOnly || disabled}
@@ -687,25 +687,21 @@ export class ContainerDatasetModalContent extends Component {
             rootClose
             onHide={() => this.abortAutoSelection()}
           >
-            <ListGroup
-              style={{
-                position: 'absolute', marginLeft: 0, marginTop: 17, width: '95%'
-              }}
-            >
+            <ListGroup className='ms-0 mt-5 w-100'>
               {this.renderInstruments()}
             </ListGroup>
           </Overlay>
-        </FormGroup>
-        <FormGroup controlId="datasetDescription">
-          <ControlLabel>Description</ControlLabel>
-          <FormControl
-            componentClass="textarea"
+        </Form.Group>
+        <Form.Group controlId="datasetDescription">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={4}
             value={datasetContainer.description || ''}
             disabled={readOnly || disabled}
             onChange={(event) => this.handleInputChange('description', event)}
-            rows={4}
           />
-        </FormGroup>
+        </Form.Group>
         <GenericDSDetails
           genericDS={genericDS}
           klass={klass}

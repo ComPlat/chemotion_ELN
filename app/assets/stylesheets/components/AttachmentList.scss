@@ -1,0 +1,99 @@
+.attachment-dropzone {
+  @extend .dnd-zone;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachment-dropzone:hover {
+  @extend .dnd-zone-over;
+}
+
+.sorting-row-style {
+  padding: 5px;
+  border-radius: 5px;
+  @extend .border;
+  height: 35px;
+}
+
+.sort-icon-style:hover {
+  color: $gray-600 !important;
+  transform: scale(1.1);
+  transition: color 0.3s, transform 0.3s
+}
+
+.attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  @extend .p-2;
+  transform-origin: center;
+  position: relative;
+}
+
+.attachment-row:hover {
+  @extend .bg-gray-200;
+}
+
+.attachment-row-image {
+  @extend .position-relative;
+  @extend .border;
+  @extend .rounded;
+}
+
+.attachment-row-image .large-preview-modal {
+  position: absolute;
+  left: 1000%;
+  top: -300%;
+  @extend .rounded;
+  background-color: $body-bg;
+  object-fit: contain;
+  @extend .border;
+  @extend .invisible;
+  z-index: 10;
+}
+
+.attachment-row-image:hover .large-preview-modal {
+  @extend .visible;
+}
+
+.attachment-row-text {
+  flex: 0.7;
+  margin-left: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: $body-color;
+  font-size: 16px;
+}
+
+.attachment-row-subtext {
+  font-size: 12px;
+  color: $gray-600;
+  display: flex;
+}
+
+.attachment-row-actions {
+  flex: 0.4;
+  display: flex;
+  margin-right: 5px;
+  justify-content: flex-end;
+}
+
+.attachment-button-size {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.attachment-main-container {
+  padding: 10px;
+  background-color: $body-bg;
+  border-radius: 5px;
+}
+
+.no-attachments-text {
+  text-align: center;
+  font-size: 16px;
+  @extend .text-muted;
+}

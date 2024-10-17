@@ -1,10 +1,10 @@
+/* eslint-disable react/sort-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroup, ListGroupItem, FormGroup, ControlLabel, FormControl,
-  Row, Col, Collapse, Button, ButtonGroup, InputGroup, Grid,
+  Accordion, Form, Row, Col, Button, InputGroup
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
 import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
 import Sample from 'src/models/Sample';
@@ -46,9 +46,7 @@ export default class ReactionDetailsScheme extends Component {
     this.state = {
       reaction,
       lockEquivColumn: false,
-      cCon: false,
       reactionDescTemplate: textTemplate.toJS(),
-      open: true,
     };
 
     this.reactQuillRef = React.createRef();
@@ -157,28 +155,26 @@ export default class ReactionDetailsScheme extends Component {
     );
   }
 
-  renderRolesOptions(opt) {
-    const className = `fa ${opt.icon} ${opt.bsStyle}`;
+  renderRolesOption({icon, label, variant}) {
     return (
-      <span>
-        <i className={className} />
-        <span className="spacer-10" />
-        {opt.label}
-      </span>
+      <>
+        <i className={`fa ${icon} text-${variant} me-2`} />
+        {label}
+      </>
     );
   }
 
   renderRoleSelect() {
     const { role } = this.props.reaction;
+
     return (
       <Select
-        disabled={!permitOn(this.props.reaction)}
+        isDisabled={!permitOn(this.props.reaction)}
         name="role"
         options={rolesOptions}
-        optionRenderer={this.renderRolesOptions}
-        multi={false}
-        clearable
-        value={role}
+        formatOptionLabel={this.renderRolesOption}
+        isClearable
+        value={rolesOptions.find(({value}) => value === role)}
         onChange={this.onChangeRole}
       />
     );
@@ -187,32 +183,29 @@ export default class ReactionDetailsScheme extends Component {
   renderRole() {
     const { reaction } = this.props;
     const { role } = reaction;
+    const isPartsRole = role === 'parts';
     let accordTo;
-    let width;
     if (role === 'parts') {
       accordTo = 'According to';
-      width = 2;
-    } else {
-      accordTo = null;
-      width = 4;
     }
+
     return (
-      <>
-        <Col md={width}>
-          <FormGroup>
-            <ControlLabel>Role</ControlLabel>
+      <Row className="d-flex align-items-center">
+        <Col sm={isPartsRole ? 6 : 12}>
+          <Form.Group className="flex-grow-1">
+            <Form.Label>Role</Form.Label>
             {this.renderRoleSelect()}
-          </FormGroup>
+          </Form.Group>
         </Col>
-        {role === 'parts' && (
-          <Col md={2}>
-            <FormGroup>
-              <ControlLabel>{accordTo}</ControlLabel>
+        {isPartsRole && (
+          <Col sm={6}>
+            <Form.Group>
+              <Form.Label>{accordTo}</Form.Label>
               {this.renderGPDnD()}
-            </FormGroup>
+            </Form.Group>
           </Col>
         )}
-      </>
+      </Row>
     );
   }
 
@@ -920,7 +913,7 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-  updatedSamplesForShowLabelChange(samples, referenceMaterial) {
+  updatedSamplesForShowLabelChange(samples) {
     return samples;
   }
 
@@ -1031,65 +1024,17 @@ export default class ReactionDetailsScheme extends Component {
     return reaction;
   }
 
-  solventCollapseBtn() {
-    const { open } = this.state;
-    const arrow = open
-      ? <i className="fa fa-angle-double-up" />
-      : <i className="fa fa-angle-double-down" />;
-    return (
-      <ButtonGroup vertical block>
-        <Button
-          bsSize="xsmall"
-          style={{ backgroundColor: '#ddd' }}
-          onClick={() => this.setState({ open: !open })}
-        >{arrow} &nbsp; Solvents
-        </Button>
-      </ButtonGroup>
-    );
-  }
-
-  conditionsCollapseBtn() {
-    const { cCon } = this.state;
-    const arrow = cCon
-      ? <i className="fa fa-angle-double-up" />
-      : <i className="fa fa-angle-double-down" />;
-    return (
-      <ButtonGroup vertical block>
-        <Button
-          bsSize="xsmall"
-          style={{ backgroundColor: '#ddd' }}
-          onClick={() => this.setState({ cCon: !cCon })}
-        >{arrow} &nbsp; Conditions
-        </Button>
-      </ButtonGroup>
-    );
-  }
-
-  updatesEquivalentForGasProductSamples(samples, vesselVolume) {
-    return samples.map((sample) => {
-      if (sample.gas_type === 'gas') {
-        const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
-        sample.equivalent = equivalent > 1 ? 1 : equivalent;
-      }
-      return sample;
-    });
-  }
-
   updateVesselSize(e) {
     const { onInputChange } = this.props;
     const { value } = e.target;
     onInputChange('vesselSizeAmount', value);
   }
 
-  updateVesselSizeOnBlur(e, unit) {
-    const { onInputChange, reaction } = this.props;
+  updateVesselSizeOnBlur(e) {
+    const { onInputChange } = this.props;
     const { value } = e.target;
     const newValue = parseNumericString(value);
     onInputChange('vesselSizeAmount', newValue);
-    const valueInLiter = unit === 'ml' ? newValue * 0.001 : newValue;
-    GasPhaseReactionActions.setReactionVesselSize(valueInLiter);
-    reaction.products = this.updatesEquivalentForGasProductSamples(reaction.products, valueInLiter);
-    this.onReactionChange(reaction);
   }
 
   changeVesselSizeUnit() {
@@ -1104,33 +1049,27 @@ export default class ReactionDetailsScheme extends Component {
   reactionVesselSize() {
     const { reaction } = this.props;
     return (
-      <Col md={3} className="vesselSize">
-        <InputGroup style={{ width: '100%', paddingRight: '40px' }}>
-          <ControlLabel>Vessel size</ControlLabel>
-          <FormGroup style={{ display: 'flex' }}>
-            <FormControl
-              id="reactionVesselSize"
-              name="reaction_vessel_size"
-              type="text"
-              style={{ height: '36px' }}
-              value={reaction.vessel_size?.amount || ''}
-              disabled={false}
-              onChange={(event) => this.updateVesselSize(event)}
-              onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
-            />
-            <InputGroup.Button>
-              <Button
-                disabled={false}
-                bsStyle="success"
-                onClick={() => this.changeVesselSizeUnit()}
-                style={{ width: '44px', height: '36px' }}
-              >
-                {reaction.vessel_size?.unit || 'ml'}
-              </Button>
-            </InputGroup.Button>
-          </FormGroup>
+      <Form.Group>
+        <Form.Label>Vessel size</Form.Label>
+        <InputGroup>
+          <Form.Control
+            name="reaction_vessel_size"
+            type="text"
+            value={reaction.vessel_size?.amount || ''}
+            disabled={false}
+            onChange={(event) => this.updateVesselSize(event)}
+            onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
+            className="flex-grow-1 Select-control"
+          />
+          <Button
+            disabled={false}
+            variant="success"
+            onClick={() => this.changeVesselSizeUnit()}
+          >
+            {reaction.vessel_size?.unit || 'ml'}
+          </Button>
         </InputGroup>
-      </Col>
+      </Form.Group>
     );
   }
 
@@ -1140,7 +1079,6 @@ export default class ReactionDetailsScheme extends Component {
       lockEquivColumn,
       reactionDescTemplate
     } = this.state;
-    const minPadding = { padding: '1px 2px 2px 0px' };
     if (reaction.editedSample !== undefined) {
       if (reaction.editedSample.amountType === 'target') {
         this.updatedSamplesForEquivalentChange(reaction.samples, reaction.editedSample);
@@ -1178,9 +1116,9 @@ export default class ReactionDetailsScheme extends Component {
 
     const headReactants = reaction.starting_materials.length ?? 0;
     return (
-      <div>
-        <ListGroup fill="true">
-          <ListGroupItem style={minPadding}>
+      <>
+        <div>
+          <div className="border-bottom">
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="starting_materials"
@@ -1191,13 +1129,14 @@ export default class ReactionDetailsScheme extends Component {
               }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               switchEquiv={this.switchEquiv}
               lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
             />
-          </ListGroupItem>
-          <ListGroupItem style={minPadding}>
+          </div>
+
+          <div className="border-bottom">
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="reactants"
@@ -1208,14 +1147,13 @@ export default class ReactionDetailsScheme extends Component {
               }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               switchEquiv={this.switchEquiv}
               lockEquivColumn={lockEquivColumn}
               headIndex={headReactants}
             />
-          </ListGroupItem>
-          <ListGroupItem style={minPadding}>
-
+          </div>
+          <div className="mb-3">
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="products"
@@ -1226,16 +1164,20 @@ export default class ReactionDetailsScheme extends Component {
               }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               switchEquiv={this.switchEquiv}
               lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
             />
-          </ListGroupItem>
-          <ListGroupItem style={minPadding}>
-            {this.solventCollapseBtn()}
-            <Collapse in={this.state.open}>
-              <div>
+          </div>
+
+          <Accordion
+            alwaysOpen
+            defaultActiveKey={['solvents']}
+          >
+            <Accordion.Item eventKey="solvents">
+              <Accordion.Header>Solvents</Accordion.Header>
+              <Accordion.Body>
                 <MaterialGroupContainer
                   reaction={reaction}
                   materialGroup="solvents"
@@ -1246,18 +1188,17 @@ export default class ReactionDetailsScheme extends Component {
                   }
                   dropSample={this.dropSample}
                   showLoadingColumn={!!reaction.hasPolymers()}
-                  onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
                   switchEquiv={this.switchEquiv}
                   lockEquivColumn={this.state.lockEquivColumn}
                   headIndex={0}
                 />
-              </div>
-            </Collapse>
-          </ListGroupItem>
-          <ListGroupItem style={minPadding}>
-            {this.conditionsCollapseBtn()}
-            <Collapse in={this.state.cCon}>
-              <div>
+              </Accordion.Body>
+            </Accordion.Item>
+
+            <Accordion.Item eventKey="conditions">
+              <Accordion.Header>Conditions</Accordion.Header>
+              <Accordion.Body>
                 <Select
                   disabled={!permitOn(reaction)}
                   name="default_conditions"
@@ -1265,74 +1206,74 @@ export default class ReactionDetailsScheme extends Component {
                   options={conditionsOptions}
                   onChange={this.handleOnConditionSelect}
                 />
-                <FormControl
-                  componentClass="textarea"
+                <Form.Control
+                  as="textarea"
+                  className="mt-2"
                   rows="4"
                   value={reaction.conditions || ''}
                   disabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
                   placeholder="Conditions..."
-                  onChange={event => this.props.onInputChange('conditions', event)}
+                  onChange={(event) => this.props.onInputChange('conditions', event)}
                 />
-              </div>
-            </Collapse>
-          </ListGroupItem>
-        </ListGroup>
-        <ListGroup>
-          <ListGroupItem>
-            <div className="reaction-scheme-props">
-              <ReactionDetailsMainProperties
-                reaction={reaction}
-                onInputChange={(type, event) => this.props.onInputChange(type, event)}
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
+        </div>
+
+        <ReactionDetailsMainProperties
+          reaction={reaction}
+          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+        />
+        <ReactionDetailsDuration
+          reaction={reaction}
+          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+        />
+        <Row className="mb-3">
+          <Col sm={4}>
+            <Form.Group className="">
+              <Form.Label className="text-nowrap">Type (Name Reaction Ontology)</Form.Label>
+              <OlsTreeSelect
+                selectName="rxno"
+                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+                onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
+                selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
               />
+            </Form.Group>
+          </Col>
+          <Col sm={4}>
+            {this.renderRole()}
+          </Col>
+          <Col sm={4}>
+            {this.reactionVesselSize()}
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Form.Group>
+            <Form.Label>Description</Form.Label>
+            <div className="quill-resize">
+              {
+                permitOn(reaction)
+                  ? (
+                    <ReactionDescriptionEditor
+                      height="100%"
+                      reactQuillRef={this.reactQuillRef}
+                      template={reactionDescTemplate}
+                      value={reaction.description}
+                      updateTextTemplates={this.updateTextTemplates}
+                      onChange={(event) => this.props.onInputChange('description', event)}
+                    />
+                  ) : <QuillViewer value={reaction.description} />
+              }
             </div>
-            <ReactionDetailsDuration
-              reaction={reaction}
-              onInputChange={(type, event) => this.props.onInputChange(type, event)}
-            />
-            <Row className="small-padding">
-              <Col md={5}>
-                <FormGroup>
-                  <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
-                  <OlsTreeSelect
-                    selectName="rxno"
-                    selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                    onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
-                    selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
-                  />
-                </FormGroup>
-              </Col>
-              {this.renderRole()}
-              {this.reactionVesselSize()}
-            </Row>
-            <Row>
-              <Col md={12}>
-                <FormGroup>
-                  <ControlLabel>Description</ControlLabel>
-                  <div className="quill-resize">
-                    {
-                      permitOn(reaction) ?
-                        <ReactionDescriptionEditor
-                          height="100%"
-                          reactQuillRef={this.reactQuillRef}
-                          template={reactionDescTemplate}
-                          value={reaction.description}
-                          updateTextTemplates={this.updateTextTemplates}
-                          onChange={event => this.props.onInputChange('description', event)}
-                        /> : <QuillViewer value={reaction.description} />
-                    }
-                  </div>
-                </FormGroup>
-              </Col>
-            </Row>
-            <ReactionDetailsPurification
-              reaction={reaction}
-              onReactionChange={r => this.onReactionChange(r)}
-              onInputChange={(type, event) => this.props.onInputChange(type, event)}
-              additionQuillRef={this.additionQuillRef}
-            />
-          </ListGroupItem>
-        </ListGroup>
-      </div>
+          </Form.Group>
+        </Row>
+        <ReactionDetailsPurification
+          reaction={reaction}
+          onReactionChange={(r) => this.onReactionChange(r)}
+          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+          additionQuillRef={this.additionQuillRef}
+        />
+      </>
     );
   }
 }

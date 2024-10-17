@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Form } from 'react-bootstrap';
 import _ from 'lodash';
 import { AgGridReact } from 'ag-grid-react';
-import { Checkbox } from 'react-bootstrap';
 
 import Sample from 'src/models/Sample';
 import SampleName from 'src/components/common/SampleName';
@@ -51,10 +51,12 @@ function MaterialNameWithIupac({ group, node }) {
 function WasteCheckbox({ node, toggleWaste }) {
   const material = node.data;
   return (
-    <div className="waste-chkbx">
-      <Checkbox
+    <div>
+      <Form.Check
+        type='checkbox'
         checked={material.waste || false}
         onChange={() => toggleWaste(material)}
+        className='mx-4'
       />
     </div>
   );
@@ -103,7 +105,7 @@ export default class GreenMaterialGroup extends React.Component {
     const {
       group, materials
     } = this.props;
-    if (materials && materials.length === 0) return <span />;
+    if (materials && materials.length === 0) return <></>;
 
     const isProduct = group === 'products';
     const contents = [];
@@ -158,16 +160,15 @@ export default class GreenMaterialGroup extends React.Component {
     };
 
     return (
-      <div className="ag-theme-balham">
-        <AgGridReact
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          onGridReady={this.onGridReady}
-          rowData={materials}
-          domLayout="autoHeight"
-          onCellValueChanged={this.onCoefficientChanged}
-        />
-      </div>
+      <AgGridReact
+        columnDefs={columnDefs}
+        autoSizeStrategy={{type: 'fitGridWidth'}}
+        defaultColDef={defaultColDef}
+        onGridReady={this.onGridReady}
+        rowData={materials}
+        domLayout="autoHeight"
+        onCellValueChanged={this.onCoefficientChanged}
+      />
     );
   }
 }

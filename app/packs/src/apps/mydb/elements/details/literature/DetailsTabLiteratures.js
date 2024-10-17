@@ -1,9 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  ListGroup, ListGroupItem, Button, Row, Col
-} from 'react-bootstrap';
+import { Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 import {
@@ -279,89 +277,88 @@ export default class DetailsTabLiteratures extends Component {
     const { readOnly } = this.props;
     const citationTypeMap = createCitationTypeMap(this.props.element.type);
     return (
-      <ListGroup fill="true">
-        <ListGroupItem style={{ border: 'unset' }}>
-          <Row>
-            <Col md={8} style={{ paddingRight: 0 }}>
-              <LiteratureInput
-                handleInputChange={this.handleInputChange}
-                literature={literature}
-                field="doi_isbn"
+      <>
+        <Row className='mb-4'>
+          <Col xs={8}>
+            <LiteratureInput
+              handleInputChange={this.handleInputChange}
+              literature={literature}
+              field="doi_isbn"
+              readOnly={readOnly}
+              placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..."
+            />
+          </Col>
+          <Col xs={3}>
+            <LiteralType
+              handleInputChange={this.handleInputChange}
+              disabled={readOnly}
+              val={literature.litype}
+              citationMap={citationTypeMap}
+            />
+          </Col>
+          <Col xs={1}>
+            <Button
+              variant="success"
+              size="sm"
+              onClick={this.fetchMetadata}
+              title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
+              disabled={(isInvalidDoi && isInvalidIsbn) || readOnly}
+            >
+              <i className="fa fa-plus" aria-hidden="true" />
+            </Button>
+          </Col>
+        </Row>
+        <Row className='mb-4'>
+          <Col>
+            <Citation literature={literature} />
+          </Col>
+        </Row>
+        <Row className='mb-4'>
+          <Col xs={7}>
+            <LiteratureInput
+              handleInputChange={this.handleInputChange}
+              literature={literature}
+              field="title"
+              readOnly={readOnly}
+              placeholder="Title..."
+            />
+          </Col>
+          <Col xs={4}>
+            <LiteratureInput
+              handleInputChange={this.handleInputChange}
+              literature={literature}
+              field="url"
+              readOnly={readOnly}
+              placeholder="URL..."
+            />
+          </Col>
+          <Col md={1}>
+            <AddButton
+              readOnly={readOnly}
+              onLiteratureAdd={this.handleLiteratureAdd}
+              literature={literature}
+            />
+          </Col>
+        </Row>
+        {
+          Object.keys(citationTypeMap)
+            .map((e) => (
+              <CitationPanel
+                key={`_citation_panel_${e}`}
+                title={e}
+                fnDelete={this.handleLiteratureRemove}
+                sortedIds={sortedIds}
+                rows={literatures}
                 readOnly={readOnly}
-                placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..."
+                uid={currentUser && currentUser.id}
+                fnUpdate={this.handleTypeUpdate}
+                citationMap={citationTypeMap[e]}
+                typeMap={citationTypeMap}
               />
-            </Col>
-            <Col md={3} style={{ paddingRight: 0 }}>
-              <LiteralType
-                handleInputChange={this.handleInputChange}
-                disabled={readOnly}
-                val={literature.litype}
-                citationMap={citationTypeMap}
-              />
-            </Col>
-            <Col md={1} style={{ paddingRight: 0 }}>
-              <Button
-                bsStyle="success"
-                bsSize="small"
-                style={{ marginTop: 2 }}
-                onClick={this.fetchMetadata}
-                title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
-                disabled={(isInvalidDoi && isInvalidIsbn) || readOnly}
-              >
-                <i className="fa fa-plus" aria-hidden="true" />
-              </Button>
-            </Col>
-            <Col md={12} style={{ paddingRight: 0 }}>
-              <Citation literature={literature} />
-            </Col>
-            <Col md={7} style={{ paddingRight: 0 }}>
-              <LiteratureInput
-                handleInputChange={this.handleInputChange}
-                literature={literature}
-                field="title"
-                readOnly={readOnly}
-                placeholder="Title..."
-              />
-            </Col>
-            <Col md={4} style={{ paddingRight: 0 }}>
-              <LiteratureInput
-                handleInputChange={this.handleInputChange}
-                literature={literature}
-                field="url"
-                readOnly={readOnly}
-                placeholder="URL..."
-              />
-            </Col>
-            <Col md={1}>
-              <AddButton
-                readOnly={readOnly}
-                onLiteratureAdd={this.handleLiteratureAdd}
-                literature={literature}
-              />
-            </Col>
-          </Row>
-        </ListGroupItem>
-        <ListGroupItem style={{ border: 'unset' }}>
-          {
-            Object.keys(citationTypeMap)
-              .map((e) => (
-                <CitationPanel
-                  key={`_citation_panel_${e}`}
-                  title={e}
-                  fnDelete={this.handleLiteratureRemove}
-                  sortedIds={sortedIds}
-                  rows={literatures}
-                  readOnly={readOnly}
-                  uid={currentUser && currentUser.id}
-                  fnUpdate={this.handleTypeUpdate}
-                  citationMap={citationTypeMap[e]}
-                  typeMap={citationTypeMap}
-                />
-              ))
-          }
-        </ListGroupItem>
-      </ListGroup>
-    );
+            ))
+        }
+      </>
+    )
   }
 }
 

@@ -1,9 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  ListGroup, ListGroupItem, Button, Well
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import ContainerDatasetModal from 'src/components/container/ContainerDatasetModal';
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
@@ -102,8 +100,8 @@ export default class ContainerDatasets extends Component {
     const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
       return (
-        <div className="pull-right" style={{ marginTop: 5, marginBottom: 5 }}>
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+        <div className="d-flex justify-content-end mt-2 mb-0">
+          <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
             <i className="fa fa-plus" />
           </Button>
         </div>
@@ -120,10 +118,10 @@ export default class ContainerDatasets extends Component {
       const kind = container.extended_metadata && container.extended_metadata.kind;
       return (
         <div>
-          <Well style={{ minHeight: 70, padding: 5, paddingBottom: 31 }}>
-            <ListGroup style={{ marginBottom: 0 }}>
+          <div className="border rounded p-2 mb-2">
+            <div className="list-group">
               {container.children.map((datasetContainer, key) => (
-                <ListGroupItem key={key}>
+                <div key={key} className="list-group-item" >
                   <ContainerDatasetField
                     kind={kind}
                     datasetContainer={datasetContainer}
@@ -134,16 +132,16 @@ export default class ContainerDatasets extends Component {
                     disabled={disabled}
                     readOnly={readOnly}
                   />
-                </ListGroupItem>
+                </div>
               ))}
-              <ListGroupItem key="attachmentdropzone" disabled >
+              <div key="attachmentdropzone" className="list-group-item disabled" >
                 <AttachmentDropzone
                   handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
                 />
-              </ListGroupItem>
-            </ListGroup>
+              </div>
+            </div>
             {this.addButton()}
-          </Well>
+          </div>
           {modal.show && modal.datasetContainer && (
           <ContainerDatasetModal
             onHide={() => this.handleModalHide()}
@@ -160,18 +158,18 @@ export default class ContainerDatasets extends Component {
       );
     }
     return (
-      <div>
-        <Well style={{ minHeight: 70, padding: 5, paddingBottom: 31 }}>
+      <div className='bg-gray-200'>
+        <div className="border rounded p-2 mb-2">
           <p>There are currently no Datasets.</p>
-          <ListGroup style={{ marginBottom: 0 }}>
-            <ListGroupItem key="attachmentdropzone" disabled>
+          <div className="list-group">
+            <div key="attachmentdropzone" className="list-group-item disabled">
               <AttachmentDropzone
                 handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
               />
-            </ListGroupItem>
-          </ListGroup>
+            </div>
+          </div>
           {this.addButton()}
-        </Well>
+        </div>
       </div>
     );
   }

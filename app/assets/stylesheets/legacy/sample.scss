@@ -1,0 +1,188 @@
+.svg-container, .svg-container-empty {
+  text-align: center;
+
+  border: thick solid transparent;
+
+  min-height: 200px;
+  width: 100%;
+  height: 100%;
+
+  .fa {
+    margin-top: -1px;
+    visibility: hidden;
+    border: thick solid transparent;
+  }
+}
+
+.svg-container:hover, .svg-container-empty {
+  border-color: powderblue;
+
+  .fa {
+    border-color: powderblue;
+    visibility: visible;
+    background-color: powderblue;
+  }
+}
+
+.sample-form,
+.additional-form {
+  margin-bottom: 0px !important;
+
+  // .table > tbody > tr > td {
+  //   border-top: none !important;
+  //   padding: 0px !important;
+  // }
+
+  .name-form {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+
+    -webkit-flex-flow: row nowrap;
+    justify-content: space-between;
+  }
+
+  .numeric-input-unit_g{
+    margin-top: -15px;
+  }
+
+  .numeric-input-unit_l{
+    margin-top: -15px;
+  }
+
+  .numeric-input-unit_mol{
+    margin-top: -15px;
+  }
+
+
+  td {
+    padding: 2px 3px 2px 3px !important;
+    border-top: none !important;
+  }
+
+  button.external-save-btn {
+    margin-top: 23px;
+    margin-left: -10px;
+    float: right;
+  }
+
+  @media screen and (max-height: 768px) {
+    button.external-save-btn {
+      margin-left: -32px;
+    }
+
+    label {
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 768px) {
+  .checkbox-label,
+  .purity-label {
+    font-size: 12px;
+  }
+
+  .name-form {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .name-form > div {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .tab-density-molarity {
+    width: 40%;
+  }
+}
+
+  .top-secret-checkbox,
+  .decoupled-checkbox {
+    margin-top: 22px;
+    float: right;
+  }
+
+  .Select-menu-outer {
+    z-index: 5;
+  }
+
+  .nav-tabs{
+    font-size: 13px;
+    font-weight: 700;
+
+    li {
+      a {
+        padding: 0 10px 5px 10px;
+      }
+    }
+  }
+}
+
+.label--bold {
+  font-weight: bold;
+}
+
+.analysis-header-delete {
+  display: inline-block;
+  line-height: 2.5;
+  padding-left: 135px;
+  width: calc(100% - 30px);
+
+  .undo-middle {
+    height: 35px;
+    padding-top: 6.5px;
+  }
+}
+
+.analysis-header {
+  $preview-size: 120px;
+
+  .preview {
+    img {
+      height: $preview-size;
+    }
+    img, i {
+      width: $preview-size;
+    }
+  }
+
+  .analysis-header-fade {
+    height: $preview-size + 2px; // 2px to align with preview border
+    mask-image: linear-gradient(to bottom, white ($preview-size - 15px), transparent);
+    overflow: hidden;
+  }
+
+  .upper-btn {
+    height: 22px;
+
+    .add-to-report {
+      font-size: 12px;
+      height: 22px;
+      padding: 0 12px;
+      vertical-align: middle;
+    }
+
+    .checkbox {
+      margin: 0;
+
+      span {
+        line-height: 22px;
+      }
+    }
+  }
+
+  .ql-hidden {
+    display: none;
+  }
+
+  .ql-editor {
+    padding: 3px 0 0;
+  }
+}

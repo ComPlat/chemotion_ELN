@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
-import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, ButtonGroup, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Utils from 'src/utilities/Functions';
@@ -94,50 +94,45 @@ class AttachmentContainer extends Component {
       largerInbox,
       fromUnsorted,
     } = this.props;
+    const { deletingTooltip } = this.state;
     if (sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
       return null;
     }
     const { inboxSize } = InboxStore.getState();
 
-    const textStyle = {
-      display: 'block',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'clip',
-      maxWidth: '100%',
-      cursor: 'move'
-    };
-
-    if (largerInbox === true) {
-      textStyle.marginTop = '6px';
-      textStyle.marginBottom = '6px';
-    }
-
     const trash = (
-      <span>
-        <i className="fa fa-trash-o" onClick={() => this.toggleTooltip()} style={{ cursor: "pointer" }}>&nbsp;</i>
-        {this.state.deletingTooltip ? (
+      <OverlayTrigger
+        show={deletingTooltip}
+        animation
+        trigger="click"
+        placement="bottom"
+        overlay={(
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             Delete this attachment?
             <ButtonGroup>
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
+                variant="danger"
+                size="sm"
                 onClick={() => InboxActions.deleteAttachment(attachment, fromUnsorted)}
               >
                 Yes
               </Button>
               <Button
-                bsStyle="warning"
-                bsSize="xsmall"
+                variant="warning"
+                size="sm"
                 onClick={() => this.toggleTooltip()}
               >
                 No
               </Button>
             </ButtonGroup>
           </Tooltip>
-        ) : null}
-      </span>
+        )}
+      >
+        <i
+          className="fa fa-trash-o mt-1"
+          onClick={() => this.toggleTooltip()}
+          role="button" />
+      </OverlayTrigger>
     );
 
     const attachmentId = attachment.id;
@@ -150,46 +145,45 @@ class AttachmentContainer extends Component {
     );
 
     const filenameTooltip = (
-      <Tooltip
-        id="filename_tooltip"
-        className="tooltip"
-        style={{ maxWidth: '100%' }}
-      >
+      <Tooltip id="filename_tooltip">
         <p>
           {attachment.filename}
         </p>
-      </Tooltip>);
+      </Tooltip>
+    );
 
     return connectDragSource(
-      <div style={textStyle}>
-        {checkBox}
-        &nbsp;&nbsp;{trash}&nbsp;
-        <i className="fa fa-download" onClick={() => handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />
-        &nbsp;&nbsp;
-        {largerInbox ? (
-          <MoveToAnalysisButton
-            attachment={attachment}
-            largerInbox={largerInbox}
-            sourceType={sourceType}
+      <div className="d-flex align-items-center overflow-hidden p-1">
+        <ButtonToolbar className="gap-2">
+          {checkBox}
+          {trash}
+          <i
+            className="fa fa-download mt-1"
+            onClick={() => handleAttachmentDownload(attachment)}
           />
-        ) : null}
-        <OverlayTrigger placement="top" overlay={filenameTooltip} >
-          <span>
-            <span
-              className="text-info fa fa-arrows"
-              style={{ maxWidth: '100%', marginRight: '8px' }}
+          {largerInbox && (
+            <MoveToAnalysisButton
+              attachment={attachment}
+              largerInbox={largerInbox}
+              sourceType={sourceType}
             />
-            {attachment.filename}
-          </span>
-        </OverlayTrigger>
+          )}
+          <OverlayTrigger placement="top" overlay={filenameTooltip} >
+            <span>
+              <i className="text-primary fa fa-arrows mx-1" />
+              {attachment.filename}
+            </span>
+          </OverlayTrigger>
+        </ButtonToolbar>
         {
           inboxSize && inboxSize !== 'Small'
           && (
-            <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
+            <span
+              className={`text-dark ms-auto ${largerInbox ? '' : 'none'}`}
+            >
               {formatDate(attachment.created_at)}
             </span>
-          )
-        }
+          )}
       </div>,
       { dropEffect: 'move' }
     );

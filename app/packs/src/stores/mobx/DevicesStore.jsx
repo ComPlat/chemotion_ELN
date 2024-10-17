@@ -29,14 +29,14 @@ const newDevice = {
   novnc_target: '',
   novnc_password: '',
   novnc_password_decrypted: '',
-  valid_name: null,
-  valid_name_abbreviation: null,
-  valid_datacollector_method: null,
-  valid_datacollector_user: null,
-  valid_datacollector_host: null,
-  valid_datacollector_key_name: null,
-  valid_datacollector_dir: null,
-  valid_novnc_target: null,
+  valid_name: '',
+  valid_name_abbreviation: '',
+  valid_datacollector_method: '',
+  valid_datacollector_user: '',
+  valid_datacollector_host: '',
+  valid_datacollector_key_name: '',
+  valid_datacollector_dir: '',
+  valid_novnc_target: '',
 }
 
 export const DevicesStore = types
@@ -70,7 +70,7 @@ export const DevicesStore = types
         self.changeErrorMessage(self.errorMessage(result.errors));
       } else if (result) {
         self.setCreateOrUpdate('update');
-        self.changeSuccess_message('Successfully saved');
+        self.changeSuccessMessage('Successfully saved');
         self.setDevice(result.device);
         self.load();
       }
@@ -136,7 +136,7 @@ export const DevicesStore = types
       self.create_or_update = value;
     },
     setActiveTabKey(key) {
-      self.active_tab_key = key;
+      self.active_tab_key = key * 1;
     },
     changeDevice(field, value) {
       let device = { ...self.device };
@@ -170,12 +170,12 @@ export const DevicesStore = types
       Object.entries(errors).forEach(([key, value]) => {
         let errorKey = key.replace('datacollector_', '').split('_').join(' ');
         if (key == 'name') { self.changeDevice('valid_name', 'error'); }
-        if (key == 'name_abbreviation') { self.changeDevice('valid_name_abbreviation', 'error'); }
-        if (key == 'datacollector_method') { self.changeDevice('valid_datacollector_method', 'error'); }
-        if (key == 'datacollector_dir') { self.changeDevice('valid_datacollector_dir', 'error'); }
-        if (key == 'datacollector_user') { self.changeDevice('valid_datacollector_user', 'error'); }
-        if (key == 'datacollector_host') { self.changeDevice('valid_datacollector_host', 'error'); }
-        if (key == 'datacollector_key_name') { self.changeDevice('valid_datacollector_key_name', 'error'); }
+        if (key == 'name_abbreviation') { self.changeDevice('valid_name_abbreviation', 'is-invalid'); }
+        if (key == 'datacollector_method') { self.changeDevice('valid_datacollector_method', 'is-invalid'); }
+        if (key == 'datacollector_dir') { self.changeDevice('valid_datacollector_dir', 'is-invalid'); }
+        if (key == 'datacollector_user') { self.changeDevice('valid_datacollector_user', 'is-invalid'); }
+        if (key == 'datacollector_host') { self.changeDevice('valid_datacollector_host', 'is-invalid'); }
+        if (key == 'datacollector_key_name') { self.changeDevice('valid_datacollector_key_name', 'is-invalid'); }
         message += `${errorKey.charAt(0).toUpperCase() + errorKey.slice(1)}: ${value.join(', ')}\n`;
       });
       return message;

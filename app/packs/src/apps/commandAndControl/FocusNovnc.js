@@ -1,102 +1,74 @@
 import React from 'react';
-import { ButtonToolbar, Button, ButtonGroup } from 'react-bootstrap';
+import { Badge, ButtonToolbar, Button, ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-export default class FocusNovnc extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.handleFocus = this.handleFocus.bind(this);
-    this.handleBlur = this.handleBlur.bind(this);
-    this.handleCursor = this.handleCursor.bind(this);
-    this.handleForceScreenResizing = this.handleForceScreenResizing.bind(this);
-  }
-
-  handleFocus() {
-    this.props.handleFocus();
-  }
-
-  handleBlur() {
-    this.props.handleBlur();
-  }
-
-  handleCursor() {
-    this.props.handleCursor();
-  }
-
-  handleForceScreenResizing() {
-    this.props.handleForceScreenResizing();
-  }
-
-  render() {
-    const { connected, isNotFocused, forceCursor, isForcedScreenResizing } = this.props;
-    const focusedColor = 'btn btn-xs btn-success m-4';
-    const blurredColor = 'btn btn-xs btn-danger m-4';
-    const normalColor = 'btn btn-xs m-2';
-    const somePadding = { padding: '0 0 5px 5px' };
-    const BlurBtn = () => (
+const FocusNovnc = ({
+  watching,
+  using,
+  isNotFocused,
+  isForcedScreenResizing,
+  connected,
+  forceCursor,
+  handleBlur,
+  handleFocus,
+  handleCursor,
+  handleForceScreenResizing,
+}) => (
+  <ButtonToolbar className="gap-1">
+    <ButtonGroup>
       <Button
-        className={(!isNotFocused || !connected) ? normalColor : blurredColor}
+        size="xxsm"
+        variant={(!isNotFocused || !connected) ? 'primary' : 'danger'}
         disabled={isNotFocused || !connected}
-        onClick={this.handleBlur}
-      > {(!isNotFocused || !connected) ? 'Blur' : 'Blurred'}
-      </Button>
-    );
-    const FocusBtn = () => (
-      <Button
-        className={(isNotFocused || !connected) ? normalColor : focusedColor}
-        disabled={!isNotFocused || !connected}
-        onClick={this.handleFocus}
-      > {isNotFocused ? 'Focus' : 'Focused'}
-      </Button>
-    );
-    const ScreenResizingBtn = () => (
-      <Button
-        className={(!isForcedScreenResizing || !connected) ? normalColor : focusedColor}
-        disabled={!connected}
-        onClick={this.handleForceScreenResizing}
-        title="Fit width screen"
-        style={{margin : '0 5px 0 5px'}}
+        onClick={handleBlur}
       >
-      <i className="fa fa-desktop" aria-hidden="true" style={{marginRight: '2px'}}/>
-      <i className="fa fa-arrows-alt" aria-hidden="true" />
-
+        {(!isNotFocused || !connected) ? 'Blur' : 'Blurred'}
       </Button>
-    );
-    const UsersConnected = () => (
-      <span className="title">
-        <i className="fa fa-eye">
-          {this.props.watching}
-        </i>
-        &nbsp;
-        <i className="fa fa-pencil-square-o">
-          {this.props.using}
-        </i>
-      </span>);
+      <Button
+        size="xxsm"
+        variant={(isNotFocused || !connected) ? 'primary' : 'success'}
+        disabled={!isNotFocused || !connected}
+        onClick={handleFocus}
+      >
+        {isNotFocused ? 'Focus' : 'Focused'}
+      </Button>
+    </ButtonGroup>
 
-    return (
-      <ButtonToolbar>
-        <ButtonGroup style={somePadding}>
-          <BlurBtn />
-          <FocusBtn />
-        </ButtonGroup>
+    <Button
+      size="xxsm"
+      variant={(!forceCursor) ? 'primary' : 'success'}
+      onClick={handleCursor}
+      title="force mouse cursor"
+    >
+      <i className="fa fa-desktop" aria-hidden="true" />
+      <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
+    </Button>
 
-        <Button
-          className={(!forceCursor) ? normalColor : focusedColor}
-          onClick={this.handleCursor}
-          title="force mouse cursor"
-        >
-          <i className="fa fa-desktop" aria-hidden="true" />
-          <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
-        </Button>
 
-        {connected ? <UsersConnected /> : null}
-        <ScreenResizingBtn />
-      </ButtonToolbar>
+    <Button
+      size="xxsm"
+      variant={(!isForcedScreenResizing || !connected) ? 'primary' : 'success'}
+      disabled={!connected}
+      onClick={handleForceScreenResizing}
+      title="Fit width screen"
+    >
+      <i className="fa fa-desktop" aria-hidden="true" />
+      <i className="fa fa-arrows-alt ms-1" aria-hidden="true" />
+    </Button>
 
-    );
-  }
-}
+    {connected && (
+      <>
+        <Badge>
+          <i className="fa fa-eye" /> {watching}
+        </Badge>
+
+        <Badge>
+          <i className="fa fa-pencil-square-o" /> {using}
+        </Badge>
+      </>
+    )}
+  </ButtonToolbar>
+);
 
 FocusNovnc.propTypes = {
   watching: PropTypes.number.isRequired,
@@ -110,3 +82,5 @@ FocusNovnc.propTypes = {
   handleCursor: PropTypes.func.isRequired,
   handleForceScreenResizing: PropTypes.func.isRequired,
 };
+
+export default FocusNovnc;

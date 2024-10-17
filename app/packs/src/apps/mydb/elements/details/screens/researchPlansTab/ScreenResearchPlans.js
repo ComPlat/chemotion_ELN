@@ -43,13 +43,10 @@ class ScreenResearchPlans extends Component {
 
   renderDropZone() {
     const { isOver, connectDropTarget } = this.props;
-    const style = {
-      padding: 10, borderStyle: 'dashed', textAlign: 'center', color: 'gray', marginTop: '12px', marginBottom: '8px'
-    };
-    if (isOver) { style.borderColor = '#337ab7'; }
+    const borderColor = isOver ? 'dnd-zone-over' : '';
 
     return connectDropTarget( // eslint-disable-line function-paren-newline
-      <div style={style}>
+      <div className={`p-2 mb-4 dnd-zone text-center text-gray-600 ${borderColor}`}>
         Drop Research Plan here to add.
       </div>);
   }
@@ -99,9 +96,8 @@ class ScreenResearchPlans extends Component {
           />
         ))}
         <Button
-          bsSize="xsmall"
-          bsStyle="success"
-          className="button-right"
+          size="sm"
+          variant="success"
           onClick={this.handleAddResearchPlan.bind(this)}
           type="button"
         >

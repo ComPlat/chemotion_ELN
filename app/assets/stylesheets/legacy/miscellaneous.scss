@@ -1,0 +1,302 @@
+html,
+body,
+#AdminHome {
+  height: 100%;
+  width: 100%;
+}
+
+label.required:after {
+  content: " *";
+}
+
+.custom-modal {
+  width: 100%;
+}
+
+.modal-container {
+  position: relative;
+}
+
+.modal-container .modal, .modal-container .modal-backdrop {
+  position: absolute;
+}
+
+#app {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.table.borderless td, .table.borderless th {
+  border: 0;
+}
+
+.panel-fixed {
+  overflow-y: auto;
+  max-height: 100vh;
+
+  button.btn-danger {
+    position: relative;
+    margin-right: 5px;
+  }
+}
+
+.panel-fixed::-webkit-scrollbar {
+  width: 0px;  /* remove scrollbar space */
+  background: transparent;  /* optional: just make scrollbar invisible */
+}
+
+.panel-detail {
+  max-height: calc(100vh - 150px);
+  .wellplate-detail {
+    width: 980px;
+  }
+}
+
+.panel-detail > .panel-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.btn-unified, .dropdown > .btn-unified ~ .btn {
+  color: $white;
+  background-color: $gray-600;
+  border-color: $gray-700;
+}
+
+span.pseudo-link {
+  cursor:pointer;
+  color: $link-color;
+}
+
+span.pseudo-link:hover {
+  text-decoration:underline;
+}
+
+.nav-tabs > li > a {
+  margin-right: 0px;
+}
+
+.small-col {
+  float: left;
+  padding-left: 6px !important;
+  padding-right: 0px !important;
+}
+
+.no-pad-col {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+
+// icon for research plan. just a standard FontAwesome icon
+$font-icons-research_plan: "\f0f6";
+
+.icon-research_plan {
+  font-style: inherit;
+}
+
+.icon-research_plan:before {
+  font-family: FontAwesome;
+  content: "\f0f6";
+}
+
+.icon-cell_line {
+  font-style: inherit;
+}
+.icon-cell_line:before {
+  font-family: FontAwesome;
+  content: "\f0a3";
+}
+
+.importChemDrawModal {
+  width: 98%;
+  height: 97%;
+  top: 47%;
+
+  .modal-dialog {
+    top: 47%;
+  }
+
+  .modal-content {
+    height: 100%;
+
+    .modal-body {
+      height: 92%;
+    }
+  }
+
+  ::-webkit-scrollbar {
+  background: transparent;
+  overflow: visible;
+  width: 17px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: solid $white;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.8);
+  }
+
+  ::-webkit-scrollbar-thumb:horizontal {
+  border-width: 4px 6px;
+  min-width: 40px;
+  }
+
+  ::-webkit-scrollbar-thumb:vertical {
+  border-width: 6px 4px;
+  min-height: 40px;
+  }
+
+  ::-webkit-scrollbar-track-piece {
+  background-color: $white;
+  }
+
+  ::-webkit-scrollbar-corner {
+  background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+  background-color: $gray-500;
+  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,0.10),inset 0 -1px 0 rgba(0,0,0,0.07);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+  background-color: $gray-600;
+  }
+}
+
+tr.strokeout  td {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NkYGCQBAAAIwAbDJgTxgAAAABJRU5ErkJggg==');
+    background-repeat: repeat-x;
+    background-position: 50% 40%;
+}
+
+.force-mouse-pointer > div > canvas {
+    cursor: url('data:image/gif;base64,R0lGODlhEAAQAIQQAAUXJQglPAknPggoQQorRQksSAotSQsyUQw7YA07YQ48Xw08Yg48Yw4+Z6wgIGBYhv///////////////////////////////////////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKABAALAAAAAAQABAAAAU+IAQZi2ieqJCUaAsJzuqmTszOb23juS7PMN3OFRT+aMLa0VRMLnvJGqBxCj4CCoRWixzwRLDCF3wYiwiMcQgAOw=='), auto !important;
+}
+
+// https://github.com/Hacker0x01/react-datepicker/issues/624#issuecomment-261696513
+
+.react-datepicker {
+  font-size: 1.3rem !important;
+}
+
+.react-datepicker__current-month {
+  font-size: 1.5rem !important;
+}
+
+.react-datepicker__header {
+  padding-top: 6px !important;
+}
+
+.react-datepicker__navigation {
+  top: 13px !important;
+}
+
+.react-datepicker__day-name, .react-datepicker__day {
+  margin: 0.5rem !important;
+}
+// ===================================================================
+
+.pagination {
+  margin-top: 0 !important;
+}
+
+th.check {
+  width: 30px !important;
+}
+
+th.drag {
+  width: 40px !important;
+}
+
+.managing-actions-add-btn {
+  margin-top: 11px;
+}
+
+.scrollable-popover > .popover-body {
+  overflow-y: scroll;
+}
+
+.pubchem-logo {
+  max-height: 22px;
+}
+
+#tabList .active a {
+  border-bottom-color: $gray-100;
+}
+
+@-webkit-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@-moz-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@-webkit-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@-moz-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@-webkit-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+@keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+
+.running-1 {
+  -webkit-animation: blink-1 4s infinite ; /* Safari 4+ */
+  -moz-animation:    blink-1 4s infinite ; /* Fx 5+ */
+  animation:         blink-1 4s infinite ; /* IE 10+, Fx 29+ */
+}
+
+.running-2 {
+  -webkit-animation: blink-2 4s infinite; /* Safari 4+ */
+  -moz-animation:    blink-2 4s infinite; /* Fx 5+ */
+  animation:         blink-2 4s infinite; /* IE 10+, Fx 29+ */;
+}
+
+.running-3 {
+  -webkit-animation: blink-3 4s infinite  ; /* Safari 4+ */
+  -moz-animation:    blink-3 4s infinite  ; /* Fx 5+ */
+  animation:         blink-3 4s infinite  ; /* IE 10+, Fx 29+ */
+}

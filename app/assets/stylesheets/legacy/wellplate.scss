@@ -1,0 +1,60 @@
+.modal-content{
+  .modal-body{
+    .invalid-wellplate-size{
+      border-style: solid;
+      border-color: red;
+    }
+    .invalid-wellplate-size-text{
+      font-size: 80%;
+      color: red;
+    }
+    .size-without-error{
+      margin-bottom: 35px;
+    }
+  }
+}
+
+.wellplate-horizontal-header-field {
+  width: 60px;
+  height: 30px;
+}
+
+.wellplate-vertical-header-field {
+  width: 60px;
+  height: 60px;
+}
+
+.wellplate-well-container {
+  background-color: white;
+  border-color: lightgray;
+  border-radius: 50%;
+  border-style: solid;
+  border-width: 4px;
+  cursor: move;
+  font-size: 8;
+  height: 60px;
+  line-height: 2;
+  padding-top: 9px;
+  text-align: center;
+  vertical-align: middle;
+  width: 60px;
+  &.active {
+    background-color: #337ab7;
+    color: white;
+  }
+  &.has-sample {
+    border-color: gray;
+  }
+}
+
+.well-details-svg-container {
+  border-radius: 50%;
+  height: 190px;
+  width: 190px;
+  border: 6px solid lightgray;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 2;
+  margin: 0 auto;
+}
+

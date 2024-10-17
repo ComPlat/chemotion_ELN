@@ -46,18 +46,7 @@ export default class SampleDetailsSolvents extends React.Component {
   }
 
   render() {
-    const {
-      sample, isOver, canDrop
-    } = this.props;
-    const style = {
-      padding: '2px 5px',
-    };
-    if (isOver && canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderColor = '#337ab7';
-    } else if (canDrop) {
-      style.borderStyle = 'dashed';
-    }
+    const { sample } = this.props;
     return (
       <SampleDetailsSolventsDnd
         sample={sample}
@@ -72,11 +61,4 @@ export default class SampleDetailsSolvents extends React.Component {
 SampleDetailsSolvents.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
   onChange: PropTypes.func.isRequired,
-  isOver: PropTypes.bool.isRequired,
-  canDrop: PropTypes.bool.isRequired,
-};
-
-SampleDetailsSolvents.defaultProps = {
-  canDrop: true,
-  isOver: false
 };

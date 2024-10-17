@@ -1,5 +1,5 @@
 import React, { useEffect, useContext } from 'react';
-import { Panel, Table, Button, Tooltip, OverlayTrigger, Popover, Alert } from 'react-bootstrap';
+import { Table, Button, ButtonToolbar, Tooltip, OverlayTrigger, Popover, Alert, Card } from 'react-bootstrap';
 import DeviceModal from './DeviceModal';
 import { endsWith } from 'lodash';
 import { observer } from 'mobx-react';
@@ -30,7 +30,7 @@ const DevicesList = () => {
   }
 
   const toggleDeviceUsersAndGroups = (deviceId) => {
-    document.getElementById(`row-device-${deviceId}`).classList.toggle('in');
+    document.getElementById(`row-device-${deviceId}`).classList.toggle('show');
   }
 
   const showBasicConfig = (device) => {
@@ -48,10 +48,10 @@ const DevicesList = () => {
 
     return (
       <>
-        <b className="devices-button-group-clear">Data Collector:</b>
+        <b className="text-success pe-1">Data Collector:</b>
         {datacollectorText}
         <br />
-        <b className="devices-button-group-clear">Novnc:</b>
+        <b className="text-success pe-1">Novnc:</b>
         {novncText}
       </>
     );
@@ -59,15 +59,15 @@ const DevicesList = () => {
 
   const listUsersAndGroups = (device, idx) => {
     return (
-      <Table key={`users-table-${idx}`} className="device-users-table">
+      <Table key={`users-table-${idx}`} className="bg-body-secondary">
         <tbody>
           {device.users.map((user, i) => (
             <tr key={`row_${device.id}-${user.id}`}>
-              <td width="5%">{i + 1}</td>
-              <td width="30%">{user.name}</td>
-              <td width="10%">{user.initials}</td>
-              <td width="35%">{user.type}</td>
-              <td width="20%">{deleteButton(device, user.type.toLowerCase(), user)}</td>
+              <td>{i + 1}</td>
+              <td>{user.name}</td>
+              <td>{user.initials}</td>
+              <td>{user.type}</td>
+              <td>{deleteButton(device, user.type.toLowerCase(), user)}</td>
             </tr>
           ))}
         </tbody>
@@ -86,9 +86,11 @@ const DevicesList = () => {
     const tipTestConnect = <Tooltip id="test_tooltip">test data collector connection</Tooltip>;
     return (
       <OverlayTrigger placement="top" overlay={tipTestConnect}>
-        <Button bsSize="xsmall" onClick={() => testSFTP(device)}>
+        <Button size="sm" onClick={() => testSFTP(device)}>
           {
-            devicesStore.device_testing_id == device.id ? <i className="fa fa-spin fa-spinner" aria-hidden="true" /> : <i className="fa fa-plug" aria-hidden="true" />
+            devicesStore.device_testing_id == device.id
+              ? <i className="fa fa-spin fa-spinner" aria-hidden="true" />
+              : <i className="fa fa-plug" aria-hidden="true" />
           }
         </Button>
       </OverlayTrigger>
@@ -101,32 +103,30 @@ const DevicesList = () => {
 
   const clearDatacollectorSettingsButton = (device) => {
     if (device.datacollector_method) {
-      const tooltip = <Tooltip id="clearDatacollectorSettings">Clear data collector settings</Tooltip>;
       const clearPopover = (
-        <Popover id="popover-positioned-scrolling-left">
-          Remove data collector settings of {device.name}<br />
-          <div className="btn-toolbar">
-            <Button
-              bsSize="xsmall"
-              bsStyle="danger"
-              className="devices-button-group"
-              onClick={() => clearDatacollector(device)}>
-              Yes
-            </Button>
-            <Button bsSize="xsmall" bsStyle="warning">
-              No
-            </Button>
-          </div>
+        <Popover id="popover-clear-datacollector">
+          <Popover.Header as="h3">Remove data collector settings of {device.name}</Popover.Header>
+          <Popover.Body>
+            <ButtonToolbar className="gap-2">
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => clearDatacollector(device)}>
+                Yes
+              </Button>
+              <Button size="sm" variant="warning">
+                No
+              </Button>
+            </ButtonToolbar>
+          </Popover.Body>
         </Popover>
       );
 
       return (
-        <OverlayTrigger animation placement="right" root trigger="focus" overlay={clearPopover}>
-          <OverlayTrigger placement="top" overlay={tooltip}>
-            <Button bsSize="xsmall" className="devices-button-group-clear">
-              <i className="fa fa-database" />
-            </Button>
-          </OverlayTrigger>
+        <OverlayTrigger placement="right" trigger="focus" overlay={clearPopover}>
+          <Button size="sm" className="bg-danger-subtle text-danger" title="Clear data collector settings">
+            <i className="fa fa-database" />
+          </Button>
         </OverlayTrigger>
       )
     }
@@ -138,32 +138,30 @@ const DevicesList = () => {
 
   const clearNovncSettingsButton = (device) => {
     if (device.novnc_target) {
-      const tooltip = <Tooltip id="clearNovncSettings">Clear Novnc settings</Tooltip>;
       const clearPopover = (
-        <Popover id="popover-positioned-scrolling-left">
-          Remove Novnc settings of {device.name}<br />
-          <div className="btn-toolbar">
-            <Button
-              bsSize="xsmall"
-              bsStyle="danger"
-              className="devices-button-group"
-              onClick={() => clearNovncSettings(device)}>
-              Yes
-            </Button>
-            <Button bsSize="xsmall" bsStyle="warning">
-              No
-            </Button>
-          </div>
+        <Popover id="popover-clear-novnc">
+          <Popover.Header as="h3">Remove Novnc settings of {device.name}</Popover.Header>
+          <Popover.Body>
+            <ButtonToolbar className="gap-2">
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => clearNovncSettings(device)}>
+                Yes
+              </Button>
+              <Button size="sm" variant="warning">
+                No
+              </Button>
+            </ButtonToolbar>
+          </Popover.Body>
         </Popover>
       );
 
       return (
-        <OverlayTrigger animation placement="right" root trigger="focus" overlay={clearPopover}>
-          <OverlayTrigger placement="top" overlay={tooltip}>
-            <Button bsSize="xsmall" className="devices-button-group-clear">
-              <i className="fa fa-cogs" />
-            </Button>
-          </OverlayTrigger>
+        <OverlayTrigger placement="right" trigger="focus" overlay={clearPopover}>
+          <Button size="sm" className="bg-danger-subtle text-danger" title="Clear NoVNC settings">
+            <i className="fa fa-cogs" />
+          </Button>
         </OverlayTrigger>
       )
     }
@@ -179,32 +177,31 @@ const DevicesList = () => {
 
   const deleteButton = (object, type, user) => {
     const deletePopover = (
-      <Popover id="popover-positioned-scrolling-left">
-        Remove {type}: {object.name}<br />
-        <div className="btn-toolbar">
-          <Button
-            bsSize="xsmall"
-            bsStyle="danger"
-            className="devices-button-group"
-            onClick={() => confirmDelete(object, type, user)}>
-            Yes
-          </Button>
-          <Button bsSize="xsmall" bsStyle="warning">
-            No
-          </Button>
-        </div>
+      <Popover id="popover-delete-button">
+        <Popover.Header as="h3">Remove {type}: {object.name}</Popover.Header>
+        <Popover.Body>
+          <ButtonToolbar className="gap-2">
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => confirmDelete(object, type, user)}>
+              Yes
+            </Button>
+            <Button size="sm" variant="warning">
+              No
+            </Button>
+          </ButtonToolbar>
+        </Popover.Body>
       </Popover>
     );
 
     return (
       <OverlayTrigger
-        animation
         placement="right"
-        root
         trigger="focus"
         overlay={deletePopover}
       >
-        <Button bsSize="xsmall" bsStyle="danger" className="devices-button-group">
+        <Button size="sm" variant="danger" title="Delete device">
           <i className="fa fa-trash-o" />
         </Button>
       </OverlayTrigger>
@@ -214,30 +211,31 @@ const DevicesList = () => {
   const listActionButtons = (device, idx) => {
     return (
       <td>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="editDevice">Edit device</Tooltip>}>
-          <Button
-            bsSize="xsmall"
-            type="button"
-            bsStyle="warning"
-            className="devices-button-group"
-            onClick={() => showEditDeviceModal(device)}>
-            <i className="fa fa-pencil-square-o" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="UsersAndGroups">Show device users and groups</Tooltip>}>
-          <Button
-            bsSize="xsmall"
-            type="button"
-            bsStyle="info"
-            className="devices-button-group"
-            onClick={() => toggleDeviceUsersAndGroups(device.id)}>
-            <i className="fa fa-users" />&nbsp;({device.users.length < 10 ? `0${device.users.length}` : device.users.length})
-          </Button>
-        </OverlayTrigger>
-        {deleteButton(device, 'device', {})}
-        {clearDatacollectorSettingsButton(device)}
-        {clearNovncSettingsButton(device)}
-        {testSFTPButton(device)}
+        <ButtonToolbar className="gap-2">
+          <OverlayTrigger placement="top" overlay={<Tooltip id="editDevice">Edit device</Tooltip>}>
+            <Button
+              size="sm"
+              type="button"
+              variant="warning"
+              onClick={() => showEditDeviceModal(device)}>
+              <i className="fa fa-pencil-square-o" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger placement="top" overlay={<Tooltip id="UsersAndGroups">Show device users and groups</Tooltip>}>
+            <Button
+              size="sm"
+              type="button"
+              variant="info"
+              onClick={() => toggleDeviceUsersAndGroups(device.id)}>
+              <i className="fa fa-users me-1" />
+              ({device.users.length < 10 ? `0${device.users.length}` : device.users.length})
+            </Button>
+          </OverlayTrigger>
+          {deleteButton(device, 'device', {})}
+          {clearDatacollectorSettingsButton(device)}
+          {clearNovncSettingsButton(device)}
+          {testSFTPButton(device)}
+        </ButtonToolbar>
       </td>
     );
   }
@@ -256,11 +254,11 @@ const DevicesList = () => {
             {listActionButtons(device, idx)}
             <td>{device.name}</td>
             <td>{device.initials}</td>
-            <td className="device-list-config">{showBasicConfig(device)}</td>
+            <td>{showBasicConfig(device)}</td>
           </tr>
           <tr key={`users-row-${idx}-${device.id}`} className="collapse" id={`row-device-${device.id}`}>
-            <td colSpan="5" className="device-users">
-              <div className="device-users-headline">Device "{device.name}" managed by following users / groups</div>
+            <td colSpan="5" className="border-top-0">
+              <div className="fw-bold mt-1 mb-1">Device "{device.name}" managed by following users / groups</div>
               {listUsersAndGroups(device, idx)}
             </td>
           </tr>
@@ -273,35 +271,35 @@ const DevicesList = () => {
 
   const showMessage = () => {
     if (devicesStore.error_message !== '') {
-      return <Alert bsStyle="danger" className="device-alert">{devicesStore.error_message}</Alert>;
+      return <Alert variant="danger" className="device-alert">{devicesStore.error_message}</Alert>;
     } else if (devicesStore.success_message !== '') {
-      return <Alert bsStyle="success" className="device-alert">{devicesStore.success_message}</Alert>;
+      return <Alert variant="success" className="device-alert">{devicesStore.success_message}</Alert>;
     }
   }
 
   return (
-    <Panel>
-      <Panel.Heading className="devices-panel-header">
-        <span>Devices</span>
-        <Button bsStyle="default" onClick={() => showCreateDeviceModal()}>Add new device</Button>
-      </Panel.Heading>
-      <Panel.Body>
+    <Card>
+      <Card.Header className="d-flex justify-content-between align-items-center">
+        <span className="fw-bold fs-4">Devices</span>
+        <Button variant="light" onClick={() => showCreateDeviceModal()}>Add new device</Button>
+      </Card.Header>
+      <Card.Body>
         {showMessage()}
-        <Table responsive condensed hover key="devices-list">
+        <Table responsive hover key="devices-list">
           <thead>
-            <tr className="device-table-header">
-              <th width="3%">#</th>
-              <th width="22%">Actions</th>
-              <th width="28%">Name</th>
-              <th width="9%">Initial</th>
-              <th width="38%">Data Collector / NoVNC</th>
+            <tr className="bg-dark-subtle">
+              <th>#</th>
+              <th>Actions</th>
+              <th>Name</th>
+              <th>Initial</th>
+              <th>Data Collector / NoVNC</th>
             </tr>
           </thead>
           {listDevices()}
         </Table>
         <DeviceModal />
-      </Panel.Body>
-    </Panel>
+      </Card.Body>
+    </Card>
   );
 };
 

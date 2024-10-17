@@ -1,71 +1,64 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
-import Select from 'react-select3';
+import {
+  Button, Col, Form, Row
+} from 'react-bootstrap';
+import { Select } from 'src/components/common/Select';
 
-import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes'
-import { relationTypes } from 'src/components/staticDropdownOptions/radar/relationTypes'
+import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes';
+import { relationTypes } from 'src/components/staticDropdownOptions/radar/relationTypes';
 
-const MetadataRelatedIdentifier = ({ relatedIdentifier, index, onChange, onRemove }) => {
-  const relatedIdentifierType = relatedIdentifierTypes.find(el => el.value == relatedIdentifier.relatedIdentifierType)
-  const relationType = relationTypes.find(el => el.value == relatedIdentifier.relationType)
+const MetadataRelatedIdentifier = ({
+  relatedIdentifier, index, onChange, onRemove
+}) => {
+  const relatedIdentifierType = relatedIdentifierTypes.find((el) => el.value == relatedIdentifier.relatedIdentifierType);
+  const relationType = relationTypes.find((el) => el.value == relatedIdentifier.relationType);
 
   return (
-    <div>
-      <Row>
-        <Col sm={5}>
-          <FormGroup>
-            <ControlLabel>
-              Identifier
-            </ControlLabel>
-            <FormControl
-              type="text"
-              value={relatedIdentifier.value}
-              onChange={event => onChange(event.target.value, 'relatedIdentifiers', index, 'value')}
-            />
-          </FormGroup>
-        </Col>
-        <Col sm={3}>
-          <FormGroup>
-            <ControlLabel>
-              Identifier type
-            </ControlLabel>
-            <Select
-              name="relatedIdentifierType"
-              options={relatedIdentifierTypes}
-              onChange={option => onChange(option.value, 'relatedIdentifiers', index, 'relatedIdentifierType')}
-              value={relatedIdentifierType}
-              menuPortalTarget={document.body}
-              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-            />
-          </FormGroup>
-        </Col>
-        <Col sm={3}>
-          <FormGroup>
-            <ControlLabel>
-              Relation type
-            </ControlLabel>
-            <Select
-              name="relationType"
-              options={relationTypes}
-              onChange={option => onChange(option.value, 'relatedIdentifiers', index, 'relationType')}
-              value={relationType}
-              menuPortalTarget={document.body}
-              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-            />
-          </FormGroup>
-        </Col>
-        <Col sm={1}>
-          <ControlLabel>
-            &nbsp;
-          </ControlLabel>
-          <Button bsStyle="danger" onClick={() => onRemove('relatedIdentifiers', index)}>
-            <i className="fa fa-trash-o" />
-          </Button>
-        </Col>
-      </Row>
-    </div>
-  )
+    <Row className="mb-3">
+      <Form.Group as={Col} xs={5}>
+        <Form.Label>
+          Identifier
+        </Form.Label>
+        <Form.Control
+          type="text"
+          value={relatedIdentifier.value}
+          onChange={(event) => onChange(event.target.value, 'relatedIdentifiers', index, 'value')}
+        />
+      </Form.Group>
+      <Form.Group as={Col} xs={3}>
+        <Form.Label>
+          Identifier type
+        </Form.Label>
+        <Select
+          name="relatedIdentifierType"
+          options={relatedIdentifierTypes}
+          onChange={(option) => onChange(option.value, 'relatedIdentifiers', index, 'relatedIdentifierType')}
+          value={relatedIdentifierType}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+        />
+      </Form.Group>
+      <Form.Group as={Col} xs={3}>
+        <Form.Label>
+          Relation type
+        </Form.Label>
+        <Select
+          name="relationType"
+          options={relationTypes}
+          onChange={(option) => onChange(option.value, 'relatedIdentifiers', index, 'relationType')}
+          value={relationType}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+        />
+      </Form.Group>
+      <Col xs={1} className="d-flex align-items-center">
+        <Button variant="danger" onClick={() => onRemove('relatedIdentifiers', index)}>
+          <i className="fa fa-trash-o" />
+        </Button>
+      </Col>
+    </Row>
+  );
 };
 
 MetadataRelatedIdentifier.propTypes = {
