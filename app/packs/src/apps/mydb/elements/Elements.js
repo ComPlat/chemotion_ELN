@@ -32,7 +32,6 @@ export default class Elements extends Component {
     const { currentElement } = this.state;
     const hasCurrentElement = currentElement !== null;
 
-    const showReport = currentElement?.type === 'report';
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
@@ -40,7 +39,6 @@ export default class Elements extends Component {
         <Col xs={listWidth}>
           <ElementsList
             overview={!hasCurrentElement}
-            showReport={showReport}
           />
         </Col>
         {hasCurrentElement && (

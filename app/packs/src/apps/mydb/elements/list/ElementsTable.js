@@ -320,14 +320,11 @@ export default class ElementsTable extends React.Component {
 
   renderPagination() {
     const { page, pages } = this.state;
-    const items = [];
+
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
 
-    items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
-    if (page > 1) {
-      items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);
-    }
+    const items = [];
     for (let currentPage = minPage; currentPage <= maxPage; currentPage += 1) {
       items.push(
         <Pagination.Item
@@ -340,17 +337,14 @@ export default class ElementsTable extends React.Component {
       );
     }
 
-    if (pages > maxPage) {
-      items.push(<Pagination.Ellipsis key="Ell" />);
-    }
-    if (page !== pages) {
-      items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page + 1)} />);
-    }
-    items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
-
     return pages > 1 && (
       <Pagination>
+        <Pagination.First disabled={page === 1} onClick={() => this.handlePaginationSelect(1)} />
+        <Pagination.Prev disabled={page === 1} onClick={() => this.handlePaginationSelect(page - 1)} />
         {items}
+        {pages > maxPage && (<Pagination.Ellipsis />)}
+        <Pagination.Next disabled={page === pages} onClick={() => this.handlePaginationSelect(page + 1)} />
+        <Pagination.Last disabled={page === pages} onClick={() => this.handlePaginationSelect(pages)} />
       </Pagination>
     );
   }
@@ -546,7 +540,7 @@ export default class ElementsTable extends React.Component {
 
   renderHeader = () => {
     const { filterCreatedAt, ui } = this.state;
-    const { type, showReport, genericEl } = this.props;
+    const { type, genericEl } = this.props;
     const { fromDate, toDate, userLabel } = ui;
 
     let searchLabel = <span />;
@@ -576,7 +570,6 @@ export default class ElementsTable extends React.Component {
           <ElementAllCheckbox
             type={type}
             ui={ui}
-            showReport={showReport}
           />
         </div>
         <div
@@ -701,7 +694,6 @@ ElementsTable.defaultProps = {
 
 ElementsTable.propTypes = {
   overview: PropTypes.bool.isRequired,
-  showReport: PropTypes.bool.isRequired,
   type: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   genericEl: PropTypes.object,
