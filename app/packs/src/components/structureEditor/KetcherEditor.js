@@ -577,7 +577,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
   }, []);
 
-
+  // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
     getData: () => {
       return "hallo";
@@ -610,11 +610,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         }
       }
       const iframeDocument = iframeRef.current.contentWindow.document;
-      const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
-      const serializer = new XMLSerializer();
-      const svgString = "<?xml version=`1.0\`?>" + serializer.serializeToString(svg);
-      console.log(lines.join("\n"));
-      return { svgString, ket2Molfile: lines.join("\n") };
+      const imageElements = iframeDocument.querySelectorAll('image');
+      return { ket2Molfile: lines.join("\n"), imageElements };
     }
   }));
 

@@ -269,24 +269,28 @@ export default class StructureEditorModal extends React.Component {
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
     } else if (editor.id === 'ketcher2') {
       if (this.ketcher2Ref.current) {
-        const { svgString, ket2Molfile } = await this.ketcher2Ref.current.onSaveFileK2SC();
-        // this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, svgString, { smiles: '' }, editor.id); } });
+        const { ket2Molfile, imageElements } = await this.ketcher2Ref.current.onSaveFileK2SC();
         structure.editor.getMolfile().then((molfile) => {
           structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
             imgfile.text().then(async (text) => {
-              this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, text, { smiles: '' }, editor.id); } });
+              const parser = new DOMParser();
+              const svgDoc = parser.parseFromString(text, 'image/svg+xml');
+              let svgElement = svgDoc.documentElement;
+              imageElements.forEach((img) => {
+                svgDoc.documentElement.appendChild(img);
+              });
+              svgElement = new XMLSerializer().serializeToString(svgElement);
+              this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, svgElement, { smiles: '' }, editor.id); } });
             });
           });
         });
       }
-
-      // return;
-
     } else {
       try {
         const { molfile, info } = structure;
         if (!molfile) throw new Error('No molfile');
         structure.fetchSVG().then((svg) => {
+          console.log({ railssvg: svg });
           this.setState({
             showModal: false,
             showWarning: this.props.hasChildren || this.props.hasParent
