@@ -111,7 +111,7 @@ class App extends Component {
     return (
       <Container fluid className="mydb-app vh-100">
         <Row className="h-100">
-          <Col xs={sidebarCols}>
+          <Col xs={sidebarCols} className="position-relative">
             <Sidebar
               isCollapsed={isSidebarCollapsed}
               toggleCollapse={this.toggleSidebar}
