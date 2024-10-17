@@ -609,9 +609,32 @@ const KetcherEditor = forwardRef((props, ref) => {
           }
         }
       }
+
       const iframeDocument = iframeRef.current.contentWindow.document;
+      const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
       const imageElements = iframeDocument.querySelectorAll('image');
-      return { ket2Molfile: lines.join("\n"), imageElements };
+      imageElements.forEach((img) => {
+        svg.removeChild(img);
+      });
+
+      imageElements.forEach((img) => {
+        const width = img.getAttribute('width');
+        const height = img.getAttribute('height');
+        const x = img.getAttribute('x');
+        const y = img.getAttribute('y');
+        const newImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+
+        newImg.setAttribute('x', x);
+        newImg.setAttribute('y', y);
+        newImg.setAttribute('width', width);
+        newImg.setAttribute('height', height);
+        newImg.setAttribute('href', img.getAttribute('href'));
+        svg.appendChild(newImg);
+      });
+
+      const svgElement = new XMLSerializer().serializeToString(svg);
+      console.log({ svgElement });
+      return { ket2Molfile: lines.join("\n"), svgElement };
     }
   }));
 
@@ -626,7 +649,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         width="100%"
         style={iS}
       />
-      {/* <button onClick={onSaveFileK2SC}>Save</button> */}
     </div>
   );
 });
