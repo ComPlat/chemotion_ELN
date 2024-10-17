@@ -7,6 +7,7 @@ import SplitElementButton from 'src/components/contextActions/SplitElementButton
 import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 import ScanCodeButton from 'src/components/contextActions/ScanCodeButton';
+import SupportMenuButton from 'src/components/navigation/SupportMenuButton';
 import UserAuth from 'src/components/navigation/UserAuth';
 
 export default function Topbar() {
@@ -24,6 +25,7 @@ export default function Topbar() {
         <ReportUtilButton />
         <ScanCodeButton />
 
+        <SupportMenuButton />
         <UserAuth />
       </div>
     </div>
