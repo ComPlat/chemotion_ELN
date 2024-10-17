@@ -181,25 +181,11 @@ const TextSearch = () => {
                 )
               }
             </div>
-            <SearchButtonToolbar store={searchStore} />
-          </div>
-        </Accordion.Collapse>
-      </Accordion.Item>
-      <Accordion.Item eventKey={1} className={`${panelVars.invisibleClassName}${activeResultAccordionClass}`}>
-        <h2 className="accordion-header">
-          <AccordeonHeaderButtonForSearchForm
-            title={panelVars.resultTitle}
-            eventKey={1}
-            callback={togglePanel(searchStore)}
-          />
-        </h2>
-        <Accordion.Collapse eventKey={1}>
-          <div className="accordion-body">
-            <Form className="d-flex align-items-start gap-5">
-              <SearchResult handleClear={() => handleClear(searchStore)} />
+            <Form className="d-flex align-items-center gap-5">
+              <SearchButtonToolbar store={searchStore} />
               {
                 searchStore.searchType == 'detail' && (
-                  <Form.Group className="d-flex align-items-baseline gap-5">
+                  <Form.Group className="d-flex align-items-baseline gap-4">
                     <span>Change search operator for numeric Fields:</span>
                     <Form.Check
                       type="radio"
@@ -223,6 +209,20 @@ const TextSearch = () => {
                 )
               }
             </Form>
+          </div>
+        </Accordion.Collapse>
+      </Accordion.Item>
+      <Accordion.Item eventKey={1} className={`${panelVars.invisibleClassName}${activeResultAccordionClass}`}>
+        <h2 className="accordion-header">
+          <AccordeonHeaderButtonForSearchForm
+            title={panelVars.resultTitle}
+            eventKey={1}
+            callback={togglePanel(searchStore)}
+          />
+        </h2>
+        <Accordion.Collapse eventKey={1}>
+          <div className="accordion-body">
+            <SearchResult handleClear={() => handleClear(searchStore)} />
           </div>
         </Accordion.Collapse>
       </Accordion.Item>
