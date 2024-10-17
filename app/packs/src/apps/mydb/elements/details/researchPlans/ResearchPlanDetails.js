@@ -74,9 +74,11 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { researchPlan } = nextProps;
-    this.setState({ researchPlan });
+  componentDidUpdate(prevProps) {
+    const { researchPlan } = this.props;
+    if (researchPlan !== prevProps.researchPlan) {
+      this.setState({ researchPlan });
+    }
   }
 
   handleResearchPlanChange(el) {
@@ -579,10 +581,7 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_metadata" element={researchPlan} />
           }
-          <ResearchPlanMetadata
-            parentResearchPlan={researchPlan}
-            parentResearchPlanMetadata={researchPlan.research_plan_metadata}
-          />
+          <ResearchPlanMetadata researchPlan={researchPlan} />
         </Tab>
       ),
     };

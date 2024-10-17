@@ -44,7 +44,6 @@ export default class ReactionDetailsScheme extends Component {
 
     const textTemplate = TextTemplateStore.getState().reactionDescription;
     this.state = {
-      reaction,
       lockEquivColumn: false,
       reactionDescTemplate: textTemplate.toJS(),
     };
@@ -76,12 +75,6 @@ export default class ReactionDetailsScheme extends Component {
     TextTemplateActions.fetchTextTemplates('reactionDescription');
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { reaction } = nextProps;
-    this.setState({ reaction });
-  }
-
   componentWillUnmount() {
     TextTemplateStore.unlisten(this.handleTemplateChange);
     this.resetGasPhaseStore();
@@ -93,7 +86,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
-    const { reaction } = this.state;
+    const { reaction } = this.props;
     let splitSample;
 
     if (srcSample instanceof Molecule || isNewSample) {
@@ -165,11 +158,12 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   renderRoleSelect() {
-    const { role } = this.props.reaction;
+    const { reaction } = this.props;
+    const { role } = reaction;
 
     return (
       <Select
-        isDisabled={!permitOn(this.props.reaction)}
+        isDisabled={!permitOn(reaction)}
         name="role"
         options={rolesOptions}
         formatOptionLabel={this.renderRolesOption}
@@ -210,7 +204,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   deleteMaterial(material, materialGroup) {
-    const { reaction } = this.state;
+    const { reaction } = this.props;
     reaction.deleteMaterial(material, materialGroup);
 
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
@@ -254,7 +248,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
-    const { reaction } = this.state;
+    const { reaction } = this.props;
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
     reaction.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
     this.onReactionChange(reaction, { schemaChanged: true });
@@ -334,7 +328,7 @@ export default class ReactionDetailsScheme extends Component {
         );
         break;
       case 'externalLabelCompleted':
-        const { reaction } = this.state;
+        const { reaction } = this.props;
         this.onReactionChange(reaction, { schemaChanged: true });
         break;
       case 'addToDesc':
@@ -747,7 +741,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
-    const { referenceMaterial } = this.props.reaction;
+    const { reaction: { referenceMaterial } } = this.props;
     const { lockEquivColumn } = this.state;
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     let stoichiometryCoeff = 1.0;
@@ -843,7 +837,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   calculateEquivalentForGasProduct(sample, reactionVesselSize = null) {
-    const { reaction } = this.state;
+    const { reaction } = this.props;
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     const volume = reactionVesselSize || vesselVolume;
     const refMaterial = reaction.findFeedstockMaterial();
@@ -856,7 +850,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForEquivalentChange(samples, updatedSample, materialGroup) {
-    const { referenceMaterial } = this.props.reaction;
+    const { reaction: { referenceMaterial } } = this.props;
     let stoichiometryCoeff = 1.0;
     return samples.map((sample) => {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
@@ -893,7 +887,6 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForExternalLabelChange(samples, updatedSample) {
-    const { referenceMaterial } = this.props.reaction;
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.external_label = updatedSample.external_label;
@@ -903,8 +896,6 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForDrySolventChange(samples, updatedSample) {
-    const { referenceMaterial } = this.props.reaction;
-
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.dry_solvent = updatedSample.dry_solvent;
@@ -1016,7 +1007,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionWithSample(updateFunction, updatedSample, type) {
-    const { reaction } = this.state;
+    const { reaction } = this.props;
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
     reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
@@ -1074,11 +1065,9 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   render() {
-    const {
-      reaction,
-      lockEquivColumn,
-      reactionDescTemplate
-    } = this.state;
+    const { lockEquivColumn, reactionDescTemplate } = this.state;
+    const { reaction } = this.props;
+
     if (reaction.editedSample !== undefined) {
       if (reaction.editedSample.amountType === 'target') {
         this.updatedSamplesForEquivalentChange(reaction.samples, reaction.editedSample);
@@ -1087,7 +1076,7 @@ export default class ReactionDetailsScheme extends Component {
       }
       reaction.editedSample = undefined;
     } else {
-      const { referenceMaterial } = this.props.reaction;
+      const { referenceMaterial } = reaction;
       reaction.products.map((sample) => {
         sample.concn = sample.amount_mol / reaction.solventVolume;
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
@@ -1109,8 +1098,8 @@ export default class ReactionDetailsScheme extends Component {
     }
 
     // if no reference material then mark first starting material
-    const refM = this.props.reaction.starting_materials[0];
-    if (!this.props.reaction.referenceMaterial && refM) {
+    const refM = reaction.starting_materials[0];
+    if (!reaction.referenceMaterial && refM) {
       reaction.markSampleAsReference(refM.id);
     }
 

@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const TextTemplateIcon = ({ template, iconClass }) => {
-  if (!template) return <span />;
+  if (!template) return null;
 
   const { data, name } = template;
 
@@ -12,7 +12,7 @@ const TextTemplateIcon = ({ template, iconClass }) => {
     );
   }
 
-  const text = (data || {}).text || name;
+  const text = data?.text ?? name ?? '';
 
   return (
     <span className={iconClass}>{text.toUpperCase()}</span>
