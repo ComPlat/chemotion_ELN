@@ -1,10 +1,10 @@
 import expect from 'expect';
 import {
   EquivalentFormatter, EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
-describe('ReactionVariationsCellComponents', async () => {
+describe('ReactionVariationsComponents', async () => {
   describe('FormatterComponents', () => {
     it('EquivalentFormatter returns number string with correct precision', () => {
       const cellData = { aux: { equivalent: 1.2345 } };

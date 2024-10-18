@@ -7,7 +7,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
   setUpMaterial, setUpReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
 } from 'helper/reactionVariationsHelpers';
