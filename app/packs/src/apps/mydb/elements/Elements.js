@@ -32,15 +32,13 @@ export default class Elements extends Component {
     const { currentElement } = this.state;
     const hasCurrentElement = currentElement !== null;
 
-    const showReport = currentElement?.type === 'report';
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
-      <Row className='w-100'>
+      <Row className="flex-grow-1">
         <Col xs={listWidth}>
           <ElementsList
             overview={!hasCurrentElement}
-            showReport={showReport}
           />
         </Col>
         {hasCurrentElement && (
