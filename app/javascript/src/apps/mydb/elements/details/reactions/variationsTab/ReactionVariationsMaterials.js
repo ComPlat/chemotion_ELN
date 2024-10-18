@@ -6,7 +6,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   MaterialOverlay
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {

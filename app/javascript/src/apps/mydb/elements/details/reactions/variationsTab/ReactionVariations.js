@@ -28,7 +28,7 @@ import {
   EquivalentFormatter, EquivalentParser,
   NoteCellRenderer, NoteCellEditor,
   RowToolsCellRenderer, MenuHeader
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
