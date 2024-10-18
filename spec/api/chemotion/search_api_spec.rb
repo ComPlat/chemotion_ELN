@@ -250,6 +250,9 @@ describe Chemotion::SearchAPI do
       let(:advanced_params) do
         [
           {
+            available_options: [
+              { value: '-22', unit: '°C' }, { value: '-7.6', unit: '°F' }, { value: '251.15', unit: 'K' }
+            ],
             link: '',
             match: '>=',
             table: 'reactions',

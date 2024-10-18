@@ -155,11 +155,23 @@ module Usecases
         return [filter['smiles']] if filter['field']['column'] == 'solvent'
         return [filter['value'].to_f] if sanitize_float_fields(filter)
 
-        no_sanitizing_matches = ['=', '>=']
+        no_sanitizing_matches = ['=', '>=', '<=']
         sanitize = no_sanitizing_matches.exclude?(filter['match'])
         words = filter['value'].split(/(\r)?\n/).map!(&:strip)
         words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } if sanitize
         words
+      end
+
+      def valid_temperature(prop, number)
+        regex_number = "'^-{0,1}\\d+(\\.\\d+){0,1}\\Z'"
+        "(#{prop} ->> '#{number}' ~ #{regex_number})"
+      end
+
+      def temperature_field_specials(prop, number, unit)
+        @conditions[:words][0] = @conditions[:words][0].to_f.to_s
+        @conditions[:field] = "(#{prop} ->> '#{number}')::FLOAT"
+        @conditions[:first_condition] +=
+          " (#{prop} ->> '#{unit}')::TEXT != '' AND #{valid_temperature(prop, number)} AND "
       end
 
       # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
@@ -187,14 +199,10 @@ module Usecases
             AND private_notes.noteable_id = #{@table}.id"
           @conditions[:condition_table] = 'private_notes.'
         when 'temperature'
-          regex_number = "'^-{0,1}\\d+(\\.\\d+){0,1}\\Z'"
-          is_data_valid = "(#{@table}.temperature ->> 'userText' ~ #{regex_number})"
-
-          @conditions[:field] =
-            "CASE WHEN #{is_data_valid} THEN (#{@table}.temperature ->> 'userText')::FLOAT ELSE -30000 END "
-
-          @conditions[:first_condition] += " (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
-          @conditions[:additional_condition] = "AND (#{@table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
+          # is_data_valid = valid_temperature("#{@table}.temperature", 'userText')
+          field = filter['field']['column']
+          temperature_field_specials("#{@table}.temperature", 'userText', 'valueUnit')
+          unit_and_available_options_conditions(filter, "#{@table}.temperature", field, 'userText', 'valueUnit')
           @conditions[:condition_table] = ''
         when 'duration'
           time_divisor = duration_interval_by_unit(filter['unit'])
@@ -372,19 +380,56 @@ module Usecases
         prop = "prop_#{key}_#{number}"
         datasets_joins(filter, prop, key)
 
-        if filter['field']['column'] == 'datasets_type'
+        if filter['field']['column'] == 'datasets_type' && filter['field']['field'].blank?
           @conditions[:field] = ''
         else
           field = filter['field']['column'].remove('datasets_')
           @conditions[:field] = "(#{prop} ->> 'value')::TEXT"
           @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{field}'"
-          if filter['unit'].present?
-            unit = filter['unit'].remove('°').remove(/ \(.*\)/).tr('/', '_')
-            @conditions[:additional_condition] +=
-              " AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{unit}')"
+
+          if filter['unit'].present? || filter['available_options'].present?
+            temperature_field_specials(prop, 'value', 'value_system') if field == 'temperature'
+            unit_and_available_options_conditions(filter, prop, field, 'value', 'value_system')
           end
         end
       end
+
+      def remove_degree_from_unit(filter)
+        filter['unit'].remove('°').remove(/ \(.*\)/).tr('/', '_')
+      end
+
+      def remove_degree_from_property(prop, unit)
+        "LOWER(replace((#{prop} ->> '#{unit}')::TEXT, '°', ''))"
+      end
+
+      # rubocop:disable Metrics/AbcSize
+      def unit_and_available_options_conditions(filter, prop, field, number, unit)
+        if filter['unit'].present?
+          @conditions[:additional_condition] +=
+            " AND #{remove_degree_from_property(prop, unit)} = LOWER('#{remove_degree_from_unit(filter)}')"
+        end
+
+        return if filter['available_options'].blank?
+
+        conditions = ''
+        filter['available_options'].each do |option|
+          if field.include?('temperature')
+            next if option[:unit].remove('°') == filter['unit'].remove('°')
+
+            @conditions[:additional_condition] +=
+              " OR (#{valid_temperature(prop, number)}
+              AND (#{prop} ->> '#{number}')::FLOAT #{@match} '#{option[:value].to_f}'
+              AND #{remove_degree_from_property(prop, unit)} = LOWER('#{remove_degree_from_unit(option)}'))"
+          else
+            conditions += " AND (#{prop} ->> '#{number}')::TEXT NOT ILIKE '%#{option[:value]}%'"
+          end
+        end
+
+        return if field.include?('temperature')
+
+        @conditions[:additional_condition] += " OR ((#{prop} ->> 'field')::TEXT = '#{field}'#{conditions})"
+      end
+      # rubocop:enable Metrics/AbcSize
 
       def datasets_joins(filter, prop, key)
         datasets_join =
@@ -392,7 +437,7 @@ module Usecases
 
         @conditions[:joins] << datasets_join if @conditions[:joins].exclude?(datasets_join)
 
-        if filter['field']['column'] == 'datasets_type'
+        if filter['field']['column'] == 'datasets_type' && filter['field']['field'].blank?
           @conditions[:joins] <<
             "INNER JOIN dataset_klasses ON dataset_klasses.id = datasets.dataset_klass_id
             AND dataset_klasses.ols_term_id = '#{filter['value']}'"
