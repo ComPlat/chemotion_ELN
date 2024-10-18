@@ -20,6 +20,10 @@ module Chemotion
       def base_scrub_ml(fragment, type: :xml, encoding: nil)
         result = encoding ? fragment.encode(encoding) : fragment
 
+        # Allow the <image> tag and all its attributes
+        scrubber = Loofah::Scrubber.new do |node|
+          node['src'] = node['src'] if node.name == 'image'
+        end
         # Loofah will remove node having rgb function as value in svg
         # though rgb is an allowed css function
         result = transform_rgb_to_hex(result)
@@ -29,7 +33,7 @@ module Chemotion
                  when :html
                    Loofah.scrub_html5_fragment(result, :strip)
                  else
-                   Loofah.scrub_fragment(result, :strip)
+                   Loofah.fragment(result).scrub!(scrubber)
                  end.to_s
         # Fix some camelcase attributes
         camelcase_attributes(result)
