@@ -1,12 +1,12 @@
-import { AgGridReact } from 'ag-grid-react';
-import React from 'react';
-import PropTypes from 'prop-types';
 import { cloneDeep } from 'lodash';
 import {
-  convertUnit, materialTypes, volumeUnits, massUnits, amountUnits, concentrationUnits, getStandardUnit,
+  materialTypes, volumeUnits, massUnits, amountUnits, concentrationUnits, getStandardUnit,
   getCellDataType, updateColumnDefinitions,
   durationUnits, temperatureUnits
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  MaterialOverlay
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
 
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
@@ -140,53 +140,6 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
   });
   return updatedVariations;
 }
-
-function MaterialOverlay({
-  value: cellData, colDef
-}) {
-  const { aux = null } = cellData;
-  const { currentEntry, displayUnit } = colDef.entryDefs;
-
-  return (
-    <div className="tooltip show">
-      <div className="tooltip-inner text-start">
-        {currentEntry !== 'equivalent' && (
-          <div>
-            {`${Number(convertUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit)).toPrecision(4)} ${displayUnit}`}
-          </div>
-        )}
-        {aux?.isReference && (
-          <div>Reference</div>
-        )}
-        {aux?.equivalent !== null && (
-          <div>{`Equivalent: ${Number(aux.equivalent).toPrecision(4)}`}</div>
-        )}
-        {aux?.coefficient !== null && (
-          <div>{`Coefficient: ${Number(aux.coefficient).toPrecision(4)}`}</div>
-        )}
-        {aux?.yield !== null && (
-          <div>{`Yield: ${Number(aux.yield).toPrecision(4)}%`}</div>
-        )}
-        {aux?.molecularWeight !== null && (
-          <div>{`Molar mass: ${Number(aux.molecularWeight).toPrecision(2)} g/mol`}</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-MaterialOverlay.propTypes = {
-  value: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number.isRequired,
-    unit: PropTypes.string.isRequired,
-  })).isRequired,
-  colDef: PropTypes.shape({
-    entryDefs: PropTypes.shape({
-      currentEntry: PropTypes.number.isRequired,
-      displayUnit: PropTypes.string.isRequired,
-    }).isRequired,
-  }).isRequired,
-};
 
 function getNonGaseousMaterialEntriesWithUnits(materialType, isReference) {
   let entries = {};
@@ -327,7 +280,6 @@ function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) 
 }
 
 export {
-  MaterialOverlay,
   getMaterialColumnGroupChild,
   getReactionMaterials,
   getReactionMaterialsIDs,

@@ -1,13 +1,12 @@
 /* eslint-disable react/display-name */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
   Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
-  getVariationsRowName,
-  convertUnit
+  getVariationsRowName, convertUnit, updateColumnDefinitions, getCellDataType
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   updateNonReferenceMaterialOnMassChange,
@@ -211,6 +210,199 @@ NoteCellEditor.propTypes = {
   }).isRequired,
 };
 
+function MaterialOverlay({
+  value: cellData, colDef
+}) {
+  const { aux = null } = cellData;
+  const { currentEntry, displayUnit } = colDef.entryDefs;
+
+  return (
+    <div className="tooltip show">
+      <div className="tooltip-inner text-start">
+        {currentEntry !== 'equivalent' && (
+          <div>
+            {`${Number(convertUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit)).toPrecision(4)} ${displayUnit}`}
+          </div>
+        )}
+        {aux?.isReference && (
+          <div>Reference</div>
+        )}
+        {aux?.equivalent !== null && (
+          <div>{`Equivalent: ${Number(aux.equivalent).toPrecision(4)}`}</div>
+        )}
+        {aux?.coefficient !== null && (
+          <div>{`Coefficient: ${Number(aux.coefficient).toPrecision(4)}`}</div>
+        )}
+        {aux?.yield !== null && (
+          <div>{`Yield: ${Number(aux.yield).toPrecision(4)}%`}</div>
+        )}
+        {aux?.molecularWeight !== null && (
+          <div>{`Molar mass: ${Number(aux.molecularWeight).toPrecision(2)} g/mol`}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+MaterialOverlay.propTypes = {
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    entryDefs: PropTypes.shape({
+      currentEntry: PropTypes.number.isRequired,
+      displayUnit: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
+
+function MenuHeader({
+  column, context, setSort, names
+}) {
+  const { field, entryDefs } = column.colDef;
+  const { columnDefinitions, setColumnDefinitions } = context;
+  const [ascendingSort, setAscendingSort] = useState('inactive');
+  const [descendingSort, setDescendingSort] = useState('inactive');
+  const [noSort, setNoSort] = useState('inactive');
+  const [name, setName] = useState(names[0]);
+  const { currentEntry, displayUnit, availableEntriesWithUnits } = entryDefs;
+  const [entry, setEntry] = useState(currentEntry);
+  const [unit, setUnit] = useState(displayUnit);
+  const [units, setUnits] = useState(availableEntriesWithUnits[currentEntry]);
+
+  const onSortChanged = () => {
+    setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
+    setDescendingSort(column.isSortDescending() ? 'sort_active' : 'inactive');
+    setNoSort(
+      !column.isSortAscending() && !column.isSortDescending()
+        ? 'sort_active'
+        : 'inactive'
+    );
+  };
+
+  useEffect(() => {
+    column.addEventListener('sortChanged', onSortChanged);
+    onSortChanged();
+  }, []);
+
+  const onSortRequested = (order, event) => {
+    setSort(order, event.shiftKey);
+  };
+
+  const onUnitChanged = () => {
+    const newUnit = units[(units.indexOf(unit) + 1) % units.length];
+    const newColumnDefinitions = updateColumnDefinitions(
+      columnDefinitions,
+      field,
+      'entryDefs',
+      { currentEntry: entry, displayUnit: newUnit, availableEntriesWithUnits }
+    );
+
+    setUnit(newUnit);
+    setColumnDefinitions(newColumnDefinitions);
+  };
+
+  const unitSelection = (
+    <Button
+      className="unitSelection"
+      bsStyle="success"
+      bsSize="xsmall"
+      style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
+      onClick={onUnitChanged}
+    >
+      {unit}
+    </Button>
+  );
+
+  const onEntryChanged = () => {
+    const entryKeys = Object.keys(availableEntriesWithUnits);
+    const newEntry = entryKeys[(entryKeys.indexOf(entry) + 1) % entryKeys.length];
+    const newUnits = availableEntriesWithUnits[newEntry];
+    const newUnit = newUnits[0];
+    let newColumnDefinitions = updateColumnDefinitions(
+      columnDefinitions,
+      field,
+      'cellDataType',
+      getCellDataType(newEntry)
+    );
+    newColumnDefinitions = updateColumnDefinitions(
+      newColumnDefinitions,
+      field,
+      'entryDefs',
+      { currentEntry: newEntry, displayUnit: newUnit, availableEntriesWithUnits }
+    );
+
+    setEntry(newEntry);
+    setUnits(newUnits);
+    setUnit(newUnit);
+    setColumnDefinitions(newColumnDefinitions);
+  };
+
+  const entrySelection = (
+    <Button
+      className="entrySelection"
+      bsStyle="default"
+      bsSize="xsmall"
+      style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
+      disabled={Object.keys(availableEntriesWithUnits).length === 1}
+      onClick={onEntryChanged}
+    >
+      {entry}
+    </Button>
+  );
+
+  const sortMenu = (
+    <div className="sortHeader" style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
+      <div
+        onClick={(event) => onSortRequested('asc', event)}
+        onTouchEnd={(event) => onSortRequested('asc', event)}
+        className={`customSortDownLabel ${ascendingSort}`}
+      >
+        <i className="fa fa-chevron-up fa-fw" />
+      </div>
+      <div
+        onClick={(event) => onSortRequested('desc', event)}
+        onTouchEnd={(event) => onSortRequested('desc', event)}
+        className={`customSortUpLabel ${descendingSort}`}
+      >
+        <i className="fa fa-chevron-down fa-fw" />
+      </div>
+      <div
+        onClick={(event) => onSortRequested('', event)}
+        onTouchEnd={(event) => onSortRequested('', event)}
+        className={`customSortRemoveLabel ${noSort}`}
+      >
+        <i className="fa fa-times fa-fw" />
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'grid' }}>
+      <span
+        className="header-title"
+        onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
+      >
+        {name}
+      </span>
+      <div>
+        {entrySelection}
+        {' '}
+        {unitSelection}
+      </div>
+      {sortMenu}
+    </div>
+  );
+}
+
+MenuHeader.propTypes = {
+  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
+  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  setSort: PropTypes.func.isRequired,
+  names: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 export {
   RowToolsCellRenderer,
   EquivalentFormatter,
@@ -220,5 +412,7 @@ export {
   MaterialFormatter,
   MaterialParser,
   NoteCellRenderer,
-  NoteCellEditor
+  NoteCellEditor,
+  MaterialOverlay,
+  MenuHeader,
 };
