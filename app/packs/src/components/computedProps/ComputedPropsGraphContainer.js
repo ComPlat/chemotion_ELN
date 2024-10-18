@@ -62,9 +62,6 @@ export default class ComputedPropsGraphContainer extends React.Component {
 
   componentDidMount() {
     UserStore.listen(this.onUserChange);
-  }
-
-  UNSAFE_componentWillReceiveProps() {
     this.onUserChange();
   }
 

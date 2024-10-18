@@ -167,10 +167,6 @@ export default class ReactQuill extends React.Component {
     }
   }
 
-  UNSAFE_componentWillMount() {
-    this.destroyEditor();
-  }
-
   validateProps(props) {
     let error;
     if (this.lastDeltaChangeSet && this.lastDeltaChangeSet === props.value) {

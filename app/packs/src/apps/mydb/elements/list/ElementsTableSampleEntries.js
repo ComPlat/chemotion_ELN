@@ -189,34 +189,43 @@ export default class ElementsTableSampleEntries extends Component {
     KeyboardStore.listen(this.sampleOnKeyDown);
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const displayedMoleculeGroup = [];
-    const { currentElement } = ElementStore.getState();
-    const { elements } = nextProps;
-    const moleculelist = {};
-    elements.forEach((sample) => {
-      let samples = [];
-      let molId = '';
-      if (sample.decoupled && sample.molfile) {
-        molId = `M${sample.id}`;
-      } else if (sample.stereo == null) {
-        molId = `M${sample.molecule.id}_any_any`;
+  getMolId(sample) {
+    if (sample.decoupled && sample.molfile) {
+      return `M${sample.id}`;
+    } else if (sample.stereo == null) {
+      return `M${sample.molecule.id}_any_any`;
+    } else {
+      return `M${sample.molecule.id}_${sample.stereo.abs || 'any'}_${sample.stereo.rel || 'any'}`;
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    const { elements, moleculeSort } = this.props;
+    if (elements === prevProps.elements && moleculeSort === prevProps.moleculeSort) {
+      return
+    }
+
+    const moleculeList = elements.reduce((acc, sample) => {
+      const key = this.getMolId(sample);
+      if (!acc[key]) {
+        acc[key] = [sample];
       } else {
-        molId = `M${sample.molecule.id}_${sample.stereo.abs || 'any'}_${sample.stereo.rel || 'any'}`;
+        acc[key].push(sample);
       }
-      if (moleculelist[molId]) {
-        samples = moleculelist[molId];
+      return acc;
+    }, {});
+
+    const displayedMoleculeGroup = Object.keys(moleculeList).map((molId) => {
+      const m = moleculeList[molId];
+      if (moleculeSort && m.length > 3) {
+        m.numSamples = 3;
+      } else {
+        m.numSamples = m.length;
       }
-      samples.push(sample);
-      moleculelist[molId] = samples;
+      return m;
     });
-    Object.keys(moleculelist).forEach((moleculeId, idx) => {
-      displayedMoleculeGroup.push(moleculelist[moleculeId]);
-      let numSamples = moleculelist[moleculeId].length;
-      if (nextProps.moleculeSort && numSamples > 3) { numSamples = 3; }
-      displayedMoleculeGroup[idx].numSamples = numSamples;
-    });
+
+    const { currentElement } = ElementStore.getState();
     this.setState({
       displayedMoleculeGroup,
       targetType: currentElement && currentElement.type,

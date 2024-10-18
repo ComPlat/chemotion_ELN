@@ -75,10 +75,6 @@ class SectionSpectrum extends Component {
     return isChanged;
   }
 
-  UNSAFE_componentWillUpdate() {
-    this.updateThumbNails();
-  }
-
   updateThumbNails() {
     const { prdAtts } = this.props;
     const attArrIds = prdAtts.map(prdAtt => (

@@ -1,39 +1,38 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-
+import React, { createRef } from 'react';
 import { LineChart } from 'src/components/lineChart/LineChart';
 
 export default class LineChartContainer extends React.Component {
-  componentDidMount() {
-    LineChart.create({
-      data: this.props.data,
-      el: this.getDOMNode(),
-      xAxisLabel: this.props.xAxis,
-      yAxisLabel: this.props.yAxis
-    })
+  constructor(props) {
+    super(props);
+    this.ref = createRef();
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    LineChart.update({
-      data: nextProps.data,
-      el: this.getDOMNode(),
-      xAxisLabel: nextProps.xAxis,
-      yAxisLabel: nextProps.yAxis
-    })
+  componentDidMount() {
+    LineChart.create(this.getLineChartData());
+  }
+
+  componentDidUpdate() {
+    LineChart.update(this.getLineChartData());
+  }
+
+  getLineChartData() {
+    const { data, xAxis, yAxis } = this.props;
+    return {
+      data: data,
+      el: this.ref.current,
+      xAxisLabel: xAxis,
+      yAxisLabel: yAxis
+    };
   }
 
   componentWillUnmount() {
-    LineChart.destroy(this.getDOMNode())
-  }
-
-  getDOMNode() {
-    return ReactDOM.findDOMNode(this)
+    LineChart.destroy(this.ref.current)
   }
 
   render() {
     return (
-      <div id="line-chart" />
-    )
+      <div ref={this.ref} />
+    );
   }
 }
 

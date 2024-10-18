@@ -15,8 +15,13 @@ export default class SampleComputedProps extends React.Component {
     this.onGridReady = this.onGridReady.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    if (this.gridApi) this.gridApi.setGridOption('rowData', nextProps.cprops);
+  componentDidUpdate(prevProps) {
+    const { cprops } = this.props;
+    if (cprops != prevProps.cprops && this.gridApi) {
+      // Is this even necessary?
+      // Should updating the prop not simply update 'rowData' when rendering the AgGridReact?
+      this.gridApi.setGridOption('rowData', nextProps.cprops);
+    }
   }
 
   onGridReady(params) {

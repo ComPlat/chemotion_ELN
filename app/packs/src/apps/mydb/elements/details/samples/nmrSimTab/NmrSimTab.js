@@ -22,10 +22,9 @@ export default class NmrSimTab extends React.Component {
     NmrSimStore.listen(this.onChange);
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const sample = this.props.sample;
-    if (sample.molecule.id !== nextProps.sample.molecule.id) {
+  componentDidUpdate(prevProps) {
+    const { sample } = this.props;
+    if (sample.molecule.id !== prevProps.sample.molecule.id) {
       NmrSimActions.resetNMR.defer();
     }
   }

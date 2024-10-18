@@ -45,13 +45,6 @@ const collectSource = (connect, monitor) => ({
 });
 
 class WellContainer extends Component {
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { active, hideOverlay } = this.props;
-    if (active && nextProps.isDragging) {
-      hideOverlay();
-    }
-  }
-
   render() {
     const { isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop, active } = this.props;
     const styleOverrides = {
