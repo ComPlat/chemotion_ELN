@@ -50,17 +50,17 @@ const KetcherEditor = forwardRef((props, ref) => {
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
   // helper function to check file kind coming as source; this handles indigo and ketcherrails molfile
-  const molfileType = async (molfile) => {
-    const lines = molfile.trim().split('\n');
-    if (lines[0].indexOf("Ketcher") != -1) return { type: "ketcher", polymers_list_required: true };
-    return { type: "Indigo", polymers_list_required: false };
-  };
+  // const molfileType = async (molfile) => {
+  //   const lines = molfile.trim().split('\n');
+  //   console.log(lines[0], "1111111111111111111");
+  //   if (lines[1].indexOf("Ketcher") != -1) return { type: "ketcher", polymers_list_required: true };
+  //   return { type: "ketcher", polymers_list_required: false };
+  // };
 
   // helper function to examine the file coming ketcherrails
-  const hasKetcherData = async (molfile, meta) => {
+  const hasKetcherData = async (molfile) => {
     const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
-    if (meta.type === "indigo") return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
-
+    if (!molfile.includes("<PolymersList>")) return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
     // when ketcher mofile and polymers exists
     const lines = molfile.trim().split('\n');
     let rails_polymers_list = -1;
@@ -82,10 +82,10 @@ const KetcherEditor = forwardRef((props, ref) => {
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
       window.editor = editor;
-      const meta = await molfileType(initMol);
-      const { struct, rails_polymers_list } = await hasKetcherData(initMol, meta);
+      // const meta = await molfileType(initMol);
+      const { struct, rails_polymers_list } = await hasKetcherData(initMol);
       await editor.structureDef.editor.setMolecule(struct);
-      await setKetcherData({ rails_polymers_list, meta });
+      await setKetcherData({ rails_polymers_list });
       editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
         const result = await eventData;
         handleEventCapture(result);
@@ -146,16 +146,13 @@ const KetcherEditor = forwardRef((props, ref) => {
   };
 
   // helper function to calculate counters for the ketcher2 setup based on file source type
-  const setKetcherData = async ({ rails_polymers_list, meta }) => {
+  const setKetcherData = async ({ rails_polymers_list }) => {
     await fuelKetcherData();
-    const { type, } = meta;
     let collected_images = [];
-    if (type == "ketcher" && rails_polymers_list) {
+    if (rails_polymers_list) {
       console.log("ketcher");
       collected_images = adding_polymers_ketcher_format(rails_polymers_list);
-    }
-
-    if (type == "Indigo") {
+    } else { //type == "Indigo"
       console.log("Indigo");
       collected_images = adding_polymers_indigo_molfile();
     }
@@ -271,6 +268,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       image_used_counter = image_used_counter - atoms_to_be_deleted.length;
       atoms_to_be_deleted = [];
+      return; // FIXME: return added for testing
     }
 
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
@@ -393,7 +391,8 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
       latestData[mol] = molecule;
     });
-    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    // FIXME: commented for testing
+    // await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     moveTemplate();
   };
 
@@ -590,7 +589,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       const lines = canvas_data_Mol.split('\n');
       const elements_info = lines[3];
       const header_starting_from = 4;
-      let [_, atoms_count, bonds_count] = elements_info.split("  ");
+      let [atoms_count, bonds_count] = elements_info.split("  ");
       atoms_count = parseInt(atoms_count);
       bonds_count = parseInt(bonds_count);
       const extra_data_start = header_starting_from + atoms_count + bonds_count;
@@ -633,10 +632,36 @@ const KetcherEditor = forwardRef((props, ref) => {
       });
 
       const svgElement = new XMLSerializer().serializeToString(svg);
-      console.log({ svgElement });
-      return { ket2Molfile: lines.join("\n"), svgElement };
+      return { ket2Molfile: reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end }), svgElement };
     }
   }));
+
+  const reAttachPolymerList = ({ lines, atoms_count, extra_data_start, extra_data_end }) => {
+    const ploy_identifier = "> <PolymersList>";
+    let my_lines = [...lines];
+    const atom_with_alias_list = [];
+    const list_alias = my_lines.slice(extra_data_start, extra_data_end);
+    const atom_starts = 4;
+    for (let i = atom_starts; i < atoms_count + atom_starts; i++) {
+      const atom_line = lines[i].split(" ");
+      const idx = atom_line.indexOf("A");
+      if (idx != -1) {
+        atom_line[idx] = "R#";
+        console.log(i);
+        atom_with_alias_list.push(`${i - atom_starts}`);
+      }
+      my_lines[i] = atom_line.join(" ");
+    }
+    my_lines.splice(extra_data_start, extra_data_end - extra_data_start);
+    let counter = 0;
+    for (let i = 1; i < list_alias.length; i += 2) {
+      const t_id = list_alias[i].split("    ")[0].split("_")[1];
+      atom_with_alias_list[counter] += t_id == '02' ? "s" : "";
+      counter++;
+    }
+    my_lines.splice(my_lines.length - 1, 0, ...[ploy_identifier, atom_with_alias_list.join(" "), "$$$$"]);
+    return my_lines.join("\n");
+  };
 
   return (
     <div>
