@@ -546,7 +546,7 @@ export default class ElementsTable extends React.Component {
 
   renderHeader = () => {
     const { filterCreatedAt, ui } = this.state;
-    const { type, showReport, genericEl } = this.props;
+    const { type, genericEl } = this.props;
     const { fromDate, toDate, userLabel } = ui;
 
     let searchLabel = <span />;
@@ -576,7 +576,6 @@ export default class ElementsTable extends React.Component {
           <ElementAllCheckbox
             type={type}
             ui={ui}
-            showReport={showReport}
           />
         </div>
         <div
@@ -701,7 +700,6 @@ ElementsTable.defaultProps = {
 
 ElementsTable.propTypes = {
   overview: PropTypes.bool.isRequired,
-  showReport: PropTypes.bool.isRequired,
   type: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   genericEl: PropTypes.object,

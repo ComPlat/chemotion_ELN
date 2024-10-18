@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import update from 'immutability-helper';
 import Aviator from 'aviator';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -86,14 +85,10 @@ export default class CollectionTree extends React.Component {
     let { sharedRoots, sharedToCollectionVisible } = this.state
     sharedRoots = this.removeOrphanRoots(sharedRoots)
 
-    let labelledRoots = sharedRoots.map(e => {
-      return update(e, {
-        label: {
-          $set:
-            <span>{this.labelRoot('shared_to', e)}</span>
-        }
-      })
-    })
+    let labelledRoots = sharedRoots.map(e => ({
+      ...e,
+      label: <span>{this.labelRoot('shared_to', e)}</span>
+    }));
 
     let subTreeLabels = (
       <div className="tree-view">
@@ -114,18 +109,16 @@ export default class CollectionTree extends React.Component {
     let { remoteRoots, sharedWithCollectionVisible } = this.state
     remoteRoots = this.removeOrphanRoots(remoteRoots)
 
-    let labelledRoots = remoteRoots.map(e => {
-      return update(e, {
-        label: {
-          $set:
-            <span>
-              {this.labelRoot('shared_by', e)}
-              {' '}
-              {this.labelRoot('shared_to', e)}
-            </span>
-        }
-      })
-    })
+    let labelledRoots = remoteRoots.map(e => ({
+      ...e,
+      label: (
+        <span>
+          {this.labelRoot('shared_by', e)}
+          {' '}
+          {this.labelRoot('shared_to', e)}
+        </span>
+      )
+    }));
 
     let subTreeLabels = (
       <div className="tree-view">
@@ -149,18 +142,16 @@ export default class CollectionTree extends React.Component {
     let { syncInRoots, syncCollectionVisible } = this.state
     syncInRoots = this.removeOrphanRoots(syncInRoots)
 
-    let labelledRoots = syncInRoots.map(e => {
-      return update(e, {
-        label: {
-          $set:
-            <span>
-              {this.labelRoot('shared_by', e)}
-              {' '}
-              {this.labelRoot('shared_to', e)}
-            </span>
-        }
-      })
-    })
+    let labelledRoots = syncInRoots.map(e => ({
+      ...e,
+      label: (
+        <span>
+          {this.labelRoot('shared_by', e)}
+          {' '}
+          {this.labelRoot('shared_to', e)}
+        </span>
+      )
+    }));
 
     let subTreeLabels = (
       <div className="tree-view">
