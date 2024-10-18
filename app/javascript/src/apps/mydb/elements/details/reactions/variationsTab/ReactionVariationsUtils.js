@@ -10,6 +10,7 @@ const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)']
 const massUnits = ['g', 'mg', 'μg'];
 const volumeUnits = ['l', 'ml', 'μl'];
 const amountUnits = ['mol', 'mmol'];
+const concentrationUnits = ['ppm'];
 const materialTypes = {
   startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
   reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
@@ -29,6 +30,8 @@ function getStandardUnit(entry) {
       return temperatureUnits[0];
     case 'duration':
       return durationUnits[0];
+    case 'concentration':
+      return concentrationUnits[0];
     default:
       return null;
   }
@@ -182,6 +185,7 @@ export {
   amountUnits,
   temperatureUnits,
   durationUnits,
+  concentrationUnits,
   convertUnit,
   getStandardUnit,
   materialTypes,

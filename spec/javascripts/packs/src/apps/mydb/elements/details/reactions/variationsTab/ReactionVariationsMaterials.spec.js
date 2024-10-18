@@ -3,12 +3,15 @@ import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
   updateNonReferenceMaterialOnMassChange, updateColumnDefinitionsMaterials,
-  getMaterialColumnGroupChild, getReactionMaterialsIDs
+  getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialsGasType
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
-import { setUpMaterial, setUpReaction, getColumnDefinitionsMaterialIDs } from 'helper/reactionVariationsHelpers';
+import {
+  setUpMaterial, setUpReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
+} from 'helper/reactionVariationsHelpers';
+import { materialTypes } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 describe('ReactionVariationsMaterials', () => {
   it('removes obsolete materials', async () => {
@@ -132,5 +135,55 @@ describe('ReactionVariationsMaterials', () => {
     const reactionMaterialsIDs = getReactionMaterialsIDs(reactionMaterials);
     expect(Array.isArray(reactionMaterialsIDs)).toBe(true);
     expect(new Set(reactionMaterialsIDs).size).toBe(5);
+  });
+  it('updates column definitions of gaseous materials', async () => {
+    const reaction = await setUpReaction();
+
+    const reactionMaterials = getReactionMaterials(reaction);
+    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
+      groupId: materialType,
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null))
+    }));
+
+    Object.keys(materialTypes).forEach((materialType) => {
+      reactionMaterials[materialType].forEach((material) => {
+        switch (materialType) {
+          case 'startingMaterials':
+            material.gas_type = 'catalyst';
+            break;
+          case 'reactants':
+            material.gas_type = 'feedstock';
+            break;
+          case 'products':
+            material.gas_type = 'gas';
+            break;
+          default:
+            break;
+        }
+      });
+    });
+    const updatedColumnDefinitions = updateColumnDefinitionsMaterialsGasType(
+      columnDefinitions,
+      reactionMaterials,
+    );
+
+    const productIDs = getColumnDefinitionsMaterialIDs(updatedColumnDefinitions, 'products');
+    const productColumnDefinition = getColumnGroupChild(
+      updatedColumnDefinitions,
+      'products',
+      `products.${productIDs[0]}`
+    );
+    expect(productColumnDefinition.cellDataType).toBe('gas');
+    expect(productColumnDefinition.entryDefs.currentEntry).toBe('duration');
+    expect(productColumnDefinition.entryDefs.displayUnit).toBe('Second(s)');
+
+    const reactantIDs = getColumnDefinitionsMaterialIDs(updatedColumnDefinitions, 'reactants');
+    const reactantColumnDefinition = getColumnGroupChild(
+      updatedColumnDefinitions,
+      'reactants',
+      `reactants.${reactantIDs[0]}`
+    );
+    expect(reactantColumnDefinition.cellDataType).toBe('gas');
+    expect(reactantColumnDefinition.entryDefs.availableEntriesWithUnits).not.toHaveProperty('mass');
   });
 });

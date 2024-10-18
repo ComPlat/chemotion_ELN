@@ -3,8 +3,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { cloneDeep } from 'lodash';
 import {
-  convertUnit, materialTypes, volumeUnits, massUnits, amountUnits, getStandardUnit,
-  getCellDataType
+  convertUnit, materialTypes, volumeUnits, massUnits, amountUnits, concentrationUnits, getStandardUnit,
+  getCellDataType, updateColumnDefinitions,
+  durationUnits, temperatureUnits
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function getMolFromGram(gram, material) {
@@ -187,21 +188,53 @@ MaterialOverlay.propTypes = {
   }).isRequired,
 };
 
+function getNonGaseousMaterialEntriesWithUnits(materialType, isReference) {
+  let entries = {};
+  switch (materialType) {
+    case 'solvents':
+      entries = { volume: volumeUnits };
+      break;
+    case 'products':
+      entries = { mass: massUnits };
+      break;
+    case 'startingMaterials':
+    case 'reactants':
+      entries = { mass: massUnits, amount: amountUnits };
+      if (!isReference) {
+        entries.equivalent = [];
+      }
+      break;
+    default:
+      break;
+  }
+  return entries;
+}
+
+function getGaseousMaterialEntriesWithUnits(gasType, isReference) {
+  let entries = {};
+  switch (gasType) {
+    case 'gas':
+      entries = { duration: durationUnits, temperature: temperatureUnits, concentration: concentrationUnits };
+      break;
+    case 'feedstock':
+      // It doesn't matter if we pass 'startingMaterials' or 'reactants'.
+      entries = getNonGaseousMaterialEntriesWithUnits('startingMaterials', isReference);
+      delete entries.mass;
+      break;
+    case 'catalyst':
+      // It doesn't matter if we pass 'startingMaterials' or 'reactants'.
+      entries = getNonGaseousMaterialEntriesWithUnits('startingMaterials', isReference);
+      break;
+    default:
+      break;
+  }
+  return entries;
+}
+
 function getMaterialColumnGroupChild(material, materialType, headerComponent) {
   const materialCopy = cloneDeep(material);
-  let entries = {};
-  if (materialType === 'solvents') {
-    entries = { volume: volumeUnits };
-  }
-  if (materialType === 'products') {
-    entries = { mass: massUnits };
-  }
-  if (['startingMaterials', 'reactants'].includes(materialType)) {
-    entries = { mass: massUnits, amount: amountUnits };
-    if (!materialCopy.reference ?? false) {
-      entries.equivalent = [];
-    }
-  }
+
+  const entries = getNonGaseousMaterialEntriesWithUnits(materialType, materialCopy.reference ?? false);
   let names = new Set([`ID: ${materialCopy.id.toString()}`]);
   ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
     if (materialCopy[name]) {
@@ -222,6 +255,26 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent) {
       names,
     },
   };
+}
+
+function updateColumnDefinitionsMaterialsGasType(columnDefinitions, currentMaterials) {
+  let updatedColumnDefinitions = cloneDeep(columnDefinitions);
+  Object.entries(currentMaterials).forEach(([materialType, materials]) => {
+    materials.forEach((material) => {
+      const field = `${materialType}.${material.id}`;
+      updatedColumnDefinitions = updateColumnDefinitions(updatedColumnDefinitions, field, 'cellDataType', 'gas');
+      const entries = getGaseousMaterialEntriesWithUnits(material.gas_type, material.reference);
+      const entry = Object.keys(entries)[0];
+      updatedColumnDefinitions = updateColumnDefinitions(
+        updatedColumnDefinitions,
+        field,
+        'entryDefs',
+        { currentEntry: entry, displayUnit: getStandardUnit(entry), availableEntriesWithUnits: entries }
+      );
+    });
+  });
+
+  return updatedColumnDefinitions;
 }
 
 function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, headerComponent) {
@@ -280,6 +333,7 @@ export {
   getReactionMaterialsIDs,
   getMaterialData,
   updateColumnDefinitionsMaterials,
+  updateColumnDefinitionsMaterialsGasType,
   updateNonReferenceMaterialOnMassChange,
   updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations,
