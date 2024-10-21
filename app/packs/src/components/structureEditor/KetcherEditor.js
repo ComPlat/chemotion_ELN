@@ -378,10 +378,10 @@ const KetcherEditor = forwardRef((props, ref) => {
         const is_two = two_parts_pattern.test(item?.alias);
         const is_three = three_parts_patten.test(item?.alias);
         if (is_two || is_three) {
+          const alias_splits = item.alias.split("_");
           const part_three = ++image_used_counter;
           if (is_two) {
             item.alias += `_${part_three}`;
-            const alias_splits = item.alias.split("_");
             if (!imagesList[part_three]) { // specifically for direct attachments
               latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
             }
@@ -390,6 +390,9 @@ const KetcherEditor = forwardRef((props, ref) => {
           if (is_three) {
             const minor_split = item.alias.split("_");
             item.alias = `t_${minor_split[1]}_${part_three}`;
+            if (!imagesList[part_three]) { // specifically for direct attachments
+              latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
+            }
           }
         }
 
