@@ -404,22 +404,23 @@ export default class ChemicalTab extends React.Component {
     } else {
       value = data || '';
     }
-    let conditionalOverlay;
-    if (parameter === 'date') {
-      conditionalOverlay = 'please enter the name of the person who orders/ordered the substance';
+    let conditionalOverlay = null;
+    if (parameter === 'person') {
+      conditionalOverlay = 'please enter the name of the person who ordered the substance';
     } else if (parameter === 'required_by') {
       conditionalOverlay = 'please enter the name of the person who requires the substance';
-    } else {
-      conditionalOverlay = null;
+    } else if (parameter === 'expiration_date') {
+      conditionalOverlay = 'please enter the expiration date of the substance';
     }
     const checkLabel = label !== 'Date' && <ControlLabel>{label}</ControlLabel>;
-    const dateArray = ['date', 'required_by', 'expiration_date'];
+    const dateArray = ['person', 'required_by', 'expiration_date'];
 
     return (
       <OverlayTrigger
         placement="top"
         overlay={dateArray.includes(parameter)
-          ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
+          ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}
+      >
         <FormGroup>
           {checkLabel}
           <Form.Control
@@ -501,7 +502,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   numInputWithoutTable(data, label, parameter) {
-    const value = data?.[parameter]?.value ?? 0;
+    const value = data?.[parameter]?.value;
     let unit; let field;
     if (parameter === 'amount') {
       unit = data?.[parameter]?.unit ?? 'mg';
@@ -509,6 +510,9 @@ export default class ChemicalTab extends React.Component {
     } else if (parameter === 'volume') {
       unit = data?.[parameter]?.unit ?? 'ml';
       field = 'chemical_amount_in_l';
+    } else if (parameter === 'storage_temperature') {
+      unit = data?.[parameter]?.unit ?? '°C';
+      field = 'storage_temperature';
     }
     return (
       <NumericInputUnit
