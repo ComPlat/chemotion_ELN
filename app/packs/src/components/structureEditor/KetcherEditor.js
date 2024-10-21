@@ -99,7 +99,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     // p_items-example:  10, 11s, 12, 13s
     let visited_atoms = 0;
     let collected_images = [];
-    let user_image_counter_temp = image_used_counter;
 
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
@@ -107,18 +106,18 @@ const KetcherEditor = forwardRef((props, ref) => {
         // if (p_items.length - 1 == visited_atoms) break;
         const atom = mol.atoms[a];
         const p_value = p_items[visited_atoms];
-        if (atom.type === "rg-label") {
+        if (atom.type === "rg-label" || three_parts_patten.test(atom.label)) {
           const select_template_type = p_value.includes("s") ? "02" : "01";
           latestData[mols[m]].atoms[a] = {
             "label": "A",
-            "alias": `t_${select_template_type}_${++user_image_counter_temp}`,
+            "alias": `t_${select_template_type}_${++image_used_counter}`,
             "location": atom.location
           };
           const bb = template_list[parseInt(select_template_type)];
           bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
           collected_images.push(bb);
           visited_atoms += 1;
-        };
+        }
       }
     }
     return collected_images;
@@ -156,9 +155,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       console.log("Indigo");
       collected_images = adding_polymers_indigo_molfile();
     }
-
     latestData.root.nodes.push(...collected_images);
-    image_used_counter += collected_images.length;
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     await fuelKetcherData();
     await moveTemplate();
@@ -214,6 +211,7 @@ const KetcherEditor = forwardRef((props, ref) => {
           addEventToFILOStack("Move image");
           break;
         case "Add atom":
+          console.log({ eventItem });
           addEventToFILOStack("Add atom");
           break;
         case "Upsert image":
@@ -371,19 +369,30 @@ const KetcherEditor = forwardRef((props, ref) => {
   // helper function to handle new atoms added to the canvas
   const handleAddAtom = async () => {
     console.log("Atom moved!");
+    image_used_counter = -1;
     mols.forEach((mol) => {
       let is_h_id_list = [];
       const molecule = latestData[mol];
       molecule?.atoms.map((item, idx) => {
         if (item?.label === "H") is_h_id_list.push(idx);
-        if (two_parts_pattern.test(item?.alias)) {
+        const is_two = two_parts_pattern.test(item?.alias);
+        const is_three = three_parts_patten.test(item?.alias);
+        if (is_two || is_three) {
           const part_three = ++image_used_counter;
-          item.alias += `_${part_three}`;
-          const alias_splits = item.alias.split("_");
-          if (!imagesList[part_three]) { // specifically for direction attachments
-            latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
+          if (is_two) {
+            item.alias += `_${part_three}`;
+            const alias_splits = item.alias.split("_");
+            if (!imagesList[part_three]) { // specifically for direct attachments
+              latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
+            }
+          }
+
+          if (is_three) {
+            const minor_split = item.alias.split("_");
+            item.alias = `t_${minor_split[1]}_${part_three}`;
           }
         }
+
       });
       if (is_h_id_list.length) {
         molecule.atoms?.splice(molecule.atoms.length - is_h_id_list.length, is_h_id_list.length);
@@ -392,13 +401,12 @@ const KetcherEditor = forwardRef((props, ref) => {
       latestData[mol] = molecule;
     });
     // FIXME: commented for testing
-    // await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     moveTemplate();
   };
 
   // helper function to return a new image in imagesList with a location
   const prepareImageFromTemplateList = (idx, location) => {
-
     template_list[idx].boundingBox.x = location[0];
     template_list[idx].boundingBox.y = location[1];
     template_list[idx].boundingBox.z = location[2];
@@ -589,7 +597,8 @@ const KetcherEditor = forwardRef((props, ref) => {
       const lines = canvas_data_Mol.split('\n');
       const elements_info = lines[3];
       const header_starting_from = 4;
-      let [atoms_count, bonds_count] = elements_info.split("  ");
+
+      let [atoms_count, bonds_count] = elements_info.trim().split(" ").filter(i => i != "");
       atoms_count = parseInt(atoms_count);
       bonds_count = parseInt(bonds_count);
       const extra_data_start = header_starting_from + atoms_count + bonds_count;
@@ -640,7 +649,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     const ploy_identifier = "> <PolymersList>";
     let my_lines = [...lines];
     const atom_with_alias_list = [];
-    const list_alias = my_lines.slice(extra_data_start, extra_data_end);
+    let list_alias = my_lines.slice(extra_data_start, extra_data_end);
     const atom_starts = 4;
     for (let i = atom_starts; i < atoms_count + atom_starts; i++) {
       const atom_line = lines[i].split(" ");
@@ -654,10 +663,13 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
     my_lines.splice(extra_data_start, extra_data_end - extra_data_start);
     let counter = 0;
+
     for (let i = 1; i < list_alias.length; i += 2) {
       const t_id = list_alias[i].split("    ")[0].split("_")[1];
-      atom_with_alias_list[counter] += t_id == '02' ? "s" : "";
-      counter++;
+      if (t_id) {
+        atom_with_alias_list[counter] += t_id == '02' ? "s" : "";
+        counter++;
+      }
     }
     my_lines.splice(my_lines.length - 1, 0, ...[ploy_identifier, atom_with_alias_list.join(" "), "$$$$"]);
     return my_lines.join("\n");
@@ -686,3 +698,4 @@ KetcherEditor.propTypes = {
 };
 
 export default KetcherEditor;
+
