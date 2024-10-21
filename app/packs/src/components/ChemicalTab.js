@@ -395,7 +395,8 @@ export default class ChemicalTab extends React.Component {
   }
 
   textInput(data, label, parameter) {
-    const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
+    const componentClass = parameter !== 'important_notes'
+      && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
     && parameter !== 'solubility' ? 'input' : 'textarea';
     let value = '';
     if (parameter !== 'cas') {
@@ -411,11 +412,15 @@ export default class ChemicalTab extends React.Component {
     } else {
       conditionalOverlay = null;
     }
-    const checkLabel = label !== 'Date' && <Form.Label>{label}</Form.Label>;
+    const checkLabel = label !== 'Date' && <ControlLabel>{label}</ControlLabel>;
+    const dateArray = ['date', 'required_by', 'expiration_date'];
 
     return (
-      <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
-        <Form.Group>
+      <OverlayTrigger
+        placement="top"
+        overlay={dateArray.includes(parameter)
+          ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
+        <FormGroup>
           {checkLabel}
           <Form.Control
             as={componentClass}
@@ -898,6 +903,9 @@ export default class ChemicalTab extends React.Component {
           <Col className="pt-2">
             {this.numInputWithoutTable(data, '', 'volume')}
           </Col>
+          <Col className="pt-2">
+            {this.numInputWithoutTable(data, 'Storage Temperature', 'storage_temperature')}
+          </Col>
         </Row>
         <Row>
           <Col sm={3}>
@@ -922,10 +930,17 @@ export default class ChemicalTab extends React.Component {
               >
                 Ordered date
               </ButtonGroupToggleButton>
+              <ButtonGroupToggleButton
+                onClick={() => this.setState({ switchRequiredOrderedDate: 'expiration' })}
+                active={switchRequiredOrderedDate === 'expiration'}
+                size="xxsm"
+              >
+                Expiration date
+              </ButtonGroupToggleButton>
             </ButtonGroup>
-            {switchRequiredOrderedDate === 'required'
-              ? this.textInput(data, 'Date', 'required_date')
-              : this.textInput(data, 'Date', 'ordered_date')}
+            {switchRequiredOrderedDate === 'required' && this.textInput(data, 'Date', 'required_date')}
+            {switchRequiredOrderedDate === 'ordered' && this.textInput(data, 'Date', 'ordered_date')}
+            {switchRequiredOrderedDate === 'expiration' && this.textInput(data, 'Date', 'expiration_date')}
           </Col>
           <Col sm={3}>
             {this.textInput(data, 'Required by', 'required_by')}
