@@ -412,7 +412,7 @@ export default class ChemicalTab extends React.Component {
     } else if (parameter === 'expiration_date') {
       conditionalOverlay = 'please enter the expiration date of the substance';
     }
-    const checkLabel = label !== 'Date' && <ControlLabel>{label}</ControlLabel>;
+    const checkLabel = label !== 'Date' && <Form.Label>{label}</Form.Label>;
     const dateArray = ['person', 'required_by', 'expiration_date'];
 
     return (
@@ -421,7 +421,7 @@ export default class ChemicalTab extends React.Component {
         overlay={dateArray.includes(parameter)
           ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}
       >
-        <FormGroup>
+        <Form.Group>
           {checkLabel}
           <Form.Control
             as={componentClass}
@@ -901,24 +901,15 @@ export default class ChemicalTab extends React.Component {
           <Col>
             {this.textInput(data, 'Order number', 'order_number')}
           </Col>
-          <Col>
-            {this.numInputWithoutTable(data, 'Amount', 'amount')}
-          </Col>
-          <Col className="pt-2">
-            {this.numInputWithoutTable(data, '', 'volume')}
-          </Col>
-          <Col className="pt-2">
-            {this.numInputWithoutTable(data, 'Storage Temperature', 'storage_temperature')}
-          </Col>
-        </Row>
-        <Row>
           <Col sm={3}>
             {this.textInput(data, 'Price', 'price')}
           </Col>
-          <Col sm={3}>
+        </Row>
+        <Row className="mb-3">
+          <Col>
             {this.textInput(data, 'Person', 'person')}
           </Col>
-          <Col sm={3}>
+          <Col sm={4}>
             <ButtonGroup className="mb-2">
               <ButtonGroupToggleButton
                 onClick={() => this.setState({ switchRequiredOrderedDate: 'required' })}
@@ -948,6 +939,17 @@ export default class ChemicalTab extends React.Component {
           </Col>
           <Col sm={3}>
             {this.textInput(data, 'Required by', 'required_by')}
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Col>
+            {this.numInputWithoutTable(data, 'Amount', 'amount')}
+          </Col>
+          <Col className="pt-2">
+            {this.numInputWithoutTable(data, '', 'volume')}
+          </Col>
+          <Col>
+            {this.numInputWithoutTable(data, 'Storage Temperature', 'storage_temperature')}
           </Col>
         </Row>
       </>
