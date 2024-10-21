@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
-import { Glyphicon } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 const DeviceDescriptionListHeader = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
@@ -25,20 +25,13 @@ const DeviceDescriptionListHeader = () => {
   }
 
   const toggleAllButton = () => {
-    const showAllGroups = deviceDescriptionsStore.show_all_groups;
-    const icon = showAllGroups ? 'chevron-down' : 'chevron-right';
-
     return (
-      <Glyphicon
-        glyph={icon}
-        title="Toggle all groups"
+      <ChevronIcon
+        direction={deviceDescriptionsStore.show_all_groups ? 'down' : 'right'}
         onClick={() => toggleAllGroups()}
-        style={{
-          fontSize: '20px',
-          cursor: 'pointer',
-          color: '#337ab7',
-          top: 0
-        }}
+        color="primary"
+        className="fs-5"
+        role="button"
       />
     );
   }
