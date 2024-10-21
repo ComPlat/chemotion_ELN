@@ -104,10 +104,21 @@ $font-icons-research_plan: "\f0f6";
 .icon-cell_line {
   font-style: inherit;
 }
+
 .icon-cell_line:before {
   font-family: FontAwesome;
   content: "\f0a3";
 }
+
+.icon-device_description {
+  font-style: inherit;
+}
+
+.icon-device_description:before {
+  font-family: FontAwesome;
+  content: "\f1b2";
+}
+
 
 .importChemDrawModal {
   width: 98%;
