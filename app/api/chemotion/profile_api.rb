@@ -31,6 +31,12 @@ module Chemotion
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
         end
 
+        if (element_list = layout.dig(:layout))
+          element_list.each do |element, sorting|
+            data['layout'][element.to_s] = sorting if data['layout'][element.to_s].nil?
+          end
+       end
+
         if current_user.matrix_check_by_name('genericElement')
           available_elements = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
           new_layout = data['layout'] || {}
@@ -99,6 +105,7 @@ module Chemotion
           optional :layout_detail_wellplate, type: Hash, profile_layout_hash: true
           optional :layout_detail_screen, type: Hash, profile_layout_hash: true
           optional :layout_detail_device_description, type: Hash, profile_layout_hash: true
+          optional :layout_detail_vessel, type: Hash, profile_layout_hash: true
           optional :export_selection, type: Hash do
             optional :sample, type: [Boolean]
             optional :reaction, type: [Boolean]
@@ -137,6 +144,7 @@ module Chemotion
           'research_plan' => 5,
           'cell_line' => -1000,
           'device_description' => -1100,
+          'vessel' => -1100,
         } if data['layout'].nil?
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
