@@ -3,151 +3,160 @@
 require 'net/imap'
 require 'mail'
 
-class Mailcollector
-  def initialize
-    raise 'No datacollector configuration!' unless Rails.configuration.datacollectors
+module Datacollector
+  # Class for collecting attachment data from emails
+  class Mailcollector
+    INBOX = 'INBOX'
+    ENVELOPE = 'ENVELOPE'
+    RFC822 = 'RFC822'
 
-    config = Rails.configuration.datacollectors.mailcollector
-    @server = config[:server]
-    @mail_address = config[:mail_address]
-    @password = config[:password]
-    @aliases = config[:aliases] || []
-    @port = config.key?(:port) ? config[:port] : 993
-    @ssl = config.key?(:ssl) ? config[:ssl] : true
-  end
+    def initialize
+      parse_mail_data_collector_config
+      login
+    end
 
-  def execute
-    imap = Net::IMAP.new(@server, @port, @ssl)
-    response = imap.login(@mail_address, @password)
-    if response['name'] == 'OK'
+    def parse_mail_data_collector_config
+      config = Configuration.config
+      raise 'No datacollector configuration!' unless config
+
+      @server = config[:server]
+      @mail_address = config[:mail_address]
+      @password = config[:password]
+      @aliases = config[:aliases] || []
+      @port = config.key?(:port) ? config[:port] : 993
+      @ssl = config.key?(:ssl) ? config[:ssl] : true
+    end
+
+    def imap
+      @imap ||= Net::IMAP.new(@server, port: @port, ssl: @ssl)
+    end
+
+    def login
+      response = imap.login(@mail_address, @password)
+      raise unless response['name'] != 'OK'
+
       log_info('Login...')
-      imap.select('INBOX')
-      imap.search(%w[NOT SEEN]).each do |message_id|
-        handle_new_mail(message_id, imap)
-      rescue StandardError => e
-        log_error e.message
-      end
-      imap.close
-    else
+      imap.select(INBOX)
+    rescue StandardError => e
       log_error("Cannot login #{@server}")
+      log_error e.message
+      logout
+    end
+
+    def logout
+      imap.close
+      imap.logout
+      imap.disconnect
+    end
+
+    def execute
+      imap.search(%w[NOT SEEN]).each do |message_id|
+        fetch_envelope(message_id)
+        handle_new_mail(message_id)
+      end
+    rescue StandardError => e
+      log_error e.backtrace.join('\n')
+      raise
+    ensure
+      logout
+    end
+
+    private
+
+    def reset_envelope
+      @envelope = nil
+      @from_email = nil
+      @from_user = nil
+      @receivers = []
+      @event = nil
+      @message = nil
+    end
+
+    def helper_set
+      @helper_set ||= CorrespondenceArray.new(from_user, receivers)
+    end
+
+    def fetch_envelope(id)
+      reset_envelope
+      @envelope = imap.fetch(id, ENVELOPE).first.attr[ENVELOPE]
+      @message = Mail.read_from_string raw_message(id)
+    end
+
+    attr_reader :envelope
+
+    def raw_message(id)
+      imap.fetch(id, RFC822).first.attr[RFC822]
+    end
+
+    def handle_new_mail(message_id)
+      helper_set.each do |helper|
+        if message.attachments
+          handle_new_message(message, helper)
+          log_info "#{message.from} Data stored!"
+        else
+          log_info "#{message.from} No data!"
+        end
+        imap.store(message_id, '+FLAGS', [:Deleted])
+        log_info "#{message.from} Email processed!"
+      end
+    rescue StandardError => e
+      log_error 'Error on mailcollector handle_new_mail'
+      log_error e.backtrace.join('\n')
+    ensure
+      reset_envelope
+    end
+
+    def handle_new_message(message, helper)
+      message.attachments.each do |attachment|
+        tempfile = Tempfile.new('mail_attachment')
+        tempfile.binmode
+        tempfile.write(attachment.decoded)
+        tempfile.rewind
+        helper.attach(attachment.filename, tempfile.path)
+      ensure
+        tempfile.close
+        tempfile.unlink
+      end
+    rescue StandardError => e
+      log_error 'Error on mailcollector handle_new_message:'
+      log_error e.backtrace.join('\n')
       raise
     end
-  rescue StandardError => e
-    log_error 'mail collector execute error:'
-    log_error e.backtrace.join('\n')
-    raise
-  ensure
-    imap.logout
-    imap.disconnect
-  end
 
-  private
-
-  def handle_new_mail(message_id, imap)
-    envelope = imap.fetch(message_id, 'ENVELOPE')[0].attr['ENVELOPE']
-    raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
-    message = Mail.read_from_string raw_message
-    helper_set = create_helper_set(envelope)
-    log_info "Mail from #{message.from}"
-    unless helper_set
-      log_info "#{message.from} Email format incorrect or sender unknown!"
-      return nil
+    def email_eln_email?(mail_to)
+      mail_to.casecmp(@mail_address).zero? ||
+        (@aliases.any? { |s| s.casecmp(mail_to).zero? })
     end
-    helper_set.helper_set.each do |helper|
-      unless helper.sender
-        log_info "#{message.from} Sender unknown!"
-        return nil
+
+    def from_email
+      @from_email ||= envelope&.from&.first && format_email(envelope.from.first)
+    end
+
+    def receivers
+      @receivers ||= fetch_receivers
+    end
+
+    def format_email(email_object)
+      "#{email_object.mailbox}@#{email_object.host}"
+    end
+
+    def fetch_receivers
+      list = envelope.to.presence || []
+      list.concat(envelope.cc) if envelope.cc
+      list.map { |email_obj| format_email(email_obj) }
+          .reject { |m| email_eln_email?(m) }
+    end
+
+    def log_info(message)
+      DCLogger.log.info(self.class.name) do
+        " >>> #{message}"
       end
-      unless helper.recipient
-        log_info "#{message.from} Recipient unknown!"
-        return nil
+    end
+
+    def log_error(message)
+      DCLogger.log.error(self.class.name) do
+        " >>> #{message}"
       end
-      if message.attachments
-        handle_new_message(message, helper)
-        log_info "#{message.from} Data stored!"
-      else
-        log_info "#{message.from} No data!"
-      end
-      imap.store(message_id, '+FLAGS', [:Deleted])
-      log_info "#{message.from} Email processed!"
-    end
-  rescue StandardError => e
-    log_error 'Error on mailcollector handle_new_mail'
-    log_error e.backtrace.join('\n')
-    raise
-  end
-
-  def handle_new_message(message, helper)
-    dataset = helper.prepare_new_dataset(message.subject)
-    message.attachments.each do |attachment|
-      tempfile = Tempfile.new('mail_attachment')
-      tempfile.binmode
-      tempfile.write(attachment.decoded)
-      tempfile.rewind
-      att = Attachment.new(
-        filename: attachment.filename,
-        created_by: helper.sender.id,
-        created_for: helper.recipient.id,
-        file_path: tempfile.path,
-      )
-
-      att.save!
-      tempfile.close
-      tempfile.unlink
-      att.update!(attachable: dataset)
-    end
-  rescue StandardError => e
-    log_error 'Error on mailcollector handle_new_message:'
-    log_error e.backtrace.join('\n')
-    raise
-  end
-
-  def email_eln_email?(mail_to)
-    mail_to.casecmp(@mail_address).zero? ||
-      (@aliases.any? { |s| s.casecmp(mail_to).zero? })
-  end
-
-  def get_user(mail)
-    user = User.find_by email: mail
-    user ||= User.find_by email: mail.downcase
-    user
-  end
-
-  def create_helper_set(envelope)
-    # Check if from is User or Device
-    from = "#{envelope.from[0].mailbox}@#{envelope.from[0].host}"
-    from_user = get_user from
-    raise "#{from} not registered" if from_user.nil?
-
-    receiver = []
-    if from_user.is_a?(User) && (!from_user.is_a?(Device) && !from_user.is_a?(Admin))
-      receiver.push(from_user)
-    else # Concatenate all receiver (cc & to)
-      receiver.concat(envelope.cc) if envelope.cc
-      receiver.concat(envelope.to) if envelope.to
-      receiver = receiver.map { |m| "#{m.mailbox}@#{m.host}" }
-                         .reject { |m| email_eln_email?(m) }
-                         .map { |m| get_user(m) }
-                         .select { |user| !user.nil? && !user.is_a?(Device) && !user.is_a?(Admin) }
-    end
-    return nil if receiver.empty?
-
-    CollectorHelperSet.new(from_user, receiver)
-  rescue StandardError => e
-    log_error 'Error on mailcollector create_helper:'
-    log_error e.backtrace.join('\n')
-    raise
-  end
-
-  def log_info(message)
-    DCLogger.log.info(self.class.name) do
-      " >>> #{message}"
-    end
-  end
-
-  def log_error(message)
-    DCLogger.log.error(self.class.name) do
-      " >>> #{message}"
     end
   end
 end

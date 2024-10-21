@@ -57,6 +57,8 @@ development: &development
     - :path: '<%= Rails.root.join(*%w[tmp datacollector]).to_s %>'
 
 test:
-  <<: *development
+  :keydir: '<%= "#{Dir.home}/.ssh/" %>'
+  :localcollectors:
+    - :path: '<%= Rails.root.join(*%w[tmp datacollector test]).to_s %>'
 
 production:

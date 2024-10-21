@@ -2,7 +2,7 @@ class CollectDataFromSftpJob < ApplicationJob
   queue_as :collect_data
 
   def perform
-    collector = Foldercollector.new
-    collector.execute(true)
+    devices = Device.where(datacollector_method: 'folderwatchersftp')
+    Datacollector::Collectors.bulk_execute(devices)
   end
 end
