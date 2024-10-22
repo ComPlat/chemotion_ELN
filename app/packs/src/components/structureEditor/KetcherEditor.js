@@ -16,6 +16,7 @@ let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
 const skip_template_name_hide = false;
 const skip_image_layering = false;
+const new_atoms = [];
 const [standard_height_cirlce, standard_width_circle] = [1.0250000000000006, 1.0250000000000006];
 const [standard_height_square, standard_width_square] = [0.9750000000000001, 1.5749999999999986];
 
@@ -210,8 +211,11 @@ const KetcherEditor = forwardRef((props, ref) => {
         case "Move image":
           addEventToFILOStack("Move image");
           break;
+        case "Set atom attribute":
         case "Add atom":
-          console.log({ eventItem });
+          if (two_parts_pattern.test(eventItem.to) || eventItem.label == "A") {
+            new_atoms.push(eventItem);
+          }
           addEventToFILOStack("Add atom");
           break;
         case "Upsert image":
@@ -366,44 +370,77 @@ const KetcherEditor = forwardRef((props, ref) => {
     imagesList.length && placeImageOnAtoms(mols, imagesList);
   };
 
+  const atom_id_match = (id) => {
+    const index = new_atoms.findIndex(i => i.id == id);
+    if (index !== -1) {
+      const item = new_atoms[index];
+      new_atoms.splice(index, 1);
+      return item;
+    }
+    return null;  // If no match is found
+  };
   // helper function to handle new atoms added to the canvas
   const handleAddAtom = async () => {
     console.log("Atom moved!");
-    image_used_counter = -1;
-    mols.forEach((mol) => {
+    await fuelKetcherData();
+    let atom_id_counter = -1;
+    let new_images = [];
+    mols.forEach(async (mol) => {
       let is_h_id_list = [];
       const molecule = latestData[mol];
-      molecule?.atoms.map((item, idx) => {
-        if (item?.label === "H") is_h_id_list.push(idx);
-        const is_two = two_parts_pattern.test(item?.alias);
-        const is_three = three_parts_patten.test(item?.alias);
-        if (is_two || is_three) {
-          const alias_splits = item.alias.split("_");
-          const part_three = ++image_used_counter;
-          if (is_two) {
-            item.alias += `_${part_three}`;
-            if (!imagesList[part_three]) { // specifically for direct attachments
-              latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
-            }
-          }
+      const atoms = latestData[mol].atoms;
+      console.log({ new_atoms });
+      for (let i = 0; i < atoms.length; i++) {
+        const item = atoms[i];
+        atom_id_counter++;
+        const atom_found = atom_id_match(atom_id_counter);
 
-          if (is_three) {
-            const minor_split = item.alias.split("_");
-            item.alias = `t_${minor_split[1]}_${part_three}`;
-            if (!imagesList[part_three]) { // specifically for direct attachments
-              latestData.root.nodes.push(prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location));
+        if (atom_found) { // atoms passing pattern_two
+          console.log("start----------------", atom_found, item.alias);
+          // if (three_parts_patten.test(item.alias)) {
+          //   console.log({ was: item.alias });
+          //   const three_splits = item.alias.split("_");
+          //   item.alias = `t_${three_splits[1]}`;
+          //   console.log({ now: item.alias });
+          // }
+          const is_two = two_parts_pattern.test(item?.alias);
+          if (is_two && item.alias) {
+            console.log({ in: item.alias });
+            const alias_splits = item.alias.split("_");
+            latestData[mol].atoms[i].alias += `_${++image_used_counter}`;
+            if (!imagesList[image_used_counter]) {
+              const img = prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location);
+              new_images.push(img);
             }
+            console.log("end----------------");
+          } else {
+            console.log({ else: item });
+          }
+        } else if (two_parts_pattern.test(item.alias)) {
+          new_images = [];
+          console.log({ outer_else: item }, "item00000000000");
+          const alias_splits = item.alias.split("_");
+          const third_part = ++image_used_counter;
+          latestData[mol].atoms[i].alias += `_${third_part}`;
+          console.log({ end_outer_else: latestData[mol].atoms[i].alias });
+          if (!imagesList[third_part]) {
+            const img = prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location);
+            new_images.push(img);
           }
         }
+        if (item?.label === "H") is_h_id_list.push(i);
+      }
 
-      });
       if (is_h_id_list.length) {
         molecule.atoms?.splice(molecule.atoms.length - is_h_id_list.length, is_h_id_list.length);
         molecule.bonds?.splice(molecule.bonds.length - is_h_id_list.length, is_h_id_list.length);
       }
       latestData[mol] = molecule;
     });
-    // FIXME: commented for testing
+    const d = { ...latestData };
+    console.log({ new_images });
+    d.root.nodes = [...d.root.nodes, ...new_images];
+    console.log({ all_nodes: d.root.nodes });
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     moveTemplate();
   };
