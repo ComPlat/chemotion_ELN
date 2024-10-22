@@ -110,6 +110,23 @@ const searchValuesBySubFields = (val, table) => {
   return searchValues;
 }
 
+const searchValuesByAvailableOptions = (val, table) => {
+  let searchValues = [];
+  let link = 'OR';
+  let match = val.match;
+
+  val.available_options.map((option, i) => {
+    if (val.field.column.indexOf('temperature') === -1) {
+      link = i === 0 ? 'OR' : 'AND';
+      match = 'NOT LIKE';
+    }
+    if (!option.unit || option.unit.replace('°', '') !== val.unit.replace('°', '')) {
+      searchValues.push([link, table, val.field.label.toLowerCase(), match, option.value, option.unit].join(" "));
+    }
+  });
+  return searchValues;
+}
+
 const searchValuesByFilters = (store) => {
   const storedFilter = store.searchFilters;
   const filters = storedFilter.length == 0 ? [] : storedFilter[0].filters;
@@ -120,10 +137,14 @@ const searchValuesByFilters = (store) => {
       let table = val.field.table || val.table;
       let value = val.value;
       table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
-      value = value != true ? value.replace(/[\n\r]/g, ' OR ') : value;
+      value = value && value !== true ? value.replace(/[\n\r]/g, ' OR ') : value;
 
       if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
         let values = searchValuesBySubFields(val, table);
+        searchValues.push(...values);
+      } else if (val.available_options) {
+        let values = searchValuesByAvailableOptions(val, table);
+        searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, value, val.unit].join(" "));
         searchValues.push(...values);
       } else {
         searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, value, val.unit].join(" "));

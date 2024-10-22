@@ -11,6 +11,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
+import { convertTemperature } from 'src/utilities/UnitsConversion';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
 
 const DetailSearch = () => {
@@ -45,6 +46,7 @@ const DetailSearch = () => {
     smiles: '',
     sub_values: [],
     unit: '',
+    available_options: [],
     validationState: null
   }];
 
@@ -194,7 +196,7 @@ const DetailSearch = () => {
         }
         if (value[0] === 'analyses') {
           fieldsByTab.push(...analysesData);
-          // pushDatasetsToAnalysesFields();
+          pushDatasetsToAnalysesFields();
         }
         if (value[0] === 'inventory') {
           fieldsByTab.push(...inventoryData);
@@ -593,18 +595,16 @@ const DetailSearch = () => {
       case 'value_measurement':
       case 'solvent_ratio':
       case 'molecular_mass':
-        return '>=';
+        return searchStore.numeric_match;
       case 'unit_measurement':
       case 'solvent_smiles':
         return '=';
       default:
-        return type == 'system-defined' ? '>=' : 'ILIKE';
+        return type == 'system-defined' ? searchStore.numeric_match : 'ILIKE';
     }
   }
 
   const checkValueForNumber = (label, value) => {
-    if (value === '') { return null; }
-
     let validationState = null;
     let message = `${label}: Only numbers are allowed`;
     searchStore.removeErrorMessage(message);
@@ -612,7 +612,7 @@ const DetailSearch = () => {
     const regex = /^[0-9\s\-]+$/;
     let numericCheck = label.includes('point') ? !regex.test(value) : isNaN(Number(value));
 
-    if (numericCheck) {
+    if (numericCheck && value !== '') {
       searchStore.addErrorMessage(message);
       validationState = 'error';
     }
@@ -637,8 +637,9 @@ const DetailSearch = () => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
 
     if (optionField.value_system) {
-      let valueSystem =
-        searchValue.sub_values.length >= 1 && searchValue.sub_values[0][id] ? searchValue.sub_values[0][id].value_system : optionField.value_system;
+      let valueSystem = searchValue.sub_values.length >= 1 && searchValue.sub_values[0][id]
+        ? searchValue.sub_values[0][id].value_system
+        : optionField.value_system;
       subValue = { id: id, value: { value: value, value_system: valueSystem } };
     } else {
       subValue = { id: id, value: value };
@@ -664,14 +665,14 @@ const DetailSearch = () => {
 
   const setSearchStoreValues = (value, option, column, type, subValue, smiles) => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
-    let cleanedValue = ['>=', '<@'].includes(searchValue.match) ? value.replace(/,/g, '.') : value;
+    let cleanedValue = ['>=', '<=', '<@'].includes(searchValue.match) ? value.replace(/,/g, '.') : value;
     searchValue.field = option;
     searchValue.value = cleanedValue;
     searchValue.sub_values = subValuesForSearchValue(searchValue, subValue, cleanedValue);
     searchValue.match = matchByField(column, type);
     searchValue.smiles = smiles;
 
-    if (['>=', '<@'].includes(searchValue.match)) {
+    if (['>=', '<=', '<@'].includes(searchValue.match)) {
       searchValue.validationState = checkValueForNumber(option.label, cleanedValue);
     }
 
@@ -679,10 +680,25 @@ const DetailSearch = () => {
       let units = optionsForSelect(option);
       searchValue.unit = units[0].label;
     }
+
+    if (column.indexOf('temperature') !== -1 && value !== '' && value !== 0 && value !== "0") {
+      searchValue = availableOptionsForTemperature(searchValue, value, searchValue.unit);
+    }
+
+    if (value === 'others' && option.type === 'select') {
+      searchValue.available_options = [];
+      optionsForSelect(option).map((object) => {
+        if (object.value !== '' && object.value !== 'others') {
+          searchValue.available_options.push(object);
+        }
+      });
+    }
+
     let searchSubValuesLength = searchValue.sub_values.length >= 1 ? Object.keys(searchValue.sub_values[0]).length : 0;
     let typesWithSubValues = ['input-group', 'table'];
 
-    if (((value === '' || value === false) && !typesWithSubValues.includes(type)) || (searchSubValuesLength === 0 && typesWithSubValues.includes(type) && value === '')) {
+    if (((value === '' || value === false) && !typesWithSubValues.includes(type))
+      || (searchSubValuesLength === 0 && typesWithSubValues.includes(type) && value === '')) {
       searchStore.removeDetailSearchValue(column);
     } else {
       searchStore.addDetailSearchValue(column, searchValue);
@@ -706,6 +722,22 @@ const DetailSearch = () => {
     return subValues;
   }
 
+  const availableOptionsForTemperature = (searchValue, startValue, startUnit) => {
+    startValue = startValue.match(/^-?\d+(\.\d+)?$/g);
+
+    if (startValue === null || isNaN(Number(startValue))) { return searchValue; }
+
+    searchValue.available_options = [];
+    searchValue.available_options.push({ value: startValue[0], unit: startUnit });
+
+    let [convertedValue, convertedUnit] = convertTemperature(startValue[0], startUnit);
+    searchValue.available_options.push({ value: convertedValue.trim(), unit: convertedUnit });
+
+    [convertedValue, convertedUnit] = convertTemperature(convertedValue, convertedUnit);
+    searchValue.available_options.push({ value: convertedValue.trim(), unit: convertedUnit });
+    return searchValue;
+  }
+
   const changeUnit = (units, value, column, option, subFieldId) => (e) => {
     let activeUnitIndex = units.findIndex((f) => { return f.label.replace('°', '') === value || f.label === value });
     let nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
@@ -722,7 +754,12 @@ const DetailSearch = () => {
       }
     }
 
+    if (column.indexOf('temperature') !== -1 && searchValue.value !== '') {
+      const nextValue = searchValue.available_options.find((v) => newUnit.indexOf(v.unit) !== -1);
+      searchValue.value = nextValue.value;
+    }
     searchValue.unit = newUnit;
+
     searchStore.addDetailSearchValue(column, searchValue);
   }
 
