@@ -20,6 +20,8 @@ const SearchModal = () => {
   const searchStore = useContext(StoreContext).search;
   const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
 
+  if (!searchStore.searchModalVisible) return null;
+
   let FormData = [
     {
       value: 'advanced',
@@ -73,7 +75,7 @@ const SearchModal = () => {
     <Draggable handle=".modal-header" onDrag={handleDrag}>
       <div>
         <Modal
-          show={searchStore.searchModalVisible}
+          show={true}
           onHide={() => searchStore.handleCancel()}
           backdrop={false}
           keyboard={false}
@@ -85,7 +87,7 @@ const SearchModal = () => {
             transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
           }}
         >
-     
+
           <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" closeButton>
             <Stack direction="horizontal" className="draggable-modal-stack" gap={3}>
               <Modal.Title className="draggable-modal-stack-title">
@@ -125,7 +127,7 @@ const SearchModal = () => {
               </Button>
             </Stack>
           </Modal.Header>
-        
+
           <Modal.Body className="p-0">
             <React.Suspense fallback={<Spinner />}>
               <div className={`draggable-modal-form-container${minimizedClass}`}>

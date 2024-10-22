@@ -41,6 +41,9 @@ const SampleTaskInbox = ({}) => {
   };
   const [_colProps1, singleScanDropRef] = useDrop(dropConfig(1));
   const [_colProps2, doubleScanDropRef] = useDrop(dropConfig(2));
+
+  if (!sampleTasksStore.inboxVisible) return null;
+
   const sendErrorNotification = (message) => {
     const notification = {
       title: message,
@@ -101,7 +104,7 @@ const SampleTaskInbox = ({}) => {
     <Draggable handle=".modal-header" onDrag={handleDrag}>
       <div>
         <Modal
-          show={sampleTasksStore.inboxVisible}
+          show={true}
           onHide={sampleTasksStore.hideSampleTaskInbox}
           backdrop={false}
           keyboard={false}
