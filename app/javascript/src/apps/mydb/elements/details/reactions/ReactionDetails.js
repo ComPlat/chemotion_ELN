@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
+import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
@@ -55,6 +56,30 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+
+const handleProductClick = (product) => {
+  const uri = Aviator.getCurrentURI();
+  const uriArray = uri.split(/\//);
+  Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
+  sampleShowOrNew({ params: { sampleID: product.id } });
+};
+
+const productLink = (product) => (
+  <span>
+    Analysis: &nbsp;
+    <span
+      aria-hidden="true"
+      className="pseudo-link"
+      onClick={() => handleProductClick(product)}
+      style={{ cursor: 'pointer' }}
+      title="Open sample window"
+    >
+      <i className="icon-sample" />
+      &nbsp;
+      {product.title()}
+    </span>
+  </span>
+);
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -132,16 +157,6 @@ export default class ReactionDetails extends Component {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
-  onUIStoreChange(state) {
-    if (state.reaction.activeTab != this.state.activeTab
-      || state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
-      this.setState({
-        activeTab: state.reaction.activeTab,
-        activeAnalysisTab: state.reaction.activeAnalysisTab
-      });
-    }
-  }
-
   handleSubmit(closeView = false) {
     LoadingActions.start();
 
@@ -155,11 +170,6 @@ export default class ReactionDetails extends Component {
     if (reaction.is_new || closeView) {
       DetailActions.close(reaction, true);
     }
-  }
-
-  reactionIsValid() {
-    const { reaction } = this.state;
-    return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
   handleReactionChange(reaction, options = {}) {
@@ -193,13 +203,6 @@ export default class ReactionDetails extends Component {
     this.handleReactionChange(newReaction, options);
   }
 
-  handleProductClick(product) {
-    const uri = Aviator.getCurrentURI();
-    const uriArray = uri.split(/\//);
-    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
-    sampleShowOrNew({ params: { sampleID: product.id } });
-  }
-
   handleProductChange(product, cb) {
     const { reaction } = this.state;
 
@@ -207,24 +210,6 @@ export default class ReactionDetails extends Component {
     reaction.changed = true;
 
     this.setState({ reaction }, cb);
-  }
-
-  productLink(product) {
-    return (
-      <span>
-        Analysis:
-        <span
-          className="pseudo-link"
-          onClick={() => this.handleProductClick(product)}
-          role="button"
-          title="Open sample window"
-        >
-          <i className="icon-sample" />
-          &nbsp;
-          {product.title()}
-        </span>
-      </span>
-    );
   }
 
   handleSelect = (key) => {
@@ -460,46 +445,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  handleSelect(key) {
-    UIActions.selectTab({ tabKey: key, type: 'reaction' });
-    this.setState({
-      activeTab: key
-    });
-  }
-
-  handleSelectActiveAnalysisTab(key) {
-    UIActions.selectActiveAnalysisTab(key);
-    this.setState({
-      activeAnalysisTab: key
-    });
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
-  reactionIsValid() {
-    const { reaction } = this.state;
-    return reaction.hasMaterials() && reaction.SMGroupValid();
-  }
-
-  productLink(product) {
-    return (
-      <span>
-        Analysis:
-        <span
-          className="pseudo-link"
-          onClick={() => this.handleProductClick(product)}
-          role="button"
-          title="Open sample window"
-        >
-          <i className="icon-sample me-1 ms-1" />
-          {product.title()}
-        </span>
-      </span>
-    );
-  }
-
   updateReactionSvg() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
@@ -523,16 +468,6 @@ export default class ReactionDetails extends Component {
         reaction.reaction_svg_file = result.reaction_svg;
         this.setState(reaction);
       });
-  }
-
-  handleSegmentsChange(se) {
-    const { reaction } = this.state;
-    const { segments } = reaction;
-    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
-    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
-    reaction.segments = segments;
-    reaction.changed = true;
-    this.setState({ reaction });
   }
 
   handleGaseousChange() {
@@ -588,7 +523,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsScheme
             reaction={reaction}
-            onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+            onReactionChange={(r, options) => this.handleReactionChange(r, options)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
           />
         </Tab>

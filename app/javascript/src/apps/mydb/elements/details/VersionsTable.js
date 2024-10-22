@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Pager } from 'react-bootstrap';
+import { Pagination } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import VersionsFetcher from 'src/fetchers/VersionsFetcher';
 import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableChanges';
@@ -111,24 +111,24 @@ export default class VersionsTable extends Component {
     const { isEdited } = this.props;
 
     const pagination = () => (
-      <Pager>
-        <Pager.Item
+      <Pagination>
+        <Pagination.Item
           previous
           href="#"
           onClick={() => this.handlePagerClick('prev')}
           disabled={page >= pages}
         >
           &larr; Older Versions
-        </Pager.Item>
-        <Pager.Item
+        </Pagination.Item>
+        <Pagination.Item
           next
           href="#"
           onClick={() => this.handlePagerClick('next')}
           disabled={page <= 1}
         >
           Newer Versions &rarr;
-        </Pager.Item>
-      </Pager>
+        </Pagination.Item>
+      </Pagination>
     );
 
     const columns = [
@@ -168,11 +168,6 @@ export default class VersionsTable extends Component {
             }
           `}
         </style>
-        <ul className="history-legend">
-          <li className="history-legend__item history-legend__item--old">before</li>
-          <li className="history-legend__item history-legend__item--new">after</li>
-          <li className="history-legend__item history-legend__item--current">current value</li>
-        </ul>
         <div className="ag-theme-balham">
           <AgGridReact
             columnDefs={columns}

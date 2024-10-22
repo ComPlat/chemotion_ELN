@@ -105,13 +105,6 @@ const rangeCheck = (field, sample) => {
   return true;
 };
 
-const clipboardTooltip = () => (
-  <Tooltip id="assign_button">copy to clipboard</Tooltip>
-);
-
-const moleculeCreatorTooltip = () => (
-  <Tooltip id="assign_button">create molecule</Tooltip>
-);
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
 
@@ -616,27 +609,6 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  versioningTable(index) {
-    const { sample } = this.state;
-
-    return (
-      <Tab
-        eventKey={index}
-        title="All Versions"
-        key={`All_Versions_Sample_${sample.id.toString()}`}
-      >
-        <ListGroupItem>
-          <VersionsTable
-            type="samples"
-            id={sample.id}
-            element={sample}
-            parent={this}
-          />
-        </ListGroupItem>
-      </Tab>
-    );
-  }
-
   moleculeComputedProps(ind) {
     const { sample } = this.state;
     const key = `computed_props_${sample.id.toString()}`;
@@ -868,7 +840,7 @@ export default class SampleDetails extends React.Component {
             onChange={(e) => this.updateCas(e)}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
-            value={options.find(({value}) => value === cas)}
+            value={options.find(({ value }) => value === cas)}
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"
@@ -931,7 +903,8 @@ export default class SampleDetails extends React.Component {
     const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
-    const saveAndClose = (saveBtnDisplay &&
+    const saveAndClose = (saveBtnDisplay
+      && (
       <OverlayTrigger
         placement="bottom"
         overlay={(
@@ -942,8 +915,10 @@ export default class SampleDetails extends React.Component {
       >
         {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
       </OverlayTrigger>
+      )
     );
-    const save = (saveBtnDisplay &&
+    const save = (saveBtnDisplay
+      && (
       <OverlayTrigger
         placement="bottom"
         overlay={(
@@ -954,6 +929,7 @@ export default class SampleDetails extends React.Component {
       >
         {this.saveButton(sampleUpdateCondition, floppyTag)}
       </OverlayTrigger>
+      )
     );
 
     const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;

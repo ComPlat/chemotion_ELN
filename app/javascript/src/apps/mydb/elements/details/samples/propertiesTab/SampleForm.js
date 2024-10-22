@@ -550,7 +550,7 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  attachedAmountInput(sample, size) {
+  attachedAmountInput(sample) {
     if (!sample.contains_residues) return false;
 
     return this.numInput(
