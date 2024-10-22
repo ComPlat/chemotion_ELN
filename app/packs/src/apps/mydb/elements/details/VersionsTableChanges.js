@@ -2,7 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import VersionsTableFields from 'src/apps/mydb/elements/details/VersionsTableFields';
 import VersionsTableModal from 'src/apps/mydb/elements/details/VersionsTableModal';
-import { Alert, Modal } from 'react-bootstrap';
+import {
+  Row, Col, Alert, Modal
+} from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 
 function VersionsTableChanges(props) {
@@ -56,11 +58,25 @@ function VersionsTableChanges(props) {
   }
 
   return (
-    <Modal show bsSize="large" backdrop="static" className="history-modal">
+    <Modal show size="lg" backdrop="static" className="history-modal">
       <Modal.Header closeButton onHide={() => stopEditing()}>
-        {`# ${id}`}
+        <Modal.Title>{`# ${id} `}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <Row bsStyle="change" style={{ marginRight: 0 }}>
+          <Col xs={3}>
+            legend: param
+          </Col>
+          <Col xs={3}>
+            old value
+          </Col>
+          <Col xs={3}>
+            new value
+          </Col>
+          <Col>
+            current value
+          </Col>
+        </Row>
         {change}
       </Modal.Body>
       <Modal.Footer>

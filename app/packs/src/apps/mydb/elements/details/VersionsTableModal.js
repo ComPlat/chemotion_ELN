@@ -139,58 +139,52 @@ function VersionsTableModal(props) {
         show={show}
         backdrop="static"
         onHide={handleClose}
-        bsSize="large"
+        size="lg"
         className="history-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>{name}</Modal.Title>
-          <Modal.Body>
-            <div className="history-table">
-              <Row bsStyle="change" style={{ marginRight: 0 }}>
-                <Col xs={3}>
-                  <label
-                    className="history-checkbox-label"
-                    htmlFor="toggle-all"
-                  >
-                    <input
-                      id="toggle-all"
-                      type="checkbox"
-                      onChange={toggleAllFieldsCheckbox}
-                      checked={
+        </Modal.Header>
+        <Modal.Body>
+          <Row bsStyle="change" style={{ marginRight: 0 }}>
+            <Col xs={4}>
+              <label
+                className="history-checkbox-label"
+                htmlFor="toggle-all"
+              >
+                <input
+                  id="toggle-all"
+                  type="checkbox"
+                  onChange={toggleAllFieldsCheckbox}
+                  checked={
                         allFieldIndexes().length === selectedFields.length
                       }
-                    />
-                    Select all
-                  </label>
-                </Col>
-                <Col xs={9}>
-                  <ul className="history-legend">
-                    <li className="history-legend__item history-legend__item--current">
-                      current value
-                    </li>
-                    <li className="history-legend__item history-legend__item--old">
-                      before/new value
-                    </li>
-                  </ul>
-                </Col>
-              </Row>
-            </div>
+                />
+                Select all
+              </label>
+            </Col>
+            <Col xs={4}>
+              current value
+            </Col>
+            <Col>
+              before/new value
+            </Col>
+          </Row>
 
-            <div className="history-table">{change}</div>
-            <Alert bsStyle="warning" className="history-alert">
-              Only reversible changes are are shown.
-            </Alert>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button
-              bsStyle="primary"
-              onClick={() => handleRevert(reversibleChanges()).then(() => handleClose())}
-            >
-              Revert
-            </Button>
-          </Modal.Footer>
-        </Modal.Header>
+          <div className="history-table">{change}</div>
+          <Alert bsStyle="warning" className="history-alert">
+            Only reversible changes are are shown.
+          </Alert>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button
+            bsStyle="primary"
+            onClick={() => handleRevert(reversibleChanges()).then(() => handleClose())}
+          >
+            Revert
+          </Button>
+        </Modal.Footer>
       </Modal>
     </>
   );
