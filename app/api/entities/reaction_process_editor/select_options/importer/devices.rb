@@ -9,13 +9,13 @@ module Entities
           DEVICES_FILENAME = ENV.fetch('REACTION_PROCESS_EDITOR_DEVICES_FILENAME', '')
 
           def devices_csv
-            CSV.parse(read_devices_file, col_sep: ';', headers: true, return_headers: false)
+            CSV.parse(devices_file, col_sep: ';', headers: true, return_headers: false)
           end
 
           private
 
-          def read_devices_file
-            @read_devices_file ||= Rails.root.join(ROOT_DIR, DEVICES_FILENAME).read
+          def devices_file
+            @devices_file ||= Rails.root.join(ROOT_DIR, DEVICES_FILENAME).read
           rescue Errno::ENOENT
             ''
           end
