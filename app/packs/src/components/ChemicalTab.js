@@ -246,12 +246,12 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div>
-        <p className="fw-bold m-3">Pictograms: </p>
+        <p className="fw-bold">Pictograms: </p>
         {(str.pictograms !== undefined && str.pictograms.length !== 0)
           ? pictogramsArray : <p>Could not find pictograms</p>}
-        <p className="fw-bold m-3">Hazard Statements: </p>
+        <p className="fw-bold mt-3">Hazard Statements: </p>
         {HazardPhrases}
-        <p className="fw-bold m-3">Precautionary Statements: </p>
+        <p className="fw-bold">Precautionary Statements: </p>
         {precautionaryPhrases}
       </div>
     );
