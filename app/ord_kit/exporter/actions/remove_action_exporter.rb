@@ -67,7 +67,7 @@ module OrdKit
         def stepwise_fields
           { stepwise: {
             starter_conditions: starter_conditions,
-            limits: limits_to_ord([workup['limits']]),
+            limits: limits_to_ord(Array(workup['limits'])),
           } }
         end
 
