@@ -39,7 +39,15 @@
 }
 
 .sample-entries > tbody > tr > td {
-  border-top: 0
+  border-top: 0;
+  
+  .sample-entries-inventory-label-icon {
+    margin-top: 3px;
+    padding: 4px 4px 4px 4px;
+    border-radius: 4px;
+    background-color: #96c7e7;
+    color: black;
+  }
 }
 
 @media only screen and (max-width: 1500px) {

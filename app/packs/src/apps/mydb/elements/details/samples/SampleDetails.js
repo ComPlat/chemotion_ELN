@@ -951,13 +951,15 @@ export default class SampleDetails extends React.Component {
       />
     ) : null;
 
+    const inventoryLabel = sample.inventory_sample && sample.xref.inventory_label ? sample.xref.inventory_label : null;
+
     return (
       <div className="d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span className="flex-shrink-0">
               <i className="icon-sample me-1" />
-              {sample.title()}
+              {inventoryLabel || sample.title()}
             </span>
           </OverlayTrigger>
           <ShowUserLabels element={sample} />
