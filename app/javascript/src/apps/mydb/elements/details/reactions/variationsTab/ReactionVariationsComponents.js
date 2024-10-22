@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
-  getVariationsRowName, convertUnit, updateColumnDefinitions, getCellDataType
+  getVariationsRowName, convertUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   updateNonReferenceMaterialOnMassChange,
@@ -261,7 +261,7 @@ function MenuHeader({
   column, context, setSort, names
 }) {
   const { field, entryDefs } = column.colDef;
-  const { columnDefinitions, setColumnDefinitions } = context;
+  const { setColumnDefinitions } = context;
   const [ascendingSort, setAscendingSort] = useState('inactive');
   const [descendingSort, setDescendingSort] = useState('inactive');
   const [noSort, setNoSort] = useState('inactive');
@@ -292,15 +292,15 @@ function MenuHeader({
 
   const onUnitChanged = () => {
     const newUnit = units[(units.indexOf(unit) + 1) % units.length];
-    const newColumnDefinitions = updateColumnDefinitions(
-      columnDefinitions,
-      field,
-      'entryDefs',
-      { currentEntry: entry, displayUnit: newUnit, availableEntriesWithUnits }
-    );
 
     setUnit(newUnit);
-    setColumnDefinitions(newColumnDefinitions);
+    setColumnDefinitions(
+      {
+        type: 'update_entry_defs',
+        field,
+        entryDefs: { currentEntry: entry, displayUnit: newUnit, availableEntriesWithUnits }
+      }
+    );
   };
 
   const unitSelection = (
@@ -320,23 +320,17 @@ function MenuHeader({
     const newEntry = entryKeys[(entryKeys.indexOf(entry) + 1) % entryKeys.length];
     const newUnits = availableEntriesWithUnits[newEntry];
     const newUnit = newUnits[0];
-    let newColumnDefinitions = updateColumnDefinitions(
-      columnDefinitions,
-      field,
-      'cellDataType',
-      getCellDataType(newEntry)
-    );
-    newColumnDefinitions = updateColumnDefinitions(
-      newColumnDefinitions,
-      field,
-      'entryDefs',
-      { currentEntry: newEntry, displayUnit: newUnit, availableEntriesWithUnits }
-    );
 
     setEntry(newEntry);
     setUnits(newUnits);
     setUnit(newUnit);
-    setColumnDefinitions(newColumnDefinitions);
+    setColumnDefinitions(
+      {
+        type: 'update_entry_defs',
+        field,
+        entryDefs: { currentEntry: newEntry, displayUnit: newUnit, availableEntriesWithUnits }
+      }
+    );
   };
 
   const entrySelection = (

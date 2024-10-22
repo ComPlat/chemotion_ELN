@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useCallback
+  useRef, useState, useCallback, useReducer
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert,
@@ -18,7 +18,7 @@ import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  getMaterialColumnGroupChild, updateColumnDefinitionsMaterials,
+  getMaterialColumnGroupChild,
   getReactionMaterials, getReactionMaterialsIDs,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
@@ -29,13 +29,16 @@ import {
   NoteCellRenderer, NoteCellEditor,
   RowToolsCellRenderer, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import {
+  columnDefinitionsReducer
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const [reactionVariations, _setReactionVariations] = useState(reaction.variations);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
-  const [columnDefinitions, setColumnDefinitions] = useState([
+  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
     {
       headerName: 'Tools',
       cellRenderer: RowToolsCellRenderer,
@@ -152,16 +155,16 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     Materials could have been added or removed in the "Scheme" tab.
     These changes need to be reflected in the variations.
     */
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(
-      columnDefinitions,
-      updatedReactionMaterials,
-      MenuHeader
-    );
     let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
     updatedReactionVariations = addMissingMaterialsToVariations(updatedReactionVariations, updatedReactionMaterials);
 
     setReactionVariations(updatedReactionVariations);
-    setColumnDefinitions(updatedColumnDefinitions);
+    setColumnDefinitions(
+      {
+        type: 'update_on_render',
+        reactionMaterials: updatedReactionMaterials
+      }
+    );
     setReactionMaterials(updatedReactionMaterials);
   }
 
@@ -331,7 +334,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           context={{
             copyRow,
             removeRow,
-            columnDefinitions,
             setColumnDefinitions,
             reactionHasPolymers: reaction.hasPolymers(),
             reactionShortLabel: reaction.short_label,
