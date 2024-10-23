@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Row, Col } from 'react-bootstrap';
+import { Col } from 'react-bootstrap';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
@@ -36,18 +36,18 @@ export default class Elements extends Component {
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
-      <Row className="flex-grow-1">
-        <Col xs={listWidth}>
+      <div className="flex-grow-1 d-flex ps-3 pt-2">
+        <Col xs={listWidth} className="pe-3">
           <ElementsList
             overview={!hasCurrentElement}
           />
         </Col>
         {hasCurrentElement && (
-          <Col xs={7}>
+          <Col xs={7} className="pe-3">
             <ElementDetails currentElement={currentElement} />
           </Col>
         )}
-      </Row>
+      </div>
     );
   }
 }
