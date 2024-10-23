@@ -116,7 +116,7 @@ export default class ToolbarTemplateCreator extends React.Component {
     const { updateTextTemplates } = this.props;
     if (!updateTextTemplates) return;
 
-    const iconTemplates = this.toolbarSelectRef.current.state.value;
+    const iconTemplates = this.toolbarSelectRef.current.state.selectValue;
     const userTemplate = { _toolbar: iconTemplates.map(n => n.value) };
 
     const { dropdownTemplates } = this.state;
@@ -126,7 +126,7 @@ export default class ToolbarTemplateCreator extends React.Component {
       if (selectRefs.length === 0 || titleRefs.length === 0) return;
 
       const selectRef = selectRefs[0].ref;
-      const selectedValue = selectRef.current.state.value;
+      const selectedValue = selectRef.current.state.selectValue;
 
       const tempName = template.name;
       userTemplate[tempName] = selectedValue.map(v => v.value);
@@ -156,10 +156,9 @@ export default class ToolbarTemplateCreator extends React.Component {
       const removeDropdown = () => this.removeDropdownTemplate(template);
 
       return (
-        <>
+        <div key={`ttc_dd_${name}_${id}`}>
           <hr />
           <div
-            key={`ttc_dd_${name}_${id}`}
             className="d-flex gap-2 mt-2"
             style={{ maxWidth: '775px' }}
           >
@@ -188,7 +187,7 @@ export default class ToolbarTemplateCreator extends React.Component {
               <i className="fa fa-trash" />
             </Button>
           </div>
-        </>
+        </div>
       );
     });
 
@@ -219,8 +218,8 @@ export default class ToolbarTemplateCreator extends React.Component {
               defaultValue="Toolbar"
             />
             <Select
-              ref={this.toolbarSelectRef}
               className="me-5 col-10 f-5"
+              ref={this.toolbarSelectRef}
               defaultValue={iconSelected}
               options={options}
               isMulti

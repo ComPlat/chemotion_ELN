@@ -32,23 +32,21 @@ export default class Elements extends Component {
     const { currentElement } = this.state;
     const hasCurrentElement = currentElement !== null;
 
-    const showReport = currentElement?.type === 'report';
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
-      <Row className='w-100'>
-        <Col xs={listWidth}>
+      <div className="flex-grow-1 d-flex ps-3 pt-2">
+        <Col xs={listWidth} className="pe-3">
           <ElementsList
             overview={!hasCurrentElement}
-            showReport={showReport}
           />
         </Col>
         {hasCurrentElement && (
-          <Col xs={7}>
+          <Col xs={7} className="pe-3">
             <ElementDetails currentElement={currentElement} />
           </Col>
         )}
-      </Row>
+      </div>
     );
   }
 }

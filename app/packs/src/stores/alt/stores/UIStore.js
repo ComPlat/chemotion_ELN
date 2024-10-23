@@ -73,12 +73,11 @@ class UIStore {
       showCollectionManagement: false,
       showDeviceManagement: false,
       isSync: false,
-      showModal: false,
-      modalParams: {},
       hasChemSpectra: false,
       hasNmriumWrapper: false,
       matrices: {},
       thirdPartyApps: [],
+      version: {},
     };
 
     this.bindListeners({
@@ -112,8 +111,6 @@ class UIStore {
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
       handleShowDeviceManagement: UIActions.showDeviceManagement,
       handleCloseDeviceManagement: UIActions.closeDeviceManagement,
-      handleShowModalChange: UIActions.updateModalProps,
-      handleHideModal: UIActions.hideModal,
       handleSetFilterCreatedAt: UIActions.setFilterCreatedAt,
       handleSetUserLabel: UIActions.setUserLabel,
       handleSetFromDate: UIActions.setFromDate,
@@ -471,20 +468,6 @@ class UIStore {
 
   handleChangeNumberOfResultsShown(value) {
     this.state.number_of_results = value;
-  }
-  handleShowModalChange(params) {
-    this.state.showModal = params.show ? true : false
-    this.state.modalParams = params
-  }
-
-  handleHideModal() {
-    this.state.showModal = false
-    this.state.modalParams = {
-      show: false,
-      title: "",
-      component: null,
-      action: null
-    }
   }
 
   handleSetFilterCreatedAt(filterCreatedAt) {

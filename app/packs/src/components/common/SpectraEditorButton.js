@@ -27,7 +27,6 @@ export default function SpectraEditorButton({
             <Dropdown as={ButtonGroup}>
               <Button
                 id="spectra-editor-split-button"
-                pullRight
                 variant="info"
                 size="xxsm"
                 onToggle={(_, event) => { if (event) { event.stopPropagation(); } }}
@@ -47,7 +46,7 @@ export default function SpectraEditorButton({
                   }}
                   disabled={!hasJcamp || !element.can_update}
                 >
-                  <i className="fa fa-refresh" />
+                  <i className="fa fa-refresh me-1" />
                   Reprocess
                 </Dropdown.Item>
                 {hasEditedJcamp
@@ -60,7 +59,7 @@ export default function SpectraEditorButton({
                         confirmRegenerateEdited(event);
                       }}
                     >
-                      <i className="fa fa-refresh" />
+                      <i className="fa fa-refresh me-1" />
                       Regenerate .edit.jdx files
                     </Dropdown.Item>
                   )}
@@ -91,7 +90,6 @@ export default function SpectraEditorButton({
             <ButtonGroup>
               <Button
                 id="spectra-editor-split-button"
-                pullRight
                 variant="info"
                 size="xxsm"
                 onToggle={(_, event) => { if (event) { event.stopPropagation(); } }}

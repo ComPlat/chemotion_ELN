@@ -31,6 +31,7 @@ module Chemotion
           molecule_viewer: Matrice.molecule_viewer,
           collector_address: collector_address.presence,
           third_party_apps: Entities::ThirdPartyAppEntity.represent(ThirdPartyApp.all),
+          version: Chemotion::Application.config.version,
         }
       end
     end

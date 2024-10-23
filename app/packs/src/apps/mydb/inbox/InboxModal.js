@@ -2,10 +2,9 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Pagination, OverlayTrigger, Tooltip, Dropdown, Card,
+  Badge, Button, Pagination, OverlayTrigger, Tooltip, Dropdown, DropdownButton, Card,
   ButtonToolbar
 } from 'react-bootstrap';
-import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -37,8 +36,10 @@ export default class InboxModal extends React.Component {
       colMdValue: 4,
     };
 
-    this.onChange = this.onChange.bind(this);
+    this.onInboxStoreChange = this.onInboxStoreChange.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.onUserStoreChange = this.onUserStoreChange.bind(this);
+
     this.onClickInbox = this.onClickInbox.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -46,10 +47,12 @@ export default class InboxModal extends React.Component {
   }
 
   componentDidMount() {
-    InboxStore.listen(this.onChange);
+    InboxStore.listen(this.onInboxStoreChange);
     UIStore.listen(this.onUIStoreChange);
+    UserStore.listen(this.onUserStoreChange);
+    this.onUserStoreChange(UserStore.getState());
+
     InboxActions.fetchInboxCount();
-    this.initState();
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -61,7 +64,9 @@ export default class InboxModal extends React.Component {
   }
 
   componentWillUnmount() {
-    InboxStore.unlisten(this.onChange);
+    InboxStore.unlisten(this.onInboxStoreChange);
+    UIStore.unlisten(this.onUIStoreChange);
+    UserStore.unlisten(this.onUserStoreChange);
   }
 
   handlePageChange(pageNumber) {
@@ -73,7 +78,7 @@ export default class InboxModal extends React.Component {
     }
   }
 
-  onChange(state) {
+  onInboxStoreChange(state) {
     this.setState(state);
     this.setState({ visible: state.inboxModalVisible });
   }
@@ -82,6 +87,17 @@ export default class InboxModal extends React.Component {
     const { collectorAddress } = state;
     if (collectorAddress !== this.state.collectorAddress) {
       this.setState({ collectorAddress });
+    }
+  }
+
+  onUserStoreChange(state) {
+    const type = 'inbox';
+    const filters = state?.profile?.data?.filters || {};
+    const newSortColumn = filters[type]?.sort || 'name';
+
+    const { sortColumn } = this.state;
+    if (sortColumn !== newSortColumn) {
+      this.setState({ sortColumn: newSortColumn });
     }
   }
 
@@ -128,17 +144,6 @@ export default class InboxModal extends React.Component {
       default:
         return 'Unknown';
     }
-  };
-
-  initState = () => {
-    const type = 'inbox';
-    const userState = UserStore.getState();
-    const filters = userState?.profile?.data?.filters || {};
-
-    // you are not able to use this.setState because this would rerender it again and again ...
-
-    // eslint-disable-next-line react/no-direct-mutation-state
-    this.state.sortColumn = filters[type]?.sort || 'name';
   };
 
   updateFilterAndUserProfile = (type, sort) => {
@@ -306,19 +311,17 @@ export default class InboxModal extends React.Component {
         placement="top"
         overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}
       >
-        <Dropdown>
-          <Dropdown.Toggle id="dropdown-size-button" variant="info" size="sm">
-            Size
-          </Dropdown.Toggle>
-
-          <Dropdown.Menu>
-            {sizes.map((size) => (
-              <Dropdown.Item key={size} eventKey={size} onClick={() => this.handleSizingIconClick(size)}>
-                {size}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
+        <DropdownButton title="Size"
+          variant="info"
+          size="sm"
+          onSelect={(size) => this.handleSizingIconClick(size)}
+        >
+          {sizes.map((size) => (
+            <Dropdown.Item key={size} eventKey={size}>
+              {size}
+            </Dropdown.Item>
+          ))}
+        </DropdownButton>
       </OverlayTrigger>
     );
   };
@@ -340,8 +343,6 @@ export default class InboxModal extends React.Component {
   }
 
   renderSortButton() {
-    this.initState();
-
     const sortTitle = this.state.sortColumn === 'name'
       ? 'click to sort datasets and attachments by creation date (descending) - currently sorted alphabetically'
       : 'click to sort datasets and attachments alphabetically - currently sorted by creation date (descending)';
@@ -362,98 +363,90 @@ export default class InboxModal extends React.Component {
   }
 
   render() {
-    const { showCollectionTree } = this.props;
     const {
       visible, inboxVisible, numberOfAttachments, collectorAddress, colMdValue
     } = this.state;
 
-    const panelClass = showCollectionTree
-      ? `small-col col-md-${colMdValue} ${colMdValue === 2 ? 'small-panel' : ''}`
-      : 'small-col col-md-5';
-    const inboxDisplay = inboxVisible ? '' : 'none';
-
     if (!visible) { return null; };
 
-      return (
-        <Draggable
-          handle=".handle"
-          bounds="body"
+    return (
+      <Draggable
+        handle=".handle"
+        bounds="body"
+      >
+        <div
+          className={`small-col col-md-${colMdValue}`}
+          style={{
+            zIndex: 10,
+            position: 'absolute',
+            top: '70px',
+            left: '10px'
+          }}
         >
-          <div
-            className={panelClass}
-            style={{
-              zIndex: 10, position: 'absolute', top: '70px', left: '10px'
-            }}
-          >
-            <Card className="detail-card cursor">
-              <Card.Header
-                className="cursor handle draggable"
-                id="draggableInbox"
-                onMouseDown={this.handleMouseDown}
-              >
-                <div className="d-flex justify-content-between align-items-center w-100">
+          <Card className="cursor">
+            <Card.Header
+              className="cursor handle draggable text-bg-primary"
+              id="draggableInbox"
+              onMouseDown={this.handleMouseDown}
+            >
+              <div className="d-flex justify-content-between align-items-center w-100">
+                <div>
+                  <button
+                    type="button"
+                    className="border-0 bg-transparent"
+                    onClick={() => this.onClickInbox()}
+                  >
+                    <i className="fa fa-inbox" />
+                    <span className="ms-2 me-1 fw-bold text-white">Inbox</span>
+                  </button>
+                  {
+                    numberOfAttachments > 0
+                    && (
+                      <Badge bg="light" className="mx-1 text-primary">{numberOfAttachments}</Badge>
+                    )
+                  }
+                </div>
+                <ButtonToolbar className=" gap-1">
+                  {this.renderSortButton()}
+                  {collectorAddress && this.collectorAddressInfoButton()}
+                  {this.renderSizingIcon()}
+                  <Button
+                    variant="success"
+                    size="xsm"
+                    onClick={() => this.refreshInbox()}
+                  >
+                    <i className="fa fa-refresh" />
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="xsm"
+                    onClick={InboxActions.toggleInboxModal}
+                  >
+                    <i className="fa fa-close" />
+                  </Button>
+                </ButtonToolbar>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              <div>
+                {inboxVisible ? (
+                  this.inboxSubtrees()
+                ) : (
                   <div>
-                    <button
-                      type="button"
-                      className="border-0 bg-transparent"
+                    <Button
+                      variant="light"
                       onClick={() => this.onClickInbox()}
                     >
                       <i className="fa fa-inbox" />
-                      <span className="ms-2 me-1 fw-bold text-white">Inbox</span>
-                    </button>
-                    {
-                      numberOfAttachments > 0
-                      && (
-                        <Badge bg="light" className="mx-1 text-primary">{numberOfAttachments}</Badge>
-                      )
-                    }
-                  </div>
-                  <ButtonToolbar className=" gap-1">
-                    {this.renderSortButton()}
-                    {collectorAddress && this.collectorAddressInfoButton()}
-                    {this.renderSizingIcon()}
-                    <Button
-                      variant="success"
-                      size="xsm"
-                      onClick={() => this.refreshInbox()}
-                    >
-                      <i className="fa fa-refresh" />
+                      <span className="ms-2">Fetch Inbox</span>
                     </Button>
-                    <Button
-                      variant="danger"
-                      size="xsm"
-                      onClick={InboxActions.toggleInboxModal}
-                    >
-                      <i className="fa fa-close" />
-                    </Button>
-                  </ButtonToolbar>
-                </div>
-              </Card.Header>
-              <Card.Body>
-                <div>
-                  {!inboxVisible &&
-                    <div>
-                      <Button
-                        variant="light"
-                        onClick={() => this.onClickInbox()}
-                      >
-                        <i className="fa fa-inbox" />
-                        <span className="ms-2">Fetch Inbox</span>
-                      </Button>
-                    </div>
-                  }
-                  <div style={{ display: inboxDisplay }}>
-                    {this.inboxSubtrees()}
                   </div>
-                </div>
-              </Card.Body>
-            </Card>
-          </div>
-        </Draggable>
-      );
+                )}
+              </div>
+            </Card.Body>
+          </Card>
+        </div>
+      </Draggable>
+    );
   }
 }
-
-InboxModal.propTypes = {
-  showCollectionTree: PropTypes.bool.isRequired
-};

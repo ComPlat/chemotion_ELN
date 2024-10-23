@@ -8,6 +8,7 @@
  *= require_self
  */
 
+@import "global-styles/chemstrap-tokens";
 @import "global-styles/bootstrap-config";
 @import "global-styles/bootstrap-mods";
 @import "global-styles/vendor";
@@ -17,15 +18,17 @@
 
 // file css rules that are targeted at specific components under components
 @import "components/MydbApp";
+@import "components/Sheet";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
-@import "components/CollectionTree";
 @import "components/ElementsTable";
 @import "components/Report";
 @import "components/SearchModal";
 @import "components/SearchResult";
+@import "components/SideBar";
 @import "components/QuillEditor";
 @import "components/QuillViewer";
+@import "components/Styleguide";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";
@@ -49,7 +52,6 @@
 @import "legacy/molecules";
 @import "legacy/molviewer";
 @import "legacy/mozilla";
-@import "legacy/navigation";
 @import "legacy/nmrdb-logo";
 @import "legacy/omniauth";
 @import "legacy/polymer_section";
