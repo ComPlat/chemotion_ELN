@@ -94,7 +94,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       });
     };
   };
-
   // helper function to process ketcherrails files and adding image to ketcher2 canvas
   const adding_polymers_ketcher_format = (rails_polymers_list) => {
     const p_items = rails_polymers_list.split(" ");
@@ -348,7 +347,7 @@ const KetcherEditor = forwardRef((props, ref) => {
           if (three_parts_patten.test(item.alias)) {
             const image = imagesList[alias[2]];
             if (image?.boundingBox) {
-              const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
+              const { x, y } = image?.boundingBox;
               const location = [x, y, 0]; // Set location as an array of coordinates
               // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images 
               molecule.atoms[atom_idx].alias = item.alias.trim();
@@ -372,6 +371,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     imagesList.length && placeImageOnAtoms(mols, imagesList);
   };
 
+  // helper function to match and indentify collectio three part alias and match then my image_used_counter number
   const checkAliasMatch = (aliasInput, aliasSet) => {
     // Get the last part of the input alias
     const inputLastPart = aliasInput.split('_').pop();
@@ -384,6 +384,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
     return false;
   };
+
   // helper function to handle new atoms added to the canvas
   const handleAddAtom = async () => {
     console.log("Atom moved!");
@@ -540,11 +541,11 @@ const KetcherEditor = forwardRef((props, ref) => {
       "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
         image_used_counter = -1;
       },
-      "[title='Undo \\(Ctrl\\+Z\\)']": async () => {
-        // await editor._structureDef.editor.editor.undo();
+      "[title='Undo \\(Ctrl\\+Z\\)']": () => {
+
       },
-      "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": async () => {
-        // await editor._structureDef.editor.editor.redo();
+      "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
+
       }
     };
 
@@ -554,6 +555,16 @@ const KetcherEditor = forwardRef((props, ref) => {
       if (button && !button.hasClickListener) {
         button.addEventListener('click', buttonEvents[selector]);
         button.hasClickListener = true;
+      }
+    };
+
+    const disableButton = (iframeDocument, title) => {
+      const button = iframeDocument.querySelector(`[title="${title}"]`);
+      if (button) {
+        button.setAttribute("disabled", true);
+        button.classList.add("disabled"); // Optional: add a class for styling
+      } else {
+        console.log({ button }, `${title} not found`);
       }
     };
 
@@ -568,6 +579,11 @@ const KetcherEditor = forwardRef((props, ref) => {
             Object.keys(buttonEvents).forEach((selector) => {
               attachListenerForTitle(iframeDocument, selector);
             });
+
+            // Disable buttons again in case they were added dynamically
+            disableButton(iframeDocument, 'Undo \\(Ctrl\\+Z\\)');
+            disableButton(iframeDocument, 'Redo \\(Ctrl\\+Shift\\+Z\\)');
+            disableButton(iframeDocument, 'Erase \\(Del\\)');
           }
         }
 
