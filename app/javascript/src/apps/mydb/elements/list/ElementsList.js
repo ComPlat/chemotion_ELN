@@ -134,7 +134,7 @@ export default class ElementsList extends React.Component {
       'sample', 'reaction', 'screen',
       'wellplate', 'research_plan',
       'cell_line', 'device_description'
-    ].concat(genericKlasses);
+    , 'vessel'].concat(genericKlasses);
 
     const newTotalCheckedElements = {};
     let needsUpdate = false;
@@ -191,7 +191,8 @@ export default class ElementsList extends React.Component {
       'wellplate',
       'research_plan',
       'cell_line',
-      'device_description'
+      'device_description',
+      'vessel'
     ]);
     const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;
