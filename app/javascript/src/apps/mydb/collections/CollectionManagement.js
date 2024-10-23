@@ -10,7 +10,7 @@ import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
 
 export default function CollectionManagement() {
   return (
-    <div className="tabs-container--with-borders tabs-container--with-full-height">
+    <div className="tabs-container--with-borders tabs-container--with-full-height px-3">
       <Tabs defaultActiveKey={0} id="collection-management-tab">
         <Tab eventKey={0} title="My Collections">
           <ScrollContainer>
