@@ -112,7 +112,7 @@ class App extends Component {
           isCollapsed={isSidebarCollapsed}
           toggleCollapse={this.toggleSidebar}
         />
-        <div className="d-flex flex-column flex-grow-1 px-4">
+        <div className="d-flex flex-column flex-grow-1">
           <Topbar />
           {this.mainContent()}
         </div>

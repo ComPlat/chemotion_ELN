@@ -23,11 +23,11 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
           <i className={"fa " + (isCollapsed ? "fa-angle-double-right" : "fa-angle-double-left")} />
         </Button>
       </div>
-      <div className="h-100 d-flex flex-column">
+      <div className="h-100 d-flex flex-column gap-3">
         <a href="/mydb" title="Link to mydb index page">
           <ChemotionLogo collapsed={isCollapsed} />
         </a>
-        <div className="d-flex flex-column flex-grow-1 overflow-y-auto h-0 my-3">
+        <div className="d-flex flex-column flex-grow-1 overflow-y-auto h-0">
           {!isCollapsed && (
             <CollectionTree />
           )}
