@@ -1,7 +1,7 @@
 /*
  * In order to control import order and provide access to variables, mixins and utilities, we import
  * the files within this directory manually via sass `@import`, instead of using `require_tree .`
- *
+ * 
  * The files in the legacy directory have not yet been aligned with the design system initiative and
  * will be refactored in the future.
  *
@@ -25,6 +25,7 @@
 @import "components/Report";
 @import "components/SearchModal";
 @import "components/SearchResult";
+@import "components/SideBar";
 @import "components/QuillEditor";
 @import "components/QuillViewer";
 @import "components/Styleguide";

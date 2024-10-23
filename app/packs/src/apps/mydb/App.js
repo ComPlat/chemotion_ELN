@@ -119,22 +119,17 @@ class App extends Component {
 
   renderContent() {
     const { isSidebarCollapsed } = this.state;
-    const sidebarCols = isSidebarCollapsed ? 1 : 2;
     return (
-      <Container fluid className="mydb-app vh-100">
-        <Row className="h-100">
-          <Col xs={sidebarCols} className="px-0">
-            <Sidebar
-              isCollapsed={isSidebarCollapsed}
-              toggleCollapse={this.toggleSidebar}
-            />
-          </Col>
-          <Col xs={12 - sidebarCols} className="d-flex flex-column px-0">
-            <Topbar />
-            {this.mainContent()}
-          </Col>
-        </Row>
-      </Container>
+      <div className="mydb-app d-flex vh-100">
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          toggleCollapse={this.toggleSidebar}
+        />
+        <div className="d-flex flex-column flex-grow-1">
+          <Topbar />
+          {this.mainContent()}
+        </div>
+      </div>
     );
   }
 

@@ -1,0 +1,36 @@
+.sidebar {
+  @extend .text-bg-white;
+  @extend .position-relative;
+  @extend .p-3;
+  width: 300px;
+  &.sidebar--collapsed {
+    width: 80px;
+  }
+}
+
+$sidebar-button-diameter: 16px;
+
+.sidebar-collapse-button-container {
+  @extend .position-absolute;
+  @extend .end-0;
+  @extend .overflow-hidden;
+  top: calc(50% - #{$sidebar-button-diameter});
+  width: $sidebar-button-diameter;
+  margin: auto -14px auto 0;
+  z-index: 1000;
+}
+
+.sidebar-collapse-button {
+  @extend .rounded-start-0;
+  @extend .btn-sm;
+  @extend .p-2;
+  @extend .text-end;
+  @extend .text-primary;
+  @extend .border;
+  background-color: $white !important;
+  margin-left: -$sidebar-button-diameter;
+  border-top-right-radius: 100% !important;
+  border-bottom-right-radius: 100% !important;
+  width: $sidebar-button-diameter * 2;
+  height: $sidebar-button-diameter * 2;
+}

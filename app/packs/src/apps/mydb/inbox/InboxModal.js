@@ -55,18 +55,18 @@ export default class InboxModal extends React.Component {
     InboxActions.fetchInboxCount();
   }
 
-  componentWillUnmount() {
-    InboxStore.unlisten(this.onInboxStoreChange);
-    UIStore.unlisten(this.onUIStoreChange);
-    UserStore.unlisten(this.onUserStoreChange);
-  }
-
   componentDidUpdate(prevProps, prevState) {
     const { currentPage, itemsPerPage } = this.state;
     if (prevState.currentPage !== currentPage
         || prevState.itemsPerPage !== itemsPerPage) {
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onInboxStoreChange);
+    UIStore.unlisten(this.onUIStoreChange);
+    UserStore.unlisten(this.onUserStoreChange);
   }
 
   handlePageChange(pageNumber) {
@@ -93,7 +93,12 @@ export default class InboxModal extends React.Component {
   onUserStoreChange(state) {
     const type = 'inbox';
     const filters = state?.profile?.data?.filters || {};
-    this.setState({sortColumn: filters[type]?.sort || 'name'});
+    const newSortColumn = filters[type]?.sort || 'name';
+
+    const { sortColumn } = this.state;
+    if (sortColumn !== newSortColumn) {
+      this.setState({ sortColumn: newSortColumn });
+    }
   }
 
   onClickInbox() {

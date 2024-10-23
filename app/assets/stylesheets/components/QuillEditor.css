@@ -456,6 +456,11 @@
 .ql-snow .ql-toolbar .ql-picker-item.ql-selected .ql-stroke-miter {
   stroke: $primary;
 }
+.ql-snow .ql-picker .ql-picker-label::before, .ql-snow .ql-picker.ql-size .ql-picker-item::before {
+  content: attr(data-label);
+  line-height: 25px;
+}
+
 .ql-snow {
   box-sizing: border-box;
 }

@@ -4,6 +4,7 @@ $success: $chemstrap-green;
 $info: #5bc0de; // to be removed application wide
 $warning: $chemstrap-yellow;
 $danger: $chemstrap-red;
+$white: white;
 
 $zindex-levels: (
   n1: -1,
@@ -17,6 +18,7 @@ $zindex-levels: (
 
 $chemstrap-theme-colors: (
   "active": $chemstrap-blue-dark,
+  "white": $white,
 );
 
 @import "bootstrap/functions";
