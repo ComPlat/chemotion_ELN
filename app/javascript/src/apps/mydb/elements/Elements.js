@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Row, Col } from 'react-bootstrap';
+import { Col } from 'react-bootstrap';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
@@ -12,7 +12,7 @@ export default class Elements extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentElement: null
+      showElementDetails: ElementStore.getState().currentElement !== null,
     };
 
     this.handleOnChange = this.handleOnChange.bind(this);
@@ -27,30 +27,29 @@ export default class Elements extends Component {
     ElementStore.unlisten(this.handleOnChange);
   }
 
-  handleOnChange(state) {
-    const { currentElement } = state;
-    if (currentElement && currentElement.type == 'device_description') {
-      this.context.deviceDescriptions.addDeviceDescriptionToOpen(currentElement);
+  handleOnChange({ currentElement }) {
+    if (currentElement && currentElement.type === 'device_description') {
+      const { deviceDescriptions } = this.context;
+      deviceDescriptions.addDeviceDescriptionToOpen(currentElement);
     }
-    this.setState({ currentElement });
+    this.setState({ showElementDetails: currentElement !== null });
   }
 
   render() {
-    const { currentElement } = this.state;
-    const hasCurrentElement = currentElement !== null;
-    const listWidth = hasCurrentElement ? 5 : 12;
+    const { showElementDetails } = this.state;
+    const listWidth = showElementDetails ? 5 : 12;
 
     return (
-      <Row className="flex-grow-1">
-        <Col xs={listWidth}>
+      <div className="flex-grow-1 d-flex ps-3 pt-2">
+        <Col xs={listWidth} className="pe-3">
           <ElementsList />
         </Col>
-        {hasCurrentElement && (
-          <Col xs={7}>
-            <ElementDetails currentElement={currentElement} />
+        {showElementDetails && (
+          <Col xs={7} className="pe-3">
+            <ElementDetails />
           </Col>
         )}
-      </Row>
+      </div>
     );
   }
 }
