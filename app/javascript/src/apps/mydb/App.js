@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Col, Row, Container } from 'react-bootstrap';
 
 import Sidebar from 'src/apps/mydb/layout/Sidebar';
 import Topbar from 'src/apps/mydb/layout/Topbar';
@@ -107,22 +106,17 @@ class App extends Component {
 
   renderContent() {
     const { isSidebarCollapsed } = this.state;
-    const sidebarCols = isSidebarCollapsed ? 1 : 2;
     return (
-      <Container fluid className="mydb-app vh-100">
-        <Row className="h-100">
-          <Col xs={sidebarCols} className="position-relative">
-            <Sidebar
-              isCollapsed={isSidebarCollapsed}
-              toggleCollapse={this.toggleSidebar}
-            />
-          </Col>
-          <Col xs={12 - sidebarCols} className="d-flex flex-column">
-            <Topbar />
-            {this.mainContent()}
-          </Col>
-        </Row>
-      </Container>
+      <div className="mydb-app d-flex vh-100">
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          toggleCollapse={this.toggleSidebar}
+        />
+        <div className="d-flex flex-column flex-grow-1 px-4">
+          <Topbar />
+          {this.mainContent()}
+        </div>
+      </div>
     );
   }
 
