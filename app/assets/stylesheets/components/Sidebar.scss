@@ -1,16 +1,36 @@
+.sidebar {
+  @extend .position-relative;
+  @extend .text-bg-light;
+  @extend .p-3;
+  width: 300px;
+  @extend .flex-shrink-0;
+  &.sidebar--collapsed {
+    width: 80px;
+  }
+}
+
+$sidebar-button-diameter: 20px;
+
 .sidebar-collapse-button-container {
-  @extend .d-flex;
-  @extend .justify-content-center;
-  @extend .align-items-center;
-  @extend .flex-column;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  margin: auto -30px auto 0;
+  @extend .position-absolute;
+  @extend .end-0;
+  @extend .overflow-hidden;
+  top: calc(50% - #{$sidebar-button-diameter});
+  width: $sidebar-button-diameter;
+  margin: auto -#{$sidebar-button-diameter} auto 0;
   z-index: 1000;
 }
 
 .sidebar-collapse-button {
-  width: 30px;
+  @extend .rounded-start-0;
+  @extend .btn-sm;
+  @extend .p-2;
+  @extend .text-end;
+  @extend .btn-light;
+  @extend .text-primary;
+  margin-left: -20px;
+  border-top-right-radius: 100% !important;
+  border-bottom-right-radius: 100% !important;
+  width: $sidebar-button-diameter * 2;
+  height: $sidebar-button-diameter * 2;
 }
