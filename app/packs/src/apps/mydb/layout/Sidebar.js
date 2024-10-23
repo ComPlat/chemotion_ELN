@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import classNames from 'classnames';
 
-import NavHead from 'src/components/navigation/NavHead';
+import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 
@@ -14,28 +14,27 @@ import NoticeButton from 'src/components/contextActions/NoticeButton';
 
 export default function Sidebar({ isCollapsed, toggleCollapse }) {
   return (
-    <>
+    <div className={"sidebar" + (isCollapsed ? " sidebar--collapsed" : "")} >
       <div className="sidebar-collapse-button-container">
         <Button
           onClick={toggleCollapse}
-          variant="light"
           className="sidebar-collapse-button"
         >
-          <i className="fa fa-exchange" />
+          <i className={"fa " + (isCollapsed ? "fa-angle-double-right" : "fa-angle-double-left")} />
         </Button>
       </div>
+      <a href="/mydb" title="Link to mydb index page">
+        <ChemotionLogo collapsed={isCollapsed} />
+      </a>
       <div className="h-100 d-flex flex-column">
-        <div className="d-flex flex-column flex-grow-1 overflow-y-auto h-0">
-          <div className="d-flex justify-content-center py-3">
-            <NavHead />
-          </div>
+        <div className="d-flex flex-column flex-grow-1 overflow-y-auto h-0 my-3">
           {!isCollapsed && (
             <CollectionTree />
           )}
           <CollectionManagementButton />
         </div>
         <div className={classNames(
-          'd-flex justify-content-center gap-3 py-4',
+          'd-flex justify-content-center gap-3 py-4 border-top',
           { 'flex-column align-items-center': isCollapsed }
         )}>
           <InboxButton />
@@ -44,7 +43,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
           <NoticeButton />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
