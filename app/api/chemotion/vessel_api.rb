@@ -58,7 +58,7 @@ module Chemotion
         vessels = paginate(scope).map do |vessel|
           Entities::VesselInstanceEntity.represent(
             vessel,
-            # displayed_in_list: true,
+            displayed_in_list: true,
             #  detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: cell_line_sample).detail_levels,
           )
         end
@@ -86,7 +86,7 @@ module Chemotion
         optional :vessel_name, type: String, desc: 'name of a vessel sample'
         optional :material_details, type: String, desc: 'details of the vessel template'
         optional :details, type: String, desc: 'additional details'
-        optional :material_type, type: String, desc: 'material type of the vessel'
+        optional :material_type, type: String, desc: 'vessel material type of the vessel'
         optional :vessel_type, type: String, desc: 'type of the vessel'
         optional :volume_amount, type: Float, desc: 'volume amount'
         optional :volume_unit, type: String, desc: 'volume unit'
@@ -143,50 +143,74 @@ module Chemotion
         present vessel, with: Entities::VesselInstanceEntity
       end
 
-      desc 'Update a Cell line sample'
+      desc 'Update a vessel instance or associated vessel template'
       params do
-        requires :cell_line_sample_id, type: String, desc: 'id of the cell line to update'
-        optional :organism, type: String, desc: 'name of the donor organism of the cell'
-        optional :mutation, type: String, desc: 'mutation of a cell line'
-        optional :tissue, type: String, desc: 'tissue from which the cell originates'
-        requires :amount, type: Integer, desc: 'amount of cells'
-        requires :unit, type: String, desc: 'unit of amount of cells'
-        optional :passage, type: Integer, desc: 'passage of cells'
-        optional :disease, type: String, desc: 'deasease of cells'
-        optional :material_names, type: String, desc: 'names of cell line e.g. name1;name2'
-        optional :collection_id, type: Integer, desc: 'Collection of the cell line sample'
-        optional :cell_type, type: String, desc: 'type of cells'
-        optional :biosafety_level, type: String, desc: 'biosafety_level of cells'
-        optional :variant, type: String, desc: 'variant of cells'
-        optional :optimal_growth_temp, type: Float, desc: 'optimal_growth_temp of cells'
-        optional :cryo_pres_medium, type: String, desc: 'cryo preservation medium of cells'
-        optional :gender, type: String, desc: 'gender of donor organism'
-        optional :material_description, type: String, desc: 'description of cell line concept'
-        optional :contamination, type: String, desc: 'contamination of a cell line sample'
-        optional :source, type: String, desc: 'source of a cell line sample'
-        optional :name, type: String, desc: 'name of a cell line sample'
-        optional :description, type: String, desc: 'description of a cell line sample'
-        requires :container, type: Hash, desc: 'root Container of element'
+        requires :vessel_id, type: String, desc: 'id of the vessel to update'
+        optional :vessel_template_id, type: String, desc: 'ID of the vessel template to update'
+        optional :template_name, type: String, desc: 'name of a vessel template'
+        optional :vessel_name, type: String, desc: 'name of a vessel sample'
+        optional :material_details, type: String, desc: 'details of the vessel template'
+        optional :details, type: String, desc: 'additional details'
+        optional :material_type, type: String, desc: 'vessel material type of the vessel'
+        optional :vessel_type, type: String, desc: 'type of the vessel'
+        optional :volume_amount, type: Float, desc: 'volume amount'
+        optional :volume_unit, type: String, desc: 'volume unit'
+        optional :weight_amount, type: Float, desc: 'weight of the vessel'
+        optional :weight_unit, type: String, desc: 'weight unit of the vessel'
+        optional :bar_code, type: String, desc: 'bar code of the vessel'
+        optional :qr_code, type: String, desc: 'qr code of the vessel'
+        optional :collection_id, type: Integer, desc: 'collection of the vessel sample'
+        optional :description, type: String, desc: 'description of a vessel sample'
+        optional :short_label, type: String, desc: 'short label of a vessel sample'
+        optional :container, type: Hash, desc: 'root Container of element'
       end
       put do
-        use_case = Usecases::CellLines::Update.new(params, current_user)
-        cell_line_sample = use_case.execute!
-        cell_line_sample.container = update_datamodel(params[:container])
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        vessel = Vessel.find_by(id: params[:vessel_id])
+        error!('Vessel not found', 404) unless vessel
+
+        vessel_params = {
+          name: params[:vessel_name],
+          description: params[:description],
+          bar_code: params[:bar_code],
+          qr_code: params[:qr_code],
+          short_label: params[:short_label]
+        }.compact
+        vessel.update!(vessel_params) if vessel_params.present?
+
+        if params[:vessel_template_id]
+          vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id], deleted_at: nil)
+          error!('Vessel template not found', 404) unless vessel_template
+
+          template_params = {
+            name: params[:template_name],
+            details: params[:details],
+            material_details: params[:material_details],
+            material_type: params[:material_type],
+            vessel_type: params[:vessel_type],
+            volume_amount: params[:volume_amount],
+            volume_unit: params[:volume_unit],
+            weight_amount: params[:weight_amount],
+            weight_unit: params[:weight_unit]
+          }.compact
+          vessel_template.update!(template_params) if template_params.present?
+        end
+
+        present vessel, with: Entities::VesselInstanceEntity
       end
 
+
       resource :names do
-        desc 'Returns all accessable cell line material names and their id'
+        desc 'Returns all accessable vessel templates material names and their id'
         get 'all' do
-          return present CelllineMaterial.all, with: Entities::CellLineMaterialNameEntity
+          return present VesselTemplate.all, with: Entities::VesselTemplateEntity
         end
       end
       resource :material do
         params do
-          requires :id, type: Integer, desc: 'id of cell line material to load'
+          requires :id, type: String, desc: 'id of vessel template to load'
         end
         get ':id' do
-          return CelllineMaterial.find(params[:id])
+          return VesselTemplate.find(params[:id])
         end
       end
 
@@ -205,7 +229,7 @@ module Chemotion
         end
       end
 
-      desc 'Delete a VesselTemplate'
+      desc 'Delete a Vessel Template'
       params do
         requires :id, type: String, desc: 'ID of the vessel template to delete'
       end
