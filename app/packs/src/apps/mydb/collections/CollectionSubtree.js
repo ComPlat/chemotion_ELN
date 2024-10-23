@@ -187,7 +187,7 @@ export default class CollectionSubtree extends React.Component {
               placement="top"
               overlay={<Tooltip id="collection_inventory_label">Inventory Label</Tooltip>}
             >
-              <Badge>{inventoryPrefix}</Badge>
+              <Badge bg="secondary">{inventoryPrefix}</Badge>
             </OverlayTrigger>
           )}
           {this.canTakeOwnership() && (
