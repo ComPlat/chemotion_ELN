@@ -518,7 +518,21 @@ const KetcherEditor = forwardRef((props, ref) => {
           console.warn({ three: splits, all_three_alias_collection, all_three_alias_collection });
           if (checkAliasMatch(atom.alias, all_three_alias_collection)) {
             console.log("EXISTS");
-            atom.alias = `t_${splits[1]}_${++image_used_counter}`;
+            ++image_used_counter;
+            atom.alias = `t_${splits[1]}_${image_used_counter}`;
+            console.log("THREE", { imagesList }, imagesList.length - 1, image_used_counter);
+            if (imagesList.length - 1 < image_used_counter) {
+              console.log("neu bild ist gebraucht.");
+              const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
+              new_images.push(img);
+            }
+          } else {
+            console.log({ image_used_counter, imagesList });
+            if (image_used_counter === -1 && !imagesList.length) {
+              const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
+              new_images.push(img);
+              image_used_counter++;
+            }
           }
           all_three_alias_collection.add(atom.alias);
         }
@@ -526,7 +540,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         else if (atom.label === "A" && two_parts_pattern.test(atom.alias) && splits.length == 2) {
           console.warn({ two: splits, atom, all_three_alias_collection });
           atom.alias += `_${++image_used_counter}`;
-          if (!imagesList[image_used_counter]) {
+          console.log("TWO", { imagesList }, imagesList.length - 1, image_used_counter);
+          if (imagesList.length - 1 < image_used_counter) {
             const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
             new_images.push(img);
           }
@@ -535,6 +550,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         else if (atom.label === "H") is_h_id_list.push(atom);
         else if (atom.label === "C") {
           // ignore
+        } else {
+          console.error("dead zone!!");
         }
       }
       if (is_h_id_list.length) {
