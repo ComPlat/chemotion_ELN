@@ -1262,7 +1262,7 @@ export default class SampleDetails extends React.Component {
 
   renderMolfileModal() {
     const { molfile } = this.state;
-    const molfileText = molfile.replace(/\r?\n/g, '<br />');
+    const molfileText = molfile ? molfile.replace(/\r?\n/g, '<br />') : '';
 
     return (
       <Modal
