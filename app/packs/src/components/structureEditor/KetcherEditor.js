@@ -14,9 +14,10 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
+let new_atoms = [];
+
 const skip_template_name_hide = false;
 const skip_image_layering = false;
-const new_atoms = [];
 const [standard_height_cirlce, standard_width_circle] = [1.0250000000000006, 1.0250000000000006];
 const [standard_height_square, standard_width_square] = [0.9750000000000001, 1.5749999999999986];
 
@@ -172,7 +173,8 @@ const KetcherEditor = forwardRef((props, ref) => {
     ) : imagesList;
     mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
     mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
-    // console.log("DATA FUELED", { latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
+    // image_used_counter = imagesList.length > 0 ? imagesList.length - 1 : image_used_counter;
+    // console.log("DATA FUELED", { image_used_counter, latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
 
   // all logic implementation if move atom has an alias which passed three part regex
@@ -370,77 +372,181 @@ const KetcherEditor = forwardRef((props, ref) => {
     imagesList.length && placeImageOnAtoms(mols, imagesList);
   };
 
-  const atom_id_match = (id) => {
-    const index = new_atoms.findIndex(i => i.id == id);
-    if (index !== -1) {
-      const item = new_atoms[index];
-      new_atoms.splice(index, 1);
-      return item;
+  const checkAliasMatch = (aliasInput, aliasSet) => {
+    // Get the last part of the input alias
+    const inputLastPart = aliasInput.split('_').pop();
+
+    // Iterate over the Set and check if the last part matches
+    for (let alias of aliasSet) {
+      const aliasLastPart = alias.split('_').pop();  // Get the last part of each alias in the set
+      if (aliasLastPart === inputLastPart) {
+        return true;  // Return true if a match is found
+      }
     }
-    return null;  // If no match is found
+
+    return false;  // Return false if no match is found
   };
   // helper function to handle new atoms added to the canvas
   const handleAddAtom = async () => {
     console.log("Atom moved!");
     await fuelKetcherData();
+
+    // mols.forEach(async (mol) => {
+    //   let is_h_id_list = [];
+    //   const molecule = latestData[mol];
+    //   const atoms = latestData[mol].atoms;
+    //   for (let i = 0; i < atoms.length; i++) {
+    //     const item = atoms[i];
+    //     atom_id_counter++;
+    //     atoms_changed_counter--;
+
+    //     const atom_found = atom_id_match(atom_id_counter);
+    //     if (atom_found) { // atoms passing pattern_t
+    //       console.log({ atom_found });
+    //       const is_two = two_parts_pattern.test(item?.alias);
+    //       if (is_two) {
+    //         console.error({ atom_found: "if" });
+    //         if (!imagesList[image_used_counter + 1]) {
+    //           const alias_splits = item.alias.split("_");
+    //           latestData[mol].atoms[i].alias += `_${++image_used_counter}`;
+    //           const img = prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location);
+    //           new_images.push(img);
+    //         } else {
+    //           console.warn("image found?", item.alias);
+    //           const is_two = two_parts_pattern.test(item?.alias);
+    //           if (is_two) {
+    //             latestData[mol].atoms[i].alias += `_${++image_used_counter}`;
+    //           }
+    //         }
+    //       } else {
+    //         if (item.label === "A") {
+    //           console.error({ atom_found: "else" });
+    //           const three_splits = item.alias.split("_");
+    //           latestData[mol].atoms[i].alias = `t_${three_splits[1]}`;
+    //           //
+    //           const alias_splits = item.alias.split("_");
+    //           latestData[mol].atoms[i].alias += `_${++image_used_counter}`;
+    //           if (!imagesList[image_used_counter]) {
+    //             const img = prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location);
+    //             new_images.push(img);
+    //           }
+    //         }
+    //       }
+    //     } else if (two_parts_pattern.test(item.alias) || three_parts_patten.test(item.alias)) {
+    //       console.error("Atom not found");
+    //       new_images = [];
+
+    //       const alias_splits = item.alias.split("_");
+    //       if (!imagesList[image_used_counter]) {
+    //         console.error("Atom not found if");
+    //         const third_part = ++image_used_counter;
+    //         latestData[mol].atoms[i].alias += `_${third_part}`;
+    //         console.log({ end_outer_else: latestData[mol].atoms[i].alias });
+    //         const img = prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location);
+    //         new_images.push(img);
+    //       } else {
+    //         console.error("Atom not found else", item.alias, imagesList);
+    //         const is_two = two_parts_pattern.test(item?.alias);
+    //         const is_three = three_parts_patten.test(item?.alias);
+    //         console.log({ is_two, is_three });
+    //         if (is_two) item.alias += `_${image_used_counter}`;
+    //         if (is_three) {
+    //           console.warn({ three: item.alias, image_used_counter });
+    //           const three_splits = item.alias.split("_");
+    //           item.alias = `t_${three_splits[1]}_${image_used_counter}`;
+    //           if (!imagesList[image_used_counter]) {
+    //             console.error("image needs to be added!!!!!!!!!");
+    //           } else {
+    //             console.log({ image_is_there: imagesList[image_used_counter] });
+    //           }
+    //         }
+    //       }
+    //     } else {
+    //       if (item.label === "A") {
+    //         console.error("died?", item.alias, item.label, image_used_counter);
+    //         const three_splits = item.alias.split("_");
+
+    //         if (three_parts_patten.test(item.alias)) {
+    //           const three_splits = item.alias.split("_");
+    //           item.alias = `t_${three_splits[1]}`;
+    //         }
+
+    //         console.log({ new: item.alias });
+    //         // if (alias_list_on_template_drop.indexOf(item.alias) != -1 && three_splits[2] <= image_used_counter) {
+    //         //   item.alias = `t_${three_splits[1]}_${image_used_counter}`;
+    //         //   console.log({ atom_item_alias: item.alias });
+    //         // } else {
+    //         //   alias_list_on_template_drop.push(item.alias);
+    //         // }
+    //       }
+    //     }
+    //     if (item?.label === "H") is_h_id_list.push(i);
+    //     if (atoms_changed_counter < 0) {
+    //       console.log("BREAKING NOW");
+    //       break;
+    //     };
+    //   }
+
+    //   if (is_h_id_list.length) {
+    //     molecule.atoms?.splice(molecule.atoms.length - is_h_id_list.length, is_h_id_list.length);
+    //     molecule.bonds?.splice(molecule.bonds.length - is_h_id_list.length, is_h_id_list.length);
+    //   }
+    //   latestData[mol] = molecule;
+    //   if (atoms_changed_counter < 0) {
+    //     console.log("BREAKING NOW main");
+    //     return;
+    //   };
+    // });
+
+    // for (let i = 0; i < new_atoms.length; i++) {
+    //   const new_atom_item = new_atoms[i];
+
     let atom_id_counter = -1;
     let new_images = [];
-    mols.forEach(async (mol) => {
-      let is_h_id_list = [];
-      const molecule = latestData[mol];
-      const atoms = latestData[mol].atoms;
-      console.log({ new_atoms });
-      for (let i = 0; i < atoms.length; i++) {
-        const item = atoms[i];
-        atom_id_counter++;
-        const atom_found = atom_id_match(atom_id_counter);
+    const all_three_alias_collection = new Set();
 
-        if (atom_found) { // atoms passing pattern_two
-          console.log("start----------------", atom_found, item.alias);
-          // if (three_parts_patten.test(item.alias)) {
-          //   console.log({ was: item.alias });
-          //   const three_splits = item.alias.split("_");
-          //   item.alias = `t_${three_splits[1]}`;
-          //   console.log({ now: item.alias });
-          // }
-          const is_two = two_parts_pattern.test(item?.alias);
-          if (is_two && item.alias) {
-            console.log({ in: item.alias });
-            const alias_splits = item.alias.split("_");
-            latestData[mol].atoms[i].alias += `_${++image_used_counter}`;
-            if (!imagesList[image_used_counter]) {
-              const img = prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location);
-              new_images.push(img);
-            }
-            console.log("end----------------");
-          } else {
-            console.log({ else: item });
+    for (let m = 0; m < mols.length; m++) {
+      const mol = latestData[mols[m]];
+      const is_h_id_list = [];
+      for (let a = 0; a < mol.atoms.length; a++) {
+        const atom = mol.atoms[a];
+        atom_id_counter++;
+        const splits = atom?.alias?.split("_");
+
+        // label A with three part alias
+        if (atom.label === "A" && three_parts_patten.test(atom.alias) && splits.length == 3) {
+          console.warn({ three: splits, all_three_alias_collection, all_three_alias_collection });
+          if (checkAliasMatch(atom.alias, all_three_alias_collection)) {
+            console.log("EXISTS");
+            atom.alias = `t_${splits[1]}_${++image_used_counter}`;
           }
-        } else if (two_parts_pattern.test(item.alias)) {
-          new_images = [];
-          console.log({ outer_else: item }, "item00000000000");
-          const alias_splits = item.alias.split("_");
-          const third_part = ++image_used_counter;
-          latestData[mol].atoms[i].alias += `_${third_part}`;
-          console.log({ end_outer_else: latestData[mol].atoms[i].alias });
-          if (!imagesList[third_part]) {
-            const img = prepareImageFromTemplateList(parseInt(alias_splits[1]), item.location);
+          all_three_alias_collection.add(atom.alias);
+        }
+        // label A with two part alias n
+        else if (atom.label === "A" && two_parts_pattern.test(atom.alias) && splits.length == 2) {
+          console.warn({ two: splits, atom, all_three_alias_collection });
+          atom.alias += `_${++image_used_counter}`;
+          if (!imagesList[image_used_counter]) {
+            const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
             new_images.push(img);
           }
+          all_three_alias_collection.add(atom.alias);
         }
-        if (item?.label === "H") is_h_id_list.push(i);
+        else if (atom.label === "H") is_h_id_list.push(atom);
+        else if (atom.label === "C") {
+          // ignore
+        }
       }
-
       if (is_h_id_list.length) {
-        molecule.atoms?.splice(molecule.atoms.length - is_h_id_list.length, is_h_id_list.length);
-        molecule.bonds?.splice(molecule.bonds.length - is_h_id_list.length, is_h_id_list.length);
+        mol.atoms?.splice(mol.atoms.length - is_h_id_list.length, is_h_id_list.length);
+        mol.bonds?.splice(mol.bonds.length - is_h_id_list.length, is_h_id_list.length);
       }
-      latestData[mol] = molecule;
-    });
+    }
+    // };
     const d = { ...latestData };
-    console.log({ new_images });
     d.root.nodes = [...d.root.nodes, ...new_images];
-    console.log({ all_nodes: d.root.nodes });
+    console.log({ data: d, all_three_alias_collection });
+    new_atoms = [];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     moveTemplate();
   };
