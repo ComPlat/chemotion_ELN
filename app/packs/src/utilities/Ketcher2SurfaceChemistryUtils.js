@@ -36,6 +36,9 @@ const skip_image_layering = false;
 // image exists in dom
 let images_to_be_updated = false;
 
+// tags
+const inspired_label = "A";
+const rails_polymer_identifier = "R#";
 
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile, cb) => {
@@ -74,7 +77,7 @@ const adding_polymers_ketcher_format = (rails_polymers_list, mols, latestData, i
       if (atom.type === "rg-label" || three_parts_patten.test(atom.label)) {
         const select_template_type = p_value.includes("s") ? "02" : "01";
         latestData[mols[m]].atoms[a] = {
-          "label": "A",
+          "label": inspired_label,
           "alias": `t_${select_template_type}_${++image_used_counter}`,
           "location": atom.location
         };
@@ -97,7 +100,7 @@ const adding_polymers_indigo_molfile = (mols, latestData) => {
       const atom = mol.atoms[a];
       const splits = atom?.label?.split("    ");
       if (splits && three_parts_patten.test(splits[0])) {
-        atom.label = "A";
+        atom.label = inspired_label;
         atom.alias = splits[0];
         const alias_splits = splits[0].split("_");
         const bb = template_list_data[parseInt(alias_splits[1])];
@@ -154,7 +157,6 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
   return latestData;
 };
 
-
 // DOM functions
 // Function to attach click listeners based on titles
 const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
@@ -165,6 +167,7 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
   }
 };
 
+// funcation to disable canvas button based on title
 const disableButton = (iframeDocument, title) => {
   const button = iframeDocument.querySelector(`[title="${title}"]`);
   if (button) {
@@ -187,8 +190,6 @@ const updateImagesInTheCanvas = async (iframeRef) => {
       imageElements.forEach((img) => {
         svg.appendChild(img);
       });
-    } else {
-      console.error("SVG element not found in the iframe.");
     }
     images_to_be_updated = false;
   }
@@ -202,7 +203,7 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
     const textElements = svg.querySelectorAll('text'); // Select all text elements
     textElements.forEach((textElem) => {
       const textContent = textElem.textContent; // Get the text content of the <text> element
-      if (textContent === "A") { // Check if it matches the pattern
+      if (textContent === inspired_label) { // Check if it matches the pattern
         textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
       }
     });
@@ -239,6 +240,10 @@ export {
   updateTemplatesInTheCanvas,
 
   // setters
-  images_to_be_updated_setter
+  images_to_be_updated_setter,
+
+  // tags
+  inspired_label,
+  rails_polymer_identifier
 };
 

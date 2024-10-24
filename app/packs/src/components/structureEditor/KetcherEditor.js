@@ -27,7 +27,11 @@ import {
   updateTemplatesInTheCanvas,
 
   // setters
-  images_to_be_updated_setter
+  images_to_be_updated_setter,
+
+  // tags
+  inspired_label,
+  rails_polymer_identifier
 } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 let FILOStack = [];
@@ -41,6 +45,19 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let new_atoms = [];
+
+// funcation to reset all data containers
+const resetStore = () => {
+  FILOStack = [];
+  uniqueEvents = new Set();
+  latestData = null;
+  imagesList = [];
+  mols = [];
+  allNodes = [];
+  image_used_counter = -1;
+  re_render_canvas = false;
+};
+
 
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
@@ -61,7 +78,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   };
 
   // enable editor change listener
-  const onEditorChange = (editor) => {
+  const onEditorContentChange = (editor) => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
       const result = await eventData;
       handleEventCapture(result);
@@ -75,7 +92,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       await hasKetcherData(initMol, async ({ struct, rails_polymers_list }) => {
         await editor.structureDef.editor.setMolecule(struct); // set initial
         await setKetcherData({ rails_polymers_list }); // process polymers
-        onEditorChange(editor); // subscribe to editor change
+        onEditorContentChange(editor); // subscribe to editor change
       });
     };
   };
@@ -120,7 +137,7 @@ const KetcherEditor = forwardRef((props, ref) => {
           break;
         case "Set atom attribute":
         case "Add atom":
-          if (two_parts_pattern.test(eventItem.to) || eventItem.label == "A") {
+          if (two_parts_pattern.test(eventItem.to) || eventItem.label == inspired_label) {
             new_atoms.push(eventItem);
           }
           addEventToFILOStack("Add atom");
@@ -140,7 +157,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         case 'Delete atom': {
           console.log("DELETE ATOM!!");
           const { atom } = should_canvas_update_on_movement(eventItem);
-          if (eventItem.label == "A") atoms_to_be_deleted.push(atom);
+          if (eventItem.label == inspired_label) atoms_to_be_deleted.push(atom);
         } break;
         case 'Update': {
           // console.log({ Update: eventItem });
@@ -313,7 +330,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         const splits = atom?.alias?.split("_");
 
         // label A with three part alias
-        if (atom.label === "A" && three_parts_patten.test(atom.alias) && splits.length == 3) {
+        if (atom.label === inspired_label && three_parts_patten.test(atom.alias) && splits.length == 3) {
           // console.warn({ three: splits, all_three_alias_collection, all_three_alias_collection });
           if (checkAliasMatch(atom.alias, all_three_alias_collection)) {
             console.log("EXISTS");
@@ -335,7 +352,7 @@ const KetcherEditor = forwardRef((props, ref) => {
           all_three_alias_collection.add(atom.alias);
         }
         // label A with two part alias n
-        else if (atom.label === "A" && two_parts_pattern.test(atom.alias) && splits.length == 2) {
+        else if (atom.label === inspired_label && two_parts_pattern.test(atom.alias) && splits.length == 2) {
           console.warn({ two: splits, atom, all_three_alias_collection });
           atom.alias += `_${++image_used_counter}`;
           console.log("TWO", { imagesList }, imagesList.length - 1, image_used_counter);
@@ -387,13 +404,13 @@ const KetcherEditor = forwardRef((props, ref) => {
         image_used_counter = -1;
       },
       "[title='Undo \\(Ctrl\\+Z\\)']": () => {
-        // pattern identify
+        // TODO:pattern identify
       },
       "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
-        // pattern identify
+        // TODO:pattern identify
       },
       'Erase \\(Del\\)': () => {
-        // pattern identify
+        // TODO:pattern identify
       }
     };
 
@@ -437,7 +454,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       // Cleanup function
       return () => {
         observer.disconnect();
-        pathObserver.disconnect(); // Disconnect the path observer
         clearTimeout(debounceAttach);
         Object.keys(buttonEvents).forEach((title) => {
           const button = iframeDocument.querySelector(`[title="${title}"]`);
@@ -447,18 +463,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         });
       };
     }
-  };
-
-  // funcation to reset all data containers
-  const resetStore = () => {
-    FILOStack = [];
-    uniqueEvents = new Set();
-    latestData = null;
-    imagesList = [];
-    mols = [];
-    allNodes = [];
-    image_used_counter = -1;
-    re_render_canvas = false;
   };
 
   useEffect(() => {
@@ -546,9 +550,9 @@ const KetcherEditor = forwardRef((props, ref) => {
     const atom_starts = 4;
     for (let i = atom_starts; i < atoms_count + atom_starts; i++) {
       const atom_line = lines[i].split(" ");
-      const idx = atom_line.indexOf("A");
+      const idx = atom_line.indexOf(inspired_label);
       if (idx != -1) {
-        atom_line[idx] = "R#";
+        atom_line[idx] = rails_polymer_identifier;
         console.log(i);
         atom_with_alias_list.push(`${i - atom_starts}`);
       }
