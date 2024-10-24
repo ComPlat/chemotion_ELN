@@ -121,6 +121,30 @@ const KetcherEditor = forwardRef((props, ref) => {
     // 'Upsert image': async () => await postAtomAddImageInsertion(),
   };
 
+  // DOM button events with scope
+  const buttonEvents = {
+    "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => {
+      await fuelKetcherData();
+      re_render_canvas = true;
+    },
+    "[title='Layout \\(Ctrl\\+L\\)']": async () => {
+      await fuelKetcherData();
+      re_render_canvas = true;
+    },
+    "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
+      image_used_counter = -1;
+    },
+    "[title='Undo \\(Ctrl\\+Z\\)']": () => {
+      // TODO:pattern identify
+    },
+    "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
+      // TODO:pattern identify
+    },
+    'Erase \\(Del\\)': () => {
+      // TODO:pattern identify
+    }
+  };
+
   // helper function to rebase with the ketcher canvas data
   const fuelKetcherData = async () => {
     all_atoms = [];
@@ -164,7 +188,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       image_used_counter = image_counter;
       latestData = { ...molfileData };
     } else { // type == "Indigo"
-      const { c_images: collected_images, molfileData } = adding_polymers_indigo_molfile();
+      const { c_images, molfileData } = adding_polymers_indigo_molfile();
       latestData = { ...molfileData };
       collected_images = c_images;
     }
@@ -245,8 +269,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       uniqueEvents.delete(event);
       if (eventHandlers[event]) {
         await eventHandlers[event]();
-      } else {
-        console.warn("Unhandled event:", event);
       }
     }
     if (images_to_be_updated && !skip_image_layering) {
@@ -334,7 +356,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
         // label A with three part alias
         if (atom.label === inspired_label && three_parts_patten.test(atom.alias) && splits.length == 3) {
-          // console.warn({ three: splits, all_three_alias_collection, all_three_alias_collection });
+          // console.log({ three: splits, all_three_alias_collection, all_three_alias_collection });
           if (checkAliasMatch(atom.alias, all_three_alias_collection)) {
             console.log("EXISTS");
             ++image_used_counter;
@@ -356,7 +378,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         }
         // label A with two part alias n
         else if (atom.label === inspired_label && two_parts_pattern.test(atom.alias) && splits.length == 2) {
-          console.warn({ two: splits, atom, all_three_alias_collection });
+          console.log({ two: splits, atom, all_three_alias_collection });
           atom.alias += `_${++image_used_counter}`;
           console.log("TWO", { imagesList }, imagesList.length - 1, image_used_counter);
           if (imagesList.length - 1 < image_used_counter) {
@@ -391,29 +413,6 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to add mutation oberservers to DOM elements
   const attachClickListeners = () => {
-    const buttonEvents = {
-      "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => {
-        await fuelKetcherData();
-        re_render_canvas = true;
-      },
-      "[title='Layout \\(Ctrl\\+L\\)']": async () => {
-        await fuelKetcherData();
-        re_render_canvas = true;
-      },
-      "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
-        image_used_counter = -1;
-      },
-      "[title='Undo \\(Ctrl\\+Z\\)']": () => {
-        // TODO:pattern identify
-      },
-      "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
-        // TODO:pattern identify
-      },
-      'Erase \\(Del\\)': () => {
-        // TODO:pattern identify
-      }
-    };
-
     // Main function to attach listeners and observers
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
