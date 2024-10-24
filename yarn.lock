@@ -5761,10 +5761,10 @@ cheerio@^1.0.0-rc.3:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chem-generic-ui@^1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.4.4.tgz#2b3662031af2278cc5606f8d5879f3be02155d4b"
-  integrity sha512-U5r9bqFFgs8mOeBBX/eu1ICD8vI8TvnzUi7WPVXDc38GEeD8npSRrG3WgKVSymrRNK6vO77hGHO4ZBV/ExCCwg==
+chem-generic-ui@^1.4.9:
+  version "1.4.9"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.4.9.tgz#ccbb94ca3009b036c574b191982db7820bcdd6bf"
+  integrity sha512-5f/KbVHsA3FvCh5ahVGUGuWy+GKXVJDrf5gWIEw7WRKXyKH9uuqONbiZ1UFCxNGrJwFYlE9p/M9K51oFEAtuiQ==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.5.2"
     "@fortawesome/free-regular-svg-icons" "^6.5.2"
@@ -5773,7 +5773,7 @@ chem-generic-ui@^1.4.4:
     ag-grid-community "^32.0.1"
     ag-grid-react "^32.0.1"
     date-fns "^2.29.3"
-    generic-ui-core "^1.4.7"
+    generic-ui-core "^1.5.0"
     html-to-image "^1.11.11"
     lodash "^4.17.21"
     moment "^2.29.4"
@@ -5790,10 +5790,10 @@ chem-generic-ui@^1.4.4:
     reactflow "^11.7.2"
     uuid "^9.0.0"
 
-chem-units@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-1.1.2.tgz#38f5c6af67a99e6eb661256c303a570f85df6687"
-  integrity sha512-JC4PtdFMlDfzZHYunMaVGiIEkXxqsQqknzDLRvethzhIjE/w3UyVbB93pyYzSnQxxqTpXy10TZTdGN2VdASl5w==
+chem-units@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-1.2.0.tgz#370b89ba225a84112ca1d201adb3343d9cddb9fd"
+  integrity sha512-Yzz6Re1ZSvEwZc0aINCj2yVvsZrdPms+RcF4EPdHLDdJK8ElHG73pFJM+3cIW1sLn9cddDSnqST7Qnltcy+n/w==
 
 chokidar@3.5.3, chokidar@^3.5.3:
   version "3.5.3"
@@ -8500,12 +8500,12 @@ gauge@^4.0.3:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
-generic-ui-core@^1.4.7:
-  version "1.4.7"
-  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.4.7.tgz#1bcc82e03b0af1eae8459cf2dc2ce6a63e8d3545"
-  integrity sha512-ifvcZfz+mfOX5GmvbFpKTBaQTcvR+vXtUATtSiECJ2KN7qj2nDK/czM5rntOv/IGeBZCGrKhrcbgeiwFKcy+QQ==
+generic-ui-core@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.5.0.tgz#2ed2d11901f90c1df2b946de1e82e56101e27728"
+  integrity sha512-MkoNSd2KompcjgfoSa+sGH2OAs2vowMJv13Pfas6nzJVDwSCmRTYFxMIKFjzJIhXd70QwAR4DcJ5T2UbwUyjmg==
   dependencies:
-    chem-units "^1.1.2"
+    chem-units "^1.2.0"
     lodash "^4.17.21"
 
 gensync@^1.0.0-beta.2:
