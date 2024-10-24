@@ -35,7 +35,7 @@ import {
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
-  const [reactionVariations, _setReactionVariations] = useState(reaction.variations);
+  const reactionVariations = reaction.variations;
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
@@ -135,8 +135,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   };
 
   const setReactionVariations = (updatedReactionVariations) => {
-    // Set updated state here and in parent component.
-    _setReactionVariations(updatedReactionVariations);
     reaction.variations = updatedReactionVariations;
     onReactionChange(reaction);
   };
