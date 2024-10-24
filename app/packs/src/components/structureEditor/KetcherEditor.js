@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   // data stores
-  template_list_data,
   three_parts_patten,
   two_parts_pattern,
 
@@ -16,7 +15,8 @@ import {
   hasKetcherData,
   adding_polymers_ketcher_format,
   adding_polymers_indigo_molfile,
-  checkAliasMatch
+  checkAliasMatch,
+  prepareImageFromTemplateList
 } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 let FILOStack = [];
@@ -37,42 +37,6 @@ const KetcherEditor = forwardRef((props, ref) => {
   const iframeRef = useRef();
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
-  // Load the editor content and set up the molecule
-  const loadContent = async (event) => {
-    if (event.data.eventType === 'init') {
-      window.editor = editor;
-      const { struct, rails_polymers_list } = await hasKetcherData(initMol);
-      await editor.structureDef.editor.setMolecule(struct);
-      await setKetcherData({ rails_polymers_list });
-      editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
-        const result = await eventData;
-        handleEventCapture(result);
-      });
-    };
-  };
-
-  // helper function to calculate counters for the ketcher2 setup based on file source type
-  const setKetcherData = async ({ rails_polymers_list }) => {
-    await fuelKetcherData();
-    let collected_images = [];
-    if (rails_polymers_list) {
-      console.log("ketcher");
-      const { c_images, molfileData, image_counter } = adding_polymers_ketcher_format(rails_polymers_list, mols, latestData, image_used_counter);
-      collected_images = c_images;
-      image_used_counter = image_counter;
-      latestData = { ...molfileData };
-    } else { //type == "Indigo"
-      console.log("Indigo");
-      const { c_images: collected_images, molfileData } = adding_polymers_indigo_molfile();
-      latestData = { ...molfileData };
-      collected_images = c_images;
-    }
-    latestData.root.nodes.push(...collected_images);
-    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    await fuelKetcherData();
-    await moveTemplate();
-  };
-
   // helper function to rebase with the ketcher canvas data
   const fuelKetcherData = async (data) => {
     all_atoms = [];
@@ -86,22 +50,41 @@ const KetcherEditor = forwardRef((props, ref) => {
     // console.log("DATA FUELED", { image_used_counter, latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
 
-  // all logic implementation if move atom has an alias which passed three part regex
-  const should_canvas_update_on_movement = (eventItem) => {
-    const { id } = eventItem;
-    const target_atom = all_atoms[id];
-    if (target_atom) {
-      return { exists: three_parts_patten.test(target_atom.alias), atom: target_atom };
-    }
-    return { exists: true, atom: target_atom };
+  // Load the editor content and set up the molecule
+  const loadContent = async (event) => {
+    if (event.data.eventType === 'init') {
+      window.editor = editor;
+      await hasKetcherData(initMol, async ({ struct, rails_polymers_list }) => {
+        await editor.structureDef.editor.setMolecule(struct); // set initial
+        await setKetcherData({ rails_polymers_list }); // process polymers
+
+        // listening to changes
+        editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
+          const result = await eventData;
+          handleEventCapture(result);
+        });
+      });
+    };
   };
 
-  // helper function to add event to stack
-  const addEventToFILOStack = (event) => {
-    if (!uniqueEvents.has(event)) {
-      FILOStack.push(event);
-      uniqueEvents.add(event);
+  // helper function to calculate counters for the ketcher2 setup based on file source type
+  const setKetcherData = async ({ rails_polymers_list }) => {
+    await fuelKetcherData();
+    let collected_images = [];
+    if (rails_polymers_list) {
+      const { c_images, molfileData, image_counter } = adding_polymers_ketcher_format(rails_polymers_list, mols, latestData, image_used_counter);
+      collected_images = c_images;
+      image_used_counter = image_counter;
+      latestData = { ...molfileData };
+    } else { // type == "Indigo"
+      const { c_images: collected_images, molfileData } = adding_polymers_indigo_molfile();
+      latestData = { ...molfileData };
+      collected_images = c_images;
     }
+    latestData.root.nodes.push(...collected_images);
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await fuelKetcherData();
+    await moveTemplate();
   };
 
   // main funcation to capture all events from editor
@@ -161,6 +144,24 @@ const KetcherEditor = forwardRef((props, ref) => {
       FILOStack = [];
       uniqueEvents = new Set();
       return;
+    }
+  };
+
+  // all logic implementation if move atom has an alias which passed three part regex
+  const should_canvas_update_on_movement = (eventItem) => {
+    const { id } = eventItem;
+    const target_atom = all_atoms[id];
+    if (target_atom) {
+      return { exists: three_parts_patten.test(target_atom.alias), atom: target_atom };
+    }
+    return { exists: true, atom: target_atom };
+  };
+
+  // helper function to add event to stack
+  const addEventToFILOStack = (event) => {
+    if (!uniqueEvents.has(event)) {
+      FILOStack.push(event);
+      uniqueEvents.add(event);
     }
   };
 
@@ -346,14 +347,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     new_atoms = [];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     moveTemplate();
-  };
-
-  // helper function to return a new image in imagesList with a location
-  const prepareImageFromTemplateList = (idx, location) => {
-    template_list_data[idx].boundingBox.x = location[0];
-    template_list_data[idx].boundingBox.y = location[1];
-    template_list_data[idx].boundingBox.z = location[2];
-    return template_list_data[idx];
   };
 
   // helper function to delete a template and reset the counter, assign new alias to all atoms
