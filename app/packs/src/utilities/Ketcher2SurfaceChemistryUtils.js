@@ -127,6 +127,28 @@ const prepareImageFromTemplateList = (idx, location) => {
   return template_list_data[idx];
 };
 
+const resetOtherAliasCounters = (atom, mols, latestData) => {
+  for (let m = 0; m < mols?.length; m++) {
+    const mol = mols[m];
+    const atoms = latestData[mol]?.atoms;
+    for (let a = 0; a < atoms?.length; a++) {
+      const item = atoms[a];
+      if (three_parts_patten.test(item.alias)) {
+        const atom_splits = atom?.alias?.split("_");
+        const item_splits = item?.alias?.split("_");
+        console.log(parseInt(atom_splits[2]), parseInt(item_splits[2]), parseInt(atom_splits[2]) <= parseInt(item_splits[2]));
+        if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
+          console.log("should be updated", item);
+          const step_back = parseInt(item_splits[2]) - 1;
+          const new_alias = `${item_splits[0]}_${item_splits[1]}_${step_back}`;
+          atoms[a].alias = new_alias;
+        }
+      }
+    }
+  };
+  return latestData;
+};
+
 export {
   // data stores
   three_parts_patten,
@@ -141,6 +163,7 @@ export {
   adding_polymers_ketcher_format,
   adding_polymers_indigo_molfile,
   checkAliasMatch,
-  prepareImageFromTemplateList
+  prepareImageFromTemplateList,
+  resetOtherAliasCounters
 };
 

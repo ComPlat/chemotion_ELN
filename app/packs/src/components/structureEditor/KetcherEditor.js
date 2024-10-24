@@ -16,7 +16,8 @@ import {
   adding_polymers_ketcher_format,
   adding_polymers_indigo_molfile,
   checkAliasMatch,
-  prepareImageFromTemplateList
+  prepareImageFromTemplateList,
+  resetOtherAliasCounters
 } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 let FILOStack = [];
@@ -50,6 +51,14 @@ const KetcherEditor = forwardRef((props, ref) => {
     // console.log("DATA FUELED", { image_used_counter, latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
 
+  // enable editor change listener
+  const onEditorChange = (editor) => {
+    editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
+      const result = await eventData;
+      handleEventCapture(result);
+    });
+  };
+
   // Load the editor content and set up the molecule
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
@@ -57,12 +66,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       await hasKetcherData(initMol, async ({ struct, rails_polymers_list }) => {
         await editor.structureDef.editor.setMolecule(struct); // set initial
         await setKetcherData({ rails_polymers_list }); // process polymers
-
-        // listening to changes
-        editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
-          const result = await eventData;
-          handleEventCapture(result);
-        });
+        onEditorChange(editor); // subscribe to editor change
       });
     };
   };
@@ -353,24 +357,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   const onEventDeleteAtom = async (atom) => {
     try {
       if (!mols.length) await fuelKetcherData();
-      for (let m = 0; m < mols?.length; m++) {
-        const mol = mols[m];
-        const atoms = latestData[mol]?.atoms;
-        for (let a = 0; a < atoms?.length; a++) {
-          const item = atoms[a];
-          if (three_parts_patten.test(item.alias)) {
-            const atom_splits = atom?.alias?.split("_");
-            const item_splits = item?.alias?.split("_");
-            console.log(parseInt(atom_splits[2]), parseInt(item_splits[2]), parseInt(atom_splits[2]) <= parseInt(item_splits[2]));
-            if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
-              console.log("should be updated", item);
-              const step_back = parseInt(item_splits[2]) - 1;
-              const new_alias = `${item_splits[0]}_${item_splits[1]}_${step_back}`;
-              atoms[a].alias = new_alias;
-            }
-          }
-        }
-      };
+      latestData = resetOtherAliasCounters(atom, mols, latestData);
     } catch (err) {
       console.log({ err });
     };
