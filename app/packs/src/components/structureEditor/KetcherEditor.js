@@ -61,7 +61,6 @@ const resetStore = () => {
   re_render_canvas = false;
 };
 
-
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
   const iframeRef = useRef();
@@ -356,22 +355,29 @@ const KetcherEditor = forwardRef((props, ref) => {
 
         // label A with three part alias
         if (atom.label === inspired_label && three_parts_patten.test(atom.alias) && splits.length == 3) {
-          // console.log({ three: splits, all_three_alias_collection, all_three_alias_collection });
+          console.log({ three: splits, all_three_alias_collection, all_three_alias_collection });
           if (checkAliasMatch(atom.alias, all_three_alias_collection)) {
             console.log("EXISTS");
             ++image_used_counter;
             atom.alias = `t_${splits[1]}_${image_used_counter}`;
-            // console.log("THREE", { imagesList }, imagesList.length - 1, image_used_counter);
+            console.log("THREE", { imagesList }, imagesList.length - 1, image_used_counter);
             if (imagesList.length - 1 < image_used_counter) {
               console.log("neu bild ist gebraucht.");
               const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
               new_images.push(img);
             }
           } else {
+            console.log("not found alias", { image_used_counter, imagesList });
             if (image_used_counter === -1 && !imagesList.length) {
               const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
               new_images.push(img);
               image_used_counter++;
+            } else {
+              if (image_used_counter < imagesList.length) {
+                image_used_counter++;
+                console.log("ELSE ELSE", { image_used_counter, imagesList });
+                // TODO:start from here
+              }
             }
           }
           all_three_alias_collection.add(atom.alias);
@@ -397,7 +403,8 @@ const KetcherEditor = forwardRef((props, ref) => {
     const d = { ...latestData };
     d.root.nodes = [...d.root.nodes, ...new_images];
     new_atoms = [];
-    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    console.log({ image_used_counter });
+    await editor.structureDef.editor.setMolecule(JSON.stringify(d));
     moveTemplate();
   };
 
