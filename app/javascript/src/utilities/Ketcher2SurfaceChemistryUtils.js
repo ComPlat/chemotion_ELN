@@ -1,3 +1,6 @@
+// console.log disable untill the final version of the feature; some consoles are added for debugging purposes and they are important to track changes happening; Debugger can be used but for now console.log are placed;
+console.log = () => { };
+
 // standard sizes for the shapes
 const [standard_height_cirlce, standard_width_circle] = [1.0250000000000006, 1.0250000000000006];
 const [standard_height_square, standard_width_square] = [0.9750000000000001, 1.5749999999999986];
