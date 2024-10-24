@@ -33,6 +33,10 @@ const two_parts_pattern = /^t_\d{2,3}$/;
 const skip_template_name_hide = false;
 const skip_image_layering = false;
 
+// image exists in dom
+let images_to_be_updated = false;
+
+
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile, cb) => {
   const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
@@ -127,6 +131,7 @@ const prepareImageFromTemplateList = (idx, location) => {
   return template_list_data[idx];
 };
 
+// helper funcation to update counter for other mols when a image-template is removed
 const resetOtherAliasCounters = (atom, mols, latestData) => {
   for (let m = 0; m < mols?.length; m++) {
     const mol = mols[m];
@@ -149,6 +154,66 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
   return latestData;
 };
 
+
+// DOM functions
+// Function to attach click listeners based on titles
+const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
+  const button = iframeDocument.querySelector(selector);
+  if (button && !button.hasClickListener) {
+    button.addEventListener('click', buttonEvents[selector]);
+    button.hasClickListener = true;
+  }
+};
+
+const disableButton = (iframeDocument, title) => {
+  const button = iframeDocument.querySelector(`[title="${title}"]`);
+  if (button) {
+    button.setAttribute("disabled", true);
+    button.classList.add("disabled");
+  }
+};
+
+// helper function to update DOM images using layering technique 
+const updateImagesInTheCanvas = async (iframeRef) => {
+  if (iframeRef.current) {
+    const iframeDocument = iframeRef.current.contentWindow.document;
+    const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+    if (svg) {
+      const imageElements = iframeDocument.querySelectorAll('image'); // Select all text elements
+      imageElements.forEach((img) => {
+        svg.removeChild(img);
+      });
+
+      imageElements.forEach((img) => {
+        svg.appendChild(img);
+      });
+    } else {
+      console.error("SVG element not found in the iframe.");
+    }
+    images_to_be_updated = false;
+  }
+};
+
+// helper funcation to update text > span > t_###_### fill transparent
+const updateTemplatesInTheCanvas = async (iframeRef) => {
+  const iframeDocument = iframeRef.current.contentWindow.document;
+  const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+  if (svg) {
+    const textElements = svg.querySelectorAll('text'); // Select all text elements
+    textElements.forEach((textElem) => {
+      const textContent = textElem.textContent; // Get the text content of the <text> element
+      if (textContent === "A") { // Check if it matches the pattern
+        textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
+      }
+    });
+  }
+};
+
+// update images_to_be_updated flag
+const images_to_be_updated_setter = () => {
+  images_to_be_updated = !images_to_be_updated;
+};
+
 export {
   // data stores
   three_parts_patten,
@@ -157,6 +222,7 @@ export {
   // flags
   skip_template_name_hide,
   skip_image_layering,
+  images_to_be_updated,
 
   // methods
   hasKetcherData,
@@ -164,6 +230,15 @@ export {
   adding_polymers_indigo_molfile,
   checkAliasMatch,
   prepareImageFromTemplateList,
-  resetOtherAliasCounters
+  resetOtherAliasCounters,
+
+  // DOM Methods
+  disableButton,
+  attachListenerForTitle,
+  updateImagesInTheCanvas,
+  updateTemplatesInTheCanvas,
+
+  // setters
+  images_to_be_updated_setter
 };
 
