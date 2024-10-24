@@ -11,6 +11,7 @@ import {
   skip_template_name_hide,
   skip_image_layering,
   images_to_be_updated,
+  allowed_to_process,
 
   // methods
   hasKetcherData,
@@ -19,6 +20,7 @@ import {
   checkAliasMatch,
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
+  isNewAtom,
 
   // DOM Methods
   disableButton,
@@ -28,6 +30,7 @@ import {
 
   // setters
   images_to_be_updated_setter,
+  allowed_to_process_setter,
 
   // tags
   inspired_label,
@@ -64,10 +67,64 @@ const KetcherEditor = forwardRef((props, ref) => {
   const iframeRef = useRef();
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
+  // Handlers for each event operation, mapped by operation name
+  const eventOperationHandlers = {
+    "Load canvas": async (eventItem) => {
+      await fuelKetcherData();
+      if (re_render_canvas) await moveTemplate();
+    },
+    "Move image": async (eventItem) => {
+      addEventToFILOStack("Move image");
+    },
+    "Set atom attribute": async (eventItem) => {
+      if (isNewAtom(eventItem)) {
+        new_atoms.push(eventItem);
+      }
+      addEventToFILOStack("Add atom");
+    },
+    "Add atom": async (eventItem) => {
+      if (isNewAtom(eventItem)) {
+        new_atoms.push(eventItem);
+      }
+      addEventToFILOStack("Add atom");
+    },
+    "Upsert image": async (eventItem) => {
+      addEventToFILOStack("Upsert image");
+    },
+    "Move atom": async (eventItem) => {
+      const { exists } = should_canvas_update_on_movement(eventItem);
+      allowed_to_process_setter(exists);
+      addEventToFILOStack("Move atom");
+    },
+    "Delete image": async (eventItem) => {
+      console.log("Delete image");
+      // await editor._structureDef.editor.editor.undo();
+    },
+    "Delete atom": async (eventItem) => {
+      console.log("DELETE ATOM!!");
+      const { atom } = should_canvas_update_on_movement(eventItem);
+      if (eventItem.label === inspired_label) atoms_to_be_deleted.push(atom);
+    },
+    "Update": async (eventItem) => {
+      // Optional logic for update, e.g., logging
+      // console.log({ Update: eventItem });
+    },
+  };
+
+  // action based on event-name
+  const eventHandlers = {
+    'Load canvas': async () => await fuelKetcherData(),
+    'Move image': async () => await moveTemplate(),
+    'Move atom': async () => await moveTemplate(),
+    'Add atom': async () => await handleAddAtom(),
+    'Delete image': async () => console.log("Delete image"),
+    // 'Upsert image': async () => await postAtomAddImageInsertion(),
+  };
+
   // helper function to rebase with the ketcher canvas data
-  const fuelKetcherData = async (data) => {
+  const fuelKetcherData = async () => {
     all_atoms = [];
-    latestData = data ? JSON.parse(await editor.structureDef.editor.getKet(data)) : JSON.parse(await editor.structureDef.editor.getKet());
+    latestData = JSON.parse(await editor.structureDef.editor.getKet());
     allNodes = [...latestData.root.nodes];
     imagesList = allNodes.length > mols.length ? allNodes.filter(
       item => item.type === 'image'
@@ -119,52 +176,15 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // main funcation to capture all events from editor
   const handleEventCapture = async (data) => {
-    let allowed_to_process = true;
     const selection = editor._structureDef.editor.editor._selection;
     if (selection?.images) {
       addEventToFILOStack("Move image");
     }
 
     for (const eventItem of data) {
-      switch (eventItem?.operation) {
-        case "Load canvas":
-          await fuelKetcherData();
-          if (re_render_canvas)
-            await moveTemplate();
-          break;
-        case "Move image":
-          addEventToFILOStack("Move image");
-          break;
-        case "Set atom attribute":
-        case "Add atom":
-          if (two_parts_pattern.test(eventItem.to) || eventItem.label == inspired_label) {
-            new_atoms.push(eventItem);
-          }
-          addEventToFILOStack("Add atom");
-          break;
-        case "Upsert image":
-          addEventToFILOStack("Upsert image");
-          break;
-        case "Move atom":
-          const { exists } = should_canvas_update_on_movement(eventItem);
-          allowed_to_process = exists;
-          addEventToFILOStack("Move atom");
-          break;
-        case "Delete image":
-          console.log("delete image");
-          // await editor._structureDef.editor.editor.undo();
-          break;
-        case 'Delete atom': {
-          console.log("DELETE ATOM!!");
-          const { atom } = should_canvas_update_on_movement(eventItem);
-          if (eventItem.label == inspired_label) atoms_to_be_deleted.push(atom);
-        } break;
-        case 'Update': {
-          // console.log({ Update: eventItem });
-        } break;
-        default:
-          // console.warn("Unhandled operation:", eventItem.operation);
-          break;
+      const operationHandler = eventOperationHandlers[eventItem?.operation];
+      if (operationHandler) {
+        await operationHandler(eventItem);
       }
     }
 
@@ -198,7 +218,6 @@ const KetcherEditor = forwardRef((props, ref) => {
   // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
     await fuelKetcherData();
-
     if (!latestData) {
       alert("data not present!!");
       return;
@@ -224,26 +243,10 @@ const KetcherEditor = forwardRef((props, ref) => {
     while (FILOStack.length > 0) {
       const event = FILOStack.pop();
       uniqueEvents.delete(event);
-      switch (event) {
-        case "Load canvas":
-          // nothing happens because it can lead to infinite canvas render
-          break;
-        case "Move image":
-        case "Move atom":
-          moveTemplate();
-          break;
-        case "Add atom":
-          handleAddAtom();
-          break;
-        case "Upsert image":
-          // postAtomAddImageInsertion();
-          break;
-        case "Delete image":
-          break;
-        default:
-          console.log("I'm default");
-          // console.warn("Unhandled event:", event);
-          break;
+      if (eventHandlers[event]) {
+        await eventHandlers[event]();
+      } else {
+        console.warn("Unhandled event:", event);
       }
     }
     if (images_to_be_updated && !skip_image_layering) {
@@ -363,9 +366,6 @@ const KetcherEditor = forwardRef((props, ref) => {
           all_three_alias_collection.add(atom.alias);
         }
         else if (atom.label === "H") is_h_id_list.push(atom);
-        else {
-          console.error("dead zone!!");
-        }
       }
       if (is_h_id_list.length) {
         mol.atoms?.splice(mol.atoms.length - is_h_id_list.length, is_h_id_list.length);
@@ -483,9 +483,6 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
-    getData: () => {
-      return "hallo";
-    },
     onSaveFileK2SC: async () => {
       await fuelKetcherData();
 
@@ -542,6 +539,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   }));
 
+  // helper function for output molfile re-structure
   const reAttachPolymerList = ({ lines, atoms_count, extra_data_start, extra_data_end }) => {
     const ploy_identifier = "> <PolymersList>";
     let my_lines = [...lines];
