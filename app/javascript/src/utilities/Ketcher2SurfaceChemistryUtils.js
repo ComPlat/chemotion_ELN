@@ -106,7 +106,7 @@ const adding_polymers_ketcher_format = (rails_polymers_list, mols, latestData, i
 // helper function to process ketcher2 indigo file to add images to ketcher2 canvas
 const adding_polymers_indigo_molfile = (mols, latestData) => {
   let collected_images = [];
-  for (let m = 0; m < mols.length; m++) {
+  for (let m = 0; m < mols?.length; m++) {
     const mol = latestData[mols[m]];
     for (let a = 0; a < mol.atoms.length; a++) {
       const atom = mol.atoms[a];
