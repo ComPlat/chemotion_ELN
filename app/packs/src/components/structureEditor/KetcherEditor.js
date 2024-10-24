@@ -192,7 +192,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       latestData = { ...molfileData };
       collected_images = c_images;
     }
-    latestData.root.nodes.push(...collected_images);
+    latestData?.root?.nodes.push(...collected_images);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     await fuelKetcherData();
     await moveTemplate();
