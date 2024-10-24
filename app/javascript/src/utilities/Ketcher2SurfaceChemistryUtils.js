@@ -36,6 +36,9 @@ const skip_image_layering = false;
 // image exists in dom
 let images_to_be_updated = false;
 
+// allowed to process based on atom
+let allowed_to_process = true;
+
 // tags
 const inspired_label = "A";
 const rails_polymer_identifier = "R#";
@@ -157,6 +160,11 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
   return latestData;
 };
 
+// is new atom
+const isNewAtom = (eventItem) => {
+  return two_parts_pattern.test(eventItem.to) || eventItem.label === inspired_label;
+};
+
 // DOM functions
 // Function to attach click listeners based on titles
 const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
@@ -210,9 +218,14 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
   }
 };
 
-// update images_to_be_updated flag
+// setter
 const images_to_be_updated_setter = () => {
   images_to_be_updated = !images_to_be_updated;
+};
+
+// setter
+const allowed_to_process_setter = (data) => {
+  allowed_to_process = data;
 };
 
 export {
@@ -224,6 +237,7 @@ export {
   skip_template_name_hide,
   skip_image_layering,
   images_to_be_updated,
+  allowed_to_process,
 
   // methods
   hasKetcherData,
@@ -232,6 +246,7 @@ export {
   checkAliasMatch,
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
+  isNewAtom,
 
   // DOM Methods
   disableButton,
@@ -241,6 +256,7 @@ export {
 
   // setters
   images_to_be_updated_setter,
+  allowed_to_process_setter,
 
   // tags
   inspired_label,
