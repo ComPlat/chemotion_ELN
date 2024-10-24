@@ -55,7 +55,7 @@ const rails_polymer_identifier = "R#";
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile, cb) => {
   const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
-  if (!molfile.includes("<PolymersList>")) return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
+  if (!molfile.includes("<PolymersList>")) cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
   // when ketcher mofile and polymers exists
   const lines = molfile.trim().split('\n');
   let rails_polymers_list = -1;
