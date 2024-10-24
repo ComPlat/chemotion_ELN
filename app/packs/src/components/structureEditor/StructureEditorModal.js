@@ -271,19 +271,6 @@ export default class StructureEditorModal extends React.Component {
       if (this.ketcher2Ref.current) {
         const { ket2Molfile, svgElement } = await this.ketcher2Ref.current.onSaveFileK2SC();
         this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, svgElement, { smiles: '' }, editor.id); } });
-        // structure.editor.getMolfile().then((molfile) => {
-        // structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
-        // imgfile.text().then(async (text) => {
-        // const parser = new DOMParser();
-        // const svgDoc = parser.parseFromString(text, 'image/svg+xml');
-        // let svgElement = svgDoc.documentElement;
-        // imageElements.forEach((img) => {
-        //   svgDoc.documentElement.appendChild(img);
-        // });
-        // svgElement = new XMLSerializer().serializeToString(svgElement);
-        // });
-        // });
-        // });
       }
     } else {
       try {
