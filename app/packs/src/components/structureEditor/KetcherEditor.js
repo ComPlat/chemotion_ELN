@@ -10,6 +10,7 @@ import {
   // flags
   skip_template_name_hide,
   skip_image_layering,
+  images_to_be_updated,
 
   // methods
   hasKetcherData,
@@ -17,7 +18,16 @@ import {
   adding_polymers_indigo_molfile,
   checkAliasMatch,
   prepareImageFromTemplateList,
-  resetOtherAliasCounters
+  resetOtherAliasCounters,
+
+  // DOM Methods
+  disableButton,
+  attachListenerForTitle,
+  updateImagesInTheCanvas,
+  updateTemplatesInTheCanvas,
+
+  // setters
+  images_to_be_updated_setter
 } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 let FILOStack = [];
@@ -30,7 +40,6 @@ let all_atoms = [];
 let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
-let images_to_be_updated = false;
 let new_atoms = [];
 
 const KetcherEditor = forwardRef((props, ref) => {
@@ -186,7 +195,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       image_used_counter = image_used_counter - atoms_to_be_deleted.length;
       atoms_to_be_deleted = [];
-      return; // FIXME: return added for testing
+      return;
     }
 
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
@@ -222,7 +231,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
     if (images_to_be_updated && !skip_image_layering) {
       setTimeout(async () => {
-        await updateImagesInTheCanvas();
+        await updateImagesInTheCanvas(iframeRef);
       }, [250]);
     }
   };
@@ -282,7 +291,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     latestData.root.nodes = latestData.root.nodes.slice(0, mols.length);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     re_render_canvas = false;
-    images_to_be_updated = true;
+    images_to_be_updated_setter();
     imagesList.length && placeImageOnAtoms(mols, imagesList);
   };
 
@@ -363,44 +372,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
   };
 
-  // helper function to update DOM images using layering technique 
-  const updateImagesInTheCanvas = async () => {
-    if (iframeRef.current) {
-      const iframeDocument = iframeRef.current.contentWindow.document;
-      const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
-      if (svg) {
-        const imageElements = iframeDocument.querySelectorAll('image'); // Select all text elements
-        imageElements.forEach((img) => {
-          svg.removeChild(img);
-        });
-
-        imageElements.forEach((img) => {
-          svg.appendChild(img);
-        });
-      } else {
-        console.error("SVG element not found in the iframe.");
-      }
-      images_to_be_updated = false;
-    }
-  };
-
-  // helper funcation to update text > span > t_###_### fill transparent
-  const updateTemplatesInTheCanvas = async () => {
-    if (iframeRef.current) {
-      const iframeDocument = iframeRef.current.contentWindow.document;
-      const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
-      if (svg) {
-        const textElements = svg.querySelectorAll('text'); // Select all text elements
-        textElements.forEach((textElem) => {
-          const textContent = textElem.textContent; // Get the text content of the <text> element
-          if (textContent === "A") { // Check if it matches the pattern
-            textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
-          }
-        });
-      }
-    }
-  };
-
   // helper function to add mutation oberservers to DOM elements
   const attachClickListeners = () => {
     const buttonEvents = {
@@ -426,26 +397,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     };
 
-    // Function to attach click listeners based on titles
-    const attachListenerForTitle = (iframeDocument, selector) => {
-      const button = iframeDocument.querySelector(selector);
-      if (button && !button.hasClickListener) {
-        button.addEventListener('click', buttonEvents[selector]);
-        button.hasClickListener = true;
-      }
-    };
-
-    const disableButton = (iframeDocument, title) => {
-      const button = iframeDocument.querySelector(`[title="${title}"]`);
-      if (button) {
-        button.setAttribute("disabled", true);
-        button.classList.add("disabled");
-      }
-      //  else {
-      //   console.log({ button }, `${title} not found`);
-      // }
-    };
-
     // Main function to attach listeners and observers
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
@@ -455,7 +406,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         for (const mutation of mutationsList) {
           if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
             Object.keys(buttonEvents).forEach((selector) => {
-              attachListenerForTitle(iframeDocument, selector);
+              attachListenerForTitle(iframeDocument, selector, buttonEvents);
             });
 
             // Disable buttons again in case they were added dynamically
@@ -466,7 +417,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         }
 
         if (!skip_template_name_hide) {
-          await updateTemplatesInTheCanvas();
+          await updateTemplatesInTheCanvas(iframeRef);
         }
       });
 
