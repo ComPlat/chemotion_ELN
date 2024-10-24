@@ -47,7 +47,7 @@ class GenericSGDetails extends Component {
         genId={0}
         isPreview={false}
         isSearch={isSearch}
-        isActiveWF={false}
+        isActiveWF
         fnNavi={fnNavi}
       />
     );
