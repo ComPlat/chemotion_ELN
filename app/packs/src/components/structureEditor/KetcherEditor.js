@@ -2,6 +2,22 @@
 /* eslint-disable react/forbid-prop-types */
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import {
+  // data stores
+  template_list_data,
+  three_parts_patten,
+  two_parts_pattern,
+
+  // flags
+  skip_template_name_hide,
+  skip_image_layering,
+
+  // methods
+  hasKetcherData,
+  adding_polymers_ketcher_format,
+  adding_polymers_indigo_molfile,
+  checkAliasMatch
+} from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 let FILOStack = [];
 let uniqueEvents = new Set();
@@ -16,75 +32,15 @@ let atoms_to_be_deleted = [];
 let images_to_be_updated = false;
 let new_atoms = [];
 
-const skip_template_name_hide = false;
-const skip_image_layering = false;
-const [standard_height_cirlce, standard_width_circle] = [1.0250000000000006, 1.0250000000000006];
-const [standard_height_square, standard_width_square] = [0.9750000000000001, 1.5749999999999986];
-
-const template_list = [
-  null,
-  {
-    "type": "image",
-    "format": "image/svg+xml",
-    "boundingBox": {
-      "width": standard_width_circle,
-      "height": standard_height_cirlce
-    },
-    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
-  },
-  {
-    "type": "image",
-    "format": "image/svg+xml",
-    "boundingBox": {
-      "width": standard_width_square,
-      "height": standard_height_square
-    },
-    "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIHk9IjgwIiByeD0iMjAiIHJ5PSIyMCIKICBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMTAiIGZpbGw9Ijc1NzA3MCIKICAvPgo8L3N2Zz4="
-  }
-];
-
-const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
-const two_parts_pattern = /^t_\d{2,3}$/;
-
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
   const iframeRef = useRef();
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
-  // helper function to check file kind coming as source; this handles indigo and ketcherrails molfile
-  // const molfileType = async (molfile) => {
-  //   const lines = molfile.trim().split('\n');
-  //   console.log(lines[0], "1111111111111111111");
-  //   if (lines[1].indexOf("Ketcher") != -1) return { type: "ketcher", polymers_list_required: true };
-  //   return { type: "ketcher", polymers_list_required: false };
-  // };
-
-  // helper function to examine the file coming ketcherrails
-  const hasKetcherData = async (molfile) => {
-    const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
-    if (!molfile.includes("<PolymersList>")) return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
-    // when ketcher mofile and polymers exists
-    const lines = molfile.trim().split('\n');
-    let rails_polymers_list = -1;
-    for (let i = lines.length - 1; i > -1; i--) {
-      if (lines[i].indexOf("> <PolymersList>") != -1) {
-        rails_polymers_list = lines[i + 1].trim();
-        break;
-      }
-    }
-    if (rails_polymers_list == -1) {
-      return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
-    } else {
-      // polymers list exists
-      return { struct: indigo_converted_ket.struct, rails_polymers_list };
-    }
-  };
-
   // Load the editor content and set up the molecule
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
       window.editor = editor;
-      // const meta = await molfileType(initMol);
       const { struct, rails_polymers_list } = await hasKetcherData(initMol);
       await editor.structureDef.editor.setMolecule(struct);
       await setKetcherData({ rails_polymers_list });
@@ -94,56 +50,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       });
     };
   };
-  // helper function to process ketcherrails files and adding image to ketcher2 canvas
-  const adding_polymers_ketcher_format = (rails_polymers_list) => {
-    const p_items = rails_polymers_list.split(" ");
-    // p_items-example:  10, 11s, 12, 13s
-    let visited_atoms = 0;
-    let collected_images = [];
-
-    for (let m = 0; m < mols.length; m++) {
-      const mol = latestData[mols[m]];
-      for (let a = 0; a < mol.atoms.length; a++) {
-        // if (p_items.length - 1 == visited_atoms) break;
-        const atom = mol.atoms[a];
-        const p_value = p_items[visited_atoms];
-        if (atom.type === "rg-label" || three_parts_patten.test(atom.label)) {
-          const select_template_type = p_value.includes("s") ? "02" : "01";
-          latestData[mols[m]].atoms[a] = {
-            "label": "A",
-            "alias": `t_${select_template_type}_${++image_used_counter}`,
-            "location": atom.location
-          };
-          const bb = template_list[parseInt(select_template_type)];
-          bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
-          collected_images.push(bb);
-          visited_atoms += 1;
-        }
-      }
-    }
-    return collected_images;
-  };
-
-  // helper function to process ketcher2 indigo file to add images to ketcher2 canvas
-  const adding_polymers_indigo_molfile = () => {
-    let collected_images = [];
-    for (let m = 0; m < mols.length; m++) {
-      const mol = latestData[mols[m]];
-      for (let a = 0; a < mol.atoms.length; a++) {
-        const atom = mol.atoms[a];
-        const splits = atom?.label?.split("    ");
-        if (splits && three_parts_patten.test(splits[0])) {
-          atom.label = "A";
-          atom.alias = splits[0];
-          const alias_splits = splits[0].split("_");
-          const bb = template_list[parseInt(alias_splits[1])];
-          bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
-          collected_images.push(bb);
-        }
-      }
-    }
-    return collected_images;
-  };
 
   // helper function to calculate counters for the ketcher2 setup based on file source type
   const setKetcherData = async ({ rails_polymers_list }) => {
@@ -151,10 +57,15 @@ const KetcherEditor = forwardRef((props, ref) => {
     let collected_images = [];
     if (rails_polymers_list) {
       console.log("ketcher");
-      collected_images = adding_polymers_ketcher_format(rails_polymers_list);
+      const { c_images, molfileData, image_counter } = adding_polymers_ketcher_format(rails_polymers_list, mols, latestData, image_used_counter);
+      collected_images = c_images;
+      image_used_counter = image_counter;
+      latestData = { ...molfileData };
     } else { //type == "Indigo"
       console.log("Indigo");
-      collected_images = adding_polymers_indigo_molfile();
+      const { c_images: collected_images, molfileData } = adding_polymers_indigo_molfile();
+      latestData = { ...molfileData };
+      collected_images = c_images;
     }
     latestData.root.nodes.push(...collected_images);
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
@@ -172,7 +83,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     ) : imagesList;
     mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
     mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
-    // image_used_counter = imagesList.length > 0 ? imagesList.length - 1 : image_used_counter;
     // console.log("DATA FUELED", { image_used_counter, latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
 
@@ -371,20 +281,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     imagesList.length && placeImageOnAtoms(mols, imagesList);
   };
 
-  // helper function to match and indentify collectio three part alias and match then my image_used_counter number
-  const checkAliasMatch = (aliasInput, aliasSet) => {
-    // Get the last part of the input alias
-    const inputLastPart = aliasInput.split('_').pop();
-
-    for (let alias of aliasSet) {
-      const aliasLastPart = alias.split('_').pop();  // Get the last part of each alias in the set
-      if (aliasLastPart === inputLastPart) {
-        return true;
-      }
-    }
-    return false;
-  };
-
   // helper function to handle new atoms added to the canvas
   const handleAddAtom = async () => {
     console.log("Atom moved!");
@@ -445,10 +341,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         mol.bonds?.splice(mol.bonds.length - is_h_id_list.length, is_h_id_list.length);
       }
     }
-    // };
     const d = { ...latestData };
     d.root.nodes = [...d.root.nodes, ...new_images];
-    console.log({ data: d, all_three_alias_collection });
     new_atoms = [];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
     moveTemplate();
@@ -456,10 +350,10 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to return a new image in imagesList with a location
   const prepareImageFromTemplateList = (idx, location) => {
-    template_list[idx].boundingBox.x = location[0];
-    template_list[idx].boundingBox.y = location[1];
-    template_list[idx].boundingBox.z = location[2];
-    return template_list[idx];
+    template_list_data[idx].boundingBox.x = location[0];
+    template_list_data[idx].boundingBox.y = location[1];
+    template_list_data[idx].boundingBox.z = location[2];
+    return template_list_data[idx];
   };
 
   // helper function to delete a template and reset the counter, assign new alias to all atoms
@@ -542,10 +436,13 @@ const KetcherEditor = forwardRef((props, ref) => {
         image_used_counter = -1;
       },
       "[title='Undo \\(Ctrl\\+Z\\)']": () => {
-
+        // pattern identify
       },
       "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
-
+        // pattern identify
+      },
+      'Erase \\(Del\\)': () => {
+        // pattern identify
       }
     };
 
@@ -562,10 +459,11 @@ const KetcherEditor = forwardRef((props, ref) => {
       const button = iframeDocument.querySelector(`[title="${title}"]`);
       if (button) {
         button.setAttribute("disabled", true);
-        button.classList.add("disabled"); // Optional: add a class for styling
-      } else {
-        console.log({ button }, `${title} not found`);
+        button.classList.add("disabled");
       }
+      //  else {
+      //   console.log({ button }, `${title} not found`);
+      // }
     };
 
     // Main function to attach listeners and observers
