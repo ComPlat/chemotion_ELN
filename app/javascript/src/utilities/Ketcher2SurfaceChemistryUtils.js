@@ -34,7 +34,7 @@ const skip_template_name_hide = false;
 const skip_image_layering = false;
 
 // helper function to examine the file coming ketcherrails
-const hasKetcherData = async (molfile) => {
+const hasKetcherData = async (molfile, cb) => {
   const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
   if (!molfile.includes("<PolymersList>")) return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
   // when ketcher mofile and polymers exists
@@ -47,10 +47,10 @@ const hasKetcherData = async (molfile) => {
     }
   }
   if (rails_polymers_list == -1) {
-    return { struct: indigo_converted_ket.struct, rails_polymers_list: null };
+    cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
   } else {
     // polymers list exists
-    return { struct: indigo_converted_ket.struct, rails_polymers_list };
+    cb({ struct: indigo_converted_ket.struct, rails_polymers_list });
   }
 };
 
@@ -119,9 +119,16 @@ const checkAliasMatch = (aliasInput, aliasSet) => {
   return false;
 };
 
+// helper function to return a new image in imagesList with a location
+const prepareImageFromTemplateList = (idx, location) => {
+  template_list_data[idx].boundingBox.x = location[0];
+  template_list_data[idx].boundingBox.y = location[1];
+  template_list_data[idx].boundingBox.z = location[2];
+  return template_list_data[idx];
+};
+
 export {
   // data stores
-  template_list_data,
   three_parts_patten,
   two_parts_pattern,
 
@@ -133,6 +140,7 @@ export {
   hasKetcherData,
   adding_polymers_ketcher_format,
   adding_polymers_indigo_molfile,
-  checkAliasMatch
+  checkAliasMatch,
+  prepareImageFromTemplateList
 };
 
