@@ -127,14 +127,14 @@ const adding_polymers_indigo_molfile = (mols, latestData) => {
 // helper function to match and indentify collectio three part alias and match then my image_used_counter number
 const checkAliasMatch = (aliasInput, aliasSet) => {
   // Get the last part of the input alias
-  const inputLastPart = aliasInput.split('_').pop();
-  console.log({ aliasInput, aliasSet });
   for (let alias of aliasSet) {
-    const aliasLastPart = alias.split('_').pop();  // Get the last part of each alias in the set
-    if (aliasLastPart === inputLastPart) {
+    const splits = alias.split("_");
+    if (splits[2] === aliasInput) {
+      console.log("found");
       return true;
     }
   }
+  console.log("not found");
   return false;
 };
 
