@@ -146,11 +146,11 @@ function NoteCellRenderer(props) {
   return (
     <OverlayTrigger
       placement="right"
-      overlay={
-        <Tooltip id={"note-tooltip-" + props.data.id}>
+      overlay={(
+        <Tooltip id={`note-tooltip-${props.data.id}`}>
           double click to edit
         </Tooltip>
-      }
+      )}
     >
       <span>{props.value ? props.value : '_'}</span>
     </OverlayTrigger>

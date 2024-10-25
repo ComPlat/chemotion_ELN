@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, Modal, Badge, Tooltip
+  Form, Button, Modal, Badge
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
