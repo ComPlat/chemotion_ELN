@@ -31,6 +31,14 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       );
       return updatedColumnDefinitions;
     }
+    case 'toggle_gas_mode': {
+      return updateColumnDefinitions(
+        columnDefinitions,
+        'properties.duration',
+        'editability',
+        !action.gasMode
+      );
+    }
     default: {
       return columnDefinitions;
     }
