@@ -13,40 +13,38 @@ import {
     ButtonToolbar, Button, Card,
     Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
-import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
-import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
-import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 
-const VesselDetails = ({ cellLineItem, toggleFullScreen }) => {
+const VesselDetails = ({ vesselItem, toggleFullScreen }) => {
     const context = useContext(StoreContext);
 
     const [activeTab, setActiveTab] = useState('tab1');
     const [readOnly, setReadOnly] = useState(isReadOnly());
 
     useEffect(() => {
-        context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
+        context.vesselDetailsStore.convertCellLineToModel(vesselItem);
         setReadOnly(isReadOnly());
-    }, [cellLineItem]);
+    }, [vesselItem]);
 
-    const handleSubmit = (cellLineItem) => {
-        const mobXItem = context.cellLineDetailsStore.cellLines(cellLineItem.id);
-        cellLineItem.adoptPropsFromMobXModel(mobXItem);
+    const handleSubmit = (vesselItem) => {
+        const mobXItem = context.vesselDetailsStore.cellLines(vesselItem.id);
+        vesselItem.adoptPropsFromMobXModel(mobXItem);
 
-        if (cellLineItem.is_new) {
-            DetailActions.close(cellLineItem, true);
-            ElementActions.createCellLine(cellLineItem);
+        if (vesselItem.is_new) {
+            DetailActions.close(vesselItem, true);
+            ElementActions.createVessel(vesselItem);
         } else {
-            ElementActions.updateCellLine(cellLineItem);
+            ElementActions.updateVessel(vesselItem);
         }
         mobXItem.setChanged(false);
     };
 
-    const handleClose = (cellLineItem) => {
-        const { cellLineDetailsStore } = context;
-        const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+    const handleClose = (vesselItem) => {
+        const { vesselDetailsStore } = context;
+        const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
         if (!mobXItem.changed || window.confirm('Unsaved data will be lost. Close sample?')) {
-            cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
-            DetailActions.close(cellLineItem, true);
+            vesselDetailsStore.removeVesselFromStore(vesselItem.id);
+            DetailActions.close(vesselItem, true);
         }
     };
 
@@ -64,13 +62,13 @@ const VesselDetails = ({ cellLineItem, toggleFullScreen }) => {
         <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex gap-2">
                 <span>
-                    <i className="icon-cell_line me-1" />
-                    {cellLineItem.short_label}
+                    <i className="icon-vessel me-1" />
+                    {vesselItem.short_label}
                 </span>
                 <ElementCollectionLabels
                     className="collection-label"
-                    element={cellLineItem}
-                    key={cellLineItem.id}
+                    element={vesselItem}
+                    key={vesselItem.id}
                     placement="right"
                 />
             </div>
@@ -94,15 +92,15 @@ const VesselDetails = ({ cellLineItem, toggleFullScreen }) => {
     );
 
     const renderSaveButton = (closeAfterClick = false) => {
-        const { cellLineDetailsStore } = context;
-        const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-        const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
+        const { vesselDetailsStore } = context;
+        const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
+        const validationInfo = vesselDetailsStore.checkInputValidity(vesselItem.id);
         const disabled = validationInfo.length > 0 || !mobXItem.changed;
         if (disabled) { return null; }
 
         const action = closeAfterClick
-            ? () => { handleSubmit(cellLineItem); DetailActions.close(cellLineItem, true); }
-            : () => { handleSubmit(cellLineItem); };
+            ? () => { handleSubmit(vesselItem); DetailActions.close(vesselItem, true); }
+            : () => { handleSubmit(vesselItem); };
 
         const toolTipMessage = closeAfterClick ? 'save and close' : 'save';
         const icons = closeAfterClick
@@ -130,31 +128,31 @@ const VesselDetails = ({ cellLineItem, toggleFullScreen }) => {
         <Button
             variant="danger"
             size="xxsm"
-            onClick={() => { handleClose(cellLineItem); }}
+            onClick={() => { handleClose(vesselItem); }}
         >
             <i className="fa fa-times" />
         </Button>
     );
 
     const renderSubmitButton = () => {
-        const { cellLineDetailsStore } = context;
-        const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-        const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
+        const { vesselDetailsStore } = context;
+        const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
+        const validationInfo = vesselDetailsStore.checkInputValidity(vesselItem.id);
         const disabled = validationInfo.length > 0 || !mobXItem.changed;
-        const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
+        const buttonText = vesselItem.is_new ? 'Create' : 'Save';
 
         return (
             <Button
                 variant="warning"
                 disabled={disabled}
-                onClick={() => { handleSubmit(cellLineItem); }}
+                onClick={() => { handleSubmit(vesselItem); }}
             >
                 {buttonText}
             </Button>
         );
     };
 
-    if (!cellLineItem) return null;
+    if (!vesselItem) return null;
 
     return (
         <Card className="detail-card">
@@ -163,24 +161,24 @@ const VesselDetails = ({ cellLineItem, toggleFullScreen }) => {
             </Card.Header>
             <Card.Body>
                 <div className="tabs-container--with-borders">
-                    <Tabs activeKey={activeTab} onSelect={handleTabChange} id="cell-line-details-tab">
+                    <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
                         <Tab eventKey="tab1" title="Properties" key="tab1">
-                            <GeneralProperties item={cellLineItem} readOnly={readOnly} />
+                            <VesselProperties item={vesselItem} readOnly={readOnly} />
                         </Tab>
-                        <Tab eventKey="tab2" title="Analyses" key="tab2">
-                            <AnalysesContainer item={cellLineItem} readOnly={readOnly} />
+                        {/* <Tab eventKey="tab2" title="Analyses" key="tab2">
+                            <AnalysesContainer item={vesselItem} readOnly={readOnly} />
                         </Tab>
-                        <Tab eventKey="tab3" title="References" key="tab3" disabled={cellLineItem.is_new}>
+                        <Tab eventKey="tab3" title="References" key="tab3" disabled={vesselItem.is_new}>
                             <DetailsTabLiteratures
                                 readOnly={readOnly}
-                                element={cellLineItem}
-                                literatures={cellLineItem.is_new ? cellLineItem.literatures : null}
+                                element={vesselItem}
+                                literatures={vesselItem.is_new ? vesselItem.literatures : null}
                             />
-                        </Tab>
+                        </Tab> */}
                     </Tabs>
                 </div>
                 <ButtonToolbar className="d-flex gap-1">
-                    <Button variant="primary" onClick={() => { handleClose(cellLineItem); }}>
+                    <Button variant="primary" onClick={() => { handleClose(vesselItem); }}>
                         Close
                     </Button>
                     {renderSubmitButton()}
@@ -191,14 +189,12 @@ const VesselDetails = ({ cellLineItem, toggleFullScreen }) => {
 };
 
 VesselDetails.propTypes = {
-    cellLineItem: PropTypes.shape({
+    vesselItem: PropTypes.shape({
         id: PropTypes.string.isRequired,
         itemName: PropTypes.string.isRequired,
-        cellLineName: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
         short_label: PropTypes.string.isRequired,
         is_new: PropTypes.bool.isRequired,
-        literatures: PropTypes.arrayOf(PropTypes.object),
-        disease: PropTypes.string.isRequired
     }).isRequired,
     toggleFullScreen: PropTypes.func.isRequired
 };
