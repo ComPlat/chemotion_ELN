@@ -20,7 +20,7 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
-      <Badge bg='secondary' className='me-2'>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
+      <Badge bg="secondary" className="me-2">{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
       <ButtonGroup>
         <Button size="xsm" variant="success" onClick={() => copyRow(variationsRow)}>
           <i className="fa fa-clone" />
@@ -141,11 +141,11 @@ function NoteCellRenderer(props) {
   return (
     <OverlayTrigger
       placement="right"
-      overlay={
-        <Tooltip id={"note-tooltip-" + props.data.id}>
+      overlay={(
+        <Tooltip id={`note-tooltip-${props.data.id}`}>
           double click to edit
         </Tooltip>
-      }
+      )}
     >
       <span>{props.value ? props.value : '_'}</span>
     </OverlayTrigger>
