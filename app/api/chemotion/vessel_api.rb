@@ -173,7 +173,7 @@ module Chemotion
           description: params[:description],
           bar_code: params[:bar_code],
           qr_code: params[:qr_code],
-          short_label: params[:short_label]
+          short_label: params[:short_label],
         }.compact
         vessel.update!(vessel_params) if vessel_params.present?
 
@@ -190,14 +190,13 @@ module Chemotion
             volume_amount: params[:volume_amount],
             volume_unit: params[:volume_unit],
             weight_amount: params[:weight_amount],
-            weight_unit: params[:weight_unit]
+            weight_unit: params[:weight_unit],
           }.compact
           vessel_template.update!(template_params) if template_params.present?
         end
 
         present vessel, with: Entities::VesselInstanceEntity
       end
-
 
       resource :names do
         desc 'Returns all accessable vessel templates material names and their id'
