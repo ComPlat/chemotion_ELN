@@ -358,10 +358,10 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
 
     let new_images = [];
-    console.error("--------------------------------------------------------");
+    // console.error("--------------------------------------------------------");
     // already_processed = already_processed.splice(-new_atoms.length);
     image_used_counter = already_processed.length - 1;
-    console.log({ already_processed, new_atoms, image_used_counter });
+    // console.log({ already_processed, new_atoms, image_used_counter });
 
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
@@ -371,7 +371,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         const splits = atom?.alias?.split("_");
         // label A with three part alias
         if (two_parts_pattern.test(atom.alias)) {
-          console.log("TWO", { imagesList }, image_used_counter, atom.alias);
+          // console.log("TWO", { imagesList }, image_used_counter, atom.alias);
           image_used_counter += 1;
           if (!imagesList[image_used_counter]) {
             const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
@@ -379,19 +379,19 @@ const KetcherEditor = forwardRef((props, ref) => {
           }
           atom.alias += `_${image_used_counter}`;
           already_processed.push(`${m}_${a}_${image_used_counter}`);
-          console.log("TWO END XXXXXXXXXXXXXXXXXXX", { imagesList }, image_used_counter, atom.alias);
+          // console.log("TWO END XXXXXXXXXXXXXXXXXXX", { imagesList }, image_used_counter, atom.alias);
         }
         else if (three_parts_patten.test(atom.alias)) {
           console.log("Three", `${m}_${a}_${splits[2]}`);
           if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
-            console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
+            // console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
           } else {
-            console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
+            // console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
             image_used_counter += 1;
             atom.alias = `t_${splits[1]}_${image_used_counter}`;
             already_processed.push(`${m}_${a}_${image_used_counter}`);
           }
-          console.log("Three END XXXXXXXXXXXX", atom.alias, image_used_counter);
+          // console.log("Three END XXXXXXXXXXXX", atom.alias, image_used_counter);
         }
         if (atom.label === "H") {
           is_h_id_list.push(atom);
@@ -407,7 +407,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     d.root.nodes = [...d.root.nodes, ...new_images];
     new_atoms = [];
     imagesList.push(...new_images);
-    console.log("END", { imagesList, image_used_counter, imagesList });
+    // console.log("END", { imagesList, image_used_counter, imagesList });
     await editor.structureDef.editor.setMolecule(JSON.stringify(d));
     moveTemplate();
   };
