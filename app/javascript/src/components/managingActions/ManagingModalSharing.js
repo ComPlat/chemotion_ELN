@@ -67,6 +67,7 @@ export default class ManagingModalSharing extends React.Component {
     let isWellplateSelectionEmpty = this.isElementSelectionEmpty(uiState.wellplate);
     let isScreenSelectionEmpty = this.isElementSelectionEmpty(uiState.screen);
     let isCelllineSelectionEmpty = this.isElementSelectionEmpty(uiState.cell_line);
+    let isVesselSelectionEmpty = this.isElementSelectionEmpty(uiState.vessel);
 
     let isElementSelectionEmpty = false;
 
@@ -87,6 +88,7 @@ export default class ManagingModalSharing extends React.Component {
       isWellplateSelectionEmpty &&
       isScreenSelectionEmpty &&
       isCelllineSelectionEmpty &&
+      isVesselSelectionEmpty &&
       isElementSelectionEmpty;
   }
 
@@ -178,6 +180,12 @@ export default class ManagingModalSharing extends React.Component {
         all: uiState.cell_line.checkedAll,
         included_ids: uiState.cell_line.checkedIds,
         excluded_ids: uiState.cell_line.uncheckedIds,
+        collection_id: collectionId
+      },
+      vessel: {
+        all: uiState.vessel.checkedAll,
+        included_ids: uiState.vessel.checkedIds,
+        excluded_ids: uiState.vessel.uncheckedIds,
         collection_id: collectionId
       },
       currentSearchSelection: uiState.currentSearchSelection

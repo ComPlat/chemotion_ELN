@@ -201,7 +201,7 @@ export default class ElementDetails extends Component {
       case 'cell_line':
         return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
       case 'vessel':
-        return <VesselDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
+        return <VesselDetails vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
       default:
         return (
           <div style={{ textAlign: 'center' }}>
