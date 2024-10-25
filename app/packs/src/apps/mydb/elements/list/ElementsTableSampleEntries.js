@@ -108,19 +108,17 @@ const showDecoupledIcon = (sample) => (sample.decoupled ? (
 ) : null);
 
 const showInventoryLabelIcon = (sample) => (sample.inventory_sample && sample.xref.inventory_label ? (
-  <div>
-    <OverlayTrigger
-      placement="top"
-      overlay={<Tooltip id="sample_inventory_label">Inventory Label</Tooltip>}
+  <OverlayTrigger
+    placement="top"
+    overlay={<Tooltip id="sample_inventory_label">Inventory Label</Tooltip>}
+  >
+    <Badge
+      className="bg-info text-light p-1 mt-0 rounded"
+      key={`inventory_label_${sample.xref.inventory_label}`}
     >
-      <Badge
-        className="sample-entries-inventory-label-icon"
-        key={`inventory_label_${sample.xref.inventory_label}`}
-      >
-        {sample.xref.inventory_label}
-      </Badge>
-    </OverlayTrigger>
-  </div>
+      {sample.xref.inventory_label}
+    </Badge>
+  </OverlayTrigger>
 ) : null);
 
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>;
