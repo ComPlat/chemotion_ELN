@@ -94,6 +94,7 @@ const scollectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
     UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'vessel', range: 'all' });
     elementNames(false).then((klassArray) => {
       klassArray.forEach((klass) => {
         UIActions.uncheckAllElements({ type: klass, range: 'all' });
@@ -134,6 +135,17 @@ const cellLineShowOrNew = (e) => {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
   } else {
     ElementActions.tryFetchCellLineElById.defer(e.params.cell_lineID);
+  }
+};
+
+const vesselShowOrNew = (e) => {
+  if (e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselId === 'new')) {
+    ElementActions.generateEmptyVessel(e.params.collectionID, e.params.vessel_template);
+  } else {
+    if (e.params.vesselID) {
+      e.params.vesselId = e.params.vesselID;
+    }
+    ElementActions.fetchVesselElById.defer(e.params.vesselId);
   }
 };
 
@@ -309,6 +321,9 @@ const elementShowOrNew = (e) => {
     case 'device_description':
       deviceDescriptionShowOrNew(e);
       break;
+    case 'vessel':
+      vesselShowOrNew(e);
+      break;
     default:
       if (e && e.klassType == 'GenericEl') {
         genericElShowOrNew(e, type);
@@ -339,5 +354,6 @@ export {
   elementShowOrNew,
   predictionShowFwdRxn,
   genericElShowOrNew,
-  cellLineShowOrNew
+  cellLineShowOrNew,
+  vesselShowOrNew
 };

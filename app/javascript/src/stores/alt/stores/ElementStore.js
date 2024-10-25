@@ -112,6 +112,13 @@ class ElementStore {
         pages: null,
         perPage: null
       },
+      vessels: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
     };
 
     this.state = {
