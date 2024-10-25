@@ -271,7 +271,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         )}
       >
         <Button size="sm" variant="success" onClick={addRow} className="mb-2">
-          <i className="fa fa-plus me-1" /> Add Variation
+          <i className="fa fa-plus me-1" />
+          {' '}
+          Add Variation
         </Button>
       </OverlayTrigger>
       <div className="ag-theme-alpine">
