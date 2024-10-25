@@ -36,6 +36,7 @@ import {
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
+  const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
@@ -86,6 +87,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         {
           field: 'properties.duration',
           cellDataType: getCellDataType('duration'),
+          editable: !gasMode,
           entryDefs: {
             currentEntry: 'duration',
             displayUnit: getStandardUnit('duration'),
@@ -142,6 +144,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
   // https://react.dev/reference/react/useState#storing-information-from-previous-renders
   const updatedReactionMaterials = getReactionMaterials(reaction);
+  const updatedGasMode = reaction.gaseous;
+  const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
+
   if (
     !isEqual(
       getReactionMaterialsIDs(reactionMaterials),
@@ -166,7 +171,16 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     setReactionMaterials(updatedReactionMaterials);
   }
 
-  const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
+  if (gasMode !== updatedGasMode) {
+    setColumnDefinitions(
+      {
+        type: 'toggle_gas_mode',
+        gasMode: updatedGasMode,
+      }
+    );
+    setGasMode(updatedGasMode);
+  }
+
   if (!isEqual(allReactionAnalyses, updatedAllReactionAnalyses)) {
     /*
     The "Variations" tab holds references to analyses in the "Analyses" tab.
