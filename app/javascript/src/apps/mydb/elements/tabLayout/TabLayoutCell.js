@@ -33,8 +33,8 @@ class TabLayoutCell extends Component {
     const elnElements = [
       'sample', 'reaction', 'screen',
       'wellplate', 'research_plan',
-      'cell_line', 'device_description'
-    ];
+      'cell_line', 'device_description',
+      'vessel'];
 
     let cellIcon = `icon-${cell}`;
     let cellTitle = capitalizeWords(cell);
