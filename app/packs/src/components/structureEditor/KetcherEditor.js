@@ -381,10 +381,9 @@ const KetcherEditor = forwardRef((props, ref) => {
         }
         else if (three_parts_patten.test(atom.alias)) {
           console.log("Three", `${m}_${a}_${splits[2]}`);
-          if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
-
-            console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
-          } else {
+          if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) == -1) {
+            //   console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
+            // } else {
             console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
             image_used_counter += 1;
             atom.alias = `t_${splits[1]}_${image_used_counter}`;

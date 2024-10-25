@@ -55,7 +55,7 @@ const onEventListen = async (event) => {
     newValue = JSON.parse(newValue);
     oldValue = JSON.parse(oldValue);
     if (event.key === key) { // matching key && deleteAllowed
-      newValue = await sanitizeTemplateAlias(newValue);
+      // newValue = await sanitizeTemplateAlias(newValue);
       if (newValue.length > oldValue.length) { // when a new template is added
         let newItem = newValue[newValue.length - 1];
         createAddAttachmentidToNewUserTemplate(newValue, newItem);
