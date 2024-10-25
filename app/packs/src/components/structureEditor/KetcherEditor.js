@@ -340,60 +340,62 @@ const KetcherEditor = forwardRef((props, ref) => {
   const handleAddAtom = async () => {
     console.log("Atom moved!");
     await fuelKetcherData();
+    let already_processed = [];
+    const seenThirdParts = new Set();
 
-    let atom_id_counter = -1;
+    for (let m = 0; m < mols.length; m++) {
+      const mol = latestData[mols[m]];
+      for (let a = 0; a < mol.atoms.length; a++) {
+        const atom = mol.atoms[a];
+        if (atom?.alias && three_parts_patten.test(atom?.alias)) {
+          const splits = atom?.alias?.split("_");
+          if (!seenThirdParts.has(splits[2])) {
+            already_processed.push(`${m}_${a}_${splits[2]}`);
+            seenThirdParts.add(splits[2]);
+          }
+        }
+      }
+    }
+
     let new_images = [];
-    const all_three_alias_collection = new Set();
+    console.log({ already_processed, new_atoms });
+    // already_processed = already_processed.splice(-new_atoms.length);
 
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
       const is_h_id_list = [];
       for (let a = 0; a < mol.atoms.length; a++) {
         const atom = mol.atoms[a];
-        atom_id_counter++;
         const splits = atom?.alias?.split("_");
-
         // label A with three part alias
-        if (atom.label === inspired_label && three_parts_patten.test(atom.alias) && splits.length == 3) {
-          console.log({ three: splits, all_three_alias_collection, all_three_alias_collection });
-          if (checkAliasMatch(atom.alias, all_three_alias_collection)) {
-            console.log("EXISTS");
-            ++image_used_counter;
-            atom.alias = `t_${splits[1]}_${image_used_counter}`;
-            console.log("THREE", { imagesList }, imagesList.length - 1, image_used_counter);
-            if (imagesList.length - 1 < image_used_counter) {
-              console.log("neu bild ist gebraucht.");
-              const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
-              new_images.push(img);
-            }
-          } else {
-            console.log("not found alias", { image_used_counter, imagesList });
-            if (image_used_counter === -1 && !imagesList.length) {
-              const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
-              new_images.push(img);
-              image_used_counter++;
-            } else {
-              if (image_used_counter < imagesList.length) {
-                image_used_counter++;
-                console.log("ELSE ELSE", { image_used_counter, imagesList });
-                // TODO:start from here
-              }
-            }
-          }
-          all_three_alias_collection.add(atom.alias);
-        }
-        // label A with two part alias n
-        else if (atom.label === inspired_label && two_parts_pattern.test(atom.alias) && splits.length == 2) {
-          console.log({ two: splits, atom, all_three_alias_collection });
-          atom.alias += `_${++image_used_counter}`;
-          console.log("TWO", { imagesList }, imagesList.length - 1, image_used_counter);
-          if (imagesList.length - 1 < image_used_counter) {
+        if (two_parts_pattern.test(atom.alias)) {
+          console.log("TWO", { imagesList }, image_used_counter, atom.alias);
+          image_used_counter += 1;
+          if (!imagesList[image_used_counter]) {
             const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
             new_images.push(img);
           }
-          all_three_alias_collection.add(atom.alias);
+          atom.alias += `_${image_used_counter}`;
+          already_processed.push(`${m}_${a}_${image_used_counter}`);
+          console.log("TWO END XXXXXXXXXXXXXXXXXXX", { imagesList }, image_used_counter, atom.alias);
         }
-        else if (atom.label === "H") is_h_id_list.push(atom);
+        else if (three_parts_patten.test(atom.alias)) {
+          console.log("Three", `${m}_${a}_${splits[2]}`);
+          if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
+
+            console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
+          } else {
+            console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
+            image_used_counter += 1;
+            atom.alias = `t_${splits[1]}_${image_used_counter}`;
+            already_processed.push(`${m}_${a}_${image_used_counter}`);
+          }
+          console.log("Three END XXXXXXXXXXXX", atom.alias, image_used_counter);
+        }
+        if (atom.label === "H") {
+          is_h_id_list.push(atom);
+        };
+        console.log("-----------------------------");
       }
       if (is_h_id_list.length) {
         mol.atoms?.splice(mol.atoms.length - is_h_id_list.length, is_h_id_list.length);
@@ -403,7 +405,8 @@ const KetcherEditor = forwardRef((props, ref) => {
     const d = { ...latestData };
     d.root.nodes = [...d.root.nodes, ...new_images];
     new_atoms = [];
-    console.log({ image_used_counter });
+    imagesList.push(...new_images);
+    console.log("END", { imagesList, image_used_counter, imagesList });
     await editor.structureDef.editor.setMolecule(JSON.stringify(d));
     moveTemplate();
   };

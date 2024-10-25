@@ -1,5 +1,6 @@
 import ProfilesFetcher from 'src/fetchers/ProfilesFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import { three_parts_patten } from './Ketcher2SurfaceChemistryUtils';
 const key = 'ketcher-tmpls';
 
 const createAddAttachmentidToNewUserTemplate = async (newValue, newItem, deleteIdx) => {
@@ -31,11 +32,11 @@ const removeUserTemplate = async (listOfLocalid, oldValue) => {
 
 const updateUserTemplateDetails = async (oldValue, newValue) => {
   const listOfLocalNames = newValue.map(
-    (item) => JSON.parse(item.struct).header.moleculeName
+    (item) => JSON.parse(item.struct)?.header?.moleculeName
   );
   for (let i = 0; i < oldValue.length; i++) {
     const localItem = JSON.parse(oldValue[i].struct);
-    const exists = listOfLocalNames.indexOf(localItem.header.moleculeName) !== -1;
+    const exists = listOfLocalNames.indexOf(localItem?.header?.moleculeName) !== -1;
     if (!exists) {
       await ProfilesFetcher.deleteUserTemplate({
         path: oldValue[i].props.path,
@@ -54,6 +55,7 @@ const onEventListen = async (event) => {
     newValue = JSON.parse(newValue);
     oldValue = JSON.parse(oldValue);
     if (event.key === key) { // matching key && deleteAllowed
+      newValue = await sanitizeTemplateAlias(newValue);
       if (newValue.length > oldValue.length) { // when a new template is added
         let newItem = newValue[newValue.length - 1];
         createAddAttachmentidToNewUserTemplate(newValue, newItem);
@@ -67,6 +69,34 @@ const onEventListen = async (event) => {
       UsersFetcher.updateUserKetcher2Options(event.newValue);
     }
   }
+};
+
+
+const sanitizeTemplateAlias = async (newValue) => {
+  for (let i = 0; i < newValue.length; i++) {
+    let item = newValue[i];
+    item.struct = JSON.parse(item.struct);
+    let _struct = item.struct;
+    const allNodes = Object.keys(_struct);
+    for (let n = 0; n < allNodes.length; n++) {
+      const item_mol = allNodes[n];
+      if (/^mol.*/.test(item_mol)) {
+        const atoms = _struct[item_mol].atoms;
+        for (let j = 0; j < atoms.length; j++) {
+          const atom = atoms[j];
+          if (three_parts_patten.test(atom.alias)) {
+            const splits = atom.alias.split("_");
+            _struct[item_mol].atoms[j].alias = `t_${splits[1]}`;
+            console.log(_struct[item_mol].atoms[j].alias, "ALIASSSSS");
+          }
+        }
+      }
+      item.struct = JSON.stringify({ struct: _struct }, null, 4);
+      newValue[i] = item;
+    }
+  }
+  console.log({ newValue });
+  return newValue;
 };
 
 export default onEventListen;
