@@ -6,7 +6,6 @@ const template_list_for_storage = [
   { "struct": "{\n    \"root\": {\n        \"nodes\": [\n            {\n                \"$ref\": \"mol0\"\n            },\n            {\n                \"type\": \"image\",\n                \"format\": \"image/svg+xml\",\n                \"boundingBox\": {\n                    \"x\": 7.775000000000006,\n                    \"y\": -6.000000000000001,\n                    \"z\": 0,\n                    \"width\":  1.5749999999999986,\n                    \"height\": 0.9750000000000001\n                },\n                \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIHk9IjgwIiByeD0iMjAiIHJ5PSIyMCIKICBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMTAiIGZpbGw9Ijc1NzA3MCIKICAvPgo8L3N2Zz4=\"\n            }\n        ],\n        \"connections\": [],\n        \"templates\": []\n    },\n    \"header\": {\n        \"moleculeName\": \"t_02\"\n    },\n    \"mol0\": {\n        \"type\": \"molecule\",\n        \"atoms\": [\n            {\n                \"label\": \"A\",\n                \"alias\": \"t_02\",\n                \"location\": [\n                    8.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            },\n            {\n                \"label\": \"H\",\n                \"location\": [\n                    9.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            }\n        ],\n        \"bonds\": [\n            {\n                \"type\": 1,\n                \"atoms\": [\n                    0,\n                    1\n                ]\n            }\n        ],\n        \"sgroups\": [\n            {\n                \"type\": \"SUP\",\n                \"atoms\": [\n                    0,\n                    1\n                ],\n                \"name\": \"\",\n                \"expanded\": true,\n                \"id\": 0,\n                \"attachmentPoints\": [\n                    {\n                        \"attachmentAtom\": 0,\n                        \"leavingAtom\": 1,\n                        \"attachmentId\": \"1\"\n                    }\n                ]\n            }\n        ]\n    }\n}", "props": { "atomid": 0, "bondid": 0 } }
 ];
 
-
 // standard sizes for the shapes
 const [standard_height_cirlce, standard_width_circle] = [1.0250000000000006, 1.0250000000000006];
 const [standard_height_square, standard_width_square] = [0.9750000000000001, 1.5749999999999986];
@@ -54,22 +53,28 @@ const rails_polymer_identifier = "R#";
 
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile, cb) => {
-  const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
-  if (!molfile.includes("<PolymersList>")) cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
-  // when ketcher mofile and polymers exists
-  const lines = molfile.trim().split('\n');
-  let rails_polymers_list = -1;
-  for (let i = lines.length - 1; i > -1; i--) {
-    if (lines[i].indexOf("> <PolymersList>") != -1) {
-      rails_polymers_list = lines[i + 1].trim();
-      break;
+  try {
+
+    const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
+    if (!molfile.includes("<PolymersList>")) cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
+    // when ketcher mofile and polymers exists
+    const lines = molfile.trim().split('\n');
+    let rails_polymers_list = -1;
+    for (let i = lines.length - 1; i > -1; i--) {
+      if (lines[i].indexOf("> <PolymersList>") != -1) {
+        rails_polymers_list = lines[i + 1].trim();
+        break;
+      }
     }
-  }
-  if (rails_polymers_list == -1) {
-    cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
-  } else {
-    // polymers list exists
-    cb({ struct: indigo_converted_ket.struct, rails_polymers_list });
+    if (rails_polymers_list == -1) {
+      cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
+    } else {
+      // polymers list exists
+      cb({ struct: indigo_converted_ket.struct, rails_polymers_list });
+    }
+
+  } catch (err) {
+    alert("Opening this molfile is possible at the movement. Please report this molfile to chemotion ELN dev team.");
   }
 };
 
@@ -122,20 +127,6 @@ const adding_polymers_indigo_molfile = (mols, latestData) => {
     }
   }
   return { c_images: collected_images, molfileData: latestData };
-};
-
-// helper function to match and indentify collectio three part alias and match then my image_used_counter number
-const checkAliasMatch = (aliasInput, aliasSet) => {
-  // Get the last part of the input alias
-  for (let alias of aliasSet) {
-    const splits = alias.split("_");
-    if (splits[2] === aliasInput) {
-      console.log("found");
-      return true;
-    }
-  }
-  console.log("not found");
-  return false;
 };
 
 // helper function to return a new image in imagesList with a location
@@ -255,7 +246,6 @@ export {
   hasKetcherData,
   adding_polymers_ketcher_format,
   adding_polymers_indigo_molfile,
-  checkAliasMatch,
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
   isNewAtom,
