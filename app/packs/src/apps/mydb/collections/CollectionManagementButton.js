@@ -1,10 +1,10 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
 import Aviator from 'aviator';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import CollapsibleButton from 'src/apps/mydb/collections/CollapsibleButton';
 
 function urlForCurrentElement() {
   const { currentElement } = ElementStore.getState();
@@ -29,16 +29,14 @@ function handleCollectionManagementToggle() {
   }
 }
 
-export default function CollectionManagementButton() {
+export default function CollectionManagementButton({ isCollapsed }) {
   return (
-    <Button
-      id="collection-management-button"
-      variant="info"
-      title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
+    <CollapsibleButton
+      isCollapsed={isCollapsed}
       onClick={handleCollectionManagementToggle}
-    >
-      <i className="fa fa-cog me-1" />
-      Manage Collections
-    </Button>
+      label="Manage Collections"
+      icon="fa-cog"
+      variant="info"
+    />
   );
 }
