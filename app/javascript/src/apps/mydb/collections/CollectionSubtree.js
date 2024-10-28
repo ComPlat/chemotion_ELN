@@ -26,6 +26,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   componentDidMount() {
+    this.onChange(UIStore.getState());
     UIStore.listen(this.onChange);
   }
 
