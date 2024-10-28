@@ -38,7 +38,7 @@ const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
 // enable/disable text labels Matching label A and putting images in the end
-const skip_template_name_hide = true;
+const skip_template_name_hide = false;
 const skip_image_layering = false;
 
 // image exists in dom
@@ -175,6 +175,24 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
   }
 };
 
+// function to make template list extra content hidden
+const makeTransparentByTitle = (iframeDocument) => {
+  const elements = iframeDocument.querySelectorAll('[title]');
+  elements.forEach((element) => {
+    if (two_parts_pattern.test(element.getAttribute('title'))) {
+      element.querySelectorAll("path, text").forEach((child) => {
+        if (child.getAttribute("stroke-width") === "2" &&
+          child.getAttribute("stroke-linecap") === "round" &&
+          child.getAttribute("stroke-linejoin") === "round" ||
+          (child.tagName.toLowerCase() === 'text' &&
+            (child.textContent.trim() === 'R1' || child.textContent.trim() === 'A'))) {
+          child.style.opacity = '0';
+        }
+      });
+    }
+  });
+};
+
 // funcation to disable canvas button based on title
 const disableButton = (iframeDocument, title) => {
   const button = iframeDocument.querySelector(`[title="${title}"]`);
@@ -255,6 +273,7 @@ export {
   attachListenerForTitle,
   updateImagesInTheCanvas,
   updateTemplatesInTheCanvas,
+  makeTransparentByTitle,
 
   // setters
   images_to_be_updated_setter,

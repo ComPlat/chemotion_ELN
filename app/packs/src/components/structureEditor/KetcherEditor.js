@@ -26,7 +26,7 @@ import {
   attachListenerForTitle,
   updateImagesInTheCanvas,
   updateTemplatesInTheCanvas,
-
+  makeTransparentByTitle,
   // setters
   images_to_be_updated_setter,
   allowed_to_process_setter,
@@ -465,6 +465,8 @@ const KetcherEditor = forwardRef((props, ref) => {
           if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
             Object.keys(buttonEvents).forEach((selector) => {
               attachListenerForTitle(iframeDocument, selector, buttonEvents);
+              attachListenerForTitle(iframeDocument, selector, buttonEvents);
+              makeTransparentByTitle(iframeDocument);
             });
 
             // Disable buttons again in case they were added dynamically
