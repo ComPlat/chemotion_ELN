@@ -17,7 +17,6 @@ import {
   hasKetcherData,
   adding_polymers_ketcher_format,
   adding_polymers_indigo_molfile,
-  checkAliasMatch,
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
   isNewAtom,
@@ -68,11 +67,11 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // Handlers for each event operation, mapped by operation name
   const eventOperationHandlers = {
-    "Load canvas": async (eventItem) => {
+    "Load canvas": async () => {
       await fuelKetcherData();
       if (re_render_canvas) await moveTemplate();
     },
-    "Move image": async (eventItem) => {
+    "Move image": async () => {
       addEventToFILOStack("Move image");
     },
     "Set atom attribute": async (eventItem) => {
@@ -87,7 +86,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
       addEventToFILOStack("Add atom");
     },
-    "Upsert image": async (eventItem) => {
+    "Upsert image": async () => {
       addEventToFILOStack("Upsert image");
     },
     "Move atom": async (eventItem) => {
@@ -95,7 +94,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       allowed_to_process_setter(exists);
       addEventToFILOStack("Move atom");
     },
-    "Delete image": async (eventItem) => {
+    "Delete image": async () => {
       console.log("Delete image");
       // await editor._structureDef.editor.editor.undo();
     },
@@ -104,7 +103,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       const { atom } = should_canvas_update_on_movement(eventItem);
       if (eventItem.label === inspired_label) atoms_to_be_deleted.push(atom);
     },
-    "Update": async (eventItem) => {
+    "Update": async () => {
       // Optional logic for update, e.g., logging
       // console.log({ Update: eventItem });
     },
@@ -143,6 +142,22 @@ const KetcherEditor = forwardRef((props, ref) => {
       // TODO:pattern identify
     }
   };
+
+  useEffect(() => {
+    resetStore();
+    const iframe = iframeRef.current;
+    if (iframe) {
+      iframe.addEventListener('load', attachClickListeners); // DOM change listener
+    }
+    window.addEventListener('message', loadContent); // molfile intializer
+
+    return () => {
+      if (iframe) {
+        iframe.removeEventListener('load', attachClickListeners);
+      }
+      window.removeEventListener('message', loadContent);
+    };
+  }, []);
 
   // helper function to rebase with the ketcher canvas data
   const fuelKetcherData = async () => {
@@ -358,7 +373,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
 
     let new_images = [];
-    // console.error("--------------------------------------------------------");
     // already_processed = already_processed.splice(-new_atoms.length);
     image_used_counter = already_processed.length - 1;
     // console.log({ already_processed, new_atoms, image_used_counter });
@@ -407,7 +421,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     d.root.nodes = [...d.root.nodes, ...new_images];
     new_atoms = [];
     imagesList.push(...new_images);
-    // console.log("END", { imagesList, image_used_counter, imagesList });
+    console.log("END", { imagesList, image_used_counter, imagesList });
     await editor.structureDef.editor.setMolecule(JSON.stringify(d));
     moveTemplate();
   };
@@ -475,22 +489,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   };
 
-  useEffect(() => {
-    resetStore();
-    const iframe = iframeRef.current;
-    if (iframe) {
-      iframe.addEventListener('load', attachClickListeners);
-    }
-    window.addEventListener('message', loadContent);
-
-    return () => {
-      if (iframe) {
-        iframe.removeEventListener('load', attachClickListeners);
-      }
-      window.removeEventListener('message', loadContent);
-    };
-  }, []);
-
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
     onSaveFileK2SC: async () => {
@@ -551,7 +549,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function for output molfile re-structure
   const reAttachPolymerList = ({ lines, atoms_count, extra_data_start, extra_data_end }) => {
-    const ploy_identifier = "> <PolymersList>";
+    const poly_identifier = "> <PolymersList>";
     let my_lines = [...lines];
     const atom_with_alias_list = [];
     let list_alias = my_lines.slice(extra_data_start, extra_data_end);
@@ -576,7 +574,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         counter++;
       }
     }
-    my_lines.splice(my_lines.length - 1, 0, ...[ploy_identifier, atom_with_alias_list.join(" "), "$$$$"]);
+    my_lines.splice(my_lines.length - 1, 0, ...[poly_identifier, atom_with_alias_list.join(" "), "$$$$"]);
     return my_lines.join("\n");
   };
 
