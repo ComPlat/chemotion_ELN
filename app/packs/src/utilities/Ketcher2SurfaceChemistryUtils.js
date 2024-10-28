@@ -8,7 +8,7 @@ const template_list_for_storage = [
 
 // standard sizes for the shapes
 const [standard_height_cirlce, standard_width_circle] = [1.0250000000000006, 1.0250000000000006];
-const [standard_height_square, standard_width_square] = [0.9750000000000001, 1.5749999999999986];
+const [standard_height_square, standard_width_square] = [0.50, 2.0];
 
 // list of data is required when alias is t_##, and image is not available in canvas
 const template_list_data = [
@@ -38,7 +38,7 @@ const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{2,3}$/;
 
 // enable/disable text labels Matching label A and putting images in the end
-const skip_template_name_hide = false;
+const skip_template_name_hide = true;
 const skip_image_layering = false;
 
 // image exists in dom

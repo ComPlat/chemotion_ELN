@@ -178,6 +178,20 @@ const KetcherEditor = forwardRef((props, ref) => {
       const result = await eventData;
       handleEventCapture(result);
     });
+
+    editor._structureDef.editor.editor.subscribe('selectionChange', async (eventData) => {
+      const result = await eventData;
+    });
+
+    editor._structureDef.editor.editor.subscribe('click', async (eventData) => {
+      const result = await eventData;
+      const atom = editor._structureDef.editor.editor._selection?.atoms;
+      if (atom) {
+        console.log({ atom: all_atoms[atom[0]] });
+      }
+    });
+
+
   };
 
   // Load the editor content and set up the molecule
@@ -216,7 +230,10 @@ const KetcherEditor = forwardRef((props, ref) => {
   const handleEventCapture = async (data) => {
     const selection = editor._structureDef.editor.editor._selection;
     if (selection?.images) {
-      addEventToFILOStack("Move image");
+      await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+      await fuelKetcherData();
+      return;
+      // addEventToFILOStack("Move image");
     }
 
     for (const eventItem of data) {
