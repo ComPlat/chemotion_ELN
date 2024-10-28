@@ -5,19 +5,18 @@ import classNames from 'classnames';
 
 import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
-import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 
 import InboxButton from "src/components/contextActions/InboxButton";
 import SampleTaskNavigationElement from "src/components/sampleTaskInbox/SampleTaskNavigationElement";
 import OpenCalendarButton from "src/components/calendar/OpenCalendarButton";
 import NoticeButton from "src/components/contextActions/NoticeButton";
 
-export default function Sidebar({ isCollapsed, toggleCollapse }) {
+export default function Sidebar({ isCollapsed, toggleSidebar, expandSidebar }) {
   return (
     <div className={"sidebar" + (isCollapsed ? " sidebar--collapsed" : "")} >
       <div className="sidebar-collapse-button-container">
         <Button
-          onClick={toggleCollapse}
+          onClick={toggleSidebar}
           className="sidebar-collapse-button"
         >
           <i className={"fa " + (isCollapsed ? "fa-angle-double-right" : "fa-angle-double-left")} />
@@ -27,11 +26,8 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
         <a href="/mydb" title="Link to mydb index page">
           <ChemotionLogo collapsed={isCollapsed} />
         </a>
-        <div className="d-flex flex-column flex-grow-1 overflow-y-auto h-0">
-          {!isCollapsed && (
-            <CollectionTree />
-          )}
-          <CollectionManagementButton />
+        <div className="flex-grow-1 h-0">
+          <CollectionTree isCollapsed={isCollapsed} expandSidebar={expandSidebar} />
         </div>
         <div className={classNames(
           'd-flex justify-content-center gap-3 py-4 border-top',
@@ -49,5 +45,6 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
 
 Sidebar.propTypes = {
   isCollapsed: PropTypes.bool.isRequired,
-  toggleCollapse: PropTypes.func.isRequired,
+  toggleSidebar: PropTypes.func.isRequired,
+  expandSidebar: PropTypes.func.isRequired,
 };
