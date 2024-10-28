@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Tabs, Tab, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
+import { Tabs, Tab, Tooltip, OverlayTrigger, Button, ButtonGroup } from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -14,6 +14,10 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import PropTypes from 'prop-types';
+import ManagingActions from 'src/components/managingActions/ManagingActions';
+import CreateButton from 'src/components/contextActions/CreateButton';
+import SplitElementButton from 'src/components/contextActions/SplitElementButton';
+import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 
 function getSortedHash(inputHash) {
   const resultHash = {};
@@ -257,14 +261,23 @@ export default class ElementsList extends React.Component {
             Remove search result
           </Button>
         )}
-        <div className="position-relative h-100">
-          <div className="position-absolute top-0 end-0">
-            <ElementsTableSettings
-              visible={visible}
-              hidden={hidden}
-            />
+        <div className="d-flex flex-column gap-1 h-100">
+          <div className="d-flex gap-2">
+            <ManagingActions />
+            <ButtonGroup className="d-flex align-items-center">
+              <SplitElementButton />
+              <CreateButton />
+            </ButtonGroup>
+            <ExportImportButton />
           </div>
-          <div className="tabs-container--with-full-height">
+          <div className="tabs-container--with-full-height position-relative">
+            <div className="position-absolute top-0 end-0">
+              <ElementsTableSettings
+                visible={visible}
+                hidden={hidden}
+              />
+            </div>
+
             <Tabs
               id="tabList"
               activeKey={currentTab}
