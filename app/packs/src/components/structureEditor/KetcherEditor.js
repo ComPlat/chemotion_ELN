@@ -115,12 +115,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Move image': async () => await moveTemplate(),
     'Move atom': async () => await moveTemplate(),
     'Add atom': async () => await handleAddAtom(),
-    // 'Delete image': async () => {
-    //   console.log(latestData);
-    //   await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    // },
-
-
+    // 'Delete image': async () => {},
     // 'Upsert image': async () => await postAtomAddImageInsertion(),
   };
 
@@ -285,10 +280,21 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
 
     if (atoms_to_be_deleted.length) { // reduce template indentifier based on the deleted templates
+      const image_index_deleted = [];
       for (let i = 0; i < atoms_to_be_deleted.length; i++) {
         const item = atoms_to_be_deleted[i];
         await onEventDeleteAtom(item);
+        if (item?.alias && three_parts_patten.test(item.alias)) {
+          image_index_deleted.push(parseInt(item.alias.split("_")[2]) + mols.length);
+        }
       }
+
+      console.log({ image_index_deleted });
+      // Iterate in reverse order
+      for (let i = 0; i >= 0; i--) {
+        latestData.root.nodes.splice(image_index_deleted[i], 1);
+      }
+
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       image_used_counter = image_used_counter - atoms_to_be_deleted.length;
       atoms_to_be_deleted = [];
