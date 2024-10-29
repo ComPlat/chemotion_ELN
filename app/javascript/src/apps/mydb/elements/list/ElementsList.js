@@ -14,6 +14,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
 import CreateButton from 'src/components/contextActions/CreateButton';
+import PrintCodeButton from 'src/components/contextActions/PrintCodeButton';
 import SplitElementButton from 'src/components/contextActions/SplitElementButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 
@@ -264,6 +265,7 @@ export default class ElementsList extends React.Component {
               <CreateButton />
             </ButtonGroup>
             <ExportImportButton />
+            <PrintCodeButton />
           </div>
           <div className="tabs-container--with-full-height position-relative">
             <div className="position-absolute top-0 end-0">
