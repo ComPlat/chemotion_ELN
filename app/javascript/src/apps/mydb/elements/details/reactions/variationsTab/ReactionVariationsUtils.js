@@ -165,11 +165,15 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   updatedColumnDefinitions.forEach((columnDefinition) => {
     if (columnDefinition.groupId) {
       // Column group.
-      columnDefinition.children.forEach((child) => {
-        if (child.field === field) {
-          child[property] = newValue;
-        }
-      });
+      if (columnDefinition.groupId === field) {
+        columnDefinition[property] = newValue;
+      } else {
+        columnDefinition.children.forEach((child) => {
+          if (child.field === field) {
+            child[property] = newValue;
+          }
+        });
+      }
     } else if (columnDefinition.field === field) {
       // Single column.
       columnDefinition[property] = newValue;
