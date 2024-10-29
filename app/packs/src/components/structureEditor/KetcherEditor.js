@@ -387,6 +387,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     console.log("Atom moved!");
     await fuelKetcherData();
     let already_processed = [];
+    image_used_counter = -1;
     const seenThirdParts = new Set();
 
     for (let m = 0; m < mols.length; m++) {
@@ -429,9 +430,14 @@ const KetcherEditor = forwardRef((props, ref) => {
         else if (three_parts_patten.test(atom.alias)) {
           console.log("Three", `${m}_${a}_${splits[2]}`);
           if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
-            // console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
+            console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
+            // add image if image doesnt exists
+            if (!imagesList[image_used_counter]) {
+              const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
+              new_images.push(img);
+            }
           } else {
-            // console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
+            console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
             image_used_counter += 1;
             atom.alias = `t_${splits[1]}_${image_used_counter}`;
             already_processed.push(`${m}_${a}_${image_used_counter}`);
@@ -486,7 +492,7 @@ const KetcherEditor = forwardRef((props, ref) => {
             // Disable buttons again in case they were added dynamically
             disableButton(iframeDocument, 'Undo \\(Ctrl\\+Z\\)');
             disableButton(iframeDocument, 'Redo \\(Ctrl\\+Shift\\+Z\\)');
-            disableButton(iframeDocument, 'Erase \\(Del\\)');
+            // disableButton(iframeDocument, 'Erase \\(Del\\)');
           }
         }
 
