@@ -150,8 +150,8 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
         console.log(parseInt(atom_splits[2]), parseInt(item_splits[2]), parseInt(atom_splits[2]) <= parseInt(item_splits[2]));
         if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
           console.log("should be updated", item);
+          if (parseInt(item_splits[2]) == 0) continue;
           let step_back = parseInt(item_splits[2]) - 1;
-          step_back < 0 ? step_back = 0 : null;
           const new_alias = `${item_splits[0]}_${item_splits[1]}_${step_back}`;
           atoms[a].alias = new_alias;
         }
@@ -164,6 +164,46 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
 // is new atom
 const isNewAtom = (eventItem) => {
   return two_parts_pattern.test(eventItem.to) || eventItem.label === inspired_label;
+};
+
+const removeImageTemplateAtom = (images, mols, latestData) => {
+  const latestData_alias = { ...latestData };
+  let how_many_to_remove = 0;
+  for (let m = 0; m < mols.length; m++) {
+    const mol = latestData[mols[m]];
+    // const atoms = mol.atoms?.filter(i => {
+    //   if (i.label === inspired_label) {
+    //     const splits = i.alias.split("_");
+    //     if (images.indexOf(parseInt(splits[2])) != -1) {
+    //       return false;
+    //     }
+    //   }
+    //   return true;
+    // });
+    const atoms = latestData[mol[m]]?.atoms.map((atom, idx) => {
+      if (atom.label === inspired_label) {
+        const splits = atom.alias.split("_");
+        if (images.indexOf(parseInt(splits[2])) != -1) {
+          // latestData[mols[m]].bonds = latestData[mols[m]]?.bonds.filter(i => !i.atoms.includes(a));
+          if (images.indexOf(parseInt(splits[2])) != -1) {
+            latestData[mol[m]]?.atoms.splice(idx, 1);
+          }
+
+          if (!atoms.length) {
+            delete latestData[mols[m]];
+            latestData_alias.root.nodes.splice(m, 1);
+          }
+          how_many_to_remove++;
+        } else if (how_many_to_remove > 0) {
+          console.log("elseif");
+          atom.alias = `t_${splits[1]}_${parseInt(splits[2]) - how_many_to_remove}`;
+        }
+      }
+      return atom;
+    });
+    console.log({ atoms }, "-----");
+  }
+  return { data: latestData, how_many_to_remove };
 };
 
 // DOM functions
@@ -193,6 +233,7 @@ const makeTransparentByTitle = (iframeDocument) => {
     }
   });
 };
+
 
 // funcation to disable canvas button based on title
 const disableButton = (iframeDocument, title) => {
@@ -268,6 +309,7 @@ export {
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
   isNewAtom,
+  removeImageTemplateAtom,
 
   // DOM Methods
   disableButton,

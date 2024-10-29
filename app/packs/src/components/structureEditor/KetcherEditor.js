@@ -20,6 +20,7 @@ import {
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
   isNewAtom,
+  removeImageTemplateAtom,
 
   // DOM Methods
   disableButton,
@@ -47,6 +48,8 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let new_atoms = [];
+let on_erase_delete = false;
+let _selection = null;
 
 // funcation to reset all data containers
 const resetStore = () => {
@@ -94,16 +97,38 @@ const KetcherEditor = forwardRef((props, ref) => {
       allowed_to_process_setter(exists);
       addEventToFILOStack("Move atom");
     },
-    "Delete image": async () => {
-      console.log("Delete image");
-      await editor._structureDef.editor.editor.undo();
+    "Delete image": async (eventItem) => {
+      console.log("Delete image", _selection);
+      if (_selection?.images) {
+        await fuelKetcherData();
+        const image_list = _selection?.images;
+        const { data, how_many_to_remove } = removeImageTemplateAtom(image_list, mols, latestData);
+        await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+        image_used_counter -= how_many_to_remove;
+        return;
+      }
     },
     "Delete atom": async (eventItem) => {
-      console.log("DELETE ATOM!!");
-      const { atom } = should_canvas_update_on_movement(eventItem);
-      if (eventItem.label === inspired_label) atoms_to_be_deleted.push(atom);
+      console.log("DELETE ATOM!!", _selection);
+
+      if (eventItem.label === inspired_label) {
+        // await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+        console.log({ eventItem });
+        const { atom } = should_canvas_update_on_movement(eventItem);
+        console.log({ "DELETED ATOM---------": atom });
+
+        // if (!on_erase_delete) {
+        //   console.log("atom remove manually");
+        // } else {
+        //   console.log("deleted from Erase");
+        // }
+        FILOStack = [];
+        uniqueEvents = new Set();
+        return;
+      }
     },
-    "Update": async () => {
+    "Update": async (eventItem) => {
+      console.log(eventItem);
       // Optional logic for update, e.g., logging
       // console.log({ Update: eventItem });
     },
@@ -126,6 +151,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       re_render_canvas = true;
     },
     "[title='Layout \\(Ctrl\\+L\\)']": async () => {
+      console.log("Layout");
       await fuelKetcherData();
       re_render_canvas = true;
     },
@@ -138,8 +164,8 @@ const KetcherEditor = forwardRef((props, ref) => {
     "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
       // TODO:pattern identify
     },
-    'Erase \\(Del\\)': () => {
-      // TODO:pattern identify
+    'Erase \\(Del\\)': async () => {
+      // on click event is can be access is funcation eraseStateAlert
     }
   };
 
@@ -179,19 +205,10 @@ const KetcherEditor = forwardRef((props, ref) => {
       handleEventCapture(result);
     });
 
-    editor._structureDef.editor.editor.subscribe('selectionChange', async (eventData) => {
-      const result = await eventData;
-    });
-
     editor._structureDef.editor.editor.subscribe('click', async (eventData) => {
-      const result = await eventData;
-      const atom = editor._structureDef.editor.editor._selection?.atoms;
-      if (atom) {
-        console.log({ atom: all_atoms[atom[0]] });
-      }
+      // const result = await eventData;
+      _selection = editor._structureDef.editor.editor._selection;
     });
-
-
   };
 
   // Load the editor content and set up the molecule
@@ -280,6 +297,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
 
     if (atoms_to_be_deleted.length) { // reduce template indentifier based on the deleted templates
+      console.log("ATOM TO BE DELETEDDDD!!!!!", atoms_to_be_deleted);
       const image_index_deleted = [];
       for (let i = 0; i < atoms_to_be_deleted.length; i++) {
         const item = atoms_to_be_deleted[i];
@@ -295,10 +313,15 @@ const KetcherEditor = forwardRef((props, ref) => {
         latestData.root.nodes.splice(image_index_deleted[i], 1);
       }
 
+      console.log({ latestData });
+
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       image_used_counter = image_used_counter - atoms_to_be_deleted.length;
       atoms_to_be_deleted = [];
       images_to_be_updated_setter();
+      FILOStack = [];
+      uniqueEvents = new Set();
+      console.log("---------------------");
       return;
     }
 
@@ -312,7 +335,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       const event = FILOStack.pop();
       uniqueEvents.delete(event);
       if (eventHandlers[event]) {
-        console.log({ event });
         await eventHandlers[event]();
       }
     }
@@ -473,11 +495,32 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
   };
 
+  const eraseStateAlert = () => {
+    on_erase_delete = true;
+  };
   // helper function to add mutation oberservers to DOM elements
   const attachClickListeners = () => {
     // Main function to attach listeners and observers
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
+
+      const checkEraseButtonClass = () => {
+        setTimeout(() => {
+          const eraseButton = iframeDocument.querySelector('[title="Erase \\(Del\\)"]');
+          if (eraseButton && eraseButton.classList.contains('ActionButton-module_selected__kPCxA')) {
+            eraseStateAlert(); // Call your function if the class is present
+          }
+        }, 10);
+      };
+
+
+      // Attach the click listener for the Erase button
+      const attachEraseButtonListener = () => {
+        const eraseButton = iframeDocument.querySelector('[title="Erase \\(Del\\)"]');
+        if (eraseButton) {
+          eraseButton.addEventListener('click', checkEraseButtonClass);
+        }
+      };
 
       // Attach MutationObserver to listen for relevant DOM mutations (e.g., new buttons added)
       const observer = new MutationObserver(async (mutationsList) => {
@@ -487,12 +530,13 @@ const KetcherEditor = forwardRef((props, ref) => {
               attachListenerForTitle(iframeDocument, selector, buttonEvents);
               attachListenerForTitle(iframeDocument, selector, buttonEvents);
               makeTransparentByTitle(iframeDocument);
+              attachEraseButtonListener();
             });
 
             // Disable buttons again in case they were added dynamically
             disableButton(iframeDocument, 'Undo \\(Ctrl\\+Z\\)');
             disableButton(iframeDocument, 'Redo \\(Ctrl\\+Shift\\+Z\\)');
-            // disableButton(iframeDocument, 'Erase \\(Del\\)');
+            // disableButton(iframeDocument, 'Erase \\(Del\\)')
           }
         }
 
@@ -506,6 +550,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         childList: true,
         subtree: true,
       });
+
 
       // Fallback: Try to manually find buttons after some time, debounce the function
       const debounceAttach = setTimeout(() => {
