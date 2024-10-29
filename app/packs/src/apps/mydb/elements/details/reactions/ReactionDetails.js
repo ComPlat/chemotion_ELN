@@ -281,12 +281,14 @@ export default class ReactionDetails extends Component {
       : { svg: reaction.reaction_svg_file };
     if (reaction.hasMaterials()) {
       return (
-        <SvgFileZoomPan
-          duration={300}
-          resize
-          // eslint-disable-next-line react/jsx-props-no-spreading
-          {...svgProps}
-        />
+        <div>
+          <SvgFileZoomPan
+            duration={300}
+            resize
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...svgProps}
+          />
+        </div>
       );
     }
   }
