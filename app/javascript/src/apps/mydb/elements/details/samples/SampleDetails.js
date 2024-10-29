@@ -1425,7 +1425,7 @@ export default class SampleDetails extends React.Component {
           />
           {this.state.sfn && <ScifinderSearch el={sample} />}
           <div className="tabs-container--with-borders">
-            <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+            <Tabs mountOnEnter unmountOnExit activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {tabContents}
             </Tabs>
           </div>
