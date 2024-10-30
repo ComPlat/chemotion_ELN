@@ -72,6 +72,10 @@ module Usecases
                 modified_sample = update_existing_sample(sample, fixed_label)
               end
 
+              if sample.components.present? && sample.sample_type == 'Mixture'
+                save_components(modified_sample.id, sample.components)
+              end
+
               modified_sample.save_segments(segments: sample.segments, current_user_id: @current_user.id) if sample.segments
               modified_sample_ids << modified_sample.id
 
@@ -247,6 +251,21 @@ module Usecases
           Range.new(-Float::INFINITY, Float::INFINITY, '()')
         else
           Range.new(lower, upper)
+        end
+      end
+
+      def save_components(sample_id, components)
+        components.each do |component_params|
+          molecule_id = component_params[:component_properties][:molecule_id]
+
+          component = Component.where("sample_id = ? AND CAST(component_properties ->> 'molecule_id' AS INTEGER) = ?", sample_id, molecule_id)
+                               .first_or_initialize(sample_id: sample_id)
+
+          component.update(
+            name: component_params[:name],
+            position: component_params[:position],
+            component_properties: component_params[:component_properties],
+          )
         end
       end
     end
