@@ -105,7 +105,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       headerName: materialTypes[materialType].label,
       groupId: materialType,
       marryChildren: true,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, MenuHeader))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode))
     }))
   ));
 
@@ -169,6 +169,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     setColumnDefinitions(
       {
         type: 'update_on_render',
+        gasMode: updatedGasMode,
         reactionMaterials: updatedReactionMaterials
       }
     );
@@ -180,6 +181,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       {
         type: 'toggle_gas_mode',
         gasMode: updatedGasMode,
+        reactionMaterials: updatedReactionMaterials
       }
     );
     setGasMode(updatedGasMode);

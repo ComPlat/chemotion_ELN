@@ -3,7 +3,7 @@ import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
   updateNonReferenceMaterialOnMassChange, updateColumnDefinitionsMaterials,
-  getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialsGasType
+  getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -115,7 +115,7 @@ describe('ReactionVariationsMaterials', () => {
     const reactionMaterials = getReactionMaterials(reaction);
     const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
       groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
     }));
 
     const startingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
@@ -123,7 +123,7 @@ describe('ReactionVariationsMaterials', () => {
 
     reactionMaterials.startingMaterials.pop();
     const updatedStartingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, reactionMaterials, null);
+    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, reactionMaterials, null, false);
     expect(getColumnDefinitionsMaterialIDs(
       updatedColumnDefinitions,
       'startingMaterials'
@@ -142,7 +142,7 @@ describe('ReactionVariationsMaterials', () => {
     const reactionMaterials = getReactionMaterials(reaction);
     const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
       groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
     }));
 
     Object.keys(materialTypes).forEach((materialType) => {
@@ -162,9 +162,11 @@ describe('ReactionVariationsMaterials', () => {
         }
       });
     });
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterialsGasType(
+
+    const updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
       columnDefinitions,
       reactionMaterials,
+      true
     );
 
     const productIDs = getColumnDefinitionsMaterialIDs(updatedColumnDefinitions, 'products');
@@ -174,7 +176,7 @@ describe('ReactionVariationsMaterials', () => {
       `products.${productIDs[0]}`
     );
     expect(productColumnDefinition.cellDataType).toBe('gas');
-    expect(productColumnDefinition.entryDefs.currentEntry).toBe('duration');
+    expect(productColumnDefinition.entryDefs.currentEntry).toBe('gasDuration');
     expect(productColumnDefinition.entryDefs.displayUnit).toBe('Second(s)');
 
     const reactantIDs = getColumnDefinitionsMaterialIDs(updatedColumnDefinitions, 'reactants');
@@ -184,6 +186,6 @@ describe('ReactionVariationsMaterials', () => {
       `reactants.${reactantIDs[0]}`
     );
     expect(reactantColumnDefinition.cellDataType).toBe('gas');
-    expect(reactantColumnDefinition.entryDefs.availableEntriesWithUnits).not.toHaveProperty('mass');
+    expect(reactantColumnDefinition.entryDefs.availableEntriesWithUnits).not.toHaveProperty('gasMass');
   });
 });
