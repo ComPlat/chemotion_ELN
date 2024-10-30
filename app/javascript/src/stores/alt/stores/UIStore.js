@@ -68,6 +68,7 @@ class UIStore {
         activeTab: 0,
         activeAnalysis: 0,
       },
+      isSidebarCollapsed: false,
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -126,6 +127,8 @@ class UIStore {
       handleSetProductOnly: UIActions.setProductOnly,
       handleRerenderGenericWorkflow: UIActions.rerenderGenericWorkflow,
       handleShowGenericWorkflowModal: UIActions.showGenericWorkflowModal,
+      handleExpandSidebar: UIActions.expandSidebar,
+      handleToggleSidebar: UIActions.toggleSidebar,
     });
   }
 
@@ -509,6 +512,14 @@ class UIStore {
   handleSetProductOnly(productOnly) {
     this.state.productOnly = productOnly;
     this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleExpandSidebar() {
+    this.setState({ isSidebarCollapsed: false });
+  }
+
+  handleToggleSidebar() {
+    this.setState({ isSidebarCollapsed: !this.state.isSidebarCollapsed });
   }
 }
 

@@ -1,7 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
 import { Button } from 'react-bootstrap';
 import classNames from 'classnames';
+
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
@@ -11,12 +13,20 @@ import SampleTaskNavigationElement from "src/components/sampleTaskInbox/SampleTa
 import OpenCalendarButton from "src/components/calendar/OpenCalendarButton";
 import NoticeButton from "src/components/contextActions/NoticeButton";
 
-export default function Sidebar({ isCollapsed, toggleSidebar, expandSidebar }) {
+export default function Sidebar() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  useEffect(() => {
+    const onUiStoreChange = ({ isSidebarCollapsed }) => setIsCollapsed(isSidebarCollapsed);
+    UIStore.listen(onUiStoreChange);
+    onUiStoreChange(UIStore.getState());
+    return () => UIStore.unlisten(onUiStoreChange);
+  }, []);
+
   return (
     <div className={"sidebar" + (isCollapsed ? " sidebar--collapsed" : "")} >
       <div className="sidebar-collapse-button-container">
         <Button
-          onClick={toggleSidebar}
+          onClick={UIActions.toggleSidebar}
           className="sidebar-collapse-button"
         >
           <i className={"fa " + (isCollapsed ? "fa-angle-double-right" : "fa-angle-double-left")} />
@@ -27,7 +37,9 @@ export default function Sidebar({ isCollapsed, toggleSidebar, expandSidebar }) {
           <ChemotionLogo collapsed={isCollapsed} />
         </a>
         <div className="flex-grow-1 h-0">
-          <CollectionTree isCollapsed={isCollapsed} expandSidebar={expandSidebar} />
+          <CollectionTree
+            isCollapsed={isCollapsed}
+            expandSidebar={UIActions.expandSidebar} />
         </div>
         <div className={classNames(
           'd-flex justify-content-center gap-3 py-4 border-top',
@@ -42,9 +54,3 @@ export default function Sidebar({ isCollapsed, toggleSidebar, expandSidebar }) {
     </div>
   );
 }
-
-Sidebar.propTypes = {
-  isCollapsed: PropTypes.bool.isRequired,
-  toggleSidebar: PropTypes.func.isRequired,
-  expandSidebar: PropTypes.func.isRequired,
-};
