@@ -1,7 +1,7 @@
 /*
  * In order to control import order and provide access to variables, mixins and utilities, we import
  * the files within this directory manually via sass `@import`, instead of using `require_tree .`
- * 
+ *
  * The files in the legacy directory have not yet been aligned with the design system initiative and
  * will be refactored in the future.
  *
@@ -27,6 +27,7 @@
 @import "components/Sidebar";
 @import "components/QuillEditor";
 @import "components/QuillViewer";
+@import "components/CollectionSubtree";
 @import "components/svg_with_popver";
 
 @import "legacy/miscellaneous";
@@ -36,7 +37,6 @@
 @import "legacy/chemical-tab";
 @import "legacy/chemspectra";
 @import "legacy/collection_management";
-@import "legacy/collection_tree";
 @import "legacy/common";
 @import "legacy/converter";
 @import "legacy/CustomHeader";
