@@ -6,7 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfos from 'src/apps/mydb/collections/UserInfos';
+import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import GatePushButton from 'src/components/common/GatePushButton';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
 
@@ -163,7 +163,7 @@ export default class CollectionSubtree extends React.Component {
             />
           )}
           {(sharedUsers && sharedUsers.length > 0) && (
-            <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers })}>
+            <OverlayTrigger placement="top" overlay={<UserInfosTooltip users={sharedUsers} />}>
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
