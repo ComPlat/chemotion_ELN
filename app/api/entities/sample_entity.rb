@@ -52,7 +52,7 @@ module Entities
       expose! :melting_point,           unless: :displayed_in_list
       expose! :metrics
       expose! :molarity_unit,           unless: :displayed_in_list
-      expose! :molarity_value,          unless: :displayed_in_list
+      expose! :molarity_value
       expose! :molecule_name_hash,                                  anonymize_with: {}
       expose! :name
       expose! :parent_id,               unless: :displayed_in_list
@@ -73,6 +73,8 @@ module Entities
       expose! :target_amount_value,     unless: :displayed_in_list
       expose! :user_labels
       expose! :xref
+      expose! :sample_type
+      expose! :sample_details
     end
     # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 
