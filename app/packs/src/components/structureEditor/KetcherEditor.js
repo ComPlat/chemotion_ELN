@@ -165,9 +165,16 @@ const KetcherEditor = forwardRef((props, ref) => {
       // TODO:pattern identify
       console.log("hi");
       const list = [...editor._structureDef.editor.editor.historyStack];
-      console.log(list.length);
+      let opp_idx = 0;
       for (let i = list.length - 1; i >= 0; i--) {
-        console.log(list[i]);
+        if (list[i].operations[0].type !== 'Load canvas') {
+          break;
+        } else {
+          opp_idx++;
+        }
+      }
+      for (let j = 0; j < opp_idx; j++) {
+        editor._structureDef.editor.editor.undo();
       }
     },
     "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
@@ -553,7 +560,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
             // Disable buttons again in case they were added dynamically
             // disableButton(iframeDocument, 'Undo \\(Ctrl\\+Z\\)');
-            disableButton(iframeDocument, 'Redo \\(Ctrl\\+Shift\\+Z\\)');
+            // disableButton(iframeDocument, 'Redo \\(Ctrl\\+Shift\\+Z\\)');
             // disableButton(iframeDocument, 'Erase \\(Del\\)')
           }
         }
