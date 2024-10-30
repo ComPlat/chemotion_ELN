@@ -37,6 +37,7 @@ export const DeviceDescriptionsStore = types
     active_tab_key: types.optional(types.number, 1),
     key_prefix: types.optional(types.string, ''),
     toggable_contents: types.optional(types.frozen({}), toggableContents),
+    toggable_segments: types.optional(types.array(types.string), []),
     analysis_mode: types.optional(types.string, 'edit'),
     analysis_open_panel: types.optional(types.union(types.string, types.number), 'none'),
     analysis_comment_box: types.optional(types.boolean, false),
@@ -122,6 +123,15 @@ export const DeviceDescriptionsStore = types
       let contents = { ...self.toggable_contents };
       contents[content] = !contents[content];
       self.toggable_contents = contents;
+    },
+    toggleSegment(segment) {
+      let segments = [...self.toggable_segments];
+      if (segments.includes(segment)) {
+        segments = segments.filter((s) => { return s != segment });
+      } else {
+        segments.push(segment);
+      }
+      self.toggable_segments = segments;
     },
     changeAnalysisMode(mode) {
       self.analysis_mode = mode;

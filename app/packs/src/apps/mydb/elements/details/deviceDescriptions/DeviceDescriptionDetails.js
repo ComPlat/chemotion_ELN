@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  Panel, ButtonToolbar, Button, Tabs, Tab, Tooltip, OverlayTrigger
+  ButtonToolbar, Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -135,95 +135,112 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     if (deviceDescription.isNew || hasNoAnalysis) { return null; }
 
     return (
-      <Button bsStyle="info" disabled={!deviceDescriptionIsValid()} onClick={() => handleExportAnalyses()}>
+      <Button
+        variant="info"
+        disabled={!deviceDescriptionIsValid()}
+        onClick={() => handleExportAnalyses()}
+      >
         Download Analysis
-        {' '}
-        {deviceDescriptionsStore.analysis_start_export ? (
-          <span>
-            <i className="fa fa-spin fa-spinner" />
-          </span>
-        ) : null}
+        {deviceDescriptionsStore.analysis_start_export && <i className="fa fa-spin fa-spinner ms-1" />}
       </Button>
     );
   }
 
   const deviceDescriptionHeader = () => {
-    const saveBtnDisplay = deviceDescription.isEdited ? '' : 'none';
     const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
     const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
-    const copyButton = (deviceDescription.can_copy && !deviceDescription.isNew) ? (
-      <CopyElementModal
-        element={deviceDescription}
-        defCol={defCol}
-      />
-    ) : null;
-
     return (
-      <div>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="deviceDescriptionDates">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="icon-device_description" />
-            &nbsp; <span>{deviceDescription.name}</span> &nbsp;
-          </span>
-        </OverlayTrigger>
-        <ElementCollectionLabels element={deviceDescription} placement="right" />
-        <HeaderCommentSection element={deviceDescription} />
-        <ConfirmClose el={deviceDescription} />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveDeviceDescription">Save device description</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => handleSubmit()}
-            style={{ display: saveBtnDisplay }}
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="deviceDescriptionDates">{titleTooltip}</Tooltip>}>
+            <span>
+              <i className="icon-device_description me-1" />
+              {deviceDescription.name}
+            </span>
+          </OverlayTrigger>
+          <ElementCollectionLabels element={deviceDescription} placement="right" />
+          <HeaderCommentSection element={deviceDescription} />
+        </div>
+        <div className="d-flex align-items-center gap-1">
+          <PrintCodeButton element={deviceDescription} />
+          {!deviceDescription.isNew &&
+            <OpenCalendarButton isPanelHeader eventableId={deviceDescription.id} eventableType="DeviceDescription" />}
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="fullDeviceDescription">FullScreen</Tooltip>}
           >
-            <i className="fa fa-floppy-o " />
-          </Button>
-        </OverlayTrigger>
-        {copyButton}
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => toggleFullScreen()}>
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        <PrintCodeButton element={deviceDescription} />
-        {deviceDescription.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={deviceDescription.id} eventableType="DeviceDescription" />}
+            <Button
+              variant="info"
+              size="xxsm"
+              onClick={() => toggleFullScreen()}
+            >
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          {deviceDescription.can_copy && !deviceDescription.isNew && (
+            <CopyElementModal
+              element={deviceDescription}
+              defCol={defCol}
+            />
+          )}
+          {deviceDescription.isEdited && (
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="saveDeviceDescription">Save device description</Tooltip>}
+            >
+              <Button
+                variant="warning"
+                size="xxsm"
+                onClick={() => handleSubmit()}
+              >
+                <i className="fa fa-floppy-o " />
+              </Button>
+            </OverlayTrigger>
+          )}
+          <ConfirmClose el={deviceDescription} />
+        </div>
       </div>
     );
   }
 
   return (
-    <Panel bsStyle={deviceDescription.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
-      <Panel.Heading>{deviceDescriptionHeader()}</Panel.Heading>
-      <Panel.Body>
+    <Card className={"detail-card" + (deviceDescription.isPendingToSave ? " detail-card--unsaved" : "")}>
+      <Card.Header>
+        {deviceDescriptionHeader()}
+      </Card.Header>
+      <Card.Body>
         <ElementDetailSortTab
           type="device_description"
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
         />
-        <Tabs activeKey={activeTab} onSelect={key => handleTabChange(key)} id="deviceDescriptionDetailsTab">
-          {tabContents}
-        </Tabs>
-        <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => DetailActions.close(deviceDescription)}>
+        <div className="tabs-container--with-borders">
+          <Tabs
+            activeKey={activeTab}
+            onSelect={key => handleTabChange(key)}
+            id="deviceDescriptionDetailsTab"
+            unmountOnExit
+          >
+            {tabContents}
+          </Tabs>
+        </div>
+        <CommentModal element={deviceDescription} />
+      </Card.Body>
+      <Card.Footer>
+        <ButtonToolbar className="gap-2">
+          <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
             Close
           </Button>
-          <Button bsStyle="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
+          <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
             {submitLabel}
           </Button>
           {downloadAnalysisButton()}
         </ButtonToolbar>
-        <CommentModal element={deviceDescription} />
-      </Panel.Body>
-    </Panel>
+      </Card.Footer>
+    </Card>
   );
 }
 

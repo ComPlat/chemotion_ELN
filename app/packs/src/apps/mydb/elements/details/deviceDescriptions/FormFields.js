@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  FormGroup, ControlLabel, FormControl, InputGroup,
-  OverlayTrigger, Tooltip, Button, Checkbox,
+  InputGroup, OverlayTrigger, Tooltip, Button, Form,
 } from 'react-bootstrap';
-import Select from 'react-select3';
+import { Select } from 'src/components/common/Select';
 import DatePicker from 'react-datepicker';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
 
@@ -103,8 +103,8 @@ const annotationButton = (store, attachment) => {
     >
       <span>
         <Button
-          bsSize="xs"
-          bsStyle="warning"
+          size="xs"
+          variant="warning"
           className={`attachment-button-size ${className}`}
           onClick={() => {
             if (isActive) {
@@ -123,10 +123,19 @@ const annotationButton = (store, attachment) => {
 }
 
 const headlineWithToggle = (store, type, text) => {
-  const toggledClass = store.toggable_contents[type] ? '' : ' toggled';
+  const direction = store.toggable_contents[type] ? 'down' : 'right';
   return (
-    <div className={`form-fields-headline${toggledClass}`} onClick={() => toggleContent(store, type)}>
-      {text}
+    <div
+      className="d-flex justify-content-between align-items-center bg-gray-200 py-2 px-3 border-bottom"
+      onClick={() => toggleContent(store, type)}
+      role="button"
+    >
+      <div className="fw-bold fs-5">{text}</div>
+      <ChevronIcon
+        direction={direction}
+        color="primary"
+        className="fs-5"
+      />
     </div>
   );
 }
@@ -134,19 +143,19 @@ const headlineWithToggle = (store, type, text) => {
 const labelWithInfo = (label, info) => {
   if (label === '') { return null; }
 
-  let controlLabel = <ControlLabel>{label}</ControlLabel>;
+  let formLabel = <Form.Label>{label}</Form.Label>;
 
   if (info) {
-    controlLabel = (
+    formLabel = (
       <OverlayTrigger
         placement="top"
         overlay={<Tooltip id={uuid()}>{info}</Tooltip>}
       >
-        <ControlLabel>{label}</ControlLabel>
+        <Form.Label>{label}</Form.Label>
       </OverlayTrigger>
     );
   }
-  return controlLabel;
+  return formLabel;
 }
 
 const elementFieldValue = (element, store, field) => {
@@ -191,8 +200,7 @@ const DropAreaForComponent = ({ index, element, store, field, type }) => {
     <div
       key={`component-dropzone-${type}-${index}`}
       ref={(node) => drop(node)}
-      className="element-dropzone"
-      style={{ width: '96%', border: isOver && canDrop ? '2px dashed #337ab7' : '2px dashed #bbb' }}
+      className={`p-2 dnd-zone text-center text-gray-600 ${isOver && canDrop ? 'dnd-zone-over' : ''}`}
     >
       Drop device description here
     </div>
@@ -201,17 +209,17 @@ const DropAreaForComponent = ({ index, element, store, field, type }) => {
 
 const LinkedComponent = ({ element, entry }) => {
   return (
-    <div className="form-group url-entry">
-      <label>{entry.label}</label>
-      <div className="form-control no-border">
-        <a
-          role="link"
+    <div>
+      <label className="form-label">{entry.label}</label>
+      <div className="form-control border-0">
+        <Button
           tabIndex={0}
+          variant="link"
+          className="text-nowrap p-0"
           onClick={() => handleClickOnUrl('device_description', element.device_description_id)}
-          style={{ cursor: 'pointer' }}
         >
-          <span className="reaction-material-link">{element.url}</span>
-        </a>  
+          {element.url}
+        </Button>  
       </div>
     </div>
   );
@@ -241,10 +249,10 @@ const deleteComponent = (element, store, field, type, i) => {
 const addComponentButton = (element, store, field, type, rowFields) => {
   return (
     <Button
-      bsSize="xsmall"
-      bsStyle="primary"
+      size="xxsm"
+      variant="primary"
       onClick={() => addComponent(element, store, field, type, rowFields)}
-      className="add-row"
+      className="me-2 mb-2"
     >
       <i className="fa fa-plus" />
     </Button>
@@ -254,10 +262,10 @@ const addComponentButton = (element, store, field, type, rowFields) => {
 const deleteComponentButton = (element, store, field, type, i) => {
   return (
     <Button
-      bsSize="xsmall"
-      bsStyle="danger"
+      size="sm"
+      variant="danger"
       onClick={() => deleteComponent(element, store, field, type, i)}
-      className="delete-in-row"
+      className="p-2"
     >
       <i className="fa fa-trash-o" />
     </Button>
@@ -309,7 +317,7 @@ const componentInput = (element, store, label, field, type, rowFields, info) => 
       });
 
       components.push(
-        <div className={`grouped-fields-row cols-${rowFields.length}`} key={`${row}-${i}`}>
+        <div className="multiple-row-fields components" key={`${row}-${i}`}>
           {fields}
           {deleteComponentButton(element, store, field, type, i)}
         </div>
@@ -318,11 +326,13 @@ const componentInput = (element, store, label, field, type, rowFields, info) => 
   }
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`} className="no-margin-bottom">
-      {addComponentButton(element, store, field, type, rowFields)}
-      {labelWithInfo(label, info)}
+    <Form.Group key={`${store.key_prefix}-${label}`}>
+      <div className="d-flex align-items-center">
+        {addComponentButton(element, store, field, type, rowFields)}
+        {labelWithInfo(label, info)}
+      </div>
       {components}
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -344,10 +354,10 @@ const deleteRow = (element, field, store, i) => {
 const addRowButton = (element, field, rowFields, store) => {
   return (
     <Button
-      bsSize="xsmall"
-      bsStyle="primary"
+      size="xxsm"
+      variant="primary"
       onClick={() => addRow(element, field, rowFields, store)}
-      className="add-row"
+      className="me-2 mb-2"
     >
       <i className="fa fa-plus" />
     </Button>
@@ -357,10 +367,10 @@ const addRowButton = (element, field, rowFields, store) => {
 const deleteRowButton = (element, field, store, i) => {
   return (
     <Button
-      bsSize="xsmall"
-      bsStyle="danger"
+      size="sm"
+      variant="danger"
       onClick={() => deleteRow(element, field, store, i)}
-      className="delete-in-row"
+      className="p-2"
     >
       <i className="fa fa-trash-o" />
     </Button>
@@ -378,7 +388,7 @@ const mulipleRowInput = (element, store, label, field, rowFields, info) => {
       });
 
       rows.push(
-        <div className={`grouped-fields-row cols-${rowFields.length}`} key={`${row}-${i}`}>
+        <div className="multiple-row-fields" key={`${row}-${i}`}>
           {fields}
           {deleteRowButton(element, field, store, i)}
         </div>
@@ -387,11 +397,13 @@ const mulipleRowInput = (element, store, label, field, rowFields, info) => {
   }
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`} className="no-margin-bottom">
-      {addRowButton(element, field, rowFields, store)}
-      {labelWithInfo(label, info)}
+    <Form.Group key={`${store.key_prefix}-${label}`}>
+      <div className="d-flex align-items-center">
+        {addRowButton(element, field, rowFields, store)}
+        {labelWithInfo(label, info)}
+      </div>
       {rows}
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -400,7 +412,7 @@ const datePickerInput = (element, store, field, label, info) => {
   const selectedDate = value ? value : null;
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
       <DatePicker
         selected={selectedDate}
@@ -409,7 +421,7 @@ const datePickerInput = (element, store, field, label, info) => {
         isClearable
         dateFormat="dd-MM-YY"
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -418,7 +430,7 @@ const timePickerInput = (element, store, field, label, info) => {
   const selectedDate = value ? value : null;
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
       <DatePicker
         selected={selectedDate}
@@ -432,15 +444,15 @@ const timePickerInput = (element, store, field, label, info) => {
         timeCaption="Time"
         dateFormat="HH:mm"
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
 const dateTimePickerInput = (element, store, field, label, info) => {
-  const selectedDate = element[field] ? element[field] : null;
+  const selectedDate = element[field] ? new Date(element[field]) : null;
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
       <DatePicker
         isClearable
@@ -454,19 +466,20 @@ const dateTimePickerInput = (element, store, field, label, info) => {
         selected={selectedDate}
         onChange={handleFieldChanged(store, field, 'datetime', element.type)}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
 const checkboxInput = (element, label, field, store) => {
   return (
-    <Checkbox
+    <Form.Check
+      type="checkbox"
+      id={field}
       key={`${store.key_prefix}-${field}`}
+      label={label}
       checked={element[field]}
       onChange={handleFieldChanged(store, field, 'checkbox', element.type)}
-    >
-      {label}
-    </Checkbox>
+    />
   );
 }
 
@@ -475,21 +488,21 @@ const identifierMultipleInputGroups = (element, label, options, store, info) => 
   let idOrNew = element.id !== '' ? element.id : 'new';
 
   return (
-    <FormGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
+    <Form.Group key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
       {labelWithInfo(label, info)}
       <InputGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}-group`}>
-        <InputGroup.Addon key={`${element.type}-version_identifier_type`} className="with-select">
+        <InputGroup.Text key={`${element.type}-version_identifier_type`} className="py-0 my-0">
           {basicSelectInputWithSpecialLabel(element, store, 'version_identifier_type', 'Type', options, 'Type')}
-        </InputGroup.Addon>
-        <FormControl
+        </InputGroup.Text>
+        <Form.Control
           name="version_doi"
           type="text"
           key={`${store.key_prefix}-version_doi`}
           value={element.version_doi}
           onChange={handleFieldChanged(store, 'version_doi', 'text', element.type)}
         />
-        <InputGroup.Addon key={`${element.type}-version_doi_url`}>Link</InputGroup.Addon>
-        <FormControl
+        <InputGroup.Text key={`${element.type}-version_doi_url`}>Link</InputGroup.Text>
+        <Form.Control
           name="version_doi_url"
           type="text"
           key={`${store.key_prefix}-version_doi_url`}
@@ -497,7 +510,7 @@ const identifierMultipleInputGroups = (element, label, options, store, info) => 
           onChange={handleFieldChanged(store, 'version_doi_url', 'text', element.type)}
         />
       </InputGroup>
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -508,14 +521,14 @@ const multipleInputGroups = (element, label, fields, store, info) => {
 
   fields.forEach((field, i) => {
     formGroupKey += `-${field.value}`;
-    inputGroupForms.push(<InputGroup.Addon key={`${field.label}-${i}`}>{field.label}</InputGroup.Addon>);
+    inputGroupForms.push(<InputGroup.Text key={`${field.label}-${i}`}>{field.label}</InputGroup.Text>);
     if (field.type === 'select') {
       inputGroupForms.push(
         basicSelectInputWithSpecialLabel(element, store, field.value, field.label, field.options, '')
       );
     } else {
       inputGroupForms.push(
-        <FormControl
+        <Form.Control
           name={field.value}
           type="text"
           key={`${store.key_prefix}${field.value}`}
@@ -527,22 +540,22 @@ const multipleInputGroups = (element, label, fields, store, info) => {
   });
 
   return (
-    <FormGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
+    <Form.Group key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
       {labelWithInfo(label, info)}
       <InputGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}-group`}>
         {inputGroupForms}
       </InputGroup>
-    </FormGroup>
+    </Form.Group>
   );
 }
 
 const selectInput = (element, store, field, label, options, info) => {
   const elementValue = elementFieldValue(element, store, field);
   let value = options.find((o) => { return o.value == elementValue });
-  value = value === undefined ? { value: '', label: '' } : value;
+  value = value === undefined ? '' : value;
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`}>
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
       <Select
         name={field}
@@ -552,7 +565,7 @@ const selectInput = (element, store, field, label, options, info) => {
         isClearable={true}
         onChange={handleFieldChanged(store, field, 'select', element.type)}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -573,7 +586,7 @@ const menuLabel = (option, field, store) => {
 const basicSelectInputWithSpecialLabel = (element, store, field, label, options, placeholder) => {
   const elementValue = elementFieldValue(element, store, field);
   let value = options.find((o) => { return o.value == elementValue });
-  value = value === undefined ? (placeholder ? placeholder : { value: '', label: '', description: '' }) : value;
+  value = value === undefined ? (placeholder ? placeholder : '') : value;
 
   return (
     <Select
@@ -583,7 +596,8 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options,
       value={value}
       isClearable={true}
       placeholder={placeholder}
-      classNamePrefix="select-in-addon"
+      className="select-in-inputgroup-text"
+      classNamePrefix="select-in-inputgroup-text"
       getOptionLabel={(option) => menuLabel(option, field, store)}
       onMenuOpen={() => changeMenuStatus(store, field, true)}
       onMenuClose={() => changeMenuStatus(store, field, false)}
@@ -600,7 +614,7 @@ const multiSelectInput = (element, store, field, label, options, info) => {
   }
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`}>
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
       <Select
         name={field}
@@ -611,23 +625,23 @@ const multiSelectInput = (element, store, field, label, options, info) => {
         isClearable={true}
         onChange={handleFieldChanged(store, field, 'multiselect', element.type)}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
 const textareaInput = (element, store, field, label, rows, info) => {
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`}>
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
-      <FormControl
+      <Form.Control
         name={field}
-        componentClass="textarea"
+        as="textarea"
         key={`${store.key_prefix}-${field}`}
         value={element[field]}
         rows={rows}
         onChange={handleFieldChanged(store, field, 'textarea', element.type)}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -635,16 +649,16 @@ const numericInput = (element, store, field, label, type, info) => {
   let value = elementFieldValue(element, store, field);
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`}>
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
-      <FormControl
+      <Form.Control
         name={field}
         type="number"
         key={`${store.key_prefix}-${field}`}
         value={parseFloat(value)}
         onChange={handleFieldChanged(store, field, type, element.type)}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -652,16 +666,16 @@ const textInput = (element, store, field, label, info) => {
   let value = elementFieldValue(element, store, field);
 
   return (
-    <FormGroup key={`${store.key_prefix}-${label}`}>
+    <Form.Group key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
-      <FormControl
+      <Form.Control
         name={field}
         type="text"
         key={`${store.key_prefix}-${field}`}
         value={value}
         onChange={handleFieldChanged(store, field, 'text', element.type)}
       />
-    </FormGroup>
+    </Form.Group>
   );
 }
 
@@ -669,5 +683,5 @@ export {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
   mulipleRowInput, annotationButton, checkboxInput, componentInput,
-  identifierMultipleInputGroups,
+  identifierMultipleInputGroups, toggleContent,
 }

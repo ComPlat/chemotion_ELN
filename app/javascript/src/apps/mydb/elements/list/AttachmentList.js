@@ -51,7 +51,6 @@ export const attachmentThumbnail = (attachment) => (
               src: attachment.preview,
             }
         }
-        hasPop={false}
         disableClick
       />
     </div>
@@ -103,6 +102,17 @@ const handleOpenLocally = (attachment, option = 0) => {
     link.dispatchEvent(event);
   });
 };
+
+export const undoButton = (attachment, onUndoDelete) => (
+  <Button
+    size="xs"
+    variant="danger"
+    className="attachment-button-size"
+    onClick={() => onUndoDelete(attachment)}
+  >
+    <i className="fa fa-undo" aria-hidden="true" />
+  </Button>
+);
 
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>

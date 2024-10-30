@@ -1,11 +1,10 @@
 import React, { useContext } from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import { Form, Button } from 'react-bootstrap';
 
 import QuillViewer from 'src/components/QuillViewer';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import { stopBubble } from 'src/utilities/DomHelper';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
@@ -83,64 +82,32 @@ const AnalysisHeader = ({ container, readonly }) => {
     }
   }
 
-  const hasEditedJcamp = jcampIds.edited.length > 0;
-  const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
-  const { chmos } = UserStore.getState();
-  const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
-
-  const imagePreview = () => {
-    const previewImg = previewContainerImage(container);
-    const fetchNeeded = false;
-    const fetchId = 1;
-
-    return (
-      <div className="preview">
-        <ImageModal
-          hasPop={false}
-          previewObject={{
-            src: previewImg
-          }}
-          popObject={{
-            title: container.name,
-            src: previewImg,
-            fetchNeeded,
-            fetchId
-          }}
-        />
-      </div>
-    );
-  }
-
   const panelButtons = () => {
     if (deviceDescriptionsStore.analysis_mode == 'order') { return '' }
 
     if (container?.is_deleted) {
       return (
         <Button
-          className="pull-right"
-          bsSize="xsmall"
-          bsStyle="danger"
-          onClick={(e) => undoDeleteContainer(e)}
+          size="xxsm"
+          variant="danger"
+          onClick={(e) => { undoDeleteContainer(e) }}
         >
           <i className="fa fa-undo" />
         </Button>
       );
     } else {
       return (
-        <div className="upper-btn">
-          <Button
-            disabled={readonly}
-            bsSize="xsmall"
-            bsStyle="danger"
-            className="button-right"
-            onClick={(e) => deleteContainer(e)}
-          >
-            <i className="fa fa-trash" />
-          </Button>
-          <PrintCodeButton
-            element={deviceDescription}
-            analyses={[container]}
-            ident={container.id}
+        <div
+          className="d-flex gap-1 align-items-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Form.Check
+            id={`add-device-description-${deviceDescription.id}-to-report`}
+            type="checkbox"
+            onClick={toggleAddToReport}
+            defaultChecked={inReport}
+            label="Add to Report"
+            className="mx-2"
           />
           <SpectraEditorButton
             element={deviceDescription}
@@ -154,79 +121,94 @@ const AnalysisHeader = ({ container, readonly }) => {
             toggleNMRDisplayerModal={toggleNMRDisplayerModal}
             hasNMRium={hasNMRium}
           />
-          <span
-            className="button-right add-to-report"
-            onClick={stopBubble}
+          <PrintCodeButton
+            element={deviceDescription}
+            analyses={[container]}
+            ident={container.id}
+          />
+          <Button
+            disabled={readonly}
+            size="xxsm"
+            variant="danger"
+            className="button-right"
+            onClick={(e) => deleteContainer(e)}
           >
-            <Checkbox
-              onClick={toggleAddToReport}
-              defaultChecked={inReport}
-            >
-              <span>Add to Report</span>
-            </Checkbox>
-          </span>
+            <i className="fa fa-trash" />
+          </Button>
         </div>
       );
     }
   }
 
-  const titleContent = () => {
-    const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
-    const contentOneLine = {
-      ops: content.ops.map((x) => {
-        const c = { ...x };
-        if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
-        return c;
-      }),
-    };
-    return (
-      <div className="desc sub-title">
-        <span style={{ float: 'left', marginRight: '5px' }}>
-          Content:
-        </span>
-        <QuillViewer value={contentOneLine} preview />
-      </div>
-    );
+  const hasEditedJcamp = jcampIds.edited.length > 0;
+  const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
+  const { chmos } = UserStore.getState();
+  const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
+  const kind = (container.extended_metadata.kind?.split('|')[1] || container.extended_metadata.kind)?.trim() || '';
+  const instText = ` - ${instrumentText(container)}`;
+  const status = container.extended_metadata.status || '';
+  const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
+  const contentOneLine = {
+    ops: content.ops.map((x) => {
+      const c = { ...x };
+      if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+      return c;
+    }),
+  };
+  const previewImg = previewContainerImage(container);
+  let hasPop = true;
+  let fetchNeeded = false;
+  let fetchId = 0;
+  if (previewImg.startsWith('data:image')) {
+    fetchNeeded = true;
+    fetchId = container.preview_img.id;
+  } else {
+    hasPop = false;
   }
 
-  const panelHeader = () => {
-    const kind = (container.extended_metadata.kind?.split('|')[1] || container.extended_metadata.kind)?.trim() || '';
-    const titleKind = `Type: ${kind}`;
-    const instText = ` - ${instrumentText(container)}`;
-    const status = container.extended_metadata.status || '';
-    const titleStatus = `Status: ${status} ${instText}`;
-    const titleStriked =
-      [container.name, titleKind, titleStatus].filter(n => n != 'Type: ' && n != 'Status: ').join(' - ');
-    const headerClass = deviceDescriptionsStore.analysis_mode == 'order' ? 'analysis-header order' : 'analysis-header';
+  const orderClass = deviceDescriptionsStore.analysis_mode == 'order' ? 'order pe-2' : '';
+  const deleted = container?.is_deleted || false;
 
-    if (container?.is_deleted) {
-      return (
-        <div className="analysis-header-delete">
-          <strike>
-            {titleStriked}
-          </strike>
+  return (
+    <div className={`analysis-header w-100 d-flex gap-3 lh-base ${orderClass}`}>
+      <div className="preview border d-flex align-items-center">
+        {deleted
+          ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> 
+          : <ImageModal
+            hasPop={hasPop}
+            previewObject={{
+              src: previewImg
+            }}
+            popObject={{
+              title: container.name,
+              src: previewImg,
+              fetchNeeded,
+              fetchId
+            }}
+          />
+        }
+      </div>
+      <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
+        <div className="d-flex justify-content-between align-items-center">
+          <h4 className={"flex-grow-1" + (deleted ? " text-decoration-line-through" : "")}>{container.name}</h4>
           {panelButtons()}
         </div>
-      );
-    } else {
-      return (
-        <div className={headerClass}>
-          <div className="preview">{imagePreview()}</div>
-          <div className="abstract">
-            {panelButtons()}
-            <div className="lower-text">
-              <div className="main-title">{container.name}</div>
-              <div className="sub-title">{titleKind}</div>
-              <div className="sub-title">{titleStatus}</div>
-              {titleContent()}
+        <div className={deleted ? "text-body-tertiary" : ""}>
+          Type: {kind}
+          <br />
+          Status: {status} {instText}
+        </div>
+        {!deleted && (
+          <div className="d-flex gap-2">
+            <span>Content:</span>
+            <div className="flex-grow-1">
+              <QuillViewer value={contentOneLine} className="p-0" />
             </div>
           </div>
-        </div>
-      );
-    }
-  }
-
-  return panelHeader();
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default AnalysisHeader;
