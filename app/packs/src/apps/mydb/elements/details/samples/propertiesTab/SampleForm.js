@@ -25,6 +25,8 @@ export default class SampleForm extends React.Component {
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
       selectedSampleType: props.sample.sample_type ? props.sample.sample_type : SampleTypesOptions[0],
+      enableComponentLabel: false,
+      enableComponentPurity: false,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -45,6 +47,27 @@ export default class SampleForm extends React.Component {
     this.setState({ isMolNameLoading: false });
   }
 
+  handleToggle = (key) => {
+    this.setState((prevState) => ({
+      [key]: !prevState[key],
+    }));
+  };
+
+  renderCheckbox = (key, label, className) => {
+    const isChecked = this.state[key];
+
+    return (
+      <Checkbox
+        className={className}
+        style={{ margin: 0 }}
+        checked={isChecked}
+        onChange={() => this.handleToggle(key)}
+      >
+        {label}
+      </Checkbox>
+    );
+  };
+
   formulaChanged() {
     return this.props.sample.molecule_formula !== this.state.moleculeFormulaWas;
   }
@@ -61,7 +84,7 @@ export default class SampleForm extends React.Component {
   handleSampleTypeChanged(sampleType) {
     const { sample } = this.props;
     sample.updateSampleType(sampleType.value);
-    this.setState({ selectedSampleType: sampleType.value })
+    this.setState({ selectedSampleType: sampleType.value });
     this.props.parent.setState({ sample });
   }
 
@@ -440,7 +463,8 @@ export default class SampleForm extends React.Component {
     disabled = false,
     title = '',
     block = false,
-    notApplicable = false
+    notApplicable = false,
+    showInfoTooltipTotalVol = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
@@ -497,6 +521,7 @@ export default class SampleForm extends React.Component {
           onChange={(e) => this.handleFieldChanged(field, e)}
           onMetricsChange={(e) => this.handleMetricsChange(e)}
           id={`numInput_${field}`}
+          showInfoTooltipTotalVol={showInfoTooltipTotalVol}
         />
       </td>
     );
@@ -546,33 +571,43 @@ export default class SampleForm extends React.Component {
   }
 
   totalAmount(sample) {
-    const content = [];
     const isDisabled = !sample.can_update;
 
-    if (sample.isMethodDisabled('amount_value') === false) {
-      if (!sample.contains_residues) {
-        content.push(this.numInput(
-          sample,
-          'amount_l',
-          'l',
-          ['m', 'u', 'n'],
-          5,
-          'Total volume',
-          'l',
-          isDisabled,
-          '',
-          false
-        ));
-      }
-
-      return content;
+    if (!sample.isMethodDisabled('amount_value') && !sample.contains_residues) {
+      return this.numInput(
+        sample,
+        'amount_l',
+        'l',
+        ['m', 'u', 'n'],
+        5,
+        'Total volume',
+        'l',
+        isDisabled,
+        '',
+        false,
+        false,
+        true
+      );
     }
+  }
+
+  totalRequiredAmount() {
+    const { sample } = this.props;
+
+    const requiredTotalVolume = sample.calculateRequiredTotalVolume() / 1000;
 
     return (
-      <FormGroup>
-        <ControlLabel>Target Total Volume</ControlLabel>
-        <FormControl type="text" disabled defaultValue="***" readOnly />
-      </FormGroup>
+      <NumeralInputWithUnitsCompo
+        value={requiredTotalVolume}
+        unit="l"
+        label="Required Total Volume"
+        metricPrefix="m"
+        precision={5}
+        title="Required Total Volume'"
+        disabled
+        bsStyle="default"
+        id="numInput_amount_l"
+      />
     );
   }
 
@@ -740,7 +775,6 @@ export default class SampleForm extends React.Component {
       });
     }
   }
-  
 
   sampleTypeInput() {
     const { sample } = this.props;
@@ -756,17 +790,20 @@ export default class SampleForm extends React.Component {
           options={SampleTypesOptions}
         />
       </FormGroup>
-    )
+    );
   }
 
   mixtureComponentsList(sample) {
+    const { enableComponentLabel, enableComponentPurity } = this.state;
+
     return (
       <tr>
-          <ControlLabel>Mixture Components:</ControlLabel>
-          <SampleDetailsComponents
-            sample={sample}
-            onChange={this.handleMixtureComponentChanged}
-          />
+        <SampleDetailsComponents
+          sample={sample}
+          onChange={this.handleMixtureComponentChanged}
+          enableComponentLabel={enableComponentLabel}
+          enableComponentPurity={enableComponentPurity}
+        />
       </tr>
     );
   }
@@ -776,9 +813,8 @@ export default class SampleForm extends React.Component {
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
-    const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
-    const densityBlocked = isDisabled ? true : !molarityBlocked;
     const { enableSampleDecoupled } = this.props;
+    const { selectedSampleType } = this.state;
     const minPadding = { padding: '4px 4px 4px 4px' };
 
     if (sample.belongTo !== undefined && sample.belongTo !== null) {
@@ -790,135 +826,155 @@ export default class SampleForm extends React.Component {
       <Table responsive className="sample-form">
         <tbody>
           <ListGroup fill="true">
-          {this.sampleTypeInput()}
+            {this.sampleTypeInput()}
             <h5 style={{ fontWeight: 'bold' }}>Basic Properties:</h5>
-            <ListGroupItem style={minPadding}>  {this.state.selectedSampleType !== 'Mixture' ? (
-              <div className="properties-form" style={{ width: '100%' }}>
-                <tr>
-                  <td colSpan="4">
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ width: '100%', display: 'flex' }}>
-                        {this.moleculeInput()}
-                        {this.stereoAbsInput()}
-                        {this.stereoRelInput()}
-                      </div>
-                      {/* <div style={{ paddingLeft: '10px' }} className="top-secret-checkbox">
-                  {this.topSecretCheckbox(sample)}
-                </div> */}
-                      {
-                  enableSampleDecoupled ? (
-                    <div
-                      style={{ paddingLeft: '10px' }}
-                      className="decoupled-checkbox"
-                    >
-                      {this.decoupledCheckbox(sample)}
-                    </div>
-                  ) : null
-                }
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan="4">
-                    <div className="name-form">
-                      <div style={{ width: '30%' }}>
-                        {this.textInput(sample, 'name', 'Name')}
-                      </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
-                        {this.textInput(sample, 'external_label', 'External label')}
-                      </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
-                        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-                      </div>
-                      <div style={{ width: '10%', paddingLeft: '10px' }} className="top-secret-checkbox">
-                        {this.drySolventCheckbox(sample)}
-                      </div>
-                      {/* <div style={{ width: '40%' }}>
-                  <label htmlFor="solventInput">Solvent</label>
-                  {this.sampleSolvent(sample)}
-                </div> */}
-                    </div>
-                  </td>
-                </tr>
-                {sample.decoupled
-            && (
-            <tr>
-              {
-                this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
-              }
-              <td colSpan="3">
-                {
-                  this.textInput(sample, 'sum_formula', 'Sum formula')
-                }
-              </td>
-            </tr>
-            )}
-
-                <tr className="visible-hd">
-                  <td colSpan="6">
-                    <table>
-                      <tbody>
-                        <tr>
-                          <td style={{ width: '3%' }}>
-                            <div style={{ marginBottom: '15px' }}>
-                              {/* eslint-disable-next-line jsx-a11y/label-has-for */}
-                              <label style={{ height: '14px' }} />
-                              <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
-                                {this.infoButton()}
-                              </InputGroup.Button>
+            <ListGroupItem style={minPadding}>
+              {' '}
+              {selectedSampleType !== 'Mixture' ? (
+                <div className="properties-form" style={{ width: '100%' }}>
+                  <tr>
+                    <td colSpan="4">
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ width: '100%', display: 'flex' }}>
+                          {this.moleculeInput()}
+                          {this.stereoAbsInput()}
+                          {this.stereoRelInput()}
+                        </div>
+                        {
+                          enableSampleDecoupled ? (
+                            <div
+                              style={{ paddingLeft: '10px' }}
+                              className="decoupled-checkbox"
+                            >
+                              {this.decoupledCheckbox(sample)}
                             </div>
-                          </td>
-                          {this.sampleAmount(sample)}
-                          <td style={{ width: '47%' }}>
-                            <div className="name-form" style={{ marginBottom: '15px' }}>
-                              <Tabs
-                                style={{ width: '60%' }}
-                                id="tab-density-molarity"
-                                defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
-                              >
-                                <Tab eventKey="density" title="Density">
-                                  {
-                              this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                            }
-                                </Tab>
-                                <Tab eventKey="molarity" title="Molarity">
-                                  {
-                              this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-                            }
-                                </Tab>
-                              </Tabs>
-                              <div style={{ width: '40%', paddingLeft: '5px' }}>
-                                {
-                            this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+                          ) : null
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan="4">
+                      <div className="name-form">
+                        <div style={{ width: '30%' }}>
+                          {this.textInput(sample, 'name', 'Name')}
+                        </div>
+                        <div style={{ width: '30%', paddingLeft: '5px' }}>
+                          {this.textInput(sample, 'external_label', 'External label')}
+                        </div>
+                        <div style={{ width: '30%', paddingLeft: '5px' }}>
+                          {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                        </div>
+                        <div style={{ width: '10%', paddingLeft: '10px' }} className="top-secret-checkbox">
+                          {this.drySolventCheckbox(sample)}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {sample.decoupled
+                    && (
+                      <tr>
+                        {
+                          this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
+                        }
+                        <td colSpan="3">
+                          {
+                            this.textInput(sample, 'sum_formula', 'Sum formula')
                           }
+                        </td>
+                      </tr>
+                    )}
+
+                  <tr className="visible-hd">
+                    <td colSpan="6">
+                      <table>
+                        <tbody>
+                          <tr>
+                            <td style={{ width: '3%' }}>
+                              <div style={{ marginBottom: '15px' }}>
+                                {/* eslint-disable-next-line jsx-a11y/label-has-for */}
+                                <label style={{ height: '14px' }} />
+                                <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
+                                  {this.infoButton()}
+                                </InputGroup.Button>
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              </div>
+                            </td>
+                            {this.sampleAmount(sample)}
+                            <td style={{ width: '47%' }}>
+                              <div className="name-form" style={{ marginBottom: '15px' }}>
+                                <Tabs
+                                  style={{ width: '60%' }}
+                                  id="tab-density-molarity"
+                                  defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
+                                >
+                                  <Tab eventKey="density" title="Density">
+                                    {
+                                      this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                                    }
+                                  </Tab>
+                                  <Tab eventKey="molarity" title="Molarity">
+                                    {
+                                      this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+                                    }
+                                  </Tab>
+                                </Tabs>
+                                <div style={{ width: '40%', paddingLeft: '5px' }}>
+                                  {
+                                    this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+                                  }
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </div>
               ) : (
-              <div className="name-form">
-                <div style={{ flex: '1' }}>
-                  {this.textInput(sample, 'name', 'Name')}
+                <div className="name-form">
+                  <div style={{ flex: '1' }}>
+                    {this.textInput(sample, 'name', 'Name')}
+                  </div>
+                  <div style={{ flex: '1', paddingLeft: '10px' }}>
+                    {this.textInput(sample, 'external_label', 'External label')}
+                  </div>
+                  <div style={{ flex: '1', paddingLeft: '10px' }}>
+                    {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                  </div>
                 </div>
-                <div style={{ flex: '1' , paddingLeft: '10px' }}>
-                  {this.textInput(sample, 'external_label', 'External label')}
-                </div>
-                <div style={{ flex: '1' , paddingLeft: '10px' }}>
-                  {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-                </div>
-              </div>
-            )}
+              )}
             </ListGroupItem>
           </ListGroup>
-          <tr>
-            {this.state.selectedSampleType === 'Mixture' ? this.totalAmount(sample) : null}
-          </tr>
-          {this.state.selectedSampleType === 'Mixture' ? this.mixtureComponentsList(sample) : null}
+          {selectedSampleType === 'Mixture' && (
+            <>
+              <tr>
+                <ControlLabel>Mixture Components:</ControlLabel>
+              </tr>
+
+              <tr style={{ float: 'right' }}>
+                <td style={{ width: '10%', paddingRight: '15px', verticalAlign: 'middle' }}>
+                  {this.totalRequiredAmount()}
+                </td>
+                <td style={{ width: '10%', paddingRight: '15px', verticalAlign: 'middle' }}>
+                  {this.totalAmount(sample)}
+                </td>
+              </tr>
+
+              {this.mixtureComponentsList(sample)}
+
+              <tr>
+                <td>
+                  <div style={{
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px'
+                  }}>
+                    {this.renderCheckbox('enableComponentLabel', 'Enable Label', 'enable-component-label')}
+                    {this.renderCheckbox('enableComponentPurity', 'Enable Purity', 'enable-component-purity')}
+                  </div>
+                </td>
+              </tr>
+            </>
+          )}
           <tr>
             <td colSpan="4">
               <SampleDetailsSolvents
