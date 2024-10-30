@@ -4,8 +4,12 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   // data stores
+  template_list_data,
+
+  // patterns
   three_parts_patten,
   two_parts_pattern,
+
 
   // flags
   skip_template_name_hide,
@@ -28,6 +32,7 @@ import {
   updateImagesInTheCanvas,
   updateTemplatesInTheCanvas,
   makeTransparentByTitle,
+
   // setters
   images_to_be_updated_setter,
   allowed_to_process_setter,
@@ -370,7 +375,9 @@ const KetcherEditor = forwardRef((props, ref) => {
             ...image_coordinates,
             x: atom.location[0] - image_coordinates.width / 2,
             y: atom.location[1] + image_coordinates.height / 2,
-            z: 0
+            z: 0,
+            height: template_list_data[parseInt(splits_alias[1])].boundingBox.height,
+            width: template_list_data[parseInt(splits_alias[1])].boundingBox.width,
           };
           imagesList_[splits_alias[2]].boundingBox = image_coordinates;
         };
@@ -401,7 +408,8 @@ const KetcherEditor = forwardRef((props, ref) => {
                 molecule.stereoFlagPosition = {
                   x: location[0],
                   y: location[1],
-                  z: 0
+                  z: 0,
+
                 };
               }
             }
