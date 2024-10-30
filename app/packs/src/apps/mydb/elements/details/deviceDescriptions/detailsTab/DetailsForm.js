@@ -1,9 +1,8 @@
 import React, { useContext } from 'react';
-import { Collapse } from 'react-bootstrap';
-import {
-  headlineWithToggle,
-} from '../FormFields';
-import { ontologiesList, ontologySegmentList } from '../OntologyFields';
+import { Accordion } from 'react-bootstrap';
+import { toggleContent } from '../FormFields';
+import OntologiesList from '../OntologiesList';
+import OntologySegmentsList from '../OntologySegmentsList';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -34,16 +33,35 @@ const DetailsForm = () => {
   }
 
   return (
-    <div className="form-fields">
-      {headlineWithToggle(deviceDescriptionsStore, 'ontology', 'Ontology Classification')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.ontology} className="grouped-fields-row cols-1">
-        <div>
-          {ontologiesList(deviceDescriptionsStore, deviceDescription)}
-        </div>
-      </Collapse>
-
-      {ontologySegmentList(deviceDescriptionsStore, deviceDescription, handleSegmentsChange, handleRetrieveRevision)}
-    </div>
+    <>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.ontology && 'ontology'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'ontology')}
+      >
+        <Accordion.Item eventKey="ontology">
+          <Accordion.Header>
+            Ontology Classification
+          </Accordion.Header>
+          <Accordion.Body>
+            <div className="mb-3">
+              <OntologiesList
+                key="ontologies-list-component"
+                store={deviceDescriptionsStore}
+                element={deviceDescription}
+              />
+            </div>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
+      <OntologySegmentsList
+        key="ontology-segments-list-component"
+        store={deviceDescriptionsStore}
+        element={deviceDescription}
+        handleSegmentsChange={handleSegmentsChange}
+        handleRetrieveRevision={handleRetrieveRevision}
+      />
+    </>
   );
 }
 
