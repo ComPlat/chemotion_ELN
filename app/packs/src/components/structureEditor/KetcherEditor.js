@@ -162,30 +162,57 @@ const KetcherEditor = forwardRef((props, ref) => {
       image_used_counter = -1;
     },
     "[title='Undo \\(Ctrl\\+Z\\)']": () => {
-      // TODO:pattern identify
-      console.log("hi");
-      const list = [...editor._structureDef.editor.editor.historyStack];
-      let opp_idx = 0;
-      for (let i = list.length - 1; i >= 0; i--) {
-        if (list[i].operations[0].type !== 'Load canvas') {
-          break;
-        } else {
-          opp_idx++;
+      try {
+
+        const list = [...editor._structureDef.editor.editor.historyStack];
+        const historyPtr = editor._structureDef.editor.editor.historyPtr;
+        console.log({ list, historyPtr });
+        let opp_idx = 0;
+        for (let i = historyPtr - 1; i >= 0; i--) {
+          if (list[i]?.operations[0]?.type !== 'Load canvas') {
+            break;
+          } else {
+            opp_idx++;
+          }
         }
-      }
-      for (let j = 0; j < opp_idx; j++) {
-        editor._structureDef.editor.editor.undo();
+        console.log({ opp_idx });
+        for (let j = 0; j < opp_idx; j++) {
+          editor._structureDef.editor.editor.undo();
+        }
+      } catch (error) {
+        console.error({ undo: error });
       }
     },
     "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
-      // TODO:pattern identify
+      try {
+
+        const list = [...editor._structureDef.editor.editor.historyStack];
+        const historyPtr = editor._structureDef.editor.editor.historyPtr;
+        let opp_idx = 1;
+        console.log("REDO", { list, historyPtr });
+
+        for (let i = historyPtr; i < list.length; i++) {
+          if (list[i]?.operations[0]?.type !== 'Load canvas') {
+            break;
+          } else {
+            opp_idx++;
+          }
+        }
+        console.log(opp_idx);
+        for (let j = 0; j < opp_idx; j++) {
+          editor._structureDef.editor.editor.redo();
+        }
+      } catch (error) {
+        console.error({ redo: error });
+      }
     },
     'Erase \\(Del\\)': async () => {
       // on click event is can be access is funcation eraseStateAlert
     },
     "[title='Add/Remove explicit hydrogens']": async () => {
       // TODO:pattern identify
-      await moveTemplate();
+      await fuelKetcherData();
+      re_render_canvas = true;
     },
 
   };
@@ -442,7 +469,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
-      for (let a = 0; a < mol.atoms.length; a++) {
+      for (let a = 0; a < mol?.atoms?.length; a++) {
         const atom = mol.atoms[a];
         if (atom?.alias && three_parts_patten.test(atom?.alias)) {
           const splits = atom?.alias?.split("_");
