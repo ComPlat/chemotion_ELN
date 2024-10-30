@@ -1,0 +1,26 @@
+@import "bootstrap/functions";
+@import "bootstrap/variables";
+
+.tree-view {
+  &_item {
+    @extend .d-flex;
+    @extend .align-items-baseline;
+    @extend .gap-1;
+    cursor: pointer;
+    background: $gray-200;
+    font-size: 14px;
+    padding: 7px;
+    margin-bottom: 1px;
+
+    &--selected {
+      background: $primary;
+      color: $white;
+    }
+  }
+
+  &_title {
+    @extend .flex-grow-1;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+}
