@@ -48,7 +48,6 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
 let new_atoms = [];
-let on_erase_delete = false;
 let _selection = null;
 
 // funcation to reset all data containers
@@ -97,14 +96,18 @@ const KetcherEditor = forwardRef((props, ref) => {
       allowed_to_process_setter(exists);
       addEventToFILOStack("Move atom");
     },
-    "Delete image": async (eventItem) => {
+    "Delete image": async () => {
       console.log("Delete image", _selection);
       if (_selection?.images) {
+        const image_list = _selection.images;
+        if (image_list.length > 1) {
+          return;
+        }
         await fuelKetcherData();
-        const image_list = _selection?.images;
-        const { data, how_many_to_remove } = removeImageTemplateAtom(image_list, mols, latestData);
+        const { data } = removeImageTemplateAtom(image_list, mols, latestData);
         await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-        image_used_counter -= how_many_to_remove;
+        image_used_counter -= 1;
+        // await moveTemplate();
         return;
       }
     },
@@ -115,13 +118,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         // await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
         console.log({ eventItem });
         const { atom } = should_canvas_update_on_movement(eventItem);
+        atoms_to_be_deleted.push(atom);
         console.log({ "DELETED ATOM---------": atom });
-
-        // if (!on_erase_delete) {
-        //   console.log("atom remove manually");
-        // } else {
-        //   console.log("deleted from Erase");
-        // }
         FILOStack = [];
         uniqueEvents = new Set();
         return;
@@ -193,7 +191,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     imagesList = allNodes.length > mols.length ? allNodes.filter(
       item => item.type === 'image'
     ) : imagesList;
-    mols = allNodes.slice(0, allNodes.length - imagesList.length).map(i => i.$ref);
+    // Ensure `allNodes.length - imagesList.length` is positive
+    const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
+    mols = sliceEnd > 0
+      ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
+      : mols;
     mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
     // console.log("DATA FUELED", { image_used_counter, latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
@@ -426,11 +428,8 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     }
 
-    let new_images = [];
-    // already_processed = already_processed.splice(-new_atoms.length);
     image_used_counter = already_processed.length - 1;
-    // console.log({ already_processed, new_atoms, image_used_counter });
-
+    let new_images = [...imagesList];
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
       const is_h_id_list = [];
@@ -439,22 +438,23 @@ const KetcherEditor = forwardRef((props, ref) => {
         const splits = atom?.alias?.split("_");
         // label A with three part alias
         if (two_parts_pattern.test(atom.alias)) {
-          // console.log("TWO", { imagesList }, image_used_counter, atom.alias);
+          // console.log("TWO", { new_images }, image_used_counter, atom.alias);
           image_used_counter += 1;
-          if (!imagesList[image_used_counter]) {
+          if (!new_images[image_used_counter]) {
             const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
             new_images.push(img);
           }
           atom.alias += `_${image_used_counter}`;
           already_processed.push(`${m}_${a}_${image_used_counter}`);
-          // console.log("TWO END XXXXXXXXXXXXXXXXXXX", { imagesList }, image_used_counter, atom.alias);
+          // console.log("TWO END XXXXXXXXXXXXXXXXXXX", { new_images }, image_used_counter, atom.alias);
         }
         else if (three_parts_patten.test(atom.alias)) {
           console.log("Three", `${m}_${a}_${splits[2]}`);
           if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
-            console.warn("dying from existance!!!!!", atom.alias, image_used_counter, imagesList);
+            console.warn("dying from existance!!!!!", atom.alias, image_used_counter, new_images);
             // add image if image doesnt exists
-            if (!imagesList[image_used_counter]) {
+
+            if (!new_images[image_used_counter]) {
               const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
               new_images.push(img);
             }
@@ -477,10 +477,9 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     }
     const d = { ...latestData };
-    d.root.nodes = [...d.root.nodes, ...new_images];
+    const mols_list = d.root.nodes.slice(0, mols.length);
+    d.root.nodes = [...mols_list, ...new_images];
     new_atoms = [];
-    imagesList.push(...new_images);
-    console.log("END", { imagesList, image_used_counter, imagesList });
     await editor.structureDef.editor.setMolecule(JSON.stringify(d));
     moveTemplate();
   };

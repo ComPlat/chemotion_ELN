@@ -167,43 +167,63 @@ const isNewAtom = (eventItem) => {
 };
 
 const removeImageTemplateAtom = (images, mols, latestData) => {
-  const latestData_alias = { ...latestData };
-  let how_many_to_remove = 0;
+  let container = [];
+  console.log({ images, mols, latestData });
   for (let m = 0; m < mols.length; m++) {
     const mol = latestData[mols[m]];
-    // const atoms = mol.atoms?.filter(i => {
-    //   if (i.label === inspired_label) {
-    //     const splits = i.alias.split("_");
-    //     if (images.indexOf(parseInt(splits[2])) != -1) {
-    //       return false;
-    //     }
-    //   }
-    //   return true;
-    // });
-    const atoms = latestData[mol[m]]?.atoms.map((atom, idx) => {
-      if (atom.label === inspired_label) {
-        const splits = atom.alias.split("_");
-        if (images.indexOf(parseInt(splits[2])) != -1) {
-          // latestData[mols[m]].bonds = latestData[mols[m]]?.bonds.filter(i => !i.atoms.includes(a));
+    const atoms_list = [];
+    let bonds_list = mol?.bonds || [];
+    let store_image_idx_matched = null;
+    if (mol && mol?.atoms) {
+      for (let i = 0; i < mol?.atoms?.length; i++) {
+        const atom = mol.atoms[i];
+        if (atom?.alias && atom.label == inspired_label) {
+          const splits = atom.alias.split("_");
           if (images.indexOf(parseInt(splits[2])) != -1) {
-            latestData[mol[m]]?.atoms.splice(idx, 1);
+            store_image_idx_matched = parseInt(splits[2]);
+            container.push(parseInt(splits[2]));
+            const updatedBondsList = [];
+            for (let ba of bonds_list) {
+              if (!ba.atoms.includes(i)) {
+                const adjustedAtoms = ba.atoms.map(j => (j > i ? j - 1 : j));
+                updatedBondsList.push({ ...ba, atoms: adjustedAtoms });
+              }
+            }
+            bonds_list = updatedBondsList;
           }
-
-          if (!atoms.length) {
-            delete latestData[mols[m]];
-            latestData_alias.root.nodes.splice(m, 1);
+          else {
+            atoms_list.push(atom);
           }
-          how_many_to_remove++;
-        } else if (how_many_to_remove > 0) {
-          console.log("elseif");
-          atom.alias = `t_${splits[1]}_${parseInt(splits[2]) - how_many_to_remove}`;
+        } else {
+          atoms_list.push(atom);
         }
       }
-      return atom;
-    });
-    console.log({ atoms }, "-----");
+      if (!atoms_list.length) {
+        console.log("it went it?");
+        // delete latestData[mols[m]];
+        // latestData.root.nodes.splice(m, 1);
+      } else {
+        console.log("else?");
+        for (let img_i = 0; img_i < container.length; img_i++) {
+          const img_idx = container[img_i];
+          for (let i = 0; i < atoms_list.length; i++) {
+            const atom = atoms_list[i];
+            if (atom?.alias && atom.label == inspired_label) {
+              const splits = atom.alias.split("_");
+              if (parseInt(splits[2]) > img_idx) {
+                atoms_list[i].alias = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
+              }
+            }
+          }
+        }
+        mol.atoms = atoms_list;
+        mol.bonds = bonds_list;
+      }
+      latestData[mols[m]] = mol;
+    }
   }
-  return { data: latestData, how_many_to_remove };
+  console.log(latestData);
+  return { data: latestData };
 };
 
 // DOM functions
