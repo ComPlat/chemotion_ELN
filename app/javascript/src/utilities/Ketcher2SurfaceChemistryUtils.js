@@ -311,6 +311,7 @@ const allowed_to_process_setter = (data) => {
 export {
   // data store
   template_list_for_storage,
+  template_list_data,
 
   // data patterns
   three_parts_patten,
