@@ -23,14 +23,20 @@ function getStandardUnit(entry) {
     case 'volume':
       return volumeUnits[0];
     case 'mass':
+    case 'gasMass':
       return massUnits[0];
     case 'amount':
+    case 'gasAmount':
       return amountUnits[0];
     case 'temperature':
       return temperatureUnits[0];
     case 'duration':
       return durationUnits[0];
-    case 'concentration':
+    case 'gasTemperature':
+      return temperatureUnits[0];
+    case 'gasDuration':
+      return durationUnits[0];
+    case 'gasConcentration':
       return concentrationUnits[0];
     default:
       return null;
@@ -86,6 +92,9 @@ function getCellDataType(entry) {
   }
   if (['mass', 'volume', 'amount'].includes(entry)) {
     return 'material';
+  }
+  if (entry.startsWith('gas')) {
+    return 'gas';
   }
   return null;
 }

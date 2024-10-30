@@ -5,7 +5,7 @@ import {
   durationUnits, temperatureUnits
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  MaterialOverlay
+  MaterialOverlay, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 
 function getMolFromGram(gram, material) {
@@ -141,7 +141,7 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
   return updatedVariations;
 }
 
-function getNonGaseousMaterialEntriesWithUnits(materialType, isReference) {
+function getMaterialEntriesWithUnits(materialType, isReference) {
   let entries = {};
   switch (materialType) {
     case 'solvents':
@@ -157,26 +157,20 @@ function getNonGaseousMaterialEntriesWithUnits(materialType, isReference) {
         entries.equivalent = [];
       }
       break;
-    default:
+    case 'catalyst':
+      entries = { gasMass: massUnits, gasAmount: amountUnits };
+      if (!isReference) {
+        entries.gasEquivalent = [];
+      }
       break;
-  }
-  return entries;
-}
-
-function getGaseousMaterialEntriesWithUnits(gasType, isReference) {
-  let entries = {};
-  switch (gasType) {
     case 'gas':
-      entries = { duration: durationUnits, temperature: temperatureUnits, concentration: concentrationUnits };
+      entries = { gasDuration: durationUnits, gasTemperature: temperatureUnits, gasConcentration: concentrationUnits };
       break;
     case 'feedstock':
-      // It doesn't matter if we pass 'startingMaterials' or 'reactants'.
-      entries = getNonGaseousMaterialEntriesWithUnits('startingMaterials', isReference);
-      delete entries.mass;
-      break;
-    case 'catalyst':
-      // It doesn't matter if we pass 'startingMaterials' or 'reactants'.
-      entries = getNonGaseousMaterialEntriesWithUnits('startingMaterials', isReference);
+      entries = { gasAmount: amountUnits };
+      if (!isReference) {
+        entries.gasEquivalent = [];
+      }
       break;
     default:
       break;
@@ -184,10 +178,17 @@ function getGaseousMaterialEntriesWithUnits(gasType, isReference) {
   return entries;
 }
 
-function getMaterialColumnGroupChild(material, materialType, headerComponent) {
+function getMaterialColumnGroupChild(material, materialType, headerComponent, gasMode) {
   const materialCopy = cloneDeep(material);
 
-  const entries = getNonGaseousMaterialEntriesWithUnits(materialType, materialCopy.reference ?? false);
+  const gasType = material.gas_type;
+  const treatAsGaseous = gasMode && (gasType !== 'off');
+  const entries = getMaterialEntriesWithUnits(
+    treatAsGaseous ? gasType : materialType,
+    materialCopy.reference ?? false
+  );
+  const entry = Object.keys(entries)[0];
+
   let names = new Set([`ID: ${materialCopy.id.toString()}`]);
   ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
     if (materialCopy[name]) {
@@ -196,7 +197,6 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent) {
   });
   names = Array.from(names);
 
-  const entry = materialType === 'solvents' ? 'volume' : 'mass';
   return {
     field: `${materialType}.${materialCopy.id}`, // Must be unique.
     tooltipField: `${materialType}.${materialCopy.id}`,
@@ -210,27 +210,25 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent) {
   };
 }
 
-function updateColumnDefinitionsMaterialsGasType(columnDefinitions, currentMaterials) {
+function updateColumnDefinitionsMaterialTypes(columnDefinitions, currentMaterials, gasMode) {
   let updatedColumnDefinitions = cloneDeep(columnDefinitions);
+
   Object.entries(currentMaterials).forEach(([materialType, materials]) => {
-    materials.forEach((material) => {
-      const field = `${materialType}.${material.id}`;
-      updatedColumnDefinitions = updateColumnDefinitions(updatedColumnDefinitions, field, 'cellDataType', 'gas');
-      const entries = getGaseousMaterialEntriesWithUnits(material.gas_type, material.reference);
-      const entry = Object.keys(entries)[0];
-      updatedColumnDefinitions = updateColumnDefinitions(
-        updatedColumnDefinitions,
-        field,
-        'entryDefs',
-        { currentEntry: entry, displayUnit: getStandardUnit(entry), availableEntriesWithUnits: entries }
-      );
-    });
+    const updatedMaterials = materials.map(
+      (material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode)
+    );
+    updatedColumnDefinitions = updateColumnDefinitions(
+      updatedColumnDefinitions,
+      materialType,
+      'children',
+      updatedMaterials
+    );
   });
 
   return updatedColumnDefinitions;
 }
 
-function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, headerComponent) {
+function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, headerComponent, gasMode) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
   Object.entries(currentMaterials).forEach(([materialType, materials]) => {
@@ -245,7 +243,14 @@ function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, h
     // Add missing materials.
     materials.forEach((material) => {
       if (!materialColumnGroup.children.some((child) => child.field === `${materialType}.${material.id}`)) {
-        materialColumnGroup.children.push(getMaterialColumnGroupChild(material, materialType, headerComponent));
+        materialColumnGroup.children.push(
+          getMaterialColumnGroupChild(
+            material,
+            materialType,
+            headerComponent,
+            gasMode
+          )
+        );
       }
     });
   });
@@ -285,7 +290,7 @@ export {
   getReactionMaterialsIDs,
   getMaterialData,
   updateColumnDefinitionsMaterials,
-  updateColumnDefinitionsMaterialsGasType,
+  updateColumnDefinitionsMaterialTypes,
   updateNonReferenceMaterialOnMassChange,
   updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations,

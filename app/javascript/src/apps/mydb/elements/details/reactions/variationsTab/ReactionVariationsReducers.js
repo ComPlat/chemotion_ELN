@@ -1,6 +1,6 @@
 import { MenuHeader } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  updateColumnDefinitionsMaterials,
+  updateColumnDefinitionsMaterials, updateColumnDefinitionsMaterialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   getCellDataType,
@@ -13,7 +13,8 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       return updateColumnDefinitionsMaterials(
         columnDefinitions,
         action.reactionMaterials,
-        MenuHeader
+        MenuHeader,
+        action.gasMode
       );
     }
     case 'update_entry_defs': {
@@ -32,12 +33,19 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       return updatedColumnDefinitions;
     }
     case 'toggle_gas_mode': {
-      return updateColumnDefinitions(
+      let updatedColumnDefinitions = updateColumnDefinitions(
         columnDefinitions,
         'properties.duration',
-        'editability',
+        'editable',
         !action.gasMode
       );
+      updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
+        updatedColumnDefinitions,
+        action.reactionMaterials,
+        action.gasMode
+      );
+
+      return updatedColumnDefinitions;
     }
     default: {
       return columnDefinitions;

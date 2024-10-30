@@ -260,16 +260,14 @@ MaterialOverlay.propTypes = {
 function MenuHeader({
   column, context, setSort, names
 }) {
-  const { field, entryDefs } = column.colDef;
   const { setColumnDefinitions } = context;
   const [ascendingSort, setAscendingSort] = useState('inactive');
   const [descendingSort, setDescendingSort] = useState('inactive');
   const [noSort, setNoSort] = useState('inactive');
   const [name, setName] = useState(names[0]);
+  const { field, entryDefs } = column.colDef;
   const { currentEntry, displayUnit, availableEntriesWithUnits } = entryDefs;
-  const [entry, setEntry] = useState(currentEntry);
-  const [unit, setUnit] = useState(displayUnit);
-  const [units, setUnits] = useState(availableEntriesWithUnits[currentEntry]);
+  const units = availableEntriesWithUnits[currentEntry];
 
   const onSortChanged = () => {
     setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
@@ -291,14 +289,13 @@ function MenuHeader({
   };
 
   const onUnitChanged = () => {
-    const newUnit = units[(units.indexOf(unit) + 1) % units.length];
+    const newDisplayUnit = units[(units.indexOf(displayUnit) + 1) % units.length];
 
-    setUnit(newUnit);
     setColumnDefinitions(
       {
         type: 'update_entry_defs',
         field,
-        entryDefs: { currentEntry: entry, displayUnit: newUnit, availableEntriesWithUnits }
+        entryDefs: { currentEntry, displayUnit: newDisplayUnit, availableEntriesWithUnits }
       }
     );
   };
@@ -308,27 +305,24 @@ function MenuHeader({
       className="unitSelection"
       bsStyle="success"
       bsSize="xsmall"
-      style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
+      style={{ display: units.length === 0 ? 'none' : 'inline' }}
+      disabled={units.length === 1}
       onClick={onUnitChanged}
     >
-      {unit}
+      {displayUnit}
     </Button>
   );
 
   const onEntryChanged = () => {
     const entryKeys = Object.keys(availableEntriesWithUnits);
-    const newEntry = entryKeys[(entryKeys.indexOf(entry) + 1) % entryKeys.length];
-    const newUnits = availableEntriesWithUnits[newEntry];
-    const newUnit = newUnits[0];
+    const newCurrentEntry = entryKeys[(entryKeys.indexOf(currentEntry) + 1) % entryKeys.length];
+    const newUnit = availableEntriesWithUnits[newCurrentEntry][0];
 
-    setEntry(newEntry);
-    setUnits(newUnits);
-    setUnit(newUnit);
     setColumnDefinitions(
       {
         type: 'update_entry_defs',
         field,
-        entryDefs: { currentEntry: newEntry, displayUnit: newUnit, availableEntriesWithUnits }
+        entryDefs: { currentEntry: newCurrentEntry, displayUnit: newUnit, availableEntriesWithUnits }
       }
     );
   };
@@ -338,11 +332,11 @@ function MenuHeader({
       className="entrySelection"
       bsStyle="default"
       bsSize="xsmall"
-      style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
+      style={{ display: ['temperature', 'duration'].includes(currentEntry) ? 'none' : 'inline' }}
       disabled={Object.keys(availableEntriesWithUnits).length === 1}
       onClick={onEntryChanged}
     >
-      {entry}
+      {currentEntry.startsWith('gas') ? currentEntry.toLowerCase().replace('gas', 'gas: ') : currentEntry}
     </Button>
   );
 
