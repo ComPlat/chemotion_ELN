@@ -180,8 +180,10 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { sample } = nextProps;
+  componentDidUpdate(prevProps) {
+    const { sample } = this.props;
+    if (sample === prevProps.sample) { return };
+
     const smileReadonly = !(
       (sample.isNew
        && (typeof (sample.molfile) === 'undefined'

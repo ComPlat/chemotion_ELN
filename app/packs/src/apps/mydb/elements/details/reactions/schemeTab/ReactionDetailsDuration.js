@@ -8,16 +8,9 @@ import { copyToClipboard } from 'src/utilities/clipboard';
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {
     super(props);
-    props.reaction.convertDurationDisplay();
     this.setCurrentTime = this.setCurrentTime.bind(this);
     this.copyToDuration = this.copyToDuration.bind(this);
     this.handleDurationChange = this.handleDurationChange.bind(this);
-  }
-
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    if (!nextProps.reaction) { return; }
-    nextProps.reaction.convertDurationDisplay();
   }
 
   setCurrentTime(type) {

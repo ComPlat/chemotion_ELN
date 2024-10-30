@@ -69,12 +69,12 @@ export default class WellplateDetails extends Component {
     }
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { wellplate } = this.state;
-    const nextWellplate = nextProps.wellplate;
-    if (nextWellplate.id !== wellplate.id || nextWellplate.updated_at !== wellplate.updated_at) {
+  componentDidUpdate() {
+    const { wellplate: newWellplate } = this.props;
+    const { wellplate: currentWellplate } = this.state;
+    if (newWellplate.id !== currentWellplate.id || newWellplate.updated_at !== currentWellplate.updated_at) {
       this.setState({
-        wellplate: nextWellplate
+        wellplate: newWellplate,
       });
     }
   }

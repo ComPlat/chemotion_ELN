@@ -309,6 +309,21 @@ export default class Reaction extends Element {
   }
   
   get durationDisplay() {
+    if (!this._durationDisplay || this._durationDisplay.memValue === '') {
+      const duration = this._duration;
+      const m = duration && duration.match(/(\d+\.?(\d+)?)\s+([\w()]+)/)
+      if (m) {
+        this._durationDisplay = {
+          dispUnit: m[3],
+          memUnit: m[3],
+          dispValue: m[1],
+          memValue: m[1],
+        };
+      } else {
+        this._durationDisplay = { ...DurationDefault };
+      }
+    }
+
     return this._durationDisplay;
   }
   
@@ -316,8 +331,8 @@ export default class Reaction extends Element {
     const { fromStartStop, nextUnit, nextValue } = newDuration;
     const {
       dispUnit, memUnit, memValue
-    } = this._durationDisplay || {};
-    
+    } = this.durationDisplay || {};
+
     if (fromStartStop) {
       const d = durationDiff(this.timestamp_start, this.timestamp_stop);
       if (d) {
@@ -366,27 +381,9 @@ export default class Reaction extends Element {
   }
   
   get durationUnit() {
-    return this._durationDisplay.dispUnit;
+    return this.durationDisplay.dispUnit;
   }
-  
-  convertDurationDisplay() {
-    const duration = this._duration;
-    if (this._durationDisplay && this._durationDisplay.memValue !== '') { return null; }
-    const m = duration && duration.match(/(\d+\.?(\d+)?)\s+([\w()]+)/)
-    if (m) {
-      this._durationDisplay = {
-        dispUnit: m[3],
-        memUnit: m[3],
-        dispValue: m[1],
-        memValue: m[1],
-        ...this._durationDisplay
-      };
-      return null;
-    }
-    this._durationDisplay = { ...DurationDefault };
-    return null;
-  }
-  
+
   // Reaction Temperature
   
   get temperature_display() {

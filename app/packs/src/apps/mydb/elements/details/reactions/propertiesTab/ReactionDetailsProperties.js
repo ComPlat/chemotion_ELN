@@ -16,16 +16,9 @@ import { EditUserLabels } from 'src/components/UserLabels';
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
     super(props);
-    props.reaction.convertDurationDisplay();
 
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
-  }
-
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    if (!nextProps.reaction) { return; }
-    nextProps.reaction.convertDurationDisplay();
   }
 
   handleOnReactionChange(reaction) {

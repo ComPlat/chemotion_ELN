@@ -18,7 +18,7 @@ import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
-    super();
+    super(props);
 
     const { container, templateType } = props;
     const textTemplate = TextTemplateStore.getState()[templateType] || Map();
@@ -40,11 +40,11 @@ export default class ContainerComponent extends Component {
     TextTemplateStore.listen(this.handleTemplateChange);
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      container: nextProps.container,
-    });
+  componentDidUpdate(prevProps) {
+    const { container } = this.props;
+    if (container !== prevProps.container) {
+      this.setState({ container });
+    }
   }
 
   componentWillUnmount() {
