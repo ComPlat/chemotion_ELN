@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import AsyncSelect from 'react-select3/async';
+import { AsyncSelect } from 'src/components/common/Select';
+import { Badge } from 'react-bootstrap';
 
 const TS_BASE = 'https://service.tib.eu/ts4tib/api/select';
 const TS_PATHS = 'https://service.tib.eu/ts4tib/api/ontologies/chmo/hierarchicalAncestors';
@@ -19,24 +20,20 @@ const constructOption = data => {
     return {
       value: data.id,
       label: (
-        <>
-          {data.label}
-          <span>
-            <span className="gu-ontology-select-code-short badge">
+        <div className="d-flex justify-content-between flex-wrap">
+          <div>{data.label}</div>
+          <div className="ms-auto">
+            <Badge bg="primary" className="me-1">
               {data.short_form}
-            </span>
-            &nbsp;
-            <span className="gu-ontology-select-code-prefix badge">
+            </Badge>
+            <Badge bg="info">
               {data.ontology_prefix}
-            </span>
-            {desc ? (
-              <>
-                <br />
-                <span style={{ fontSize: '11px' }}>{desc}</span>
-              </>
-            ) : null}
-          </span>
-        </>
+            </Badge>
+          </div>
+          {desc && (
+            <div className="w-100 mt-1" style={{ fontSize: '11px' }}>{desc}</div>
+          )}
+        </div>
       ),
     };
   }
@@ -130,23 +127,6 @@ const OntologySelect = props => {
       }}
       onChange={selected => {
         fetchPaths(selected);
-      }}
-      styles={{
-        container: baseStyles => {
-          return {
-            ...baseStyles,
-            width: '100%',
-          };
-        },
-        control: base => {
-          return {
-            ...base,
-            height: '36px',
-            minHeight: '36px',
-            minWidth: '200px',
-            border: '1px solid #ccc',
-          };
-        },
       }}
     />
   );

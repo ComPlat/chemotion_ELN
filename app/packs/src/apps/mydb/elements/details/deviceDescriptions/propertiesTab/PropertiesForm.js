@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
-import { Collapse } from 'react-bootstrap';
+import { Form, Row, Col, Accordion } from 'react-bootstrap';
 import {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
-  textareaInput, dateTimePickerInput, headlineWithToggle, mulipleRowInput,
+  textareaInput, dateTimePickerInput, mulipleRowInput, toggleContent,
   checkboxInput, componentInput, identifierMultipleInputGroups,
 } from '../FormFields';
 
@@ -172,147 +172,303 @@ const PropertiesForm = () => {
     const rowFields = type == 'setup' ? setupFields : componentFields;
 
     return (
-      <>
-        {headlineWithToggle(deviceDescriptionsStore, 'setup', 'Setup description')}
-        <Collapse in={deviceDescriptionsStore.toggable_contents.setup} className="grouped-fields-row cols-1 component-inputs" >
-          <div>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.setup && 'setup'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'setup')}
+      >
+        <Accordion.Item eventKey="setup">
+          <Accordion.Header>
+            Setup description
+          </Accordion.Header>
+          <Accordion.Body>
             {
               componentInput(
                 deviceDescription, deviceDescriptionsStore, 'Component',
                 'setup_descriptions', type, rowFields, ''
               )
             }
-          </div>
-        </Collapse>
-      </>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     );
   }
 
   return (
-    <div className="form-fields">
-      <div className="grouped-fields-row cols-3">
-        {textInput(deviceDescription, deviceDescriptionsStore, 'name', 'Name')}
-      </div>
-      <div className="grouped-fields-row cols-3">
-        {selectInput(deviceDescription, deviceDescriptionsStore, 'device_type', 'Device type', deviceType)}
-        {
-          selectInput(
-            deviceDescription, deviceDescriptionsStore, 'device_type_detail',
-            'Device type detail', deviceTypeDetail
-          )
-        }
-        {selectInput(deviceDescription, deviceDescriptionsStore, 'operation_mode', 'Operation mode', operationMode)}
-      </div>
+    <Form>
+      <Row className="mb-4">
+        <Col>
+          {textInput(deviceDescription, deviceDescriptionsStore, 'name', 'Name')}
+        </Col>
+      </Row>
+      <Row className="mb-4">
+        <Col>
+          {selectInput(deviceDescription, deviceDescriptionsStore, 'device_type', 'Device type', deviceType)}
+        </Col>
+        <Col>
+          {
+            selectInput(
+              deviceDescription, deviceDescriptionsStore, 'device_type_detail', 'Device type detail', deviceTypeDetail
+            )
+          }
+        </Col>
+        <Col>
+          {selectInput(deviceDescription, deviceDescriptionsStore, 'operation_mode', 'Operation mode', operationMode)}
+        </Col>
+      </Row>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'general', 'General description')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.general} className="grouped-fields-row cols-1">
-        <div>
-          {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
-          {multipleInputGroups(deviceDescription, vendorCompanyNameLabel, vendorCompanyName, deviceDescriptionsStore)}
-          {textareaInput(deviceDescription, deviceDescriptionsStore, 'description', 'Description', 3)}
-          {multiSelectInput(deviceDescription, deviceDescriptionsStore, 'general_tags', 'Tags', deviceTags)}
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.general && 'general'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'general')}
+      >
+        <Accordion.Item eventKey="general">
+          <Accordion.Header>
+            General description
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-4">
+              <Col>
+                {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
+              </Col>
+            </Row>
+            <Row className="mb-4">
+              <Col>
+                {
+                  multipleInputGroups(
+                    deviceDescription, vendorCompanyNameLabel, vendorCompanyName, deviceDescriptionsStore
+                  )
+                }
+              </Col>
+            </Row>
+            <Row className="mb-4">
+              <Col>
+                {textareaInput(deviceDescription, deviceDescriptionsStore, 'description', 'Description', 3)}
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col>
+                {multiSelectInput(deviceDescription, deviceDescriptionsStore, 'general_tags', 'Tags', deviceTags)}
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'version_specific', 'Version specific information')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.version_specific}>
-        <div>
-          <div className="grouped-fields-row cols-3">
-            {
-              textInput(
-                deviceDescription, deviceDescriptionsStore, 'version_number',
-                'Version', 'To be extracted from short label (either 1 or 1.1,1.2, 1.3)'
-              )
-            }
-            {
-              dateTimePickerInput(
-                deviceDescription, deviceDescriptionsStore,
-                'version_installation_start_date', 'Started: Installation Date'
-              )
-            }
-            {
-              dateTimePickerInput(
-                deviceDescription, deviceDescriptionsStore,
-                'version_installation_end_date', 'End Date'
-              )
-            }
-          </div>
-          <div className="grouped-fields-row cols-1">
-            {identifierMultipleInputGroups(deviceDescription, versionDoiLabel, versionIdentifierTypes, deviceDescriptionsStore)}
-            <div className="form-group">
-              Previous versions of this device
-            </div>
-            <div className="form-group">
-              Later versions of this device
-            </div>
-            {
-              textareaInput(
-                deviceDescription, deviceDescriptionsStore, 'version_characterization',
-                'Characterization of this version', 3, 'Description and comments'
-              )
-            }
-          </div>
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.version_specific && 'version_specific'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'version_specific')}
+      >
+        <Accordion.Item eventKey="version_specific">
+          <Accordion.Header>
+            Version specific information
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-4">
+              <Col>
+                {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
+              </Col>
+            </Row>
+            <Row className="mb-4">
+              <Col>
+                {
+                  textInput(
+                    deviceDescription, deviceDescriptionsStore, 'version_number',
+                    'Version', 'To be extracted from short label (either 1 or 1.1,1.2, 1.3)'
+                  )
+                }
+              </Col>
+              <Col>
+                {
+                  dateTimePickerInput(
+                    deviceDescription, deviceDescriptionsStore,
+                    'version_installation_start_date', 'Started: Installation Date'
+                  )
+                }
+              </Col>
+              <Col>
+                {
+                  dateTimePickerInput(
+                    deviceDescription, deviceDescriptionsStore,
+                    'version_installation_end_date', 'End Date'
+                  )
+                }
+              </Col>
+            </Row>
+            <Row className="mb-4">
+              <Col>
+                {
+                  identifierMultipleInputGroups(
+                    deviceDescription, versionDoiLabel, versionIdentifierTypes, deviceDescriptionsStore
+                  )
+                }
+              </Col>
+            </Row>
+            <Row className="mb-4">
+              <Col>
+                <div className="mb-2">
+                  Previous versions of this device
+                </div>
+                <div>
+                  Later versions of this device
+                </div>
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col>
+                {
+                  textareaInput(
+                    deviceDescription, deviceDescriptionsStore, 'version_characterization',
+                    'Characterization of this version', 3, 'Description and comments'
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'operators_and_locations', 'Device operators and location')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.operators_and_locations} className="grouped-fields-row cols-1">
-        <div>
-          {mulipleRowInput(deviceDescription, deviceDescriptionsStore, 'Operators', 'operators', operatorFields, '')}
-          {multipleInputGroups(deviceDescription, locationLabel, location, deviceDescriptionsStore)}
-          {multipleInputGroups(deviceDescription, accessOptionsLabel, accessOptions, deviceDescriptionsStore)}
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.operators_and_locations && 'operators_and_locations'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'operators_and_locations')}
+      >
+        <Accordion.Item eventKey="operators_and_locations">
+          <Accordion.Header>
+            Device operators and location
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row>
+              <Col>
+                {
+                  mulipleRowInput(
+                    deviceDescription, deviceDescriptionsStore, 'Operators', 'operators', operatorFields, ''
+                  )
+                }
+              </Col>
+            </Row>
+            <Row className="mb-4">
+              <Col>
+                {multipleInputGroups(deviceDescription, locationLabel, location, deviceDescriptionsStore)}
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col>
+                {multipleInputGroups(deviceDescription, accessOptionsLabel, accessOptions, deviceDescriptionsStore)}
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
       {setupDescription()}
 
-      {headlineWithToggle(deviceDescriptionsStore, 'software_interfaces', 'Software and interfaces')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.software_interfaces} className="grouped-fields-row cols-3">
-        <div>
-          {textInput(deviceDescription, deviceDescriptionsStore, 'application_name', 'Application Name')}
-          {textInput(deviceDescription, deviceDescriptionsStore, 'application_version', 'Version')}
-          {textInput(deviceDescription, deviceDescriptionsStore, 'vendor_url', 'Vendor URL')}
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.software_interfaces && 'software_interfaces'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'software_interfaces')}
+      >
+        <Accordion.Item eventKey="software_interfaces">
+          <Accordion.Header>
+            Software and interfaces
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-3">
+              <Col>
+                {textInput(deviceDescription, deviceDescriptionsStore, 'application_name', 'Application Name')}
+              </Col>
+              <Col>
+                {textInput(deviceDescription, deviceDescriptionsStore, 'application_version', 'Version')}
+              </Col>
+              <Col>
+                {textInput(deviceDescription, deviceDescriptionsStore, 'vendor_url', 'Vendor URL')}
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'manuals', 'Manuals, documentation and helpers')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.manuals} className="grouped-fields-row cols-1">
-        <div>
-          {
-            checkboxInput(
-              deviceDescription, 'Additional Helpers uploaded to attachments',
-              'helpers_uploaded', deviceDescriptionsStore
-            )
-          }
-          {
-            textareaInput(
-              deviceDescription, deviceDescriptionsStore, 'policies_and_user_information',
-              'Policies and User Information', 3
-            )
-          }
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.manuals && 'manuals'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'manuals')}
+      >
+        <Accordion.Item eventKey="manuals">
+          <Accordion.Header>
+            Manuals, documentation and helpers
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-4">
+              <Col>
+                {
+                  checkboxInput(
+                    deviceDescription, 'Additional Helpers uploaded to attachments',
+                    'helpers_uploaded', deviceDescriptionsStore
+                  )
+                }
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col>
+                {
+                  textareaInput(
+                    deviceDescription, deviceDescriptionsStore, 'policies_and_user_information',
+                    'Policies and User Information', 3
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'publications', 'Information for Publications')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.publications} className="grouped-fields-row cols-1">
-        <div>
-          {
-            textareaInput(
-              deviceDescription, deviceDescriptionsStore, 'description_for_methods_part',
-              'Description for methods part', 3
-            )
-          }
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.publications && 'publications'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'publications')}
+      >
+        <Accordion.Item eventKey="publications">
+          <Accordion.Header>
+            Information for Publications
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-3">
+              <Col>
+                {
+                  textareaInput(
+                    deviceDescription, deviceDescriptionsStore, 'description_for_methods_part',
+                    'Description for methods part', 3
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'physical_data', 'Physical data, media and hardware requirements')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.physical_data} className="grouped-fields-row cols-2">
-        <div>
-          {textInput(deviceDescription, deviceDescriptionsStore, 'size', 'Size')}
-          {textInput(deviceDescription, deviceDescriptionsStore, 'weight', 'Weight [kg]', 'Weight in kilogram')}
-        </div>
-      </Collapse>
-    </div>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.physical_data && 'physical_data'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'physical_data')}
+      >
+        <Accordion.Item eventKey="physical_data">
+          <Accordion.Header>
+            Information for Publications
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-3">
+              <Col>
+                {textInput(deviceDescription, deviceDescriptionsStore, 'size', 'Size')}
+              </Col>
+              <Col>
+                {textInput(deviceDescription, deviceDescriptionsStore, 'weight', 'Weight [kg]', 'Weight in kilogram')}
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
+    </Form>
   );
 }
 

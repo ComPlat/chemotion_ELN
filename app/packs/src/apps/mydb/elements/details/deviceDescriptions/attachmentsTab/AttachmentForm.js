@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { Button } from 'react-bootstrap';
+import { ButtonToolbar } from 'react-bootstrap';
 
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import Attachment from 'src/models/Attachment';
@@ -8,40 +8,37 @@ import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlan
 import { last, findKey } from 'lodash';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
+  undoButton,
   downloadButton,
   removeButton,
   editButton,
   importButton,
+  annotateButton,
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
-  attachmentThumbnail
+  attachmentThumbnail,
+  ThirdPartyAppButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
-import {
-  annotationButton,
-} from '../FormFields';
-
-
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const AttachmentForm = ({ readonly }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
+  const { thirdPartyApps } = UIStore.getState() || [];
 
   useEffect(() => {
     editorInitial();
-    deviceDescriptionsStore.setFilteredAttachments(deviceDescription.attachments);
+    createAttachmentPreviewImage();
   }, []);
 
   useEffect(() => {
-    // console.log('did update', deviceDescription.updated, deviceDescription);
     if (deviceDescription.updated) {
-      deviceDescriptionsStore.setFilteredAttachments(deviceDescription.attachments);
+      createAttachmentPreviewImage();
     }
   }, [deviceDescription.attachments]);
 
@@ -52,8 +49,16 @@ const AttachmentForm = ({ readonly }) => {
     });
   }
 
-  const handleAttachmentImportComplete = () => {
-    //this.setState({ activeTab: 0 });
+  const createAttachmentPreviewImage = () => {
+    const attachments = deviceDescription.attachments.map((attachment) => {
+      if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
+
+      attachment.preview = attachment.thumb
+        ? `data:image/png;base64,${attachment.thumbnail}`
+        : '/images/wild_card/not_available.svg';
+      return attachment;
+    });
+    deviceDescriptionsStore.setFilteredAttachments(attachments);
   }
 
   const handleSortChange = (e) => {
@@ -152,7 +157,6 @@ const AttachmentForm = ({ readonly }) => {
       });
   }
 
-
   const onUndoDelete = (attachment) => {
     const index = deviceDescription.attachments.indexOf(attachment);
     deviceDescriptionsStore.changeAttachment(index, 'is_deleted', false);
@@ -188,32 +192,22 @@ const AttachmentForm = ({ readonly }) => {
     hideImportConfirm(attachment.id);
   }
 
-  const attachmentRowActions = (attachment) => {
-    if (attachment.is_deleted) {
-      return (
-        <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <Button
-            bsSize="xs"
-            bsStyle="danger"
-            className="attachment-button-size"
-            onClick={() => onUndoDelete(attachment)}
-          >
-            <i className="fa fa-undo" aria-hidden="true" />
-          </Button>
-        </div>
-      );
-    }
+  const openAnnotateModal = (attachment) => {
+    deviceDescriptionsStore.toogleAttachmentModal();
+    deviceDescriptionsStore.setAttachmentSelected(attachment);
+  }
 
+  const attachmentRowActions = (attachment) => {
     const updatedAt = new Date(attachment.updated_at).getTime() + 15 * 60 * 1000;
     const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updatedAt;
     const editDisable =
       !deviceDescriptionsStore.attachment_editor || attachment.aasm_state === 'oo_editing'
       || attachment.is_new || documentType(attachment.filename) === null;
-    const importButtonRefs = [];
 
     return (
-      <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+      <ButtonToolbar className="gap-1">
         {downloadButton(attachment)}
+        <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
         {editButton(
           attachment,
           deviceDescriptionsStore.attachment_extension,
@@ -222,59 +216,63 @@ const AttachmentForm = ({ readonly }) => {
           editDisable,
           handleEditAttachment
         )}
-        {annotationButton(deviceDescriptionsStore, attachment)}
+        {annotateButton(attachment, () => openAnnotateModal(attachment))}
         {importButton(
           attachment,
           deviceDescriptionsStore.attachment_show_import_confirm,
           deviceDescription.changed,
-          importButtonRefs,
           showImportConfirm,
           hideImportConfirm,
           confirmAttachmentImport
         )}
-        &nbsp;
-        {removeButton(attachment, onDelete, readonly)}
-      </div>
+        <div className="ms-2">
+          {removeButton(attachment, onDelete, readonly)}
+        </div>
+      </ButtonToolbar>
     );
   }
 
   const showList = () => {
-    if (deviceDescriptionsStore.filteredAttachments.length === 0) {
-      return (
-        <div className="no-attachments-text">
-          There are currently no attachments.
-        </div>
-      );
-    }
-
     let attachmentList = [];
 
     deviceDescriptionsStore.filteredAttachments.map((attachment) => {
+      const rowTextClass = attachment.is_deleted ? ' text-decoration-line-through' : '';
+
       attachmentList.push(
         <div className="attachment-row" key={attachment.id}>
-          {attachmentThumbnail(attachment)}
-          <div className="attachment-row-text" title={attachment.filename}>
-            {attachment.is_deleted ? (
-              <strike>{attachment.filename}</strike>
-            ) : (
-              attachment.filename
-            )}
+          {
+            attachment.is_deleted
+              ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" />
+              : attachmentThumbnail(attachment)
+          }
+          <div className={`attachment-row-text ${rowTextClass}`} title={attachment.filename}>
+            {attachment.filename}
             <div className="attachment-row-subtext">
               <div>
-                Created:&nbsp;
-                {formatDate(attachment.created_at)}
+                Created:
+                <span className="ms-1">{formatDate(attachment.created_at)}</span>
               </div>
-              &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+              <span className="ms-2 me-2">|</span>
               <div>
-                Size:&nbsp;
-                <span style={{ fontWeight: 'bold', color: '#444' }}>
+                Size:
+                <span className="fw-bold text-gray-700 ms-1">
                   {formatFileSize(attachment.filesize)}
                 </span>
               </div>
             </div>
           </div>
-          {attachmentRowActions(attachment)}
-          {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+          <div className="attachment-row-actions d-flex justify-content-end align-items-center gap-1">
+            {
+              attachment.is_deleted
+                ? undoButton(attachment, onUndoDelete)
+                : attachmentRowActions(attachment)
+            }
+          </div>
+          {attachment.updatedAnnotation && (
+            <div className="position-absolute top-50 start-50 translate-middle text-nowrap h-auto lh-base">
+              <SaveEditedImageWarning visible />
+            </div>
+          )}
         </div>
       )
     });
@@ -296,6 +294,8 @@ const AttachmentForm = ({ readonly }) => {
   }
 
   const renderImageEditModal = () => {
+    if (!deviceDescriptionsStore.attachment_image_edit_modal_shown) { return null; }
+
     return (
       <ImageAnnotationModalSVG
         attachment={deviceDescriptionsStore.attachment_selected}
@@ -310,21 +310,22 @@ const AttachmentForm = ({ readonly }) => {
         handleOnClose={() => { deviceDescriptionsStore.toogleAttachmentModal() }}
       />
     );
-    return null;
   }
 
   return (
-    <div className="attachment-main-container">
+    <div className="p-3">
       {renderImageEditModal()}
-      <div>
-        <div className="attachment-dropzone-filter">
+      <div className="d-flex justify-content-between align-items-center gap-4 mb-4">
+        <div className="flex-grow-1">
           {customDropzone(handleAttachmentDrop)}
-          {showFilter()}
         </div>
+        {showFilter()}
       </div>
-      <div style={{ marginBottom: '10px' }}>
-        {showList()}
-      </div>
+      {
+        deviceDescriptionsStore.filteredAttachments.length === 0
+          ? <div className="text-center text-gray-500 fs-5">There are currently no attachments.</div>
+          : showList()
+      }
     </div>
   );
 }

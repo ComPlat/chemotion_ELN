@@ -1,0 +1,20 @@
+.multiple-row-fields {
+  @extend .d-flex;
+  @extend .justify-content-between;
+  @extend .align-items-end;
+  @extend .flex-nowrap;
+  @extend .gap-2;
+  @extend .mb-4;
+}
+
+.multiple-row-fields.components:last-child {
+  @extend .mb-3;
+}
+
+.multiple-row-fields > div {
+  flex: 1;
+}
+
+.multiple-row-fields .dnd-zone + button {
+  @extend .my-auto;
+}

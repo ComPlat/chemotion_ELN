@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
-import { Collapse } from 'react-bootstrap';
+import { Form, Row, Col, Accordion } from 'react-bootstrap';
 import {
-  selectInput, textareaInput, headlineWithToggle, mulipleRowInput,
+  selectInput, textareaInput, mulipleRowInput, toggleContent
 } from '../FormFields';
 
 import { observer } from 'mobx-react';
@@ -75,101 +75,175 @@ const MaintenanceForm = () => {
   ];
 
   return (
-    <div className="form-fields">
-      {headlineWithToggle(deviceDescriptionsStore, 'general_aspects', 'General aspects')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.general_aspects}>
-        <div>
-          <div className="grouped-fields-row cols-2">
-            {
-              selectInput(
-                deviceDescription, deviceDescriptionsStore, 'maintenance_contract_available',
-                'Maintenance contract available', yesOrNo
-              )
-            }
-            {
-              selectInput(
-                deviceDescription, deviceDescriptionsStore, 'maintenance_scheduling',
-                'Scheduling', schedules
-              )
-            }
-          </div>
-          <div className="grouped-fields-row cols-1">
-            {
-              mulipleRowInput(
-                deviceDescription, deviceDescriptionsStore, 'Contact for maintenance and repair',
-                'contact_for_maintenance', contactFields, ''
-              )
-            }
-          </div>
-        </div>
-      </Collapse>
+    <Form>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.general_aspects && 'general_aspects'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'general_aspects')}
+      >
+        <Accordion.Item eventKey="general_aspects">
+          <Accordion.Header>
+            General aspects
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-4">
+              <Col>
+                {
+                  selectInput(
+                    deviceDescription, deviceDescriptionsStore, 'maintenance_contract_available',
+                    'Maintenance contract available', yesOrNo
+                  )
+                }
+              </Col>
+              <Col>
+                {
+                  selectInput(
+                    deviceDescription, deviceDescriptionsStore, 'maintenance_scheduling',
+                    'Scheduling', schedules
+                  )
+                }
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                {
+                  mulipleRowInput(
+                    deviceDescription, deviceDescriptionsStore, 'Contact for maintenance and repair',
+                    'contact_for_maintenance', contactFields, ''
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'planned_maintenance', 'Planned Maintenance')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.planned_maintenance} className="grouped-fields-row cols-1">
-        <div>
-          {
-            mulipleRowInput(
-              deviceDescription, deviceDescriptionsStore, 'Planned maintenance',
-              'planned_maintenance', maintenanceFields, ''
-            )
-          }
-          {
-            mulipleRowInput(
-              deviceDescription, deviceDescriptionsStore, 'Consumables needed for maintenance',
-              'consumables_needed_for_maintenance', consumablesNeededFields, ''
-            )
-          }
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.planned_maintenance && 'planned_maintenance'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'planned_maintenance')}
+      >
+        <Accordion.Item eventKey="planned_maintenance">
+          <Accordion.Header>
+            Planned Maintenance
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-4">
+              <Col>
+                {
+                  mulipleRowInput(
+                    deviceDescription, deviceDescriptionsStore, 'Planned maintenance',
+                    'planned_maintenance', maintenanceFields, ''
+                  )
+                }
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                {
+                  mulipleRowInput(
+                    deviceDescription, deviceDescriptionsStore, 'Consumables needed for maintenance',
+                    'consumables_needed_for_maintenance', consumablesNeededFields, ''
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'unexpected_maintenance', 'Unexpected maintenance and repair')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.unexpected_maintenance} className="grouped-fields-row cols-1">
-        <div>
-          {
-            mulipleRowInput(
-              deviceDescription, deviceDescriptionsStore, 'Unexpected maintenance and repair',
-              'unexpected_maintenance', maintenanceFields, ''
-            )
-          }
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.unexpected_maintenance && 'unexpected_maintenance'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'unexpected_maintenance')}
+      >
+        <Accordion.Item eventKey="unexpected_maintenance">
+          <Accordion.Header>
+            Unexpected maintenance and repair
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row>
+              <Col>
+                {
+                  mulipleRowInput(
+                    deviceDescription, deviceDescriptionsStore, 'Unexpected maintenance and repair',
+                    'unexpected_maintenance', maintenanceFields, ''
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'unexpected_power_shutdown', 'Unexpected Power Shutdown')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.unexpected_power_shutdown} className="grouped-fields-row cols-1">
-        <div>
-          {
-            textareaInput(
-              deviceDescription, deviceDescriptionsStore, 'measures_after_full_shut_down',
-              'Measures after complete power shutdown', 3, ''
-            )
-          }
-          {
-            textareaInput(
-              deviceDescription, deviceDescriptionsStore, 'measures_after_short_shut_down',
-              'Measures for a running device with short shutdown period', 3, ''
-            )
-          }
-        </div>
-      </Collapse>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.unexpected_power_shutdown && 'unexpected_power_shutdown'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'unexpected_power_shutdown')}
+      >
+        <Accordion.Item eventKey="unexpected_power_shutdown">
+          <Accordion.Header>
+            Unexpected Power Shutdown
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-4">
+              <Col>
+                {
+                  textareaInput(
+                    deviceDescription, deviceDescriptionsStore, 'measures_after_full_shut_down',
+                    'Measures after complete power shutdown', 3, ''
+                  )
+                }
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                {
+                  textareaInput(
+                    deviceDescription, deviceDescriptionsStore, 'measures_after_short_shut_down',
+                    'Measures for a running device with short shutdown period', 3, ''
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'planned_offline_period', 'Planned offline period')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.planned_offline_period} className="grouped-fields-row cols-1">
-        <div>
-          {
-            textareaInput(
-              deviceDescription, deviceDescriptionsStore, 'measures_to_plan_offline_period',
-              'Measures to plan an offline period', 3, ''
-            )
-          }
-          {
-            textareaInput(
-              deviceDescription, deviceDescriptionsStore, 'restart_after_planned_offline_period',
-              'Re-Start after planned offline time', 3, ''
-            )
-          }
-        </div>
-      </Collapse>
-    </div>
+      <Accordion
+        className="mb-4"
+        activeKey={deviceDescriptionsStore.toggable_contents.planned_offline_period && 'planned_offline_period'}
+        onSelect={() => toggleContent(deviceDescriptionsStore, 'planned_offline_period')}
+      >
+        <Accordion.Item eventKey="planned_offline_period">
+          <Accordion.Header>
+            Planned offline period
+          </Accordion.Header>
+          <Accordion.Body>
+            <Row className="mb-4">
+              <Col>
+                {
+                  textareaInput(
+                    deviceDescription, deviceDescriptionsStore, 'measures_to_plan_offline_period',
+                    'Measures to plan an offline period', 3, ''
+                  )
+                }
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                {
+                  textareaInput(
+                    deviceDescription, deviceDescriptionsStore, 'restart_after_planned_offline_period',
+                    'Re-Start after planned offline time', 3, ''
+                  )
+                }
+              </Col>
+            </Row>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
+    </Form>
   );
 }
 

@@ -82,8 +82,8 @@
   }
 
   &__value-container {
-    @extend .flex-nowrap;
     @extend .text-nowrap;
+    @extend .gap-1;
   }
 
   &__value-container.chemotion-select__value-container--is-multi {
@@ -94,11 +94,6 @@
   &__indicator, &__value-container, &__input-container, &__placeholder, &__single-value, &__indicator-separator {
     @extend .p-0;
     @extend .m-0;
-  }
-
-  &__value-container {
-    @extend .gap-1;
-    @extend .d-flex;
   }
 
   &__single-value .badge {
@@ -158,4 +153,66 @@
   &__clear-indicator {
     @include fa-based-remove-icon;
   }
+}
+
+.select-in-inputgroup-text {
+  &__control {
+    @extend .d-flex;
+    @extend .justify-content-between;
+    @extend .align-items-center;
+    @extend .gap-1;
+    min-height: auto !important;
+
+    &:hover {
+      border-color: $form-select-border-color;
+    }
+
+    &--menu-is-open {
+      border-color: color("primary");
+    }
+
+    &:focus, &--is-focused {
+      border-color: $input-focus-border-color;
+      outline: 0;
+      @if $enable-shadows {
+        @include box-shadow($form-select-box-shadow, $form-select-focus-box-shadow);
+      } @else {
+        // Avoid using mixin so we can pass custom focus shadow properly
+        box-shadow: $form-select-focus-box-shadow;
+      }
+    }
+  }
+
+  &__menu {
+    padding: $form-select-padding-y 0;
+    box-shadow: none;
+    z-index: 10;
+  }
+
+  &__option {
+    padding: $form-select-padding-y $form-select-padding-x;
+
+    &--is-selected, &--is-selected.chemotion-select__option--is-focused {
+      background-color: color("primary");
+    }
+
+    &--is-focused {
+      background-color: $input-focus-border-color;
+    }
+  }
+}
+
+.select-in-inputgroup-text__control {
+  min-height: 30px !important;
+}
+
+.select-in-inputgroup-text__menu-list {
+  @extend .bg-white;
+}
+
+.select-in-inputgroup-text__option, .select-in-inputgroup-text__menu-list {
+  width: 160px;
+  white-space: normal;
+  text-align: left;
+  overflow-x: hidden;
 }
