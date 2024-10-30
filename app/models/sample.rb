@@ -230,6 +230,9 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
+  belongs_to :micromolecule, optional: true
+  has_many :components, dependent: :destroy
+
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
   belongs_to :molecule_name, optional: true
@@ -262,6 +265,7 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
+  delegate :molfile, :molfile_version, :stereo, to: :micromolecule, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
 
@@ -640,7 +644,7 @@ class Sample < ApplicationRecord
   end
 
   def check_molfile_polymer_section
-    return if decoupled
+    return if decoupled || sample_type == 'Mixture'
     return unless molfile.include? 'R#'
 
     lines = molfile.lines
