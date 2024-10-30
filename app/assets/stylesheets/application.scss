@@ -26,6 +26,7 @@
 @import "components/Sidebar";
 @import "components/QuillEditor";
 @import "components/QuillViewer";
+@import "components/CollectionSubtree";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";
@@ -34,7 +35,6 @@
 @import "legacy/chemical-tab";
 @import "legacy/chemspectra";
 @import "legacy/collection_management";
-@import "legacy/collection_tree";
 @import "legacy/CommentModal";
 @import "legacy/common";
 @import "legacy/converter";
