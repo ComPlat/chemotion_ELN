@@ -320,6 +320,16 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.index ["section"], name: "index_comments_on_section"
   end
 
+  create_table "components", force: :cascade do |t|
+    t.bigint "sample_id", null: false
+    t.string "name"
+    t.integer "position"
+    t.jsonb "component_properties"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["sample_id"], name: "index_components_on_sample_id"
+  end
+
   create_table "computed_props", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.float "max_potential", default: 0.0
@@ -923,6 +933,15 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "micromolecules", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.binary "molfile"
+    t.string "molfile_version", limit: 20
+    t.jsonb "stereo"
+  end
+
   create_table "molecule_names", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.integer "user_id"
@@ -1296,9 +1315,13 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
     t.jsonb "log_data"
+    t.bigint "micromolecule_id"
+    t.string "sample_type"
+    t.jsonb "sample_details"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
+    t.index ["micromolecule_id"], name: "index_samples_on_micromolecule_id"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
@@ -1637,10 +1660,13 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
 
   add_foreign_key "collections", "inventories"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
+  add_foreign_key "components", "samples"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  add_foreign_key "samples", "samples", column: "micromolecule_id"
+
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
