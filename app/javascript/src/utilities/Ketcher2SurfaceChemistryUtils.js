@@ -272,11 +272,11 @@ const updateImagesInTheCanvas = async (iframeRef) => {
     if (svg) {
       const imageElements = iframeDocument.querySelectorAll('image'); // Select all text elements
       imageElements.forEach((img) => {
-        svg.removeChild(img);
+        svg?.removeChild(img);
       });
 
       imageElements.forEach((img) => {
-        svg.appendChild(img);
+        svg?.appendChild(img);
       });
     }
     images_to_be_updated = false;
