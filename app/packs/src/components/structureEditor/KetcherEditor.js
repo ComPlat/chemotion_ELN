@@ -158,13 +158,24 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     "[title='Undo \\(Ctrl\\+Z\\)']": () => {
       // TODO:pattern identify
+      console.log("hi");
+      const list = [...editor._structureDef.editor.editor.historyStack];
+      console.log(list.length);
+      for (let i = list.length - 1; i >= 0; i--) {
+        console.log(list[i]);
+      }
     },
     "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
       // TODO:pattern identify
     },
     'Erase \\(Del\\)': async () => {
       // on click event is can be access is funcation eraseStateAlert
-    }
+    },
+    "[title='Add/Remove explicit hydrogens']": async () => {
+      // TODO:pattern identify
+      await moveTemplate();
+    },
+
   };
 
   useEffect(() => {
@@ -533,7 +544,7 @@ const KetcherEditor = forwardRef((props, ref) => {
             });
 
             // Disable buttons again in case they were added dynamically
-            disableButton(iframeDocument, 'Undo \\(Ctrl\\+Z\\)');
+            // disableButton(iframeDocument, 'Undo \\(Ctrl\\+Z\\)');
             disableButton(iframeDocument, 'Redo \\(Ctrl\\+Shift\\+Z\\)');
             // disableButton(iframeDocument, 'Erase \\(Del\\)')
           }
