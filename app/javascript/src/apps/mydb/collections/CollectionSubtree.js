@@ -48,8 +48,8 @@ export default class CollectionSubtree extends React.Component {
       );
 
       this.setState({
-          selected: selectedCol,
-          visible
+        selected: selectedCol,
+        visible
       });
     }
   }
@@ -62,11 +62,6 @@ export default class CollectionSubtree extends React.Component {
 
     let { visibleRootsIds } = CollectionStore.getState();
     return (visibleRootsIds.indexOf(node.id) > -1)
-  }
-
-  children() {
-    const { root } = this.props;
-    return root.children || [];
   }
 
   canTakeOwnership() {
@@ -140,7 +135,7 @@ export default class CollectionSubtree extends React.Component {
     const { root, isRemote } = this.props;
     const { visible, selected } = this.state;
     const sharedUsers = root.sync_collections_users;
-    const children = this.children();
+    const children = root.children || [];
 
     const showGatePushButton = root && root.is_locked && root.label === 'chemotion-repository.net';
 
@@ -148,11 +143,11 @@ export default class CollectionSubtree extends React.Component {
       <div className="tree-view" key={root.id}>
         <div
           id={`tree-id-${root.label}`}
-          className={`title ${selected ? 'selected' : ''} d-flex align-items-baseline gap-1`}
+          className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
           onClick={this.handleClick}
         >
           {showGatePushButton && (<GatePushButton collectionId={root.id} />)}
-          <span className="me-auto">{root.label}</span>
+          <span className="tree-view_title">{root.label}</span>
           {root.inventory_prefix && (
             <OverlayTrigger
               placement="top"
@@ -180,13 +175,11 @@ export default class CollectionSubtree extends React.Component {
           )}
         </div>
         {visible && (
-          <ul>
+          <div className="ms-3">
             {children.map((child) => (
-              <li key={`collection-${child.id}`}>
-                <CollectionSubtree root={child} isRemote={isRemote} />
-              </li>
+              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} />
             ))}
-          </ul>
+          </div>
         )}
       </div>
     );
