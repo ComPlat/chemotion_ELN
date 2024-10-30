@@ -9,42 +9,44 @@ export default class Elements extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentElement: null
+      showDetailView: false
     };
 
-    this.handleOnChange = this.handleOnChange.bind(this);
+    this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
 
   componentDidMount() {
-    ElementStore.listen(this.handleOnChange);
-    this.handleOnChange(ElementStore.getState());
+    ElementStore.listen(this.onElementStoreChange);
+    this.onElementStoreChange(ElementStore.getState());
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(this.handleOnChange);
+    ElementStore.unlisten(this.onElementStoreChange);
   }
 
-  handleOnChange(state) {
+  onElementStoreChange(state) {
     const { currentElement } = state;
-    this.setState({ currentElement });
+    const { showDetailView } = this.state;
+
+    const newShowDetailView = currentElement !== null;
+    if (showDetailView !== newShowDetailView) {
+      this.setState({ showDetailView: newShowDetailView });
+    }
   }
 
   render() {
-    const { currentElement } = this.state;
-    const hasCurrentElement = currentElement !== null;
-
-    const listWidth = hasCurrentElement ? 5 : 12;
+    const { showDetailView } = this.state;
+    const detailWidth = showDetailView ? 7 : 0;
+    const listWidth = 12 - detailWidth;
 
     return (
       <div className="flex-grow-1 d-flex ps-3 pt-2">
         <Col xs={listWidth} className="pe-3">
-          <ElementsList
-            overview={!hasCurrentElement}
-          />
+          <ElementsList overview={!showDetailView} />
         </Col>
-        {hasCurrentElement && (
-          <Col xs={7} className="pe-3">
-            <ElementDetails currentElement={currentElement} />
+        {showDetailView && (
+          <Col xs={detailWidth} className="pe-3">
+            <ElementDetails />
           </Col>
         )}
       </div>
