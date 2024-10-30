@@ -160,6 +160,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
       image_used_counter = -1;
+      resetStore();
     },
     "[title='Undo \\(Ctrl\\+Z\\)']": () => {
       try {
@@ -486,7 +487,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
       const is_h_id_list = [];
-      for (let a = 0; a < mol.atoms.length; a++) {
+      for (let a = 0; a < mol?.atoms?.length; a++) {
         const atom = mol.atoms[a];
         const splits = atom?.alias?.split("_");
         // label A with three part alias
