@@ -51,8 +51,10 @@ let allNodes = [];
 let all_atoms = [];
 let image_used_counter = -1;
 let re_render_canvas = false;
-let atoms_to_be_deleted = [];
+let delete_process = false;
+let only_image_delete = false;
 let _selection = null;
+
 
 // funcation to reset all data containers
 const resetStore = () => {
@@ -80,12 +82,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     "Move image": async () => {
       addEventToFILOStack("Move image");
     },
-    // "Set atom attribute": async (eventItem) => {
-    //   console.log("Add atom", eventItem);
-    //   if (isNewAtom(eventItem)) {
-    //     addEventToFILOStack("Add atom");
-    //   }
-    // },
     "Add atom": async (eventItem) => {
       console.log("Add atom", eventItem);
       // if (isNewAtom(eventItem)) {
@@ -101,32 +97,30 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack("Move atom");
     },
     "Delete image": async () => {
-      console.log("Delete image", _selection);
-      if (_selection?.images) {
-        const image_list = _selection.images;
-        if (image_list.length > 1) {
-          return;
-        }
-        await fuelKetcherData();
-        const { data } = removeImageTemplateAtom(image_list, mols, latestData);
-        await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-        image_used_counter -= 1;
-        // await moveTemplate();
-        return;
-      }
+      console.log(_selection);
+      delete_process = true;
+      only_image_delete = true;
+      // if (_selection?.images && !_selection.atoms) {
+      //   console.log("Delete image", _selection);
+      //   const image_list = _selection.images;
+      //   if (image_list.length > 1) {
+      //     return;
+      //   }
+      //   await fuelKetcherData();
+      //   const { data } = removeImageTemplateAtom(image_list, mols, latestData);
+      //   await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+      //   image_used_counter -= 1;
+      //   // await moveTemplate();
+      //   return;
+      // }
     },
     "Delete atom": async (eventItem) => {
-      console.log("DELETE ATOM!!", _selection);
-
       if (eventItem.label === inspired_label) {
-        // await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-        console.log({ eventItem });
-        const { atom } = should_canvas_update_on_movement(eventItem);
-        atoms_to_be_deleted.push(atom);
-        console.log({ "DELETED ATOM---------": atom });
-        FILOStack = [];
-        uniqueEvents = new Set();
-        return;
+        delete_process = true;
+        console.log("DELETE ATOM!!", _selection);
+        // const { atom } = should_canvas_update_on_movement(eventItem);
+        // await fuelKetcherData();
+        // await deleteAtomCollectedWithImage(atom);
       }
     },
     "Update": async (eventItem) => {
@@ -314,7 +308,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     }
 
-    console.log({ FILOStack, allowed_to_process });
     if (allowed_to_process) {
       processFILOStack();
     } else {
@@ -334,6 +327,21 @@ const KetcherEditor = forwardRef((props, ref) => {
     return { exists: true, atom: target_atom };
   };
 
+  const deleteAtomCollectedWithImage = async (item) => {
+    console.log("ATOM TO BE DELETEDDDD!!!!!", item);
+    console.log({ item });
+    const data = await onEventDeleteAtom(item);
+    console.log({ data });
+    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+    image_used_counter -= 1; //image_used_counter - atoms_to_be_deleted.length;
+    atoms_to_be_deleted = [];
+    images_to_be_updated_setter();
+    FILOStack = [];
+    uniqueEvents = new Set();
+    allowed_to_process_setter(true);
+    return;
+  };
+
   // helper function to add event to stack
   const addEventToFILOStack = (event) => {
     if (!uniqueEvents.has(event)) {
@@ -344,34 +352,50 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
-    await fuelKetcherData();
     if (!latestData) {
       alert("data not present!!");
       return;
     }
 
-    if (atoms_to_be_deleted.length) { // reduce template indentifier based on the deleted templates
-      console.log("ATOM TO BE DELETEDDDD!!!!!", atoms_to_be_deleted);
-      const image_index_deleted = [];
-      for (let i = 0; i < atoms_to_be_deleted.length; i++) {
-        const item = atoms_to_be_deleted[i];
-        await onEventDeleteAtom(item);
-        if (item?.alias && three_parts_patten.test(item.alias)) {
-          image_index_deleted.push(parseInt(item.alias.split("_")[2]) + mols.length);
+    if (delete_process) {
+      if (_selection) {
+        const { atoms, images } = _selection;
+        let atoms_data = new Set();
+        let atom_counter = -1;
+
+        if (atoms && atoms.length) {
+          for (let m = 0; m < mols?.length; m++) {
+            const mol = mols[m];
+            const all_atoms = latestData[mol]?.atoms;
+            for (let a = 0; a < all_atoms?.length; a++) {
+              atom_counter++;
+              if (atoms.indexOf(atom_counter) != -1) {
+                atoms_data.add(all_atoms[a].alias);
+              }
+            }
+          }
+        } else if (images && images.length) {
+          atoms_data.add(...images);
         }
+
+        await fuelKetcherData();
+        let { data } = removeImageTemplateAtom(atoms_data, mols, latestData);
+        if (!images && atoms) {
+          console.log(atoms_data.values().next().value);
+          const image_to_remove = atoms_data.values().next().value.split("_");
+          data.root.nodes.splice(mols.length + parseInt(image_to_remove[2]), 1);
+        }
+        await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+        image_used_counter -= atoms_data.length;
       }
-      for (let i = 0; i >= 0; i--) {
-        latestData.root.nodes.splice(image_index_deleted[i], 1);
-      }
-      await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-      image_used_counter = image_used_counter - atoms_to_be_deleted.length;
-      atoms_to_be_deleted = [];
-      images_to_be_updated_setter();
+      // await moveTemplate();
       FILOStack = [];
       uniqueEvents = new Set();
+      delete_process = false;
       return;
     }
 
+    await fuelKetcherData();
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
       FILOStack.splice(loadCanvasIndex, 1);
@@ -532,17 +556,11 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to delete a template and reset the counter, assign new alias to all atoms
   const onEventDeleteAtom = async (atom) => {
-    try {
-      if (!mols.length) await fuelKetcherData();
-      latestData = resetOtherAliasCounters(atom, mols, latestData);
-    } catch (err) {
-      console.log({ err });
-    };
+    if (!mols.length) await fuelKetcherData();
+    return resetOtherAliasCounters(atom, mols, latestData);
   };
 
-  const eraseStateAlert = () => {
-    on_erase_delete = true;
-  };
+
   // helper function to add mutation oberservers to DOM elements
   const attachClickListeners = () => {
     // Main function to attach listeners and observers
@@ -553,7 +571,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         setTimeout(() => {
           const eraseButton = iframeDocument.querySelector('[title="Erase \\(Del\\)"]');
           if (eraseButton && eraseButton.classList.contains('ActionButton-module_selected__kPCxA')) {
-            eraseStateAlert(); // Call your function if the class is present
+            // eraseStateAlert(); // Call your function if the class is present
           }
         }, 10);
       };
@@ -575,7 +593,7 @@ const KetcherEditor = forwardRef((props, ref) => {
               attachListenerForTitle(iframeDocument, selector, buttonEvents);
               attachListenerForTitle(iframeDocument, selector, buttonEvents);
               makeTransparentByTitle(iframeDocument);
-              attachEraseButtonListener();
+              // attachEraseButtonListener();
             });
 
             // Disable buttons again in case they were added dynamically
