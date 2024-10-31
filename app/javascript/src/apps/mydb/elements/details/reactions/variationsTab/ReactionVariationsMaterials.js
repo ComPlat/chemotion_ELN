@@ -61,6 +61,10 @@ function getReactionMaterialsIDs(reactionMaterials) {
   return Object.values(reactionMaterials).flat().map((material) => material.id);
 }
 
+function getReactionMaterialsGasTypes(reactionMaterials) {
+  return Object.values(reactionMaterials).flat().map((material) => material.gas_type);
+}
+
 function updateYields(variationsRow, reactionHasPolymers) {
   const updatedVariationsRow = cloneDeep(variationsRow);
   const referenceMaterial = getReferenceMaterial(updatedVariationsRow);
@@ -288,6 +292,7 @@ export {
   getMaterialColumnGroupChild,
   getReactionMaterials,
   getReactionMaterialsIDs,
+  getReactionMaterialsGasTypes,
   getMaterialData,
   updateColumnDefinitionsMaterials,
   updateColumnDefinitionsMaterialTypes,

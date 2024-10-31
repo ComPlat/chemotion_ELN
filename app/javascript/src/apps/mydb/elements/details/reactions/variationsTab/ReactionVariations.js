@@ -19,7 +19,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   getMaterialColumnGroupChild,
-  getReactionMaterials, getReactionMaterialsIDs,
+  getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
@@ -141,30 +141,35 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     onReactionChange(reaction);
   };
 
-  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
-  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  /*
+  What follows is a series of imperative state updates that keep the "Variations" tab in sync with other tabs.
+  This pattern isn't nice, but the best I could do according to
+  https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
+  https://react.dev/reference/react/useState#storing-information-from-previous-renders.
+  It would be preferable to refactor this to a more declarative approach, using a store for example.
+  */
   const updatedReactionMaterials = getReactionMaterials(reaction);
   const updatedGasMode = reaction.gaseous;
   const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
 
+  /*
+  Keep set of materials up-to-date.
+  Materials could have been added or removed in the "Scheme" tab.
+  These changes need to be reflected in the variations.
+  */
   if (
     !isEqual(
       getReactionMaterialsIDs(reactionMaterials),
       getReactionMaterialsIDs(updatedReactionMaterials)
     )
   ) {
-    /*
-    Keep set of materials up-to-date.
-    Materials could have been added or removed in the "Scheme" tab.
-    These changes need to be reflected in the variations.
-    */
     let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
     updatedReactionVariations = addMissingMaterialsToVariations(updatedReactionVariations, updatedReactionMaterials);
 
     setReactionVariations(updatedReactionVariations);
     setColumnDefinitions(
       {
-        type: 'update_on_render',
+        type: 'update_material_set',
         gasMode: updatedGasMode,
         reactionMaterials: updatedReactionMaterials
       }
@@ -172,6 +177,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     setReactionMaterials(updatedReactionMaterials);
   }
 
+  /*
+  Update gas mode according to "Scheme" tab.
+  */
   if (gasMode !== updatedGasMode) {
     setColumnDefinitions(
       {
@@ -183,47 +191,66 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     setGasMode(updatedGasMode);
   }
 
+  /*
+  Update the materials's gas types according to  the "Scheme" tab.
+  */
+  if (
+    updatedGasMode && !isEqual(
+      getReactionMaterialsGasTypes(reactionMaterials),
+      getReactionMaterialsGasTypes(updatedReactionMaterials)
+    )
+  ) {
+    setColumnDefinitions(
+      {
+        type: 'update_gas_type',
+        gasMode: updatedGasMode,
+        reactionMaterials: updatedReactionMaterials
+      }
+    );
+    setReactionMaterials(updatedReactionMaterials);
+  }
+
+  /*
+  The "Variations" tab holds references to analyses in the "Analyses" tab.
+  Users can add, remove, or edit analyses in the "Analyses" tab.
+  Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
+  Each row in the variations table keeps references to its assigned analyses
+  by tracking the corresponding `analysesIDs`.
+  In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
+  whereas variations row "C" keeps references to "1" and "3".
+  The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
+
+  Figure 1
+  Analyses tab  Variations tab
+  .---.         .---------.
+  | 1 |<--------| A: 1    |
+  |---|     \   |---------|
+  | 2 |      \  | B:      |
+  |---|       \ |---------|
+  | 3 |<-------\| C: 1, 3 |
+  |---|         `---------`
+  | 4 |
+  `---`
+
+  The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
+  "X" denotes absence of ID.
+
+  Table 1
+  .-------------- ---------------- -------------------------------------------------.
+  | Analyses tab  | Variations tab | action                                         |
+  | (analysesIDs) | (referenceIDs) |                                                |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | ID             | None                                           |
+  |-------------- |--------------- |----------------------------------------------- |
+  | X             | ID             | Container with ID removed in "Analyses" tab.   |
+  |               |                | Remove ID from `referenceIDs`.                 |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | X              | Row that's tracking ID removed in "Variations" |
+  |               |                | tab. No action required since "Analyses" tab   |
+  |               |                | only displays associations to existing rows.   |
+  `-------------- ---------------- -------------------------------------------------`
+  */
   if (!isEqual(allReactionAnalyses, updatedAllReactionAnalyses)) {
-    /*
-    The "Variations" tab holds references to analyses in the "Analyses" tab.
-    Users can add, remove, or edit analyses in the "Analyses" tab.
-    Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
-    Each row in the variations table keeps references to its assigned analyses
-    by tracking the corresponding `analysesIDs`.
-    In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
-    whereas variations row "C" keeps references to "1" and "3".
-    The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
-
-    Figure 1
-    Analyses tab  Variations tab
-    .---.         .---------.
-    | 1 |<--------| A: 1    |
-    |---|     \   |---------|
-    | 2 |      \  | B:      |
-    |---|       \ |---------|
-    | 3 |<-------\| C: 1, 3 |
-    |---|         `---------`
-    | 4 |
-    `---`
-
-    The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
-    "X" denotes absence of ID.
-
-    Table 1
-    .-------------- ---------------- -------------------------------------------------.
-    | Analyses tab  | Variations tab | action                                         |
-    | (analysesIDs) | (referenceIDs) |                                                |
-    |-------------- |--------------- |----------------------------------------------- |
-    | ID            | ID             | None                                           |
-    |-------------- |--------------- |----------------------------------------------- |
-    | X             | ID             | Container with ID removed in "Analyses" tab.   |
-    |               |                | Remove ID from `referenceIDs`.                 |
-    |-------------- |--------------- |----------------------------------------------- |
-    | ID            | X              | Row that's tracking ID removed in "Variations" |
-    |               |                | tab. No action required since "Analyses" tab   |
-    |               |                | only displays associations to existing rows.   |
-    `-------------- ---------------- -------------------------------------------------`
-    */
     const updatedReactionVariations = updateAnalyses(reactionVariations, updatedAllReactionAnalyses);
     setReactionVariations(updatedReactionVariations);
     setAllReactionAnalyses(updatedAllReactionAnalyses);
