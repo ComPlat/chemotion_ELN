@@ -81,13 +81,16 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack("Move image");
     },
     // "Set atom attribute": async (eventItem) => {
-    //   addEventToFILOStack("Add atom");
+    //   console.log("Add atom", eventItem);
+    //   if (isNewAtom(eventItem)) {
+    //     addEventToFILOStack("Add atom");
+    //   }
     // },
     "Add atom": async (eventItem) => {
       console.log("Add atom", eventItem);
-      if (isNewAtom(eventItem)) {
-        addEventToFILOStack("Add atom");
-      }
+      // if (isNewAtom(eventItem)) {
+      addEventToFILOStack("Add atom");
+      // }
     },
     "Upsert image": async () => {
       addEventToFILOStack("Upsert image");
@@ -295,7 +298,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   // main funcation to capture all events from editor
   const handleEventCapture = async (data) => {
     const selection = editor._structureDef.editor.editor._selection;
-    allowed_to_process_setter(true);
+    // allowed_to_process_setter(true);
     if (selection?.images) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       await fuelKetcherData();
