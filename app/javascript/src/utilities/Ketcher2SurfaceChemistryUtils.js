@@ -147,7 +147,7 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
       if (three_parts_patten.test(item.alias)) {
         const atom_splits = atom?.alias?.split("_");
         const item_splits = item?.alias?.split("_");
-        console.log(parseInt(atom_splits[2]), parseInt(item_splits[2]), parseInt(atom_splits[2]) <= parseInt(item_splits[2]));
+        console.log({ atom_splits: atom?.alias, item_splits });
         if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
           console.log("should be updated", item);
           if (parseInt(item_splits[2]) == 0) continue;
@@ -179,7 +179,7 @@ const removeImageTemplateAtom = (images, mols, latestData) => {
         const atom = mol.atoms[i];
         if (atom?.alias && atom.label == inspired_label) {
           const splits = atom.alias.split("_");
-          if (images.indexOf(parseInt(splits[2])) != -1) {
+          if (images.has(parseInt(splits[2]))) {
             store_image_idx_matched = parseInt(splits[2]);
             container.push(parseInt(splits[2]));
             const updatedBondsList = [];
@@ -222,7 +222,6 @@ const removeImageTemplateAtom = (images, mols, latestData) => {
       latestData[mols[m]] = mol;
     }
   }
-  console.log(latestData);
   return { data: latestData };
 };
 
