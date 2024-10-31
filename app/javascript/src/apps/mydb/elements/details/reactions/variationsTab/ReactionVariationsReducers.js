@@ -9,7 +9,7 @@ import {
 
 function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
-    case 'update_on_render': {
+    case 'update_material_set': {
       return updateColumnDefinitionsMaterials(
         columnDefinitions,
         action.reactionMaterials,
@@ -46,6 +46,13 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       );
 
       return updatedColumnDefinitions;
+    }
+    case 'update_gas_type': {
+      return updateColumnDefinitionsMaterialTypes(
+        columnDefinitions,
+        action.reactionMaterials,
+        action.gasMode
+      );
     }
     default: {
       return columnDefinitions;
