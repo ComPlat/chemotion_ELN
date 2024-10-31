@@ -163,7 +163,7 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
 
 // is new atom
 const isNewAtom = (eventItem) => {
-  return two_parts_pattern.test(eventItem.to) || eventItem.label === inspired_label;
+  return eventItem.label === inspired_label;
 };
 
 const removeImageTemplateAtom = (images, mols, latestData) => {

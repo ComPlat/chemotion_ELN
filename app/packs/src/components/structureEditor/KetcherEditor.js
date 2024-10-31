@@ -52,7 +52,6 @@ let all_atoms = [];
 let image_used_counter = -1;
 let re_render_canvas = false;
 let atoms_to_be_deleted = [];
-let new_atoms = [];
 let _selection = null;
 
 // funcation to reset all data containers
@@ -81,17 +80,14 @@ const KetcherEditor = forwardRef((props, ref) => {
     "Move image": async () => {
       addEventToFILOStack("Move image");
     },
-    "Set atom attribute": async (eventItem) => {
-      if (isNewAtom(eventItem)) {
-        new_atoms.push(eventItem);
-      }
-      addEventToFILOStack("Add atom");
-    },
+    // "Set atom attribute": async (eventItem) => {
+    //   addEventToFILOStack("Add atom");
+    // },
     "Add atom": async (eventItem) => {
+      console.log("Add atom", eventItem);
       if (isNewAtom(eventItem)) {
-        new_atoms.push(eventItem);
+        addEventToFILOStack("Add atom");
       }
-      addEventToFILOStack("Add atom");
     },
     "Upsert image": async () => {
       addEventToFILOStack("Upsert image");
@@ -299,6 +295,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   // main funcation to capture all events from editor
   const handleEventCapture = async (data) => {
     const selection = editor._structureDef.editor.editor._selection;
+    allowed_to_process_setter(true);
     if (selection?.images) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       await fuelKetcherData();
@@ -314,6 +311,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     }
 
+    console.log({ FILOStack, allowed_to_process });
     if (allowed_to_process) {
       processFILOStack();
     } else {
@@ -359,22 +357,15 @@ const KetcherEditor = forwardRef((props, ref) => {
           image_index_deleted.push(parseInt(item.alias.split("_")[2]) + mols.length);
         }
       }
-
-      console.log({ image_index_deleted });
-      // Iterate in reverse order
       for (let i = 0; i >= 0; i--) {
         latestData.root.nodes.splice(image_index_deleted[i], 1);
       }
-
-      console.log({ latestData });
-
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       image_used_counter = image_used_counter - atoms_to_be_deleted.length;
       atoms_to_be_deleted = [];
       images_to_be_updated_setter();
       FILOStack = [];
       uniqueEvents = new Set();
-      console.log("---------------------");
       return;
     }
 
@@ -383,7 +374,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       FILOStack.splice(loadCanvasIndex, 1);
       uniqueEvents.delete("Load canvas");
     }
-
     while (FILOStack.length > 0) {
       const event = FILOStack.pop();
       uniqueEvents.delete(event);
@@ -533,7 +523,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     const d = { ...latestData };
     const mols_list = d.root.nodes.slice(0, mols.length);
     d.root.nodes = [...mols_list, ...new_images];
-    new_atoms = [];
     await editor.structureDef.editor.setMolecule(JSON.stringify(d));
     moveTemplate();
   };
