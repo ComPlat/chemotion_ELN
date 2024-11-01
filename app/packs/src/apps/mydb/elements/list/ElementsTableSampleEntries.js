@@ -126,10 +126,7 @@ const svgPreview = (sample) => (
   />
 );
 
-function MoleculeHeader({
-  sample, show, showDragColumn, onClick, targetType
-}) {
-  const { collId, showPreviews } = UIStore.getState();
+function MoleculeHeader({ sample, show, showPreviews, showDragColumn, onClick, targetType }) {
   const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
 
   return (
@@ -174,19 +171,31 @@ function MoleculeHeader({
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
     super(props);
+
+    const { showPreviews } = UIStore.getState();
     this.state = {
       displayedMoleculeGroup: [],
       moleculeGroupsShown: [],
+      showPreviews,
       flattenSamplesId: [],
       keyboardIndex: null,
       keyboardSeletectedElementId: null,
     };
 
     this.sampleOnKeyDown = this.sampleOnKeyDown.bind(this);
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentDidMount() {
     KeyboardStore.listen(this.sampleOnKeyDown);
+    UIStore.listen(this.onUIStoreChange);
+  }
+
+  onUIStoreChange(state) {
+    const { showPreviews } = state;
+    if (this.state.showPreviews !== showPreviews) {
+      this.setState({ showPreviews });
+    }
   }
 
   getMolId(sample) {
@@ -237,10 +246,11 @@ export default class ElementsTableSampleEntries extends Component {
     const {
       collapseAll, showDragColumn, moleculeSort, currentElement, elements, ui
     } = this.props;
-    const { keyboardIndex, keyboardSeletectedElementId } = this.state;
+    const { keyboardIndex, keyboardSeletectedElementId, showPreviews } = this.state;
     const { checkedAll, checkedIds, uncheckedIds } = ui;
     const nextUi = nextProps.ui;
     return collapseAll !== nextProps.collapseAll // Bool
+      || showPreviews !== nextState.showPreviews // Bool
       || showDragColumn !== nextProps.showDragColumn // Bool
       || moleculeSort !== nextProps.moleculeSort // Bool
       || currentElement !== nextProps.currentElement // instance of Sample
@@ -254,6 +264,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   componentWillUnmount() {
     KeyboardStore.unlisten(this.sampleOnKeyDown);
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
   handleMoleculeToggle(moleculeName) {
@@ -396,7 +407,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   renderMoleculeGroup(moleculeGroup, index) {
     const { showDragColumn, collapseAll } = this.props;
-    const { moleculeGroupsShown, targetType } = this.state;
+    const { showPreviews, moleculeGroupsShown, targetType } = this.state;
     const { molecule } = moleculeGroup[0];
     const moleculeName = molecule.iupac_name || molecule.inchistring;
     const showGroup = !moleculeGroupsShown.includes(moleculeName) && !collapseAll;
@@ -406,6 +417,7 @@ export default class ElementsTableSampleEntries extends Component {
         <MoleculeHeader
           sample={moleculeGroup[0]}
           show={showGroup}
+          showPreviews={showPreviews}
           showDragColumn={showDragColumn}
           onClick={() => this.handleMoleculeToggle(moleculeName)}
           targetType={targetType}
