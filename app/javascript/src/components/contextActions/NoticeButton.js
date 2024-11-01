@@ -1,7 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Button, Modal, Card, Row, Col, Badge
+  Button, Modal, Card, Row, Col
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -14,6 +15,8 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import { formatDate } from 'src/utilities/timezoneHelper';
+
+import CollapsibleIconButton from 'src/apps/mydb/layout/sidebar/CollapsibleIconButton';
 
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
@@ -409,35 +412,30 @@ export default class NoticeButton extends React.Component {
   render() {
     const noticeNum = Object.keys(this.state.dbNotices).length;
     let btnStyle = 'light';
-    let btnClass = 'fa fa-bell-o';
+    let btnIcon = 'fa-bell-o';
 
     if (noticeNum > 0) {
       btnStyle = 'warning';
-      btnClass = 'fa fa-bell';
+      btnIcon = 'fa-bell';
     }
+
+    const { isCollapsed } = this.props;
 
     return (
       <>
-        <Button
-          id="notice-button"
+        <CollapsibleIconButton
+          isCollapsed={isCollapsed}
+          label="Notifications"
           variant={btnStyle}
+          icon={btnIcon}
           onClick={this.handleShow}
-          className="position-relative" // necessary to display the badge
-        >
-          <i className={btnClass} />
-          {noticeNum > 0 && (
-            <Badge
-              pill
-              text="warning"
-              bg="light"
-              className="position-absolute top-100 start-100 translate-middle"
-            >
-              {noticeNum}
-            </Badge>
-          )}
-        </Button>
+        />
         {this.renderModal()}
       </>
     );
   }
 }
+
+NoticeButton.propTypes = {
+  isCollapsed: PropTypes.bool.isRequired,
+};
