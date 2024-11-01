@@ -45,10 +45,10 @@ export default function Sidebar() {
           'd-flex justify-content-center gap-3 py-4 border-top',
           { 'flex-column align-items-center': isCollapsed }
         )}>
-          <InboxButton />
-          <SampleTaskNavigationElement />
-          <OpenCalendarButton />
-          <NoticeButton />
+          <InboxButton isCollapsed={isCollapsed} />
+          <SampleTaskNavigationElement isCollapsed={isCollapsed} />
+          <OpenCalendarButton isCollapsed={isCollapsed} />
+          <NoticeButton isCollapsed={isCollapsed} />
         </div>
       </div>
     </div>

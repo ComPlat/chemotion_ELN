@@ -4,7 +4,7 @@ import Aviator from 'aviator';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CollapsibleButton from 'src/apps/mydb/collections/CollapsibleButton';
+import CollapsibleButton from 'src/apps/mydb/layout/sidebar/CollapsibleButton';
 
 function urlForCurrentElement() {
   const { currentElement } = ElementStore.getState();
