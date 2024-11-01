@@ -20,7 +20,7 @@ import ResearchPlanDetailsFieldReaction from 'src/apps/mydb/elements/details/res
 export default class ResearchPlanDetailsField extends Component {
   render() {
     const {
-      field, index, disabled, onChange, onDrop, onDelete, onExport, update, edit, tableIndex,
+      field, index, disabled, onChange, onDrop, onDelete, onExport, edit, tableIndex,
       onCopyToMetadata, isNew, copyableFields
     } = this.props;
     let label;
@@ -82,7 +82,6 @@ export default class ResearchPlanDetailsField extends Component {
             disabled={disabled}
             onChange={onChange.bind(this)}
             onExport={onExport}
-            update={update}
             edit={edit}
             tableIndex={tableIndex}
           />
@@ -206,7 +205,6 @@ ResearchPlanDetailsField.propTypes = {
   onCopyToMetadata: PropTypes.func,
   isNew: PropTypes.bool,
   copyableFields: PropTypes.arrayOf(PropTypes.object),
-  update: PropTypes.bool,
   edit: PropTypes.bool,
   attachments: PropTypes.array
 };

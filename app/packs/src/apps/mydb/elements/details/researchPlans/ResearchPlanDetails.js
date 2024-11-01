@@ -50,13 +50,11 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = props;
     this.state = {
       researchPlan,
-      update: false,
       visible: Immutable.List(),
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
-    this.toggleFullScreen = this.toggleFullScreen.bind(this);
     this.handleNameChange = this.handleNameChange.bind(this);
     this.handleBodyChange = this.handleBodyChange.bind(this);
     this.handleBodyAdd = this.handleBodyAdd.bind(this);
@@ -261,13 +259,6 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ visible });
   }
 
-  toggleFullScreen() {
-    this.props.toggleFullScreen();
-
-    // toogle update prop to notify react data grid for view change
-    this.setState({ update: !this.state.update });
-  }
-
   dropWellplate(wellplate) {
     const { researchPlan } = this.state;
     researchPlan.changed = true;
@@ -351,7 +342,7 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
+  renderResearchPlanMain(researchPlan) { /* eslint-disable react/jsx-no-bind */
     const {
       name, body, changed, attachments
     } = researchPlan;
@@ -434,7 +425,6 @@ export default class ResearchPlanDetails extends Component {
           onDelete={this.handleBodyDelete.bind(this)}
           onExport={this.handleExportField.bind(this)}
           onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-          update={update}
           edit={edit}
           copyableFields={[
             { title: 'Subject', fieldName: 'subject' },
@@ -515,7 +505,7 @@ export default class ResearchPlanDetails extends Component {
               </Button>
             </OverlayTrigger>
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
-              <Button variant="info" size="xxsm" onClick={this.toggleFullScreen}>
+              <Button variant="info" size="xxsm" onClick={this.props.toggleFullScreen}>
                 <i className="fa fa-expand" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
@@ -529,7 +519,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   render() {
-    const { researchPlan, update, visible } = this.state;
+    const { researchPlan, visible } = this.state;
 
     const tabContentsMap = {
       research_plan: (
@@ -537,7 +527,7 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_research_plan" element={researchPlan} />
           }
-          {this.renderResearchPlanMain(researchPlan, update)}
+          {this.renderResearchPlanMain(researchPlan)}
           <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
         </Tab>
       ),
