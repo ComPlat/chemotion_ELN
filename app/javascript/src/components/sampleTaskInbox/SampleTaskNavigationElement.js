@@ -1,39 +1,29 @@
 import React, { useContext, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { observer } from 'mobx-react';
-import { Button, Badge } from 'react-bootstrap';
+
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const SampleTaskNavigationElement = ({}) => {
+import CollapsibleIconButton from 'src/apps/mydb/layout/sidebar/CollapsibleIconButton';
+
+const SampleTaskNavigationElement = ({ isCollapsed }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
-
-  const loadSampleTasks = () => {
-    sampleTasksStore.load();
-  };
-
-  useEffect(loadSampleTasks, []); // do this once at the creation of the component
-
-  const title = `${sampleTasksStore.openSampleTaskCount} open Sample Tasks`;
+  useEffect(() => sampleTasksStore.load(), []);
 
   return (
-    <Button
-      title={title}
+    <CollapsibleIconButton
+      isCollapsed={isCollapsed}
+      label="Sample Tasks"
       variant="light"
-      size="xs"
+      icon="fa-image"
       onClick={sampleTasksStore.showSampleTaskInbox}
-      className="position-relative"
-    >
-      <i className="fa fa-image" />
-      {sampleTasksStore.openSampleTaskCount > 0 && (
-        <Badge
-          pill
-          bg="secondary"
-          className="position-absolute top-100 start-100 translate-middle"
-        >
-          {sampleTasksStore.openSampleTaskCount}
-        </Badge>
-      )}
-    </Button>
+      badgeCount={sampleTasksStore.openSampleTaskCount}
+    />
   );
 }
 
 export default observer(SampleTaskNavigationElement);
+
+SampleTaskNavigationElement.propTypes = {
+  isCollapsed: PropTypes.bool.isRequired,
+};
