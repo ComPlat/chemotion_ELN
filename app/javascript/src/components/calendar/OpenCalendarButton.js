@@ -3,6 +3,8 @@ import { Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
+import CollapsibleIconButton from 'src/apps/mydb/layout/sidebar/CollapsibleIconButton';
+
 function getDefaultDateTimeRange() {
   const date = new Date();
   const weekStart = new Date().setDate(date.getDate() - (date.getDay() || 7));
@@ -39,7 +41,7 @@ export default class OpenCalendarButton extends Component {
   }
 
   render() {
-    const { isPanelHeader } = this.props;
+    const { isPanelHeader, isCollapsed } = this.props;
     if (isPanelHeader) {
       return (
         <Button
@@ -53,14 +55,13 @@ export default class OpenCalendarButton extends Component {
     }
 
     return (
-      <Button
+      <CollapsibleIconButton
+        isCollapsed={isCollapsed}
         variant="light"
         onClick={this.onClick}
-        size="md"
-        id="navigationCalendarButton"
-      >
-        <i className="fa fa-calendar indicator" />
-      </Button>
+        label="Calendar"
+        icon="fa-calendar"
+      />
     );
   }
 }
@@ -69,10 +70,12 @@ OpenCalendarButton.defaultProps = {
   eventableType: undefined,
   eventableId: undefined,
   isPanelHeader: undefined,
+  isCollapsed: false,
 };
 
 OpenCalendarButton.propTypes = {
   eventableType: PropTypes.string,
   eventableId: PropTypes.number,
-  isPanelHeader: PropTypes.bool
+  isPanelHeader: PropTypes.bool,
+  isCollapsed: PropTypes.bool,
 };
