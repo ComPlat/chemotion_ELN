@@ -99,31 +99,28 @@ export default class ElementsList extends React.Component {
   onChangeUser(state) {
     let visible = Immutable.List();
     let hidden = Immutable.List();
-    let currentTabIndex = 0;
-
-    const { currentType } = state;
-    let type = state.currentType;
+    let { currentType, currentTab } = state;
 
     if (typeof (state.profile) !== 'undefined' && state.profile
       && typeof (state.profile.data) !== 'undefined' && state.profile.data) {
       visible = getArrayFromLayout(state.profile.data.layout, true);
       hidden = getArrayFromLayout(state.profile.data.layout, false);
-      currentTabIndex = visible.findIndex((e) => e === currentType);
-      if (type === '') { type = visible.get(0); }
+      currentTab = visible.findIndex((e) => e === currentType);
+      if (currentType === '') { currentType = visible.get(0); }
     }
     if (hidden.size === 0) {
       hidden = ArrayUtils.pushUniq(hidden, 'hidden');
     }
 
-    if (currentTabIndex < 0) currentTabIndex = 0;
+    if (currentTab < 0) currentTab = 0;
 
-    if (typeof type !== 'undefined' && type != null) {
-      KeyboardActions.contextChange.defer(type);
+    if (typeof currentType !== 'undefined' && currentType != null) {
+      KeyboardActions.contextChange.defer(currentType);
     }
 
     this.setState({
-      currentTab: currentTabIndex,
       genericEls: state.genericEls || [],
+      currentTab,
       visible,
       hidden
     });
@@ -185,7 +182,7 @@ export default class ElementsList extends React.Component {
 
   render() {
     const {
-      visible, hidden, totalCheckedElements, totalElements
+      visible, hidden, totalCheckedElements, totalElements, currentTab
     } = this.state;
     const { overview } = this.props;
 
@@ -261,7 +258,7 @@ export default class ElementsList extends React.Component {
         <div className="position-relative">
           <Tabs
             id="tabList"
-            defaultActiveKey={0}
+            activeKey={currentTab}
             onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
           >
             {tabItems}
