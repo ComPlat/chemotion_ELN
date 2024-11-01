@@ -5,7 +5,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
-import CollapsibleButton from 'src/apps/mydb/collections/CollapsibleButton';
+import CollapsibleButton from 'src/apps/mydb/layout/sidebar/CollapsibleButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 
 export default function CollectionTree({ isCollapsed, expandSidebar }) {
