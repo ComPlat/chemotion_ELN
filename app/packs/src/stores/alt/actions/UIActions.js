@@ -51,10 +51,6 @@ class UIActions {
     return collection
   }
 
-  selectSyncCollection(syncCollection) {
-    return syncCollection
-  }
-
   checkAllElements(params) {
     return params;
   }

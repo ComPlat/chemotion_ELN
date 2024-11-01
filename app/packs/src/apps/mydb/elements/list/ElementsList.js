@@ -163,9 +163,8 @@ export default class ElementsList extends React.Component {
     searchStore.changeShowSearchResultListValue(false);
     UIActions.clearSearchById();
     ElementActions.changeSorting(false);
-    const { currentCollection, isSync } = UIStore.getState();
-    isSync ? UIActions.selectSyncCollection(currentCollection)
-      : UIActions.selectCollection(currentCollection);
+    const { currentCollection } = UIStore.getState();
+    UIActions.selectCollection(currentCollection);
   }
 
   handleTabSelect(tab) {

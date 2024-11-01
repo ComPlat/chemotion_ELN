@@ -47,11 +47,10 @@ export default class Search extends React.Component {
   }
 
   handleClearSearchSelection() {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     this.setState({ elementType: 'all' })
     currentCollection['clearSearch'] = true;
-    isSync ? UIActions.selectSyncCollection(currentCollection)
-      : UIActions.selectCollection(currentCollection);
+    UIActions.selectCollection(currentCollection);
   }
 
   handleElementSelection(event, element = null) {

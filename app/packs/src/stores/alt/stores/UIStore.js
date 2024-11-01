@@ -88,7 +88,6 @@ class UIStore {
       handleSelectActiveAnalysisTab: UIActions.selectActiveAnalysisTab,
 
       handleSelectCollection: UIActions.selectCollection,
-      handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
       handleToggleShowPreviews: UIActions.toggleShowPreviews,
       handleToggleAdvancedSearch: UIActions.toggleAdvancedSearch,
@@ -435,10 +434,6 @@ class UIStore {
         });
       }
     });
-  }
-
-  handleSelectSyncCollection(collection) {
-    this.handleSelectCollection(collection)
   }
 
   // FIXME this method is also defined in ElementStore
