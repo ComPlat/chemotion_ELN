@@ -85,7 +85,7 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
               variant={isActive && !isCollapsed ? 'primary' : 'light'}
             />
             {isActive && !isCollapsed && (
-              <div className="overflow-y-auto ms-2">
+              <div className="tree-view_container">
                 {roots.length === 0
                   ? <div className="text-muted text-center p-2">No collections</div>
                   : roots.map((root) => <CollectionSubtree key={root.id} root={root} />)
