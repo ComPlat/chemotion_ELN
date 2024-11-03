@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import 'whatwg-fetch';
 import {
   Card,
-  NavDropdown,
+  Dropdown,
   Modal,
   Button,
   Table,
@@ -608,44 +608,50 @@ export default class UserAuth extends Component {
 
     return (
       <>
-        <NavDropdown title={currentUser.name} align="end" className="mx-2">
-          <NavDropdown.Item eventKey="1" href="/pages/settings">
-            Account &amp; Profile
-          </NavDropdown.Item>
-          {currentUser.is_templates_moderator && (
-            <NavDropdown.Item eventKey="2" href="/ketcher/common_templates">
-              Template Management
-            </NavDropdown.Item>
-          )}
-          <NavDropdown.Item eventKey="3" href="/users/edit">
-            Change Password
-          </NavDropdown.Item>
-          <NavDropdown.Item
-            onClick={this.handleAffiliationsShow}>
-            My Affiliations
-          </NavDropdown.Item>
-          <NavDropdown.Item onClick={this.handleShow}>My Groups & Devices</NavDropdown.Item>
-          <NavDropdown.Item onClick={this.handleLabelShow}>My Labels</NavDropdown.Item>
-          {/* <NavDropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</NavDropdown.Item>
-                Disable for now as there is no subsciption channel yet (Paggy) */}
-          <NavDropdown.Item eventKey="7" href="/command_n_control">
-            My Devices
-          </NavDropdown.Item>
-          {currentUser.molecule_editor && (
-            <NavDropdown.Item eventKey="6" href="/molecule_moderator">
-              Molecule Moderator
-            </NavDropdown.Item>
-          )}
-          <NavDropdown.Item eventKey="12" href="/converter_admin">
-            Converter Profile
-          </NavDropdown.Item>
-          <NavDropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</NavDropdown.Item>
+        <Dropdown>
+          <Dropdown.Toggle variant="light">
+            <i className="fa fa-user me-1" />
+            {currentUser.name}
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            <Dropdown.Item eventKey="1" href="/pages/settings">
+              Account &amp; Profile
+            </Dropdown.Item>
+            {currentUser.is_templates_moderator && (
+              <Dropdown.Item eventKey="2" href="/ketcher/common_templates">
+                Template Management
+              </Dropdown.Item>
+            )}
+            <Dropdown.Item eventKey="3" href="/users/edit">
+              Change Password
+            </Dropdown.Item>
+            <Dropdown.Item
+              onClick={this.handleAffiliationsShow}>
+              My Affiliations
+            </Dropdown.Item>
+            <Dropdown.Item onClick={this.handleShow}>My Groups & Devices</Dropdown.Item>
+            <Dropdown.Item onClick={this.handleLabelShow}>My Labels</Dropdown.Item>
+            {/* <Dropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</Dropdown.Item>
+                  Disable for now as there is no subsciption channel yet (Paggy) */}
+            <Dropdown.Item eventKey="7" href="/command_n_control">
+              My Devices
+            </Dropdown.Item>
+            {currentUser.molecule_editor && (
+              <Dropdown.Item eventKey="6" href="/molecule_moderator">
+                Molecule Moderator
+              </Dropdown.Item>
+            )}
+            <Dropdown.Item eventKey="12" href="/converter_admin">
+              Converter Profile
+            </Dropdown.Item>
+            <Dropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</Dropdown.Item>
 
-          <NavDropdown.Item onClick={() => UserActions.logout()}>
-            <i className="fa fa-sign-out me-1" />
-            Log out
-          </NavDropdown.Item>
-        </NavDropdown>
+            <Dropdown.Item onClick={() => UserActions.logout()}>
+              <i className="fa fa-sign-out me-1" />
+              Log out
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
 
         {this.renderModal()}
         {this.renderAffiliations()}
