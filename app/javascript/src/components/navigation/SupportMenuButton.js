@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, DropdownButton } from 'react-bootstrap';
+import { Dropdown } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 
@@ -27,28 +27,34 @@ export default function SupportMenuButton() {
   const hasVersions = version && Object.keys(version).length > 1;
 
   return (
-    <DropdownButton title="Info & Support" variant="light">
-      <ExternalItem title="Chemotion.net" href="https://www.chemotion.net" />
-      <ExternalItem title="Chemotion-Repository.net" href="https://www.chemotion-repository.net" />
-      <Dropdown.Divider />
-      <ExternalItem title="Search documentation" href="https://chemotion.net/search" />
-      <ExternalItem title="Helpdesk - Contact Us" href="https://chemotion.net/helpdesk" />
-      <ExternalItem title="Report an issue on Github" href="https://github.com/ComPlat/chemotion_ELN/issues" />
-      {hasVersions && (
-        <>
-          <Dropdown.Divider />
-          <Dropdown.ItemText className="d-flex flex-column text-muted">
-            {Object.entries(version).map(([k, v]) => (
-              <span key={k} className="d-flex justify-content-between">
-                <span>{k}:</span>
-                <span style={{ userSelect: 'text' }}>
-                  {k == 'version' ? v : v.substring(0, 8)}
+    <Dropdown>
+      <Dropdown.Toggle variant="light">
+        <i className="fa fa-info-circle me-1" />
+        Info & Support
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <ExternalItem title="Chemotion.net" href="https://www.chemotion.net" />
+        <ExternalItem title="Chemotion-Repository.net" href="https://www.chemotion-repository.net" />
+        <Dropdown.Divider />
+        <ExternalItem title="Search documentation" href="https://chemotion.net/search" />
+        <ExternalItem title="Helpdesk - Contact Us" href="https://chemotion.net/helpdesk" />
+        <ExternalItem title="Report an issue on Github" href="https://github.com/ComPlat/chemotion_ELN/issues" />
+        {hasVersions && (
+          <>
+            <Dropdown.Divider />
+            <Dropdown.ItemText className="d-flex flex-column text-muted">
+              {Object.entries(version).map(([k, v]) => (
+                <span key={k} className="d-flex justify-content-between">
+                  <span>{k}:</span>
+                  <span style={{ userSelect: 'text' }}>
+                    {k == 'version' ? v : v.substring(0, 8)}
+                  </span>
                 </span>
-              </span>
-            ))}
-          </Dropdown.ItemText>
-        </>
-      )}
-    </DropdownButton>
+              ))}
+            </Dropdown.ItemText>
+          </>
+        )}
+      </Dropdown.Menu>
+    </Dropdown>
   );
 }
