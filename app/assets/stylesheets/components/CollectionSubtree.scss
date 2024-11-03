@@ -1,7 +1,35 @@
-@import "bootstrap/functions";
-@import "bootstrap/variables";
-
 .tree-view {
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .gap-1;
+  &_container {
+    @extend .d-flex;
+    @extend .flex-column;
+    @extend .gap-1;
+    @extend .overflow-y-auto;
+    @extend .ms-3;
+    @extend .my-n1;
+    @extend .py-1;
+    --scrollbar-width: 8px;
+    --mask-height: 0.25rem;
+    padding-right: calc(var(--scrollbar-width) + 0.25rem);
+    --mask-image-content: linear-gradient(
+      to bottom,
+      transparent,
+      black var(--mask-height),
+      black calc(100% - var(--mask-height)),
+      transparent
+    );
+    --mask-size-content: calc(100% - var(--scrollbar-width)) 100%;
+    /* Do not mask the scrollbar */
+    --mask-image-scrollbar: linear-gradient(black, black);
+    --mask-size-scrollbar: var(--scrollbar-width) 100%;
+
+    mask-image: var(--mask-image-content), var(--mask-image-scrollbar);
+    mask-size: var(--mask-size-content), var(--mask-size-scrollbar);
+    mask-position: 0 0, 100% 0;
+    mask-repeat: no-repeat, no-repeat;
+  }
   &_item {
     @extend .d-flex;
     @extend .align-items-baseline;
@@ -9,8 +37,9 @@
     cursor: pointer;
     background: $gray-200;
     font-size: 14px;
-    padding: 7px;
-    margin-bottom: 1px;
+    @extend .py-2;
+    @extend .px-3;
+    @extend .rounded;
 
     &--selected {
       background: $primary;
