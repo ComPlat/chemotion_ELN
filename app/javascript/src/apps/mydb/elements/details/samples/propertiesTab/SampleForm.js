@@ -13,23 +13,32 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
-import { solventOptions } from 'src/components/staticDropdownOptions/options';
+import { solventOptions, SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
+
+    const selectedOption = SampleTypesOptions.find(
+      (option) => option.value === props.sample.sample_type
+    );
+
     this.state = {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
       sumFormula: null,
-      densityMolarity: props.sample.molarity_value !== 0 ? 'molarity' : 'density'
+      densityMolarity: props.sample.molarity_value !== 0 ? 'molarity' : 'density',
+      selectedSampleType: selectedOption || SampleTypesOptions[0],
+      enableComponentLabel: false,
+      enableComponentPurity: false,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -45,6 +54,8 @@ export default class SampleForm extends React.Component {
     this.handleMassCalculation = this.handleMassCalculation.bind(this);
     this.calculateMolecularMass = this.calculateMolecularMass.bind(this);
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
+    this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
+    this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -53,6 +64,27 @@ export default class SampleForm extends React.Component {
       this.setState({ isMolNameLoading: false });
     }
   }
+
+  handleToggle = (key) => {
+    this.setState((prevState) => ({
+      [key]: !prevState[key],
+    }));
+  };
+
+  renderCheckbox = (key, label, className) => {
+    const isChecked = this.state[key];
+
+    return (
+      <Form.Check
+        className={className}
+        style={{ margin: 0 }}
+        type="checkbox"
+        checked={isChecked}
+        onChange={() => this.handleToggle(key)}
+        label={label}
+      />
+    );
+  };
 
   formulaChanged() {
     return this.props.sample.molecule_formula !== this.state.moleculeFormulaWas;
@@ -67,6 +99,15 @@ export default class SampleForm extends React.Component {
     this.setState({ molarityBlocked: false });
   }
 
+  handleSampleTypeChanged(sampleType) {
+    const { sample } = this.props;
+
+    // selectedSampleType = {label: 'Single molecule', value: 'Micromolecule'}
+    sample.updateSampleType(sampleType.value);
+    this.setState({ selectedSampleType: sampleType });
+    this.props.handleSampleChanged(sample);
+  }
+
   handleDensityChanged(density) {
     this.props.sample.setDensity(density);
     this.setState({ molarityBlocked: true });
@@ -74,6 +115,10 @@ export default class SampleForm extends React.Component {
 
   handleMolecularMassChanged(mass) {
     this.props.sample.setMolecularMass(mass);
+  }
+
+  handleMixtureComponentChanged(sample) {
+    this.props.handleSampleChanged(sample);
   }
 
   structureEditorButton(isDisabled) {
@@ -245,6 +290,7 @@ export default class SampleForm extends React.Component {
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
+
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
@@ -450,6 +496,7 @@ export default class SampleForm extends React.Component {
   textInput(sample, field, label, disabled = false, readOnly = false) {
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
+
     return (
       <Form.Group className="w-100">
         <Form.Label>{label}</Form.Label>
@@ -540,7 +587,8 @@ export default class SampleForm extends React.Component {
     disabled = false,
     title = '',
     block = false,
-    notApplicable = false
+    notApplicable = false,
+    showInfoTooltipTotalVol = false,
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
@@ -603,6 +651,7 @@ export default class SampleForm extends React.Component {
         onChange={(e) => this.handleFieldChanged(field, e)}
         onMetricsChange={(e) => this.handleMetricsChange(e)}
         id={`numInput_${field}`}
+        showInfoTooltipTotalVol={showInfoTooltipTotalVol}
       />
     );
   }
@@ -646,6 +695,49 @@ export default class SampleForm extends React.Component {
         block={block}
         variant={unit && sample.amount_unit === unit ? 'primary' : 'light'}
         onChange={(e) => this.handleFieldChanged(field, e)}
+      />
+    );
+  }
+
+  totalAmount(sample) {
+    const isDisabled = !sample.can_update;
+
+    if (!sample.isMethodDisabled('amount_value') && !sample.contains_residues) {
+      return this.numInput(
+        sample,
+        'amount_l',
+        'l',
+        ['m', 'u', 'n'],
+        5,
+        'Total volume',
+        'l',
+        isDisabled,
+        '',
+        false,
+        false,
+        true
+      );
+    }
+  }
+
+  totalRequiredAmount() {
+    const { sample } = this.props;
+
+    const requiredTotalVolume = sample.calculateRequiredTotalVolume() / 1000;
+
+    return (
+      <NumeralInputWithUnitsCompo
+        value={requiredTotalVolume}
+        unit="l"
+        label="Required total volume"
+        metricPrefix="m"
+        metricPrefixes={['m', 'u', 'n']}
+        precision={5}
+        title="Required Total Volume'"
+        disabled
+        variant="light"
+        id="numInput_amount_l"
+        showInfoTooltipRequiredVol={true}
       />
     );
   }
@@ -731,12 +823,50 @@ export default class SampleForm extends React.Component {
     });
   }
 
+  sampleTypeInput() {
+    const { sample } = this.props;
+    const { selectedSampleType } = this.state;
+
+    return (
+      <Form.Group>
+        <Form.Label>Sample type</Form.Label>
+        <Select
+          name="sampleType"
+          clearable={false}
+          disabled={!sample.can_update}
+          value={selectedSampleType}
+          onChange={(value) => this.handleSampleTypeChanged(value)}
+          options={SampleTypesOptions}
+          className="z-5"
+        />
+      </Form.Group>
+    );
+  }
+
+  mixtureComponentsList(sample) {
+    const { enableComponentLabel, enableComponentPurity } = this.state;
+
+    return (
+      <Row className="mb-4">
+        <Col>
+          <SampleDetailsComponents
+            sample={sample}
+            onChange={this.handleMixtureComponentChanged}
+            enableComponentLabel={enableComponentLabel}
+            enableComponentPurity={enableComponentPurity}
+          />
+        </Col>
+      </Row>
+    );
+  }
+
   render() {
     const { enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
+    const { selectedSampleType } = this.state;
 
     if (sample.belongTo !== undefined && sample.belongTo !== null) {
       // assign amount type for product samples of reaction to real
@@ -746,93 +876,140 @@ export default class SampleForm extends React.Component {
     return (
       <Form>
         <Row className="align-items-end mb-4">
-          <Col>{this.moleculeInput()}</Col>
+          {this.sampleTypeInput()}
         </Row>
-        <Row className="align-items-end mb-4">
-          <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
-          <Col>{this.stereoAbsInput()}</Col>
-          <Col>{this.stereoRelInput()}</Col>
-          {
-            enableSampleDecoupled && (
-              <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>
-            )
-          }
-        </Row>
+        {
+          selectedSampleType?.value !== 'Mixture' ? (
+            <>
+              <Row className="align-items-end mb-4">
+                <Col>{this.moleculeInput()}</Col>
+              </Row>
+              <Row className="align-items-end mb-4">
+                <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
+                <Col>{this.stereoAbsInput()}</Col>
+                <Col>{this.stereoRelInput()}</Col>
+                {
+                  enableSampleDecoupled && (
+                    <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>
+                  )
+                }
+              </Row>
 
-        <Row className="align-items-end mb-4">
-          <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
-          <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
-          <Col className="d-flex align-items-end">
-            {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-            {this.nextInventoryLabel(sample)}
-          </Col>
-          <Col>{this.textInput(sample, 'location', 'Location')}</Col>
-          <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
-        </Row>
+              <Row className="align-items-end mb-4">
+                <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
+                <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
+                <Col className="d-flex align-items-end">
+                  {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                  {this.nextInventoryLabel(sample)}
+                </Col>
+                <Col>{this.textInput(sample, 'location', 'Location')}</Col>
+                <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
+              </Row>
 
-        {sample.decoupled && (
-          <Row className="mb-4">
-            <Col>
-              {this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}
-            </Col>
-            <Col className="d-flex align-items-end">
-              {this.textInput(sample, 'sum_formula', 'Sum formula')}
-              {this.btnCalculateMolecularMass()}
-              {this.markUndefinedButton()}
-            </Col>
-          </Row>
+              {sample.decoupled && (
+                <Row className="mb-4">
+                  <Col>
+                    {this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}
+                  </Col>
+                  <Col className="d-flex align-items-end">
+                    {this.textInput(sample, 'sum_formula', 'Sum formula')}
+                    {this.btnCalculateMolecularMass()}
+                    {this.markUndefinedButton()}
+                  </Col>
+                </Row>
+              )}
+
+              <Row className="align-items-center g-2 mb-4">
+                <Col xs={6} className="d-flex align-items-end gap-2">
+                  {this.infoButton()}
+                  {this.sampleAmount(sample)}
+                </Col>
+                {sample.contains_residues && (
+                  <Col>{this.attachedAmountInput(sample)}</Col>
+                )}
+                <Col>
+                  {this.densityMolarityInput(sample)}
+                </Col>
+                <Col className="gap-2">
+                  {
+                    this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+                  }
+                </Col>
+              </Row>
+
+              <Row className="mb-4">
+                <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
+                <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
+                <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
+              </Row>
+              <Row className="align-items-end mb-4">
+                <Col>
+                  <TextRangeWithAddon
+                    field="melting_point"
+                    label="Melting point"
+                    addon="°C"
+                    value={sample.melting_point_display}
+                    disabled={polyDisabled}
+                    onChange={this.handleRangeChanged}
+                    tipOnText="Use space-separated value to input a Temperature range"
+                  />
+                </Col>
+
+                <Col>
+                  <TextRangeWithAddon
+                    field="boiling_point"
+                    label="Boiling point"
+                    addon="°C"
+                    value={sample.boiling_point_display}
+                    disabled={polyDisabled}
+                    onChange={this.handleRangeChanged}
+                    tipOnText="Use space-separated value to input a Temperature range"
+                  />
+                </Col>
+                <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
+                <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive index')}</Col>
+              </Row>
+            </>
+          ) : (
+            <Row>
+              <Col md={4}>
+                {this.textInput(sample, 'name', 'Name')}
+              </Col>
+              <Col md={4}>
+                {this.textInput(sample, 'external_label', 'External label')}
+              </Col>
+              <Col md={4}>
+                {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+              </Col>
+            </Row>
+          )
+        }
+
+        {selectedSampleType?.value === 'Mixture' && (
+          <>
+            <br/>
+            <h5>Mixture components:</h5>
+            <Row className="mb-4 justify-content-end">
+              <Col xs={10} className="d-flex align-items-center justify-content-end">
+                <div className="me-3">
+                  {this.totalRequiredAmount()}
+                </div>
+                {this.totalAmount(sample)}
+              </Col>
+            </Row>
+
+            {this.mixtureComponentsList(sample)}
+
+            <Row className="mb-4">
+              <Col>
+                <div className="d-flex justify-content-center align-items-center gap-3">
+                  {this.renderCheckbox('enableComponentLabel', 'Enable label', 'enable-component-label')}
+                  {this.renderCheckbox('enableComponentPurity', 'Enable purity', 'enable-component-purity')}
+                </div>
+              </Col>
+            </Row>
+          </>
         )}
-
-        <Row className="align-items-center g-2 mb-4">
-          <Col xs={7} className="d-flex align-items-end gap-2">
-            {this.infoButton()}
-            {this.sampleAmount(sample)}
-          </Col>
-          {sample.contains_residues && (
-            <Col>{this.attachedAmountInput(sample)}</Col>
-          )}
-          <Col>
-            {this.densityMolarityInput(sample)}
-          </Col>
-          <Col className="gap-2">
-            {
-              this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
-            }
-          </Col>
-        </Row>
-
-        <Row className="mb-4">
-          <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
-          <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
-          <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
-        </Row>
-        <Row className="align-items-end mb-4">
-          <Col>
-            <TextRangeWithAddon
-              field="melting_point"
-              label="Melting point"
-              addon="°C"
-              value={sample.melting_point_display}
-              disabled={polyDisabled}
-              onChange={this.handleRangeChanged}
-              tipOnText="Use space-separated value to input a Temperature range"
-            />
-          </Col>
-
-          <Col>
-            <TextRangeWithAddon
-              field="boiling_point"
-              label="Boiling point"
-              addon="°C"
-              value={sample.boiling_point_display}
-              disabled={polyDisabled}
-              onChange={this.handleRangeChanged}
-              tipOnText="Use space-separated value to input a Temperature range"
-            />
-          </Col>
-          <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
-          <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive index')}</Col>
-        </Row>
 
         <Row>
           <SampleDetailsSolvents
