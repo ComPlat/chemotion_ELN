@@ -203,7 +203,7 @@ const removeImageTemplateAtom = (images, mols, latestData) => {
         // delete latestData[mols[m]];
         // latestData.root.nodes.splice(m, 1);
       } else {
-        console.log("else?");
+        console.log("else?", container);
         for (let img_i = 0; img_i < container.length; img_i++) {
           const img_idx = container[img_i];
           for (let i = 0; i < atoms_list.length; i++) {

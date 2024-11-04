@@ -10,7 +10,6 @@ import {
   three_parts_patten,
   two_parts_pattern,
 
-
   // flags
   skip_template_name_hide,
   skip_image_layering,
@@ -22,12 +21,9 @@ import {
   adding_polymers_ketcher_format,
   adding_polymers_indigo_molfile,
   prepareImageFromTemplateList,
-  resetOtherAliasCounters,
-  isNewAtom,
   removeImageTemplateAtom,
 
   // DOM Methods
-  disableButton,
   attachListenerForTitle,
   updateImagesInTheCanvas,
   updateTemplatesInTheCanvas,
@@ -51,10 +47,7 @@ let allNodes = [];
 let all_atoms = [];
 let image_used_counter = -1;
 let re_render_canvas = false;
-let delete_process = false;
-let only_image_delete = false;
 let _selection = null;
-
 
 // funcation to reset all data containers
 const resetStore = () => {
@@ -97,36 +90,41 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack("Move atom");
     },
     "Delete image": async () => {
-      console.log(_selection);
-      delete_process = true;
-      only_image_delete = true;
-      // if (_selection?.images && !_selection.atoms) {
-      //   console.log("Delete image", _selection);
-      //   const image_list = _selection.images;
-      //   if (image_list.length > 1) {
-      //     return;
-      //   }
-      //   await fuelKetcherData();
-      //   const { data } = removeImageTemplateAtom(image_list, mols, latestData);
-      //   await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-      //   image_used_counter -= 1;
-      //   // await moveTemplate();
-      //   return;
-      // }
+      console.log("DELETE image!!", _selection);
+      addEventToFILOStack("Delete image");
     },
     "Delete atom": async (eventItem) => {
       if (eventItem.label === inspired_label) {
-        delete_process = true;
-        console.log("DELETE ATOM!!", _selection);
-        // const { atom } = should_canvas_update_on_movement(eventItem);
-        // await fuelKetcherData();
-        // await deleteAtomCollectedWithImage(atom);
+        console.log("DELETE ATOM!!", _selection, eventItem);
+        await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+        FILOStack = [];
+        uniqueEvents = new Set();
+        _selection = null;
+        return;
+        // if (atoms && atoms.length && !images) {
+        //   console.log(all_atoms[atoms[0]]);
+        //   for (let m = 0; m < mols?.length; m++) {
+        //     const mol = mols[m];
+        //     const all_atoms = latestData[mol]?.atoms;
+        //     for (let a = 0; a < all_atoms?.length; a++) {
+        //       atom_counter++;
+        //       if (atoms.indexOf(atom_counter) != -1) {
+        //         atoms_data.add(all_atoms[a].alias);
+        //         count_to_reduce++;
+        //       }
+        //     }
+        //   }
+        //   atoms_data.forEach((item, idx) => {
+        //     if (three_parts_patten.test(item)) {
+        //       const splits = item.split("_");
+        //       data.root.nodes.splice(mols.length - 1 + parseInt(splits[2]), 1);
+        //     }
+        //   });
+        // }
       }
     },
     "Update": async (eventItem) => {
-      console.log(eventItem);
-      // Optional logic for update, e.g., logging
-      // console.log({ Update: eventItem });
+      // console.log(eventItem);
     },
   };
 
@@ -136,8 +134,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Move image': async () => await moveTemplate(),
     'Move atom': async () => await moveTemplate(),
     'Add atom': async () => await handleAddAtom(),
-    // 'Delete image': async () => {},
-    // 'Upsert image': async () => await postAtomAddImageInsertion(),
+    'Delete image': async () => await handleOnDeleteImage(),
   };
 
   // DOM button events with scope
@@ -234,8 +231,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     allNodes = [...latestData.root.nodes];
     imagesList = allNodes.length > mols.length ? allNodes.filter(
       item => item.type === 'image'
-    ) : imagesList;
-    // Ensure `allNodes.length - imagesList.length` is positive
+    ) : [];
     const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
     mols = sliceEnd > 0
       ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
@@ -327,21 +323,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     return { exists: true, atom: target_atom };
   };
 
-  const deleteAtomCollectedWithImage = async (item) => {
-    console.log("ATOM TO BE DELETEDDDD!!!!!", item);
-    console.log({ item });
-    const data = await onEventDeleteAtom(item);
-    console.log({ data });
-    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-    image_used_counter -= 1; //image_used_counter - atoms_to_be_deleted.length;
-    atoms_to_be_deleted = [];
-    images_to_be_updated_setter();
-    FILOStack = [];
-    uniqueEvents = new Set();
-    allowed_to_process_setter(true);
-    return;
-  };
-
   // helper function to add event to stack
   const addEventToFILOStack = (event) => {
     if (!uniqueEvents.has(event)) {
@@ -354,44 +335,6 @@ const KetcherEditor = forwardRef((props, ref) => {
   const processFILOStack = async () => {
     if (!latestData) {
       alert("data not present!!");
-      return;
-    }
-
-    if (delete_process) {
-      if (_selection) {
-        const { atoms, images } = _selection;
-        let atoms_data = new Set();
-        let atom_counter = -1;
-
-        if (atoms && atoms.length) {
-          for (let m = 0; m < mols?.length; m++) {
-            const mol = mols[m];
-            const all_atoms = latestData[mol]?.atoms;
-            for (let a = 0; a < all_atoms?.length; a++) {
-              atom_counter++;
-              if (atoms.indexOf(atom_counter) != -1) {
-                atoms_data.add(all_atoms[a].alias);
-              }
-            }
-          }
-        } else if (images && images.length) {
-          atoms_data.add(...images);
-        }
-
-        await fuelKetcherData();
-        let { data } = removeImageTemplateAtom(atoms_data, mols, latestData);
-        if (!images && atoms) {
-          console.log(atoms_data.values().next().value);
-          const image_to_remove = atoms_data.values().next().value.split("_");
-          data.root.nodes.splice(mols.length + parseInt(image_to_remove[2]), 1);
-        }
-        await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-        image_used_counter -= atoms_data.length;
-      }
-      // await moveTemplate();
-      FILOStack = [];
-      uniqueEvents = new Set();
-      delete_process = false;
       return;
     }
 
@@ -554,12 +497,23 @@ const KetcherEditor = forwardRef((props, ref) => {
     moveTemplate();
   };
 
-  // helper function to delete a template and reset the counter, assign new alias to all atoms
-  const onEventDeleteAtom = async (atom) => {
-    if (!mols.length) await fuelKetcherData();
-    return resetOtherAliasCounters(atom, mols, latestData);
+  // helper function to delete a template and update the counter, assign new alias to all atoms
+  const handleOnDeleteImage = async () => {
+    console.log("handleOnDelete", mols);
+    if (_selection) {
+      const { images } = _selection;
+      if (images.length) {
+        let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
+        await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+        image_used_counter -= images.length;
+      }
+      await moveTemplate();
+      FILOStack = [];
+      uniqueEvents = new Set();
+      _selection = null;
+      return;
+    };
   };
-
 
   // helper function to add mutation oberservers to DOM elements
   const attachClickListeners = () => {
