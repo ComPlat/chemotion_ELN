@@ -679,3 +679,8 @@ export const colorOptions = [
   { label: 'Brown - #795548', value: '#795548' },
   { label: 'Blue Grey - #607d8b', value: '#607d8b' },
 ];
+
+export const SampleTypesOptions = [
+  { label: 'Single molecule', value: 'Micromolecule' },
+  { label: 'Mixture', value: 'Mixture' },
+]

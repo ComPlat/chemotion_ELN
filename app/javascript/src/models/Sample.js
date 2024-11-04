@@ -6,7 +6,6 @@ import _ from 'lodash';
 import Element from 'src/models/Element';
 import Molecule from 'src/models/Molecule';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -97,6 +96,11 @@ export default class Sample extends Element {
 
     newSample.filterElementalComposition();
     newSample.segments = Segment.buildCopy(sample.segments);
+
+    if (sample.sample_type === 'Mixture') {
+      newSample.amount_value = sample.amount_value;
+    }
+
     return newSample;
   }
 
@@ -285,6 +289,7 @@ export default class Sample extends Element {
     newSample.filterResidueData(true);
     newSample.density = sample.density;
     newSample.starting_molarity_value = sample.molarity_value;
+    newSample.molarity_value = 0;
     newSample.metrics = sample.metrics;
     newSample.molfile = sample.molfile || '';
     newSample.gas_type = 'off';
@@ -305,6 +310,7 @@ export default class Sample extends Element {
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
     splitSample.starting_molarity_value = this.molarity_value;
+    splitSample.molarity_value = 0;
 
     if (this.name) { splitSample.name = this.name; }
     if (this.external_label) { splitSample.external_label = this.external_label; }
@@ -608,8 +614,8 @@ export default class Sample extends Element {
     }
   }
 
-  updateTotalVolume(amount, totalConcentration, lockedConcentration) {
-    if (!lockedConcentration || !amount || totalConcentration === 0 || Number.isNaN(totalConcentration)) {
+  updateTotalVolume(amount, totalConcentration) {
+    if (!amount || totalConcentration === 0 || Number.isNaN(totalConcentration)) {
       return;
     }
     // totalVolume = amount_mol / final concentration of the component
@@ -1001,6 +1007,10 @@ export default class Sample extends Element {
   get molecule_formula() {
     if (this.decoupled) {
       return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : '';
+    }
+
+    if (this.sample_type === 'Mixture') {
+      return 'mixture structure';
     }
 
     return this.molecule && this.molecule.sum_formular;
@@ -1407,13 +1417,17 @@ export default class Sample extends Element {
   // Case 2: Total volume updated; Total Conc. is locked
   // Case 3: Total volume updated; Total Conc. is not locked
   updateMixtureComponentVolume(totalVolume) {
-    if (this.components.length < 1) {
+    if (this.components.length < 1 || totalVolume <= 0) {
       return;
     }
 
+    const referenceComponent = this.reference_component;
+
     this.components.forEach((component) => {
-      component.handleTotalVolumeChanges(totalVolume);
+      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
     });
+
+    this.updateMixtureComponentEquivalent();
   }
 
   setReferenceComponent(componentIndex) {

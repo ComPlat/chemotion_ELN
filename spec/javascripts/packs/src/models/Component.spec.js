@@ -1,47 +1,160 @@
+import Component from 'src/models/Component';
+import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import expect from 'expect';
-import Component from '../../../../../app/packs/src/models/Component.js';
-import Molecule from '../../../../../app/packs/src/models/Molecule.js';
+import { describe, it, beforeEach } from 'mocha';
 
 describe('Component', () => {
   let component;
 
   beforeEach(() => {
+    const mockMolecule = { id: 101, molecular_weight: 18.010564684 };
+
+    // Create a new instance of Component for each test
     component = new Component({});
-    component.molecular_weight = 18.010564684; // Set a default molecular weight
     component.purity = 1.0; // Set a default purity
+    component.material_group = 'liquid';
+    component.molecule = mockMolecule;
+  });
+
+  describe('has_density', () => {
+    it('should return true when density > 0 and starting molarity value is 0', () => {
+      component.density = 1.5;
+      component.starting_molarity_value = 0;
+      expect(component.has_density).toBe(true);
+    });
+
+    it('should return false when density <= 0 or starting molarity value is > 0', () => {
+      component.density = 0;
+      component.starting_molarity_value = 1;
+      expect(component.has_density).toBe(false);
+    });
+  });
+
+  describe('calculateVolumeForLiquid', () => {
+    it('should calculate volume from density when density is provided', () => {
+      component.amount_mol = 1; // 1 mol
+      component.amount_l = 1; // 1 L
+      component.calculateVolumeForLiquid(1); // Call with purity 1
+      expect(component.amount_l).toBe(1);
+    });
+
+    it('should calculate volume from starting/stock concentration when stock is provided', () => {
+      component.density = 0;
+      component.starting_molarity_value = 0.5; // 1 M
+      component.amount_mol = 2; // 1 mol
+      component.amount_l = 1; // 1 L
+      component.calculateVolumeForLiquid(1);
+      expect(component.amount_l).toBe(2 / 0.5);
+    });
   });
 
   describe('handleVolumeChange', () => {
-    it('should set volume and calculate amount from density when material group is liquid', () => {
-      const amount = { unit: 'l', value: 2 };
+    const amount = { value: 10, unit: 'ml' };
+    const totalVolume = 2; // L
+    const referenceComponent = null; // No reference component for simplicity
+
+    it('should update volume and calculate amount when the component is liquid', () => {
       component.material_group = 'liquid';
-      component.density = 1.0; //1 g/mL
+      component.density = 1.5;
 
-      component.handleVolumeChange(amount, 200);
+      const expectedAmountMol = (amount.value * component.density * 1000 * component.purity)
+        / component.molecule.molecular_weight;
 
-      console.log('--------------------component component.amount_mol:', component.amount_mol);
+      component.handleVolumeChange(amount, totalVolume, referenceComponent);
 
-      expect(component.amount_l).toEqual(2);
-      expect(component.amount_g).toEqual(2000); // 2 liters * 1 g/mL = 2000 g
-      // expect(component.amount_mol).toBeCloseTo(111.07, 0.01); // 2000g / 18.01g/mol
+      expect(component.amount_l).toBe(amount.value);
+      expect(Math.abs(component.amount_mol - expectedAmountMol)).toBeLessThanOrEqual(0.0001);
     });
 
-    it('should set volume and calculate amount and molarity, when material group is liquid, and stock (starting' +
-      ' concentration) is given', () => {
-      const amount = { unit: 'l', value: 2 };
-      component.material_group = 'liquid';
-      component.starting_molarity_value = 0.1; // Molarity of 0.1 mmol/L
+    it('should update volume and calculate amount when the component is solid', () => {
+      component.material_group = 'solid';
 
-      component.handleVolumeChange(amount, 200);
+      const expectedAmountMol = (amount.value * component.purity) / component.molecule_molecular_weight;
 
-      expect(component.amount_mol).toEqual(0.0002); // 0.1 mmol/L * 2 liters = 0.2 mmol = 0.0002 mol
-      expect(component.molarity_value).toEqual(0.000001); // 0.2 mmol / 200 liters = 0.001 mmol/L = 0.000001 mol/L
+      component.handleVolumeChange(amount, totalVolume, referenceComponent);
+
+      expect(component.amount_g).toBe(amount.value);
+      expect(Math.abs(component.amount_mol - expectedAmountMol)).toBeLessThanOrEqual(0.0001);
+    });
+  });
+
+  describe('handleConcentrationChange', () => {
+    it('should handle starting concentration change', () => {
+      const amount = { value: 2, unit: 'mol/l' };
+      const totalVolume = 10; // L
+      const referenceComponent = null; // No reference component
+
+      component.handleConcentrationChange(
+        amount,
+        totalVolume,
+        'startingConc',
+        false,
+        referenceComponent
+      );
+      expect(component.starting_molarity_value).toBe(amount.value);
+      expect(component.molarity_value).toBe(0); // Should reset amount to 0
+    });
+
+    it('should handle target concentration change', () => {
+      const amount = { value: 1, unit: 'mol/l' };
+      const totalVolume = 10; // L
+      const referenceComponent = null;
+
+      component.handleConcentrationChange(
+        amount,
+        totalVolume,
+        'targetConc',
+        false,
+        referenceComponent
+      );
+      expect(component.molarity_value).toBe(amount.value);
+      expect(component.amount_mol).toBe(component.concn * totalVolume);
+    });
+  });
+
+  describe('handleTotalVolumeChanges', () => {
+    it('should handle total volume changes, when conc. is not locked and recalculate target conc.', () => {
+      const totalVolume = 10; // L
+      const referenceComponent = null; // No reference component
+      component.amount_mol = 2;
+
+      // Mock store state for unlocked concentration
+      ComponentStore.getState = () => ({
+        lockedComponents: [],
+      });
+
+      const expectedResult = component.amount_mol / totalVolume;
+
+      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
+      expect(component.molarity_value).toEqual(expectedResult); // Concentration should be recalculated
+    });
+
+    it('should handle total volume changes when conc. is locked: recalculate amount and volume', () => {
+      const totalVolume = 10; // L
+      const referenceComponent = null;
+      const originalMolarityValue = component.molarity_value;
+      component.density = 1.5;
+
+      // Mock store state for locked concentration
+      ComponentStore.getState = () => ({
+        lockedComponents: [component.id],
+      });
+
+      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
+
+      const expectedAmountMol = component.concn * totalVolume;
+      const expectedAmountL = (component.amount_mol * component.molecule.molecular_weight)
+        / (component.density * 1000 * component.purity);
+
+      expect(component.molarity_value).toBe(originalMolarityValue); // Conc. shouldn't change
+      expect(component.amount_mol).toEqual(expectedAmountMol); // but amount and volume should be recalculated
+      expect(component.amount_l).toEqual(expectedAmountL);
     });
   });
 
   describe('handleAmountChange', () => {
-    it('should set amount in mol and calculate volume if stock (starting concentration), when material group is' +
-      ' liquid', () => {
+    it('should set amount in mol and calculate volume if stock (starting concentration), when material group is'
+      + ' liquid', () => {
       const amount = { unit: 'mol', value: 2 };
       component.material_group = 'liquid';
       component.starting_molarity_value = 1.0; // 1 Molar solution
@@ -56,7 +169,7 @@ describe('Component', () => {
     it('should set amount in mol and calculate volume if density is given, when material group is liquid', () => {
       const amount = { unit: 'mol', value: 2 };
       component.material_group = 'liquid';
-      component.density = 1.0; //1 g/mL
+      component.density = 1.0; // 1 g/mL
       component.purity = 1.0; // 100% purity
 
       component.handleAmountChange(amount, 2);
@@ -71,60 +184,98 @@ describe('Component', () => {
   });
 
   describe('handleDensityChange', () => {
-    it('should set density and calculate amount when volume is known, when material group is liquid', () => {
+    it('should set density and reset other attributes of the component', () => {
       const density = { unit: 'g/ml', value: 2.0 };
-      component.material_group = 'liquid';
       component.amount_l = 2.0;
+      component.amount_mol = 0.5;
+      component.purity = 0.5;
 
-      component.handleDensityChange(density, false, 2);
-
-      // amount_g = (amount_l * 1000) * density;
-      // amount_mol = (amount_g * purity) / molecule_molecular_weight;
-      const expectedAmountG = component.amount_l * 1000 * density.value; // 2 L * 1000 g/L * 2.0 = 4000 g
-      const expectedAmountMol = expectedAmountG / component.molecular_weight; // 4000 g / 18.010564684 g/mol
+      component.handleDensityChange(density, false);
 
       expect(component.density).toEqual(2.0);
-      expect(component.amount_g).toEqual(expectedAmountG); // 4000 g
-      expect(component.amount_mol).toBeCloseTo(expectedAmountMol, 0.01); // Approximately 222.1 mol
-    });
+      expect(component.starting_molarity_value).toBe(0);
 
-    it('should set density and calculate volume when amount is known, when material group is liquid', () => {
-      component.amount_mol = 1.0; // 1 mole of the substance
-      component.molecular_weight = 18.010564684; // g/mol
-      const density = { unit: 'g/ml', value: 2.0 }; // g/mL (which is equivalent to 2000 g/L)
-      const purity = 1.0; // 100% purity
-
-      component.handleDensityChange(density, false, 2);
-
-      // amount_l = (amount_mol * molecule_molecular_weight * purity) / (density * 1000)
-      // amount_l = (1.0 mol * 18.010564684 g/mol * 1.0) / (2.0 g/mL * 1000)
-      const expectedAmountL = (component.amount_mol * component.molecule_molecular_weight * purity) / (component.density * 1000);
-
-      expect(component.density).toEqual(2.0);
-      expect(component.amount_l).toBeCloseTo(expectedAmountL, 0.01); // Allow a small margin for floating-point arithmetic
+      // resetRowFields
+      expect(component.amount_l).toBe(0);
+      expect(component.amount_mol).toBe(0);
+      expect(component.molarity_value).toBe(0);
+      expect(component.equivalent).toBe(1.0);
+      expect(component.purity).toBe(1.0);
     });
   });
 
   describe('setPurity', () => {
-    it('should set purity and adjust amount_mol accordingly', () => {
-      component.molarity_value = 1.0;
-      component.setPurity(0.9, 2); // Setting purity to 0.9
+    it('should set purity correctly for liquid and adjust amount_mol', () => {
+      component.amount_mol = 0.5;
+      const prevAmountMol = component.amount_mol;
+      const prevPurity = component.purity;
+      const newPurity = 0.8;
+      const totalVolume = 100;
 
-      expect(component.purity).toEqual(0.9);
-      expect(component.amount_mol).toEqual(1.8); // 1 mol/L * 2L * 0.9 purity = 1.8 mol
+      // Call setPurity and check if amount_mol is adjusted
+      component.setPurity(newPurity, totalVolume, null, false, 'liquid');
+
+      expect(component.purity).toEqual(newPurity);
+      // amount_mol (corrected) = amount_mol (before correction) * purity(new)/purity(before correction)
+      expect(component.amount_mol).toBeCloseTo((prevAmountMol * newPurity) / prevPurity, 0.0001);
     });
 
-    it('should not set purity if it is out of bounds', () => {
-      component.setPurity(1.1, 2); // Invalid purity (> 1)
-      expect(component.purity).not.toEqual(1.1);
+    it('should set purity correctly for solid and adjust amount_mol when lockAmountColumnSolids is true', () => {
+      component.material_group = 'solid';
+      component.amount_g = 50;
+      const newPurity = 0.9;
+      const lockAmountColumnSolids = true;
+      const totalVolume = 1.0;
 
-      component.setPurity(-0.5, 2); // Invalid purity (< 0)
-      expect(component.purity).not.toEqual(-0.5);
+      // Call setPurity and check if amount_mol is adjusted
+      component.setPurity(newPurity, totalVolume, null, lockAmountColumnSolids, 'solid');
+
+      expect(component.purity).toEqual(newPurity);
+      expect(Math.abs(component.amount_mol - (component.amount_g * newPurity) / component.molecule.molecular_weight))
+        .toBeLessThanOrEqual(0.0001);
+    });
+
+    it('should set purity correctly for solid and adjust amount_g when lockAmountColumnSolids is false', () => {
+      // mass is not locked
+      // mass_g = (amount_mol * molecular_weight) / purity
+
+      component.material_group = 'solid';
+      component.amount_mol = 0.1;
+      const newPurity = 0.8;
+      const lockAmountColumnSolids = false;
+      const totalVolume = 1.0;
+
+      // Call setPurity and check if amount_g is adjusted
+      component.setPurity(newPurity, totalVolume, null, lockAmountColumnSolids, 'solid');
+
+      expect(component.purity).toEqual(newPurity);
+      expect(Math.abs(component.amount_g - (component.amount_mol * component.molecule.molecular_weight) / newPurity))
+        .toBeLessThanOrEqual(0.0001);
+    });
+
+    it('should not update amount_mol when purity is not valid (less than or equal to 0 or greater than 1)', () => {
+      const prevPurity = component.purity;
+      const prevAmountMol = component.amount_mol;
+
+      // Try setting an invalid purity value (less than 0)
+      component.setPurity(-0.1, 1.0, null, false, 'liquid');
+
+      expect(component.purity).toEqual(prevPurity);
+      expect(component.amount_mol).toEqual(prevAmountMol);
+
+      // Try setting an invalid purity value (greater than 1)
+      component.setPurity(1.2, 1.0, null, false, 'liquid');
+
+      expect(component.purity).toEqual(prevPurity);
+      expect(component.amount_mol).toEqual(prevAmountMol);
     });
   });
 
   describe('serializeComponent', () => {
     it('should return a serialized object of the  component', () => {
+      // Create a mock molecule object
+      const mockMolecule = { id: 101 };
+
       component.id = 1;
       component.name = 'Test Component';
       component.position = 1;
@@ -132,12 +283,14 @@ describe('Component', () => {
       component.amount_g = 20.0;
       component.amount_l = 1.5;
       component.density = 1.2;
+      component.molarity_unit = 'M';
       component.molarity_value = 0.5;
       component.starting_molarity_value = 0.1;
       component.equivalent = 1.0;
       component.parent_id = 2;
       component.material_group = 'solid';
       component.purity = 0.9;
+      component.molecule = mockMolecule;
 
       const serialized = component.serializeComponent();
 

@@ -3,8 +3,8 @@ import Formula from 'src/components/common/Formula';
 import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 
 const SampleName = ({ sample }) => {
-  const { contains_residues, polymer_type, molecule_formula, decoupled } = sample;
-  const moleculeName = sample.decoupled ? null :
+  const { contains_residues, polymer_type, molecule_formula, decoupled, sample_type } = sample;
+  const moleculeName = sample.decoupled || sample_type === 'Mixture' ? null :
     (<p style={{ wordBreak: 'break-all' }}><ClipboardCopyText text={sample.showed_name} /></p>);
   let stereo = '';
   if (sample.stereo) {
@@ -33,6 +33,16 @@ const SampleName = ({ sample }) => {
       </div>
     );
   }
+
+  if (sample_type === 'Mixture' && sample.components) {
+    const title = sample.components.map(comp => comp.molecule.iupac_name).join('/');
+    return (
+      <div>
+        Components: {title}
+      </div>
+    );
+  }
+
   return (
     <div>
       <p className='mb-2'><ClipboardCopyText text={sumFormulaCom} clipText={clipText} /></p>

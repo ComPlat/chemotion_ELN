@@ -6,7 +6,7 @@ class ComponentStore {
     this.state = {
       lockAmountColumn: true,
       lockAmountColumnSolids: false,
-      lockedComponentID: null,
+      lockedComponents: [],
     };
 
     this.bindListeners({
@@ -20,10 +20,21 @@ class ComponentStore {
   }
 
   handleToggleComponentLock({ componentId, lockConc }) {
-    this.setState({
-      // Lock the component if lockState is true, else unlock by setting it to null
-      lockedComponentID: lockConc ? componentId : null,
-    });
+    const { lockedComponents } = this.state;
+
+    if (lockConc) {
+      // Add the component ID to the lockedComponents array if not already present
+      if (!lockedComponents.includes(componentId)) {
+        this.setState({
+          lockedComponents: [...lockedComponents, componentId],
+        });
+      }
+    } else {
+      // Remove the component ID from the lockedComponents array
+      this.setState({
+        lockedComponents: lockedComponents.filter((id) => id !== componentId),
+      });
+    }
   }
 }
 

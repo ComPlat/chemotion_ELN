@@ -11,7 +11,7 @@ class ComponentActions {
 
     return {
       key,
-      value: !lockState,
+      value: lockState,
     };
   }
 
