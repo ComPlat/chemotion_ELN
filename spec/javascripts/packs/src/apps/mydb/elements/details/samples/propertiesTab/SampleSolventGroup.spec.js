@@ -42,6 +42,7 @@ describe('SampleSolventGroup', () => {
     it('renders a solvent area with header and two entries', async () => {
       const sample = await SampleFactory.build('SampleFactory.water_100g');
       sample.solvent = [{ label: 'water', ratio: 1.0 }, { label: 'ethanol', ratio: 2.0 }];
+      sample.sample_type = 'Micromolecule';
 
       const wrapper = shallow(
         <SampleSolventGroup
@@ -62,6 +63,7 @@ describe('SampleSolventGroup', () => {
 describe('SolventDetails', () => {
   const deleteSolvent = () => {};
   const onChangeSolvent = () => {};
+  const sampleType = 'Micromolecule';
 
   describe('when solvent prop is null', () => {
     const wrapper = shallow(
@@ -69,6 +71,7 @@ describe('SolventDetails', () => {
         deleteSolvent={deleteSolvent}
         onChangeSolvent={onChangeSolvent}
         solvent={null}
+        sampleType={sampleType}
       />
     );
 
@@ -85,6 +88,7 @@ describe('SolventDetails', () => {
         deleteSolvent={deleteSolvent}
         onChangeSolvent={onChangeSolvent}
         solvent={solvent}
+        sampleType={sampleType}
       />
     );
 

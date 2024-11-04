@@ -366,7 +366,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView, components: params.components })
         });
     };
   }
@@ -375,7 +375,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(sample)
         .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup })
+          dispatch({ newSample, reaction, materialGroup, components: sample.components })
         });
     };
   }
@@ -424,7 +424,7 @@ class ElementActions {
         .then((newSample) => {
           reaction.updateMaterial(newSample);
           reaction.changed = true;
-          dispatch({ reaction, sample: newSample, closeView })
+          dispatch({ reaction, sample: newSample, closeView, components: sample.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -435,7 +435,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView, components: params.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -505,6 +505,18 @@ class ElementActions {
       SamplesFetcher.fetchById(params.sample.id)
         .then((result) => {
           params.coefficient = sampleCoefficient;
+          params.sample = result;
+          dispatch(params);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        })
+    }
+  }
+
+  showMixtureMaterial(params) {
+    return (dispatch) => {
+      SamplesFetcher.fetchById(params.sample.id)
+        .then((result) => {
           params.sample = result;
           dispatch(params);
         }).catch((errorMessage) => {
