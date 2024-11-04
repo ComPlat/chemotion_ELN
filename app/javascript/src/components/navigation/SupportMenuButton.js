@@ -16,7 +16,7 @@ function ExternalItem({ title, href }) {
   );
 }
 
-export default function SupportMenuButton() {
+export default function SupportMenuButton({ linkToEln = false }) {
   const [version, setVersion] = useState({});
   const onUiStoreChange = ({ version }) => setVersion(version);
   useEffect(() => {
@@ -39,9 +39,14 @@ export default function SupportMenuButton() {
         <ExternalItem title="Search documentation" href="https://chemotion.net/search" />
         <ExternalItem title="Helpdesk - Contact Us" href="https://chemotion.net/helpdesk" />
         <ExternalItem title="Report an issue on Github" href="https://github.com/ComPlat/chemotion_ELN/issues" />
+        <Dropdown.Divider />
+
+        {linkToEln
+          ? <Dropdown.Item href="/mydb">ELN</Dropdown.Item>
+          : <Dropdown.Item href="/home">Home</Dropdown.Item>}
+
         {hasVersions && (
           <>
-            <Dropdown.Divider />
             <Dropdown.ItemText className="d-flex flex-column text-muted">
               {Object.entries(version).map(([k, v]) => (
                 <span key={k} className="d-flex justify-content-between">
