@@ -140,7 +140,7 @@ export default class CollectionSubtree extends React.Component {
     const showGatePushButton = root && root.is_locked && root.label === 'chemotion-repository.net';
 
     return (
-      <div className="tree-view" key={root.id}>
+      <div key={root.id}>
         <div
           id={`tree-id-${root.label}`}
           className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
@@ -175,7 +175,7 @@ export default class CollectionSubtree extends React.Component {
           )}
         </div>
         {visible && (
-          <div className="ms-3">
+          <div className="tree-view">
             {children.map((child) => (
               <CollectionSubtree key={child.id} root={child} isRemote={isRemote} />
             ))}
