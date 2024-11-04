@@ -128,7 +128,6 @@ export default class ElementsList extends React.Component {
 
   onChangeUI(state) {
     const { totalCheckedElements } = this.state;
-    let forceUpdate = false;
     // const genericNames = (genericEls && genericEls.map(el => el.name)) || [];
     let genericKlasses = [];
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -138,22 +137,25 @@ export default class ElementsList extends React.Component {
     }
     const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericKlasses);
 
+    const newTotalCheckedElements = {};
+    let needsUpdate = false;
     elNames.forEach((type) => {
       const elementUI = state[type] || {
-        checkedAll: false, checkedIds: [], uncheckedIds: [], currentId: null
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
       };
       const element = ElementStore.getState().elements[`${type}s`];
       const nextCount = elementUI.checkedAll
         ? (element.totalElements - elementUI.uncheckedIds.size)
         : elementUI.checkedIds.size;
-      if (!forceUpdate && nextCount !== (totalCheckedElements[type] || 0)) { forceUpdate = true; }
-      totalCheckedElements[type] = nextCount;
+      needsUpdate = needsUpdate || nextCount !== totalCheckedElements[type];
+      newTotalCheckedElements[type] = nextCount
     });
 
-    this.setState((previousState) => ({ ...previousState, totalCheckedElements }));
-    // could not use shouldComponentUpdate because state.totalCheckedElements
-    // has already changed independently of setstate
-    if (forceUpdate) { this.forceUpdate(); }
+    if (needsUpdate) {
+      this.setState({ totalCheckedElements: newTotalCheckedElements });
+    }
   }
 
   handleRemoveSearchResult(searchStore) {
