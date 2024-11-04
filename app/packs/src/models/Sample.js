@@ -1388,9 +1388,13 @@ export default class Sample extends Element {
       return;
     }
 
+    const referenceComponent = this.reference_component;
+
     this.components.forEach((component) => {
-      component.handleTotalVolumeChanges(totalVolume);
+      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
     });
+
+    this.updateMixtureComponentEquivalent();
   }
 
   setReferenceComponent(componentIndex) {
