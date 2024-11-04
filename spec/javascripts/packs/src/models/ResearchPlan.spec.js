@@ -203,6 +203,15 @@ describe('ResearchPlan', () => {
         expect(researchPlan.getNewAttachments().length).toEqual(1);
       });
     });
+
+    describe('.when attachment property is not defined', () => {
+      it('empty array was returned', () => {
+        const researchPlanWithoutAttachments = ResearchPlan.buildEmpty();
+        delete (researchPlanWithoutAttachments.attachments);
+
+        expect(researchPlanWithoutAttachments.getNewAttachments().length).toEqual(0);
+      });
+    });
   });
 
   describe('.getMarkedAsDeletedAttachments', () => {
@@ -222,6 +231,14 @@ describe('ResearchPlan', () => {
 
       it('one attachment was found', () => {
         expect(researchPlan.getNewAttachments().length).toEqual(1);
+      });
+    });
+    describe('.when attachment property is not defined', () => {
+      it('empty array was returned', () => {
+        const researchPlanWithoutAttachments = ResearchPlan.buildEmpty();
+        delete (researchPlanWithoutAttachments.attachments);
+
+        expect(researchPlanWithoutAttachments.getNewAttachments().length).toEqual(0);
       });
     });
   });

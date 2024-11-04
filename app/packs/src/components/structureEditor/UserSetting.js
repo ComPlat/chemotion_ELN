@@ -1,10 +1,9 @@
-/* eslint-disable react/forbid-prop-types */
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
-  Button, Panel, Row, Col
+  Button, Card, Row, Col
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const DEFAULT_EDITOR = 'ketcher';
@@ -50,39 +49,47 @@ function UserSetting() {
     setEditor((prev) => ({ ...prev, selected: e.value }));
   };
 
-  let options = editors
-    .map((e) => ({ value: e.configs.editor, label: `${e.label} (${e.configs.editor})` }));
-  options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }].concat(options);
+  const options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }];
+  editors.forEach((e) => {
+    options.push({
+      value: e.configs.editor,
+      label: `${e.label} (${e.configs.editor})`
+    })
+  });
 
   return (
-    <Panel>
-      <Panel.Heading><Panel.Title>Structure Editor</Panel.Title></Panel.Heading>
-      <Panel.Body>
-        <Row className="profile-row">
-          <Col sm={2}><b>Current default is</b></Col>
-          <Col sm={2}>{editor?.default}</Col>
-          <Col sm={2}><b>Editor Selection</b></Col>
-          <Col sm={2}>
+    <Card>
+      <Card.Header>Structure Editor</Card.Header>
+      <Card.Body>
+        <Row className="mb-3">
+          <Col xs={{ span: 3, offset: 3 }} className="fw-bold">Current default is</Col>
+          <Col xs={2}>{editor?.default ?? '-'}</Col>
+        </Row>
+        <Row className="mb-3 align-items-baseline">
+          <Col xs={{ span: 3, offset: 3 }} className="fw-bold">
+            Editor Selection
+          </Col>
+          <Col xs={2}>
             <Select
               name="editor selection"
-              clearable={false}
               options={options}
               onChange={onChange}
-              value={editor?.selected}
+              value={options.find(({value}) => value == editor?.selected)}
             />
           </Col>
-          <Col sm={4}>
-            <Button bsStyle="primary" onClick={() => updateProfile()}>
-              {
-                editor.changing ? <i className="fa fa-spinner fa-pulse" aria-hidden="true" /> : null
-              }
+        </Row>
+        <Row>
+          <Col xs={{ offset: 8 }}>
+            <Button variant="primary" onClick={() => updateProfile()}>
+              {editor.changing && (
+                <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
+              )}
               Update user profiles
             </Button>
           </Col>
         </Row>
-        <br />
-      </Panel.Body>
-    </Panel>
+      </Card.Body>
+    </Card>
   );
 }
 

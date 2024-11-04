@@ -1,50 +1,49 @@
-.container
-  %br
+.container.my-5
   - if resource.password_required?
     = render "devise/shared/omniauth"
     %hr
 
-  %h2 Sign up
-  = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
-    = devise_error_messages!
-    .form-group.field
-      = f.label :email, class: "required"
-      %br/
-      = f.email_field :email, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
-    - if resource.password_required?
-      .form-group.field
-        = f.label :password, 'Password *'
-        - if @validatable
-          %em
-            (#{@minimum_password_length} characters minimum)
-        %br/
-        = f.password_field :password, autocomplete: "off", class: 'form-control'
-      .form-group.field
-        = f.label :password_confirmation, 'Password confirmation *'
-        %br/
-        = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
-    .form-group.field
-      = f.label :first_name, class: "required"
-      %br/
-      = f.text_field :first_name, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
-    .form-group.field
-      = f.label :last_name, class: "required"
-      %br/
-      = f.text_field :last_name, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
-    .form-group.field
-      = f.label "Name Abbreviation", class: "required"
-      %em
-        (Kürzel)
-      %br/
-      = f.text_field :name_abbreviation, autofocus: true, class: 'form-control', required: true
-    = f.fields_for :affiliations, resource.affiliations do |a|
-      = render "devise/shared/affiliations", f: a, disabled: false
-    = f.hidden_field :provider, value: resource.provider
-    = f.hidden_field :uid, value: resource.uid
-    = render 'devise/shared/pn_and_tos'
+  .row.mb-3
+    %h2.mb-3 Sign up
+    = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
+      = devise_error_messages!
+      .form-group.mb-3
+        = f.label :email, class: "required form-label"
+        = f.email_field :email, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
 
-    .form-group.actions
-      %input{:style=>"display:none;"}
+      - if resource.password_required?
+        .form-group.mb-3
+          = f.label :password, class: 'required form-label'
+          = f.password_field :password, autocomplete: "off", class: 'form-control'
+          - if @validatable
+            .form-text
+              (#{@minimum_password_length} characters minimum)
+
+        .form-group.mb-3
+          = f.label :password_confirmation, class: 'required form-label'
+          = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
+
+      .form-group.mb-3
+        = f.label :first_name, class: "required form-label"
+        = f.text_field :first_name, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
+
+      .form-group.mb-3
+        = f.label :last_name, class: "required form-label"
+        = f.text_field :last_name, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
+
+      .form-group.mb-3
+        = f.label :name_abbreviation, class: 'form-label required' do
+          Name Abbreviation
+          %em
+            (Kürzel)
+        = f.text_field :name_abbreviation, autofocus: true, class: 'form-control', required: true
+
+      = f.fields_for :affiliations, resource.affiliations do |a|
+        = render "devise/shared/affiliations", f: a, disabled: false
+      = f.hidden_field :provider, value: resource.provider
+      = f.hidden_field :uid, value: resource.uid
+      = render 'devise/shared/pn_and_tos'
+
       = f.submit "Sign up", class: 'btn btn-primary'
 
   = render "devise/shared/links"

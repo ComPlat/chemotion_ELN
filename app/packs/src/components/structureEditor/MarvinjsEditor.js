@@ -1,22 +1,9 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal } from 'react-bootstrap';
 import StructureEditor from 'src/models/StructureEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-
-const LoadingModal = (props) => {
-  const { loading } = props;
-  return (
-    <Modal className="chemdraw-loading" animation show={loading}>
-      <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
-      <span className="sr-only">Initializing...</span>
-    </Modal>
-  );
-};
-
-LoadingModal.propTypes = { loading: PropTypes.bool };
-LoadingModal.defaultProps = { loading: false };
+import LoadingEditorModal from './LoadingEditorModal';
 
 class MarvinjsEditor extends React.Component {
   constructor(props) {
@@ -41,12 +28,13 @@ class MarvinjsEditor extends React.Component {
 
   attached(mv) {
     this.setState({ loading: false });
+    const { fnCb } = this.props;
     const { editor } = this.props;
     const molfile = this.props.molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
     mv.sketcherInstance.setDisplaySettings({ toolbars: 'reporting' });
     mv.sketcherInstance.importStructure('mol', molfile).then(() => {}, (error) => { alert(error); }).catch((error) => { alert(error); });
     editor.structureDef.getEditorFunction = () => mv;
-    this.props.parent.setState({ editor });
+    fnCb(editor);
   }
 
   attachError(e) {
@@ -66,7 +54,7 @@ class MarvinjsEditor extends React.Component {
     return (
       <div>
         <iframe title="Marvin JS" id="mvs" src={editor.extSrc} className="sketcher-frame" height={iH} width="100%" />
-        <LoadingModal loading={this.state.loading} />
+        <LoadingEditorModal loading={this.state.loading} />
       </div>
     );
   }
@@ -74,9 +62,9 @@ class MarvinjsEditor extends React.Component {
 
 MarvinjsEditor.propTypes = {
   editor: PropTypes.instanceOf(StructureEditor).isRequired,
-  parent: PropTypes.object.isRequired,
   molfile: PropTypes.string,
-  iH: PropTypes.string.isRequired
+  iH: PropTypes.string.isRequired,
+  fnCb: PropTypes.func.isRequired,
 };
 
 MarvinjsEditor.defaultProps = { molfile: '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n' };

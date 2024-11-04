@@ -5,7 +5,11 @@ export default class UserSettingsFetcher {
     return fetch(
       `/api/v1/public/affiliations/${type}`
     ).then((response) => response.json())
-      .then((data) => data)
+      .then((data) => {
+        return data
+          .filter(item => item && item.trim() !== '')
+          .map(item => ({ value: item, label: item }));
+      })
       .catch((error) => {
         console.log(error);
       });

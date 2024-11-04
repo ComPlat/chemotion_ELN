@@ -2,17 +2,14 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Col,
-  FormGroup,
-  FormControl,
-  ControlLabel,
   OverlayTrigger,
   Button,
   Tooltip,
   InputGroup,
-  Grid,
-  Row
+  Row,
+  Form
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
 import { statusOptions } from 'src/components/staticDropdownOptions/options';
@@ -23,30 +20,18 @@ import { permitOn } from 'src/components/common/uis';
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
     super(props);
-    const { temperature } = props && props.reaction;
+
     this.state = {
       showTemperatureChart: false,
-      temperature,
     };
+
     this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this);
     this.updateTemperature = this.updateTemperature.bind(this);
-    this.temperatureUnit = props.reaction.temperature.valueUnit;
-  }
-
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      temperature: nextProps.reaction.temperature,
-    });
-
-    this.temperatureUnit = nextProps.reaction.temperature.valueUnit;
   }
 
   updateTemperature(newData) {
-    const { temperature } = this.state;
-    temperature.data = newData;
-    this.setState({ temperature });
-    this.props.onInputChange('temperatureData', temperature);
+    const { reaction: { temperature } } = this.props;
+    this.props.onInputChange('temperatureData', { ...temperature, data: newData });
   }
 
   toggleTemperatureChart() {
@@ -55,120 +40,106 @@ export default class ReactionDetailsMainProperties extends Component {
   }
 
   changeUnit() {
-    const index = Reaction.temperature_unit.indexOf(this.temperatureUnit);
-    const unit = Reaction.temperature_unit[(index + 1) % 3];
+    const { reaction: { temperature } } = this.props;
+
+    const units = Reaction.temperature_unit;
+    const index = units.indexOf(temperature.valueUnit);
+    const unit = units[(index + 1) % units.length];
     this.props.onInputChange('temperatureUnit', unit);
   }
 
-
   render() {
     const { reaction, onInputChange } = this.props;
-    const temperatureTooltip = (
-      <Tooltip id="show_temperature">Show temperature chart</Tooltip>
-    );
-
-    const temperatureDisplay = reaction.temperature_display;
-    const { showTemperatureChart, temperature } = this.state;
-    const tempUnitLabel = `Temperature (${this.temperatureUnit})`;
-
-    let TempChartRow = <span />;
-    if (showTemperatureChart) {
-      TempChartRow = (
-        <Col md={12}>
-          <div style={{ width: '74%', float: 'left' }}>
-            <LineChartContainer
-              data={temperature}
-              xAxis="Time"
-              yAxis={tempUnitLabel}
-            />
-          </div>
-          <div style={{ width: '25%', float: 'left' }}>
-            <EditableTable
-              temperature={temperature}
-              updateTemperature={this.updateTemperature}
-            />
-          </div>
-        </Col>
-      );
-    }
+    const { temperature } = reaction;
+    const { showTemperatureChart } = this.state;
 
     return (
-      <Grid fluid style={{ paddingLeft: 'unset' }}>
-        <Row>
-          <Col md={6}>
-            <FormGroup>
-              <ControlLabel>Name</ControlLabel>
-              <FormControl
+      <>
+        <Row className="my-3">
+          <Col sm={6}>
+            <Form.Group>
+              <Form.Label>Name</Form.Label>
+              <Form.Control
                 id={uuid.v4()}
                 name="reaction_name"
                 type="text"
                 value={reaction.name || ''}
                 placeholder="Name..."
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
-                onChange={event => onInputChange('name', event)}
+                onChange={(event) => onInputChange('name', event)}
               />
-            </FormGroup>
+            </Form.Group>
           </Col>
-          <Col md={3}>
-            <FormGroup>
-              <ControlLabel>Status</ControlLabel>
+          <Col sm={3}>
+            <Form.Group>
+              <Form.Label>Status</Form.Label>
               <Select
-                className="status-select reaction-status-change"
                 name="status"
-                key={reaction.status}
-                multi={false}
+                isClearable
                 options={statusOptions}
-                value={reaction.status}
-                disabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
-                onChange={(event) => {
-                  const wrappedEvent = {
-                    target: { value: event && event.value },
-                  };
+                value={statusOptions.find(({value}) => value === reaction.status)}
+                isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
+                onChange={(option) => {
+                  const wrappedEvent = {target: {value: option?.value || null}};
                   onInputChange('status', wrappedEvent);
                 }}
               />
-            </FormGroup>
+            </Form.Group>
           </Col>
-          <Col md={3}>
-            <FormGroup>
-              <ControlLabel>Temperature</ControlLabel>
+          <Col sm={3}>
+            <Form.Group>
+              <Form.Label>Temperature</Form.Label>
               <InputGroup>
-                <InputGroup.Button>
-                  <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
-                    <Button
-                      disabled={!permitOn(reaction)}
-                      active
-                      className="clipboardBtn"
-                      onClick={this.toggleTemperatureChart}
-                    >
-                      <i className="fa fa-area-chart" />
-                    </Button>
-                  </OverlayTrigger>
-                </InputGroup.Button>
-                <FormControl
-                  type="text"
-                  value={temperatureDisplay || ''}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
-                  placeholder="Temperature..."
-                  onChange={event => onInputChange('temperature', event)}
-                />
-                <InputGroup.Button>
+                <OverlayTrigger placement="bottom" overlay={(
+                  <Tooltip id="show_temperature">Show temperature chart</Tooltip>
+                )}>
                   <Button
                     disabled={!permitOn(reaction)}
-                    bsStyle="success"
-                    onClick={() => this.changeUnit()}
+                    active
+                    className="clipboardBtn"
+                    onClick={this.toggleTemperatureChart}
+                    variant="secondary"
                   >
-                    {this.temperatureUnit}
+                    <i className="fa fa-area-chart" />
                   </Button>
-                </InputGroup.Button>
+                </OverlayTrigger>
+                <Form.Control
+                  type="text"
+                  value={reaction.temperature_display || ''}
+                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
+                  placeholder="Temperature..."
+                  onChange={(event) => onInputChange('temperature', event)}
+                />
+                <Button
+                  disabled={!permitOn(reaction)}
+                  variant="success"
+                  onClick={() => this.changeUnit()}
+                >
+                  {temperature.valueUnit}
+                </Button>
               </InputGroup>
-            </FormGroup>
+            </Form.Group>
           </Col>
         </Row>
-        <Row>
-          {TempChartRow}
-        </Row>
-      </Grid>
+
+        {showTemperatureChart && (
+          <Row className="mb-2">
+            <Col>
+              <LineChartContainer
+                data={temperature}
+                xAxis="Time"
+                yAxis={`Temperature (${temperature.valueUnit})`}
+              />
+            </Col>
+            <Col>
+              <EditableTable
+                temperature={temperature}
+                updateTemperature={this.updateTemperature}
+              />
+            </Col>
+          </Row>
+        )}
+      </>
     );
   }
 }

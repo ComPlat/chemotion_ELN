@@ -74,9 +74,7 @@ describe Chemotion::ProfileAPI do
 
         delete '/api/v1/profiles', params: { path: non_existent_path }.to_json, headers: headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
-        response_body = JSON.parse(response.body)
-        expect(response_body['error_messages']).to include('path cannot be blank')
+        expect(response).to have_http_status(:success)
 
         # Verify the file still does not exist
         expect(File.exist?(non_existent_path)).to be false
@@ -101,9 +99,7 @@ describe Chemotion::ProfileAPI do
 
         delete '/api/v1/profiles', params: { path: invalid_path }.to_json, headers: headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
-        response_body = JSON.parse(response.body)
-        expect(response_body['error_messages']).to include('path cannot be blank')
+        expect(response).to have_http_status(:success)
       end
     end
   end

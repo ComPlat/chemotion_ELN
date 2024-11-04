@@ -1,0 +1,27 @@
+.dnd-zone {
+  @extend .w-100;
+  @extend .border;
+  @extend .border-dashed;
+  @extend .border-3;
+  @extend .p-3;
+  @extend .text-center;
+}
+
+.dnd-zone-over {
+  @extend .border-primary;
+}
+
+.dnd-dragging {
+  @extend .opacity-25;
+}
+
+.dnd-arrow-disable {
+  @extend .text-muted;
+  cursor: not-allowed;
+  @extend .fs-3;
+}
+
+.dnd-arrow-enable {
+  cursor: move;
+  @extend .fs-3;
+}

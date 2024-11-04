@@ -14,16 +14,18 @@ export default class ImageAnnotationModalSVG extends Component {
   render() {
     return (
       <Modal
+        centered
         backdrop="static"
-        bsSize="large"
+        // size="lg"
         show={this.props.isShow}
-        dialogClassName="attachment-annotation-modal"
+        fullscreen
+        // dialogClassName="attachment-annotation-modal"
       >
 
         <Modal.Header>
           <Modal.Title>Image annotation</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'hidden' }}>
+        <Modal.Body>
           <iframe
             title="SVGEditor"
             src="/svgedit/index.html"
@@ -200,8 +202,9 @@ export default class ImageAnnotationModalSVG extends Component {
             }}
           />
         </Modal.Body>
-        <Modal.Footer style={{ textAlign: 'right' }}>
+        <Modal.Footer>
           <Button
+            variant="warning"
             onClick={() => {
               this.setState({ canSave: false });
               const { handleOnClose } = this.props;
@@ -211,7 +214,7 @@ export default class ImageAnnotationModalSVG extends Component {
             Discard changes and close
           </Button>
           <Button
-            bsStyle="primary"
+            variant="primary"
             disabled={!this.state.canSave}
             onClick={() => {
               this.setState({ canSave: false });

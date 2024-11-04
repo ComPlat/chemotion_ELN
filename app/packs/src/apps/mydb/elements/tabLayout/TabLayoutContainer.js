@@ -1,11 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Table } from 'react-bootstrap';
 import Immutable from 'immutable';
 import uuid from 'uuid';
 
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import TabLayoutCell from 'src/apps/mydb/elements/tabLayout/TabLayoutCell';
-import capitalizeWords from 'src/utilities/textHelper';
+import { capitalizeWords } from 'src/utilities/textHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class TabLayoutContainer extends React.Component {
@@ -76,7 +77,7 @@ export default class TabLayoutContainer extends React.Component {
     const hiddenCells = hidden.map((cell, index) => {
       const defTitle = segmentTabs.includes(cell) ? cell : capitalizeWords(cell);
       return (
-        <td className="hidden-layout" key={uuid.v4()}>
+        <td key={uuid.v4()}>
           <TabLayoutCell
             cell={cell}
             index={index}
@@ -91,12 +92,18 @@ export default class TabLayoutContainer extends React.Component {
     });
 
     return (
-      <table className="layout-container" style={{ overflowY: 'scroll' }}>
-        <tbody style={{ textAlign: 'left' }}>
-          <tr>{visibleCells}</tr>
-          <tr>{hiddenCells}</tr>
+      <Table
+        bordered
+        responsive
+        className={`text-center ${!isCollectionTab ? 'fs-1' : ''} border-1 border-gray-300 m-0`}
+      >
+        <tbody>
+          <tr className="text-center">{visibleCells}</tr>
+          <tr className="text-center bg-gray-400 text-gray-200 border-bottom-0">
+            {hiddenCells}
+          </tr>
         </tbody>
-      </table>
+      </Table>
     );
   }
 }

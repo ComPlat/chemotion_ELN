@@ -1,7 +1,6 @@
 import React from 'react';
-import _ from 'lodash';
 import PropTypes from 'prop-types';
-import { Dropdown, MenuItem } from 'react-bootstrap';
+import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -36,46 +35,46 @@ const ReportUtilButton = ({ customClass }) => {
   let task = <span />;
   if (enableComputedProps) {
     graph = (
-      <MenuItem onSelect={showComputedPropsGraph} title="Graph">
+      <Dropdown.Item onClick={showComputedPropsGraph} title="Graph">
         Computed Props Graph
-      </MenuItem>
+      </Dropdown.Item>
     );
     task = (
-      <MenuItem onSelect={showComputedPropsTasks} title="Graph">
+      <Dropdown.Item onClick={showComputedPropsTasks} title="Graph">
         Computed Props Tasks
-      </MenuItem>
+      </Dropdown.Item>
     );
   }
 
   let predDiv = <span />;
   let divider = <span />;
   if (enableReactionPredict) {
-    divider = <MenuItem divider />;
+    divider = <Dropdown.Divider />;
     predDiv = (
-      <MenuItem onSelect={showPredictionContainer} title="Predict">
+      <Dropdown.Item onClick={showPredictionContainer} title="Predict">
         Synthesis Prediction
-      </MenuItem>
+      </Dropdown.Item>
     );
   }
 
   return (
-    <Dropdown id="format-dropdown">
-      <Dropdown.Toggle className={customClass || 'btn-success'}>
+    <Dropdown as={ButtonGroup} id="format-dropdown">
+      <Dropdown.Toggle className={customClass} variant="success">
         <i className="fa fa-file-text-o" style={{ marginRight: 4 }} />
         <i className="fa fa-pencil" style={{ marginRight: 4 }} />
         <i className="fa fa-percent" />
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        <MenuItem onSelect={showReportContainer} title="Report">
+        <Dropdown.Item onClick={showReportContainer} title="Report">
           Report
-        </MenuItem>
-        <MenuItem divider />
-        <MenuItem onSelect={showFormatContainer} title="Analyses Formatting">
+        </Dropdown.Item>
+        <Dropdown.Divider />
+        <Dropdown.Item onClick={showFormatContainer} title="Analyses Formatting">
           Format Analyses
-        </MenuItem>
-        <MenuItem onSelect={ElementActions.showLiteratureDetail} title="Reference Manager">
+        </Dropdown.Item>
+        <Dropdown.Item onClick={ElementActions.showLiteratureDetail} title="Reference Manager">
           Reference Manager
-        </MenuItem>
+        </Dropdown.Item>
         {graph}
         {task}
         {divider}

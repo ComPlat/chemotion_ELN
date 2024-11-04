@@ -6,11 +6,12 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 function NavigationModal({
   show, title, component, customModal, ...props
 }) {
+  if (component == null) return null;
   const Component = component;
-  if (!show) return (<span />);
 
   return (
     <Modal
+      centered
       dialogClassName={customModal}
       animation={false}
       show={show}

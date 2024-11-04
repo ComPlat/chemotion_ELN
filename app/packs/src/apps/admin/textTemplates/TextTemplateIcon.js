@@ -1,21 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const TextTemplateIcon = ({ template }) => {
-  if (!template) return <span />;
+const TextTemplateIcon = ({ template, iconClass }) => {
+  if (!template) return null;
 
   const { data, name } = template;
 
   if (data.icon) {
     return (
-      <i className={data.icon} />
+      <i className={`${iconClass} ${data.icon}`} />
     );
   }
 
-  const text = (data || {}).text || name;
+  const text = data?.text ?? name ?? '';
 
   return (
-    <span>{text.toUpperCase()}</span>
+    <span className={iconClass}>{text.toUpperCase()}</span>
   );
 };
 

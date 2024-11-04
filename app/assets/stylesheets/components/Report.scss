@@ -1,0 +1,38 @@
+.report-orders {
+  .row {
+    height: 80px;
+  }
+
+  .svg {
+    -webkit-flex: 1;
+            flex: 1;
+    min-width: 0;
+    padding: 2px;
+    text-align: center;
+    vertical-align: middle;
+
+    svg {
+      max-height: 96%;
+      max-width: 96%;
+    }
+  }
+
+  .dnd-btn {
+    line-height: 80px;
+    text-align: center;
+    width: 80px;
+  }
+}
+
+.report-serial {
+  svg {
+    width: 150px;
+    height: 80px;
+  }
+}
+
+.spectrum-thumbnail {
+  display: block;
+  width: 256px;
+}
+

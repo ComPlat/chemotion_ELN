@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import capitalizeWords from 'src/utilities/textHelper';
+import { capitalizeWords } from 'src/utilities/textHelper';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 const layoutSource = {
@@ -13,7 +13,7 @@ const layoutSource = {
 };
 
 const layoutTarget = {
-  drop(props, monitor, component) {
+  drop(props, monitor) {
     props.moveLayout(monitor.getItem(), props);
   }
 };
@@ -30,7 +30,7 @@ class TabLayoutCell extends Component {
       isCollectionTab
     } = this.props;
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'];
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
     let cellIcon = `icon-${cell}`;
     let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
@@ -44,20 +44,24 @@ class TabLayoutCell extends Component {
     }
 
     let content = isElementDetails ? (
-      <div style={{ width: '100%' }}>
-        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
+      <div className="p-1 mt-2">
+        <p className={`text-center fs-6 ${title === 'hidden' ? 'text-muted' : ''}`}>
+          {title === 'hidden' ? '-' : title}
+        </p>
       </div>
     ) : (
       <div>
-        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')}>
-          {isHidden ? '\u00A0' : ''}
+        <i
+          className={`${cellIcon} text-center ${isHidden ? 'text-gray-600' : 'text-primary'}`}
+          title={[cellTitle, cellDescription].join(': ')}
+        >
         </i>
       </div>
     );
 
     content = isCollectionTab ? (
-      <div style={{ width: 'auto' }}>
-        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
+      <div className={`w-auto text-center p-0 m-0 ${title === 'hidden' ? 'text-muted' : ''}`}>
+          {title === 'hidden' ? '-' : title}
       </div>
     ) : (
       content

@@ -2,9 +2,9 @@
 import React, { Component } from 'react';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import {
-  Table, Button, Form, FormControl, Modal, Panel, FormGroup, ControlLabel, Popover, OverlayTrigger, ButtonGroup, Alert
+  Table, Button, Form, Modal, Popover, OverlayTrigger, Alert
 } from 'react-bootstrap';
-import Select from 'react-select';
+import { Select } from 'src/components/common/Select';
 
 export default class ChemSpectraLayouts extends Component {
   constructor(props) {
@@ -27,6 +27,7 @@ export default class ChemSpectraLayouts extends Component {
     this.handleShowNewTypeLayoutModal = this.handleShowNewTypeLayoutModal.bind(this);
     this.handleCloseNewTypeLayoutModal = this.handleCloseNewTypeLayoutModal.bind(this);
     this.getLayoutOptionsAndMapping = this.getLayoutOptionsAndMapping.bind(this);
+    this.handleSelectLayout = this.handleSelectLayout.bind(this)
   }
 
   componentDidMount() {
@@ -134,8 +135,9 @@ export default class ChemSpectraLayouts extends Component {
     ChemSpectraFetcher.fetchSpectraLayouts()
       .then((layouts) => {
         if (layouts) {
-          this.setState({ layouts: Object.entries(layouts.current_data_types),
-          defaultLayouts: Object.entries(layouts.default_data_types)
+          this.setState({
+            layouts: Object.entries(layouts.current_data_types),
+            defaultLayouts: Object.entries(layouts.default_data_types)
           });
         }
       })
@@ -180,131 +182,126 @@ export default class ChemSpectraLayouts extends Component {
 
     return (
       <div>
-        <Button onClick={this.handleShowNewTypeLayoutModal}>Add New Data Type</Button>
+        <Button
+          variant="primary"
+          size="md"
+          onClick={this.handleShowNewTypeLayoutModal}
+          className="mb-2"
+        >
+          Add New Data Type
+        </Button>
 
-        <Modal show={showNewTypeLayoutModal} onHide={this.handleCloseNewTypeLayoutModal}>
-          <Modal.Header closeButton />
+        <Modal centered show={showNewTypeLayoutModal} onHide={this.handleCloseNewTypeLayoutModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              New Data Type
+            </Modal.Title>
+          </Modal.Header>
           <Modal.Body>
             {alertMessage && (
-            <Alert variant="warning">
-              {alertMessage}
-            </Alert>
+              <Alert variant="warning">
+                {alertMessage}
+              </Alert>
             )}
-            <Panel>
-              <Panel.Heading>
-                <Panel.Title>
-                  New Data Type
-                </Panel.Title>
-              </Panel.Heading>
-              <Panel.Body>
-                <Form>
-                  <FormGroup>
-                    <ControlLabel>Data Type</ControlLabel>
-                    <FormControl
-                      type="text"
-                      name="dataType"
-                      value={newDataType.dataType}
-                      onChange={this.handleInputChange}
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <ControlLabel>Layout</ControlLabel>
-                    <Select
-                      name="layout"
-                      value={newDataType.layout}
-                      onChange={(selectedOption) => this.handleSelectLayout(selectedOption)}
-                      options={layoutsOptions}
-                      placeholder="Select a Layout"
-                    />
-                  </FormGroup>
-                </Form>
-              </Panel.Body>
-            </Panel>
+            <Form>
+              <Form.Group className="mb-2">
+                <Form.Label>Data Type</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="dataType"
+                  value={newDataType.dataType}
+                  onChange={this.handleInputChange}
+                  className="py-2"
+                />
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Layout</Form.Label>
+                <Select
+                  name="layout"
+                  value={{ label: newDataType.layout, value: newDataType.layout }}
+                  onChange={this.handleSelectLayout}
+                  options={layoutsOptions}
+                  placeholder="Select a Layout"
+                />
+              </Form.Group>
+            </Form>
+
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="primary" onClick={this.handleAddDataType}>
+          <Modal.Footer className="modal-footer border-0">
+            <Button variant="primary" size="md" onClick={this.handleAddDataType}>
               Add Data Type
             </Button>
-            <Button variant="secondary" onClick={this.handleCloseNewTypeLayoutModal}>
+            <Button variant="warning" size="md" onClick={this.handleCloseNewTypeLayoutModal}>
               Cancel
             </Button>
           </Modal.Footer>
         </Modal>
 
-        <Panel>
-          <Panel.Heading>
-            <Panel.Title>
-              Data Types
-            </Panel.Title>
-          </Panel.Heading>
-          <Table responsive hover bordered>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Data Type</th>
-                <th>Layout</th>
-              </tr>
-            </thead>
-            <tbody>
-              {layoutsMapping.map((entry, index) => (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>{entry.dataType}</td>
-                  <td>{entry.layout}</td>
-                  <td>
-                    {' '}
-                    {defaultLayouts.some(([layout, dataTypes]) => layout === entry.layout
-                  && !dataTypes.includes(entry.dataType)) ? (
-                    <ButtonGroup className="actions">
-                      <OverlayTrigger
-                        root
-                        trigger="focus"
-                        placement="top"
-                        overlay={(
-                          <Popover id="popover-positioned-scrolling-left">
-                            Delete this data type?
-                            <br />
-                            <div className="btn-toolbar">
-                              <Button
-                                bsSize="xsmall"
-                                bsStyle="danger"
-                                onClick={() => {
-                                  this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
-                                }}
-                              >
-                                {' '}
-                                Yes
-                              </Button>
-                              <span>&nbsp;&nbsp;</span>
-                              <Button
-                                bsSize="xsmall"
-                                bsStyle="warning"
-                                onClick={this.handleClick}
-                              >
-                                {' '}
-                                No
-                              </Button>
-                            </div>
-                          </Popover>
-                    )}
-                      >
-                        <Button
-                          bsSize="xsmall"
-                          bsStyle="danger"
+        <h3 className="bg-gray-200 p-3 rounded">Data Types</h3>
+        <Table responsive hover bordered>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Data Type</th>
+              <th>Layout</th>
+            </tr>
+          </thead>
+          <tbody>
+            {layoutsMapping.map((entry, index) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{entry.dataType}</td>
+                <td>{entry.layout}</td>
+                <td>
+                  {' '}
+                  {defaultLayouts.some(([layout, dataTypes]) => layout === entry.layout
+                    && !dataTypes.includes(entry.dataType)) && (
+                      <div className="actions d-inline-block">
+                        <OverlayTrigger
+                          root
+                          trigger="focus"
+                          placement="top"
+                          overlay={(
+                            <Popover id="popover-positioned-scrolling-left">
+                              <Popover.Header id="popover-positioned-scrolling-left" as="h5">
+                                Delete this data type?
+                              </Popover.Header>
+                              <Popover.Body className="ps-5">
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  className="me-2"
+                                  onClick={() => {
+                                    this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
+                                  }}
+                                >
+                                  Yes
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="warning"
+                                  onClick={this.handleClick}
+                                >
+                                  No
+                                </Button>
+                              </Popover.Body>
+                            </Popover>
+                          )}
                         >
-                          <i className="fa fa-trash-o" />
-                        </Button>
-                      </OverlayTrigger>
-                    </ButtonGroup>
-                      ) : (
-                        <span />
-                      )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Panel>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                          >
+                            <i className="fa fa-trash-o" />
+                          </Button>
+                        </OverlayTrigger>
+                      </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </div>
     );
   }

@@ -26,10 +26,9 @@ function extractAnalyses(listEls) {
       listObjs.push(obj);
     } else if (el.type === 'reaction') {
       let rAna = [];
-      const ana = el.container.children
-        .filter(x => x.container_type === 'analyses')[0];
+      const ana = el.container?.children?.filter((x) => x.container_type === 'analyses')[0];
       if (ana) {
-        rAna = ana.children.filter(x => x.container_type === 'analysis');
+        rAna = ana.children?.filter((x) => x.container_type === 'analysis');
       }
 
       let samplesAna = [];
@@ -157,7 +156,7 @@ export default class FormatContainer extends React.Component {
       <FormatComponent
         list={selectedObjs}
         onFormat={this.onFormat}
-        bsStyle={isSaved ? 'primary' : 'info'}
+        isPendingToSave={!isSaved}
         onSave={this.onSave}
         onClose={this.onClose}
       />

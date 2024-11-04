@@ -4,7 +4,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel,
   Button,
   ButtonToolbar,
   ListGroupItem,
@@ -38,6 +37,7 @@ import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
+import Panel from 'src/components/legacyBootstrap/Panel'
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
 const onNaviClick = (type, id) => {
@@ -303,7 +303,6 @@ export default class GenericElDetails extends Component {
         aiComs[ly.key] = (
           <GenericElDetailsContainers
             genericEl={genericEl}
-            parent={this}
             readOnly={false}
             handleElChanged={this.handleElChanged}
             noAct
@@ -354,7 +353,6 @@ export default class GenericElDetails extends Component {
           <GenericElDetailsContainers
             // key={genericEl.id}
             genericEl={genericEl}
-            parent={this}
             readOnly={false}
             handleElChanged={this.handleElChanged}
             handleSubmit={this.handleSubmit}
@@ -422,9 +420,8 @@ export default class GenericElDetails extends Component {
           overlay={<Tooltip id="tip_fullscreen_btn">FullScreen</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
+            variant="info"
+            size="sm"
             onClick={() => toggleFullScreen()}
           >
             <i className="fa fa-expand" aria-hidden="true" />
@@ -435,9 +432,8 @@ export default class GenericElDetails extends Component {
           overlay={<Tooltip id="saveScreen">Save</Tooltip>}
         >
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
+            variant="warning"
+            size="sm"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
           >
@@ -490,7 +486,7 @@ export default class GenericElDetails extends Component {
     return (
       <Panel
         className="panel-detail"
-        bsStyle={genericEl.isPendingToSave ? 'info' : 'primary'}
+        variant={genericEl.isPendingToSave ? 'info' : 'primary'}
       >
         <Panel.Heading>{this.header(genericEl)}</Panel.Heading>
         <Panel.Body>
@@ -513,13 +509,13 @@ export default class GenericElDetails extends Component {
           <hr />
           <ButtonToolbar>
             <Button
-              bsStyle="primary"
+              variant="primary"
               onClick={() => DetailActions.close(genericEl, true)}
             >
               Close
             </Button>
             <Button
-              bsStyle="warning"
+              variant="warning"
               onClick={() => this.handleSubmit()}
               style={saveBtnDisplay}
             >

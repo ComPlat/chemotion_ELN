@@ -4,6 +4,7 @@ import { DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Sample from 'src/models/Sample';
 import { SampleSolventGroup } from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
+import classnames from 'classnames';
 
 const target = {
   drop(tagProps, monitor) {
@@ -37,34 +38,23 @@ const collect = (connect, monitor) => ({
 class SampleDetailsSolventsDnd extends React.Component {
   render() {
     const {
-      sample,
-      headIndex, materialGroup, deleteMaterial, onChange,
-      addDefaultSolvent, dropMaterial, switchEquiv,
+      sample, materialGroup,
       isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent
     } = this.props;
-    const style = {
-      padding: '0px 0px',
-    };
-    if (isOver && canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderColor = '#337ab7';
-    } else if (canDrop) {
-      style.borderStyle = 'dashed';
-    }
+
     return connectDropTarget(
-      <div style={style}>
+      <div
+        className={classnames({
+          'dnd-zone': canDrop,
+          'dnd-zone-over': isOver,
+        })}
+      >
         <SampleSolventGroup
           sample={sample}
           dropSample={dropSample}
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
-          headIndex={headIndex ?? 0}
           materialGroup={materialGroup ?? ''}
-          deleteMaterial={deleteMaterial ?? (() => true)}
-          onChange={onChange ?? (() => true)}
-          addDefaultSolvent={addDefaultSolvent ?? (() => true)}
-          dropMaterial={dropMaterial ?? (() => true)}
-          switchEquiv={switchEquiv ?? (() => true)}
         />
       </div>
     );
@@ -79,7 +69,6 @@ export default DropTarget(
 
 SampleDetailsSolventsDnd.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
-  headIndex: PropTypes.number,
   onChangeSolvent: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
   isOver: PropTypes.bool.isRequired,

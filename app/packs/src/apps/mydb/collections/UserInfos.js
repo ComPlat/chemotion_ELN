@@ -4,18 +4,24 @@ import { Tooltip } from 'react-bootstrap';
 import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
 
 const UserInfos = ({ users }) => {
-  let tipUsers = users.map((user, ind) => {
-    return <div key={ind}><UserInfoIcon type={user.type} /> {user.name}<br /></div>
-  })
+  const userTooltips = users.map((user) => {
+    return (
+      <div key={user.id}>
+        <UserInfoIcon type={user.type} />
+        {user.name}
+      </div>
+    );
+  });
+
   return (
     <Tooltip id="tooltip">
-      {tipUsers.map(u => u)}
+      {userTooltips}
     </Tooltip>
-  )
-}
+  );
+};
 
 UserInfos.propTypes = {
   users: PropTypes.array.isRequired,
-}
+};
 
 export default UserInfos;

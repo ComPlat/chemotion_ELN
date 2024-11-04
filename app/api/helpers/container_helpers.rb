@@ -101,7 +101,7 @@ module ContainerHelpers
         attachment.destroy!
         next
       end
-      attachment.update!(attachable: container)
+      attachment.update!(attachable_id: container.id, attachable_type: 'Container') if container.present?
     end
   end
 

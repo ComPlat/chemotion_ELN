@@ -1,9 +1,7 @@
-.container
-  %br
+.container.my-5
   - flash.each do |key, value|
     %div{class: "alert alert-warning"}= value
 
-  %br
   = render "devise/shared/omniauth"
 
   %hr

@@ -1,11 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  SplitButton, Button, ButtonToolbar, FormControl,
-  FormGroup, ControlLabel, Modal, MenuItem
+  SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown
 } from 'react-bootstrap';
 import Aviator from 'aviator';
-import { filter } from 'lodash';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -29,9 +27,8 @@ const elementList = () => {
   if (MatrixCheck(currentUser.matrix, 'genericElement')) {
     genericEls = UserStore.getState().genericEls || [];
   }
-  const itemTables = [];
 
-  return { elements, genericEls, itemTables };
+  return { elements, genericEls };
 };
 
 export default class CreateButton extends React.Component {
@@ -160,25 +157,25 @@ export default class CreateButton extends React.Component {
     const { modalProps } = this.state;
 
     return (
-      <Modal animation={false} show={modalProps.show} onHide={() => this.handleModalHide()}>
+      <Modal centered animation={false} show={modalProps.show} onHide={() => this.handleModalHide()}>
         <Modal.Header closeButton>
           <Modal.Title>Create Wellplates from Samples</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           You have selected {modalProps.sampleCount} samples. Please fill in the number of wellplates you would like to create.
           <p />
-          <FormGroup controlId="wellplateInput">
-            <ControlLabel>Number of wellplates</ControlLabel>
-            <FormControl
+          <Form.Group controlId="wellplateInput">
+            <Form.Label>Number of wellplates</Form.Label>
+            <Form.Control
               type="text"
-              inputRef={(input) => { this.wellplateInput = input; }}
+              ref={(input) => { this.wellplateInput = input; }}
               defaultValue={modalProps.wellplateCount || ''}
             />
-          </FormGroup>
+          </Form.Group>
 
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
-            <Button bsStyle="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>
+            <Button variant="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
+            <Button variant="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>
           </ButtonToolbar>
         </Modal.Body>
       </Modal>
@@ -225,14 +222,15 @@ export default class CreateButton extends React.Component {
   createBtn(type) {
     let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
     if (!constEls.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
       const genericEl = (genericEls && genericEls.find(el => el.name == type)) || {};
       iconClass = `${genericEl.icon_name}`;
     }
     return (
       <div>
-        <i className={`${iconClass}`}></i> &nbsp; <i className="fa fa-plus"></i>
+        <i className={`${iconClass} me-1`} />
+        <i className="fa fa-plus" />
       </div>
     )
   }
@@ -246,35 +244,54 @@ export default class CreateButton extends React.Component {
     const { isDisabled, customClass } = this.props;
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
-    const { elements, genericEls, itemTables } = elementList();
-    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
+    const { elements, genericEls } = elementList();
+    const sortedLayout = Object.entries(layout)
+      .filter((o) => o[1] && o[1] > 0)
+      .sort((a, b) => a[1] - b[1]);
 
-    sortedLayout?.forEach(([sl]) => {
+    const sortedGenericEls = [];
+    sortedLayout.forEach(([sl]) => {
       const el = elements.concat(genericEls).find((ael) => ael.name === sl);
-      if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+      if (typeof el !== 'undefined') {
+        sortedGenericEls.push(el);
+      }
     });
 
     return (
-
-        <SplitButton
-          id='create-split-button'
-          bsStyle={customClass ? null : 'primary'}
-          className={customClass}
-          title={this.createBtn(type)}
-          disabled={isDisabled}
-          onClick={() => this.createElementOfType(type)}
-        >
-          {this.createWellplateModal()}
-          {itemTables}
-          <MenuItem divider />
-          <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
-          <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
-          <MenuItem divider />
-          <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
-          <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
-        </SplitButton>
-
-    )
+      <SplitButton
+        id="create-split-button"
+        variant={customClass ? null : 'primary'}
+        className={customClass}
+        title={this.createBtn(type)}
+        disabled={isDisabled}
+        onClick={() => this.createElementOfType(type)}
+      >
+        {this.createWellplateModal()}
+        {sortedGenericEls.map((el) => (
+          <Dropdown.Item
+            key={el.name}
+            id={`create-${el.name}-button`}
+            onClick={() => this.createElementOfType(el.name)}
+          >
+            {`Create ${el.label}`}
+          </Dropdown.Item>
+        ))}
+        <Dropdown.Divider />
+        <Dropdown.Item onClick={() => this.createWellplateFromSamples()}>
+          Create Wellplate from Samples
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.createScreenFromWellplates()}>
+          Create Screen from Wellplates
+        </Dropdown.Item>
+        <Dropdown.Divider />
+        <Dropdown.Item onClick={() => this.copySample()} disabled={this.isCopySampleDisabled()}>
+          Copy Sample
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>
+          Copy Reaction
+        </Dropdown.Item>
+      </SplitButton>
+    );
   }
 }
 
@@ -285,5 +302,3 @@ CreateButton.propTypes = {
 CreateButton.defaultProps = {
   customClass: null,
 };
-
-export { elementList };

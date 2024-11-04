@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
-import { FormGroup, ControlLabel, Form, FormControl, Checkbox } from 'react-bootstrap';
-import Select from 'react-select3';
+import { Form } from 'react-bootstrap';
+import { Select } from 'src/components/common/Select';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -24,69 +24,74 @@ const DevicePropertiesTab = () => {
 
   return (
     <Form>
-      <FormGroup validationState={device.valid_name}>
-        <ControlLabel>Name *</ControlLabel>
-        <FormControl
+      <Form.Group className="mb-4">
+        <Form.Label>Name *</Form.Label>
+        <Form.Control
           type="text"
           value={device.name}
+          className={device.valid_name}
           onChange={(event) => onChange('name', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup validationState={device.valid_name_abbreviation}>
-        <ControlLabel>Name abbreviation *</ControlLabel>
-        <FormControl
+      <Form.Group className="mb-4">
+        <Form.Label>Name abbreviation *</Form.Label>
+        <Form.Control
           type="text"
           value={device.name_abbreviation}
+          className={device.valid_name_abbreviation}
           onChange={(event) => onChange('name_abbreviation', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup>
-        <ControlLabel>Email</ControlLabel>
-        <FormControl
+      <Form.Group className="mb-4">
+        <Form.Label>Email</Form.Label>
+        <Form.Control
           type="text"
           value={device.email}
-          readOnly={true}
+          readOnly
+          disabled
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup>
-        <ControlLabel>Serial number</ControlLabel>
-        <FormControl
+      <Form.Group className="mb-4">
+        <Form.Label>Serial number</Form.Label>
+        <Form.Control
           type="text"
           value={device.serial_number ? device.serial_number : ''}
           onChange={(event) => onChange('serial_number', event.target.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup>
-        <ControlLabel>Verification Status</ControlLabel>
+      <Form.Group className="mb-4">
+        <Form.Label>Verification Status</Form.Label>
         <Select
           isClearable
           value={verificationStatusValue}
           options={verificationOptions}
           onChange={(event) => onChange('verification_status', event.value)}
         />
-      </FormGroup>
+      </Form.Group>
 
-      <FormGroup>
-        <Checkbox
+      <Form.Group className="mb-4">
+        <Form.Check
+          id="device_active"
+          type="checkbox"
           checked={device.account_active}
+          label="Active"
           onChange={(event) => onChange('account_active', event.target.checked)}
-        >
-          Active
-        </Checkbox>
-      </FormGroup>
+        />
+      </Form.Group>
 
-      <FormGroup>
-        <Checkbox
+      <Form.Group className="mb-4">
+        <Form.Check
+          id="device_visible"
+          type="checkbox"
           checked={device.visibility}
+          label="Visibility"
           onChange={(event) => onChange('visibility', event.target.checked)}
-        >
-          Visibility
-        </Checkbox>
-      </FormGroup>
+        />
+      </Form.Group>
     </Form>
   );
 }

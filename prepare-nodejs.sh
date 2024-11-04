@@ -30,7 +30,7 @@ if [ -z "$nodeversion" ]; then
 fi
 
 # find the latest version of the required version
-REQUIRED_NODE_VERSION=$(asdf list all nodejs | grep -E "$nodeversion" | tail -n1)
+REQUIRED_NODE_VERSION=$(asdf list all nodejs | grep -E "^$nodeversion" | tail -n1)
 
 # Compare the versions
 if [[ "$CURRENT_NODE_VERSION" == "$REQUIRED_NODE_VERSION" ]]; then

@@ -1,7 +1,7 @@
 import React from 'react';
 
 const minusRender = (name) => (
-  <span key={`${name}_key`} id={`${name}_id`} style={{ marginRight: '10px', cursor: 'pointer' }}>
+  <span key={`${name}_key`} id={`${name}_id`} className="me-3" role="button">
     <i className="fa fa-minus" />
   </span>
 );

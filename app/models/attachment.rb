@@ -237,7 +237,7 @@ class Attachment < ApplicationRecord
 
   def annotated?
     # attachment['derivatives'].present? && attachment['derivatives']['annotation'].present?
-    attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location')&.present? || false
+    attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location').present? || false
   end
 
   def annotated_image?
@@ -249,6 +249,7 @@ class Attachment < ApplicationRecord
     attachment['mime_type'].to_s == 'application/pdf'
   end
 
+  # @return [String] the path to the combined image file on disk
   def annotated_file_location
     return '' unless annotated?
 
@@ -256,6 +257,15 @@ class Attachment < ApplicationRecord
       attachment.storage.directory,
       attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location'),
     )
+  end
+
+  # @return [String] build annotation file name based on the original file name
+  def annotated_filename
+    return '' unless annotated?
+
+    # NB: original tiff file are converted to png for the annotation background layer
+    extension_of_annotation = content_type == 'image/tiff' ? '.png' : File.extname(filename)
+    "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
   end
 
   def preview

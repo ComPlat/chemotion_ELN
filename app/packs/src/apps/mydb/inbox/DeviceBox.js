@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
+import { Button, Tooltip, ButtonGroup, OverlayTrigger } from 'react-bootstrap';
 
 import DatasetContainer from 'src/apps/mydb/inbox/DatasetContainer';
 import Pagination from 'src/apps/mydb/inbox/Pagination';
@@ -222,9 +222,10 @@ export default class DeviceBox extends React.Component {
   render() {
     const { device_box, largerInbox } = this.props;
     const {
-      visible, checkedDeviceAll, checkedDeviceIds, checkedIds, currentDeviceBoxPage, dataItemsPerPage,
+      visible, checkedDeviceAll, checkedDeviceIds, checkedIds, currentDeviceBoxPage, dataItemsPerPage, deletingTooltip
     } = this.state;
     const cache = InboxStore.getState().cache;
+
 
     // device_box.children_count gives the total number of children of each DeviceBox
     // while device_box.children contains only the paginated entries
@@ -239,7 +240,7 @@ export default class DeviceBox extends React.Component {
           checked={checkedDeviceIds.length === currentItemsCount && currentItemsCount !== 0}
           onChange={this.toggleSelectAllFiles}
         />
-        <span className="g-marginLeft--10" style={{ fontWeight: 'bold' }}>
+        <span className="ms-2 fw-bold">
           {checkedDeviceIds.length === currentItemsCount
           && currentItemsCount !== 0 ? 'Deselect all' : 'Select all'}
         </span>
@@ -247,33 +248,35 @@ export default class DeviceBox extends React.Component {
     );
 
     const trash = (
-      <span>
-        <i
-          className="fa fa-trash-o"
-          aria-hidden="true"
-          onClick={() => this.toggleTooltip()}
-          style={{ cursor: 'pointer' }}
-        >
-          &nbsp;
-        </i>
-        {this.state.deletingTooltip ? (
+      <OverlayTrigger
+        show={deletingTooltip}
+        animation
+        trigger="click"
+        placement="bottom"
+        overlay={(
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             Delete this item(s)?
-            <ButtonGroup>
+            <ButtonGroup className="mt-1">
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
+                variant="danger"
+                size="sm"
                 onClick={() => this.deleteCheckedDataset(device_box)}
               >
                 Yes
               </Button>
-              <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.toggleTooltip()}>
+              <Button variant="warning" size="sm" onClick={() => this.toggleTooltip()}>
                 No
               </Button>
             </ButtonGroup>
           </Tooltip>
-        ) : null}
-      </span>
+        )}>
+        <i
+          className="fa fa-trash-o mt-1"
+          aria-hidden="true"
+          onClick={() => this.toggleTooltip()}
+          role="button"
+        />
+      </OverlayTrigger>
     );
 
     const datasets = device_box.children.map((dataset) => (
@@ -289,20 +292,10 @@ export default class DeviceBox extends React.Component {
       />
     ));
 
-    const textStyle = {
-      display: 'block',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      maxWidth: '100%',
-      cursor: 'move'
-    };
-
     return (
-      <div className="tree-view">
+      <div>
         <div
-          className="title"
-          style={textStyle}
+          className="bg-gray-200 p-1 overflow-auto d-flex align-items-between"
           onClick={() => this.handleDeviceBoxClick(device_box)}
           role="button"
           tabIndex={0}
@@ -310,19 +303,16 @@ export default class DeviceBox extends React.Component {
         >
           {
             device_box?.children_count === 0
-              ? (
+              && (
                 <i
                   className="fa fa-trash-o"
                   onClick={() => this.deleteDeviceBox(device_box)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  &nbsp;&nbsp;
-                </i>
-              ) : null
-          }
+                  role="button"
+                />
+          )}
           <button
             type="button"
-            className="btn-inbox"
+            className="border-0 bg-transparent"
             onClick={() => this.setState({ visible: !visible })}
             tabIndex={0}
             onKeyDown={(e) => {
@@ -332,36 +322,34 @@ export default class DeviceBox extends React.Component {
             }}
           >
             <i
-              className={`fa fa-folder${visible ? '-open' : ''}`}
+              className={`fa fa-folder${visible ? '-open' : ''} me-1`}
               aria-hidden="true"
-              style={{ marginRight: '5px' }}
             />
             {device_box.name}
           </button>
         </div>
         {
-          visible && device_box?.children_count > dataItemsPerPage ? (
+          visible && device_box?.children_count > dataItemsPerPage && (
             <Pagination
               currentDataSetPage={currentDeviceBoxPage}
               totalPages={totalPages}
               handlePrevClick={() => this.handlePrevClick(device_box)}
               handleNextClick={() => this.handleNextClick(device_box)}
             />
-          ) : null
-        }
+        )}
         <table>
           <tbody>
             <tr>
-              <td style={{ width: '80%', paddingRight: '30px' }}>
-                <div>{visible ? renderCheckAll : null}</div>
+              <td className="w-75 pe-5">
+                <div>{visible && renderCheckAll}</div>
               </td>
-              <td style={{ width: '20%' }}>
-                <div>{visible ? trash : null}</div>
+              <td className="w-25">
+                <div>{visible && trash}</div>
               </td>
             </tr>
           </tbody>
         </table>
-        <div>{visible ? datasets : null}</div>
+        <div>{visible && datasets}</div>
       </div>
     );
   }

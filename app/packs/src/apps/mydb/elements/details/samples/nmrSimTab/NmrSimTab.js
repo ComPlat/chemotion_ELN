@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonToolbar, ListGroup, ListGroupItem } from 'react-bootstrap';
+import { Button, ButtonToolbar, ListGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import NmrSimActions from 'src/stores/alt/actions/NmrSimActions';
@@ -22,10 +22,9 @@ export default class NmrSimTab extends React.Component {
     NmrSimStore.listen(this.onChange);
   }
 
-  // eslint-disable-next-line camelcase
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const sample = this.props.sample;
-    if (sample.molecule.id !== nextProps.sample.molecule.id) {
+  componentDidUpdate(prevProps) {
+    const { sample } = this.props;
+    if (sample.molecule.id !== prevProps.sample.molecule.id) {
       NmrSimActions.resetNMR.defer();
     }
   }
@@ -75,12 +74,10 @@ export default class NmrSimTab extends React.Component {
       <div>
         <br />
         <ListGroup>
-          <ListGroupItem bsStyle={style}>
-            Sorry, the {type} simulation is not available now. Please check directly on
-            <a target="_blank" href="https://www.nmrdb.org/">
-              <img src="/images/nmrdb_logo.jpg" alt="" width="80" />
-            </a>
-          </ListGroupItem>
+          <ListGroup.Item variant={style} className="d-flex align-items-center gap-2">
+            <span>Sorry, the {type} simulation is not available now. Please check directly on</span>
+            <a target="_blank" href="https://www.nmrdb.org/" className="nmrdb-logo" />
+          </ListGroup.Item>
         </ListGroup>
       </div>
     );
@@ -93,13 +90,13 @@ export default class NmrSimTab extends React.Component {
     const smile = sample.molecule_cano_smiles || 'c1ccccc1CC';
 
     return (
-      <div style={{ width: '100%' }}>
-        <ButtonToolbar>
-          <Button bsStyle="primary"
+      <>
+        <ButtonToolbar className="gap-2">
+          <Button variant="primary"
             onClick={this.updateNmrdb.bind(this, '1H')}>
             predict 1H NMR
           </Button>
-          <Button bsStyle="success"
+          <Button variant="success"
             onClick={this.updateNmrdb.bind(this, '13C')}>
             predict 13C NMR
           </Button>
@@ -110,10 +107,10 @@ export default class NmrSimTab extends React.Component {
         {this.showChartNmrdb(spectrum)}
 
         <br />
-        <ListGroupItem>
+        <ListGroup.Item>
           <LinkToNmrdb />
-        </ListGroupItem>
-      </div>
+        </ListGroup.Item>
+      </>
     );
   }
 

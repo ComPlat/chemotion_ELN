@@ -70,13 +70,14 @@ export const SearchStore = types
     publication_search_values: types.optional(types.array(types.frozen({})), defaultPublicationValues),
     search_results: types.map(SearchResult),
     tab_search_results: types.map(SearchResult),
+    search_accordion_active_key: types.optional(types.number, 0),
     search_result_panel_visible: types.optional(types.boolean, false),
     search_results_visible: types.optional(types.boolean, false),
+    search_result_active_tab_key: types.optional(types.number, 1),
+    search_accordion_toggle_disabled: types.optional(types.boolean, true),
     search_visible: types.optional(types.boolean, true),
     search_filters: types.map(SearchFilter),
     search_values: types.optional(types.array(types.string), []),
-    search_icon: types.optional(types.enumeration("search_icon", ["right", "down"]), "down"),
-    result_icon: types.optional(types.enumeration("result_icon", ["right", "down"]), "right"),
     error_messages: types.optional(types.array(types.string), []),
     tab_current_page: types.optional(types.array(types.frozen({})), []),
     active_tab_key: types.optional(types.number, 0),
@@ -142,6 +143,7 @@ export const SearchStore = types
       self.resetPublicationSearchValue();
       self.search_type = (e.target.checked == true ? 'detail' : 'advanced');
       self.active_tab_key = 0;
+      self.search_result_active_tab_key = 1;
     },
     changeSearchElement(elementValues) {
       self.resetAdvancedSearchValue();
@@ -149,6 +151,7 @@ export const SearchStore = types
       self.resetPublicationSearchValue();
       self.search_element = elementValues;
       self.active_tab_key = 0;
+      self.search_result_active_tab_key = 1;
     },
     addAdvancedSearchValue(id, values) {
       self.advanced_search_values[id] = values;
@@ -199,20 +202,17 @@ export const SearchStore = types
       self.search_results_visible = true;
       self.search_result_panel_visible = true;
       self.search_visible = false;
-      self.search_icon = "right";
-      self.result_icon = "down";
+      self.search_accordion_active_key = 1;
     },
     hideSearchResults() {
       self.search_results_visible = false;
       self.search_result_panel_visible = false;
       self.search_visible = true;
-      self.search_icon = "down";
-      self.result_icon = "right";
+      self.search_accordion_active_key = 0;
     },
     toggleSearchResults() {
       self.search_results_visible = !self.search_results_visible;
-      self.result_icon = self.search_results_visible ? "down" : "right";
-      self.search_icon = self.result_icon == "right" ? "down" : "right";
+      self.search_accordion_active_key = self.search_results_visible ? 1 : 0;
     },
     clearSearchAndTabResults() {
       self.search_results.clear();
@@ -223,6 +223,7 @@ export const SearchStore = types
       self.clearSearchAndTabResults();
       self.hideSearchResults();
       self.search_result_panel_visible = false;
+      self.search_accordion_active_key = 0;
       self.search_filters.clear();
       self.search_values.clear();
       self.error_messages = [];
@@ -230,14 +231,16 @@ export const SearchStore = types
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
       self.active_tab_key = 0;
+      self.search_result_active_tab_key = 1;
       self.resetKetcherRailsValues();
       self.resetPublicationSearchValue();
       self.result_error_messages = [];
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;
-      self.search_icon = self.search_visible ? "down" : "right";
-      self.result_icon = self.search_icon == "right" ? "down" : "right";
+    },
+    enableAccordionToggle() {
+      self.search_accordion_toggle_disabled = false;
     },
     changeSearchFilter(filtered_options) {
       let filter = SearchFilter.create({ id: 'filter', filters: filtered_options });
@@ -269,6 +272,9 @@ export const SearchStore = types
     changeActiveTabKey(key) {
       self.active_tab_key = key;
     },
+    changeSearchResultActiveTabKey(key) {
+      self.search_result_active_tab_key = key;
+    },
     handleCancel() {
       self.hideSearchModal();
       self.hideSearchResults();
@@ -284,6 +290,7 @@ export const SearchStore = types
       self.hideSearchModal();
       self.hideSearchResults();
       self.active_tab_key = 0;
+      self.search_result_active_tab_key = 1;
       self.search_result_panel_visible = true;
       self.changeShowSearchResultListValue(true);
       self.result_error_messages = [];

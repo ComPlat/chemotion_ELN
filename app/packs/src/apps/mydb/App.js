@@ -1,6 +1,6 @@
-import { FlowViewerModal } from 'chem-generic-ui';
 import React, { Component } from 'react';
-import { Col, Grid, Row } from 'react-bootstrap';
+import { Col, Row, Container } from 'react-bootstrap';
+import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 import Elements from 'src/apps/mydb/elements/Elements';
@@ -26,7 +26,6 @@ class App extends Component {
       showCollectionManagement: false,
       indicatorClassName: 'fa fa-chevron-circle-left',
       showCollectionTree: true,
-      mainContentClassName: 'small-col main-content',
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
     this.documentKeyDown = this.documentKeyDown.bind(this);
@@ -120,45 +119,29 @@ class App extends Component {
     const { showCollectionTree } = this.state;
     this.setState({
       showCollectionTree: !showCollectionTree,
-      indicatorClassName: showCollectionTree ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left',
-      mainContentClassName: showCollectionTree ? 'small-col full-main' : 'small-col main-content'
+      indicatorClassName: showCollectionTree ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left'
     });
   }
 
-  collectionTree() {
-    const { showCollectionTree } = this.state;
-    if (!showCollectionTree) {
-      return <div />;
-    }
-
-    return (
-      <Col className="small-col collec-tree">
-        <CollectionTree />
-      </Col>
-    );
-  }
-
   mainContent() {
-    const { showCollectionManagement, mainContentClassName } = this.state;
-    return (
-      <Col className={mainContentClassName}>
-        {showCollectionManagement ? <CollectionManagement /> : <Elements />}
-      </Col>
-    );
+    const { showCollectionManagement } = this.state;
+    return (showCollectionManagement ? <CollectionManagement /> : <Elements />);
   }
 
   render() {
     const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
     return (
-      <Grid fluid>
-        <Row className="card-navigation">
+      <Container fluid className="mydb-app">
+        <Row className="bg-light z-5">
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
         </Row>
-        <Row className="card-content container-fluid">
-          {this.collectionTree()}
+        <div className="d-flex py-3 px-2 gap-3">
+          {showCollectionTree &&
+            <CollectionTree />
+          }
           {this.mainContent()}
-        </Row>
+        </div>
         <Row>
           <Notifications />
           <LoadingModal />
@@ -171,7 +154,7 @@ class App extends Component {
         />
         <InboxModal showCollectionTree={showCollectionTree} />
         <Calendar />
-      </Grid>
+      </Container>
     );
   }
 }

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import RFB from '@novnc/novnc/lib/rfb';
-import { Grid, Row, Col } from 'react-bootstrap';
+import { Container, Row, Col, ListGroup } from 'react-bootstrap';
 import { uniq } from 'lodash';
 
 import DeviceActions from 'src/stores/alt/actions/UserActions';
@@ -8,7 +8,6 @@ import DeviceStore from 'src/stores/alt/stores/UserStore';
 import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
 import Navigation from 'src/apps/commandAndControl/Navigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import { ConnectedBtn, DisconnectedBtn } from 'src/apps/commandAndControl/NovncStatus';
 
 // Timeout before disconnection when not focused
 const TIME_DISCO = 180000;
@@ -52,6 +51,7 @@ class CnC extends React.Component {
     this.clearTimers = this.clearTimers.bind(this);
 
     this.fetchConnections = this.fetchConnections.bind(this);
+    this.canvasRef = createRef();
   }
 
   componentDidMount() {
@@ -59,14 +59,6 @@ class CnC extends React.Component {
     DeviceActions.fetchNoVNCDevices();
     // Listen for window resize event and handle it accordingly
     window.addEventListener("resize", this.handleScreenSizeChanging);
-  }
-
-  shouldComponentUpdate(nextState) {
-    return this.state.connected !== nextState.connected
-      || this.state.rfb !== nextState.rfb
-      || this.state.selected.id !== nextState.selected.id
-      || this.state.isNotFocused !== nextState.isNotFocused
-      || this.state.isForcedScreenResizing !== nextState.isForcedScreenResizing;
   }
 
   componentWillUnmount() {
@@ -98,7 +90,7 @@ class CnC extends React.Component {
     if (!this.state.rfb) { return; }
     const tempRFB = this.state.rfb;
     tempRFB.viewOnly = false;
-  
+
     // Focuses the RFB instance
     this.state.rfb.focus();
     this.clearTimers(); // Clear the auto blur and auto disconnect timers
@@ -144,7 +136,7 @@ class CnC extends React.Component {
     // Update the state with the new RFB instance and toggled `isForcedScreenResizing` property
     this.setState({
       rfb: tempRFB,
-      isForcedScreenResizing: !this.state.isForcedScreenResizing 
+      isForcedScreenResizing: !this.state.isForcedScreenResizing
     });
   }
 
@@ -158,7 +150,7 @@ class CnC extends React.Component {
     this.clearTimers();
     const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
     this.setState({ rfb: tempRFB, isNotFocused: true, showDeviceList: true, autoDisconnect: disconnectTime });
-    
+
     // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
     if (this.state.isForcedScreenResizing) {
       setTimeout(() => {
@@ -186,10 +178,10 @@ class CnC extends React.Component {
   connect() {
     this.disconnect();
     const { id, target, password } = this.state.selected;
-    if (!this.canvas || !id || !target) { return; }
+    if (!this.canvasRef.current || !id || !target) { return; }
 
     const rfb = new RFB(
-      this.canvas,
+      this.canvasRef.current,
       target,
       {
         repeaterID: '',
@@ -255,13 +247,11 @@ class CnC extends React.Component {
 
     // If the device is currently in focus, we want to call handleBlur
     // so that the device is blurred when the device list is toggled.
-    if (!this.state.isNotFocused) {
+    if (!isNotFocused) {
       this.handleBlur();
     }
     this.setState({
       showDeviceList: !showDeviceList,
-      indicatorClassName: showDeviceList ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left',
-      mainContentClassName: showDeviceList ? 'small-col full-main' : 'small-col main-content'
     });
   }
 
@@ -273,87 +263,83 @@ class CnC extends React.Component {
       ));
   }
 
-  tree(dev, selectedId) {
-    const sortedDevices = dev.sort((a, b) => {
-      if (a.name < b.name) {
-        return -1;
-      }
-      if (a.name > b.name) {
-        return 1;
-      }
-      return 0;
-    });
+  renderDeviceList() {
+    const { devices, connected, selected } = this.state;
+    const sortedDevices = devices.sort((a, b) => a.name.localCompare(b.name));
 
     return (
-      <Col className="small-col collec-tree">
-        <div className="tree-view">
-          <div className="title" style={{ backgroundColor: 'white' }}>
-            <i className="fa fa-list" />
-            {' '}
-&nbsp;&nbsp; Devices
-          </div>
-        </div>
-        <div className="tree-wrapper">
-          {sortedDevices.map((device, index) => (
-            <div
-              className="tree-view"
-              key={`device${device.id}`}
-              onClick={() => this.deviceClick(device)}
-              role="button"
-              tabIndex={index === 0 ? 0 : -1}
-            >
-              <div
-                className={`title ${selectedId === device.id ? 'selected' : null}`}
-
-              >
-                {device.name}
-                {selectedId === device.id && this.state.connected ? <ConnectedBtn /> : null}
-                {selectedId === device.id && !this.state.connected ? <DisconnectedBtn /> : null}
-              </div>
+      <ListGroup>
+        {sortedDevices.map((device) => (
+          <ListGroup.Item
+            action
+            key={`device${device.id}`}
+            onClick={() => this.deviceClick(device)}
+            active={selected.id == device.id}
+          >
+            <div className="d-flex align-items-center justify-content-between">
+              {device.name}
+              {selected.id === device.id && (
+                <i className={`fa ${connected
+                    ? 'fa-check-circle-o text-success'
+                    : 'fa-times-circle-o text-danger'}`}
+                />
+              )}
             </div>
-          ))}
-        </div>
-      </Col>
+          </ListGroup.Item>
+        ))}
+      </ListGroup>
     );
   }
 
   render() {
     const {
-      devices, selected, showDeviceList,
-      isNotFocused, isForcedScreenResizing, connected, watching, using, forceCursor
+      showDeviceList,
+      isNotFocused,
+      isForcedScreenResizing,
+      connected,
+      watching,
+      using,
+      forceCursor
     } = this.state;
 
+    const showList = showDeviceList && isNotFocused;
+
     return (
-      <div>
-        <Grid fluid>
-          <Row className="card-navigation">
-            <Navigation toggleDeviceList={this.toggleDeviceList} />
-          </Row>
-          <Row className="card-content container-fluid">
-            {showDeviceList && isNotFocused ? this.tree(devices, selected.id) : null}
-            <Col className="small-col main-content">
-              <FocusNovnc
-                isNotFocused={isNotFocused}
-                isForcedScreenResizing={isForcedScreenResizing}
-                handleFocus={this.handleFocus}
-                handleBlur={this.handleBlur}
-                handleForceScreenResizing={this.handleForceScreenResizing}
-                connected={connected}
-                watching={watching}
-                using={using}
-                forceCursor={forceCursor}
-                handleCursor={this.handleCursor}
-              />
-              <div 
-                className={forceCursor ? 'force-mouse-pointer' : ''}
-                ref={(ref) => { this.canvas = ref; }}
-                onMouseEnter={this.handleMouseEnter}
-                onMouseLeave={this.handleMouseLeave}
-              />
+      <Container fluid>
+        <Navigation toggleDeviceList={this.toggleDeviceList} />
+        <Row className="pt-3">
+          {showList && (
+            <Col xs={2}>
+              <div className="d-flex gap-2 align-items-baseline">
+                <i className="fa fa-list" />
+                <span>Devices</span>
+              </div>
+
+              {this.renderDeviceList()}
             </Col>
-          </Row>
-        </Grid>
-      </div>
+          )}
+          <Col xs={showList ? 10 : 12} className="d-flex flex-column gap-2">
+            <FocusNovnc
+              isNotFocused={isNotFocused}
+              isForcedScreenResizing={isForcedScreenResizing}
+              handleFocus={this.handleFocus}
+              handleBlur={this.handleBlur}
+              handleForceScreenResizing={this.handleForceScreenResizing}
+              connected={connected}
+              watching={watching}
+              using={using}
+              forceCursor={forceCursor}
+              handleCursor={this.handleCursor}
+            />
+            <div
+              className={forceCursor ? 'force-mouse-pointer' : ''}
+              ref={this.canvasRef}
+              onMouseEnter={this.handleMouseEnter}
+              onMouseLeave={this.handleMouseLeave}
+            />
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }

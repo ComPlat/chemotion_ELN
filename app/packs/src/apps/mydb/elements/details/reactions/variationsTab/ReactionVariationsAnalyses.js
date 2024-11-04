@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import {
-  Label, FormGroup, Checkbox, Button, Modal
+  Form, Button, Modal, Badge, Tooltip
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
@@ -21,6 +21,7 @@ function updateAnalyses(variations, allReactionAnalyses) {
   const analysesIDs = allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((child) => child.id);
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
+    // eslint-disable-next-line no-param-reassign
     row.analyses = row.analyses.filter((id) => analysesIDs.includes(id));
   });
 
@@ -39,28 +40,24 @@ function AnalysisOverlay({ value: analyses }) {
     return ''; // Don't return null, it breaks AG's logic to determine if component is rendered.
   }
   return (
-    <div
-      className="custom-tooltip"
-      style={{
-        padding: '3px 8px',
-        color: '#fff',
-        backgroundColor: '#000',
-        borderRadius: '4px',
-      }}
-    >
-      Linked analyses:
-      <ul style={{ paddingLeft: '15px' }}>
-        {analyses.map((analysis) => (
-          <li key={analysis.id}>{analysis.name}</li>
-        ))}
-      </ul>
-
+    <div className="tooltip show">
+      <div className="tooltip-inner text-start">
+        Linked analyses:
+        <ul style={{ paddingLeft: '15px' }}>
+          {analyses.map((analysis) => (
+            <li key={analysis.id}>{analysis.name}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
 
 AnalysisOverlay.propTypes = {
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  value: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  })).isRequired,
 };
 
 function AnalysisVariationLink({ reaction, analysisID }) {
@@ -71,14 +68,14 @@ function AnalysisVariationLink({ reaction, analysisID }) {
     return null;
   }
   return (
-    <Label
-      bsStyle="info"
+    <Badge
+      bg="info"
       onClick={() => UIActions.selectTab({ type: 'reaction', tabKey: 'variations' })}
     >
       {`Linked to ${linkedVariations.length} variation(s)`}
       {' '}
       <i className="fa fa-external-link" />
-    </Label>
+    </Badge>
   );
 }
 
@@ -94,7 +91,7 @@ function AnalysesCellRenderer({ value: analysesIDs }) {
 }
 
 AnalysesCellRenderer.propTypes = {
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  value: PropTypes.array.isRequired,
 };
 
 function AnalysesCellEditor({
@@ -132,27 +129,27 @@ function AnalysesCellEditor({
 
   const analysesSelection = (
     <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-      <FormGroup>
+      <Form.Group>
         {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => (
           <div key={analysis.id} style={{ display: 'flex', alignItems: 'center' }}>
-            <Checkbox
+            <Form.Check
+              type="checkbox"
               onChange={() => onChange(analysis.id)}
+              label={analysis.name}
               checked={selectedAnalysisIDs.includes(analysis.id)}
-              style={{ marginRight: '10px' }}
-            >
-              {analysis.name}
-            </Checkbox>
-            <Button bsSize="xs" onClick={() => navigateToAnalysis(analysis.id)}>
+              className="me-2"
+            />
+            <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
               <i className="fa fa-external-link" />
             </Button>
           </div>
         ))}
-      </FormGroup>
+      </Form.Group>
     </div>
   );
 
   const cellContent = (
-    <Modal show>
+    <Modal centered show>
       <Modal.Header>
         {`Link analyses to ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
       </Modal.Header>
@@ -167,11 +164,16 @@ function AnalysesCellEditor({
 }
 
 AnalysesCellEditor.propTypes = {
-  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  data: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+  }).isRequired,
+  value: PropTypes.arrayOf(PropTypes.number).isRequired,
   onValueChange: PropTypes.func.isRequired,
-  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  stopEditing: PropTypes.func.isRequired,
+  context: PropTypes.shape({
+    reactionShortLabel: PropTypes.string.isRequired,
+    allReactionAnalyses: PropTypes.array.isRequired,
+  }).isRequired,
 };
 
 export {

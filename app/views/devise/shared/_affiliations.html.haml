@@ -1,22 +1,19 @@
 %script{:src => asset_path('autocomplete.min.js')}
 %script{:src => asset_path('affiliations.js')}
-.form-group.field
-  = f.label "Country"
-  %br/
+
+.form-group.mb-3
+  = f.label "Country", class: 'form-label'
   = f.text_field :country, autofocus: true, class: 'form-control',
       id: 'country-select'
-.form-group.field
-  = f.label "Organization", class: "required"
-  %br/
+.form-group.mb-3
+  = f.label "Organization", class: "required form-label"
   = f.text_field :organization, autofocus: true, class: 'form-control',
       id: 'organization-select', required: true, disabled: disabled
-.form-group.field
-  = f.label "Department"
-  %br/
+.form-group.mb-3
+  = f.label "Department", class: 'form-label'
   = f.text_field :department, autofocus: true, class: 'form-control',
       id: 'department-select'
-.form-group.field
-  = f.label "Working group"
-  %br/
+.form-group.mb-3
+  = f.label "Working group", class: 'form-label'
   = f.text_field :group, autofocus: true, class: 'form-control',
       id: 'group-select'

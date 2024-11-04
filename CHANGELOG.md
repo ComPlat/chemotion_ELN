@@ -1,6 +1,82 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v1.10.3]
+> (2024-10-02)
+
+* Bug fixes
+  * wellplate template download  ([#2115](https://github.com/ComPlat/chemotion_ELN/pull/2115))
+  * oidc params issue  ([#2190](https://github.com/ComPlat/chemotion_ELN/pull/2190))
+  * admin restore account - rm obsolete has_profile calls  ([#2181](https://github.com/ComPlat/chemotion_ELN/pull/2181))
+  * returning attachment preview when not annotated  ([#2192](https://github.com/ComPlat/chemotion_ELN/pull/2192))
+  * type error when sample has no collection tag data on saving sample  ([#2158](https://github.com/ComPlat/chemotion_ELN/pull/2158))
+
+  ChemSpectra and NMRIUM
+  * internal ref for cv layout  ([#2104](https://github.com/ComPlat/chemotion_ELN/pull/2104))
+
+  UX/UI
+  * reaction scheme - sample names style  ([#2193](https://github.com/ComPlat/chemotion_ELN/pull/2193))
+
+* Chores
+  * Bump express from 4.19.2 to 4.21.0  ([#2154](https://github.com/ComPlat/chemotion_ELN/pull/2154))
+  * Bump dompurify from 2.4.1 to 2.5.6  ([#2157](https://github.com/ComPlat/chemotion_ELN/pull/2157))
+  * bump converter-client 0.11.0  ([#2171](https://github.com/ComPlat/chemotion_ELN/pull/2171))
+  * Bump puma from 5.6.8 to 5.6.9  ([#2168](https://github.com/ComPlat/chemotion_ELN/pull/2168))
+
+* Ci
+  * set postgres to latest 16 for testing  ([#2191](https://github.com/ComPlat/chemotion_ELN/pull/2191))
+
+## [v1.10.2]
+> (2024-09-13)
+
+* Bug fixes
+  * save research plan inside screen  ([#2107](https://github.com/ComPlat/chemotion_ELN/pull/2107))
+  * element filter when selecting ui-state  ([#2145](https://github.com/ComPlat/chemotion_ELN/pull/2145))
+  * proper link format for the url handler app  ([#2147](https://github.com/ComPlat/chemotion_ELN/pull/2147))
+
+* Code refactoring
+  * asset pipeline to prepare for bootstrap update  ([#2139](https://github.com/ComPlat/chemotion_ELN/pull/2139))
+
+* Chores
+  * Bump webpack from 5.93.0 to 5.94.0  ([#2106](https://github.com/ComPlat/chemotion_ELN/pull/2106))
+  * Bump rexml from 3.3.5 to 3.3.6  ([#2099](https://github.com/ComPlat/chemotion_ELN/pull/2099))
+  * Bump recommended versions for nmrium-wrapper (0.8.0) and converter-app (1.3.0)  ([#2153](https://github.com/ComPlat/chemotion_ELN/pull/2153))
+
+## [v1.10.1]
+> (2024-09-06)
+
+* Features and enhancements
+  * Ketcher2 Common Templates, User Templates & User settings ([#2061](https://github.com/ComPlat/chemotion_ELN/pull/2061))
+  * collect metadata other solvent for cv ([#2121](https://github.com/ComPlat/chemotion_ELN/pull/2121))
+  * search common templates in Ketcher2 ([#2127](https://github.com/ComPlat/chemotion_ELN/pull/2127))
+  * Structure viewer ([#2098](https://github.com/ComPlat/chemotion_ELN/pull/2098))
+
+  UX/UI
+  * Reaction UI enhancements ([#2100](https://github.com/ComPlat/chemotion_ELN/pull/2100))
+  * Sample layout UI enhancements ([#2111](https://github.com/ComPlat/chemotion_ELN/pull/2111))
+  * Sample properties UI changes ([#2116](https://github.com/ComPlat/chemotion_ELN/pull/2116))
+  * affiliations-change color of the save button and add required placeholder  ([#2137](https://github.com/ComPlat/chemotion_ELN/pull/2137))
+  * display toggle button for default/gaseous scheme only in reaction scheme tab ([#2136](https://github.com/ComPlat/chemotion_ELN/pull/2136))
+  * align style of the analysis section ([#2102](https://github.com/ComPlat/chemotion_ELN/pull/2102))
+
+* Bug fixes
+  * missing other internal ref for CV ([#2110](https://github.com/ComPlat/chemotion_ELN/pull/2110))
+  * ketcher-options fetching on load ([#2113](https://github.com/ComPlat/chemotion_ELN/pull/2113))
+  * handle binary response for viewer ([#2114](https://github.com/ComPlat/chemotion_ELN/pull/2114))
+  * restore user label ([#2101](https://github.com/ComPlat/chemotion_ELN/pull/2101))
+  * cannot get scan rate from metadata  ([#2120](https://github.com/ComPlat/chemotion_ELN/pull/2120))
+  * handle empty input for viewer ([#2105](https://github.com/ComPlat/chemotion_ELN/pull/2105))
+  * truncate sample name for reactant materials in reaction scheme  ([#2125](https://github.com/ComPlat/chemotion_ELN/pull/2125))
+  * handling empty sample names during truncation  ([#2126](https://github.com/ComPlat/chemotion_ELN/pull/2126))
+  * restore old density-molarity styling  ([#2134](https://github.com/ComPlat/chemotion_ELN/pull/2134))
+  * disable dataset metadata search  ([#2129](https://github.com/ComPlat/chemotion_ELN/pull/2129))
+  * user template duplicate tab crash  ([#2131](https://github.com/ComPlat/chemotion_ELN/pull/2131))
+  * duplicate attachments in analyses  ([#2130](https://github.com/ComPlat/chemotion_ELN/pull/2130))
+  * coefficient is set to null due to missing coefficient parameter  ([#2135](https://github.com/ComPlat/chemotion_ELN/pull/2135))
+  * profile test case fail  ([#2132](https://github.com/ComPlat/chemotion_ELN/pull/2132))
+  * upload attachment error  ([#2133](https://github.com/ComPlat/chemotion_ELN/pull/2133))
+
+
 ## [v1.10.0]
 > (2024-08-22)
 

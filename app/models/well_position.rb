@@ -6,9 +6,8 @@ class WellPosition
   def self.from_string(string)
     return if string.blank?
 
-    y = ('A'..'H').to_a.index(string.first) + 1
-    x = string[1..].to_i
-
+    y = ('A'..'DZ').to_a.index(string.delete('0-9')) + 1
+    x = string.delete('^0-9').to_i
     new(x: x, y: y)
   end
 

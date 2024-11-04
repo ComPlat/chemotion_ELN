@@ -1,53 +1,73 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, OverlayTrigger, Tooltip} from 'react-bootstrap';
-import PanelHeader from 'src/components/common/PanelHeader';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
-const MetadataHeader = ({ title, saveBtnDisplay, onSave, onClose }) => {
+const MetadataHeader = ({
+  title, saveBtnDisplay, onSave, onClose
+}) => {
   const onSaveAndClose = () => {
-    onSave()
-    onClose()
-  }
-  const btns = [
-     <OverlayTrigger placement="bottom" key="closeMetadata"
-        overlay={<Tooltip id="closeMetadata">Close Metadata</Tooltip>}>
-      <Button
-        bsStyle="danger"
-        bsSize="xsmall"
-        className="button-right"
-        onClick={onClose}>
-        <i className="fa fa-times" />
-      </Button>
-    </OverlayTrigger>
-  ]
-  if (saveBtnDisplay) {
-    btns.push(
-      <OverlayTrigger placement="bottom" key="saveCloseMetadata"
-          overlay={<Tooltip id="saveCloseMetadata">Save and Close Metadata</Tooltip>}>
-        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-          onClick={onSaveAndClose}>
-          <i className="fa fa-floppy-o" />
-          <i className="fa fa-times"  />
-        </Button>
-      </OverlayTrigger>,
-      <OverlayTrigger placement="bottom" key="saveMetadata"
-          overlay={<Tooltip id="saveMetadata">Save Metadata</Tooltip>}>
-        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-          onClick={onSave}>
-          <i className="fa fa-floppy-o "></i>
-        </Button>
-      </OverlayTrigger>
-    )
-  }
+    onSave();
+    onClose();
+  };
 
-  return <PanelHeader title={title} btns={btns} />
-}
+  return (
+    <div className="d-flex justify-content-between">
+      {title}
+      <div className="d-flex align-items-center gap-1">
+        {saveBtnDisplay && (
+          <>
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="saveMetadata">Save Metadata</Tooltip>}
+            >
+              <Button
+                variant="warning"
+                size="xxsm"
+                onClick={onSave}
+              >
+                <i className="fa fa-floppy-o " />
+              </Button>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="saveCloseMetadata">Save and Close Metadata</Tooltip>}
+            >
+              <Button
+                variant="warning"
+                size="xxsm"
+                onClick={onSaveAndClose}
+              >
+                <i className="fa fa-floppy-o" />
+                <i className="fa fa-times" />
+              </Button>
+            </OverlayTrigger>
+          </>
+        )}
+
+        <OverlayTrigger
+          placement="bottom"
+          key="closeMetadata"
+          overlay={<Tooltip id="closeMetadata">Close Metadata</Tooltip>}
+        >
+          <Button
+            variant="danger"
+            size="xxsm"
+            onClick={onClose}
+          >
+            <i className="fa fa-times" />
+          </Button>
+        </OverlayTrigger>
+      </div>
+    </div>
+  );
+};
 
 MetadataHeader.propTypes = {
-  title: PropTypes.string,
+  title: PropTypes.string.isRequired,
   onSave: PropTypes.func.isRequired,
   saveBtnDisplay: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired
-}
+};
 
-export default MetadataHeader
+export default MetadataHeader;

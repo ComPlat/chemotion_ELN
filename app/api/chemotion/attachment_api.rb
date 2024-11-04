@@ -219,31 +219,19 @@ module Chemotion
       desc 'get_annotated_image_of_attachment'
       get ':attachment_id/annotated_image' do
         content_type 'application/octet-stream'
-
         env['api.format'] = :binary
 
-        store = @attachment.attachment.storage.directory
-        file_location = store.join(
-          @attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] || 'not available',
-        )
-
-        uploaded_file = if file_location.present? && File.file?(file_location)
-                          extension_of_annotation = File.extname(@attachment.filename)
-                          extension_of_annotation = '.png' if @attachment.attachment.mime_type == 'image/tiff'
-                          filename_of_annotated_image = @attachment.filename.gsub(
-                            File.extname(@attachment.filename),
-                            "_annotated#{extension_of_annotation}",
-                          )
-                          header['Content-Disposition'] = "attachment; filename=\"#{filename_of_annotated_image}\""
-                          File.open(file_location)
-                        else
-                          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
-                          @attachment.attachment_attacher.file
-                        end
-        data = uploaded_file.read
-        uploaded_file.close
-
-        data
+        annotation = @attachment.annotated_file_location.presence
+        if annotation.present? && File.file?(annotation)
+          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.annotated_filename}\""
+          file = File.open(annotation)
+        else
+          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
+          file = @attachment.attachment_attacher.file
+        end
+        file.read
+      ensure
+        file&.close
       end
 
       desc 'update_annotation_of_attachment'
@@ -314,13 +302,12 @@ module Chemotion
             next unless att.annotated?
 
             begin
-              annotated_file_name = "#{File.basename(att.filename, '.*')}_annotated#{File.extname(att.filename)}"
-              zip.put_next_entry annotated_file_name
+              zip.put_next_entry att.annotated_filename
               file = File.open(att.annotated_file_location)
               zip.write file.read
-              file_text += "#{annotated_file_name} #{file.size}\n"
+              file_text += "#{att.annotated_filename} #{file.size}\n"
             ensure
-              file.close
+              file&.close
             end
           end
 

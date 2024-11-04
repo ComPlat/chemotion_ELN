@@ -2,16 +2,13 @@ import PropTypes from 'prop-types';
 import Quagga from 'quagga';
 import React from 'react';
 import {
-  Alert, Button,
-  FormControl,
-  FormGroup,
-  MenuItem,
-  Modal, SplitButton
+  Alert, Button, Form, Modal, SplitButton, Dropdown
 } from 'react-bootstrap';
 import QrReader from 'react-qr-reader';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import { PDFDocument } from 'pdf-lib'; // <-- Added import
 import Utils from 'src/utilities/Functions';
 import 'whatwg-fetch';
 
@@ -34,6 +31,7 @@ export default class ScanCodeButton extends React.Component {
     this.startQrCodeScan = this.startQrCodeScan.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.downloadPrintCodesPDF = this.downloadPrintCodesPDF.bind(this);
+    this.handleScan = this.handleScan.bind(this);
   }
 
   async componentDidMount() {
@@ -107,19 +105,6 @@ export default class ScanCodeButton extends React.Component {
     this.setState({ showQrReader: true });
   }
 
-  qrReader(state) {
-    if (state.showQrReader === true) {
-      return (
-        <QrReader
-          previewStyle={{ width: 550 }}
-          onScan={this.handleScan.bind(this)}
-          onError={this.handleError}
-        />
-      );
-    }
-    return '';
-  }
-
   checkJSONResponse(json) {
     if (json.error) {
       var error = new Error(json.error);
@@ -180,54 +165,60 @@ export default class ScanCodeButton extends React.Component {
   }
 
   scanModal() {
-    if (this.state.showModal === true) {
-      return (
-        <Modal show={this.state.showModal} onHide={this.close}>
-          <Modal.Header closeButton>
-            <Modal.Title>Scan barcode or QR code</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
-              <FormGroup>
-                <FormControl
-                  autoFocus
-                  type="text"
-                  inputRef={(m) => { this.codeInput = m; }}
-                  onKeyPress={this.handleKeyPress}
-                />
-              </FormGroup>
-              <input
-                type="button"
-                style={{ display: 'none' }}
-                ref={(scanInput) => { this.scanInput = scanInput; }}
-                onClick={() => this.handleScan()}
+    const { showModal, showQrReader } = this.state;
+    return (
+      <Modal centered show={showModal} onHide={this.close}>
+        <Modal.Header closeButton>
+          <Modal.Title>Scan barcode or QR code</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
+            <Form.Group>
+              <Form.Control
+                autoFocus
+                type="text"
+                ref={(m) => { this.codeInput = m; }}
+                onKeyPress={this.handleKeyPress}
               />
+            </Form.Group>
+            <input
+              type="button"
+              style={{ display: 'none' }}
+              ref={(scanInput) => { this.scanInput = scanInput; }}
+              onClick={() => this.handleScan()}
+            />
 
-              <div id="barcode-scanner" {...this.state.showQrReader && { style: { display: 'none' } }}></div>
-              {this.qrReader(this.state)}
-            </div>
-            <br />
-            {this.scanAlert()}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
-            <Button onClick={this.startQrCodeScan}>Start QR code scan</Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
-    return '';
+            {showQrReader
+              ? (
+                <QrReader
+                  previewStyle={{ width: 550 }}
+                  onScan={this.handleScan}
+                  onError={this.handleError}
+                />
+              )
+              : (
+                <div id="barcode-scanner" />
+              )}
+          </div>
+          <br />
+          {this.scanAlert()}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
+          <Button onClick={this.startQrCodeScan}>Start QR code scan</Button>
+        </Modal.Footer>
+      </Modal>
+    );
   }
 
   scanAlert() {
     if (this.state.scanError) {
       return (
         <div>
-          {this.state.scanInfo
-            ? <Alert bsStyle="info">{this.state.scanInfo}</Alert>
-            : null
+          {this.state.scanInfo &&
+            <Alert variant="info">{this.state.scanInfo}</Alert>
           }
-          <Alert bsStyle="danger">
+          <Alert variant="danger">
             {this.state.scanError}
           </Alert>
         </div>
@@ -239,23 +230,44 @@ export default class ScanCodeButton extends React.Component {
   /**
    * Downloads a PDF file with the print codes for the given element
    */
-  downloadPrintCodesPDF(id, selectedConfig) {
+  async downloadPrintCodesPDF(ids, selectedConfig) {
+    // Create a new PDFDocument to merge PDFs into
+    const mergedPdf = await PDFDocument.create();
+
     const { json } = this.state;
-    let newUrl = `/api/v1/code_logs/print_codes?element_type=sample&ids[]=${id}`;
-    // build the URL by adding the selected config parameters
-    Object.entries(json).forEach(([configKey, configValue]) => {
-      if (configKey === selectedConfig) {
+
+    // Fetch PDFs and merge them
+    const pdfPromises = ids.map(async (id) => {
+      let newUrl = `/api/v1/code_logs/print_codes?element_type=sample&ids[]=${id}`;
+
+      // Append the selected config parameters to the URL
+      if (selectedConfig in json) {
+        const configValue = json[selectedConfig];
         Object.entries(configValue).forEach(([key, value]) => {
           newUrl += `&${key}=${value}`;
         });
       }
+
+      // Fetch and load the PDF
+      const pdfBytes = await PrintCodeFetcher.fetchMergedPrintCodes(newUrl);
+      const pdfToMerge = await PDFDocument.load(pdfBytes);
+      const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
+
+      // Add the pages to the merged PDF
+      copiedPages.forEach((page) => mergedPdf.addPage(page));
     });
-    // fetch the PDF and download it
-    PrintCodeFetcher.fetchPrintCodes(newUrl).then((result) => {
-      if (result != null) {
-        Utils.downloadFile({ contents: result, name: `print_codes_${id}.pdf` });
-      }
-    });
+
+    // Wait for all PDFs to be processed
+    await Promise.all(pdfPromises);
+
+    // Serialize the merged PDF to bytes
+    const mergedPdfBytes = await mergedPdf.save();
+    // Create a Blob from the bytes
+    const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    // Download the merged PDF
+    Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
   }
 
   render() {
@@ -265,10 +277,10 @@ export default class ScanCodeButton extends React.Component {
     const menuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     const title = (
-      <span className="fa-stack" style={{ top: -4 }} >
-        <i className="fa fa-barcode fa-stack-1x" />
-        <i className="fa fa-search fa-stack-1x" style={{ left: 7 }} />
-      </span>
+      <>
+        <i className="fa fa-barcode" />
+        <i className="fa fa-search ms-n2" />
+      </>
     );
 
     const { customClass } = this.props;
@@ -276,23 +288,23 @@ export default class ScanCodeButton extends React.Component {
       <div>
         <SplitButton
           id="search-code-split-button"
-          bsStyle={customClass ? null : 'default'}
+          variant={customClass ? null : 'light'}
           className={customClass}
           title={title}
           onClick={this.open}
-          style={{ height: '34px' }}
         >
           {menuItems.map((e) => (
-            <MenuItem
+            <Dropdown.Item
               key={e.key}
               disabled={disabledPrint}
-              onSelect={(eventKey, event) => {
+              onClick={(event) => {
                 event.stopPropagation();
-                ids.map((id) => this.downloadPrintCodesPDF(id, e.name));
+                this.downloadPrintCodesPDF(ids, e.name);
+
               }}
             >
               {e.name}
-            </MenuItem>
+            </Dropdown.Item>
           ))}
         </SplitButton>
 

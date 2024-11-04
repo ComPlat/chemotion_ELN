@@ -4,24 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import StructureEditor from 'src/models/StructureEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-
-function LoadingModal(props) {
-  const { loading, message } = props;
-  return (
-    loading && (
-      <div className="structure-editor-loading">
-        <div>
-          Initializing...
-          {message}
-        </div>
-        <i className="fa fa-spinner fa-pulse fa-3x fa-fw" aria-hidden="true" />
-      </div>
-    )
-  );
-}
-
-LoadingModal.propTypes = { loading: PropTypes.bool, message: PropTypes.node };
-LoadingModal.defaultProps = { loading: false, message: '' };
+import LoadingEditorModal from './LoadingEditorModal';
 
 class ChemDrawEditor extends React.Component {
   constructor(props) {
@@ -90,7 +73,7 @@ class ChemDrawEditor extends React.Component {
     const { loading, message } = this.state;
     return (
       <div id={editor.id} style={{ height: iH }}>
-        <LoadingModal loading={loading} message={message} />
+        <LoadingEditorModal loading={loading} message={message} />
       </div>
     );
   }

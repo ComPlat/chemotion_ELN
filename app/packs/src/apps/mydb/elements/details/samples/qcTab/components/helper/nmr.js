@@ -5,7 +5,7 @@ import { iconStatus } from 'src/apps/mydb/elements/details/samples/qcTab/compone
 import { numFormat, realFormat } from 'src/apps/mydb/elements/details/samples/qcTab/utils/common';
 
 const tableNmr = (shifts = []) => (
-  <Table responsive striped condensed hover>
+  <Table responsive striped size="sm" hover>
     <thead>
       <tr>
         <th>Atom</th>

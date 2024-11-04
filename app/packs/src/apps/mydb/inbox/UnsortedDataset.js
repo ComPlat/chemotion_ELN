@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Row, Col, Table, ListGroup, ListGroupItem, Button, ButtonToolbar } from 'react-bootstrap';
+import { Row, Col, ListGroup, ListGroupItem, Button, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 
@@ -8,7 +8,6 @@ import InboxActions from 'src/stores/alt/actions/InboxActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Attachment from 'src/models/Attachment';
 import Container from 'src/models/Container';
-import InboxStore from 'src/stores/alt/stores/InboxStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class UnsortedDataset extends React.Component {
@@ -71,72 +70,63 @@ export default class UnsortedDataset extends React.Component {
   }
 
   listGroupItem(attachment) {
-    if (attachment.is_deleted) {
-      return (
-        <Table className="borderless">
-          <tbody>
-            <tr>
-              <td>
-                <strike>{attachment.filename}</strike>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <Button
-                  bsSize="xsmall"
-                  bsStyle="danger"
-                  onClick={() => this.handleUndo(attachment)}
-                >
-                  <i className="fa fa-undo" />
-                </Button>
-              </td>
-            </tr>
-          </tbody>
-        </Table>
-      );
-    }
-
     return (
-      <Table className="borderless">
-        <tbody>
-          <tr>
-            <td>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              {this.removeAttachmentButton(attachment)} &nbsp;
-            </td>
-          </tr>
-        </tbody>
-      </Table>
+      <Row>
+        <Col>
+          {attachment.is_deleted ? (
+            <strike>{attachment.filename}</strike>
+          ) : (
+            <a
+              onClick={() => this.handleAttachmentDownload(attachment)}
+              role="button">
+              {attachment.filename}
+            </a>
+          )}
+        </Col>
+        <Col className="d-flex align-items-center">
+          {attachment.is_deleted ? (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => this.handleUndo(attachment)}
+              className="ms-auto"
+            >
+              <i className="fa fa-undo" />
+            </Button>
+          ) : (
+            this.removeAttachmentButton(attachment)
+          )}
+        </Col>
+      </Row>
     );
   }
 
   attachments() {
     const { datasetContainer } = this.state;
-    if (datasetContainer.attachments && datasetContainer.attachments.length > 0) {
-      return (
-        <ListGroup>
-          {datasetContainer.attachments.map((attachment) => {
-            return (
-              <ListGroupItem key={attachment.id}>
-                {this.listGroupItem(attachment)}
-              </ListGroupItem>
-            );
-          })}
-        </ListGroup>
-      );
+
+    if (!datasetContainer.attachments || datasetContainer.attachments.length === 0) {
+      return null;
     }
+
     return (
-      <div />
+      <ListGroup>
+        {datasetContainer.attachments.map((attachment) => (
+          <ListGroupItem key={attachment.id}>
+            {this.listGroupItem(attachment)}
+          </ListGroupItem>
+        ))}
+      </ListGroup>
     );
   }
 
   removeAttachmentButton(attachment) {
     return (
-      <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={() => this.handleAttachmentRemove(attachment)}
+        className="ms-auto"
+      >
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -145,10 +135,9 @@ export default class UnsortedDataset extends React.Component {
   dropzone() {
     return (
       <Dropzone
-        onDrop={files => this.handleFileDrop(files)}
-        style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-      >
-        <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
+        onDrop={(files) => this.handleFileDrop(files)}
+        className="dnd-zone">
+        <div className="text-center p-3 text-gray-500">
           Drop Files, or Click to Select.
         </div>
       </Dropzone>
@@ -160,16 +149,16 @@ export default class UnsortedDataset extends React.Component {
 
     return (
       <Row>
-        <Col md={12}>
+        <Col sm={12}>
           {this.attachments()}
           {this.dropzone()}
           <br />
         </Col>
         <Col md={12}>
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => onModalHide()}>Close</Button>
+          <ButtonToolbar className="gap-1 justify-content-end">
+            <Button variant="primary" onClick={() => onModalHide()}>Close</Button>
             <Button
-              bsStyle="warning"
+              variant="warning"
               onClick={() => this.handleSave()}
             >
               Save

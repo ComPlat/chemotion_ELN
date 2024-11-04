@@ -32,7 +32,6 @@ import Report from 'src/models/Report';
 import Format from 'src/models/Format';
 import Graph from 'src/models/Graph';
 import ComputeTask from 'src/models/ComputeTask';
-import DeviceControl from 'src/models/DeviceControl';
 import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
@@ -189,10 +188,6 @@ class ElementActions {
         })
   }
 
-  showDeviceControl() {
-    return DeviceControl.buildEmpty()
-  }
-
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(params) {
@@ -280,7 +275,7 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.split(ui_state, name)
         .then((result) => {
-          dispatch({ui_state: ui_state, name: name});
+          dispatch({ ui_state: ui_state, name: name });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -462,10 +457,10 @@ class ElementActions {
     };
   }
 
-  createCellLine(params){
+  createCellLine(params) {
     return (dispatch) => {
       const { currentUser } = UserStore.getState();
-      CellLinesFetcher.create(params,currentUser)
+      CellLinesFetcher.create(params, currentUser)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -474,12 +469,12 @@ class ElementActions {
     };
   }
 
-  generateEmptyCellLine(collectionId,template){
+  generateEmptyCellLine(collectionId, template) {
     const { currentUser } = UserStore.getState();
-    if (!currentUser) {return }
+    if (!currentUser) { return }
 
-    const cellLineSample= CellLine.buildEmpty(collectionId,`${currentUser.initials}-C${currentUser.cell_lines_count}`);
-    if(template){
+    const cellLineSample = CellLine.buildEmpty(collectionId, `${currentUser.initials}-C${currentUser.cell_lines_count}`);
+    if (template) {
       cellLineSample.copyMaterialFrom(template);
     }
     return cellLineSample;
@@ -654,8 +649,8 @@ class ElementActions {
         .then((result) => {
           dispatch({ research_plan: result, colId: colId });
         }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
     };
   }
 
@@ -845,15 +840,15 @@ class ElementActions {
     };
   }
 
-  updateCellLine(params){
-      return (dispatch) => {
-        CellLinesFetcher.update(params)
-          .then((result) => {
-            dispatch(result);
-          }).catch((errorMessage) => {
-            console.log(errorMessage);
-          });
-      };
+  updateCellLine(params) {
+    return (dispatch) => {
+      CellLinesFetcher.update(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 
   updateResearchPlan(params) {

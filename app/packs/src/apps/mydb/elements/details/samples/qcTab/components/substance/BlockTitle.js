@@ -12,16 +12,15 @@ const infoTp = (
 const BlockTitle = () => (
   <div>
     <h4>
-      <span className="underline-qc">
+      <span className="text-decoration-underline">
         Analysis of digital research data for plausibility and Quality Control - QC
       </span>
     </h4>
-    <h4>
-      <span>Information </span>
+    <h4 className="d-flex gap-2 align-items-baseline">
+      Information
       <OverlayTrigger
         placement="right"
         overlay={infoTp}
-        style={{ marginLeft: '10px' }}
       >
         <i className="fa fa-info-circle" style={{ color: '#337ab7' }} />
       </OverlayTrigger>

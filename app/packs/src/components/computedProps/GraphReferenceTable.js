@@ -12,7 +12,8 @@ function TableEditBtn({ dataLength, onEditBtnClick, node }) {
     <Button
       active
       onClick={() => onEditBtnClick(node.rowIndex)}
-      bsSize="xsmall"
+      size="sm"
+      variant="light"
     >
       <i className={`fa ${btnIcon}`} />
     </Button>
@@ -105,7 +106,7 @@ export default class GraphReferenceTable extends React.Component {
     ];
 
     return (
-      <div className="ag-theme-material">
+      <div className="ag-theme-material mt-4">
         <AgGridReact
           columnDefs={columnDefs}
           rowData={data}
