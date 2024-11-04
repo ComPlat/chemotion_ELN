@@ -283,7 +283,7 @@ class ElementActions {
         });
     };
   }
-  
+
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
     moleculeSort = false) {
     return (dispatch) => {
@@ -715,7 +715,7 @@ class ElementActions {
       return (dispatch) => {
         const ids = ui_state["cell_line"].checkedIds.toArray();
         const collection_id = ui_state.currentCollection.id;
-        
+
         CellLinesFetcher.splitAsSubCellLines(ids,collection_id)
           .then((result) => {
             dispatch(ui_state);
