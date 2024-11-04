@@ -2,17 +2,16 @@
   @extend .d-flex;
   @extend .flex-column;
   @extend .gap-1;
+  @extend .ms-3;
+  @extend .pt-1;
   &_container {
-    @extend .d-flex;
-    @extend .flex-column;
-    @extend .gap-1;
+    @extend .tree-view;
     @extend .overflow-y-auto;
-    @extend .ms-3;
     @extend .my-n1;
-    @extend .py-1;
+    @extend .pe-1;
+    @extend .pb-1;
     --scrollbar-width: 8px;
     --mask-height: 0.25rem;
-    padding-right: calc(var(--scrollbar-width) + 0.25rem);
     --mask-image-content: linear-gradient(
       to bottom,
       transparent,
@@ -42,8 +41,7 @@
     @extend .rounded;
 
     &--selected {
-      background: $primary;
-      color: $white;
+      @extend .text-bg-primary;
     }
   }
 
