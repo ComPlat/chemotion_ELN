@@ -82,7 +82,7 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
               icon={icon}
               isCollapsed={isCollapsed}
               onClick={() => setCollection(collectionKey)}
-              variant={isActive && !isCollapsed ? 'primary' : 'light'}
+              variant={isActive ? 'primary' : 'light'}
             />
             {isActive && !isCollapsed && (
               <div className="tree-view_container">
