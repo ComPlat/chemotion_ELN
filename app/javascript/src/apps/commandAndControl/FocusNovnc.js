@@ -13,8 +13,19 @@ const FocusNovnc = ({
   handleFocus,
   handleCursor,
   handleForceScreenResizing,
+  toggleDeviceList,
+  isDeviceListVisible,
 }) => (
   <ButtonToolbar className="gap-1">
+    <Button
+      size="xxsm"
+      variant="primary"
+      onClick={toggleDeviceList}
+      title={`${isDeviceListVisible ? 'Hide' : 'Show'} device list`}
+    >
+      <i className={`fa ${isDeviceListVisible ? 'fa-expand' : 'fa-compress'}`} />
+    </Button>
+
     <ButtonGroup>
       <Button
         size="xxsm"
@@ -43,7 +54,6 @@ const FocusNovnc = ({
       <i className="fa fa-desktop" aria-hidden="true" />
       <i className="fa fa-mouse-pointer text-danger" aria-hidden="true" />
     </Button>
-
 
     <Button
       size="xxsm"
@@ -81,6 +91,8 @@ FocusNovnc.propTypes = {
   handleFocus: PropTypes.func.isRequired,
   handleCursor: PropTypes.func.isRequired,
   handleForceScreenResizing: PropTypes.func.isRequired,
+  toggleDeviceList: PropTypes.func.isRequired,
+  isDeviceListVisible: PropTypes.bool.isRequired,
 };
 
 export default FocusNovnc;
