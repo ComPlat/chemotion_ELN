@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   Form, Button, ButtonGroup, ButtonToolbar,
   OverlayTrigger, Tooltip, Accordion, Card,
@@ -14,6 +14,7 @@ import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWit
 import { useDrag, useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -22,6 +23,10 @@ const AnalysesContainer = ({ readonly }) => {
   const deviceDescription = deviceDescriptionsStore.device_description;
   const containers = deviceDescription.container.children[0].children;
   const mode = deviceDescriptionsStore.analysis_mode;
+
+  useEffect(() => {
+    TextTemplateActions.fetchTextTemplates('deviceDescription');
+  }, []);
 
   const addEmptyAnalysis = () => {
     deviceDescriptionsStore.addEmptyAnalysisContainer();
