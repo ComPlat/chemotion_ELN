@@ -529,8 +529,6 @@ module Chemotion
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
           sample_type: params[:sample_type],
-          molfile: params[:molfile],
-          stereo: params[:stereo],
           sample_details: params[:sample_details],
         }
         micro_att = {
