@@ -1,12 +1,12 @@
 import React from 'react';
 
-import Navigation from 'src/apps/home/Navigation';
+import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import WelcomeMessage from 'src/apps/home/WelcomeMessage';
 
 export default function Home() {
   return (
     <div>
-      <Navigation />
+      <BaseNavigation />
       <WelcomeMessage />
     </div>
   );
