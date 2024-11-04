@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { isEqual } from 'lodash';
-import { Form, InputGroup, Button } from 'react-bootstrap';
+import {
+  Form, InputGroup, Button, OverlayTrigger, Tooltip,
+} from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -107,15 +109,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }, () => this._onChangeCallback());
   }
 
-  handleInputDoubleClick() {
-    if (this.state.block) {
-      this.setState({
-        block: false,
-        value: 0,
-      });
-    }
-  }
-
   _onChangeCallback() {
     if (this.props.onChange) {
       this.props.onChange({ ...this.state, unit: this.props.unit });
@@ -151,7 +144,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      size, variant, disabled, label, unit, name
+      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -189,9 +182,25 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return (
         <div>
           {label && <Form.Label className="me-2">{label}</Form.Label>}
+          {showInfoTooltipTotalVol && (
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="info-total-volume">
+                  <p>
+                    It is only a value given manually, i.e. volume by definition - not (re)calculated.
+                    <br/>
+                    Recalculation occurs only when the attributes of a component with a locked total concentration are
+                    modified.
+                  </p>
+                </Tooltip>
+              )}
+            >
+              <i className="ms-1 fa fa-info-circle"/>
+            </OverlayTrigger>
+          )}
           <InputGroup
             className="d-flex flex-nowrap align-items-center w-100"
-            onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
             <Form.Control
               type="text"
@@ -213,7 +222,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     return (
       <div>
         {label && <Form.Label className="me-2">{label}</Form.Label>}
-        <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
+        <div>
           <Form.Control
             type="text"
             disabled={inputDisabled}
@@ -223,7 +232,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
             onChange={event => this._handleInputValueChange(event)}
             onFocus={event => this._handleInputValueFocus(event)}
             onBlur={event => this._handleInputValueBlur(event)}
-            onDoubleClick={event => this.handleInputDoubleClick(event)}
             name={name}
             className="flex-grow-1"
           />
@@ -245,7 +253,8 @@ NumeralInputWithUnitsCompo.propTypes = {
   label: PropTypes.node,
   variant: PropTypes.string,
   size: PropTypes.string,
-  name: PropTypes.string
+  name: PropTypes.string,
+  showInfoTooltipTotalVol: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -255,5 +264,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disabled: false,
   block: false,
   variant: 'light',
-  name: ''
+  name: '',
+  showInfoTooltipTotalVol: false,
 };
