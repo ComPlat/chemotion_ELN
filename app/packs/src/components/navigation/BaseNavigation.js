@@ -1,10 +1,10 @@
 import React from 'react';
-import { Navbar } from 'react-bootstrap';
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import NavNewSession from 'src/components/navigation/NavNewSession';
-import NavHead from 'src/components/navigation/NavHead';
+import ChemotionLogo from 'src/components/common/ChemotionLogo';
+import SupportMenuButton from 'src/components/navigation/SupportMenuButton';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 
 export default class Navigation extends React.Component {
@@ -55,29 +55,29 @@ export default class Navigation extends React.Component {
 
   userSession() {
     const { currentUser, omniauthProviders, extraRules } = this.state;
-    return (
-      currentUser
-        ? (
-          <div className="d-flex gap-2">
-            <UserAuth />
-          </div>
-        )
-        : (
-          <NavNewSession
-            authenticityToken={this.token()}
-            omniauthProviders={omniauthProviders}
-            extraRules={extraRules}
-          />
-        )
-    );
+    return currentUser
+      ? <UserAuth />
+      : (
+        <NavNewSession
+          authenticityToken={this.token()}
+          omniauthProviders={omniauthProviders}
+          extraRules={extraRules}
+        />
+      );
   }
 
   render() {
     return (
-      <Navbar className="bg-gray-200 justify-content-between px-4">
-        <NavHead />
-        {this.userSession()}
-      </Navbar>
+      <div className="bg-gray-200 d-flex align-items-center justify-content-between px-4 py-2">
+        <a href="/mydb">
+          <ChemotionLogo />
+        </a>
+
+        <div className="d-flex gap-2">
+          <SupportMenuButton linkToEln />
+          {this.userSession()}
+        </div>
+      </div>
     );
   }
 }
