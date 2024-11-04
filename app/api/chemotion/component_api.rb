@@ -65,7 +65,7 @@ module Chemotion
           )
         end
         # Delete components
-        molecule_ids_to_keep = components_params.map { |cp| cp[:component_properties][:molecule_id] }.compact
+        molecule_ids_to_keep = components_params.filter_map { |cp| cp[:component_properties][:molecule_id] }
         Component.where(sample_id: sample_id)
                  .where.not("CAST(component_properties ->> 'molecule_id' AS INTEGER) IN (?)", molecule_ids_to_keep)
                  &.destroy_all
