@@ -115,6 +115,12 @@ const showDecoupledIcon = (sample) => (sample.decoupled ? (
   </OverlayTrigger>
 ) : null);
 
+const showMixtureIcon = (sample) => (sample.sample_type === 'Mixture' ? (
+  <OverlayTrigger placement="top" overlay={<Tooltip id="tip_mixture_icon">is a mixture</Tooltip>}>
+    <Button size="xxsm" variant="light"><i className="fa fa-glass" aria-hidden="true" /></Button>
+  </OverlayTrigger>
+) : null);
+
 const showInventoryLabelIcon = (sample) => (sample.inventory_sample && sample.inventory_label ? (
   <OverlayTrigger
     placement="top"
@@ -358,6 +364,7 @@ export default class ElementsTableSampleEntries extends Component {
                   <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
                 </div>
                 {showDecoupledIcon(sample)}
+                {showMixtureIcon(sample)}
                 <TopSecretIcon element={sample} />
               </div>
             </div>

@@ -1,5 +1,5 @@
 /* eslint-disable react/sort-comp */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion, Form, Row, Col, Button, InputGroup
@@ -34,9 +34,11 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
+import Component from 'src/models/Component';
 import { parseNumericString } from 'src/utilities/MathUtils';
 
-export default class ReactionDetailsScheme extends Component {
+export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
     super(props);
 
@@ -106,9 +108,34 @@ export default class ReactionDetailsScheme extends Component {
       splitSample.reference = false;
     }
 
-    this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
-    reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-    this.onReactionChange(reaction, { schemaChanged: true });
+    if (splitSample.sample_type === 'Mixture') {
+      ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
+         .then(async components => {
+            const sampleComponents = components.map(component => {
+              const { component_properties, ...rest } = component;
+              const sampleData = {
+                  ...rest,
+                  ...component_properties
+              };
+              return new Component(sampleData);
+          });
+          await splitSample.initialComponents(sampleComponents);
+          const comp = sampleComponents.find(component => component.amount_mol > 0 && component.molarity_value > 0);
+          if (comp) {
+              splitSample.target_amount_value = comp.amount_mol / comp.molarity_value;
+              splitSample.target_amount_unit = 'l';
+          }
+          reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+          this.onReactionChange(reaction, { schemaChanged: true });
+        })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    } else {
+      this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
+      reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+      this.onReactionChange(reaction, { schemaChanged: true });
+    }
   }
 
   insertSolventExtLabel(splitSample, materialGroup, external_label) {
