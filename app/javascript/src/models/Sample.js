@@ -6,7 +6,6 @@ import _ from 'lodash';
 import Element from 'src/models/Element';
 import Molecule from 'src/models/Molecule';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -97,6 +96,11 @@ export default class Sample extends Element {
 
     newSample.filterElementalComposition();
     newSample.segments = Segment.buildCopy(sample.segments);
+
+    if (sample.sample_type === 'Mixture') {
+      newSample.amount_value = sample.amount_value;
+    }
+
     return newSample;
   }
 
@@ -594,8 +598,8 @@ export default class Sample extends Element {
     }
   }
 
-  updateTotalVolume(amount, totalConcentration, lockedConcentration) {
-    if (!lockedConcentration || !amount || totalConcentration === 0 || Number.isNaN(totalConcentration)) {
+  updateTotalVolume(amount, totalConcentration) {
+    if (!amount || totalConcentration === 0 || Number.isNaN(totalConcentration)) {
       return;
     }
     // totalVolume = amount_mol / final concentration of the component
@@ -1393,13 +1397,17 @@ export default class Sample extends Element {
   // Case 2: Total volume updated; Total Conc. is locked
   // Case 3: Total volume updated; Total Conc. is not locked
   updateMixtureComponentVolume(totalVolume) {
-    if (this.components.length < 1) {
+    if (this.components.length < 1 || totalVolume <= 0) {
       return;
     }
 
+    const referenceComponent = this.reference_component;
+
     this.components.forEach((component) => {
-      component.handleTotalVolumeChanges(totalVolume);
+      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
     });
+
+    this.updateMixtureComponentEquivalent();
   }
 
   setReferenceComponent(componentIndex) {
