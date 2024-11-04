@@ -8,6 +8,7 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import GatePushButton from 'src/components/common/GatePushButton';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
 
 export default class CollectionSubtree extends React.Component {
@@ -168,8 +169,8 @@ export default class CollectionSubtree extends React.Component {
             </OverlayTrigger>
           )}
           {children.length > 0 && (
-            <i
-              className={`fa fa-${visible ? 'minus' : 'plus'}`}
+            <ChevronIcon
+              direction={visible ? 'down' : 'right'}
               onClick={this.toggleExpansion}
             />
           )}
