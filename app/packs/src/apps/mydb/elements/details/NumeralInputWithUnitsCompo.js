@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
+import {
+  FormControl, ControlLabel, InputGroup, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -138,7 +140,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      bsSize, bsStyle, disabled, label, unit, name
+      bsSize, bsStyle, disabled, label, unit, name, showInfoTooltipTotalVol
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -178,6 +180,21 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return (
         <div className={`numeric-input-unit_${this.props.unit}`}>
           {labelWrap}
+          {showInfoTooltipTotalVol && (
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="info-total-volume">
+                  <p>It is only a value given manually, i.e. volume by definition - not (re)calculated</p>
+                  <p>Recalculation occurs only when the attributes of a component with a locked total concentration are modified.</p>
+                </Tooltip>
+              )}
+            >
+              <ControlLabel style={{ marginLeft: '5px', cursor: 'pointer' }}>
+                <span style={{ cursor: 'pointer' }} className="glyphicon glyphicon-info-sign" />
+              </ControlLabel>
+            </OverlayTrigger>
+          )}
           <InputGroup>
             <FormControl
               type="text"
@@ -230,7 +247,8 @@ NumeralInputWithUnitsCompo.propTypes = {
   label: PropTypes.node,
   bsSize: PropTypes.string,
   bsStyle: PropTypes.string,
-  name: PropTypes.string
+  name: PropTypes.string,
+  showInfoTooltipTotalVol: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -241,5 +259,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   block: false,
   bsSize: 'small',
   bsStyle: 'default',
-  name: ''
+  name: '',
+  showInfoTooltipTotalVol: false,
 };

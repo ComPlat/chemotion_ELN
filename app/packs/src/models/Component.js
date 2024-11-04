@@ -3,6 +3,7 @@
 import React from 'react';
 import Sample from 'src/models/Sample';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class Component extends Sample {
   constructor(props) {
@@ -93,7 +94,7 @@ export default class Component extends Sample {
         this.calculateVolumeFromDensityTargetConc(totalVolume, purity);
       } else if (this.starting_molarity_value && this.starting_molarity_value > 0) { // if stock concentration is given
         // this.calculateVolumeFromConcentration(purity);
-        this.calculateVolumeFromConcentrationTargetConc(totalVolume, purity);
+        this.calculateVolumeFromConcentrationTargetConc(totalVolume);
       }
     } else if (this.material_group === 'solid') {
       this.calculateMassFromAmount(purity);
@@ -168,12 +169,12 @@ export default class Component extends Sample {
   }
 
   calculateTargetConcentration(totalVolume) {
-    const { lockedComponentID } = ComponentStore.getState();
-    const lockedConcentration = this.id === lockedComponentID;
+    const { lockedComponents } = ComponentStore.getState();
+    const lockedConcentration = lockedComponents.includes(this.id);
 
     if (!lockedConcentration) {
       // totalConc_mol/l = amount_mol/totalVolume_l
-      const concentration = (this.amount_mol ?? 0) / totalVolume;
+      const concentration = totalVolume > 0 ? (this.amount_mol ?? 0) / totalVolume : 0;
       this.molarity_value = concentration;
       this.concn = concentration;
       this.molarity_unit = 'M';
@@ -181,12 +182,11 @@ export default class Component extends Sample {
   }
 
   handleTargetConcUpdates(totalVolume, referenceComponent) {
-    if (totalVolume <= 0 || this.concn <= 0) { return; }
-
     const purity = this.purity || 1.0;
 
     // Calculate Amount (mol): Both solid and liquid
-    this.amount_mol = this.concn * totalVolume * purity;
+    // amount_mol = TotalConc_(molL-1) * TotalVolume_L
+    this.amount_mol = this.concn * totalVolume;
 
     // Calculate Volume (L): check code duplication
     if (this.material_group === 'liquid') {
@@ -195,7 +195,7 @@ export default class Component extends Sample {
         this.calculateVolumeFromDensityTargetConc(totalVolume, purity);
       } else if (this.starting_molarity_value && this.starting_molarity_value > 0) {
         // if stock concentration is given and target conc. changes
-        this.calculateVolumeFromConcentrationTargetConc(totalVolume, purity);
+        this.calculateVolumeFromConcentrationTargetConc(totalVolume);
       }
     } else if (this.material_group === 'solid') {
       this.calculateMassFromTargetConc(purity);
@@ -205,15 +205,15 @@ export default class Component extends Sample {
   }
 
   // Total Volume changes -> total concentration changes -> amount changes ->volume changes
-  handleTotalVolumeChanges(totalVolume) {
-    const { lockedComponentID } = ComponentStore.getState();
-    const lockedConcentration = this.id === lockedComponentID;
+  handleTotalVolumeChanges(totalVolume, referenceComponent) {
+    const { lockedComponents } = ComponentStore.getState();
+    const lockedConcentration = lockedComponents.includes(this.id);
 
     if (lockedConcentration) {
       // Case 2: Total volume updated; Total Conc. is locked
       // Amount recalculated
       // Volume recalculated
-      this.handleTargetConcUpdates(totalVolume);
+      this.handleTargetConcUpdates(totalVolume, referenceComponent);
     } else {
       // Case 3: Total volume updated; Total Conc. is not locked
       // Recalculate the total conc. Amount, Volume stay the same
@@ -247,7 +247,7 @@ export default class Component extends Sample {
     this.starting_molarity_value = 0;
 
     if (this.material_group === 'liquid') {
-      this.amount_g = (this.amount_l * 1000) * this.density;
+      this.amount_g = this.amount_l * this.density;
       this.amount_mol = (this.amount_g * purity) / this.molecule_molecular_weight;
     }
   }
@@ -255,10 +255,6 @@ export default class Component extends Sample {
   // Case 1.2: Calculate Amount from Volume, Concentration, and Purity
   calculateAmountFromConcentration(totalVolume, purity) {
     this.amount_mol = this.starting_molarity_value * this.amount_l * purity;
-
-    if (totalVolume && totalVolume > 0) {
-      this.calculateTargetConcentration(totalVolume);
-    }
   }
 
   // Case 2.1: Calculate Volume from Amount, Density, Molecular Weight, and Purity
@@ -268,10 +264,10 @@ export default class Component extends Sample {
   // }
 
   // Calculate Volume from Target Concentration, Total Volume, Density, Molecular Weight, and Purity
-  // volume of the component (L) = final conc (mol/L)* total volume (L) * purity * Molar mass (g/mol) / density (g/L)
+  // volume of the component (L) = final conc (mol/L)* total volume (L) * Molar mass (g/mol) / (density (g/L) * purity)
   calculateVolumeFromDensityTargetConc(totalVolume, purity) {
     this.starting_molarity_value = 0;
-    this.amount_l = (this.concn * totalVolume * purity * this.molecule_molecular_weight) / this.density;
+    this.amount_l = (this.concn * totalVolume * this.molecule_molecular_weight) / (this.density * purity);
   }
 
   // Case 2.2: Calculate Volume from Amount, Concentration, and Purity
@@ -280,11 +276,11 @@ export default class Component extends Sample {
   //   this.amount_l = this.amount_mol / (this.starting_molarity_value * purity);
   // }
 
-  // Calculate Volume from Target Concentration, Starting Concentration, Total Volume and Purity
-  // volume of component (L) = final conc (mol/L)*total volume (L) * purity/ stock concentration (mol/L)
-  calculateVolumeFromConcentrationTargetConc(totalVolume, purity) {
+  // Calculate Volume from Target Concentration, Starting Concentration, Total Volume
+  // volume of component (L) = final conc (mol/L)*total volume (L) / stock concentration (mol/L)
+  calculateVolumeFromConcentrationTargetConc(totalVolume) {
     this.density = 0;
-    this.amount_l = (this.concn * totalVolume * purity) / this.starting_molarity_value;
+    this.amount_l = (this.concn * totalVolume) / this.starting_molarity_value;
   }
 
   // Case 4: Ratio changes
@@ -299,7 +295,7 @@ export default class Component extends Sample {
     if (materialGroup === 'liquid') {
       if (!this.has_density) {
         // this.calculateVolumeFromConcentration(purity);
-        this.calculateVolumeFromConcentrationTargetConc(totalVolume, purity);
+        this.calculateVolumeFromConcentrationTargetConc(totalVolume);
       } else if (this.has_density) {
         // this.calculateVolumeFromDensity(purity);
         this.calculateVolumeFromDensityTargetConc(totalVolume, purity);
@@ -338,16 +334,19 @@ export default class Component extends Sample {
 
   setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup) {
     if (!Number.isNaN(purity) && purity >= 0 && purity <= 1) {
+      const prevPurity = this.purity;
+
       this.purity = purity;
-      this.handlePurityChanges(totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
+
+      this.handlePurityChanges(prevPurity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
     }
   }
 
-  handlePurityChanges(totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup) {
+  handlePurityChanges(prevPurity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup) {
     if (materialGroup === 'liquid' && this.purity > 0) {
       const previous_amount = this.amount_mol;
-      // amount_mmol (corrected) = amount_mmol (before correction) * purity
-      this.amount_mol = (previous_amount * this.purity);
+      // amount_mol (corrected) = amount_mol (before correction) * purity(new)/purity(before correction)
+      this.amount_mol = (previous_amount * this.purity) / prevPurity;
       this.updateRatioFromReference(referenceComponent);
 
       if (totalVolume && totalVolume > 0) {
@@ -372,7 +371,18 @@ export default class Component extends Sample {
 
   updatePurityFromAmount() {
     // purity = amount_mol * (Molweight / mass_g)
-    this.purity = this.amount_mol * (this.molecule_molecular_weight / this.amount_g);
+    const purity = this.amount_mol * (this.molecule_molecular_weight / this.amount_g);
+
+    if (purity <= 1) {
+      this.purity = purity;
+    } else {
+      this.purity = 1;
+
+      NotificationActions.add({
+        message: `Your input makes the purity ${purity.toFixed(2)}. Purity value should be >= 0 and <= 1.`,
+        level: 'error'
+      });
+    }
   }
 
   get svgPath() {

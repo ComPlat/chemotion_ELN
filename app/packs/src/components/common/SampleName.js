@@ -33,6 +33,17 @@ const SampleName = ({ sample }) => {
       </div>
     );
   }
+
+  if (sample.sample_type == 'Mixture' && sample.components) {
+    const title = sample.components.map(comp => comp.molecule.iupac_name).join(', ');
+    return (
+      <div>
+        <p>{sample.name}</p>
+        {title}
+      </div>
+    );
+  }
+
   return (
     <div>
       <p><ClipboardCopyText text={sumFormulaCom} clipText={clipText} /></p>
