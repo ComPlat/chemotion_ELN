@@ -110,7 +110,6 @@ const annotationButton = (store, attachment) => {
             if (isActive) {
               store.toogleAttachmentModal();
               store.setAttachmentSelected(attachment);
-              // imageName: attachment.filename,
             }
           }}
           disabled={!isActive}
