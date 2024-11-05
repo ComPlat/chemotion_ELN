@@ -20,7 +20,7 @@ describe('ReactionVariationsUtils', () => {
   });
   it('creates a row in the variations table', async () => {
     const reaction = await setUpReaction();
-    const row = createVariationsRow(reaction, reaction.variations);
+    const row = createVariationsRow(reaction, reaction.variations, false);
     const nonReferenceStartingMaterial = Object.values(row.startingMaterials).find(
       (material) => !material.aux.isReference
     );
@@ -32,9 +32,9 @@ describe('ReactionVariationsUtils', () => {
       temperature: { value: '', unit: '°C' },
       duration: { value: NaN, unit: 'Second(s)' },
     });
-    expect(Object.values(row.products).map((product) => product.aux.yield)).toEqual([100, 100]);
-    expect(nonReferenceStartingMaterial.aux.equivalent).toBe(1);
-    expect(reactant.aux.equivalent).toBe(1);
+    expect(Object.values(row.products).map((product) => product.yield.value)).toEqual([100, 100]);
+    expect(nonReferenceStartingMaterial.equivalent.value).toBe(1);
+    expect(reactant.equivalent.value).toBe(1);
   });
   it('copies a row in the variations table', async () => {
     const reaction = await setUpReaction();
@@ -61,11 +61,11 @@ describe('ReactionVariationsUtils', () => {
       { ...referenceMaterial, mass: { ...referenceMaterial.mass, value: referenceMaterial.mass.value * 10 } },
       reaction.hasPolymers()
     );
-    expect(Object.values(row.reactants)[0].aux.equivalent).toBeGreaterThan(
-      Object.values(updatedRow.reactants)[0].aux.equivalent
+    expect(Object.values(row.reactants)[0].equivalent.value).toBeGreaterThan(
+      Object.values(updatedRow.reactants)[0].equivalent.value
     );
-    expect(Object.values(row.products)[0].aux.yield).toBeGreaterThan(
-      Object.values(updatedRow.products)[0].aux.yield
+    expect(Object.values(row.products)[0].yield.value).toBeGreaterThan(
+      Object.values(updatedRow.products)[0].yield.value
     );
   });
   it('updates the definition of a column', async () => {
