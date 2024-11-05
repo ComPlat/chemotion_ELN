@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
-  getVariationsRowName, convertUnit
+  getVariationsRowName, convertUnit, getStandardUnits
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   updateNonReferenceMaterialOnMassChange,
@@ -49,12 +49,6 @@ RowToolsCellRenderer.propTypes = {
   }).isRequired,
 };
 
-function EquivalentFormatter({ value: cellData }) {
-  const { equivalent } = cellData.aux;
-
-  return `${Number(equivalent).toPrecision(4)}`;
-}
-
 function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue }) {
   let equivalent = parseNumericString(newValue);
   if (equivalent < 0) {
@@ -72,7 +66,7 @@ function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue })
     ...cellData,
     mass: { ...cellData.mass, value: mass },
     amount: { ...cellData.amount, value: amount },
-    aux: { ...cellData.aux, equivalent }
+    equivalent: { ...cellData.equivalent, value: equivalent }
   };
 }
 
@@ -111,9 +105,7 @@ function MaterialFormatter({ value: cellData, colDef }) {
 function MaterialParser({
   data: variationsRow, oldValue: cellData, newValue, colDef, context
 }) {
-  const { field } = colDef;
   const { currentEntry, displayUnit } = colDef.entryDefs;
-  const columnGroup = field.split('.')[0];
   let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
   if (value < 0) {
     value = 0;
@@ -131,13 +123,9 @@ function MaterialParser({
     updatedCellData = { ...updatedCellData, mass: { ...updatedCellData.mass, value: mass } };
   }
   // See comment in ReactionVariationsUtils.updateVariationsRow() regarding reactive updates.
-  if (updatedCellData.aux.isReference) {
-    return updatedCellData;
-  }
   return updateNonReferenceMaterialOnMassChange(
     variationsRow,
     updatedCellData,
-    columnGroup,
     context.reactionHasPolymers
   );
 }
@@ -210,31 +198,17 @@ NoteCellEditor.propTypes = {
   }).isRequired,
 };
 
-function MaterialOverlay({
-  value: cellData, colDef
-}) {
+function MaterialOverlay({ value: cellData }) {
   const { aux = null } = cellData;
-  const { currentEntry, displayUnit } = colDef.entryDefs;
 
   return (
     <div className="tooltip show">
       <div className="tooltip-inner text-start">
-        {currentEntry !== 'equivalent' && (
-          <div>
-            {`${Number(convertUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit)).toPrecision(4)} ${displayUnit}`}
-          </div>
-        )}
         {aux?.isReference && (
           <div>Reference</div>
         )}
-        {aux?.equivalent !== null && (
-          <div>{`Equivalent: ${Number(aux.equivalent).toPrecision(4)}`}</div>
-        )}
         {aux?.coefficient !== null && (
           <div>{`Coefficient: ${Number(aux.coefficient).toPrecision(4)}`}</div>
-        )}
-        {aux?.yield !== null && (
-          <div>{`Yield: ${Number(aux.yield).toPrecision(4)}%`}</div>
         )}
         {aux?.molecularWeight !== null && (
           <div>{`Molar mass: ${Number(aux.molecularWeight).toPrecision(2)} g/mol`}</div>
@@ -266,8 +240,8 @@ function MenuHeader({
   const [noSort, setNoSort] = useState('inactive');
   const [name, setName] = useState(names[0]);
   const { field, entryDefs } = column.colDef;
-  const { currentEntry, displayUnit, availableEntriesWithUnits } = entryDefs;
-  const units = availableEntriesWithUnits[currentEntry];
+  const { currentEntry, displayUnit, availableEntries } = entryDefs;
+  const units = getStandardUnits(currentEntry);
 
   const onSortChanged = () => {
     setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
@@ -295,7 +269,7 @@ function MenuHeader({
       {
         type: 'update_entry_defs',
         field,
-        entryDefs: { currentEntry, displayUnit: newDisplayUnit, availableEntriesWithUnits }
+        entryDefs: { currentEntry, displayUnit: newDisplayUnit, availableEntries }
       }
     );
   };
@@ -303,9 +277,9 @@ function MenuHeader({
   const unitSelection = (
     <Button
       className="unitSelection"
-      bsStyle="success"
-      bsSize="xsmall"
-      style={{ display: units.length === 0 ? 'none' : 'inline' }}
+      variant="success"
+      size="sm"
+      style={{ display: displayUnit === null ? 'none' : 'inline' }}
       disabled={units.length === 1}
       onClick={onUnitChanged}
     >
@@ -314,15 +288,14 @@ function MenuHeader({
   );
 
   const onEntryChanged = () => {
-    const entryKeys = Object.keys(availableEntriesWithUnits);
-    const newCurrentEntry = entryKeys[(entryKeys.indexOf(currentEntry) + 1) % entryKeys.length];
-    const newUnit = availableEntriesWithUnits[newCurrentEntry][0];
+    const newCurrentEntry = availableEntries[(availableEntries.indexOf(currentEntry) + 1) % availableEntries.length];
+    const newUnit = getStandardUnits(newCurrentEntry)[0];
 
     setColumnDefinitions(
       {
         type: 'update_entry_defs',
         field,
-        entryDefs: { currentEntry: newCurrentEntry, displayUnit: newUnit, availableEntriesWithUnits }
+        entryDefs: { currentEntry: newCurrentEntry, displayUnit: newUnit, availableEntries }
       }
     );
   };
@@ -330,10 +303,10 @@ function MenuHeader({
   const entrySelection = (
     <Button
       className="entrySelection"
-      bsStyle="default"
-      bsSize="xsmall"
+      variant="light"
+      size="sm"
       style={{ display: ['temperature', 'duration'].includes(currentEntry) ? 'none' : 'inline' }}
-      disabled={Object.keys(availableEntriesWithUnits).length === 1}
+      disabled={availableEntries.length === 1}
       onClick={onEntryChanged}
     >
       {currentEntry.startsWith('gas') ? currentEntry.toLowerCase().replace('gas', 'gas: ') : currentEntry}
@@ -393,7 +366,6 @@ MenuHeader.propTypes = {
 
 export {
   RowToolsCellRenderer,
-  EquivalentFormatter,
   EquivalentParser,
   PropertyFormatter,
   PropertyParser,

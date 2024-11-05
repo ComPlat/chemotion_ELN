@@ -1,8 +1,6 @@
-import { cloneDeep } from 'lodash';
+import { get, cloneDeep } from 'lodash';
 import {
-  materialTypes, volumeUnits, massUnits, amountUnits, concentrationUnits, getStandardUnit,
-  getCellDataType, updateColumnDefinitions,
-  durationUnits, temperatureUnits
+  materialTypes, getStandardUnits, getCellDataType, updateColumnDefinitions, getStandardValue
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   MaterialOverlay, MenuHeader
@@ -69,8 +67,9 @@ function updateYields(variationsRow, reactionHasPolymers) {
   const updatedVariationsRow = cloneDeep(variationsRow);
   const referenceMaterial = getReferenceMaterial(updatedVariationsRow);
 
-  Object.entries(updatedVariationsRow.products).forEach(([productName, productMaterial]) => {
-    updatedVariationsRow.products[productName].aux.yield = computePercentYield(
+  Object.values(updatedVariationsRow.products).forEach((productMaterial) => {
+    if (productMaterial.aux.gasType === 'gas') { return; }
+    productMaterial.yield.value = computePercentYield(
       productMaterial,
       referenceMaterial,
       reactionHasPolymers
@@ -85,22 +84,54 @@ function updateEquivalents(variationsRow) {
   const referenceMaterial = getReferenceMaterial(updatedVariationsRow);
 
   ['startingMaterials', 'reactants'].forEach((materialType) => {
-    Object.entries(updatedVariationsRow[materialType]).forEach(([materialName, material]) => {
+    Object.values(updatedVariationsRow[materialType]).forEach((material) => {
       if (material.aux.isReference) { return; }
-      updatedVariationsRow[materialType][materialName].aux.equivalent = computeEquivalent(material, referenceMaterial);
+      const updatedEquivalent = computeEquivalent(material, referenceMaterial);
+      material.equivalent.value = updatedEquivalent;
     });
   });
   return updatedVariationsRow;
 }
 
-function getMaterialData(material) {
+function getMaterialEntries(materialType, gasMode, gasType) {
+  const treatAsGaseous = gasMode && (gasType !== 'off');
+  const entries = [];
+
+  switch (treatAsGaseous ? gasType : materialType) {
+    case 'solvents':
+      entries.push('volume');
+      break;
+    case 'products':
+      entries.push('mass', 'amount', 'yield');
+      break;
+    case 'startingMaterials':
+    case 'reactants':
+    case 'catalyst':
+    case 'feedstock':
+      entries.push('mass', 'amount', 'equivalent');
+      break;
+    case 'gas':
+      entries.push('gasDuration', 'gasTemperature', 'gasConcentration');
+      break;
+    default:
+      break;
+  }
+  return entries;
+}
+
+function getMaterialData(material, materialType, gasMode) {
   const materialCopy = cloneDeep(material);
+  const gasType = materialCopy.gas_type ?? 'off';
 
-  const mass = { value: materialCopy.amount_g ?? null, unit: getStandardUnit('mass') };
-  const amount = { value: material.amount_mol ?? null, unit: getStandardUnit('amount') };
-  const volume = { value: materialCopy.amount_l ?? null, unit: getStandardUnit('volume') };
+  // Editable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
+  const entries = getMaterialEntries(materialType, gasMode, gasType);
+  const materialData = entries.reduce((data, entry) => {
+    data[entry] = { value: getStandardValue(entry, materialCopy), unit: getStandardUnits(entry)[0] };
+    return data;
+  }, {});
 
-  const aux = {
+  // `aux` includes only non-editable / static data.
+  materialData.aux = {
     coefficient: materialCopy.coefficient ?? null,
     isReference: materialCopy.reference ?? false,
     loading: (Array.isArray(materialCopy.residues) && materialCopy.residues.length) ? materialCopy.residues[0].custom_info?.loading : null,
@@ -108,13 +139,10 @@ function getMaterialData(material) {
     molarity: materialCopy.molarity_value ?? null,
     molecularWeight: materialCopy.molecule_molecular_weight ?? null,
     sumFormula: materialCopy.molecule_formula ?? null,
-    yield: null,
-    equivalent: null
+    gasType,
   };
 
-  return {
-    volume, mass, amount, aux
-  };
+  return materialData;
 }
 
 function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
@@ -131,13 +159,13 @@ function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
   return updatedVariations;
 }
 
-function addMissingMaterialsToVariations(variations, currentMaterials) {
+function addMissingMaterialsToVariations(variations, currentMaterials, gasMode) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     Object.keys(materialTypes).forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         if (!(material.id in row[materialType])) {
-          row[materialType][material.id] = getMaterialData(material);
+          row[materialType][material.id] = getMaterialData(material, materialType, gasMode);
         }
       });
     });
@@ -145,53 +173,49 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
   return updatedVariations;
 }
 
-function getMaterialEntriesWithUnits(materialType, isReference) {
-  let entries = {};
-  switch (materialType) {
-    case 'solvents':
-      entries = { volume: volumeUnits };
-      break;
-    case 'products':
-      entries = { mass: massUnits };
-      break;
-    case 'startingMaterials':
-    case 'reactants':
-      entries = { mass: massUnits, amount: amountUnits };
-      if (!isReference) {
-        entries.equivalent = [];
-      }
-      break;
-    case 'catalyst':
-      entries = { gasMass: massUnits, gasAmount: amountUnits };
-      if (!isReference) {
-        entries.gasEquivalent = [];
-      }
-      break;
-    case 'gas':
-      entries = { gasDuration: durationUnits, gasTemperature: temperatureUnits, gasConcentration: concentrationUnits };
-      break;
-    case 'feedstock':
-      entries = { gasAmount: amountUnits };
-      if (!isReference) {
-        entries.gasEquivalent = [];
-      }
-      break;
+function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    Object.keys(materialTypes).forEach((materialType) => {
+      currentMaterials[materialType].forEach((material) => {
+        const currentGasType = material.gas_type ?? 'off';
+        if (currentGasType !== row[materialType][material.id].aux.gasType) {
+          row[materialType][material.id] = getMaterialData(material, materialType, gasMode);
+        }
+      });
+    });
+  });
+  return updatedVariations;
+}
+
+function cellIsEditable(params) {
+  const entry = params.colDef.entryDefs.currentEntry;
+  const cellData = get(params.data, params.colDef.field);
+  const { isReference, gasType } = cellData.aux;
+
+  switch (entry) {
+    case 'equivalent':
+      return !isReference;
+    case 'mass':
+      return gasType !== 'feedstock';
+    case 'yield':
+      return false;
     default:
-      break;
+      return true;
   }
-  return entries;
 }
 
 function getMaterialColumnGroupChild(material, materialType, headerComponent, gasMode) {
   const materialCopy = cloneDeep(material);
 
-  const gasType = material.gas_type;
-  const treatAsGaseous = gasMode && (gasType !== 'off');
-  const entries = getMaterialEntriesWithUnits(
-    treatAsGaseous ? gasType : materialType,
-    materialCopy.reference ?? false
+  const gasType = materialCopy.gas_type ?? 'off';
+
+  const entries = getMaterialEntries(
+    materialType,
+    gasMode,
+    gasType
   );
-  const entry = Object.keys(entries)[0];
+  const entry = entries[0];
 
   let names = new Set([`ID: ${materialCopy.id.toString()}`]);
   ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
@@ -205,7 +229,12 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent, ga
     field: `${materialType}.${materialCopy.id}`, // Must be unique.
     tooltipField: `${materialType}.${materialCopy.id}`,
     tooltipComponent: MaterialOverlay,
-    entryDefs: { currentEntry: entry, displayUnit: getStandardUnit(entry), availableEntriesWithUnits: entries },
+    entryDefs: {
+      currentEntry: entry,
+      displayUnit: getStandardUnits(entry)[0],
+      availableEntries: entries
+    },
+    editable: (params) => cellIsEditable(params),
     cellDataType: getCellDataType(entry),
     headerComponent,
     headerComponentParams: {
@@ -262,22 +291,25 @@ function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, h
   return updatedColumnDefinitions;
 }
 
-function updateNonReferenceMaterialOnMassChange(variationsRow, material, materialType, reactionHasPolymers) {
+function updateNonReferenceMaterialOnMassChange(variationsRow, material, reactionHasPolymers) {
+  if (material.aux.isReference) {
+    return material;
+  }
+
   const referenceMaterial = getReferenceMaterial(variationsRow);
+  const updatedMaterial = cloneDeep(material);
 
   // Adapt equivalent to updated mass.
-  const equivalent = (!material.aux.isReference && ['startingMaterials', 'reactants'].includes(materialType))
-    ? computeEquivalent(material, referenceMaterial) : material.aux.equivalent;
+  if ('equivalent' in material) {
+    updatedMaterial.equivalent.value = computeEquivalent(material, referenceMaterial);
+  }
 
   // Adapt yield to updated mass.
-  const percentYield = (materialType === 'products')
-    ? computePercentYield(material, referenceMaterial, reactionHasPolymers) : material.aux.yield;
+  if ('yield' in material) {
+    updatedMaterial.yield.value = computePercentYield(material, referenceMaterial, reactionHasPolymers);
+  }
 
-  const updatedAux = { ...material.aux, equivalent, yield: percentYield };
-
-  return {
-    ...material, aux: updatedAux
-  };
+  return updatedMaterial;
 }
 
 function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) {
@@ -300,6 +332,7 @@ export {
   updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
+  updateVariationsGasTypes,
   getReferenceMaterial,
   getMolFromGram,
   getGramFromMol,

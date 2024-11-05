@@ -11,21 +11,20 @@ import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType,
-  temperatureUnits, durationUnits, getStandardUnit, materialTypes
+  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType, getStandardUnits, materialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  getMaterialColumnGroupChild,
+  getMaterialColumnGroupChild, updateVariationsGasTypes,
   getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-  EquivalentFormatter, EquivalentParser,
+  EquivalentParser,
   NoteCellRenderer, NoteCellEditor,
   RowToolsCellRenderer, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
@@ -36,6 +35,7 @@ import {
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
+  const reactionHasPolymers = reaction.hasPolymers();
   const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
@@ -76,8 +76,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           cellDataType: getCellDataType('temperature'),
           entryDefs: {
             currentEntry: 'temperature',
-            displayUnit: getStandardUnit('temperature'),
-            availableEntriesWithUnits: { temperature: temperatureUnits }
+            displayUnit: getStandardUnits('temperature')[0],
+            availableEntries: ['temperature']
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
@@ -90,8 +90,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           editable: !gasMode,
           entryDefs: {
             currentEntry: 'duration',
-            displayUnit: getStandardUnit('duration'),
-            availableEntriesWithUnits: { duration: durationUnits }
+            displayUnit: getStandardUnits('duration')[0],
+            availableEntries: ['duration']
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
@@ -125,9 +125,14 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     equivalent: {
       extendsDataType: 'object',
       baseDataType: 'object',
-      valueFormatter: EquivalentFormatter,
+      valueFormatter: (params) => `${Number(params.value.equivalent.value).toPrecision(4)}`,
       valueParser: EquivalentParser,
-    }
+    },
+    yield: {
+      extendsDataType: 'object',
+      baseDataType: 'object',
+      valueFormatter: (params) => `${Number(params.value.yield.value).toPrecision(4)}`,
+    },
   };
 
   const defaultColumnDefinitions = {
@@ -164,7 +169,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     )
   ) {
     let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
-    updatedReactionVariations = addMissingMaterialsToVariations(updatedReactionVariations, updatedReactionMaterials);
+    updatedReactionVariations = addMissingMaterialsToVariations(
+      updatedReactionVariations,
+      updatedReactionMaterials,
+      updatedGasMode
+    );
 
     setReactionVariations(updatedReactionVariations);
     setColumnDefinitions(
@@ -189,6 +198,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       }
     );
     setGasMode(updatedGasMode);
+    setReactionVariations([]);
   }
 
   /*
@@ -207,6 +217,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         reactionMaterials: updatedReactionMaterials
       }
     );
+    const updatedReactionVariations = updateVariationsGasTypes(reactionVariations, updatedReactionMaterials);
+    setReactionVariations(updatedReactionVariations);
+
     setReactionMaterials(updatedReactionMaterials);
   }
 
@@ -258,9 +271,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
   const addRow = useCallback(() => {
     setReactionVariations(
-      [...reactionVariations, createVariationsRow(reaction, reactionVariations)]
+      [...reactionVariations, createVariationsRow(reaction, reactionVariations, gasMode)]
     );
-  }, [reaction, reactionVariations]);
+  }, [reaction, reactionVariations, gasMode]);
 
   const copyRow = useCallback((data) => {
     const copiedRow = copyVariationsRow(data, reactionVariations);
@@ -275,11 +288,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
-    const updatedRow = updateVariationsRow(oldRow, field, newValue, reaction.hasPolymers());
+    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
     setReactionVariations(
       reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );
-  }, [reactionVariations, reaction]);
+  }, [reactionVariations, reactionHasPolymers]);
 
   const fitColumnToContent = (event) => {
     const { column } = event;
@@ -376,7 +389,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             copyRow,
             removeRow,
             setColumnDefinitions,
-            reactionHasPolymers: reaction.hasPolymers(),
+            reactionHasPolymers,
             reactionShortLabel: reaction.short_label,
             allReactionAnalyses
           }}

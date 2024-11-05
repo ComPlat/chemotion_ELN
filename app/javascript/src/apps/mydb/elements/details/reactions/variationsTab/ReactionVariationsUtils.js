@@ -18,26 +18,59 @@ const materialTypes = {
   solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
 };
 
-function getStandardUnit(entry) {
+function getStandardUnits(entry) {
   switch (entry) {
     case 'volume':
-      return volumeUnits[0];
+      return volumeUnits;
     case 'mass':
-    case 'gasMass':
-      return massUnits[0];
+      return massUnits;
     case 'amount':
-    case 'gasAmount':
-      return amountUnits[0];
+      return amountUnits;
     case 'temperature':
-      return temperatureUnits[0];
-    case 'duration':
-      return durationUnits[0];
     case 'gasTemperature':
-      return temperatureUnits[0];
+      return temperatureUnits;
+    case 'duration':
     case 'gasDuration':
-      return durationUnits[0];
+      return durationUnits;
     case 'gasConcentration':
-      return concentrationUnits[0];
+      return concentrationUnits;
+    default:
+      return [null];
+  }
+}
+
+function getStandardValue(entry, material) {
+  switch (entry) {
+    case 'volume':
+      return material.amount_l ?? null;
+    case 'mass':
+      return material.amount_g ?? null;
+    case 'amount':
+      return material.amount_mol ?? null;
+    case 'equivalent':
+      return (material.reference ?? false) ? 1 : 0;
+    default:
+      return null;
+  }
+}
+
+function getCellDataType(entry) {
+  switch (entry) {
+    case 'temperature':
+    case 'duration':
+      return 'property';
+    case 'equivalent':
+      return 'equivalent';
+    case 'mass':
+    case 'volume':
+    case 'amount':
+      return 'material';
+    case 'gasTemperature':
+    case 'gasDuration':
+    case 'gasConcentration':
+      return 'gas';
+    case 'yield':
+      return 'yield';
     default:
       return null;
   }
@@ -83,22 +116,6 @@ function convertUnit(value, fromUnit, toUnit) {
   return value;
 }
 
-function getCellDataType(entry) {
-  if (['temperature', 'duration'].includes(entry)) {
-    return 'property';
-  }
-  if (entry === 'equivalent') {
-    return 'equivalent';
-  }
-  if (['mass', 'volume', 'amount'].includes(entry)) {
-    return 'material';
-  }
-  if (entry.startsWith('gas')) {
-    return 'gas';
-  }
-  return null;
-}
-
 function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-${variationsRowId}`;
 }
@@ -108,20 +125,20 @@ function getSequentialId(variations) {
   return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
 }
 
-function createVariationsRow(reaction, variations) {
+function createVariationsRow(reaction, variations, gasMode) {
   const reactionCopy = cloneDeep(reaction);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reactionCopy.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reactionCopy.temperature ?? {};
-  let row = {
+  const row = {
     id: getSequentialId(variations),
     properties: {
       temperature: {
-        value: convertUnit(temperatureValue, temperatureUnit, getStandardUnit('temperature')),
-        unit: getStandardUnit('temperature')
+        value: convertUnit(temperatureValue, temperatureUnit, getStandardUnits('temperature')[0]),
+        unit: getStandardUnits('temperature')[0]
       },
       duration: {
-        value: convertUnit(durationValue, durationUnit, getStandardUnit('duration')),
-        unit: getStandardUnit('duration'),
+        value: convertUnit(durationValue, durationUnit, getStandardUnits('duration')[0]),
+        unit: getStandardUnits('duration')[0],
       },
     },
     analyses: [],
@@ -129,7 +146,7 @@ function createVariationsRow(reaction, variations) {
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v) }), {});
+      { ...a, [v.id]: getMaterialData(v, materialType, gasMode) }), {});
   });
 
   return updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);
@@ -199,8 +216,8 @@ export {
   temperatureUnits,
   durationUnits,
   concentrationUnits,
+  getStandardUnits,
   convertUnit,
-  getStandardUnit,
   materialTypes,
   getVariationsRowName,
   createVariationsRow,
@@ -209,4 +226,5 @@ export {
   updateColumnDefinitions,
   getCellDataType,
   getUserFacingUnit,
+  getStandardValue,
 };

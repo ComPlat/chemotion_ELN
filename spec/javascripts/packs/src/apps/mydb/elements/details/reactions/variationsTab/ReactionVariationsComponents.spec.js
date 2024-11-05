@@ -1,16 +1,11 @@
 import expect from 'expect';
 import {
-  EquivalentFormatter, EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser
+  EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsComponents', async () => {
   describe('FormatterComponents', () => {
-    it('EquivalentFormatter returns number string with correct precision', () => {
-      const cellData = { aux: { equivalent: 1.2345 } };
-
-      expect(EquivalentFormatter({ value: cellData })).toEqual('1.234');
-    });
     it('PropertyFormatter returns number string with correct precision', () => {
       const cellData = { value: 1.2345, unit: 'Second(s)' };
       const colDef = { entryDefs: { displayUnit: 'Minute(s)' } };
@@ -36,7 +31,7 @@ describe('ReactionVariationsComponents', async () => {
       const newValue = '-1';
       const updatedCellData = EquivalentParser({ data: variationsRow, oldValue: cellData, newValue });
 
-      expect(updatedCellData.aux.equivalent).toEqual(0);
+      expect(updatedCellData.equivalent.value).toEqual(0);
     });
     it('updates mass and amount', () => {
       const newValue = '2';

@@ -41,7 +41,7 @@ describe('ReactionVariationsMaterials', () => {
     reaction.starting_materials.push(material);
     const updatedStartingMaterialIDs = reaction.starting_materials.map((startingMaterial) => startingMaterial.id);
     const currentMaterials = getReactionMaterials(reaction);
-    const updatedVariations = addMissingMaterialsToVariations(reaction.variations, currentMaterials);
+    const updatedVariations = addMissingMaterialsToVariations(reaction.variations, currentMaterials, false);
     updatedVariations
       .forEach((variation) => {
         expect(Object.keys(variation.startingMaterials)).toEqual(updatedStartingMaterialIDs);
@@ -50,25 +50,25 @@ describe('ReactionVariationsMaterials', () => {
   it('updates yield when product mass changes', async () => {
     const reaction = await setUpReaction();
     const productID = reaction.products[0].id;
-    expect(reaction.variations[0].products[productID].aux.yield).toBe(100);
+    expect(reaction.variations[0].products[productID].yield.value).toBe(100);
     reaction.variations[0].products[productID].mass.value = 2;
     const updatedVariationsRow = updateVariationsRowOnReferenceMaterialChange(
       reaction.variations[0],
       reaction.hasPolymers()
     );
-    expect(updatedVariationsRow.products[productID].aux.yield).toBe(5);
+    expect(updatedVariationsRow.products[productID].yield.value).toBe(5);
   });
   it("updates non-reference materials' equivalents when reference material's mass changes", async () => {
     const reaction = await setUpReaction();
     const reactantID = reaction.reactants[0].id;
-    expect(reaction.variations[0].reactants[reactantID].aux.equivalent).toBe(1);
+    expect(reaction.variations[0].reactants[reactantID].equivalent.value).toBe(1);
     Object.values(reaction.variations[0].startingMaterials).forEach((material) => {
       if (material.aux.isReference) {
         material.mass.value = 2;
       }
     });
     const updatedVariationsRow = updateVariationsRowOnReferenceMaterialChange(reaction.variations[0]);
-    expect(updatedVariationsRow.reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
+    expect(updatedVariationsRow.reactants[reactantID].equivalent.value).toBeCloseTo(50, 0.01);
   });
   it("updates non-reference materials' equivalents when own mass changes", async () => {
     const reaction = await setUpReaction();
@@ -77,10 +77,9 @@ describe('ReactionVariationsMaterials', () => {
     const updatedReactant = updateNonReferenceMaterialOnMassChange(
       reaction.variations[0],
       reactant,
-      'reactants',
       false
     );
-    expect(reactant.aux.equivalent).toBeGreaterThan(updatedReactant.aux.equivalent);
+    expect(reactant.equivalent.value).toBeGreaterThan(updatedReactant.equivalent.value);
   });
   it("updates non-reference materials' yields when own mass changes", async () => {
     const reaction = await setUpReaction();
@@ -89,10 +88,9 @@ describe('ReactionVariationsMaterials', () => {
     const updatedProduct = updateNonReferenceMaterialOnMassChange(
       reaction.variations[0],
       product,
-      'products',
       true
     );
-    expect(product.aux.yield).toBeGreaterThan(updatedProduct.aux.yield);
+    expect(product.yield.value).toBeGreaterThan(updatedProduct.yield.value);
   });
   it("updates materials' mass when equivalent changes", async () => {
     const reaction = await setUpReaction();
@@ -101,7 +99,7 @@ describe('ReactionVariationsMaterials', () => {
     const updatedReactant = EquivalentParser({
       data: variationsRow,
       oldValue: reactant,
-      newValue: Number(reactant.aux.equivalent * 0.42).toString()
+      newValue: Number(reactant.equivalent.value * 0.42).toString()
     });
     expect(reactant.mass.value).toBeGreaterThan(updatedReactant.mass.value);
     expect(EquivalentParser({
@@ -185,7 +183,9 @@ describe('ReactionVariationsMaterials', () => {
       'reactants',
       `reactants.${reactantIDs[0]}`
     );
-    expect(reactantColumnDefinition.cellDataType).toBe('gas');
-    expect(reactantColumnDefinition.entryDefs.availableEntriesWithUnits).not.toHaveProperty('gasMass');
+    expect(reactantColumnDefinition.cellDataType).toBe('material');
+    const { currentEntry } = reactantColumnDefinition.entryDefs;
+
+    expect(currentEntry).toBe('mass');
   });
 });
