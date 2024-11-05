@@ -356,19 +356,6 @@ export default class ReactionDetails extends Component {
                 <i className="fa fa-cogs" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-            >
-              <Button
-                variant="info"
-                size="xxsm"
-                // eslint-disable-next-line react/destructuring-assignment
-                onClick={() => this.props.toggleFullScreen()}
-              >
-                <i className="fa fa-expand" />
-              </Button>
-            </OverlayTrigger>
             {reaction.changed
               && (
                 <>
@@ -659,5 +646,4 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
 };
