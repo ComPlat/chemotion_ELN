@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { Col } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
@@ -36,19 +37,33 @@ export default class Elements extends Component {
   }
 
   render() {
-    const { showElementDetails } = this.state;
-    const listWidth = showElementDetails ? 5 : 12;
+    const { showDetailView } = this.state;
 
     return (
-      <div className="flex-grow-1 d-flex ps-3 pt-2">
-        <Col xs={listWidth} className="pe-3">
-          <ElementsList />
-        </Col>
-        {showElementDetails && (
-          <Col xs={7} className="pe-3">
-            <ElementDetails />
-          </Col>
-        )}
+      <div className="flex-grow-1">
+        <PanelGroup className="p-3" direction="horizontal">
+          <Panel defaultSize={40} className="overflow-x-auto">
+            <div className="h-100" style={{ minWidth: '600px' }}>
+              <ElementsList />
+            </div>
+          </Panel>
+
+          {showDetailView && (
+            <>
+              <PanelResizeHandle>
+                <Button>
+                  <i className="fa fa-exchange" />
+                </Button>
+                <div className="elements_separator" />
+              </PanelResizeHandle>
+              <Panel defaultSize={60} className="overflow-x-auto">
+                <div className="h-100" style={{ minWidth: '680px' }}>
+                  <ElementDetails />
+                </div>
+              </Panel>
+            </>
+          )}
+        </PanelGroup>
       </div>
     );
   }
