@@ -74,7 +74,8 @@ end
 
 class PredefinedTextTemplate < TextTemplate
   def self.init_seeds
-    predefined_template_seeds_path = File.join(Rails.root.join('db/seeds/json/text_template_seeds.json'))
+    filepath = Rails.root.join('db/seeds/json/text_template_seeds.json')
+    predefined_template_seeds_path = File.join(filepath)
     predefined_templates = JSON.parse(File.read(predefined_template_seeds_path))
 
     predefined_templates.each do |template|
