@@ -3,8 +3,9 @@ import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import alt from 'src/stores/alt/alt';
-
 import DocumentHelper from 'src/utilities/DocumentHelper';
+import { template_list_for_storage } from '../../../utilities/Ketcher2SurfaceChemistryUtils';
+
 
 class UserActions {
   fetchOlsRxno() {
@@ -88,6 +89,7 @@ class UserActions {
     UsersFetcher.fetchProfile().then((res) => {
       if (res?.user_templates) {
         localStorage.setItem(storageKey, '');
+        res.user_templates.push(...template_list_for_storage);
         localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
       }
     });
