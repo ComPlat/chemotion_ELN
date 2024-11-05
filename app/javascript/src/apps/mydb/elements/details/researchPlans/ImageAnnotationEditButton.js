@@ -2,7 +2,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import Attachment from 'src/models/Attachment';
 
 export default class ImageAnnotationEditButton extends Component {
   allowedFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
@@ -43,7 +42,7 @@ export default class ImageAnnotationEditButton extends Component {
 }
 
 ImageAnnotationEditButton.propTypes = {
-  attachment: PropTypes.instanceOf(Attachment),
+  attachment: PropTypes.instanceOf(Object),
   onClick: PropTypes.func.isRequired,
 };
 
