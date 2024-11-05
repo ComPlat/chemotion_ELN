@@ -45,6 +45,8 @@ module Export
                       sample['flash_point']
                     when 'refractive index'
                       sample['refractive_index']
+                    when 'density'
+                      "#{sample['density']} g/mL"
                     else
                       sample[column]
                     end
@@ -89,13 +91,6 @@ module Export
       regex = /[\[\]()]/
       string = raw_value.gsub(regex, '')
       string.split(',').join(' - ')
-    end
-
-    def flash_point_format(value)
-      return if value.blank?
-
-      flash_point = JSON.parse(value)
-      "#{flash_point['value']} #{flash_point['unit']}"
     end
 
     def format_field(column, raw_value)

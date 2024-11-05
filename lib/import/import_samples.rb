@@ -9,7 +9,7 @@ module Import
                 :processed, :file_path, :collection_id, :current_user_id, :file_name
 
     MOLARITY_UNIT = %r{m/L|mol/L|M}i.freeze
-    DENSITY_UNIT = %r{g/mL}i.freeze
+    DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
     def initialize(file_path, collection_id, user_id, file_name, import_type)
@@ -265,8 +265,7 @@ module Import
     def handle_density(sample, value)
       return sample if value[:unit].nil? || value[:value].nil?
 
-      sample['density'] = value[:value] if value[:unit] == 'g/mL'
-      sample
+      sample['density'] = value[:value] if value[:unit].match?(DENSITY_UNIT)
     end
 
     def handle_molarity(sample, value)
@@ -282,9 +281,9 @@ module Import
 
     # rubocop:disable Style/StringLiterals
     def process_fields(sample, map_column, field, row, molecule)
-      array = ["\"cas\"", "\"purity\"", "\"density\""]
+      array = ["\"cas\""]
       conditions = map_column.nil? || array.include?(map_column[1])
-      db_column = conditions ? field : map_column[0].sub('s.', '').delete!('"')
+      db_column = conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))
       molecule.create_molecule_name_by_user(row[field], current_user_id) if field == 'molecule name'
       process_sample_fields(sample, db_column, field, row)
     end
@@ -351,10 +350,20 @@ module Import
     end
 
     def process_sample_fields(sample, db_column, field, row)
-      additional_columns = %w[cas mn.name refractive_index molarity flash_point].freeze
+      additional_columns = %w[
+        cas
+        mn.name
+        molarity
+        refractive_index
+        flash_point
+        density
+        location
+        melting_point
+        purity
+      ].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
-      excluded_column = %w[description solvent location].freeze
+      excluded_column = %w[description solvent].freeze
       val = row[field]
       value = process_value(val, db_column)
       handle_sample_fields(sample, db_column, value) unless value.nil?

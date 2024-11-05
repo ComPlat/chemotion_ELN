@@ -133,6 +133,8 @@ module Export
             flash_point_format(sample['flash_point'])
           elsif column == 'molarity'
             "#{sample['molarity_value']} #{sample['molarity_unit']}"
+          elsif column == 'density'
+            "#{sample['density']} g/ml"
           else
             sample[column]
           end
