@@ -210,18 +210,6 @@ export default class ScreenDetails extends Component {
 
           <OverlayTrigger
             placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
           >
             <Button
@@ -500,5 +488,4 @@ export default class ScreenDetails extends Component {
 
 ScreenDetails.propTypes = {
   screen: PropTypes.instanceOf(Screen).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };

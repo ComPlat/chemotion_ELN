@@ -257,13 +257,8 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
         </div>
-        <div className="d-flex justify-content-end gap-1">
+        <div className="d-flex justify-content-end gap-2">
           <PrintCodeButton element={wellplate} />
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-            <Button variant="info" size="xxsm" onClick={() => this.props.toggleFullScreen()}>
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {displaySaveButton &&
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
               <Button
@@ -448,5 +443,4 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.instanceOf(WellplateModel).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };
