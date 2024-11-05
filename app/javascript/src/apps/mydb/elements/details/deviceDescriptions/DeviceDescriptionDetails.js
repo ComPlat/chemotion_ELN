@@ -35,7 +35,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 
-const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
+const DeviceDescriptionDetails = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
@@ -165,18 +165,6 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
           <PrintCodeButton element={deviceDescription} />
           {!deviceDescription.isNew &&
             <OpenCalendarButton isPanelHeader eventableId={deviceDescription.id} eventableType="DeviceDescription" />}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullDeviceDescription">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {deviceDescription.can_copy && !deviceDescription.isNew && (
             <CopyElementModal
               element={deviceDescription}
