@@ -258,7 +258,7 @@ export default class ElementsList extends React.Component {
           </Button>
         )}
         <div className="d-flex flex-column gap-1 h-100">
-          <div className="d-flex gap-2">
+          <div className="d-flex gap-2 mb-3">
             <ManagingActions />
             <ButtonGroup className="d-flex align-items-center">
               <SplitElementButton />
