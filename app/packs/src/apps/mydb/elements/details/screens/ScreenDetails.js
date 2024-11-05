@@ -203,19 +203,7 @@ export default class ScreenDetails extends Component {
           {screen.isNew
             ? null
             : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
-          
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
+
           <OverlayTrigger
             placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
@@ -472,5 +460,4 @@ export default class ScreenDetails extends Component {
 
 ScreenDetails.propTypes = {
   screen: PropTypes.instanceOf(Screen).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };
