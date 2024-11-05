@@ -384,7 +384,6 @@ export default class GenericElDetails extends Component {
   }
 
   header(genericEl) {
-    const { toggleFullScreen } = this.props;
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection
@@ -415,18 +414,6 @@ export default class GenericElDetails extends Component {
         <ShowUserLabels element={genericEl} />
         <ConfirmClose el={genericEl} />
         {copyBtn}
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="tip_fullscreen_btn">FullScreen</Tooltip>}
-        >
-          <Button
-            variant="info"
-            size="sm"
-            onClick={() => toggleFullScreen()}
-          >
-            <i className="fa fa-expand" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="saveScreen">Save</Tooltip>}
@@ -530,7 +517,6 @@ export default class GenericElDetails extends Component {
 
 GenericElDetails.propTypes = {
   genericEl: PropTypes.object,
-  toggleFullScreen: PropTypes.func.isRequired,
 };
 
 GenericElDetails.defaultProps = {

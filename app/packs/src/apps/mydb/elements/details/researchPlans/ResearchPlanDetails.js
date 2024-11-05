@@ -504,11 +504,6 @@ export default class ResearchPlanDetails extends Component {
                 <i className="fa fa-floppy-o" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
-              <Button variant="info" size="xxsm" onClick={this.props.toggleFullScreen}>
-                <i className="fa fa-expand" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
             {!researchPlan.isNew
               && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
             {copyBtn}
@@ -630,5 +625,4 @@ export default class ResearchPlanDetails extends Component {
 
 ResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };

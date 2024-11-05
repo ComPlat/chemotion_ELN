@@ -975,18 +975,6 @@ export default class SampleDetails extends React.Component {
           {inventorySample}
           {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
           <PrintCodeButton element={sample} />
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {copyBtn}
           {this.saveAndCloseSample(sample, saveBtnDisplay)}
         </div>
@@ -1410,5 +1398,4 @@ export default class SampleDetails extends React.Component {
 
 SampleDetails.propTypes = {
   sample: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
 };
