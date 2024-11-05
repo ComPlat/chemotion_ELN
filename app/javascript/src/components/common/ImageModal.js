@@ -90,6 +90,8 @@ export default class ImageModal extends Component {
   }
 
   fetchImage() {
+    if (!this.props.popObject.fetchId) { return null; }
+
     AttachmentFetcher.fetchImageAttachment({ id: this.props.popObject.fetchId, annotated: true }).then(
       (result) => {
         if (result.data != null) {

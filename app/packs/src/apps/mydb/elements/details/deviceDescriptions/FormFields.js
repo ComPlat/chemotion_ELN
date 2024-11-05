@@ -636,7 +636,7 @@ const textareaInput = (element, store, field, label, rows, info) => {
         name={field}
         as="textarea"
         key={`${store.key_prefix}-${field}`}
-        value={element[field]}
+        value={element[field] || ''}
         rows={rows}
         onChange={handleFieldChanged(store, field, 'textarea', element.type)}
       />
