@@ -24,7 +24,8 @@ export const attachmentThumbnail = (attachment) => (
       previewObject={{
         src: attachment.preview,
       }}
-      popObject
+      hasPop={false}
+      popObject={{}}
       disableClick
     />
     <div className="large-preview-modal">
