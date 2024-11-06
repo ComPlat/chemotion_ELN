@@ -17,7 +17,7 @@ import {
   calculateTONPerTimeValue,
   determineTONFrequencyValue,
   convertTurnoverFrequency,
-} from '../../../app/packs/src/utilities/UnitsConversion';
+} from '../../../app/javascript/src/utilities/UnitsConversion';
 
 describe('Testing React Utility Functions', () => {
   const TEMPERATURE_UNITS = {

@@ -5,7 +5,7 @@ import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import NumericInputUnit from '../../../app/packs/src/apps/mydb/elements/details/NumericInputUnit';
+import NumericInputUnit from '../../../app/javascript/src/apps/mydb/elements/details/NumericInputUnit';
 
 Enzyme.configure({ adapter: new Adapter() });
 

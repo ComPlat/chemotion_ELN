@@ -34,7 +34,6 @@
 .env.test
 
 /config/matrices.json
-/config/klasses.json
 /config/mailcollector.yml
 /config/datamailcollector.yml
 /config/datacollector.yml
@@ -97,6 +96,7 @@
 !/public/editors/.keep
 /public/favicon.ico
 
+# written by Labimotion gem
 /public/klasses.json
 
 /public/ontologies/*
@@ -164,9 +164,6 @@
 
 #config generated files
 aliasifyConfig.js
-/app/assets/javascripts/components/extra/*
-/app/packs/src/components/extra/*
-/app/packs/klasses.json
 
 # Backups folder
 backup/deploy_backup
@@ -216,12 +213,11 @@ public/sprite.png
 
 !spec/fixtures/import/sample_import_template.xlsx
 
-# generic elements
-data/klasses.json
-
 # pdf worker
 public/pdf.worker.min.js
 
 # Sentry Config File
 .env.sentry-build-plugin*
 
+# Changes from Shakapacker Installation
+.yarn-integrity
