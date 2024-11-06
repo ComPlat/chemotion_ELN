@@ -9,7 +9,7 @@
     @extend .state-border;
     --bs-bg-opacity: 0.3;
     --bs-border-opacity: 0.5;
-    @extend .bg-white;
+    @extend .text-bg-paper;
     &.active {
       @extend .border-active;
       --bs-border-opacity: 1;
