@@ -39,6 +39,7 @@ export default function SupportMenuButton({ linkToEln = false }) {
         <ExternalItem title="Search documentation" href="https://chemotion.net/search" />
         <ExternalItem title="Helpdesk - Contact Us" href="https://chemotion.net/helpdesk" />
         <ExternalItem title="Report an issue on Github" href="https://github.com/ComPlat/chemotion_ELN/issues" />
+        <ExternalItem title="Styleguide" href="/styleguide" />
         <Dropdown.Divider />
 
         {linkToEln
