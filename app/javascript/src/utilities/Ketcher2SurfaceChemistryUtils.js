@@ -54,7 +54,6 @@ const rails_polymer_identifier = "R#";
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile, cb) => {
   try {
-
     const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
     if (!molfile.includes("<PolymersList>")) cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
     // when ketcher mofile and polymers exists
@@ -72,8 +71,8 @@ const hasKetcherData = async (molfile, cb) => {
       // polymers list exists
       cb({ struct: indigo_converted_ket.struct, rails_polymers_list });
     }
-
   } catch (err) {
+    console.log(err);
     alert("Opening this molfile is possible at the movement. Please report this molfile to chemotion ELN dev team.");
   }
 };
@@ -168,21 +167,22 @@ const isNewAtom = (eventItem) => {
 
 const removeImageTemplateAtom = (images, mols, latestData) => {
   let container = [];
+  const data_alias = { ...latestData };
   console.log({ images, mols, latestData });
   for (let m = 0; m < mols.length; m++) {
     const mol = latestData[mols[m]];
-    const atoms_list = [];
+    const atoms_list = mol?.atoms || [];
     let bonds_list = mol?.bonds || [];
-    let store_image_idx_matched = null;
+
     if (mol && mol?.atoms) {
+      console.log({ mol });
       for (let i = 0; i < mol?.atoms?.length; i++) {
         const atom = mol.atoms[i];
+        const updatedBondsList = [];
         if (atom?.alias && atom.label == inspired_label) {
-          const splits = atom.alias.split("_");
-          if (images.has(parseInt(splits[2]))) {
-            store_image_idx_matched = parseInt(splits[2]);
-            container.push(parseInt(splits[2]));
-            const updatedBondsList = [];
+          const splits_2 = parseInt(atom.alias.split("_")[2]);
+          if (images.has(splits_2)) {
+            container.push(splits_2);
             for (let ba of bonds_list) {
               if (!ba.atoms.includes(i)) {
                 const adjustedAtoms = ba.atoms.map(j => (j > i ? j - 1 : j));
@@ -190,19 +190,14 @@ const removeImageTemplateAtom = (images, mols, latestData) => {
               }
             }
             bonds_list = updatedBondsList;
+            console.log("pre-length", atoms_list.length);
+            atoms_list.splice(i, 1);
+            console.log("post-length", atoms_list.length);
           }
-          else {
-            atoms_list.push(atom);
-          }
-        } else {
-          atoms_list.push(atom);
         }
       }
-      if (!atoms_list.length) {
-        console.log("it went it?");
-        // delete latestData[mols[m]];
-        // latestData.root.nodes.splice(m, 1);
-      } else {
+      console.log({ atoms_list, bonds_list, container });
+      if (atoms_list.length) {
         console.log("else?", container);
         for (let img_i = 0; img_i < container.length; img_i++) {
           const img_idx = container[img_i];
@@ -218,11 +213,16 @@ const removeImageTemplateAtom = (images, mols, latestData) => {
         }
         mol.atoms = atoms_list;
         mol.bonds = bonds_list;
+        latestData[mols[m]] = mol;
+      } else {
+        delete latestData[mols[m]];
+        const atom_removed_when_empty = latestData.root.nodes.filter(item => item.$ref != mols[m]);
+        latestData.root.nodes = atom_removed_when_empty;
       }
-      latestData[mols[m]] = mol;
+      console.log("-------------------------------------------", data_alias);
     }
   }
-  return { data: latestData };
+  return latestData;
 };
 
 // DOM functions
