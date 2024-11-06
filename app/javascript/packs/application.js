@@ -1,15 +1,20 @@
-/* eslint no-console:0 */
-// This file is automatically compiled by Webpack, along with any other files
-// present in this directory. You're encouraged to place your actual application logic in
-// a relevant structure within app/javascript and only use these pack files to reference
-// that code so it'll be compiled.
-//
-// To reference this file, add <%= javascript_pack_tag 'application' %> to the appropriate
-// layout file, like app/views/layouts/application.html.erb
+// see https://github.com/rackt/react-router/issues/1067
 
-// Uncomment to copy all static images under ./images to the output folder and reference
-// them with the image_pack_tag helper in views (e.g <%= image_pack_tag 'rails.png' %>)
-// or the `imagePath` JavaScript helper below.
-//
-// const images = require.context('./images', true)
-// const imagePath = (name) => images(name, true)
+var React = require('react');
+var Home = require('src/apps/home');
+var CnC = require('src/apps/commandAndControl');
+var AdminHome = require('src/apps/admin');
+var ChemSpectra = require('src/apps/chemspectra/ChemSpectra');
+var ChemSpectraEditor = require('src/apps/chemspectra/ChemSpectraEditor');
+var MoleculeModerator = require('src/apps/moleculeModerator');
+var OmniauthCredential = require('src/apps/omniauthCredential');
+var UserCounter = require('src/apps/userCounter');
+var ScifinderCredential = require('src/apps/scifinderCredential');
+var StructureEditorUserSetting = require('src/components/structureEditor/UserSetting');
+var LoginOptions = require('src/apps/omniauthCredential/LoginOptions');
+var ConverterAdmin = require('src/apps/converter/ConverterAdmin');
+var GenericElementsAdmin = require('src/apps/generic/GenericElementsAdmin');
+var GenericSegmentsAdmin = require('src/apps/generic/GenericSegmentsAdmin');
+var GenericDatasetsAdmin = require('src/apps/generic/GenericDatasetsAdmin');
+var InventoryLabelSettings = require('src/apps/settings/InventoryLabelSettings');
+var mydb = require('src/apps/mydb');
