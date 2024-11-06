@@ -378,7 +378,7 @@ export default class AutoCompleteInput extends React.Component {
               style={{ maxHeight: 400, width: 400 }}
               ref={(alist) => { this.listSuggestions = alist; }}
             >
-              <div className="w-100 bg-white border overflow-auto">
+              <div className="w-100 text-bg-paper border overflow-auto">
                 {this.renderSuggestions()}
               </div>
             </ListGroup>
