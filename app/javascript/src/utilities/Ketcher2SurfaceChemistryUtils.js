@@ -165,10 +165,10 @@ const isNewAtom = (eventItem) => {
   return eventItem.label === inspired_label;
 };
 
+// remove image from the template
 const removeImageTemplateAtom = (images, mols, latestData) => {
   let container = [];
   const data_alias = { ...latestData };
-  console.log({ images, mols, latestData });
   for (let m = 0; m < mols.length; m++) {
     const mol = latestData[mols[m]];
     const atoms_list = mol?.atoms || [];
@@ -190,15 +190,11 @@ const removeImageTemplateAtom = (images, mols, latestData) => {
               }
             }
             bonds_list = updatedBondsList;
-            console.log("pre-length", atoms_list.length);
             atoms_list.splice(i, 1);
-            console.log("post-length", atoms_list.length);
           }
         }
       }
-      console.log({ atoms_list, bonds_list, container });
       if (atoms_list.length) {
-        console.log("else?", container);
         for (let img_i = 0; img_i < container.length; img_i++) {
           const img_idx = container[img_i];
           for (let i = 0; i < atoms_list.length; i++) {
