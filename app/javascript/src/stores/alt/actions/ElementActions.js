@@ -496,7 +496,7 @@ class ElementActions {
 
   generateEmptyCellLine(collectionId, template) {
     const { currentUser } = UserStore.getState();
-    if (!currentUser) { return }
+    if (!currentUser) { return; }
 
     const cellLineSample = CellLine.buildEmpty(collectionId, `${currentUser.initials}-C${currentUser.cell_lines_count}`);
     if (template) {
@@ -824,7 +824,6 @@ class ElementActions {
     };
   }
 
-
   // -- Screens --
   addResearchPlanToScreen(screen_id, collection_id, afterComplete = () => {}) {
     return (dispatch) => {
@@ -838,7 +837,6 @@ class ElementActions {
   generateScreenFromClipboard(collection_id) {
     return collection_id;
   }
-
 
   fetchScreenById(id) {
     return (dispatch) => {
@@ -1039,6 +1037,16 @@ class ElementActions {
     return vesselInstance;
   }
 
+  updateVessel(params) {
+    return (dispatch) => {
+      VesselsFetcher.update(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
 
   // -- DataCite/Radar metadata --
 
