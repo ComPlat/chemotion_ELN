@@ -92,6 +92,46 @@ span.pseudo-link:hover {
   padding-right: 0px !important;
 }
 
+// icon for research plan. just a standard FontAwesome icon
+$font-icons-research_plan: "\f0f6";
+
+.icon-research_plan {
+  font-style: inherit;
+}
+
+.icon-research_plan:before {
+  font-family: FontAwesome;
+  content: "\f0f6";
+}
+
+.icon-cell_line {
+  font-style: inherit;
+}
+
+.icon-cell_line:before {
+  font-family: FontAwesome;
+  content: "\f0a3";
+}
+
+.icon-device_description {
+  font-style: inherit;
+}
+
+.icon-device_description:before {
+  font-family: FontAwesome;
+  content: "\f1b2";
+}
+
+
+.icon-vessel {
+  font-style: inherit;
+}
+.icon-vessel:before {
+  font-family: FontAwesome;
+  content: "\f1fb";
+}
+
+
 .importChemDrawModal {
   width: 98%;
   height: 97%;

@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { types } from 'mobx-state-tree';
 
 const VesselItem = types
@@ -175,9 +176,7 @@ export const VesselDetailsStore = types
       //   itemName: jsCellLineModel.itemName,
       //   shortLabel: jsCellLineModel.short_label,
       // }));
-
     },
-      
     setMaterialProperties(id, properties) {
       const item = self.vessels.get(id);
       if (item === undefined) {
