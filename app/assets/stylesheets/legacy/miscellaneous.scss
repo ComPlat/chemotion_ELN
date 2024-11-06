@@ -120,6 +120,15 @@ $font-icons-research_plan: "\f0f6";
 }
 
 
+.icon-vessel {
+  font-style: inherit;
+}
+.icon-vessel:before {
+  font-family: FontAwesome;
+  content: "\f1fb";
+}
+
+
 .importChemDrawModal {
   width: 98%;
   height: 97%;
