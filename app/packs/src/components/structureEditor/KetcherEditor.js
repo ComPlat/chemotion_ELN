@@ -557,6 +557,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         await updateImagesInTheCanvas(iframeRef);
       }, [250]);
     }
+    resetStore();
+    await fuelKetcherData();
     return;
   };
 
