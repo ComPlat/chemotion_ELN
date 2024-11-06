@@ -1,6 +1,6 @@
 .sidebar {
   @extend .position-relative;
-  @extend .bg-white;
+  @extend .text-bg-paper;
   @extend .p-3;
   width: 300px;
   @extend .flex-shrink-0;
@@ -27,7 +27,7 @@ $sidebar-button-diameter: 16px;
   @extend .text-end;
   @extend .text-primary;
   @extend .rounded-circle;
-  background-color: $white !important;
+  background-color: $chemstrap-paper !important;
   border-color: transparent !important;
   margin-left: -$sidebar-button-diameter;
   width: $sidebar-button-diameter * 2;
