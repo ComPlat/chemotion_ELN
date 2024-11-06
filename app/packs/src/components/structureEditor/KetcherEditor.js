@@ -48,7 +48,6 @@ let all_atoms = [];
 let image_used_counter = -1;
 let re_render_canvas = false;
 let _selection = null;
-let is_erease_selected = false;
 let deleted_atoms_list = [];
 
 // funcation to reset all data containers
@@ -141,7 +140,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     "[title='Undo \\(Ctrl\\+Z\\)']": () => {
       try {
-
         const list = [...editor._structureDef.editor.editor.historyStack];
         const historyPtr = editor._structureDef.editor.editor.historyPtr;
         console.log({ list, historyPtr });
@@ -153,7 +151,6 @@ const KetcherEditor = forwardRef((props, ref) => {
             opp_idx++;
           }
         }
-        console.log({ opp_idx });
         for (let j = 0; j < opp_idx; j++) {
           editor._structureDef.editor.editor.undo();
         }
@@ -163,11 +160,9 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
       try {
-
         const list = [...editor._structureDef.editor.editor.historyStack];
         const historyPtr = editor._structureDef.editor.editor.historyPtr;
         let opp_idx = 1;
-        console.log("REDO", { list, historyPtr });
 
         for (let i = historyPtr; i < list.length; i++) {
           if (list[i]?.operations[0]?.type !== 'Load canvas') {
@@ -176,7 +171,6 @@ const KetcherEditor = forwardRef((props, ref) => {
             opp_idx++;
           }
         }
-        console.log(opp_idx);
         for (let j = 0; j < opp_idx; j++) {
           editor._structureDef.editor.editor.redo();
         }
@@ -378,9 +372,10 @@ const KetcherEditor = forwardRef((props, ref) => {
       // Check if molecule and atoms exist, and if the alias is formatted correctly
       molecule?.atoms?.forEach((item, atom_idx) => {
         if (item.alias) {
-          const alias = item.alias.split("_");
           if (three_parts_patten.test(item.alias)) {
-            const image = imagesList[alias[2]];
+            const alias = item.alias.split("_");
+
+            const image = imagesList[parseInt(alias[2])];
             if (image?.boundingBox) {
               const { x, y } = image?.boundingBox;
               const location = [x, y, 0]; // Set location as an array of coordinates
@@ -550,6 +545,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...filteredArray];
 
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await fuelKetcherData();
     await moveTemplate();
 
     // clear the stack to avoid further event render
