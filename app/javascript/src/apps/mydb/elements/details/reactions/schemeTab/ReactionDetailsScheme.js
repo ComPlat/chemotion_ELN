@@ -43,7 +43,7 @@ export default class ReactionDetailsScheme extends Component {
     const textTemplate = TextTemplateStore.getState().reactionDescription;
     this.state = {
       lockEquivColumn: false,
-      displayYieldField: true,
+      displayYieldField: null,
       reactionDescTemplate: textTemplate.toJS(),
     };
 
@@ -128,10 +128,10 @@ export default class ReactionDetailsScheme extends Component {
     this.setState({ lockEquivColumn: !lockEquivColumn });
   }
 
-  switchYield() {
+  switchYield = (shouldDisplayYield) => {
     const { displayYieldField } = this.state;
-    this.setState({ displayYieldField: !displayYieldField });
-  }
+    this.setState({ displayYieldField: shouldDisplayYield ?? !displayYieldField });
+  };
 
   handleOnConditionSelect(eventKey) {
     const { reaction } = this.props;
@@ -1139,6 +1139,15 @@ export default class ReactionDetailsScheme extends Component {
     const refM = reaction.starting_materials[0];
     if (!reaction.referenceMaterial && refM) {
       reaction.markSampleAsReference(refM.id);
+    }
+
+    if (displayYieldField === null) {
+      const allHaveNoConversion = reaction.products.every(
+        (material) => material.conversion_rate && material.conversion_rate !== 0
+      );
+      if (allHaveNoConversion) {
+        this.switchYield(!allHaveNoConversion);
+      }
     }
 
     const headReactants = reaction.starting_materials.length ?? 0;

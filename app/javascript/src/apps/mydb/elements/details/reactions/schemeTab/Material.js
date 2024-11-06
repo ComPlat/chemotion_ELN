@@ -280,7 +280,7 @@ class Material extends Component {
 
   yieldOrConversionRate(material) {
     const { reaction, displayYieldField } = this.props;
-    if (displayYieldField) {
+    if (displayYieldField === true || displayYieldField === null) {
       return (
         <div>
           <Form.Control
