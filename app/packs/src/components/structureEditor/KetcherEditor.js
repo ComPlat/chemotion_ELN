@@ -48,7 +48,7 @@ let all_atoms = [];
 let image_used_counter = -1;
 let re_render_canvas = false;
 let _selection = null;
-
+let is_erease_selected = false;
 // funcation to reset all data containers
 const resetStore = () => {
   FILOStack = [];
@@ -94,33 +94,29 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack("Delete image");
     },
     "Delete atom": async (eventItem) => {
-      if (eventItem.label === inspired_label) {
-        console.log("DELETE ATOM!!", _selection, eventItem);
+      console.log("DELETE atom!!", _selection);
+      if (eventItem.label === inspired_label && is_erease_selected) {
         await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-        FILOStack = [];
-        uniqueEvents = new Set();
-        _selection = null;
-        return;
-        // if (atoms && atoms.length && !images) {
-        //   console.log(all_atoms[atoms[0]]);
-        //   for (let m = 0; m < mols?.length; m++) {
-        //     const mol = mols[m];
-        //     const all_atoms = latestData[mol]?.atoms;
-        //     for (let a = 0; a < all_atoms?.length; a++) {
-        //       atom_counter++;
-        //       if (atoms.indexOf(atom_counter) != -1) {
-        //         atoms_data.add(all_atoms[a].alias);
-        //         count_to_reduce++;
-        //       }
+        // return;
+        // let atom_counter = 0;
+        // for (let m = 0; m < mols?.length; m++) {
+        //   const mol = mols[m];
+        //   const all_atoms = latestData[mol]?.atoms;
+        //   for (let a = 0; a < all_atoms?.length; a++) {
+        //     atom_counter++;
+        //     if (_selection.atoms.indexOf(atom_counter) != -1) {
+        //       // atoms_data.add(all_atoms[a].alias);
+        //       // count_to_reduce++;
+        //       console.log("which atom", all_atoms[a]);
         //     }
         //   }
-        //   atoms_data.forEach((item, idx) => {
-        //     if (three_parts_patten.test(item)) {
-        //       const splits = item.split("_");
-        //       data.root.nodes.splice(mols.length - 1 + parseInt(splits[2]), 1);
-        //     }
-        //   });
         // }
+        // atoms_data.forEach((item, idx) => {
+        //   if (three_parts_patten.test(item)) {
+        //     const splits = item.split("_");
+        //     data.root.nodes.splice(mols.length - 1 + parseInt(splits[2]), 1);
+        //   }
+        // });
       }
     },
     "Update": async (eventItem) => {
@@ -504,6 +500,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       const { images } = _selection;
       if (images.length) {
         let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
+        console.log(data);
         await editor.structureDef.editor.setMolecule(JSON.stringify(data));
         image_used_counter -= images.length;
       }
@@ -513,6 +510,11 @@ const KetcherEditor = forwardRef((props, ref) => {
       _selection = null;
       return;
     };
+  };
+
+
+  const eraseStateAlert = () => {
+    is_erease_selected = true;
   };
 
   // helper function to add mutation oberservers to DOM elements
@@ -525,7 +527,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         setTimeout(() => {
           const eraseButton = iframeDocument.querySelector('[title="Erase \\(Del\\)"]');
           if (eraseButton && eraseButton.classList.contains('ActionButton-module_selected__kPCxA')) {
-            // eraseStateAlert(); // Call your function if the class is present
+            eraseStateAlert(); // Call your function if the class is present
           }
         }, 10);
       };
