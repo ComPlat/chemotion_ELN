@@ -273,6 +273,7 @@ class Material extends Component {
           unit="%"
           disabled={!permitOn(reaction)}
           onChange={(e) => this.handleConversionRateChange(e)}
+          size="sm"
         />
       </div>
     );
@@ -287,7 +288,7 @@ class Material extends Component {
             name="yield"
             type="text"
             bsClass="bs-form--compact form-control"
-            bsSize="small"
+            size="sm"
             value={this.calculateYield(material, reaction) || 'n.d.'}
             disabled
           />
