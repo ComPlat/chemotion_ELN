@@ -50,7 +50,6 @@ module Import
     end
 
     def self.build_chemical_data(map_column, chemical, key, formated_value)
-
       if map_column.present? && should_process_key(key)
         chemical['chemical_data'][0][key] = formated_value
       elsif SAFETY_SHEET.include?(key)
