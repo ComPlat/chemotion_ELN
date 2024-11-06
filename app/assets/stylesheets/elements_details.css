@@ -31,7 +31,7 @@
 
 .full-screen .eln-panel-detail > .panel-body {
   overflow-x: hidden;
-  overflow-y: scroll;
+  /* overflow-y: scroll; */
   max-height: calc(100vh - 110px);
 }
 

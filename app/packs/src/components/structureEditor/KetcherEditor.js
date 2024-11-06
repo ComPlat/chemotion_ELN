@@ -49,6 +49,8 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let _selection = null;
 let is_erease_selected = false;
+let deleted_atoms_list = [];
+
 // funcation to reset all data containers
 const resetStore = () => {
   FILOStack = [];
@@ -77,9 +79,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     "Add atom": async (eventItem) => {
       console.log("Add atom", eventItem);
-      // if (isNewAtom(eventItem)) {
       addEventToFILOStack("Add atom");
-      // }
     },
     "Upsert image": async () => {
       addEventToFILOStack("Upsert image");
@@ -94,33 +94,23 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack("Delete image");
     },
     "Delete atom": async (eventItem) => {
-      console.log("DELETE atom!!", _selection);
-      if (eventItem.label === inspired_label && is_erease_selected) {
-        await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-        // return;
-        // let atom_counter = 0;
-        // for (let m = 0; m < mols?.length; m++) {
-        //   const mol = mols[m];
-        //   const all_atoms = latestData[mol]?.atoms;
-        //   for (let a = 0; a < all_atoms?.length; a++) {
-        //     atom_counter++;
-        //     if (_selection.atoms.indexOf(atom_counter) != -1) {
-        //       // atoms_data.add(all_atoms[a].alias);
-        //       // count_to_reduce++;
-        //       console.log("which atom", all_atoms[a]);
-        //     }
-        //   }
-        // }
-        // atoms_data.forEach((item, idx) => {
-        //   if (three_parts_patten.test(item)) {
-        //     const splits = item.split("_");
-        //     data.root.nodes.splice(mols.length - 1 + parseInt(splits[2]), 1);
-        //   }
-        // });
+      let atom_counter = -1;
+      if (eventItem.label === inspired_label) {
+        for (let m = 0; m < mols?.length; m++) {
+          const mol = mols[m];
+          const atoms = latestData[mol]?.atoms;
+          for (let a = 0; a < atoms?.length; a++) {
+            atom_counter++;
+            if (atom_counter == eventItem.id) {
+              deleted_atoms_list.push(atoms[a]);
+            }
+          }
+        }
+        addEventToFILOStack("Delete atom");
       }
     },
     "Update": async (eventItem) => {
-      // console.log(eventItem);
+      console.log(eventItem);
     },
   };
 
@@ -131,6 +121,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Move atom': async () => await moveTemplate(),
     'Add atom': async () => await handleAddAtom(),
     'Delete image': async () => await handleOnDeleteImage(),
+    'Delete atom': async () => await handleOnDeleteAtom(),
   };
 
   // DOM button events with scope
@@ -231,7 +222,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
     mols = sliceEnd > 0
       ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
-      : mols;
+      : [];
     mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
     // console.log("DATA FUELED", { image_used_counter, latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
   };
@@ -498,7 +489,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     console.log("handleOnDelete", mols);
     if (_selection) {
       const { images } = _selection;
-      if (images.length) {
+      if (images && images.length) {
         let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
         console.log(data);
         await editor.structureDef.editor.setMolecule(JSON.stringify(data));
@@ -508,10 +499,70 @@ const KetcherEditor = forwardRef((props, ref) => {
       FILOStack = [];
       uniqueEvents = new Set();
       _selection = null;
+      if (!skip_image_layering) {
+        setTimeout(async () => {
+          await updateImagesInTheCanvas(iframeRef);
+        }, [250]);
+      }
       return;
     };
   };
 
+  // helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
+  // idea: this case cannot not be a normal case; but process will crash if not handeled
+  const handleOnDeleteAtom = async () => {
+    const images_tbr = [];
+    let last_item = false;
+    console.log({ deleted_atoms_list });
+    deleted_atoms_list.forEach((item, _) => {
+      const deleted_splits = parseInt(item.alias.split("_")[2]);
+      for (let m = 0; m < mols.length; m++) {
+        const mol = latestData[mols[m]];
+        if (mol && mol?.atoms) {
+          const atoms = mol?.atoms || [];
+          for (let i = 0; i < atoms.length; i++) {
+            const atom = atoms[i];
+            console.log(atom, "out");
+            if (three_parts_patten.test(atom?.alias)) {
+              const atom_splits = atom.alias.split("_");
+              console.log({ nd: parseInt(atom_splits[2]), ds: deleted_splits });
+              if (parseInt(atom_splits[2]) === 0) {
+                images_tbr.push(0);
+              }
+              if (parseInt(atom_splits[2]) > deleted_splits) {
+                atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
+                images_tbr.push(parseInt(atom_splits[2]));
+              }
+            } else {
+              last_item = true;
+            }
+          }
+          latestData[mols[m]].atoms = atoms;
+        }
+      }
+    });
+    image_used_counter -= deleted_atoms_list.length;
+
+    // why? this handles when there is not atom with alias left and deleted_atoms_list has a length; that means last atom with alias was deleted and now the image at 0th place should be removed
+    !images_tbr.length && deleted_atoms_list.length == 1 && last_item && images_tbr.push(0);
+
+    const filteredArray = imagesList.filter((_, index) => !images_tbr.includes(index));
+    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...filteredArray];
+
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await moveTemplate();
+
+    // clear the stack to avoid further event render
+    deleted_atoms_list = [];
+    FILOStack = [];
+    uniqueEvents = new Set();
+    if (!skip_image_layering) {
+      setTimeout(async () => {
+        await updateImagesInTheCanvas(iframeRef);
+      }, [250]);
+    }
+    return;
+  };
 
   const eraseStateAlert = () => {
     is_erease_selected = true;
