@@ -1,3 +1,4 @@
+$white: $chemstrap-paper;
 $primary: $chemstrap-blue;
 $secondary: $chemstrap-interaction-grey1;
 $success: $chemstrap-green;
@@ -17,6 +18,7 @@ $zindex-levels: (
 
 $chemstrap-theme-colors: (
   "active": $chemstrap-blue-dark,
+  "paper": $chemstrap-paper,
 );
 
 @import "bootstrap/functions";
@@ -39,8 +41,11 @@ $input-btn-padding-y: 0.3rem;
 $enable-negative-margins: true;
 
 $table-bg: transparent;
+$card-bg: $chemstrap-paper;
+$accordion-bg: $chemstrap-paper;
+
 $popover-max-width: 50vw;
-$input-bg: $white;
+$input-bg: $chemstrap-paper;
 $form-select-bg: $input-bg;
 $form-check-input-bg: $input-bg;
 $form-label-font-weight: $font-weight-bold;
