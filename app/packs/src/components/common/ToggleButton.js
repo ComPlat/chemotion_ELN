@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
@@ -14,6 +14,10 @@ export default function ToggleButton({
     if (onToggle) onToggle(newToggledState);
     if (onChange) onChange(newToggledState);
   };
+
+  useEffect(() => {
+    setIsToggled(isToggledInitial);
+  }, [isToggledInitial]);
 
   const buttonColor = isToggled ? onColor : offColor;
   const toolTipMessage = isToggled ? tooltipOn : tooltipOff;

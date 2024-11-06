@@ -164,10 +164,14 @@ function GeneralMaterialGroup({
     + ' The conversion will not be displayed as part of the reaction scheme';
     const yieldText = 'Click to switch to yield field.'
     + ' The yield will be displayed as part of the reaction scheme';
+    let conversionOrYield = displayYieldField;
+    if (displayYieldField || displayYieldField === null) {
+      conversionOrYield = true;
+    }
     return (
       <div>
         <ToggleButton
-          isToggledInitial={displayYieldField}
+          isToggledInitial={conversionOrYield}
           onToggle={switchYield}
           onLabel="Yield"
           offLabel="Conv."
@@ -361,13 +365,13 @@ SolventsMaterialGroup.propTypes = {
 MaterialGroup.defaultProps = {
   showLoadingColumn: false,
   lockEquivColumn: false,
-  displayYieldField: true
+  displayYieldField: null
 };
 
 GeneralMaterialGroup.defaultProps = {
   showLoadingColumn: false,
   lockEquivColumn: false,
-  displayYieldField: true
+  displayYieldField: null
 };
 
 export { MaterialGroup, GeneralMaterialGroup, SolventsMaterialGroup };
