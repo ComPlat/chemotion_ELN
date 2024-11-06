@@ -1,21 +1,27 @@
+/* eslint-disable react/function-component-definition */
 import React, { useContext } from 'react';
 import { Accordion } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty.js'; // Adjust the import path as needed
+import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty'; // Adjust the import path as needed
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
 
 const VesselProperties = ({ item, readOnly }) => {
+
+  console.log('item: ', item);
   const { vesselDetailsStore } = useContext(StoreContext);
-  const vesselItem = vesselDetailsStore.vessels(item.id);
-  const vesselId = item.id;
+  // const vesselItem = vesselDetailsStore.getVessel(item.id);
+  const vesselItem = item;
+  const vesselTemplate = item.vessel_template;
+  console.log('vesselItem in VesselProperties: ', vesselItem);
+  const vesselId = vesselItem.id;
 
   return (
     <Accordion className="vessel-properties" defaultActiveKey="common-properties">
       <Accordion.Item eventKey="common-properties">
         <Accordion.Header>
-          <InvalidPropertyWarning item={item} propsToCheck={['name', 'material_type']} />
+          {/* <InvalidPropertyWarning item={item} propsToCheck={['name', 'material_type']} /> */}
           Vessel Properties
         </Accordion.Header>
         <Accordion.Body>
@@ -27,51 +33,53 @@ const VesselProperties = ({ item, readOnly }) => {
           />
           <VesselProperty
             label="Details"
-            value={vesselItem.details}
+            value={vesselTemplate.details || ''}
             onChange={(e) => vesselDetailsStore.changeDetails(vesselId, e.target.value)}
             readOnly={readOnly}
-            optional={true}
+            optional
           />
           <VesselProperty
             label="Material Type"
-            value={vesselItem.materialType}
+            value={vesselTemplate.material_type || ''}
             onChange={(e) => vesselDetailsStore.changeMaterialType(vesselId, e.target.value)}
             readOnly={readOnly}
           />
           <VesselProperty
             label="Vessel Type"
-            value={vesselItem.vesselType}
+            value={vesselTemplate.vessel_type || ''}
             onChange={(e) => vesselDetailsStore.changeVesselType(vesselId, e.target.value)}
             readOnly={readOnly}
-            optional={true}
+            optional
           />
           <VesselProperty
             label="Volume Amount"
-            value={vesselItem.volumeAmount}
+            value={vesselTemplate.volume_amount || ''}
             onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
-            isNumeric={true}
+            isNumeric
+            optional
           />
           <VesselProperty
             label="Volume Unit"
-            value={vesselItem.volumeAmount}
+            value={vesselItem.volume_unit}
             onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
-            isNumeric={true}
+            optional
           />
           <VesselProperty
             label="Weight Amount"
-            value={vesselItem.weightAmount}
+            value={vesselItem.weight_amount}
             onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
-            isNumeric={true}
+            isNumeric
+            optional
           />
           <VesselProperty
             label="Weight Unit"
-            value={vesselItem.weightAmount}
+            value={vesselItem.weight_amount}
             onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
-            isNumeric={true}
+            optional
           />
         </Accordion.Body>
       </Accordion.Item>
