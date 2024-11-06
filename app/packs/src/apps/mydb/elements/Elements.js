@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Button } from 'react-bootstrap';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
@@ -37,11 +36,10 @@ export default class Elements extends Component {
 
   render() {
     const { showDetailView } = this.state;
-
     return (
       <div className="flex-grow-1">
-        <PanelGroup className="p-3" direction="horizontal">
-          <Panel defaultSize={40} className="overflow-x-auto">
+        <PanelGroup direction="horizontal">
+          <Panel defaultSize={40} className="overflow-x-auto pt-3 px-3">
             <div className="h-100" style={{ minWidth: '600px' }}>
               <ElementsList overview={!showDetailView} />
             </div>
@@ -49,13 +47,8 @@ export default class Elements extends Component {
 
           {showDetailView && (
             <>
-              <PanelResizeHandle>
-                <Button>
-                  <i className="fa fa-exchange" />
-                </Button>
-                <div className="elements_separator" />
-              </PanelResizeHandle>
-              <Panel defaultSize={60} className="overflow-x-auto">
+              <PanelResizeHandle className="panel-resize-handle" />
+              <Panel defaultSize={60} className="overflow-x-auto pt-3 px-3">
                 <div className="h-100" style={{ minWidth: '680px' }}>
                   <ElementDetails />
                 </div>

@@ -1,0 +1,25 @@
+.panel-resize-handle {
+  @extend .bg-white;
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .justify-content-center;
+  width: 12px;
+  &:after {
+    content: "";
+    height: 42px;
+    top: calc(50% - 42px);
+    background-image: radial-gradient(
+      circle at 4px 4px,
+      $chemstrap-interaction-grey4 2px,
+      transparent 0
+    );
+    background-size: 5px 5px;
+  }
+  &:hover:after {
+    background-image: radial-gradient(
+      circle at 4px 4px,
+      $chemstrap-interaction-grey5 2px,
+      transparent 0
+    );
+  }
+}
