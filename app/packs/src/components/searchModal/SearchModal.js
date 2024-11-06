@@ -67,9 +67,9 @@ const SearchModal = () => {
   }
 
   let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
-  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'bg-white';
-  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'bg-white';
-  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'bg-white';
+  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-bg-paper';
+  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-bg-paper';
+  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-bg-paper';
 
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
