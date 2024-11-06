@@ -84,17 +84,6 @@ GIT
     rdkit_chem (2020.04.30.1)
 
 GIT
-  remote: https://github.com/rails/webpacker
-  revision: a715e055d937748c7cfd34b0450295348ca13ee6
-  branch: master
-  specs:
-    webpacker (6.0.0.rc.6)
-      activesupport (>= 5.2)
-      rack-proxy (>= 0.6.1)
-      railties (>= 5.2)
-      semantic_range (>= 2.3.0)
-
-GIT
   remote: https://github.com/toretore/semacode.git
   revision: 4e31e0b79a1a63c98f2560359c1c6a527b00bacc
   branch: master
@@ -534,6 +523,7 @@ GEM
       validate_url
       webfinger (~> 2.0)
     orm_adapter (0.5.0)
+    package_json (0.1.0)
     pandoc-ruby (2.1.10)
     paperclip (5.2.1)
       activemodel (>= 4.2.0)
@@ -730,7 +720,7 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
-    semantic_range (3.0.0)
+    semantic_range (3.1.0)
     sentry-delayed_job (5.19.0)
       delayed_job (>= 4.0)
       sentry-ruby (~> 5.19.0)
@@ -740,6 +730,12 @@ GEM
     sentry-ruby (5.19.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
+    shakapacker (8.0.2)
+      activesupport (>= 5.2)
+      package_json
+      rack-proxy (>= 0.6.1)
+      railties (>= 5.2)
+      semantic_range (>= 2.3.0)
     shoulda-matchers (5.3.0)
       activesupport (>= 5.2.0)
     shrine (3.6.0)
@@ -845,7 +841,7 @@ GEM
       rails (>= 3.0)
       rake (>= 0.8.7)
     yard (0.9.36)
-    zeitwerk (2.7.0)
+    zeitwerk (2.6.18)
 
 PLATFORMS
   x86_64-linux
@@ -970,6 +966,7 @@ DEPENDENCIES
   sentry-delayed_job
   sentry-rails
   sentry-ruby
+  shakapacker (= 8.0.2)
   shoulda-matchers
   shrine (~> 3.0)
   simplecov
@@ -985,7 +982,6 @@ DEPENDENCIES
   web-console
   webdrivers
   webmock
-  webpacker!
   whenever
   yaml_db
 

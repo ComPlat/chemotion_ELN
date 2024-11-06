@@ -105,6 +105,7 @@ gem 'ruby-ole'
 gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 gem 'sassc-rails'
 gem 'scenic'
+gem 'shakapacker', '8.0.2'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
 
@@ -119,7 +120,6 @@ gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
 gem 'turbo-sprockets-rails4'
 gem 'tzinfo-data'
 
-gem 'webpacker', git: 'https://github.com/rails/webpacker', branch: 'master'
 gem 'whenever', require: false
 
 gem 'yaml_db'
