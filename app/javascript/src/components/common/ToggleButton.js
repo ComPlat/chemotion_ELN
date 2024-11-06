@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 export default function ToggleButton({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
-  onColor, offColor, tooltipOn, tooltipOff, fontSize, fontWeight
+  onColor, offColor, tooltipOn, tooltipOff, fontType, fontColor
 }) {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
 
@@ -28,9 +28,9 @@ export default function ToggleButton({
         className={`toggle-button ${isToggled ? 'on' : 'off'}`}
         size="xs"
         onClick={handleChange}
-        style={{ backgroundColor: buttonColor, minWidth: '50px', border: 'none' }}
+        style={{ backgroundColor: buttonColor, border: 'none', padding: '0px 0px 0px 0px' }}
       >
-        <span className="fs-6">
+        <span className={`fs-6 ${fontType} ${fontColor}`}>
           {isToggled ? onLabel : offLabel}
         </span>
       </Button>
@@ -48,8 +48,8 @@ ToggleButton.propTypes = {
   offColor: PropTypes.string,
   tooltipOn: PropTypes.string,
   tooltipOff: PropTypes.string,
-  fontWeight: PropTypes.string,
-  fontSize: PropTypes.string,
+  fontType: PropTypes.string,
+  fontColor: PropTypes.string,
 };
 
 ToggleButton.defaultProps = {
@@ -61,6 +61,6 @@ ToggleButton.defaultProps = {
   offColor: '#d3d3d3',
   tooltipOn: 'Click to switch off',
   tooltipOff: 'Click to switch on',
-  fontWeight: 'normal',
-  fontSize: '1em',
+  fontType: 'normal',
+  fontColor: '1em',
 };
