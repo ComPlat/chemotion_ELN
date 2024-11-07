@@ -598,14 +598,6 @@ export default class ResearchPlanDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      research_plan: 'Research Plan',
-      analyses: 'Analyses',
-      attachments: 'Attachments',
-      wellplates: 'Wellplates',
-      references: 'References',
-      metadata: 'Metadata',
-    };
     addSegmentTabs(researchPlan, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -623,7 +615,6 @@ export default class ResearchPlanDetails extends Component {
           <ElementDetailSortTab
             type="research_plan"
             availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
           <div className="tabs-container--with-borders">

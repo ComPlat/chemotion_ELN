@@ -7,9 +7,10 @@ import Immutable from 'immutable';
 import _, { isEmpty } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
+import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 
 export default class ElementDetailSortTab extends Component {
@@ -74,7 +75,7 @@ export default class ElementDetailSortTab extends Component {
   }
 
   updateLayout() {
-    const layout = filterTabLayout(this.tabLayoutContainerElement.state);
+    const layout = filterTabLayout(this.state);
     const { currentCollection } = UIStore.getState();
     const { type } = this.props;
     let tabSegment = currentCollection?.tabs_segment;
@@ -91,27 +92,26 @@ export default class ElementDetailSortTab extends Component {
     UserActions.updateUserProfile(userProfile);
   }
 
+  onLayoutChange = (visible, hidden) => {
+    this.setState({ visible, hidden });
+  }
+
   render() {
     const { visible, hidden, showTabLayoutContainer } = this.state;
     const { tabTitles } = this.props;
     const { currentCollection } = UIStore.getState();
     const tabs = currentCollection?.tabs_segment;
     const buttonInfo = isEmpty(tabs) ? 'info' : 'light';
-    const wd = 200 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
+
     const popoverSettings = (
-      <Popover
-        className="scrollable-popover"
-        id="tab-layout-popover"
-        style={{ maxWidth: 'none', width: `${wd}px` }}
-      >
+      <Popover>
         <Popover.Header>Tab Layout</Popover.Header>
         <Popover.Body>
-          <TabLayoutContainer
+          <TabLayoutEditor
             visible={visible}
             hidden={hidden}
-            tabTitles={tabTitles}
-            isElementDetails
-            ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
+            getItemComponent={({item}) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
+            onLayoutChange={this.onLayoutChange}
           />
         </Popover.Body>
       </Popover>
@@ -134,7 +134,7 @@ export default class ElementDetailSortTab extends Component {
         <Overlay
           onHide={this.onCloseTabLayoutContainer}
           target={buttonRef}
-          placement="bottom"
+          placement="left"
           rootClose
           show={showTabLayoutContainer}
         >
@@ -146,9 +146,14 @@ export default class ElementDetailSortTab extends Component {
 }
 
 ElementDetailSortTab.propTypes = {
-  type: PropTypes.string,
-  onTabPositionChanged: PropTypes.func,
-  availableTabs: PropTypes.arrayOf(PropTypes.string),
+  type: PropTypes.string.isRequired,
+  onTabPositionChanged: PropTypes.func.isRequired,
+  availableTabs: PropTypes.arrayOf(PropTypes.string).isRequired,
   tabTitles: PropTypes.object,
   addInventoryTab: PropTypes.bool,
+};
+
+ElementDetailSortTab.defaultProps = {
+  tabTitles: {},
+  addInventoryTab: false,
 };
