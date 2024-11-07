@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
@@ -48,7 +49,11 @@ export default class Elements extends Component {
 
           {showDetailView && (
             <>
-              <PanelResizeHandle className="panel-resize-handle" />
+              <PanelResizeHandle className="panel-resize-handle">
+                <Button className="panel-collapse-button" onClick={() => {alert('auf und zu!')}}>
+                  <i className="fa fa-angle-double-left" />
+                </Button>
+              </PanelResizeHandle>
               <Panel defaultSize={60} className="overflow-x-auto pt-3 px-3">
                 <div className="h-100" style={{ minWidth: '680px' }}>
                   <ElementDetails />
