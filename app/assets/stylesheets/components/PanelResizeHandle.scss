@@ -2,9 +2,10 @@
   @extend .text-bg-paper;
   @extend .d-flex;
   @extend .flex-column;
-  @extend .justify-content-center;
+  @extend .justify-content-evenly;
   width: 12px;
-  &:after {
+  &:after,
+  &:before {
     content: "";
     height: 42px;
     top: calc(50% - 42px);
@@ -15,11 +16,19 @@
     );
     background-size: 5px 5px;
   }
-  &:hover:after {
+  &:hover:after,
+  &:hover:before {
     background-image: radial-gradient(
       circle at 4px 4px,
       $chemstrap-interaction-grey5 2px,
       transparent 0
     );
   }
+}
+
+.panel-collapse-button {
+  @extend .btn-sm;
+  @extend .p-0;
+  height: 20%;
+  cursor: pointer !important;
 }
