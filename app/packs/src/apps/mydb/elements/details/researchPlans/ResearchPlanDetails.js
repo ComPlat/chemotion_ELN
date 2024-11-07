@@ -111,6 +111,8 @@ export default class ResearchPlanDetails extends Component {
     this.context.attachmentNotificationStore.clearMessages();
 
     if (researchPlan.isNew) {
+      const { currentCollection } = UIStore.getState();
+      researchPlan["is_sync_to_me"] = currentCollection ? Boolean(currentCollection["is_sync_to_me"]) : false;
       ElementActions.createResearchPlan(researchPlan);
     } else {
       ElementActions.updateResearchPlan(researchPlan);

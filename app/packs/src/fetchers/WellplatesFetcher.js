@@ -87,7 +87,7 @@ export default class WellplatesFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(wellplate.serialize())
+      body: JSON.stringify({...wellplate.serialize(), is_sync_to_me: wellplate["is_sync_to_me"]})
     })
       .then((response) => response.json())
       .then((json) => {

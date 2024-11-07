@@ -99,6 +99,8 @@ export default class ScreenDetails extends Component {
     LoadingActions.start();
 
     if (screen.isNew) {
+      const { currentCollection } = UIStore.getState();
+      screen["is_sync_to_me"] = currentCollection ? Boolean(currentCollection["is_sync_to_me"]) : false;
       ElementActions.createScreen(screen);
     } else {
       ElementActions.updateScreen(screen);
