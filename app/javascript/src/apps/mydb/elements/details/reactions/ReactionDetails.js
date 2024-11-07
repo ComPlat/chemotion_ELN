@@ -590,10 +590,6 @@ export default class ReactionDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      green_chemistry: 'Green Chemistry'
-    };
-
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -617,7 +613,6 @@ export default class ReactionDetails extends Component {
           <ElementDetailSortTab
             type="reaction"
             availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
