@@ -361,7 +361,6 @@ export default class WellplateDetails extends Component {
 
     };
 
-    const tabTitlesMap = {};
     addSegmentTabs(wellplate, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -380,7 +379,6 @@ export default class WellplateDetails extends Component {
           <ElementDetailSortTab
             type="wellplate"
             availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">

@@ -10,7 +10,6 @@ const DragDropItemTypes = {
   MOLECULE: 'molecule',
   RESEARCH_PLAN: 'research_plan',
   RESEARCH_PLAN_FIELD: 'research_plan_field',
-  LAYOUT: 'layout',
   GENERAL: 'general',
   DATA: 'data',
   UNLINKED_DATA: 'unlinked_data',

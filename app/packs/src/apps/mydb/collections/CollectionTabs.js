@@ -1,14 +1,16 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import {
-  Button, Modal, Col
+  Button, Modal, Col, Row
 } from 'react-bootstrap';
 import _ from 'lodash';
+import { List } from 'immutable';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
+import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 
 const elements = [
@@ -27,22 +29,24 @@ export default class CollectionTabs extends React.Component {
       profileData: {},
       showModal: false,
       currentCollection: {},
-      layouts: [],
+      layouts: elements.reduce((acc, { name }) => {
+        acc[name] = { visible: List(), hidden: List() };
+        return acc;
+      }, {}),
       tree: {
         label: 'My Collections',
         id: -1,
         children: []
       },
     };
-    this.tabRef = [];
 
     this.onStoreChange = this.onStoreChange.bind(this);
     this.onClickCollection = this.onClickCollection.bind(this);
-    this.clickedOnBack = this.clickedOnBack.bind(this);
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
 
     this.handleChange = this.handleChange.bind(this);
     this.renderNode = this.renderNode.bind(this);
+    this.handleSave = this.handleSave.bind(this);
   }
 
   componentDidMount() {
@@ -76,23 +80,24 @@ export default class CollectionTabs extends React.Component {
   }
 
   onClickCollection(node) {
-    const { addInventoryTab } = this.props;
-    const { layouts, profileData } = this.state;
-    this.setState({ currentCollection: node });
-    this.handleModalOptions(this.state.showModal);
-    elements.forEach((element, index) => {
-      let layout = {};
-      if (_.isEmpty(node.tabs_segment[element.name])) {
-        layout = (profileData && profileData[`layout_detail_${element.name}`]) || {};
-      } else {
-        layout = node.tabs_segment[element.name];
-      }
-      const { visible, hidden } = getArrayFromLayout(layout, element.name, addInventoryTab);
-      layout = { visible, hidden };
-      layouts[index] = layout;
-    });
+    const { profileData } = this.state;
 
-    this.setState({ layouts });
+    const layouts = elements.reduce((acc, { name }) => {
+      let layout;
+      if (_.isEmpty(node.tabs_segment[name])) {
+        layout = (profileData && profileData[`layout_detail_${name}`]) || {};
+      } else {
+        layout = node.tabs_segment[name];
+      }
+      acc[name] = getArrayFromLayout(layout, name, false);
+      return acc;
+    }, {});
+
+    this.setState({
+      currentCollection: node,
+      showModal: true,
+      layouts,
+    });
   }
 
   handleChange(tree) {
@@ -101,29 +106,20 @@ export default class CollectionTabs extends React.Component {
     });
   }
 
-  handleModalOptions(showModal) {
-    this.setState({ showModal: !showModal });
-  }
-
-  handleSave(showModal) {
-    const cCol = this.state.currentCollection;
-    let layoutSegments = {};
-    elements.forEach((_e, index) => {
-      const layout = filterTabLayout(this.tabRef[index].state);
-      layoutSegments = { ...layoutSegments, [elements[index].name]: layout };
-    });
-    const params = { layoutSegments, currentCollectionId: cCol.id };
-    CollectionActions.createTabsSegment(params);
-    this.setState({ showModal: !showModal });
+  handleSave() {
+    const { currentCollection: cCol, layouts } = this.state;
+    const layoutSegments = elements.reduce((acc, { name }) => {
+      const layout = filterTabLayout(layouts[name]);
+      acc[name] = layout;
+      return acc;
+    }, {});
+    CollectionActions.createTabsSegment({ layoutSegments, currentCollectionId: cCol.id });
+    this.setState({ showModal: false });
     if (cCol.ancestry) {
       this.state.tree.children.find((c) => c.id === parseInt(cCol.ancestry)).children.find((ch) => ch.id === cCol.id).tabs_segment = layoutSegments;
     } else {
       this.state.tree.children.find((c) => c.id === cCol.id).tabs_segment = layoutSegments;
     }
-  }
-
-  clickedOnBack() {
-    this.handleModalOptions(this.state.showModal);
   }
 
   renderNode(node) {
@@ -149,12 +145,12 @@ export default class CollectionTabs extends React.Component {
   }
 
   render() {
-    const { tree, showModal, layouts } = this.state;
+    const { currentCollection, tree, showModal, layouts } = this.state;
     const tabTitlesMap = {
       qc_curation: 'QC & curation',
-      computed_props: 'computed props',
       nmr_sim: 'NMR Simulation'
     };
+
     return (
       <div className="tree">
         <Tree
@@ -170,32 +166,34 @@ export default class CollectionTabs extends React.Component {
           centered
           animation
           show={showModal}
-          onHide={() => this.handleModalOptions(showModal)}
+          onHide={() => this.setState({ showModal: false })}
         >
           <Modal.Header closeButton>
-            <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
+            <Modal.Title>{currentCollection.label}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {layouts.map((lay, index) => {
-              const callbackRef = (node) => this.tabRef[index] = node;
-              return (
-                <div key={elements[index].name}>
-                  <Col md={6}>
-                    <p className="collection-tag-element">{elements[index].label}</p>
-                  </Col>
-                  <Col md={12}>
-                    <TabLayoutContainer
-                      visible={lay.visible}
-                      hidden={lay.hidden}
-                      tabTitles={tabTitlesMap}
-                      isCollectionTab
-                      ref={callbackRef}
-                    />
-                  </Col>
-                  &nbsp;
-                </div>
-              );
-            })}
+            <Row>
+              {elements.map(({ name, label }) => (
+                <Col key={name}>
+                  <p className="collection-tag-element">{label}</p>
+                  <TabLayoutEditor
+                    visible={layouts[name].visible}
+                    hidden={layouts[name].hidden}
+                    getItemComponent={({ item }) => (
+                      <div>{tabTitlesMap[item] ?? capitalizeWords(item)}</div>
+                    )}
+                    onLayoutChange={(visible, hidden) => {
+                      this.setState(({layouts}) => ({
+                        layouts: {
+                          ...layouts,
+                          [name]: { visible, hidden }
+                        }
+                      }));
+                    }}
+                  />
+                </Col>
+              ))}
+            </Row>
           </Modal.Body>
           <Modal.Footer>
             <div className="alert alert-info" role="alert">
@@ -205,7 +203,7 @@ export default class CollectionTabs extends React.Component {
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
               </p>
             </div>
-            <Button variant="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
+            <Button variant="primary" onClick={this.handleSave}>Save</Button>
           </Modal.Footer>
         </Modal>
       </div>
