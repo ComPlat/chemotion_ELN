@@ -164,7 +164,7 @@ export default class ElementsTableSettings extends React.Component {
         </Popover.Body>
         {showSettings && (
           <>
-            <Popover.Header>Settings</Popover.Header>
+            <Popover.Header className="popover-header--additional">Settings</Popover.Header>
             <Popover.Body>
               <Form>
                 <Form.Check
