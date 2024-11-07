@@ -407,12 +407,6 @@ export default class ScreenDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      properties: 'Properties',
-      analyses: 'Analyses',
-      research_plans: 'Research Plans',
-    };
-
     addSegmentTabs(screen, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -451,7 +445,6 @@ export default class ScreenDetails extends Component {
           <ElementDetailSortTab
             type="screen"
             availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
           <div className="tabs-container--with-borders">
