@@ -83,7 +83,7 @@ $button-variant-colors: (
   }
 }
 
-.popover-header:not(:first-child) {
+.popover-header--additional {
   border-top: var(--bs-popover-border-width) solid var(--bs-popover-border-color);
   border-radius: 0;
 }
