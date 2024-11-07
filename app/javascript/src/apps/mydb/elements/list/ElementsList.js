@@ -12,7 +12,6 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import PropTypes from 'prop-types';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
 import CreateButton from 'src/components/contextActions/CreateButton';
@@ -112,9 +111,6 @@ export default class ElementsList extends React.Component {
       hidden = getArrayFromLayout(state.profile.data.layout, false);
       currentTab = visible.findIndex((e) => e === currentType);
       if (currentType === '') { currentType = visible.get(0); }
-    }
-    if (hidden.size === 0) {
-      hidden = ArrayUtils.pushUniq(hidden, 'hidden');
     }
 
     if (currentTab < 0) currentTab = 0;
