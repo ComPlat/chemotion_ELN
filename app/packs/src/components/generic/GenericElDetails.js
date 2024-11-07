@@ -463,8 +463,6 @@ export default class GenericElDetails extends Component {
       }
     });
 
-    const tabTitlesMap = {};
-
     // Select 'activeTab' and ensure that it is visible
     let activeTab = this.state.activeTab;
     if (!tabKeyContentList.includes(activeTab) && tabKeyContentList.length > 0) {
@@ -481,9 +479,7 @@ export default class GenericElDetails extends Component {
             <ElementDetailSortTab
               type={genericEl.type}
               availableTabs={Object.keys(tabContents)}
-              tabTitles={tabTitlesMap}
               onTabPositionChanged={this.onTabPositionChanged}
-              addInventoryTab={false}
             />
             <Tabs
               activeKey={activeTab}
