@@ -126,6 +126,8 @@ export default class BaseFetcher {
   }
 
   static getAttachments(container, attachments = []) {
+    if (!container || !container.attachments) { return attachments; }
+
     Array.prototype.push.apply(attachments, container.attachments);
     container.children
       .forEach((child) => BaseFetcher.getAttachments(child, attachments));
@@ -159,7 +161,7 @@ export default class BaseFetcher {
 
   static updateAnnotationsOfAttachments(element) {
     const updateTasks = [];
-    if(!element.attachments){
+    if (!element.attachments) {
       return Promise.resolve();
     }
     element.attachments
