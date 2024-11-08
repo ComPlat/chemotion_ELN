@@ -3,46 +3,8 @@ import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import Formula from 'src/components/common/Formula';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
-import { Table, Form } from 'react-bootstrap';
-
-const Serial = ({ serial, counter }) => {
-  if (!serial) return null;
-
-  const { mol, value } = serial;
-  const onCompleteEdit = (e) => {
-    const val = e.target.value;
-    ReportActions.updMSVal(mol.id, val);
-  };
-
-  return (
-    <tr className="report-serial">
-      <td valign="middle">{counter + 1}</td>
-      <td valign="middle">
-        <SVG src={mol.svgPath} key={mol.svgPath} />
-      </td>
-      <td>
-        <Formula formula={mol.sumFormula} />
-        <div className="mt-3">{mol.iupacName}</div>
-      </td>
-      <td valign="middle">
-        <Form.Control
-          value={value}
-          placeholder="xx"
-          onChange={onCompleteEdit}
-        />
-      </td>
-    </tr>
-  );
-};
-
-Serial.propTypes = {
-  serial: PropTypes.shape({
-    // eslint-disable-next-line react/forbid-prop-types
-    mol: PropTypes.object.isRequired,
-    value: PropTypes.string.isRequired,
-  }).isRequired,
-  counter: PropTypes.number.isRequired,
-};
+import { Form } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 
 const Serials = ({ template, selMolSerials }) => {
   const isApplicable = [
@@ -60,18 +22,86 @@ const Serials = ({ template, selMolSerials }) => {
     );
   }
 
+  const renderSVG = (node) => {
+    const mol = node.data.mol;
+    return (<SVG src={mol.svgPath} key={mol.svgPath} />);
+  }
+
+  const renderFormulaAndName = (node) => {
+    const mol = node.data.mol;
+    return (
+      <>
+        <Formula formula={mol.sumFormula} />
+        <div className="mt-3">{mol.iupacName}</div>
+      </>
+    );
+  }
+
+  const changeInput = (mol) => (e) => {
+    const val = e.target.value;
+    ReportActions.updMSVal(mol.id, val);
+  }
+
+  const renderValueInput = (node) => {
+    const serial = node.data;
+    return (
+      <Form.Control
+        value={serial.value}
+        placeholder="xx"
+        onChange={(e) => changeInput(serial.mol, e)}
+      />
+    );
+  }
+
+  const columnDefs = [
+    {
+      headerName: "Nr",
+      minWidth: 50,
+      maxWidth: 50,
+      valueGetter: "node.rowIndex + 1",
+    },
+    {
+      headerName: "Molecule",
+      field: "svgPath",
+      minWidth: 220,
+      maxWidth: 220,
+      cellRenderer: renderSVG,
+      cellClass: ["text-center", "py-3", "border-end"],
+    },
+    {
+      headerName: "Formula / Name",
+      field: "sumFormula",
+      cellRenderer: renderFormulaAndName,
+    },
+    {
+      headerName: "Value",
+      field: 'value',
+      minWidth: 120,
+      maxWidth: 180,
+      cellRenderer: renderValueInput,
+      cellClass: ["py-3", "border-end-0"],
+    },
+  ];
+
+  const defaultColDef = {
+    editable: false,
+    flex: 1,
+    autoHeight: true,
+    sortable: false,
+    resizable: false,
+    cellClass: ["border-end"]
+  };
+
   return (
-    <Table striped bordered>
-      <tbody>
-        {selMolSerials.map((molSer, i) => (
-          <Serial
-            key={`ms-${molSer.mol.id}`}
-            serial={molSer}
-            counter={i}
-          />
-        ))}
-      </tbody>
-    </Table>
+    <div className="ag-theme-alpine">
+      <AgGridReact
+        columnDefs={columnDefs}
+        autoSizeStrategy={{ type: 'fitGridWidth' }}
+        defaultColDef={defaultColDef}
+        rowData={selMolSerials}
+        domLayout="autoHeight"
+      />
+    </div>
   );
 };
 
