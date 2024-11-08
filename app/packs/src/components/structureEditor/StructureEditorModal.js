@@ -270,7 +270,6 @@ export default class StructureEditorModal extends React.Component {
     } else if (editor.id === 'ketcher2') {
       if (this.ketcher2Ref.current && typeof this.ketcher2Ref.current.onSaveFileK2SC === 'function') {
         const { ket2Molfile, svgElement } = await this.ketcher2Ref.current.onSaveFileK2SC();
-        console.log(await this.ketcher2Ref.current.onSaveFileK2SC(), "results?");
         this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, svgElement, { smiles: '' }, editor.id); } });
       } else {
         console.error("onSaveFileK2SC is not a function");

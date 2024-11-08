@@ -49,7 +49,6 @@ let image_used_counter = -1;
 let re_render_canvas = false;
 let _selection = null;
 let deleted_atoms_list = [];
-// let editor = null;
 
 // funcation to reset all data containers
 const resetStore = () => {
@@ -254,6 +253,7 @@ const saveMolefile = async (iframeRef, canvas_data_Mol) => {
   const lines = canvas_data_Mol.split('\n');
   const elements_info = lines[3];
   const header_starting_from = 4;
+  const all_templates_consumed = [];
 
   let [atoms_count, bonds_count] = elements_info.trim().split(" ").filter(i => i != "");
   atoms_count = parseInt(atoms_count);
@@ -266,6 +266,7 @@ const saveMolefile = async (iframeRef, canvas_data_Mol) => {
     if (three_parts_patten.test(alias)) {
       const splits = parseInt(alias.split("_")[2]);
       if (imagesList[splits]) { // image found
+        all_templates_consumed.push(parseInt(alias.split("_")[1]));
         const { boundingBox } = imagesList[splits];
         if (boundingBox) {
           const { width, height } = boundingBox;
@@ -280,13 +281,14 @@ const saveMolefile = async (iframeRef, canvas_data_Mol) => {
   const imageElements = iframeDocument.querySelectorAll('image');
 
   imageElements.forEach((img) => {
-    console.log("remove image", img);
     svg.removeChild(img);
   });
 
   imageElements.forEach((img) => {
+    // const temp_num = all_templates_consumed[idx];
     const width = img.getAttribute('width');
     const height = img.getAttribute('height');
+    console.log({ width, height });
     const x = img.getAttribute('x');
     const y = img.getAttribute('y');
     const newImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
@@ -330,7 +332,6 @@ const reAttachPolymerList = ({ lines, atoms_count, extra_data_start, extra_data_
     }
   }
   lines_copy.splice(lines_copy.length - 1, 0, ...[poly_identifier, atom_with_alias_list.join(" "), "$$$$"]);
-  console.log(lines_copy);
   return lines_copy.join("\n");
 };
 
@@ -374,9 +375,6 @@ const handleOnDeleteAtom = async (editor) => {
     console.log({ late: latestData });
     image_used_counter -= deleted_atoms_list.length;
 
-    // why? this handles when there is not atom with alias left and deleted_atoms_list has a length; that means last atom with alias was deleted and now the image at 0th place should be removed
-    // !images_tbr.length && deleted_atoms_list.length == 1 && last_item && images_tbr.push(0);
-    // const filteredArray = imagesList.filter((_, index) => !images_tbr.includes(index));
 
     latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...imagesList];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
@@ -619,10 +617,6 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to add event to stack
   const addEventToFILOStack = (event) => {
-    // Check if 'Delete image' exists and skip adding 'Delete atom' if it does
-    // if (event === 'Delete image' && uniqueEvents.has('Delete atom')) {
-    //   return;
-    // }
 
     if (!uniqueEvents.has(event)) {
       FILOStack.push(event);
@@ -657,10 +651,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   };
 
-  // const eraseStateAlert = () => {
-  //   is_erease_selected = true;
-  // };
-
   // helper function to add mutation oberservers to DOM elements
   const attachClickListeners = () => {
     // Main function to attach listeners and observers
@@ -694,12 +684,6 @@ const KetcherEditor = forwardRef((props, ref) => {
               makeTransparentByTitle(iframeDocument);
               // attachEraseButtonListener();
             });
-
-            // Disable buttons again in case they were added dynamically
-            // disableButton(iframeDocument, 'Undo \\(Ctrl\\+Z\\)');
-            // disableButton(iframeDocument, 'Redo \\(Ctrl\\+Shift\\+Z\\)');
-            // disableButton(iframeDocument, 'Erase \\(Del\\)')
-
           }
         }
 
