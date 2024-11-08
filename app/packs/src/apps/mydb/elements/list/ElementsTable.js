@@ -65,7 +65,26 @@ export default class ElementsTable extends React.Component {
     UIStore.listen(this.onChangeUI);
     this.onChangeUI(UIStore.getState());
 
-    this.initState();
+    const { type, genericEl } = this.props;
+    if (type === 'reaction' || genericEl) {
+      const userState = UserStore.getState();
+      const filters = userState.profile.data.filters || {};
+
+      const { elementsGroup, elementsSort, sortDirection } = this.state;
+      const newElementsGroup = filters[type]?.group || 'none';
+      const newElementsSort = filters[type]?.sort ?? true;
+      const newSortDirection = filters[type]?.direction || 'DESC';
+
+      if (newElementsGroup !== elementsGroup
+        || newElementsSort !== elementsSort
+        || newSortDirection !== sortDirection) {
+        this.setState({
+          elementsGroup: newElementsGroup,
+          elementsSort: newElementsSort,
+          sortDirection: newSortDirection,
+        });
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -171,25 +190,6 @@ export default class ElementsTable extends React.Component {
     const { toDate } = this.state;
     if (toDate !== date) UIActions.setToDate(date);
   }
-
-  initState = () => {
-    this.onChange(ElementStore.getState());
-
-    const { type, genericEl } = this.props;
-
-    if (type === 'reaction' || genericEl) {
-      const userState = UserStore.getState();
-      const filters = userState.profile.data.filters || {};
-
-      // you are not able to use this.setState because this would rerender it again and again ...
-      // eslint-disable-next-line react/no-direct-mutation-state
-      this.state.elementsGroup = filters[type]?.group || 'none';
-      // eslint-disable-next-line react/no-direct-mutation-state
-      this.state.elementsSort = filters[type]?.sort ?? true;
-      // eslint-disable-next-line react/no-direct-mutation-state
-      this.state.sortDirection = filters[type]?.direction || 'DESC';
-    }
-  };
 
   changeCollapse = (collapseAll) => {
     this.setState({ collapseAll: !collapseAll });
