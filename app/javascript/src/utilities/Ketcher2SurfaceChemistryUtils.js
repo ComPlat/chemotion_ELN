@@ -221,6 +221,36 @@ const removeImageTemplateAtom = (images, mols, latestData) => {
   return latestData;
 };
 
+// helper function for output molfile re-structure
+const reAttachPolymerList = ({ lines, atoms_count, extra_data_start, extra_data_end }) => {
+  const poly_identifier = "> <PolymersList>";
+  let lines_copy = [...lines];
+  const atom_with_alias_list = [];
+  let list_alias = lines_copy.slice(extra_data_start, extra_data_end);
+  const atom_starts = 4;
+  for (let i = atom_starts; i < atoms_count + atom_starts; i++) {
+    const atom_line = lines[i].split(" ");
+    const idx = atom_line.indexOf(inspired_label);
+    if (idx != -1) {
+      atom_line[idx] = rails_polymer_identifier;
+      atom_with_alias_list.push(`${i - atom_starts}`);
+    }
+    lines_copy[i] = atom_line.join(" ");
+  }
+  lines_copy.splice(extra_data_start, extra_data_end - extra_data_start);
+  let counter = 0;
+
+  for (let i = 1; i < list_alias.length; i += 2) {
+    const t_id = list_alias[i].split("    ")[0].split("_")[1];
+    if (t_id) {
+      atom_with_alias_list[counter] += t_id == '02' ? "s" : "";
+      counter++;
+    }
+  }
+  lines_copy.splice(lines_copy.length - 1, 0, ...[poly_identifier, atom_with_alias_list.join(" "), "$$$$"]);
+  return lines_copy.join("\n");
+};
+
 // DOM functions
 // Function to attach click listeners based on titles
 const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
@@ -326,6 +356,7 @@ export {
   resetOtherAliasCounters,
   isNewAtom,
   removeImageTemplateAtom,
+  reAttachPolymerList,
 
   // DOM Methods
   disableButton,
