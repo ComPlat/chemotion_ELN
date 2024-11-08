@@ -17,38 +17,20 @@ import PrintCodeButton from 'src/components/contextActions/PrintCodeButton';
 import SplitElementButton from 'src/components/contextActions/SplitElementButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 
-function getSortedHash(inputHash) {
-  const resultHash = {};
-
-  const keys = Object.keys(inputHash);
-  keys.sort((a, b) => inputHash[a] - inputHash[b]).forEach((k) => {
-    resultHash[k] = inputHash[k];
-  });
-  return resultHash;
-}
-
-function getArrayFromLayout(layout, isVisible) {
-  let array = Immutable.List();
-  let sortedLayout = layout;
-
-  if (isVisible === true) {
-    sortedLayout = getSortedHash(sortedLayout);
-  }
-
-  Object.keys(sortedLayout).forEach((key, idx) => {
-    const order = sortedLayout[key];
-    if (isVisible && order < 0) { return; }
-    if (!isVisible && order > 0) { return; }
-
-    if (isVisible === true) {
-      array = array.set(idx + 1, key);
+function getVisibleAndHiddenFromLayout(layout) {
+  const visible = [], hidden = [];
+  Object.keys(layout).forEach((key) => {
+    if (layout[key] < 0) {
+      hidden.push(key);
     } else {
-      array = array.set(Math.abs(order), key);
+      visible.push(key);
     }
   });
 
-  array = array.filter((n) => n !== undefined);
-  return array;
+  return {
+    visible: Immutable.List(visible).sortBy((t) => layout[t]),
+    hidden: Immutable.List(hidden).sortBy((t) => -1 * layout[t]),
+  };
 }
 
 export default class ElementsList extends React.Component {
@@ -103,10 +85,11 @@ export default class ElementsList extends React.Component {
     let hidden = Immutable.List();
     let { currentType, currentTab } = state;
 
-    if (typeof (state.profile) !== 'undefined' && state.profile
-      && typeof (state.profile.data) !== 'undefined' && state.profile.data) {
-      visible = getArrayFromLayout(state.profile.data.layout, true);
-      hidden = getArrayFromLayout(state.profile.data.layout, false);
+    if (state?.profile?.data?.layout) {
+      const profileConfig = getVisibleAndHiddenFromLayout(state.profile.data.layout);
+      visible = profileConfig.visible;
+      hidden = profileConfig.hidden;
+
       currentTab = visible.findIndex((e) => e === currentType);
       if (currentType === '') { currentType = visible.get(0); }
     }
