@@ -1,8 +1,8 @@
 import React from 'react';
 import { Popover, Form } from 'react-bootstrap';
 
-import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
-import TabLayoutButton from 'src/apps/mydb/elements/tabLayout/TabLayoutButton';
+import TabLayoutEditor from 'src/apps/mydb/elements/tabs/TabLayoutEditor';
+import TabLayoutButton from 'src/apps/mydb/elements/tabs/TabLayoutButton';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
