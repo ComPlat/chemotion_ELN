@@ -166,6 +166,7 @@ class ElementStore {
       handleCreateGenericEl: ElementActions.createGenericEl,
 
       handleCreateCellLine: ElementActions.createCellLine,
+      handleCreateVessel: ElementActions.createVessel,
 
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -174,6 +175,7 @@ class ElementStore {
       handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
       handlefetchDeviceDescriptionsByCollectionId: ElementActions.fetchDeviceDescriptionsByCollectionId,
+      handlefetchVesselsByCollectionId: ElementActions.fetchVesselsByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -201,6 +203,7 @@ class ElementStore {
         ElementActions.tryFetchGenericElById
       ],
       handleFetchCellLineById: ElementActions.tryFetchCellLineElById,
+      handleFetchVesselById: ElementActions.fetchVesselElById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -251,6 +254,7 @@ class ElementStore {
           ElementActions.generateEmptyReaction,
           ElementActions.generateEmptyCellLine,
           ElementActions.generateEmptyDeviceDescription,
+          ElementActions.generateEmptyVessel,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
@@ -291,6 +295,7 @@ class ElementStore {
         ElementActions.updateResearchPlan,
         ElementActions.updateCellLine,
         ElementActions.updateDeviceDescription,
+        ElementActions.updateVessel,
         ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
@@ -562,7 +567,7 @@ class ElementStore {
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line, device_description } = ui_state;
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line, device_description, vessel } = ui_state;
     const selecteds = this.state.selecteds.map((s) => ({ id: s.id, type: s.type }));
     const params = {
       options,
@@ -574,7 +579,8 @@ class ElementStore {
       currentCollection,
       selecteds,
       cell_line,
-      device_description
+      device_description,
+      vessel
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -628,6 +634,7 @@ class ElementStore {
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
         if (layout.device_description && layout.device_description > 0) { this.handleRefreshElements('device_description'); }
+        if (layout.vessel && layout.vessel > 0) { this.handleRefreshElements('vessel'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
@@ -689,6 +696,10 @@ class ElementStore {
 
   handlefetchDeviceDescriptionsByCollectionId(result) {
     this.state.elements.device_descriptions = result;
+  }
+
+  handlefetchVesselsByCollectionId(result) {
+    this.state.elements.vessels = result;
   }
 
   // -- Samples --
@@ -1101,9 +1112,18 @@ class ElementStore {
     this.changeCurrentElement(result);
   }
 
+  handleFetchVesselById(result) {
+    this.changeCurrentElement(result);
+  }
+
   handleCreateCellLine(cellLine) {
     this.handleRefreshElements('cell_line');
     this.navigateToNewElement(cellLine);
+  }
+
+  handleCreateVessel(vessel) {
+    this.handleRefreshElements('vessel');
+    this.navigateToNewElement(vessel);
   }
 
   handleCloseWarning() {
@@ -1240,7 +1260,8 @@ class ElementStore {
         'fetchScreensByCollectionId',
         'fetchResearchPlansByCollectionId',
         'fetchCellLinesByCollectionId',
-        'fetchDeviceDescriptionsByCollectionId'
+        'fetchDeviceDescriptionsByCollectionId',
+        'fetchVesselsByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
@@ -1484,6 +1505,10 @@ class ElementStore {
       case 'cell_line':
         this.changeCurrentElement(updatedElement);
         this.handleRefreshElements('cell_line');
+        break;
+      case 'vessel':
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements('vessel');
         break;
       case 'wellplate':
         fetchOls('wellplate');
