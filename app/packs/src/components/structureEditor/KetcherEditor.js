@@ -205,8 +205,6 @@ const moveTemplate = async (editor) => {
 
 // helper function to place image on atom location coordinates
 const placeImageOnAtoms = async (mols_, imagesList_, editor) => {
-  await fuelKetcherData(editor);
-  console.log({ editor, imagesList_, mols_ });
   mols_.forEach((item) => {
     latestData[item]?.atoms.forEach((atom) => {
       if (atom && three_parts_patten.test(atom?.alias)) {
@@ -231,21 +229,23 @@ const placeImageOnAtoms = async (mols_, imagesList_, editor) => {
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
 const handleOnDeleteImage = async (editor) => {
-  console.log("handleOnDelete", mols);
+  mols = mols.filter(item => item != null);
+  console.log("handleOnDelete", mols, _selection);
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
+      images = imagesList;
       let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
-      console.log(data);
+      console.log({ data });
+      // return;
       await editor.structureDef.editor.setMolecule(JSON.stringify(data));
       image_used_counter -= images.length;
+      // await fuelKetcherData(editor);
+      await moveTemplate(editor);
     }
-    await moveTemplate(editor);
-    FILOStack = [];
-    uniqueEvents = new Set();
-    _selection = null;
-    return;
-  };
+  }
+  // resetStore();
+  // return;
 };
 
 // function when a canvas is saved using main "SAVE" button
@@ -337,7 +337,10 @@ const reAttachPolymerList = ({ lines, atoms_count, extra_data_start, extra_data_
 // helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
 // idea: this case cannot not be a regular case; but process will crash if not handeled
 const handleOnDeleteAtom = async (editor) => {
+  await fuelKetcherData();
+  console.log('handleOnDeleteAtom main', { mols, imagesList });
   try {
+    await fuelKetcherData(editor);
     const images_tbr = [];
     let last_item = false;
 
@@ -349,10 +352,10 @@ const handleOnDeleteAtom = async (editor) => {
           const atoms = mol?.atoms || [];
           for (let i = 0; i < atoms.length; i++) {
             const atom = atoms[i];
-            console.log(atom, "out");
+            // console.log(atom, "out");
             if (three_parts_patten.test(atom?.alias)) {
               const atom_splits = atom.alias.split("_");
-              console.log({ nd: parseInt(atom_splits[2]), ds: deleted_splits });
+              // console.log({ nd: parseInt(atom_splits[2]), ds: deleted_splits });
               if (parseInt(atom_splits[2]) === 0) {
                 images_tbr.push(0);
               }
@@ -368,17 +371,17 @@ const handleOnDeleteAtom = async (editor) => {
         }
       }
     });
+    console.log({ late: latestData });
     image_used_counter -= deleted_atoms_list.length;
 
     // why? this handles when there is not atom with alias left and deleted_atoms_list has a length; that means last atom with alias was deleted and now the image at 0th place should be removed
-    !images_tbr.length && deleted_atoms_list.length == 1 && last_item && images_tbr.push(0);
+    // !images_tbr.length && deleted_atoms_list.length == 1 && last_item && images_tbr.push(0);
+    // const filteredArray = imagesList.filter((_, index) => !images_tbr.includes(index));
 
-    const filteredArray = imagesList.filter((_, index) => !images_tbr.includes(index));
-    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...filteredArray];
-
+    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...imagesList];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    // await fuelKetcherData(editor);
     await moveTemplate(editor);
+
     // clear the stack to avoid further event render
     resetStore();
     return;
@@ -414,7 +417,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack("Move atom");
     },
     "Delete image": async (_) => {
-      console.log("DELETE image!!", _selection);
       addEventToFILOStack("Delete image");
     },
     "Delete atom": async (eventItem) => {
@@ -596,7 +598,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     }
 
-    console.log(allowed_to_process);
     if (allowed_to_process) {
       processFILOStack();
     } else {
@@ -618,6 +619,11 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to add event to stack
   const addEventToFILOStack = (event) => {
+    // Check if 'Delete image' exists and skip adding 'Delete atom' if it does
+    // if (event === 'Delete image' && uniqueEvents.has('Delete atom')) {
+    //   return;
+    // }
+
     if (!uniqueEvents.has(event)) {
       FILOStack.push(event);
       uniqueEvents.add(event);
@@ -627,7 +633,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
     if (!latestData) {
-      alert("data not present!!");
+      // alert("data not present!!");
       return;
     }
 
