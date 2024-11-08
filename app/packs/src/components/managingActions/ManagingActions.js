@@ -21,7 +21,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
 const upState = async (state) => {
-  const { sample, reaction, screen, wellplate, research_plan, cell_line } = state;
+  const { sample, reaction, screen, wellplate, research_plan, cell_line, vessel } = state;
   const stateObj = {
     sample: {
       checkedAll: sample ? sample.checkedAll : false,
@@ -52,6 +52,11 @@ const upState = async (state) => {
       checkedAll: cell_line ? cell_line.checkedAll : false,
       checkedIds: cell_line ? cell_line.checkedIds : List(),
       uncheckedIds: cell_line ? cell_line.uncheckedIds : List(),
+    },
+    vessel: {
+      checkedAll: vessel ? vessel.checkedAll : false,
+      checkedIds: vessel ? vessel.checkedIds : List(),
+      uncheckedIds: vessel ? vessel.uncheckedIds : List(),
     }
   };
 

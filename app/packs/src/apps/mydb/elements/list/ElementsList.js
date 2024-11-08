@@ -139,7 +139,7 @@ export default class ElementsList extends React.Component {
       const { klasses } = UIStore.getState();
       genericKlasses = klasses;
     }
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericKlasses);
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'vessel'].concat(genericKlasses);
 
     elNames.forEach((type) => {
       const elementUI = state[type] || {
@@ -196,7 +196,8 @@ export default class ElementsList extends React.Component {
       'screen',
       'wellplate',
       'research_plan',
-      'cell_line'
+      'cell_line',
+      'vessel'
     ]);
     const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;

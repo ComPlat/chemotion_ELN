@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Col, Row, Container } from 'react-bootstrap';
+import { Row, Container } from 'react-bootstrap';
 import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';

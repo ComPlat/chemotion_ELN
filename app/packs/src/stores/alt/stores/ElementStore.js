@@ -103,6 +103,13 @@ class ElementStore {
         pages: null,
         perPage: null
       },
+      vessels: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
     };
 
     this.state = {
@@ -150,6 +157,7 @@ class ElementStore {
       handleCreateGenericEl: ElementActions.createGenericEl,
 
       handleCreateCellLine: ElementActions.createCellLine,
+      handleCreateVessel: ElementActions.createVessel,
 
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -157,6 +165,7 @@ class ElementStore {
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
       handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
+      handlefetchVesselsByCollectionId: ElementActions.fetchVesselsByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -183,6 +192,7 @@ class ElementStore {
         ElementActions.tryFetchGenericElById
       ],
       handleFetchCellLineById: ElementActions.tryFetchCellLineElById,
+      handleFetchVesselById: ElementActions.fetchVesselElById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -227,6 +237,7 @@ class ElementStore {
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
           ElementActions.generateEmptyCellLine,
+          ElementActions.generateEmptyVessel,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
@@ -264,6 +275,7 @@ class ElementStore {
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan,
         ElementActions.updateCellLine,
+        ElementActions.updateVessel,
         ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
@@ -272,57 +284,57 @@ class ElementStore {
   }
 
   handleFetchAllDevices(devices) {
-    this.state.elements['devices'].devices = devices
+    this.state.elements['devices'].devices = devices;
   }
 
   handleFetchDeviceById(device) {
-    this.state.currentElement = device
+    this.state.currentElement = device;
   }
 
   findDeviceIndexById(deviceId) {
-    const { devices } = this.state.elements['devices']
-    return devices.findIndex((e) => e.id === deviceId)
+    const { devices } = this.state.elements['devices'];
+    return devices.findIndex((e) => e.id === deviceId);
   }
 
   handleSaveDevice(device) {
-    const { devices } = this.state.elements['devices']
-    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum)
+    const { devices } = this.state.elements['devices'];
+    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum);
     if (deviceKey === -1) {
-      this.state.elements['devices'].devices.push(device)
+      this.state.elements['devices'].devices.push(device);
     } else {
-      this.state.elements['devices'].devices[deviceKey] = device
+      this.state.elements['devices'].devices[deviceKey] = device;
     }
   }
 
   handleToggleDeviceType({ device, type }) {
     if (device.types.includes(type)) {
-      device.types = device.types.filter((e) => e !== type)
+      device.types = device.types.filter((e) => e !== type);
     } else {
       device.types.push(type)
     }
-    const deviceKey = this.findDeviceIndexById(device.id)
-    this.state.elements['devices'].devices[deviceKey] = device
+    const deviceKey = this.findDeviceIndexById(device.id);
+    this.state.elements['devices'].devices[deviceKey] = device;
   }
 
   handleCreateDevice() {
-    const { devices } = this.state.elements['devices']
-    const newDevice = Device.buildEmpty()
-    const newKey = devices.length
-    this.state.elements['devices'].activeAccordionDevice = newKey
-    this.state.elements['devices'].devices.push(newDevice)
+    const { devices } = this.state.elements['devices'];
+    const newDevice = Device.buildEmpty();
+    const newKey = devices.length;
+    this.state.elements['devices'].activeAccordionDevice = newKey;
+    this.state.elements['devices'].devices.push(newDevice);
   }
 
   handleDeleteDevice(device) {
-    const { devices, activeAccordionDevice } = this.state.elements['devices']
-    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
+    const { devices, activeAccordionDevice } = this.state.elements['devices'];
+    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id);
   }
 
   handleAddSampleToDevice({ sample, device, options = { save: false } }) {
-    const deviceSample = DeviceSample.buildEmpty(device.id, sample)
-    device.samples.push(deviceSample)
+    const deviceSample = DeviceSample.buildEmpty(device.id, sample);
+    device.samples.push(deviceSample);
     if (options.save) {
-      ElementActions.saveDevice(device)
-      ElementActions.fetchDeviceById.defer(device.id)
+      ElementActions.saveDevice(device);
+      ElementActions.fetchDeviceById.defer(device.id);
     }
   }
 
@@ -535,7 +547,7 @@ class ElementStore {
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line } = ui_state;
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line, vessel } = ui_state;
     const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
     const params = {
       options,
@@ -546,7 +558,8 @@ class ElementStore {
       research_plan,
       currentCollection,
       selecteds,
-      cell_line
+      cell_line,
+      vessel
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -599,6 +612,7 @@ class ElementStore {
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
+        if (layout.vessel && layout.vessel > 0) { this.handleRefreshElements('vessel'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
@@ -655,6 +669,10 @@ class ElementStore {
   }
   handlefetchCellLinesByCollectionId(result) {
     this.state.elements.cell_lines = result;
+  }
+
+  handlefetchVesselsByCollectionId(result) {
+    this.state.elements.vessels = result;
   }
 
   // -- Samples --
@@ -969,15 +987,23 @@ class ElementStore {
     this.changeCurrentElement(result);
   }
 
+  handleFetchVesselById(result) {
+    this.changeCurrentElement(result);
+  }
+
   handleCreateCellLine(cellLine) {
     this.handleRefreshElements('cell_line');
     this.navigateToNewElement(cellLine);
   }
 
-  handleCloseWarning() {
-    this.state.elementWarning = false
+  handleCreateVessel(vessel) {
+    this.handleRefreshElements('vessel');
+    this.navigateToNewElement(vessel);
   }
 
+  handleCloseWarning() {
+    this.state.elementWarning = false;
+  }
 
   handleCreateReaction(reaction) {
     UserActions.fetchCurrentUser();
@@ -1104,7 +1130,8 @@ class ElementStore {
         'fetchWellplatesByCollectionId',
         'fetchScreensByCollectionId',
         'fetchResearchPlansByCollectionId',
-        'fetchCellLinesByCollectionId'
+        'fetchCellLinesByCollectionId',
+        'fetchVesselsByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
@@ -1346,6 +1373,10 @@ class ElementStore {
       case 'cell_line':
         this.changeCurrentElement(updatedElement);
         this.handleRefreshElements('cell_line');
+        break;
+      case 'vessel':
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements('vessel');
         break;
       case 'wellplate':
         fetchOls('wellplate');

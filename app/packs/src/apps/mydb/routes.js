@@ -75,6 +75,12 @@ const routes = {
     },
     '/:cellLineID': 'showOrNew'
   },
+  '/vessel': {
+    target: {
+      showOrNew: routesUtils.vesselShowOrNew
+    },
+    '/:vesselID': 'showOrNew'
+  },
   '/devicesAnalysis': {
     target: {
       create: routesUtils.devicesAnalysisCreate,

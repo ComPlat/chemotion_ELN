@@ -7,6 +7,7 @@ development:
       :screen: 4
       :research_plan: 5
       :cell_line: -1000
+      :vessel: -1100
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -64,6 +65,7 @@ production:
       :screen: 4
       :research_plan: 5
       :cell_line: -1000
+      :vessel: -1100
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -121,6 +123,7 @@ test:
       :screen: 4
       :research_plan: 5
       :cell_line: -1000
+      :vessel: -1100
     :layout_detail_research_plan:
       :research_plan:
         1

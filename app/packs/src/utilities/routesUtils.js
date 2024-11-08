@@ -96,6 +96,7 @@ const scollectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'vessel', range: 'all' });
     elementNames(false).then((klassArray) => {
       klassArray.forEach((klass) => {
         UIActions.uncheckAllElements({ type: klass, range: 'all' });
@@ -132,15 +133,26 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  if(e.params.new_cellLine||(e.params.new_cellLine===undefined&&e.params.cell_lineID==="new")){
-     ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
-  }else{
-    if(e.params.cellLineID){
-     e.params.cellLineId=e.params.cellLineID
+  if (e.params.new_cellLine || (e.params.new_cellLine === undefined&&e.params.cell_lineID === 'new')) {
+    ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
+  } else {
+    if (e.params.cellLineID) {
+      e.params.cellLineId = e.params.cellLineID;
     }
-     ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
+    ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
   }
-}
+};
+
+const vesselShowOrNew = (e) => {
+  if (e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselId === 'new')) {
+    ElementActions.generateEmptyVessel(e.params.collectionID, e.params.vessel_template);
+  } else {
+    if (e.params.vesselID) {
+      e.params.vesselId = e.params.vesselID;
+    }
+    ElementActions.fetchVesselElById.defer(e.params.vesselId);
+  }
+};
 
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
@@ -273,7 +285,7 @@ const genericElShowOrNew = (e, type) => {
 
 const elementShowOrNew = (e) => {
   const type = e.type;
-  switch(type) {
+  switch (type) {
     case 'sample':
       sampleShowOrNew(e);
       break;
@@ -294,6 +306,9 @@ const elementShowOrNew = (e) => {
       break;
     case 'cell_line':
       cellLineShowOrNew(e);
+      break;
+    case 'vessel':
+      vesselShowOrNew(e);
       break;
     default:
       if (e && e.klassType == 'GenericEl') {
@@ -325,5 +340,6 @@ export {
   elementShowOrNew,
   predictionShowFwdRxn,
   genericElShowOrNew,
-  cellLineShowOrNew
+  cellLineShowOrNew,
+  vesselShowOrNew
 };
