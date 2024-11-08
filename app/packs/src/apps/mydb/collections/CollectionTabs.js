@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { List } from 'immutable';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
+import TabLayoutEditor from 'src/apps/mydb/elements/tabs/TabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import { capitalizeWords } from 'src/utilities/textHelper';

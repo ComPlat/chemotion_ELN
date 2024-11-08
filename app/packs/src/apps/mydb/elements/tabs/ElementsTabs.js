@@ -35,7 +35,7 @@ function getVisibleAndHiddenFromLayout(layout) {
   };
 }
 
-export default class ElementsList extends React.Component {
+export default class ElementsTabs extends React.Component {
   static contextType = StoreContext;
 
   constructor(props) {
@@ -274,6 +274,6 @@ export default class ElementsList extends React.Component {
   }
 }
 
-ElementsList.propTypes = {
+ElementsTabs.propTypes = {
   overview: PropTypes.bool.isRequired,
 };

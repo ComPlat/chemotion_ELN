@@ -1,7 +1,7 @@
 import React from 'react';
 import { Popover, Button, Form, OverlayTrigger } from 'react-bootstrap';
 
-import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
+import TabLayoutEditor from 'src/apps/mydb/elements/tabs/TabLayoutEditor';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';

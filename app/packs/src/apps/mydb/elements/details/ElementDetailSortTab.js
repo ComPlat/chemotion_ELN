@@ -7,7 +7,7 @@ import Immutable from 'immutable';
 import _, { isEmpty } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
+import TabLayoutEditor from 'src/apps/mydb/elements/tabs/TabLayoutEditor';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import { capitalizeWords } from 'src/utilities/textHelper';

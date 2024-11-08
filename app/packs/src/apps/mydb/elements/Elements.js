@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from 'react-bootstrap';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
+import ElementsTabs from 'src/apps/mydb/elements/tabs/ElementsTabs';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
@@ -63,7 +63,7 @@ export default function Elements() {
       >
         <div className="h-100 pt-3 px-3 overflow-x-auto">
           <div className="h-100" style={{ minWidth: '600px' }}>
-            <ElementsList overview={!showDetailView} />
+            <ElementsTabs overview={!showDetailView} />
           </div>
         </div>
       </Panel>
