@@ -384,6 +384,7 @@ module Import
             'position',
             'waste',
             'coefficient',
+            'conversion_rate',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
             sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
