@@ -269,23 +269,12 @@ export default class ElementsTableEntries extends Component {
   }
 
   previewColumn(element) {
-    const classNames = classnames(
-      {
-        molecule: element.type === 'sample'
-      },
-      {
-        reaction: element.type === 'reaction'
-      },
-      {
-        'molecule-selected': element.type === 'sample' && this.isElementSelected(element)
-      },
-      {
-        reaction: element.type === 'reaction' && this.isElementSelected(element)
-      },
-      {
-        research_plan: element.type === 'research_plan'
-      }
-    );
+    const classNames = classnames({
+      molecule: element.type === 'sample',
+      'molecule-selected': element.type === 'sample' && this.isElementSelected(element),
+      reaction: element.type === 'reaction',
+      research_plan: element.type === 'research_plan',
+    });
 
     const svgContainerStyle = {
       verticalAlign: 'middle',
