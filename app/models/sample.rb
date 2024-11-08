@@ -59,6 +59,7 @@
 class Sample < ApplicationRecord
   attr_accessor :skip_inventory_label_update
 
+  has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model

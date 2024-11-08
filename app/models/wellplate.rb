@@ -22,6 +22,7 @@
 #
 
 class Wellplate < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model
@@ -37,19 +38,19 @@ class Wellplate < ApplicationRecord
   pg_search_scope :search_by_wellplate_name, against: :name
 
   pg_search_scope :search_by_sample_name, associated_against: {
-    samples: :name
+    samples: :name,
   }
 
   pg_search_scope :search_by_iupac_name, associated_against: {
-    molecules: :iupac_name
+    molecules: :iupac_name,
   }
 
   pg_search_scope :search_by_inchistring, associated_against: {
-    molecules: :inchistring
+    molecules: :inchistring,
   }
 
   pg_search_scope :search_by_cano_smiles, associated_against: {
-    molecules: :cano_smiles
+    molecules: :cano_smiles,
   }
 
   pg_search_scope :search_by_substring, against: :name,
@@ -59,7 +60,7 @@ class Wellplate < ApplicationRecord
                                             iupac_name
                                             inchistring
                                             cano_smiles
-                                          ]
+                                          ],
                                         },
                                         using: { trigram: { threshold: 0.0001 } }
 
@@ -132,7 +133,7 @@ class Wellplate < ApplicationRecord
         readouts: w.readouts,
         additive: w.additive,
         position_x: w.position_x,
-        position_y: w.position_y
+        position_y: w.position_y,
       )
       subwell_ary.push(subwell)
     end
@@ -150,7 +151,7 @@ class Wellplate < ApplicationRecord
     ordered_wells.includes(:sample)
   end
 
-  def set_short_label(user:) # rubocop:disable Naming/AccessorMethodName
+  def set_short_label(user:)
     prefix = 'WP'
     counter = user.increment_counter 'wellplates'
     user_label = user.name_abbreviation
