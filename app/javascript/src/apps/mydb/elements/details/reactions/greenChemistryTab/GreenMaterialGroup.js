@@ -95,7 +95,7 @@ export default class GreenMaterialGroup extends React.Component {
   }
 
   toggleWaste(material) {
-    const { materials, onChange } = this.props;
+    const { onChange } = this.props;
     material.waste = !(material.waste || false);
     this.api.refreshCells();
     onChange();
@@ -106,9 +106,6 @@ export default class GreenMaterialGroup extends React.Component {
       group, materials
     } = this.props;
     if (materials && materials.length === 0) return <></>;
-
-    const isProduct = group === 'products';
-    const contents = [];
 
     const columnDefs = [
       {
@@ -131,7 +128,7 @@ export default class GreenMaterialGroup extends React.Component {
       {
         headerName: "Moles",
         field: "amount_mol",
-        width: 76,
+        minWidth: 76,
         valueFormatter: floatFormatter,
       },
       {
