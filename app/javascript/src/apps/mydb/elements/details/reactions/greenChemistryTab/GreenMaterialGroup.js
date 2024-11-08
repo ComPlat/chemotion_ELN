@@ -56,7 +56,7 @@ function WasteCheckbox({ node, toggleWaste }) {
         type='checkbox'
         checked={material.waste || false}
         onChange={() => toggleWaste(material)}
-        className='mx-4'
+        className='mx-4 mt-2'
       />
     </div>
   );
@@ -113,16 +113,20 @@ export default class GreenMaterialGroup extends React.Component {
     const columnDefs = [
       {
         headerName: _.startCase(group),
-        width: 170,
+        minWidth: 170,
         cellRenderer: MaterialNameWithIupac,
         cellRendererParams: { group },
       },
-      { headerName: "Mass", field: "amount_g", valueFormatter: floatFormatter },
+      {
+        headerName: "Mass",
+        field: "amount_g",
+        valueFormatter: floatFormatter
+      },
       {
         headerName: "Volume",
         field: "amount_l",
         valueFormatter: floatFormatter,
-        width: 86,
+        minWidth: 86,
       },
       {
         headerName: "Moles",
@@ -133,20 +137,20 @@ export default class GreenMaterialGroup extends React.Component {
       {
         headerName: 'Equiv.',
         field: 'equivalent',
-        width: 76,
+        minWidth: 76,
         valueFormatter: floatFormatter
       },
       {
         headerName: group === 'products' ? 'Waste' : 'Recyclable',
         field: 'waste',
-        width: 104,
+        minWidth: 104,
         cellRenderer: WasteCheckbox,
         cellRendererParams: { toggleWaste: this.toggleWaste },
       },
       {
         headerName: 'Coeff',
         field: 'coefficient',
-        width: 72,
+        minWidth: 72,
         editable: true,
         cellEditor: 'agTextCellEditor',
       },
@@ -154,7 +158,8 @@ export default class GreenMaterialGroup extends React.Component {
 
     const defaultColDef = {
       editable: false,
-      width: 71,
+      flex: 1,
+      minWidth: 71,
       autoHeight: true,
       resizable: true,
     };
@@ -162,7 +167,7 @@ export default class GreenMaterialGroup extends React.Component {
     return (
       <AgGridReact
         columnDefs={columnDefs}
-        autoSizeStrategy={{type: 'fitGridWidth'}}
+        autoSizeStrategy={{ type: 'fitGridWidth' }}
         defaultColDef={defaultColDef}
         onGridReady={this.onGridReady}
         rowData={materials}
