@@ -59,9 +59,12 @@ export default class ElementsTable extends React.Component {
   }
 
   componentDidMount() {
-    UIStore.getState();
     ElementStore.listen(this.onChange);
+    this.onChange(ElementStore.getState());
+
     UIStore.listen(this.onChangeUI);
+    this.onChangeUI(UIStore.getState());
+
     this.initState();
   }
 
