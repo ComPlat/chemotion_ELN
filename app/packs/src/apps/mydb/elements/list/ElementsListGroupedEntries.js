@@ -1,131 +1,19 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
-import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Table } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
-import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
-import { reactionStatus, reactionRole } from 'src/apps/mydb/elements/list/ElementsListEntries';
-import CommentIcon from 'src/components/comments/CommentIcon';
-import { ShowUserLabels } from 'src/components/UserLabels';
-import ChevronIcon from 'src/components/common/ChevronIcon';
+import GenericGroupHeader from 'src/apps/mydb/elements/list/generic/GenericGroupHeader';
+import GenericGroupElement from 'src/apps/mydb/elements/list/generic/GenericGroupElement';
+import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
+import ReactionGroupElement from 'src/apps/mydb/elements/list/reaction/ReactionGroupElement';
+
 import Aviator from 'aviator';
-
-
-const dragHandle = (element) => {
-  const { currentElement } = ElementStore.getState();
-
-  let sourceType = '';
-
-  if (element.type === 'reaction' && currentElement && currentElement.type === 'research_plan') {
-    sourceType = DragDropItemTypes.REACTION;
-  }
-
-  return (
-    <ElementContainer
-      key={element.id}
-      sourceType={sourceType}
-      element={element}
-    />
-  );
-};
-
-const dragColumn = (element) => (
-  <td className="text-center align-middle">
-    {dragHandle(element)}
-  </td>
-);
-
-const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
-
-function ReactionsHeader({
-  group, element, show, showDragColumn, onClick
-}) {
-  const { showPreviews } = UIStore.getState();
-
-  return (
-    <tr
-      style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
-      onClick={onClick}
-    >
-      <td colSpan="2" className="position-relative">
-        {showPreviews && (
-          <SvgWithPopover
-            hasPop
-            previewObject={{
-              txtOnly: '',
-              isSVG: true,
-              className: 'reaction-header',
-              src: element.svgPath
-            }}
-            popObject={{
-              title: group,
-              src: element.svgPath,
-              height: '26vh',
-              width: '52vw',
-            }}
-          />
-        )}
-        <div className="position-absolute top-0 end-0 mt-2 me-2">
-          <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-            <ChevronIcon direction={show ? 'down' : 'right'} color="primary"/>
-          </OverlayTrigger>
-        </div>
-      </td>
-      {showDragColumn && dragColumn(element)}
-    </tr>
-  );
-}
-
-ReactionsHeader.propTypes = {
-  group: PropTypes.string.isRequired,
-  element: PropTypes.object.isRequired,
-  show: PropTypes.bool.isRequired,
-  showDragColumn: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
-};
-
-function GenericElementsHeader({
-  group, element, show, showDragColumn, onClick
-}) {
-  return (
-    <tr
-      style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
-      onClick={onClick}
-    >
-      <td colSpan="2" className="position-relative">
-        <div className="preview-table">
-          {group}
-        </div>
-        <div className="position-absolute top-0 end-0 mt-2 me-2">
-          <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-            <span style={{ color: '#337ab7' }}>
-              <ChevronIcon direction={show ? 'down' : 'right'} />
-            </span>
-          </OverlayTrigger>
-        </div>
-      </td>
-      {showDragColumn && dragColumn(element)}
-    </tr>
-  );
-}
-
-GenericElementsHeader.propTypes = {
-  group: PropTypes.string.isRequired,
-  element: PropTypes.object.isRequired,
-  show: PropTypes.bool.isRequired,
-  showDragColumn: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
-};
 
 export default class ElementsListGroupedEntries extends Component {
   constructor() {
@@ -137,15 +25,12 @@ export default class ElementsListGroupedEntries extends Component {
       keyboardSelectedElementId: null,
       sortedElementIds: [],
     };
+
+    this.showDetails = this.showDetails.bind(this);
   }
 
   componentDidMount() {
     KeyboardStore.listen(this.reactionsOnKeyDown);
-    this.updateTargetType();
-  }
-
-  componentDidUpdate() {
-    this.updateTargetType();
   }
 
   componentWillUnmount() {
@@ -205,13 +90,6 @@ export default class ElementsListGroupedEntries extends Component {
     return null;
   };
 
-  updateTargetType() {
-    const { currentElement } = ElementStore.getState();
-    const targetType = currentElement && currentElement.type;
-    // eslint-disable-next-line react/no-direct-mutation-state
-    this.state.targetType = targetType;
-  }
-
   showDetails(id) {
     const { currentCollection, isSync } = UIStore.getState();
     const { type, genericEl } = this.props;
@@ -230,7 +108,7 @@ export default class ElementsListGroupedEntries extends Component {
 
   isElementSelected(element) {
     const { currentElement } = this.props;
-    return (currentElement && currentElement.id === element.id);
+    return currentElement?.id === element.id;
   }
 
   groupedElements() {
@@ -279,139 +157,51 @@ export default class ElementsListGroupedEntries extends Component {
     return groupedElements;
   }
 
-  renderReactionElements(elements) {
-    const { keyboardSelectedElementId } = this.state;
-    const { showDragColumn } = this.props;
+  renderGroup(group, elements, GroupHeader, GroupElement) {
+    const {
+      showDragColumn,
+      collapseAll,
+    } = this.props;
 
-    const rows = elements.map((element) => {
-      const selected = this.isElementSelected(element);
-      const style = (selected || keyboardSelectedElementId === element.id) ? {
-        color: '#fff', background: '#337ab7'
-      } : {};
-
-      return (
-        <tr key={element.id} style={style}>
-          <td width="30px">
-            <ElementCheckbox element={element} />
-          </td>
-          <td
-            role="gridcell"
-            style={{ cursor: 'pointer' }}
-            onClick={() => this.showDetails(element.id)}
-          >
-            <div className="d-flex gap-2">
-              <SvgWithPopover
-                hasPop
-                previewObject={{
-                  txtOnly: element.title(),
-                  isSVG: true,
-                  src: element.svgPath
-                }}
-                popObject={{
-                  title: element.short_label,
-                  src: element.svgPath,
-                  height: '26vh',
-                  width: '52vw'
-                }}
-              />
-              <div className="d-flex gap-1 align-items-center">
-                {reactionStatus(element)}
-                {reactionRole(element)}
-                <ShowUserLabels element={element} />
-              </div>
-              <CommentIcon commentCount={element.comment_count} />
-              <ElementCollectionLabels element={element} key={element.id} />
-            </div>
-          </td>
-          {showDragColumn && dragColumn(element)}
-        </tr>
-      );
-    });
-
-    return rows;
-  }
-
-  renderGenericElements(elements) {
-    const { keyboardSelectedElementId } = this.state;
-    const { showDragColumn } = this.props;
-
-    const rows = elements.map((element) => {
-      const selected = this.isElementSelected(element);
-      const style = (selected || keyboardSelectedElementId === element.id) ? {
-        color: '#fff', background: '#337ab7'
-      } : {};
-
-      return (
-        <tr key={element.id} style={style}>
-          <td width="30px">
-            <ElementCheckbox element={element} />
-          </td>
-          <td
-            role="gridcell"
-            style={{ cursor: 'pointer' }}
-            onClick={() => this.showDetails(element.id)}
-          >
-            <div className="d-flex gap-2">
-              <div className="preview-table">
-                {element.title()}
-              </div>
-              <ShowUserLabels element={element} />
-              <ElementCollectionLabels element={element} key={element.id} />
-            </div>
-          </td>
-          {showDragColumn && dragColumn(element)}
-        </tr>
-      );
-    });
-
-    return rows;
-  }
-
-  renderGroup(group, elements, index) {
-    const { showDragColumn, collapseAll, type } = this.props;
-    const { elementsShown, targetType } = this.state;
-
+    const { elementsShown, keyboardSelectedElementId } = this.state;
     const showGroup = !elementsShown.includes(group) && !collapseAll;
-    let groupedElements;
-    let groupHeader;
-
-    if (type === 'reaction') {
-      groupedElements = this.renderReactionElements(elements);
-      groupHeader = (
-        <ReactionsHeader
-          group={group}
-          element={elements[0]}
-          show={showGroup}
-          showDragColumn={showDragColumn}
-          onClick={() => this.handleGroupToggle(group)}
-          targetType={targetType}
-        />
-      );
-    } else {
-      groupedElements = this.renderGenericElements(elements);
-      groupHeader = (
-        <GenericElementsHeader
-          group={group}
-          element={elements[0]}
-          show={showGroup}
-          showDragColumn={showDragColumn}
-          onClick={() => this.handleGroupToggle(group)}
-          targetType={targetType}
-        />
-      );
-    }
 
     return (
-      <tbody key={index}>
-        {groupHeader}
-        {showGroup && groupedElements}
+      <tbody key={`group-header-${group}`}>
+        <GroupHeader
+          group={group}
+          element={elements[0]}
+          show={showGroup}
+          showDragColumn={showDragColumn}
+          toggleGroup={() => this.handleGroupToggle(group)}
+        />
+        {showGroup && elements.map((element) => (
+          <GroupElement
+            key={element.id}
+            element={element}
+            isSelected={this.isElementSelected(element)}
+            showDragColumn={showDragColumn}
+            keyboardSelectedElementId={keyboardSelectedElementId}
+            showDetails={this.showDetails}
+          />
+        ))}
       </tbody>
     );
   }
 
   render() {
-    const tableContent = Object.entries(this.groupedElements()).map(
-      (entry, index) => (this.renderGroup(entry[0], entry[1], index))
+    const { type } = this.props;
+    let headerComponent, elementComponent;
+    if (type === 'reaction') {
+      headerComponent = ReactionGroupHeader;
+      elementComponent = ReactionGroupElement;
+    } else {
+      headerComponent = GenericGroupHeader;
+      elementComponent = GenericGroupElement;
+    }
+
+    const tableContent = Object.entries(this.groupedElements()).map((entry) =>
+      this.renderGroup(entry[0], entry[1], headerComponent, elementComponent)
     );
 
     return (
