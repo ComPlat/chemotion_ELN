@@ -4,7 +4,6 @@ import { Tooltip, OverlayTrigger, Collapse } from 'react-bootstrap';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import Aviator from 'aviator';
@@ -15,7 +14,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
+const DeviceDescriptionList = ({ elements, currentElement }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
   const showAllGroups = deviceDescriptionsStore.show_all_groups;
@@ -23,12 +22,6 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
 
   const isElementSelected = (element) => {
     return (currentElement && currentElement.id === element.id);
-  }
-
-  const isElementChecked = (element) => {
-    const { checkedIds, uncheckedIds, checkedAll } = ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
   }
 
   const showDetails = (element) => {
@@ -180,10 +173,7 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
         role="button"
       >
         <div className="d-flex gap-3">
-          <ElementCheckbox
-            element={element}
-            checked={isElementChecked(element)}
-          />
+          <ElementCheckbox element={element} />
           <div>{element.title()}</div>
         </div>
         <div className="d-flex gap-1">

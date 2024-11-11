@@ -308,11 +308,6 @@ export default class ElementsTableSampleEntries extends Component {
     }, this.forceUpdate());
   }
 
-  isElementChecked(element) {
-    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
-    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
-  }
-
   isElementSelected(element) {
     const { currentElement } = this.props;
     return (currentElement && currentElement.id === element.id);
@@ -331,11 +326,7 @@ export default class ElementsTableSampleEntries extends Component {
       return (
         <tr key={sample.id} className={classnames({ 'text-bg-primary': applyHighlight })}>
           <td width="30px">
-            <ElementCheckbox
-              element={sample}
-              key={sample.id}
-              checked={this.isElementChecked(sample)}
-            />
+            <ElementCheckbox element={sample} />
           </td>
           <td
             onClick={() => showDetails(sample.id)}
@@ -429,6 +420,5 @@ ElementsTableSampleEntries.propTypes = {
   elements: PropTypes.array,
   currentElement: PropTypes.object,
   showDragColumn: PropTypes.bool,
-  ui: PropTypes.object,
   moleculeSort: PropTypes.bool,
 };
