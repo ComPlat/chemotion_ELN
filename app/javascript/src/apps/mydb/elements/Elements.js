@@ -56,38 +56,40 @@ function Elements() {
   }, []);
 
   return (
-    <div className="flex-grow-1">
-      <PanelGroup
-        autoSaveId="elements-panel"
-        direction="horizontal"
-        ref={panelRef}
-        onLayout={onLayout}
-      >
-        <Panel collapsible defaultSize={defaultLayout[0]} className="overflow-x-auto">
-          <div className="h-100 mt-3 mx-3" style={{ minWidth: '600px' }}>
+    <PanelGroup
+      autoSaveId="elements-panel"
+      direction="horizontal"
+      ref={panelRef}
+      onLayout={onLayout}
+    >
+      <Panel collapsible defaultSize={defaultLayout[0]} className="w-0">
+        <div className="h-100 pt-3 px-3 overflow-x-auto">
+          <div className="h-100" style={{ minWidth: '600px' }}>
             <ElementsList overview={!showDetailView} />
           </div>
-        </Panel>
+        </div>
+      </Panel>
 
-        {showDetailView && (
-          <>
-            <PanelResizeHandle className="panel-resize-handle">
-              <Button
-                className="panel-collapse-button"
-                onClick={toggleListView}
-              >
-                <i className={`fa fa-angle-double-${isCollapsed ? 'right' : 'left'}`} />
-              </Button>
-            </PanelResizeHandle>
-            <Panel defaultSize={defaultLayout[1]} className="overflow-x-auto">
-              <div className="h-100 mt-3 mx-3" style={{ minWidth: '680px' }}>
+      {showDetailView && (
+        <>
+          <PanelResizeHandle className="panel-resize-handle">
+            <Button
+              className="panel-collapse-button"
+              onClick={toggleListView}
+            >
+              <i className={`fa fa-angle-double-${isCollapsed ? 'right' : 'left'}`} />
+            </Button>
+          </PanelResizeHandle>
+          <Panel defaultSize={defaultLayout[1]} className="w-0">
+            <div className="h-100 pt-3 px-3 overflow-x-auto">
+              <div className="h-100" style={{ minWidth: '680px' }}>
                 <ElementDetails />
               </div>
-            </Panel>
-          </>
-        )}
-      </PanelGroup>
-    </div>
+            </div>
+          </Panel>
+        </>
+      )}
+    </PanelGroup>
   );
 }
 
