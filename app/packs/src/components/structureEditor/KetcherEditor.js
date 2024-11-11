@@ -186,7 +186,6 @@ export const moveTemplate = async (editor) => {
                   x: location[0],
                   y: location[1],
                   z: 0,
-
                 };
               }
             }
@@ -205,6 +204,7 @@ export const moveTemplate = async (editor) => {
 
 // helper function to place image on atom location coordinates
 export const placeImageOnAtoms = async (mols_, imagesList_, editor) => {
+  await fuelKetcherData(editor);
   mols_.forEach((item) => {
     latestData[item]?.atoms.forEach((atom) => {
       if (atom && three_parts_patten.test(atom?.alias)) {
@@ -213,8 +213,8 @@ export const placeImageOnAtoms = async (mols_, imagesList_, editor) => {
         let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
         image_coordinates = {
           ...image_coordinates,
-          x: atom.location[0] - image_coordinates?.width / 2 || 1,
-          y: atom.location[1] + image_coordinates?.height / 2 || 1,
+          x: atom.location[0] - image_coordinates?.width / 2,
+          y: atom.location[1] + image_coordinates?.height / 2,
           z: 0,
           height: template_list_data[parseInt(splits_alias[1])].boundingBox.height,
           width: template_list_data[parseInt(splits_alias[1])].boundingBox.width,
