@@ -1384,7 +1384,7 @@ export default class Sample extends Element {
   // Case 2: Total volume updated; Total Conc. is locked
   // Case 3: Total volume updated; Total Conc. is not locked
   updateMixtureComponentVolume(totalVolume) {
-    if (this.components.length < 1) {
+    if (this.components.length < 1 || totalVolume <= 0) {
       return;
     }
 

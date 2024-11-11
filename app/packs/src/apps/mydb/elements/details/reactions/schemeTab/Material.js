@@ -169,7 +169,6 @@ class Material extends Component {
     );
   }
 
-
   materialLoading(material, showLoadingColumn) {
     if (!showLoadingColumn) {
       return false;
@@ -704,10 +703,13 @@ class Material extends Component {
               </div>
             </OverlayTrigger>
           </td>
+
           <td>
             {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
           </td>
+
           {this.materialVolume(material)}
+
           <td>
             <NumeralInputWithUnitsCompo
               key={material.id}
@@ -764,9 +766,13 @@ class Material extends Component {
   }
 
   generateMolecularWeightTooltipText(sample, reaction) {
-    const isProduct = reaction.products.includes(sample);
-    const molecularWeight = sample.decoupled ?
+    const isProduct = reaction.products.includes(sample)
+    let molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
+
+    if (sample.sample_type === 'Mixture' && sample.reference_molecular_weight) {
+      molecularWeight = sample.reference_molecular_weight.toFixed(4);
+    }
     let theoreticalMassPart = "";
     if (isProduct && sample.maxAmount) {
       theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;

@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { isEqual } from 'lodash';
-import { Form, InputGroup, Button } from 'react-bootstrap';
+import {
+  Form, InputGroup, Button, OverlayTrigger, Tooltip,
+} from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -107,15 +109,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }, () => this._onChangeCallback());
   }
 
-  handleInputDoubleClick() {
-    if (this.state.block) {
-      this.setState({
-        block: false,
-        value: 0,
-      });
-    }
-  }
-
   _onChangeCallback() {
     if (this.props.onChange) {
       this.props.onChange({ ...this.state, unit: this.props.unit });
@@ -151,7 +144,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      size, variant, disabled, label, unit, name
+      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -189,9 +182,22 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return (
         <div>
           {label && <Form.Label className="me-2">{label}</Form.Label>}
+          {showInfoTooltipTotalVol && (
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="info-total-volume">
+                  It is only a value given manually, i.e. volume by definition - not (re)calculated
+                </Tooltip>
+              )}
+            >
+              <Form.Label className="ms-1" style={{ cursor: 'pointer' }}>
+                <span style={{ cursor: 'pointer' }} className="glyphicon glyphicon-info-sign" />
+              </Form.Label>
+            </OverlayTrigger>
+          )}
           <InputGroup
             className="d-flex flex-nowrap align-items-center w-100"
-            onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
             <Form.Control
               type="text"
@@ -245,7 +251,8 @@ NumeralInputWithUnitsCompo.propTypes = {
   label: PropTypes.node,
   variant: PropTypes.string,
   size: PropTypes.string,
-  name: PropTypes.string
+  name: PropTypes.string,
+  showInfoTooltipTotalVol: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -255,5 +262,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disabled: false,
   block: false,
   variant: 'light',
-  name: ''
+  name: '',
+  showInfoTooltipTotalVol: false,
 };

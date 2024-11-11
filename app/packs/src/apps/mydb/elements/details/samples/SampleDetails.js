@@ -75,7 +75,7 @@ import { copyToClipboard } from 'src/utilities/clipboard';
 const MWPrecision = 6;
 
 const decoupleCheck = (sample) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.sample_type == 'Mixture') {
     NotificationActions.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -164,6 +164,7 @@ export default class SampleDetails extends React.Component {
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
+    this.splitSmiles = this.splitSmiles.bind(this);
   }
 
   componentDidMount() {
@@ -311,6 +312,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
+          this.splitSmiles(editor, svgFile)
           this.hideStructureEditor();
         });
     };
@@ -322,7 +324,7 @@ export default class SampleDetails extends React.Component {
     } else {
       fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-  }
+   }
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
@@ -454,6 +456,7 @@ export default class SampleDetails extends React.Component {
         molfile={molfile}
         hasParent={hasParent}
         hasChildren={hasChildren}
+        sample={sample}
       />
     );
   }
@@ -661,7 +664,9 @@ export default class SampleDetails extends React.Component {
 
   saveBtn(sample, closeView = false) {
     let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
-    const isDisabled = !sample.can_update;
+    const hasComponents = sample.sample_type !== 'Mixture'
+      || (sample.components && sample.components.length > 0);
+    const isDisabled = !sample.can_update || !hasComponents;
     if (closeView) submitLabel += ' and close';
 
     return (
@@ -677,6 +682,10 @@ export default class SampleDetails extends React.Component {
   }
 
   elementalPropertiesItem(sample) {
+    if (!sample.molecule_formula || sample.sample_type === 'Mixture') {
+      return false;
+    }
+
     const label = sample.contains_residues
       ? 'Polymer section / Elemental composition'
       : 'Elemental composition';
@@ -876,7 +885,9 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
+    const hasComponents = sample.sample_type !== 'Mixture'
+      || (sample.components && sample.components.length > 0);
+    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (saveBtnDisplay &&
@@ -953,6 +964,8 @@ export default class SampleDetails extends React.Component {
       />
     ) : null;
 
+    const isMixture = sample.sample_type === 'Mixture';
+
     return (
       <div className="d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center gap-2">
@@ -968,7 +981,7 @@ export default class SampleDetails extends React.Component {
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           <PubchemLabels element={sample} />
           <HeaderCommentSection element={sample} />
-          {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
+          {sample.isNew && !isMixture && <FastInput fnHandle={this.handleFastInput} />}
         </div>
         <div className="d-flex align-items-center gap-1">
           {decoupleCb}
@@ -995,6 +1008,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
+    const isMixture = sample.sample_type === 'Mixture';
     const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
@@ -1018,7 +1032,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
-          {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
+          {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
         <Col md={8} className="position-relative">
@@ -1184,12 +1198,20 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleAverageMW(sample) {
-    const mw = sample.molecule_molecular_weight;
+    let mw;
+
+    if (sample.sample_type === 'Mixture' && sample.sample_details) {
+      mw = sample.total_molecular_weight;
+    } else {
+      mw = sample.molecule_molecular_weight;
+    }
+
     if (mw) return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
   }
 
   sampleExactMW(sample) {
+    if (sample.sample_type === 'Mixture' && sample.sample_details) { return }
     const mw = sample.molecule_exact_molecular_weight;
     if (mw) return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
@@ -1216,6 +1238,19 @@ export default class SampleDetails extends React.Component {
     this.setState({
       showStructureEditor: false
     });
+  }
+
+  splitSmiles(editor, svgFile) {
+    const { sample } = this.state;
+    if (sample.sample_type !== 'Mixture' || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '')  { return }
+
+    const mixtureSmiles = sample.molecule_cano_smiles.split('.')
+    if (mixtureSmiles) {
+      sample.splitSmilesToMolecule(mixtureSmiles, editor)
+        .then(() => {
+          this.setState({ sample });
+        });
+    }
   }
 
   toggleInchi() {
@@ -1376,6 +1411,7 @@ export default class SampleDetails extends React.Component {
       && this.state.activeTab) || visible.get(0);
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
+    const isMixture = sample.sample_type === 'Mixture';
 
     return (
       <Card className={"detail-card" + (pendingToSave ? " detail-card--unsaved" : "")}>
