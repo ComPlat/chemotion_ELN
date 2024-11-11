@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_08_20_101958) do
+ActiveRecord::Schema.define(version: 2024_07_11_120833) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -641,12 +641,6 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
     t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
   end
 
-  create_table "ketcher_settings", force: :cascade do |t|
-    t.string "name"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
-
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
     t.integer "moderated_by"
     t.integer "suggested_by"
@@ -930,6 +924,7 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
+    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
@@ -966,8 +961,8 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
     t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
-    t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
+    t.boolean "gaseous", default: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1174,8 +1169,8 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
-    t.boolean "inventory_sample", default: false
     t.boolean "dry_solvent", default: false
+    t.boolean "inventory_sample", default: false
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1616,25 +1611,25 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
         a_userids int4[];
         u int4;
       begin
-        select channel_type into i_channel_type
-        from channels where id = in_channel_id;
+      	select channel_type into i_channel_type
+      	from channels where id = in_channel_id;
 
         case i_channel_type
-        when 9 then
-          insert into notifications (message_id, user_id, created_at,updated_at)
-          (select in_message_id, id, now(),now() from users where deleted_at is null and type='Person');
-        when 5,8 then
-          if (in_user_ids is not null) then
-          a_userids = in_user_ids;
-          end if;
-          FOREACH u IN ARRAY a_userids
-          loop
-            insert into notifications (message_id, user_id, created_at,updated_at)
-            (select distinct in_message_id, id, now(),now() from users where type='Person' and id in (select group_user_ids(u))
-             and not exists (select id from notifications where message_id = in_message_id and user_id = users.id));
-          end loop;
-        end case;
-        return in_message_id;
+      	when 9 then
+      	  insert into notifications (message_id, user_id, created_at,updated_at)
+      	  (select in_message_id, id, now(),now() from users where deleted_at is null and type='Person');
+      	when 5,8 then
+      	  if (in_user_ids is not null) then
+      	  a_userids = in_user_ids;
+      	  end if;
+      	  FOREACH u IN ARRAY a_userids
+      	  loop
+      		  insert into notifications (message_id, user_id, created_at,updated_at)
+      		  (select distinct in_message_id, id, now(),now() from users where type='Person' and id in (select group_user_ids(u))
+      		   and not exists (select id from notifications where message_id = in_message_id and user_id = users.id));
+       	  end loop;
+      	end case;
+      	return in_message_id;
       end;$function$
   SQL
   create_function :labels_by_user_sample, sql_definition: <<-'SQL'
@@ -1658,31 +1653,31 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
        LANGUAGE plpgsql
       AS $function$
       begin
-        if in_user_ids is null then
+      	if in_user_ids is null then
           update users u set matrix = (
-            select coalesce(sum(2^mx.id),0) from (
-              select distinct m1.* from matrices m1, users u1
-              left join users_groups ug1 on ug1.user_id = u1.id
-                where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
-              except
-              select distinct m2.* from matrices m2, users u2
-              left join users_groups ug2 on ug2.user_id = u2.id
-                where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
-            ) mx
+      	    select coalesce(sum(2^mx.id),0) from (
+      		    select distinct m1.* from matrices m1, users u1
+      				left join users_groups ug1 on ug1.user_id = u1.id
+      		      where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
+      	      except
+      		    select distinct m2.* from matrices m2, users u2
+      				left join users_groups ug2 on ug2.user_id = u2.id
+      		      where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
+      	    ) mx
           );
-        else
-            update users u set matrix = (
-              select coalesce(sum(2^mx.id),0) from (
-               select distinct m1.* from matrices m1, users u1
-               left join users_groups ug1 on ug1.user_id = u1.id
-                 where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
-               except
-               select distinct m2.* from matrices m2, users u2
-               left join users_groups ug2 on ug2.user_id = u2.id
-                 where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
-              ) mx
-            ) where ((in_user_ids) @> array[u.id]) or (u.id in (select ug3.user_id from users_groups ug3 where (in_user_ids) @> array[ug3.group_id]));
-        end if;
+      	else
+      		  update users u set matrix = (
+      		  	select coalesce(sum(2^mx.id),0) from (
+      			   select distinct m1.* from matrices m1, users u1
+      				 left join users_groups ug1 on ug1.user_id = u1.id
+      			     where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
+      			   except
+      			   select distinct m2.* from matrices m2, users u2
+      				 left join users_groups ug2 on ug2.user_id = u2.id
+      			     where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
+      			  ) mx
+      		  ) where ((in_user_ids) @> array[u.id]) or (u.id in (select ug3.user_id from users_groups ug3 where (in_user_ids) @> array[ug3.group_id]));
+      	end if;
         return true;
       end
       $function$
@@ -1693,42 +1688,19 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
        LANGUAGE plpgsql
       AS $function$
       begin
-        if (TG_OP='INSERT') then
+      	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
-        end if;
+      	end if;
 
-        if (TG_OP='UPDATE') then
-          if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
+      	if (TG_OP='UPDATE') then
+      	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);
-          elsif new.include_ids <> old.include_ids then
+      	  elsif new.include_ids <> old.include_ids then
             PERFORM generate_users_matrix(new.include_ids || old.include_ids);
           elsif new.exclude_ids <> old.exclude_ids then
             PERFORM generate_users_matrix(new.exclude_ids || old.exclude_ids);
-          end if;
-        end if;
-        return new;
-      end
-      $function$
-  SQL
-  create_function :pub_reactions_by_molecule, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.pub_reactions_by_molecule(collection_id integer, molecule_id integer)
-       RETURNS TABLE(reaction_ids integer)
-       LANGUAGE sql
-      AS $function$
-          (select r.id from collections c, collections_reactions cr, reactions r, reactions_samples rs, samples s,molecules m
-           where c.id=$1 and c.id = cr.collection_id and cr.reaction_id = r.id
-           and r.id = rs.reaction_id and rs.sample_id = s.id and rs.type in ('ReactionsProductSample')
-           and c.deleted_at is null and cr.deleted_at is null and r.deleted_at is null and rs.deleted_at is null and s.deleted_at is null and m.deleted_at is null
-           and s.molecule_id = m.id and m.id=$2)
-        $function$
-  SQL
-  create_function :set_segment_klasses_identifier, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_segment_klasses_identifier()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-        update segment_klasses set identifier = gen_random_uuid() where identifier is null;
+      	  end if;
+      	end if;
         return new;
       end
       $function$
@@ -1738,8 +1710,8 @@ ActiveRecord::Schema.define(version: 2024_08_20_101958) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
