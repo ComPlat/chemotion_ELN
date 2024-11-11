@@ -159,9 +159,8 @@
   ],
   "babel": {
     "presets": [
-      "@rails/webpacker/package/babel/preset.js",
-      "@babel/preset-react",
-      "./node_modules/shakapacker/package/babel/preset.js"
+      "./node_modules/shakapacker/package/babel/preset.js",
+      "@babel/preset-react"
     ]
   },
   "packageManager": "yarn@1.22.22",
