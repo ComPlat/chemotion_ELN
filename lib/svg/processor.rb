@@ -9,8 +9,6 @@ module SVG
       processor = case editor
                   when /marvinjs/i
                     Chemotion::MarvinjsSvgProcessor.new(svg)
-                  when /ketcher2/i
-                    Chemotion::OpenBabelSvgProcessor.new(svg)
                   when /chemdraw/i
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   when /ketcher/i
@@ -19,8 +17,7 @@ module SVG
                     Chemotion::OpenBabelSvgProcessor.new(svg)
                   end
 
-      editor === 'ketcher2' && is_centered = true
-      svg = processor.centered_and_scaled_svg unless is_centered == true
+      svg = processor.centered_and_scaled_svg unless is_centered
       info = generate_svg_info('samples', hexdigest)
       svg_file = File.new(info[:svg_file_path], 'w+')
       svg_file.write(svg)
