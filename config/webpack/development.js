@@ -1,7 +1,7 @@
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
-const { merge } = require('@rails/webpacker');
+const { merge } = require('shakapacker');
 const webpackConfig = require('./base');
 const developmentConfig = {
   devServer: {
