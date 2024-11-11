@@ -1,6 +1,5 @@
 import ProfilesFetcher from 'src/fetchers/ProfilesFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import { three_parts_patten } from './Ketcher2SurfaceChemistryUtils';
 const key = 'ketcher-tmpls';
 
 const createAddAttachmentidToNewUserTemplate = async (newValue, newItem, deleteIdx) => {
