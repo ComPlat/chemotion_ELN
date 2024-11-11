@@ -1,86 +1,78 @@
-import React from 'react'
-import PropTypes from 'prop-types'
-import Immutable from 'immutable'
+import React, { useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import Immutable from 'immutable';
 
-import UIActions from 'src/stores/alt/actions/UIActions'
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
-export default class ElementAllCheckbox extends React.Component {
-  constructor(props) {
-    super(props)
+const options = ["current", "all", "none"];
 
-    this.state =  {
-      showOptions: false,
-      currentOption: 2
-    }
+export default function ElementAllCheckbox({ type }) {
+  const [showOptions, setShowOptions] = React.useState(false);
+  const [currentOption, setCurrentOption] = React.useState(2);
+  const [uiState, setUiState] = React.useState('unchecked');
 
-    this.options = ["current", "all", "none"]
+  useEffect(() => {
+    const onUpdate = (uiStore) => {
+      const uiState = uiStore[type] ?? {};
+      const { checkedAll = false, checkedIds = Immutable.List() } = uiState;
+      if (checkedAll) {
+        setUiState('checked');
+      } else if (checkedIds.size > 0) {
+        setUiState('partial');
+      } else {
+        setUiState('unchecked');
+      }
+    };
 
-    this.toggleCheckbox = this.toggleCheckbox.bind(this)
-    this.showOptions = this.showOptions.bind(this)
-    this.selectAll = this.selectAll.bind(this)
-  }
+    UIStore.listen(onUpdate);
+    onUpdate(UIStore.getState());
+    return () => UIStore.unlisten(onUpdate);
+  }, [type]);
 
-  toggleCheckbox(e) {
-    let {currentOption} = this.state
-    currentOption = (currentOption + 1) % 3
+  const toggleOptions = useCallback(() => {
+    setShowOptions(!showOptions);
+  }, [showOptions]);
 
-    this.setState({currentOption: currentOption}, this.selectAll)
+  const toggleCheckbox = useCallback(() => {
+    let newOption = (currentOption + 1) % 3;
+    setCurrentOption(newOption);
+    selectAll(newOption);
+  }, [currentOption]);
 
-    e.preventDefault()
-    e.stopPropagation()
-  }
-
-  showOptions() {
-    this.setState({ showOptions: !this.state.showOptions })
-  }
-
-  selectAll(option) {
-    if (option == null) option = this.state.currentOption
-    let range = this.options[option]
+  const selectAll = useCallback((option) => {
+    if (option == null) option = currentOption;
+    let range = options[option];
 
     UIActions.checkAllElements({
-      type: this.props.type,
+      type: type,
       range: range
-    })
-    this.setState({
-      showOptions: false,
-      currentOption: option
-    })
-  }
+    });
 
-  render() {
-    const { showOptions } = this.state;
-    const { checkedAll, checkedIds } = this.props;
+    setShowOptions(false);
+    setCurrentOption(option);
+  }, [type, currentOption]);
 
-    let checkMarkClass = '';
-    if (checkedAll == true) {
-      checkMarkClass = 'fa-check';
-    } else if (checkedIds && checkedIds.size > 0) {
-      checkMarkClass = 'fa-minus';
-    }
-
-    return (
-      <div className="all-checkbox" onClick={this.showOptions}>
-        <div className="checkbox-dropdown">
-          <span className="span-checkbox" onClick={this.toggleCheckbox}>
-            <i className={`fa ${checkMarkClass}`}/>
-          </span>
-          <i className="fa fa-caret-down ms-2" />
-        </div>
-        {showOptions && (
-          <div className="checkbox-options">
-            <div onClick={() => this.selectAll(0)}>Current page</div>
-            <div onClick={() => this.selectAll(1)}>All pages</div>
-            <div onClick={() => this.selectAll(2)}>None</div>
-          </div>
-        )}
+  return (
+    <div className="all-checkbox" onClick={toggleOptions}>
+      <div className="checkbox-dropdown">
+        <span className="span-checkbox" onClick={toggleCheckbox}>
+          {uiState === 'checked' && <i className="fa fa-check" />}
+          {uiState === 'partial' && <i className="fa fa-minus" />}
+        </span>
+        <i className="fa fa-caret-down ms-2" />
       </div>
-    )
-  }
+      {showOptions && (
+        <div className="checkbox-options">
+          <div onClick={() => this.selectAll(0)}>Current page</div>
+          <div onClick={() => this.selectAll(1)}>All pages</div>
+          <div onClick={() => this.selectAll(2)}>None</div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 ElementAllCheckbox.propTypes = {
   type: PropTypes.string.isRequired,
-  checkedAll: PropTypes.bool.isRequired,
-  checkedIds: PropTypes.instanceOf(Immutable.List),
-}
+};
