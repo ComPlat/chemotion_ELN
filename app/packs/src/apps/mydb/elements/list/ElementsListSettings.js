@@ -31,7 +31,7 @@ function TabItem({ item }) {
   )
 };
 
-export default class ElementsTableSettings extends React.Component {
+export default class ElementsListSettings extends React.Component {
   constructor(props) {
     super(props);
 

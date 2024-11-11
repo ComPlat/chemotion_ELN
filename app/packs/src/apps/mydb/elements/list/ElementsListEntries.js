@@ -155,7 +155,7 @@ function topSecretIcon(element) {
   return null;
 }
 
-export default class ElementsTableEntries extends Component {
+export default class ElementsListEntries extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -387,12 +387,12 @@ export default class ElementsTableEntries extends Component {
   }
 }
 
-ElementsTableEntries.defaultProps = {
+ElementsListEntries.defaultProps = {
   currentElement: null
 };
 
 /* eslint-disable react/forbid-prop-types */
-ElementsTableEntries.propTypes = {
+ElementsListEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
   showDragColumn: PropTypes.bool.isRequired,
   currentElement: PropTypes.object,

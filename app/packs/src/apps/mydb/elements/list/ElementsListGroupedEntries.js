@@ -14,7 +14,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
-import { reactionStatus, reactionRole } from 'src/apps/mydb/elements/list/ElementsTableEntries';
+import { reactionStatus, reactionRole } from 'src/apps/mydb/elements/list/ElementsListEntries';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import ChevronIcon from 'src/components/common/ChevronIcon';
@@ -127,7 +127,7 @@ GenericElementsHeader.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-export default class ElementsTableGroupedEntries extends Component {
+export default class ElementsListGroupedEntries extends Component {
   constructor() {
     super();
 
@@ -422,12 +422,12 @@ export default class ElementsTableGroupedEntries extends Component {
   }
 }
 
-ElementsTableGroupedEntries.defaultProps = {
+ElementsListGroupedEntries.defaultProps = {
   currentElement: null,
   genericEl: null,
 };
 
-ElementsTableGroupedEntries.propTypes = {
+ElementsListGroupedEntries.propTypes = {
   onChangeCollapse: PropTypes.func.isRequired,
   collapseAll: PropTypes.bool.isRequired,
   elements: PropTypes.array.isRequired,
