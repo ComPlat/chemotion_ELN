@@ -624,7 +624,6 @@ export default class ElementsTable extends React.Component {
   renderEntries() {
     const {
       elements,
-      ui,
       currentElement,
       collapseAll,
       moleculeSort,
@@ -641,7 +640,6 @@ export default class ElementsTable extends React.Component {
           elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
-          ui={ui}
           moleculeSort={moleculeSort}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
         />
@@ -653,7 +651,6 @@ export default class ElementsTable extends React.Component {
           elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
-          ui={ui}
           elementsGroup={elementsGroup}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
           genericEl={genericEl}
@@ -672,7 +669,6 @@ export default class ElementsTable extends React.Component {
           elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
-          ui={ui}
         />
       );
     }

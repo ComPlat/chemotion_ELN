@@ -228,11 +228,6 @@ export default class ElementsTableGroupedEntries extends Component {
     elementShowOrNew(e);
   }
 
-  isElementChecked(element) {
-    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
-    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
-  }
-
   isElementSelected(element) {
     const { currentElement } = this.props;
     return (currentElement && currentElement.id === element.id);
@@ -297,11 +292,7 @@ export default class ElementsTableGroupedEntries extends Component {
       return (
         <tr key={element.id} style={style}>
           <td width="30px">
-            <ElementCheckbox
-              element={element}
-              key={element.id}
-              checked={this.isElementChecked(element)}
-            />
+            <ElementCheckbox element={element} />
           </td>
           <td
             role="gridcell"
@@ -353,11 +344,7 @@ export default class ElementsTableGroupedEntries extends Component {
       return (
         <tr key={element.id} style={style}>
           <td width="30px">
-            <ElementCheckbox
-              element={element}
-              key={element.id}
-              checked={this.isElementChecked(element)}
-            />
+            <ElementCheckbox element={element} />
           </td>
           <td
             role="gridcell"
@@ -446,7 +433,6 @@ ElementsTableGroupedEntries.propTypes = {
   elements: PropTypes.array.isRequired,
   currentElement: PropTypes.object,
   showDragColumn: PropTypes.bool.isRequired,
-  ui: PropTypes.object.isRequired,
   elementsGroup: PropTypes.string.isRequired,
   genericEl: PropTypes.object,
   type: PropTypes.string.isRequired,

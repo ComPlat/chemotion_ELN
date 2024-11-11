@@ -210,11 +210,6 @@ export default class ElementsTableEntries extends Component {
     return null;
   }
 
-  isElementChecked(element) {
-    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
-    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
-  }
-
   isElementSelected(element) {
     const { currentElement } = this.props;
     return (currentElement && currentElement.id === element.id);
@@ -340,12 +335,7 @@ export default class ElementsTableEntries extends Component {
             return (
               <tr key={element.id} style={style}>
                 <td width="30px">
-                  <ElementCheckbox
-                    element={element}
-                    key={element.id}
-                    checked={this.isElementChecked(element)}
-                  />
-                  <br />
+                  <ElementCheckbox element={element} />
                 </td>
                 <td
                   role="gridcell"
@@ -405,6 +395,5 @@ ElementsTableEntries.defaultProps = {
 ElementsTableEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
   showDragColumn: PropTypes.bool.isRequired,
-  ui: PropTypes.object.isRequired,
   currentElement: PropTypes.object,
 };
