@@ -22,7 +22,6 @@ import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import SampleName from 'src/components/common/SampleName';
-import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
@@ -42,13 +41,6 @@ const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   });
 
   return flattenSamplesId;
-};
-
-const showDetails = (id) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/sample/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
 };
 
 const targets = {
@@ -263,6 +255,7 @@ export default class ElementsListSampleEntries extends Component {
 
     const { documentKeyDownCode } = state;
     let { keyboardIndex, keyboardSeletectedElementId, flattenSamplesId } = this.state;
+    const { showDetails } = this.props;
 
     switch (documentKeyDownCode) {
       case 13: // Enter
@@ -315,7 +308,7 @@ export default class ElementsListSampleEntries extends Component {
 
   renderSamples(samples, index) {
     const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
-    const { showDragColumn } = this.props;
+    const { showDragColumn, showDetails } = this.props;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
@@ -420,5 +413,6 @@ ElementsListSampleEntries.propTypes = {
   elements: PropTypes.array,
   currentElement: PropTypes.object,
   showDragColumn: PropTypes.bool,
+  showDetails: PropTypes.func.isRequired,
   moleculeSort: PropTypes.bool,
 };

@@ -6,15 +6,12 @@ import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ChevronIcon from 'src/components/common/ChevronIcon';
-import Aviator from 'aviator';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
-const DeviceDescriptionList = ({ elements, currentElement }) => {
+const DeviceDescriptionList = ({ elements, currentElement, showDetails }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
   const showAllGroups = deviceDescriptionsStore.show_all_groups;
@@ -22,20 +19,6 @@ const DeviceDescriptionList = ({ elements, currentElement }) => {
 
   const isElementSelected = (element) => {
     return (currentElement && currentElement.id === element.id);
-  }
-
-  const showDetails = (element) => {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { id, type } = element;
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/${id}`
-      : `/collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = id;
-    elementShowOrNew(e);
-
-    return null;
   }
 
   const dragHandle = (element) => {
@@ -169,7 +152,7 @@ const DeviceDescriptionList = ({ elements, currentElement }) => {
       <div
         className={`d-flex justify-content-between px-3 py-2 border-bottom ${selectedClass}`}
         key={`collapse-${element.id}`}
-        onClick={() => showDetails(element)}
+        onClick={() => showDetails(element.id)}
         role="button"
       >
         <div className="d-flex gap-3">
