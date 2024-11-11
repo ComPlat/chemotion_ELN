@@ -15,13 +15,10 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import PropTypes from 'prop-types';
-import Aviator from 'aviator';
 
 export function reactionRole(element) {
   let tooltip = null;
@@ -61,26 +58,6 @@ function reactionVariations(element) {
       <Badge bg="info">{`${element.variations.length} variation(s)`}</Badge>
     );
   }
-  return null;
-}
-
-function showDetails(element) {
-  const { currentCollection, isSync } = UIStore.getState();
-  const { id, type } = element;
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/${type}/${id}`
-    : `/collection/${currentCollection.id}/${type}/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  const e = { type, params: { collectionID: currentCollection.id } };
-  e.params[`${type}ID`] = id;
-
-  const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
-  if (genericEls.find((el) => el.name === type)) {
-    e.klassType = 'GenericEl';
-  }
-
-  elementShowOrNew(e);
-
   return null;
 }
 
@@ -175,7 +152,7 @@ export default class ElementsListEntries extends Component {
 
   entriesOnKeyDown(state) {
     const { context } = state;
-    const { elements } = this.props;
+    const { elements, showDetails } = this.props;
 
     if (elements[0] == null || context !== elements[0].type) return false;
 
@@ -186,7 +163,7 @@ export default class ElementsListEntries extends Component {
       case 13: // Enter
       case 39: // Right
         if (keyboardElementIndex && elements[keyboardElementIndex]) {
-          showDetails(elements[keyboardElementIndex]);
+          showDetails(elements[keyboardElementIndex].id);
         }
         break;
       case 38: // Up
@@ -264,6 +241,7 @@ export default class ElementsListEntries extends Component {
   }
 
   previewColumn(element) {
+    const { showDetails } = this.props;
     const classNames = classnames({
       molecule: element.type === 'sample',
       'molecule-selected': element.type === 'sample' && this.isElementSelected(element),
@@ -280,7 +258,7 @@ export default class ElementsListEntries extends Component {
     const { showPreviews } = UIStore.getState();
     if (showPreviews && (element.type === 'reaction')) {
       return (
-        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element.id)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath} />
         </td>
       );
@@ -288,7 +266,7 @@ export default class ElementsListEntries extends Component {
     if (element.type === 'research_plan' || element.element_klass) {
       if (element.thumb_svg !== 'not available') {
         return (
-          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element.id)}>
             <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" role="button" />
           </td>
         );
@@ -298,7 +276,7 @@ export default class ElementsListEntries extends Component {
           role="gridcell"
           aria-label="Element"
           style={svgContainerStyle}
-          onClick={() => showDetails(element)}
+          onClick={() => showDetails(element.id)}
         />
       );
     }
@@ -308,13 +286,13 @@ export default class ElementsListEntries extends Component {
         role="gridcell"
         aria-label="Element"
         style={{ display: 'none', cursor: 'pointer' }}
-        onClick={() => showDetails(element)}
+        onClick={() => showDetails(element.id)}
       />
     );
   }
 
   render() {
-    const { elements, showDragColumn } = this.props;
+    const { elements, showDragColumn, showDetails } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -339,7 +317,7 @@ export default class ElementsListEntries extends Component {
                 </td>
                 <td
                   role="gridcell"
-                  onClick={() => showDetails(element)}
+                  onClick={() => showDetails(element.id)}
                   style={{ cursor: 'pointer' }}
                   width={element.type === 'research_plan' ? '280px' : 'unset'}
                   data-cy={`researchPLanItem-${element.id}`}
@@ -396,4 +374,5 @@ ElementsListEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
   showDragColumn: PropTypes.bool.isRequired,
   currentElement: PropTypes.object,
+  showDetails: PropTypes.func.isRequired,
 };

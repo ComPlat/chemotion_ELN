@@ -7,6 +7,7 @@ import {
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
+import Aviator from 'aviator';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -27,6 +28,8 @@ import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import Sheet from 'src/components/common/Sheet';
+
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 export default class ElementsList extends React.Component {
   constructor(props) {
@@ -54,6 +57,8 @@ export default class ElementsList extends React.Component {
 
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
+
+    this.showDetails = this.showDetails.bind(this);
 
     this.changeDateFilter = this.changeDateFilter.bind(this);
 
@@ -325,6 +330,27 @@ export default class ElementsList extends React.Component {
         </InputGroup>
       </Form>
     );
+  }
+
+  showDetails(id) {
+    const { currentCollection, isSync } = UIStore.getState();
+    const { type, genericEl } = this.props;
+
+    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+    const e = {
+      type,
+      params: {
+        [`${type}ID`]: id,
+        collectionID: currentCollection.id,
+      }
+    };
+
+    if (genericEl) {
+      e.klassType = 'GenericEl';
+    }
+
+    elementShowOrNew(e);
   }
 
   renderPagination() {
@@ -640,6 +666,7 @@ export default class ElementsList extends React.Component {
           elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
+          showDetails={this.showDetails}
           moleculeSort={moleculeSort}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
         />
@@ -651,6 +678,7 @@ export default class ElementsList extends React.Component {
           elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
+          showDetails={this.showDetails}
           elementsGroup={elementsGroup}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
           genericEl={genericEl}
@@ -661,6 +689,7 @@ export default class ElementsList extends React.Component {
       elementsTableEntries = (
         <CellLineContainer
           cellLineGroups={CellLineGroup.buildFromElements(elements)}
+          showDetails={this.showDetails}
         />
       );
     } else {
@@ -669,6 +698,7 @@ export default class ElementsList extends React.Component {
           elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
+          showDetails={this.showDetails}
         />
       );
     }

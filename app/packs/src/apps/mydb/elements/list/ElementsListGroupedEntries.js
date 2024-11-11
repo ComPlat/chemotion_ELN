@@ -3,17 +3,12 @@ import React, { Component } from 'react';
 import { Table } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-import UIStore from 'src/stores/alt/stores/UIStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
-
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import GenericGroupHeader from 'src/apps/mydb/elements/list/generic/GenericGroupHeader';
 import GenericGroupElement from 'src/apps/mydb/elements/list/generic/GenericGroupElement';
 import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
 import ReactionGroupElement from 'src/apps/mydb/elements/list/reaction/ReactionGroupElement';
-
-import Aviator from 'aviator';
 
 export default class ElementsListGroupedEntries extends Component {
   constructor() {
@@ -25,8 +20,6 @@ export default class ElementsListGroupedEntries extends Component {
       keyboardSelectedElementId: null,
       sortedElementIds: [],
     };
-
-    this.showDetails = this.showDetails.bind(this);
   }
 
   componentDidMount() {
@@ -55,6 +48,7 @@ export default class ElementsListGroupedEntries extends Component {
     const { context } = state;
     if (context !== 'reaction') { return false; }
 
+    const { showDetails } = this.props;
     const { documentKeyDownCode } = state;
     const { sortedElementIds } = this.state;
     let { keyboardIndex, keyboardSelectedElementId } = this.state;
@@ -63,7 +57,7 @@ export default class ElementsListGroupedEntries extends Component {
       case 13: // Enter
       case 39: // Right
         if (keyboardIndex != null && keyboardSelectedElementId != null) {
-          this.showDetails(keyboardSelectedElementId);
+          showDetails(keyboardSelectedElementId);
         }
         break;
       case 38: // Up
@@ -89,22 +83,6 @@ export default class ElementsListGroupedEntries extends Component {
 
     return null;
   };
-
-  showDetails(id) {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { type, genericEl } = this.props;
-
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = id;
-
-    if (genericEl) {
-      e.klassType = 'GenericEl';
-    }
-
-    elementShowOrNew(e);
-  }
 
   isElementSelected(element) {
     const { currentElement } = this.props;
@@ -161,6 +139,7 @@ export default class ElementsListGroupedEntries extends Component {
     const {
       showDragColumn,
       collapseAll,
+      showDetails,
     } = this.props;
 
     const { elementsShown, keyboardSelectedElementId } = this.state;
@@ -182,7 +161,7 @@ export default class ElementsListGroupedEntries extends Component {
             isSelected={this.isElementSelected(element)}
             showDragColumn={showDragColumn}
             keyboardSelectedElementId={keyboardSelectedElementId}
-            showDetails={this.showDetails}
+            showDetails={showDetails}
           />
         ))}
       </tbody>
@@ -223,6 +202,7 @@ ElementsListGroupedEntries.propTypes = {
   elements: PropTypes.array.isRequired,
   currentElement: PropTypes.object,
   showDragColumn: PropTypes.bool.isRequired,
+  showDetails: PropTypes.func.isRequired,
   elementsGroup: PropTypes.string.isRequired,
   genericEl: PropTypes.object,
   type: PropTypes.string.isRequired,

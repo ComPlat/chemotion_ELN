@@ -29,9 +29,14 @@ export default class CellLineEntry extends Component {
 
   renderItemEntries(cellLineItems) {
     const { showEntries } = this.state;
-    return showEntries ? cellLineItems.map(
-      (cellLineItem) => <CellLineItemEntry key={cellLineItem.id} cellLineItem={cellLineItem} />
-    ) : [];
+    const { showDetails } = this.props;
+    return showEntries ? cellLineItems.map((cellLineItem) => (
+      <CellLineItemEntry
+        key={cellLineItem.id}
+        cellLineItem={cellLineItem}
+        showDetails={showDetails}
+      />
+    )) : [];
   }
 
   renderNameHeader(firstCellLineItem) {
@@ -172,5 +177,6 @@ export default class CellLineEntry extends Component {
 CellLineEntry.propTypes = {
   cellLineItems: PropTypes.arrayOf(
     CellLinePropTypeTableEntry
-  ).isRequired
+  ).isRequired,
+  showDetails: PropTypes.func.isRequired,
 };
