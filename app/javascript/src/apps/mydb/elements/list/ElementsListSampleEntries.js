@@ -189,7 +189,7 @@ function MoleculeHeader({ sample, show, showPreviews, showDragColumn, onClick, t
   );
 }
 
-export default class ElementsTableSampleEntries extends Component {
+export default class ElementsListSampleEntries extends Component {
   constructor(props) {
     super(props);
 
@@ -414,7 +414,7 @@ export default class ElementsTableSampleEntries extends Component {
   }
 }
 
-ElementsTableSampleEntries.propTypes = {
+ElementsListSampleEntries.propTypes = {
   onChangeCollapse: PropTypes.func,
   collapseAll: PropTypes.bool,
   elements: PropTypes.array,

@@ -15,12 +15,12 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
-import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
-import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
+import ElementsListEntries from 'src/apps/mydb/elements/list/ElementsListEntries';
+import ElementsListSampleEntries from 'src/apps/mydb/elements/list/ElementsListSampleEntries';
 import { SearchUserLabels } from 'src/components/UserLabels';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
-import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
+import ElementsListGroupedEntries from 'src/apps/mydb/elements/list/ElementsListGroupedEntries';
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
@@ -31,7 +31,7 @@ import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescr
 import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
 import Sheet from 'src/components/common/Sheet';
 
-export default class ElementsTable extends React.Component {
+export default class ElementsList extends React.Component {
   constructor(props) {
     super(props);
     this.elementRef = React.createRef();
@@ -590,7 +590,7 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <Sheet className="elements-table-header">
+      <Sheet className="elements-list-header">
         <div className="d-flex gap-1 align-items-center">
           <ElementAllCheckbox
             type={type}
@@ -652,7 +652,7 @@ export default class ElementsTable extends React.Component {
 
     if (type === 'sample') {
       elementsTableEntries = (
-        <ElementsTableSampleEntries
+        <ElementsListSampleEntries
           collapseAll={collapseAll}
           elements={elements}
           currentElement={currentElement}
@@ -664,7 +664,7 @@ export default class ElementsTable extends React.Component {
       );
     } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
       elementsTableEntries = (
-        <ElementsTableGroupedEntries
+        <ElementsListGroupedEntries
           collapseAll={collapseAll}
           elements={elements}
           currentElement={currentElement}
@@ -690,7 +690,7 @@ export default class ElementsTable extends React.Component {
       );
     } else {
       elementsTableEntries = (
-        <ElementsTableEntries
+        <ElementsListEntries
           elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
@@ -719,11 +719,11 @@ export default class ElementsTable extends React.Component {
   }
 }
 
-ElementsTable.defaultProps = {
+ElementsList.defaultProps = {
   genericEl: null,
 };
 
-ElementsTable.propTypes = {
+ElementsList.propTypes = {
   overview: PropTypes.bool.isRequired,
   type: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types

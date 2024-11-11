@@ -6,8 +6,8 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import ElementsTable from 'src/apps/mydb/elements/list/ElementsTable';
-import ElementsTableSettings from 'src/apps/mydb/elements/list/ElementsTableSettings';
+import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
+import ElementsListSettings from 'src/apps/mydb/elements/list/ElementsListSettings';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -221,7 +221,7 @@ export default class ElementsTabs extends React.Component {
           title={title}
           className={`elements-list-tab-${value}s`}
         >
-          <ElementsTable
+          <ElementsList
             overview={overview}
             type={value}
             genericEl={genericEl}
@@ -242,7 +242,7 @@ export default class ElementsTabs extends React.Component {
           </Button>
         )}
         <div className="tabs-container--with-full-height position-relative">
-          <ElementsTableSettings
+          <ElementsListSettings
             visible={visible}
             hidden={hidden}
           />
