@@ -8,7 +8,6 @@ import classnames from 'classnames';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -61,16 +60,6 @@ function reactionVariations(element) {
   return null;
 }
 
-function sampleAnalysesLabels(element) {
-  if (element.type === 'sample') {
-    return (
-      <ElementAnalysesLabels element={element} key={`${element.id}_analyses`} />
-    );
-  }
-
-  return null;
-}
-
 export function reactionStatus(element) {
   if (element.type === 'reaction' && element.status) {
     const tooltip = (
@@ -114,19 +103,6 @@ export function reactionStatus(element) {
       default:
         return null;
     }
-  }
-
-  return null;
-}
-
-function topSecretIcon(element) {
-  if (element.type === 'sample' && element.is_top_secret === true) {
-    const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
-    return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        <i className="fa fa-user-secret" />
-      </OverlayTrigger>
-    );
   }
 
   return null;
@@ -196,7 +172,6 @@ export default class ElementsListEntries extends Component {
   isCurrEleDropType(type) {
     const { currentElement } = ElementStore.getState();
     const targets = {
-      sample: ['reaction', 'wellplate'],
       reaction: ['research_plan'],
       wellplate: ['screen', 'research_plan'],
       generalProcedure: ['reaction'],
@@ -218,15 +193,12 @@ export default class ElementsListEntries extends Component {
 
   dropSourceType(el) {
     let sourceType = '';
-    const isDropForSample = el.type === 'sample' && this.isCurrEleDropType('sample');
     const isDropForWellPlate = el.type === 'wellplate' && this.isCurrEleDropType('wellplate');
     const isDropForResearchPlan = el.type === 'reaction' && this.isCurrEleDropType('reaction');
     const isDropForGP = el.type === 'reaction' && el.role === 'gp' && this.isCurrEleDropType('generalProcedure');
     const isDropForScreen = el.type === 'research_plan' && this.isCurrEleDropType('research_plan');
 
-    if (isDropForSample) {
-      sourceType = DragDropItemTypes.SAMPLE;
-    } else if (isDropForWellPlate) {
+    if (isDropForWellPlate) {
       sourceType = DragDropItemTypes.WELLPLATE;
     } else if (isDropForResearchPlan) {
       sourceType = DragDropItemTypes.REACTION;
@@ -243,8 +215,6 @@ export default class ElementsListEntries extends Component {
   previewColumn(element) {
     const { showDetails } = this.props;
     const classNames = classnames({
-      molecule: element.type === 'sample',
-      'molecule-selected': element.type === 'sample' && this.isElementSelected(element),
       reaction: element.type === 'reaction',
       research_plan: element.type === 'research_plan',
     });
@@ -299,12 +269,10 @@ export default class ElementsListEntries extends Component {
       <Table className="elements" hover>
         <tbody className="sheet">
           {elements.map((element, index) => {
-            const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name : '';
-            let className = "";
-            if (this.isElementSelected(element)
-              || (keyboardElementIndex != null && keyboardElementIndex === index)) {
-              className = "text-bg-primary";
-            }
+            const className = classnames({
+              'text-bg-primary': (this.isElementSelected(element)
+                || (keyboardElementIndex != null && keyboardElementIndex === index))
+            });
 
             return (
               <tr key={element.id} className={className}>
@@ -339,11 +307,8 @@ export default class ElementsListEntries extends Component {
                     <ShowUserLabels element={element} />
                     {reactionVariations(element)}
                     <br />
-                    {sampleMoleculeName}
                     <CommentIcon commentCount={element.comment_count} />
                     <ElementCollectionLabels element={element} key={element.id} />
-                    {sampleAnalysesLabels(element)}
-                    {topSecretIcon(element)}
                   </div>
                 </td>
                 {this.previewColumn(element)}
