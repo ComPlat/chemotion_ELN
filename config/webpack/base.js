@@ -1,4 +1,5 @@
-const { webpackConfig, merge } = require('@rails/webpacker')
+const { generateWebpackConfig, merge } = require('shakapacker')
+const baseConfig = generateWebpackConfig();
 const customConfig = require('./custom')
 
-module.exports = merge(webpackConfig, customConfig)
+module.exports = merge(baseConfig, customConfig)
