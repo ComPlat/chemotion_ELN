@@ -362,7 +362,7 @@ export const handleOnDeleteAtom = async (editor) => {
 };
 
 // helper function to calculate counters for the ketcher2 setup based on file source type
-export const setKetcherData = async ({ rails_polymers_list }) => {
+export const setKetcherData = async (rails_polymers_list) => {
   let collected_images = [];
   if (rails_polymers_list && rails_polymers_list.length) {
     const { c_images, molfileData, image_counter } = adding_polymers_ketcher_format(rails_polymers_list, mols, latestData, image_used_counter);
@@ -370,7 +370,7 @@ export const setKetcherData = async ({ rails_polymers_list }) => {
     image_used_counter = image_counter;
     latestData = { ...molfileData };
   }
-  latestData?.root?.nodes.push(...collected_images);
+  return collected_images;
 };
 
 const KetcherEditor = forwardRef((props, ref) => {
@@ -518,6 +518,13 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   }, [editor]);
 
+  const setMolfileAndMove = async (data) => {
+    data = data ? data : latestData;
+    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+    await fetchKetcherData(editor);
+    await moveTemplate(editor);
+  };
+
   // enable editor change listener
   const onEditorContentChange = (editor) => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
@@ -535,6 +542,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       // editor = createEditors({})['ketcher2'] || editorProp;
       window.editor = editor;
       if (editor && editor.structureDef) {
+        onEditorContentChange(editor);
         const rails_polymers_list = await hasKetcherData(initMol);
         const ketfile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
           alert("invalid molfile. Please try again");
@@ -542,13 +550,12 @@ const KetcherEditor = forwardRef((props, ref) => {
         });
         await editor.structureDef.editor.setMolecule(ketfile.struct);
         await fetchKetcherData(editor);
-        await setKetcherData({ rails_polymers_list, editor }); // process polymers
-
-        // save and move
-        await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-        await fetchKetcherData(editor);
-        await moveTemplate(editor);
-        onEditorContentChange(editor);
+        console.log({ rails_polymers_list });
+        const collected_images = await setKetcherData(rails_polymers_list); // process polymers
+        if (collected_images.length) {
+          latestData?.root?.nodes.push(...collected_images);
+          setMolfileAndMove();
+        }
       }
     };
   };
