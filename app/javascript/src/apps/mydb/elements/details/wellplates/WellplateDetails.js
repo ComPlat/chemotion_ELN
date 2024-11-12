@@ -256,7 +256,7 @@ export default class WellplateDetails extends Component {
               <i className="fa fa-expand" />
             </Button>
           </OverlayTrigger>
-          { displaySaveButton &&
+          {displaySaveButton &&
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
               <Button
                 variant="warning"
@@ -325,7 +325,7 @@ export default class WellplateDetails extends Component {
             handleAddReadout={(c) => this.handleAddReadout(c)}
             handleRemoveReadout={(c) => this.handleRemoveReadout(c)}
           />
-          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
+          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update || false} />
           {' '}
           {/* For samples and reactions (<element>): disabled={!<element>.can_update} */}
         </Tab>

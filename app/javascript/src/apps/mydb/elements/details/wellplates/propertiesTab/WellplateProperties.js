@@ -65,7 +65,7 @@ export default class WellplateProperties extends Component {
           content={"Delete Readout Title? This will also delete the respective well readouts."}
           onClick={(deletionConfirmed) => {
             if (deletionConfirmed) this.deleteReadoutTitle(this.state.selectedReadoutIndex)
-            this.setState({selectedReadoutIndex: null})
+            this.setState({ selectedReadoutIndex: null })
           }}
         />
         <Row className="">
@@ -86,6 +86,7 @@ export default class WellplateProperties extends Component {
               <WellplateSizeDropdown
                 updateWellplate={changeProperties}
                 wellplate={wellplate}
+                key={`${wellplate.id}-wellplate-size-dropdown`}
               />
             </div>
           </Col>
@@ -100,7 +101,7 @@ export default class WellplateProperties extends Component {
                 value={readoutTitle}
                 onChange={(event) => this.updateReadoutTitle(index, event.target.value)}
               />
-              <Button variant="danger" onClick={() => this.setState({selectedReadoutIndex: index})}>
+              <Button variant="danger" onClick={() => this.setState({ selectedReadoutIndex: index })}>
                 <i className="fa fa-trash-o" />
               </Button>
             </InputGroup>
