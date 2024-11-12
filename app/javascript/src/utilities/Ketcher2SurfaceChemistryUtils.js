@@ -54,9 +54,6 @@ const rails_polymer_identifier = "R#";
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile) => {
   try {
-    // if (!molfile.includes("<PolymersList>")) return { struct: JSON.parse(ketfile.struct), rails_polymers_list: null };
-
-    // when ketcher mofile and polymers exists
     const lines = molfile.trim().split('\n');
     let rails_polymers_list = -1;
     for (let i = lines.length - 1; i > -1; i--) {

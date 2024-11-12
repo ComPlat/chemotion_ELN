@@ -1,6 +1,6 @@
 import assert from 'assert';
 
-import { all_atoms, allNodes, fuelKetcherData, imagesList, mols, resetStore } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
+import { all_atoms, allNodes, fuelKetcherData, imagesList, latestData, mols, resetStore, setKetcherData } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
 
 import { empty_mol_file, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list } from '../../../data/ketcher2_mockups';
 import { hasKetcherData } from '../../../../../app/packs/src/utilities/Ketcher2SurfaceChemistryUtils';
@@ -48,22 +48,31 @@ describe('Ketcher2', () => {
   });
 
   describe('On reading molfile with polymers list', () => {
-    it('should have a polymer list', () => {
-      hasKetcherData(molfile_with_polymer_list, ({ struct, rails_polymers_list }) => {
-        const list_to_array = rails_polymers_list.split(" ");
-        assert.notStrictEqual(struct, null, "Expected struct to not be null.");
-        assert.ok(list_to_array.length == 2, 'list of polymers should have length of 2');
-      });
+    it('should have a polymer list', async () => {
+      const rails_polymers_list = await hasKetcherData(molfile_with_polymer_list);
+      const list_to_array = rails_polymers_list.split(" ");
+      assert.ok(list_to_array.length == 2, 'list of polymers should have length of 2');
     });
 
     it('should not have a polymer list', async () => {
+      const p_list = "0 1s";
+      // START with fueling the data TODO:
       const rails_polymers_list = await hasKetcherData(molfile_without_polymer_list);
+      const images = await setKetcherData(p_list);
       assert.strictEqual(rails_polymers_list, null, 'list of polymers should be null');
+      assert.ok(images.length > 0, 'Collected images should be greater then 0');
     });
 
     it('should not have a polymer list & no struct', async () => {
+      const p_list = null;
       const rails_polymers_list = await hasKetcherData(molfile_without_polymer_list);
+      const images = await setKetcherData(p_list);
       assert.strictEqual(rails_polymers_list, null, 'list of polymers should be null');
+      assert.ok(images.length == 0, 'Collected images should be empty');
+    });
+
+    it('should set ketcher data to latestdata', async () => {
+
     });
   });
 
