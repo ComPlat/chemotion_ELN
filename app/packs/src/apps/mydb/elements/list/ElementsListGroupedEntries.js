@@ -9,16 +9,22 @@ import GenericGroupHeader from 'src/apps/mydb/elements/list/generic/GenericGroup
 import GenericGroupElement from 'src/apps/mydb/elements/list/generic/GenericGroupElement';
 import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
 import ReactionGroupElement from 'src/apps/mydb/elements/list/reaction/ReactionGroupElement';
+import CellLineGroupHeader from 'src/apps/mydb/elements/list/cellLine/CellLineGroupHeader';
+import CellLineGroupElement from 'src/apps/mydb/elements/list/cellLine/CellLineGroupElement';
 
 export default class ElementsListGroupedEntries extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
+
+    const { elementGroups } = props;
+    const sortedElementIds = Object.values(elementGroups)
+      .flatMap((elements) => elements.map(({ id }) => id));
 
     this.state = {
       elementsShown: [],
       keyboardIndex: null,
       keyboardSelectedElementId: null,
-      sortedElementIds: [],
+      sortedElementIds: sortedElementIds,
     };
   }
 
@@ -28,6 +34,18 @@ export default class ElementsListGroupedEntries extends Component {
 
   componentWillUnmount() {
     KeyboardStore.unlisten(this.reactionsOnKeyDown);
+  }
+
+  componentDidUpdate(prevProps) {
+    const { elementGroups } = this.props;
+    const { elementGroups: prevElementGroups } = prevProps;
+
+    if (elementGroups !== prevElementGroups) {
+      const sortedElementIds = Object.values(elementGroups)
+        .flatMap((elements) => elements.map(({ id }) => id));
+
+      this.setState({ sortedElementIds });
+    }
   }
 
   handleGroupToggle(group) {
@@ -89,52 +107,6 @@ export default class ElementsListGroupedEntries extends Component {
     return currentElement?.id === element.id;
   }
 
-  groupedElements() {
-    const { elements, elementsGroup, type } = this.props;
-
-    const groupedElements = {};
-
-    if (type === 'reaction') {
-      elements.forEach((element) => {
-        const key = element[elementsGroup];
-
-        if (!Object.prototype.hasOwnProperty.call(groupedElements, key)) {
-          groupedElements[key] = [];
-        }
-
-        groupedElements[key].push(element);
-      });
-    } else {
-      const groupElements = elementsGroup.split('.');
-      const layer = groupElements[0];
-      const field = groupElements[1];
-
-      elements.forEach((element) => {
-        const { fields } = (element.properties.layers[layer] || { fields: [{ field, value: '' }] });
-        const key = fields.find((f) => f.field === field)?.value || '[empty]';
-
-        if (!Object.prototype.hasOwnProperty.call(groupedElements, key)) {
-          groupedElements[key] = [];
-        }
-
-        groupedElements[key].push(element);
-      });
-    }
-
-    const sortedElementIds = [];
-    Object.entries(groupedElements).forEach((entry) => {
-      entry[1].forEach((element) => {
-        sortedElementIds.push(element.id);
-      });
-    });
-
-    // you are not able to use this.setState because this would rerender it again and again ...
-    // eslint-disable-next-line react/no-direct-mutation-state
-    this.state.sortedElementIds = sortedElementIds;
-
-    return groupedElements;
-  }
-
   renderGroup(group, elements, GroupHeader, GroupElement) {
     const {
       showDragColumn,
@@ -169,18 +141,21 @@ export default class ElementsListGroupedEntries extends Component {
   }
 
   render() {
-    const { type } = this.props;
+    const { type, elementGroups } = this.props;
     let headerComponent, elementComponent;
     if (type === 'reaction') {
       headerComponent = ReactionGroupHeader;
       elementComponent = ReactionGroupElement;
+    } else if (type == 'cell_line') {
+      headerComponent = CellLineGroupHeader;
+      elementComponent = CellLineGroupElement;
     } else {
       headerComponent = GenericGroupHeader;
       elementComponent = GenericGroupElement;
     }
 
-    const tableContent = Object.entries(this.groupedElements()).map((entry) =>
-      this.renderGroup(entry[0], entry[1], headerComponent, elementComponent)
+    const tableContent = Object.entries(elementGroups).map(([key, elements]) =>
+      this.renderGroup(key, elements, headerComponent, elementComponent)
     );
 
     return (
@@ -199,11 +174,10 @@ ElementsListGroupedEntries.defaultProps = {
 ElementsListGroupedEntries.propTypes = {
   onChangeCollapse: PropTypes.func.isRequired,
   collapseAll: PropTypes.bool.isRequired,
-  elements: PropTypes.array.isRequired,
+  elementGroups: PropTypes.array.isRequired,
   currentElement: PropTypes.object,
   showDragColumn: PropTypes.bool.isRequired,
   showDetails: PropTypes.func.isRequired,
-  elementsGroup: PropTypes.string.isRequired,
   genericEl: PropTypes.object,
   type: PropTypes.string.isRequired,
 };

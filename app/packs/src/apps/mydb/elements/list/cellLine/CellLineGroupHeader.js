@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CellLineItemEntry from 'src/apps/mydb/elements/list/cellLine/CellLineItemEntry';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
@@ -11,36 +10,16 @@ import ChevronIcon from 'src/components/common/ChevronIcon';
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 
-export default class CellLineEntry extends Component {
+export default class CellLineGroupHeader extends Component {
   constructor(props) {
     super(props);
     this.state = {
       detailedInformation: false,
-      showEntries: true
     };
   }
 
-  getBorderStyle() {
-    const { showEntries } = this.state;
-    return showEntries
-      ? 'list-container title-panel p-3'
-      : 'list-container title-panel p-3 cell-line-group-bottom-border';
-  }
-
-  renderItemEntries(cellLineItems) {
-    const { showEntries } = this.state;
-    const { showDetails } = this.props;
-    return showEntries ? cellLineItems.map((cellLineItem) => (
-      <CellLineItemEntry
-        key={cellLineItem.id}
-        cellLineItem={cellLineItem}
-        showDetails={showDetails}
-      />
-    )) : [];
-  }
-
   renderNameHeader(firstCellLineItem) {
-    const { showEntries } = this.state;
+    const { show } = this.props;
     return (
       <div className="d-flex gap-2 align-items-center">
         <div className="flex-grow-1 fw-bold fs-5">
@@ -48,7 +27,7 @@ export default class CellLineEntry extends Component {
         </div>
         {this.renderCreateSubSampleButton()}
         {this.renderDetailedInfoButton()}
-        <ChevronIcon color="primary" direction={showEntries ? 'down' : 'right'} />
+        <ChevronIcon color="primary" direction={show ? 'down' : 'right'} />
       </div>
     );
   }
@@ -98,10 +77,11 @@ export default class CellLineEntry extends Component {
   }
 
   renderCreateSubSampleButton() {
-    const { cellLineItems } = this.props;
     const { currentCollection, isSync } = UIStore.getState();
     if (currentCollection.label === 'All') { return null; }
     if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) { return null; }
+
+    const { element } = this.props;
 
     return (
       <OverlayTrigger
@@ -129,7 +109,7 @@ export default class CellLineEntry extends Component {
               {
                 collectionID: currentCollection.id,
                 cell_lineID: 'new',
-                cell_line_template: cellLineItems[0]
+                cell_line_template: element,
               }
             };
             elementShowOrNew(creationEvent);
@@ -147,7 +127,7 @@ export default class CellLineEntry extends Component {
     return (
       <div className="cell-line-group-header-property">
         <div className="property-key floating">{propertyName}</div>
-        <div className="property-key-minus floating" floating>-</div>
+        <div className="property-key-minus floating">-</div>
         <div className="property-value">
           {propertyValue}
         </div>
@@ -156,27 +136,26 @@ export default class CellLineEntry extends Component {
   }
 
   render() {
-    const { cellLineItems } = this.props;
-    const { showEntries } = this.state;
-    if (cellLineItems.length === 0) { return (null); }
+    const { element, toggleGroup } = this.props;
     return (
-      <div className="cell-line-group">
-        <div
-          className={this.getBorderStyle()}
-          onClick={() => { this.setState({ showEntries: !showEntries }); }}
+      <tr className="cell-line-group">
+        <td
+          colSpan="5"
+          className="list-container title-panel p-3"
+          onClick={toggleGroup}
         >
-          {this.renderNameHeader(cellLineItems[0])}
-          {this.renderDetailedInfos(cellLineItems[0])}
-        </div>
-        {this.renderItemEntries(cellLineItems)}
-      </div>
+          {this.renderNameHeader(element)}
+          {this.renderDetailedInfos(element)}
+        </td>
+      </tr>
     );
   }
 }
 
-CellLineEntry.propTypes = {
-  cellLineItems: PropTypes.arrayOf(
-    CellLinePropTypeTableEntry
-  ).isRequired,
-  showDetails: PropTypes.func.isRequired,
+CellLineGroupHeader.propTypes = {
+  group: PropTypes.string.isRequired,
+  element: CellLinePropTypeTableEntry.isRequired,
+  show: PropTypes.bool.isRequired,
+  showDragColumn: PropTypes.bool.isRequired,
+  toggleGroup: PropTypes.func.isRequired,
 };
