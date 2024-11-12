@@ -1,112 +1,181 @@
 // TODO: check if imported_readout is still functionality that is used or if it is abandoned and should be removed
 
-import React, { Component } from 'react';
+import React, { useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Table, Form } from 'react-bootstrap';
+// import { Form } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
+import { AgGridReact } from 'ag-grid-react';
 
-export default class WellplateList extends Component {
-  handleReadoutOfWellChange(event, well, index, type) {
-    const { value } = event.target;
-    const { wells, handleWellsChange } = this.props;
-    const wellId = wells.indexOf(well);
-    wells[wellId].readouts[index][type] = value;
+const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
+  // let timeout = null;
+  const gridRef = useRef();
+
+  // const handleReadoutOfWellChange = (well, index, type, event) => {
+  //   const { value } = event.target;
+  //   const wellIndex = wells.indexOf(well);
+  //   wells[wellIndex].readouts[index][type] = value;
+ 
+  //   clearTimeout(timeout);
+  //   timeout = setTimeout(() => {
+  //     handleWellsChange(wells);
+  //   }, 3000);
+  // }
+
+  const renderSVG = (node) => {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return (
+      <SVG className="molecule-small" src={`/images/molecules/${sample.molecule.molecule_svg_file}`} />
+    );
+  }
+
+  const renderName = (node) => {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return sample.short_label;
+  }
+
+  const renderExternalLabel = (node) => {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return sample.external_label;
+  }
+
+  const renderSumFormula = (node) => {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return sample.molecule_formula;
+  }
+
+  const renderReadoutValue = (node) => {
+    const readouts = node.data?.readouts;
+    if (!node.data.sample) { return null; }
+    return readouts[node.index].value;
+    //return (
+    //  <Form.Control
+    //    value={readouts[node.index].value || ''}
+    //    onChange={(event) => handleReadoutOfWellChange(node.data, node.index, 'value', event)}
+    //    className="my-2"
+    //  />
+    //);
+  }
+
+  const renderReadoutUnit = (node) => {
+    const readouts = node.data?.readouts;
+    if (!node.data.sample) { return null; }
+    return readouts[node.index].unit;
+
+    //return (
+    //  <Form.Control
+    //    value={readouts[node.index].unit || ''}
+    //    onChange={(event) => handleReadoutOfWellChange(node.data, node.index, 'unit', event)}
+    //    className="my-2"
+    //  />
+    //);
+  }
+
+  const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
+    const { field, cellRendererParams } = colDef;
+    if (!oldRow.sample) { return null }
+
+    const wellIndex = wells.indexOf(oldRow);
+    wells[wellIndex].readouts[cellRendererParams.index][field] = newValue;
     handleWellsChange(wells);
-  }
+  }, [wells, readoutTitles]);
 
-  renderReadoutHeaders() {
-    return (
-      this.props.readoutTitles && this.props.readoutTitles.map((title, index) => {
-        return (
-          [
-            <th key={`readout_${index}_value_header`} width="15%">{title} Value</th>,
-            <th key={`readout_${index}_unit_header`} width="10%">{title} Unit</th>
-          ]
-        );
-      })
-    );
-  }
+  const columnDefs = [
+    {
+      headerName: "#",
+      minWidth: 35,
+      maxWidth: 35,
+      valueGetter: "node.rowIndex + 1",
+    },
+    {
+      headerName: "Position",
+      field: "alphanumericPosition",
+      minWidth: 70,
+      maxWidth: 70,
+    },
+    {
+      headerName: "Molecule",
+      field: "sample",
+      minWidth: 75,
+      maxWidth: 75,
+      cellRenderer: renderSVG,
+      cellClass: ["text-center", "py-2", "border-end"],
+    },
+    {
+      headerName: "Name",
+      field: "short_label",
+      cellRenderer: renderName,
+    },
+    {
+      headerName: "External Label",
+      field: "external_label",
+      cellRenderer: renderExternalLabel,
+    },
+    {
+      headerName: "Sum-Formula",
+      field: "short_label",
+      cellRenderer: renderSumFormula,
+    },
+  ];
 
-  renderReadoutFields(well) {
-    return (
-      well.readouts && well.readouts.map((readout, index) => {
-        return (
-          [
-            <td key={`well_${well.id}_readout_${index}_value`} className="p-0">
-              <Form.Control
-                value={readout.value || ''}
-                onChange={event => this.handleReadoutOfWellChange(event, well, index, 'value')}
-                className="m-0"
-              />
-            </td>,
-            <td key={`well_${well.id}_readout_${index}_unit`} className="p-0">
-              <Form.Control
-                value={readout.unit || ''}
-                onChange={event => this.handleReadoutOfWellChange(event, well, index, 'unit')}
-                className="m-0"
-              />
-            </td>,
-          ]
-        );
-      })
+  readoutTitles && readoutTitles.map((title, index) => {
+    columnDefs.push(
+      {
+        headerName: `${title} Value`,
+        field: "value",
+        editable: true,
+        cellRenderer: renderReadoutValue,
+        cellRendererParams: {
+          index: index,
+        }
+      },
+      {
+        headerName: `${title} Unit`,
+        field: "unit",
+        editable: true,
+        cellRenderer: renderReadoutUnit,
+        cellRendererParams: {
+          index: index,
+        }
+      },
     );
-  }
+  });
 
-  render() {
-    const { wells } = this.props;
-    return (
-      <Table bordered hover responsive>
-        <thead>
-          <tr>
-            <th width="3%">#</th>
-            <th width="5%">Position</th>
-            <th width="5%">Molecule</th>
-            <th width="11%">Name</th>
-            <th width="11%">External Label</th>
-            <th width="15%">Sum-Formula</th>
-            {this.renderReadoutHeaders()}
-            <th style={{ display: 'none' }} width="25%">Imported Readout</th>
-          </tr>
-        </thead>
-        <tbody>
-          {wells.map((well, key) => {
-            const id = key + 1;
-            const { sample, position } = well;
-            let svgPath = '';
-            let sampleName = '';
-            let externalLabel = '';
-            let sum_formular = '';
-            let importedReadout = '';
-            let svgNode = '';
-            if (sample) {
-              svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
-              svgNode = <SVG className="molecule-small" src={svgPath} />;
-              const { external_label, short_label, imported_readout } = sample;
-              sampleName = `${short_label || ''}`;
-              externalLabel = `${external_label || ''}`;
-              importedReadout = imported_readout;
-              sum_formular = sample.molecule_formula;
-            }
-            return (
-              <tr key={key}>
-                <td>{id}</td>
-                <td>{well.alphanumericPosition}</td>
-                <td>{svgNode}</td>
-                <td>{sampleName}</td>
-                <td>{externalLabel}</td>
-                <td>{sum_formular}</td>
-                {this.renderReadoutFields(well)}
-                <td className="p-0" style={{display: 'none'}}>
-                  <Form.Control value={importedReadout || ''} disabled className="m-0" />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
-    );
-  }
+  const defaultColDef = {
+    editable: false,
+    flex: 1,
+    wrapHeaderText: true,
+    autoHeaderHeight: true,
+    autoHeight: true,
+    sortable: false,
+    resizable: true,
+    cellClass: ["border-end", "px-2"],
+    headerClass: ["px-2"]
+  };
+
+  return (
+    <div className="ag-theme-alpine">
+      <AgGridReact
+        ref={gridRef}
+        columnDefs={columnDefs}
+        defaultColDef={defaultColDef}
+        rowData={wells}
+        domLayout="autoHeight"
+        readOnlyEdit
+        onCellEditRequest={updateRow}
+      />
+    </div>
+  );
 }
+
+export default WellplateList;
 
 WellplateList.propTypes = {
   wells: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
