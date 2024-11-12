@@ -274,11 +274,11 @@ export class WellplateDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const { onUndoDelete, attachments,wellplate } = this.props;
+    const { onUndoDelete, attachments, wellplate } = this.props;
 
     let combinedAttachments = filteredAttachments;
-    if(this.context.attachmentNotificationStore ){
-      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"Wellplate",wellplate);
+    if (this.context.attachmentNotificationStore) {
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, "Wellplate", wellplate);
     }
 
     return (
@@ -292,13 +292,13 @@ export class WellplateDetailsAttachments extends Component {
           <div className="ms-3 align-self-center">
             {
               attachments.length > 0
-                && sortingAndFilteringUI(
-                    sortDirection,
-                    this.handleSortChange,
-                    this.toggleSortDirection,
-                    this.handleFilterChange,
-                    true
-                  )
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                true
+              )
             }
           </div>
         </div>
@@ -350,9 +350,9 @@ export class WellplateDetailsAttachments extends Component {
                       extension,
                       attachmentEditor,
                       attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                          < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                      < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                       !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                          || attachment.is_new || this.documentType(attachment.filename) === null,
+                      || attachment.is_new || this.documentType(attachment.filename) === null,
                       this.handleEdit
                     )}
                     {annotateButton(attachment, () => {
@@ -389,14 +389,7 @@ WellplateDetailsAttachments.propTypes = {
       PropTypes.string,
       PropTypes.number
     ]).isRequired,
-    changed: PropTypes.bool.isRequired,
-    body: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-      })
-    ).isRequired,
+    changed: PropTypes.bool,
     attachments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.oneOfType([
