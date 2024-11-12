@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import React from 'react';
-import { List } from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
@@ -24,8 +23,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsListGroupedEntries from 'src/apps/mydb/elements/list/ElementsListGroupedEntries';
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
-import CellLineGroup from 'src/models/cellLine/CellLineGroup';
-import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
@@ -677,25 +674,41 @@ export default class ElementsList extends React.Component {
           moleculeGroupsShown = {moleculeGroupsShown}
         />
       );
-    } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
+    } else if (
+      ((type === 'reaction' || !!genericEl) && elementsGroup !== 'none')
+      || type === 'cell_line'
+    ) {
+      let getGroupKey;
+      if (type === 'reaction') {
+        getGroupKey = (element) => element[elementsGroup];
+      } else if (!!genericEl) {
+        const [layer, field] = elementsGroup.split('.');
+        const layerFields = genericEl.properties_release?.layers[layer]?.fields || [];
+        const keyField = layerFields.find((f) => f.field === field)?.value || '[empty]';
+        getGroupKey = (element) => element[keyField];
+      } else if (type === 'cell_line') {
+        getGroupKey = (element) => `${element.cellLineName} - ${element.source}`;
+      }
+
+      const elementGroups = {};
+      elements.forEach((element) => {
+        const groupKey = getGroupKey(element);
+        if (!elementGroups[groupKey]) {
+          elementGroups[groupKey] = [];
+        }
+        elementGroups[groupKey].push(element);
+      });
+
       elementsTableEntries = (
         <ElementsListGroupedEntries
           collapseAll={collapseAll}
-          elements={elements}
+          elementGroups={elementGroups}
           currentElement={currentElement}
           showDragColumn={!overview}
           showDetails={this.showDetails}
-          elementsGroup={elementsGroup}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
           genericEl={genericEl}
           type={type}
-        />
-      );
-    } else if (type === 'cell_line') {
-      elementsTableEntries = (
-        <CellLineContainer
-          cellLineGroups={CellLineGroup.buildFromElements(elements)}
-          showDetails={this.showDetails}
         />
       );
     } else if (type === 'device_description') {
