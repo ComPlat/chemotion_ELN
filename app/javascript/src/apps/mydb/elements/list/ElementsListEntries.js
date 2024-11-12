@@ -163,11 +163,6 @@ export default class ElementsListEntries extends Component {
     return null;
   }
 
-  isElementSelected(element) {
-    const { currentElement } = this.props;
-    return (currentElement && currentElement.id === element.id);
-  }
-
   // eslint-disable-next-line class-methods-use-this
   isCurrEleDropType(type) {
     const { currentElement } = ElementStore.getState();
@@ -262,7 +257,9 @@ export default class ElementsListEntries extends Component {
   }
 
   render() {
-    const { elements, showDragColumn, showDetails } = this.props;
+    const {
+      elements, showDragColumn, showDetails, isElementSelected
+    } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -270,7 +267,7 @@ export default class ElementsListEntries extends Component {
         <tbody className="sheet">
           {elements.map((element, index) => {
             const className = classnames({
-              'text-bg-primary': (this.isElementSelected(element)
+              'text-bg-primary': (isElementSelected(element)
                 || (keyboardElementIndex != null && keyboardElementIndex === index))
             });
 
@@ -326,14 +323,10 @@ export default class ElementsListEntries extends Component {
   }
 }
 
-ElementsListEntries.defaultProps = {
-  currentElement: null
-};
-
 /* eslint-disable react/forbid-prop-types */
 ElementsListEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
   showDragColumn: PropTypes.bool.isRequired,
-  currentElement: PropTypes.object,
+  isElementSelected: PropTypes.func.isRequired,
   showDetails: PropTypes.func.isRequired,
 };

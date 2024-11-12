@@ -11,15 +11,11 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const DeviceDescriptionList = ({ elements, currentElement, showDetails }) => {
+const DeviceDescriptionList = ({ elements, isElementSelected, showDetails }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
   const showAllGroups = deviceDescriptionsStore.show_all_groups;
   const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
-
-  const isElementSelected = (element) => {
-    return (currentElement && currentElement.id === element.id);
-  }
 
   const dragHandle = (element) => {
     const sourceType = DragDropItemTypes.DEVICE_DESCRIPTION;

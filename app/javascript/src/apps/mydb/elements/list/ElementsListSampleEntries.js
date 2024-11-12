@@ -301,19 +301,14 @@ export default class ElementsListSampleEntries extends Component {
     }, this.forceUpdate());
   }
 
-  isElementSelected(element) {
-    const { currentElement } = this.props;
-    return (currentElement && currentElement.id === element.id);
-  }
-
   renderSamples(samples, index) {
     const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
-    const { showDragColumn, showDetails } = this.props;
+    const { showDragColumn, showDetails, isElementSelected } = this.props;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
     const sampleRows = samples.slice(0, numSamples).map((sample) => {
-      const selected = this.isElementSelected(sample);
+      const selected = isElementSelected(sample);
       const applyHighlight = selected || keyboardSeletectedElementId === sample.id
 
       return (
@@ -411,7 +406,7 @@ ElementsListSampleEntries.propTypes = {
   onChangeCollapse: PropTypes.func,
   collapseAll: PropTypes.bool,
   elements: PropTypes.array,
-  currentElement: PropTypes.object,
+  isElementSelected: PropTypes.func.isRequired,
   showDragColumn: PropTypes.bool,
   showDetails: PropTypes.func.isRequired,
   moleculeSort: PropTypes.bool,
