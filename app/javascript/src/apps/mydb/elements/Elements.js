@@ -62,7 +62,13 @@ function Elements() {
       ref={panelRef}
       onLayout={onLayout}
     >
-      <Panel collapsible defaultSize={defaultLayout[0]} className="w-0">
+      <Panel
+        id="elements-list-view"
+        order={1}
+        collapsible
+        defaultSize={showDetailView ? defaultLayout[0] : 100}
+        className="w-0"
+      >
         <div className="h-100 pt-3 px-3 overflow-x-auto">
           <div className="h-100" style={{ minWidth: '600px' }}>
             <ElementsList overview={!showDetailView} />
@@ -80,7 +86,12 @@ function Elements() {
               <i className={`fa fa-angle-double-${isCollapsed ? 'right' : 'left'}`} />
             </Button>
           </PanelResizeHandle>
-          <Panel defaultSize={defaultLayout[1]} className="w-0">
+          <Panel
+            id="elements-detail-view"
+            order={2}
+            defaultSize={defaultLayout[1]}
+            className="w-0"
+          >
             <div className="h-100 pt-3 px-3 overflow-x-auto">
               <div className="h-100" style={{ minWidth: '680px' }}>
                 <ElementDetails />
