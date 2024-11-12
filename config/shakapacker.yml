@@ -57,7 +57,7 @@ default: &default
 
 development:
   <<: *default
-  compile: true
+  compile: false
   compiler_strategy: mtime
 
   # Reference: https://webpack.js.org/configuration/dev-server/
@@ -66,8 +66,8 @@ development:
     # For running dev server with https, set `server: https`.
     # server: https
 
-    host: localhost
-    port: 3035
+    host: <%= ENV['SHAPACKER_DEV_SERVER_HOST'] || 'localhost' %>
+    port: <%= ENV['SHAPACKER_DEV_SERVER_PORT'] || 3035 %>
     # Hot Module Replacement updates modules while the application is running without a full reload
     # Used instead of the `hot` key in https://webpack.js.org/configuration/dev-server/#devserverhot
     hmr: true
@@ -85,10 +85,10 @@ development:
       # Should we show a full-screen overlay in the browser when there are compiler errors or warnings?
       overlay: true
       # May also be a string
-      # webSocketURL:
-      #  hostname: '0.0.0.0'
-      #  pathname: '/ws'
-      #  port: 8080
+      webSocketURL:
+       hostname: 'localhost'
+       pathname: '/ws'
+       port: 3035
     # Should we use gzip compression?
     compress: true
     # Note that apps that do not check the host are vulnerable to DNS rebinding attacks
