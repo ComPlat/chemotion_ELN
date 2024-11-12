@@ -9,10 +9,10 @@ const Option = (width, height) => {
   const label = `${height * width} (${width}x${height})`
   const value = `${width} ${height}`
 
-  return (<option label={label} value={value} />)
+  return (<option key={`${label}-${value}`} label={label} value={value} />)
 }
 
-const WellplateSizeDropdown = ({wellplate, updateWellplate}) => {
+const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
   const size = `${wellplate.width} ${wellplate.height}`
   const [showCustomSizeModal, setShowCustomSizeModal] = useState(false)
 
@@ -21,14 +21,14 @@ const WellplateSizeDropdown = ({wellplate, updateWellplate}) => {
     const width = values[0]
     const height = values[1]
 
-    updateWellplate({ type: 'size', value: { width: width, height: height} });
+    updateWellplate({ type: 'size', value: { width: width, height: height } });
   }
 
   const options = [
     Option(24, 16),
     Option(12, 8),
     Option(6, 4),
-    Option(4,3)
+    Option(4, 3)
   ]
 
   return (
@@ -38,6 +38,7 @@ const WellplateSizeDropdown = ({wellplate, updateWellplate}) => {
         wellplate={wellplate}
         updateWellplate={updateWellplate}
         handleClose={() => setShowCustomSizeModal(false)}
+        key={`${wellplate.id}-custom-size-modal`}
       />
       <InputGroup>
         <Form.Select
