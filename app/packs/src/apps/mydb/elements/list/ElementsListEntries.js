@@ -163,11 +163,6 @@ export default class ElementsListEntries extends Component {
     return null;
   }
 
-  isElementSelected(element) {
-    const { currentElement } = this.props;
-    return (currentElement && currentElement.id === element.id);
-  }
-
   // eslint-disable-next-line class-methods-use-this
   isCurrEleDropType(type) {
     const { currentElement } = ElementStore.getState();
@@ -262,7 +257,7 @@ export default class ElementsListEntries extends Component {
   }
 
   render() {
-    const { elements, showDragColumn, showDetails } = this.props;
+    const { elements, showDragColumn, showDetails, isElementSelected } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -270,7 +265,7 @@ export default class ElementsListEntries extends Component {
         <tbody>
           {elements.map((element, index) => {
             let style = {};
-            if (this.isElementSelected(element)
+            if (isElementSelected(element)
               || (keyboardElementIndex != null && keyboardElementIndex === index)) {
               style = {
                 color: '#000',
@@ -339,6 +334,6 @@ ElementsListEntries.defaultProps = {
 ElementsListEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
   showDragColumn: PropTypes.bool.isRequired,
-  currentElement: PropTypes.object,
+  isElementSelected: PropTypes.func.isRequired,
   showDetails: PropTypes.func.isRequired,
 };

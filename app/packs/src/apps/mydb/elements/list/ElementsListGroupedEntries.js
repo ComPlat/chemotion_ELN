@@ -102,16 +102,12 @@ export default class ElementsListGroupedEntries extends Component {
     return null;
   };
 
-  isElementSelected(element) {
-    const { currentElement } = this.props;
-    return currentElement?.id === element.id;
-  }
-
   renderGroup(group, elements, GroupHeader, GroupElement) {
     const {
       showDragColumn,
       collapseAll,
       showDetails,
+      isElementSelected,
     } = this.props;
 
     const { elementsShown, keyboardSelectedElementId } = this.state;
@@ -130,7 +126,7 @@ export default class ElementsListGroupedEntries extends Component {
           <GroupElement
             key={element.id}
             element={element}
-            isSelected={this.isElementSelected(element)}
+            isSelected={isElementSelected(element)}
             showDragColumn={showDragColumn}
             keyboardSelectedElementId={keyboardSelectedElementId}
             showDetails={showDetails}
@@ -167,7 +163,6 @@ export default class ElementsListGroupedEntries extends Component {
 }
 
 ElementsListGroupedEntries.defaultProps = {
-  currentElement: null,
   genericEl: null,
 };
 
@@ -175,7 +170,7 @@ ElementsListGroupedEntries.propTypes = {
   onChangeCollapse: PropTypes.func.isRequired,
   collapseAll: PropTypes.bool.isRequired,
   elementGroups: PropTypes.array.isRequired,
-  currentElement: PropTypes.object,
+  isElementSelected: PropTypes.func.isRequired,
   showDragColumn: PropTypes.bool.isRequired,
   showDetails: PropTypes.func.isRequired,
   genericEl: PropTypes.object,

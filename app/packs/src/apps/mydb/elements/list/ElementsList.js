@@ -52,6 +52,7 @@ export default class ElementsList extends React.Component {
     this.onChangeUI = this.onChangeUI.bind(this);
 
     this.showDetails = this.showDetails.bind(this);
+    this.isElementSelected = this.isElementSelected.bind(this);
 
     this.changeDateFilter = this.changeDateFilter.bind(this);
 
@@ -340,6 +341,11 @@ export default class ElementsList extends React.Component {
     }
 
     elementShowOrNew(e);
+  }
+
+  isElementSelected(element) {
+    const { currentElement } = this.state;
+    return currentElement?.id === element.id;
   }
 
   renderPagination() {
@@ -635,7 +641,6 @@ export default class ElementsList extends React.Component {
   renderEntries() {
     const {
       elements,
-      currentElement,
       collapseAll,
       moleculeSort,
       elementsGroup,
@@ -649,7 +654,7 @@ export default class ElementsList extends React.Component {
         <ElementsListSampleEntries
           collapseAll={collapseAll}
           elements={elements}
-          currentElement={currentElement}
+          isElementSelected={this.isElementSelected}
           showDragColumn={!overview}
           showDetails={this.showDetails}
           moleculeSort={moleculeSort}
@@ -685,7 +690,7 @@ export default class ElementsList extends React.Component {
         <ElementsListGroupedEntries
           collapseAll={collapseAll}
           elementGroups={elementGroups}
-          currentElement={currentElement}
+          isElementSelected={this.isElementSelected}
           showDragColumn={!overview}
           showDetails={this.showDetails}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
@@ -697,7 +702,7 @@ export default class ElementsList extends React.Component {
       elementsTableEntries = (
         <ElementsListEntries
           elements={elements}
-          currentElement={currentElement}
+          isElementSelected={this.isElementSelected}
           showDragColumn={!overview}
           showDetails={this.showDetails}
         />
