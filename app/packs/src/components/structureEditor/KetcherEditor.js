@@ -19,7 +19,6 @@ import {
   // methods
   hasKetcherData,
   adding_polymers_ketcher_format,
-  adding_polymers_indigo_molfile,
   prepareImageFromTemplateList,
   removeImageTemplateAtom,
   reAttachPolymerList,
@@ -36,20 +35,19 @@ import {
 
   // tags
   inspired_label,
-  rails_polymer_identifier
 } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
-let FILOStack = [];
-let uniqueEvents = new Set();
-let latestData = null;
-let imagesList = [];
-let mols = [];
-let allNodes = [];
-let all_atoms = [];
-let image_used_counter = -1;
-let re_render_canvas = false;
-let _selection = null;
-let deleted_atoms_list = [];
+export let FILOStack = [];
+export let uniqueEvents = new Set();
+export let latestData = null;
+export let imagesList = [];
+export let mols = [];
+export let allNodes = [];
+export let all_atoms = [];
+export let image_used_counter = -1;
+export let re_render_canvas = false;
+export let _selection = null;
+export let deleted_atoms_list = [];
 
 // funcation to reset all data containers
 export const resetStore = () => {
@@ -64,30 +62,37 @@ export const resetStore = () => {
   deleted_atoms_list = [];
   FILOStack = [];
   uniqueEvents = new Set();
+  all_atoms = [];
 };
 
+export const fuelKetcherData = async (data) => {
+  allNodes = [...data.root.nodes];
+  imagesList = allNodes.filter(item => item.type === 'image');
+
+  const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
+  mols = sliceEnd > 0
+    ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
+    : [];
+  mols.forEach((item) => data[item]?.atoms.map(i => all_atoms.push(i)));
+  // console.log("DATA FUELED", {
+  //   image_used_counter, all_atoms_alias, allNodes_alias, imagesList_alias, mols_alias
+  // });
+};
+
+
 // helper function to rebase with the ketcher canvas data
-export const fuelKetcherData = async (editor) => {
+const fetchKetcherData = async (editor) => {
   if (editor) {
     all_atoms = [];
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
-    allNodes = [...latestData.root.nodes];
-    imagesList = allNodes.length > mols.length ? allNodes.filter(
-      item => item.type === 'image'
-    ) : [];
-    const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
-    mols = sliceEnd > 0
-      ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
-      : [];
-    mols.forEach((item) => latestData[item]?.atoms.map(i => all_atoms.push(i)));
-    // console.log("DATA FUELED", { image_used_counter, latestData, allNodes, imagesList, mols, decision: allNodes.length > mols.length });
+    await fuelKetcherData(latestData);
   }
 };
 
 // helper function to handle new atoms added to the canvas
 export const handleAddAtom = async (editor) => {
   console.log("Atom moved!");
-  await fuelKetcherData(editor);
+  await fetchKetcherData(editor);
   let already_processed = [];
   image_used_counter = -1;
   const seenThirdParts = new Set();
@@ -158,7 +163,7 @@ export const handleAddAtom = async (editor) => {
   const mols_list = d.root.nodes.slice(0, mols.length);
   d.root.nodes = [...mols_list, ...new_images];
   await editor.structureDef.editor.setMolecule(JSON.stringify(d));
-  await fuelKetcherData(editor);
+  await fetchKetcherData(editor);
   moveTemplate(editor);
 };
 
@@ -204,12 +209,11 @@ export const moveTemplate = async (editor) => {
 
 // helper function to place image on atom location coordinates
 export const placeImageOnAtoms = async (mols_, imagesList_, editor) => {
-  await fuelKetcherData(editor);
+  await fetchKetcherData(editor);
   mols_.forEach((item) => {
     latestData[item]?.atoms.forEach((atom) => {
       if (atom && three_parts_patten.test(atom?.alias)) {
         const splits_alias = atom.alias.split("_");
-        console.log({ splits_alias, imagesList_, mols_ });
         let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
         image_coordinates = {
           ...image_coordinates,
@@ -234,13 +238,13 @@ export const handleOnDeleteImage = async (editor) => {
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
-      images = imagesList;
+      // images = imagesList;
       let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
       console.log({ data });
       // return;
       await editor.structureDef.editor.setMolecule(JSON.stringify(data));
       image_used_counter -= images.length;
-      // await fuelKetcherData(editor);
+      // await fetchKetcherData(editor);
       await moveTemplate(editor);
     }
   }
@@ -308,12 +312,11 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
 
 // helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
 export const handleOnDeleteAtom = async (editor) => {
-  await fuelKetcherData();
+  await fetchKetcherData();
   console.log('handleOnDeleteAtom main', { mols, imagesList });
   try {
-    await fuelKetcherData(editor);
+    await fetchKetcherData(editor);
     const images_tbr = [];
-    let last_item = false;
 
     deleted_atoms_list.forEach((item, _) => {
       const deleted_splits = parseInt(item.alias.split("_")[2]);
@@ -358,37 +361,28 @@ export const handleOnDeleteAtom = async (editor) => {
   }
 };
 
-
 // helper function to calculate counters for the ketcher2 setup based on file source type
-export const setKetcherData = async ({ rails_polymers_list, editor }) => {
-  await fuelKetcherData(editor);
+export const setKetcherData = async ({ rails_polymers_list }) => {
   let collected_images = [];
-  if (rails_polymers_list) {
+  if (rails_polymers_list && rails_polymers_list.length) {
     const { c_images, molfileData, image_counter } = adding_polymers_ketcher_format(rails_polymers_list, mols, latestData, image_used_counter);
     collected_images = c_images;
     image_used_counter = image_counter;
     latestData = { ...molfileData };
-  } else { // type == "Indigo"
-    const { c_images, molfileData } = adding_polymers_indigo_molfile();
-    latestData = { ...molfileData };
-    collected_images = c_images;
   }
   latestData?.root?.nodes.push(...collected_images);
-  console.log({ setkatcherdata: latestData });
-  await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-  await fuelKetcherData(editor);
-  await moveTemplate(editor);
 };
 
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
+  console.log({ editor });
   const iframeRef = useRef();
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
   // Handlers for each event operation, mapped by operation name;
   const eventOperationHandlers = {
     "Load canvas": async () => {
-      await fuelKetcherData(editor);
+      await fetchKetcherData(editor);
       if (re_render_canvas) await moveTemplate(editor);
     },
     "Move image": async (_) => {
@@ -432,7 +426,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // action based on event-name
   const eventHandlers = {
-    'Load canvas': async () => await fuelKetcherData(editor),
+    'Load canvas': async () => await fetchKetcherData(editor),
     'Move image': async () => await moveTemplate(editor),
     'Move atom': async () => await moveTemplate(editor),
     'Add atom': async () => await handleAddAtom(editor),
@@ -443,12 +437,12 @@ const KetcherEditor = forwardRef((props, ref) => {
   // DOM button events with scope
   const buttonEvents = {
     "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => {
-      await fuelKetcherData(editor);
+      await fetchKetcherData(editor);
       re_render_canvas = true;
     },
     "[title='Layout \\(Ctrl\\+L\\)']": async () => {
       console.log("Layout");
-      await fuelKetcherData(editor);
+      await fetchKetcherData(editor);
       re_render_canvas = true;
     },
     "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
@@ -500,7 +494,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     "[title='Add/Remove explicit hydrogens']": async () => {
       // TODO:pattern identify
-      await fuelKetcherData(editor);
+      await fetchKetcherData(editor);
       re_render_canvas = true;
     },
 
@@ -540,12 +534,22 @@ const KetcherEditor = forwardRef((props, ref) => {
     if (event.data.eventType === 'init') {
       // editor = createEditors({})['ketcher2'] || editorProp;
       window.editor = editor;
-      if (editor && editor.structureDef)
-        await hasKetcherData(initMol, async ({ struct, rails_polymers_list }) => {
-          await editor.structureDef.editor.setMolecule(struct); // set initial
-          await setKetcherData({ rails_polymers_list, editor }); // process polymers
-          onEditorContentChange(editor); // subscribe to editor change
+      if (editor && editor.structureDef) {
+        const rails_polymers_list = await hasKetcherData(initMol);
+        const ketfile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
+          alert("invalid molfile. Please try again");
+          console.log(err);
         });
+        await editor.structureDef.editor.setMolecule(ketfile.struct);
+        await fetchKetcherData(editor);
+        await setKetcherData({ rails_polymers_list, editor }); // process polymers
+
+        // save and move
+        await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+        await fetchKetcherData(editor);
+        await moveTemplate(editor);
+        onEditorContentChange(editor);
+      }
     };
   };
 
@@ -555,7 +559,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     allowed_to_process_setter(true);
     if (selection?.images) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-      await fuelKetcherData(editor);
+      await fetchKetcherData(editor);
       images_to_be_updated_setter();
       return;
     }
@@ -601,7 +605,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       return;
     }
 
-    await fuelKetcherData(editor);
+    await fetchKetcherData(editor);
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
       FILOStack.splice(loadCanvasIndex, 1);
@@ -693,13 +697,15 @@ const KetcherEditor = forwardRef((props, ref) => {
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
     onSaveFileK2SC: async () => {
-      await fuelKetcherData(editor);
+      await fetchKetcherData(editor);
       const canvasDataMol = await editor.structureDef.editor.getMolfile();
       const result = await saveMolefile(iframeRef, canvasDataMol);
       resetStore();
       return result;
     }
   }));
+
+  console.log(editor);
 
   return (
     <div>

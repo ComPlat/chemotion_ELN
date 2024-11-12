@@ -52,10 +52,10 @@ const inspired_label = "A";
 const rails_polymer_identifier = "R#";
 
 // helper function to examine the file coming ketcherrails
-const hasKetcherData = async (molfile, cb) => {
+const hasKetcherData = async (molfile) => {
   try {
-    const indigo_converted_ket = await editor._structureDef.editor.indigo.convert(molfile);
-    if (!molfile.includes("<PolymersList>")) cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
+    // if (!molfile.includes("<PolymersList>")) return { struct: JSON.parse(ketfile.struct), rails_polymers_list: null };
+
     // when ketcher mofile and polymers exists
     const lines = molfile.trim().split('\n');
     let rails_polymers_list = -1;
@@ -65,12 +65,7 @@ const hasKetcherData = async (molfile, cb) => {
         break;
       }
     }
-    if (rails_polymers_list == -1) {
-      cb({ struct: indigo_converted_ket.struct, rails_polymers_list: null });
-    } else {
-      // polymers list exists
-      cb({ struct: indigo_converted_ket.struct, rails_polymers_list });
-    }
+    return rails_polymers_list == -1 ? null : rails_polymers_list;
   } catch (err) {
     console.log(err);
     alert("Opening this molfile is possible at the movement. Please report this molfile to chemotion ELN dev team.");

@@ -35,7 +35,7 @@ const notifyError = (message) => {
   });
 };
 
-const loadEditor = (editor, scripts) => {
+export const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
       es: scripts,
@@ -48,16 +48,18 @@ const loadEditor = (editor, scripts) => {
   }
 };
 
-const createEditorInstance = (editor, available, configs) => ({
-  [editor]: new StructureEditor({
-    ...EditorAttrs[editor],
-    ...available,
-    ...configs,
-    id: editor,
-  }),
-});
+const createEditorInstance = (editor, available, configs) => {
+  return ({
+    [editor]: new StructureEditor({
+      ...EditorAttrs[editor],
+      ...available,
+      ...configs,
+      id: editor,
+    }),
+  });
+};
 
-const createEditor = (configs, availableEditors) => {
+export const createEditor = (configs, availableEditors) => {
   if (!availableEditors) return null;
   const available = availableEditors[configs.editor];
   if (available) {
@@ -67,7 +69,7 @@ const createEditor = (configs, availableEditors) => {
   return null;
 };
 
-export const createEditors = (_state = {}) => {
+const createEditors = (_state = {}) => {
   const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors || {};
 
@@ -207,7 +209,7 @@ WarningBox.propTypes = {
   show: PropTypes.bool.isRequired,
 };
 
-const initEditor = () => {
+export const initEditor = () => {
   const userProfile = UserStore.getState().profile;
   const eId = userProfile?.data?.default_structure_editor || 'ketcher';
   const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
