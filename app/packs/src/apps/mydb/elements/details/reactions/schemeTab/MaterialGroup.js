@@ -233,7 +233,7 @@ const GeneralMaterialGroup = ({
             {!isReactants && <th />}
             {showLoadingColumn && !isReactants && <th>{headers.loading}</th>}
             {!isReactants && <th>{headers.concn}</th>}
-            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
+            {!isReactants && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
           </tr>
         </thead>
         <tbody>
