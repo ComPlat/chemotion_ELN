@@ -164,10 +164,11 @@ export const handleAddAtom = async (editor) => {
   d.root.nodes = [...mols_list, ...new_images];
   await editor.structureDef.editor.setMolecule(JSON.stringify(d));
   await fetchKetcherData(editor);
-  moveTemplate(editor);
+  onTemplateMove(editor);
 };
 
 // helper function to move image and update molecule positions
+<<<<<<< HEAD
 const moveTemplate = async () => {
   console.log('move template!!');
   mols.forEach(async (mol) => {
@@ -183,12 +184,33 @@ const moveTemplate = async () => {
             const { x, y } = image?.boundingBox; // Destructure x, y coordinates from boundingBox
             const location = [x, y, 0]; // Set location as an array of coordinates
             // molecule.atoms[atom_idx].location = location;
+=======
+export const moveTemplate = async () => {
+  console.log("move template!!");
+  mols.forEach(async (mol) => {
+    const molecule = latestData[mol];
+    // Check if molecule and atoms exist, and if the alias is formatted correctly
+    molecule?.atoms?.forEach((item, atom_idx) => {
+      if (item.alias) {
+        if (three_parts_patten.test(item.alias)) {
+          const alias = item.alias.split("_");
+
+          const image = imagesList[parseInt(alias[2])];
+          if (image?.boundingBox) {
+            const { x, y } = image?.boundingBox;
+            const location = [x, y, 0]; // Set location as an array of coordinates
+            // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images 
+>>>>>>> ee7024c04 (refactoring: onTemplateMove)
             molecule.atoms[atom_idx].alias = item.alias.trim();
             if (molecule?.stereoFlagPosition) {
               molecule.stereoFlagPosition = {
                 x: location[0],
                 y: location[1],
+<<<<<<< HEAD
                 z: location[2]
+=======
+                z: 0,
+>>>>>>> ee7024c04 (refactoring: onTemplateMove)
               };
             }
           }
@@ -198,14 +220,16 @@ const moveTemplate = async () => {
     latestData[mol] = molecule;
   });
   latestData.root.nodes = latestData.root.nodes.slice(0, mols.length);
+<<<<<<< HEAD
   await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
   re_render_canvas = false;
   placeImageOnAtoms(mols, imagesList);
+=======
+>>>>>>> ee7024c04 (refactoring: onTemplateMove)
 };
 
 // helper function to place image on atom location coordinates
-export const placeImageOnAtoms = async (mols_, imagesList_, editor) => {
-  await fetchKetcherData(editor);
+export const placeImageOnAtoms = async (mols_, imagesList_) => {
   mols_.forEach((item) => {
     latestData[item]?.atoms.forEach((atom) => {
       if (atom && three_parts_patten.test(atom?.alias)) {
@@ -224,7 +248,6 @@ export const placeImageOnAtoms = async (mols_, imagesList_, editor) => {
     });
   });
   latestData.root.nodes = [...latestData.root.nodes.slice(0, mols_.length), ...imagesList_];
-  await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
 };
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
@@ -241,7 +264,7 @@ export const handleOnDeleteImage = async (editor) => {
       await editor.structureDef.editor.setMolecule(JSON.stringify(data));
       image_used_counter -= images.length;
       // await fetchKetcherData(editor);
-      await moveTemplate(editor);
+      await onTemplateMove(editor);
     }
   }
   // resetStore();
@@ -333,9 +356,10 @@ export const handleOnDeleteAtom = async (editor) => {
                 atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
                 images_tbr.push(parseInt(atom_splits[2]));
               }
-            } else {
-              last_item = true;
             }
+            // else {
+            //   last_item = true;
+            // }
           }
           latestData[mols[m]].atoms = atoms;
         }
@@ -347,7 +371,7 @@ export const handleOnDeleteAtom = async (editor) => {
 
     latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...imagesList];
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    await moveTemplate(editor);
+    await onTemplateMove(editor);
 
     // clear the stack to avoid further event render
     resetStore();
@@ -369,6 +393,29 @@ export const setKetcherData = async (rails_polymers_list, data) => {
   return { collected_images, molfileData: data };
 };
 
+const onTemplateMove = async (editor) => {
+  if (editor && editor.structureDef) {
+    await moveTemplate();
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    re_render_canvas = false;
+    images_to_be_updated_setter();
+    const mols_copy = mols;
+    const imagelist_copy = imagesList;
+    await fetchKetcherData(editor);
+    if (imagelist_copy.length) {
+      await placeImageOnAtoms(mols_copy, imagelist_copy, editor);
+      await saveMoveCanvas(null, true, false);
+    }
+  }
+};
+
+const saveMoveCanvas = async (data, should_fetch, should_move) => {
+  data = data ? data : latestData;
+  await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+  should_fetch && fetchKetcherData(editor);
+  should_move && onTemplateMove(editor);
+};
+
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
 
@@ -379,7 +426,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   const eventOperationHandlers = {
     "Load canvas": async () => {
       await fetchKetcherData(editor);
-      if (re_render_canvas) await moveTemplate(editor);
+      if (re_render_canvas) await onTemplateMove(editor);
     },
     "Move image": async (_) => {
       addEventToFILOStack("Move image");
@@ -423,8 +470,9 @@ const KetcherEditor = forwardRef((props, ref) => {
   // action based on event-name
   const eventHandlers = {
     'Load canvas': async () => await fetchKetcherData(editor),
-    'Move image': async () => await moveTemplate(editor),
-    'Move atom': async () => await moveTemplate(editor),
+    'Move image': async () => await onTemplateMove(editor),
+    // 'Move atom': async () => await onTemplateMove(editor),
+    'Move atom': async () => await onTemplateMove(editor),
     'Add atom': async () => await handleAddAtom(editor),
     'Delete image': async () => await handleOnDeleteImage(editor),
     'Delete atom': async () => await handleOnDeleteAtom(editor),
@@ -517,7 +565,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     data = data ? data : latestData;
     await editor.structureDef.editor.setMolecule(JSON.stringify(data));
     await fetchKetcherData(editor);
-    await moveTemplate(editor);
+    await onTemplateMove(editor);
   };
 
   // enable editor change listener
