@@ -5,14 +5,6 @@ import PropTypes from 'prop-types';
 
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import SampleGroupHeader from 'src/apps/mydb/elements/list/sample/SampleGroupHeader';
-import SampleGroupElement from 'src/apps/mydb/elements/list/sample/SampleGroupElement';
-import GenericGroupHeader from 'src/apps/mydb/elements/list/generic/GenericGroupHeader';
-import GenericGroupElement from 'src/apps/mydb/elements/list/generic/GenericGroupElement';
-import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
-import ReactionGroupElement from 'src/apps/mydb/elements/list/reaction/ReactionGroupElement';
-import CellLineGroupHeader from 'src/apps/mydb/elements/list/cellLine/CellLineGroupHeader';
-import CellLineGroupElement from 'src/apps/mydb/elements/list/cellLine/CellLineGroupElement';
 
 export default class ElementsListGroupedEntries extends Component {
   constructor(props) {
@@ -104,12 +96,14 @@ export default class ElementsListGroupedEntries extends Component {
     return null;
   };
 
-  renderGroup(group, elements, GroupHeader, GroupElement) {
+  renderGroup(group, elements) {
     const {
       showDragColumn,
       collapseAll,
       showDetails,
       isElementSelected,
+      headerComponent: GroupHeader,
+      elementComponent: GroupElement
     } = this.props;
 
     const { elementsShown, keyboardSelectedElementId } = this.state;
@@ -139,37 +133,17 @@ export default class ElementsListGroupedEntries extends Component {
   }
 
   render() {
-    const { type, elementGroups } = this.props;
-    let headerComponent, elementComponent;
-    if (type === 'sample') {
-      headerComponent = SampleGroupHeader;
-      elementComponent = SampleGroupElement;
-    } else if (type === 'reaction') {
-      headerComponent = ReactionGroupHeader;
-      elementComponent = ReactionGroupElement;
-    } else if (type == 'cell_line') {
-      headerComponent = CellLineGroupHeader;
-      elementComponent = CellLineGroupElement;
-    } else {
-      headerComponent = GenericGroupHeader;
-      elementComponent = GenericGroupElement;
-    }
-
-    const tableContent = Object.entries(elementGroups).map(([key, elements]) =>
-      this.renderGroup(key, elements, headerComponent, elementComponent)
-    );
+    const { elementGroups } = this.props;
 
     return (
       <Table>
-        {tableContent}
+        {Object.keys(elementGroups).map((key) =>
+          this.renderGroup(key, elementGroups[key])
+        )}
       </Table>
     );
   }
 }
-
-ElementsListGroupedEntries.defaultProps = {
-  genericEl: null,
-};
 
 ElementsListGroupedEntries.propTypes = {
   onChangeCollapse: PropTypes.func.isRequired,
@@ -178,6 +152,4 @@ ElementsListGroupedEntries.propTypes = {
   isElementSelected: PropTypes.func.isRequired,
   showDragColumn: PropTypes.bool.isRequired,
   showDetails: PropTypes.func.isRequired,
-  genericEl: PropTypes.object,
-  type: PropTypes.string.isRequired,
 };
