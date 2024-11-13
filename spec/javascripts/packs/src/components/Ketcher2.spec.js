@@ -1,8 +1,8 @@
 import assert from 'assert';
 
-import { all_atoms, allNodes, fuelKetcherData, imagesList, latestData, mols, resetStore, setKetcherData } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
+import { all_atoms, allNodes, fuelKetcherData, image_used_counter, imagesList, latestData, mols, resetStore, setKetcherData } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
 
-import { empty_mol_file, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list } from '../../../data/ketcher2_mockups';
+import { empty_mol_file, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list, one_image_ketfile, one_image_ketfile_rg, one_image_molfile } from '../../../data/ketcher2_mockups';
 import { hasKetcherData } from '../../../../../app/packs/src/utilities/Ketcher2SurfaceChemistryUtils';
 import { split } from 'lodash';
 
@@ -48,27 +48,32 @@ describe('Ketcher2', () => {
   });
 
   describe('On reading molfile with polymers list', () => {
-    it('should have a polymer list', async () => {
+    it('should have rails polymer list', async () => {
       const rails_polymers_list = await hasKetcherData(molfile_with_polymer_list);
       const list_to_array = rails_polymers_list.split(" ");
       assert.ok(list_to_array.length == 2, 'list of polymers should have length of 2');
     });
 
-    it('should not have a polymer list', async () => {
-      const p_list = "0 1s";
-      // START with fueling the data TODO:
-      const rails_polymers_list = await hasKetcherData(molfile_without_polymer_list);
-      const images = await setKetcherData(p_list);
-      assert.strictEqual(rails_polymers_list, null, 'list of polymers should be null');
-      assert.ok(images.length > 0, 'Collected images should be greater then 0');
+    it('should have a polymer list', async () => {
+      const p_list = "0";
+      const rails_polymers_list = await hasKetcherData(one_image_molfile);
+      const { collected_images, molfileData } = await setKetcherData(p_list, one_image_ketfile_rg);
+      assert.notStrictEqual(molfileData, null, 'list of polymers can not be null');
+      assert.ok(collected_images.length > 0, 'collected images should have a length');
+      assert.ok(rails_polymers_list.length > 0, 'polymer list should be valid');
+      assert.ok(image_used_counter == 0, 'imagelist should have length of 1');
+
     });
 
-    it('should not have a polymer list & no struct', async () => {
+    it('should not have a polymer list', async () => {
       const p_list = null;
       const rails_polymers_list = await hasKetcherData(molfile_without_polymer_list);
-      const images = await setKetcherData(p_list);
+      const { collected_images, molfileData } = await setKetcherData(p_list);
       assert.strictEqual(rails_polymers_list, null, 'list of polymers should be null');
-      assert.ok(images.length == 0, 'Collected images should be empty');
+      assert.ok(collected_images.length == 0, 'Collected images should be empty');
+      assert.notStrictEqual(molfileData, null, 'list of polymers can not be null');
+      assert.ok(image_used_counter == -1, 'imagelist should have length of -1');
+
     });
 
     it('should set ketcher data to latestdata', async () => {

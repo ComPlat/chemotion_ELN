@@ -74,11 +74,11 @@ export const fuelKetcherData = async (data) => {
     ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
     : [];
   mols.forEach((item) => data[item]?.atoms.map(i => all_atoms.push(i)));
+  // latestData = data;
   // console.log("DATA FUELED", {
   //   image_used_counter, all_atoms_alias, allNodes_alias, imagesList_alias, mols_alias
   // });
 };
-
 
 // helper function to rebase with the ketcher canvas data
 const fetchKetcherData = async (editor) => {
@@ -362,20 +362,20 @@ export const handleOnDeleteAtom = async (editor) => {
 };
 
 // helper function to calculate counters for the ketcher2 setup based on file source type
-export const setKetcherData = async (rails_polymers_list) => {
+export const setKetcherData = async (rails_polymers_list, data) => {
   let collected_images = [];
   if (rails_polymers_list && rails_polymers_list.length) {
-    const { c_images, molfileData, image_counter } = adding_polymers_ketcher_format(rails_polymers_list, mols, latestData, image_used_counter);
-    collected_images = c_images;
+    const { c_images, molfileData, image_counter } = await adding_polymers_ketcher_format(rails_polymers_list, mols, data, image_used_counter);
     image_used_counter = image_counter;
-    latestData = { ...molfileData };
+    molfileData?.root?.nodes.push(...c_images);
+    return { collected_images: c_images, molfileData };
   }
-  return collected_images;
+  return { collected_images, molfileData: data };
 };
 
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
-  console.log({ editor });
+
   const iframeRef = useRef();
   let initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
@@ -453,7 +453,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       try {
         const list = [...editor._structureDef.editor.editor.historyStack];
         const historyPtr = editor._structureDef.editor.editor.historyPtr;
-        console.log({ list, historyPtr });
         let opp_idx = 0;
         for (let i = historyPtr - 1; i >= 0; i--) {
           if (list[i]?.operations[0]?.type !== 'Load canvas') {
@@ -539,7 +538,6 @@ const KetcherEditor = forwardRef((props, ref) => {
   // Load the editor content and set up the molecule
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
-      // editor = createEditors({})['ketcher2'] || editorProp;
       window.editor = editor;
       if (editor && editor.structureDef) {
         onEditorContentChange(editor);
@@ -548,13 +546,11 @@ const KetcherEditor = forwardRef((props, ref) => {
           alert("invalid molfile. Please try again");
           console.log(err);
         });
-        await editor.structureDef.editor.setMolecule(ketfile.struct);
-        await fetchKetcherData(editor);
-        console.log({ rails_polymers_list });
-        const collected_images = await setKetcherData(rails_polymers_list); // process polymers
-        if (collected_images.length) {
-          latestData?.root?.nodes.push(...collected_images);
-          setMolfileAndMove();
+        const file_content = JSON.parse(ketfile.struct);
+        // process polymers
+        const { collected_images, molfileData } = await setKetcherData(rails_polymers_list, file_content);
+        if (collected_images && collected_images.length) {
+          setMolfileAndMove(molfileData);
         }
       }
     };
@@ -711,8 +707,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       return result;
     }
   }));
-
-  console.log(editor);
 
   return (
     <div>

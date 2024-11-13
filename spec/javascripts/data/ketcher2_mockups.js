@@ -515,3 +515,40 @@ export const molfile_without_polymer_list = `Ketcher 11122415212D 1   1.00000   
 M  RGP  2   1   1   2   1
 M  END
 $$$$`;
+
+
+export const one_image_molfile = `
+Ketcher 11132410362D 1   1.00000     0.00000     0
+
+1  0  0     0  0            999 V2000
+ 18.1250   -6.5625    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+> <PolymersList>
+0 
+$$$$
+`;
+
+export const one_image_ketfile_rg = {
+  "root": {
+    "nodes": [
+      {
+        "$ref": "mol0"
+      }
+    ]
+  },
+  "mol0": {
+    "type": "molecule",
+    "atoms": [
+      {
+        "type": "rg-label",
+        "$refs": [],
+        "location": [
+          18.125,
+          -6.5625,
+          0
+        ]
+      }
+    ],
+    "bonds": []
+  }
+};
