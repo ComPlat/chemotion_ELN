@@ -1,5 +1,5 @@
 // alt initialization
-const Alt = require('alt');
+import Alt from 'alt/src';
 const alt = new Alt();
 
-module.exports = alt;
+export default alt;
