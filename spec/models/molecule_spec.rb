@@ -68,4 +68,37 @@ RSpec.describe Molecule, type: :model do
       expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).not_to be_nil
     end
   end
+  describe '.find_or_create_by_inchikey' do
+    let(:smiles_bad)  { 'CC1=C(CC)C(C)=[N]2C1=C(C)C3=CC(/C=C\B4NC5=C6C(C=CC=C6N4)=CC=C5)=CN3B2(F)F' }
+    let(:smiles_good) { 'CC1=C(CC)C(C)=[N+]2C1=C(C)C3=CC(/C=C\B4NC5=C6C(C=CC=C6N4)=CC=C5)=CN3[B-]2(F)F' }
+    let(:good_info) { Chemotion::OpenBabelService.molecule_info_from_structure(smiles_good, 'smi') }
+    let(:bad_info) { Chemotion::OpenBabelService.molecule_info_from_structure(smiles_bad, 'smi') }
+
+    # mock Chemotion::PubchemService.molecule_info_from_inchikey to return empty hash
+    before do
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+    end
+
+    it 'has different inchikeys' do
+      byebug 
+
+      expect(good_info[:inchikey]).not_to eq(bad_info[:inchikey])
+    end
+
+    it 'creates a new bad molecule if it does not exist' do
+      byebug
+
+      expect(described_class.find_by(inchikey: bad_info[:inchikey], is_partial: false))
+      molecule = described_class.find_or_create_by_molfile(bad_info[:molfile])
+      expect(molecule).to be_persisted
+      expect(molecule.inchikey).to eq(bad_info[:inchikey])
+    end
+
+    it 'does not create a good molecule after a bad one' do
+      molecule = described_class.find_or_create_by_molfile(bad_info[:molfile])
+      molecule_good = described_class.find_or_create_by_molfile(good_info[:molfile])
+      expect(molecule_good).to be_persisted
+      expect(molecule_good.inchikey).to eq(good_info[:inchikey])
+    end
+  end
 end
