@@ -16,7 +16,6 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsListEntries from 'src/apps/mydb/elements/list/ElementsListEntries';
-import ElementsListSampleEntries from 'src/apps/mydb/elements/list/ElementsListSampleEntries';
 import { SearchUserLabels } from 'src/components/UserLabels';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -26,7 +25,6 @@ import PropTypes from 'prop-types';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
-import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
 import Sheet from 'src/components/common/Sheet';
 
 import { elementShowOrNew } from 'src/utilities/routesUtils';
@@ -41,7 +39,6 @@ export default class ElementsList extends React.Component {
       currentElement: null,
       ui: {},
       collapseAll: false,
-      moleculeGroupsShown: [],
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
@@ -196,10 +193,9 @@ export default class ElementsList extends React.Component {
     if (toDate !== date) UIActions.setToDate(date);
   }
 
-  changeCollapse = (collapseAll, childPropName, childPropValue) => {
+  changeCollapse = (collapseAll) => {
     this.setState({
         collapseAll: !collapseAll,
-        ...(childPropName ? { [childPropName]: childPropValue } : {})
     });
   };
 
@@ -270,22 +266,13 @@ export default class ElementsList extends React.Component {
     );
   };
 
-  getMoleculeGroupsShownFromElement = (elements, moleculeSort) => {
-    const displayedMoleculeGroup = getDisplayedMoleculeGroup(elements, moleculeSort);
-    const moleculeGroupsShown = getMoleculeGroupsShown(displayedMoleculeGroup);
-    return moleculeGroupsShown;
-  }
-
   collapseButton = () => {
-    const { collapseAll, elements, moleculeSort} = this.state;
+    const { collapseAll } = this.state;
 
     return (
       <ChevronIcon
         direction={collapseAll ? 'right' : 'down'}
-        onClick={() => this.setState((prevState) => ({
-          collapseAll: !prevState.collapseAll,
-         moleculeGroupsShown: !collapseAll ? [] : this.getMoleculeGroupsShownFromElement(elements, moleculeSort)
-         }))}
+        onClick={() => this.changeCollapse(collapseAll)}
         color="primary"
         className="fs-5"
         role="button"
@@ -658,33 +645,21 @@ export default class ElementsList extends React.Component {
     const {
       elements,
       collapseAll,
-      moleculeSort,
       elementsGroup,
-      moleculeGroupsShown
     } = this.state;
 
     const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
 
-    if (type === 'sample') {
-      elementsTableEntries = (
-        <ElementsListSampleEntries
-          collapseAll={collapseAll}
-          elements={elements}
-          isElementSelected={this.isElementSelected}
-          showDragColumn={!overview}
-          showDetails={this.showDetails}
-          moleculeSort={moleculeSort}
-          onChangeCollapse={(collapseAll, childPropName, childPropValue) => this.changeCollapse(!collapseAll, childPropName, childPropValue)}
-          moleculeGroupsShown = {moleculeGroupsShown}
-        />
-      );
-    } else if (
-      ((type === 'reaction' || !!genericEl) && elementsGroup !== 'none')
+    if (
+      type === 'sample'
+      || ((type === 'reaction' || !!genericEl) && elementsGroup !== 'none')
       || type === 'cell_line'
     ) {
       let getGroupKey;
-      if (type === 'reaction') {
+      if (type === 'sample') {
+        getGroupKey = (sample) => sample.getMoleculeId();
+      } else if (type === 'reaction') {
         getGroupKey = (element) => element[elementsGroup];
       } else if (!!genericEl) {
         const [layer, field] = elementsGroup.split('.');

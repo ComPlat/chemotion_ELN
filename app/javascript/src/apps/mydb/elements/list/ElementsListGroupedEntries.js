@@ -5,6 +5,8 @@ import PropTypes from 'prop-types';
 
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
+import SampleGroupHeader from 'src/apps/mydb/elements/list/sample/SampleGroupHeader';
+import SampleGroupElement from 'src/apps/mydb/elements/list/sample/SampleGroupElement';
 import GenericGroupHeader from 'src/apps/mydb/elements/list/generic/GenericGroupHeader';
 import GenericGroupElement from 'src/apps/mydb/elements/list/generic/GenericGroupElement';
 import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
@@ -29,11 +31,11 @@ export default class ElementsListGroupedEntries extends Component {
   }
 
   componentDidMount() {
-    KeyboardStore.listen(this.reactionsOnKeyDown);
+    KeyboardStore.listen(this.onKeyDown);
   }
 
   componentWillUnmount() {
-    KeyboardStore.unlisten(this.reactionsOnKeyDown);
+    KeyboardStore.unlisten(this.onKeyDown);
   }
 
   componentDidUpdate(prevProps) {
@@ -62,9 +64,9 @@ export default class ElementsListGroupedEntries extends Component {
     onChangeCollapse(false);
   }
 
-  reactionsOnKeyDown = (state) => {
+  onKeyDown = (state) => {
     const { context } = state;
-    if (context !== 'reaction') { return false; }
+    if (context !== 'reaction' && context !== 'sample') { return false; }
 
     const { showDetails } = this.props;
     const { documentKeyDownCode } = state;
@@ -140,7 +142,10 @@ export default class ElementsListGroupedEntries extends Component {
     const { type, elementGroups } = this.props;
     let headerComponent;
     let elementComponent;
-    if (type === 'reaction') {
+    if (type === 'sample') {
+      headerComponent = SampleGroupHeader;
+      elementComponent = SampleGroupElement;
+    } else if (type === 'reaction') {
       headerComponent = ReactionGroupHeader;
       elementComponent = ReactionGroupElement;
     } else if (type === 'cell_line') {
