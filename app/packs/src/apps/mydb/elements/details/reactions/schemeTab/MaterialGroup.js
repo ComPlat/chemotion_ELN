@@ -214,7 +214,7 @@ function GeneralMaterialGroup({
               <th />
               {showLoadingColumn && <th>{headers.loading}</th>}
               <th>{headers.concn}</th>
-              {!isReactants && permitOn(reaction) && (
+              {!isReactants && (
                 <th>
                   {headers.eq}
                   {materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}
