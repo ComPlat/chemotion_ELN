@@ -1,6 +1,8 @@
 // console.log disable untill the final version of the feature; some consoles are added for debugging purposes and they are important to track changes happening; Debugger can be used but for now console.log are placed;
 // console.log = () => { };
 
+import { fuelKetcherData, imagesList, latestData, mols } from "../components/structureEditor/KetcherEditor";
+
 const template_list_for_storage = [
   { "struct": "{\n    \"root\": {\n        \"nodes\": [\n            {\n                \"$ref\": \"mol0\"\n            },\n            {\n                \"type\": \"image\",\n                \"format\": \"image/svg+xml\",\n                \"boundingBox\": {\n                    \"x\": 7.900000000000001,\n                    \"y\": -5.824999999999999,\n                    \"z\": 0,\n                    \"width\": 1.0749999999999995,\n                    \"height\": 1.0749999999999995\n                },\n                \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg==\"\n            }\n        ],\n        \"connections\": [],\n        \"templates\": []\n    },\n    \"header\": {\n        \"moleculeName\": \"t_01\"\n    },\n    \"mol0\": {\n        \"type\": \"molecule\",\n        \"atoms\": [\n            {\n                \"label\": \"A\",\n                \"alias\": \"t_01\",\n                \"location\": [\n                    8.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            },\n            {\n                \"label\": \"H\",\n                \"location\": [\n                    9.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            }\n        ],\n        \"bonds\": [\n            {\n                \"type\": 1,\n                \"atoms\": [\n                    0,\n                    1\n                ]\n            }\n        ],\n        \"sgroups\": [\n            {\n                \"type\": \"SUP\",\n                \"atoms\": [\n                    0,\n                    1\n                ],\n                \"name\": \"\",\n                \"expanded\": true,\n                \"id\": 0,\n                \"attachmentPoints\": [\n                    {\n                        \"attachmentAtom\": 0,\n                        \"leavingAtom\": 1,\n                        \"attachmentId\": \"1\"\n                    }\n                ]\n            }\n        ]\n    }\n}", "props": { "atomid": 0, "bondid": 0 } },
   { "struct": "{\n    \"root\": {\n        \"nodes\": [\n            {\n                \"$ref\": \"mol0\"\n            },\n            {\n                \"type\": \"image\",\n                \"format\": \"image/svg+xml\",\n                \"boundingBox\": {\n                    \"x\": 7.775000000000006,\n                    \"y\": -6.000000000000001,\n                    \"z\": 0,\n                    \"width\":  2.0,\n                    \"height\": 0.5\n                },\n                \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIHk9IjgwIiByeD0iMjAiIHJ5PSIyMCIKICBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMTAiIGZpbGw9Ijc1NzA3MCIKICAvPgo8L3N2Zz4=\"\n            }\n        ],\n        \"connections\": [],\n        \"templates\": []\n    },\n    \"header\": {\n        \"moleculeName\": \"t_02\"\n    },\n    \"mol0\": {\n        \"type\": \"molecule\",\n        \"atoms\": [\n            {\n                \"label\": \"A\",\n                \"alias\": \"t_02\",\n                \"location\": [\n                    8.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            },\n            {\n                \"label\": \"H\",\n                \"location\": [\n                    9.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            }\n        ],\n        \"bonds\": [\n            {\n                \"type\": 1,\n                \"atoms\": [\n                    0,\n                    1\n                ]\n            }\n        ],\n        \"sgroups\": [\n            {\n                \"type\": \"SUP\",\n                \"atoms\": [\n                    0,\n                    1\n                ],\n                \"name\": \"\",\n                \"expanded\": true,\n                \"id\": 0,\n                \"attachmentPoints\": [\n                    {\n                        \"attachmentAtom\": 0,\n                        \"leavingAtom\": 1,\n                        \"attachmentId\": \"1\"\n                    }\n                ]\n            }\n        ]\n    }\n}", "props": { "atomid": 0, "bondid": 0 } }
@@ -70,33 +72,38 @@ const hasKetcherData = async (molfile) => {
 };
 
 // helper function to process ketcherrails files and adding image to ketcher2 canvas
-const adding_polymers_ketcher_format = (rails_polymers_list, mols, latestData, image_used_counter) => {
-  const p_items = rails_polymers_list.split(" ");
-  // p_items-example:  10, 11s, 12, 13s
-  let visited_atoms = 0;
-  let collected_images = [];
+const adding_polymers_ketcher_format = async (rails_polymers_list, _, data, image_used_counter) => {
+  try {
+    const p_items = rails_polymers_list.split(" ");
+    // p_items-example:  10, 11s, 12, 13s
+    let visited_atoms = 0;
+    let collected_images = [];
+    await fuelKetcherData(data);
 
-  for (let m = 0; m < mols.length; m++) {
-    const mol = latestData[mols[m]];
-    for (let a = 0; a < mol.atoms.length; a++) {
-      // if (p_items.length - 1 == visited_atoms) break;
-      const atom = mol.atoms[a];
-      const p_value = p_items[visited_atoms];
-      if (atom.type === "rg-label" || three_parts_patten.test(atom.label)) {
-        const select_template_type = p_value.includes("s") ? "02" : "01";
-        latestData[mols[m]].atoms[a] = {
-          "label": inspired_label,
-          "alias": `t_${select_template_type}_${++image_used_counter}`,
-          "location": atom.location
-        };
-        const bb = template_list_data[parseInt(select_template_type)];
-        bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
-        collected_images.push(bb);
-        visited_atoms += 1;
+    for (let m = 0; m < mols.length; m++) {
+      const mol = data[mols[m]];
+      for (let a = 0; a < mol.atoms.length; a++) {
+        // if (p_items.length - 1 == visited_atoms) break;
+        const atom = mol.atoms[a];
+        const p_value = p_items[visited_atoms];
+        if (atom.type === "rg-label" || three_parts_patten.test(atom.label)) {
+          const select_template_type = p_value.includes("s") ? "02" : "01";
+          data[mols[m]].atoms[a] = {
+            "label": inspired_label,
+            "alias": `t_${select_template_type}_${++image_used_counter}`,
+            "location": atom.location
+          };
+          const bb = template_list_data[parseInt(select_template_type)];
+          bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
+          collected_images.push(bb);
+          visited_atoms += 1;
+        }
       }
     }
+    return { c_images: collected_images, molfileData: data, image_counter: image_used_counter };
+  } catch (err) {
+    console.log({ err: err.message });
   }
-  return { c_images: collected_images, molfileData: latestData, image_counter: image_used_counter };
 };
 
 // helper function to process ketcher2 indigo file to add images to ketcher2 canvas
