@@ -16,7 +16,6 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsListEntries from 'src/apps/mydb/elements/list/ElementsListEntries';
-import ElementsListSampleEntries from 'src/apps/mydb/elements/list/ElementsListSampleEntries';
 import { SearchUserLabels } from 'src/components/UserLabels';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -649,24 +648,15 @@ export default class ElementsList extends React.Component {
     const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
 
-    if (type === 'sample') {
-      elementsTableEntries = (
-        <ElementsListSampleEntries
-          collapseAll={collapseAll}
-          elements={elements}
-          isElementSelected={this.isElementSelected}
-          showDragColumn={!overview}
-          showDetails={this.showDetails}
-          moleculeSort={moleculeSort}
-          onChangeCollapse={(checked) => this.changeCollapse(!checked)}
-        />
-      );
-    } else if (
-      ((type === 'reaction' || !!genericEl) && elementsGroup !== 'none')
+    if (
+      type === 'sample'
+      || ((type === 'reaction' || !!genericEl) && elementsGroup !== 'none')
       || type === 'cell_line'
     ) {
       let getGroupKey;
-      if (type === 'reaction') {
+      if (type === 'sample') {
+        getGroupKey = (element) => element.molecule?.inchikey;
+      } else if (type === 'reaction') {
         getGroupKey = (element) => element[elementsGroup];
       } else if (!!genericEl) {
         const [layer, field] = elementsGroup.split('.');
