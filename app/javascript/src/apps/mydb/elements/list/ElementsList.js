@@ -18,8 +18,17 @@ import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsListEntries from 'src/apps/mydb/elements/list/ElementsListEntries';
 import { SearchUserLabels } from 'src/components/UserLabels';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsListGroupedEntries from 'src/apps/mydb/elements/list/ElementsListGroupedEntries';
+import SampleGroupHeader from 'src/apps/mydb/elements/list/sample/SampleGroupHeader';
+import SampleGroupElement from 'src/apps/mydb/elements/list/sample/SampleGroupElement';
+import GenericGroupHeader from 'src/apps/mydb/elements/list/generic/GenericGroupHeader';
+import GenericGroupElement from 'src/apps/mydb/elements/list/generic/GenericGroupElement';
+import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
+import ReactionGroupElement from 'src/apps/mydb/elements/list/reaction/ReactionGroupElement';
+import CellLineGroupHeader from 'src/apps/mydb/elements/list/cellLine/CellLineGroupHeader';
+import CellLineGroupElement from 'src/apps/mydb/elements/list/cellLine/CellLineGroupElement';
+
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import ChevronIcon from 'src/components/common/ChevronIcon';
@@ -651,23 +660,33 @@ export default class ElementsList extends React.Component {
     const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
 
-    if (
-      type === 'sample'
-      || ((type === 'reaction' || !!genericEl) && elementsGroup !== 'none')
-      || type === 'cell_line'
-    ) {
+    const renderGrouped = type === 'sample' || type === 'cell_line' ||
+      ((type === 'reaction' || !!genericEl) && elementsGroup !== 'none');
+
+    if (renderGrouped) {
       let getGroupKey;
+      let headerComponent;
+      let elementComponent;
+
       if (type === 'sample') {
         getGroupKey = (sample) => sample.getMoleculeId();
+        headerComponent = SampleGroupHeader;
+        elementComponent = SampleGroupElement;
       } else if (type === 'reaction') {
         getGroupKey = (element) => element[elementsGroup];
+        headerComponent = ReactionGroupHeader;
+        elementComponent = ReactionGroupElement;
       } else if (!!genericEl) {
         const [layer, field] = elementsGroup.split('.');
         const layerFields = genericEl.properties_release?.layers[layer]?.fields || [];
         const keyField = layerFields.find((f) => f.field === field)?.value || '[empty]';
         getGroupKey = (element) => element[keyField];
+        headerComponent = GenericGroupHeader;
+        elementComponent = GenericGroupElement;
       } else if (type === 'cell_line') {
         getGroupKey = (element) => `${element.cellLineName} - ${element.source}`;
+        headerComponent = CellLineGroupHeader;
+        elementComponent = CellLineGroupElement;
       }
 
       const elementGroups = {};
@@ -681,14 +700,14 @@ export default class ElementsList extends React.Component {
 
       elementsTableEntries = (
         <ElementsListGroupedEntries
+          headerComponent={headerComponent}
+          elementComponent={elementComponent}
           collapseAll={collapseAll}
           elementGroups={elementGroups}
           isElementSelected={this.isElementSelected}
           showDragColumn={!overview}
           showDetails={this.showDetails}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
-          genericEl={genericEl}
-          type={type}
         />
       );
     } else if (type === 'device_description') {
