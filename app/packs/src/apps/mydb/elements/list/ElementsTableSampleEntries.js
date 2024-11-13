@@ -107,16 +107,16 @@ const showDecoupledIcon = (sample) => (sample.decoupled ? (
   </OverlayTrigger>
 ) : null);
 
-const showInventoryLabelIcon = (sample) => (sample.inventory_sample && sample.xref.inventory_label ? (
+const showInventoryLabelIcon = (sample) => (sample.inventory_sample && sample.inventory_label ? (
   <OverlayTrigger
     placement="top"
     overlay={<Tooltip id="sample_inventory_label">Inventory Label</Tooltip>}
   >
     <Badge
       className="bg-info text-light p-1 mt-0 rounded"
-      key={`inventory_label_${sample.xref.inventory_label}`}
+      key={`inventory_label_${sample.inventory_label}`}
     >
-      {sample.xref.inventory_label}
+      {sample.inventory_label}
     </Badge>
   </OverlayTrigger>
 ) : null);

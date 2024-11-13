@@ -138,7 +138,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     } else if (object.type == 'sample') {
       let infos = [];
       if (object.external_label) { infos.push(object.external_label) }
-      if (object.xref && object.xref.inventory_label) { infos.push(object.xref.inventory_label) }
+      if (object.xref && object.inventory_label) { infos.push(object.inventory_label) }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas) }
       names = [object.short_label, object.name].concat(infos).join(" | ");
     } else {
