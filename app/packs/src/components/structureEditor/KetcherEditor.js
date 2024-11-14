@@ -68,7 +68,6 @@ export const resetStore = () => {
 export const fuelKetcherData = async (data) => {
   allNodes = [...data.root.nodes];
   imagesList = allNodes.filter(item => item.type === 'image');
-
   const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
   mols = sliceEnd > 0
     ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
@@ -76,8 +75,12 @@ export const fuelKetcherData = async (data) => {
   mols.forEach((item) => data[item]?.atoms.map(i => all_atoms.push(i)));
   // latestData = data;
   // console.log("DATA FUELED", {
-  //   image_used_counter, all_atoms_alias, allNodes_alias, imagesList_alias, mols_alias
+  //   image_used_counter, allNodes, imagesList, mols
   // });
+};
+
+export const latestdataSetter = data => {
+  latestData = data;
 };
 
 // helper function to rebase with the ketcher canvas data
@@ -87,6 +90,82 @@ const fetchKetcherData = async (editor) => {
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
     await fuelKetcherData(latestData);
   }
+};
+
+// helper function to move image and update molecule positions
+export const moveTemplate = async () => {
+  try {
+    console.log("move template!!");
+    mols.forEach(async (mol) => {
+      const molecule = latestData[mol];
+      // Check if molecule and atoms exist, and if the alias is formatted correctly
+      molecule?.atoms?.forEach((item, atom_idx) => {
+        if (item.alias) {
+          if (three_parts_patten.test(item.alias)) {
+            const alias = item.alias.split("_");
+
+            const image = imagesList[parseInt(alias[2])];
+            if (image?.boundingBox) {
+              const { x, y } = image?.boundingBox;
+              const location = [x, y, 0]; // Set location as an array of coordinates
+              // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images 
+              molecule.atoms[atom_idx].alias = item.alias.trim();
+              if (molecule?.stereoFlagPosition) {
+                molecule.stereoFlagPosition = {
+                  x: location[0],
+                  y: location[1],
+                  z: 0,
+                };
+              }
+            }
+          }
+        }
+      });
+      latestData[mol] = molecule;
+    });
+    latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
+  } catch (err) {
+    console.log("moveTemplate", err.message);
+  }
+};
+
+// helper function to place image on atom location coordinates
+export const placeImageOnAtoms = async (mols_, imagesList_) => {
+  try {
+    mols_.forEach((item) => {
+      latestData[item]?.atoms.forEach((atom) => {
+        if (atom && three_parts_patten.test(atom?.alias)) {
+          const splits_alias = atom.alias.split("_");
+          let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
+          if (!image_coordinates) throw error("Invalid alias");
+          image_coordinates = {
+            ...image_coordinates,
+            x: atom.location[0] - image_coordinates?.width / 2,
+            y: atom.location[1] + image_coordinates?.height / 2,
+            z: 0,
+            height: template_list_data[parseInt(splits_alias[1])].boundingBox.height,
+            width: template_list_data[parseInt(splits_alias[1])].boundingBox.width,
+          };
+          imagesList_[splits_alias[2]].boundingBox = image_coordinates;
+        };
+      });
+    });
+    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols_.length), ...imagesList_];
+  } catch (err) {
+    console.log("placeImageOnAtoms", err.message);
+  }
+};
+
+// helper function to calculate counters for the ketcher2 setup based on file source type
+export const setKetcherData = async (rails_polymers_list, data) => {
+  let collected_images = [];
+  if (rails_polymers_list && rails_polymers_list.length) {
+    const { c_images, molfileData, image_counter } = await adding_polymers_ketcher_format(rails_polymers_list, mols, data, image_used_counter);
+    image_used_counter = image_counter;
+    molfileData?.root?.nodes.push(...c_images);
+    return { collected_images: c_images, molfileData };
+  }
+  return { collected_images, molfileData: data };
 };
 
 // helper function to handle new atoms added to the canvas
@@ -165,61 +244,6 @@ export const handleAddAtom = async (editor) => {
   await editor.structureDef.editor.setMolecule(JSON.stringify(d));
   await fetchKetcherData(editor);
   onTemplateMove(editor);
-};
-
-// helper function to move image and update molecule positions
-export const moveTemplate = async () => {
-  console.log("move template!!");
-  mols.forEach(async (mol) => {
-    const molecule = latestData[mol];
-    // Check if molecule and atoms exist, and if the alias is formatted correctly
-    molecule?.atoms?.forEach((item, atom_idx) => {
-      if (item.alias) {
-        if (three_parts_patten.test(item.alias)) {
-          const alias = item.alias.split("_");
-
-          const image = imagesList[parseInt(alias[2])];
-          if (image?.boundingBox) {
-            const { x, y } = image?.boundingBox;
-            const location = [x, y, 0]; // Set location as an array of coordinates
-            // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images 
-            molecule.atoms[atom_idx].alias = item.alias.trim();
-            if (molecule?.stereoFlagPosition) {
-              molecule.stereoFlagPosition = {
-                x: location[0],
-                y: location[1],
-                z: 0,
-              };
-            }
-          }
-        }
-      }
-    });
-    latestData[mol] = molecule;
-  });
-  latestData.root.nodes = latestData.root.nodes.slice(0, mols.length);
-};
-
-// helper function to place image on atom location coordinates
-export const placeImageOnAtoms = async (mols_, imagesList_) => {
-  mols_.forEach((item) => {
-    latestData[item]?.atoms.forEach((atom) => {
-      if (atom && three_parts_patten.test(atom?.alias)) {
-        const splits_alias = atom.alias.split("_");
-        let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
-        image_coordinates = {
-          ...image_coordinates,
-          x: atom.location[0] - image_coordinates?.width / 2,
-          y: atom.location[1] + image_coordinates?.height / 2,
-          z: 0,
-          height: template_list_data[parseInt(splits_alias[1])].boundingBox.height,
-          width: template_list_data[parseInt(splits_alias[1])].boundingBox.width,
-        };
-        imagesList_[splits_alias[2]].boundingBox = image_coordinates;
-      };
-    });
-  });
-  latestData.root.nodes = [...latestData.root.nodes.slice(0, mols_.length), ...imagesList_];
 };
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
@@ -353,24 +377,15 @@ export const handleOnDeleteAtom = async (editor) => {
   }
 };
 
-// helper function to calculate counters for the ketcher2 setup based on file source type
-export const setKetcherData = async (rails_polymers_list, data) => {
-  let collected_images = [];
-  if (rails_polymers_list && rails_polymers_list.length) {
-    const { c_images, molfileData, image_counter } = await adding_polymers_ketcher_format(rails_polymers_list, mols, data, image_used_counter);
-    image_used_counter = image_counter;
-    molfileData?.root?.nodes.push(...c_images);
-    return { collected_images: c_images, molfileData };
-  }
-  return { collected_images, molfileData: data };
-};
 
 const onTemplateMove = async (editor) => {
   if (editor && editor.structureDef) {
+    // set atom stereo
     await moveTemplate();
-    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    re_render_canvas = false;
-    images_to_be_updated_setter();
+    await saveMoveCanvas(null, true, false);
+    // ----
+
+    re_render_canvas = false; // no-rerender
     const mols_copy = mols;
     const imagelist_copy = imagesList;
     await fetchKetcherData(editor);
@@ -378,6 +393,7 @@ const onTemplateMove = async (editor) => {
       await placeImageOnAtoms(mols_copy, imagelist_copy, editor);
       await saveMoveCanvas(null, true, false);
     }
+    images_to_be_updated_setter();
   }
 };
 
