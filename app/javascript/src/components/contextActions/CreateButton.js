@@ -309,16 +309,21 @@ export default class CreateButton extends React.Component {
     const { isDisabled, layout } = this.state;
     const type = UserStore.getState().currentType;
     const { elements, genericEls } = elementList();
+    const itemTables = [];
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 
-    const sortedGenericEls = [];
-    sortedLayout.forEach(([sl]) => {
+    sortedLayout?.forEach(([sl]) => {
       const el = elements.concat(genericEls).find((ael) => ael.name === sl);
-      if (typeof el !== 'undefined') {
-        sortedGenericEls.push(el);
-      }
+      if (el) itemTables.push(
+        <Dropdown.Item
+          id={`create-${el.name}-button`}
+          key={el.name}
+          onClick={() => this.createElementOfType(`${el.name}`)}
+        >
+          Create {el.label}
+        </Dropdown.Item>);
     });
 
     return (
@@ -330,15 +335,8 @@ export default class CreateButton extends React.Component {
         onClick={() => this.createElementOfType(type)}
       >
         {this.createWellplateModal()}
-        {sortedGenericEls.map((el) => (
-          <Dropdown.Item
-            key={el.name}
-            id={`create-${el.name}-button`}
-            onClick={() => this.createElementOfType(el.name)}
-          >
-            {`Create ${el.label}`}
-          </Dropdown.Item>
-        ))}
+        {itemTables}
+
         <Dropdown.Divider />
         <Dropdown.Item onClick={() => this.createWellplateFromSamples()}>
           Create Wellplate from Samples
