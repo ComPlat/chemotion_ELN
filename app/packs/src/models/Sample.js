@@ -1113,6 +1113,14 @@ export default class Sample extends Element {
     return this._gas_phase_data;
   }
 
+  get inventory_label() {
+    return this.xref.inventory_label;
+  }
+
+  set inventory_label(inventory_label) {
+    this.xref.inventory_label = inventory_label;
+  }
+
   addSolvent(newSolvent) {
     const { molecule } = newSolvent;
     if (molecule) {

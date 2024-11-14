@@ -332,7 +332,7 @@ export default class SampleDetails extends React.Component {
     const { currentCollection } = UIStore.getState();
     LoadingActions.start.defer();
     const { sample, validCas } = this.state;
-    if (this.matchSelectedCollection(currentCollection) && sample.xref.inventory_label !== undefined) {
+    if (this.matchSelectedCollection(currentCollection) && sample.inventory_label !== undefined) {
       sample.collection_id = currentCollection.id;
     }
     this.checkMolfileChange();
@@ -953,13 +953,15 @@ export default class SampleDetails extends React.Component {
       />
     ) : null;
 
+    const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
+
     return (
       <div className="d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span className="flex-shrink-0">
               <i className="icon-sample me-1" />
-              {sample.title()}
+              {inventoryLabel || sample.title()}
             </span>
           </OverlayTrigger>
           <ShowUserLabels element={sample} />

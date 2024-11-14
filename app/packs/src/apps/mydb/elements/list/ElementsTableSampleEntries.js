@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Table, Button, Tooltip, OverlayTrigger
+  Table, Button, Tooltip, OverlayTrigger, Badge,
 } from 'react-bootstrap';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
@@ -104,6 +104,20 @@ XvialIcon.defaultProps = {
 const showDecoupledIcon = (sample) => (sample.decoupled ? (
   <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
     <Button size="xxsm" variant="light"><i className="fa fa-chain-broken" aria-hidden="true" /></Button>
+  </OverlayTrigger>
+) : null);
+
+const showInventoryLabelIcon = (sample) => (sample.inventory_sample && sample.inventory_label ? (
+  <OverlayTrigger
+    placement="top"
+    overlay={<Tooltip id="sample_inventory_label">Inventory Label</Tooltip>}
+  >
+    <Badge
+      className="bg-info text-light p-1 mt-0 rounded"
+      key={`inventory_label_${sample.inventory_label}`}
+    >
+      {sample.inventory_label}
+    </Badge>
   </OverlayTrigger>
 ) : null);
 
@@ -366,6 +380,7 @@ export default class ElementsTableSampleEntries extends Component {
               {sample.title(selected)}
 
               <div className="d-flex align-items-center gap-1">
+                {showInventoryLabelIcon(sample)}
                 <CommentIcon commentCount={sample.comment_count} />
                 <ShowUserLabels element={sample} />
                 <XvialIcon label={sample.external_label} />
