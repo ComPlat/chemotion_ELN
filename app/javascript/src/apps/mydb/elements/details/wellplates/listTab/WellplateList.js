@@ -2,24 +2,11 @@
 
 import React, { useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
-// import { Form } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { AgGridReact } from 'ag-grid-react';
 
 const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
-  // let timeout = null;
   const gridRef = useRef();
-
-  // const handleReadoutOfWellChange = (well, index, type, event) => {
-  //   const { value } = event.target;
-  //   const wellIndex = wells.indexOf(well);
-  //   wells[wellIndex].readouts[index][type] = value;
- 
-  //   clearTimeout(timeout);
-  //   timeout = setTimeout(() => {
-  //     handleWellsChange(wells);
-  //   }, 3000);
-  // }
 
   const renderSVG = (node) => {
     const sample = node.data?.sample;
@@ -49,33 +36,6 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     if (!sample) { return null; }
 
     return sample.molecule_formula;
-  }
-
-  const renderReadoutValue = (node) => {
-    const readouts = node.data?.readouts;
-    if (!node.data.sample) { return null; }
-    return readouts[node.index].value;
-    //return (
-    //  <Form.Control
-    //    value={readouts[node.index].value || ''}
-    //    onChange={(event) => handleReadoutOfWellChange(node.data, node.index, 'value', event)}
-    //    className="my-2"
-    //  />
-    //);
-  }
-
-  const renderReadoutUnit = (node) => {
-    const readouts = node.data?.readouts;
-    if (!node.data.sample) { return null; }
-    return readouts[node.index].unit;
-
-    //return (
-    //  <Form.Control
-    //    value={readouts[node.index].unit || ''}
-    //    onChange={(event) => handleReadoutOfWellChange(node.data, node.index, 'unit', event)}
-    //    className="my-2"
-    //  />
-    //);
   }
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
@@ -130,20 +90,38 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       {
         headerName: `${title} Value`,
         field: "value",
-        editable: true,
-        cellRenderer: renderReadoutValue,
+        editable: (params) => params.data.sample,
+        valueGetter: (params) => {
+          if (params.data?.readouts) {
+            return params.data.readouts[index].value;
+          }
+        },
+        valueSetter: (params) => {
+          params.data.readouts[index].value = params.newValue;
+          return true;
+        },
+        valueParser: (params) => {
+          return params.newValue;
+        },
         cellRendererParams: {
           index: index,
-        }
+        },
       },
       {
         headerName: `${title} Unit`,
-        field: "unit",
-        editable: true,
-        cellRenderer: renderReadoutUnit,
-        cellRendererParams: {
-          index: index,
-        }
+        editable: (params) => params.data.sample,
+        valueGetter: (params) => {
+          if (params.data?.readouts) {
+            return params.data.readouts[index].unit;
+          }
+        },
+        valueSetter: (params) => {
+          params.data.readouts[index].unit = params.newValue;
+          return true;
+        },
+        valueParser: (params) => {
+          return params.newValue;
+        },
       },
     );
   });
@@ -170,6 +148,8 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         domLayout="autoHeight"
         readOnlyEdit
         onCellEditRequest={updateRow}
+        singleClickEdit={true}
+        stopEditingWhenCellsLoseFocus={true}
       />
     </div>
   );
