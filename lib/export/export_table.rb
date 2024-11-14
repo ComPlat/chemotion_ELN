@@ -110,11 +110,32 @@ module Export
       }
     end
 
+    def flash_point_format(value)
+      return if value.blank?
+
+      # Add quotes around unquoted keys & values
+      value = value.gsub(/(\w+):/, '"\1":')
+      value = value.gsub(/:\s*([^",{}\s]+)/, ':"\1"')
+
+      flash_point = JSON.parse(value)
+      "#{flash_point['value']} #{flash_point['unit']}"
+    rescue JSON::ParserError => e
+      Rails.logger.warn("Failed to parse flash_point JSON: #{e.message}")
+      nil
+    end
+
     def format_headers(headers)
       headers.map! do |header|
-        header.tr('_', ' ')
+        header = header.tr('_', ' ')
+        if header.scan('molarity value').first == 'molarity value'
+          'molarity'
+        elsif header == 'molarity unit'
+          nil
+        else
+          header
+        end
       end
-      headers
+      headers.compact
     end
 
     def generate_headers_sample

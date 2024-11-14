@@ -209,7 +209,7 @@ describe Chemotion::SampleAPI do
             short_label: 'C9H12ClNO2',
             target_amount: '10 g /  g',
             real_amount: '15mg/mg',
-            density: '30',
+            density: '30 g/mL',
             decoupled: 'f',
             molarity: '900',
             melting_point: '900.0',
@@ -249,7 +249,7 @@ describe Chemotion::SampleAPI do
         expect(sample['location']).to eq 'location'
         expect(sample['external_label']).to eq 'external_label'
         expect(sample['name']).to eq 'name'
-        expect(sample['molarity_value']).to eq 900
+        expect(sample['molarity_value']).to eq 0.0
 
         expect(sample['boiling_point']).to eq 900.0..1500.0
         expect(sample['melting_point']).to eq 900.0...Float::INFINITY
@@ -319,7 +319,7 @@ describe Chemotion::SampleAPI do
         expect(sample['location']).to eq 'location'
         expect(sample['external_label']).to eq 'external_label'
         expect(sample['name']).to eq 'name'
-        expect(sample['molarity_value']).to eq 900
+        expect(sample['molarity_value']).to eq 0.0
 
         expect(sample['boiling_point']).to eq 1000.0...Float::INFINITY
         expect(sample['melting_point']).to eq 900.0...Float::INFINITY

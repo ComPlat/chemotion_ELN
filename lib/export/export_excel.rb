@@ -127,6 +127,14 @@ module Export
             string.split(',').join(' - ')
           elsif column == 'solvent'
             extract_label_from_solvent_column(sample[column]) || ''
+          elsif column == 'refractive index'
+            sample['refractive_index']
+          elsif column == 'flash point'
+            flash_point_format(sample['flash_point'])
+          elsif column == 'molarity'
+            "#{sample['molarity_value']} #{sample['molarity_unit']}"
+          elsif column == 'density'
+            "#{sample['density']} g/ml"
           else
             sample[column]
           end
