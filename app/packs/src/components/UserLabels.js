@@ -422,7 +422,7 @@ class ShowUserLabels extends React.Component {
       curLabelIds.includes(o.id) && (o.access_level > 0 || o.user_id === currentUser.id)
     ));
 
-    return labels.map((l) => <UserLabel {...l} />);
+    return labels.map((l) => <UserLabel key={l.id} {...l} />);
   }
 }
 

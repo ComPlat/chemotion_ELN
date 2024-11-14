@@ -99,31 +99,28 @@ export default class ElementsList extends React.Component {
   onChangeUser(state) {
     let visible = Immutable.List();
     let hidden = Immutable.List();
-    let currentTabIndex = 0;
-
-    const { currentType } = state;
-    let type = state.currentType;
+    let { currentType, currentTab } = state;
 
     if (typeof (state.profile) !== 'undefined' && state.profile
       && typeof (state.profile.data) !== 'undefined' && state.profile.data) {
       visible = getArrayFromLayout(state.profile.data.layout, true);
       hidden = getArrayFromLayout(state.profile.data.layout, false);
-      currentTabIndex = visible.findIndex((e) => e === currentType);
-      if (type === '') { type = visible.get(0); }
+      currentTab = visible.findIndex((e) => e === currentType);
+      if (currentType === '') { currentType = visible.get(0); }
     }
     if (hidden.size === 0) {
       hidden = ArrayUtils.pushUniq(hidden, 'hidden');
     }
 
-    if (currentTabIndex < 0) currentTabIndex = 0;
+    if (currentTab < 0) currentTab = 0;
 
-    if (typeof type !== 'undefined' && type != null) {
-      KeyboardActions.contextChange.defer(type);
+    if (typeof currentType !== 'undefined' && currentType != null) {
+      KeyboardActions.contextChange.defer(currentType);
     }
 
     this.setState({
-      currentTab: currentTabIndex,
       genericEls: state.genericEls || [],
+      currentTab,
       visible,
       hidden
     });
@@ -131,7 +128,6 @@ export default class ElementsList extends React.Component {
 
   onChangeUI(state) {
     const { totalCheckedElements } = this.state;
-    let forceUpdate = false;
     // const genericNames = (genericEls && genericEls.map(el => el.name)) || [];
     let genericKlasses = [];
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -141,31 +137,33 @@ export default class ElementsList extends React.Component {
     }
     const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericKlasses);
 
+    const newTotalCheckedElements = {};
+    let needsUpdate = false;
     elNames.forEach((type) => {
       const elementUI = state[type] || {
-        checkedAll: false, checkedIds: [], uncheckedIds: [], currentId: null
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
       };
       const element = ElementStore.getState().elements[`${type}s`];
       const nextCount = elementUI.checkedAll
         ? (element.totalElements - elementUI.uncheckedIds.size)
         : elementUI.checkedIds.size;
-      if (!forceUpdate && nextCount !== (totalCheckedElements[type] || 0)) { forceUpdate = true; }
-      totalCheckedElements[type] = nextCount;
+      needsUpdate = needsUpdate || nextCount !== totalCheckedElements[type];
+      newTotalCheckedElements[type] = nextCount
     });
 
-    this.setState((previousState) => ({ ...previousState, totalCheckedElements }));
-    // could not use shouldComponentUpdate because state.totalCheckedElements
-    // has already changed independently of setstate
-    if (forceUpdate) { this.forceUpdate(); }
+    if (needsUpdate) {
+      this.setState({ totalCheckedElements: newTotalCheckedElements });
+    }
   }
 
   handleRemoveSearchResult(searchStore) {
     searchStore.changeShowSearchResultListValue(false);
     UIActions.clearSearchById();
     ElementActions.changeSorting(false);
-    const { currentCollection, isSync } = UIStore.getState();
-    isSync ? UIActions.selectSyncCollection(currentCollection)
-      : UIActions.selectCollection(currentCollection);
+    const { currentCollection } = UIStore.getState();
+    UIActions.selectCollection(currentCollection);
   }
 
   handleTabSelect(tab) {
@@ -186,7 +184,7 @@ export default class ElementsList extends React.Component {
 
   render() {
     const {
-      visible, hidden, totalCheckedElements, totalElements
+      visible, hidden, totalCheckedElements, totalElements, currentTab
     } = this.state;
     const { overview } = this.props;
 
@@ -262,7 +260,7 @@ export default class ElementsList extends React.Component {
         <div className="position-relative">
           <Tabs
             id="tabList"
-            defaultActiveKey={0}
+            activeKey={currentTab}
             onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
           >
             {tabItems}

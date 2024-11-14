@@ -20,7 +20,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      update: this.props.update,
       currentlyCollapsedInEditMode: this.props?.field?.value?.startCollapsed ?? false,
       currentlyCollapsedInViewMode: this.props?.field?.value?.startCollapsed ?? false,
       columnNameModal: {
@@ -43,12 +42,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     uniqueId.enableUniqueIds(this)
 
     this.ref = React.createRef();
-  }
-
-  componentDidUpdate() {
-    if (this.state.update !== this.props.update) {
-      this.setState({ update: this.props.update });
-    }
   }
 
   buildColumn(columnName) {
@@ -663,6 +656,5 @@ ResearchPlanDetailsFieldTable.propTypes = {
   index: PropTypes.number,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
-  update: PropTypes.bool,
   edit: PropTypes.bool
 };

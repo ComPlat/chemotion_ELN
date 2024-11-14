@@ -9,7 +9,7 @@ import Field from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/
 export default class ResearchPlanDetailsBody extends Component {
   render() {
     const {
-      body, disabled, onChange, onDrop, onAdd, onDelete, onExport, update, edit, isNew,
+      body, disabled, onChange, onDrop, onAdd, onDelete, onExport, edit, isNew,
       copyableFields, onCopyToMetadata
     } = this.props;
 
@@ -29,7 +29,6 @@ export default class ResearchPlanDetailsBody extends Component {
             onDelete={onDelete.bind(this)}
             onExport={onExport.bind(this)}
             onCopyToMetadata={onCopyToMetadata.bind(this)}
-            update={update}
             edit={edit}
             tableIndex={tableIndex}
             isNew={isNew}
@@ -49,7 +48,6 @@ export default class ResearchPlanDetailsBody extends Component {
             onDelete={onDelete.bind(this)}
             onExport={onExport.bind(this)}
             onCopyToMetadata={onCopyToMetadata.bind(this)}
-            update={update}
             edit={edit}
             tableIndex={tableIndex}
             isNew={isNew}
@@ -92,7 +90,6 @@ ResearchPlanDetailsBody.propTypes = {
   onDelete: PropTypes.func,
   onExport: PropTypes.func,
   onCopyToMetadata: PropTypes.func,
-  update: PropTypes.bool,
   edit: PropTypes.bool,
   isNew: PropTypes.bool,
   copyableFields: PropTypes.arrayOf(PropTypes.object),

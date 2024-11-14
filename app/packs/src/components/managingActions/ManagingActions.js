@@ -1,7 +1,6 @@
 import React from 'react';
 import { ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import { List } from 'immutable';
 import {
   ShareButton,
   MoveOrAssignButton,
@@ -20,53 +19,6 @@ import ManagingModalTopSecret from 'src/components/managingActions/ManagingModal
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
-const upState = async (state) => {
-  const { sample, reaction, screen, wellplate, research_plan, cell_line } = state;
-  const stateObj = {
-    sample: {
-      checkedAll: sample ? sample.checkedAll : false,
-      checkedIds: sample ? sample.checkedIds : List(),
-      uncheckedIds: sample ? sample.uncheckedIds : List(),
-    },
-    reaction: {
-      checkedAll: reaction ? reaction.checkedAll : false,
-      checkedIds: reaction ? reaction.checkedIds : List(),
-      uncheckedIds: reaction ? reaction.uncheckedIds : List(),
-    },
-    wellplate: {
-      checkedAll: wellplate ? wellplate.checkedAll : false,
-      checkedIds: wellplate ? wellplate.checkedIds : List(),
-      uncheckedIds: wellplate ? wellplate.uncheckedIds : List(),
-    },
-    screen: {
-      checkedAll: screen ? screen.checkedAll : false,
-      checkedIds: screen ? screen.checkedIds : List(),
-      uncheckedIds: screen ? screen.uncheckedIds : List(),
-    },
-    research_plan: {
-      checkedAll: research_plan ? research_plan.checkedAll : false,
-      checkedIds: research_plan ? research_plan.checkedIds : List(),
-      uncheckedIds: research_plan ? research_plan.uncheckedIds : List(),
-    },
-    cell_line: {
-      checkedAll: cell_line ? cell_line.checkedAll : false,
-      checkedIds: cell_line ? cell_line.checkedIds : List(),
-      uncheckedIds: cell_line ? cell_line.uncheckedIds : List(),
-    }
-  };
-
-  // eslint-disable-next-line no-unused-expressions
-  const klassArray = await elementNames(false);
-  klassArray.forEach((klass) => {
-    stateObj[`${klass}`] = {
-      checkedAll: state[`${klass}`] ? state[`${klass}`].checkedAll : false,
-      checkedIds: state[`${klass}`] ? state[`${klass}`].checkedIds : List(),
-      uncheckedIds: state[`${klass}`] ? state[`${klass}`].uncheckedIds : List(),
-    };
-  });
-  //  }
-  return (stateObj);
-};
 
 export default class ManagingActions extends React.Component {
   constructor(props) {
@@ -79,7 +31,7 @@ export default class ManagingActions extends React.Component {
       deletion_allowed: false,
       remove_allowed: false,
       is_top_secret: false,
-      genericEls: []
+      genericEls: genericEls
     };
 
     this.handleButtonClick = this.handleButtonClick.bind(this);
@@ -87,8 +39,6 @@ export default class ManagingActions extends React.Component {
 
     this.onUserChange = this.onUserChange.bind(this);
     this.onPermissionChange = this.onPermissionChange.bind(this);
-
-    this.initializeAsyncState();
   }
 
   componentDidMount() {
@@ -115,14 +65,14 @@ export default class ManagingActions extends React.Component {
         hasSel: false,
         currentCollection
       });
-    } else if (this.checkUIState(state)) {
+    } else {
       const klassArray = await elementNames(true);
-      const hasSel = klassArray.some((el) => (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
-      PermissionActions.fetchPermissionStatus(state);
-      const upStateResult = await upState(state);
-      this.setState({
-        ...upStateResult, hasSel
+      const newHasSel = klassArray.some((el) => {
+        return (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll));
       });
+      PermissionActions.fetchPermissionStatus(state);
+      const { hasSel } = this.state;
+      if (newHasSel != hasSel) this.setState({ hasSel: newHasSel });
     }
   }
 
@@ -145,11 +95,6 @@ export default class ManagingActions extends React.Component {
     this.setState({ ...state });
   }
 
-  async initializeAsyncState() {
-    const upStateResult = await upState({});
-    this.setState({ ...upStateResult });
-  }
-
   collectionChanged(state) {
     const { currentCollection } = state;
     if (typeof currentCollection === 'undefined' || currentCollection == null) {
@@ -158,17 +103,6 @@ export default class ManagingActions extends React.Component {
     const { id, is_sync_to_me } = currentCollection;
     return this.state.currentCollection.id !== id ||
       this.state.currentCollection.is_sync_to_me !== is_sync_to_me;
-  }
-
-  checkUIState(state) {
-    const genericNames = (this.state.genericEls && this.state.genericEls.map(el => el.name)) || [];
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericNames);
-    const result = elNames.find(el => (this.state[el] && state[el] && (
-      state[el].checkedIds !== this.state[el].checkedIds ||
-      state[el].checkedAll !== this.state[el].checkedAll ||
-      state[el].uncheckedIds !== this.state[el].uncheckedIds
-    )));
-    return result;
   }
 
   // eslint-disable-next-line react/sort-comp
@@ -252,10 +186,8 @@ export default class ManagingActions extends React.Component {
 ManagingActions.propTypes = {
   updateModalProps: PropTypes.func.isRequired,
   customClass: PropTypes.string,
-  genericEls: PropTypes.array
 };
 
 ManagingActions.defaultProps = {
   customClass: null,
-  genericEls: []
 };
