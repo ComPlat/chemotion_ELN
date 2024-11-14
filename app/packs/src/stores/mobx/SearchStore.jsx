@@ -31,6 +31,7 @@ const defaultSearchValues = [{
   smiles: '',
   sub_values: [],
   unit: '',
+  available_options: [],
   validationState: null
 }];
 
@@ -68,6 +69,7 @@ export const SearchStore = types
     detail_search_values: types.optional(types.array(types.frozen({})), []),
     ketcher_rails_values: types.optional(types.frozen({}), defaultKetcherValues),
     publication_search_values: types.optional(types.array(types.frozen({})), defaultPublicationValues),
+    numeric_match: types.optional(types.string, '>='),
     search_results: types.map(SearchResult),
     tab_search_results: types.map(SearchResult),
     search_accordion_active_key: types.optional(types.number, 0),
@@ -172,6 +174,18 @@ export const SearchStore = types
       if (index != -1) {
         self.detail_search_values.splice(index, 1);
       }
+    },
+    changeNumericMatchValue(match) {
+      self.numeric_match = match;
+      self.detail_search_values.map((object, i) => {
+        if (['>=', '<='].includes(Object.values(object)[0].match)) {
+          Object.entries(self.detail_search_values[i]).forEach(([key, value]) => {
+            let values = { ...value };
+            values.match = match;
+            self.detail_search_values[i] = { [key]: values };
+          });
+        }
+      });
     },
     changeKetcherRailsValue(key, value) {
       let ketcherValues = { ...self.ketcher_rails_values };

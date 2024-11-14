@@ -1,8 +1,8 @@
 import React, { useEffect, useContext } from 'react';
-import { ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger, Stack, Accordion } from 'react-bootstrap';
+import { ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger, Stack, Accordion, Form } from 'react-bootstrap';
 import {
-  togglePanel, handleClear, showErrorMessage, handleSearch,
-  AccordeonHeaderButtonForSearchForm, SearchButtonToolbar, panelVariables
+  togglePanel, handleClear, showErrorMessage, panelVariables,
+  AccordeonHeaderButtonForSearchForm, SearchButtonToolbar
 } from './SearchModalFunctions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import AdvancedSearchRow from './AdvancedSearchRow';
@@ -53,6 +53,10 @@ const TextSearch = () => {
     searchValues.table = table;
     searchValues.element_id = (genericElement.id || 0);
     searchStore.addAdvancedSearchValue(0, searchValues);
+  }
+
+  const handleNumericMatchChange = (e) => {
+    searchStore.changeNumericMatchValue(e.target.value);
   }
 
   const SelectSearchTable = () => {
@@ -177,7 +181,34 @@ const TextSearch = () => {
                 )
               }
             </div>
-            <SearchButtonToolbar store={searchStore} />
+            <Form className="d-flex align-items-center gap-5">
+              <SearchButtonToolbar store={searchStore} />
+              {
+                searchStore.searchType == 'detail' && (
+                  <Form.Group className="d-flex align-items-baseline gap-4">
+                    <span>Change search operator for numeric Fields:</span>
+                    <Form.Check
+                      type="radio"
+                      name="equal_higher_or_lower"
+                      id="equal_higher_or_lower_higher"
+                      label=">="
+                      value=">="
+                      checked={searchStore.numeric_match === '>='}
+                      onChange={handleNumericMatchChange}
+                    />
+                    <Form.Check
+                      type="radio"
+                      name="equal_higher_or_lower"
+                      id="equal_higher_or_lower_higher"
+                      label="<="
+                      value="<="
+                      checked={searchStore.numeric_match === '<='}
+                      onChange={handleNumericMatchChange}
+                    />
+                  </Form.Group>
+                )
+              }
+            </Form>
           </div>
         </Accordion.Collapse>
       </Accordion.Item>
@@ -191,9 +222,7 @@ const TextSearch = () => {
         </h2>
         <Accordion.Collapse eventKey={1}>
           <div className="accordion-body">
-            <SearchResult
-              handleClear={() => handleClear(searchStore)}
-            />
+            <SearchResult handleClear={() => handleClear(searchStore)} />
           </div>
         </Accordion.Collapse>
       </Accordion.Item>
