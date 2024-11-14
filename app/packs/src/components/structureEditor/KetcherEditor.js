@@ -276,23 +276,18 @@ export const handleAddAtom = async () => {
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
 export const handleOnDeleteImage = async (editor) => {
-  mols = mols.filter(item => item != null);
   console.log("handleOnDelete", mols, _selection);
+  mols = mols.filter(item => item != null);
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
-      // images = imagesList;
       let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
       console.log({ data });
-      // return;
       await editor.structureDef.editor.setMolecule(JSON.stringify(data));
       image_used_counter -= images.length;
-      // await fetchKetcherData(editor);
       await onTemplateMove(editor);
     }
   }
-  // resetStore();
-  // return;
 };
 
 // function when a canvas is saved using main "SAVE" button
