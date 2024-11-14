@@ -168,10 +168,40 @@ export const setKetcherData = async (rails_polymers_list, data) => {
   return { collected_images, molfileData: data };
 };
 
+export const isAliasConsistent = () => {
+  const index_list = [];
+  const uniqueIndices = new Set();
+
+  for (const mol of mols) {
+    const molecule = latestData[mol];
+    molecule?.atoms?.forEach((item) => {
+      if (item.alias) {
+        const splits = item.alias.split("_");
+        const index = parseInt(splits[2]);
+
+        // Check for duplicates
+        if (uniqueIndices.has(index)) {
+          return false;  // Duplicate found
+        }
+        uniqueIndices.add(index);
+        index_list.push(index);
+      }
+    });
+  }
+
+  index_list.sort((a, b) => a - b);
+  for (let i = 0; i < index_list.length; i++) {
+    if (index_list[i] !== i) {
+      return false;  // Missing or incorrect number sequence
+    }
+  }
+  return true;  // Passed all checks
+};
+
 // helper function to handle new atoms added to the canvas
-export const handleAddAtom = async (editor) => {
+export const handleAddAtom = async () => {
   console.log("Atom moved!");
-  await fetchKetcherData(editor);
+  const print_logs = false;
   let already_processed = [];
   image_used_counter = -1;
   const seenThirdParts = new Set();
@@ -200,7 +230,7 @@ export const handleAddAtom = async (editor) => {
       const splits = atom?.alias?.split("_");
       // label A with three part alias
       if (two_parts_pattern.test(atom.alias)) {
-        // console.log("TWO", { new_images }, image_used_counter, atom.alias);
+        print_logs && console.log("TWO", { new_images }, image_used_counter, atom.alias);
         image_used_counter += 1;
         if (!new_images[image_used_counter]) {
           const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
@@ -208,12 +238,12 @@ export const handleAddAtom = async (editor) => {
         }
         atom.alias += `_${image_used_counter}`;
         already_processed.push(`${m}_${a}_${image_used_counter}`);
-        // console.log("TWO END XXXXXXXXXXXXXXXXXXX", { new_images }, image_used_counter, atom.alias);
+        print_logs && console.log("TWO END XXXXXXXXXXXXXXXXXXX", { new_images }, image_used_counter, atom.alias);
       }
       else if (three_parts_patten.test(atom.alias)) {
-        console.log("Three", `${m}_${a}_${splits[2]}`);
+        print_logs && console.log("Three", `${m}_${a}_${splits[2]}`);
         if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
-          console.warn("dying from existance!!!!!", atom.alias, image_used_counter, new_images);
+          print_logs && console.warn("dying from existance!!!!!", atom.alias, image_used_counter, new_images);
           // add image if image doesnt exists
 
           if (!new_images[image_used_counter]) {
@@ -221,17 +251,17 @@ export const handleAddAtom = async (editor) => {
             new_images.push(img);
           }
         } else {
-          console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
+          print_logs && console.log(atom.alias, "doesn't exists here!!!!", image_used_counter);
           image_used_counter += 1;
           atom.alias = `t_${splits[1]}_${image_used_counter}`;
           already_processed.push(`${m}_${a}_${image_used_counter}`);
         }
-        // console.log("Three END XXXXXXXXXXXX", atom.alias, image_used_counter);
+        print_logs && console.log("Three END XXXXXXXXXXXX", atom.alias, image_used_counter);
       }
       if (atom.label === "H") {
         is_h_id_list.push(atom);
       };
-      console.log("-----------------------------");
+      print_logs && console.log("-----------------------------");
     }
     if (is_h_id_list.length) {
       mol.atoms?.splice(mol.atoms.length - is_h_id_list.length, is_h_id_list.length);
@@ -241,9 +271,7 @@ export const handleAddAtom = async (editor) => {
   const d = { ...latestData };
   const mols_list = d.root.nodes.slice(0, mols.length);
   d.root.nodes = [...mols_list, ...new_images];
-  await editor.structureDef.editor.setMolecule(JSON.stringify(d));
-  await fetchKetcherData(editor);
-  onTemplateMove(editor);
+  return { d, isConsistent: isAliasConsistent() };
 };
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
@@ -327,7 +355,7 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
 
 // helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
 export const handleOnDeleteAtom = async (editor) => {
-  await fetchKetcherData();
+  await fetchKetcherData(editor);
   console.log('handleOnDeleteAtom main', { mols, imagesList });
   try {
     await fetchKetcherData(editor);
@@ -377,7 +405,7 @@ export const handleOnDeleteAtom = async (editor) => {
   }
 };
 
-
+// container funcation for templatemove
 const onTemplateMove = async (editor) => {
   if (editor && editor.structureDef) {
     // set atom stereo
@@ -397,6 +425,17 @@ const onTemplateMove = async (editor) => {
   }
 };
 
+// container funcation for onAddAtom
+const onAddAtom = async (editor) => {
+  if (editor && editor.structureDef) {
+    await fetchKetcherData(editor);
+    const { d, isConsistent } = await handleAddAtom();
+    !isConsistent && console.log("Generated aliases are inconsistent. Please try reopening the canvas again.");
+    isConsistent && saveMoveCanvas(d, true, true);
+  }
+};
+
+// savemolfile with source, should_fetch, should_move
 const saveMoveCanvas = async (data, should_fetch, should_move) => {
   data = data ? data : latestData;
   await editor.structureDef.editor.setMolecule(JSON.stringify(data));
@@ -459,9 +498,8 @@ const KetcherEditor = forwardRef((props, ref) => {
   const eventHandlers = {
     'Load canvas': async () => await fetchKetcherData(editor),
     'Move image': async () => await onTemplateMove(editor),
-    // 'Move atom': async () => await onTemplateMove(editor),
     'Move atom': async () => await onTemplateMove(editor),
-    'Add atom': async () => await handleAddAtom(editor),
+    'Add atom': async () => await onAddAtom(editor),
     'Delete image': async () => await handleOnDeleteImage(editor),
     'Delete atom': async () => await handleOnDeleteAtom(editor),
   };
