@@ -66,6 +66,13 @@ export default {
               type: 'text',
             },
             {
+              column: 'expiration_date',
+              label: 'Expiration date',
+              key: 'information',
+              table: 'chemicals',
+              type: 'text',
+            },
+            {
               column: 'required_by',
               label: 'Required by',
               key: 'information',
