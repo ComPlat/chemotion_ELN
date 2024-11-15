@@ -72,16 +72,22 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       headerName: "Name",
       field: "short_label",
       cellRenderer: renderName,
+      wrapText: true,
+      cellClass: ["lh-base", "py-2", "border-end"],
     },
     {
       headerName: "External Label",
       field: "external_label",
       cellRenderer: renderExternalLabel,
+      wrapText: true,
+      cellClass: ["lh-base", "py-2", "border-end"],
     },
     {
       headerName: "Sum-Formula",
       field: "short_label",
       cellRenderer: renderSumFormula,
+      wrapText: true,
+      cellClass: ["lh-base", "py-2", "border-end"],
     },
   ];
 
@@ -134,7 +140,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     sortable: false,
     resizable: true,
     cellClass: ["border-end", "px-2"],
-    headerClass: ["px-2"]
+    headerClass: ["border-end", "px-2"]
   };
 
   return (
@@ -144,6 +150,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
         rowData={wells}
+        rowHeight="auto"
         domLayout="autoHeight"
         readOnlyEdit
         onCellEditRequest={updateRow}
