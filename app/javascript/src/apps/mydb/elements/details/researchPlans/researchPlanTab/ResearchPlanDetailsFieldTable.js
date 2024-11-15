@@ -4,7 +4,8 @@ import React, { Component } from 'react';
 import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, ContextMenuTrigger } from "react-contextmenu";
-import { Button, Row, Col, Table, Dropdown } from 'react-bootstrap';
+import { Button, Row, Col, Dropdown } from 'react-bootstrap';
+import { cloneDeep } from 'lodash';
 
 import CustomHeader from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/CustomHeader';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -16,7 +17,6 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
 export default class ResearchPlanDetailsFieldTable extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -42,6 +42,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     uniqueId.enableUniqueIds(this)
 
     this.ref = React.createRef();
+    this.renderShortLabel = this.renderShortLabel.bind(this);
   }
 
   buildColumn(columnName) {
@@ -219,7 +220,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   onGridReady = (params) => {
-    this.setState({
+    this.setState({ 
       gridApi: params.api,
     });
 
@@ -402,7 +403,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         size="xxsm"
         title={collapseToggleTitle}
         onClick={this.toggleTemporaryCollapse.bind(this)}
-        className="pull-right"
       >
         <i className={`fa ${collapseToggleIconClass}`} />
       </Button>
@@ -496,7 +496,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
                 <Dropdown.Item onClick={this.removeThisColumn}>Remove this column</Dropdown.Item>
                 <Dropdown.Item onClick={this.removeThisRow}>Remove this row</Dropdown.Item>
               </Dropdown.Menu>
-
             </ContextMenu>
           </div>
         </div>
@@ -553,77 +552,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     );
   }
 
-  renderStatic() {
-    const { field } = this.props;
-    const { columns, rows } = field.value;
-
-    const lastColumn = columns.length - 1;
-    const th = columns.map((column, index) => {
-
-      return (
-        <th key={column.colId}>
-          {column.headerName}
-          {index == lastColumn && this.temporaryCollapseToggleButton()}
-        </th>
-      );
-    });
-
-    const tr = rows.map((row, index) => {
-      const td = columns.map((column) => {
-        let cellContent = row[column.colId];
-        if (column.headerName == 'Sample') {
-          let cellContentIsShortLabel = column.headerName == 'Sample' && (cellContent || '').length > 3;
-          if (cellContentIsShortLabel) {
-            let shortLabel = cellContent;
-            cellContent = <a
-              onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}
-            >
-              {shortLabel}
-            </a>
-          }
-        }
-        else if (column.headerName == 'Reaction') {
-          let cellContentIsShortLabel = column.headerName == 'Reaction' && (cellContent || '').length > 3;
-          if (cellContentIsShortLabel) {
-            let shortLabel = cellContent;
-            cellContent = <a
-              onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(shortLabel) }}
-            >
-              {shortLabel}
-            </a>
-          }
-        }
-        return <td key={column.colId} style={{ height: '37px' }}>{cellContent}</td>;
-      });
-      return (
-        <tr key={index}>
-          {td}
-        </tr>
-      );
-    });
-    const collapsed = this.state.currentlyCollapsedInViewMode;
-
-    return (
-      <Table bordered>
-        <thead>
-          <tr>
-            {th}
-          </tr>
-        </thead>
-        <tbody className={collapsed ? 'd-none' : ''}>
-          {tr}
-        </tbody>
-      </Table>
-    );
-  }
-
-  render() {
-    if (this.props.edit) {
-      return this.renderEdit();
-    }
-    return this.renderStatic();
-  }
-
   openSampleByShortLabel(shortLabel) {
     console.debug('opening Sample by short label', shortLabel);
     SamplesFetcher.findByShortLabel(shortLabel).then((result) => {
@@ -648,6 +576,73 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         console.debug('No valid data returned for short label', shortLabel, result);
       }
     });
+  }
+
+  renderShortLabel(node) {
+    const shortLabel = node.data?.sample ? node.data.sample : node.data?.reaction;
+    if (node.data?.sample) {
+      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}>
+        {shortLabel}
+      </a>);
+    } else if (node.data?.reaction) {
+      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(shortLabel) }}>
+        {shortLabel}
+      </a>);
+    }
+  }
+
+  renderStatic() {
+    const { field } = this.props;
+    const { columns, rows } = field.value;
+    const staticColumns = cloneDeep(columns);
+
+    staticColumns.forEach((item) => {
+      if (item.colId == 'sample' || item.colId == 'reaction') {
+        item.cellRenderer = this.renderShortLabel;
+      }
+      item.editable = false;
+      item.resizable = false;
+      item.sortable = false;
+      item.rowDrag = false;
+      return item;
+    });
+
+    const defaultColDef = {
+      flex: 1,
+      wrapHeaderText: true,
+      autoHeaderHeight: true,
+      autoHeight: true,
+      cellClass: ["border-end"],
+    };
+
+    const gridWrapperClassName = ['research-plan-table-grid'];
+    if (this.state.currentlyCollapsedInViewMode) {
+      gridWrapperClassName.push('grid-with-collapsed-rows')
+    }
+
+    return (
+      <div className={gridWrapperClassName.join(' ')}>
+        <div className="d-flex justify-content-end">
+          {this.temporaryCollapseToggleButton()}
+        </div>
+        <div className="ag-theme-alpine">
+          <AgGridReact
+            columnDefs={staticColumns}
+            defaultColDef={defaultColDef}
+            domLayout='autoHeight'
+            rowData={rows}
+            rowHeight='37'
+          />
+        </div>
+      </div>
+    );
+  }
+
+  render() {
+    if (this.props.edit) {
+      return this.renderEdit();
+    }
+    return this.renderStatic();
   }
 }
 
