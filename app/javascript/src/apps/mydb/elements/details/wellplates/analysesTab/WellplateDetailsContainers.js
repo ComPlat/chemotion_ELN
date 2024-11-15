@@ -176,7 +176,7 @@ export default class WellplateDetailsContainers extends Component {
       <div>
         <div className="d-flex justify-content-end my-2 mx-3">
           <ButtonToolbar className="gap-2">
-            <CommentButton toggleCommentBox={this.toggleCommentBox} disable={false} />
+            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
             {this.addButton()}
           </ButtonToolbar>
         </div>

@@ -7,14 +7,14 @@ import {
   Tooltip,
 } from 'react-bootstrap';
 
-function CommentButton({ toggleCommentBox }) {
+function CommentButton({ toggleCommentBox, size }) {
   return (
     <OverlayTrigger
       placement="top"
       overlay={<Tooltip id="analysisCommentBox">General remarks related to all analytical data</Tooltip>}
     >
       <Button
-        size="xsm"
+        size={size}
         variant="primary"
         onClick={toggleCommentBox}
       >
@@ -26,15 +26,15 @@ function CommentButton({ toggleCommentBox }) {
 
 CommentButton.propTypes = {
   toggleCommentBox: PropTypes.func.isRequired,
+  size: PropTypes.string.isRequired,
 };
 
 function CommentBox({ isVisible, value, handleCommentTextChange }) {
-  console.log('CommentBox value:', value);
   return isVisible && (
     <Form.Group>
       <Form.Control
         as="textarea"
-        style={{ height: '80px' }}
+        style={{ height: '50px' }}
         value={value}
         onChange={handleCommentTextChange}
         className="my-3"

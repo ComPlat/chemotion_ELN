@@ -2,7 +2,12 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Accordion, Card } from 'react-bootstrap';
+import {
+  Button,
+  Accordion,
+  Card,
+  ButtonToolbar,
+} from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -25,6 +30,7 @@ import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { truncateText } from 'src/utilities/textHelper';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import { CommentButton, CommentBox } from 'src/components/common/CommentBoxComponent';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -63,7 +69,8 @@ export default class ReactionDetailsContainers extends Component {
     super(props);
 
     this.state = {
-      activeContainer: UIStore.getState().reaction.activeAnalysis
+      activeContainer: UIStore.getState().reaction.activeAnalysis,
+      commentBoxVisible: false,
     };
     this.containerRefs = {};
 
@@ -234,8 +241,18 @@ export default class ReactionDetailsContainers extends Component {
     return null;
   }
 
+  handleCommentTextChange = (e) => {
+    const { reaction } = this.props;
+    reaction.container.description = e.target.value;
+    this.handleChange(reaction.container);
+  };
+
+  toggleCommentBox = () => {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
+  };
+
   render() {
-    const { activeContainer } = this.state;
+    const { activeContainer, commentBoxVisible } = this.state;
     const { reaction, readOnly } = this.props;
 
     const containerHeader = (container) => {
@@ -340,8 +357,18 @@ export default class ReactionDetailsContainers extends Component {
         return (
           <div>
             <div className="d-flex justify-content-end align-items-center mb-3">
-              {this.addButton()}
+              <ButtonToolbar className="gap-1">
+                <div className="mt-2">
+                  <CommentButton toggleCommentBox={this.toggleCommentBox} size="sm" />
+                </div>
+                {this.addButton()}
+              </ButtonToolbar>
             </div>
+            <CommentBox
+              isVisible={commentBoxVisible}
+              value={reaction.container.description}
+              handleCommentTextChange={this.handleCommentTextChange}
+            />
             <Accordion
               className='border rounded overflow-hidden'
               onSelect={this.handleAccordionOpen}
