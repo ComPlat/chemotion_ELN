@@ -52,7 +52,7 @@ function ReactionsDisplay({
       <div className="d-flex justify-content-between align-items-center mb-3">
         {AnalysisModeToggle(mode, handleToggleMode, isDisabled)}
         <ButtonToolbar className="gap-2">
-          <CommentButton toggleCommentBox={toggleCommentBox} />
+          <CommentButton toggleCommentBox={toggleCommentBox} size="xsm" />
           {addButton()}
         </ButtonToolbar>
       </div>

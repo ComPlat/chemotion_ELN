@@ -195,7 +195,7 @@ class AnalysesContainer extends Component {
         <div className="d-flex justify-content-between mb-3">
           {this.renderModeButton()}
           <ButtonToolbar className="gap-2">
-            <CommentButton toggleCommentBox={this.toggleCommentBox} disable={false} />
+            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" disable={false} />
             {this.renderAddButton()}
           </ButtonToolbar>
         </div>
