@@ -83,6 +83,14 @@ export const latestdataSetter = data => {
   latestData = data;
 };
 
+export const _selectionSetter = data => {
+  _selection = data;
+};
+
+export const imageUsedCounterSetter = async count => {
+  image_used_counter = count;
+};
+
 // helper function to rebase with the ketcher canvas data
 const fetchKetcherData = async (editor) => {
   if (editor) {
@@ -275,18 +283,69 @@ export const handleAddAtom = async () => {
 };
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
-export const handleOnDeleteImage = async (editor) => {
-  console.log("handleOnDelete", mols, _selection);
+export const handleOnDeleteImage = async () => {
+  console.log("handleOnDelete");
   mols = mols.filter(item => item != null);
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
-      let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
-      console.log({ data });
-      await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+      let data = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
       image_used_counter -= images.length;
-      await onTemplateMove(editor);
+      return data;
     }
+  }
+  return latestData;
+};
+
+// helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
+export const handleOnDeleteAtom = async (editor) => {
+  await fetchKetcherData(editor);
+  console.log('handleOnDeleteAtom main', { mols, imagesList });
+  try {
+    await fetchKetcherData(editor);
+    const images_tbr = [];
+
+    deleted_atoms_list.forEach((item, _) => {
+      const deleted_splits = parseInt(item.alias.split("_")[2]);
+      for (let m = 0; m < mols.length; m++) {
+        const mol = latestData[mols[m]];
+        if (mol && mol?.atoms) {
+          const atoms = mol?.atoms || [];
+          for (let i = 0; i < atoms.length; i++) {
+            const atom = atoms[i];
+            // console.log(atom, "out");
+            if (three_parts_patten.test(atom?.alias)) {
+              const atom_splits = atom.alias.split("_");
+              // console.log({ nd: parseInt(atom_splits[2]), ds: deleted_splits });
+              if (parseInt(atom_splits[2]) === 0) {
+                images_tbr.push(0);
+              }
+              if (parseInt(atom_splits[2]) > deleted_splits) {
+                atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
+                images_tbr.push(parseInt(atom_splits[2]));
+              }
+            }
+            // else {
+            //   last_item = true;
+            // }
+          }
+          latestData[mols[m]].atoms = atoms;
+        }
+      }
+    });
+    console.log({ late: latestData });
+    image_used_counter -= deleted_atoms_list.length;
+
+
+    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...imagesList];
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await onTemplateMove(editor);
+
+    // clear the stack to avoid further event render
+    resetStore();
+    return;
+  } catch (err) {
+    console.error("handleDelete!!", err.message);
   }
 };
 
@@ -348,58 +407,6 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
   return { ket2Molfile: reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end }), svgElement };
 };
 
-// helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
-export const handleOnDeleteAtom = async (editor) => {
-  await fetchKetcherData(editor);
-  console.log('handleOnDeleteAtom main', { mols, imagesList });
-  try {
-    await fetchKetcherData(editor);
-    const images_tbr = [];
-
-    deleted_atoms_list.forEach((item, _) => {
-      const deleted_splits = parseInt(item.alias.split("_")[2]);
-      for (let m = 0; m < mols.length; m++) {
-        const mol = latestData[mols[m]];
-        if (mol && mol?.atoms) {
-          const atoms = mol?.atoms || [];
-          for (let i = 0; i < atoms.length; i++) {
-            const atom = atoms[i];
-            // console.log(atom, "out");
-            if (three_parts_patten.test(atom?.alias)) {
-              const atom_splits = atom.alias.split("_");
-              // console.log({ nd: parseInt(atom_splits[2]), ds: deleted_splits });
-              if (parseInt(atom_splits[2]) === 0) {
-                images_tbr.push(0);
-              }
-              if (parseInt(atom_splits[2]) > deleted_splits) {
-                atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
-                images_tbr.push(parseInt(atom_splits[2]));
-              }
-            }
-            // else {
-            //   last_item = true;
-            // }
-          }
-          latestData[mols[m]].atoms = atoms;
-        }
-      }
-    });
-    console.log({ late: latestData });
-    image_used_counter -= deleted_atoms_list.length;
-
-
-    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...imagesList];
-    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    await onTemplateMove(editor);
-
-    // clear the stack to avoid further event render
-    resetStore();
-    return;
-  } catch (err) {
-    console.error("handleDelete!!", err.message);
-  }
-};
-
 // container funcation for templatemove
 const onTemplateMove = async (editor) => {
   if (editor && editor.structureDef) {
@@ -427,6 +434,15 @@ const onAddAtom = async (editor) => {
     const { d, isConsistent } = await handleAddAtom();
     !isConsistent && console.log("Generated aliases are inconsistent. Please try reopening the canvas again.");
     isConsistent && saveMoveCanvas(d, true, true);
+  }
+};
+
+// container function for on image delete
+const onDeleteImage = async (editor) => {
+  if (editor && editor.structureDef) {
+    const data = await handleOnDeleteImage();
+    saveMoveCanvas(data, false, true);
+    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
   }
 };
 
@@ -495,7 +511,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Move image': async () => await onTemplateMove(editor),
     'Move atom': async () => await onTemplateMove(editor),
     'Add atom': async () => await onAddAtom(editor),
-    'Delete image': async () => await handleOnDeleteImage(editor),
+    'Delete image': async () => await onDeleteImage(editor),
     'Delete atom': async () => await handleOnDeleteAtom(editor),
   };
 
