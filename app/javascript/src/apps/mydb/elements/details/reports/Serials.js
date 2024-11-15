@@ -72,6 +72,8 @@ const Serials = ({ template, selMolSerials }) => {
       headerName: "Formula / Name",
       field: "sumFormula",
       cellRenderer: renderFormulaAndName,
+      wrapText: true,
+      cellClass: ["lh-base", "py-2", "border-end"],
     },
     {
       headerName: "Value",
@@ -89,7 +91,8 @@ const Serials = ({ template, selMolSerials }) => {
     autoHeight: true,
     sortable: false,
     resizable: false,
-    cellClass: ["border-end"]
+    cellClass: ["border-end"],
+    headerClass: ["border-end", "px-2"]
   };
 
   return (
@@ -99,6 +102,7 @@ const Serials = ({ template, selMolSerials }) => {
         autoSizeStrategy={{ type: 'fitGridWidth' }}
         defaultColDef={defaultColDef}
         rowData={selMolSerials}
+        rowHeight="auto"
         domLayout="autoHeight"
       />
     </div>

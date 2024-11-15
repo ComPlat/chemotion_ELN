@@ -70,6 +70,8 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
       {
         headerName: "Columns",
         cellRenderer: this.renderSchemaColumns,
+        wrapText: true,
+        cellClass: ["lh-base", "py-2"],
       },
       {
         headerName: "# Rows",
@@ -121,6 +123,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
               autoSizeStrategy={{ type: 'fitGridWidth' }}
               defaultColDef={defaultColDef}
               rowData={modal.schemas}
+              rowHeight="auto"
               domLayout="autoHeight"
             />
           </div>

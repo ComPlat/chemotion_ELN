@@ -117,12 +117,14 @@ export default class EmbeddedWellplate extends Component {
       {
         headerName: "Position",
         field: "alphanumericPosition",
-        minWidth: 70,
-        maxWidth: 70,
+        minWidth: 90,
+        maxWidth: 90,
       },
       {
         headerName: "Sample",
         cellRenderer: this.renderSampleTitle,
+        wrapText: true,
+        cellClass: ["lh-base", "py-2", "border-end"],
       },
     ];
 
@@ -170,6 +172,7 @@ export default class EmbeddedWellplate extends Component {
       sortable: false,
       resizable: false,
       cellClass: ["border-end"],
+      headerClass: ["border-end"],
     };
 
     return (
@@ -178,6 +181,7 @@ export default class EmbeddedWellplate extends Component {
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           rowData={wells}
+          rowHeight="auto"
           domLayout="autoHeight"
         />
       </div>
