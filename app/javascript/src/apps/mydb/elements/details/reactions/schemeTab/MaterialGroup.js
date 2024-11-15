@@ -279,7 +279,7 @@ function GeneralMaterialGroup({
   );
 
   const intermediatesTable = (
-    <table width="100%" className="reaction-scheme">
+    <table className="w-100 m-2">
       <colgroup>
         <col style={{ width: '4%' }} />
         <col style={{ width: '16%' }} />
@@ -301,9 +301,7 @@ function GeneralMaterialGroup({
           <th> </th>
         </tr>
       </thead>
-      <tbody>
-        {contents.map(item => item)}
-      </tbody>
+        {contents}
     </table>
   );
 

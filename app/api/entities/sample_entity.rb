@@ -152,9 +152,7 @@ module Entities
       # We want to present the position of the ReactionProcessStep in which the object (Sample) was saved.
       intermediate = ReactionsIntermediateSample.find_by(sample_id: object.id)
 
-      return if intermediate.nil?
-
-      ::ReactionProcessEditor::ReactionProcessStep.find_by(id: intermediate.reaction_process_step_id)&.step_number
+      intermediate&.reaction_process_step&.step_number
     end
   end
 end

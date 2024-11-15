@@ -1179,7 +1179,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
-    t.uuid "reaction_process_step_id"
+    t.uuid "reaction_process_activity_id"
     t.string "intermediate_type"
     t.datetime "created_at", precision: 6
     t.datetime "updated_at", precision: 6

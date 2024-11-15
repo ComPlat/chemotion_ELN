@@ -12,7 +12,7 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendActi
   let(:insert_before) { nil }
 
   let(:activity_params) do
-    { activity_name: 'ADD', workup: { SOME: 'WORKUP' } }.deep_stringify_keys
+    { activity_name: 'WAIT', workup: { SOME: 'WORKUP' } }.deep_stringify_keys
   end
 
   let(:created_action) { ReactionProcessEditor::ReactionProcess.order(:crated_at).last }
