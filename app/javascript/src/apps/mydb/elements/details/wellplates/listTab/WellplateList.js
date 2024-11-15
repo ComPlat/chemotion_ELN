@@ -89,7 +89,6 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     columnDefs.push(
       {
         headerName: `${title} Value`,
-        field: "value",
         editable: (params) => params.data.sample,
         valueGetter: (params) => {
           if (params.data?.readouts) {
