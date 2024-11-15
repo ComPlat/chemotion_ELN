@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Accordion, Button, ButtonGroup, Card, Tooltip, Overlay, OverlayTrigger, Table
+  Accordion, Button, ButtonGroup, Card, Tooltip, Overlay, OverlayTrigger,
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -12,6 +12,7 @@ import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import { AgGridReact } from 'ag-grid-react';
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {
@@ -22,6 +23,7 @@ export default class EmbeddedWellplate extends Component {
       confirmRemove: false,
       showImportConfirm: false,
     };
+    this.renderWellplateMain = this.renderWellplateMain.bind(this);
   }
 
   openWellplate() {
@@ -45,28 +47,6 @@ export default class EmbeddedWellplate extends Component {
 
     importWellplate(this.props.wellplate.id);
     this.hideImportConfirm();
-  }
-
-  // render functions
-  renderReadoutHeaders() {
-    const readoutTitles = this.props.wellplate.readout_titles;
-    return (
-      readoutTitles && readoutTitles.map((title) => {
-        const key = title.id;
-        return ([
-          <th className="py-0" key={`v_${key}`} width="15%">
-            {title}
-            &nbsp;
-            Value
-          </th>,
-          <th className="py-0" key={`u_${key}`} width="10%">
-            {title}
-            &nbsp;
-            Unit
-          </th>
-        ]);
-      })
-    );
   }
 
   renderImportWellplateButton() {
@@ -116,28 +96,16 @@ export default class EmbeddedWellplate extends Component {
     ]);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  renderReadoutFields(well) {
-    const { readouts } = well;
+  renderSampleTitle(node) {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
 
-    return (
-      readouts && readouts.map((readout) => {
-        const key = readout.id;
-        return ([
-          <td key={`v_${key}`} className="py-0">
-            {readout.value || ''}
-          </td>,
-          <td key={`u_${key}`} className="py-0">
-            {readout.unit || ''}
-          </td>,
-        ]);
-      })
-    );
+    return `${sample.short_label} ${sample.name}`;
   }
 
   // eslint-disable-next-line class-methods-use-this
   renderWellplateMain(wellplate) {
-    const { wells } = wellplate;
+    const { wells, readout_titles } = wellplate;
 
     // Wellplates that were just dragged in do not have samples assigned.
     // Saving the research plan and reloading it reloads the wellplates and fetches the samples as well
@@ -145,31 +113,74 @@ export default class EmbeddedWellplate extends Component {
       return (<p>Please save the newly assigned wellplate to the research plan first</p>);
     }
 
-    return (
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th className="py-0" width="5%">Position</th>
-            <th className="py-0" width="10%">Sample</th>
-            {this.renderReadoutHeaders()}
-          </tr>
-        </thead>
-        <tbody>
-          {wells.map((well) => {
-            let sample_title = '';
-            if (well.sample) {
-              sample_title = `${well.sample.short_label} ${well.sample.name}`;
+    const columnDefs = [
+      {
+        headerName: "Position",
+        field: "alphanumericPosition",
+        minWidth: 70,
+        maxWidth: 70,
+      },
+      {
+        headerName: "Sample",
+        cellRenderer: this.renderSampleTitle,
+      },
+    ];
+
+    readout_titles && readout_titles.map((title, index) => {
+      columnDefs.push(
+        {
+          headerName: `${title} Value`,
+          valueGetter: (params) => {
+            if (params.data?.readouts) {
+              return params.data.readouts[index].value;
             }
-            return (
-              <tr key={well.id}>
-                <td className="py-0">{well.alphanumericPosition}</td>
-                <td className="py-0">{sample_title}</td>
-                {this.renderReadoutFields(well)}
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
+          },
+          valueSetter: (params) => {
+            params.data.readouts[index].value = params.newValue;
+            return true;
+          },
+          valueParser: (params) => {
+            return params.newValue;
+          },
+        },
+        {
+          headerName: `${title} Unit`,
+          valueGetter: (params) => {
+            if (params.data?.readouts) {
+              return params.data.readouts[index].unit;
+            }
+          },
+          valueSetter: (params) => {
+            params.data.readouts[index].unit = params.newValue;
+            return true;
+          },
+          valueParser: (params) => {
+            return params.newValue;
+          },
+        },
+      );
+    });
+
+    const defaultColDef = {
+      editable: false,
+      flex: 1,
+      wrapHeaderText: true,
+      autoHeaderHeight: true,
+      autoHeight: true,
+      sortable: false,
+      resizable: false,
+      cellClass: ["border-end"],
+    };
+
+    return (
+      <div className="ag-theme-alpine">
+        <AgGridReact
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          rowData={wells}
+          domLayout="autoHeight"
+        />
+      </div>
     );
   }
 
@@ -179,9 +190,7 @@ export default class EmbeddedWellplate extends Component {
 
     const popover = (
       <Tooltip placement="left" id="tooltip-bottom">
-        Remove&nbsp;
-        {wellplate.name}
-        &nbsp;from ResearchPlan?
+        {`Remove ${wellplate.name} from Research Plan?`}
         <br />
         <ButtonGroup>
           <Button variant="danger" size="sm" onClick={() => deleteWellplate(wellplate.id)}>
@@ -197,7 +206,7 @@ export default class EmbeddedWellplate extends Component {
     const removeButton = (
       <OverlayTrigger
         placement="bottom"
-        overlay={<Tooltip id="remove_wellplate">Remove Wellplate from Screen</Tooltip>}
+        overlay={<Tooltip id="remove_wellplate">Remove Wellplate from Research Plan</Tooltip>}
       >
         <Button
           ref={(button) => { this.target = button; }}
@@ -235,14 +244,10 @@ export default class EmbeddedWellplate extends Component {
         <div className="d-flex align-items-center gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="WellplateDatesx">{titleTooltip}</Tooltip>}>
             <span>
-              <i className="icon-wellplate" />
-              &nbsp;&nbsp;
+              <i className="icon-wellplate me-2" />
               <span>
-                {wellplate.short_label}
-                &nbsp;
-                {wellplate.name}
+                {`${wellplate.short_label} ${wellplate.name}`}
               </span>
-              &nbsp;&nbsp;
             </span>
           </OverlayTrigger>
           <ElementCollectionLabels element={wellplate} placement="right" />
@@ -256,9 +261,10 @@ export default class EmbeddedWellplate extends Component {
   }
 
   render() {
-    const eventKey = this.props.wellplateIndex.toString()
+    const eventKey = this.props.wellplateIndex.toString();
+    const isFirstTab = this.props.wellplateIndex === 0;
     return (
-      <Card className="rounded-0 border-0">
+      <Card className={`rounded-0 border-0${!isFirstTab ? ' border-top' : ''}`}>
         <Card.Header className="rounded-0 p-0 border-bottom-0">
           <AccordionHeaderWithButtons eventKey={eventKey}>
             {this.renderPanelHeading(this.props.wellplate)}
