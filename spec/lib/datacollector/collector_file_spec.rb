@@ -3,12 +3,18 @@
 require 'spec_helper'
 
 RSpec.describe Datacollector::CollectorFile do
-  let(:root_path) { Rails.configuration.datacollectors.dig(:localcollectors, 0, :path) }
+  let(:root_path) do
+    build(
+      :data_folder,
+      root: Rails.configuration.datacollectors.dig(:localcollectors, 0, :path),
+      name: '',
+      mode: 0o755,
+      mkdir: true,
+    )
+  end
   let(:relative_path) { 'test' }
-  let(:full_path) { File.join(root_path, relative_path) }
-
-  before do
-    FileUtils.mkdir_p(full_path)
+  let(:full_path) do
+    build(:data_file, root: root_path, name: relative_path, touch: true)
   end
 
   describe '#initialize' do
@@ -25,16 +31,13 @@ RSpec.describe Datacollector::CollectorFile do
     end
 
     context 'when the paths are valid' do
-      before do
-        allow(File).to receive(:exist?).with(full_path).and_return(true)
-        allow(Dir).to receive(:exist?).with(root_path).and_return(true)
-      end
-
       it 'initializes the object correctly' do
+        full_path
         fstruct = described_class.new!(relative_path, root_path)
-        expect(fstruct.root_path).to eq(root_path)
-        expect(fstruct.relative_path).to eq(relative_path)
-        expect(fstruct.path).to eq(full_path)
+        expect(fstruct.root_path).to eq(root_path.to_s)
+        expect(fstruct.relative_path).to eq(relative_path.to_s)
+        expect(fstruct.path).to eq(full_path.to_s)
+        full_path.delete
       end
     end
   end
@@ -42,8 +45,10 @@ RSpec.describe Datacollector::CollectorFile do
   describe '#mtime' do
     context 'when the file exists locally' do
       it 'returns the modification time' do
+        full_path
         fstruct = described_class.new(relative_path, root_path)
         expect(fstruct.mtime).to be_a(Time)
+        full_path.delete
       end
     end
 

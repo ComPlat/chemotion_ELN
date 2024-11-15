@@ -117,7 +117,7 @@ module Datacollector
     def inspect_folder(dir = collector_dir, correspondence: nil)
       new_files_or_folders(dir).each do |file|
         next if previous_failure?(file)
-        next if skip_for_now?(file)
+        next unless ready?(file)
 
         current_correspondence = correspondence || correspondence_by_file(device, file)
         attach_file_or_folder(current_correspondence, file)
@@ -167,8 +167,6 @@ module Datacollector
     # @param correspondence [Datacollector::Correspondence] the collector correspondence
     # @param folder [Datacollector::CollectorFile] the folder to attach
     def attach_folder(correspondence, folder)
-      return unless ready?(folder.file_count)
-
       tmp_zip = folder.to_zip
       name = folder.name
       correspondence.attach("#{name}.zip", tmp_zip.path, name)
@@ -219,20 +217,24 @@ module Datacollector
       true
     end
 
-    # Get the modification time difference for the folder
+    # Get the modification time difference for the folder/file offset by the wait time for the dc method
     # @param [CollectorFile]
-    # @return [Integer] the modification time difference in seconds
+    # @return [Integer] the modification time difference in seconds (positive if the folder/ is ready for collection)
     def modification_time_diff(folder)
-      Time.zone.now - folder.mtime
+      Time.zone.now - folder.mtime - config.sleep_time
     end
 
     # Wait some time before if dir just created and no fixed number of files expected
-    def skip_for_now?(path)
-      expected_count.zero? && modification_time_diff(path) < 30
+    def ready?(path)
+      return log.info(__method__, 'Folder not ready!') && false unless modification_time_diff(path).positive?
+      return true if expected_count.zero? || file_collector?
+
+      path.directory? && correct_file_count?(path.file_count)
     end
 
     # Check if the folder is ready for collection
-    def ready?(file_count)
+    #   compare the number of files in the folder with the expected number set in the device config
+    def correct_file_count?(file_count)
       return true if expected_count.zero?
 
       file_count == expected_count || (log.info(__method__, 'Wrong number of files!') && false)

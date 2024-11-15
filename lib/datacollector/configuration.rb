@@ -31,10 +31,10 @@ module Datacollector
 
     # @return [Integer] the sleep seconds, default is 5
     def self.sleep_time(method = nil)
-      return 5 if method.blank?
+      return 20 if method.blank?
 
       config.services&.find { |service| service[:name] == method }
-            &.dig(:watcher_sleep)&.to_i || 5
+            &.dig(:watcher_sleep)&.to_i || 20
     end
 
     # @return [Device] the device to collect from
@@ -92,6 +92,13 @@ module Datacollector
     # @return [String] the collector method
     def collector_method
       @collector_method ||= COLLECTOR_METHODS.find { |m| m == device.datacollector_method }
+    end
+
+    # Sleep time for the watcher
+    # @return [Integer] the sleep time in seconds
+    # @note: default is 5 seconds
+    def sleep_time
+      self.class.sleep_time(collector_method)
     end
 
     ##################################################################

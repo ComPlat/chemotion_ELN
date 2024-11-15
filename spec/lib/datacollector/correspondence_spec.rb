@@ -19,6 +19,12 @@ describe Datacollector::Correspondence do
   describe described_class do
     subject(:correspondence) { described_class.new(device, person) }
 
+    # rubocop:disable RSpec/BeforeAfterAll
+    after(:all) do
+      Pathname.new(Rails.configuration.datacollectors.dig(:localcollectors, 0, :path)).rmtree
+    end
+    # rubocop:enable RSpec/BeforeAfterAll
+
     describe '.new' do
       it 'returns a new instance of the class' do
         expect(correspondence).to be_a(described_class)

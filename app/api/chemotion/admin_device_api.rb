@@ -138,7 +138,7 @@ module Chemotion
       route_param :test_sftp do
         post do
           # make options hashie compatible
-          options = Hashie::Mash.new declared(params, include_missing: false).merge(info: id)
+          options = Hashie::Mash.new declared(params, include_missing: false).merge(info: params[:id])
           Datacollector::Configuration.new!(options)
 
           { status: 'success', message: 'Test connection successfully.' }

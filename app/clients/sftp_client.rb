@@ -175,7 +175,7 @@ class SFTPClient
 
   # rubocop:disable Lint/RescueException
   def with_session(*args_of_caller)
-    Net::SFTP.start(@host, @username, @session_options) do |sftp|
+    Net::SFTP.start(@host, @user, @session_options) do |sftp|
       data = yield(sftp)
       return data unless data.nil?
     end
