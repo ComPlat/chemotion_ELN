@@ -604,6 +604,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       item.resizable = false;
       item.sortable = false;
       item.rowDrag = false;
+      item.cellClass = 'border-end';
       return item;
     });
 
@@ -613,6 +614,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       autoHeaderHeight: true,
       autoHeight: true,
       cellClass: ["border-end"],
+      headerClass: ["border-end"],
     };
 
     const gridWrapperClassName = ['research-plan-table-grid'];
@@ -631,7 +633,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             defaultColDef={defaultColDef}
             domLayout='autoHeight'
             rowData={rows}
-            rowHeight='37'
+            rowHeight="37"
           />
         </div>
       </div>
