@@ -77,13 +77,13 @@ module ReactionProcessEditor
 
     def saved_sample_ids
       reaction_process_activities.filter_map do |activity|
-        activity.activity_name == 'SAVE' && activity.workup['sample_id']
+        activity.saves_sample? && activity.workup['sample_id']
       end
     end
 
     def mounted_equipment
       @mounted_equipment ||= reaction_process_activities.map do |action|
-        if action.activity_name == 'CONDITION'
+        if action.condition?
           action.workup && action.workup['EQUIPMENT'].try(:[], 'value')
         else
           action.workup && action.workup['equipment']
@@ -94,12 +94,10 @@ module ReactionProcessEditor
     private
 
     def activities_adding_sample_acting_as(material_type)
-      activities_adding_sample.select { |activity| activity.workup['acts_as'] == material_type }
-    end
-
-    def activities_adding_sample
-      @activities_adding_sample ||= reaction_process_activities.select do |activity|
-        activity.activity_name == 'ADD'
+      reaction_process_activities
+        .select(&:adds_compound?)
+        .select do |activity|
+        activity.workup['acts_as'] == material_type
       end
     end
 

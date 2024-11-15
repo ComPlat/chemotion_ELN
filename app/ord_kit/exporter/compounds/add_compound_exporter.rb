@@ -15,15 +15,15 @@ module OrdKit
         end
 
         def details
-          if action.sample?
+          if action.sample
             action.sample.name # TODO: inchi? iupac? smiles?
-          elsif action.medium?
+          elsif action.medium
             action.medium.sample_name
           end
         end
 
         def value
-          if action.sample?
+          if action.sample
             action.sample.preferred_label || action.sample.short_label
           elsif action.medium?
             action.medium.label

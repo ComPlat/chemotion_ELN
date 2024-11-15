@@ -6,16 +6,19 @@ module Entities
       expose :id
       expose :short_label
       expose :sample_svg_file
-      expose :target_amount_unit
-      expose :target_amount_value
       expose :metrics
       expose :location
       expose :hide_in_eln
 
+      expose :target_amount
       expose :amounts
       expose :icon
 
       private
+
+      def target_amount
+        ::ReactionProcessEditor::SampleAmountsConverter.to_rpe(object)
+      end
 
       def amounts
         {

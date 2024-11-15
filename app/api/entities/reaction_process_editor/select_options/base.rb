@@ -35,12 +35,11 @@ module Entities
         end
 
         def sample_info_option(sample, acts_as)
+          return {} unless sample
+
           sample_minimal_option(sample, acts_as).merge(
             {
-              amount: {
-                value: sample.target_amount_value,
-                unit: sample.target_amount_unit,
-              },
+              amount: ::ReactionProcessEditor::SampleAmountsConverter.to_rpe(sample),
               unit_amounts: {
                 mmol: sample.amount_mmol,
                 mg: sample.amount_mg,
@@ -53,6 +52,8 @@ module Entities
         end
 
         def sample_minimal_option(sample, acts_as)
+          return {} unless sample
+
           {
             id: sample.id,
             value: sample.id,
@@ -61,15 +62,6 @@ module Entities
             label: sample.preferred_label || sample.short_label,
             acts_as: acts_as,
           }
-        end
-
-        def sample_amount_option(sample, acts_as)
-          amount = sample.amount # TODO: samples might need target_amount_value
-          sample_minimal_option(sample, acts_as).merge({ amount: amount })
-          # amount: {
-          #   value: sample.target_amount_value,
-          #   unit: sample.target_amount_unit,
-          # },
         end
 
         def solvent_options_for(reaction_process:)

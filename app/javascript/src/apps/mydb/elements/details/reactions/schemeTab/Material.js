@@ -219,12 +219,13 @@ class Material extends Component {
     );
   }
 
-
   materialStep(material) {
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="reactionStep">Reaction Step</Tooltip>}>
-        <td style={{ paddingRight: '4px' }}>
+        <td>
           <NumeralInputWithUnitsCompo
+            disabled
+            size="sm"
             precision={1}
             value={material.reaction_step}
             onChange={e => this.handleStepChange(e)}
@@ -234,22 +235,21 @@ class Material extends Component {
     );
   }
 
-  // eslint-disable-next-line class-methods-use-this
   materialIntermediateType(material) {
     return (
-      <td style={{ paddingRight: '4px' }}>
-        <FormControl
-          componentClass="select"
-          placeholder="select intermediate"
+      <td>
+        <Form.Select
+          size="sm"
           value={material.intermediate_type}
-          onChange={e => this.handleintermediateTypeChange(e)}
+          onChange={event => this.handleintermediateTypeChange(event.target.value)}
+          isInvalid={!material.intermediate_type}
         >
-          <option value="-">-</option>
+          <option disabled hidden>Unspecified</option>
           <option value="CRUDE">Crude</option>
           <option value="MIXTURE">Mixture</option>
           <option value="INTERMEDIATE">Intermediate</option>
           <option value="PURE">Pure</option>
-        </FormControl>
+        </Form.Select>
       </td>
     );
   }
@@ -959,7 +959,6 @@ class Material extends Component {
 
   handleStepChange(e) {
     const reactionStep = e.value;
-    console.log(e.value);
     if (this.props.onChange) {
       const event = {
         reactionStep,
@@ -971,8 +970,7 @@ class Material extends Component {
     }
   }
 
-  handleintermediateTypeChange(e) {
-    const intermediateType = e.target.value;
+  handleintermediateTypeChange(intermediateType) {
     if (this.props.onChange) {
       const event = {
         intermediateType,
@@ -1283,6 +1281,11 @@ class Material extends Component {
     const mw = material.decoupled ?
       (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
 
+    const inputsStyle = {
+      paddingRight: 2,
+      paddingLeft: 2,
+    };
+
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
 
@@ -1295,49 +1298,34 @@ class Material extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td style={{ width: '25%', maxWidth: '50px' }}>
-          {this.materialNameWithIupac(material)}
-        </td>
+          <td style={{ width: '27%', maxWidth: '50px' }}>
+            {this.materialNameWithIupac(material)}
+          </td>
 
-        <td>
-          {this.materialShowLabel(material)}
-        </td>
+          <td style={{ inputsStyle }}>
+            {this.materialShowLabel(material)}
+          </td>
 
-        {this.materialStep(material)}
-        {this.materialIntermediateType(material)}
+          {this.materialStep(material)}
+          {this.materialIntermediateType(material)}
 
-        <td>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="molecular-weight-info">{mw} g/mol</Tooltip>}>
-            <div>
-              <NumeralInputWithUnitsCompo
-                key={material.id}
-                value={material.amount_g}
-                unit="g"
-                metricPrefix={metric}
-                metricPrefixes={metricPrefixes}
-                precision={4}
-                disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
-                onChange={this.handleAmountUnitChange}
-                onMetricsChange={this.handleMetricsChange}
-                bsStyle={material.error_mass ? 'error' : massBsStyle}
-              />
-            </div>
-          </OverlayTrigger>
-        </td>
+          <td style={{ width: '15%', maxWidth: '50px' }}>
+            {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
+          </td>
 
-        {this.materialVolume(material)}
+          {this.materialVolume(material)}
 
-        <td>
-          <Button
-            disabled={!permitOn(reaction)}
-            bsStyle="danger"
-            bsSize="small"
-            onClick={() => deleteMaterial(material)}
-          >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </td>
-      </tr>
+          <td>
+            <Button
+              disabled={!permitOn(reaction)}
+              variant="danger"
+              size="sm"
+              onClick={() => deleteMaterial(material)}
+            >
+              <i className="fa fa-trash-o" />
+            </Button>
+          </td>
+        </tr>
     );
   }
 

@@ -237,6 +237,8 @@ class Sample < ApplicationRecord
   after_save :update_gas_material
   after_save :update_svg_for_reactions, unless: :skip_reaction_svg_update?
 
+  after_update_commit :update_intermediate_amounts_in_process_editor
+
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
 
@@ -912,6 +914,10 @@ class Sample < ApplicationRecord
 
   def valid_molecular_weight?
     molecule&.molecular_weight.present? && molecule.molecular_weight.to_f.positive?
+  end
+
+  def update_intermediate_amounts_in_process_editor
+    Usecases::ReactionProcessEditor::Samples::UpdateIntermediateAmountsInWorkup.execute!(sample: self)
   end
 end
 # rubocop:enable Metrics/ClassLength
