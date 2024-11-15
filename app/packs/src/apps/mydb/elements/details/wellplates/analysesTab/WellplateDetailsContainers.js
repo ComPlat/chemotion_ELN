@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Accordion, Button, Card } from 'react-bootstrap';
+import { Accordion, Button, Card, ButtonToolbar } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import { CommentButton, CommentBox } from 'src/components/common/CommentBoxComponent';
 
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {
@@ -14,7 +15,8 @@ export default class WellplateDetailsContainers extends Component {
     const { wellplate } = props;
     this.state = {
       wellplate,
-      activeContainer: 0
+      activeContainer: 0,
+      commentBoxVisible: false,
     };
   }
 
@@ -86,8 +88,18 @@ export default class WellplateDetailsContainers extends Component {
     }
   }
 
+  handleCommentTextChange = (e) => {
+    const { wellplate } = this.state;
+    wellplate.container.description = e.target.value;
+    this.handleChange(wellplate.container);
+  };
+
+  toggleCommentBox = () => {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
+  };
+
   render() {
-    const { wellplate, activeContainer } = this.state;
+    const { wellplate, activeContainer, commentBoxVisible } = this.state;
     const { readOnly } = this.props;
 
     let containerHeader = (container) => <div className="analysis-header d-flex justify-content-between w-100">
@@ -163,8 +175,16 @@ export default class WellplateDetailsContainers extends Component {
     return (
       <div>
         <div className="d-flex justify-content-end my-2 mx-3">
-          {this.addButton()}
+          <ButtonToolbar className="gap-2">
+            <CommentButton toggleCommentBox={this.toggleCommentBox} disable={false} />
+            {this.addButton()}
+          </ButtonToolbar>
         </div>
+        <CommentBox
+          isVisible={commentBoxVisible}
+          value={wellplate.container.description}
+          handleCommentTextChange={this.handleCommentTextChange}
+        />
         <Accordion
           className="border rounded overflow-hidden"
           onSelect={this.handleAccordionOpen}

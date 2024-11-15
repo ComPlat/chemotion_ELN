@@ -1,8 +1,6 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect } from 'react';
-import {
-  Button, Form, OverlayTrigger, Tooltip, ButtonToolbar, Accordion, Card
-} from 'react-bootstrap';
+import React, { useState } from 'react';
+import { ButtonToolbar, Accordion, Card } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
 import {
@@ -10,6 +8,7 @@ import {
   AnalysisModeToggle,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import { CommentButton, CommentBox } from 'src/components/common/CommentBoxComponent';
 
 function RndNotAvailable() {
   return (
@@ -46,61 +45,22 @@ function ReactionsDisplay({
 }) {
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
 
-  useEffect(() => {
-    if (sample.container.description && sample.container.description.trim() !== '') {
-      setCommentBoxVisible(true);
-    } else {
-      setCommentBoxVisible(false);
-    }
-  }, [sample.container.description]);
-
-  const renderCommentButton = (disable = false) => {
-    return (
-      <OverlayTrigger
-        placement="top"
-        overlay={(
-          <Tooltip id="analysisCommentBox">
-            general remarks that relate to all analytical data
-          </Tooltip>
-        )}
-      >
-        <Button
-          size="xsm"
-          variant="primary"
-          onClick={() => {setCommentBoxVisible(!commentBoxVisible)}}
-          disabled={disable}
-        >
-          Add comment
-        </Button>
-      </OverlayTrigger>
-    );
-  }
-  
-  const renderCommentBox = (sample, handleCommentTextChange) => {
-    const { container } = sample;
-    return (
-      <Form.Group>
-        <Form.Control
-          as="textarea"
-          style={{ height: '80px' }}
-          value={container.description}
-          onChange={handleCommentTextChange}
-          className="my-3"
-        />
-      </Form.Group>
-    );
-  }
+  const toggleCommentBox = () => setCommentBoxVisible((prev) => !prev);
 
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         {AnalysisModeToggle(mode, handleToggleMode, isDisabled)}
         <ButtonToolbar className="gap-2">
-          {renderCommentButton()}
+          <CommentButton toggleCommentBox={toggleCommentBox} />
           {addButton()}
         </ButtonToolbar>
       </div>
-      {commentBoxVisible && renderCommentBox(sample, handleCommentTextChange)}
+      <CommentBox
+        isVisible={commentBoxVisible}
+        value={sample.container.description}
+        handleCommentTextChange={handleCommentTextChange}
+      />
       {mode === 'edit' ? (
         <Accordion
           id="editable-analysis-list"
