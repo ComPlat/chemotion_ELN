@@ -2427,3 +2427,132 @@ export const areAllAliasesConsistent_ket = {
     }
   }
 };
+
+export const onMultiImageDelete_ket = {
+  "root": {
+    "nodes": [
+      {
+        "$ref": "mol0"
+      },
+      {
+        "$ref": "mol1"
+      },
+      {
+        "type": "image",
+        "format": "image/svg+xml",
+        "boundingBox": {
+          "x": 17.635600042657444,
+          "y": -5.4582998402121765,
+          "z": 0,
+          "width": 1.0250000000000006,
+          "height": 1.0250000000000006
+        },
+        "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+      },
+      {
+        "type": "image",
+        "format": "image/svg+xml",
+        "boundingBox": {
+          "x": 12.439399957342559,
+          "y": -5.4582998402121765,
+          "z": 0,
+          "width": 1.0250000000000006,
+          "height": 1.0250000000000006
+        },
+        "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+      }
+    ],
+    "connections": [],
+    "templates": []
+  },
+  "mol0": {
+    "type": "molecule",
+    "atoms": [
+      {
+        "label": "A",
+        "alias": "t_01_0",
+        "location": [
+          18.148100042657443,
+          -5.970799840212177,
+          0
+        ]
+      },
+      {
+        "label": "A",
+        "alias": "t_01_1",
+        "location": [
+          12.95189995734256,
+          -5.970799840212177,
+          0
+        ]
+      },
+    ],
+    "bonds": []
+  },
+  "mol1": {
+    "type": "molecule",
+    "atoms": [
+      {
+        "label": "A",
+        "alias": "t_01_2",
+        "location": [
+          18.148100042657443,
+          -5.970799840212177,
+          0
+        ]
+      },
+      {
+        "label": "A",
+        "alias": "t_01_3",
+        "location": [
+          12.95189995734256,
+          -5.970799840212177,
+          0
+        ]
+      }
+    ],
+    "bonds": [],
+    "stereoFlagPosition": {
+      "x": 12.951899957342556,
+      "y": -5.958299812742712,
+      "z": 0
+    }
+  }
+};
+
+
+export const wiht2Aliases_ket = {
+  "root": {
+    "nodes": [
+      {
+        "$ref": "mol0"
+      }
+    ],
+    "connections": [],
+    "templates": []
+  },
+  "mol0": {
+    "type": "molecule",
+    "atoms": [
+      {
+        "label": "A",
+        "alias": "t_01_0",
+        "location": [
+          18.148100042657443,
+          -5.970799840212177,
+          0
+        ]
+      },
+      {
+        "label": "A",
+        "alias": "t_01_1",
+        "location": [
+          12.95189995734256,
+          -5.970799840212177,
+          0
+        ]
+      },
+    ],
+    "bonds": []
+  },
+};
