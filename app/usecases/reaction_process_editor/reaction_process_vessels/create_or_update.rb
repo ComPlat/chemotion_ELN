@@ -5,7 +5,7 @@ module Usecases
     module ReactionProcessVessels
       class CreateOrUpdate
         def self.execute!(reaction_process_id:, reaction_process_vessel_params:)
-          return unless reaction_process_vessel_params
+          return unless reaction_process_id && reaction_process_vessel_params
 
           reaction_process_vessel = ::ReactionProcessEditor::ReactionProcessVessel.find_or_create_by(
             reaction_process_id: reaction_process_id,

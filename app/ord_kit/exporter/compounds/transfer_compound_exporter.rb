@@ -15,13 +15,13 @@ module OrdKit
         end
 
         def details
-          return unless action.sample?
+          return unless action.sample
 
           action.sample.preferred_label || action.sample.short_label
         end
 
         def value
-          return unless action.sample?
+          return unless action.sample
 
           action.sample.name # TODO: inchi? iupac? smiles?
         end

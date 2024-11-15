@@ -216,38 +216,21 @@ module Usecases
 
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
-        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
-        if existing_association
-          existing_association.update!(
-            reaction_id: @reaction.id,
-            equivalent: sample.equivalent,
-            reference: sample.reference,
-            show_label: sample.show_label,
-            waste: sample.waste,
-            coefficient: sample.coefficient,
-            position: sample.position,
-            type: reactions_sample_klass,
-            gas_type: sample.gas_type,
-            gas_phase_data: sample.gas_phase_data,
-            conversion_rate: sample.conversion_rate,
-          )
-        # sample was moved to other materialgroup
-        else
-          ReactionsSample.create!(
-            sample_id: modified_sample.id,
-            reaction_id: @reaction.id,
-            equivalent: sample.equivalent,
-            reference: sample.reference,
-            show_label: sample.show_label,
-            waste: sample.waste,
-            coefficient: sample.coefficient,
-            position: sample.position,
-            type: reactions_sample_klass,
-            gas_type: sample.gas_type,
-            gas_phase_data: sample.gas_phase_data,
-            conversion_rate: sample.conversion_rate,
-          )
-        end
+        reactions_sample = ReactionsSample.find_or_initialize_by(sample_id: modified_sample.id,
+                                                                 reaction_id: @reaction.id)
+        reactions_sample.update!(
+          equivalent: sample.equivalent,
+          reference: sample.reference,
+          show_label: sample.show_label,
+          waste: sample.waste,
+          coefficient: sample.coefficient,
+          position: sample.position,
+          type: reactions_sample_klass,
+          intermediate_type: sample.intermediate_type,
+          gas_type: sample.gas_type,
+          gas_phase_data: sample.gas_phase_data,
+          conversion_rate: sample.conversion_rate,
+        )
       end
 
       def destroy_unused_samples(modified_sample_ids)
