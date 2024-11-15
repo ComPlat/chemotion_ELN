@@ -3,7 +3,7 @@ import expect from 'expect';
 
 import { _selection, _selectionSetter, all_atoms, allNodes, deleted_atoms_list, FILOStack, fuelKetcherData, handleAddAtom, handleOnDeleteImage, image_used_counter, imagesList, imageUsedCounterSetter, isAliasConsistent, latestData, latestdataSetter, mols, moveTemplate, placeImageOnAtoms, re_render_canvas, resetStore, setKetcherData, uniqueEvents } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
 
-import { areAllAliasesConsistent_ket, empty_mol_file, hasConsistentAliases_ket, hasValidMolsAndImages, imageCountAdjuster_ket, isImageSelectionValid_ket, isMoleculeEmpty_ket, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list, one_image_ketfile_rg, one_image_molfile } from '../../../data/ketcher2_mockups';
+import { areAllAliasesConsistent_ket, empty_mol_file, hasConsistentAliases_ket, hasValidMolsAndImages, imageCountAdjuster_ket, isImageSelectionValid_ket, isMoleculeEmpty_ket, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list, one_image_ketfile_rg, one_image_molfile, onMultiImageDelete_ket, wiht2Aliases_ket } from '../../../data/ketcher2_mockups';
 import { hasKetcherData, template_list_data, three_parts_patten } from '../../../../../app/packs/src/utilities/Ketcher2SurfaceChemistryUtils';
 
 describe('Ketcher2', () => {
@@ -727,6 +727,142 @@ describe('Ketcher2', () => {
       assert.
         ok(imagesList.length - 1 === image_used_counter, "images left in the canvas should be equal to used image counter");
       assert.deepStrictEqual(data, latestData, "Latest molfile should be same as latest data");
+    });
+  });
+
+  describe('on multi-image delete of template', async () => {
+    it('should delete and update alias with image-count', async () => {
+      _selectionSetter({
+        images: [0, 1]
+      });
+      latestdataSetter(onMultiImageDelete_ket);
+      await fuelKetcherData(onMultiImageDelete_ket);
+      await imageUsedCounterSetter(3);
+      const data = await handleOnDeleteImage();
+      assert.
+        ok(imagesList.length - 1 === image_used_counter, "images left in the canvas should be equal to used image counter");
+      assert.ok(data['mol1'].atoms[0].alias === "t_01_0", "mol0 expected alias should exists are correct path");
+      assert.ok(data['mol1'].atoms[1].alias === "t_01_1", "mol0 expected alias should exists are correct path");
+    });
+
+    it('should delete and update alias with image-count when there is only atoms with alias and result should be empty ketfile', async () => {
+      _selectionSetter({
+        images: [0, 1]
+      });
+      latestdataSetter(wiht2Aliases_ket);
+      await fuelKetcherData(wiht2Aliases_ket);
+      await imageUsedCounterSetter(1);
+      const data = await handleOnDeleteImage();
+      console.log(imagesList.length - 1, image_used_counter);
+      assert.
+        ok(imagesList.length - 1 === image_used_counter, "images left in the canvas should be equal to used image counter");
+      assert.deepStrictEqual(data, empty_mol_file, "ket_file should be on default state");
+    });
+
+    it('when image index is invalid', async () => {
+      await _selectionSetter({
+        images: [0, 22]
+      });
+      await latestdataSetter({
+        "root": {
+          "nodes": [
+            {
+              "$ref": "mol0"
+            },
+            {
+              "type": "image",
+              "format": "image/svg+xml",
+              "boundingBox": {
+                "x": 12.439399957342559,
+                "y": -5.4582998402121765,
+                "z": 0,
+                "width": 1.0250000000000006,
+                "height": 1.0250000000000006
+              },
+              "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+            }
+          ],
+          "connections": [],
+          "templates": []
+        },
+        "mol0": {
+          "type": "molecule",
+          "atoms": [
+            {
+              "label": "A",
+              "alias": "t_01_0",
+              "location": [
+                18.148100042657443,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "A",
+              "alias": "t_01_1",
+              "location": [
+                12.95189995734256,
+                -5.970799840212177,
+                0
+              ]
+            },
+          ],
+          "bonds": []
+        },
+      });
+      await fuelKetcherData({
+        "root": {
+          "nodes": [
+            {
+              "$ref": "mol0"
+            },
+            {
+              "type": "image",
+              "format": "image/svg+xml",
+              "boundingBox": {
+                "x": 12.439399957342559,
+                "y": -5.4582998402121765,
+                "z": 0,
+                "width": 1.0250000000000006,
+                "height": 1.0250000000000006
+              },
+              "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+            }
+          ],
+          "connections": [],
+          "templates": []
+        },
+        "mol0": {
+          "type": "molecule",
+          "atoms": [
+            {
+              "label": "A",
+              "alias": "t_01_0",
+              "location": [
+                18.148100042657443,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "A",
+              "alias": "t_01_1",
+              "location": [
+                12.95189995734256,
+                -5.970799840212177,
+                0
+              ]
+            },
+          ],
+          "bonds": []
+        },
+      });
+      await imageUsedCounterSetter(1);
+      const data = await handleOnDeleteImage();
+      const alias = parseInt(data['mol0'].atoms[0].alias.split("_")[2]);
+      assert.
+        ok(imagesList.length - 1 === image_used_counter, "images left in the canvas should be equal to used image counter");
+      assert.ok(alias == 0, "alias index 1 should change to 0");
     });
   });
 });

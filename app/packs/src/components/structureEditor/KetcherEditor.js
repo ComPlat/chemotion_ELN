@@ -79,11 +79,11 @@ export const fuelKetcherData = async (data) => {
   // });
 };
 
-export const latestdataSetter = data => {
+export const latestdataSetter = async data => {
   latestData = data;
 };
 
-export const _selectionSetter = data => {
+export const _selectionSetter = async data => {
   _selection = data;
 };
 
@@ -284,13 +284,13 @@ export const handleAddAtom = async () => {
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
 export const handleOnDeleteImage = async () => {
-  console.log("handleOnDelete");
+  console.log("handleOnDelete", []);
   mols = mols.filter(item => item != null);
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
-      let data = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
-      image_used_counter -= images.length;
+      let { latestData: data, container } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
+      image_used_counter -= container;
       return data;
     }
   }
