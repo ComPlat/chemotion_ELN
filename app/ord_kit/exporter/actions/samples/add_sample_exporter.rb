@@ -17,7 +17,7 @@ module OrdKit
 
           def addition_order
             # ELN is 0-indexed, ORD is 1-indexed.
-            action.siblings.select(&:adds_sample?).index(@action) + 1
+            action.siblings.select(&:adds_compound?).index(@action) + 1
           end
 
           def conditions

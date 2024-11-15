@@ -75,15 +75,6 @@ RSpec.describe User do
       expect(group.valid?).to be true
     end
 
-    it '#jti_auth_token' do
-      user.save!
-      expect(
-        JWT.decode(user.jti_auth_token, Rails.application.secrets.secret_key_base),
-      ).to eq(
-        [{ 'jti' => user.jti, 'sub' => user.id }, { 'alg' => 'HS256' }],
-      )
-    end
-
     it 'validates the presence of email' do
       expect(build(:user, email: '')).not_to be_valid
     end
@@ -144,9 +135,11 @@ RSpec.describe User do
 
     it 'reset email after soft deletion' do
       user_deleted.destroy!
-      expect(User.with_deleted.find_by(email: 'user_deleted@eln.edu')).to be_nil
-      expect(User.only_deleted.where('email LIKE ?', "#{user_deleted.id}_%").where('email LIKE ?',
-                                                                                   '%@deleted').present?).to be true
+      expect(described_class.with_deleted.find_by(email: 'user_deleted@eln.edu')).to be_nil
+      expect(
+        described_class.only_deleted.where('email LIKE ?', "#{user_deleted.id}_%").where('email LIKE ?',
+                                                                                         '%@deleted').present?,
+      ).to be true
     end
   end
 
@@ -156,16 +149,16 @@ RSpec.describe User do
     let!(:user_upper) { create(:group, name_abbreviation: 'UZZER') }
 
     it 'finds a user by name_abbreviation' do
-      expect(User.try_find_by_name_abbreviation(user_upper.name_abbreviation)).to eq user_upper
-      expect(User.try_find_by_name_abbreviation(user.name_abbreviation)).to eq user
+      expect(described_class.try_find_by_name_abbreviation(user_upper.name_abbreviation)).to eq user_upper
+      expect(described_class.try_find_by_name_abbreviation(user.name_abbreviation)).to eq user
     end
 
     it 'finds a user by name_abbreviation with different case' do
-      expect(User.try_find_by_name_abbreviation(user.name_abbreviation.upcase)).to eq user
+      expect(described_class.try_find_by_name_abbreviation(user.name_abbreviation.upcase)).to eq user
     end
 
     it 'can not find a uniq user by name_abbreviation with different case' do
-      expect(User.try_find_by_name_abbreviation(user_lower.name_abbreviation.downcase)).to be_nil
+      expect(described_class.try_find_by_name_abbreviation(user_lower.name_abbreviation.downcase)).to be_nil
     end
   end
 

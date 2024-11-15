@@ -20,12 +20,10 @@ module Entities
         end
 
         def added_materials(reaction_process_step)
-          add_activity_names = ['ADD']
           # For the ProcessStepHeader in the UI, in order of actions.
           reaction_process_step.reaction_process_activities.order(:position).filter_map do |action|
-            if add_activity_names.include?(action.activity_name)
-              added_material_option = sample_info_option(action.sample || action.medium,
-                                                         action.workup['acts_as'])
+            if action.adds_compound?
+              added_material_option = sample_info_option(action.compound, action.workup['acts_as'])
               added_material_option.merge(amount: action.workup['target_amount'])
             end
           end.uniq
@@ -68,7 +66,8 @@ module Entities
 
         def save_sample_origins(reaction_process_step)
           reaction_process_step
-            .reaction_process_activities.includes([:reaction_process_vessel])
+            .reaction_process_activities
+            .includes([:reaction_process_vessel])
             .where(activity_name: 'PURIFICATION')
             .order(:position)
             .map do |purification|
@@ -86,7 +85,7 @@ module Entities
         private
 
         def current_step_samples_options(reaction_process_step)
-          %w[SOLVENT MEDIUM ADDITIVE DIVERSE_SOLVENT].map do |material|
+          %w[SOLVENT MEDIUM ADDITIVE DIVERSE_SOLVENT MODIFIER].map do |material|
             added_samples_acting_as(reaction_process_step, material)
           end.flatten.uniq
         end
@@ -98,26 +97,23 @@ module Entities
         end
 
         def saved_sample_with_solvents_options(reaction_process_step)
-          save_actions = reaction_process_step.reaction_process_activities
-                                              .includes([:reaction_process_vessel])
-                                              .order(:position)
-                                              .select do |activity|
-            activity.activity_name == 'SAVE'
-          end
-
-          save_actions.map do |action|
+          reaction_process_step.reaction_process_activities
+                               .includes([:reaction_process_vessel])
+                               .order(:position)
+                               .select(&:saves_sample?)
+                               .map do |action|
             saved_sample_with_solvents_option(action)
           end
         end
 
         def saved_sample_with_solvents_option(action)
-          return {} unless action.sample?
+          return {} unless action.sample
 
           solvents = action.workup.dig('sample_origin_purification_step', 'solvents') || []
 
           sample_minimal_option(action.sample, 'SAMPLE').merge(
             {
-              amount: { value: action.sample.target_amount_value, unit: action.sample.target_amount_unit },
+              amount: ::ReactionProcessEditor::SampleAmountsConverter.to_rpe(action.sample),
               solvents: solvents,
               solvents_amount: action.workup['solvents_amount'],
             },

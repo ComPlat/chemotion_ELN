@@ -18,8 +18,12 @@ module ReactionProcessEditor
   class ReactionProcessActivity < ApplicationRecord
     acts_as_paranoid
 
+    before_save :assert_position
+
     belongs_to :reaction_process_step
     belongs_to :reaction_process_vessel, optional: true
+
+    has_one :reactions_intermediate_sample, dependent: :nullify
 
     validate :validate_workup
 
@@ -29,41 +33,49 @@ module ReactionProcessEditor
       reaction_process_step.reaction_process_activities.order(:position)
     end
 
+    def saves_sample?
+      %w[SAVE].include?(activity_name)
+    end
+
+    def transfer?
+      %w[TRANSFER].include?(activity_name)
+    end
+
     def condition?
       %w[CONDITION].include?(activity_name)
     end
 
-    def adds_sample?
-      %w[ADD TRANSFER].include?(activity_name)
+    def adds_compound?
+      %w[ADD TRANSFER].include?(activity_name) && compound
+    end
+
+    def removes_compound?
+      %w[REMOVE].include?(activity_name)
+    end
+
+    def compound
+      sample || medium
     end
 
     def medium
-      return unless medium?
+      return unless acts_as_medium?
 
       Medium::Medium.find_by(id: workup['sample_id'])
     end
 
     def sample
-      return unless sample?
+      return unless acts_as_sample?
 
       Sample.find_by(id: workup['sample_id'])
     end
 
-    def sample?
-      acts_as_sample? && workup['sample_id'].present?
-    end
-
-    def medium?
-      acts_as_medium? && workup['sample_id'].present?
-    end
-
     def acts_as_sample?
-      !acts_as_medium? && activity_name != 'REMOVE'
+      !removes_compound? && !acts_as_medium?
     end
 
     def acts_as_medium?
-      # These are the 4 subclasses stored in the STI table `media`
-      %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as']) && activity_name != 'REMOVE'
+      !removes_compound? &&
+        %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as'])
     end
 
     private
@@ -74,6 +86,10 @@ module ReactionProcessEditor
 
     def validate_workup_sample
       errors.add(:workup, 'Missing Sample') if workup['sample_id'].blank?
+    end
+
+    def assert_position
+      self.position ||= siblings.count
     end
   end
 end

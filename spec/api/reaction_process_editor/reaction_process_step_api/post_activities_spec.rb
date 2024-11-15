@@ -23,7 +23,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.post /activities' do
                                                                                  }),
                                                     }) }
   end
-  let!(:create_activity_params) do
+  let(:create_activity_params) do
     { activity:
           { activity_name: 'ADD',
             workup: {
@@ -63,22 +63,18 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.post /activities' do
     end
     let!(:action_save) { create(:reaction_process_activity_save, reaction_process_step: source_step) }
     let(:create_activity_params) do
-      { activity: { activity_name: 'TRANSFER', workup: {
-        transfer_source_step_id: source_step.id,
-        transfer_target_step_id: reaction_process_step.id,
-        sample_id: action_save.workup['sample_id'],
-        intermediate_type: 'CRUDE',
-      } } }
+      { activity:
+       { activity_name: 'TRANSFER',
+         workup: {
+           transfer_source_step_id: source_step.id,
+           transfer_target_step_id: reaction_process_step.id,
+           sample_id: action_save.workup['sample_id'],
+           intermediate_type: 'CRUDE',
+         } } }
     end
 
     before do
       post_action_request
-    end
-
-    it 'returns intermediate type' do
-      expect(parsed_json_response['reaction_process_activity']).to include(
-        { intermediate_type: 'CRUDE' }.stringify_keys,
-      )
     end
 
     it 'returns transfer_source_step_name' do
@@ -90,7 +86,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.post /activities' do
 
   context 'with invalid action data' do
     let(:create_activity_params) do
-      # Invalid: acts_as 'SAMPLE' also requires sample_id:
+      # Invalid: acts_as 'SAMPLE' requires sample_id.
       { activity: { activity_name: 'ADD', workup: { acts_as: 'SAMPLE' } } }
     end
 

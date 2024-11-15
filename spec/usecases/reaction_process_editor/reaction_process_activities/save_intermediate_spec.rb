@@ -26,12 +26,22 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessActivities::SaveI
     let!(:activity) { create(:reaction_process_activity_save) }
     let(:workup) { amount.merge({ sample_id: activity.workup['sample_id'] }).deep_stringify_keys }
 
-    it 'creates no Sample' do
+    let(:saved_sample) { Sample.find(activity.workup['sample_id']) }
+
+    it 'creates no new Sample' do
       expect { usecase }.not_to change(Sample, :count)
     end
 
-    it 'updates Sample amount' do
-      expect { usecase }.to change { Sample.find(activity.workup['sample_id']).target_amount_value }.to(314.0)
+    it 'converts Sample amount' do
+      expect { usecase }.to change {
+        saved_sample.reload.target_amount_value
+      }.to(314.0 * (10**-6))
+    end
+
+    it 'calculates Sample metrics' do
+      expect { usecase }.to change {
+        saved_sample.reload.metrics
+      }.to('ummm')
     end
 
     it 'retains workup sample_id' do

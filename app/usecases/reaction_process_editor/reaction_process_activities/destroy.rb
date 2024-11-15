@@ -5,7 +5,7 @@ module Usecases
     module ReactionProcessActivities
       class Destroy
         def self.execute!(activity:)
-          activities = activity.reaction_process_step.reaction_process_activities.order(:position).to_a
+          activities = activity.siblings.to_a
           activities.delete(activity)
           activities.each_with_index { |item, idx| item.update(position: idx) }
 
