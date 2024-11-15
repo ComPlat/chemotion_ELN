@@ -25,10 +25,9 @@ export default function ToggleButton({
   return (
     <OverlayTrigger placement="top" overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}>
       <Button
-        className={`toggle-button ${isToggled ? 'on' : 'off'}`}
+        className={`bg-${buttonColor} border-0 p-0 toggle-button-${isToggled ? 'on' : 'off'}`}
         size="xs"
         onClick={handleChange}
-        style={{ backgroundColor: buttonColor, border: 'none', padding: '0px 0px 0px 0px' }}
       >
         <span className={`fs-6 ${fontType} ${fontColor}`}>
           {isToggled ? onLabel : offLabel}
