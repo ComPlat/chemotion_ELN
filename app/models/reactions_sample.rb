@@ -87,11 +87,9 @@ end
 class ReactionsIntermediateSample < ReactionsSample
   scope :visible, -> { joins(:sample).merge(Sample.visible) }
 
-  def reaction_step
-    # TODO: Provisional. replaces former attribute "step_number" which gets never updated (prone to age badly.)
-    # Write a spec, maybe move to some more appropriate place.
-    ::ReactionProcessEditor::ReactionProcessStep.find_by(id: reaction_process_step_id)&.step_number
-  end
+  belongs_to :reaction_process_activity, class_name: 'ReactionProcessEditor::ReactionProcessActivity', optional: true
+
+  delegate :reaction_process_step, to: :reaction_process_activity, allow_nil: true
 
   include Reactable
   include Tagging
