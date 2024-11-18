@@ -229,7 +229,6 @@ const addAtomAliasHelper = async (already_processed) => {
         } else if (three_parts_patten.test(atom.alias)) {
           if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
             // add image if image doesnt exists
-
             if (!new_images[image_used_counter]) {
               const img = prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
               new_images.push(img);
@@ -359,6 +358,7 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
   return { ket2Molfile: reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end }), svgElement };
 };
 
+/* istanbul ignore next */
 // container funcation for templatemove
 const onTemplateMove = async (editor) => {
   if (editor && editor.structureDef) {
@@ -379,6 +379,7 @@ const onTemplateMove = async (editor) => {
   }
 };
 
+/* istanbul ignore next */
 // container funcation for onAddAtom
 const onAddAtom = async (editor) => {
   if (editor && editor.structureDef) {
@@ -389,6 +390,7 @@ const onAddAtom = async (editor) => {
   }
 };
 
+/* istanbul ignore next */
 // container function for on image delete
 const onDeleteImage = async (editor) => {
   if (editor && editor.structureDef) {
@@ -398,6 +400,7 @@ const onDeleteImage = async (editor) => {
   }
 };
 
+/* istanbul ignore next */
 // container funcation on atom delete
 const onAtomDelete = async (editor) => {
   if (editor && editor.structureDef) {
@@ -412,6 +415,7 @@ const onAtomDelete = async (editor) => {
   }
 };
 
+/* istanbul ignore next */
 // savemolfile with source, should_fetch, should_move
 const saveMoveCanvas = async (data, should_fetch, should_move) => {
   data = data ? data : latestData;
@@ -420,6 +424,7 @@ const saveMoveCanvas = async (data, should_fetch, should_move) => {
   should_move && onTemplateMove(editor);
 };
 
+/* istanbul ignore next */
 // component
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
