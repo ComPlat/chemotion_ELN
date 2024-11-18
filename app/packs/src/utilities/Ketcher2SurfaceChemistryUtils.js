@@ -1,7 +1,4 @@
-// console.log disable untill the final version of the feature; some consoles are added for debugging purposes and they are important to track changes happening; Debugger can be used but for now console.log are placed;
-// console.log = () => { };
-
-import { fuelKetcherData, imagesList, latestData, mols } from "../components/structureEditor/KetcherEditor";
+import { fuelKetcherData, mols } from "../components/structureEditor/KetcherEditor";
 
 const template_list_for_storage = [
   { "struct": "{\n    \"root\": {\n        \"nodes\": [\n            {\n                \"$ref\": \"mol0\"\n            },\n            {\n                \"type\": \"image\",\n                \"format\": \"image/svg+xml\",\n                \"boundingBox\": {\n                    \"x\": 7.900000000000001,\n                    \"y\": -5.824999999999999,\n                    \"z\": 0,\n                    \"width\": 1.0749999999999995,\n                    \"height\": 1.0749999999999995\n                },\n                \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg==\"\n            }\n        ],\n        \"connections\": [],\n        \"templates\": []\n    },\n    \"header\": {\n        \"moleculeName\": \"t_01\"\n    },\n    \"mol0\": {\n        \"type\": \"molecule\",\n        \"atoms\": [\n            {\n                \"label\": \"A\",\n                \"alias\": \"t_01\",\n                \"location\": [\n                    8.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            },\n            {\n                \"label\": \"H\",\n                \"location\": [\n                    9.700000000000001,\n                    -6.550000000000001,\n                    0\n                ]\n            }\n        ],\n        \"bonds\": [\n            {\n                \"type\": 1,\n                \"atoms\": [\n                    0,\n                    1\n                ]\n            }\n        ],\n        \"sgroups\": [\n            {\n                \"type\": \"SUP\",\n                \"atoms\": [\n                    0,\n                    1\n                ],\n                \"name\": \"\",\n                \"expanded\": true,\n                \"id\": 0,\n                \"attachmentPoints\": [\n                    {\n                        \"attachmentAtom\": 0,\n                        \"leavingAtom\": 1,\n                        \"attachmentId\": \"1\"\n                    }\n                ]\n            }\n        ]\n    }\n}", "props": { "atomid": 0, "bondid": 0 } },
@@ -66,7 +63,7 @@ const hasKetcherData = async (molfile) => {
     }
     return rails_polymers_list == -1 ? null : rails_polymers_list;
   } catch (err) {
-    console.log(err);
+    console.error(err);
     alert("Opening this molfile is possible at the movement. Please report this molfile to chemotion ELN dev team.");
   }
 };
@@ -102,7 +99,7 @@ const adding_polymers_ketcher_format = async (rails_polymers_list, _, data, imag
     }
     return { c_images: collected_images, molfileData: data, image_counter: image_used_counter };
   } catch (err) {
-    console.log({ err: err.message });
+    console.error({ err: err.message });
   }
 };
 
@@ -145,9 +142,7 @@ const resetOtherAliasCounters = (atom, mols, latestData) => {
       if (three_parts_patten.test(item.alias)) {
         const atom_splits = atom?.alias?.split("_");
         const item_splits = item?.alias?.split("_");
-        console.log({ atom_splits: atom?.alias, item_splits });
         if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
-          console.log("should be updated", item);
           if (parseInt(item_splits[2]) == 0) continue;
           let step_back = parseInt(item_splits[2]) - 1;
           const new_alias = `${item_splits[0]}_${item_splits[1]}_${step_back}`;
@@ -230,7 +225,7 @@ const removeImageTemplateAtom = async (images, mols, latestData) => {
     }
     return { latestData, container: indexFound };
   } catch (err) {
-    console.log("removeImageTemplateAtom", err.message);
+    console.error("removeImageTemplateAtom", err.message);
   }
 };
 
