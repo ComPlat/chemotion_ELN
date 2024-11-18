@@ -169,54 +169,6 @@ const removeImageTemplateAtom = async (images, mols, latestData) => {
   try {
     let container = [];
     let indexFound = 0;
-    // for (let m = 0; m < mols.length; m++) {
-    //   const mol = latestData[mols[m]];
-    //   const atoms_list = mol?.atoms || [];
-    //   let bonds_list = mol?.bonds || [];
-
-    //   if (mol && mol?.atoms) {
-    //     for (let i = 0; i < mol?.atoms?.length; i++) {
-    //       const atom = mol.atoms[i];
-    //       const updatedBondsList = [];
-    //       if (atom?.alias && atom.label == inspired_label) {
-    //         const splits_2 = parseInt(atom.alias.split("_")[2]);
-    //         if (images.has(splits_2)) {
-    //           container.push(splits_2);
-    //           for (let ba of bonds_list) {
-    //             if (!ba.atoms.includes(i)) {
-    //               const adjustedAtoms = ba.atoms.map(j => (j > i ? j - 1 : j));
-    //               updatedBondsList.push({ ...ba, atoms: adjustedAtoms });
-    //             }
-    //           }
-    //           bonds_list = updatedBondsList;
-    //           atoms_list.splice(i, 1);
-    //         }
-    //       }
-    //     }
-    //     // console.log({ atoms_list, container });
-    //     if (atoms_list.length) {
-    //       for (let img_i = 0; img_i < container.length; img_i++) {
-    //         const img_idx = container[img_i];
-    //         for (let i = 0; i < atoms_list.length; i++) {
-    //           const atom = atoms_list[i];
-    //           if (atom?.alias && atom.label == inspired_label) {
-    //             const splits = atom.alias.split("_");
-    //             if (parseInt(splits[2]) > img_idx) {
-    //               atoms_list[i].alias = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
-    //             }
-    //           }
-    //         }
-    //       }
-    //       mol.atoms = atoms_list;
-    //       mol.bonds = bonds_list;
-    //       latestData[mols[m]] = mol;
-    //     } else {
-    //       delete latestData[mols[m]];
-    //       const atom_removed_when_empty = latestData.root.nodes.filter(item => item.$ref != mols[m]);
-    //       latestData.root.nodes = atom_removed_when_empty;
-    //     }
-    //   }
-    // }
 
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
@@ -234,7 +186,6 @@ const removeImageTemplateAtom = async (images, mols, latestData) => {
             if (has_idx) {
               images.delete(splits_2);
               container.push(splits_2);
-              console.log("increase number");
               indexFound++;
 
               // Update bonds to reflect the removal of the atom
