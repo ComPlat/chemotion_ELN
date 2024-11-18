@@ -90,6 +90,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
       autoHeight: true,
       sortable: false,
       resizable: false,
+      suppressMovable: true,
     };
 
     return (

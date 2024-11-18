@@ -613,6 +613,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       wrapHeaderText: true,
       autoHeaderHeight: true,
       autoHeight: true,
+      suppressMovable: true,
       cellClass: ["border-end"],
       headerClass: ["border-end"],
     };
@@ -632,6 +633,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             columnDefs={staticColumns}
             defaultColDef={defaultColDef}
             domLayout='autoHeight'
+            autoSizeStrategy={{ type: 'fitGridWidth' }}
             rowData={rows}
             rowHeight="37"
           />
