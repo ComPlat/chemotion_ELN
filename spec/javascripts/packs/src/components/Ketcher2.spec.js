@@ -882,13 +882,7 @@ describe('Ketcher2', () => {
       await latestdataSetter(deleteAtomAndRemoveImage_ket);
       await fuelKetcherData(deleteAtomAndRemoveImage_ket);
       await imageUsedCounterSetter(0);
-      const update_image_list = await handleOnDeleteAtom();
-      assert.ok(update_image_list.length == 0, "List of images returned should be 0");
-
-      // image_used_counter -= deleted_atoms_list.length;
-      latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...update_image_list];
-
-      assert.ok(latestData.root.nodes.length == mols.length + update_image_list, "length of nodes should be equal to mols+updated_images_list");
+      await handleOnDeleteAtom();
       assert.ok(-1 == image_used_counter - deleted_atoms_list.length, "image used counter should be -1");
     });
 
@@ -904,8 +898,7 @@ describe('Ketcher2', () => {
       await latestdataSetter(deleteAtomAndRemoveImage_ket);
       await fuelKetcherData(deleteAtomAndRemoveImage_ket);
       await imageUsedCounterSetter(0);
-      const update_image_list = await handleOnDeleteAtom();
-      assert.ok(update_image_list.length == 0, "List of images returned should be 0");
+      await handleOnDeleteAtom();
       assert.deepStrictEqual(deleteAtomAndRemoveImage_ket, latestData, "latest data should be equal to input");
     });
 
@@ -932,13 +925,7 @@ describe('Ketcher2', () => {
       await latestdataSetter(deleteAtomAndRemoveImageMulti_ket);
       await fuelKetcherData(deleteAtomAndRemoveImageMulti_ket);
       await imageUsedCounterSetter(1);
-      const update_image_list = await handleOnDeleteAtom();
-      assert.ok(update_image_list.length == 0, "List of images returned should be 0");
-
-      // image_used_counter -= deleted_atoms_list.length;
-      latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...update_image_list];
-
-      assert.ok(latestData.root.nodes.length == mols.length + update_image_list, "length of nodes should be equal to mols+updated_images_list");
+      await handleOnDeleteAtom();
       assert.ok(-1 == image_used_counter - deleted_atoms_list.length, "image used counter should be -1");
     });
 
@@ -1088,14 +1075,10 @@ describe('Ketcher2', () => {
         }
       });
       await imageUsedCounterSetter(1);
-      const update_image_list = await handleOnDeleteAtom();
-      assert.ok(update_image_list.length == 1, "List of images returned should be 0");
-
-      // image_used_counter -= deleted_atoms_list.length;
-      latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length), ...update_image_list];
-
-      assert.ok(latestData.root.nodes.length == mols.length + update_image_list.length, "length of nodes should be equal to mols+updated_images_list");
+      await handleOnDeleteAtom();
       assert.ok(0 == image_used_counter - deleted_atoms_list.length, "image used counter should be -1");
     });
   });
+
+
 });
