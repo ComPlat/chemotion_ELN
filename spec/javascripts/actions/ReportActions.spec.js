@@ -1,6 +1,6 @@
 import React from 'react'
 import expect from 'expect'
-import ReportActions from '../../../app/packs/src/stores/alt/actions/ReportActions'
+import ReportActions from '../../../app/javascript/src/stores/alt/actions/ReportActions'
 Object.assign = require('object-assign')
 
 describe('ReportActions', () => {

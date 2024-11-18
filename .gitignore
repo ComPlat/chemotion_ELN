@@ -31,7 +31,6 @@
 .env
 
 /config/matrices.json
-/config/klasses.json
 /config/mailcollector.yml
 /config/datamailcollector.yml
 /config/datacollector.yml
@@ -94,6 +93,7 @@
 !/public/editors/.keep
 /public/favicon.ico
 
+# written by Labimotion gem
 /public/klasses.json
 
 /public/ontologies/*
@@ -162,9 +162,7 @@
 #config generated files
 aliasifyConfig.js
 /app/assets/javascripts/components/extra/*
-/app/packs/src/components/extra/*
-/app/javascript/klasses.json
-/app/packs/klasses.json
+/app/javascript/src/components/extra/*
 
 # Backups folder
 backup/deploy_backup
@@ -213,9 +211,6 @@ public/sprite.png
 /public/pdf.worker.min.js
 
 !spec/fixtures/import/sample_import_template.xlsx
-
-# generic elements
-data/klasses.json
 
 # pdf worker
 public/pdf.worker.min.js

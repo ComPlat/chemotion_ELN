@@ -140,7 +140,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
 #      - name: precompile
-#        run: RAILS_ENV=test bundle exec rake webpacker:compile
+#        run: RAILS_ENV=test bundle exec rake shakapacker:compile
 
 #      - name: rspec acceptance
 #        continue-on-error: true    # don't fail job because this step; TODO: fix flaky acceptance tests...

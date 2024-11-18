@@ -17,7 +17,6 @@
     "@complat/react-spectra-editor": "1.3.2",
     "@novnc/novnc": "^1.2.0",
     "@rails/ujs": "^6.1.3-1",
-    "@rails/webpacker": "https://github.com/rails/webpacker.git",
     "@sentry/react": "^7.73.0",
     "@sentry/tracing": "^7.16.0",
     "@sentry/webpack-plugin": "^2.22.4",
@@ -140,7 +139,7 @@
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
-    "test": "NODE_PATH=./spec/javascripts:./app/packs yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
+    "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
     "coverage": "yarn nyc npm test;yarn nyc report --reporter=html"
   },
   "nyc": {
