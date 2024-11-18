@@ -192,6 +192,7 @@ module Usecases
             waste: sample.waste,
             coefficient: sample.coefficient,
             position: sample.position,
+            type: reactions_sample_klass,
             conversion_rate: sample.conversion_rate,
           )
         end

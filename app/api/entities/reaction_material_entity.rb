@@ -9,7 +9,6 @@ module Entities
     expose! :reference
     expose! :show_label
     expose! :waste
-    expose! :waste
     expose! :conversion_rate
 
     expose! :sample, using: 'Entities::SampleEntity', merge: true
