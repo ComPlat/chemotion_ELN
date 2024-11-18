@@ -220,6 +220,7 @@ class UserLabelModal extends Component {
       autoHeight: true,
       sortable: false,
       resizable: false,
+      suppressMovable: true,
       cellClass: ["border-end", "px-2"],
       headerClass: ["border-end", "px-2"]
     };
@@ -234,11 +235,11 @@ class UserLabelModal extends Component {
         </h3>
         <AgGridReact
           columnDefs={columnDefs}
-          autoSizeStrategy={{ type: 'fitGridWidth' }}
           defaultColDef={defaultColDef}
           rowData={labels || []}
           rowHeight="auto"
           domLayout="autoHeight"
+          autoSizeStrategy={{ type: 'fitGridWidth' }}
         />
       </div>
     );
