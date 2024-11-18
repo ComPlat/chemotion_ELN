@@ -171,6 +171,7 @@ export default class EmbeddedWellplate extends Component {
       autoHeight: true,
       sortable: false,
       resizable: false,
+      suppressMovable: true,
       cellClass: ["border-end"],
       headerClass: ["border-end"],
     };
@@ -183,6 +184,7 @@ export default class EmbeddedWellplate extends Component {
           rowData={wells}
           rowHeight="auto"
           domLayout="autoHeight"
+          autoSizeStrategy={{ type: 'fitGridWidth' }}
         />
       </div>
     );
