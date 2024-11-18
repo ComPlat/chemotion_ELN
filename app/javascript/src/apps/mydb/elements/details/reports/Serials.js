@@ -91,6 +91,7 @@ const Serials = ({ template, selMolSerials }) => {
     autoHeight: true,
     sortable: false,
     resizable: false,
+    suppressMovable: true,
     cellClass: ["border-end"],
     headerClass: ["border-end", "px-2"]
   };

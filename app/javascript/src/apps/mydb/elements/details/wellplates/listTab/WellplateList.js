@@ -139,6 +139,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     autoHeight: true,
     sortable: false,
     resizable: true,
+    suppressMovable: true,
     cellClass: ["border-end", "px-2"],
     headerClass: ["border-end", "px-2"]
   };
@@ -152,6 +153,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         rowData={wells}
         rowHeight="auto"
         domLayout="autoHeight"
+        autoSizeStrategy={{ type: 'fitGridWidth' }}
         readOnlyEdit
         onCellEditRequest={updateRow}
         singleClickEdit={true}
