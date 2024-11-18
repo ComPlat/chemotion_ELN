@@ -109,35 +109,6 @@ export const moveTemplate = async () => {
   try {
     console.log("move template!!");
     latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
-    return;
-    mols.forEach(async (mol) => {
-      const molecule = latestData[mol];
-      // Check if molecule and atoms exist, and if the alias is formatted correctly
-      molecule?.atoms?.forEach((item, atom_idx) => {
-        if (item.alias) {
-          if (three_parts_patten.test(item.alias)) {
-            const alias = item.alias.split("_");
-
-            const image = imagesList[parseInt(alias[2])];
-            if (image?.boundingBox) {
-              const { x, y } = image?.boundingBox;
-              const location = [x, y, 0]; // Set location as an array of coordinates
-              // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images 
-              molecule.atoms[atom_idx].alias = item.alias.trim();
-              if (molecule?.stereoFlagPosition) {
-                molecule.stereoFlagPosition = {
-                  x: location[0],
-                  y: location[1],
-                  z: 0,
-                };
-              }
-            }
-          }
-        }
-      });
-      latestData[mol] = molecule;
-    });
-    latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
   } catch (err) {
     console.log("moveTemplate", err.message);
   }
