@@ -19,7 +19,7 @@
     "prefer-destructuring": ["error", {"object": true, "array": false}],
     "no-relative-import-paths/no-relative-import-paths": [
       "error",
-      { "allowSameFolder": false, "rootDir": "app/packs" }
+      { "allowSameFolder": false, "rootDir": "app/javascript" }
     ],
     "max-len": [
       "error",
@@ -32,7 +32,7 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "paths": ["app/packs"]
+        "paths": ["app/javascript"]
       }
     }
   }

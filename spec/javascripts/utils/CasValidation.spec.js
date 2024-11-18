@@ -4,7 +4,7 @@ import {
   addHyphensToCas,
   checkCasDigit,
   validateCas
-} from '../../../app/packs/src/utilities/CasValidation';
+} from '../../../app/javascript/src/utilities/CasValidation';
 
 describe('CasValidation', () => {
   describe('addHyphensToCas', () => {
