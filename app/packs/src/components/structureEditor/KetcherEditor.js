@@ -65,6 +65,7 @@ export const resetStore = () => {
   all_atoms = [];
 };
 
+// load data into respective containers/vars
 export const fuelKetcherData = async (data) => {
   allNodes = [...data.root.nodes];
   imagesList = allNodes.filter(item => item.type === 'image');
@@ -75,18 +76,22 @@ export const fuelKetcherData = async (data) => {
   mols.forEach((item) => data[item]?.atoms.map(i => all_atoms.push(i)));
 };
 
+// latestData setter
 export const latestdataSetter = async data => {
   latestData = data;
 };
 
+// selection setter it can have images, atoms, bonds or anything selected in the canvas
 export const _selectionSetter = async data => {
   _selection = data;
 };
 
+// image counter is strictly related and synced with how many images are there in the canvas
 export const imageUsedCounterSetter = async count => {
   image_used_counter = count;
 };
 
+// when one/more atoms are selected and deleted this holds array of deleted atoms
 export const deleteAtomListSetter = async data => {
   deleted_atoms_list = data;
 };
@@ -100,7 +105,7 @@ const fetchKetcherData = async (editor) => {
   }
 };
 
-// helper function to move image and update molecule positions
+// helper function to remove images from the ketfile on atom move or manual atom move
 export const moveTemplate = async () => {
   try {
     latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
@@ -201,6 +206,7 @@ export const handleAddAtom = async () => {
   return await addAtomAliasHelper(already_processed);
 };
 
+// IMP: helper funcation when new atom is added or rebase for alias
 const addAtomAliasHelper = async (already_processed) => {
   try {
     let new_images = [...imagesList];
