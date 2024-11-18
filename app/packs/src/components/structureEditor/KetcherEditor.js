@@ -108,6 +108,8 @@ const fetchKetcherData = async (editor) => {
 export const moveTemplate = async () => {
   try {
     console.log("move template!!");
+    latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
+    return;
     mols.forEach(async (mol) => {
       const molecule = latestData[mol];
       // Check if molecule and atoms exist, and if the alias is formatted correctly
@@ -149,7 +151,7 @@ export const placeImageOnAtoms = async (mols_, imagesList_) => {
         if (atom && three_parts_patten.test(atom?.alias)) {
           const splits_alias = atom.alias.split("_");
           let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
-          if (!image_coordinates) throw error("Invalid alias");
+          if (!image_coordinates) throw new ("Invalid alias");
           image_coordinates = {
             ...image_coordinates,
             x: atom.location[0] - image_coordinates?.width / 2,
@@ -213,7 +215,7 @@ export const isAliasConsistent = () => {
 
 // helper function to handle new atoms added to the canvas
 export const handleAddAtom = async () => {
-  console.log("Atom moved!");
+  console.log("Atom added!");
   const print_logs = false;
   let already_processed = [];
   image_used_counter = -1;
@@ -289,7 +291,7 @@ export const handleAddAtom = async () => {
 
 // helper function to delete a template and update the counter, assign new alias to all atoms
 export const handleOnDeleteImage = async () => {
-  console.log("handleOnDelete", []);
+  console.log("handleOnDelete");
   mols = mols.filter(item => item != null);
   if (_selection) {
     const { images } = _selection;
@@ -507,7 +509,6 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // action based on event-name
   const eventHandlers = {
-    'Load canvas': async () => await fetchKetcherData(editor),
     'Move image': async () => await onTemplateMove(editor),
     'Move atom': async () => await onTemplateMove(editor),
     'Add atom': async () => await onAddAtom(editor),
@@ -577,7 +578,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       await fetchKetcherData(editor);
       re_render_canvas = true;
     },
-
   };
 
   useEffect(() => {
