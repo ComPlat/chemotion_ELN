@@ -141,7 +141,7 @@ group :development do
 end
 
 group :vscode do
-  gem 'debase'
+  gem 'debase', git: 'https://github.com/ruby-debug/debase.git', branch: 'master'
   gem 'ruby-debug-ide'
   gem 'solargraph'
 end

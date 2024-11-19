@@ -95,6 +95,14 @@ GIT
       semantic_range (>= 2.3.0)
 
 GIT
+  remote: https://github.com/ruby-debug/debase.git
+  revision: 626c56b00287416495d4079ee7a1a6194a0b8127
+  branch: master
+  specs:
+    debase (0.2.7)
+      debase-ruby_core_source (>= 3.3.6)
+
+GIT
   remote: https://github.com/toretore/semacode.git
   revision: 4e31e0b79a1a63c98f2560359c1c6a527b00bacc
   branch: master
@@ -273,9 +281,7 @@ GEM
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
     date (3.3.4)
-    debase (0.2.4.1)
-      debase-ruby_core_source (>= 0.10.2)
-    debase-ruby_core_source (3.3.1)
+    debase-ruby_core_source (3.3.6)
     debug_inspector (1.2.0)
     delayed_cron_job (0.9.0)
       fugit (>= 1.5)
@@ -495,7 +501,7 @@ GEM
       net-protocol
     net-ssh (6.1.0)
     nio4r (2.7.3)
-    nokogiri (1.15.6-x86_64-linux)
+    nokogiri (1.16.5-x86_64-linux)
       racc (~> 1.4)
     oauth2 (2.0.9)
       faraday (>= 0.17.3, < 3.0)
@@ -845,7 +851,7 @@ GEM
       rails (>= 3.0)
       rake (>= 0.8.7)
     yard (0.9.36)
-    zeitwerk (2.7.0)
+    zeitwerk (2.6.18)
 
 PLATFORMS
   x86_64-linux
@@ -878,7 +884,7 @@ DEPENDENCIES
   cypress-on-rails
   database_cleaner
   database_cleaner-active_record
-  debase
+  debase!
   delayed_cron_job
   delayed_job_active_record
   devise
