@@ -203,6 +203,7 @@ export const handleAddAtom = async () => {
       }
     }
   }
+  console.log({ already_processed });
   return await addAtomAliasHelper(already_processed);
 };
 
@@ -260,12 +261,15 @@ const addAtomAliasHelper = async (already_processed) => {
 // helper function to delete a template and update the counter, assign new alias to all atoms
 export const handleOnDeleteImage = async () => {
   mols = mols.filter(item => item != null);
+
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
-      let { latestData: data, container } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
-      image_used_counter -= container;
-      return data;
+      let { latestData: data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
+      console.log(data, imageFoundIndexCount);
+
+      // image_used_counter -= imageFoundIndexCount;
+      // return data;
     }
   }
   return latestData;
@@ -286,6 +290,7 @@ export const handleOnDeleteAtom = async () => {
               const atom = atoms[i];
               if (three_parts_patten.test(atom?.alias)) {
                 const atom_splits = atom.alias.split("_");
+                console.log("atom splits", parseInt(atom_splits[2]), deleted_splits);
                 if (parseInt(atom_splits[2]) > deleted_splits) {
                   atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
                 }
@@ -296,6 +301,7 @@ export const handleOnDeleteAtom = async () => {
         }
       }
     });
+    return latestData;
   } catch (err) {
     console.error("handleDelete!!", err.message);
   }
@@ -393,11 +399,25 @@ const onAddAtom = async (editor) => {
 /* istanbul ignore next */
 // container function for on image delete
 const onDeleteImage = async (editor) => {
-  if (editor && editor.structureDef) {
+  if (editor && editor.structureDef && !deleted_atoms_list.length) {
+    console.log("hitting iamge");
+    // await fetchKetcherData(editor);
     const data = await handleOnDeleteImage();
+    console.log({ data, imagesList, mols, _selection });
     await saveMoveCanvas(data, false, true);
-    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
   }
+};
+
+// function to remove image by index
+const removeImageByIndex = async () => {
+  const list = latestData.root.nodes;
+  deleted_atoms_list.forEach(item => {
+    const imageIndex = parseInt(item.alias.split("_")[2]);
+    list.splice(imageIndex + mols.length, 1);
+  });
+  latestData.root.nodes = list;
+  deleted_atoms_list = [];
+
 };
 
 /* istanbul ignore next */
@@ -405,13 +425,14 @@ const onDeleteImage = async (editor) => {
 const onAtomDelete = async (editor) => {
   if (editor && editor.structureDef) {
     await fetchKetcherData(editor);
-    await handleOnDeleteAtom();
-    image_used_counter -= deleted_atoms_list.length;
-    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols.length)];
-    await fetchKetcherData(editor);
-    const { d, isConsistent } = await handleAddAtom();
-    isConsistent && await saveMoveCanvas(d, true, true);
-    resetStore();
+    const data = await handleOnDeleteAtom(); // rebase atom aliases
+    image_used_counter -= deleted_atoms_list.length; // update image used counter
+
+    if (image_used_counter < imagesList.length - 1) {
+      console.log("p pharo pye");
+      await removeImageByIndex(); // remove and add images
+    }
+    await saveMoveCanvas(data, true, true); // save
   }
 };
 

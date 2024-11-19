@@ -34,7 +34,7 @@ const template_list_data = [
 
 // pattern's for alias identification
 const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
-const two_parts_pattern = /^t_\d{2,3}$/;
+const two_parts_pattern = /^t_\d{1,3}$/;
 
 // enable/disable text labels Matching label A and putting images in the end
 const skip_template_name_hide = false;
@@ -49,6 +49,17 @@ let allowed_to_process = true;
 // tags
 const inspired_label = "A";
 const rails_polymer_identifier = "R#";
+const template_surface = 2;
+const template_bead = 1;
+
+// Helper to initialize Ketcher data
+const initializeKetcherData = async (data) => {
+  try {
+    await fuelKetcherData(data);
+  } catch (err) {
+    throw new Error(`Failed to initialize Ketcher data: ${err.message}`);
+  }
+};
 
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile) => {
@@ -68,60 +79,61 @@ const hasKetcherData = async (molfile) => {
   }
 };
 
+// Helper to determine template type based on polymer value
+const getTemplateType = (polymerValue) => {
+  return polymerValue.includes("s") ? template_surface : template_bead;
+};
+
+// Helper to update an atom with new labels and aliases
+const updateAtom = (atomLocation, templateType, imageCounter) => ({
+  label: inspired_label,
+  alias: `t_${templateType}_${imageCounter}`,
+  location: atomLocation
+});
+
+// Helper to create a bounding box for a template
+const templateWithBoundingBox = (templateType, atomLocation) => {
+  const template = template_list_data[templateType];
+  const boundingBox = { ...template.boundingBox };
+  boundingBox.x = atomLocation[0];
+  boundingBox.y = atomLocation[1];
+  boundingBox.z = 0;
+  return { ...template, boundingBox };
+};
+
 // helper function to process ketcherrails files and adding image to ketcher2 canvas
-const adding_polymers_ketcher_format = async (rails_polymers_list, _, data, image_used_counter) => {
+const adding_polymers_ketcher_format = async (railsPolymersList, _, data, image_used_counter) => {
   try {
-    const p_items = rails_polymers_list.split(" ");
-    // p_items-example:  10, 11s, 12, 13s
+    const polymerList = railsPolymersList.split(" "); // e.g., ["10", "11s", "12", "13s"]
     let visited_atoms = 0;
     let collected_images = [];
-    await fuelKetcherData(data);
+    await initializeKetcherData(data);
 
-    for (let m = 0; m < mols.length; m++) {
-      const mol = data[mols[m]];
-      for (let a = 0; a < mol.atoms.length; a++) {
-        // if (p_items.length - 1 == visited_atoms) break;
-        const atom = mol.atoms[a];
-        const p_value = p_items[visited_atoms];
-        if (atom.type === "rg-label" || three_parts_patten.test(atom.label)) {
-          const select_template_type = p_value.includes("s") ? "02" : "01";
-          data[mols[m]].atoms[a] = {
-            "label": inspired_label,
-            "alias": `t_${select_template_type}_${++image_used_counter}`,
-            "location": atom.location
-          };
-          const bb = template_list_data[parseInt(select_template_type)];
-          bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
-          collected_images.push(bb);
-          visited_atoms += 1;
-        }
+    for (const molName of mols) {
+      const molecule = data[molName];
+      for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
+        const atom = molecule.atoms[atomIndex];
+        const polymerItem = polymerList[visited_atoms];
+        if (!(atom.type === "rg-label" || three_parts_patten.test(atom.label))) continue;
+
+        // counters
+        ++image_used_counter;
+        ++visited_atoms;
+
+        // step 1: // get template type
+        const template_type = getTemplateType(polymerItem);
+        // step 2: update atom with alias
+        data[molName].atoms[atomIndex] = updateAtom(atom.location, template_type, image_used_counter);
+        // step 3: sync boundingbox with atom location
+        const new_template = templateWithBoundingBox(template_type, atom.location);
+        // step 4: add to the list
+        collected_images.push(new_template);
       }
     }
     return { c_images: collected_images, molfileData: data, image_counter: image_used_counter };
   } catch (err) {
     console.error({ err: err.message });
   }
-};
-
-// helper function to process ketcher2 indigo file to add images to ketcher2 canvas
-const adding_polymers_indigo_molfile = (mols, latestData) => {
-  let collected_images = [];
-  for (let m = 0; m < mols?.length; m++) {
-    const mol = latestData[mols[m]];
-    for (let a = 0; a < mol.atoms.length; a++) {
-      const atom = mol.atoms[a];
-      const splits = atom?.label?.split("    ");
-      if (splits && three_parts_patten.test(splits[0])) {
-        atom.label = inspired_label;
-        atom.alias = splits[0];
-        const alias_splits = splits[0].split("_");
-        const bb = template_list_data[parseInt(alias_splits[1])];
-        bb.boundingBox = { ...bb.boundingBox, x: atom.location[0], y: atom.location[1], z: 0 };
-        collected_images.push(bb);
-      }
-    }
-  }
-  return { c_images: collected_images, molfileData: latestData };
 };
 
 // helper function to return a new image in imagesList with a location
@@ -159,71 +171,114 @@ const isNewAtom = (eventItem) => {
   return eventItem.label === inspired_label;
 };
 
-// remove image from the template
-const removeImageTemplateAtom = async (images, mols, latestData) => {
-  try {
-    let container = [];
-    let indexFound = 0;
+//  Removes a molecule from `data` and updates the root node structure.
+const removeMoleculeFromData = (data, molKey) => {
+  // Remove the molecule
+  delete data[molKey];
 
-    for (let m = 0; m < mols.length; m++) {
-      const mol = latestData[mols[m]];
-      const atoms_list = mol?.atoms || [];
-      let bonds_list = mol?.bonds || [];
-      if (mol && mol?.atoms) {
-        // Iterate backwards to avoid index-shifting issues
-        for (let i = atoms_list.length - 1; i >= 0; i--) {
-          const atom = mol.atoms[i];
-          const updatedBondsList = [];
+  // Filter out the node referencing the removed molecule
+  data.root.nodes = data.root.nodes.filter(node => node.$ref !== molKey);
+  return data;
+};
 
-          if (atom?.alias && atom.label == inspired_label) {
-            const splits_2 = parseInt(atom.alias.split("_")[2]);
-            const has_idx = images.has(splits_2);
-            if (has_idx) {
-              images.delete(splits_2);
-              container.push(splits_2);
-              indexFound++;
-
-              // Update bonds to reflect the removal of the atom
-              for (let ba of bonds_list) {
-                if (!ba.atoms.includes(i)) {
-                  const adjustedAtoms = ba.atoms.map(j => (j > i ? j - 1 : j));
-                  updatedBondsList.push({ ...ba, atoms: adjustedAtoms });
-                }
-              }
-              bonds_list = updatedBondsList;
-
-              // Remove the atom
-              atoms_list.splice(i, 1);
-            }
-          }
-        }
-
-        // Update aliases and manage remaining data
-        if (atoms_list.length) {
-          for (let img_i = 0; img_i < container.length; img_i++) {
-            const img_idx = container[img_i];
-            for (let i = 0; i < atoms_list.length; i++) {
-              const atom = atoms_list[i];
-              if (atom?.alias && atom.label == inspired_label) {
-                const splits = atom.alias.split("_");
-                if (parseInt(splits[2]) > img_idx) {
-                  atoms_list[i].alias = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
-                }
-              }
-            }
-          }
-          mol.atoms = atoms_list;
-          mol.bonds = bonds_list;
-          latestData[mols[m]] = mol;
-        } else {
-          // Remove the molecule if no atoms remain
-          delete latestData[mols[m]];
-          const atom_removed_when_empty = latestData.root.nodes.filter(item => item.$ref != mols[m]);
-          latestData.root.nodes = atom_removed_when_empty;
+// Updates atom aliases in a molecule after removing certain images and updates the molecule data.
+const updateMoleculeAliases = async (container, atoms_list) => {
+  for (let img_i = 0; img_i < container.length; img_i++) {
+    const img_idx = container[img_i];
+    for (let i = 0; i < atoms_list.length; i++) {
+      const atom = atoms_list[i];
+      if (atom?.alias && atom.label == inspired_label) {
+        const splits = atom.alias.split("_");
+        if (parseInt(splits[2]) > img_idx) {
+          atoms_list[i].alias = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
         }
       }
     }
-    return { latestData, container: indexFound };
+  }
+  return atoms_list;
+};
+
+const updateBondList = (indexToMatch, bondList) => {
+  // Update bonds to reflect the removal of the atom
+  let list = [];
+  for (let ba of bondList) {
+    if (!ba.atoms.includes(indexToMatch)) {
+      const adjustedAtoms = ba.atoms.map(j => (j > indexToMatch ? j - 1 : j));
+      list.push({ ...ba, atoms: adjustedAtoms });
+    }
+  }
+  return list;
+};
+
+// Removes atoms that match specific criteria, updates bonds, and collects removed indices.
+const removeAndUpdateAtoms = async (atomsList, bondsList, images, container) => {
+  let imageFoundIndex = 0;
+  // Iterate backwards to avoid index-shifting issues
+  for (let i = atomsList.length - 1; i >= 0; i--) {
+    const atom = atomsList[i];
+
+    if (atom?.alias && atom.label === inspired_label) {
+      const imgIndex = parseInt(atom.alias.split("_")[2]);
+      if (images.has(imgIndex)) {
+        container.push(imgIndex);
+        bondsList = updateBondList(i, bondsList); // Update bonds to reflect the removal of the atom
+        atomsList.splice(i, 1); // Remove the atom
+        images.delete(imgIndex); // Remove the index from the images set
+        imageFoundIndex++; // Increment counter for found images
+      }
+    }
+  }
+  return {
+    updatedAtoms: atomsList,
+    updatedBonds: bondsList,
+    removedIndices: container,
+    removedCount: imageFoundIndex,
+  };
+};
+
+// Updates molecule data or removes it from the dataset based on the atoms list.
+const updateOrRemoveMolecule = async (molecule, data, molKey, container, atomsList, bondsList) => {
+  if (atomsList.length) {
+    // Molecule has atoms, update its data
+    molecule.atoms = await updateMoleculeAliases(container, atomsList);
+    molecule.bonds = bondsList;
+    data[molKey] = molecule;
+  } else {
+    // Molecule has no atoms, remove it from the data
+    data = removeMoleculeFromData(data, molKey);
+  }
+  return data;
+};
+
+// remove image from the template
+const removeImageTemplateAtom = async (images, mols, data) => {
+  try {
+    let container = [];
+    let imageFoundIndexCount = 0;
+
+    for (const molKey of mols) {
+      console.log(molKey);
+      const molecule = data[molKey];
+      if (!molecule || !molecule.atoms) continue;
+      let atoms_list = molecule?.atoms || [];
+      let bonds_list = molecule?.bonds || [];
+
+      console.log("Starting source", atoms_list);
+      // step 1: remove atoms and bonds based on images list
+      const { updatedAtoms, updatedBonds, removedIndices, removedCount } = await removeAndUpdateAtoms(atoms_list, bonds_list, images, container);
+
+      // step 2: data filler
+      atoms_list = updatedAtoms;
+      bonds_list = updatedBonds;
+      imageFoundIndexCount += removedCount; // Update total found count
+      container.push(...removedIndices); // Collect removed indices
+
+      // step 3: Updates molecule data or delete atoms if empty
+
+      //TODO: start from here!
+      // data = await updateOrRemoveMolecule(molecule, data, molKey, container, atoms_list, bonds_list);
+    }
+    return { latestData: data, imageFoundIndexCount };
   } catch (err) {
     console.error("removeImageTemplateAtom", err.message);
   }
@@ -286,7 +341,6 @@ const makeTransparentByTitle = (iframeDocument) => {
     }
   });
 };
-
 
 // funcation to disable canvas button based on title
 const disableButton = (iframeDocument, title) => {
@@ -359,7 +413,6 @@ export {
   // methods
   hasKetcherData,
   adding_polymers_ketcher_format,
-  adding_polymers_indigo_molfile,
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
   isNewAtom,
