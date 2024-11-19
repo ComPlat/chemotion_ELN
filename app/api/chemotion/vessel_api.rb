@@ -70,6 +70,9 @@ module Chemotion
         requires :id, type: String, desc: 'id of vessel instance to load'
       end
       get ':id' do
+        if params[:id] == 'new'
+          return present Vessel.new, with: Entities::VesselInstanceEntity
+        end
         begin
           vessel = Vessel.find(params[:id])
         rescue ActiveRecord::RecordNotFound
