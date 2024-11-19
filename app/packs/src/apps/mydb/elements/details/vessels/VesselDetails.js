@@ -29,10 +29,10 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const [activeTab, setActiveTab] = useState('tab1');
   const [readOnly, setReadOnly] = useState(isReadOnly());
 
-  // useEffect(() => {
-  //   context.vesselDetailsStore.convertVesselToModel(vesselItem);
-  //   setReadOnly(isReadOnly());
-  // }, [vesselItem]);
+  useEffect(() => {
+    context.vesselDetailsStore.convertVesselToModel(vesselItem);
+    setReadOnly(isReadOnly());
+  }, [vesselItem]);
 
   const handleSubmit = (vesselItem) => {
     const mobXItem = context.vesselDetailsStore.getVessel(vesselItem.id);
@@ -192,15 +192,15 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   );
 }
 
-VesselDetails.propTypes = {
-  vesselItem: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    itemName: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    short_label: PropTypes.string.isRequired,
-    is_new: PropTypes.bool.isRequired,
-  }).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired
-};
+// VesselDetails.propTypes = {
+//   vesselItem: PropTypes.shape({
+//     id: PropTypes.string.isRequired,
+//     itemName: PropTypes.string.isRequired,
+//     name: PropTypes.string.isRequired,
+//     short_label: PropTypes.string.isRequired,
+//     is_new: PropTypes.bool.isRequired,
+//   }).isRequired,
+//   toggleFullScreen: PropTypes.func.isRequired
+// };
 
 export default observer(VesselDetails);
