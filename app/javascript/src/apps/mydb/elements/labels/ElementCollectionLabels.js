@@ -132,7 +132,7 @@ export default class ElementCollectionLabels extends React.Component {
 
 ElementCollectionLabels.propTypes = {
   element: PropTypes.shape({
-    id: PropTypes.number,
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     type: PropTypes.string,
     tag: PropTypes.shape({
       taggable_data: PropTypes.shape({
