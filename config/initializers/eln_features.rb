@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-# TODO: clarify what this is and why it is used in the message api
-# pack_path = Webpacker.manifest.send(:data)&.fetch('application.js', nil)
-# ENV['VERSION_ASSETS'] = pack_path && File.basename(pack_path)
+pack_path = Shakapacker.manifest.send(:data)&.fetch('application.js', nil)
+ENV['VERSION_ASSETS'] = pack_path && File.basename(pack_path)
 
 ActiveSupport.on_load(:active_record) do
   # config.eln_features = ActiveSupport::OrderedOptions.new
