@@ -20,8 +20,8 @@ const VesselItem = types
     changed: false
   })
   .actions((self) => ({
-    markChanged() {
-      self.changed = true;
+    markChanged(newChanged) {
+      self.changed = newChanged;
     },
     setName(newName) {
       self.name = newName;
@@ -147,7 +147,7 @@ export const VesselDetailsStore = types
       }
     },
     convertVesselToModel(jsVesselModel) {
-      if (self.vesselItem.has(jsVesselModel.id)) {
+      if (self.vessels.has(jsVesselModel.id)) {
         return;
       }
 
@@ -199,15 +199,15 @@ export const VesselDetailsStore = types
     getVessel(id) {
       return self.vessels.get(id);
     },
-    getAllVessels() {
-      return Array.from(self.vessels.values());
-    },
-    hasVessel(id) {
-      return self.vessels.has(id);
-    },
+    // getAllVessels() {
+    //   return Array.from(self.vessels.values());
+    // },
+    // hasVessel(id) {
+    //   return self.vessels.has(id);
+    // },
     checkInputValidity(id) {
       const result = [];
-      const item = self.VesselItem.get(id);
+      const item = self.vessels.get(id);
       if (item.name.trim() === '') { result.push('name'); }
       // if (item.source.trim() === '') { result.push('source'); }
       if (item.unit.trim() === '') { result.push('unit'); }
