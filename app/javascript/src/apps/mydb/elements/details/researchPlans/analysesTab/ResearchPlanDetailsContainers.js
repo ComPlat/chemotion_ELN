@@ -1,6 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Accordion, Card } from 'react-bootstrap';
+import {
+  Button,
+  Accordion,
+  Card,
+  ButtonToolbar
+} from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
@@ -18,12 +23,14 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import { truncateText } from 'src/utilities/textHelper';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeContainer: 0
+      activeContainer: 0,
+      commentBoxVisible: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -162,9 +169,19 @@ export default class ResearchPlanDetailsContainers extends Component {
     return null;
   }
 
+  handleCommentTextChange = (e) => {
+    const { researchPlan } = this.props;
+    researchPlan.container.description = e.target.value;
+    this.handleChange(researchPlan);
+  };
+
+  toggleCommentBox = () => {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
+  };
+
   render() {
     const { researchPlan, readOnly } = this.props;
-    const { activeContainer } = this.state;
+    const { activeContainer, commentBoxVisible } = this.state;
 
     const containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
@@ -267,8 +284,18 @@ export default class ResearchPlanDetailsContainers extends Component {
         return (
           <div>
             <div className="my-2 mx-3 d-flex justify-content-end">
-              {this.addButton()}
+              <ButtonToolbar className="gap-1">
+                <div className="mt-2">
+                  <CommentButton toggleCommentBox={this.toggleCommentBox} size="sm" />
+                </div>
+                {this.addButton()}
+              </ButtonToolbar>
             </div>
+            <CommentBox
+              isVisible={commentBoxVisible}
+              value={researchPlan.container.description}
+              handleCommentTextChange={this.handleCommentTextChange}
+            />
             <Accordion
               className="border rounded overflow-hidden"
               onSelect={this.handleAccordionOpen}

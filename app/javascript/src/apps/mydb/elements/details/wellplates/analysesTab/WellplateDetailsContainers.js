@@ -7,7 +7,7 @@ import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
-import { CommentButton, CommentBox } from 'src/components/common/CommentBoxComponent';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {

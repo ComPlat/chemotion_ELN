@@ -11,7 +11,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeRow';
 import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
-import { CommentButton, CommentBox } from 'src/components/common/CommentBoxComponent';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 class AnalysesContainer extends Component {
   // eslint-disable-next-line react/static-property-placement
