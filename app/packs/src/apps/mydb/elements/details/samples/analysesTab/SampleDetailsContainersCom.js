@@ -8,7 +8,7 @@ import {
   AnalysisModeToggle,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
-import { CommentButton, CommentBox } from 'src/components/common/CommentBoxComponent';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 function RndNotAvailable() {
   return (
