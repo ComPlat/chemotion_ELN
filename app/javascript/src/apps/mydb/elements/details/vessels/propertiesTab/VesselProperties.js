@@ -27,33 +27,33 @@ const VesselProperties = ({ item, readOnly }) => {
         <Accordion.Body>
           <VesselProperty
             label="Name"
-            value={vesselItem.name}
+            value={vesselItem?.name}
             onChange={(e) => vesselDetailsStore.changeName(vesselId, e.target.value)}
             readOnly={readOnly}
           />
           <VesselProperty
             label="Details"
-            value={vesselTemplate.details || ''}
+            value={vesselTemplate?.details || ''}
             onChange={(e) => vesselDetailsStore.changeDetails(vesselId, e.target.value)}
             readOnly={readOnly}
             optional
           />
           <VesselProperty
             label="Material Type"
-            value={vesselTemplate.material_type || ''}
+            value={vesselTemplate?.material_type || ''}
             onChange={(e) => vesselDetailsStore.changeMaterialType(vesselId, e.target.value)}
             readOnly={readOnly}
           />
           <VesselProperty
             label="Vessel Type"
-            value={vesselTemplate.vessel_type || ''}
+            value={vesselTemplate?.vessel_type || ''}
             onChange={(e) => vesselDetailsStore.changeVesselType(vesselId, e.target.value)}
             readOnly={readOnly}
             optional
           />
           <VesselProperty
             label="Volume Amount"
-            value={vesselTemplate.volume_amount || ''}
+            value={vesselTemplate?.volume_amount || ''}
             onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
             isNumeric
@@ -61,14 +61,14 @@ const VesselProperties = ({ item, readOnly }) => {
           />
           <VesselProperty
             label="Volume Unit"
-            value={vesselItem.volume_unit}
+            value={vesselItem?.volume_unit}
             onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
             optional
           />
           <VesselProperty
             label="Weight Amount"
-            value={vesselItem.weight_amount}
+            value={vesselItem?.weight_amount}
             onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
             isNumeric
@@ -76,7 +76,7 @@ const VesselProperties = ({ item, readOnly }) => {
           />
           <VesselProperty
             label="Weight Unit"
-            value={vesselItem.weight_amount}
+            value={vesselItem?.weight_amount}
             onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
             readOnly={readOnly}
             optional
@@ -87,11 +87,11 @@ const VesselProperties = ({ item, readOnly }) => {
   );
 };
 
-VesselProperties.propTypes = {
-  readOnly: PropTypes.bool.isRequired,
-  item: PropTypes.shape({
-    id: PropTypes.string.isRequired
-  }).isRequired
-};
+// VesselProperties.propTypes = {
+//   readOnly: PropTypes.bool.isRequired,
+//   item: PropTypes.shape({
+//     id: PropTypes.string.isRequired
+//   }).isRequired
+// };
 
 export default observer(VesselProperties);

@@ -136,31 +136,7 @@ export default class ElementDetails extends Component {
       return <GenericElDetails genericEl={el} />;
     }
 
-    const vesselElement = {
-      "id": "b8ee0f9e-5097-4d47-b838-75478474ef66",
-      "name": "test vessel",
-      "short_label": "BAA-V2.1",
-      "description": null,
-      "vessel_template": {
-        "id": "76f09dce-09ce-46fc-874e-c71fbe826724",
-        "name": "latest vessel created",
-        "details": null,
-        "material_details": null,
-        "material_type": "silicone",
-        "vessel_type": "beaker",
-        "volume_amount": null,
-        "volume_unit": null,
-        "created_at": "2024-10-23T13:25:56.887Z",
-        "updated_at": "2024-10-23T13:57:14.634Z",
-        "deleted_at": null,
-        "weight_amount": null,
-        "weight_unit": null
-      },
-      "bar_code": "trailiw86e7c hdsbgrittovl hkfgdsfre",
-      "qr_code": null
-    };
-
-    console.log(vesselElement);
+    // console.log(el);
 
     switch (el.type) {
       case 'sample':
@@ -190,10 +166,8 @@ export default class ElementDetails extends Component {
         return <ComputeTaskContainer task={el} />;
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
-      // case 'cell_line':
-      //   return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
       case 'cell_line':
-        return <VesselDetails vesselItem={vesselElement} toggleFullScreen={this.toggleFullScreen} />;
+        return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
       case 'vessel':
         return <VesselDetails vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
       default:
