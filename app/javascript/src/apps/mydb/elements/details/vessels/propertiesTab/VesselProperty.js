@@ -4,7 +4,7 @@ import { Row, Col, Form } from 'react-bootstrap';
 
 const VesselProperty = ({ label, value, onChange, readOnly, isNumeric = false, optional = false }) => {
   let styleClass = '';
-  if (!optional && !readOnly) {
+  if ( value && !optional && !readOnly) {
     if (isNumeric) {
       styleClass = Number.isFinite(value) && value > 0 ? '' : 'invalid-input';
     } else {
@@ -28,13 +28,13 @@ const VesselProperty = ({ label, value, onChange, readOnly, isNumeric = false, o
   );
 };
 
-VesselProperty.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  onChange: PropTypes.func.isRequired,
-  readOnly: PropTypes.bool.isRequired,
-  isNumeric: PropTypes.bool,
-  optional: PropTypes.bool
-};
+// VesselProperty.propTypes = {
+//   label: PropTypes.string.isRequired,
+//   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+//   onChange: PropTypes.func.isRequired,
+//   readOnly: PropTypes.bool.isRequired,
+//   isNumeric: PropTypes.bool,
+//   optional: PropTypes.bool
+// };
 
 export default VesselProperty;

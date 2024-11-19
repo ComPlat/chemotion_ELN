@@ -6,14 +6,14 @@ export default class Vessel extends Element {
     if (collectionId === undefined || !Number.isInteger(Number(collectionId))) {
       throw new Error(`collection id is not valid: ${collectionId}`);
     }
-    const Vessel = new Vessel({
+    const vessel = new Vessel({
       container: Container.init(),
       collectionId: Number(collectionId),
       type: 'vessel',
       short_label: shortLabelIn
     });
 
-    return Vessel;
+    return vessel;
   }
 
   title() {
@@ -22,22 +22,22 @@ export default class Vessel extends Element {
 
   static createFromRestResponse(collectionId, response) {
     const vessel = Vessel.buildEmpty(collectionId, response.short_label);
-    vessel.vesselInstanceName = response.name;
-    vessel.vesselInstanceDescription = response.description;
+    vessel.vesselInstanceName = response.name || '';
+    vessel.vesselInstanceDescription = response.description || '';
     vessel.barCode = response.bar_code;
     vessel.qrCode = response.qr_code;
-    vessel.id = response.id;
+    vessel.id = response.id || '';
     // Vessel.tag = response.tag;
 
-    vessel.vesselName = response.vessel_template.name;
-    vessel.materialDetails = response.vessel_template.material_details;
-    vessel.materialType = response.vessel_template.material_type;
-    vessel.vesselType = response.vessel_template.vessel_type;
-    vessel.volumeAmount = response.vessel_template.volume_amount;
-    vessel.volumeUnit = response.vessel_template.volume_unit;
-    vessel.weight = response.vessel_template.weight_amount;
-    vessel.weightUnit = response.vessel_template.weight_unit;
-    vessel.details = response.vessel_template.details;
+    vessel.vesselName = response?.vessel_template?.name  || '';
+    vessel.materialDetails = response?.vessel_template?.material_details || '';
+    vessel.materialType = response?.vessel_template?.material_type || '';
+    vessel.vesselType = response?.vessel_template?.vessel_type || '';
+    vessel.volumeAmount = response?.vessel_template?.volume_amount || '';
+    vessel.volumeUnit = response?.vessel_template?.volume_unit || '';
+    vessel.weight = response?.vessel_template?.weight_amount || '';
+    vessel.weightUnit = response?.vessel_template?.weight_unit || '';
+    vessel.details = response?.vessel_template?.details || '';
     vessel.is_new = false;
 
     Vessel.container = response.container;
