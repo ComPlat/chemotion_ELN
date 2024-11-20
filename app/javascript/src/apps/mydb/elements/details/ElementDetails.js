@@ -136,8 +136,6 @@ export default class ElementDetails extends Component {
       return <GenericElDetails genericEl={el} />;
     }
 
-    // console.log(el);
-
     switch (el.type) {
       case 'sample':
         return <SampleDetails sample={el} />;
