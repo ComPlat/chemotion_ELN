@@ -957,7 +957,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center flex-wrap gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span className="flex-shrink-0">
               <i className="icon-sample me-1" />
