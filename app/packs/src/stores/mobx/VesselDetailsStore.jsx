@@ -20,8 +20,8 @@ const VesselItem = types
     changed: false
   })
   .actions((self) => ({
-    markChanged() {
-      self.changed = true;
+    markChanged(newChanged) {
+      self.changed = newChanged;
     },
     setName(newName) {
       self.name = newName;

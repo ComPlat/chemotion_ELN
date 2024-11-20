@@ -50,6 +50,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const handleClose = (vesselItem) => {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
+    console.log('vesselItem passed to handleClose:', vesselItem);
     if (!mobXItem.changed || window.confirm('Unsaved data will be lost. Close sample?')) {
       vesselDetailsStore.removeVesselFromStore(vesselItem.id);
       DetailActions.close(vesselItem, true);

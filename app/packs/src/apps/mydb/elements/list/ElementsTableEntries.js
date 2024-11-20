@@ -66,7 +66,9 @@ function reactionVariations(element) {
 
 function showDetails(element) {
   const { currentCollection, isSync } = UIStore.getState();
+  console.log('Before destructuring: ', element);
   const { id, type } = element;
+  console.log('type', type)
   const uri = isSync
     ? `/scollection/${currentCollection.id}/${type}/${id}`
     : `/collection/${currentCollection.id}/${type}/${id}`;
