@@ -29,13 +29,13 @@ export default class Vessel extends Element {
     vessel.id = response.id || '';
     // Vessel.tag = response.tag;
 
-    vessel.vesselName = response?.vessel_template?.name  || '';
+    vessel.vesselName = response?.vessel_template?.name || '';
     vessel.materialDetails = response?.vessel_template?.material_details || '';
     vessel.materialType = response?.vessel_template?.material_type || '';
     vessel.vesselType = response?.vessel_template?.vessel_type || '';
-    vessel.volumeAmount = response?.vessel_template?.volume_amount || '';
+    vessel.volumeAmount = response?.vessel_template?.volume_amount || 0;
     vessel.volumeUnit = response?.vessel_template?.volume_unit || '';
-    vessel.weight = response?.vessel_template?.weight_amount || '';
+    vessel.weight = response?.vessel_template?.weight_amount || 0;
     vessel.weightUnit = response?.vessel_template?.weight_unit || '';
     vessel.details = response?.vessel_template?.details || '';
     vessel.is_new = false;
@@ -58,7 +58,7 @@ export default class Vessel extends Element {
   }
 
   adoptPropsFromMobXModel(mobx) {
-    this.name = mobx.VesselName;
+    this.name = mobx.vesselName;
     this.details = mobx.itemDescription;
     this.materialDetails = mobx.materialDescription;
     this.materialType = mobx.materialType;

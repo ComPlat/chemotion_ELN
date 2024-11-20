@@ -3,8 +3,8 @@ import { types } from 'mobx-state-tree';
 
 const VesselItem = types
   .model({
-    id: types.identifier,
-    name: '',
+    id: '',
+    vesselName: '',
     details: '',
     materialDetails: '',
     materialType: '',
@@ -17,56 +17,13 @@ const VesselItem = types
     vesselInstanceDescription: '',
     qrCode: '',
     barCode: '',
+    shortLabel: types.maybeNull(types.string),
     changed: false
   })
   .actions((self) => ({
     markChanged(newChanged) {
       self.changed = newChanged;
     },
-    setName(newName) {
-      self.name = newName;
-      self.markChanged();
-    },
-    setDetails(newDetails) {
-      self.details = newDetails;
-      self.markChanged();
-    },
-    setMaterialDetails(newMaterialDetails) {
-      self.materialDetails = newMaterialDetails;
-      self.markChanged();
-    },
-    setMaterialType(newMaterialType) {
-      self.materialType = newMaterialType;
-      self.markChanged();
-    },
-    setVesselType(newVesselType) {
-      self.vesselType = newVesselType;
-      self.markChanged();
-    },
-    setVolumeAmount(newVolumeAmount) {
-      self.volumeAmount = newVolumeAmount;
-      self.markChanged();
-    },
-    setVolumeUnit(newVolumeUnit) {
-      self.volumeUnit = newVolumeUnit;
-      self.markChanged();
-    },
-    setWeightAmount(newWeightAmount) {
-      self.weightAmount = newWeightAmount;
-      self.markChanged();
-    },
-    setWeightUnit(newWeightUnit) {
-      self.weightUnit = newWeightUnit;
-      self.markChanged();
-    },
-    setVesselInstanceName(newName) {
-      self.vesselInstanceName = newName;
-      self.markChanged();
-    },
-    setVesselInstanceDescription(newDescription) {
-      self.vesselInstanceDescription = newDescription;
-      self.markChanged();
-    }
   }));
 
 export const VesselDetailsStore = types
@@ -81,130 +38,104 @@ export const VesselDetailsStore = types
       self.vessels.delete(id);
     },
     changeName(id, newName) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setName(newName);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).vesselName = newName;
     },
     changeDetails(id, newDetails) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setDetails(newDetails);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).details = newDetails;
     },
     changeMaterialDetails(id, newMaterialDetails) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setMaterialDetails(newMaterialDetails);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).materialDetails = newMaterialDetails;
     },
     changeMaterialType(id, newMaterialType) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setMaterialType(newMaterialType);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).materialType = newMaterialType;
     },
     changeVesselType(id, newVesselType) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setVesselType(newVesselType);
-      }
+self.vessels.get(id).changed = true;
+      self.vessels.get(id).vesselType = newVesselType;
     },
     changeVolumeAmount(id, newVolumeAmount) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setVolumeAmount(newVolumeAmount);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).volumeAmount = newVolumeAmount;
     },
     changeVolumeUnit(id, newVolumeUnit) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setVolumeUnit(newVolumeUnit);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).volumeUnit = newVolumeUnit;
     },
     changeWeightAmount(id, newWeightAmount) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setWeightAmount(newWeightAmount);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).weightAmount = newWeightAmount;
     },
     changeWeightUnit(id, newWeightUnit) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setWeightUnit(newWeightUnit);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).weightUnit = newWeightUnit;
     },
-    changeVesselInstanceName(id, newName) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setVesselInstanceName(newName);
-      }
+    changeVesselInstanceName(id, newInstanceName) {
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).vesselInstanceName = newInstanceName;
     },
     changeVesselInstanceDescription(id, newDescription) {
-      const vessel = self.vessels.get(id);
-      if (vessel) {
-        vessel.setVesselInstanceDescription(newDescription);
-      }
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).vesselInstanceDescription = newDescription;
+    },
+    changeBarCode(id, newBarCode) {
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).barCode = newBarCode;
+    },
+    changeQrCode(id, newQrCode) {
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).qrCode = newQrCode;
     },
     convertVesselToModel(jsVesselModel) {
+      const vesselId = jsVesselModel.id ? jsVesselModel.id.toString() : `new-${Date.now()}`;
+      console.log("Generated Vessel ID:", vesselId); // Debugging
       if (self.vessels.has(jsVesselModel.id)) {
         return;
       }
 
-      // self.cellLineItem.set(jsCellLineModel.id, CellLineItem.create({
-      //   cellLineId: jsCellLineModel.cellLineId,
-      //   id: jsCellLineModel.id.toString(),
-      //   organism: jsCellLineModel.organism,
-      //   tissue: jsCellLineModel.tissue,
-      //   cellType: jsCellLineModel.cellType,
-      //   mutation: jsCellLineModel.mutation,
-      //   disease: jsCellLineModel.disease,
-      //   itemDescription: jsCellLineModel.itemComment,
-      //   bioSafetyLevel: jsCellLineModel.bioSafetyLevel,
-      //   variant: jsCellLineModel.variant,
-      //   optimalGrowthTemperature: jsCellLineModel.optimal_growth_temp,
-      //   cryopreservationMedium: jsCellLineModel.cryopreservationMedium,
-      //   cellLineName: jsCellLineModel.cellLineName,
-      //   materialDescription: jsCellLineModel.materialDescription,
-      //   gender: jsCellLineModel.gender,
-      //   amount: jsCellLineModel.amount,
-      //   unit: jsCellLineModel.unit,
-      //   passage: jsCellLineModel.passage,
-      //   contamination: jsCellLineModel.contamination,
-      //   source: jsCellLineModel.source,
-      //   growthMedium: jsCellLineModel.growthMedium,
-      //   itemName: jsCellLineModel.itemName,
-      //   shortLabel: jsCellLineModel.short_label,
-      // }));
+      self.vessels.set(vesselId, VesselItem.create({
+        // cellLineId: jsVesselModel.cellLineId,
+        id: vesselId,
+        name: jsVesselModel.name || '',
+        details: jsVesselModel.details || '',
+        materialDetails: jsVesselModel.materialDetails || '',
+        materialType: jsVesselModel.materialType || '',
+        vesselType: jsVesselModel.vesselType || '',
+        volumeAmount: jsVesselModel.volumeAmount || 0,
+        volumeUnit: jsVesselModel.volumeUnit || '',
+        weightAmount: jsVesselModel.weightAmount || 0,
+        weightUnit: jsVesselModel.weightUnit || '',
+        vesselInstanceName: jsVesselModel.vesselInstanceName || '',
+        vesselInstanceDescription: jsVesselModel.vesselInstanceDescription || '',
+        qrCode: jsVesselModel.qrCode || '',
+        barCode: jsVesselModel.barCode || '',
+        shortLabel: jsVesselModel.short_label || '',
+      }));
     },
     setMaterialProperties(id, properties) {
       const item = self.vessels.get(id);
       if (item === undefined) {
         throw new Error(`No vessel with id found: ${id}`);
       }
-      item.setName(properties.name);
-      item.setDetails(properties.details);
-      item.setMaterialDetails(properties.materialDetails);
-      item.setMaterialType(properties.materialType);
-      item.setVesselType(properties.vesselType);
-      item.setVolumeAmount(properties.volumeAmount);
-      item.setVolumeUnit(properties.volumeUnit);
-      item.setWeightAmount(properties.weightAmount);
-      item.setWeightUnit(properties.weightUnit);
-      item.setVesselInstanceName(properties.vesselInstanceName);
-      item.setVesselInstanceDescription(properties.vesselInstanceDescription);
+      //name vs vesselName to be verified
+      item.vesselName = properties.name;
+      item.details = properties.details;
+      item.materialDetails = properties.materialDetails;
+      item.materialType = properties.materialType;
+      item.vesselType = properties.vesselType;
+      item.volumeAmount = properties.volumeAmount;
+      item.volumeUnit = properties.volumeUnit;
+      item.weightAmount = properties.weightAmount;
+      item.weightUnit = properties.weightUnit;
     }
   }))
   .views((self) => ({
     getVessel(id) {
       return self.vessels.get(id);
     },
-    // getAllVessels() {
-    //   return Array.from(self.vessels.values());
-    // },
-    // hasVessel(id) {
-    //   return self.vessels.has(id);
-    // },
     checkInputValidity(id) {
       const result = [];
       const item = self.vessels.get(id);

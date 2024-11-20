@@ -1,5 +1,5 @@
 /* eslint-disable react/function-component-definition */
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Accordion } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
@@ -8,78 +8,113 @@ import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
 
 const VesselProperties = ({ item, readOnly }) => {
-
-  console.log('item: ', item);
   const { vesselDetailsStore } = useContext(StoreContext);
-  // const vesselItem = vesselDetailsStore.getVessel(item.id);
-  const vesselItem = item;
-  const vesselTemplate = item.vessel_template;
-  console.log('vesselItem in VesselProperties: ', vesselItem);
-  const vesselId = vesselItem.id;
+  const vesselId = item.id;
+  const vesselItem = vesselDetailsStore.vessels.get(vesselId);
+
+  const [typing, setTyping] = useState(false);
+
+  
 
   return (
     <Accordion className="vessel-properties" defaultActiveKey="common-properties">
       <Accordion.Item eventKey="common-properties">
         <Accordion.Header>
           {/* <InvalidPropertyWarning item={item} propsToCheck={['name', 'material_type']} /> */}
-          Vessel Properties
+          Common vessel properties
         </Accordion.Header>
         <Accordion.Body>
           <VesselProperty
             label="Name"
-            value={vesselItem?.name}
-            onChange={(e) => vesselDetailsStore.changeName(vesselId, e.target.value)}
-            readOnly={readOnly}
+            value={vesselItem?.vesselName || ''}
+            onChange={(e) => {
+              // handleButtonClick();
+              vesselDetailsStore.changeName(vesselId, e.target.value);
+            }}
+            // readOnly={readOnly}
           />
           <VesselProperty
             label="Details"
-            value={vesselTemplate?.details || ''}
+            value={vesselItem?.details || ''}
             onChange={(e) => vesselDetailsStore.changeDetails(vesselId, e.target.value)}
-            readOnly={readOnly}
+            // readOnly={readOnly}
             optional
           />
           <VesselProperty
-            label="Material Type"
-            value={vesselTemplate?.material_type || ''}
+            label="Material type"
+            value={vesselItem?.materialType || ''}
             onChange={(e) => vesselDetailsStore.changeMaterialType(vesselId, e.target.value)}
-            readOnly={readOnly}
+            // readOnly={readOnly}
           />
           <VesselProperty
-            label="Vessel Type"
-            value={vesselTemplate?.vessel_type || ''}
+            label="Vessel type"
+            value={vesselItem?.vesselType || ''}
             onChange={(e) => vesselDetailsStore.changeVesselType(vesselId, e.target.value)}
-            readOnly={readOnly}
+            // readOnly={readOnly}
             optional
           />
           <VesselProperty
-            label="Volume Amount"
-            value={vesselTemplate?.volume_amount || ''}
+            label="Volume amount"
+            value={vesselItem?.volumeAmount || 0 }
             onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
-            readOnly={readOnly}
+            // readOnly={readOnly}
             isNumeric
             optional
           />
           <VesselProperty
-            label="Volume Unit"
-            value={vesselItem?.volume_unit}
-            onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
-            readOnly={readOnly}
+            label="Volume unit"
+            value={vesselItem?.volumeUnit || ''}
+            onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, e.target.value)}
+            // readOnly={readOnly}
             optional
           />
           <VesselProperty
-            label="Weight Amount"
-            value={vesselItem?.weight_amount}
+            label="Weight amount"
+            value={vesselItem?.weightAmount || 0}
             onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
-            readOnly={readOnly}
+            // readOnly={readOnly}
             isNumeric
             optional
           />
           <VesselProperty
-            label="Weight Unit"
-            value={vesselItem?.weight_amount}
-            onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
+            label="Weight unit"
+            value={vesselItem?.weightUnit || ''}
+            onChange={(e) => vesselDetailsStore.changeWeightUnit(vesselId, e.target.value)}
             readOnly={readOnly}
             optional
+          />
+        </Accordion.Body>
+      </Accordion.Item>
+
+      <Accordion.Item eventKey="specific-properties">
+        <Accordion.Header>
+          {/* <InvalidPropertyWarning item={item} propsToCheck={['passage', 'amount', 'unit']} /> */}
+          Item specific vessel properties
+        </Accordion.Header>
+        <Accordion.Body>
+          <VesselProperty
+            label="Vessel instance name"
+            value={vesselItem?.vesselInstanceName}
+            onChange={(e) => vesselDetailsStore.changeVesselInstanceName(vesselId, e.target.value)}
+            readOnly={readOnly}
+          />
+          <VesselProperty
+            label="Vessel instance description"
+            value={vesselItem?.vesselInstanceDescription}
+            onChange={(e) => vesselDetailsStore.changeVesselInstanceDescription(vesselId, e.target.value)}
+            readOnly={readOnly}
+          />
+          <VesselProperty
+            label="Barcode"
+            value={vesselItem?.barCode}
+            onChange={(e) => vesselDetailsStore.changeBarCode(vesselId, e.target.value)}
+            readOnly={readOnly}
+          />
+          <VesselProperty
+            label="QR Code"
+            value={vesselItem?.qrCode}
+            onChange={(e) => vesselDetailsStore.changeQrCode(vesselId, e.target.value)}
+            readOnly={readOnly}
           />
         </Accordion.Body>
       </Accordion.Item>
@@ -87,11 +122,11 @@ const VesselProperties = ({ item, readOnly }) => {
   );
 };
 
-// VesselProperties.propTypes = {
-//   readOnly: PropTypes.bool.isRequired,
-//   item: PropTypes.shape({
-//     id: PropTypes.string.isRequired
-//   }).isRequired
-// };
+VesselProperties.propTypes = {
+  readOnly: PropTypes.bool.isRequired,
+  item: PropTypes.shape({
+    id: PropTypes.string.isRequired
+  }).isRequired
+};
 
 export default observer(VesselProperties);

@@ -17,8 +17,6 @@ import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesT
 
 function VesselDetails({ vesselItem, toggleFullScreen }) {
 
-  console.log('vesselItem: ', vesselItem);
-
   const isReadOnly = () => {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
@@ -28,6 +26,8 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
 
   const [activeTab, setActiveTab] = useState('tab1');
   const [readOnly, setReadOnly] = useState(isReadOnly());
+
+  console.log('From vessel details', vesselItem);
 
   useEffect(() => {
     context.vesselDetailsStore.convertVesselToModel(vesselItem);
@@ -44,13 +44,13 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
     } else {
       ElementActions.updateVessel(vesselItem);
     }
-    mobXItem.setChanged(false);
+    mobXItem.markChanged(false);
   };
 
   const handleClose = (vesselItem) => {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
-    console.log('vesselItem passed to handleClose:', vesselItem);
+
     if (!mobXItem.changed || window.confirm('Unsaved data will be lost. Close sample?')) {
       vesselDetailsStore.removeVesselFromStore(vesselItem.id);
       DetailActions.close(vesselItem, true);
@@ -121,6 +121,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
     // const validationInfo = vesselDetailsStore.checkInputValidity(vesselItem.id);
     const disabled = false;
     // const disabled = validationInfo.length > 0 || !mobXItem.changed;
+    // const disabled = !mobXItem.changed;
     const buttonText = vesselItem.is_new ? 'Create' : 'Save';
 
     return (
@@ -170,16 +171,9 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
             <Tab eventKey="tab1" title="Properties" key="tab1">
               <VesselProperties item={vesselItem} readOnly={readOnly} />
             </Tab>
-            {/* <Tab eventKey="tab2" title="Analyses" key="tab2">
-                            <AnalysesContainer item={vesselItem} readOnly={readOnly} />
-                        </Tab>
-                        <Tab eventKey="tab3" title="References" key="tab3" disabled={vesselItem.is_new}>
-                            <DetailsTabLiteratures
-                                readOnly={readOnly}
-                                element={vesselItem}
-                                literatures={vesselItem.is_new ? vesselItem.literatures : null}
-                            />
-                        </Tab> */}
+            <Tab eventKey="tab2" title="Attachments" key="tab2">
+                  Attachments will appear here          {/* <AnalysesContainer item={vesselItem} readOnly={readOnly} /> */}
+            </Tab>
           </Tabs>
         </div>
         <ButtonToolbar className="d-flex gap-1">
