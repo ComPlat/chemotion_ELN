@@ -703,6 +703,7 @@ export default class ElementsList extends React.Component {
           showDragColumn={!overview}
           showDetails={this.showDetails}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
+          initialGroupLimit={type === 'sample' && moleculeSort ? 3 : null}
         />
       );
     } else {

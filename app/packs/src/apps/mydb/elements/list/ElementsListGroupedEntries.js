@@ -19,7 +19,10 @@ export default class ElementsListGroupedEntries extends Component {
       keyboardIndex: null,
       keyboardSelectedElementId: null,
       sortedElementIds: sortedElementIds,
+      groupLimits: {},
     };
+
+    this.showMoreElements = this.showMoreElements.bind(this);
   }
 
   componentDidMount() {
@@ -38,8 +41,26 @@ export default class ElementsListGroupedEntries extends Component {
       const sortedElementIds = Object.values(elementGroups)
         .flatMap((elements) => elements.map(({ id }) => id));
 
-      this.setState({ sortedElementIds });
+      this.setState({
+        sortedElementIds,
+        groupLimits: {},
+      });
     }
+  }
+
+  showMoreElements(group) {
+    const { groupLimits } = this.state;
+    const { initialGroupLimit } = this.props;
+
+    const groupLimit = groupLimits[group] ?? initialGroupLimit;
+    const newGroupLimit = groupLimit + initialGroupLimit;
+
+    this.setState({
+      groupLimits: {
+        ...groupLimits,
+        [group]: newGroupLimit,
+      },
+    });
   }
 
   handleGroupToggle(group) {
@@ -102,12 +123,22 @@ export default class ElementsListGroupedEntries extends Component {
       collapseAll,
       showDetails,
       isElementSelected,
+      initialGroupLimit,
       headerComponent: GroupHeader,
-      elementComponent: GroupElement
+      elementComponent: GroupElement,
     } = this.props;
 
-    const { elementsShown, keyboardSelectedElementId } = this.state;
+    const { elementsShown, keyboardSelectedElementId, groupLimits } = this.state;
     const showGroup = !elementsShown.includes(group) && !collapseAll;
+
+    let groupLimit, limitedElements;
+    if (initialGroupLimit !== null) {
+      groupLimit = groupLimits[group] ?? initialGroupLimit;
+      limitedElements = elements.slice(0, groupLimit);
+    } else {
+      groupLimit = elements.length;
+      limitedElements = elements;
+    }
 
     return (
       <tbody key={`group-header-${group}`} className="sheet">
@@ -118,7 +149,7 @@ export default class ElementsListGroupedEntries extends Component {
           showDragColumn={showDragColumn}
           toggleGroup={() => this.handleGroupToggle(group)}
         />
-        {showGroup && elements.map((element) => (
+        {showGroup && limitedElements.map((element) => (
           <GroupElement
             key={element.id}
             element={element}
@@ -128,6 +159,19 @@ export default class ElementsListGroupedEntries extends Component {
             showDetails={showDetails}
           />
         ))}
+        {groupLimit < limitedElements.length && (
+          <tr>
+            <td colSpan="3" className="p-0">
+              <Button
+                variant="info"
+                onClick={() => this.showMoreElements(group)}
+                className="w-100"
+              >
+                Show more samples
+              </Button>
+            </td>
+          </tr>
+        )}
       </tbody>
     );
   }
@@ -145,6 +189,11 @@ export default class ElementsListGroupedEntries extends Component {
   }
 }
 
+
+ElementsListGroupedEntries.defaultProps = {
+  initialGroupLimit: null,
+};
+
 ElementsListGroupedEntries.propTypes = {
   onChangeCollapse: PropTypes.func.isRequired,
   collapseAll: PropTypes.bool.isRequired,
@@ -152,4 +201,5 @@ ElementsListGroupedEntries.propTypes = {
   isElementSelected: PropTypes.func.isRequired,
   showDragColumn: PropTypes.bool.isRequired,
   showDetails: PropTypes.func.isRequired,
+  initialGroupLimit: PropTypes.number,
 };
