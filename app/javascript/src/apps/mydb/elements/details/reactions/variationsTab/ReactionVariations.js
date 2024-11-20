@@ -24,7 +24,7 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-  EquivalentParser,
+  EquivalentParser, GasParser,
   NoteCellRenderer, NoteCellEditor,
   RowToolsCellRenderer, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
@@ -133,6 +133,12 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       baseDataType: 'object',
       valueFormatter: (params) => `${Number(params.value.yield.value).toPrecision(4)}`,
     },
+    gas: {
+      extendsDataType: 'object',
+      baseDataType: 'object',
+      valueFormatter: MaterialFormatter,
+      valueParser: GasParser,
+    },
   };
 
   const defaultColumnDefinitions = {
@@ -210,6 +216,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       getReactionMaterialsGasTypes(updatedReactionMaterials)
     )
   ) {
+    const updatedReactionVariations = updateVariationsGasTypes(
+      reactionVariations,
+      updatedReactionMaterials,
+      updatedGasMode
+    );
+    setReactionVariations(updatedReactionVariations);
+
     setColumnDefinitions(
       {
         type: 'update_gas_type',
@@ -217,8 +230,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         reactionMaterials: updatedReactionMaterials
       }
     );
-    const updatedReactionVariations = updateVariationsGasTypes(reactionVariations, updatedReactionMaterials);
-    setReactionVariations(updatedReactionVariations);
 
     setReactionMaterials(updatedReactionMaterials);
   }

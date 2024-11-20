@@ -10,9 +10,10 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   updateNonReferenceMaterialOnMassChange,
-  getReferenceMaterial, getMolFromGram, getGramFromMol
+  getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { parseNumericString } from 'src/utilities/MathUtils';
+import { calculateGasMoles, calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
 function RowToolsCellRenderer({
   data: variationsRow, context
@@ -130,6 +131,72 @@ function MaterialParser({
   );
 }
 
+function GasParser({
+  data: variationsRow, oldValue: cellData, newValue, colDef
+}) {
+  const { currentEntry, displayUnit } = colDef.entryDefs;
+  const value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
+
+  switch (currentEntry) {
+    case 'concentration':
+    case 'temperature': {
+      const temperatureInKelvin = convertUnit(
+        updatedCellData.temperature.value,
+        updatedCellData.temperature.unit,
+        'K'
+      );
+      const concentration = updatedCellData.concentration.value;
+      const { vesselVolume } = updatedCellData.aux;
+      const amount = calculateGasMoles(vesselVolume, concentration, temperatureInKelvin);
+      const mass = getGramFromMol(amount, updatedCellData);
+
+      const catalystAmount = getCatalystMaterial(variationsRow).amount.value;
+      const turnoverNumber = calculateTON(amount, catalystAmount);
+
+      const durationInHours = convertUnit(
+        updatedCellData.temperature.value,
+        updatedCellData.temperature.unit,
+        'Hour(s)'
+      );
+      const turnoverFrequency = turnoverNumber / (durationInHours || 1);
+
+      const feedstockPurity = getFeedstockMaterial(variationsRow).aux.purity || 1;
+      const feedstockAmount = calculateFeedstockMoles(vesselVolume, feedstockPurity);
+      const percentYield = (amount / feedstockAmount) * 100;
+
+      updatedCellData = {
+        ...updatedCellData,
+        mass: { ...updatedCellData.mass, value: mass },
+        amount: { ...updatedCellData.amount, value: amount },
+        yield: { ...updatedCellData.yield, value: percentYield },
+        turnoverNumber: { ...updatedCellData.turnoverNumber, value: turnoverNumber },
+        turnoverFrequency: { ...updatedCellData.turnoverFrequency, value: turnoverFrequency }
+      };
+      break;
+    }
+    case 'duration': {
+      const durationInHours = convertUnit(
+        updatedCellData.duration.value,
+        updatedCellData.duration.unit,
+        'Hour(s)'
+      );
+      const turnoverNumber = updatedCellData.turnoverNumber.value;
+      const turnoverFrequency = turnoverNumber / (durationInHours || 1);
+
+      updatedCellData = {
+        ...updatedCellData,
+        turnoverFrequency: { ...updatedCellData.turnoverFrequency, value: turnoverFrequency }
+      };
+      break;
+    }
+    default:
+      break;
+  }
+
+  return updatedCellData;
+}
+
 function NoteCellRenderer(props) {
   return (
     <OverlayTrigger
@@ -232,7 +299,7 @@ MaterialOverlay.propTypes = {
 };
 
 function MenuHeader({
-  column, context, setSort, names
+  column, context, setSort, names, gasType = 'off'
 }) {
   const { setColumnDefinitions } = context;
   const [ascendingSort, setAscendingSort] = useState('inactive');
@@ -242,6 +309,7 @@ function MenuHeader({
   const { field, entryDefs } = column.colDef;
   const { currentEntry, displayUnit, availableEntries } = entryDefs;
   const units = getStandardUnits(currentEntry);
+  const currentEntryTitle = currentEntry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // e.g. 'turnoverNumber' -> 'turnover number'
 
   const onSortChanged = () => {
     setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
@@ -269,7 +337,8 @@ function MenuHeader({
       {
         type: 'update_entry_defs',
         field,
-        entryDefs: { currentEntry, displayUnit: newDisplayUnit, availableEntries }
+        entryDefs: { currentEntry, displayUnit: newDisplayUnit, availableEntries },
+        gasType
       }
     );
   };
@@ -295,7 +364,8 @@ function MenuHeader({
       {
         type: 'update_entry_defs',
         field,
-        entryDefs: { currentEntry: newCurrentEntry, displayUnit: newUnit, availableEntries }
+        entryDefs: { currentEntry: newCurrentEntry, displayUnit: newUnit, availableEntries },
+        gasType
       }
     );
   };
@@ -305,11 +375,10 @@ function MenuHeader({
       className="entrySelection"
       variant="light"
       size="sm"
-      style={{ display: ['temperature', 'duration'].includes(currentEntry) ? 'none' : 'inline' }}
       disabled={availableEntries.length === 1}
       onClick={onEntryChanged}
     >
-      {currentEntry.startsWith('gas') ? currentEntry.toLowerCase().replace('gas', 'gas: ') : currentEntry}
+      {currentEntryTitle}
     </Button>
   );
 
@@ -345,7 +414,7 @@ function MenuHeader({
         className="header-title"
         onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
       >
-        {name}
+        {`${name} ${gasType !== 'off' ? `(${gasType})` : ''}`}
       </span>
       <div>
         {entrySelection}
@@ -362,6 +431,11 @@ MenuHeader.propTypes = {
   context: PropTypes.instanceOf(AgGridReact.context).isRequired,
   setSort: PropTypes.func.isRequired,
   names: PropTypes.arrayOf(PropTypes.string).isRequired,
+  gasType: PropTypes.string,
+};
+
+MenuHeader.defaultProps = {
+  gasType: 'off',
 };
 
 export {
@@ -371,6 +445,7 @@ export {
   PropertyParser,
   MaterialFormatter,
   MaterialParser,
+  GasParser,
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,

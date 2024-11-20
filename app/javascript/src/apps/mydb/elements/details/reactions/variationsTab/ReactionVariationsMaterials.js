@@ -5,6 +5,7 @@ import {
 import {
   MaterialOverlay, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
@@ -31,6 +32,18 @@ function getReferenceMaterial(variationsRow) {
   const variationsRowCopy = cloneDeep(variationsRow);
   const potentialReferenceMaterials = { ...variationsRowCopy.startingMaterials, ...variationsRowCopy.reactants };
   return Object.values(potentialReferenceMaterials).find((material) => material.aux?.isReference || false);
+}
+
+function getCatalystMaterial(variationsRow) {
+  const variationsRowCopy = cloneDeep(variationsRow);
+  const potentialCatalystMaterials = { ...variationsRowCopy.startingMaterials, ...variationsRowCopy.reactants };
+  return Object.values(potentialCatalystMaterials).find((material) => material.aux?.gasType === 'catalyst' || false);
+}
+
+function getFeedstockMaterial(variationsRow) {
+  const variationsRowCopy = cloneDeep(variationsRow);
+  const potentialFeedstockMaterials = { ...variationsRowCopy.startingMaterials, ...variationsRowCopy.reactants };
+  return Object.values(potentialFeedstockMaterials).find((material) => material.aux?.gasType === 'feedstock' || false);
 }
 
 function computeEquivalent(material, referenceMaterial) {
@@ -93,44 +106,49 @@ function updateEquivalents(variationsRow) {
   return updatedVariationsRow;
 }
 
-function getMaterialEntries(materialType, gasMode, gasType) {
-  const treatAsGaseous = gasMode && (gasType !== 'off');
-  const entries = [];
-
-  switch (treatAsGaseous ? gasType : materialType) {
+function getMaterialEntries(materialType, gasType) {
+  switch ((gasType !== 'off') ? gasType : materialType) {
     case 'solvents':
-      entries.push('volume');
-      break;
+      return ['volume'];
     case 'products':
-      entries.push('mass', 'amount', 'yield');
-      break;
+      return ['mass', 'amount', 'yield'];
     case 'startingMaterials':
     case 'reactants':
     case 'catalyst':
+      return ['mass', 'amount', 'equivalent'];
     case 'feedstock':
-      entries.push('mass', 'amount', 'equivalent');
-      break;
+      return ['mass', 'amount', 'volume', 'equivalent'];
     case 'gas':
-      entries.push('gasDuration', 'gasTemperature', 'gasConcentration');
-      break;
+      return [
+        'duration',
+        'temperature',
+        'concentration',
+        'turnoverNumber',
+        'turnoverFrequency',
+        'mass',
+        'amount',
+        'yield'
+      ];
     default:
-      break;
+      return [];
   }
-  return entries;
 }
 
 function getMaterialData(material, materialType, gasMode) {
   const materialCopy = cloneDeep(material);
-  const gasType = materialCopy.gas_type ?? 'off';
 
-  // Editable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
-  const entries = getMaterialEntries(materialType, gasMode, gasType);
+  let gasType = materialCopy.gas_type ?? 'off';
+  gasType = gasMode ? gasType : 'off';
+
+  const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+
+  // Mutable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
+  const entries = getMaterialEntries(materialType, gasType);
   const materialData = entries.reduce((data, entry) => {
     data[entry] = { value: getStandardValue(entry, materialCopy), unit: getStandardUnits(entry)[0] };
     return data;
   }, {});
 
-  // `aux` includes only non-editable / static data.
   materialData.aux = {
     coefficient: materialCopy.coefficient ?? null,
     isReference: materialCopy.reference ?? false,
@@ -140,6 +158,8 @@ function getMaterialData(material, materialType, gasMode) {
     molecularWeight: materialCopy.molecule_molecular_weight ?? null,
     sumFormula: materialCopy.molecule_formula ?? null,
     gasType,
+    vesselVolume,
+    materialType,
   };
 
   return materialData;
@@ -191,14 +211,18 @@ function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
 function cellIsEditable(params) {
   const entry = params.colDef.entryDefs.currentEntry;
   const cellData = get(params.data, params.colDef.field);
-  const { isReference, gasType } = cellData.aux;
+  const { isReference, gasType, materialType } = cellData.aux;
 
   switch (entry) {
     case 'equivalent':
       return !isReference;
     case 'mass':
-      return gasType !== 'feedstock';
+      return !['feedstock', 'gas'].includes(gasType);
+    case 'amount':
+      return materialType !== 'products';
     case 'yield':
+    case 'turnoverNumber':
+    case 'turnoverFrequency':
       return false;
     default:
       return true;
@@ -208,11 +232,11 @@ function cellIsEditable(params) {
 function getMaterialColumnGroupChild(material, materialType, headerComponent, gasMode) {
   const materialCopy = cloneDeep(material);
 
-  const gasType = materialCopy.gas_type ?? 'off';
+  let gasType = materialCopy.gas_type ?? 'off';
+  gasType = gasMode ? gasType : 'off';
 
   const entries = getMaterialEntries(
     materialType,
-    gasMode,
     gasType
   );
   const entry = entries[0];
@@ -235,10 +259,11 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent, ga
       availableEntries: entries
     },
     editable: (params) => cellIsEditable(params),
-    cellDataType: getCellDataType(entry),
+    cellDataType: getCellDataType(entry, gasType),
     headerComponent,
     headerComponentParams: {
       names,
+      gasType,
     },
   };
 }
@@ -334,6 +359,8 @@ export {
   addMissingMaterialsToVariations,
   updateVariationsGasTypes,
   getReferenceMaterial,
+  getCatalystMaterial,
+  getFeedstockMaterial,
   getMolFromGram,
   getGramFromMol,
 };

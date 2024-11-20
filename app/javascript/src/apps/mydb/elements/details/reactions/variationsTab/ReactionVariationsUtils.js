@@ -27,12 +27,10 @@ function getStandardUnits(entry) {
     case 'amount':
       return amountUnits;
     case 'temperature':
-    case 'gasTemperature':
       return temperatureUnits;
     case 'duration':
-    case 'gasDuration':
       return durationUnits;
-    case 'gasConcentration':
+    case 'concentration':
       return concentrationUnits;
     default:
       return [null];
@@ -54,20 +52,20 @@ function getStandardValue(entry, material) {
   }
 }
 
-function getCellDataType(entry) {
+function getCellDataType(entry, gasType = 'off') {
   switch (entry) {
     case 'temperature':
     case 'duration':
-      return 'property';
+      return gasType === 'off' ? 'property' : 'gas';
     case 'equivalent':
       return 'equivalent';
     case 'mass':
     case 'volume':
     case 'amount':
       return 'material';
-    case 'gasTemperature':
-    case 'gasDuration':
-    case 'gasConcentration':
+    case 'concentration':
+    case 'turnoverNumber':
+    case 'turnoverFrequency':
       return 'gas';
     case 'yield':
       return 'yield';
@@ -165,12 +163,14 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   /*
   Some attributes of a material need to be updated in response to changes in other attributes:
 
-  attribute  | needs to be updated in response to
-  -----------|----------------------------------
-  equivalent | own mass changes^, own amount changes^, reference material's mass changes~, reference material's amount changes~
-  mass       | own amount changes^, own equivalent changes^
-  amount     | own mass changes^, own equivalent changes^
-  yield      | own mass changes^, own amount changes^x, reference material's mass changes~, reference material's amount changes~
+  attribute         | needs to be updated in response to change in
+  ------------------|---------------------------------------------
+  equivalent        | mass^, amount^, reference material's mass~, reference material's amount~
+  mass              | amount^, equivalent^, concentration^, temperature^
+  amount            | mass^, equivalent^, concentration^, temperature^
+  yield             | mass^, amount^x, concentration^, temperature^, reference material's mass~, reference material's amount~
+  turnoverNumber    | concentration^, temperature^
+  turnoverFrequency | concentration^, temperature^, duration^
 
   ^: handled in corresponding cell parsers (changes within single material)
   ~: handled here (row-wide changes across materials)

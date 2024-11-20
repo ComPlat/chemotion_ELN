@@ -28,7 +28,7 @@ function columnDefinitionsReducer(columnDefinitions, action) {
         updatedColumnDefinitions,
         action.field,
         'cellDataType',
-        getCellDataType(action.entryDefs.currentEntry)
+        getCellDataType(action.entryDefs.currentEntry, action.gasType)
       );
       return updatedColumnDefinitions;
     }
