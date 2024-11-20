@@ -399,13 +399,23 @@ const onDeleteImage = async (editor) => {
 
 // function to remove image by index
 const removeImageByIndex = async () => {
-  const list = latestData.root.nodes;
-  deleted_atoms_list.forEach(item => {
-    const imageIndex = parseInt(item.alias.split("_")[2]);
-    list.splice(imageIndex + mols.length, 1);
-  });
-  latestData.root.nodes = list;
-  deleted_atoms_list = [];
+  const all_aliases = [];
+  for (const molKey of mols) {
+    const molecule = data[molKey];
+    const atoms = molecule.atoms;
+    for (const atom of atoms) {
+      if (three_parts_patten.test(atom.alias)) {
+        all_aliases.push(atom.alias);
+      }
+    }
+  }
+  // const list = latestData.root.nodes;
+  // deleted_atoms_list.forEach(item => {
+  //   const imageIndex = parseInt(item.alias.split("_")[2]);
+  //   list.splice(imageIndex + mols.length, 1);
+  // });
+  // latestData.root.nodes = list;
+  // deleted_atoms_list = [];
 
 };
 
@@ -417,11 +427,16 @@ const onAtomDelete = async (editor) => {
     const data = await handleOnDeleteAtom(); // rebase atom aliases
     image_used_counter -= deleted_atoms_list.length; // update image used counter
 
-    if (image_used_counter < imagesList.length - 1) {
-      console.log("p pharo pye");
-      await removeImageByIndex(); // remove and add images
-    }
-    await saveMoveCanvas(data, true, true); // save
+    // if (image_used_counter < imagesList.length - 1) {
+    //   console.log("p pharo pye");
+    // }
+    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+    await fetchKetcherData(editor);
+    // await removeImageByIndex(); // remove and add images
+
+    // TODO: start from here!
+    // remove-image when its a single atom
+    // reduce counters
   }
 };
 
