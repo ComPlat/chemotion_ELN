@@ -40,7 +40,8 @@ class Channel < ApplicationRecord
   COMMENT_ON_MY_COLLECTION = 'New comment on synchronized collection'
   COMMENT_RESOLVED = 'Comment resolved in synchronized collection'
   SEND_TPA_ATTACHMENT_NOTIFICATION = 'Send TPA attachment arrival notification'
-
+  FETCH_GOECHEM_UPDATES_NOTIFICATION = 'Fetch GoeChem updates Completed'
+  SYNC_GOECHEM_CHEMICALS_NOTIFICATION = 'Synchronization of GoeChem records and inventory chemicals is Completed'
   class << self
     def build_message(**args)
       channel_id = args[:channel_id] # args.delete(:channel_id)
