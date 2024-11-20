@@ -1,48 +1,65 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Table } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
 import { getSectionComments } from 'src/utilities/CommentHelper';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
-export default function CommentList(props) {
-  const { section } = props;
+const CommentList = ({ section }) => {
   const { comments } = CommentStore.getState();
-  const sectionComments = getSectionComments(comments, section)
-    ?.filter((cmt) => cmt.status === 'Pending');
+  const sectionComments = getSectionComments(comments, section)?.filter((cmt) => cmt.status === 'Pending');
 
-  let commentsTbl = null;
+  if (sectionComments.length === 0) { return null; }
 
-  if (sectionComments?.length > 0) {
-    commentsTbl = sectionComments.map((comment) => (
-      <tr key={comment.id}>
-        <td>{formatDate(comment.created_at)}</td>
-        <td>{comment.content}</td>
-        <td>{comment.submitter}</td>
-      </tr>
-    ));
+  const renderDate = (node) => {
+    return formatDate(node.data.created_at);
   }
 
+  const columnDefs = [
+    {
+      headerName: "Date",
+      minWidth: 200,
+      maxWidth: 200,
+      cellRenderer: renderDate,
+    },
+    {
+      headerName: "Comment",
+      field: "content",
+      wrapText: true,
+      cellClass: ["lh-base", "p-2", "border-end"],
+    },
+    {
+      headerName: "From User",
+      field: "submitter",
+    },
+  ];
+
+  const defaultColDef = {
+    editable: false,
+    flex: 1,
+    autoHeight: true,
+    sortable: false,
+    resizable: false,
+    suppressMovable: true,
+    cellClass: ["border-end", "px-2"],
+    headerClass: ["border-end", "px-2"]
+  };
+
   return (
-    <div>
-      {
-        (sectionComments?.length > 0)
-          && (
-            <Table striped bordered hover>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Comment</th>
-                  <th>From User</th>
-                </tr>
-              </thead>
-              <tbody>{commentsTbl}</tbody>
-            </Table>
-          )
-      }
+    <div className="ag-theme-alpine w-100 mb-4">
+      <AgGridReact
+        columnDefs={columnDefs}
+        defaultColDef={defaultColDef}
+        rowData={sectionComments || []}
+        rowHeight="auto"
+        domLayout="autoHeight"
+        autoSizeStrategy={{ type: 'fitGridWidth' }}
+      />
     </div>
   );
 }
+
+export default CommentList;
 
 CommentList.propTypes = {
   section: PropTypes.string,
