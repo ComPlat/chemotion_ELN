@@ -45,6 +45,8 @@ export default class ElementsTableEntries extends Component {
       cursor: 'pointer'
     };
 
+    const { showPreviews } = UIStore.getState();
+    const { type } = this.props;
     if (showPreviews && (element.type === 'reaction')) {
       return (
         <div
