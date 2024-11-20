@@ -174,7 +174,7 @@ describe('ReactionVariationsMaterials', () => {
       `products.${productIDs[0]}`
     );
     expect(productColumnDefinition.cellDataType).toBe('gas');
-    expect(productColumnDefinition.entryDefs.currentEntry).toBe('gasDuration');
+    expect(productColumnDefinition.entryDefs.currentEntry).toBe('duration');
     expect(productColumnDefinition.entryDefs.displayUnit).toBe('Second(s)');
 
     const reactantIDs = getColumnDefinitionsMaterialIDs(updatedColumnDefinitions, 'reactants');
