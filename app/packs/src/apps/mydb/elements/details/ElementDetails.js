@@ -142,8 +142,6 @@ export default class ElementDetails extends Component {
       return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
     }
 
-    // console.log(el);
-
     switch (el.type) {
       case 'sample':
         return (

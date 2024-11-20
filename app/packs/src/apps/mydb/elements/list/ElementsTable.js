@@ -670,6 +670,7 @@ export default class ElementsTable extends React.Component {
           currentElement={currentElement}
           showDragColumn={!overview}
           ui={ui}
+          type={type}
         />
       );
     }
