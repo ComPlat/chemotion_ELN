@@ -4,8 +4,7 @@ import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import alt from 'src/stores/alt/alt';
 import DocumentHelper from 'src/utilities/DocumentHelper';
-import { template_list_for_storage } from '../../../utilities/Ketcher2SurfaceChemistryUtils';
-
+import template_list_for_storage from 'src/surfaceChemistryTemplates.json';
 
 class UserActions {
   fetchOlsRxno() {

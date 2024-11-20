@@ -203,7 +203,6 @@ export const handleAddAtom = async () => {
       }
     }
   }
-  console.log({ already_processed });
   return await addAtomAliasHelper(already_processed);
 };
 
@@ -261,15 +260,12 @@ const addAtomAliasHelper = async (already_processed) => {
 // helper function to delete a template and update the counter, assign new alias to all atoms
 export const handleOnDeleteImage = async () => {
   mols = mols.filter(item => item != null);
-
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
-      let { latestData: data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
-      console.log(data, imageFoundIndexCount);
-
-      // image_used_counter -= imageFoundIndexCount;
-      // return data;
+      let { data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
+      image_used_counter -= imageFoundIndexCount;
+      return data;
     }
   }
   return latestData;
@@ -327,11 +323,6 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
       const splits = parseInt(alias.split("_")[2]);
       if (imagesList[splits]) { // image found
         all_templates_consumed.push(parseInt(alias.split("_")[1]));
-        const { boundingBox } = imagesList[splits];
-        if (boundingBox) {
-          const { width, height } = boundingBox;
-          lines[i] += `    ${height}    ${width}`;
-        }
       }
     }
   }
@@ -361,7 +352,8 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
   });
 
   const svgElement = new XMLSerializer().serializeToString(svg);
-  return { ket2Molfile: reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end }), svgElement };
+  const ket2Molfile = await reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end });
+  return { ket2Molfile, svgElement };
 };
 
 /* istanbul ignore next */
@@ -400,10 +392,7 @@ const onAddAtom = async (editor) => {
 // container function for on image delete
 const onDeleteImage = async (editor) => {
   if (editor && editor.structureDef && !deleted_atoms_list.length) {
-    console.log("hitting iamge");
-    // await fetchKetcherData(editor);
     const data = await handleOnDeleteImage();
-    console.log({ data, imagesList, mols, _selection });
     await saveMoveCanvas(data, false, true);
   }
 };
@@ -641,7 +630,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         await operationHandler(eventItem);
       }
     }
-
     if (allowed_to_process) {
       processFILOStack();
     } else {
@@ -671,11 +659,6 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
-    if (!latestData) {
-      // alert("data not present!!");
-      return;
-    }
-
     await fetchKetcherData(editor);
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
