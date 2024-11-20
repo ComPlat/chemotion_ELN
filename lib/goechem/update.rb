@@ -1,0 +1,2 @@
+class Goechem::FetchUpdates
+end
