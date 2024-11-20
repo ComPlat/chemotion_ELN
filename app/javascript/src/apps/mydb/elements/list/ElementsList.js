@@ -166,7 +166,7 @@ export default class ElementsList extends React.Component {
         },
         productOnly,
         searchResult: isSearchResult,
-        moleculeSort: moleculeSort
+        moleculeSort,
       });
     }
   }
@@ -744,6 +744,7 @@ export default class ElementsList extends React.Component {
     const {
       elements,
       elementsGroup,
+      moleculeSort,
     } = this.state;
 
     const { overview, type, genericEl } = this.props;
@@ -797,6 +798,7 @@ export default class ElementsList extends React.Component {
           toggleGroupCollapsed={this.toggleGroupCollapsed}
           showDragColumn={!overview}
           showDetails={this.showDetails}
+          initialGroupLimit={type === 'sample' && moleculeSort ? 3 : null}
         />
       );
     } else if (type === 'device_description') {

@@ -1,6 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
-import { Table } from 'react-bootstrap';
+import { Table, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
@@ -17,7 +17,10 @@ export default class ElementsListGroupedEntries extends Component {
       keyboardIndex: null,
       keyboardSelectedElementId: null,
       sortedElementIds,
+      groupLimits: {},
     };
+
+    this.showMoreElements = this.showMoreElements.bind(this);
   }
 
   componentDidMount() {
@@ -36,8 +39,26 @@ export default class ElementsListGroupedEntries extends Component {
       const sortedElementIds = Object.values(elementGroups)
         .flatMap((elements) => elements.map(({ id }) => id));
 
-      this.setState({ sortedElementIds });
+      this.setState({
+        sortedElementIds,
+        groupLimits: {},
+      });
     }
+  }
+
+  showMoreElements(group) {
+    const { groupLimits } = this.state;
+    const { initialGroupLimit } = this.props;
+
+    const groupLimit = groupLimits[group] ?? initialGroupLimit;
+    const newGroupLimit = groupLimit + initialGroupLimit;
+
+    this.setState({
+      groupLimits: {
+        ...groupLimits,
+        [group]: newGroupLimit,
+      },
+    });
   }
 
   onKeyDown = (state) => {
@@ -87,12 +108,23 @@ export default class ElementsListGroupedEntries extends Component {
       isElementSelected,
       isGroupCollapsed,
       toggleGroupCollapsed,
+      initialGroupLimit,
       headerComponent: GroupHeader,
-      elementComponent: GroupElement
+      elementComponent: GroupElement,
     } = this.props;
 
-    const { keyboardSelectedElementId } = this.state;
+    const { keyboardSelectedElementId, groupLimits } = this.state;
     const showGroup = !isGroupCollapsed(group);
+
+    let groupLimit;
+    let limitedElements;
+    if (initialGroupLimit !== null) {
+      groupLimit = groupLimits[group] ?? initialGroupLimit;
+      limitedElements = elements.slice(0, groupLimit);
+    } else {
+      groupLimit = elements.length;
+      limitedElements = elements;
+    }
 
     return (
       <tbody key={`group-header-${group}`} className="sheet">
@@ -103,7 +135,7 @@ export default class ElementsListGroupedEntries extends Component {
           showDragColumn={showDragColumn}
           toggleGroup={() => toggleGroupCollapsed(group)}
         />
-        {showGroup && elements.map((element) => (
+        {showGroup && limitedElements.map((element) => (
           <GroupElement
             key={element.id}
             element={element}
@@ -113,6 +145,19 @@ export default class ElementsListGroupedEntries extends Component {
             showDetails={showDetails}
           />
         ))}
+        {groupLimit < limitedElements.length && (
+          <tr>
+            <td colSpan="3" className="p-0">
+              <Button
+                variant="info"
+                onClick={() => this.showMoreElements(group)}
+                className="w-100"
+              >
+                Show more samples
+              </Button>
+            </td>
+          </tr>
+        )}
       </tbody>
     );
   }
@@ -128,6 +173,11 @@ export default class ElementsListGroupedEntries extends Component {
   }
 }
 
+
+ElementsListGroupedEntries.defaultProps = {
+  initialGroupLimit: null,
+};
+
 ElementsListGroupedEntries.propTypes = {
   isGroupCollapsed: PropTypes.func.isRequired,
   toggleGroupCollapsed: PropTypes.func.isRequired,
@@ -137,4 +187,5 @@ ElementsListGroupedEntries.propTypes = {
   showDetails: PropTypes.func.isRequired,
   headerComponent: PropTypes.node.isRequired,
   elementComponent: PropTypes.node.isRequired,
+  initialGroupLimit: PropTypes.number,
 };
