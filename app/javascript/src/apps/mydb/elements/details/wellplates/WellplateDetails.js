@@ -310,15 +310,13 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
-          <Card className="overflow-scroll h-100">
-            <Card.Body>
-              <WellplateList
-                wells={wellplate.wells}
-                readoutTitles={readoutTitles}
-                handleWellsChange={(w) => this.handleWellsChange(w)}
-              />
-            </Card.Body>
-          </Card>
+          <div className="mb-4">
+            <WellplateList
+              wells={wellplate.wells}
+              readoutTitles={readoutTitles}
+              handleWellsChange={(w) => this.handleWellsChange(w)}
+            />
+          </div>
         </Tab>
       ),
       properties: (

@@ -1,12 +1,13 @@
 // TODO: check if imported_readout is still functionality that is used or if it is abandoned and should be removed
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import { AgGridReact } from 'ag-grid-react';
 
 const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
   const gridRef = useRef();
+  const [wellsList, setWellsList] = useState(wells);
 
   const renderSVG = (node) => {
     const sample = node.data?.sample;
@@ -42,10 +43,11 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     const { field, cellRendererParams } = colDef;
     if (!oldRow.sample) { return null }
 
-    const wellIndex = wells.indexOf(oldRow);
-    wells[wellIndex].readouts[cellRendererParams.index][field] = newValue;
-    handleWellsChange(wells);
-  }, [wells, readoutTitles]);
+    const wellIndex = wellsList.indexOf(oldRow);
+    wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
+    setWellsList(wellsList);
+    handleWellsChange(wellsList);
+  }, [wellsList, readoutTitles]);
 
   const columnDefs = [
     {
@@ -95,6 +97,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     columnDefs.push(
       {
         headerName: `${title} Value`,
+        field: "value",
         editable: (params) => params.data.sample,
         valueGetter: (params) => {
           if (params.data?.readouts) {
@@ -111,9 +114,11 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         cellRendererParams: {
           index: index,
         },
+        cellClass: ["editable-cell", "border-end", "px-2"],
       },
       {
         headerName: `${title} Unit`,
+        field: "unit",
         editable: (params) => params.data.sample,
         valueGetter: (params) => {
           if (params.data?.readouts) {
@@ -127,6 +132,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         valueParser: (params) => {
           return params.newValue;
         },
+        cellClass: ["editable-cell", "border-end", "px-2"],
       },
     );
   });
@@ -150,7 +156,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         ref={gridRef}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
-        rowData={wells}
+        rowData={wellsList}
         rowHeight="auto"
         domLayout="autoHeight"
         autoSizeStrategy={{ type: 'fitGridWidth' }}
