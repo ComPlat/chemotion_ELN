@@ -134,6 +134,27 @@ function getMaterialEntries(materialType, gasType) {
   }
 }
 
+function cellIsEditable(params) {
+  const entry = params.colDef.entryDefs.currentEntry;
+  const cellData = get(params.data, params.colDef.field);
+  const { isReference, gasType, materialType } = cellData.aux;
+
+  switch (entry) {
+    case 'equivalent':
+      return !isReference;
+    case 'mass':
+      return !['feedstock', 'gas'].includes(gasType);
+    case 'amount':
+      return materialType !== 'products';
+    case 'yield':
+    case 'turnoverNumber':
+    case 'turnoverFrequency':
+      return false;
+    default:
+      return true;
+  }
+}
+
 function getMaterialData(material, materialType, gasMode) {
   const materialCopy = cloneDeep(material);
 
@@ -163,6 +184,45 @@ function getMaterialData(material, materialType, gasMode) {
   };
 
   return materialData;
+}
+
+function getMaterialColumnGroupChild(material, materialType, headerComponent, gasMode) {
+  const materialCopy = cloneDeep(material);
+
+  let gasType = materialCopy.gas_type ?? 'off';
+  gasType = gasMode ? gasType : 'off';
+
+  const entries = getMaterialEntries(
+    materialType,
+    gasType
+  );
+  const entry = entries[0];
+
+  let names = new Set([`ID: ${materialCopy.id.toString()}`]);
+  ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
+    if (materialCopy[name]) {
+      names.add(materialCopy[name]);
+    }
+  });
+  names = Array.from(names);
+
+  return {
+    field: `${materialType}.${materialCopy.id}`, // Must be unique.
+    tooltipField: `${materialType}.${materialCopy.id}`,
+    tooltipComponent: MaterialOverlay,
+    entryDefs: {
+      currentEntry: entry,
+      displayUnit: getStandardUnits(entry)[0],
+      availableEntries: entries
+    },
+    editable: (params) => cellIsEditable(params),
+    cellDataType: getCellDataType(entry, gasType),
+    headerComponent,
+    headerComponentParams: {
+      names,
+      gasType,
+    },
+  };
 }
 
 function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
@@ -206,66 +266,6 @@ function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
     });
   });
   return updatedVariations;
-}
-
-function cellIsEditable(params) {
-  const entry = params.colDef.entryDefs.currentEntry;
-  const cellData = get(params.data, params.colDef.field);
-  const { isReference, gasType, materialType } = cellData.aux;
-
-  switch (entry) {
-    case 'equivalent':
-      return !isReference;
-    case 'mass':
-      return !['feedstock', 'gas'].includes(gasType);
-    case 'amount':
-      return materialType !== 'products';
-    case 'yield':
-    case 'turnoverNumber':
-    case 'turnoverFrequency':
-      return false;
-    default:
-      return true;
-  }
-}
-
-function getMaterialColumnGroupChild(material, materialType, headerComponent, gasMode) {
-  const materialCopy = cloneDeep(material);
-
-  let gasType = materialCopy.gas_type ?? 'off';
-  gasType = gasMode ? gasType : 'off';
-
-  const entries = getMaterialEntries(
-    materialType,
-    gasType
-  );
-  const entry = entries[0];
-
-  let names = new Set([`ID: ${materialCopy.id.toString()}`]);
-  ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
-    if (materialCopy[name]) {
-      names.add(materialCopy[name]);
-    }
-  });
-  names = Array.from(names);
-
-  return {
-    field: `${materialType}.${materialCopy.id}`, // Must be unique.
-    tooltipField: `${materialType}.${materialCopy.id}`,
-    tooltipComponent: MaterialOverlay,
-    entryDefs: {
-      currentEntry: entry,
-      displayUnit: getStandardUnits(entry)[0],
-      availableEntries: entries
-    },
-    editable: (params) => cellIsEditable(params),
-    cellDataType: getCellDataType(entry, gasType),
-    headerComponent,
-    headerComponentParams: {
-      names,
-      gasType,
-    },
-  };
 }
 
 function updateColumnDefinitionsMaterialTypes(columnDefinitions, currentMaterials, gasMode) {
