@@ -160,6 +160,13 @@
     "presets": [
       "./node_modules/shakapacker/package/babel/preset.js",
       "@babel/preset-react"
+    ],
+    "plugins": [
+      "@babel/plugin-transform-arrow-functions",
+      "@babel/plugin-transform-async-to-generator",
+      "@babel/plugin-transform-class-properties",
+      "@babel/plugin-transform-classes",
+      "@babel/plugin-transform-private-methods"
     ]
   },
   "packageManager": "yarn@1.22.22",
