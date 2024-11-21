@@ -24,7 +24,7 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-  EquivalentParser, GasParser,
+  EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor,
   RowToolsCellRenderer, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
@@ -138,6 +138,12 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       baseDataType: 'object',
       valueFormatter: MaterialFormatter,
       valueParser: GasParser,
+    },
+    feedstock: {
+      extendsDataType: 'object',
+      baseDataType: 'object',
+      valueFormatter: MaterialFormatter,
+      valueParser: FeedstockParser,
     },
   };
 

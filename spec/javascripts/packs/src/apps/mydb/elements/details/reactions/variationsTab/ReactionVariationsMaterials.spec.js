@@ -161,7 +161,7 @@ describe('ReactionVariationsMaterials', () => {
       'reactants',
       `reactants.${reactantIDs[0]}`
     );
-    expect(reactantColumnDefinition.cellDataType).toBe('material');
+    expect(reactantColumnDefinition.cellDataType).toBe('feedstock');
     const { currentEntry } = reactantColumnDefinition.entryDefs;
 
     expect(currentEntry).toBe('mass');
