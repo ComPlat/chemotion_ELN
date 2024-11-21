@@ -11,10 +11,11 @@ async function setUpReaction() {
   const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
   reaction.starting_materials[0].reference = true;
   reaction.reactants = [await setUpMaterial()];
+  reaction.reactants[0].gas_type = 'feedstock';
 
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, variations, false));
+    variations.push(createVariationsRow(reaction, variations, true));
   }
   reaction.variations = variations;
 
