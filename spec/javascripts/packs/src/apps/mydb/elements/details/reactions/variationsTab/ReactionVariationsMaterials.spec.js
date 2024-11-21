@@ -2,7 +2,7 @@ import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
-  updateNonReferenceMaterialOnMassChange, updateColumnDefinitionsMaterials,
+  updateColumnDefinitionsMaterials,
   getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
@@ -69,28 +69,6 @@ describe('ReactionVariationsMaterials', () => {
     });
     const updatedVariationsRow = updateVariationsRowOnReferenceMaterialChange(reaction.variations[0]);
     expect(updatedVariationsRow.reactants[reactantID].equivalent.value).toBeCloseTo(50, 0.01);
-  });
-  it("updates non-reference materials' equivalents when own mass changes", async () => {
-    const reaction = await setUpReaction();
-    const reactant = Object.values(reaction.variations[0].reactants)[0];
-    reactant.mass.value *= 0.42;
-    const updatedReactant = updateNonReferenceMaterialOnMassChange(
-      reaction.variations[0],
-      reactant,
-      false
-    );
-    expect(reactant.equivalent.value).toBeGreaterThan(updatedReactant.equivalent.value);
-  });
-  it("updates non-reference materials' yields when own mass changes", async () => {
-    const reaction = await setUpReaction();
-    const product = Object.values(reaction.variations[0].products)[0];
-    product.mass.value *= 0.042;
-    const updatedProduct = updateNonReferenceMaterialOnMassChange(
-      reaction.variations[0],
-      product,
-      true
-    );
-    expect(product.yield.value).toBeGreaterThan(updatedProduct.yield.value);
   });
   it("updates materials' mass when equivalent changes", async () => {
     const reaction = await setUpReaction();

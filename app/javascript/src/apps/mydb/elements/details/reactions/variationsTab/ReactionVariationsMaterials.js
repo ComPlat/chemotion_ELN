@@ -316,27 +316,6 @@ function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, h
   return updatedColumnDefinitions;
 }
 
-function updateNonReferenceMaterialOnMassChange(variationsRow, material, reactionHasPolymers) {
-  if (material.aux.isReference) {
-    return material;
-  }
-
-  const referenceMaterial = getReferenceMaterial(variationsRow);
-  const updatedMaterial = cloneDeep(material);
-
-  // Adapt equivalent to updated mass.
-  if ('equivalent' in material) {
-    updatedMaterial.equivalent.value = computeEquivalent(material, referenceMaterial);
-  }
-
-  // Adapt yield to updated mass.
-  if ('yield' in material) {
-    updatedMaterial.yield.value = computePercentYield(material, referenceMaterial, reactionHasPolymers);
-  }
-
-  return updatedMaterial;
-}
-
 function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) {
   let updatedRow = cloneDeep(row);
   updatedRow = updateEquivalents(updatedRow);
@@ -353,7 +332,6 @@ export {
   getMaterialData,
   updateColumnDefinitionsMaterials,
   updateColumnDefinitionsMaterialTypes,
-  updateNonReferenceMaterialOnMassChange,
   updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
@@ -363,4 +341,6 @@ export {
   getFeedstockMaterial,
   getMolFromGram,
   getGramFromMol,
+  computeEquivalent,
+  computePercentYield,
 };

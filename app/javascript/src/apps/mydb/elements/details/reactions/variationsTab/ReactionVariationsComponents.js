@@ -9,8 +9,8 @@ import {
   getVariationsRowName, convertUnit, getStandardUnits
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  updateNonReferenceMaterialOnMassChange,
-  getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol
+  getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
+  computeEquivalent, computePercentYield
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { parseNumericString } from 'src/utilities/MathUtils';
 import { calculateGasMoles, calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
@@ -123,12 +123,25 @@ function MaterialParser({
     const mass = getGramFromMol(value, updatedCellData);
     updatedCellData = { ...updatedCellData, mass: { ...updatedCellData.mass, value: mass } };
   }
-  // See comment in ReactionVariationsUtils.updateVariationsRow() regarding reactive updates.
-  return updateNonReferenceMaterialOnMassChange(
-    variationsRow,
-    updatedCellData,
-    context.reactionHasPolymers
-  );
+  if (updatedCellData.aux.isReference) {
+    return updatedCellData;
+  }
+
+  const referenceMaterial = getReferenceMaterial(variationsRow);
+
+  // Adapt equivalent to updated mass.
+  if ('equivalent' in updatedCellData) {
+    const equivalent = computeEquivalent(updatedCellData, referenceMaterial);
+    updatedCellData = { ...updatedCellData, equivalent: { ...updatedCellData.equivalent, value: equivalent } };
+  }
+
+  // Adapt yield to updated mass.
+  if ('yield' in updatedCellData) {
+    const percentYield = computePercentYield(updatedCellData, referenceMaterial, context.reactionHasPolymers);
+    updatedCellData = { ...updatedCellData, yield: { ...updatedCellData.yield, value: percentYield } };
+  }
+
+  return updatedCellData;
 }
 
 function GasParser({
