@@ -99,5 +99,24 @@ describe('ReactionVariationsComponents', async () => {
 
       expect(updatedCellData.amount.value).toBeCloseTo(2.33, 0.1);
     });
+    it("adapts non-reference materials' equivalent when updating mass", async () => {
+      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: `${cellData.mass.value * 2}`, colDef, context
+      });
+
+      expect(updatedCellData.equivalent.value).toBe(cellData.equivalent.value * 2);
+    });
+    it("adapts non-reference materials' yield when updating mass", async () => {
+      cellData = Object.values(variationsRow.products)[0];
+      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: `${cellData.mass.value * 0.1}`, colDef, context
+      });
+
+      expect(updatedCellData.yield.value).toBeLessThan(cellData.yield.value);
+    });
   });
 });
