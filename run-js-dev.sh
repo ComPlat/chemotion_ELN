@@ -13,4 +13,4 @@ yarn install
 echo "=========================================================================================================="
 echo "THIS WILL FAIL UNTIL THE RUBY GEMS ARE INSTALLED BY run-ruby-dev.sh. JUST TRY AGAIN AFTER INSTALLING THEM."
 echo "=========================================================================================================="
-./bin/webpacker-dev-server
+./bin/shakapacker-dev-server
