@@ -13,7 +13,9 @@ import {
   computeEquivalent, computePercentYield
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { parseNumericString } from 'src/utilities/MathUtils';
-import { calculateGasMoles, calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import {
+  calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume
+} from 'src/utilities/UnitsConversion';
 
 function RowToolsCellRenderer({
   data: variationsRow, context
@@ -208,6 +210,62 @@ function GasParser({
   }
 
   return updatedCellData;
+}
+
+function FeedstockParser({
+  data: variationsRow, oldValue: cellData, newValue, colDef
+}) {
+  const { currentEntry, displayUnit } = colDef.entryDefs;
+  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
+  if (value < 0) {
+    value = 0;
+  }
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
+
+  switch (currentEntry) {
+    case 'amount': {
+      const amount = updatedCellData.amount.value;
+      const mass = getGramFromMol(amount, updatedCellData);
+
+      const purity = updatedCellData.aux.purity || 1;
+      const volume = calculateFeedstockVolume(amount, purity);
+
+      updatedCellData = {
+        ...updatedCellData,
+        mass: { ...updatedCellData.mass, value: mass },
+        volume: { ...updatedCellData.volume, value: volume },
+      };
+      break;
+    }
+    case 'volume': {
+      const volume = updatedCellData.volume.value;
+      const purity = updatedCellData.aux.purity || 1;
+      const amount = calculateFeedstockMoles(volume, purity);
+
+      const mass = getGramFromMol(amount, updatedCellData);
+
+      updatedCellData = {
+        ...updatedCellData,
+        mass: { ...updatedCellData.mass, value: mass },
+        amount: { ...updatedCellData.amount, value: amount },
+      };
+      break;
+    }
+    case 'equivalent': {
+      return updatedCellData;
+    }
+    default:
+      break;
+  }
+
+  if (updatedCellData.aux.isReference) {
+    return updatedCellData;
+  }
+
+  const referenceMaterial = getReferenceMaterial(variationsRow);
+  const equivalent = computeEquivalent(updatedCellData, referenceMaterial);
+
+  return { ...updatedCellData, equivalent: { ...updatedCellData.equivalent, value: equivalent } };
 }
 
 function NoteCellRenderer(props) {
@@ -459,6 +517,7 @@ export {
   MaterialFormatter,
   MaterialParser,
   GasParser,
+  FeedstockParser,
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,

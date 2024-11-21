@@ -58,11 +58,11 @@ function getCellDataType(entry, gasType = 'off') {
     case 'duration':
       return gasType === 'off' ? 'property' : 'gas';
     case 'equivalent':
-      return 'equivalent';
+      return gasType === 'feedstock' ? 'feedstock' : 'equivalent';
     case 'mass':
     case 'volume':
     case 'amount':
-      return 'material';
+      return gasType === 'feedstock' ? 'feedstock' : 'material';
     case 'concentration':
     case 'turnoverNumber':
     case 'turnoverFrequency':
@@ -172,9 +172,9 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   turnoverNumber    | concentration^, temperature^
   turnoverFrequency | concentration^, temperature^, duration^
 
-  ^: handled in corresponding cell parsers (changes within single material)
+  ^: handled in cell parsers (changes within single material)
   ~: handled here (row-wide changes across materials)
-  x: not permitted according to business logic
+  ^x: not permitted according to business logic
   */
   let updatedRow = cloneDeep(row);
   set(updatedRow, field, value);

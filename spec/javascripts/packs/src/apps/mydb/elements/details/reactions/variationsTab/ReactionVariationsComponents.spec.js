@@ -1,6 +1,6 @@
 import expect from 'expect';
 import {
-  EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser
+  EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
@@ -117,6 +117,61 @@ describe('ReactionVariationsComponents', async () => {
       });
 
       expect(updatedCellData.yield.value).toBeLessThan(cellData.yield.value);
+    });
+  });
+  describe('FeedstockParser', async () => {
+    let variationsRow;
+    let cellData;
+    let context;
+    beforeEach(async () => {
+      const reaction = await setUpReaction();
+      variationsRow = reaction.variations[0];
+      cellData = Object.values(variationsRow.reactants)[0];
+      context = { reactionHasPolymers: false };
+    });
+    it('rejects negative value', () => {
+      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'equivalent', displayUnit: null } };
+      const updatedCellData = FeedstockParser({
+        data: variationsRow, oldValue: cellData, newValue: '-1', colDef, context
+      });
+
+      expect(updatedCellData.equivalent.value).toEqual(0);
+    });
+    it('adapts nothing when updating equivalent', () => {
+      const colDef = { field: 'reactant.42', entryDefs: { currentEntry: 'equivalent', displayUnit: null } };
+
+      const updatedCellData = FeedstockParser({
+        data: variationsRow, oldValue: cellData, newValue: `${cellData.equivalent.value * 2}`, colDef, context
+      });
+
+      expect(updatedCellData.equivalent.value).toBe(cellData.equivalent.value * 2);
+      expect(updatedCellData.mass.value).toBe(cellData.mass.value);
+      expect(updatedCellData.amount.value).toBe(cellData.amount.value);
+      expect(updatedCellData.volume.value).toBe(cellData.volume.value);
+    });
+    it('adapts other entries when updating volume', () => {
+      const colDef = { field: 'reactant.42', entryDefs: { currentEntry: 'volume', displayUnit: 'l' } };
+
+      const updatedCellData = FeedstockParser({
+        data: variationsRow, oldValue: cellData, newValue: `${cellData.volume.value * 2}`, colDef, context
+      });
+
+      expect(updatedCellData.volume.value).toBe(cellData.volume.value * 2);
+      expect(updatedCellData.mass.value).toBeGreaterThan(cellData.mass.value);
+      expect(updatedCellData.amount.value).toBeGreaterThan(cellData.amount.value);
+      expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
+    });
+    it('adapts other entries when updating amount', () => {
+      const colDef = { field: 'reactant.42', entryDefs: { currentEntry: 'amount', displayUnit: 'mol' } };
+
+      const updatedCellData = FeedstockParser({
+        data: variationsRow, oldValue: cellData, newValue: `${cellData.amount.value * 2}`, colDef, context
+      });
+
+      expect(updatedCellData.amount.value).toBe(cellData.amount.value * 2);
+      expect(updatedCellData.mass.value).toBeGreaterThan(cellData.mass.value);
+      expect(updatedCellData.volume.value).toBeGreaterThan(cellData.volume.value);
+      expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
     });
   });
 });
