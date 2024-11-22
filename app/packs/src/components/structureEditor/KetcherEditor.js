@@ -199,7 +199,7 @@ export const moveTemplate = async () => {
           if (image?.boundingBox) {
             const { x, y } = image?.boundingBox;
             const location = [x, y, 0]; // Set location as an array of coordinates
-            // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images 
+            // molecule.atoms[atom_idx].location = location; // enable this is you want to handle location based on images
 >>>>>>> ee7024c04 (refactoring: onTemplateMove)
             molecule.atoms[atom_idx].alias = item.alias.trim();
             if (molecule?.stereoFlagPosition) {
@@ -257,12 +257,44 @@ export const handleOnDeleteImage = async (editor) => {
   if (_selection) {
     const { images } = _selection;
     if (images && images.length) {
-      let data = removeImageTemplateAtom(new Set([...images]), mols, latestData);
-      console.log({ data });
-      await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-      image_used_counter -= images.length;
-      await onTemplateMove(editor);
+      let { data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
+      image_used_counter -= imageFoundIndexCount;
+      return data;
     }
+  }
+  return latestData;
+};
+
+// helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
+export const handleOnDeleteAtom = async () => {
+  try {
+    const data = { ...latestData };
+    deleted_atoms_list.forEach((item, _) => {
+      if (three_parts_patten.test(item.alias)) {
+        const deleted_splits = parseInt(item.alias.split("_")[2]);
+
+        for (let m = 0; m < mols.length; m++) {
+          const mol = data[mols[m]];
+          if (mol && mol?.atoms) {
+            const atoms = mol?.atoms || [];
+            for (let i = 0; i < atoms.length; i++) {
+              const atom = atoms[i];
+              if (three_parts_patten.test(atom?.alias)) {
+                const atom_splits = atom.alias.split("_");
+                console.log("atom splits", parseInt(atom_splits[2]), deleted_splits);
+                if (parseInt(atom_splits[2]) > deleted_splits) {
+                  atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
+                }
+              }
+            }
+            data[mols[m]].atoms = atoms;
+          }
+        }
+      }
+    });
+    return data;
+  } catch (err) {
+    console.error("handleDelete!!", err.message);
   }
 };
 
@@ -404,6 +436,74 @@ const onTemplateMove = async (editor) => {
   }
 };
 
+/* istanbul ignore next */
+// container funcation for onAddAtom
+const onAddAtom = async (editor) => {
+  if (editor && editor.structureDef) {
+    await fetchKetcherData(editor);
+    const { d, isConsistent } = await handleAddAtom();
+    !isConsistent && console.error("Generated aliases are inconsistent. Please try reopening the canvas again.");
+    isConsistent && await saveMoveCanvas(d, true, true);
+  }
+};
+
+/* istanbul ignore next */
+// container function for on image delete
+const onDeleteImage = async (editor) => {
+  if (editor && editor.structureDef && !deleted_atoms_list.length) {
+    const data = await handleOnDeleteImage();
+    await saveMoveCanvas(data, false, true);
+  }
+};
+
+const removeNodeByIndex = async (index) => {
+  latestData.root.nodes.splice(index + mols.length, 1);
+};
+
+const aliasExists = (index) => {
+  for (const molKey of mols) {
+    const molecule = latestData[molKey];
+    if (!molecule || !molecule.atoms) continue;
+    const atoms = molecule.atoms;
+    for (const atom of atoms) {
+      if (three_parts_patten.test(atom.alias)) {
+        const atom_index = parseInt(atom.alias.split("_")[2]);
+        if (index == atom_index) return true;
+      }
+    }
+  }
+  return false;
+};
+
+/* istanbul ignore next */
+// container funcation on atom delete
+const onAtomDelete = async (editor) => {
+  if (editor && editor.structureDef) {
+    await fetchKetcherData(editor);
+    const last_alias_index = parseInt(deleted_atoms_list[0].alias.split("_")[2]);
+    if (deleted_atoms_list.length == 1) { // deleted item is one
+      // aliases are not consistent
+      if (!isAliasConsistent()) await removeNodeByIndex(last_alias_index);
+      // alias are consistent; which means last index is deleted
+      else if (isAliasConsistent() && last_alias_index == image_used_counter)
+        if (image_used_counter == last_alias_index && !aliasExists(last_alias_index)) { // remove image required
+          await removeNodeByIndex(last_alias_index);
+        } else { // an atom is dropped on another atom so just save it as it is!
+          await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+          placeImageOnAtoms(mols, imagesList);
+          deleted_atoms_list = [];
+          return;
+        }
+    }
+    const data = await handleOnDeleteAtom(); // rebase atom aliases
+    image_used_counter -= deleted_atoms_list.length; // update image used counter
+    await saveMoveCanvas(data, true, true);
+    deleted_atoms_list = [];
+  }
+};
+
+/* istanbul ignore next */
+// savemolfile with source, should_fetch, should_move
 const saveMoveCanvas = async (data, should_fetch, should_move) => {
   data = data ? data : latestData;
   await editor.structureDef.editor.setMolecule(JSON.stringify(data));
