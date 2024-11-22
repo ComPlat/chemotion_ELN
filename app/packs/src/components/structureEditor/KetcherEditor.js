@@ -108,6 +108,7 @@ const fetchKetcherData = async (editor) => {
 // helper function to remove images from the ketfile on atom move or manual atom move
 export const moveTemplate = async () => {
   try {
+    if (!latestData) await fetchKetcherData(editor);
     latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
   } catch (err) {
     console.error("moveTemplate", err.message);
@@ -239,7 +240,7 @@ const addAtomAliasHelper = async (already_processed) => {
             already_processed.push(`${m}_${a}_${image_used_counter}`);
           }
         }
-        if (atom.label === "H") {
+        if (atom.label === "tbr") {
           is_h_id_list.push(atom);
         };
       }
@@ -287,7 +288,6 @@ export const handleOnDeleteAtom = async () => {
               const atom = atoms[i];
               if (three_parts_patten.test(atom?.alias)) {
                 const atom_splits = atom.alias.split("_");
-                console.log("atom splits", parseInt(atom_splits[2]), deleted_splits);
                 if (parseInt(atom_splits[2]) > deleted_splits) {
                   atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
                 }
@@ -374,7 +374,7 @@ const onTemplateMove = async (editor) => {
       await placeImageOnAtoms(mols_copy, imagelist_copy, editor);
       await saveMoveCanvas(null, true, false);
     }
-    images_to_be_updated_setter();
+    images_to_be_updated_setter(true);
   }
 };
 
@@ -386,6 +386,7 @@ const onAddAtom = async (editor) => {
     const { d, isConsistent } = await handleAddAtom();
     !isConsistent && console.error("Generated aliases are inconsistent. Please try reopening the canvas again.");
     isConsistent && await saveMoveCanvas(d, true, true);
+    images_to_be_updated_setter(true);
   }
 };
 
@@ -422,29 +423,28 @@ const aliasExists = (index) => {
 const onAtomDelete = async (editor) => {
   if (editor && editor.structureDef) {
     await fetchKetcherData(editor);
-    const last_alias_index = parseInt(deleted_atoms_list[0].alias.split("_")[2]);
-    if (deleted_atoms_list.length == 1) { // deleted item is one
-      // aliases are not consistent
-      if (!isAliasConsistent()) {
-        console.log("not consistent");
-        await removeNodeByIndex(last_alias_index);
-      }
-      // alias are consistent; which means last index is deleted
-      else if (isAliasConsistent())
-        if (image_used_counter == last_alias_index && !aliasExists(last_alias_index)) { // remove image required
-          console.log("matching?");
+    if (three_parts_patten.test(deleted_atoms_list[0]?.alias)) {
+      const last_alias_index = parseInt(deleted_atoms_list[0]?.alias?.split("_")[2]);
+      if (deleted_atoms_list.length == 1) { // deleted item is one
+        // aliases are not consistent
+        if (!isAliasConsistent()) {
           await removeNodeByIndex(last_alias_index);
-        } else { // an atom is dropped on another atom so just save it as it is!
-          console.log(data);
-          await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-          deleted_atoms_list = [];
-          return;
         }
+        // alias are consistent; which means last index is deleted
+        else if (isAliasConsistent())
+          if (image_used_counter == last_alias_index && !aliasExists(last_alias_index)) { // remove image required
+            await removeNodeByIndex(last_alias_index);
+          } else { // an atom is dropped on another atom so just save it as it is!
+            await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+            deleted_atoms_list = [];
+            return;
+          }
+      }
+      const data = await handleOnDeleteAtom(); // rebase atom aliases
+      image_used_counter -= deleted_atoms_list.length; // update image used counter
+      await saveMoveCanvas(data, false, true);
+      deleted_atoms_list = [];
     }
-    const data = await handleOnDeleteAtom(); // rebase atom aliases
-    image_used_counter -= deleted_atoms_list.length; // update image used counter
-    await saveMoveCanvas(data, false, true);
-    deleted_atoms_list = [];
   }
 };
 
@@ -597,13 +597,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   }, [editor]);
 
-  const setMolfileAndMove = async (data) => {
-    data = data ? data : latestData;
-    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-    await fetchKetcherData(editor);
-    await onTemplateMove(editor);
-  };
-
   // enable editor change listener
   const onEditorContentChange = (editor) => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
@@ -627,11 +620,10 @@ const KetcherEditor = forwardRef((props, ref) => {
           console.error(err);
         });
         const file_content = JSON.parse(ketfile.struct);
+
         // process polymers
-        const { collected_images, molfileData } = await setKetcherData(rails_polymers_list, file_content);
-        if (collected_images && collected_images.length) {
-          setMolfileAndMove(molfileData);
-        }
+        const { molfileData } = await setKetcherData(rails_polymers_list, file_content);
+        saveMoveCanvas(molfileData, true, true);
       }
     };
   };
@@ -643,7 +635,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     if (selection?.images) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       await fetchKetcherData(editor);
-      images_to_be_updated_setter();
+      images_to_be_updated_setter(true);
       return;
     }
 
@@ -707,23 +699,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     // Main function to attach listeners and observers
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
-
-      const checkEraseButtonClass = () => {
-        setTimeout(() => {
-          const eraseButton = iframeDocument.querySelector('[title="Erase \\(Del\\)"]');
-          if (eraseButton && eraseButton.classList.contains('ActionButton-module_selected__kPCxA')) {
-            eraseStateAlert(); // Call your function if the class is present
-          }
-        }, 10);
-      };
-
-      // Attach the click listener for the Erase button
-      const attachEraseButtonListener = () => {
-        const eraseButton = iframeDocument.querySelector('[title="Erase \\(Del\\)"]');
-        if (eraseButton) {
-          eraseButton.addEventListener('click', checkEraseButtonClass);
-        }
-      };
 
       // Attach MutationObserver to listen for relevant DOM mutations (e.g., new buttons added)
       const observer = new MutationObserver(async (mutationsList) => {
