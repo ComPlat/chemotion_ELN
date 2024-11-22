@@ -35,6 +35,7 @@ import {
 
   // tags
   inspired_label,
+  molfile_header_line_number,
 } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 export let FILOStack = [];
@@ -96,6 +97,7 @@ export const deleteAtomListSetter = async data => {
   deleted_atoms_list = data;
 };
 
+/* istanbul ignore next */
 // helper function to rebase with the ketcher canvas data
 const fetchKetcherData = async (editor) => {
   if (editor) {
@@ -115,24 +117,28 @@ export const moveTemplate = async () => {
   }
 };
 
+// helper function set image coordinates
+const adjustImageCoordinatesAtomDependent = (image_coordinates, location, temp_id) => {
+  return {
+    ...image_coordinates,
+    x: location[0] - image_coordinates?.width / 2,
+    y: location[1] + image_coordinates?.height / 2,
+    z: 0,
+    height: template_list_data[temp_id].boundingBox.height,
+    width: template_list_data[temp_id].boundingBox.width,
+  };
+};
+
 // helper function to place image on atom location coordinates
 export const placeImageOnAtoms = async (mols_, imagesList_) => {
   try {
-    mols_.forEach((item) => {
+    mols_.forEach(async (item) => {
       latestData[item]?.atoms.forEach((atom) => {
         if (atom && three_parts_patten.test(atom?.alias)) {
           const splits_alias = atom.alias.split("_");
           let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
           if (!image_coordinates) throw new ("Invalid alias");
-          image_coordinates = {
-            ...image_coordinates,
-            x: atom.location[0] - image_coordinates?.width / 2,
-            y: atom.location[1] + image_coordinates?.height / 2,
-            z: 0,
-            height: template_list_data[parseInt(splits_alias[1])].boundingBox.height,
-            width: template_list_data[parseInt(splits_alias[1])].boundingBox.width,
-          };
-          imagesList_[splits_alias[2]].boundingBox = image_coordinates;
+          imagesList_[splits_alias[2]].boundingBox = adjustImageCoordinatesAtomDependent(image_coordinates, atom.location, parseInt(splits_alias[1]));;
         };
       });
     });
@@ -305,11 +311,14 @@ export const handleOnDeleteAtom = async () => {
 };
 
 // function when a canvas is saved using main "SAVE" button
-export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
+export const saveMolefile = async (svgElement, canvas_data_Mol) => {
   // molfile disection
-  const lines = canvas_data_Mol.split('\n');
+  canvas_data_Mol = canvas_data_Mol.trim();
+  const lines = ["", ...canvas_data_Mol.split('\n')];
+  if (lines.length < 5) return { ket2Molfile: null, svgElement: null };
+
   const elements_info = lines[3];
-  const header_starting_from = 4;
+  const header_starting_from = molfile_header_line_number;
   const all_templates_consumed = [];
 
   let [atoms_count, bonds_count] = elements_info.trim().split(" ").filter(i => i != "");
@@ -317,7 +326,6 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
   bonds_count = parseInt(bonds_count);
   const extra_data_start = header_starting_from + atoms_count + bonds_count;
   const extra_data_end = lines.length - 2;
-
   for (let i = extra_data_start; i < extra_data_end; i++) {
     const alias = lines[i];
     if (three_parts_patten.test(alias)) {
@@ -328,6 +336,13 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
     }
   }
 
+  const ket2Molfile = await reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end });
+  return { ket2Molfile, svgElement };
+};
+
+/* istanbul ignore next */
+// helpe funcation for saving mofile => re-layering images from iframe
+const reArrangeImagesOnCanvas = async (iframeRef) => {
   const iframeDocument = iframeRef.current.contentWindow.document;
   const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
   const imageElements = iframeDocument.querySelectorAll('image');
@@ -353,8 +368,7 @@ export const saveMolefile = async (iframeRef, canvas_data_Mol) => {
   });
 
   const svgElement = new XMLSerializer().serializeToString(svg);
-  const ket2Molfile = await reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end });
-  return { ket2Molfile, svgElement };
+  return svgElement;
 };
 
 /* istanbul ignore next */
@@ -687,10 +701,14 @@ const KetcherEditor = forwardRef((props, ref) => {
         await eventHandlers[event]();
       }
     }
+    await runImageLayering();
+  };
+
+  const runImageLayering = async () => {
     if (images_to_be_updated && !skip_image_layering) {
       setTimeout(async () => {
         await updateImagesInTheCanvas(iframeRef);
-      }, [250]);
+      }, [500]);
     }
   };
 
@@ -751,7 +769,8 @@ const KetcherEditor = forwardRef((props, ref) => {
     onSaveFileK2SC: async () => {
       await fetchKetcherData(editor);
       const canvasDataMol = await editor.structureDef.editor.getMolfile();
-      const result = await saveMolefile(iframeRef, canvasDataMol);
+      const svgElement = await reArrangeImagesOnCanvas(iframeRef);
+      const result = await saveMolefile(svgElement, canvasDataMol);
       resetStore();
       return result;
     }

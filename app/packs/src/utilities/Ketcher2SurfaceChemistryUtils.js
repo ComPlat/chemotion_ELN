@@ -298,6 +298,7 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
   }
 };
 
+/* istanbul ignore next */
 // function to make template list extra content hidden
 const makeTransparentByTitle = (iframeDocument) => {
   const elements = iframeDocument.querySelectorAll('[title]');
@@ -316,6 +317,7 @@ const makeTransparentByTitle = (iframeDocument) => {
   });
 };
 
+/* istanbul ignore next */
 // funcation to disable canvas button based on title
 const disableButton = (iframeDocument, title) => {
   const button = iframeDocument.querySelector(`[title="${title}"]`);
@@ -325,6 +327,7 @@ const disableButton = (iframeDocument, title) => {
   }
 };
 
+/* istanbul ignore next */
 // helper function to update DOM images using layering technique 
 const updateImagesInTheCanvas = async (iframeRef) => {
   if (iframeRef.current) {
@@ -344,6 +347,7 @@ const updateImagesInTheCanvas = async (iframeRef) => {
   }
 };
 
+/* istanbul ignore next */
 // helper funcation to update text > span > t_###_### fill transparent
 const updateTemplatesInTheCanvas = async (iframeRef) => {
   const iframeDocument = iframeRef.current.contentWindow.document;
@@ -383,6 +387,7 @@ export {
   skip_image_layering,
   images_to_be_updated,
   allowed_to_process,
+  molfile_header_line_number,
 
   // methods
   hasKetcherData,

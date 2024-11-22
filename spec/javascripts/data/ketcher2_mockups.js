@@ -2660,3 +2660,70 @@ export const deleteAtomAndRemoveImageMulti_ket = {
     "bonds": []
   },
 };
+
+
+export const molfileData_save_invalid_spacing = `
+-INDIGO-11222414432D
+5  3  0  0  0  0  0  0  0  0999 V2000
+M  END`;
+
+export const molfileData_save = `
+-INDIGO-11222414432D
+
+5  3  0  0  0  0  0  0  0  0999 V2000
+ 15.8063   -6.2526    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+ 10.6440   -5.3922    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+ 10.5288   -6.2334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 10.8071   -7.2724    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 10.0468   -8.0328    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+2  3  1  0  0  0  0
+3  4  1  0  0  0  0
+4  5  1  0  0  0  0
+A    1
+t_1_0
+A    2
+t_1_1
+M  END`;
+
+
+export const resetOtherAliasesOnAnyDelete = {
+  "mol0": {
+    "type": "molecule",
+    "atoms": [
+      {
+        "label": "A",
+        "alias": "t_01_0",
+        "location": [
+          18.148100042657443,
+          -5.970799840212177,
+          0
+        ]
+      }
+    ],
+    "bonds": []
+  },
+  "mol1": {
+    "type": "molecule",
+    "atoms": [
+      {
+        "label": "A",
+        "alias": "t_01_1",
+        "location": [
+          18.148100042657443,
+          -5.970799840212177,
+          0
+        ]
+      },
+      {
+        "label": "A",
+        "alias": "t_01_2",
+        "location": [
+          18.148100042657443,
+          -5.970799840212177,
+          0
+        ]
+      }
+    ],
+    "bonds": []
+  },
+};

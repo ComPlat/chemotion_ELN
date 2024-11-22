@@ -1,13 +1,13 @@
 import assert from 'assert';
 
 // ketcher2 component
-import { _selection, _selectionSetter, all_atoms, allNodes, deleteAtomListSetter, deleted_atoms_list, FILOStack, fuelKetcherData, handleAddAtom, handleOnDeleteAtom, handleOnDeleteImage, image_used_counter, imagesList, imageUsedCounterSetter, latestData, latestdataSetter, mols, moveTemplate, re_render_canvas, resetStore, setKetcherData, uniqueEvents } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
+import { _selection, _selectionSetter, all_atoms, allNodes, deleteAtomListSetter, deleted_atoms_list, FILOStack, fuelKetcherData, handleAddAtom, handleOnDeleteAtom, handleOnDeleteImage, image_used_counter, imagesList, imageUsedCounterSetter, isAliasConsistent, latestData, latestdataSetter, mols, moveTemplate, placeImageOnAtoms, re_render_canvas, resetStore, saveMolefile, setKetcherData, uniqueEvents } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
 
 // ketcher/mofiles mockups
-import { areAllAliasesConsistent_ket, deleteAtomAndRemoveImage_ket, deleteAtomAndRemoveImageMulti_ket, empty_mol_file, hasConsistentAliases_ket, hasValidMolsAndImages, imageCountAdjuster_ket, isImageSelectionValid_ket, isMoleculeEmpty_ket, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list, one_image_ketfile_rg, one_image_molfile, onMultiImageDelete_ket, wiht2Aliases_ket } from '../../../data/ketcher2_mockups';
+import { areAllAliasesConsistent_ket, deleteAtomAndRemoveImage_ket, deleteAtomAndRemoveImageMulti_ket, empty_mol_file, hasConsistentAliases_ket, hasValidMolsAndImages, imageCountAdjuster_ket, isImageSelectionValid_ket, isMoleculeEmpty_ket, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list, molfileData_save, molfileData_save_invalid_spacing, one_image_ketfile_rg, one_image_molfile, onMultiImageDelete_ket, resetOtherAliasesOnAnyDelete, wiht2Aliases_ket } from '../../../data/ketcher2_mockups';
 
 // ketcher2 helpers
-import { hasKetcherData, template_list_data, three_parts_patten } from '../../../../../app/packs/src/utilities/Ketcher2SurfaceChemistryUtils';
+import { hasKetcherData, resetOtherAliasCounters, template_list_data, three_parts_patten } from '../../../../../app/packs/src/utilities/Ketcher2SurfaceChemistryUtils';
 
 describe('Ketcher2', () => {
 
@@ -663,6 +663,501 @@ describe('Ketcher2', () => {
       assert.ok(imagesList.length > 0, "imagesList should be a list");
       assert.ok(latestData.root.nodes.length == mols.length + imagesList.length, "nodes should be equal to sum of mols and images list");
     });
+
+    it('should have valid mols and image list from place Image funcation directly', async () => {
+      latestdataSetter({
+        "root": {
+          "nodes": [
+            {
+              "$ref": "mol0"
+            },
+            {
+              "type": "image",
+              "format": "image/svg+xml",
+              "boundingBox": {
+                "x": 17.635600042657444,
+                "y": -5.4582998402121765,
+                "z": 0,
+                "width": 1.0250000000000006,
+                "height": 1.0250000000000006
+              },
+              "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+            },
+            {
+              "type": "image",
+              "format": "image/svg+xml",
+              "boundingBox": {
+                "x": 12.439399957342559,
+                "y": -5.4582998402121765,
+                "z": 0,
+                "width": 1.0250000000000006,
+                "height": 1.0250000000000006
+              },
+              "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+            }
+          ],
+          "connections": [],
+          "templates": []
+        },
+        "mol0": {
+          "type": "molecule",
+          "atoms": [
+            {
+              "label": "A",
+              "alias": "t_01_0",
+              "location": [
+                18.148100042657443,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                17.282100868432757,
+                -5.470799867681642,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                16.416000604736084,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.550000476837134,
+                -5.470799867681642,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                14.684000348938183,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                13.818000221039231,
+                -5.470799867681642,
+                0
+              ]
+            },
+            {
+              "label": "A",
+              "alias": "t_01_1",
+              "location": [
+                12.95189995734256,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                17.313900183091988,
+                -6.406299961244762,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                17.538601098481532,
+                -7.37879975522877,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                16.922300549454686,
+                -8.160499369723212,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.512299825832196,
+                -6.415500056869689,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.917000082834235,
+                -8.166700159787823,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.291600527654445,
+                -7.387899715055976,
+                0
+              ]
+            }
+          ],
+          "bonds": [
+            {
+              "type": 1,
+              "atoms": [
+                0,
+                1
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                1,
+                2
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                2,
+                3
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                3,
+                4
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                4,
+                5
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                5,
+                6
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                7,
+                2
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                2,
+                10
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                10,
+                12
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                12,
+                11
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                11,
+                9
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                9,
+                8
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                8,
+                7
+              ]
+            }
+          ],
+          "stereoFlagPosition": {
+            "x": 12.951899957342556,
+            "y": -5.958299812742712,
+            "z": 0
+          }
+        }
+      });
+      await fuelKetcherData({
+        "root": {
+          "nodes": [
+            {
+              "$ref": "mol0"
+            },
+            {
+              "type": "image",
+              "format": "image/svg+xml",
+              "boundingBox": {
+                "x": 17.635600042657444,
+                "y": -5.4582998402121765,
+                "z": 0,
+                "width": 1.0250000000000006,
+                "height": 1.0250000000000006
+              },
+              "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+            },
+            {
+              "type": "image",
+              "format": "image/svg+xml",
+              "boundingBox": {
+                "x": 12.439399957342559,
+                "y": -5.4582998402121765,
+                "z": 0,
+                "width": 1.0250000000000006,
+                "height": 1.0250000000000006
+              },
+              "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=="
+            }
+          ],
+          "connections": [],
+          "templates": []
+        },
+        "mol0": {
+          "type": "molecule",
+          "atoms": [
+            {
+              "label": "A",
+              "alias": "t_01_0",
+              "location": [
+                18.148100042657443,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                17.282100868432757,
+                -5.470799867681642,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                16.416000604736084,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.550000476837134,
+                -5.470799867681642,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                14.684000348938183,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                13.818000221039231,
+                -5.470799867681642,
+                0
+              ]
+            },
+            {
+              "label": "A",
+              "alias": "t_01_1",
+              "location": [
+                12.95189995734256,
+                -5.970799840212177,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                17.313900183091988,
+                -6.406299961244762,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                17.538601098481532,
+                -7.37879975522877,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                16.922300549454686,
+                -8.160499369723212,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.512299825832196,
+                -6.415500056869689,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.917000082834235,
+                -8.166700159787823,
+                0
+              ]
+            },
+            {
+              "label": "C",
+              "location": [
+                15.291600527654445,
+                -7.387899715055976,
+                0
+              ]
+            }
+          ],
+          "bonds": [
+            {
+              "type": 1,
+              "atoms": [
+                0,
+                1
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                1,
+                2
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                2,
+                3
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                3,
+                4
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                4,
+                5
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                5,
+                6
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                7,
+                2
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                2,
+                10
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                10,
+                12
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                12,
+                11
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                11,
+                9
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                9,
+                8
+              ]
+            },
+            {
+              "type": 1,
+              "atoms": [
+                8,
+                7
+              ]
+            }
+          ],
+          "stereoFlagPosition": {
+            "x": 12.951899957342556,
+            "y": -5.958299812742712,
+            "z": 0
+          }
+        }
+      });
+      await placeImageOnAtoms(mols, imagesList);
+      assert.ok(mols.length > 0, "mols should be a list");
+      assert.ok(imagesList.length > 0, "imagesList should be a list");
+      assert.ok(latestData.root.nodes.length == mols.length + imagesList.length, "nodes should be equal to sum of mols and images list");
+    });
   });
 
   describe('on add atom', () => {
@@ -1080,5 +1575,46 @@ describe('Ketcher2', () => {
     });
   });
 
+  describe('on move template helper function', async () => {
+    it('length of nodes should be requal to mols', async () => {
+      latestdataSetter(imageCountAdjuster_ket);
+      await fuelKetcherData(imageCountAdjuster_ket);
+      await moveTemplate();
+      assert.ok(latestData.root.nodes.length === 2, "latestData should only have mols");
+    });
 
+    it('length of nodes should be requal to mols as empty', async () => {
+      latestdataSetter(empty_mol_file);
+      await fuelKetcherData(empty_mol_file);
+      await moveTemplate();
+      assert.ok(latestData.root.nodes.length === 0, "latestData should only have mols");
+    });
+  });
+
+  describe('on save molfile', async () => {
+    it('should report invalid molfile invalid spacing', async () => {
+      const { ket2Molfile, svgElement } = await saveMolefile(null, molfileData_save_invalid_spacing);
+      assert.deepEqual(ket2Molfile, null, "Ketcher2 should be null");
+      assert.deepEqual(svgElement, null, "Svg will always be null for specs");
+    });
+
+    it('should report valid molfile invalid spacing', async () => {
+      const { ket2Molfile, svgElement } = await saveMolefile(null, molfileData_save);
+      assert.notDeepStrictEqual(ket2Molfile, null, "Ketcher2 should be null");
+      assert.deepEqual(svgElement, null, "Svg will always be null for specs");
+    });
+  });
+});
+
+describe('on reset alias', async () => {
+  it('should have consistent aliases after removing one', async () => {
+    const atom = {
+      alias: "t_01_1"
+    };
+    await latestdataSetter(resetOtherAliasesOnAnyDelete);
+    const molecules = ["mol0", "mol1"];
+    await resetOtherAliasCounters(atom, molecules, latestData);
+    assert.notDeepStrictEqual(latestData, null, "latestdata should be valid after computing");
+    assert.ok(isAliasConsistent() === true, "latestdata should be valid after computing");
+  });
 });
