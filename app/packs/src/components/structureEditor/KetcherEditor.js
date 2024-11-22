@@ -425,21 +425,25 @@ const onAtomDelete = async (editor) => {
     const last_alias_index = parseInt(deleted_atoms_list[0].alias.split("_")[2]);
     if (deleted_atoms_list.length == 1) { // deleted item is one
       // aliases are not consistent
-      if (!isAliasConsistent()) await removeNodeByIndex(last_alias_index);
+      if (!isAliasConsistent()) {
+        console.log("not consistent");
+        await removeNodeByIndex(last_alias_index);
+      }
       // alias are consistent; which means last index is deleted
-      else if (isAliasConsistent() && last_alias_index == image_used_counter)
+      else if (isAliasConsistent())
         if (image_used_counter == last_alias_index && !aliasExists(last_alias_index)) { // remove image required
+          console.log("matching?");
           await removeNodeByIndex(last_alias_index);
         } else { // an atom is dropped on another atom so just save it as it is!
+          console.log(data);
           await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-          placeImageOnAtoms(mols, imagesList);
           deleted_atoms_list = [];
           return;
         }
     }
     const data = await handleOnDeleteAtom(); // rebase atom aliases
     image_used_counter -= deleted_atoms_list.length; // update image used counter
-    await saveMoveCanvas(data, true, true);
+    await saveMoveCanvas(data, false, true);
     deleted_atoms_list = [];
   }
 };
