@@ -25,6 +25,7 @@ const poly_identifier = "> <PolymersList>";
 const file_end_indentifier = "$$$$";
 const molfile_header_line_number = 4;
 const rgLabel = "rg-label";
+const shapes = ["Bead", "Surface"];
 
 // Helper to initialize Ketcher data
 const initializeKetcherData = async (data) => {
@@ -248,17 +249,7 @@ const removeImageTemplateAtom = async (images, mols, data) => {
   }
 };
 
-/**
- * Processes atom lines to replace inspired_label with rails_polymer_identifier
- * and collect atom aliases.
- *
- * @param {Array} lines - The array of lines from the molfile.
- * @param {Number} atomStarts - The starting line index for atom data.
- * @param {Number} atomsCount - The total number of atoms.
- * @param {String} inspiredLabel - The label to search for in atom lines.
- * @param {String} railsPolymerIdentifier - The replacement for inspired_label.
- * @returns {Object} - An object containing the updated lines and the atom aliases list.
- */
+// Processes atom lines to replace inspired_label with rails_polymer_identifier and collect atom aliases.
 const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
   const atomAliasList = [];
 
@@ -311,7 +302,7 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
 const makeTransparentByTitle = (iframeDocument) => {
   const elements = iframeDocument.querySelectorAll('[title]');
   elements.forEach((element) => {
-    if (two_parts_pattern.test(element.getAttribute('title'))) {
+    if (shapes.indexOf(element.getAttribute('title')) != -1) {
       element.querySelectorAll("path, text").forEach((child) => {
         if (child.getAttribute("stroke-width") === "2" &&
           child.getAttribute("stroke-linecap") === "round" &&
