@@ -95,7 +95,7 @@ const adding_polymers_ketcher_format = async (railsPolymersList, _, data, image_
         ++image_used_counter;
         ++visited_atoms;
 
-        // step 1: // get template type
+        // step 1: get template type
         const template_type = getTemplateType(polymerItem);
         // step 2: update atom with alias
         data[molName].atoms[atomIndex] = updateAtom(atom.location, template_type, image_used_counter);
@@ -360,8 +360,8 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
 };
 
 // setter
-const images_to_be_updated_setter = () => {
-  images_to_be_updated = !images_to_be_updated;
+const images_to_be_updated_setter = (status) => {
+  images_to_be_updated = status;
 };
 
 // setter

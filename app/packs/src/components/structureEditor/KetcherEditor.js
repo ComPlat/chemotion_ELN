@@ -89,6 +89,89 @@ const fetchKetcherData = async (editor) => {
   }
 };
 
+<<<<<<< HEAD
+=======
+// helper function to remove images from the ketfile on atom move or manual atom move
+export const moveTemplate = async () => {
+  try {
+    if (!latestData) await fetchKetcherData(editor);
+    latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
+  } catch (err) {
+    console.error("moveTemplate", err.message);
+  }
+};
+
+// helper function to place image on atom location coordinates
+export const placeImageOnAtoms = async (mols_, imagesList_) => {
+  try {
+    mols_.forEach((item) => {
+      latestData[item]?.atoms.forEach((atom) => {
+        if (atom && three_parts_patten.test(atom?.alias)) {
+          const splits_alias = atom.alias.split("_");
+          let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
+          if (!image_coordinates) throw new ("Invalid alias");
+          image_coordinates = {
+            ...image_coordinates,
+            x: atom.location[0] - image_coordinates?.width / 2,
+            y: atom.location[1] + image_coordinates?.height / 2,
+            z: 0,
+            height: template_list_data[parseInt(splits_alias[1])].boundingBox.height,
+            width: template_list_data[parseInt(splits_alias[1])].boundingBox.width,
+          };
+          imagesList_[splits_alias[2]].boundingBox = image_coordinates;
+        };
+      });
+    });
+    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols_.length), ...imagesList_];
+  } catch (err) {
+    console.error("placeImageOnAtoms", err.message);
+  }
+};
+
+// helper function to calculate counters for the ketcher2 setup based on file source type
+export const setKetcherData = async (rails_polymers_list, data) => {
+  let collected_images = [];
+  if (rails_polymers_list && rails_polymers_list.length) {
+    const { c_images, molfileData, image_counter } = await adding_polymers_ketcher_format(rails_polymers_list, mols, data, image_used_counter);
+    image_used_counter = image_counter;
+    molfileData?.root?.nodes.push(...c_images);
+    return { collected_images: c_images, molfileData };
+  }
+  return { collected_images, molfileData: data };
+};
+
+// helper function to test alias list consistency
+export const isAliasConsistent = () => {
+  const index_list = [];
+  const uniqueIndices = new Set();
+
+  for (const mol of mols) {
+    const molecule = latestData[mol];
+    molecule?.atoms?.forEach((item) => {
+      if (item.alias) {
+        const splits = item.alias.split("_");
+        const index = parseInt(splits[2]);
+
+        // Check for duplicates
+        if (uniqueIndices.has(index)) {
+          return false;  // Duplicate found
+        }
+        uniqueIndices.add(index);
+        index_list.push(index);
+      }
+    });
+  }
+
+  index_list.sort((a, b) => a - b);
+  for (let i = 0; i < index_list.length; i++) {
+    if (index_list[i] !== i) {
+      return false;  // Missing or incorrect number sequence
+    }
+  }
+  return true;  // Passed all checks
+};
+
+>>>>>>> 51b43bb2b (cleanup + minor fixes)
 // helper function to handle new atoms added to the canvas
 export const handleAddAtom = async (editor) => {
   console.log("Atom moved!");
@@ -215,6 +298,7 @@ export const moveTemplate = async () => {
             }
           }
         }
+<<<<<<< HEAD
       }
     });
     latestData[mol] = molecule;
@@ -242,6 +326,10 @@ export const placeImageOnAtoms = async (mols_, imagesList_) => {
           z: 0,
           height: template_list_data[parseInt(splits_alias[1])].boundingBox.height,
           width: template_list_data[parseInt(splits_alias[1])].boundingBox.width,
+=======
+        if (atom.label === "tbr") {
+          is_h_id_list.push(atom);
+>>>>>>> 51b43bb2b (cleanup + minor fixes)
         };
         imagesList_[splits_alias[2]].boundingBox = image_coordinates;
       };
@@ -281,7 +369,6 @@ export const handleOnDeleteAtom = async () => {
               const atom = atoms[i];
               if (three_parts_patten.test(atom?.alias)) {
                 const atom_splits = atom.alias.split("_");
-                console.log("atom splits", parseInt(atom_splits[2]), deleted_splits);
                 if (parseInt(atom_splits[2]) > deleted_splits) {
                   atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
                 }
@@ -433,6 +520,10 @@ const onTemplateMove = async (editor) => {
       await placeImageOnAtoms(mols_copy, imagelist_copy, editor);
       await saveMoveCanvas(null, true, false);
     }
+<<<<<<< HEAD
+=======
+    images_to_be_updated_setter(true);
+>>>>>>> 51b43bb2b (cleanup + minor fixes)
   }
 };
 
@@ -444,6 +535,7 @@ const onAddAtom = async (editor) => {
     const { d, isConsistent } = await handleAddAtom();
     !isConsistent && console.error("Generated aliases are inconsistent. Please try reopening the canvas again.");
     isConsistent && await saveMoveCanvas(d, true, true);
+    images_to_be_updated_setter(true);
   }
 };
 
@@ -480,29 +572,28 @@ const aliasExists = (index) => {
 const onAtomDelete = async (editor) => {
   if (editor && editor.structureDef) {
     await fetchKetcherData(editor);
-    const last_alias_index = parseInt(deleted_atoms_list[0].alias.split("_")[2]);
-    if (deleted_atoms_list.length == 1) { // deleted item is one
-      // aliases are not consistent
-      if (!isAliasConsistent()) {
-        console.log("not consistent");
-        await removeNodeByIndex(last_alias_index);
-      }
-      // alias are consistent; which means last index is deleted
-      else if (isAliasConsistent())
-        if (image_used_counter == last_alias_index && !aliasExists(last_alias_index)) { // remove image required
-          console.log("matching?");
+    if (three_parts_patten.test(deleted_atoms_list[0]?.alias)) {
+      const last_alias_index = parseInt(deleted_atoms_list[0]?.alias?.split("_")[2]);
+      if (deleted_atoms_list.length == 1) { // deleted item is one
+        // aliases are not consistent
+        if (!isAliasConsistent()) {
           await removeNodeByIndex(last_alias_index);
-        } else { // an atom is dropped on another atom so just save it as it is!
-          console.log(data);
-          await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-          deleted_atoms_list = [];
-          return;
         }
+        // alias are consistent; which means last index is deleted
+        else if (isAliasConsistent())
+          if (image_used_counter == last_alias_index && !aliasExists(last_alias_index)) { // remove image required
+            await removeNodeByIndex(last_alias_index);
+          } else { // an atom is dropped on another atom so just save it as it is!
+            await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+            deleted_atoms_list = [];
+            return;
+          }
+      }
+      const data = await handleOnDeleteAtom(); // rebase atom aliases
+      image_used_counter -= deleted_atoms_list.length; // update image used counter
+      await saveMoveCanvas(data, false, true);
+      deleted_atoms_list = [];
     }
-    const data = await handleOnDeleteAtom(); // rebase atom aliases
-    image_used_counter -= deleted_atoms_list.length; // update image used counter
-    await saveMoveCanvas(data, false, true);
-    deleted_atoms_list = [];
   }
 };
 
@@ -660,13 +751,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   }, [editor]);
 
-  const setMolfileAndMove = async (data) => {
-    data = data ? data : latestData;
-    await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-    await fetchKetcherData(editor);
-    await onTemplateMove(editor);
-  };
-
   // enable editor change listener
   const onEditorContentChange = (editor) => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
@@ -690,11 +774,10 @@ const KetcherEditor = forwardRef((props, ref) => {
           console.log(err);
         });
         const file_content = JSON.parse(ketfile.struct);
+
         // process polymers
-        const { collected_images, molfileData } = await setKetcherData(rails_polymers_list, file_content);
-        if (collected_images && collected_images.length) {
-          setMolfileAndMove(molfileData);
-        }
+        const { molfileData } = await setKetcherData(rails_polymers_list, file_content);
+        saveMoveCanvas(molfileData, true, true);
       }
     };
   };
@@ -706,7 +789,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     if (selection?.images) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
       await fetchKetcherData(editor);
-      images_to_be_updated_setter();
+      images_to_be_updated_setter(true);
       return;
     }
 
@@ -777,6 +860,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     if (iframeRef.current) {
       const iframeDocument = iframeRef.current.contentWindow.document;
 
+<<<<<<< HEAD
       // Function to attach click listeners based on titles
       const attachListenerForTitle = (title) => {
         const button = iframeDocument.querySelector(`[title="${title}"]`);
@@ -789,6 +873,10 @@ const KetcherEditor = forwardRef((props, ref) => {
 
       // Attach listeners only for relevant mutations (e.g., when a new button is added)
       const observer = new MutationObserver((mutationsList) => {
+=======
+      // Attach MutationObserver to listen for relevant DOM mutations (e.g., new buttons added)
+      const observer = new MutationObserver(async (mutationsList) => {
+>>>>>>> 51b43bb2b (cleanup + minor fixes)
         for (const mutation of mutationsList) {
           if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
             Object.keys(buttonEvents).forEach((title) => {
