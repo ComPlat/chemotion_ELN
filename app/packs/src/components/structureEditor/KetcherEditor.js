@@ -186,7 +186,7 @@ export const isAliasConsistent = () => {
       return false;  // Missing or incorrect number sequence
     }
   }
-  return true;  // Passed all checks
+  return true; // Passed all checks
 };
 
 // IMP: helper function to handle new atoms added to the canvas
@@ -350,7 +350,7 @@ export const saveMolefile = async (svgElement, canvas_data_Mol) => {
 };
 
 /* istanbul ignore next */
-// helpe funcation for saving mofile => re-layering images from iframe
+// helper funcation for saving mofile => re-layering images from iframe
 const reArrangeImagesOnCanvas = async (iframeRef) => {
   const iframeDocument = iframeRef.current.contentWindow.document;
   const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
