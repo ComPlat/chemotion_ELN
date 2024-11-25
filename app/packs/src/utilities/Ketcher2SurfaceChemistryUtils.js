@@ -3,7 +3,7 @@ import template_list_for_storage from 'src/surfaceChemistryTemplates.json';
 import { template_list_data } from "../surfaceChemistryImages";
 
 // pattern's for alias identification
-const three_parts_patten = /t_\d{1,3}_\d{1,3}/;
+const three_parts_pattern = /t_\d{1,3}_\d{1,3}/;
 const two_parts_pattern = /^t_\d{1,3}$/;
 
 // enable/disable text labels Matching label A and putting images in the end
@@ -36,21 +36,35 @@ const initializeKetcherData = async (data) => {
   }
 };
 
+// helper to stringfy Surface chemistry template because it only takes stringified structs
+const templateParser = () => {
+  const outputData = template_list_for_storage.map(item => {
+    const structObject = item.struct; // Parse the struct field
+    item.struct = JSON.stringify(structObject, null, 4); // Re-stringify with formatting
+    return item;
+  });
+  return outputData;
+};
+
 // helper function to examine the file coming ketcherrails
 const hasKetcherData = async (molfile) => {
   try {
-    const lines = molfile.trim().split('\n');
-    let rails_polymers_list = -1;
-    for (let i = lines.length - 1; i > -1; i--) {
-      if (lines[i].indexOf(poly_identifier) != -1) {
-        rails_polymers_list = lines[i + 1].trim();
-        break;
+    if (molfile) {
+      const lines = molfile.trim().split('\n');
+      let rails_polymers_list = -1;
+      for (let i = lines.length - 1; i > -1; i--) {
+        if (lines[i].indexOf(poly_identifier) != -1) {
+          rails_polymers_list = lines[i + 1].trim();
+          break;
+        }
       }
+      return rails_polymers_list == -1 ? null : rails_polymers_list;
+    } else {
+      throw new "Invalid molfile source.";
     }
-    return rails_polymers_list == -1 ? null : rails_polymers_list;
   } catch (err) {
     console.error(err);
-    alert("Opening this molfile is possible at the movement. Please report this molfile to chemotion ELN dev team.");
+    alert("Opening this molfile is not possible at the movement. Please report this molfile to chemotion ELN dev team.");
   }
 };
 
@@ -59,14 +73,14 @@ const getTemplateType = (polymerValue) => {
   return polymerValue.includes("s") ? template_surface : template_bead;
 };
 
-// Helper to update an atom with new labels and aliases
+// Helper to update an atom with K2SC labels and aliases
 const updateAtom = (atomLocation, templateType, imageCounter) => ({
   label: inspired_label,
   alias: `t_${templateType}_${imageCounter}`,
   location: atomLocation
 });
 
-// Helper to create a bounding box for a template
+// Helper to create a bounding box for a template with atom location
 const templateWithBoundingBox = (templateType, atomLocation) => {
   const template = template_list_data[templateType];
   const boundingBox = { ...template.boundingBox };
@@ -89,7 +103,7 @@ const adding_polymers_ketcher_format = async (railsPolymersList, _, data, image_
       for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
         const atom = molecule.atoms[atomIndex];
         const polymerItem = polymerList[visited_atoms];
-        if (!(atom.type === rgLabel || three_parts_patten.test(atom.label))) continue;
+        if (!(atom.type === rgLabel || three_parts_pattern.test(atom.label))) continue;
 
         // counters
         ++image_used_counter;
@@ -111,7 +125,7 @@ const adding_polymers_ketcher_format = async (railsPolymersList, _, data, image_
   }
 };
 
-// helper function to return a new image in imagesList with a location
+// helper function to return a new template-image for imagesList with new location
 const prepareImageFromTemplateList = (idx, location) => {
   template_list_data[idx].boundingBox.x = location[0];
   template_list_data[idx].boundingBox.y = location[1];
@@ -119,14 +133,14 @@ const prepareImageFromTemplateList = (idx, location) => {
   return template_list_data[idx];
 };
 
-// helper funcation to update counter for other mols when a image-template is removed
+// helper function to update counter for other mols when a image-template is removed
 const resetOtherAliasCounters = (atom, mols, latestData) => {
   for (let m = 0; m < mols?.length; m++) {
     const mol = mols[m];
     const atoms = latestData[mol]?.atoms;
     for (let a = 0; a < atoms?.length; a++) {
       const item = atoms[a];
-      if (three_parts_patten.test(item.alias)) {
+      if (three_parts_pattern.test(item.alias)) {
         const atom_splits = atom?.alias?.split("_");
         const item_splits = item?.alias?.split("_");
         if (parseInt(atom_splits[2]) <= parseInt(item_splits[2])) {
@@ -146,7 +160,7 @@ const isNewAtom = (eventItem) => {
   return eventItem.label === inspired_label;
 };
 
-//  Removes a molecule from `data` and updates the root node structure.
+// filter out mol-node from ket2 format
 const removeMoleculeFromData = (data, molKey) => {
   // Filter out the node referencing the removed molecule
   return data.root.nodes.filter(node => node.$ref !== molKey);;
@@ -157,7 +171,7 @@ const updateMoleculeAliases = async (container, atoms_list) => {
   for (const img_idx of container) {
     for (let i = 0; i < atoms_list.length; i++) {
       const atom = atoms_list[i];
-      if (three_parts_patten.test(atom.alias)) {
+      if (three_parts_pattern.test(atom.alias)) {
         const splits = atom.alias.split("_");
         if (parseInt(splits[2]) > img_idx) {
           atoms_list[i].alias = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
@@ -168,6 +182,7 @@ const updateMoleculeAliases = async (container, atoms_list) => {
   return atoms_list;
 };
 
+// helper function to remove bonds by atom id
 const updateBondList = (indexToMatch, bondList) => {
   // Update bonds to reflect the removal of the atom
   let list = [];
@@ -180,7 +195,7 @@ const updateBondList = (indexToMatch, bondList) => {
   return list;
 };
 
-// Removes atoms that match specific criteria, updates bonds, and collects removed indices.
+// Removes atoms that match image index, updates bonds, and collects removed indices.
 const removeAndUpdateAtoms = async (atomsList, bondsList, images, container) => {
   let imageFoundIndex = 0;
 
@@ -215,7 +230,7 @@ const updateOrRemoveMolecule = async (molecule, container, atomsList, bondsList)
   return molecule;
 };
 
-// remove image from the template
+// remove atoms from the template-list with alias, 
 const removeImageTemplateAtom = async (images, mols, data) => {
   try {
     let removeIndexList = new Set();
@@ -230,7 +245,7 @@ const removeImageTemplateAtom = async (images, mols, data) => {
       // step 1: remove atoms and bonds based on images list
       const { updatedAtoms, updatedBonds, removedIndices, removedCount } = await removeAndUpdateAtoms(atoms_list, bonds_list, images, removeIndexList);
 
-      // // step 2: data filler
+      // step 2: data filler
       imageFoundIndexCount += removedCount; // Update total found count
       removedIndices.forEach(item => removeIndexList.add(item)); // updated remove indices
 
@@ -249,7 +264,7 @@ const removeImageTemplateAtom = async (images, mols, data) => {
   }
 };
 
-// Processes atom lines to replace inspired_label with rails_polymer_identifier and collect atom aliases.
+// collect polymers atomlist from molfile
 const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
   const atomAliasList = [];
 
@@ -265,7 +280,10 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
   return { linesCopy, atomAliasList };
 };
 
-// helper function for output molfile re-structure
+/* attaching polymers list is ketcherrails standards to a molfile
+  s => S means its a surface polymers 
+  final output is expected a string:  "11 12s 13"
+*/
 const reAttachPolymerList = async ({ lines, atoms_count, extra_data_start, extra_data_end }) => {
   let lines_copy = [...lines];
   let list_alias = lines_copy.slice(extra_data_start, extra_data_end);
@@ -288,6 +306,7 @@ const reAttachPolymerList = async ({ lines, atoms_count, extra_data_start, extra
   return lines_copy.join("\n");
 };
 
+/* istanbul ignore next */
 // DOM functions
 // Function to attach click listeners based on titles
 const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
@@ -379,7 +398,7 @@ export {
   template_list_data,
 
   // data patterns
-  three_parts_patten,
+  three_parts_pattern,
   two_parts_pattern,
 
   // flags
@@ -397,6 +416,7 @@ export {
   isNewAtom,
   removeImageTemplateAtom,
   reAttachPolymerList,
+  templateParser,
 
   // DOM Methods
   disableButton,

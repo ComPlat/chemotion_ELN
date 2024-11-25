@@ -7,7 +7,7 @@ import {
   template_list_data,
 
   // patterns
-  three_parts_patten,
+  three_parts_pattern,
   two_parts_pattern,
 
   // flags
@@ -38,19 +38,19 @@ import {
   molfile_header_line_number,
 } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
-export let FILOStack = [];
-export let uniqueEvents = new Set();
-export let latestData = null;
-export let imagesList = [];
-export let mols = [];
-export let allNodes = [];
-export let all_atoms = [];
-export let image_used_counter = -1;
-export let re_render_canvas = false;
-export let _selection = null;
-export let deleted_atoms_list = [];
+export let FILOStack = []; // a stack to main a list of event triggered
+export let uniqueEvents = new Set(); // list of unique event from the canvas
+export let latestData = null; // latestData contains the updated ket2 format always
+export let imagesList = []; // image list has all nodes matching type === image
+export let mols = []; // mols has list of molecules present in ket2 format ['mol0', 'mol1']
+export let allNodes = []; // contains a list of latestData.root.nodes list
+export let all_atoms = []; // contains list of all atoms present in a ketche2 format
+export let image_used_counter = -1; // counter of how many images are used/present in data.root.nodes
+export let re_render_canvas = false; // flag to re-render canvas
+export let _selection = null; // contains list of images, atoms, bonds selected in the canvas
+export let deleted_atoms_list = []; // has a list of deleted atoms on delete "atom event"
 
-// funcation to reset all data containers
+// to reset all data containers
 export const resetStore = () => {
   FILOStack = [];
   uniqueEvents = new Set();
@@ -66,14 +66,12 @@ export const resetStore = () => {
   all_atoms = [];
 };
 
-// load data into respective containers/vars
+// prepare/load ket2 format data
 export const fuelKetcherData = async (data) => {
   allNodes = [...data.root.nodes];
   imagesList = allNodes.filter(item => item.type === 'image');
   const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
-  mols = sliceEnd > 0
-    ? allNodes.slice(0, sliceEnd).map(i => i.$ref)
-    : [];
+  mols = sliceEnd > 0 ? allNodes.slice(0, sliceEnd).map(i => i.$ref) : [];
   mols.forEach((item) => data[item]?.atoms.map(i => all_atoms.push(i)));
 };
 
@@ -129,12 +127,12 @@ const adjustImageCoordinatesAtomDependent = (image_coordinates, location, temp_i
   };
 };
 
-// helper function to place image on atom location coordinates
+// generates list of images with atom location based on alias present in ket2 format
 export const placeImageOnAtoms = async (mols_, imagesList_) => {
   try {
     mols_.forEach(async (item) => {
       latestData[item]?.atoms.forEach((atom) => {
-        if (atom && three_parts_patten.test(atom?.alias)) {
+        if (atom && three_parts_pattern.test(atom?.alias)) {
           const splits_alias = atom.alias.split("_");
           let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
           if (!image_coordinates) throw new ("Invalid alias");
@@ -148,7 +146,7 @@ export const placeImageOnAtoms = async (mols_, imagesList_) => {
   }
 };
 
-// helper function to calculate counters for the ketcher2 setup based on file source type
+// generating images for ket2 format from molfile polymers list
 export const setKetcherData = async (rails_polymers_list, data) => {
   let collected_images = [];
   if (rails_polymers_list && rails_polymers_list.length) {
@@ -160,7 +158,7 @@ export const setKetcherData = async (rails_polymers_list, data) => {
   return { collected_images, molfileData: data };
 };
 
-// helper function to test alias list consistency
+// helper function to test alias list consistency 0,1,2,3,4...
 export const isAliasConsistent = () => {
   const index_list = [];
   const uniqueIndices = new Set();
@@ -191,7 +189,7 @@ export const isAliasConsistent = () => {
   return true;  // Passed all checks
 };
 
-// helper function to handle new atoms added to the canvas
+// IMP: helper function to handle new atoms added to the canvas
 export const handleAddAtom = async () => {
   let already_processed = [];
   image_used_counter = -1;
@@ -201,7 +199,7 @@ export const handleAddAtom = async () => {
     const mol = latestData[mols[m]];
     for (let a = 0; a < mol?.atoms?.length; a++) {
       const atom = mol.atoms[a];
-      if (atom?.alias && three_parts_patten.test(atom?.alias)) {
+      if (atom?.alias && three_parts_pattern.test(atom?.alias)) {
         const splits = atom?.alias?.split("_");
         if (!seenThirdParts.has(splits[2])) {
           already_processed.push(`${m}_${a}_${splits[2]}`);
@@ -213,7 +211,18 @@ export const handleAddAtom = async () => {
   return await addAtomAliasHelper(already_processed);
 };
 
-// IMP: helper funcation when new atom is added or rebase for alias
+/* IMP: helper function when new atom is added or rebase for alias
+-> Two parts => t_01 => will always be new template added from the template list
+-> Three parts => t_templateid_used_image_counter
+  ----- possible cases
+-> two part with image -> is an event when a new template is added to canvas as new molecule
+-> two parts with no image -> is an event when a new template is directly added to other molecule
+-> three part with image -> can be a regular case when an atom with 3 three part aliases is pasted on canvas or can a saved template
+-> three part without image -> in case there the canvas is not synced an image is there
+  ----- notes
+-> tbr -> flag means this atom has to removed from the list coming from the template
+-> isAliasConsistent before returning -> is a function to make sure all aliases generated are in order 0,1,2,3,4,5,6...
+*/
 const addAtomAliasHelper = async (already_processed) => {
   try {
     let new_images = [...imagesList];
@@ -233,7 +242,7 @@ const addAtomAliasHelper = async (already_processed) => {
           }
           atom.alias += `_${image_used_counter}`;
           already_processed.push(`${m}_${a}_${image_used_counter}`);
-        } else if (three_parts_patten.test(atom.alias)) {
+        } else if (three_parts_pattern.test(atom.alias)) {
           if (already_processed.indexOf(`${m}_${a}_${splits[2]}`) != -1) {
             // add image if image doesnt exists
             if (!new_images[image_used_counter]) {
@@ -264,7 +273,7 @@ const addAtomAliasHelper = async (already_processed) => {
   }
 };
 
-// helper function to delete a template and update the counter, assign new alias to all atoms
+// helper function to remove template by image
 export const handleOnDeleteImage = async () => {
   mols = mols.filter(item => item != null);
   if (_selection) {
@@ -278,12 +287,12 @@ export const handleOnDeleteImage = async () => {
   return latestData;
 };
 
-// helper function to delete a template and update the counter, when an atom is delete with alias with no image/image not selected.
+// helper function to remove template by atom with alias
 export const handleOnDeleteAtom = async () => {
   try {
     const data = { ...latestData };
     deleted_atoms_list.forEach((item, _) => {
-      if (three_parts_patten.test(item.alias)) {
+      if (three_parts_pattern.test(item.alias)) {
         const deleted_splits = parseInt(item.alias.split("_")[2]);
 
         for (let m = 0; m < mols.length; m++) {
@@ -292,7 +301,7 @@ export const handleOnDeleteAtom = async () => {
             const atoms = mol?.atoms || [];
             for (let i = 0; i < atoms.length; i++) {
               const atom = atoms[i];
-              if (three_parts_patten.test(atom?.alias)) {
+              if (three_parts_pattern.test(atom?.alias)) {
                 const atom_splits = atom.alias.split("_");
                 if (parseInt(atom_splits[2]) > deleted_splits) {
                   atom.alias = `t_${atom_splits[1]}_${parseInt(atom_splits[2]) - 1}`;
@@ -328,7 +337,7 @@ export const saveMolefile = async (svgElement, canvas_data_Mol) => {
   const extra_data_end = lines.length - 2;
   for (let i = extra_data_start; i < extra_data_end; i++) {
     const alias = lines[i];
-    if (three_parts_patten.test(alias)) {
+    if (three_parts_pattern.test(alias)) {
       const splits = parseInt(alias.split("_")[2]);
       if (imagesList[splits]) { // image found
         all_templates_consumed.push(parseInt(alias.split("_")[1]));
@@ -393,7 +402,7 @@ const onTemplateMove = async (editor) => {
 };
 
 /* istanbul ignore next */
-// container funcation for onAddAtom
+// container function for onAddAtom
 const onAddAtom = async (editor) => {
   if (editor && editor.structureDef) {
     await fetchKetcherData(editor);
@@ -413,17 +422,19 @@ const onDeleteImage = async (editor) => {
   }
 };
 
+// remove a node from root.nodes by index num
 const removeNodeByIndex = async (index) => {
   latestData.root.nodes.splice(index + mols.length, 1);
 };
 
+// helper to check is generated alias already exists in latestData
 const aliasExists = (index) => {
   for (const molKey of mols) {
     const molecule = latestData[molKey];
     if (!molecule || !molecule.atoms) continue;
     const atoms = molecule.atoms;
     for (const atom of atoms) {
-      if (three_parts_patten.test(atom.alias)) {
+      if (three_parts_pattern.test(atom.alias)) {
         const atom_index = parseInt(atom.alias.split("_")[2]);
         if (index == atom_index) return true;
       }
@@ -433,11 +444,15 @@ const aliasExists = (index) => {
 };
 
 /* istanbul ignore next */
-// container funcation on atom delete
+/* container function on atom delete
+  removes an atom: atoms should always be consistent
+    case1: when last(current count for image counter) image is deleted means aliases are consistent
+    case1: when any image is deleted means aliases are in-consistent
+*/
 const onAtomDelete = async (editor) => {
   if (editor && editor.structureDef) {
     await fetchKetcherData(editor);
-    if (three_parts_patten.test(deleted_atoms_list[0]?.alias)) {
+    if (three_parts_pattern.test(deleted_atoms_list[0]?.alias)) {
       const last_alias_index = parseInt(deleted_atoms_list[0]?.alias?.split("_")[2]);
       if (deleted_atoms_list.length == 1) { // deleted item is one
         // aliases are not consistent
@@ -472,7 +487,6 @@ const saveMoveCanvas = async (data, should_fetch, should_move) => {
 };
 
 /* istanbul ignore next */
-// component
 const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
 
@@ -642,7 +656,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
   };
 
-  // main funcation to capture all events from editor
+  // main function to capture all events from editor
   const handleEventCapture = async (data) => {
     const selection = editor._structureDef.editor.editor._selection;
     allowed_to_process_setter(true);
@@ -673,7 +687,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     const { id } = eventItem;
     const target_atom = all_atoms[id];
     if (target_atom) {
-      return { exists: three_parts_patten.test(target_atom.alias), atom: target_atom };
+      return { exists: three_parts_pattern.test(target_atom.alias), atom: target_atom };
     }
     return { exists: true, atom: target_atom };
   };
@@ -701,9 +715,10 @@ const KetcherEditor = forwardRef((props, ref) => {
         await eventHandlers[event]();
       }
     }
-    await runImageLayering();
+    await runImageLayering(); // pused all the image at the end of the canvas
   };
 
+  // pused all the image at the end of the canvas
   const runImageLayering = async () => {
     if (images_to_be_updated && !skip_image_layering) {
       setTimeout(async () => {
