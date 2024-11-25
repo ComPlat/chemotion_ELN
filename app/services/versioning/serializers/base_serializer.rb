@@ -110,7 +110,12 @@ module Versioning
       end
 
       def array_formatter
-        ->(key, value) { default_formatter.call(key, value)&.join("\n") }
+        lambda { |key, value|
+          array = default_formatter.call(key, value)
+          array = [array] unless array.instance_of?(Array)
+
+          array&.join("\n")
+        }
       end
 
       def non_formatter
