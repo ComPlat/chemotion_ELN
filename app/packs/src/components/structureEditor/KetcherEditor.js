@@ -322,19 +322,17 @@ export const handleOnDeleteAtom = async () => {
 // function when a canvas is saved using main "SAVE" button
 export const saveMolefile = async (svgElement, canvas_data_Mol) => {
   // molfile disection
+  const all_templates_consumed = [];
   canvas_data_Mol = canvas_data_Mol.trim();
   const lines = ["", ...canvas_data_Mol.split('\n')];
   if (lines.length < 5) return { ket2Molfile: null, svgElement: null };
 
   const elements_info = lines[3];
-  const header_starting_from = molfile_header_line_number;
-  const all_templates_consumed = [];
-
   let [atoms_count, bonds_count] = elements_info.trim().split(" ").filter(i => i != "");
   atoms_count = parseInt(atoms_count);
   bonds_count = parseInt(bonds_count);
-  const extra_data_start = header_starting_from + atoms_count + bonds_count;
-  const extra_data_end = lines.length - 2;
+  const extra_data_start = molfile_header_line_number + atoms_count + bonds_count;
+  const extra_data_end = lines.length - 1;
   for (let i = extra_data_start; i < extra_data_end; i++) {
     const alias = lines[i];
     if (three_parts_pattern.test(alias)) {
@@ -784,6 +782,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     onSaveFileK2SC: async () => {
       await fetchKetcherData(editor);
       const canvasDataMol = await editor.structureDef.editor.getMolfile();
+      console.log({ canvasDataMol });
       const svgElement = await reArrangeImagesOnCanvas(iframeRef);
       const result = await saveMolefile(svgElement, canvasDataMol);
       resetStore();
