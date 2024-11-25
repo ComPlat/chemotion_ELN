@@ -322,18 +322,23 @@ export const handleOnDeleteAtom = async () => {
 // function when a canvas is saved using main "SAVE" button
 export const saveMolefile = async (svgElement, canvas_data_Mol) => {
   // molfile disection
-  const all_templates_consumed = [];
   canvas_data_Mol = canvas_data_Mol.trim();
   const lines = ["", ...canvas_data_Mol.split('\n')];
   if (lines.length < 5) return { ket2Molfile: null, svgElement: null };
-
   const elements_info = lines[3];
+  const all_templates_consumed = [];
+
   let [atoms_count, bonds_count] = elements_info.trim().split(" ").filter(i => i != "");
   atoms_count = parseInt(atoms_count);
   bonds_count = parseInt(bonds_count);
+
+
+
   const extra_data_start = molfile_header_line_number + atoms_count + bonds_count;
+
   const extra_data_end = lines.length - 1;
-  for (let i = extra_data_start; i < extra_data_end; i++) {
+
+  for (let i = extra_data_start; i <= extra_data_end; i++) {
     const alias = lines[i];
     if (three_parts_pattern.test(alias)) {
       const splits = parseInt(alias.split("_")[2]);
@@ -342,8 +347,8 @@ export const saveMolefile = async (svgElement, canvas_data_Mol) => {
       }
     }
   }
-
   const ket2Molfile = await reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end });
+  console.log({ ket2Molfile });
   return { ket2Molfile, svgElement };
 };
 

@@ -299,8 +299,9 @@ const reAttachPolymerList = async ({ lines, atoms_count, extra_data_start, extra
       counter++;
     }
   }
-  lines_copy.splice(lines_copy.length - 1, 0, ...[poly_identifier, atomAliasList.join(" "), file_end_indentifier]);
+  lines_copy.splice(lines_copy.length, 0, ...[poly_identifier, atomAliasList.join(" "), file_end_indentifier]);
 
+  console.log("lines array", lines_copy);
   return lines_copy.join("\n");
 };
 
