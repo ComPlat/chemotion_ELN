@@ -7,7 +7,7 @@ import { _selection, _selectionSetter, all_atoms, allNodes, deleteAtomListSetter
 import { areAllAliasesConsistent_ket, deleteAtomAndRemoveImage_ket, deleteAtomAndRemoveImageMulti_ket, empty_mol_file, hasConsistentAliases_ket, hasValidMolsAndImages, imageCountAdjuster_ket, isImageSelectionValid_ket, isMoleculeEmpty_ket, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list, molfileData_save, molfileData_save_invalid_spacing, one_image_ketfile_rg, one_image_molfile, onMultiImageDelete_ket, resetOtherAliasesOnAnyDelete, wiht2Aliases_ket } from '../../../data/ketcher2_mockups';
 
 // ketcher2 helpers
-import { hasKetcherData, resetOtherAliasCounters, template_list_data, three_parts_patten } from '../../../../../app/packs/src/utilities/Ketcher2SurfaceChemistryUtils';
+import { hasKetcherData, resetOtherAliasCounters, template_list_data, three_parts_pattern } from '../../../../../app/packs/src/utilities/Ketcher2SurfaceChemistryUtils';
 
 describe('Ketcher2', () => {
 
@@ -132,7 +132,7 @@ describe('Ketcher2', () => {
         const molecule = latestData[mol];
         molecule?.atoms?.forEach((item) => {
           if (item.alias) {
-            assert.ok(three_parts_patten.test(item.alias) === true, "Image user counter should be -1");
+            assert.ok(three_parts_pattern.test(item.alias) === true, "Image user counter should be -1");
           }
         });
       }));
