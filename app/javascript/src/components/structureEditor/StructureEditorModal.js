@@ -49,16 +49,14 @@ export const loadEditor = (editor, scripts) => {
   }
 };
 
-const createEditorInstance = (editor, available, configs) => {
-  return ({
-    [editor]: new StructureEditor({
-      ...EditorAttrs[editor],
-      ...available,
-      ...configs,
-      id: editor,
-    }),
-  });
-};
+const createEditorInstance = (editor, available, configs) => ({
+  [editor]: new StructureEditor({
+    ...EditorAttrs[editor],
+    ...available,
+    ...configs,
+    id: editor,
+  }),
+});
 
 export const createEditor = (configs, availableEditors) => {
   if (!availableEditors) return null;
@@ -91,7 +89,7 @@ const createEditors = (_state = {}) => {
   return editors;
 };
 function Editor({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb
+  type, editor, molfile, iframeHeight, iframeStyle, fnCb, forwardedRef
 }) {
   switch (type) {
     case 'ketcher2':
@@ -136,7 +134,7 @@ function Editor({
         </div>
       );
   }
-};
+}
 
 Editor.propTypes = {
   type: PropTypes.string.isRequired,
