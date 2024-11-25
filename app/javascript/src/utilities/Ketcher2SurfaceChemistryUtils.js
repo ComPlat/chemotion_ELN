@@ -290,9 +290,7 @@ const reAttachPolymerList = async ({ lines, atoms_count, extra_data_start, extra
   const { linesCopy, atomAliasList }
     = await processAtomLines(lines_copy, molfile_header_line_number, atoms_count);
   linesCopy.splice(extra_data_start, extra_data_end - extra_data_start);
-
   lines_copy = linesCopy;
-
   let counter = 0;
   for (let i = 1; i < list_alias.length; i += 2) {
     const t_id = list_alias[i].split("_")[1];
