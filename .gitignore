@@ -122,7 +122,8 @@
 !/public/json/precautionaryPhrases.json
 !/public/json/hazardPhrases.json
 !/public/json/pictograms.json
-
+!/public/json/surfaceChemistryTemplates.json
+!/public/json/surfaceChemistryImages.json
 
 /public/zip/*
 !/public/zip/.keep
