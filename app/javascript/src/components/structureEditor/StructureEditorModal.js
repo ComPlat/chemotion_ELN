@@ -48,16 +48,14 @@ export const loadEditor = (editor, scripts) => {
   }
 };
 
-const createEditorInstance = (editor, available, configs) => {
-  return ({
-    [editor]: new StructureEditor({
-      ...EditorAttrs[editor],
-      ...available,
-      ...configs,
-      id: editor,
-    }),
-  });
-};
+const createEditorInstance = (editor, available, configs) => ({
+  [editor]: new StructureEditor({
+    ...EditorAttrs[editor],
+    ...available,
+    ...configs,
+    id: editor,
+  }),
+});
 
 export const createEditor = (configs, availableEditors) => {
   if (!availableEditors) return null;
@@ -90,7 +88,9 @@ const createEditors = (_state = {}) => {
   return editors;
 };
 
-const Editor = ({ type, editor, molfile, iframeHeight, iframeStyle, forwardedRef }) => {
+function Editor({
+  type, editor, molfile, iframeHeight, iframeStyle, forwardedRef
+}) {
   switch (type) {
     case 'ketcher2':
       return (
@@ -134,7 +134,7 @@ const Editor = ({ type, editor, molfile, iframeHeight, iframeStyle, forwardedRef
         </div>
       );
   }
-};
+}
 
 Editor.propTypes = {
   type: PropTypes.string.isRequired,
@@ -265,18 +265,12 @@ export default class StructureEditorModal extends React.Component {
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
     } else if (editor.id === 'ketcher2') {
-      if (this.ketcher2Ref.current && typeof this.ketcher2Ref.current.onSaveFileK2SC === 'function') {
-        const { ket2Molfile, svgElement } = await this.ketcher2Ref.current.onSaveFileK2SC();
-        this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(ket2Molfile, svgElement, { smiles: '' }, editor.id); } });
-      } else {
-        console.error("onSaveFileK2SC is not a function");
-      }
+      this.saveKetcher2(editor.id);
     } else {
       try {
         const { molfile, info } = structure;
         if (!molfile) throw new Error('No molfile');
         structure.fetchSVG().then((svg) => {
-          console.log({ railssvg: svg });
           this.setState({
             showModal: false,
             showWarning: this.props.hasChildren || this.props.hasParent
@@ -285,6 +279,37 @@ export default class StructureEditorModal extends React.Component {
       } catch (e) {
         notifyError(`The drawing is not supported! ${e}`);
       }
+    }
+  }
+
+  // function to store ketcher2
+  async saveKetcher2(editorId) {
+    const { onSaveFileK2SC } = this.ketcher2Ref.current;
+    const { onSave, hasChildren, hasParent } = this.props;
+
+    // Ensure the function exists before calling it
+    if (typeof onSaveFileK2SC !== 'function') {
+      console.error('onSaveFileK2SC is not a function');
+      return;
+    }
+
+    try {
+      // Call onSaveFileK2SC and get the required data
+      const { ket2Molfile, svgElement } = await onSaveFileK2SC();
+
+      console.log({ svgElement });
+
+      // Update state and invoke onSave callback after state has been updated
+      this.setState(
+        { showModal: false, showWarning: hasChildren || hasParent },
+        () => {
+          if (onSave) {
+            onSave(ket2Molfile, svgElement, { smiles: '' }, editorId);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error during save operation for Ketcher2:', error);
     }
   }
 
