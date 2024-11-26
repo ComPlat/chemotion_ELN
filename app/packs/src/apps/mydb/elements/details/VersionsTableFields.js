@@ -1,11 +1,13 @@
+/* eslint-disable react/no-array-index-key */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Row, Col, FormControl, Table
+  FormControl, Table
 } from 'react-bootstrap';
 import moment from 'moment';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import QuillViewer from 'src/components/QuillViewer';
+import { AgGridReact } from 'ag-grid-react';
 
 function SolventDetails({ solvent }) {
   if (!solvent) {
@@ -49,8 +51,10 @@ SolventDetails.propTypes = {
 
 function VersionsTableFields(props) {
   const {
-    fields, renderRevertView, handleRevertFieldToggle, revertSelectedFields, revertGroupIndex
+    renderRevertView
   } = props;
+
+  let { fields } = props;
 
   const date = (input) => (
     input ? moment(input).format('YYYY-MM-DD HH:mm') : ''
@@ -202,8 +206,9 @@ function VersionsTableFields(props) {
       .map((line, index) => (
         // eslint-disable-next-line react/no-array-index-key
         <React.Fragment key={index}>
-          {line}
-          <br />
+          <div>
+            {line}
+          </div>
         </React.Fragment>
       ))
   );
@@ -263,90 +268,79 @@ function VersionsTableFields(props) {
     )(value, label);
   };
 
+  const autoSizeColumns = (params) => {
+    params.api.autoSizeColumns(['checkbox']);
+  };
+
+  const columns = [
+    {
+      field: 'checkbox',
+      headerName: '',
+      cellRenderer: 'agCheckboxCellRenderer',
+      cellEditor: 'agCheckboxCellEditor',
+      hide: !renderRevertView,
+      editable: true,
+    },
+    {
+      field: 'label',
+      headerName: 'Label',
+      cellStyle: {
+        fontWeight: 'bold',
+      },
+      wrapText: true,
+      autoHeight: true,
+    },
+    {
+      field: 'oldValue',
+      headerName: 'previous version',
+      cellStyle: {
+        backgroundColor: '#f2dede',
+      },
+      cellRenderer: (input) => formatValue(input.data.kind, input.value, input.data.label),
+      wrapText: true,
+      autoHeight: true,
+    },
+    {
+      field: 'newValue',
+      headerName: 'updated version',
+      cellStyle: {
+        backgroundColor: '#dff0d8',
+      },
+      cellRenderer: (input) => formatValue(input.data.kind, input.value, input.data.label),
+      wrapText: true,
+      autoHeight: true,
+    },
+    {
+      field: 'currentValue',
+      headerName: 'current version',
+      cellRenderer: (input) => formatValue(input.data.kind, input.value, input.data.label),
+      wrapText: true,
+      autoHeight: true,
+    },
+  ];
+
+  fields = fields.filter((field) => (field.kind !== 'hidden'));
+  if (renderRevertView) {
+    fields = fields.filter((field) => (field.currentValue !== field.oldValue
+    && field.revert.length > 0));
+  }
+
   return (
-    <>
-      {
-        fields.filter((field) => (field.kind !== 'hidden')).map((field, index) => {
-          if (renderRevertView) {
-            const key = `${revertGroupIndex}${index}`;
-            return (
-              // eslint-disable-next-line react/no-array-index-key
-              <Row key={index} bsStyle="change" style={{ marginRight: 0 }}>
-                <Col xs={4}>
-                  <label className="history-checkbox-label" htmlFor={`field-${key}`}>
-                    <input
-                      id={`field-${key}`}
-                      type="checkbox"
-                      onChange={() => handleRevertFieldToggle(key)}
-                      checked={revertSelectedFields.includes(key)}
-                    />
-                    <strong>{field.label}</strong>
-                  </label>
-                </Col>
-                <Col
-                  xs={4}
-                  className="bg-current"
-                  style={{ whiteSpace: 'pre-line' }}
-                >
-                  {formatValue(field.kind, field.currentValue, field.label)}
-                </Col>
-                <Col
-                  xs={4}
-                  className="bg-danger"
-                  style={{ whiteSpace: 'pre-line' }}
-                >
-                  {formatValue(field.kind, field.oldValue, field.label)}
-                </Col>
-              </Row>
-            );
-          }
-          return (
-            // eslint-disable-next-line react/no-array-index-key
-            <Row key={index} bsStyle="change">
-              <Col xs={3}>
-                <strong>{field.label}</strong>
-              </Col>
-              <Col
-                xs={3}
-                className="bg-danger"
-                style={{ whiteSpace: 'pre-line' }}
-              >
-                {formatValue(field.kind, field.oldValue, field.label)}
-              </Col>
-              <Col
-                xs={3}
-                className="bg-success"
-                style={{ whiteSpace: 'pre-line' }}
-              >
-                {formatValue(field.kind, field.newValue, field.label)}
-              </Col>
-              <Col
-                xs={3}
-                className="bg-current"
-                style={{ whiteSpace: 'pre-line' }}
-              >
-                {formatValue(field.kind, field.currentValue, field.label)}
-              </Col>
-            </Row>
-          );
-        })
-      }
-    </>
+    <div className="ag-theme-balham" key="fields_show">
+      <AgGridReact
+        columnDefs={columns}
+        rowData={fields}
+        domLayout="autoHeight"
+        onColumnVisible={autoSizeColumns}
+      />
+    </div>
   );
 }
 
-VersionsTableFields.defaultProps = {
-  handleRevertFieldToggle: () => {},
-  revertSelectedFields: [],
-  revertGroupIndex: 0,
-};
-
 VersionsTableFields.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   fields: PropTypes.arrayOf(PropTypes.object).isRequired,
   renderRevertView: PropTypes.bool.isRequired,
-  handleRevertFieldToggle: PropTypes.func,
-  revertSelectedFields: PropTypes.arrayOf(PropTypes.string),
-  revertGroupIndex: PropTypes.number,
 };
 
 export default VersionsTableFields;

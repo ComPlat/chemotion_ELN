@@ -21,6 +21,9 @@ export default class VersionsTable extends Component {
       versions: [],
       page: 1,
       pages: 1,
+      totalElements: 0,
+      TableChangesId: -1,
+      renderRevertView: false,
     };
   }
 
@@ -29,6 +32,7 @@ export default class VersionsTable extends Component {
   }
 
   handlePagerClick = (eventKey) => {
+    this.setState({ TableChangesId: -1 });
     if (eventKey === 'prev') {
       this.setState((state) => ({
         page: state.page + 1
@@ -89,6 +93,21 @@ export default class VersionsTable extends Component {
     .then(() => this.fetchVersions())
     .then(() => this.reloadEntity());
 
+  onSelectionChanged = ({ api }) => {
+    const selectedRows = api.getSelectedRows();
+    const {
+      totalElements, versions, pages, page
+    } = this.state;
+    if (selectedRows.length === 0) return;
+    if (page === pages) {
+      this.setState({ TableChangesId: versions.length - selectedRows[0].id, renderRevertView: false });
+    } else {
+      this.setState({ TableChangesId: totalElements - (page - 1) * 10 - selectedRows[0].id, renderRevertView: false });
+    }
+  };
+
+  toggleRevertView = () => this.setState((prevState) => ({ renderRevertView: !prevState.renderRevertView }));
+
   fetchVersions() {
     const { type, id } = this.props;
     const { page } = this.state;
@@ -102,12 +121,15 @@ export default class VersionsTable extends Component {
         versions: result.elements || [],
         page: result.page || 1,
         pages: result.pages || 1,
+        totalElements: result.totalElements || 0,
       });
     });
   }
 
   render() {
-    const { versions, page, pages } = this.state;
+    const {
+      versions, page, pages, TableChangesId, renderRevertView
+    } = this.state;
     const { isEdited } = this.props;
 
     const pagination = () => (
@@ -132,17 +154,6 @@ export default class VersionsTable extends Component {
     );
 
     const columns = [
-      {
-        field: 'details',
-        headerName: 'double click in cell',
-        cellEditor: VersionsTableChanges,
-        cellEditorParams: {
-          handleRevert: this.handleRevert,
-          isEdited
-        },
-        cellEditorPopup: true,
-        editable: true,
-      },
       {
         field: 'id',
         headerName: '#',
@@ -174,9 +185,18 @@ export default class VersionsTable extends Component {
             rowData={versions}
             domLayout="autoHeight"
             tooltipShowDelay="500"
+            rowSelection="single"
+            onSelectionChanged={this.onSelectionChanged}
           />
           {pagination()}
         </div>
+        <VersionsTableChanges
+          data={versions[TableChangesId]}
+          handleRevert={this.handleRevert}
+          isEdited={isEdited}
+          renderRevertView={renderRevertView}
+          toggleRevertView={this.toggleRevertView}
+        />
       </>
     );
   }

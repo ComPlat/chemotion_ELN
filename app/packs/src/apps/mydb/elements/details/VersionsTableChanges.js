@@ -1,16 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import VersionsTableFields from 'src/apps/mydb/elements/details/VersionsTableFields';
-import VersionsTableModal from 'src/apps/mydb/elements/details/VersionsTableModal';
-import {
-  Row, Col, Alert, Modal
-} from 'react-bootstrap';
+import { Alert, Button, ButtonGroup } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 
 function VersionsTableChanges(props) {
   const {
-    data, stopEditing, handleRevert, isEdited
+    data, handleRevert, isEdited, renderRevertView, toggleRevertView
   } = props;
+
+  if (typeof data === 'undefined') {
+    return '';
+  }
 
   const { id, changes } = data;
   const revertibleFields = () => {
@@ -36,16 +37,44 @@ function VersionsTableChanges(props) {
   const change = changes.map(({ name, fields }, index) => (
     // eslint-disable-next-line react/no-array-index-key
     <React.Fragment key={index}>
-      <ol className="history-table-breadcrumb">
-        {name.map((item) => (
-          <li key={item} className="history-table-breadcrumb__element">
-            {item}
-          </li>
-        ))}
-      </ol>
-      <VersionsTableFields fields={fields} renderRevertView={false} />
+      {name.map((item) => (
+        <li key={item} className="history-table-breadcrumb__element">
+          {item}
+        </li>
+      ))}
+      <VersionsTableFields
+        fields={fields}
+        renderRevertView={renderRevertView}
+      />
     </React.Fragment>
   ));
+
+  const reversibleChanges = () => {
+    const result = [];
+
+    changes.forEach((historyChange) => {
+      const affectedChangeFields = [];
+
+      historyChange.fields.filter((f) => f.checkbox).forEach((field) => {
+        if (!affectedChangeFields.includes(field)) {
+          affectedChangeFields.push(field);
+        }
+      });
+
+      if (affectedChangeFields.length > 0) {
+        result.push({
+          db_id: historyChange.db_id,
+          klass_name: historyChange.klass_name,
+          fields: affectedChangeFields.map((field) => ({
+            value: field.revertibleValue,
+            name: field.name,
+          })),
+        });
+      }
+    });
+
+    return result;
+  };
 
   const isRevertible = revertibleFields();
   let alertText = 'You cannot undo changes. ';
@@ -58,44 +87,41 @@ function VersionsTableChanges(props) {
   }
 
   return (
-    <Modal show size="lg" backdrop="static" className="history-modal">
-      <Modal.Header closeButton onHide={() => stopEditing()}>
-        <Modal.Title>{`# ${id} `}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Row bsStyle="change" style={{ marginRight: 0 }}>
-          <Col xs={3}>
-            legend: param
-          </Col>
-          <Col xs={3}>
-            old value
-          </Col>
-          <Col xs={3}>
-            new value
-          </Col>
-          <Col>
-            current value
-          </Col>
-        </Row>
+    <>
+      <h2>{`# ${id}`}</h2>
+      <ol className="history-table-breadcrumb">
         {change}
-      </Modal.Body>
-      <Modal.Footer>
-        {isRevertible > 0 ? <VersionsTableModal name={`# ${id}`} changes={changes} handleRevert={handleRevert} />
-          : (
-            <Alert bsStyle="warning" className="history-alert">
-              {alertText}
-            </Alert>
-          )}
-      </Modal.Footer>
-    </Modal>
+      </ol>
+      {isRevertible > 0 ? (
+        <ButtonGroup className="mb-2">
+          <Button variant="warning" onClick={toggleRevertView}>
+            {renderRevertView ? 'Cancel' : 'Revert'}
+          </Button>
+          {renderRevertView ? (
+            <Button
+              variant="danger"
+              onClick={() => { toggleRevertView(); handleRevert(reversibleChanges()); }}
+            >
+              Revert
+            </Button>
+          ) : ''}
+        </ButtonGroup>
+      )
+        : (
+          <Alert variant="warning">
+            {alertText}
+          </Alert>
+        )}
+    </>
   );
 }
 
 VersionsTableChanges.propTypes = {
   data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
   handleRevert: PropTypes.func.isRequired,
   isEdited: PropTypes.bool.isRequired,
+  renderRevertView: PropTypes.bool.isRequired,
+  toggleRevertView: PropTypes.func.isRequired,
 };
 
 export default VersionsTableChanges;

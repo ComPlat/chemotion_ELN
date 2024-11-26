@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 export default class HistoryField {
   constructor([name, {
-    label, kind, old_value, new_value, current_value, revert, revertible_value
+    label, kind, old_value, new_value, current_value, revert, revertible_value, checkbox = false
   }]) {
     this.name = name;
     this.label = label;
@@ -11,5 +11,6 @@ export default class HistoryField {
     this.currentValue = current_value;
     this.revert = revert;
     this.revertibleValue = revertible_value;
+    this.checkbox = checkbox;
   }
 }
