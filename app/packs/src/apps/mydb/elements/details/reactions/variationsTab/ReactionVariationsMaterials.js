@@ -5,7 +5,6 @@ import {
 import {
   MaterialOverlay, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
@@ -155,13 +154,11 @@ function cellIsEditable(params) {
   }
 }
 
-function getMaterialData(material, materialType, gasMode) {
+function getMaterialData(material, materialType, gasMode = false, vesselVolume = null) {
   const materialCopy = cloneDeep(material);
 
   let gasType = materialCopy.gas_type ?? 'off';
   gasType = gasMode ? gasType : 'off';
-
-  const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
 
   // Mutable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
   const entries = getMaterialEntries(materialType, gasType);

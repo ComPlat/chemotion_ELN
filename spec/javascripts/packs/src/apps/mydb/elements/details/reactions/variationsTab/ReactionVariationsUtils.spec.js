@@ -20,7 +20,7 @@ describe('ReactionVariationsUtils', () => {
   });
   it('creates a row in the variations table', async () => {
     const reaction = await setUpReaction();
-    const row = createVariationsRow(reaction, reaction.variations, false);
+    const row = createVariationsRow(reaction, reaction.variations);
     const nonReferenceStartingMaterial = Object.values(row.startingMaterials).find(
       (material) => !material.aux.isReference
     );
