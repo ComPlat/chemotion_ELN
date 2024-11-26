@@ -1,8 +1,8 @@
 import expect from 'expect';
 import {
-  EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser
+  EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-import { setUpReaction } from 'helper/reactionVariationsHelpers';
+import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsComponents', async () => {
   describe('FormatterComponents', () => {
@@ -56,7 +56,7 @@ describe('ReactionVariationsComponents', async () => {
       const newValue = '-1';
       const updatedCellData = PropertyParser({ oldValue: cellData, newValue, colDef });
 
-      expect(updatedCellData.value).toEqual(-274.15);
+      expect(updatedCellData.value).toEqual(-273.15);
     });
   });
   describe('MaterialParser', async () => {
@@ -124,7 +124,7 @@ describe('ReactionVariationsComponents', async () => {
     let cellData;
     let context;
     beforeEach(async () => {
-      const reaction = await setUpReaction();
+      const reaction = await setUpGaseousReaction();
       variationsRow = reaction.variations[0];
       cellData = Object.values(variationsRow.reactants)[0];
       context = { reactionHasPolymers: false };
@@ -172,6 +172,65 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.mass.value).toBeGreaterThan(cellData.mass.value);
       expect(updatedCellData.volume.value).toBeGreaterThan(cellData.volume.value);
       expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
+    });
+  });
+  describe('GasParser', async () => {
+    let variationsRow;
+    let cellData;
+    let context;
+    beforeEach(async () => {
+      const reaction = await setUpGaseousReaction();
+      variationsRow = reaction.variations[0];
+      cellData = Object.values(variationsRow.products)[0];
+      context = { reactionHasPolymers: false };
+    });
+    it('rejects negative value', () => {
+      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'duration', displayUnit: 'Hour(s)' } };
+      const updatedCellData = GasParser({
+        data: variationsRow, oldValue: cellData, newValue: '-1', colDef, context
+      });
+
+      expect(updatedCellData.duration.value).toEqual(0);
+    });
+    it('adapts only turnover frequency when updating duration', () => {
+      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'duration', displayUnit: 'Hour(s)' } };
+
+      const updatedCellData = GasParser({
+        data: variationsRow, oldValue: cellData, newValue: '2', colDef, context
+      });
+
+      expect(updatedCellData.mass.value).toBe(cellData.mass.value);
+      expect(updatedCellData.amount.value).toBe(cellData.amount.value);
+      expect(updatedCellData.yield.value).toBe(cellData.yield.value);
+      expect(updatedCellData.turnoverNumber.value).toBe(cellData.turnoverNumber.value);
+
+      expect(updatedCellData.turnoverFrequency.value).toBeLessThan(cellData.turnoverFrequency.value);
+    });
+    it('adapts other entries when updating concentration', () => {
+      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'concentration', displayUnit: 'ppm' } };
+
+      const updatedCellData = GasParser({
+        data: variationsRow, oldValue: cellData, newValue: `${cellData.concentration.value * 2}`, colDef, context
+      });
+
+      expect(updatedCellData.mass.value).not.toBe(cellData.mass.value);
+      expect(updatedCellData.amount.value).not.toBe(cellData.amount.value);
+      expect(updatedCellData.yield.value).not.toBe(cellData.yield.value);
+      expect(updatedCellData.turnoverNumber.value).not.toBe(cellData.turnoverNumber.value);
+      expect(updatedCellData.turnoverFrequency.value).not.toBe(cellData.turnoverFrequency.value);
+    });
+    it('adapts other entries when updating temperature', () => {
+      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'temperature', displayUnit: 'K' } };
+
+      const updatedCellData = GasParser({
+        data: variationsRow, oldValue: cellData, newValue: `${cellData.temperature.value / 2}`, colDef, context
+      });
+
+      expect(updatedCellData.mass.value).not.toBe(cellData.mass.value);
+      expect(updatedCellData.amount.value).not.toBe(cellData.amount.value);
+      expect(updatedCellData.yield.value).not.toBe(cellData.yield.value);
+      expect(updatedCellData.turnoverNumber.value).not.toBe(cellData.turnoverNumber.value);
+      expect(updatedCellData.turnoverFrequency.value).not.toBe(cellData.turnoverFrequency.value);
     });
   });
 });
