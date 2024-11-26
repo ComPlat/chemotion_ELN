@@ -31,6 +31,7 @@ import {
 import {
   columnDefinitionsReducer
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
+import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
@@ -287,8 +288,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }
 
   const addRow = useCallback(() => {
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     setReactionVariations(
-      [...reactionVariations, createVariationsRow(reaction, reactionVariations, gasMode)]
+      [...reactionVariations, createVariationsRow(reaction, reactionVariations, gasMode, vesselVolume)]
     );
   }, [reaction, reactionVariations, gasMode]);
 

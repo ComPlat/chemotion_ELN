@@ -18,6 +18,39 @@ const materialTypes = {
   solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
 };
 
+function convertUnit(value, fromUnit, toUnit) {
+  if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
+    const convertedValue = convertTemperature(value, fromUnit, toUnit);
+    if (toUnit === 'K' && convertedValue < 0) {
+      return 0;
+    }
+    if (toUnit === '°C' && convertedValue < -273.15) {
+      return -273.15;
+    }
+    if (toUnit === '°F' && convertedValue < -459.67) {
+      return -459.67;
+    }
+    return convertedValue;
+  }
+  if (durationUnits.includes(fromUnit) && durationUnits.includes(toUnit)) {
+    return convertDuration(value, fromUnit, toUnit);
+  }
+  if (massUnits.includes(fromUnit) && massUnits.includes(toUnit)) {
+    const amountUnitPrefixes = { g: 'n', mg: 'm', μg: 'u' };
+    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
+  }
+  if (volumeUnits.includes(fromUnit) && volumeUnits.includes(toUnit)) {
+    const amountUnitPrefixes = { l: 'n', ml: 'm', μl: 'u' };
+    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
+  }
+  if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
+    const amountUnitPrefixes = { mol: 'n', mmol: 'm' };
+    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
+  }
+
+  return value;
+}
+
 function getStandardUnits(entry) {
   switch (entry) {
     case 'volume':
@@ -47,6 +80,16 @@ function getStandardValue(entry, material) {
       return material.amount_mol ?? null;
     case 'equivalent':
       return (material.reference ?? false) ? 1 : 0;
+    case 'temperature': {
+      const { value = null, unit = null } = material.gas_phase_data?.temperature ?? {};
+      return convertUnit(value, unit, getStandardUnits('temperature')[0]);
+    }
+    case 'concentration':
+      return material.gas_phase_data?.part_per_million ?? null;
+    case 'turnoverNumber':
+      return material.gas_phase_data?.turnover_number ?? null;
+    case 'turnoverFrequency':
+      return material.gas_phase_data?.turnover_frequency?.value ?? null;
     default:
       return null;
   }
@@ -91,29 +134,6 @@ function getUserFacingUnit(unit) {
   }
 }
 
-function convertUnit(value, fromUnit, toUnit) {
-  if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
-    return convertTemperature(value, fromUnit, toUnit);
-  }
-  if (durationUnits.includes(fromUnit) && durationUnits.includes(toUnit)) {
-    return convertDuration(value, fromUnit, toUnit);
-  }
-  if (massUnits.includes(fromUnit) && massUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { g: 'n', mg: 'm', μg: 'u' };
-    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
-  }
-  if (volumeUnits.includes(fromUnit) && volumeUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { l: 'n', ml: 'm', μl: 'u' };
-    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
-  }
-  if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { mol: 'n', mmol: 'm' };
-    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
-  }
-
-  return value;
-}
-
 function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-${variationsRowId}`;
 }
@@ -123,7 +143,7 @@ function getSequentialId(variations) {
   return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
 }
 
-function createVariationsRow(reaction, variations, gasMode) {
+function createVariationsRow(reaction, variations, gasMode = false, vesselVolume = null) {
   const reactionCopy = cloneDeep(reaction);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reactionCopy.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reactionCopy.temperature ?? {};
@@ -144,7 +164,7 @@ function createVariationsRow(reaction, variations, gasMode) {
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v, materialType, gasMode) }), {});
+      { ...a, [v.id]: getMaterialData(v, materialType, gasMode, vesselVolume) }), {});
   });
 
   return updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);

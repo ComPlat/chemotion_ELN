@@ -150,7 +150,10 @@ function GasParser({
   data: variationsRow, oldValue: cellData, newValue, colDef
 }) {
   const { currentEntry, displayUnit } = colDef.entryDefs;
-  const value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
+  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
+  if (currentEntry !== 'temperature' && value < 0) {
+    value = 0;
+  }
   let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
   switch (currentEntry) {
@@ -161,22 +164,17 @@ function GasParser({
         updatedCellData.temperature.unit,
         'K'
       );
+
       const concentration = updatedCellData.concentration.value;
       const { vesselVolume } = updatedCellData.aux;
       const amount = calculateGasMoles(vesselVolume, concentration, temperatureInKelvin);
       const mass = getGramFromMol(amount, updatedCellData);
 
-      const catalystAmount = getCatalystMaterial(variationsRow).amount.value;
+      const catalyst = getCatalystMaterial(variationsRow);
+      const catalystAmount = catalyst?.amount.value ?? 0;
       const turnoverNumber = calculateTON(amount, catalystAmount);
 
-      const durationInHours = convertUnit(
-        updatedCellData.temperature.value,
-        updatedCellData.temperature.unit,
-        'Hour(s)'
-      );
-      const turnoverFrequency = turnoverNumber / (durationInHours || 1);
-
-      const feedstockPurity = getFeedstockMaterial(variationsRow).aux.purity || 1;
+      const feedstockPurity = getFeedstockMaterial(variationsRow)?.aux.purity || 1;
       const feedstockAmount = calculateFeedstockMoles(vesselVolume, feedstockPurity);
       const percentYield = (amount / feedstockAmount) * 100;
 
@@ -186,22 +184,6 @@ function GasParser({
         amount: { ...updatedCellData.amount, value: amount },
         yield: { ...updatedCellData.yield, value: percentYield },
         turnoverNumber: { ...updatedCellData.turnoverNumber, value: turnoverNumber },
-        turnoverFrequency: { ...updatedCellData.turnoverFrequency, value: turnoverFrequency }
-      };
-      break;
-    }
-    case 'duration': {
-      const durationInHours = convertUnit(
-        updatedCellData.duration.value,
-        updatedCellData.duration.unit,
-        'Hour(s)'
-      );
-      const turnoverNumber = updatedCellData.turnoverNumber.value;
-      const turnoverFrequency = turnoverNumber / (durationInHours || 1);
-
-      updatedCellData = {
-        ...updatedCellData,
-        turnoverFrequency: { ...updatedCellData.turnoverFrequency, value: turnoverFrequency }
       };
       break;
     }
@@ -209,7 +191,18 @@ function GasParser({
       break;
   }
 
-  return updatedCellData;
+  const durationInHours = convertUnit(
+    updatedCellData.duration.value,
+    updatedCellData.duration.unit,
+    'Hour(s)'
+  );
+  const turnoverNumber = updatedCellData.turnoverNumber.value;
+  const turnoverFrequency = turnoverNumber / (durationInHours || 1);
+
+  return {
+    ...updatedCellData,
+    turnoverFrequency: { ...updatedCellData.turnoverFrequency, value: turnoverFrequency }
+  };
 }
 
 function FeedstockParser({

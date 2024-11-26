@@ -11,11 +11,34 @@ async function setUpReaction() {
   const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
   reaction.starting_materials[0].reference = true;
   reaction.reactants = [await setUpMaterial()];
-  reaction.reactants[0].gas_type = 'feedstock';
 
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, variations, true));
+    variations.push(createVariationsRow(reaction, variations));
+  }
+  reaction.variations = variations;
+
+  return reaction;
+}
+
+async function setUpGaseousReaction() {
+  const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+  reaction.starting_materials[0].reference = true;
+  reaction.starting_materials[0].gas_type = 'catalyst';
+  reaction.reactants = [await setUpMaterial()];
+  reaction.reactants[0].gas_type = 'feedstock';
+  reaction.products[0].gas_type = 'gas';
+  reaction.products[0].gas_phase_data = {
+    time: { unit: 'h', value: 1 },
+    temperature: { unit: 'K', value: 1 },
+    turnover_number: 1,
+    part_per_million: 1,
+    turnover_frequency: { unit: 'TON/h', value: 1 }
+  };
+
+  const variations = [];
+  for (let id = 0; id < 3; id++) {
+    variations.push(createVariationsRow(reaction, variations, true, 10));
   }
   reaction.variations = variations;
 
@@ -40,5 +63,5 @@ function getColumnDefinitionsMaterialIDs(columnDefinitions, materialType) {
 }
 
 export {
-  setUpMaterial, setUpReaction, getColumnGroupChild, getColumnDefinitionsMaterialIDs
+  setUpMaterial, setUpReaction, setUpGaseousReaction, getColumnGroupChild, getColumnDefinitionsMaterialIDs
 };
