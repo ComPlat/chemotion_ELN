@@ -22,6 +22,7 @@ import {
   prepareImageFromTemplateList,
   removeImageTemplateAtom,
   reAttachPolymerList,
+  removeImagesFromData,
 
   // DOM Methods
   attachListenerForTitle,
@@ -109,7 +110,7 @@ const fetchKetcherData = async (editor) => {
 export const moveTemplate = async () => {
   try {
     if (!latestData) await fetchKetcherData(editor);
-    latestData.root.nodes = latestData?.root?.nodes?.slice(0, mols.length);
+    latestData.root.nodes = removeImagesFromData(latestData);
   } catch (err) {
     console.error("moveTemplate", err.message);
   }
@@ -140,7 +141,7 @@ export const placeImageOnAtoms = async (mols_, imagesList_) => {
         };
       });
     });
-    latestData.root.nodes = [...latestData.root.nodes.slice(0, mols_.length), ...imagesList_];
+    latestData.root.nodes = [...removeImagesFromData(latestData), ...imagesList_];
   } catch (err) {
     console.error("placeImageOnAtoms", err.message);
   }
@@ -265,7 +266,7 @@ const addAtomAliasHelper = async (already_processed) => {
       }
     }
     const d = { ...latestData };
-    const mols_list = d.root.nodes.slice(0, mols.length);
+    const mols_list = removeImagesFromData(d);
     d.root.nodes = [...mols_list, ...new_images];
     return { d, isConsistent: isAliasConsistent() };
   } catch (err) {
@@ -348,7 +349,6 @@ export const saveMolefile = async (svgElement, canvas_data_Mol) => {
     }
   }
   const ket2Molfile = await reAttachPolymerList({ lines, atoms_count, extra_data_start, extra_data_end });
-  console.log({ ket2Molfile });
   return { ket2Molfile, svgElement };
 };
 
@@ -787,7 +787,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     onSaveFileK2SC: async () => {
       await fetchKetcherData(editor);
       const canvasDataMol = await editor.structureDef.editor.getMolfile();
-      console.log({ canvasDataMol });
       const svgElement = await reArrangeImagesOnCanvas(iframeRef);
       const result = await saveMolefile(svgElement, canvasDataMol);
       resetStore();

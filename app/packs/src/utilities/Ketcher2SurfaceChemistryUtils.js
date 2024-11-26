@@ -166,6 +166,12 @@ const removeMoleculeFromData = (data, molKey) => {
   return data.root.nodes.filter(node => node.$ref !== molKey);;
 };
 
+// filter images from nodes
+const removeImagesFromData = (data) => {
+  // Filter out the node referencing the removed molecule
+  return data.root.nodes.filter(node => node.type !== "image");;
+};
+
 // Updates atom aliases in a molecule after removing certain images and updates the molecule data.
 const updateMoleculeAliases = async (container, atoms_list) => {
   for (const img_idx of container) {
@@ -300,8 +306,6 @@ const reAttachPolymerList = async ({ lines, atoms_count, extra_data_start, extra
     }
   }
   lines_copy.splice(lines_copy.length, 0, ...[poly_identifier, atomAliasList.join(" "), file_end_indentifier]);
-
-  console.log("lines array", lines_copy);
   return lines_copy.join("\n");
 };
 
@@ -416,6 +420,7 @@ export {
   removeImageTemplateAtom,
   reAttachPolymerList,
   templateParser,
+  removeImagesFromData,
 
   // DOM Methods
   disableButton,
