@@ -340,4 +340,5 @@ export {
   getGramFromMol,
   computeEquivalent,
   computePercentYield,
+  cellIsEditable,
 };
