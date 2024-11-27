@@ -3,15 +3,17 @@ import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
   updateColumnDefinitionsMaterials,
-  getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes
+  getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes,
+  getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  setUpMaterial, setUpReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
+  setUpMaterial, setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
 } from 'helper/reactionVariationsHelpers';
 import { materialTypes } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { cloneDeep } from 'lodash';
 
 describe('ReactionVariationsMaterials', () => {
   it('removes obsolete materials', async () => {
@@ -112,6 +114,36 @@ describe('ReactionVariationsMaterials', () => {
     expect(Array.isArray(reactionMaterialsIDs)).toBe(true);
     expect(new Set(reactionMaterialsIDs).size).toBe(5);
   });
+  it('retrieves reaction material gas types', async () => {
+    const reaction = await setUpGaseousReaction();
+    const reactionMaterials = getReactionMaterials(reaction);
+    const reactionMaterialsGasTypes = getReactionMaterialsGasTypes(reactionMaterials);
+    expect(reactionMaterialsGasTypes).toEqual(['catalyst', 'off', 'feedstock', 'gas', 'off']);
+  });
+  it("updates materials' gas type", async () => {
+    const reaction = await setUpGaseousReaction();
+    const currentMaterials = getReactionMaterials(reaction);
+
+    const updatedMaterials = cloneDeep(currentMaterials);
+    updatedMaterials.startingMaterials[0].gas_type = 'feedstock';
+    updatedMaterials.reactants[0].gas_type = 'catalyst';
+    updatedMaterials.products[0].gas_type = 'off';
+
+    const updatedVariations = updateVariationsGasTypes(reaction.variations, updatedMaterials, false);
+
+    const variationsRow = reaction.variations[0];
+    const updatedVariationsRow = updatedVariations[0];
+
+    expect(variationsRow.startingMaterials[Object.keys(variationsRow.startingMaterials)[0]].aux.gasType).not.toBe(
+      updatedVariationsRow.startingMaterials[Object.keys(updatedVariationsRow.startingMaterials)[0]].aux.gasType
+    );
+    expect(variationsRow.reactants[Object.keys(variationsRow.reactants)[0]].aux.gasType).not.toBe(
+      updatedVariationsRow.reactants[Object.keys(updatedVariationsRow.reactants)[0]].aux.gasType
+    );
+    expect(variationsRow.products[Object.keys(variationsRow.products)[0]].aux.gasType).not.toBe(
+      updatedVariationsRow.products[Object.keys(updatedVariationsRow.products)[0]].aux.gasType
+    );
+  });
   it('updates column definitions of gaseous materials', async () => {
     const reaction = await setUpReaction();
 
@@ -165,5 +197,25 @@ describe('ReactionVariationsMaterials', () => {
     const { currentEntry } = reactantColumnDefinition.entryDefs;
 
     expect(currentEntry).toBe('mass');
+  });
+  it('determines cell editability based on entry', async () => {
+    const colDef = {
+      field: 'foo',
+      entryDefs: {
+        currentEntry: 'equivalent',
+        displayUnit: null
+      }
+    };
+    const data = {
+      foo: {
+        aux: {
+          isReference: true,
+          gasType: 'off',
+          materialType: 'startingMaterials'
+        }
+      }
+    };
+    const params = { colDef, data };
+    expect(cellIsEditable(params)).toBe(false);
   });
 });
