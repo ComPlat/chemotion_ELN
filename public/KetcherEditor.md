@@ -18,9 +18,11 @@ Implementation is built on event-listeners which are triggered inside the ket2 c
 ✔️ Move Atom -> on atom move  
 ✔️ Delete Atom -> on atom delete, on molecule delete  
 ✔️ Delete Image -> on image delete  
-✔️ Upsert image(NIU) -> on image add  
-✔️ Move image(NIU) -> on image move  
-✔️ Update(NIU) -> any action on canvas  
+✔️ _selection -> holds selected structure  
+
+### ⭐ Key: 
+✔️ templates starts from 1  
+✔️ Image counter starts from 0  
 
 ### ⭐ Few frequently used functions from Editors API
 Here are some functions available in Editor API which are frequently used for K2SC:  
@@ -32,53 +34,65 @@ Here are some functions available in Editor API which are frequently used for K2
 
 ### ⭐ Alias Patterns:
 ✔️ Two parts: t_01 => p1: t(prefix), p2: template id  
-✔️ Three Parts: t_01_01 => ..., p3: Image index  
+✔️ Three Parts: t_01_01 => t_01 => p1: t(prefix), p2: template id, p3: Image index  
     &#9733; examples: **t_01, t_02, t_02_0, t_01_1**   
     **&#9733; &#9733; :** On every new template added **image_used_counter** is incremented by one
 
 ### ⭐ Understand Main events and Execution
 
 ### &#9733; Event => Add atom:
-When a new temaplte is added to the canvas. A link is created between an image and atom(with alias).
+When a new template is added to the canvas. A link is created between an image and atom(with alias).
 These main components of a template:  
 ✔️ Atom with label(A) -- all k2SC atoms should have label:A  
 ✔️ Alias(t_templateid) -- All atoms should have an alias  
 ✔️ Image -- alias third part is an index of image in the nodes [patterns](#Alias-Patterns) data.  
 
-### &#9733; Logic flow (in-order):  
-✔️ Add atom should be with lable A  
-✔️ Added atom should have an alias: Types of alias: t_01  
-✔️ Get the latest added image index  
-✔️ Update the alias of atom as: t_templateid_imageindex  
-✔️ MoveTemplate: which place an image on alias atom  
-
-  Having a correct index of the image is very import to maintain a temaplte
+  #### Add atom flow (in-order):  
+  ✔️ Add atom should be with label A  
+  ✔️ Added atom should have an alias: for example t_01  
+  ✔️ Get the latest added image index  
+  ✔️ Update the alias of atom as: t_templateid_imageindex(t_1_0)
+  ✔️ MoveTemplate: which place an image on alias atom  
+      Having a correct index of the image is very import to maintain template coordination
 
 ### &#9733; Event => Move atom (in-order):
   Once an atom is added with correct alias:  
 ✔️ On atom move, get the alias of moved atom  
-✔️ Grad the location [x,y,z] of the move atom and based on alias third part which is an index from the image list.  
+✔️ Pick the location [x,y,z] of the moved atom and based on alias third part which is an index from the image list.  
 ✔️ Update the location of image  
-✔️ MoveTemplate: which place an image on alias atom  
+✔️ Save & MoveTemplate: a helper funcation which keeps all templates in-sync
 
 ### &#9733; Event => Delete Atom (in-order):
   When an atom is deleted:  
 ✔️ grab the atom deleted with its alias  
-✔️  identify the image based on third part of the alias  
+✔️ identify the image based on third part of the alias  
 ✔️ remove the image index from imageList  
-✔️ reset all aliases and should be consistent  
-✔️ Save and Move template  
+✔️ reset all aliases and rebase. All alises should be consistent 0,1,2,3,4,5 
+✔️ Save & MoveTemplate: a helper funcation which keeps all templates in-sync
 
 ### &#9733; Event => Delete Image (in-order):
   When an image is deleted:  
-✔️ Get deleted image index from _selected variable  
+✔️ Get deleted image index from _selection variable  
 ✔️ Find an alias which has the image index number as third part  
 ✔️ Delete that atom  
 ✔️ reset all aliases and should be consistent  
-✔️  MoveTemplate: which place an image on alias atom  
+✔️ Save & MoveTemplate: a helper funcation which keeps all templates in-sync
 
 ### &#9733; Event => Load canvas:  
-  Event called when a file is loaded or when setMolecule function is called.
+Event called when a file is loaded or when setMolecule function is called.
 
-### doc-flags: 
-  - NIU => Not in use
+### ⭐ A structure in action
+An example of some actions.   
+#### Action Add Atom
+📋 Initials: image_count: -1, imageList:[],     
+🚀 Add Atom 1: Alisa: t_01_0, imageList: [0], image_count: 0   
+🚀 Add Atom 2: Alisa: t_01_1, imageList: [0, 1], image_count: 1  
+🚀 Add Atom 3: Alisa: t_02_2, imageList: [0, 1, 2], image_count: 2   
+📋 Aliases: [t_01_0, t_01_1, t_01_2], imageList: [0,1, 2], image_count: 2 
+
+#### Action Delete Atom
+🗑️ Delete Atom 1: 0  
+📋 Aliases: [t_01_1, t_01_2], imageList: [1, 2], image_count: 1  
+🚀 Rebase all aliases:    
+📋 Aliases: [t_01_0, t_01_1], imageList: [0, 1], image_count: 1    
+
