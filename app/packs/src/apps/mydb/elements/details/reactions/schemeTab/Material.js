@@ -1032,7 +1032,7 @@ class Material extends Component {
     let className = 'text-center';
     if (isDragging) { className += ' dnd-dragging'; }
     if (canDrop) {
-      className += ' dnd-zone';
+      className += ' border-3 border-dashed';
       if (isOver) {
         className += ' dnd-zone-over';
       }
