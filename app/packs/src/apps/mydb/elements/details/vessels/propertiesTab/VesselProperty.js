@@ -31,7 +31,8 @@ const VesselProperty = ({ label, value, onChange, readOnly, isNumeric = false, o
           type={isNumeric ? 'number' : 'text'}
           value={value}
           onChange={(e) => {
-            handleButtonClick();
+            // handleButonClick();
+
             onChange(e);
           }}
         />

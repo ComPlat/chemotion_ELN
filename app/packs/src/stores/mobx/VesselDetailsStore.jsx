@@ -17,7 +17,7 @@ const VesselItem = types
     vesselInstanceDescription: '',
     qrCode: '',
     barCode: '',
-    shortLabel: '',
+    shortLabel: types.maybeNull(types.string),
     changed: false
   })
   .actions((self) => ({
@@ -90,13 +90,15 @@ self.vessels.get(id).changed = true;
       self.vessels.get(id).qrCode = newQrCode;
     },
     convertVesselToModel(jsVesselModel) {
+      const vesselId = jsVesselModel.id ? jsVesselModel.id.toString() : `new-${Date.now()}`;
+      console.log("Generated Vessel ID:", vesselId); // Debugging
       if (self.vessels.has(jsVesselModel.id)) {
         return;
       }
 
       self.vessels.set(jsVesselModel.id, VesselItem.create({
         // cellLineId: jsVesselModel.cellLineId,
-        id: jsVesselModel.id.toString(),
+        id: vesselId,
         name: jsVesselModel.name || '',
         details: jsVesselModel.details || '',
         materialDetails: jsVesselModel.materialDetails || '',
@@ -110,7 +112,7 @@ self.vessels.get(id).changed = true;
         vesselInstanceDescription: jsVesselModel.vesselInstanceDescription || '',
         qrCode: jsVesselModel.qrCode || '',
         barCode: jsVesselModel.barCode || '',
-        shortLabel: jsVesselModel.short_label,
+        shortLabel: jsVesselModel.short_label || '',
       }));
     },
     setMaterialProperties(id, properties) {

@@ -9,8 +9,9 @@ import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/pro
 
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
-  const vesselItem = item;
-  const vesselId = vesselItem.id;
+  const vesselId = item.id;
+  const vesselItem = vesselDetailsStore.vessels.get(vesselId);
+
   const [typing, setTyping] = useState(false);
 
   
@@ -25,7 +26,7 @@ const VesselProperties = ({ item, readOnly }) => {
         <Accordion.Body>
           <VesselProperty
             label="Name"
-            value={vesselItem.vesselName}
+            value={vesselItem?.vesselName || ''}
             onChange={(e) => {
               // handleButtonClick();
               vesselDetailsStore.changeName(vesselId, e.target.value);
@@ -34,27 +35,27 @@ const VesselProperties = ({ item, readOnly }) => {
           />
           <VesselProperty
             label="Details"
-            value={vesselItem.details}
+            value={vesselItem?.details || ''}
             onChange={(e) => vesselDetailsStore.changeDetails(vesselId, e.target.value)}
             // readOnly={readOnly}
             optional
           />
           <VesselProperty
             label="Material type"
-            value={vesselItem.materialType}
+            value={vesselItem?.materialType || ''}
             onChange={(e) => vesselDetailsStore.changeMaterialType(vesselId, e.target.value)}
             // readOnly={readOnly}
           />
           <VesselProperty
             label="Vessel type"
-            value={vesselItem.vesselType}
+            value={vesselItem?.vesselType || ''}
             onChange={(e) => vesselDetailsStore.changeVesselType(vesselId, e.target.value)}
             // readOnly={readOnly}
             optional
           />
           <VesselProperty
             label="Volume amount"
-            value={vesselItem.volumeAmount}
+            value={vesselItem?.volumeAmount || 0 }
             onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
             // readOnly={readOnly}
             isNumeric
@@ -62,14 +63,14 @@ const VesselProperties = ({ item, readOnly }) => {
           />
           <VesselProperty
             label="Volume unit"
-            value={vesselItem.volumeUnit}
+            value={vesselItem?.volumeUnit || ''}
             onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, e.target.value)}
             // readOnly={readOnly}
             optional
           />
           <VesselProperty
             label="Weight amount"
-            value={vesselItem?.weightAmount}
+            value={vesselItem?.weightAmount || 0}
             onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
             // readOnly={readOnly}
             isNumeric
@@ -77,7 +78,7 @@ const VesselProperties = ({ item, readOnly }) => {
           />
           <VesselProperty
             label="Weight unit"
-            value={vesselItem?.weightUnit}
+            value={vesselItem?.weightUnit || ''}
             onChange={(e) => vesselDetailsStore.changeWeightUnit(vesselId, e.target.value)}
             readOnly={readOnly}
             optional
