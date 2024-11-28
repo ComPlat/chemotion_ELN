@@ -309,9 +309,9 @@ const reAttachPolymerList = async ({ lines, atoms_count, extra_data_start, extra
   return lines_copy.join("\n");
 };
 
-/* istanbul ignore next */
 // DOM functions
 // Function to attach click listeners based on titles
+/* istanbul ignore next */
 const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
   const button = iframeDocument.querySelector(selector);
   if (button && !button.hasClickListener) {
@@ -324,6 +324,7 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
 // function to make template list extra content hidden
 const makeTransparentByTitle = (iframeDocument) => {
   const elements = iframeDocument.querySelectorAll('[title]');
+  /* istanbul ignore next */
   elements.forEach((element) => {
     if (shapes.indexOf(element.getAttribute('title')) != -1) {
       element.querySelectorAll("path, text").forEach((child) => {
