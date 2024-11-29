@@ -1,6 +1,9 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+* Features and enhancements
+  * Reaction variations table can now represent gaseous materials
+
 ## [v1.10.5]
 > (2024-12-16)
 
