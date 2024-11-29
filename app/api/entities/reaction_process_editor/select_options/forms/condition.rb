@@ -18,7 +18,7 @@ module Entities
             {
               additional_information: additional_information,
               equipment: {
-                EQUIPMENT: SelectOptions::Models::Equipment.instance.all,
+                EQUIPMENT: SelectOptions::Models::Equipment.new.all,
                 TEMPERATURE: temperature_equipment,
                 PH: ph_adjust_equipment,
                 PRESSURE: pressure_adjustment,
