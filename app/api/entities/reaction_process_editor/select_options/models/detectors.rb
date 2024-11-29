@@ -5,29 +5,39 @@ module Entities
     module SelectOptions
       module Models
         class Detectors < Base
-          DETECTOR_ANALYSIS_TYPES = { PDA: ['WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
-                                      ELSD: %w[METRIC TEMPERATURE CELSIUS],
-                                      MS: %w[TEXT MS_PARAMETER V Parameter] }.stringify_keys
+          DETECTOR_TYPES = { PDA: ['CHMO:0001728', 'WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
+                             ELSD: %w[CHMO:0001718 METRIC TEMPERATURE CELSIUS Temperature],
+                             MS: %w[CHMO:0002337 TEXT MS_PARAMETER V Parameter],
+                             #  MS: %w[CHMO:0002174 TEXT MS_PARAMETER V Parameter],
+                             FID: %w[CHMO:0001719 METRIC WEIGTH g Weight],
+                             BID: %w[CHMO:0001724 METRIC WEIGTH g Weight] }.stringify_keys
 
-          def select_options_for(detector_name:)
-            detector_options(detector_name)
+          def select_options_for(detector_ids)
+            detector_ids.map do |detector_id|
+              # detector_ontology = ::ReactionProcessEditor::Models::Ontology.find_by(chmo_id: detector_id)
+
+              label, detector_type = DETECTOR_TYPES.find { |_det_type, metrics| metrics[0] == detector_id }
+
+              { value: detector_id,
+                label: label || detector_id,
+                analysis_defaults: detector_analysis_defaults(detector_type) }
+            end
           end
 
           private
 
-          def detector_options(detector_name)
-            data_type, metric_name, unit, label = DETECTOR_ANALYSIS_TYPES[detector_name]
+          def detector_analysis_defaults(detector_type)
+            chmo_id, data_type, metric, _unit, label = detector_type
 
-            return option_for(detector_name) unless metric_name
+            return [] unless chmo_id
 
-            option_for(detector_name).merge(
-              analysis_types: [{
-                data_type: data_type,
-                metric_name: metric_name,
-                label: label || metric_name.titlecase,
-                unit: unit,
-              }],
-            )
+            # TODO: A detector might have multiple metrics /metric_names (therefore we return an array).
+            # Current files have only one. Adapt CSV parsing once File format has been defined. cbuggle, 14.10.2024.
+            [{
+              label: label,
+              data_type: data_type,
+              metric_name: metric,
+            }]
           end
         end
       end

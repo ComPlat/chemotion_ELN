@@ -5,25 +5,14 @@ module Entities
     module SelectOptions
       module Models
         class DeviceMethods < Base
-          def select_options_for(device_name:)
-            matching_device = devices_methods_options.find { |device| device[:value].upcase == device_name.upcase }
-            matching_device ? matching_device[:methods] : []
-          end
-
-          private
-
-          def devices_methods_options
-            devices_methods_csv.map do |device_methods_csv|
-              device_name = device_methods_csv[0]['Device Name']
-
-              { label: device_name,
-                value: device_name,
-                methods: SelectOptions::Models::Methods.instance.to_options(device_methods_csv) }
+          def select_options_for(device_methods)
+            device_methods.map do |method|
+              method.attributes
+                    .slice(*%w[label device_name detectors stationary_phases description steps default_inject_volume
+                               active])
+                    .merge({ value: method.label,
+                             mobile_phases: options_for(method.mobile_phases) })
             end
-          end
-
-          def devices_methods_csv
-            SelectOptions::Importer::DeviceMethods.new.all
           end
         end
       end

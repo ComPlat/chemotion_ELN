@@ -7,8 +7,8 @@ module Entities
         class Add < Base
           def select_options
             {
-              addition_speed_types: SelectOptions::Models::Custom.instance.addition_speed_types,
-              equipment: SelectOptions::Models::Equipment.instance.all,
+              addition_speed_types: SelectOptions::Models::Custom.new.addition_speed_types,
+              equipment: SelectOptions::Models::Equipment.new.all,
             }
           end
         end
