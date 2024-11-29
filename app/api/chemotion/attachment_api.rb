@@ -258,7 +258,7 @@ module Chemotion
       desc 'Upload files to Inbox as unsorted'
       post 'upload_to_inbox' do
         attach_ary = []
-        params.each do |_file_id, file|
+        params.each_value do |file|
           next unless tempfile = file[:tempfile] # rubocop:disable Lint/AssignmentInCondition
 
           attach = Attachment.new(
@@ -274,6 +274,8 @@ module Chemotion
           begin
             attach.save!
             attach_ary.push(attach.id)
+          rescue StandardError
+            status 413
           ensure
             tempfile.close
             tempfile.unlink
@@ -417,7 +419,7 @@ module Chemotion
 
       desc 'Return Base64 encoded thumbnails'
       params do
-        requires :ids, type: Array[Integer]
+        requires :ids, type: [Integer]
       end
       post 'thumbnails' do
         thumbnails = params[:ids].map do |a_id|
@@ -434,7 +436,7 @@ module Chemotion
 
       desc 'Return Base64 encoded files'
       params do
-        requires :ids, type: Array[Integer]
+        requires :ids, type: [Integer]
       end
       post 'files' do
         files = params[:ids].map do |a_id|
@@ -451,8 +453,8 @@ module Chemotion
 
       desc 'Regenerate spectra'
       params do
-        requires :original, type: Array[Integer]
-        requires :generated, type: Array[Integer]
+        requires :original, type: [Integer]
+        requires :generated, type: [Integer]
       end
       post 'regenerate_spectrum' do
         pm = to_rails_snake_case(params)
@@ -475,7 +477,7 @@ module Chemotion
 
       desc 'Regenerate edited spectra'
       params do
-        requires :edited, type: Array[Integer]
+        requires :edited, type: [Integer]
         optional :molfile, type: String
       end
       post 'regenerate_edited_spectrum' do
