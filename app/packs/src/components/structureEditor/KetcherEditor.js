@@ -401,10 +401,10 @@ const onTemplateMove = async (editor) => {
     const mols_copy = mols;
     const imagelist_copy = imagesList;
     await fetchKetcherData(editor);
-    if (imagelist_copy.length) {
-      await placeImageOnAtoms(mols_copy, imagelist_copy, editor);
-      await saveMoveCanvas(null, true, false);
-    }
+    // if (imagelist_copy.length) {
+    await placeImageOnAtoms(mols_copy, imagelist_copy, editor);
+    await saveMoveCanvas(null, true, false);
+    // }
     images_to_be_updated_setter(true);
   }
 };
@@ -551,6 +551,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     'Add atom': async () => await onAddAtom(editor),
     'Delete image': async () => {
+      await fetchKetcherData(editor);
       await onDeleteImage(editor);
     },
     'Delete atom': async () => await onAtomDelete(editor),
