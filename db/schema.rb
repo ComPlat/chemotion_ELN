@@ -974,6 +974,35 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true
   end
 
+  create_table "ontologies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "chmo_id"
+    t.string "device_code"
+    t.string "name"
+    t.string "label"
+    t.string "link"
+    t.jsonb "roles", default: {}
+    t.string "detectors", default: [], array: true
+    t.string "solvents", default: [], array: true
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "ontology_device_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "ontology_id"
+    t.string "label"
+    t.string "device_code"
+    t.jsonb "detectors"
+    t.jsonb "mobile_phases", default: [], array: true
+    t.jsonb "stationary_phases", default: [], array: true
+    t.jsonb "default_inject_volume"
+    t.string "description"
+    t.jsonb "steps"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
     t.string "searchable_type"
