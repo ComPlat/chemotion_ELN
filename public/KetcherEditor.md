@@ -51,7 +51,7 @@ These main components of a template:
   ✔️ Add atom should be with label A  
   ✔️ Added atom should have an alias: for example t_01  
   ✔️ Get the latest added image index  
-  ✔️ Update the alias of atom as: t_templateid_imageindex(t_1_0)
+  ✔️ Update the alias of atom as: t_templateid_imageindex(t_1_0)   
   ✔️ MoveTemplate: which place an image on alias atom  
       Having a correct index of the image is very import to maintain template coordination
 
@@ -67,7 +67,7 @@ These main components of a template:
 ✔️ grab the atom deleted with its alias  
 ✔️ identify the image based on third part of the alias  
 ✔️ remove the image index from imageList  
-✔️ reset all aliases and rebase. All alises should be consistent 0,1,2,3,4,5 
+✔️ reset all aliases and rebase. All alises should be consistent 0,1,2,3,4,5    
 ✔️ Save & MoveTemplate: a helper funcation which keeps all templates in-sync
 
 ### &#9733; Event => Delete Image (in-order):

@@ -99,10 +99,13 @@ export const deleteAtomListSetter = async data => {
 /* istanbul ignore next */
 // helper function to rebase with the ketcher canvas data
 const fetchKetcherData = async (editor) => {
-  if (editor) {
+  try {
+    if (!editor) throw new "Editor instance is invalid";
     all_atoms = [];
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
     await fuelKetcherData(latestData);
+  } catch (err) {
+    console.error("fetchKetcherData", err.message);
   }
 };
 
@@ -136,7 +139,9 @@ export const placeImageOnAtoms = async (mols_, imagesList_) => {
         if (atom && three_parts_pattern.test(atom?.alias)) {
           const splits_alias = atom.alias.split("_");
           let image_coordinates = imagesList_[parseInt(splits_alias[2])]?.boundingBox;
-          if (!image_coordinates) throw new ("Invalid alias");
+          if (!image_coordinates) {
+            throw new ("Invalid alias");
+          }
           imagesList_[splits_alias[2]].boundingBox = adjustImageCoordinatesAtomDependent(image_coordinates, atom.location, parseInt(splits_alias[1]));;
         };
       });
@@ -388,7 +393,7 @@ const reArrangeImagesOnCanvas = async (iframeRef) => {
 const onTemplateMove = async (editor) => {
   if (editor && editor.structureDef) {
     // set atom stereo
-    await moveTemplate();
+    // await moveTemplate();
     await saveMoveCanvas(null, true, false);
     // ----
 
@@ -430,22 +435,6 @@ const removeNodeByIndex = async (index) => {
   latestData.root.nodes.splice(index + mols.length, 1);
 };
 
-// helper to check is generated alias already exists in latestData
-const aliasExists = (index) => {
-  for (const molKey of mols) {
-    const molecule = latestData[molKey];
-    if (!molecule || !molecule.atoms) continue;
-    const atoms = molecule.atoms;
-    for (const atom of atoms) {
-      if (three_parts_pattern.test(atom.alias)) {
-        const atom_index = parseInt(atom.alias.split("_")[2]);
-        if (index == atom_index) return true;
-      }
-    }
-  }
-  return false;
-};
-
 /* istanbul ignore next */
 /* container function on atom delete
   removes an atom: atoms should always be consistent
@@ -454,28 +443,42 @@ const aliasExists = (index) => {
 */
 const onAtomDelete = async (editor) => {
   if (editor && editor.structureDef) {
-    await fetchKetcherData(editor);
+    const mols_copy = mols;
+    const imgList_copy = imagesList;
     if (three_parts_pattern.test(deleted_atoms_list[0]?.alias)) {
       const last_alias_index = parseInt(deleted_atoms_list[0]?.alias?.split("_")[2]);
-      if (deleted_atoms_list.length == 1) { // deleted item is one
-        // aliases are not consistent
-        if (!isAliasConsistent()) {
-          await removeNodeByIndex(last_alias_index);
-        }
-        // alias are consistent; which means last index is deleted
-        else if (isAliasConsistent())
-          if (image_used_counter == last_alias_index && !aliasExists(last_alias_index)) { // remove image required
-            await removeNodeByIndex(last_alias_index);
-          } else { // an atom is dropped on another atom so just save it as it is!
-            await editor.structureDef.editor.setMolecule(JSON.stringify(data));
-            deleted_atoms_list = [];
-            return;
-          }
+      await fetchKetcherData(editor);
+
+      // when mol is deleted
+      if (mols_copy.length > mols.length && imagesList.length === imgList_copy.length) { // when atom is dragged to another atom
+        await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+        deleted_atoms_list = [];
+        _selection = null;
+        return;
       }
+
+      // when mols and images are changed
+      if (mols_copy.length > mols.length && imagesList.length > imgList_copy.length) {
+        // await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+        const data = await handleOnDeleteAtom(); // rebase atom aliases
+        image_used_counter -= deleted_atoms_list.length; // update image used counter
+        await saveMoveCanvas(data, false, true);
+        deleted_atoms_list = [];
+        _selection = null;
+        return;
+      }
+
+      // when one template is deleted
+      if (mols_copy.length === mols.length && imagesList.length === imgList_copy.length) { // deleted item is one
+        await removeNodeByIndex(last_alias_index);
+      }
+
+      // save and go
       const data = await handleOnDeleteAtom(); // rebase atom aliases
       image_used_counter -= deleted_atoms_list.length; // update image used counter
       await saveMoveCanvas(data, false, true);
       deleted_atoms_list = [];
+      _selection = null;
     }
   }
 };
@@ -540,10 +543,16 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // action based on event-name
   const eventHandlers = {
+    // await fetchKetcherData(editor);
     'Move image': async () => await onTemplateMove(editor),
-    'Move atom': async () => await onTemplateMove(editor),
+    'Move atom': async () => {
+      await fetchKetcherData(editor);
+      await onTemplateMove(editor);
+    },
     'Add atom': async () => await onAddAtom(editor),
-    'Delete image': async () => await onDeleteImage(editor),
+    'Delete image': async () => {
+      await onDeleteImage(editor);
+    },
     'Delete atom': async () => await onAtomDelete(editor),
   };
 
@@ -557,11 +566,15 @@ const KetcherEditor = forwardRef((props, ref) => {
       await fetchKetcherData(editor);
       re_render_canvas = true;
     },
+    "[title='Calculate CIP  \\(Ctrl\\+P\\)']": async () => {
+      await fetchKetcherData(editor);
+      re_render_canvas = true;
+    },
     "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
       image_used_counter = -1;
       resetStore();
     },
-    "[title='Undo \\(Ctrl\\+Z\\)']": () => {
+    "[title='Undo \\(Ctrl\\+Z\\)']": async () => {
       try {
         const list = [...editor._structureDef.editor.editor.historyStack];
         const historyPtr = editor._structureDef.editor.editor.historyPtr;
@@ -574,8 +587,15 @@ const KetcherEditor = forwardRef((props, ref) => {
           }
         }
         for (let j = 0; j < opp_idx; j++) {
-          editor._structureDef.editor.editor.undo();
+          await editor._structureDef.editor.editor.undo();
         }
+        // await onTemplateMove(editor);
+        // setTimeout(async () => {
+        // await fetchKetcherData(editor);
+        //   const data = await handleOnDeleteAtom(); // rebase atom aliases
+        //   image_used_counter -= deleted_atoms_list.length; // update image used counter
+        //   await saveMoveCanvas(data, false, true);
+        // }, [500]);
       } catch (error) {
         console.error({ undo: error });
       }
@@ -596,9 +616,16 @@ const KetcherEditor = forwardRef((props, ref) => {
         for (let j = 0; j < opp_idx; j++) {
           editor._structureDef.editor.editor.redo();
         }
+        setTimeout(async () => {
+          await fetchKetcherData(editor);
+          const data = await handleAddAtom(); // rebase atom aliases
+          await saveMoveCanvas(data, false, true);
+
+        }, [500]);
       } catch (error) {
         console.error({ redo: error });
       }
+      console.log("REDO", isAliasConsistent());
     },
     'Erase \\(Del\\)': async () => {
       // on click event is can be access is funcation eraseStateAlert
@@ -705,7 +732,6 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // helper function to ececute a stack: first in last out
   const processFILOStack = async () => {
-    await fetchKetcherData(editor);
     const loadCanvasIndex = FILOStack.indexOf("Load canvas");
     if (loadCanvasIndex > -1) {
       FILOStack.splice(loadCanvasIndex, 1);
