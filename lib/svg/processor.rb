@@ -20,7 +20,6 @@ module SVG
       end
     end
 
-    private
 
     def structure_svg(editor, svg, hexdigest, is_centered = false)
       processor = case editor
@@ -38,6 +37,8 @@ module SVG
       save_svg_to_file(svg, generate_svg_info('samples', hexdigest))
     end
 
+    private
+
     def generate_svg_info(type, hexdigest)
       digest = Digest::SHA256.hexdigest hexdigest
       digest = Digest::SHA256.hexdigest digest
@@ -47,13 +48,19 @@ module SVG
     end
 
     def regenerate_or_copy_svg(hexdigest)
-      svg_file_src = Rails.public_path.join('images', 'molecules', @molecule.molecule_svg_file)
-      if svg_file_exists?(svg_file_src)
+      svg_file_src = generate_svg_file_src
+      if svg_file_src && svg_file_exists?(svg_file_src)
         info = generate_svg_info('samples', hexdigest)
         needs_reprocessing? ? regenerate_svg(hexdigest) : copy_svg_file(svg_file_src, info)
       else
         generate_svg_info('samples', hexdigest)
       end
+    end
+
+    def generate_svg_file_src
+      return if @molecule.molecule_svg_file.blank?
+
+      Rails.public_path.join('images', 'molecules', @molecule.molecule_svg_file)
     end
 
     def svg_file_exists?(svg_file_src)
