@@ -8,7 +8,7 @@ module Entities
           class Extraction < Base
             def select_options_for(reaction_process:)
               {
-                automation_modes: SelectOptions::Models::Custom.instance.automation_modes,
+                automation_modes: SelectOptions::Models::Custom.new.automation_modes,
                 phases: extraction_phases,
                 solvents: solvent_options_for(reaction_process: reaction_process),
               }

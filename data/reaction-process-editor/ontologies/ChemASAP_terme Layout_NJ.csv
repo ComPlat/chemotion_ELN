@@ -1,0 +1,12 @@
+property ;label_UI;link
+type;type;
+subtype;subtype;
+usage_mode;mode;http://purl.obolibrary.org/obo/NCIT_C25571 
+engineering_material;material;http://purl.obolibrary.org/obo/NCIT_C48187
+solvent;solvent;http://purl.obolibrary.org/obo/NCIT_C45790
+detector;detectors;
+device;device;https://schema.org/device
+mobile_phases;mobile phases;
+stationary_phases;stationary phases;
+injection_volume;inj. volume;
+device_method;method;
