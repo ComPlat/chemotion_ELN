@@ -33,7 +33,6 @@ module Chemotion
         temp_svg: svg_result[:svg_file_name],
         ob_log: babel_info[:ob_log],
       )
-      molecule
     end
   end
 end
