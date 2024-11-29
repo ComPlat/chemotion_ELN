@@ -4,8 +4,6 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class Base
-        include Singleton
-
         def option_for(value)
           { value: value.strip, label: value.strip }
         end

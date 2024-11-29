@@ -14,12 +14,12 @@ module Entities
             private
 
             def spectrometry_types_options
-              SelectOptions::Models::DeviceTypes.instance.select_options(process_type: 'Analysis',
-                                                                         category: 'Spectrometry')
+              # SelectOptions::Models::DeviceTypes.new.select_options(process_type: 'Analysis',
+              #                                                       category: 'Spectrometry')
             end
 
             def devices
-              spectrometry_types_options.pluck(:subtypes).flatten.pluck(:devices).flatten.compact
+              #  spectrometry_types_options.pluck(:subtypes).flatten.pluck(:devices).flatten.compact
             end
           end
         end

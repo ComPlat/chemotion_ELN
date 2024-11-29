@@ -7,7 +7,7 @@ module Entities
         class Transfer < Base
           def select_options
             {
-              equipment: SelectOptions::Models::Equipment.instance.all,
+              equipment: SelectOptions::Models::Equipment.new.all,
             }
           end
         end

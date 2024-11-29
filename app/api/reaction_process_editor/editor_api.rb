@@ -20,7 +20,7 @@ module ReactionProcessEditor
         global: SELECT_OPTIONS::Forms::Condition::GLOBAL_DEFAULTS,
         user: current_user.reaction_process_defaults&.default_conditions.to_h,
         select_options: {
-          FORMS: { CONDITION: SELECT_OPTIONS::Forms::Condition.instance.select_options },
+          FORMS: { CONDITION: SELECT_OPTIONS::Forms::Condition.new.select_options },
         },
       }.deep_stringify_keys }
     end

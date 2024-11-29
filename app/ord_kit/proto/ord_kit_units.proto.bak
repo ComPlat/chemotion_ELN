@@ -1,0 +1,204 @@
+// Copyright 2023 KIT ELN Reaction Database Authors
+// Nicole Jung <nicole.jung@kit.edu>, Christian Buggle <christian@buggle.net>
+//
+// Ord::Kit for KIT IOC
+// (Karlsruhe Institute of Technology / Institute for Organical Chemistry).
+// Schema for the KIT ELN Reaction Database,
+// allowing to store data describing the process of a chemical reaction
+// (enhancing but incompatible in either direction to the original ORD Schema).
+//
+// v0.6.5
+// (draft, 07.10.2024)
+//
+//
+// Copyright 2020 Open Reaction Database Project Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ord_kit;
+
+/**
+ * To allow users to describe synthetic processes in whatever units they find
+ * most natural, we define a fixed list of allowable units for each measurement
+ * type. Upon submission to a centralized database, or using a validation and
+ * canonicalization script, we will convert all values to the default units
+ * (the first nonzero item in each enum).
+ *
+ * Each message also contains a `precision` field, which specifies the precision
+ * of the measurement in the same units as the measurement itself. Often the
+ * precision will be the standard deviation from an instrument calibration.
+ */
+message TimeSpan {
+  enum TimeUnit {
+    UNSPECIFIED = 0;
+    SECOND = 1;
+    MINUTE = 2;
+    HOUR = 3;
+    DAY = 4;
+  }
+  optional float value = 1;
+  optional float precision = 2;
+  TimeUnit units = 3;
+}
+message Mass {
+  enum MassUnit {
+    UNSPECIFIED = 0;
+    KILOGRAM = 1;
+    GRAM = 2;
+    MILLIGRAM = 3;
+    MICROGRAM = 4;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  MassUnit units = 3;
+}
+message Moles {
+  enum MolesUnit {
+    UNSPECIFIED = 0;
+    MOLE = 1;
+    MILLIMOLE = 2;
+    MICROMOLE = 3;
+    NANOMOLE = 4;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  MolesUnit units = 3;
+}
+message Volume {
+  enum VolumeUnit {
+    UNSPECIFIED = 0;
+    LITER = 1;
+    MILLILITER = 2;
+    MICROLITER = 3;
+    NANOLITER = 4;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  VolumeUnit units = 3;
+}
+message Concentration {
+  enum ConcentrationUnit {
+    UNSPECIFIED = 0;
+    MOLAR = 1;
+    MILLIMOLAR = 2;
+    MICROMOLAR = 3;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  ConcentrationUnit units = 3;
+}
+message Pressure {
+  enum PressureUnit {
+    UNSPECIFIED = 0;
+    BAR = 1;
+    ATMOSPHERE = 2;
+    PSI = 3;
+    KPSI = 4;
+    PASCAL = 5;
+    KILOPASCAL = 6;
+    TORR = 7;
+    MM_HG = 8;
+    MBAR = 9;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  PressureUnit units = 3;
+}
+message Temperature {
+  enum TemperatureUnit {
+    UNSPECIFIED = 0;
+    CELSIUS = 1;
+    FAHRENHEIT = 2;
+    KELVIN = 3;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  TemperatureUnit units = 3;
+}
+message Current {
+  enum CurrentUnit {
+    UNSPECIFIED = 0;
+    AMPERE = 1;
+    MILLIAMPERE = 2;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  CurrentUnit units = 3;
+}
+message Power {
+  enum PowerUnit {
+    UNSPECIFIED = 0;
+    WATT = 1;
+    MILLIWATT = 2;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  PowerUnit units = 3;
+}
+message Voltage {
+  enum VoltageUnit {
+    UNSPECIFIED = 0;
+    VOLT = 1;
+    MILLIVOLT = 2;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  VoltageUnit units = 3;
+}
+message Length {
+  enum LengthUnit {
+    UNSPECIFIED = 0;
+    CENTIMETER = 1;
+    MILLIMETER = 2;
+    METER = 3;
+    INCH = 4;
+    FOOT = 5;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  LengthUnit units = 3;
+}
+message Wavelengths {
+  repeated Wavelength peaks = 1;
+  bool is_range = 2;
+}
+message Wavelength {
+  enum WavelengthUnit {
+    UNSPECIFIED = 0;
+    NANOMETER = 1;
+    WAVENUMBER = 2; // cm^{-1}
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  WavelengthUnit units = 3;
+}
+message FlowRate {
+  enum FlowRateUnit {
+    UNSPECIFIED = 0;
+    MICROLITER_PER_MINUTE = 1;
+    MICROLITER_PER_SECOND = 2;
+    MILLILITER_PER_MINUTE = 3;
+    MILLILITER_PER_SECOND = 4;
+    MICROLITER_PER_HOUR = 5;
+  }
+  optional double value = 1;
+  optional double precision = 2;
+  FlowRateUnit units = 3;
+}
+// Used for things like conversion and yield.
+message Percentage {
+  optional double value = 1;
+  optional double precision = 2;
+}

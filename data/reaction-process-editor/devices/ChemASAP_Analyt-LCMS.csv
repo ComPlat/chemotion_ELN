@@ -1,0 +1,2 @@
+Method Name;Detectors;Mobile Phase;Stationary Phase;Def. Inj. Vol.;Description
+ChemASAP_Grad-5-99-7min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);ACN (0,1 FA), H2O (0,1 FA);VDS Optilab, VDSpher, 5 um C18-E 100, 250 x 20 mm (40);5;"ACN/H2O with 0,1% Formic Acid, Gradient 5% -> 99%,..."

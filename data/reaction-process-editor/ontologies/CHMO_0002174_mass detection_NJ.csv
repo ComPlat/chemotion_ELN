@@ -1,0 +1,5 @@
+CHMO;Ontology Name;Own Name;Full Link;Parent
+CHMO:0002174;CHMO: mass detection;;http://purl.obolibrary.org/obo/CHMO_0002174;
+CHMO:0002337;CHMO: electrospray ionisation quadrupole detection;ESI-MS;http://purl.obolibrary.org/obo/CHMO_0002337;"=detector,CHMO:0001009(subtype);=detector,CHMO:0002582(subtype);=detector,CHMO:0002876(subtype);=detector,ChemASAP:0000001(subtype);"
+CHMO:0002338;CHMO: electrospray ionisation time-of-flight quadrupole detection;;http://purl.obolibrary.org/obo/CHMO_0002338;
+CHMO:0002339;CHMO: matrix-assisted laser desorption–ionisation tandem time-of-flight detection;;http://purl.obolibrary.org/obo/CHMO_0002339;

@@ -1,0 +1,2 @@
+Method Name;Detectors;Mobile Phase;Stationary Phase;Def. Inj. Vol.;Description
+ChemASAP_Analyt-SFCMS_Iso-MeOH-20-5min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);CO2 (), MeOH (0,1 FA);Interchim, UPTISPHERE OH, 6um UP6OH-150/046, 150 x 4.6mm (40);5;"SFC with 20% MeOH and 0,1% Formic Acid modifier, Isocratic separation,..."

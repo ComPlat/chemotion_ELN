@@ -5,11 +5,9 @@ module Entities
     module SelectOptions
       module Forms
         class Remove < Base
-          include Singleton
-
           def select_options
             {
-              automation_modes: SelectOptions::Models::Custom.instance.automation_modes,
+              automation_modes: SelectOptions::Models::Custom.new.automation_modes,
               sample_types: sample_types,
               origin_types: origin_types,
               equipment: equipment,
