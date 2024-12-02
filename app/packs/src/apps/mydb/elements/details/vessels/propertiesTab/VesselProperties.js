@@ -11,9 +11,6 @@ const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
   const vesselId = item.id;
   const vesselItem = vesselDetailsStore.vessels.get(vesselId);
-
-  const [typing, setTyping] = useState(false);
-
   
 
   return (
@@ -28,7 +25,6 @@ const VesselProperties = ({ item, readOnly }) => {
             label="Name"
             value={vesselItem?.vesselName || ''}
             onChange={(e) => {
-              // handleButtonClick();
               vesselDetailsStore.changeName(vesselId, e.target.value);
             }}
             // readOnly={readOnly}
