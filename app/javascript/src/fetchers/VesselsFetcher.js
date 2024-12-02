@@ -4,10 +4,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
-import {
-  extractApiParameter
-
-} from 'src/utilities/CellLineUtils';
+import {extractVesselApiParameter} from 'src/utilities/VesselUtilities';
 
 const successfullyCreatedParameter = {
   title: 'Element created',
@@ -59,7 +56,7 @@ export default class VesselsFetcher {
   }
 
   static create(vessel, user) {
-    const params = extractApiParameter(vessel);
+    const params = extractVesselApiParameter(vessel);
 
     const promise = VesselsFetcher.uploadAttachments(vessel)
       .then(() => fetch('/api/v1/vessels', {
@@ -125,7 +122,7 @@ export default class VesselsFetcher {
   }
 
   static update(vesselItem) {
-    const params = extractApiParameter(vesselItem);
+    const params = extractVesselApiParameter(vesselItem);
     const promise = VesselsFetcher.uploadAttachments(vesselItem)
       .then(() => fetch('/api/v1/vessels', {
         credentials: 'same-origin',
