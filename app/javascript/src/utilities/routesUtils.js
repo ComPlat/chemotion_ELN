@@ -139,8 +139,9 @@ const cellLineShowOrNew = (e) => {
 };
 
 const vesselShowOrNew = (e) => {
-  if (e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselId === 'new')) {
-    ElementActions.generateEmptyVessel(e.params.collectionID, e.params.vessel_template);
+  if (e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselID === 'new')) {
+    // ElementActions.generateEmptyVessel(e.params.collectionID, e.params.vessel_template);
+    ElementActions.generateEmptyVessel(e.params.collectionID);
   } else {
     if (e.params.vesselID) {
       e.params.vesselId = e.params.vesselID;

@@ -58,16 +58,16 @@ export default class VesselsFetcher {
   static create(vessel, user) {
     const params = extractVesselApiParameter(vessel);
 
-    const promise = VesselsFetcher.uploadAttachments(vessel)
-      .then(() => fetch('/api/v1/vessels', {
-        credentials: 'same-origin',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        method: 'POST',
-        body: JSON.stringify(params)
-      }))
+    // const promise = VesselsFetcher.uploadAttachments(vessel)
+    const promise = fetch('/api/v1/vessels', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify(params)  
+    })
 
       .then((response) => response.json())
     //   .then((json) => { GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample'); return json; })

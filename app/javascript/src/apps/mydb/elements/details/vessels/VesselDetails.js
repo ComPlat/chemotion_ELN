@@ -27,7 +27,6 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const [activeTab, setActiveTab] = useState('tab1');
   const [readOnly, setReadOnly] = useState(isReadOnly());
 
-  console.log('From vessel details', vesselItem);
 
   useEffect(() => {
     context.vesselDetailsStore.convertVesselToModel(vesselItem);
