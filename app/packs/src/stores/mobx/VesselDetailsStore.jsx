@@ -3,7 +3,7 @@ import { types } from 'mobx-state-tree';
 
 const VesselItem = types
   .model({
-    id: types.identifier,
+    id: '',
     vesselName: '',
     details: '',
     materialDetails: '',
@@ -96,7 +96,7 @@ self.vessels.get(id).changed = true;
         return;
       }
 
-      self.vessels.set(jsVesselModel.id, VesselItem.create({
+      self.vessels.set(vesselId, VesselItem.create({
         // cellLineId: jsVesselModel.cellLineId,
         id: vesselId,
         name: jsVesselModel.name || '',
