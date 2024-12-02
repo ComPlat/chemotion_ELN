@@ -46,15 +46,11 @@ class Attachment < ApplicationRecord
   validate :check_file_size
 
   before_create :generate_key
-  # TODO: rm this during legacy store cleaning
-  # before_create :add_content_type
 
   # reload to get identifier:uuid
   after_create :reload
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
-  # TODO: rm this during legacy store cleaning
-  # after_save :update_filesize
   # TODO: rm this during legacy store cleaning
   # after_save :add_checksum, if: :new_upload
 
@@ -192,26 +188,10 @@ class Attachment < ApplicationRecord
     self
   end
 
-  def update_filesize
-    self.filesize = file_data.bytesize if file_data.present?
-    self.filesize = File.size(file_path) if file_path.present? && File.exist?(file_path)
-    update_column('filesize', filesize) # rubocop:disable Rails/SkipsModelValidations
-  end
-
   # Rewrite read attribute for filesize
   def filesize
     # read_attribute(:filesize).presence || attachment['size']
     attachment && attachment['size']
-  end
-
-  def add_content_type
-    return if content_type.present?
-
-    self.content_type = begin
-      MimeMagic.by_path(filename)&.type
-    rescue StandardError
-      nil
-    end
   end
 
   # Rewrite read attribute for content_type
