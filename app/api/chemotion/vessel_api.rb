@@ -85,7 +85,7 @@ module Chemotion
 
       desc 'Create a new Vessel sample'
       params do
-        requires :name, type: String, desc: 'name of a vessel template'
+        requires :template_name, type: String, desc: 'name of a vessel template'
         optional :vessel_name, type: String, desc: 'name of a vessel sample'
         optional :material_details, type: String, desc: 'details of the vessel template'
         optional :details, type: String, desc: 'additional details'
@@ -108,7 +108,7 @@ module Chemotion
         vessel_template = VesselTemplate.find_by(
           name: params[:name],
         ) || VesselTemplate.create!(
-          name: params[:name],
+          name: params[:template_name],
           details: params[:details],
           material_details: params[:material_details],
           material_type: params[:material_type],
@@ -168,38 +168,44 @@ module Chemotion
         optional :container, type: Hash, desc: 'root Container of element'
       end
       put do
-        vessel = Vessel.find_by(id: params[:vessel_id])
-        error!('Vessel not found', 404) unless vessel
-
-        vessel_params = {
-          name: params[:vessel_name],
-          description: params[:description],
-          bar_code: params[:bar_code],
-          qr_code: params[:qr_code],
-          short_label: params[:short_label],
-        }.compact
-        vessel.update!(vessel_params) if vessel_params.present?
-
-        if params[:vessel_template_id]
-          vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id], deleted_at: nil)
-          error!('Vessel template not found', 404) unless vessel_template
-
-          template_params = {
-            name: params[:template_name],
-            details: params[:details],
-            material_details: params[:material_details],
-            material_type: params[:material_type],
-            vessel_type: params[:vessel_type],
-            volume_amount: params[:volume_amount],
-            volume_unit: params[:volume_unit],
-            weight_amount: params[:weight_amount],
-            weight_unit: params[:weight_unit],
+        ActiveRecord::Base.transaction do
+          vessel = Vessel.find_by(id: params[:vessel_id])
+          error!('Vessel not found', 404) unless vessel
+      
+          vessel_params = {
+            name: params[:vessel_name],
+            description: params[:description],
+            bar_code: params[:bar_code],
+            qr_code: params[:qr_code],
+            short_label: params[:short_label],
           }.compact
-          vessel_template.update!(template_params) if template_params.present?
+          vessel.update!(vessel_params) if vessel_params.present?
+      
+          if params[:vessel_template_id]
+            vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id])
+            error!('Vessel template not found', 404) unless vessel_template
+      
+            unless vessel.vessel_template_id == vessel_template.id
+              error!("Vessel does not belong to the specified template", 400)
+            end
+      
+            template_params = {
+              name: params[:template_name],
+              details: params[:details],
+              material_details: params[:material_details],
+              material_type: params[:material_type],
+              vessel_type: params[:vessel_type],
+              volume_amount: params[:volume_amount],
+              volume_unit: params[:volume_unit],
+              weight_amount: params[:weight_amount],
+              weight_unit: params[:weight_unit],
+            }.compact
+            vessel_template.update!(template_params) if template_params.present?
+          end      
+          present vessel, with: Entities::VesselInstanceEntity
         end
-
-        present vessel, with: Entities::VesselInstanceEntity
       end
+      
 
       resource :names do
         desc 'Returns all accessable vessel templates material names and their id'

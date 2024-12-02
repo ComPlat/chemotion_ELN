@@ -10,7 +10,8 @@ export default class Vessel extends Element {
       container: Container.init(),
       collectionId: Number(collectionId),
       type: 'vessel',
-      short_label: shortLabelIn
+      short_label: shortLabelIn,
+      is_new: true,
     });
 
     return vessel;
@@ -29,13 +30,14 @@ export default class Vessel extends Element {
     vessel.id = response.id || '';
     // Vessel.tag = response.tag;
 
+    vessel.vesselTemplateId = response?.vessel_template?.id || '';
     vessel.vesselName = response?.vessel_template?.name || '';
     vessel.materialDetails = response?.vessel_template?.material_details || '';
     vessel.materialType = response?.vessel_template?.material_type || '';
     vessel.vesselType = response?.vessel_template?.vessel_type || '';
     vessel.volumeAmount = response?.vessel_template?.volume_amount || 0;
     vessel.volumeUnit = response?.vessel_template?.volume_unit || '';
-    vessel.weight = response?.vessel_template?.weight_amount || 0;
+    vessel.weightAmount = response?.vessel_template?.weight_amount || 0;
     vessel.weightUnit = response?.vessel_template?.weight_unit || '';
     vessel.details = response?.vessel_template?.details || '';
     vessel.is_new = false;
@@ -52,15 +54,15 @@ export default class Vessel extends Element {
     this.vesselType = VesselItem.vesselType;
     this.volumeAmount = VesselItem.volumeAmount;
     this.volumeUnit = VesselItem.volumeUnit;
-    this.weight = VesselItem.weight;
+    this.weightAmount = VesselItem.weightAmount;
     this.weightUnit = VesselItem.weightUnit;
     this.details = VesselItem.details;
   }
 
   adoptPropsFromMobXModel(mobx) {
-    this.name = mobx.vesselName;
-    this.details = mobx.itemDescription;
-    this.materialDetails = mobx.materialDescription;
+    this.vesselName = mobx.vesselName;
+    this.details = mobx.details;
+    this.materialDetails = mobx.materialDetails;
     this.materialType = mobx.materialType;
     this.vesselType = mobx.vesselType;
     this.volumeAmount = mobx.volumeAmount;
