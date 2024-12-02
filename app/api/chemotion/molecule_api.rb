@@ -30,10 +30,11 @@ module Chemotion
           optional :editor, type: String, desc: 'SVGProcessor', default: 'ketcher'
         end
         post do
-          molecule, temp_svg, ob_log = Chemotion::SmilesProcessor.new(params).process
+          result = Chemotion::SmilesProcessor.new(params).process
+          molecule = result[:molecule]
           return {} unless molecule
 
-          Entities::MoleculeEntity.represent(molecule, temp_svg: temp_svg, ob_log: ob_log)
+          Entities::MoleculeEntity.represent(molecule, temp_svg: result[:temp_svg], ob_log: result[:ob_log])
         end
       end
 

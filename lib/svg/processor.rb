@@ -20,7 +20,6 @@ module SVG
       end
     end
 
-
     def structure_svg(editor, svg, hexdigest, is_centered = false)
       processor = case editor
                   when /marvinjs/i

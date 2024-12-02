@@ -29,10 +29,7 @@ module Chemotion
     end
 
     def build_result(molecule, svg_result)
-      molecule.attributes.merge(
-        temp_svg: svg_result[:svg_file_name],
-        ob_log: babel_info[:ob_log],
-      )
+      { molecule: molecule, temp_svg: svg_result[:svg_file_name], ob_log: babel_info[:ob_log] }
     end
   end
 end

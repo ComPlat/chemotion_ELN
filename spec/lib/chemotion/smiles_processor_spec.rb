@@ -14,7 +14,6 @@ describe Chemotion::SmilesProcessor do
     molecule = create(:molecule)
     allow(Chemotion::MoleculeFetcher).to receive(:new).and_return(fetcher_instance)
     allow(fetcher_instance).to receive(:fetch_or_create).and_return(molecule)
-    allow(Chemotion::MoleculeFetcher).to receive(:new).and_call_original
   end
 
   context 'with valid SMILES' do
@@ -22,13 +21,12 @@ describe Chemotion::SmilesProcessor do
 
     it 'returns a molecule instance with valid attributes' do
       processor_result = described_class.new(params).process
-      binding.pry
-      expect(processor_result.keys).to include(:temp_svg, :ob_log)
+      expect(processor_result.keys).to include(:molecule, :temp_svg, :ob_log)
     end
   end
 
   context 'with invalid SMILES' do
-    let(:params) { { smiles: invalid_smiles, editor: editor, svg_file: svg } }
+    let(:params) { { smiles: invalid_smiles, editor: editor } }
 
     it 'returns a molecule instance error in ob_log key' do
       processor = described_class.new(params)
