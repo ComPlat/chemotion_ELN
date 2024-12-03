@@ -2,7 +2,9 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Form, ListGroup, ListGroupItem, Button, Overlay, ButtonToolbar } from 'react-bootstrap';
+import {
+  Form, ListGroup, ListGroupItem, Button, Overlay, ButtonToolbar, Alert
+} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -59,7 +61,7 @@ export class ContainerDatasetModalContent extends Component {
       imageEditModalShown: false,
       filteredAttachments: [...props.datasetContainer.attachments],
       prevMessages: [],
-      newMessages:[],
+      newMessages: [],
       filterText: '',
       attachmentGroups: {
         Original: [],
@@ -81,6 +83,7 @@ export class ContainerDatasetModalContent extends Component {
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
     this.classifyAttachments = this.classifyAttachments.bind(this);
+    this.checkUserQuota = this.checkUserQuota.bind(this);
     this.state.attachmentGroups = this.classifyAttachments(props.datasetContainer.attachments);
   }
 
@@ -126,8 +129,8 @@ export class ContainerDatasetModalContent extends Component {
     let combinedAttachments = [...filteredAttachments];
 
     if (this.context.attachmentNotificationStore) {
-      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(
-        filteredAttachments, 'Container', datasetContainer);
+      combinedAttachments = this.context.attachmentNotificationStore
+        .getCombinedAttachments(filteredAttachments, 'Container', datasetContainer);
     }
     return combinedAttachments;
   };
@@ -465,6 +468,14 @@ export class ContainerDatasetModalContent extends Component {
     );
   }
 
+  checkUserQuota() {
+    const { filteredAttachments } = this.state;
+    const totalSize = filteredAttachments.filter((attachment) => !attachment.is_deleted)
+      .reduce((acc, attachment) => acc + attachment.filesize, 0);
+    const { currentUser } = UserStore.getState();
+    return currentUser.available_space !== 0 && totalSize > (currentUser.available_space - currentUser.used_space);
+  }
+
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onChange } = this.props;
@@ -525,7 +536,9 @@ export class ContainerDatasetModalContent extends Component {
           <div className="attachment-row-subtext">
             <div>
               Created:
-              <span className="ms-1">{formatDate(attachment.created_at)} </span>
+              <span className="ms-1">
+                {formatDate(attachment.created_at)}
+              </span>
             </div>
             <span className="ms-2 me-2">|</span>
             <div>
@@ -547,32 +560,32 @@ export class ContainerDatasetModalContent extends Component {
               <i className="fa fa-undo" aria-hidden="true" />
             </Button>
           ) : (
-              <>
-                <ButtonToolbar className="gap-1">
-                  {downloadButton(attachment)}
-                  <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-                  {editButton(
-                    attachment,
-                    extension,
-                    attachmentEditor,
-                    attachment.aasm_state === 'oo_editing' && new Date().getTime()
+            <>
+              <ButtonToolbar className="gap-1">
+                {downloadButton(attachment)}
+                <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
+                {editButton(
+                  attachment,
+                  extension,
+                  attachmentEditor,
+                  attachment.aasm_state === 'oo_editing' && new Date().getTime()
                     < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                    !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                  !attachmentEditor || attachment.aasm_state === 'oo_editing'
                     || attachment.is_new || this.documentType(attachment.filename) === null,
-                    this.handleEdit
-                  )}
-                  {annotateButton(attachment, () => {
-                    this.setState({
-                      imageEditModalShown: true,
-                      chosenAttachment: attachment,
-                    });
-                  })}
-                  {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
-                </ButtonToolbar>
-                <div className="ms-2">
-                  {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
-                </div>
-              </>
+                  this.handleEdit
+                )}
+                {annotateButton(attachment, () => {
+                  this.setState({
+                    imageEditModalShown: true,
+                    chosenAttachment: attachment,
+                  });
+                })}
+                {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
+              </ButtonToolbar>
+              <div className="ms-2">
+                {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
+              </div>
+            </>
           )}
         </div>
         {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
@@ -587,9 +600,9 @@ export class ContainerDatasetModalContent extends Component {
     const { datasetContainer } = this.props;
 
     const renderGroup = (attachments, title, key) => (
-      <div key={key} className='mt-2'>
+      <div key={key} className="mt-2">
         <div
-          className='fw-bold mb-2 border rounded p-1'
+          className="fw-bold mb-2 border rounded p-1"
           style={{ backgroundColor: '#D3D3D3' }}
         >
           {title}
@@ -605,11 +618,11 @@ export class ContainerDatasetModalContent extends Component {
     return (
       <div className="p-2 border rounded">
         {this.renderImageEditModal()}
-        <div className='d-flex justify-content-between align-items-center'>
-          <div className='d-flex flex-grow-1 align-self-center'>
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex flex-grow-1 align-self-center">
             {this.customDropzone()}
           </div>
-          <div className='ms-4 align-self-center'>
+          <div className="ms-4 align-self-center">
             {datasetContainer.attachments.length > 0
               && sortingAndFilteringUI(
                 sortDirection,
@@ -625,16 +638,21 @@ export class ContainerDatasetModalContent extends Component {
             There are currently no attachments.
           </div>
         ) : (
-            <div className='mb-5'>
-            {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
-              && renderGroup(attachmentGroups.Pending, 'Pending')}
-            {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
-            {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
-            {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
-              .map((groupName) => attachmentGroups.Processed[groupName].length > 0
-                && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
-            {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
-          </div>
+          <>
+            <div className="mb-5">
+              {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
+                && renderGroup(attachmentGroups.Pending, 'Pending')}
+              {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
+              {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
+              {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
+                .map((groupName) => attachmentGroups.Processed[groupName].length > 0
+                  && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
+              {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
+            </div>
+            <Alert variant="warning" show={this.checkUserQuota()}>
+              Uploading attachments will fail; User quota will be exceeded.
+            </Alert>
+          </>
         )}
         <HyperLinksSection
           data={this.state.datasetContainer.extended_metadata.hyperlinks}
@@ -687,7 +705,7 @@ export class ContainerDatasetModalContent extends Component {
             rootClose
             onHide={() => this.abortAutoSelection()}
           >
-            <ListGroup className='ms-0 mt-5 w-100'>
+            <ListGroup className="ms-0 mt-5 w-100">
               {this.renderInstruments()}
             </ListGroup>
           </Overlay>
