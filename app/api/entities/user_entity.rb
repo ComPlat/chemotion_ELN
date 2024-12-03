@@ -7,6 +7,8 @@ module Entities
     expose :first_name, documentation: { type: 'String', desc: "User's name" }
     expose :last_name, documentation: { type: 'String', desc: "User's name" }
     expose :initials, documentation: { type: 'String', desc: 'initials' }
+    expose :used_space, documentation: { type: 'Integer', desc: "User's used storage space" }
+    expose :available_space, documentation: { type: 'Integer', desc: "User's available storage space (0=infinite)" }
     expose :samples_count, documentation: { type: 'Integer', desc: 'Sample count' }
     expose :reactions_count, documentation: { type: 'Integer', desc: 'Reactions count' }
     expose :cell_lines_count, documentation: { type: 'Integer', desc: 'Cellline Samples count' }
