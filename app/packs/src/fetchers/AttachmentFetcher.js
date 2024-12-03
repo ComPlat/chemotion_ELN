@@ -132,7 +132,7 @@ export default class AttachmentFetcher {
   static filterAllAttachments(files, containers) {
     containers.forEach((container) => {
       const tmpArray = (container.attachments || [])
-        .filter((a) => a.is_new)
+        .filter((a) => a.is_new && !a.is_deleted)
         .map((a) => fileFromAttachment(a, container.id));
       files.push(...tmpArray);
 
