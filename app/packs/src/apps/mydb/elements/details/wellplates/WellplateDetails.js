@@ -239,7 +239,7 @@ export default class WellplateDetails extends Component {
 
     return (
       <div className="d-flex justify-content-between">
-        <div className="d-flex justify-content-start gap-2">
+        <div className="d-flex justify-content-start gap-1">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
             <span>
               <i className="icon-wellplate" />
@@ -249,10 +249,10 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
         </div>
-        <div className="d-flex justify-content-end gap-2">
+        <div className="d-flex justify-content-end gap-1">
           <PrintCodeButton element={wellplate} />
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-            <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
+            <Button variant="info" size="xxsm" onClick={() => this.props.toggleFullScreen()}>
               <i className="fa fa-expand" />
             </Button>
           </OverlayTrigger>
@@ -260,7 +260,7 @@ export default class WellplateDetails extends Component {
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
               <Button
                 variant="warning"
-                size="sm"
+                size="xxsm"
                 onClick={() => this.handleSubmit()}
               >
                 <i className="fa fa-floppy-o " />

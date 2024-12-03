@@ -376,19 +376,21 @@ export default class ElementsTableSampleEntries extends Component {
             onClick={() => showDetails(sample.id)}
             role="button"
           >
-            <div className="d-flex justify-content-between">
+            <div className="d-flex justify-content-between flex-wrap">
               {sample.title(selected)}
 
-              <div className="d-flex align-items-center gap-1">
+              <div className="d-flex align-items-center gap-1 flex-wrap">
                 {showInventoryLabelIcon(sample)}
                 <CommentIcon commentCount={sample.comment_count} />
                 <ShowUserLabels element={sample} />
                 <XvialIcon label={sample.external_label} />
-                <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-                <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
-                <GenericElementLabels element={sample} key={`${sample.id}_element`} />
-                <ElementCollectionLabels element={sample} key={`${sample.id}`} />
-                <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+                <div className="d-flex align-items-center gap-1 ms-auto">
+                  <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+                  <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
+                  <GenericElementLabels element={sample} key={`${sample.id}_element`} />
+                  <ElementCollectionLabels element={sample} key={`${sample.id}`} />
+                  <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+                </div>
                 {showDecoupledIcon(sample)}
                 <TopSecretIcon element={sample} />
               </div>
