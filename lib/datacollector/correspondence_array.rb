@@ -2,11 +2,17 @@
 
 module Datacollector
   # Build an array of Correspondence object between two arrays
+  #
+  # @!attribute [r] sender
+  #   @return [Device, User] AR Device or User
+  # @!attribute [r] recipients
+  #   @return [Array<User>] Array of recipients for the exchange
+  #
   class CorrespondenceArray < Array
     attr_reader :sender, :recipients
 
-    # @param from [String, User, Device] The sender of the exchange
-    # @param to [Array<[String,User]>] Array of recipients for the exchange
+    # @param from [String, User, Device] The sender identifier of the exchange
+    # @param to [Array<[String, User]>] Array of recipient identifiers for the exchange
     def initialize(from, to_list)
       @sender = from.is_a?(String) ? Correspondence.find_sender(from) : from
       errors = []

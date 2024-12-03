@@ -71,5 +71,13 @@ test:
   :keydir: '<%= "#{Dir.home}/.ssh/" %>'
   :localcollectors:
     - :path: '<%= Dir.mktmpdir(%w[chemotion_collector_test-]).to_s %>'
+  :mailcollector:
+    :server: 'imap.server.de'
+    :mail_address: "service@mail"
+    :password: "password"
+    :aliases:
+      - 'alias_one@kit.edu'
+      - 'alias_two@kit.edu'
+
 
 production:

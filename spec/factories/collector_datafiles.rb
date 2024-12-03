@@ -23,7 +23,7 @@ FactoryBot.define do
       ext { 'chemotion' }
       name  { File.basename(Faker::File.file_name(ext: ext)) }
       root { nil }
-      touch { true }
+      touch { true } # rubocop:disable Rails/SkipsModelValidations
       copy_from { nil }
       mode { 0o600 }
     end
@@ -31,9 +31,9 @@ FactoryBot.define do
     initialize_with do
       pathname = Pathname.new(prefix ? "#{prefix}-#{name}" : name)
       pathname = root.join(pathname) if root
-      FileUtils.touch(pathname) if touch
+      FileUtils.touch(pathname) if touch # rubocop:disable Rails/SkipsModelValidations
       FileUtils.cp(copy_from, pathname) if copy_from
-      pathname.chmod(mode) if touch || copy_from
+      pathname.chmod(mode) if touch || copy_from # rubocop:disable Rails/SkipsModelValidations
       pathname
     end
   end

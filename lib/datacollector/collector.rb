@@ -4,6 +4,12 @@
 module Datacollector
   # File and Folder Collector:
   # Inspects the Devices' folders for new files and collect them to ELN user account if possible
+  #
+  # @!attribute [r] device
+  #   @return [Device] AR Device
+  # @!attribute [r] config
+  #   @return [Datacollector::Configuration] The configuration for the device
+  #
   class Collector
     # Execute the collection for devices
     # @param devices [Array<Device>] the devices to collect data from
@@ -17,7 +23,6 @@ module Datacollector
       end
     end
 
-    # @return [Device] the device to collect from
     attr_reader :device, :config
 
     # Initialize the collector with a device

@@ -10,52 +10,47 @@ module Datacollector
     ENVELOPE = 'ENVELOPE'
     RFC822 = 'RFC822'
 
+    attr_reader :config
+
     def initialize
-      parse_mail_data_collector_config
+      @config = MailConfiguration.new
       login
     end
 
-    def parse_mail_data_collector_config
-      config = Configuration.config
-      raise 'No datacollector configuration!' unless config
-
-      @server = config[:server]
-      @mail_address = config[:mail_address]
-      @password = config[:password]
-      @aliases = config[:aliases] || []
-      @port = config.key?(:port) ? config[:port] : 993
-      @ssl = config.key?(:ssl) ? config[:ssl] : true
-    end
-
-    def imap
-      @imap ||= Net::IMAP.new(@server, port: @port, ssl: @ssl)
-    end
-
-    def login
-      response = imap.login(@mail_address, @password)
-      raise unless response['name'] != 'OK'
-
-      log_info('Login...')
-      imap.select(INBOX)
-    rescue StandardError => e
-      log_error("Cannot login #{@server}")
-      log_error e.message
-      logout
-    end
-
-    def logout
-      imap.close
-      imap.logout
-      imap.disconnect
-    end
-
+    # Fetches all unseen emails and processes them
+    #
+    # @note The process is as follows:
+    #   |__ Fetch all unseen emails
+    #   |    |__For each email
+    #   |         |__  `open_envelop`    : Open the ENVELOPE and set the instance variable @envelope
+    #   |         |__  `correspondences` : set the array of Datacollector::Correspondence between sender and recipients
+    #   |         |          |            based on the the email addresses extracted from the envelope (from, to, cc)
+    #   |         |          |__ `sender_email`
+    #   |         |          |__ `receivers_emails`
+    #   |         |
+    #   |         X--> skip to the next email if no correspondence is found
+    #   |         |   (no ELN user found as recipient or the sender is not an ELN user/device)
+    #   |         |
+    #   |         |__ `handle_message` Extract and set the message
+    #   |         |        |
+    #   |         |        X--> return if message has no attachments
+    #   |         |        |__  `handle_attachment` for each attachment in the message
+    #   |         |                  |__  `correspondence.attach` create the attachment in the recipient ELN user inbox
+    #   |         |
+    #   |         |__ delete the email
+    #   |
+    #   |__ Logout
+    #
     def execute
       imap.search(%w[NOT SEEN]).each do |message_id|
-        fetch_envelope(message_id)
-        handle_new_mail(message_id)
+        open_envelope(message_id)
+        next if correspondences.empty?
+
+        handle_message(message_id)
+        imap.store(message_id, '+FLAGS', [:Deleted])
       end
     rescue StandardError => e
-      log_error e.backtrace.join('\n')
+      log.error __method__, e.backtrace.join('\n')
       raise
     ensure
       logout
@@ -63,100 +58,144 @@ module Datacollector
 
     private
 
-    def reset_envelope
-      @envelope = nil
-      @from_email = nil
-      @from_user = nil
-      @receivers = []
-      @event = nil
-      @message = nil
-    end
+    delegate :log, to: :config
 
-    def helper_set
-      @helper_set ||= CorrespondenceArray.new(from_user, receivers)
-    end
+    ############################################################################################################
+    ## IMAP Connection
+    ############################################################################################################
 
-    def fetch_envelope(id)
-      reset_envelope
-      @envelope = imap.fetch(id, ENVELOPE).first.attr[ENVELOPE]
-      @message = Mail.read_from_string raw_message(id)
-    end
+    delegate :server, :mail_address, :password, :aliases, :port, :ssl, to: :config
 
-    attr_reader :envelope
+    # Imap login and navigate to inbox
+    #  (initialize the imap instance variable)
+    def login
+      response = imap.login(mail_address, password)
+      raise unless response['name'] != 'OK'
 
-    def raw_message(id)
-      imap.fetch(id, RFC822).first.attr[RFC822]
-    end
-
-    def handle_new_mail(message_id)
-      helper_set.each do |helper|
-        if message.attachments
-          handle_new_message(message, helper)
-          log_info "#{message.from} Data stored!"
-        else
-          log_info "#{message.from} No data!"
-        end
-        imap.store(message_id, '+FLAGS', [:Deleted])
-        log_info "#{message.from} Email processed!"
-      end
+      log.info('Login...')
+      imap.select(INBOX)
     rescue StandardError => e
-      log_error 'Error on mailcollector handle_new_mail'
-      log_error e.backtrace.join('\n')
-    ensure
-      reset_envelope
+      log.error("Cannot login #{server}", e.message)
+      logout
     end
 
-    def handle_new_message(message, helper)
-      message.attachments.each do |attachment|
-        tempfile = Tempfile.new('mail_attachment')
-        tempfile.binmode
-        tempfile.write(attachment.decoded)
-        tempfile.rewind
-        helper.attach(attachment.filename, tempfile.path)
-      ensure
-        tempfile.close
-        tempfile.unlink
-      end
+    # Imap logout and disconnection
+    def logout
+      imap.close
+      imap.logout
+      imap.disconnect
     rescue StandardError => e
-      log_error 'Error on mailcollector handle_new_message:'
-      log_error e.backtrace.join('\n')
-      raise
+      log.error("Cannot logout #{server}", e.message)
     end
 
+    # Set the IMAP instance
+    #
+    # @return [Net::IMAP]
+    def imap
+      @imap ||= Net::IMAP.new(server, port: port, ssl: ssl)
+    end
+
+    ############################################################################################################
+    ## Building the Correspondence Array
+    ############################################################################################################
+
+    # Define the correspondence array between the ELN devices or users
+    #   as extracted from the envelope (from, to, cc)
+    #
+    # @return [Array<Datacollector::Correspondence>] the correspondence array
+    def correspondences
+      @correspondences ||= CorrespondenceArray.new(sender_email, receiver_emails)
+    end
+
+    # Check if the the given email address is the ELN system email address or one of the aliases
+    #
+    # @param mail_to [String] the email address to check
+    # @return [Boolean] true if the email address is the ELN system email address or one of the aliases
     def email_eln_email?(mail_to)
-      mail_to.casecmp(@mail_address).zero? ||
-        (@aliases.any? { |s| s.casecmp(mail_to).zero? })
+      mail_to.casecmp(mail_address).zero? ||
+        (aliases.any? { |s| s.casecmp(mail_to).zero? })
     end
 
-    def from_email
-      @from_email ||= envelope&.from&.first && format_email(envelope.from.first)
+    # The sender email address from the current envelope
+    #
+    # @return [String] the email address of the sender
+    def sender_email
+      @envelope&.from&.first && format_email(@envelope.from.first)
     end
 
-    def receivers
-      @receivers ||= fetch_receivers
-    end
-
+    # Format the email address from the email object
+    #
+    # @param email_object [Mail::Address] the email Object
+    # @return [String] the email address
     def format_email(email_object)
       "#{email_object.mailbox}@#{email_object.host}"
     end
 
-    def fetch_receivers
-      list = envelope.to.presence || []
-      list.concat(envelope.cc) if envelope.cc
-      list.map { |email_obj| format_email(email_obj) }
-          .reject { |m| email_eln_email?(m) }
+    # Extract the email address of the receivers from the envelope
+    # while omitting the ELN system email address
+    #
+    # @return [Array<String>] the email addresses of the receivers
+    def receiver_emails
+      (@envelope.to.presence || []).concat(@envelope.cc || [])
+                                   .map { |email_obj| format_email(email_obj) }
+                                   .reject { |email| email_eln_email?(email) }
     end
 
-    def log_info(message)
-      DCLogger.log.info(self.class.name) do
-        " >>> #{message}"
-      end
+    ############################################################################################################
+    ## Handling the Email
+    ############################################################################################################
+
+    # Set the envelope instance variable
+    #
+    # @param id [Integer] the id of the email to open
+    # @return [Net::IMAP::Envelope] the envelope of the email
+    def open_envelope(id)
+      @envelope = nil
+      @envelope = imap.fetch(id, ENVELOPE).first.attr[ENVELOPE]
     end
 
-    def log_error(message)
-      DCLogger.log.error(self.class.name) do
-        " >>> #{message}"
+    # Fetch the raw message from the email id
+    #
+    # @param id [Integer] the id of the email to Fetch
+    # @return [String] the raw message
+    def raw_message(id)
+      imap.fetch(id, RFC822).first.attr[RFC822]
+    end
+
+    # Build the message object from the raw message and handle the attachments
+    #
+    # @param id [Integer] the id of the email to handle
+    def handle_message(id)
+      message = Mail.read_from_string raw_message(id)
+      return if message&.attachments.blank?
+
+      log.info(message.from, message.subject)
+      message.attachments.each(&:handle_attachment)
+    rescue StandardError => e
+      log.error __method__, e.backtrace.join('\n')
+    ensure
+      reset_envelope
+    end
+
+    # Attach the attachments of the email message to the receiver Inbox
+    #
+    #  @param attachment [Mail::Attachment] the attachment to handle
+    def handle_attachment(attachment)
+      tempfile = Tempfile.new('mail_attachment')
+      tempfile.binmode
+      tempfile.write(attachment.decoded)
+      tempfile.rewind
+      correspondences.each do |correspondence|
+        correspondence.attach(attachment.filename, tempfile.path)
+        log.info("Attached #{attachment.filename} to #{correspondence.recipient}")
+        tempfile.rewind
       end
+    rescue StandardError => e
+      log.error __method__, e.message
+      raise e
+    ensure
+      tempfile.close
+      tempfile.unlink
     end
   end
 end

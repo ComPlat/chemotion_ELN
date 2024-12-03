@@ -90,6 +90,7 @@ FactoryBot.define do
     before(:create) do |device, evaluator|
       # create datacollector_dir if it is set
       if device.datacollector_dir.present?
+        build(:data_folder, root: DC_DIR, name: '', mode: 0o755)
         build(:data_folder, root: device.datacollector_dir, name: '', mode: 0o755)
         if evaluator.user_identifiers.present?
           build(

@@ -98,12 +98,12 @@ RSpec.describe Datacollector::Collector, type: :model do
       end
 
       it 'does not process the folder when the file has just been created' do
-        allow_any_instance_of(Datacollector::Configuration).to receive(:sleep_time).and_return(10)
         expected_files = device.datacollector_number_of_files.to_i
         device_dir = build(
           :data_for_collector, device: device, user_identifiers: name_abbrs[0..0], file_count: expected_files
         )
         collector = described_class.new(device)
+        allow(collector.config).to receive(:sleep_time).and_return(10)
         # Ensure test files are set up and test execution
         # rubocop:disable Performance/Count
         expect(device_dir.glob('**/*').select(&:file?).count).to eq(expected_files)

@@ -11,6 +11,7 @@ module Datacollector
       'folderwatchersftp' => 'folder watcher over sftp',
       'filewatcherlocal' => 'file watcher over local fs',
       'folderwatcherlocal' => 'folder watcher over local fs',
+      # 'mailcollector' => 'mail collector',
     }.freeze
 
     # (see COLLECTOR_METHODS_HASH)
@@ -21,6 +22,9 @@ module Datacollector
       Rails.configuration.datacollectors
     end
 
+    # Validate the configuration and return a new config instance given a device
+    #
+    # @return [Configuration] the configuration object
     def self.new!(...)
       new(...).validate
     end
