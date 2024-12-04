@@ -10,7 +10,8 @@ export default class Vessel extends Element {
       container: Container.init(),
       collectionId: Number(collectionId),
       type: 'vessel',
-      short_label: shortLabelIn
+      short_label: shortLabelIn,
+      is_new: true,
     });
 
     return vessel;
