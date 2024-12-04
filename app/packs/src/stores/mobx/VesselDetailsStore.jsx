@@ -34,7 +34,7 @@ export const VesselDetailsStore = types
     removeVesselFromStore(id) {
       self.vessels.delete(id);
     },
-    changeName(id, newName) {
+    changeVesselName(id, newName) {
       self.vessels.get(id).changed = true;
       self.vessels.get(id).vesselName = newName;
     },
