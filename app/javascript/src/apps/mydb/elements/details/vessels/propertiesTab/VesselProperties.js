@@ -1,17 +1,18 @@
 /* eslint-disable react/function-component-definition */
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 import { Accordion } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty'; // Adjust the import path as needed
-import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
+import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
+import VesselName from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselName';
+// import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
 
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
   const vesselId = item.id;
-  const vesselItem = vesselDetailsStore.vessels.get(vesselId);
-  
+  // const vesselItem = vesselDetailsStore.vessels.get(vesselId);
+  const vesselItem = vesselDetailsStore.getVessel(vesselId);
 
   return (
     <Accordion className="vessel-properties" defaultActiveKey="common-properties">
@@ -21,13 +22,10 @@ const VesselProperties = ({ item, readOnly }) => {
           Common vessel properties
         </Accordion.Header>
         <Accordion.Body>
-          <VesselProperty
-            label="Name"
-            value={vesselItem?.vesselName || ''}
-            onChange={(e) => {
-              vesselDetailsStore.changeName(vesselId, e.target.value);
-            }}
-            // readOnly={readOnly}
+          <VesselName
+            id={vesselId}
+            name={vesselItem?.vesselName || ''}
+            readOnly={readOnly}
           />
           <VesselProperty
             label="Details"

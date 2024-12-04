@@ -34,8 +34,11 @@ class Vessel < ApplicationRecord
   belongs_to :vessel_template
   belongs_to :creator, class_name: 'User', foreign_key: :user_id, inverse_of: :created_vessels
 
+  has_one :container, as: :containable
   has_many :collections_vessels, dependent: :destroy
   has_many :collections, through: :collections_vessels
+
+  accepts_nested_attributes_for :container
 
   delegate :details, :material_details, :material_type, :vessel_type, :volume_amount, :volume_unit,
            to: :vessel_template
