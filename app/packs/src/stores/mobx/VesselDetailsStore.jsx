@@ -93,7 +93,7 @@ export const VesselDetailsStore = types
 
       self.vessels.set(jsVesselModel.id, VesselItem.create({
         id: jsVesselModel.id || '',
-        name: jsVesselModel.name || '',
+        vesselName: jsVesselModel.vesselName || '',
         details: jsVesselModel.details || '',
         materialDetails: jsVesselModel.materialDetails || '',
         materialType: jsVesselModel.materialType || '',
@@ -116,7 +116,7 @@ export const VesselDetailsStore = types
         throw new Error(`No vessel with id found: ${id}`);
       }
       //name vs vesselName to be verified
-      item.vesselName = properties.name;
+      item.vesselName = properties.vesselName;
       item.details = properties.details;
       item.materialDetails = properties.materialDetails;
       item.materialType = properties.materialType;
