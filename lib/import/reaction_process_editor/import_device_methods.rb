@@ -10,7 +10,7 @@ module Import
 
       DETECTOR_TYPES = { PDA: ['CHMO:0001728', 'WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
                          'PDA/DAD': ['CHMO:0001728', 'WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
-                         ELSD: %w[CHMO:0001718 METRIC TEMPERATURE CELSIUS Temperature],
+                         ELSD: %w[CHMO:0002866 METRIC TEMPERATURE CELSIUS Temperature],
                          MS: %w[CHMO:0002337 TEXT MS_PARAMETER V Parameter],
                          #  MS: %w[CHMO:0002174 TEXT MS_PARAMETER V Parameter],
                          FID: %w[CHMO:0001719 METRIC WEIGTH g Weight],

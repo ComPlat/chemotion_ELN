@@ -6,16 +6,13 @@ module Entities
       module Models
         class Detectors < Base
           DETECTOR_TYPES = { PDA: ['CHMO:0001728', 'WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
-                             ELSD: %w[CHMO:0001718 METRIC TEMPERATURE CELSIUS Temperature],
+                             ELSD: %w[CHMO:0002866 METRIC TEMPERATURE CELSIUS Temperature],
                              MS: %w[CHMO:0002337 TEXT MS_PARAMETER V Parameter],
-                             #  MS: %w[CHMO:0002174 TEXT MS_PARAMETER V Parameter],
-                             FID: %w[CHMO:0001719 METRIC WEIGTH g Weight],
-                             BID: %w[CHMO:0001724 METRIC WEIGTH g Weight] }.stringify_keys
+                             FID: %w[CHMO:0001719],
+                             BID: %w[CHMO:0001724] }.stringify_keys
 
           def select_options_for(detector_ids)
             detector_ids.map do |detector_id|
-              # detector_ontology = ::ReactionProcessEditor::Models::Ontology.find_by(chmo_id: detector_id)
-
               label, detector_type = DETECTOR_TYPES.find { |_det_type, metrics| metrics[0] == detector_id }
 
               { value: detector_id,
