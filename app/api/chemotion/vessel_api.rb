@@ -85,7 +85,7 @@ module Chemotion
 
       desc 'Create a new Vessel sample'
       params do
-        requires :name, type: String, desc: 'name of a vessel template'
+        requires :template_name, type: String, desc: 'name of a vessel template'
         optional :vessel_name, type: String, desc: 'name of a vessel sample'
         optional :material_details, type: String, desc: 'details of the vessel template'
         optional :details, type: String, desc: 'additional details'
@@ -108,7 +108,7 @@ module Chemotion
         vessel_template = VesselTemplate.find_by(
           name: params[:name],
         ) || VesselTemplate.create!(
-          name: params[:name],
+          name: params[:template_name],
           details: params[:details],
           material_details: params[:material_details],
           material_type: params[:material_type],
