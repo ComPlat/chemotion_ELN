@@ -187,7 +187,7 @@ describe Usecases::Reactions::UpdateMaterials do
 
     context 'updates samples using set_mole_value_gas_product' do
       it 'returns nil when reaction vessel size amount is nil' do
-        result = class_instance.send(:set_mole_value_gas_product, sample, product_sample)
+        result = class_instance.send(:set_mole_value_gas_product, sample, product_material)
         expect(result).to be_nil
       end
 
