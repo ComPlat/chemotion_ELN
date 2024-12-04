@@ -3,6 +3,7 @@
 require 'rails_helper'
 
 describe 'Reporter::Docx::DetailReaction instance' do
+  include_context 'reaction report setup'
   let(:svg_fixt_path) { Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg') }
   let(:svg_image_path) { Rails.root.join('public', 'images', 'molecules', 'molecule.svg') }
 
@@ -307,6 +308,39 @@ describe 'Reporter::Docx::DetailReaction instance' do
                       "which have the following classification: #{d1}, #{d2}." }
         ]
       )
+    end
+
+    context 'when calculating_amount_mmol' do
+      let(:valid_vessel_size) { { 'amount' => 10, 'unit' => 'ml' } }
+      let!(:reaction_with_valid_vessel_size) { create(:reaction, vessel_size: valid_vessel_size) }
+      let!(:first_serialized_reaction) { create_reaction_report(reaction_with_valid_vessel_size, s3) }
+      let(:invalid_vessel_size) { { 'amount' => nil, 'unit' => nil } }
+      let!(:reaction_with_nil_vessel_size) { create(:reaction, vessel_size: invalid_vessel_size) }
+      let!(:second_serialized_reaction) { create_reaction_report(reaction_with_nil_vessel_size, s3) }
+      let!(:report_one) do
+        Reporter::Docx::DetailReaction.new(
+          reaction: OpenStruct.new(first_serialized_reaction),
+          mol_serials: mol_serials,
+          index: prev_index,
+          si_rxn_settings: all_si_rxn_settings,
+        )
+      end
+      let!(:report_two) do
+        Reporter::Docx::DetailReaction.new(
+          reaction: OpenStruct.new(second_serialized_reaction),
+          mol_serials: mol_serials,
+          index: prev_index,
+          si_rxn_settings: all_si_rxn_settings,
+        )
+      end
+
+      it 'calculates amount in mmol for a product material of type gas' do
+        expect(report_one.content[:products][0][:mol]).to eq('3.58')
+      end
+
+      it 'calculates amount in mmol of a product material of type gas for a reaction with nil values of vessel size' do
+        expect(report_two.content[:products][0][:mol]).to eq('0.00')
+      end
     end
   end
 end
