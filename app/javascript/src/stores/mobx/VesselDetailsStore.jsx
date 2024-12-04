@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { types } from 'mobx-state-tree';
+import Container from 'src/models/Container';
 
 const VesselItem = types
   .model({
@@ -34,7 +35,7 @@ export const VesselDetailsStore = types
     removeVesselFromStore(id) {
       self.vessels.delete(id);
     },
-    changeName(id, newName) {
+    changeVesselName(id, newName) {
       self.vessels.get(id).changed = true;
       self.vessels.get(id).vesselName = newName;
     },
@@ -86,6 +87,11 @@ export const VesselDetailsStore = types
       self.vessels.get(id).changed = true;
       self.vessels.get(id).qrCode = newQrCode;
     },
+    addEmptyContainer(id) {
+      const container = Container.buildEmpty();
+      container.container_type = "attachments";
+      return container;
+    },
     convertVesselToModel(jsVesselModel) {
       if (self.vessels.has(jsVesselModel.id)) {
         return;
@@ -117,14 +123,14 @@ export const VesselDetailsStore = types
       }
       //name vs vesselName to be verified
       item.vesselName = properties.vesselName;
-      item.details = properties.details;
-      item.materialDetails = properties.materialDetails;
-      item.materialType = properties.materialType;
-      item.vesselType = properties.vesselType;
-      item.volumeAmount = properties.volumeAmount;
-      item.volumeUnit = properties.volumeUnit;
-      item.weightAmount = properties.weightAmount;
-      item.weightUnit = properties.weightUnit;
+      item.details = properties.details || '';
+      item.materialDetails = properties.materialDetails || '';
+      item.materialType = properties.materialType || '';
+      item.vesselType = properties.vesselType || '';
+      item.volumeAmount = properties.volumeAmount || 0;
+      item.volumeUnit = properties.volumeUnit || '';
+      item.weightAmount = properties.weightAmount || 0;
+      item.weightUnit = properties.weightUnit || '';
     }
   }))
   .views((self) => ({
