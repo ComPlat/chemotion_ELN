@@ -361,7 +361,7 @@ module Reporter
           mol: valid_digit(mmol, digit),
           mmol_unit: mmol_unit,
           equiv: valid_digit(s.equivalent, digit),
-          molecule_name_hash: s[:molecule_name_hash]
+          molecule_name_hash: s[:molecule_name_hash],
         }
 
         if is_product
@@ -372,6 +372,7 @@ module Reporter
                                mol: valid_digit(mmol, digit),
                                equiv: equiv,
                                molecule_name_hash: s[:molecule_name_hash],
+                               conversion_rate: s.conversion_rate,
                              })
         end
 
