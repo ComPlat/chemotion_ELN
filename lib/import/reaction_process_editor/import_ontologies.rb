@@ -14,16 +14,18 @@ module Import
       VALUES_WITH_BRACKET = /(.*?)\((.*?)\)\|?;?/.freeze
 
       def execute
-        set_all_inactive
+        ActiveRecord::Base.transaction do
+          set_all_inactive
 
-        ontology_files.each do |filename|
-          CSV.foreach(filename, col_sep: ';', headers: true, return_headers: false,
-                                converters: [->(string) { string&.strip }]) do |row|
-            create_from_csv(row)
+          ontology_files.each do |filename|
+            CSV.foreach(filename, col_sep: ';', headers: true, return_headers: false,
+                                  converters: [->(string) { string&.strip }]) do |row|
+              create_from_csv(row)
+            end
           end
-        end
 
-        Import::ReactionProcessEditor::ImportDeviceMethods.new.execute
+          Import::ReactionProcessEditor::ImportDeviceMethods.new.execute
+        end
       end
 
       private
@@ -43,11 +45,11 @@ module Import
 
         ontology.update!(
           name: csv['Ontology Name'],
-          label: csv['Custom Name'] || csv['Own Name'], # inconsistent in actual files.
+          label: csv['Custom Label'] || csv['Custom Name'] || csv['Own Name'], # inconsistent in actual files.
           link: csv['Full Link'],
           detectors: detectors(csv['Detectors']),
           solvents: csv['solvents'],
-          roles: roles(csv['Parent']),
+          roles: roles(csv['Roles']),
           active: true,
         )
       rescue StandardError => e
