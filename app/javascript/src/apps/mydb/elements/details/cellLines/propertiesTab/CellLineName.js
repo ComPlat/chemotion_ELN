@@ -26,7 +26,7 @@ export default class CellLineName extends React.Component {
 
   static renderNameSuggestion(name, src) {
     return (
-      <span style={{ display: 'block', textAlign: 'left' }}>
+      <span className="d-block text-start">
         {name}
         {' '}
         (
@@ -40,6 +40,7 @@ export default class CellLineName extends React.Component {
     const { cellLineDetailsStore } = this.context;
     const { nameSuggestions } = this.state;
     const { id, name, readOnly } = this.props;
+    console.log(id, name, readOnly);
 
     if (readOnly) {
       return (
@@ -70,6 +71,7 @@ export default class CellLineName extends React.Component {
                 const currentEntry = nameSuggestions.filter((x) => x.value === e.value);
                 if (currentEntry.length > 0) {
                   cellLineDetailsStore.changeCellLineName(id, currentEntry[0].name);
+                  console.log(e.value);
                   CellLinesFetcher.getCellLineMaterialById(e.value)
                     .then((result) => {
                       cellLineDetailsStore.setMaterialProperties(id, result);
