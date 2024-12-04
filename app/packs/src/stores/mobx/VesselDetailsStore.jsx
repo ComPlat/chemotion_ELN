@@ -117,14 +117,14 @@ export const VesselDetailsStore = types
       }
       //name vs vesselName to be verified
       item.vesselName = properties.vesselName;
-      item.details = properties.details;
-      item.materialDetails = properties.materialDetails;
-      item.materialType = properties.materialType;
-      item.vesselType = properties.vesselType;
-      item.volumeAmount = properties.volumeAmount;
-      item.volumeUnit = properties.volumeUnit;
-      item.weightAmount = properties.weightAmount;
-      item.weightUnit = properties.weightUnit;
+      item.details = properties.details || '';
+      item.materialDetails = properties.materialDetails || '';
+      item.materialType = properties.materialType || '';
+      item.vesselType = properties.vesselType || '';
+      item.volumeAmount = properties.volumeAmount || 0;
+      item.volumeUnit = properties.volumeUnit || '';
+      item.weightAmount = properties.weightAmount || 0;
+      item.weightUnit = properties.weightUnit || '';
     }
   }))
   .views((self) => ({

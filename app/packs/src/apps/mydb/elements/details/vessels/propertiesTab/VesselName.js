@@ -24,13 +24,17 @@ function VesselName({ id, name, readOnly }) {
   }, []);
 
   const handleChange = (e) => {
-    if (typeof e.value === 'number') {
+    console.log('called')
+    if (typeof e.value === 'string') {
       const currentEntry = nameSuggestions.filter((x) => x.value === e.value);
       if (currentEntry.length > 0) {
         vesselDetailsStore.changeVesselName(id, currentEntry[0].name);
-        VesselsFetcher.getVesselMaterialById(e.value).then((result) => {
-          vesselDetailsStore.setMaterialProperties(id, result);
-        });
+        console.log(e.value);
+        VesselsFetcher.getVesselMaterialById(e.value)
+          .then((result) => {
+            console.log('result', result);
+            vesselDetailsStore.setMaterialProperties(id, result);
+          });
       }
     } else {
       vesselDetailsStore.changeVesselName(id, e.value);
@@ -67,12 +71,12 @@ function VesselName({ id, name, readOnly }) {
     );
   }
 
-  const className = vesselDetailsStore.getVessel(id).vesselName
-    ? 'cell-line-name-autocomplete'
-    : 'cell-line-name-autocomplete invalid';
+  // const className = vesselDetailsStore.getVessel(id).vesselName
+  //   ? 'cell-line-name-autocomplete'
+  //   : 'cell-line-name-autocomplete invalid';
 
   return (
-    <Form.Group as={Row} className="cell-line-name">
+    <Form.Group as={Row}>
       <Form.Label column sm={3}>Vessel name *</Form.Label>
       <Col sm={9}>
         <CreatableSelect

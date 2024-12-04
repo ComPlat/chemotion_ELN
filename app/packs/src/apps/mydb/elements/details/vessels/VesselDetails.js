@@ -8,11 +8,7 @@ import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
-
-import {
-  ButtonToolbar, Button, Card,
-  Tabs, Tab, OverlayTrigger, Tooltip
-} from 'react-bootstrap';
+import { ButtonToolbar, Button, Card, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 
 function VesselDetails({ vesselItem, toggleFullScreen }) {
