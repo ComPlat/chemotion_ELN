@@ -10,9 +10,9 @@ const VesselItem = types
     materialType: '',
     vesselType: '',
     volumeAmount: 0,
-    volumeUnit: '',
+    volumeUnit: types.string,
     weightAmount: 0,
-    weightUnit: '',
+    weightUnit: types.string,
     vesselInstanceName: '',
     vesselInstanceDescription: '',
     qrCode: '',
@@ -31,9 +31,6 @@ export const VesselDetailsStore = types
     vessels: types.map(VesselItem),
   })
   .actions((self) => ({
-    addVessel(vesselData) {
-      self.vessels.set(vesselData.id, VesselItem.create(vesselData));
-    },
     removeVesselFromStore(id) {
       self.vessels.delete(id);
     },
@@ -54,7 +51,7 @@ export const VesselDetailsStore = types
       self.vessels.get(id).materialType = newMaterialType;
     },
     changeVesselType(id, newVesselType) {
-self.vessels.get(id).changed = true;
+      self.vessels.get(id).changed = true;
       self.vessels.get(id).vesselType = newVesselType;
     },
     changeVolumeAmount(id, newVolumeAmount) {
@@ -90,15 +87,12 @@ self.vessels.get(id).changed = true;
       self.vessels.get(id).qrCode = newQrCode;
     },
     convertVesselToModel(jsVesselModel) {
-      const vesselId = jsVesselModel.id ? jsVesselModel.id.toString() : `new-${Date.now()}`;
-      console.log("Generated Vessel ID:", vesselId); // Debugging
       if (self.vessels.has(jsVesselModel.id)) {
         return;
       }
 
-      self.vessels.set(vesselId, VesselItem.create({
-        // cellLineId: jsVesselModel.cellLineId,
-        id: vesselId,
+      self.vessels.set(jsVesselModel.id, VesselItem.create({
+        id: jsVesselModel.id || '',
         name: jsVesselModel.name || '',
         details: jsVesselModel.details || '',
         materialDetails: jsVesselModel.materialDetails || '',
@@ -113,6 +107,7 @@ self.vessels.get(id).changed = true;
         qrCode: jsVesselModel.qrCode || '',
         barCode: jsVesselModel.barCode || '',
         shortLabel: jsVesselModel.short_label || '',
+        is_new: !jsVesselModel.id,
       }));
     },
     setMaterialProperties(id, properties) {
