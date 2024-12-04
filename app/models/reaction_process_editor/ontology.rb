@@ -25,6 +25,8 @@ module ReactionProcessEditor
 
     before_validation :set_device_code
 
+    scope :active, -> { where(active: true) }
+
     def self.normalize_device_code(device_name:)
       device_name&.upcase&.tr('^A-Za-z0-9', '')
     end
