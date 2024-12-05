@@ -470,7 +470,7 @@ export class ContainerDatasetModalContent extends Component {
 
   checkUserQuota() {
     const { filteredAttachments } = this.state;
-    const totalSize = filteredAttachments.filter((attachment) => !attachment.is_deleted)
+    const totalSize = filteredAttachments.filter((attachment) => attachment.is_new === true && !attachment.is_deleted)
       .reduce((acc, attachment) => acc + attachment.filesize, 0);
     const { currentUser } = UserStore.getState();
     return currentUser.available_space !== 0 && totalSize > (currentUser.available_space - currentUser.used_space);
