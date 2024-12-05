@@ -12,25 +12,39 @@ module Usecases
 
       def execute! # rubocop:disable Metrics/AbcSize
         ActiveRecord::Base.transaction do
-          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments, :size))
+          is_sync_to_me = params[:is_sync_to_me]
+
+          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments, :is_sync_to_me))
           wellplate.set_short_label(user: @current_user)
           wellplate.reload
           wellplate.save_segments(segments: params[:segments], current_user_id: @current_user.id)
 
-          is_shared_collection = false
-          if user_collection
-            CollectionsWellplate.create(wellplate: wellplate, collection: user_collection)
-          elsif sync_collection_user
-            is_shared_collection = true
-            CollectionsWellplate.create(wellplate: wellplate, collection: sync_collection_user.collection)
+          if is_sync_to_me
+            Rails.logger.debug('Creating wellplate in sync collection due to user request (param :is_sync_to_me is set).')
+            sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+            error!('400 Bad Request (Cant find sync collection)', 400) if sync_collection.blank?
 
-            CollectionsWellplate.create(wellplate: wellplate, collection: all_collection_of_sharer)
+            collection = Collection.find(sync_collection['collection_id'])
+            CollectionsWellplate.create(wellplate: wellplate, collection: collection) if collection.present?
+
+            sync_out_collection_sharer = Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+            CollectionsWellplate.create(wellplate: wellplate, collection: sync_out_collection_sharer)
+          else
+            is_shared_collection = false
+            if user_collection
+              CollectionsWellplate.create(wellplate: wellplate, collection: user_collection)
+            elsif sync_collection_user
+              is_shared_collection = true
+              CollectionsWellplate.create(wellplate: wellplate, collection: sync_collection_user.collection)
+
+              CollectionsWellplate.create(wellplate: wellplate, collection: all_collection_of_sharer)
+            end
+
+            CollectionsWellplate.create(
+              wellplate: wellplate,
+              collection: all_collection_of_current_user
+            ) unless is_shared_collection
           end
-
-          CollectionsWellplate.create(
-            wellplate: wellplate,
-            collection: all_collection_of_current_user
-          ) unless is_shared_collection
 
           WellplateUpdater
             .new(wellplate: wellplate, current_user: current_user)

@@ -246,6 +246,7 @@ module Chemotion
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
         optional :gaseous, type: Boolean
+        optional :is_sync_to_me, type: Boolean, default: false
       end
 
       post do
@@ -257,9 +258,8 @@ module Chemotion
         container_info = params[:container]
         attributes.delete(:container)
         attributes.delete(:segments)
-        attributes.delete(:user_labels)
-
-        collection = current_user.collections.where(id: collection_id).take
+        is_sync_to_me = attributes.delete(:is_sync_to_me)
+        
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -294,26 +294,39 @@ module Chemotion
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
 
-        is_shared_collection = false
-        if collection.blank?
+        if is_sync_to_me
           sync_collection = current_user.all_sync_in_collections_users.where(id: collection_id).take
-          if sync_collection.present?
-            is_shared_collection = true
-            sync_in_collection_receiver = Collection.find(sync_collection['collection_id'])
+
+          collection = Collection.find(sync_collection['collection_id'])
+          CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
+
+          sync_out_collection_sharer = Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+          CollectionsReaction.create(reaction: reaction, collection: sync_out_collection_sharer)
+        else
+          collection = current_user.collections.where(id: collection_id).take
+          CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
+
+          is_shared_collection = false
+          if collection.blank?
+            sync_collection = current_user.all_sync_in_collections_users.where(id: collection_id).take
+            if sync_collection.present?
+              is_shared_collection = true
+              sync_in_collection_receiver = Collection.find(sync_collection['collection_id'])
+              CollectionsReaction.create(reaction: reaction,
+                                         collection: sync_in_collection_receiver)
+              sync_out_collection_sharer = Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+              CollectionsReaction.create(reaction: reaction,
+                                         collection: sync_out_collection_sharer)
+            end
+          end
+
+          unless is_shared_collection
             CollectionsReaction.create(reaction: reaction,
-                                       collection: sync_in_collection_receiver)
-            sync_out_collection_sharer = Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-            CollectionsReaction.create(reaction: reaction,
-                                       collection: sync_out_collection_sharer)
+                                       collection: Collection.get_all_collection_for_user(current_user.id))
           end
         end
 
-        unless is_shared_collection
-          CollectionsReaction.create(reaction: reaction,
-                                     collection: Collection.get_all_collection_for_user(current_user.id))
-        end
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction
           if attributes['origin'] && attributes['origin']['short_label'] && materials['products'].present?

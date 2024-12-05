@@ -86,7 +86,7 @@ export default class ReactionsFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(reaction.serialize())
+      body: JSON.stringify({...reaction.serialize(), is_sync_to_me: reaction["is_sync_to_me"]})
     }).then((response) => response.json())
       .then((json) => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
         .then(() => ReactionsFetcher.updateAnnotationsInReaction(reaction))

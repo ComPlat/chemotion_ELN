@@ -40,7 +40,7 @@ export default class ResearchPlansFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(researchPlan.serialize())
+      body: JSON.stringify({...researchPlan.serialize(), is_sync_to_me: researchPlan["is_sync_to_me"]})
     })
       .then((response) => response.json())
       .then((json) => AttachmentFetcher.updateAttachables(

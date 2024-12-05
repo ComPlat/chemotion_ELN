@@ -142,6 +142,8 @@ export default class ReactionDetails extends Component {
 
     const { reaction } = this.state;
     if (reaction && reaction.isNew) {
+      const { currentCollection } = UIStore.getState();
+      reaction["is_sync_to_me"] = currentCollection ? Boolean(currentCollection["is_sync_to_me"]) : false;
       ElementActions.createReaction(reaction);
     } else {
       ElementActions.updateReaction(reaction, closeView);

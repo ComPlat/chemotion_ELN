@@ -355,6 +355,8 @@ export default class SampleDetails extends React.Component {
       const wellplate = sample.belongTo;
       ElementActions.updateSampleForWellplate(sample, wellplate);
     } else if (sample.isNew) {
+      const { currentCollection } = UIStore.getState();
+      sample["is_sync_to_me"] = currentCollection ? Boolean(currentCollection["is_sync_to_me"]) : false;
       ElementActions.createSample(sample, closeView);
     } else {
       sample.cleanBoilingMelting();
