@@ -1,35 +1,33 @@
+$sidebar-logo-height: 88px;
+$header-height: 61.5px;
 .sidebar {
-  @extend .position-relative;
+  @extend .d-flex;
   @extend .text-bg-paper;
-  @extend .p-3;
-  width: 300px;
   @extend .flex-shrink-0;
+  @extend .position-relative;
+  width: 300px;
   &.sidebar--collapsed {
-    width: 80px;
+    width: 84px;
   }
-}
-
-$sidebar-button-diameter: 16px;
-
-.sidebar-collapse-button-container {
-  @extend .position-absolute;
-  @extend .end-0;
-  @extend .overflow-hidden;
-  top: calc(50% - #{$sidebar-button-diameter});
-  width: $sidebar-button-diameter;
-  margin: auto -13px auto 0;
-  z-index: 1000;
-}
-
-.sidebar-collapse-button {
-  @extend .btn-sm;
-  @extend .p-2;
-  @extend .text-end;
-  @extend .text-primary;
-  @extend .rounded-circle;
-  background-color: $chemstrap-paper !important;
-  border-color: transparent !important;
-  margin-left: -$sidebar-button-diameter;
-  width: $sidebar-button-diameter * 2;
-  height: $sidebar-button-diameter * 2;
+  &-logo {
+    @extend .position-absolute;
+    @extend .top-0;
+    @extend .start-0;
+  }
+  &-content {
+    @extend .h-100;
+    @extend .d-flex;
+    @extend .flex-column;
+    @extend .gap-3;
+    @extend .flex-grow-1;
+    @extend .ps-3;
+    @extend .pb-3;
+    padding-top: $sidebar-logo-height; //logo height
+  }
+  &-collapse-button-container {
+    margin-top: $header-height; //hack to compensate header height
+    @extend .d-flex;
+    @extend .flex-column;
+    @extend .justify-content-center;
+  }
 }
