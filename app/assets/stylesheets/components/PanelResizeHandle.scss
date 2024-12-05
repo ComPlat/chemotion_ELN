@@ -3,7 +3,8 @@
   @extend .d-flex;
   @extend .flex-column;
   @extend .justify-content-evenly;
-  width: 12px;
+  @extend .border-start;
+  @extend .border-end;
   &:after,
   &:before {
     content: "";
@@ -24,11 +25,4 @@
       transparent 0
     );
   }
-}
-
-.panel-collapse-button {
-  @extend .btn-sm;
-  @extend .p-0;
-  height: 20%;
-  cursor: pointer !important;
 }
