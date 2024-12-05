@@ -1,12 +1,12 @@
 import React, {
   useState, useEffect, useContext, useRef, useCallback
 } from 'react';
-import { Button } from 'react-bootstrap';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import PanelCollapseButton from 'src/apps/mydb/layout/PanelCollapseButton';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 
@@ -79,12 +79,7 @@ function Elements() {
       {showDetailView && (
         <>
           <PanelResizeHandle className="panel-resize-handle">
-            <Button
-              className="panel-collapse-button"
-              onClick={toggleListView}
-            >
-              <i className={`fa fa-angle-double-${isCollapsed ? 'right' : 'left'}`} />
-            </Button>
+            <PanelCollapseButton isCollapsed={isCollapsed} onClick={toggleListView} />
           </PanelResizeHandle>
           <Panel
             id="elements-detail-view"
