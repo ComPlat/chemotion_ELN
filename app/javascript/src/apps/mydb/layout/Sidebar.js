@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from 'react-bootstrap';
 import classNames from 'classnames';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -8,10 +7,11 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 
-import InboxButton from "src/components/contextActions/InboxButton";
-import SampleTaskNavigationElement from "src/components/sampleTaskInbox/SampleTaskNavigationElement";
-import OpenCalendarButton from "src/components/calendar/OpenCalendarButton";
-import NoticeButton from "src/components/contextActions/NoticeButton";
+import InboxButton from 'src/components/contextActions/InboxButton';
+import SampleTaskNavigationElement from 'src/components/sampleTaskInbox/SampleTaskNavigationElement';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import NoticeButton from 'src/components/contextActions/NoticeButton';
+import PanelCollapseButton from 'src/apps/mydb/layout/PanelCollapseButton';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -24,16 +24,8 @@ export default function Sidebar() {
 
   return (
     <div className={"sidebar" + (isCollapsed ? " sidebar--collapsed" : "")} >
-      <div className="sidebar-collapse-button-container">
-        <Button
-          onClick={UIActions.toggleSidebar}
-          className="sidebar-collapse-button"
-        >
-          <i className={"fa " + (isCollapsed ? "fa-angle-double-right" : "fa-angle-double-left")} />
-        </Button>
-      </div>
-      <div className="h-100 d-flex flex-column gap-3">
-        <a href="/mydb" title="Link to mydb index page">
+      <div className="sidebar-content">
+        <a href="/mydb" title="Link to mydb index page" className='sidebar-logo'>
           <ChemotionLogo collapsed={isCollapsed} />
         </a>
         <div className="flex-grow-1 h-0">
@@ -50,6 +42,9 @@ export default function Sidebar() {
           <OpenCalendarButton isCollapsed={isCollapsed} />
           <NoticeButton isCollapsed={isCollapsed} />
         </div>
+      </div>
+      <div className="sidebar-collapse-button-container">
+        <PanelCollapseButton onClick={UIActions.toggleSidebar} isCollapsed={isCollapsed} />
       </div>
     </div>
   );

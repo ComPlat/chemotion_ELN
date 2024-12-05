@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from 'react-bootstrap';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import PanelCollapseButton from 'src/apps/mydb/layout/PanelCollapseButton';
 
 const defaultLayout = [40, 60];
 const isLayoutCollapsed = (layout) => layout[0] === 0;
@@ -71,12 +71,7 @@ export default function Elements() {
       {showDetailView && (
         <>
           <PanelResizeHandle className="panel-resize-handle">
-            <Button
-              className="panel-collapse-button"
-              onClick={toggleListView}
-            >
-              <i className={`fa fa-angle-double-${isCollapsed ? 'right' : 'left'}`} />
-            </Button>
+            <PanelCollapseButton isCollapsed={isCollapsed} onClick={toggleListView} />
           </PanelResizeHandle>
           <Panel
             id="elements-detail-view"
