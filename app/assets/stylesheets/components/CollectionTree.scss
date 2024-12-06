@@ -21,6 +21,9 @@
     font-size: 14px;
     @extend .py-1;
     @extend .pe-3;
+    &:hover {
+      background-color: $chemstrap-interaction-grey1;
+    }
 
     &--selected {
       @extend .bg-primary;
