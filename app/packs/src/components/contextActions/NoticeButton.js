@@ -16,7 +16,7 @@ import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
-import CollapsibleIconButton from 'src/apps/mydb/layout/sidebar/CollapsibleIconButton';
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
@@ -419,12 +419,9 @@ export default class NoticeButton extends React.Component {
       btnIcon = 'fa-bell';
     }
 
-    const { isCollapsed } = this.props;
-
     return (
       <>
-        <CollapsibleIconButton
-          isCollapsed={isCollapsed}
+        <SidebarButton
           label="Notifications"
           variant={btnStyle}
           icon={btnIcon}
@@ -435,7 +432,3 @@ export default class NoticeButton extends React.Component {
     );
   }
 }
-
-NoticeButton.propTypes = {
-  isCollapsed: PropTypes.bool.isRequired,
-};
