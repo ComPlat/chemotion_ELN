@@ -142,7 +142,7 @@ class GatePushButton extends React.Component {
     return (
       <>
         <Button
-          variant="success"
+          variant="secondary"
           size="sm"
           onClick={() => this.transmit()}
           ref={this.buttonRef}

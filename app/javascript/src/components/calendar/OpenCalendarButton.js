@@ -3,7 +3,7 @@ import { Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import CollapsibleIconButton from 'src/apps/mydb/layout/sidebar/CollapsibleIconButton';
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
 function getDefaultDateTimeRange() {
   const date = new Date();
@@ -41,7 +41,7 @@ export default class OpenCalendarButton extends Component {
   }
 
   render() {
-    const { isPanelHeader, isCollapsed } = this.props;
+    const { isPanelHeader } = this.props;
     if (isPanelHeader) {
       return (
         <Button
@@ -55,8 +55,7 @@ export default class OpenCalendarButton extends Component {
     }
 
     return (
-      <CollapsibleIconButton
-        isCollapsed={isCollapsed}
+      <SidebarButton
         variant="light"
         onClick={this.onClick}
         label="Calendar"

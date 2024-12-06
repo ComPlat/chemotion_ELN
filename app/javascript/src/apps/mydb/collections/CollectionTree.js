@@ -5,7 +5,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
-import CollapsibleButton from 'src/apps/mydb/layout/sidebar/CollapsibleButton';
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 
 export default function CollectionTree({ isCollapsed, expandSidebar }) {
@@ -43,13 +43,13 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
 
   const collectionGroups = [
     {
-      label: 'Collections',
+      label: 'My Collections',
       icon: 'fa-list',
       collectionKey: 'collections',
       roots: [...lockedRoots, ...unsharedRoots],
     },
     {
-      label: 'My shared collections',
+      label: 'Shared by me',
       icon: 'fa-cloud-upload',
       collectionKey: 'sharedByMe',
       roots: sharedRoots,
@@ -70,14 +70,14 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
 
   return (
     <div className={classnames(
-      'd-flex flex-column mh-100 gap-1',
+      'collection-tree',
       { 'align-items-center': isCollapsed }
     )}>
       {collectionGroups.map(({ label, icon, collectionKey, roots }) => {
         const isActive = activeCollection === collectionKey;
         return (
           <Fragment key={collectionKey}>
-            <CollapsibleButton
+            <SidebarButton
               label={label}
               icon={icon}
               isCollapsed={isCollapsed}
@@ -88,7 +88,7 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
               <div className="tree-view_container">
                 {roots.length === 0
                   ? <div className="text-muted text-center p-2">No collections</div>
-                  : roots.map((root) => <CollectionSubtree key={root.id} root={root} />)
+                  : roots.map((root) => <CollectionSubtree key={root.id} root={root} level={1}/>)
                 }
               </div>
             )}

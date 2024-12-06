@@ -1,0 +1,39 @@
+.collection-tree {
+  @extend .sidebar-button-frame;
+  @extend .flex-column;
+  @extend .mh-100;
+}
+.tree-view {
+  @extend .d-flex;
+  @extend .flex-column;
+  padding-top: 1px;
+  gap: 1px;
+  &_container {
+    @extend .tree-view;
+    @extend .overflow-y-auto;
+  }
+  &_item {
+    @extend .d-flex;
+    @extend .align-items-baseline;
+    @extend .gap-1;
+    cursor: pointer;
+    background: $chemstrap-paper;
+    font-size: 14px;
+    @extend .py-1;
+    @extend .pe-3;
+
+    &--selected {
+      @extend .bg-primary;
+      @extend .text-white;
+      &:hover {
+        background-color: $chemstrap-blue-light !important;
+      }
+    }
+  }
+
+  &_title {
+    @extend .flex-grow-1;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+}

@@ -4,7 +4,7 @@ import Aviator from 'aviator';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CollapsibleButton from 'src/apps/mydb/layout/sidebar/CollapsibleButton';
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
 function urlForCurrentElement() {
   const { currentElement } = ElementStore.getState();
@@ -31,12 +31,12 @@ function handleCollectionManagementToggle() {
 
 export default function CollectionManagementButton({ isCollapsed }) {
   return (
-    <CollapsibleButton
+    <SidebarButton
       isCollapsed={isCollapsed}
       onClick={handleCollectionManagementToggle}
       label="Manage Collections"
-      icon="fa-cog"
-      variant="info"
+      icon="fa-wrench"
+      variant="light"
     />
   );
 }
