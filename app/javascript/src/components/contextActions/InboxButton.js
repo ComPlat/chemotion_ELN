@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import 'whatwg-fetch';
 
-import CollapsibleIconButton from 'src/apps/mydb/layout/sidebar/CollapsibleIconButton';
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
@@ -19,11 +19,10 @@ export default function InboxButton({ isCollapsed }) {
   }, []);
 
   return (
-    <CollapsibleIconButton
-      isCollapsed={isCollapsed}
+    <SidebarButton
       label="Inbox"
       icon="fa-inbox"
-      variant={badgeCount > 0 ? 'warning' : 'light'}
+      variant="light"
       onClick={InboxActions.toggleInboxModal}
       badgeCount={badgeCount}
     />
