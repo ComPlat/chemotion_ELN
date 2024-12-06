@@ -1,10 +1,5 @@
 # frozen_string_literal: true
 
-# those require statements are uneccessary in test environment but
-# enable the single factory to be loaded in development environment
-require 'faker'
-require 'factory_bot'
-
 FactoryBot.define do
   # Build a Pathname object for a file
   #  optionally create the file with touch or cp from another location
@@ -196,7 +191,7 @@ FactoryBot.define do
         file_mode: 0o666,
       }
 
-      case device.datacollector_method.concat(device.datacollector_user_level_selected ? 'user' : '')
+      case "#{device.datacollector_method}#{device.datacollector_user_level_selected ? 'user' : ''}"
       when 'folderwatcherlocal'
         build(:data_for_folder_collector, **params)
       when 'folderwatcherlocaluser'

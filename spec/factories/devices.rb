@@ -8,10 +8,16 @@ DC_SFTP_HOST = ENV['DATACOLLECTOR_FACTORY_SFTP_HOST'].presence || '127.0.0.1'
 
 FactoryBot.define do
   factory :device do
-    sequence(:email) { |n| "device#{n}@foo.bar" }
+    transient do
+      start_sequence { 0 }
+      # @note: start_sequence cannot be used as the 2nd argument for the initial value of the sequence
+      #      because it is not available at the time of the factory definition
+      sequence(:fake_id) { |n| n + start_sequence }
+    end
+    email { "device#{fake_id}@foo.bar" }
     first_name { 'Device' }
-    last_name { 'One' }
-    name { 'Device One' }
+    last_name  { fake_id }
+    name { "#{first_name} #{last_name}" }
     sequence(:name_abbreviation) { "D#{SecureRandom.alphanumeric(3)}" }
 
     # passthrough parameters for data factory
