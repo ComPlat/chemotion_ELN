@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import { Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -133,7 +133,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   render() {
-    const { root, isRemote } = this.props;
+    const { root, isRemote, level } = this.props;
     const { visible, selected } = this.state;
     const sharedUsers = root.sync_collections_users;
     const children = root.children || [];
@@ -146,15 +146,23 @@ export default class CollectionSubtree extends React.Component {
           id={`tree-id-${root.label}`}
           className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
           onClick={this.handleClick}
+          style={{ paddingLeft: `${level * 12}px` }}
         >
+          {children.length > 0 ? (
+            <ChevronIcon
+              direction={visible ? 'down' : 'right'}
+              onClick={this.toggleExpansion}
+            />) :
+            (<i className="fa fa-fw" />)
+          }
           {showGatePushButton && (<GatePushButton collectionId={root.id} />)}
           <span className="tree-view_title">{root.label}</span>
           {root.inventory_prefix && (
             <OverlayTrigger
               placement="top"
-              overlay={<Tooltip id="collection_inventory_label">Prefix of Inventory Label</Tooltip>}
+              overlay={<Tooltip id="collection_inventory_label">{root.inventory_prefix}</Tooltip>}
             >
-              <Badge bg="secondary">{root.inventory_prefix}</Badge>
+              <i className="fa fa-tag"/>
             </OverlayTrigger>
           )}
           {this.canTakeOwnership() && (
@@ -168,17 +176,11 @@ export default class CollectionSubtree extends React.Component {
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
-          {children.length > 0 && (
-            <ChevronIcon
-              direction={visible ? 'down' : 'right'}
-              onClick={this.toggleExpansion}
-            />
-          )}
         </div>
         {visible && (
           <div className="tree-view">
             {children.map((child) => (
-              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} />
+              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} level={level+1}/>
             ))}
           </div>
         )}
@@ -189,5 +191,6 @@ export default class CollectionSubtree extends React.Component {
 
 CollectionSubtree.propTypes = {
   isRemote: PropTypes.bool,
-  root: PropTypes.object
+  root: PropTypes.object,
+  level: PropTypes.number
 };

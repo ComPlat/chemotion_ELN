@@ -4,15 +4,14 @@ import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import CollapsibleIconButton from 'src/apps/mydb/layout/sidebar/CollapsibleIconButton';
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
-const SampleTaskNavigationElement = ({ isCollapsed }) => {
+const SampleTaskNavigationElement = () => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
   useEffect(() => sampleTasksStore.load(), []);
 
   return (
-    <CollapsibleIconButton
-      isCollapsed={isCollapsed}
+    <SidebarButton
       label="Sample Tasks"
       variant="light"
       icon="fa-image"
@@ -23,7 +22,3 @@ const SampleTaskNavigationElement = ({ isCollapsed }) => {
 }
 
 export default observer(SampleTaskNavigationElement);
-
-SampleTaskNavigationElement.propTypes = {
-  isCollapsed: PropTypes.bool.isRequired,
-};
