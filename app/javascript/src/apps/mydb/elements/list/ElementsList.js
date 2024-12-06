@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Tabs, Tab, Tooltip, OverlayTrigger, Button, ButtonGroup } from 'react-bootstrap';
+import { Tabs, Tab, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -11,11 +11,6 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ManagingActions from 'src/components/managingActions/ManagingActions';
-import CreateButton from 'src/components/contextActions/CreateButton';
-import PrintCodeButton from 'src/components/contextActions/PrintCodeButton';
-import SplitElementButton from 'src/components/contextActions/SplitElementButton';
-import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 
 function getVisibleAndHiddenFromLayout(layout) {
   const visible = [], hidden = [];
@@ -236,33 +231,22 @@ export default class ElementsList extends React.Component {
             Remove search result
           </Button>
         )}
-        <div className="d-flex flex-column gap-1 h-100">
-          <div className="d-flex gap-2 mb-3">
-            <ManagingActions />
-            <ButtonGroup className="d-flex align-items-center">
-              <SplitElementButton />
-              <CreateButton />
-            </ButtonGroup>
-            <ExportImportButton />
-            <PrintCodeButton />
+        <div className="tabs-container--with-full-height position-relative">
+          <div className="position-absolute top-0 end-0">
+            <ElementsTableSettings
+              visible={visible}
+              hidden={hidden}
+            />
           </div>
-          <div className="tabs-container--with-full-height position-relative">
-            <div className="position-absolute top-0 end-0">
-              <ElementsTableSettings
-                visible={visible}
-                hidden={hidden}
-              />
-            </div>
 
-            <Tabs
-              id="tabList"
-              activeKey={currentTab}
-              onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
-              className="sheet-tabs"
-            >
-              {tabItems}
-            </Tabs>
-          </div>
+          <Tabs
+            id="tabList"
+            activeKey={currentTab}
+            onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+            className="sheet-tabs"
+          >
+            {tabItems}
+          </Tabs>
         </div>
       </>
     );
