@@ -42,15 +42,16 @@ module Chemotion
             molfile = babel_info[:molfile] if babel_info
             begin
               rw_mol = RDKitChem::RWMol.mol_from_smiles(smiles)
-              rd_mol = rw_mol.mol_to_mol_block  unless rw_mol.nil?
+              rd_mol = rw_mol.mol_to_mol_block unless rw_mol.nil?
             rescue StandardError => e
               Rails.logger.error ["with smiles: #{smiles}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+              rw_mol = Chemotion::MolfileValidation.validate_and_clear_molfile(rw_mol) unless rw_mol.nil?
               rd_mol = rw_mol.mol_to_mol_block(true, -1, false) unless rw_mol.nil?
             end
             if rd_mol.nil?
               begin
                 pc_mol = Chemotion::PubchemService.molfile_from_smiles(smiles)
-                pc_mol = Chemotion::OpenBabelService.molfile_clear_hydrogens(pc_mol) unless pc_mol.nil?
+                pc_mol = Chemotion::MolfileValidation.validate_and_clear_molfile(pc_mol) unless pc_mol.nil?
                 molfile = pc_mol unless pc_mol.nil?
               rescue StandardError => e
                 Rails.logger.error ["with smiles: #{smiles}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
