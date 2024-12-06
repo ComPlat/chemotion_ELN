@@ -88,23 +88,9 @@ class CellLineDetails extends React.Component {
         <div className="d-flex gap-1">
           {this.renderSaveButton(true)}
           {this.renderSaveButton()}
-          {this.renderEnlargenButton()}
           {this.renderCloseHeaderButton()}
         </div>
       </div>
-    );
-  }
-
-  renderEnlargenButton() {
-    const { toggleFullScreen } = this.props;
-    return (
-      <Button
-        variant="info"
-        size="xxsm"
-        onClick={toggleFullScreen}
-      >
-        <i className="fa fa-expand" />
-      </Button>
     );
   }
 
@@ -246,5 +232,4 @@ CellLineDetails.propTypes = {
     literatures: PropTypes.arrayOf(PropTypes.object),
     disease: PropTypes.string.isRequired
   }).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired
 };
