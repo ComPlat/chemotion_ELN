@@ -27,7 +27,7 @@ $font-styles: normal, italic;
 $chemstrap-paper: #ffffff;
 $chemstrap-ink: #3c474d; //text color
 $chemstrap-blue: #2495cf; //primary
-$chemstrap-blue-light: #009ff0; //primary-hover
+$chemstrap-blue-light: #18a6ed; //primary-hover
 $chemstrap-blue-dark: #015c8e; //primary-active
 $chemstrap-red: #ff5555; //danger
 $chemstrap-green: #7eca02; //success
@@ -37,12 +37,29 @@ $chemstrap-grey2: #acbac0;
 $chemstrap-grey3: #848e92;
 $chemstrap-grey4: #4f5659; //secondary-text-default
 $chemstrap-grey5: #333c41;
-$chemstrap-interaction-grey0: #eff6f9;
-$chemstrap-interaction-grey1: #e9f0f3; //secondary
-$chemstrap-interaction-grey2: #e1e8eb; //secondary-hover
-$chemstrap-interaction-grey3: #d9e0e3;
-$chemstrap-interaction-grey4: #d3dadd;
-$chemstrap-interaction-grey5: #4f6f7c; //secondary-active
+$chemstrap-interaction-grey0: #f4fcff;
+$chemstrap-interaction-grey5: #6794a6; //secondary-active
+// Calculate the intermediate colors
+$chemstrap-interaction-grey1: mix(
+  $chemstrap-interaction-grey0,
+  $chemstrap-interaction-grey5,
+  90%
+); //secondary
+$chemstrap-interaction-grey2: mix(
+  $chemstrap-interaction-grey0,
+  $chemstrap-interaction-grey5,
+  85%
+); //secondary-hover
+$chemstrap-interaction-grey3: mix(
+  $chemstrap-interaction-grey0,
+  $chemstrap-interaction-grey5,
+  60%
+);
+$chemstrap-interaction-grey4: mix(
+  $chemstrap-interaction-grey0,
+  $chemstrap-interaction-grey5,
+  35%
+);
 $chemstrap-neutral-grey0: #ededed;
 $chemstrap-neutral-grey1: #cecece;
 $chemstrap-neutral-grey2: #9e9e9e;
