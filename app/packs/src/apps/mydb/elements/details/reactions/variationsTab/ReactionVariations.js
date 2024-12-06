@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useEffect, useCallback
+  useRef, useState, useCallback, useReducer
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert
@@ -10,184 +10,36 @@ import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType,
-  temperatureUnits, durationUnits, getStandardUnit, materialTypes, updateColumnDefinitions,
+  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType, getStandardUnits, materialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  getMaterialColumnGroupChild, updateColumnDefinitionsMaterials,
-  getReactionMaterials, getReactionMaterialsIDs,
+  getMaterialColumnGroupChild, updateVariationsGasTypes,
+  getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-  EquivalentFormatter, EquivalentParser,
-  RowToolsCellRenderer, NoteCellRenderer, NoteCellEditor
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
-
-function MenuHeader({
-  column, context, setSort, names, entries
-}) {
-  const { field } = column.colDef;
-  const { columnDefinitions, setColumnDefinitions } = context;
-  const [ascendingSort, setAscendingSort] = useState('inactive');
-  const [descendingSort, setDescendingSort] = useState('inactive');
-  const [noSort, setNoSort] = useState('inactive');
-  const [name, setName] = useState(names[0]);
-  const [entry, setEntry] = useState(Object.keys(entries)[0]);
-  const [units, setUnits] = useState(entries[entry]);
-  const [unit, setUnit] = useState(units[0]);
-
-  const onSortChanged = () => {
-    setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
-    setDescendingSort(column.isSortDescending() ? 'sort_active' : 'inactive');
-    setNoSort(
-      !column.isSortAscending() && !column.isSortDescending()
-        ? 'sort_active'
-        : 'inactive'
-    );
-  };
-
-  useEffect(() => {
-    column.addEventListener('sortChanged', onSortChanged);
-    onSortChanged();
-  }, []);
-
-  const onSortRequested = (order, event) => {
-    setSort(order, event.shiftKey);
-  };
-
-  const onUnitChanged = () => {
-    const newUnit = units[(units.indexOf(unit) + 1) % units.length];
-    const newColumnDefinitions = updateColumnDefinitions(
-      columnDefinitions,
-      field,
-      'currentEntryWithDisplayUnit',
-      { entry, displayUnit: newUnit }
-    );
-
-    setUnit(newUnit);
-    setColumnDefinitions(newColumnDefinitions);
-  };
-
-  const unitSelection = (
-    <Button
-      className="unitSelection"
-      variant="success"
-      size="sm"
-      style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
-      onClick={onUnitChanged}
-    >
-      {unit}
-    </Button>
-  );
-
-  const onEntryChanged = () => {
-    const entryKeys = Object.keys(entries);
-    const newEntry = entryKeys[(entryKeys.indexOf(entry) + 1) % entryKeys.length];
-    const newUnits = entries[newEntry];
-    const newUnit = newUnits[0];
-    let newColumnDefinitions = updateColumnDefinitions(
-      columnDefinitions,
-      field,
-      'cellDataType',
-      getCellDataType(newEntry)
-    );
-    newColumnDefinitions = updateColumnDefinitions(
-      newColumnDefinitions,
-      field,
-      'currentEntryWithDisplayUnit',
-      { entry: newEntry, displayUnit: newUnit }
-    );
-
-    setEntry(newEntry);
-    setUnits(newUnits);
-    setUnit(newUnit);
-    setColumnDefinitions(newColumnDefinitions);
-  };
-
-  const entrySelection = (
-    <Button
-      className="entrySelection"
-      variant="light"
-      size="sm"
-      style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
-      disabled={Object.keys(entries).length === 1}
-      onClick={onEntryChanged}
-    >
-      {entry}
-    </Button>
-  );
-
-  const sortMenu = (
-    <div className="sortHeader" style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
-      <div
-        onClick={(event) => onSortRequested('asc', event)}
-        onTouchEnd={(event) => onSortRequested('asc', event)}
-        className={`customSortDownLabel ${ascendingSort}`}
-      >
-        <i className="fa fa-chevron-up fa-fw" />
-      </div>
-      <div
-        onClick={(event) => onSortRequested('desc', event)}
-        onTouchEnd={(event) => onSortRequested('desc', event)}
-        className={`customSortUpLabel ${descendingSort}`}
-      >
-        <i className="fa fa-chevron-down fa-fw" />
-      </div>
-      <div
-        onClick={(event) => onSortRequested('', event)}
-        onTouchEnd={(event) => onSortRequested('', event)}
-        className={`customSortRemoveLabel ${noSort}`}
-      >
-        <i className="fa fa-times fa-fw" />
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ display: 'grid' }}>
-      <span
-        className="header-title"
-        onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
-      >
-        {name}
-      </span>
-      <div>
-        {entrySelection}
-        {' '}
-        {unitSelection}
-      </div>
-      {sortMenu}
-    </div>
-  );
-}
-
-MenuHeader.propTypes = {
-  column: PropTypes.shape({
-    colDef: PropTypes.object.isRequired,
-    isSortAscending: PropTypes.func.isRequired,
-    isSortDescending: PropTypes.func.isRequired,
-    addEventListener: PropTypes.func.isRequired,
-  }).isRequired,
-  context: PropTypes.shape({
-    columnDefinitions: PropTypes.arrayOf(PropTypes.object).isRequired,
-    setColumnDefinitions: PropTypes.func.isRequired,
-  }).isRequired,
-  setSort: PropTypes.func.isRequired,
-  names: PropTypes.arrayOf(PropTypes.string).isRequired,
-  entries: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
-};
+  EquivalentParser, GasParser, FeedstockParser,
+  NoteCellRenderer, NoteCellEditor,
+  RowToolsCellRenderer, MenuHeader
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import {
+  columnDefinitionsReducer
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
+import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
-  const [reactionVariations, _setReactionVariations] = useState(reaction.variations);
+  const reactionVariations = reaction.variations;
+  const reactionHasPolymers = reaction.hasPolymers();
+  const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
-  const [columnDefinitions, setColumnDefinitions] = useState([
+  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
     {
       headerName: 'Tools',
       cellRenderer: RowToolsCellRenderer,
@@ -222,27 +74,28 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         {
           field: 'properties.temperature',
           cellDataType: getCellDataType('temperature'),
-          currentEntryWithDisplayUnit: {
-            entry: 'temperature',
-            displayUnit: getStandardUnit('temperature')
+          entryDefs: {
+            currentEntry: 'temperature',
+            displayUnit: getStandardUnits('temperature')[0],
+            availableEntries: ['temperature']
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
             names: ['Temperature'],
-            entries: { temperature: temperatureUnits }
           }
         },
         {
           field: 'properties.duration',
           cellDataType: getCellDataType('duration'),
-          currentEntryWithDisplayUnit: {
-            entry: 'duration',
-            displayUnit: getStandardUnit('duration')
+          editable: !gasMode,
+          entryDefs: {
+            currentEntry: 'duration',
+            displayUnit: getStandardUnits('duration')[0],
+            availableEntries: ['duration']
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
             names: ['Duration'],
-            entries: { duration: durationUnits }
           }
         },
       ]
@@ -252,7 +105,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       headerName: materialTypes[materialType].label,
       groupId: materialType,
       marryChildren: true,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, MenuHeader))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode))
     }))
   ));
 
@@ -272,9 +125,26 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     equivalent: {
       extendsDataType: 'object',
       baseDataType: 'object',
-      valueFormatter: EquivalentFormatter,
+      valueFormatter: (params) => `${Number(params.value.equivalent.value).toPrecision(4)}`,
       valueParser: EquivalentParser,
-    }
+    },
+    yield: {
+      extendsDataType: 'object',
+      baseDataType: 'object',
+      valueFormatter: (params) => `${Number(params.value.yield.value).toPrecision(4)}`,
+    },
+    gas: {
+      extendsDataType: 'object',
+      baseDataType: 'object',
+      valueFormatter: MaterialFormatter,
+      valueParser: GasParser,
+    },
+    feedstock: {
+      extendsDataType: 'object',
+      baseDataType: 'object',
+      valueFormatter: MaterialFormatter,
+      valueParser: FeedstockParser,
+    },
   };
 
   const defaultColumnDefinitions = {
@@ -288,89 +158,144 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   };
 
   const setReactionVariations = (updatedReactionVariations) => {
-    // Set updated state here and in parent component.
-    _setReactionVariations(updatedReactionVariations);
     reaction.variations = updatedReactionVariations;
     onReactionChange(reaction);
   };
 
+  /*
+  What follows is a series of imperative state updates that keep the "Variations" tab in sync with other tabs.
+  This pattern isn't nice, but the best I could do according to
+  https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
+  https://react.dev/reference/react/useState#storing-information-from-previous-renders.
+  It would be preferable to refactor this to a more declarative approach, using a store for example.
+  */
   const updatedReactionMaterials = getReactionMaterials(reaction);
+  const updatedGasMode = reaction.gaseous;
+  const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
+
+  /*
+  Keep set of materials up-to-date.
+  Materials could have been added or removed in the "Scheme" tab.
+  These changes need to be reflected in the variations.
+  */
   if (
     !isEqual(
       getReactionMaterialsIDs(reactionMaterials),
       getReactionMaterialsIDs(updatedReactionMaterials)
     )
   ) {
-    /*
-    Keep set of materials up-to-date.
-    Materials could have been added or removed in the "Scheme" tab.
-    These changes need to be reflected in the variations.
-    */
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(
-      columnDefinitions,
-      updatedReactionMaterials,
-      MenuHeader
-    );
     let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
-    updatedReactionVariations = addMissingMaterialsToVariations(updatedReactionVariations, updatedReactionMaterials);
+    updatedReactionVariations = addMissingMaterialsToVariations(
+      updatedReactionVariations,
+      updatedReactionMaterials,
+      updatedGasMode
+    );
 
     setReactionVariations(updatedReactionVariations);
-    setColumnDefinitions(updatedColumnDefinitions);
+    setColumnDefinitions(
+      {
+        type: 'update_material_set',
+        gasMode: updatedGasMode,
+        reactionMaterials: updatedReactionMaterials
+      }
+    );
     setReactionMaterials(updatedReactionMaterials);
   }
 
-  const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
+  /*
+  Update gas mode according to "Scheme" tab.
+  */
+  if (gasMode !== updatedGasMode) {
+    setColumnDefinitions(
+      {
+        type: 'toggle_gas_mode',
+        gasMode: updatedGasMode,
+        reactionMaterials: updatedReactionMaterials
+      }
+    );
+    setGasMode(updatedGasMode);
+    setReactionVariations([]);
+  }
+
+  /*
+  Update the materials's gas types according to  the "Scheme" tab.
+  */
+  if (
+    updatedGasMode && !isEqual(
+      getReactionMaterialsGasTypes(reactionMaterials),
+      getReactionMaterialsGasTypes(updatedReactionMaterials)
+    )
+  ) {
+    const updatedReactionVariations = updateVariationsGasTypes(
+      reactionVariations,
+      updatedReactionMaterials,
+      updatedGasMode
+    );
+    setReactionVariations(updatedReactionVariations);
+
+    setColumnDefinitions(
+      {
+        type: 'update_gas_type',
+        gasMode: updatedGasMode,
+        reactionMaterials: updatedReactionMaterials
+      }
+    );
+
+    setReactionMaterials(updatedReactionMaterials);
+  }
+
+  /*
+  The "Variations" tab holds references to analyses in the "Analyses" tab.
+  Users can add, remove, or edit analyses in the "Analyses" tab.
+  Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
+  Each row in the variations table keeps references to its assigned analyses
+  by tracking the corresponding `analysesIDs`.
+  In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
+  whereas variations row "C" keeps references to "1" and "3".
+  The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
+
+  Figure 1
+  Analyses tab  Variations tab
+  .---.         .---------.
+  | 1 |<--------| A: 1    |
+  |---|     \   |---------|
+  | 2 |      \  | B:      |
+  |---|       \ |---------|
+  | 3 |<-------\| C: 1, 3 |
+  |---|         `---------`
+  | 4 |
+  `---`
+
+  The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
+  "X" denotes absence of ID.
+
+  Table 1
+  .-------------- ---------------- -------------------------------------------------.
+  | Analyses tab  | Variations tab | action                                         |
+  | (analysesIDs) | (referenceIDs) |                                                |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | ID             | None                                           |
+  |-------------- |--------------- |----------------------------------------------- |
+  | X             | ID             | Container with ID removed in "Analyses" tab.   |
+  |               |                | Remove ID from `referenceIDs`.                 |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | X              | Row that's tracking ID removed in "Variations" |
+  |               |                | tab. No action required since "Analyses" tab   |
+  |               |                | only displays associations to existing rows.   |
+  `-------------- ---------------- -------------------------------------------------`
+  */
   if (!isEqual(allReactionAnalyses, updatedAllReactionAnalyses)) {
-    /*
-    The "Variations" tab holds references to analyses in the "Analyses" tab.
-    Users can add, remove, or edit analyses in the "Analyses" tab.
-    Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
-    Each row in the variations table keeps references to its assigned analyses
-    by tracking the corresponding `analysesIDs`.
-    In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
-    whereas variations row "C" keeps references to "1" and "3".
-    The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
-
-    Figure 1
-    Analyses tab  Variations tab
-    .---.         .---------.
-    | 1 |<--------| A: 1    |
-    |---|     \   |---------|
-    | 2 |      \  | B:      |
-    |---|       \ |---------|
-    | 3 |<-------\| C: 1, 3 |
-    |---|         `---------`
-    | 4 |
-    `---`
-
-    The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
-    "X" denotes absence of ID.
-
-    Table 1
-    .-------------- ---------------- -------------------------------------------------.
-    | Analyses tab  | Variations tab | action                                         |
-    | (analysesIDs) | (referenceIDs) |                                                |
-    |-------------- |--------------- |----------------------------------------------- |
-    | ID            | ID             | None                                           |
-    |-------------- |--------------- |----------------------------------------------- |
-    | X             | ID             | Container with ID removed in "Analyses" tab.   |
-    |               |                | Remove ID from `referenceIDs`.                 |
-    |-------------- |--------------- |----------------------------------------------- |
-    | ID            | X              | Row that's tracking ID removed in "Variations" |
-    |               |                | tab. No action required since "Analyses" tab   |
-    |               |                | only displays associations to existing rows.   |
-    `-------------- ---------------- -------------------------------------------------`
-    */
     const updatedReactionVariations = updateAnalyses(reactionVariations, updatedAllReactionAnalyses);
     setReactionVariations(updatedReactionVariations);
     setAllReactionAnalyses(updatedAllReactionAnalyses);
   }
 
   const addRow = useCallback(() => {
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     setReactionVariations(
-      [...reactionVariations, createVariationsRow(reaction, reactionVariations)]
+      [...reactionVariations, createVariationsRow(reaction, reactionVariations, gasMode, vesselVolume)]
     );
-  }, [reaction, reactionVariations]);
+  }, [reaction, reactionVariations, gasMode]);
 
   const copyRow = useCallback((data) => {
     const copiedRow = copyVariationsRow(data, reactionVariations);
@@ -385,11 +310,16 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
-    const updatedRow = updateVariationsRow(oldRow, field, newValue, reaction.hasPolymers());
+    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
     setReactionVariations(
       reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );
-  }, [reactionVariations, reaction]);
+  }, [reactionVariations, reactionHasPolymers]);
+
+  const fitColumnToContent = (event) => {
+    const { column } = event;
+    gridRef.current.api.autoSizeColumns([column], false);
+  };
 
   if (reaction.isNew) {
     return (
@@ -398,11 +328,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       </Alert>
     );
   }
-
-  const fitColumnToContent = (event) => {
-    const { column } = event;
-    gridRef.current.api.autoSizeColumns([column], false);
-  };
 
   return (
     <div>
@@ -421,7 +346,9 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         )}
       >
         <Button size="sm" variant="success" onClick={addRow} className="mb-2">
-          <i className="fa fa-plus me-1" /> Add Variation
+          <i className="fa fa-plus me-1" />
+          {' '}
+          Add Variation
         </Button>
       </OverlayTrigger>
       <div className="ag-theme-alpine">
@@ -439,9 +366,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           context={{
             copyRow,
             removeRow,
-            columnDefinitions,
             setColumnDefinitions,
-            reactionHasPolymers: reaction.hasPolymers(),
+            reactionHasPolymers,
             reactionShortLabel: reaction.short_label,
             allReactionAnalyses
           }}
