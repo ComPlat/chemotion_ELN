@@ -1,8 +1,9 @@
 import React from 'react';
 import {
-  Dropdown, DropdownButton
+  ButtonGroup, Dropdown, DropdownMenu
 } from 'react-bootstrap';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
+import ScanCodeButton from "src/components/contextActions/ScanCodeButton";
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { PDFDocument } from 'pdf-lib'; // <-- Added import
 import Utils from 'src/utilities/Functions';
@@ -99,26 +100,30 @@ export default class PrintCodeButton extends React.Component {
     const menuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     return (
-      <DropdownButton
+      <Dropdown
+        as={ButtonGroup}
         id="search-code-split-button"
         variant="light"
         title={<i className="fa fa-barcode" />}
         onClick={this.open}
       >
-        {menuItems.map((e) => (
-          <Dropdown.Item
-            key={e.key}
-            disabled={disabledPrint}
-            onClick={(event) => {
-              event.stopPropagation();
-              this.downloadPrintCodesPDF(ids, e.name);
-
-            }}
-          >
-            {e.name}
-          </Dropdown.Item>
-        ))}
-      </DropdownButton>
+        <ScanCodeButton />
+        <Dropdown.Toggle split variant="light" />
+        <DropdownMenu>
+          {menuItems.map((e) => (
+            <Dropdown.Item
+              key={e.key}
+              disabled={disabledPrint}
+              onClick={(event) => {
+                event.stopPropagation();
+                this.downloadPrintCodesPDF(ids, e.name);
+              }}
+            >
+              {e.name}
+            </Dropdown.Item>
+          ))}
+        </DropdownMenu>
+      </Dropdown>
     );
   }
 }
