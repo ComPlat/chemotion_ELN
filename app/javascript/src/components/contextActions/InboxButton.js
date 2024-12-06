@@ -22,7 +22,6 @@ export default function InboxButton({ isCollapsed }) {
     <SidebarButton
       label="Inbox"
       icon="fa-inbox"
-      variant="light"
       onClick={InboxActions.toggleInboxModal}
       badgeCount={badgeCount}
     />
