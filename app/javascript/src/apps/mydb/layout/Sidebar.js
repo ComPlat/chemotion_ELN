@@ -31,11 +31,12 @@ export default function Sidebar() {
         <div className="flex-grow-1 h-0">
           <CollectionTree
             isCollapsed={isCollapsed}
-            expandSidebar={UIActions.expandSidebar} />
+            expandSidebar={UIActions.expandSidebar}
+          />
         </div>
         <div className={classNames(
-          'd-flex justify-content-center gap-3 py-4 border-top',
-          { 'flex-column align-items-center': isCollapsed }
+          'sidebar-button-frame justify-content-center',
+          { 'flex-column': isCollapsed }
         )}>
           <InboxButton isCollapsed={isCollapsed} />
           <SampleTaskNavigationElement isCollapsed={isCollapsed} />
