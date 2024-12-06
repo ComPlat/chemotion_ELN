@@ -56,7 +56,6 @@ export default class OpenCalendarButton extends Component {
 
     return (
       <SidebarButton
-        variant="light"
         onClick={this.onClick}
         label="Calendar"
         icon="fa-calendar"

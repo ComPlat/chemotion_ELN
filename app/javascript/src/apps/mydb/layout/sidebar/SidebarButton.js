@@ -49,5 +49,6 @@ SidebarButton.propTypes = {
 
 SidebarButton.defaultProps = {
   isCollapsed: true,
+  variant: 'paper',
 };
 

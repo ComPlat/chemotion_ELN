@@ -12,8 +12,16 @@ $button-variant-colors: (
     "text-default": $chemstrap-grey4,
     "bg-hover": $chemstrap-interaction-grey2,
     "text-hover": $chemstrap-grey4,
-    "bg-active": $chemstrap-interaction-grey5,
+    "bg-active": $chemstrap-interaction-grey3,
     "text-active": $white,
+  ),
+  "paper": (
+    "bg-default": $chemstrap-paper,
+    "text-default": $chemstrap-ink,
+    "bg-hover": $chemstrap-interaction-grey1,
+    "text-hover": $chemstrap-ink,
+    "bg-active": $chemstrap-interaction-grey2,
+    "text-active": $chemstrap-ink,
   ),
   "knock-out": (
     "bg-default": transparent,
@@ -38,7 +46,7 @@ $button-variant-colors: (
     map-get(map-get($button-variant-colors, $name), "text-active"),
     map-get(map-get($button-variant-colors, $name), "bg-default"),
     map-get(map-get($button-variant-colors, $name), "bg-default"),
-    map-get(map-get($button-variant-colors, $name), "text-default"),
+    map-get(map-get($button-variant-colors, $name), "text-default")
   );
 }
 
@@ -72,19 +80,26 @@ $button-variant-colors: (
 }
 
 .input-group-xsm > {
-  .form-control, .form-select, .input-group-text, .btn {
+  .form-control,
+  .form-select,
+  .input-group-text,
+  .btn {
     @include xsm-form-elements;
   }
 }
 
 .input-group-xxsm > {
-  .form-control, .form-select, .input-group-text, .btn {
+  .form-control,
+  .form-select,
+  .input-group-text,
+  .btn {
     @include xxsm-form-elements;
   }
 }
 
 .popover-header--additional {
-  border-top: var(--bs-popover-border-width) solid var(--bs-popover-border-color);
+  border-top: var(--bs-popover-border-width) solid
+    var(--bs-popover-border-color);
   border-radius: 0;
 }
 

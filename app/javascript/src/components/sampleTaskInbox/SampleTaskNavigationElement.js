@@ -13,7 +13,6 @@ const SampleTaskNavigationElement = () => {
   return (
     <SidebarButton
       label="Sample Tasks"
-      variant="light"
       icon="fa-image"
       onClick={sampleTasksStore.showSampleTaskInbox}
       badgeCount={sampleTasksStore.openSampleTaskCount}

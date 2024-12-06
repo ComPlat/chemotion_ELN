@@ -36,7 +36,6 @@ export default function CollectionManagementButton({ isCollapsed }) {
       onClick={handleCollectionManagementToggle}
       label="Manage Collections"
       icon="fa-wrench"
-      variant="light"
     />
   );
 }
