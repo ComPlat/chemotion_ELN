@@ -1,5 +1,4 @@
 import React, { Fragment, useState, useEffect } from 'react';
-import classnames from 'classnames';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -69,10 +68,7 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
   ]
 
   return (
-    <div className={classnames(
-      'collection-tree',
-      { 'align-items-center': isCollapsed }
-    )}>
+    <div className="collection-tree">
       {collectionGroups.map(({ label, icon, collectionKey, roots }) => {
         const isActive = activeCollection === collectionKey;
         return (
@@ -82,7 +78,7 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
               icon={icon}
               isCollapsed={isCollapsed}
               onClick={() => setCollection(collectionKey)}
-              variant={isActive ? 'primary' : 'light'}
+              variant={isActive ? 'primary' : 'paper'}
             />
             {isActive && !isCollapsed && (
               <div className="tree-view_container">
