@@ -3,6 +3,6 @@ class CollectDataFromLocalJob < ApplicationJob
 
   def perform
     devices = Device.where(datacollector_method: 'folderwatcherlocal')
-    Datacollector::Collectors.bulk_execute(devices)
+    Datacollector::Collector.bulk_execute(devices)
   end
 end

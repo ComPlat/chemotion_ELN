@@ -21,6 +21,9 @@ require 'faker'
 require_relative '../../../spec/factories/devices.rb'
 require_relative '../../../spec/factories/collector_datafiles.rb'
 
+# build dummy (empty) data files for a set of users and devices
+#  the data can be collected by the datacollector and moved to the correponding
+#  user's Inbox
 name_abbrs = Person.limit(50).pluck(:name_abbreviation)
 Device.where.not(datacollector_method: nil).limit(50).each do |device|
   FactoryBot.build(:data_for_collector, device: device, user_identifiers: name_abbrs)
