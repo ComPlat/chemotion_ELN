@@ -77,6 +77,7 @@ class Device < ApplicationRecord
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :by_name, ->(query) { where('LOWER(name) ILIKE ?', "%#{sanitize_sql_like(query.downcase)}%") }
+  scope :by_email, ->(query) { where('LOWER(email) ILIKE ?', sanitize_sql_like(query.downcase.strip)) }
 
   def unique_name_abbreviation
     devices = Device.unscoped.where('LOWER(name_abbreviation) = ?',

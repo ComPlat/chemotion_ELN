@@ -24,11 +24,14 @@
 /tmp/novnc_devices/*
 !/tmp/novnc_devices/.keep
 
+/.yardoc/
+
 .ruby-gemset
 .ruby-version
 .coveralls.yml
 
 .env
+.env.test
 
 /config/matrices.json
 /config/klasses.json
@@ -220,5 +223,5 @@ data/klasses.json
 public/pdf.worker.min.js
 
 # Sentry Config File
-.env.sentry-build-plugin
+.env.sentry-build-plugin*
 

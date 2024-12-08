@@ -14,4 +14,6 @@ module Errors
       super(message)
     end
   end
+
+  class DatacollectorError < ApplicationError; end
 end

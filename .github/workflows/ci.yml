@@ -72,22 +72,17 @@ jobs:
           mkdir /home/testuser/.ssh
           chown testuser:testuser /home/testuser/.ssh
           chmod 700 /home/testuser/.ssh
-
-      - name: configure ssh for datacollectors testing 
-        run: |
-          service ssh restart
           mkdir -p $HOME/.ssh
           chmod 700 $HOME/.ssh
+          service ssh restart
           ssh-keygen -t ed25519 -f $HOME/.ssh/id_test -N ""
-          # echo "$(<$HOME/.ssh/id_test.pub)" >> $HOME/.ssh/authorized_keys
-          echo "$(<$HOME/.ssh/id_test.pub)" | sudo tee -a /home/testuser/.ssh/authorized_keys
-          eval `ssh-agent`
-          ssh-add $HOME/.ssh/id_test
+          cat "${HOME}/.ssh/id_test.pub" | tee -a /home/testuser/.ssh/authorized_keys
           ssh-keyscan -H 127.0.0.1  >> $HOME/.ssh/known_hosts
 
       - name: configure repository
         run: |
           mv public/welcome-message-sample.md public/welcome-message.md
+          cp .env.test.example .env.test
           cd config
           cp database.yml.gitlab database.yml
           cp -f datacollectors.yml.example datacollectors.yml
@@ -126,8 +121,8 @@ jobs:
 
       - name: rspec unit
         run: |
+          service ssh restart
           eval `ssh-agent`
-          ssh-add $HOME/.ssh/id_test
           RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
 
       - name: coverage rspec unit
@@ -138,11 +133,4 @@ jobs:
           minimum-coverage: 57
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-#      - name: precompile
-#        run: RAILS_ENV=test bundle exec rake webpacker:compile
-
-#      - name: rspec acceptance
-#        continue-on-error: true    # don't fail job because this step; TODO: fix flaky acceptance tests...
-#        run: RAILS_ENV=test bundle exec rspec spec/features
 
