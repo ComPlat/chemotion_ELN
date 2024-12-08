@@ -27,7 +27,8 @@ RSpec.describe Chemotion::AdminDeviceAPI do
 
     context 'with params by name' do
       it 'fetches max 5 devices by name' do
-        get '/api/v1/admin_devices/byname?name=one&limit=5'
+        queried_name = URI::DEFAULT_PARSER.escape device.name[-3..].downcase
+        get "/api/v1/admin_devices/byname?name=#{queried_name}&limit=5"
         expect(parsed_json_response['devices'].size).to be(1)
       end
     end

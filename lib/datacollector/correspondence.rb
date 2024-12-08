@@ -109,10 +109,11 @@ module Datacollector
         container_type: 'dataset',
         parent: sender_container,
       ).first_or_create
-      return container if container.attachments.count < 50
+      # return the container if it has less than Entity::InboxEntity::MAX_ATTACHMENTS
+      return container if container.attachments.count < 50 # Entity::InboxEntity::MAX_ATTACHMENTS
 
-      # add a counter `-1` to the subject or increment the subject counter
-      subject = subject =~ /(.+)-(\d+)/ ? subject.sub(/-(\d+)/, "-#{::Regexp.last_match(1).to_i + 1}") : "#{subject}-1"
+      # add a counter `_02` to the subject or increment the subject counter and try again
+      subject = /(.+)_(\d+)$/.match?(subject) ? subject.next : "#{subject}_02"
       prepare_dataset(subject)
     end
 
