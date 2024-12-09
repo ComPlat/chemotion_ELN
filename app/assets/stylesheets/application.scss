@@ -18,20 +18,21 @@
 @import "global-styles/tags";
 
 // file css rules that are targeted at specific components under components
-@import "components/MydbApp";
-@import "components/Sheet";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
+@import "components/CollectionTree";
 @import "components/ElementsTable";
+@import "components/MydbApp";
 @import "components/PanelCollapseButton.scss";
 @import "components/PanelResizeHandle";
+@import "components/QuillEditor";
+@import "components/QuillViewer";
 @import "components/Report";
 @import "components/SearchModal";
 @import "components/SearchResult";
+@import "components/Sheet";
 @import "components/Sidebar";
-@import "components/QuillEditor";
-@import "components/QuillViewer";
-@import "components/CollectionTree";
+@import "components/TabLayoutEditor";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";
