@@ -39,13 +39,17 @@ function Item({ scope, payload, index, isVisible, children, handlePositionChange
     },
   });
 
-  const style = {
-    opacity: isDragging || isOver ? 0.1 : 1
-  };
+  const className = (() => {
+    let nameString = "tab-layout-editor-list-item";
+    if (isDragging) {
+      nameString += " active";
+    }
+    return nameString;
+  })();
 
   drag(drop(ref));
   return (
-    <ListGroup.Item ref={ref} style={style}>
+    <ListGroup.Item ref={ref} className={className}>
       {children}
     </ListGroup.Item>
   );
@@ -167,8 +171,8 @@ export default function TabLayoutEditor({
           key={title}
           ref={ref}
         >
-          <div className="fs-5">{title}</div>
-          <ListGroup className="my-1">
+          <h5>{title}</h5>
+          <ListGroup className="my-1 tab-layout-editor-list" variant="flush">
             {collection.map((item, index) => (
               <Item
                 scope={scope}
@@ -182,7 +186,7 @@ export default function TabLayoutEditor({
               </Item>
             ))}
             {!isOver && collection.size === 0 && (
-              <ListGroup.Item>No Items</ListGroup.Item>
+              <ListGroup.Item className="bg-transparent mb-2 p-0">No Items</ListGroup.Item>
             )}
           </ListGroup>
         </div>
