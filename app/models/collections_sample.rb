@@ -13,6 +13,11 @@
 #  index_collections_samples_on_deleted_at                   (deleted_at)
 #  index_collections_samples_on_sample_id_and_collection_id  (sample_id,collection_id) UNIQUE
 #
+# Foreign Keys
+#
+#  fk_rails_...  (collection_id => collections.id)
+#  fk_rails_...  (sample_id => samples.id)
+#
 
 class CollectionsSample < ApplicationRecord
   acts_as_paranoid
