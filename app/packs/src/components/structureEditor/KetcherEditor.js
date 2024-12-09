@@ -69,6 +69,7 @@ export const resetStore = () => {
 
 // prepare/load ket2 format data
 export const fuelKetcherData = async (data) => {
+  all_atoms = [];
   allNodes = [...data.root.nodes];
   imagesList = allNodes.filter(item => item.type === 'image');
   const sliceEnd = Math.max(0, allNodes.length - imagesList.length);
@@ -101,7 +102,6 @@ export const deleteAtomListSetter = async data => {
 const fetchKetcherData = async (editor) => {
   try {
     if (!editor) throw new "Editor instance is invalid";
-    all_atoms = [];
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
     await fuelKetcherData(latestData);
   } catch (err) {
@@ -451,7 +451,9 @@ const onAtomDelete = async (editor) => {
 
       // when mol is deleted
       if (mols_copy.length > mols.length && imagesList.length === imgList_copy.length) { // when atom is dragged to another atom
-        await editor.structureDef.editor.setMolecule(JSON.stringify(data));
+        await fetchKetcherData(editor);
+        await removeNodeByIndex(last_alias_index);
+        await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
         deleted_atoms_list = [];
         _selection = null;
         return;
@@ -565,7 +567,10 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     "[title='Layout \\(Ctrl\\+L\\)']": async () => {
       await fetchKetcherData(editor);
+      // await addEventToFILOStack("Move image");
       re_render_canvas = true;
+      // addEventToFILOStack("Load canvas");
+
     },
     "[title='Calculate CIP  \\(Ctrl\\+P\\)']": async () => {
       await fetchKetcherData(editor);

@@ -1,4 +1,4 @@
-## 💡 Ketcher2 Surface Chemistry (K2SC) feature documentation 💡
+## 💡 Ketcher2 Surface Chemistry (K2SC) feature technical documentation 💡
 
 This document helps developers understand how the K2SC feature is implemented using the Ket2 Editor API provided within the Ket2 instance. Two built-in Ketcher2 features are used to form a polymer template: Atom with Alias and Image.
 
