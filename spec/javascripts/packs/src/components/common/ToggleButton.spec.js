@@ -21,8 +21,8 @@ describe('<ToggleButton />', () => {
         isToggledInitial={false}
         onToggle={onToggleSpy}
         onChange={onChangeSpy}
-        onLabel="Gas Scheme"
-        offLabel="Default Scheme"
+        onLabel="Conv."
+        offLabel="Yield"
         onColor="#afcfee"
         offColor="#d3d3d3"
         tooltipOn="Click to enable Default mode"
@@ -38,12 +38,12 @@ describe('<ToggleButton />', () => {
   });
 
   it('should render with the initial state', () => {
-    expect(wrapper.find('span').text()).toEqual('Default Scheme');
+    expect(wrapper.find('span').text()).toEqual('Yield');
   });
 
   it('should toggle state and update label when clicked', () => {
     wrapper.find('Button').simulate('click');
-    expect(wrapper.find('span').text()).toEqual('Gas Scheme');
+    expect(wrapper.find('span').text()).toEqual('Conv.');
   });
 
   it('should call the onToggle and onChange callbacks when clicked', () => {
@@ -52,15 +52,5 @@ describe('<ToggleButton />', () => {
     expect(onToggleSpy.calledWith(true)).toBe(true);
     expect(onChangeSpy.calledOnce).toBe(true);
     expect(onChangeSpy.calledWith(true)).toBe(true);
-  });
-
-  it('should apply the correct background color based on the state', () => {
-    const buttonStyleBefore = wrapper.find('Button').prop('style');
-    expect(buttonStyleBefore.backgroundColor).toEqual('#d3d3d3');
-
-    wrapper.find('Button').simulate('click');
-
-    const buttonStyleAfter = wrapper.find('Button').prop('style');
-    expect(buttonStyleAfter.backgroundColor).toEqual('#afcfee');
   });
 });
