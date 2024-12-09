@@ -1,3 +1,7 @@
+import React, { Component } from 'react';
+import {
+  Tabs, Tab, Button, Badge
+} from 'react-bootstrap';
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -7,7 +11,6 @@ import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
 //import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
-import React, { Component } from 'react';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
 import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
@@ -16,9 +19,6 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
-import {
-  Tabs, Tab, Button, Badge
-} from 'react-bootstrap';
 
 const tabInfoHash = {
   metadata: {
@@ -88,7 +88,6 @@ export default class ElementDetails extends Component {
     super(props);
     const { selecteds, activeKey, deletingElement } = ElementStore.getState();
     this.state = {
-      fullScreen: false,
       selecteds,
       activeKey,
       deletingElement,
@@ -96,7 +95,6 @@ export default class ElementDetails extends Component {
       genericEls: UserStore.getState().genericEls || [],
     };
 
-    this.toggleFullScreen = this.toggleFullScreen.bind(this);
     this.onDetailChange = this.onDetailChange.bind(this);
     this.checkSpectraMessage = this.checkSpectraMessage.bind(this);
   }
@@ -119,11 +117,6 @@ export default class ElementDetails extends Component {
     this.checkSpectraMessage(spectraMsg);
   }
 
-  toggleFullScreen() {
-    const { fullScreen } = this.state;
-    this.setState({ fullScreen: !fullScreen });
-  }
-
   checkSpectraMessage(spectraMsg) {
     if (spectraMsg) {
       const { showedSpcMsgID } = this.state;
@@ -136,45 +129,20 @@ export default class ElementDetails extends Component {
 
   content(el) {
     if (el && el.klassType === 'GenericEl' && el.type != null) {
-      return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
+      return <GenericElDetails genericEl={el} />;
     }
 
     switch (el.type) {
       case 'sample':
-        return (
-          <SampleDetails
-            sample={el}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
+        return <SampleDetails sample={el} />;
       case 'reaction':
-        return (
-          <ReactionDetails
-            reaction={el}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
+        return <ReactionDetails reaction={el} />;
       case 'wellplate':
-        return (
-          <WellplateDetails
-            wellplate={el}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
+        return <WellplateDetails wellplate={el} />;
       case 'screen':
-        return (
-          <ScreenDetails
-            screen={el}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
+        return <ScreenDetails screen={el} />;
       case 'research_plan':
-        return (
-          <ResearchPlanDetails
-            researchPlan={el}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
+        return <ResearchPlanDetails researchPlan={el} />;
       case 'metadata':
         return <MetadataContainer metadata={el} />;
       case 'report':
@@ -191,7 +159,7 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
-        return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
+        return <CellLineDetails cellLineItem={el} />;
       default:
         return (
           <div style={{ textAlign: 'center' }}>
@@ -209,31 +177,24 @@ export default class ElementDetails extends Component {
     }
   }
 
-  tabTitle(el, elKey) {
-    const { activeKey } = this.state;
-    const focusing = elKey === activeKey;
-    const variant = el.isPendingToSave ? 'info' : 'primary';
+  tabTitle(el) {
 
     const tab = tabInfoHash[el.type] ?? {};
     const title = tab.title ?? el.title();
 
-    const iconElement = el.element_klass
-      ? (<i className={`${el.element_klass.icon_name}`} />)
-      : tab.iconEl ?? (<i className={`icon-${el.type}`} />);
-    const icon = focusing ? iconElement : (<Badge bg={variant}>{iconElement}</Badge>);
+    const spanClassName = el.isPendingToSave ? 'unsaved' : '';
+    const iconClassName = 'me-1 ' + (el.element_klass ? el.element_klass.icon_name : tab.iconEl ?? 'icon-' + el.type);
 
     return (
-      <div className="d-flex align-items-baseline gap-2">
-        {icon}
+      <span className={spanClassName}>
+        <i className={iconClassName} />
         {title}
-      </div>
+      </span>
     );
   }
 
   render() {
-    const {
-      fullScreen, selecteds, activeKey
-    } = this.state;
+    const { selecteds, activeKey } = this.state;
 
     const selectedElements = selecteds
       .filter((el) => !!el)
@@ -242,18 +203,19 @@ export default class ElementDetails extends Component {
           key={`${el.type}-${el.id}`}
           eventKey={i}
           unmountOnExit
-          title={this.tabTitle(el, i)}
+          title={this.tabTitle(el)}
         >
           {this.content(el)}
         </Tab>
       ));
 
     return (
-      <div className={fullScreen ? "full-screen" : "normal-screen"}>
+      <div className="tabs-container--with-full-height">
         <Tabs
           id="elements-tabs"
           activeKey={activeKey}
           onSelect={DetailActions.select}
+          className="sheet-tabs"
         >
           {selectedElements}
         </Tabs>

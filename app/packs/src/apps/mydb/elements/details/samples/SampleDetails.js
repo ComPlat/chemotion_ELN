@@ -977,18 +977,6 @@ export default class SampleDetails extends React.Component {
           {inventorySample}
           {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
           <PrintCodeButton element={sample} />
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {copyBtn}
           {this.saveAndCloseSample(sample, saveBtnDisplay)}
         </div>
@@ -1322,10 +1310,7 @@ export default class SampleDetails extends React.Component {
     const tabTitlesMap = {
       literature: 'References',
       qc_curation: 'QC & curation',
-      computed_props: 'computed props',
       nmr_sim: 'NMR Simulation',
-      measurements: 'Measurements',
-      inventory: 'Inventory'
     };
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
@@ -1412,5 +1397,4 @@ export default class SampleDetails extends React.Component {
 
 SampleDetails.propTypes = {
   sample: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
 };

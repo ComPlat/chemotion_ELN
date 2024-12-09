@@ -504,11 +504,6 @@ export default class ResearchPlanDetails extends Component {
                 <i className="fa fa-floppy-o" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
-              <Button variant="info" size="xxsm" onClick={this.props.toggleFullScreen}>
-                <i className="fa fa-expand" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
             {!researchPlan.isNew
               && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
             {copyBtn}
@@ -576,14 +571,6 @@ export default class ResearchPlanDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      research_plan: 'Research Plan',
-      analyses: 'Analyses',
-      attachments: 'Attachments',
-      wellplates: 'Wellplates',
-      references: 'References',
-      metadata: 'Metadata',
-    };
     addSegmentTabs(researchPlan, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -601,7 +588,6 @@ export default class ResearchPlanDetails extends Component {
           <ElementDetailSortTab
             type="research_plan"
             availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
           <div className="tabs-container--with-borders">
@@ -630,5 +616,4 @@ export default class ResearchPlanDetails extends Component {
 
 ResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };

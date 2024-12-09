@@ -11,6 +11,9 @@ class UIActions {
     };
   }
 
+  expandSidebar = () => null;
+  toggleSidebar = () => null;
+
   showCollectionManagement() {
     return null;
   }
@@ -113,14 +116,6 @@ class UIActions {
 
   changeNumberOfResultsShown(value) {
     return value;
-  }
-
-  updateModalProps(params) {
-    return params
-  }
-
-  hideModal() {
-    return null
   }
 
   setFilterCreatedAt(filterCreatedAt) {
