@@ -1,7 +1,6 @@
 import React from 'react';
 import { Tabs, Tab } from 'react-bootstrap';
-
-import ScrollContainer from 'src/components/common/ScrollContainer';
+import Sheet from 'src/components/common/Sheet';
 import MyCollections from 'src/apps/mydb/collections/MyCollections';
 import MySharedCollections from 'src/apps/mydb/collections/MySharedCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
@@ -10,32 +9,32 @@ import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
 
 export default function CollectionManagement() {
   return (
-    <div className="tabs-container--with-borders tabs-container--with-full-height px-3">
-      <Tabs defaultActiveKey={0} id="collection-management-tab">
+    <div className="p-3">
+      <Tabs defaultActiveKey={0} id="collection-management-tab" className="sheet-tabs">
         <Tab eventKey={0} title="My Collections">
-          <ScrollContainer>
+          <Sheet>
             <MyCollections />
-          </ScrollContainer>
+          </Sheet>
         </Tab>
         <Tab eventKey={1} title="My Shared Collections">
-          <ScrollContainer>
+          <Sheet>
             <MySharedCollections />
-          </ScrollContainer>
+          </Sheet>
         </Tab>
         <Tab eventKey={2} title="Collections shared with me ">
-          <ScrollContainer>
+          <Sheet>
             <SharedWithMeCollections />
-          </ScrollContainer>
+          </Sheet>
         </Tab>
         <Tab eventKey={3} title="Collections synchronized with me ">
-          <ScrollContainer>
+          <Sheet>
             <SyncWithMeCollections />
-          </ScrollContainer>
+          </Sheet>
         </Tab>
         <Tab eventKey={4} title="Collection Tabs">
-          <ScrollContainer>
+          <Sheet>
             <CollectionTabs />
-          </ScrollContainer>
+          </Sheet>
         </Tab>
       </Tabs>
     </div>
