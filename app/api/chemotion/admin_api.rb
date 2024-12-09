@@ -8,7 +8,6 @@ require 'sys/filesystem'
 module Chemotion
   # Publish-Subscription MessageAPI
   class AdminAPI < Grape::API
-    helpers AdminHelpers
     resource :admin do
       before do
         error!(401) unless current_user.is_a?(Admin)
