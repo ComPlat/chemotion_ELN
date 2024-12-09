@@ -31,10 +31,11 @@ const DeviceDataCollectorTab = () => {
   }, [devicesStore.deviceModalVisible]);
 
   const methodOptions = [
-    { value: 'filewatchersftp', label: 'filewatchersftp' }, 
+    { value: 'filewatchersftp', label: 'filewatchersftp' },
     { value: 'filewatcherlocal', label: 'filewatcherlocal' },
     { value: 'folderwatchersftp', label: 'folderwatchersftp' },
-    { value: 'folderwatcherlocal', label: 'folderwatcherlocal' }
+    { value: 'folderwatcherlocal', label: 'folderwatcherlocal' },
+    { value: 'disabled', label: 'disabled' }
   ];
 
   const authenticationOptions = [
