@@ -3,6 +3,6 @@
 }
 
 .state-border {
-  border-width: 0 0 3px 0;
+  border-width: 0 0 3px 0 !important;
   @extend .border-white;
 }
