@@ -82,6 +82,9 @@ class Import::ImportJson
   #       'r_uuid' => nil,
   #       'r_reference' => nil,
   #       'r_equivalent' => nil,
+  #       'r_gas_type' => nil,
+  #       'r_gas_phase_data' => nil,
+  #       'r_conversion_rate' => nil,
   #     ]
   #   }
   # end
@@ -374,7 +377,9 @@ class Import::ImportJson
     if new_data && new_data[r_uuid] && new_data[r_uuid]['id']
       @log['samples'][el_uuid][klass.name] = klass.create(
         sample_id: new_el.id, reaction_id: new_data[r_uuid]['id'],
-        reference: ref, equivalent: eq, position: el['r_position']
+        reference: ref, equivalent: eq, position: el['r_position'],
+        gas_type: el['r_gas_type'], gas_phase_data: el['r_gas_phase_data'],
+        conversion_rate: el['r_conversion_rate']
       ) && '201' || '500'
     else
       @log['samples'][el_uuid][klass.name] = '404'
