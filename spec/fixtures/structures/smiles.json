@@ -1,0 +1,12 @@
+{
+  "Li": "[Li]",
+  "Li+": "[Li+]",
+  "LiH": "[LiH]",
+  "Na": "[Na]",
+  "Na+": "[Na+]",
+  "NaH": "[NaH]",
+  "K": "[K]",
+  "K+": "[K+]",
+  "KH": "[KH]",
+  "002": "CC1=C(CC)C(C)=[N+]2C1=C(C)C3=CC(/C=C\\B4NC5=C6C(C=CC=C6N4)=CC=C5)=CN3[B-]2(F)F"
+}
