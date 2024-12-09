@@ -65,7 +65,7 @@ export default class ScreensFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(screen.serialize())
+      body: JSON.stringify({...screen.serialize(), is_sync_to_me: screen["is_sync_to_me"]})
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
         .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {

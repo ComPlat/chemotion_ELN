@@ -480,6 +480,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :is_sync_to_me, type: Boolean, default: false
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -551,24 +552,35 @@ module Chemotion
 
         sample = Sample.new(attributes)
 
-        if params[:collection_id]
-          collection = current_user.collections.where(id: params[:collection_id]).take
-          sample.collections << collection if collection.present?
-        end
-
-        is_shared_collection = false
-        if collection.blank?
+        if params[:is_sync_to_me]
+          Rails.logger.debug('Creating sample in sync collection due to user request (param :is_sync_to_me is set).')
           sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
           if sync_collection.present?
-            is_shared_collection = true
             sample.collections << Collection.find(sync_collection['collection_id'])
             sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+          else
+            error!('400 Bad Request (Cant find sync collection)', 400)
           end
-        end
+        else
+          if params[:collection_id]
+            collection = current_user.collections.where(id: params[:collection_id]).take
+            sample.collections << collection if collection.present?
+          end
 
-        unless is_shared_collection
-          all_coll = Collection.get_all_collection_for_user(current_user.id)
-          sample.collections << all_coll
+          is_shared_collection = false
+          if collection.blank?
+            sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+            if sync_collection.present?
+              is_shared_collection = true
+              sample.collections << Collection.find(sync_collection['collection_id'])
+              sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+            end
+          end
+
+          unless is_shared_collection
+            all_coll = Collection.get_all_collection_for_user(current_user.id)
+            sample.collections << all_coll
+          end
         end
 
         sample.container = update_datamodel(params[:container])

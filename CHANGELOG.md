@@ -192,6 +192,25 @@
 * Chores
   * Bump react-pdf from 5.7.0 to 7.7.3  ([#1909](https://github.com/ComPlat/chemotion_ELN/pull/1909))
 
+
+## [v1.9.3]
+> (2024-05-13)
+
+* Features and enhancements
+  * structure editor compatibility  ([#1894](https://github.com/ComPlat/chemotion_ELN/pull/1894))
+  * enable spectra report for samples  ([#1902](https://github.com/ComPlat/chemotion_ELN/pull/1902))
+  * activate segment visibility field in generic elements  ([#1702](https://github.com/ComPlat/chemotion_ELN/pull/1702))
+
+* Bug fixes
+  * advanced search  ([#1888](https://github.com/ComPlat/chemotion_ELN/pull/1888))
+  * converter inbox issue for NMR  ([#1903](https://github.com/ComPlat/chemotion_ELN/pull/1903))
+  * add updating of annotations also in reaction container  ([#1913](https://github.com/ComPlat/chemotion_ELN/pull/1913))
+  * Yield calculation with purity  ([#1904](https://github.com/ComPlat/chemotion_ELN/pull/1904))
+  * ensure wait_until is set when initializing cron delayed jobs ([#1892](https://github.com/ComPlat/chemotion_ELN/pull/1892))
+
+* Chores
+  * Bump react-pdf from 5.7.0 to 7.7.3  ([#1909](https://github.com/ComPlat/chemotion_ELN/pull/1909))
+
 ## [v1.9.2]
 > (2024-04-26)
 

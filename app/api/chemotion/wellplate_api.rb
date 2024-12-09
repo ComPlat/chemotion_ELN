@@ -183,6 +183,7 @@ module Chemotion
         optional :height, type: Integer, default: 8, values: 1..100
         optional :width, type: Integer, default: 12, values: 1..100
         optional :segments, type: Array, desc: 'Segments'
+        optional :is_sync_to_me, type: Boolean, default: false
       end
       post do
         container = params[:container]

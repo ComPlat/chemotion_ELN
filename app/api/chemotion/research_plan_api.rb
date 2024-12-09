@@ -69,6 +69,7 @@ module Chemotion
         requires :container, type: Hash, desc: 'Containers'
         optional :segments, type: Array, desc: 'Segments'
         optional :attachments, type: Array, desc: 'Attachments'
+        optional :is_sync_to_me, type: Boolean, default: false
       end
       post do
         attributes = {
@@ -85,24 +86,35 @@ module Chemotion
         clone_attachs = params[:attachments]&.reject { |a| a[:is_new] }
         Usecases::Attachments::Copy.execute!(clone_attachs, research_plan, current_user.id) if clone_attachs
 
-        if params[:collection_id]
-          collection = current_user.collections.where(id: params[:collection_id]).take
-          research_plan.collections << collection if collection.present?
-        end
-
-        is_shared_collection = false
-        unless collection.present?
+        if params[:is_sync_to_me]
+          Rails.logger.debug('Creating rplan in sync collection due to user request (param :is_sync_to_me is set).')
           sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
           if sync_collection.present?
-            is_shared_collection = true
             research_plan.collections << Collection.find(sync_collection['collection_id'])
             research_plan.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+          else
+            error!('400 Bad Request (Cant find sync collection)', 400)
           end
-        end
+        else
+          if params[:collection_id]
+            collection = current_user.collections.where(id: params[:collection_id]).take
+            research_plan.collections << collection if collection.present?
+          end
 
-        unless is_shared_collection
-          all_coll = Collection.get_all_collection_for_user(current_user.id)
-          research_plan.collections << all_coll
+          is_shared_collection = false
+          if collection.blank?
+            sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+            if sync_collection.present?
+              is_shared_collection = true
+              research_plan.collections << Collection.find(sync_collection['collection_id'])
+              research_plan.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+            end
+          end
+
+          unless is_shared_collection
+            all_coll = Collection.get_all_collection_for_user(current_user.id)
+            research_plan.collections << all_coll
+          end
         end
 
         present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
