@@ -2,7 +2,6 @@
 
 module Chemotion
   class AdminDeviceAPI < Grape::API
-    helpers AdminHelpers
     resource :admin_devices do
       before do
         error!(401) unless current_user.is_a?(Admin)
@@ -127,7 +126,7 @@ module Chemotion
         end
       end
 
-      # test datacollector sftp
+      # test datacollector sftp connection
       params do
         requires :id, type: Integer
         optional :datacollector_method, type: String
@@ -138,21 +137,9 @@ module Chemotion
       end
       route_param :test_sftp do
         post do
-          case params[:datacollector_authentication]
-          when 'password'
-            credentials = Rails.configuration.datacollectors.sftpusers.find do |e|
-              e[:user] == params[:datacollector_user]
-            end
-            raise 'No match user credentials!' unless credentials
-
-            connect_sftp_with_password(
-              host: params[:datacollector_host],
-              user: credentials[:user],
-              password: credentials[:password],
-            )
-          when 'keyfile'
-            connect_sftp_with_key(params)
-          end
+          # make options hashie compatible
+          options = Hashie::Mash.new declared(params, include_missing: false).merge(info: params[:id])
+          Datacollector::Configuration.new!(options)
 
           { status: 'success', message: 'Test connection successfully.' }
         rescue StandardError => e

@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
-# set default value
-Rails.application.configure { config.datacollectors = nil }
+# Generic initialization
+service = File.basename(__FILE__, '.rb').to_sym # Service name
+service_setter = :"#{service}=" # Service setter
+ref = "Initializing #{service}:" # Message prefix
 
-if File.file?(Rails.root.join('config/datacollectors.yml'))
-  datacollectors_config = Rails.application.config_for :datacollectors
-  if datacollectors_config
-    Rails.application.configure do
-      config.datacollectors = ActiveSupport::OrderedOptions.new
-      config.datacollectors.services = datacollectors_config[:services]
-      config.datacollectors.mailcollector = datacollectors_config[:mailcollector]
-      config.datacollectors.sftpusers = datacollectors_config[:sftpusers]
-      config.datacollectors.localcollectors = datacollectors_config[:localcollectors]
-      config.datacollectors.keydir = datacollectors_config[:keydir]
-    end
-  end
+Rails.application.configure do
+  config.send(service_setter, config_for(service)) # Load config/.yml
+# Rescue:
+# - RuntimeError is raised if the file is not found
+# - NoMethodError is raised if the yml file cannot be parsed
+rescue RuntimeError, NoMethodError, ArgumentError, URI::InvalidURIError => e
+  Rails.logger.warn "#{ref} Error while loading configuration #{e.message}"
+  # Create service key or clear config
+  config.send(service_setter, nil)
 end

@@ -1,18 +1,20 @@
 shared:
   # List of enabled data collection services
   :services:
-  # - :name: 'mailcollector'
+    - :name: 'mailcollector'
   #   :cron: '5,20,35,50 * * * *' # every 15 minutes starting a xx:05
-  # - :name: 'folderwatchersftp'
-  #   :every: 5 # minutes
-  #   :watcher_sleep: 30 # seconds
-  # - :name: 'folderwatcherlocal'
-  #   :every: 5 # minutes
-  #   :watcher_sleep: 30 # seconds
-  # - :name: 'filewatchersftp'
-  #   :every: 2 # minutes
-  # - :name: 'filewatcherlocal'
-  #   :every: 2 # minutes
+    - :name: 'folderwatchersftp'
+  #   :every: 5                   # every 5 minutes
+  #   :watcher_sleep: 30          # seconds: skip if file/folder mtime newer than x seconds
+    - :name: 'folderwatcherlocal'
+  #   :every: 5
+  #   :watcher_sleep: 30
+    - :name: 'filewatchersftp'
+  #   :every: 2
+  #   :watcher_sleep: 30 
+    - :name: 'filewatcherlocal'
+  #   :every: 2
+  #   :watcher_sleep: 30
 
   # Email service configuration
   :mailcollector:
@@ -57,6 +59,25 @@ development: &development
     - :path: '<%= Rails.root.join(*%w[tmp datacollector]).to_s %>'
 
 test:
-  <<: *development
+  :services:
+    - :name: 'folderwatcherlocal'
+      :watcher_sleep: 0
+    - :name: 'filewatcherlocal'
+      :watcher_sleep: 0
+    - :name: 'folderwatchersftp'
+      :watcher_sleep: 0
+    - :name: 'filewatchersftp'
+      :watcher_sleep: 0
+  :keydir: '<%= "#{Dir.home}/.ssh/" %>'
+  :localcollectors:
+    - :path: '<%= Dir.mktmpdir(%w[chemotion_collector_test-]).to_s %>'
+  :mailcollector:
+    :server: 'imap.server.de'
+    :mail_address: "service@mail"
+    :password: "password"
+    :aliases:
+      - 'alias_one@kit.edu'
+      - 'alias_two@kit.edu'
+
 
 production:
