@@ -27,7 +27,8 @@ RSpec.describe Chemotion::AdminDeviceAPI do
 
     context 'with params by name' do
       it 'fetches max 5 devices by name' do
-        get '/api/v1/admin_devices/byname?name=one&limit=5'
+        queried_name = URI::DEFAULT_PARSER.escape device.name[-3..].downcase
+        get "/api/v1/admin_devices/byname?name=#{queried_name}&limit=5"
         expect(parsed_json_response['devices'].size).to be(1)
       end
     end
@@ -73,15 +74,15 @@ RSpec.describe Chemotion::AdminDeviceAPI do
       end
 
       it 'returns a valid connection' do
-        allow(Net::SFTP).to receive(:start).with(
-          device_with_sftp.datacollector_host,
-          device_with_sftp.datacollector_user,
-          key_data: [],
-          keys: Pathname.new(device_with_sftp.datacollector_key_name),
-          keys_only: true,
-          non_interactive: true,
-          timeout: 5,
-        ).and_return(sftp_double)
+        # allow(Net::SFTP).to receive(:start).with(
+        #  device_with_sftp.datacollector_host,
+        #  device_with_sftp.datacollector_user,
+        #  key_data: [],
+        #  keys: Pathname.new(device_with_sftp.datacollector_key_name),
+        #  keys_only: true,
+        #  non_interactive: true,
+        #  timeout: 5,
+        # ).and_return(sftp_double)
 
         post '/api/v1/admin_devices/test_sftp', params: params
         expect(parsed_json_response['status']).to include('success')

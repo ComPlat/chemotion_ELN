@@ -149,6 +149,13 @@ class User < ApplicationRecord
     end
   }
 
+  # Find user by an email address in a case insensitive way
+  # @param [String] email
+  # @return [ActiveRecord::Relation]
+  scope :by_email, lambda { |query|
+    where('LOWER(email) = ?', sanitize_sql_like(query.downcase.strip))
+  }
+
   # try to find a user by exact match of name_abbreviation
   # fall back to insensitive match result unless multiple users are found.
   def self.try_find_by_name_abbreviation(name_abbreviation)
