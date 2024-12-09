@@ -1,4 +1,5 @@
-import { List, fromJS } from 'immutable';
+/* eslint-disable no-param-reassign */
+import { List } from 'immutable';
 import alt from 'src/stores/alt/alt';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -139,7 +140,6 @@ class UIStore {
     });
   }
 
-
   handleRerenderGenericWorkflow(params) {
     this.state.propGenericWorkflow = params;
     if (params.toggle) { this.state.showGenericWorkflow = !this.state.showGenericWorkflow; }
@@ -158,11 +158,11 @@ class UIStore {
   }
 
   handleShowDeviceManagement() {
-    this.state.showDeviceManagement = true
+    this.state.showDeviceManagement = true;
   }
 
   handleCloseDeviceManagement() {
-    this.state.showDeviceManagement = false
+    this.state.showDeviceManagement = false;
   }
 
   handleShowElements() {
@@ -170,8 +170,8 @@ class UIStore {
   }
 
   handleSelectTab(params = {}) {
-    let type = params.type || "sample"
-    let tabKey = params.tabKey || 0
+    const type = params.type || 'sample';
+    const tabKey = params.tabKey || 0;
     this.state[type].activeTab = tabKey;
   }
 
@@ -188,31 +188,29 @@ class UIStore {
   handleCheckAllElements(params) {
     this.waitFor(ElementStore.dispatchToken);
 
-    let { type, range } = params;
-    let { elements } = ElementStore.getState();
+    const { type, range } = params;
+    const { elements } = ElementStore.getState();
 
-    if (range == 'all') {
-      if (this.state.currentSearchSelection && elements[type + "s"].ids) {
-        let ids = elements[type + "s"].ids
-        this.state[type].checkedAll = false
-        this.state[type].checkedIds = List(ids)
-        this.state[type].uncheckedIds = List()
+    if (range === 'all') {
+      if (elements[`${type}s`].ids) {
+        const { ids } = elements[`${type}s`];
+        this.state[type].checkedAll = false;
+        this.state[type].checkedIds = List(ids);
       } else {
         this.state[type].checkedAll = true;
         this.state[type].checkedIds = List();
-        this.state[type].uncheckedIds = List();
       }
-    } else if (range == 'current') {
-      let curPageIds = elements[type + "s"].elements.reduce(
-        function (a, b) { return a.concat(b); }, []
-      ).map((e) => { return e.id });
+      this.state[type].uncheckedIds = List();
+    } else if (range === 'current') {
+      const curPageIds = elements[`${type}s`].elements.reduce((a, b) => a.concat(b), []).map((e) => e.id);
       this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = List();
-      let checked = this.state[type].checkedIds
+      let checked = this.state[type].checkedIds;
       // Remove duplicates, conserve sorting
       if (checked.size > 0) {
-        let checkedMap = checked.reduce(function (mp, e) { mp[e] = 1; return mp }, {})
-        for (var i = 0; i < curPageIds.length; i++) {
+        const checkedMap = checked.reduce((mp, e) => { mp[e] = 1; return mp; }, {});
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < curPageIds.length; i++) {
           if (!checkedMap[curPageIds[i]]) {
             checked = checked.push(curPageIds[i]);
           }
@@ -222,7 +220,7 @@ class UIStore {
         this.state[type].checkedIds = List(curPageIds);
       }
     } else {
-      this.handleUncheckAllElements(params)
+      this.handleUncheckAllElements(params);
     }
   }
 
@@ -232,12 +230,12 @@ class UIStore {
   }
 
   handleToggleAdvancedSearch(show) {
-    if (show == null) show = !this.state.showAdvancedSearch
+    if (show == null) show = !this.state.showAdvancedSearch;
     this.state.showAdvancedSearch = show;
   }
 
   handleUncheckAllElements(params) {
-    let { type, range } = params;
+    const { type } = params;
 
     if (this.state[type]) {
       this.state[type].checkedAll = false;
@@ -257,31 +255,28 @@ class UIStore {
   }
 
   handleCheckElement(element) {
-    let type = element.type;
+    const { type } = element;
 
     if (this.state[type].checkedAll) {
-      this.state[type].uncheckedIds =
-        ArrayUtils.removeFromListByValue(this.state[type].uncheckedIds,
-          element.id);
+      this.state[type].uncheckedIds = ArrayUtils.removeFromListByValue(
+        this.state[type].uncheckedIds,
+        element.id
+      );
+    } else {
+      this.state[type].checkedIds = ArrayUtils.pushUniq(this.state[type].checkedIds, element.id);
     }
-    else {
-      this.state[type].checkedIds =
-        ArrayUtils.pushUniq(this.state[type].checkedIds, element.id);
-    }
-
   }
 
   handleUncheckElement(element) {
-    let type = element.type;
+    const { type } = element;
 
     if (this.state[type].checkedAll) {
-      this.state[type].uncheckedIds =
-        ArrayUtils.pushUniq(this.state[type].uncheckedIds, element.id);
-    }
-    else {
-      this.state[type].checkedIds =
-        ArrayUtils.removeFromListByValue(this.state[type].checkedIds,
-          element.id);
+      this.state[type].uncheckedIds = ArrayUtils.pushUniq(this.state[type].uncheckedIds, element.id);
+    } else {
+      this.state[type].checkedIds = ArrayUtils.removeFromListByValue(
+        this.state[type].checkedIds,
+        element.id
+      );
     }
   }
 
@@ -301,29 +296,33 @@ class UIStore {
   }
 
   handleSelectCollection(collection, hasChanged = false) {
-    const state = this.state;
-    const isSync = collection.is_sync_to_me ? true : false;
-    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
+    const { state } = this;
+    const isSync = !!collection.is_sync_to_me;
+    const {
+      filterCreatedAt, fromDate, toDate, userLabel, productOnly
+    } = state;
 
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
-      hasChanged = hasChanged || state.currentCollection.id != collection.id;
-      hasChanged = hasChanged || isSync != state.isSync;
+      hasChanged = hasChanged || state.currentCollection.id !== collection.id;
+      hasChanged = hasChanged || isSync !== state.isSync;
       hasChanged = hasChanged || state.currentSearchSelection != null;
       hasChanged = hasChanged || state.currentSearchByID != null;
     }
 
-    if (collection['clearSearch']) {
+    if (collection.clearSearch) {
       this.handleClearSearchSelection();
       hasChanged = true;
-      collection['clearSearch'] = undefined;
+      collection.clearSearch = undefined;
     }
 
     if (hasChanged && !collection.noFetch) {
       this.state.isSync = isSync;
       this.state.currentCollection = collection;
-      const per_page = state.number_of_results;
-      const params = { per_page, filterCreatedAt, fromDate, toDate, userLabel, productOnly };
+      const perPage = state.number_of_results;
+      const params = {
+        perPage, filterCreatedAt, fromDate, toDate, userLabel, productOnly
+      };
       const { profile } = UserStore.getState();
 
       if (profile && profile.data && profile.data.layout) {
@@ -334,25 +333,30 @@ class UIStore {
         } else {
           if (layout.sample && layout.sample > 0) {
             ElementActions.fetchSamplesByCollectionId(
-              collection.id, Object.assign(params, { page: state.sample.page }),
-              isSync, ElementStore.getState().moleculeSort
+              collection.id,
+              Object.assign(params, { page: state.sample.page }),
+              isSync,
+              ElementStore.getState().moleculeSort
             );
           }
           if (layout.reaction && layout.reaction > 0) {
             ElementActions.fetchReactionsByCollectionId(
-              collection.id, Object.assign(params, { page: state.reaction.page }),
+              collection.id,
+              Object.assign(params, { page: state.reaction.page }),
               isSync
             );
           }
           if (layout.wellplate && layout.wellplate > 0) {
             ElementActions.fetchWellplatesByCollectionId(
-              collection.id, Object.assign(params, { page: state.wellplate.page }),
+              collection.id,
+              Object.assign(params, { page: state.wellplate.page }),
               isSync
             );
           }
           if (layout.screen && layout.screen > 0) {
             ElementActions.fetchScreensByCollectionId(
-              collection.id, Object.assign(params, { page: state.screen.page }),
+              collection.id,
+              Object.assign(params, { page: state.screen.page }),
               isSync
             );
           }
@@ -369,7 +373,8 @@ class UIStore {
             );
           }
 
-          Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].includes(l)).forEach((key) => {
+          Object.keys(layout).filter((l) => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line']
+            .includes(l)).forEach((key) => {
             if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
               const page = state[key] ? state[key].page : 1;
               ElementActions.fetchGenericElsByCollectionId(
@@ -386,19 +391,21 @@ class UIStore {
   }
 
   handleSelectCollectionForSearchById(layout, collection) {
-    const state = this.state;
-    const isSync = state.isSync;
+    const { state } = this;
+    const { isSync } = state;
     const searchResult = { ...state.currentSearchByID };
-    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
+    const {
+      filterCreatedAt, fromDate, toDate, userLabel, productOnly
+    } = state;
     const { moleculeSort } = ElementStore.getState();
-    const per_page = state.number_of_results;
+    const perPage = state.number_of_results;
 
     Object.keys(state.currentSearchByID).forEach((key) => {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
-        if (productOnly && key != 'samples') { return }
+        if (productOnly && key !== 'samples') { return; }
         let filterParams = {};
         const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-        let modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
+        const modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
 
         if (fromDate || toDate || productOnly || userLabel) {
           filterParams = {
@@ -407,10 +414,10 @@ class UIStore {
             to_date: toDate,
             user_label: userLabel,
             product_only: productOnly,
-          }
+          };
         }
 
-        const with_filter = Object.keys(filterParams).length >= 1 ? true : false;
+        const withFilter = Object.keys(filterParams).length >= 1;
 
         const selection = {
           elementType: 'by_ids',
@@ -418,18 +425,18 @@ class UIStore {
             model_name: modelName,
             ids: searchResult[key].ids,
             total_elements: searchResult[key].totalElements,
-            with_filter: with_filter,
+            withFilter,
           },
           list_filter_params: filterParams,
           search_by_method: 'search_by_ids',
-          page_size: per_page
+          page_size: perPage
         };
 
         ElementActions.fetchBasedOnSearchResultIds.defer({
           selection,
           collectionId: collection.id,
-          isSync: isSync,
-          page_size: per_page,
+          isSync,
+          page_size: perPage,
           page: searchResult[key].page,
           moleculeSort
         });
@@ -438,12 +445,12 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    this.handleSelectCollection(collection)
+    this.handleSelectCollection(collection);
   }
 
   // FIXME this method is also defined in ElementStore
   handleSetPagination(pagination) {
-    let { type, page } = pagination;
+    const { type, page } = pagination;
     this.state[type].page = page;
   }
 
@@ -457,7 +464,7 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
-    this.state.isSync = collection.is_sync_to_me ? true : false;
+    this.state.isSync = !!collection.is_sync_to_me;
   }
 
   handleClearSearchSelection() {
@@ -472,19 +479,20 @@ class UIStore {
   handleChangeNumberOfResultsShown(value) {
     this.state.number_of_results = value;
   }
+
   handleShowModalChange(params) {
-    this.state.showModal = params.show ? true : false
-    this.state.modalParams = params
+    this.state.showModal = !!params.show;
+    this.state.modalParams = params;
   }
 
   handleHideModal() {
-    this.state.showModal = false
+    this.state.showModal = false;
     this.state.modalParams = {
       show: false,
-      title: "",
-      component: "",
+      title: '',
+      component: '',
       action: null
-    }
+    };
   }
 
   handleSetFilterCreatedAt(filterCreatedAt) {
