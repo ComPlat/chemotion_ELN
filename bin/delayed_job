@@ -2,4 +2,75 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
 require 'delayed/command'
-Delayed::Command.new(ARGV).daemonize
+
+puts ARGV.inspect
+
+CUSTOM_ARG = ENV['DELAYED_JOB_ARGS'].presence&.split(/\s+/)
+LOG_FILE = File.join(Rails.root, 'log', 'delayed_job.log')
+PID_DIR = File.join(Rails.root, 'tmp', 'pids')
+
+if CUSTOM_ARG.present? && (CUSTOM_ARG.join(' ').concat(' run') == ARGV.join(' '))
+  puts 'running command with DELAYED_JOB_ARGS'
+
+  Delayed::Command.new(CUSTOM_ARG + ['start']).daemonize
+
+  # monitoring the start of the first worker
+  pid = nil
+  while pid.nil?
+    puts 'checking for a worker pid in tmp/pids ....'
+    sleep 1
+    pid = Dir[File.join(PID_DIR, 'delayed_job*')].map { |f| File.read(f).to_i }.first
+  end
+
+  puts "A Delayed Job worker process has started with #{pid}"
+
+  # wait for other workers to start
+  sleep 10
+  workers = Dir[File.join(PID_DIR, 'delayed_job*')].map { |f| [f, File.read(f).to_i] }.to_h
+  worker = ''
+  pid = ''
+
+  # Monitor the process
+  i = 0
+  while true
+    begin
+      puts "check: #{i += 1} #{workers.inspect}"
+      workers.each do |wrkr, p_id|
+        worker = wrkr
+        pid = p_id
+        Process.kill(0, pid)
+      end
+    rescue Errno::ESRCH
+      # gets last lines that match the delayed_job pid from log/delayed_job.log
+      # to see which job was running when the process was killed
+      # and send it to sentry
+      # TODO: check if/which other jobs were running
+
+      tail = `tail -n 100 log/delayed_job.log | grep -F '##{pid}]' | tail -n 10`.strip.presence
+      message = "Delayed Job worker #{worker} #{pid} HAS stopped. #{Time.zone.now}\n "
+      message += "#{tail || "#{pid} not found in log"}"
+      message += "\n Stopping all workers ( #{CUSTOM_ARG})"
+
+      puts message
+
+      Sentry.capture_message message
+      # graciously stop all workers
+      # replace 'start' with 'stop' as last item of ARGV
+      # then call the command
+
+      Delayed::Command.new(CUSTOM_ARG + ['stop']).daemonize
+      # ensure old pids are gone
+      Dir[File.join(Rails.root, 'tmp', 'pids', 'delayed_job*')].map do |f|
+        # rename file to .garbaged.#{timestamp}
+        # so we can see when the file was removed
+        File.rename(f, f.gsub('delayed_job', 'dj') + ".garbaged.#{Time.now.to_i}")
+      end
+      puts 'exiting'
+      break
+    end
+    sleep 10
+  end
+else
+  puts 'not running special command'
+  Delayed::Command.new(ARGV).daemonize
+end
