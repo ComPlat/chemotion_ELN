@@ -17,6 +17,7 @@
 #
 #  index_matrices_on_name  (name) UNIQUE
 #
+
 # Configuration settings for some features
 # - set visibility/activation of features globaly or for users and group
 #
