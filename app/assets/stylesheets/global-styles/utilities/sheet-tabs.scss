@@ -2,25 +2,25 @@
   @extend .mb-1;
   @extend .border-bottom-0;
   @extend .gap-1;
-  --bs-nav-link-padding-x: 0.75rem;
-  --bs-nav-link-padding-y: 0.25rem;
-  .nav-link {
-    @extend .text-body;
-    @extend .state-border;
-    --bs-bg-opacity: 0.3;
-    --bs-border-opacity: 0.5;
-    @extend .text-bg-paper;
-    &.active {
-      @extend .border-active;
-      --bs-border-opacity: 1;
-      --bs-bg-opacity: 1;
-      i {
-        @extend .text-active;
-      }
+}
+.nav-tabs.sheet-tabs .nav-link,
+.sheet-tab {
+  @extend .text-body;
+  @extend .state-border;
+  --bs-bg-opacity: 0.3;
+  --bs-border-opacity: 0.5;
+  @extend .text-bg-paper;
+  padding: 0.25rem 0.75rem !important;
+  &.active {
+    @extend .border-active;
+    --bs-border-opacity: 1;
+    --bs-bg-opacity: 1;
+    i {
+      @extend .text-active;
     }
-    &:has(.unsaved) {
-      @extend .border-warning;
-      --bs-border-opacity: 1;
-    }
+  }
+  &:has(.unsaved) {
+    @extend .border-warning;
+    --bs-border-opacity: 1;
   }
 }

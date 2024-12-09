@@ -27,10 +27,11 @@ $chemstrap-theme-colors: (
 @import "bootstrap/mixins";
 
 $body-bg: $chemstrap-grey1;
-$body-color: $chemstrap-neutral-grey4;
+$body-color: $chemstrap-ink;
 $font-family-sans-serif: "Roboto", sans-serif;
 $font-size-root: 14px;
 $font-size-base: 1rem;
+$heading-color: $chemstrap-ink;
 $h1-font-size: $font-size-base * 2;
 $h2-font-size: $font-size-base * 1.75;
 $h3-font-size: $font-size-base * 1.5;
@@ -44,8 +45,15 @@ $enable-negative-margins: true;
 $table-bg: transparent;
 $card-bg: $chemstrap-paper;
 $accordion-bg: $chemstrap-paper;
+$modal-content-bg: $chemstrap-paper;
+$list-group-bg: $chemstrap-paper;
+$list-group-color: $chemstrap-ink;
 
+$popover-bg: $chemstrap-paper;
+$popover-body-color: $chemstrap-ink;
 $popover-max-width: 50vw;
+$popover-body-padding-y: 0.5rem;
+
 $input-bg: $chemstrap-paper;
 $form-select-bg: $input-bg;
 $form-check-input-bg: $input-bg;

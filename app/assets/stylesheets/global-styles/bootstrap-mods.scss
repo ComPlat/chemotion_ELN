@@ -33,6 +33,18 @@ $button-variant-colors: (
   ),
 );
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0.5em;
+  &.modal-title {
+    margin-top: 0;
+  }
+}
+
 @mixin chemstrap-button-variant($name) {
   @include button-variant(
     map-get(map-get($button-variant-colors, $name), "bg-default"),

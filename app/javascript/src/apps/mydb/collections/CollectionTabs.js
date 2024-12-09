@@ -176,7 +176,7 @@ export default class CollectionTabs extends React.Component {
             <Row>
               {elements.map(({ name, label }) => (
                 <Col key={name}>
-                  <p className="collection-tag-element">{label}</p>
+                  <h4>{label}</h4>
                   <TabLayoutEditor
                     visible={layouts[name].visible}
                     hidden={layouts[name].hidden}
