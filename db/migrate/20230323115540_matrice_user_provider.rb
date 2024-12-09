@@ -1,5 +1,5 @@
 class MatriceUserProvider < ActiveRecord::Migration[5.2]
-  def change
+  def up
     Matrice.create(
       name: 'userProvider',
       enabled: false,
@@ -7,6 +7,10 @@ class MatriceUserProvider < ActiveRecord::Migration[5.2]
       include_ids: [],
       exclude_ids: [],
       configs: {}
-    )
+    ) unless Matrice.find_by(name: 'userProvider')
+  end
+
+  def down
+    Matrice.find_by(name: 'userProvider')&.really_destroy!
   end
 end
