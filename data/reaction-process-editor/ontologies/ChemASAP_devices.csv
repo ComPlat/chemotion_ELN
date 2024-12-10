@@ -1,0 +1,18 @@
+Ontology ID;Ontology Name;Custom Label;Link;Roles;Detectors;Solvents;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000001;high performance liquid chromatography-tandem mass spectrometry;Analyt_LC/MS;;"=device,CHMO:0002876(subtype);";"CHMO:0001728; CHMO:0002866; CHMO:0002585";"CHEBI:15377; CHEBI:38472;";;;;;;;;;;;;;;;;;;;
+ChemASAP:0000002;supercritical-fluid chromatography-tandem mass spectrometry;Analyt_LC-SFC/MS;;"=device,CPOKIT:0000005(subtype);";"CHMO:0001728; CHMO:0002866; CHMO:0002585";"CHEBI:16526; CHEBI:17790;";;;;;;;;;;;;;;;;;;;
+ChemASAP:0000003;gas chromatography-tandem mass spectrometry;GC-FID/MS;;"=device,CHMO:0002862(subtype);";"CHMO:0001719, CHMO:0000480;";CHEBI:33681;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000004;gas chromatography-helium discharge ionisation detection;GC-BID;;"=device,CPOKIT:0000004(subtype);";CHMO:0001719;CHEBI:33681;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000005;;CV;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000006;nuclear magnetic resonance spectroscopy;NMR;;"=device,CHMO:0000591(type);";;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000007;;Analyt-Prep;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000008;;Solid Dosing;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000009;;Sovlent Dosing;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000010;;Abs. Solvent Dosing;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000011;;Liquid Dosing;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000012;;Gas Injection;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000013;high performance liquid chromatography-tandem mass spectrometry;Prep_LC/MS;;"=device,CHMO:0002876(subtype);";"CHMO:0001728; CHMO:0002866; CHMO:0002585";"CHEBI:15377; CHEBI:38472;";;;;;;;;;;;;;;;;;;;
+ChemASAP:0000014;supercritical-fluid chromatography-tandem mass spectrometry;Prep_LC-SFC/MS;;"=device,CPOKIT:0000005(subtype);";"CHMO:0001728; CHMO:0002866; CHMO:0002585";"CHEBI:16526; CHEBI:17790;";;;;;;;;;;;;;;;;;;;
+ChemASAP:0000015;;Inertization;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000016;;Labeling;;;;;;;;;;;;;;;;;;;;;;;
+ChemASAP:0000017;;Evaporation;;;;;;;;;;;;;;;;;;;;;;;

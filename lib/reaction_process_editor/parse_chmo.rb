@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 # doc = File.open('chmo.owl') { |f| Nokogiri::XML(f) }
+#
+# Helper-Script to extract the desired CHMO_IDS fro the official chmo.owl file in the csv format we need for our
+# ontologies definition files used in the ReactionProcessEditor. It assembles all descendants for each CHMO id.
+# This script needed to run only once (November 2024) but is kept archived. cbuggle, 10.12.202
+#
 require 'csv'
 class ParseChmo
   CHMO_IDS = %w[CHMO_0002415
@@ -38,26 +43,19 @@ class ParseChmo
     end
     nodes = []
     CHMO_IDS.each do |chmo_id|
-      Rails.logger.debug { "run #{chmo_id}" }
       root_node = parse_root(doc: doc, chmo_id: chmo_id)
-      # Rails.logger.debug { "root_node #{root_node}" }
       nodes << root_node
       nodes << parse_sub_nodes(doc: doc, chmo_id: chmo_id)
-      # Rails.logger.debug { "nodes count #{nodes.count}" }
-      # Rails.logger.debug { "nodes flat count #{nodes.flatten.count}" }
     end
     write_csv(nodes: nodes.flatten,
               filename: 'ontologies')
   end
 
   def self.parse_root(doc:, chmo_id:)
-    Rails.logger.debug { "run parse_root #{chmo_id}" }
-
     doc.xpath("//owl:Class[contains(@rdf:about, '#{chmo_id}')]").first
   end
 
   def self.parse_sub_nodes(doc:, chmo_id:)
-    # Rails.logger.debug { "run parse_subnode #{chmo_id}" }
     doc.xpath("//owl:Class[rdfs:subClassOf[contains(@rdf:resource, '#{chmo_id}')]]").map do |node|
       current_node_id = parse_chmo_id(node).tr(':', '_')
       [node] << parse_sub_nodes(doc: doc, chmo_id: current_node_id)

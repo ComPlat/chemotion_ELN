@@ -68,6 +68,8 @@ module Import
           dependencies[role] ||= []
           dependencies[role] << role_dependencies(role_dependencies)
         end
+        dependencies['automation_mode'] ||= dependencies['mode'].presence if dependencies['mode'].presence
+        dependencies.delete('mode')
         dependencies
       end
 
@@ -77,13 +79,15 @@ module Import
           options[dep_type.strip] ||= []
           options[dep_type.strip] << chmo_id.tr('_', ':').strip
         end
+        options['automation_mode'] ||= options['mode'].presence if options['mode'].presence
+        options.delete('mode')
         options
       end
 
       def detectors(detectors_csv)
         return [] if detectors_csv.blank?
 
-        detectors_csv.scan(VALUES_WITH_BRACKET).map(&:first)
+        detectors_csv.split(/[,;]/).filter_map(&:strip)
       end
 
       def ontology_files
