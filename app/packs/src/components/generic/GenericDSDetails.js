@@ -2,15 +2,10 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ButtonToolbar } from 'react-bootstrap';
-import {
-  GenInterface,
-  GenButtonReload,
-  absOlsTermLabel,
-} from 'chem-generic-ui';
+import { Card } from 'react-bootstrap';
+import { GenInterface, GenToolbar, absOlsTermLabel } from 'chem-generic-ui';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 class GenericDSDetails extends Component {
   constructor(props) {
@@ -40,7 +35,7 @@ class GenericDSDetails extends Component {
         fnNavi={() => {}}
       />
     );
-    return <div style={{ margin: '5px' }}>{layersLayout}</div>;
+    return <div className="m-2">{layersLayout}</div>;
   }
 
   render() {
@@ -52,25 +47,31 @@ class GenericDSDetails extends Component {
       Object.keys(genericDS).length !== 0
     ) {
       return (
-        <Panel className="panel-detail generic-ds-panel"> 
-          <Panel.Body>
-            {this.elementalPropertiesItem(genericDS)}
-            <span className="g-ds-note label">
-              <span className="g-ds-title">Note</span>
-              <br />
-              Selected analysis type: {absOlsTermLabel(kind)}
-              <br />
-              Content is designed for: {genericDS.klass_label}
-            </span>
-            <ButtonToolbar className="pull-right">
-              <GenButtonReload
-                klass={klass}
+        <Card className="d-flex flex-column">
+          <Card.Body className="flex-grow-1 d-flex flex-column p-0">
+            <div className="flex-grow-1 overflow-auto p-3">
+              {this.elementalPropertiesItem(genericDS)}
+            </div>
+            <Card.Footer className="d-flex justify-content-between align-items-center">
+              <span>
+                <h5>Note</h5>
+                Selected analysis type:
+                {' '}
+                {absOlsTermLabel(kind)}
+                <br />
+                Content is designed for:
+                {' '}
+                {genericDS.klass_label}
+              </span>
+              <GenToolbar
                 generic={genericDS}
+                genericType="Dataset"
+                klass={klass}
                 fnReload={this.handleReload}
               />
-            </ButtonToolbar>
-          </Panel.Body>
-        </Panel>
+            </Card.Footer>
+          </Card.Body>
+        </Card>
       );
     }
     return null;
