@@ -13,7 +13,7 @@ function GenericElementsHeader({
   group, onClick
 }) {
   return (
-    <div onClick={onClick}>
+    <div onClick={onClick} role="button">
       <td colSpan="2" className="position-relative">
         <div className="preview-table">
           {group}

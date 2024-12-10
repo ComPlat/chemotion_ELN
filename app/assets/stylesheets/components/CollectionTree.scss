@@ -26,8 +26,7 @@
     }
 
     &--selected {
-      @extend .bg-primary;
-      @extend .text-white;
+      @extend .text-bg-primary;
       &:hover {
         background-color: $chemstrap-blue-light !important;
       }
