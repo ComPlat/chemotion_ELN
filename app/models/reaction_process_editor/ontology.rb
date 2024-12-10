@@ -4,17 +4,18 @@
 #
 # Table name: ontologies
 #
-#  id           :uuid             not null, primary key
-#  chmo_id      :string
-#  label        :string
-#  name         :string
-#  link         :string
-#  dependencies :jsonb
-#  detectors    :string           default([]), is an Array
-#  solvents     :string           default([]), is an Array
-#  active       :boolean          default(TRUE), not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
+#  id          :uuid             not null, primary key
+#  chmo_id     :string
+#  device_code :string
+#  name        :string
+#  label       :string
+#  link        :string
+#  roles       :jsonb
+#  detectors   :string           default([]), is an Array
+#  solvents    :string           default([]), is an Array
+#  active      :boolean          default(TRUE), not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 
 module ReactionProcessEditor
