@@ -24,9 +24,9 @@ module Entities
           private
 
           def detector_analysis_defaults(detector_type)
-            chmo_id, data_type, metric, _unit, label = detector_type
+            _chmo_id, data_type, metric, _unit, label = detector_type
 
-            return [] unless chmo_id
+            return [] unless data_type
 
             # TODO: A detector might have multiple metrics /metric_names (therefore we return an array).
             # Current files have only one. Adapt CSV parsing once File format has been defined. cbuggle, 14.10.2024.

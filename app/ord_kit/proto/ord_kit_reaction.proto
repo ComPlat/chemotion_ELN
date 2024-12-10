@@ -259,7 +259,7 @@ message ReactionProcessAction {
       string device = 4;
       // repeated Analysis.AnalysisType detectors = 5;
       repeated Detector detectors = 6;
-      repeated string mobile_phases = 7;
+      repeated string mobile_phase = 7;
       string method = 8;
       string stationary_phase = 9;
       TemperatureConditions stationary_phase_temperature = 10;
