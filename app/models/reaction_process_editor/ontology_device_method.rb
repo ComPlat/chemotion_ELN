@@ -7,10 +7,10 @@
 #  id                    :uuid             not null, primary key
 #  ontology_id           :uuid
 #  label                 :string
-#  device_name           :string
+#  device_code           :string
 #  detectors             :jsonb
-#  mobile_phases         :string           default([]), is an Array
-#  stationary_phases     :string           default([]), is an Array
+#  mobile_phase          :jsonb            is an Array
+#  stationary_phase      :jsonb            is an Array
 #  default_inject_volume :jsonb
 #  description           :string
 #  steps                 :jsonb
