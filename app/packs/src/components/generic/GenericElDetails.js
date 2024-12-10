@@ -476,18 +476,20 @@ export default class GenericElDetails extends Component {
         <Panel.Heading>{this.header(genericEl)}</Panel.Heading>
         <Panel.Body>
           <ListGroup>
-            <ElementDetailSortTab
-              type={genericEl.type}
-              availableTabs={Object.keys(tabContents)}
-              onTabPositionChanged={this.onTabPositionChanged}
-            />
-            <Tabs
-              activeKey={activeTab}
-              onSelect={(key) => this.handleSelect(key, genericEl.type)}
-              id="GenericElementDetailsXTab"
-            >
-              {tabContentList}
-            </Tabs>
+            <div className="tabs-container--with-borders">
+              <ElementDetailSortTab
+                type={genericEl.type}
+                availableTabs={Object.keys(tabContents)}
+                onTabPositionChanged={this.onTabPositionChanged}
+              />
+              <Tabs
+                activeKey={activeTab}
+                onSelect={(key) => this.handleSelect(key, genericEl.type)}
+                id="GenericElementDetailsXTab"
+              >
+                {tabContentList}
+              </Tabs>
+            </div>
           </ListGroup>
           <hr />
           <ButtonToolbar>

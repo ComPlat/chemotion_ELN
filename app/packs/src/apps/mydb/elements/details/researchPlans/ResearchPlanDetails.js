@@ -585,12 +585,12 @@ export default class ResearchPlanDetails extends Component {
       <Card className="detail-card">
         {this.renderPanelHeading(researchPlan)}
         <Card.Body>
-          <ElementDetailSortTab
-            type="research_plan"
-            availableTabs={Object.keys(tabContentsMap)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
           <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="research_plan"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
             <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
               {tabContents}
             </Tabs>
