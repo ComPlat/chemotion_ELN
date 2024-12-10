@@ -400,20 +400,22 @@ export default class WellplateDetails extends Component {
       <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="detail-card">
         <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
         <Card.Body>
-          <ElementDetailSortTab
-            type="wellplate"
-            availableTabs={Object.keys(tabContentsMap)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            mountOnEnter
-            unmountOnExit
-            activeKey={activeTab}
-            onSelect={(event) => this.handleTabChange(event)}
-            id="wellplateDetailsTab"
-          >
-            {tabContents}
-          </Tabs>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="wellplate"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={(event) => this.handleTabChange(event)}
+              id="wellplateDetailsTab"
+            >
+              {tabContents}
+            </Tabs>
+          </div>
           <ButtonToolbar className='gap-1'>
             <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
             {
