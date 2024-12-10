@@ -36,6 +36,7 @@
 .element-list-renderer .element-list-item,
 .element-groups-renderer .element-group-item {
   &:not(&--selected) {
+  @extend .bg-white;
     &:hover {
       @extend .bg-gray-200;
     }
