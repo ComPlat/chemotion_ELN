@@ -24,15 +24,12 @@ function VesselName({ id, name, readOnly }) {
   }, []);
 
   const handleChange = (e) => {
-    console.log('called')
     if (typeof e.value === 'string') {
       const currentEntry = nameSuggestions.filter((x) => x.value === e.value);
       if (currentEntry.length > 0) {
         vesselDetailsStore.changeVesselName(id, currentEntry[0].name);
-        console.log(e.value);
         VesselsFetcher.getVesselMaterialById(e.value)
           .then((result) => {
-            console.log('result', result);
             vesselDetailsStore.setMaterialProperties(id, result);
           });
       }
