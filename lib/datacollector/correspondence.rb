@@ -26,16 +26,17 @@ module Datacollector
     # @param from [String, User, Device] The info to determine the sender (User Device) or the sender itself
     # @return [Correspondence] The correspondence object
     # @raise [Error::DataCollectorError] If no valid sender or recipient is found
-    def initialize(from, to)
+    def initialize(from, to) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       # if param is a string, find the user or device
       @sender = from.is_a?(String) ? find_sender(from) : from
       @recipient = to.is_a?(String) ? find_recipient(to) : to
 
       # if the sender is a user (not a device), then it can only send to its own account
-      @recipient = @sender if @sender.is_a?(User)
+      @recipient = @sender if @sender.is_a?(User) && to.blank?
 
       raise Errors::DatacollectorError, "Sender not found #{from}" unless validate(@sender)
       raise Errors::DatacollectorError, "Recipient not found #{to}" unless validate(@recipient)
+      raise Errors::DatacollectorError, 'User can only send to self' if @sender.is_a?(User) && @recipient != @sender
 
       prepare_containers
     end
@@ -44,7 +45,8 @@ module Datacollector
     # @param file_name [String] The name of the file
     # @param file_path [String,Path] The path to the file
     # @return [Attachment] The updated attachment
-    def attach(filename, file_path, dataset_name = Time.zone.now.strftime('%Y-%m-%d'))
+    def attach(filename, file_path, dataset_name = nil)
+      dataset_name = dataset_name.presence || Time.zone.now.strftime('%Y-%m-%d')
       attachment = create_attachment(filename, file_path)
       dataset = prepare_dataset(dataset_name)
       # rubocop:disable Rails/SkipsModelValidations

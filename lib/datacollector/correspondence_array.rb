@@ -13,18 +13,18 @@ module Datacollector
 
     # @param from [String, User, Device] The sender identifier of the exchange
     # @param to [Array<[String, User]>] Array of recipient identifiers for the exchange
-    def initialize(from, to_list)
+    def initialize(from, to_list) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       @sender = from.is_a?(String) ? Correspondence.find_sender(from) : from
       errors = []
       raise Errors::DatacollectorError, "Sender not found #{from}" unless Correspondence.validate(@sender)
 
-      correspondences = to_list.filter_map do |receiver|
+      correspondences = (to_list.presence || [@sender]).filter_map do |receiver|
         Correspondence.new(@sender, receiver)
       rescue Errors::DatacollectorError => e
         errors << e.message
         nil
       end
-      raise Errors::DatacollectorError, errors.join("\n") if correspondences.empty?
+      raise Errors::DatacollectorError, errors.join("\n") if correspondences.empty? && errors.any?
 
       super(correspondences)
 

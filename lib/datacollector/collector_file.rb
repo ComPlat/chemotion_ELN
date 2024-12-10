@@ -20,12 +20,16 @@ module Datacollector
   class CollectorFile
     attr_reader :pathname, :path, :relative_path, :root_path
 
+    ONETWODOTS = %w[. ..].freeze
+
     def self.new!(...)
       new(...).validate!
     end
 
     def self.entries(path, top_level: true, file_only: false, dir_only: false, sftp: nil)
-      new(path, sftp: sftp).entries_as(top_level: top_level, file_only: file_only, dir_only: dir_only)
+      return new(path, sftp: sftp).entries_sftp(top_level: top_level, file_only: file_only, dir_only: dir_only) if sftp
+
+      new(path).entries_local(top_level: top_level, file_only: file_only, dir_only: dir_only)
     end
 
     # Initialize a new CollectorFile object
@@ -68,12 +72,13 @@ module Datacollector
     # Delete a file
     def delete_file
       sftp? ? @sftp.remove_file!(@path) : @pathname.delete
-      true
+      !exist?
     end
 
     # Delete the folder
     def delete_folder
       sftp? ? @sftp.remove_dir!(@path) : rmtree
+      !exist?
     end
 
     # @return [Time] The mtime of the file
@@ -87,18 +92,27 @@ module Datacollector
     # @option file_only [Boolean] if true, only files should be returned
     # @option dir_only [Boolean] if true, only directories are returned
     # @return [Array<Pathname>, Array<Net::SFTP::Protocol::V01::Name>] The array of file/folders in the directory
-    def typed_glob(filter, dir_only: false, file_only: false)
-      return glob(filter).select(&:file?) if file_only
-      return glob(filter).select(&:directory?) if dir_only
-
-      glob(filter)
+    def entries_glob(filter, dir_only: false, file_only: false)
+      time_setter = sftp? ? :mtime_sftp : :mtime_local
+      case [dir_only, file_only]
+      when [true, false]
+        glob(filter).select(&:directory?)
+      when [false, true]
+        glob(filter).select(&:file?)
+      else
+        glob(filter)
+      end.map do |entry|
+        self.class.new(
+          build_relative_path(entry), path, sftp: @sftp, mtime: send(time_setter, entry)
+        )
+      end
     end
 
     # Recursively count the number of files in the folder
     #
     # @return [Integer] The total number of files in the folder and its subfolders
     def file_count
-      typed_glob('**/*', file_only: true).count
+      glob('**/*').select(&:file?).count # rubocop:disable Performance/Count
     end
 
     # Returns an array of CollectorFile file/folder from @path directory
@@ -108,21 +122,62 @@ module Datacollector
     # @option top_level [Boolean] if true, only top_level entries are returned
     # @return [Array<CollectorFile>] The array of file/folders in the directory
     def entries_as(dir_only: false, file_only: false, top_level: true)
-      filter = top_level ? '*' : '**/*'
-      typed_glob(filter, file_only: file_only, dir_only: dir_only).map do |entry|
-        self.class.new(
-          build_relative_path(entry), path, sftp: @sftp, mtime: fetch_mtime(entry)
-        )
+      return entries_sftp(dir_only: dir_only, file_only: file_only, top_level: top_level) if sftp?
+
+      entries_local(dir_only: dir_only, file_only: file_only, top_level: top_level)
+    end
+
+    # @see entries_as
+    def entries_local(dir_only: false, file_only: false, top_level: true)
+      if top_level
+        return entries_local_top_level.select(&:directory?) if dir_only
+        return entries_local_top_level.select(&:file?) if file_only
+
+        return entries_local_top_level
+      end
+
+      entries_glob('**/*', file_only: file_only, dir_only: dir_only)
+    end
+
+    # @return [Array<CollectorFile>] The array of file/folders in the directory
+    def entries_local_top_level
+      entries.filter_map do |entry|
+        next(nil) if ONETWODOTS.include?(entry.basename.to_s)
+
+        self.class.new(entry.basename.to_s, path, mtime: mtime_local(pathname + entry))
+      end
+    end
+
+    # @see entries_as
+    def entries_sftp(dir_only: false, file_only: false, top_level: true)
+      if top_level
+        return entries_sftp_top_level.select(&:directory?) if dir_only
+        return entries_sftp_top_level.select(&:file?) if file_only
+
+        return entries_sftp_top_level
+      end
+
+      entries_glob('**/*', file_only: file_only, dir_only: dir_only)
+    end
+
+    # @return [Array<CollectorFile>] The array of file/folders in the directory
+    def entries_sftp_top_level
+      entries.filter_map do |entry|
+        next(nil) if ONETWODOTS.include?(entry.name)
+
+        self.class.new(entry.name, path, mtime: mtime_sftp(entry), sftp: @sftp)
       end
     end
 
     # Basename alias
+    #
     # @return [String] The name of the file
     def name
       basename
     end
 
     # Path alias
+    #
     # @return [String] The path of the File
     def to_s
       path
@@ -159,17 +214,33 @@ module Datacollector
 
     private
 
-    # Get the mtime of the file from an item of entries
+    # Get the mtime of the file from an item of entries (from Pathname or SFTP session)
     #
     # @param entry [Pathname, Net::SFTP::Protocol::V01::Name] The entry to get the mtime from
     # @return [Integer] The mtime of the file
     def fetch_mtime(entry)
       case entry
       when Pathname
-        entry.mtime
+        mtime_local(entry)
       when Net::SFTP::Protocol::V01::Name
-        Time.zone.at(entry.attributes.mtime)
+        mtime_sfpt(entry)
       end
+    end
+
+    # Get the mtime of the file from an item of entries (from Pathname)
+    #
+    # @param entry [Pathname] The entry to get the mtime from
+    # @return [Integer] The mtime of the file
+    def mtime_local(entry)
+      entry.mtime
+    end
+
+    # Get the mtime of the file from an item of sftp entries
+    #
+    # @param entry [Net::SFTP::Protocol::V01::Name] The entry to get the mtime from
+    # @return [Integer] The mtime of the file
+    def mtime_sftp(entry)
+      Time.zone.at(entry.attributes.mtime)
     end
 
     # Build fstruct.relative_path an item of entries
