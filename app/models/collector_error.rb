@@ -17,21 +17,21 @@ class CollectorError < ApplicationRecord
   # @param mtime [Time] Timestamp
   # @return [CollectorError]
   def self.find_by_path(path, mtime)
-    error_code = hash(path, mtime)
+    error_code = digest(path, mtime)
     find_by(error_code: error_code)
   end
 
   # Find or create a record by path
   # (see #self.find_or_create_by_path)
   def self.find_or_create_by_path(path, mtime = nil)
-    error_code = hash(path, mtime)
+    error_code = digest(path, mtime)
     find_or_create_by(error_code: error_code)
   end
 
   # Generate a hash from file_path and modified_at timestamp that can be used for error tracking
   # @param (see #find_by_path)
   # @return [String] the digest
-  def self.hash(path, mtime)
+  def self.digest(path, mtime)
     # Digest::SHA256.hexdigest(path + date.to_s)
     Digest::SHA256.hexdigest(path + mtime.to_i.to_s)
   end
