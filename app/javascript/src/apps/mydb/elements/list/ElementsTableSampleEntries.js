@@ -412,7 +412,7 @@ export default class ElementsTableSampleEntries extends Component {
   render() {
     const { displayedMoleculeGroup } = this.state;
     return (
-      <Table className="sample-entries">
+      <Table className="elements" hover>
         {Object.keys(displayedMoleculeGroup).map((group, index) => {
           const moleculeGroup = displayedMoleculeGroup[group];
           const { numSamples } = displayedMoleculeGroup[group];
