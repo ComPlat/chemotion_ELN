@@ -31,10 +31,9 @@ module Import
       private
 
       def set_all_inactive
-        ::ReactionProcessEditor::Ontology.find_each do |ontology|
-          ontology.active = false
-          ontology.save(validate: false)
-        end
+        # rubocop:disable Rails/SkipsModelValidations
+        ::ReactionProcessEditor::Ontology.update_all(active: false)
+        # rubocop:enable Rails/SkipsModelValidations
       end
 
       def create_from_csv(csv)
@@ -63,7 +62,7 @@ module Import
         dependencies = {}
         parents.each do |parent|
           role, role_dependencies = parent.split(PARENT_DEPENDENCIES_SEPARATOR)
-          role = role.delete(ROLE_DELETE_CHARS).strip
+          role = role.delete(ROLE_DELETE_CHARS).strip.tr(' ', '_')
 
           dependencies[role] ||= []
           dependencies[role] << role_dependencies(role_dependencies)
@@ -76,8 +75,8 @@ module Import
       def role_dependencies(dependencies)
         options = {}
         dependencies&.scan(VALUES_WITH_BRACKET)&.each do |chmo_id, dep_type|
-          options[dep_type.strip] ||= []
-          options[dep_type.strip] << chmo_id.tr('_', ':').strip
+          options[dep_type.strip.tr(' ', '_')] ||= []
+          options[dep_type.strip.tr(' ', '_')] << chmo_id.strip
         end
         options['automation_mode'] ||= options['mode'].presence if options['mode'].presence
         options.delete('mode')

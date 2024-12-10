@@ -993,8 +993,8 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.string "label"
     t.string "device_code"
     t.jsonb "detectors"
-    t.jsonb "mobile_phases", default: [], array: true
-    t.jsonb "stationary_phases", default: [], array: true
+    t.jsonb "mobile_phase", default: [], array: true
+    t.jsonb "stationary_phase", default: [], array: true
     t.jsonb "default_inject_volume"
     t.string "description"
     t.jsonb "steps"
