@@ -54,8 +54,8 @@ function ReactionsHeader({
 
   return (
     <tr
-      style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
+      role="button"
     >
       <td colSpan="2" className="position-relative">
         {showPreviews && (
@@ -99,8 +99,8 @@ function GenericElementsHeader({
 }) {
   return (
     <tr
-      style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
+      role="button"
     >
       <td colSpan="2" className="position-relative">
         <div className="preview-table">
@@ -290,12 +290,10 @@ export default class ElementsTableGroupedEntries extends Component {
 
     const rows = elements.map((element) => {
       const selected = this.isElementSelected(element);
-      const style = (selected || keyboardSelectedElementId === element.id) ? {
-        color: '#fff', background: '#337ab7'
-      } : {};
-
+      const className = (selected || keyboardSelectedElementId === element.id) ? 
+        "text-bg-primary" : "";
       return (
-        <tr key={element.id} style={style}>
+        <tr key={element.id} className={className}>
           <td width="30px">
             <ElementCheckbox
               element={element}
@@ -346,12 +344,10 @@ export default class ElementsTableGroupedEntries extends Component {
 
     const rows = elements.map((element) => {
       const selected = this.isElementSelected(element);
-      const style = (selected || keyboardSelectedElementId === element.id) ? {
-        color: '#fff', background: '#337ab7'
-      } : {};
+      const className = (selected || keyboardSelectedElementId === element.id) ? "text-bg-primary" : "";
 
       return (
-        <tr key={element.id} style={style}>
+        <tr key={element.id} className={className}>
           <td width="30px">
             <ElementCheckbox
               element={element}
@@ -361,8 +357,8 @@ export default class ElementsTableGroupedEntries extends Component {
           </td>
           <td
             role="gridcell"
-            style={{ cursor: 'pointer' }}
             onClick={() => this.showDetails(element.id)}
+            role="button"
           >
             <div className="d-flex gap-2">
               <div className="preview-table">
@@ -415,7 +411,7 @@ export default class ElementsTableGroupedEntries extends Component {
     }
 
     return (
-      <tbody key={index}>
+      <tbody key={index} className="sheet">
         {groupHeader}
         {showGroup && groupedElements}
       </tbody>
@@ -428,7 +424,7 @@ export default class ElementsTableGroupedEntries extends Component {
     );
 
     return (
-      <Table>
+      <Table className="elements">
         {tableContent}
       </Table>
     );
