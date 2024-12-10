@@ -27,6 +27,11 @@
   }
 }
 
-.sample-entries > tbody > tr > td {
-  border-top: 0;
+.elements > tbody > tr {
+  > td {
+    border-top: 0;
+  }
+  &.text-bg-primary td {
+    @extend .text-white;
+  }
 }
