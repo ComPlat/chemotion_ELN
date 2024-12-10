@@ -43,6 +43,10 @@ module Datacollector
       @config = Configuration.new!(device)
     end
 
+    def error_tracker
+      @error_tracker ||= ErrorTracker.new(device)
+    end
+
     # config aliases
     delegate :collector_dir, to: :config
     delegate :expected_count, to: :config
@@ -212,11 +216,11 @@ module Datacollector
     end
 
     def try_delete_or_create_error(file)
-      try_delete(file) || CollectorError.find_or_create_by_path(file.path, file.mtime)
+      try_delete(file) || error_tracker.find_or_create_by_path(file.path, file.mtime)
     end
 
     def previous_failure?(file)
-      return false unless CollectorError.find_by_path(file.path, file.mtime)
+      return false unless error_tracker.find_by_path(file.path, file.mtime)
 
       try_delete(file)
       true
