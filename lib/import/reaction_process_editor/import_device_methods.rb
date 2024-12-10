@@ -46,10 +46,9 @@ module Import
       end
 
       def set_all_inactive
-        ::ReactionProcessEditor::OntologyDeviceMethod.find_each do |method|
-          method.active = false
-          method.save(validate: false)
-        end
+        # rubocop:disable Rails/SkipsModelValidations
+        ::ReactionProcessEditor::OntologyDeviceMethod.update_all(active: false)
+        # rubocop:enable Rails/SkipsModelValidations
       end
 
       def method_options(method_csv:, device_name:)
@@ -62,8 +61,8 @@ module Import
           device_code: device_code,
           label: method_label(method_csv: method_csv, device_name: device_name),
           detectors: detectors(method_csv['Detectors']),
-          mobile_phases: mobile_phases_options(method_csv['Mobile Phase']),
-          stationary_phases: stationary_phases_options(method_csv['Stationary Phase']),
+          mobile_phase: mobile_phase_options(method_csv['Mobile Phase']),
+          stationary_phase: stationary_phase_options(method_csv['Stationary Phase']),
           default_inject_volume: { value: method_csv['Def. Inj. Vol.'], unit: 'ml' },
           description: method_csv['Description'],
           steps: steps(method_csv),
@@ -123,7 +122,7 @@ module Import
         return [] unless chmo_id
 
         # TODO: A detector might have multiple metrics /metric_names (therefore we return an array).
-        # Current files have only one. Adapt CSV parsing once File format has been defined. cbuggle, 14.10.2024.
+        # Current files have only one. Adapt CSV parsing once/if File format changes. cbuggle, 14.10.2024.
         [{
           label: label,
           data_type: data_type,
@@ -132,11 +131,11 @@ module Import
         }]
       end
 
-      def mobile_phases_options(mobile_phases)
-        mobile_phases.scan(REGEX_NAMES_AND_BRACKET_VALUES).pluck(0).flatten
+      def mobile_phase_options(mobile_phase)
+        mobile_phase.scan(REGEX_NAMES_AND_BRACKET_VALUES).pluck(0).flatten
       end
 
-      def stationary_phases_options(phase)
+      def stationary_phase_options(phase)
         phase_data = phase.match(REGEX_NAMES_AND_BRACKET_VALUES)
 
         label = phase_data[1].strip
