@@ -16,11 +16,7 @@ const CalendarEntryEditor = (props) => {
   const notAccessible = !accessible;
   const editable = calendarStore.current_entry_editable;
   const disabled = !editable || notAccessible;
- 
-  let currentCalendarTypes = calendarStore.calendar_types.default;
-  if (calendarStore.eventable_type) {
-    currentCalendarTypes = calendarStore.calendar_types[calendarStore.eventable_type];
-  } 
+  const currentCalendarTypes = calendarStore.calendar_types[calendarStore.eventable_type] || calendarStore.calendar_types.default;
   const calendarTypes = currentCalendarTypes.map((type) => (
     { label: capitalizeWords(type), value: type }
   ));
@@ -179,7 +175,7 @@ const CalendarEntryEditor = (props) => {
               rows={4}
             />
           </Form.Group>
-    
+
           <Form.Group controlId="calendarEntryType" className="mb-3">
             <Form.Label>Type</Form.Label>
             <Select
@@ -190,7 +186,7 @@ const CalendarEntryEditor = (props) => {
               options={calendarTypes}
             />
           </Form.Group>
-    
+
           <Form.Group
             controlId="calendarEntryEmailNotification"
             className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
@@ -205,7 +201,7 @@ const CalendarEntryEditor = (props) => {
               options={notifyUserList}
             />
           </Form.Group>
-    
+
           <Form.Group
             controlId="calendarEntryNotifiedUsers"
             className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
@@ -219,7 +215,7 @@ const CalendarEntryEditor = (props) => {
               rows={4}
             />
           </Form.Group>
-    
+
           <Form.Group controlId="calendarStartEntry" className="mb-3">
             <Form.Label className="w-100">Start*</Form.Label>
             <DateTimePicker
@@ -231,7 +227,7 @@ const CalendarEntryEditor = (props) => {
               className="w-100"
             />
           </Form.Group>
-    
+
           <Form.Group controlId="calendarEndEntry" className="mb-3">
             <Form.Label className="w-100">End*</Form.Label>
             <DateTimePicker

@@ -71,9 +71,9 @@ module ContainerHelpers
       if child[:container_type] == 'dataset' && child[:dataset].present? && child[:dataset]['changed']
         klass_id = child[:dataset]['dataset_klass_id']
         properties = child[:dataset]['properties']
-        container.save_dataset(dataset_klass_id: klass_id, properties: properties)
+        container.save_dataset(dataset_klass_id: klass_id, properties: properties, element: parent_container&.root&.containable, current_user: current_user) # rubocop:disable Layout/LineLength
       end
-      create_or_update_containers(child[:children], container)
+      create_or_update_containers(child[:children], container, current_user)
     end
   end
 
