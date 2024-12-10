@@ -48,7 +48,7 @@ module OrdKit
               device: workup['device'],
               detectors: detectors,
               method: workup['method'],
-              mobile_phases: mobile_phases,
+              mobile_phase: mobile_phase,
               stationary_phase: workup['stationary_phase'],
               stationary_phase_temperature: stationary_phase_temperature,
               volume: volume,
@@ -59,8 +59,8 @@ module OrdKit
             DetectorExporter.new(workup).to_ord
           end
 
-          def mobile_phases
-            workup['mobile_phases']
+          def mobile_phase
+            workup['mobile_phase']
           end
 
           def stationary_phase_temperature
