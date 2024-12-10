@@ -442,12 +442,12 @@ export default class ScreenDetails extends Component {
             researchplans={screen.research_plans}
             flowConfiguration={flowConfiguration}
           />
-          <ElementDetailSortTab
-            type="screen"
-            availableTabs={Object.keys(tabContentsMap)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
           <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="screen"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
             <Tabs
               mountOnEnter
               unmountOnExit
