@@ -3,19 +3,23 @@
 /* eslint-disable no-restricted-globals */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Accordion, Button, Card } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';
 import { previewContainerImage } from 'src/utilities/imageHelper';
-import { JcampIds, BuildSpcInfos } from 'src/utilities/SpectraHelper';
+import {
+  JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind
+} from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
-import EditorAnalysisBtn from 'src/components/generic/EditorAnalysisBtn';
-import Panel from 'src/components/legacyBootstrap/Panel'
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
 const headerBtnGroup = (props) => {
   const {
@@ -31,41 +35,63 @@ const headerBtnGroup = (props) => {
     }
   };
   const spcInfos = BuildSpcInfos(generic, container);
-  const { hasChemSpectra } = UIStore.getState();
+  const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
   const toggleSpectraModal = (e) => {
     SpectraActions.ToggleModal();
     SpectraActions.LoadSpectra.defer(spcInfos);
   };
+  const toggleNMRDisplayerModal = (e) => {
+    const spcInfosForNMRDisplayer = BuildSpcInfosForNMRDisplayer(
+      generic,
+      container
+    );
+    e.stopPropagation();
+    SpectraActions.ToggleModalNMRDisplayer();
+    SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
+  };
+  const { chmos } = UserStore.getState();
+  const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
+
   return (
-    <div className="upper-btn">
-      <Button
-        size="sm"
-        variant="danger"
-        disabled={readOnly}
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); fnRemove(container); }}
-      >
-        <i className="fa fa-trash" />
-      </Button>
-      <EditorAnalysisBtn
+    <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
+      <SpectraEditorButton
         element={generic}
         hasJcamp={hasJcamp}
         spcInfos={spcInfos}
         hasChemSpectra={hasChemSpectra}
         toggleSpectraModal={toggleSpectraModal}
         confirmRegenerate={confirmRegenerate}
+        toggleNMRDisplayerModal={toggleNMRDisplayerModal}
+        hasNMRium={hasNMRium}
+        hasEditedJcamp={false}
+        confirmRegenerateEdited={() => {}}
       />
+      <Button
+        size="xxsm"
+        variant="danger"
+        disabled={readOnly}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          fnRemove(container);
+        }}
+      >
+        <i className="fa fa-trash" />
+      </Button>
     </div>
   );
 };
 
 const newHeader = (props) => {
-  const { container } = props;
+  const { container, noAct } = props;
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
   const insText = instrumentText(container);
   const previewImg = previewContainerImage(container);
   const status = container.extended_metadata.status || '';
-  const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
+  const content = container.extended_metadata.content || {
+    ops: [{ insert: '' }],
+  };
   const contentOneLine = {
     ops: content.ops.map((x) => {
       const c = Object.assign({}, x);
@@ -84,75 +110,102 @@ const newHeader = (props) => {
   }
 
   return (
-    <div className="analysis-header order" style={{ width: '100%' }}>
-      <div className="preview">
+    <div className="analysis-header w-100 d-flex gap-3 lh-base">
+      <div className="preview border d-flex align-items-center">
         <ImageModal
           hasPop={hasPop}
           previewObject={{
-            src: previewImg
+            src: previewImg,
           }}
           popObject={{
             title: container.name,
             src: previewImg,
             fetchNeeded,
-            fetchId
+            fetchId,
           }}
         />
       </div>
-      <div className="abstract">
-        {
-          headerBtnGroup(props)
-        }
-        <div className="lower-text">
-          <div className="main-title">{container.name}</div>
-          <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">Status: {status} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}</div>
-
-          <div className="desc sub-title">
-            <span style={{ float: 'left', marginRight: '5px' }}>
-              Content:
-            </span>
-            <QuillViewer value={contentOneLine} preview />
+      <div className="flex-grow-1">
+        <div className="d-flex justify-content-between align-items-center">
+          <h4 className="flex-grow-1">{container.name}</h4>
+          {!noAct && headerBtnGroup(props)}
+        </div>
+        <div>
+          {`Type: ${kind}`}
+          <br />
+          {`Status: ${status}`}
+          <span className="me-5" />
+          {insText}
+        </div>
+        <div className="d-flex gap-2">
+          <span>Content:</span>
+          <div className="flex-grow-1">
+            <QuillViewer value={contentOneLine} className="p-0" preview />
           </div>
-
         </div>
       </div>
     </div>
   );
 };
 
-const header = container => (
+const header = (container) => (
   <>
     {container.name}
-    {(container.extended_metadata && container.extended_metadata.kind && container.extended_metadata.kind !== '') ?
-      (` - Type: ${container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind}`) : ''}
-    {(container.extended_metadata && container.extended_metadata.status && container.extended_metadata.status !== '') ? (` - Status: ${container.extended_metadata.status}`) : ''}
+    {(container.extended_metadata?.kind || '') !== ''
+      ? ` - Type: ${
+          container.extended_metadata.kind.split('|')[1] ||
+          container.extended_metadata.kind
+        }`
+      : ''}
+    {(container.extended_metadata?.status || '') !== ''
+      ? ` - Status: ${container.extended_metadata.status}`
+      : ''}
   </>
 );
 
-const AiHeaderDeleted = (props) => {
+function HeaderDeleted(props) {
+  const { container, fnUndo, noAct } = props;
+  return (
+    <div className="d-flex w-100 mb-0 align-items-center">
+      <strike className="flex-grow-1">{header(container)}</strike>
+      {!noAct && (
+        <Button
+          className="ms-auto"
+          size="xsm"
+          variant="danger"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fnUndo(container);
+          }}
+        >
+          <i className="fa fa-undo" aria-hidden="true" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
+HeaderDeleted.propTypes = {
+  container: PropTypes.object.isRequired,
+  fnUndo: PropTypes.func,
+  noAct: PropTypes.bool,
+};
+
+HeaderDeleted.defaultProps = { fnUndo: () => {}, noAct: false };
+
+function AiHeaderDeleted(props) {
   const {
     container, idx, fnUndo, noAct
   } = props;
-  const id = container.id || `fake_${idx}`;
-
   return (
-    <Panel eventKey={id} key={`gen_${id}_ai`}>
-      <Panel.Heading>
-        <Panel.Title toggle>
-          <strike>{header(container)}</strike>
-          {
-            noAct ? null : (
-              <Button className="pull-right" size="sm" variant="danger" onClick={(e) => { e.preventDefault(); e.stopPropagation(); fnUndo(container); }}>
-                <i className="fa fa-undo" aria-hidden="true" />
-              </Button>
-            )
-          }
-        </Panel.Title>
-      </Panel.Heading>
-    </Panel>
+    <Card.Header className="rounded-0 p-0 border-bottom-0">
+      <AccordionHeaderWithButtons eventKey={idx}>
+        <HeaderDeleted container={container} fnUndo={fnUndo} noAct={noAct} />
+      </AccordionHeaderWithButtons>
+    </Card.Header>
   );
-};
+}
 
 AiHeaderDeleted.propTypes = {
   container: PropTypes.object.isRequired,
@@ -162,35 +215,47 @@ AiHeaderDeleted.propTypes = {
 };
 AiHeaderDeleted.defaultProps = { fnUndo: () => {}, noAct: false };
 
-const AiHeader = (props) => {
+function AiHeader(props) {
   const {
-    container, idx, generic, readOnly, fnChange, fnRemove, noAct, handleSubmit
+    container,
+    idx,
+    generic,
+    readOnly,
+    fnChange,
+    handleSubmit,
   } = props;
-  const id = idx; // container.id || `fake_${idx}`;
 
   return (
-    <Panel eventKey={id} key={`gen_${id}_ai`}>
-      <Panel.Heading>
-        <Panel.Title toggle>
+    <>
+      <Card.Header className="rounded-0 p-0 border-bottom-0">
+        <AccordionHeaderWithButtons eventKey={idx}>
           {newHeader(props)}
-        </Panel.Title>
-      </Panel.Heading>
-      <Panel.Body collapsible>
-        <ContainerComponent
-          templateType={generic.type}
-          readOnly={readOnly}
-          container={container}
-          onChange={() => fnChange()}
-        />
-        <ViewSpectra
-          sample={generic}
-          handleSampleChanged={fnChange}
-          handleSubmit={handleSubmit}
-        />
-      </Panel.Body>
-    </Panel>
+        </AccordionHeaderWithButtons>
+      </Card.Header>
+      <Accordion.Collapse eventKey={idx}>
+        <Card.Body>
+          <ContainerComponent
+            templateType={generic.type}
+            readOnly={readOnly}
+            disabled={readOnly}
+            container={container}
+            onChange={fnChange}
+          />
+          <ViewSpectra
+            sample={generic}
+            handleSampleChanged={fnChange}
+            handleSubmit={handleSubmit}
+          />
+          <NMRiumDisplayer
+            sample={generic}
+            handleSampleChanged={fnChange}
+            handleSubmit={handleSubmit}
+          />
+        </Card.Body>
+      </Accordion.Collapse>
+    </>
   );
-};
+}
 
 AiHeader.propTypes = {
   container: PropTypes.object.isRequired,
@@ -198,10 +263,9 @@ AiHeader.propTypes = {
   readOnly: PropTypes.bool.isRequired,
   generic: PropTypes.object.isRequired,
   fnChange: PropTypes.func.isRequired,
-  fnRemove: PropTypes.func,
-  noAct: PropTypes.bool,
-  handleSubmit: PropTypes.func.isRequired
+  handleSubmit: PropTypes.func.isRequired,
 };
-AiHeader.defaultProps = { fnRemove: () => {}, noAct: false };
 
-export { AiHeader, AiHeaderDeleted };
+export {
+  AiHeader, AiHeaderDeleted
+};

@@ -2,10 +2,10 @@
 /* eslint-disable react/no-array-index-key */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Badge, Button } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
-import GenericContainerGroup from 'src/components/generic/GenericContainerGroup';
+import GenericContainerSet from 'src/components/generic/GenericContainerSet';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {
@@ -22,7 +22,8 @@ export default class GenericElDetailsContainers extends Component {
   }
 
   componentDidMount() {
-    TextTemplateActions.fetchTextTemplates(this.props.genericEl.type);
+    const { genericEl } = this.props;
+    TextTemplateActions.fetchTextTemplates(genericEl.type);
   }
 
   handleChange() {
@@ -52,9 +53,15 @@ export default class GenericElDetailsContainers extends Component {
       genericEl.container.children.push(analyses);
     }
 
-    genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+    genericEl.container.children
+      // eslint-disable-next-line no-bitwise
+      .filter((element) => ~element.container_type.indexOf("analyses"))[0]
+      .children.push(container);
 
-    const newKey = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
+    const newKey = genericEl.container.children.filter(
+      // eslint-disable-next-line no-bitwise
+      (element) => ~element.container_type.indexOf('analyses')
+    )[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
     handleElChanged(genericEl);
@@ -76,36 +83,42 @@ export default class GenericElDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
-          <i className="fa fa-plus" aria-hidden="true" />
-          {' '}
-          Add analysis
-        </Button>
+        <div className="mt-2">
+          <Button size="sm" variant="success" onClick={this.handleAdd}>
+            <i className="fa fa-plus" aria-hidden="true" />
+            &nbsp; Add analysis
+          </Button>
+        </div>
       );
     }
-    return <div />;
+    return null;
   }
 
   renderNoAct(genericEl, readOnly) {
     const { linkedAis, handleSubmit } = this.props;
     if (linkedAis.length < 1) return null; // if layer has no linked analyses
     if (genericEl.container != null) {
-      const analysesContainer = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+      const analysesContainer = genericEl.container.children.filter(
+        // eslint-disable-next-line no-bitwise
+        (element) => ~element.container_type.indexOf("analyses")
+      );
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div className="gen_linked_container_group">
-            <h5>Linked Analyses</h5>
-            <GenericContainerGroup
-              ae={analysesContainer}
-              readOnly={readOnly}
-              generic={genericEl}
-              fnChange={this.handleChange}
-              fnUndo={this.handleUndo}
-              fnRemove={this.handleRemove}
-              noAct
-              linkedAis={linkedAis}
-              handleSubmit={handleSubmit}
-            />
+            <h4><Badge bg="dark">Linked Analyses</Badge></h4>
+            <div className="mb-2 me-1 d-flex justify-content-between align-items-center">
+              <GenericContainerSet
+                ae={analysesContainer}
+                readOnly={readOnly}
+                generic={genericEl}
+                fnChange={this.handleChange}
+                fnUndo={this.handleUndo}
+                fnRemove={this.handleRemove}
+                noAct
+                linkedAis={linkedAis}
+                handleSubmit={handleSubmit}
+              />
+            </div>
           </div>
         );
       }
@@ -118,42 +131,46 @@ export default class GenericElDetailsContainers extends Component {
     const {
       genericEl, readOnly, noAct, handleSubmit
     } = this.props;
+    const { activeContainer } = this.state;
+
     if (noAct) return this.renderNoAct(genericEl, readOnly);
-    if (genericEl.container != null) {
-      const analysesContainer = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+
+    if (genericEl.container != null && genericEl.container.children) {
+      const analysesContainer = genericEl.container.children.filter(
+        // eslint-disable-next-line no-bitwise
+        (element) => ~element.container_type.indexOf("analyses")
+      );
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <p className="generic-add-analysis">
-              &nbsp;
+            <div className="mb-2 me-1 d-flex justify-content-end">
               {this.addButton()}
-            </p>
-            <GenericContainerGroup
+            </div>
+            <GenericContainerSet
               ae={analysesContainer}
               readOnly={readOnly}
               generic={genericEl}
               fnChange={this.handleChange}
+              fnSelect={this.handleAccordionOpen}
               fnUndo={this.handleUndo}
               fnRemove={this.handleRemove}
               handleSubmit={handleSubmit}
+              activeKey={activeContainer}
             />
           </div>
         );
       }
       return (
-        <div>
-          <p className="m-4 generic-add-analysis">
-            There are currently no Analyses.
-            {this.addButton()}
-          </p>
+        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+          <span className="ms-3"> There are currently no Analyses. </span>
+          <div>{this.addButton()}</div>
         </div>
       );
     }
     return (
-      <div>
-        <p className="m-4">
-          There are currently no Analyses.
-        </p>
+      <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+        <span className="ms-3"> There are currently no Analyses. </span>
+        <div>{this.addButton()}</div>
       </div>
     );
   }
