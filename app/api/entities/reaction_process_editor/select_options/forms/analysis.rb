@@ -8,7 +8,6 @@ module Entities
           def select_options
             {
               CHROMATOGRAPHY: SelectOptions::Forms::Analysis::Chromatography.new.select_options,
-              SPECTROMETRY: SelectOptions::Forms::Analysis::Spectrometry.new.select_options,
               SPECTROSCOPY: SelectOptions::Forms::Analysis::Spectroscopy.new.select_options,
             }
           end
