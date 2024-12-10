@@ -197,12 +197,7 @@ class API < Grape::API
   mount Chemotion::CalendarEntryAPI
   mount Chemotion::CommentAPI
   mount Chemotion::CellLineAPI
-  mount Labimotion::ConverterAPI
-  mount Labimotion::GenericKlassAPI
-  mount Labimotion::GenericElementAPI
-  mount Labimotion::GenericDatasetAPI
-  mount Labimotion::SegmentAPI
-  mount Labimotion::LabimotionHubAPI
+  mount Labimotion::LabimotionAPI
   mount Chemotion::InventoryAPI
   mount Chemotion::AffiliationAPI
   mount Chemotion::AdminDeviceAPI
