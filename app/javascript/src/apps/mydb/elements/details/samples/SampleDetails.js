@@ -1015,7 +1015,6 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1033,7 +1032,7 @@ export default class SampleDetails extends React.Component {
       ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : null;
 
     return (
-      <Row style={style}>
+      <Row className='mb-4'>
         <Col md={4}>
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>

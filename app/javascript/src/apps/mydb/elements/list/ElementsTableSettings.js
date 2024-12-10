@@ -1,7 +1,8 @@
 import React from 'react';
-import { Popover, Button, Form, OverlayTrigger } from 'react-bootstrap';
+import { Popover, Form } from 'react-bootstrap';
 
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
+import TabLayoutButton from 'src/apps/mydb/elements/tabLayout/TabLayoutButton';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -234,21 +235,7 @@ export default class ElementsTableSettings extends React.Component {
     );
 
     return (
-      <OverlayTrigger
-        trigger="click"
-        placement="bottom"
-        overlay={popoverSettings}
-        onToggle={this.onToggleTabLayoutContainer}
-        rootClose
-      >
-        <Button
-          size="xsm"
-          variant="light"
-          className="m-2"
-        >
-          <i className="fa fa-sliders" />
-        </Button>
-      </OverlayTrigger>
+      <TabLayoutButton popoverSettings={popoverSettings} onToggle={this.onToggleTabLayoutContainer} />
     );
   }
 }

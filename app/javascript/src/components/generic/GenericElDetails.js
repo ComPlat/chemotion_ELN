@@ -513,18 +513,20 @@ export default class GenericElDetails extends Component {
       >
         <Card.Header>{this.header(genericEl)}</Card.Header>
         <Card.Body>
-          <ElementDetailSortTab
-            type={genericEl.type}
-            availableTabs={Object.keys(tabContents)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            activeKey={activeTab}
-            onSelect={(key) => this.handleSelect(key, genericEl.type)}
-            id="GenericElementDetailsXTab"
-          >
-            {tabContentList}
-          </Tabs>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type={genericEl.type}
+              availableTabs={Object.keys(tabContents)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key, genericEl.type)}
+              id="GenericElementDetailsXTab"
+            >
+              {tabContentList}
+            </Tabs>
+          </div>
         </Card.Body>
         <Card.Footer>
           <div className="d-inline-block p-1">

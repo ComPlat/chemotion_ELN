@@ -2,12 +2,13 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Overlay, Popover } from 'react-bootstrap';
+import { Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
 import _, { isEmpty } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
+import TabLayoutButton from 'src/apps/mydb/elements/tabLayout/TabLayoutButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
@@ -23,7 +24,6 @@ export default class ElementDetailSortTab extends Component {
     };
 
     this.onChangeUser = this.onChangeUser.bind(this);
-    this.onCloseTabLayoutContainer = this.onCloseTabLayoutContainer.bind(this);
     this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
 
     UserActions.fetchCurrentUser();
@@ -56,20 +56,11 @@ export default class ElementDetailSortTab extends Component {
     );
   }
 
-  onCloseTabLayoutContainer() {
-    this.setState(
-      (state) => ({ ...state, showTabLayoutContainer: false }),
-      () => this.updateLayout()
-    );
-  }
-
-  toggleTabLayoutContainer() {
-    const { showTabLayoutContainer } = this.state;
-    const isClosing = showTabLayoutContainer;
+  toggleTabLayoutContainer(show) {
     this.setState(
       (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
       () => {
-        if (isClosing) this.updateLayout();
+        if (!show) this.updateLayout();
       }
     );
   }
@@ -97,11 +88,10 @@ export default class ElementDetailSortTab extends Component {
   }
 
   render() {
-    const { visible, hidden, showTabLayoutContainer } = this.state;
+    const { visible, hidden } = this.state;
     const { tabTitles } = this.props;
     const { currentCollection } = UIStore.getState();
     const tabs = currentCollection?.tabs_segment;
-    const buttonInfo = isEmpty(tabs) ? 'info' : 'light';
 
     const popoverSettings = (
       <Popover>
@@ -120,27 +110,7 @@ export default class ElementDetailSortTab extends Component {
     const buttonRef = React.createRef(null);
 
     return (
-      <>
-        <Button
-          variant={buttonInfo}
-          className="float-end"
-          ref={buttonRef}
-          size="sm"
-          onClick={this.toggleTabLayoutContainer}
-          title="Tabs layout for all collections can also be managed in Collection Tabs page"
-        >
-          <i className="fa fa-sliders" aria-hidden="true" />
-        </Button>
-        <Overlay
-          onHide={this.onCloseTabLayoutContainer}
-          target={buttonRef}
-          placement="left"
-          rootClose
-          show={showTabLayoutContainer}
-        >
-          {popoverSettings}
-        </Overlay>
-      </>
+      <TabLayoutButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
     );
   }
 }

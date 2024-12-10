@@ -232,12 +232,10 @@ export default class ElementsList extends React.Component {
           </Button>
         )}
         <div className="tabs-container--with-full-height position-relative">
-          <div className="position-absolute top-0 end-0">
-            <ElementsTableSettings
-              visible={visible}
-              hidden={hidden}
-            />
-          </div>
+          <ElementsTableSettings
+            visible={visible}
+            hidden={hidden}
+          />
 
           <Tabs
             id="tabList"

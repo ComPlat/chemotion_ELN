@@ -611,13 +611,13 @@ export default class ReactionDetails extends Component {
         </Card.Header>
         <Card.Body>
           {this.reactionSVG(reaction)}
-          <ElementDetailSortTab
-            type="reaction"
-            availableTabs={Object.keys(tabContentsMap)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
           <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="reaction"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
             <Tabs
               mountOnEnter
               activeKey={currentTab}
