@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Col, Row, Container } from 'react-bootstrap';
-import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 import Elements from 'src/apps/mydb/elements/Elements';
@@ -147,11 +146,6 @@ class App extends Component {
           <LoadingModal />
           <ProgressModal />
         </Row>
-        <FlowViewerModal
-          show={showGenericWorkflow || false}
-          data={propGenericWorkflow || {}}
-          fnHide={() => UIActions.showGenericWorkflowModal(false)}
-        />
         <InboxModal showCollectionTree={showCollectionTree} />
         <Calendar />
       </Container>
