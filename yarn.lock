@@ -1377,7 +1377,7 @@
     core-js-pure "^3.20.2"
     regenerator-runtime "^0.13.4"
 
-"@babel/runtime@7":
+"@babel/runtime@7", "@babel/runtime@^7.24.7", "@babel/runtime@^7.26.0":
   version "7.26.0"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.26.0.tgz#8600c2f595f277c60815256418b85356a65173c1"
   integrity sha512-FDSOghenHTiToteC/QRlv2q3DhPZ/oOXTBoirfWNx1Cx3TMVcGWQtMMmQcSvb/JjpNeGzx8Pq/b4fKEJuWm1sw==
@@ -3024,6 +3024,13 @@
   dependencies:
     dequal "^2.0.3"
 
+"@restart/hooks@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@restart/hooks/-/hooks-0.5.0.tgz#a594af7c3b64f5e65a7aca011551b0cdd93ec14e"
+  integrity sha512-wS+h6IusJCPjTkmOOrRZxIPICD/mtFA3PRZviutoM23/b7akyDGfZF/WS+nIFk27u7JDhPE2+0GBdZxjSqHZkg==
+  dependencies:
+    dequal "^2.0.3"
+
 "@restart/ui@^1.6.8":
   version "1.6.9"
   resolved "https://registry.yarnpkg.com/@restart/ui/-/ui-1.6.9.tgz#05ec905a56486fa39b62f29c09b3917e57acd62f"
@@ -3037,6 +3044,21 @@
     dequal "^2.0.3"
     dom-helpers "^5.2.0"
     uncontrollable "^8.0.1"
+    warning "^4.0.3"
+
+"@restart/ui@^1.9.2":
+  version "1.9.2"
+  resolved "https://registry.yarnpkg.com/@restart/ui/-/ui-1.9.2.tgz#dad8f084e6a56f87f9799dbc248af04168ffc03b"
+  integrity sha512-MWWqJqSyqUWWPBOOiRQrX57CBc/9CoYONg7sE+uag72GCAuYrHGU5c49vU5s4BUSBgiKNY6rL7TULqGDrouUaA==
+  dependencies:
+    "@babel/runtime" "^7.26.0"
+    "@popperjs/core" "^2.11.8"
+    "@react-aria/ssr" "^3.5.0"
+    "@restart/hooks" "^0.5.0"
+    "@types/warning" "^3.0.3"
+    dequal "^2.0.3"
+    dom-helpers "^5.2.0"
+    uncontrollable "^8.0.4"
     warning "^4.0.3"
 
 "@sentry-internal/tracing@7.73.0":
@@ -3742,6 +3764,11 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.11.tgz#2596fb352ee96a1379c657734d4b913a613ad563"
   integrity sha512-ga8y9v9uyeiLdpKddhxYQkxNDrfvuPrlFb0N1qnZZByvcElJaXthF1UhvCh9TLWJBEHeNtdnbysW7Y6Uq8CVng==
 
+"@types/prop-types@^15.7.12":
+  version "15.7.14"
+  resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.14.tgz#1433419d73b2a7ebfc6918dcefd2ec0d5cd698f2"
+  integrity sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==
+
 "@types/prop-types@^15.7.5":
   version "15.7.7"
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.7.tgz#f9361f7b87fd5d8188b2c998db0a1f47e9fb391a"
@@ -3917,6 +3944,11 @@
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@types/warning/-/warning-3.0.0.tgz#0d2501268ad8f9962b740d387c4654f5f8e23e52"
   integrity sha512-t/Tvs5qR47OLOr+4E9ckN8AmP2Tf16gWq+/qA4iUGS/OOyHVO8wv2vjJuX8SNOUTJyWb+2t7wJm6cXILFnOROA==
+
+"@types/warning@^3.0.3":
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/@types/warning/-/warning-3.0.3.tgz#d1884c8cc4a426d1ac117ca2611bf333834c6798"
+  integrity sha512-D1XC7WK8K+zZEveUPY+cf4+kgauk8N4eHr/XIHXGlGYkHLud6hK9lYfZk1ry1TNh798cZUCgb6MqGEG8DkJt6Q==
 
 "@types/webpack@5":
   version "5.28.5"
@@ -5179,10 +5211,10 @@ cheerio@^1.0.0-rc.3:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chem-generic-ui@^1.4.9:
-  version "1.4.9"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.4.9.tgz#ccbb94ca3009b036c574b191982db7820bcdd6bf"
-  integrity sha512-5f/KbVHsA3FvCh5ahVGUGuWy+GKXVJDrf5gWIEw7WRKXyKH9uuqONbiZ1UFCxNGrJwFYlE9p/M9K51oFEAtuiQ==
+chem-generic-ui@^2.0.0-rc14:
+  version "2.0.0-rc9"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.0.0-rc9.tgz#c90885076e994a482495605489b707e90620f958"
+  integrity sha512-5lj43Q1EPkr9q5tIVwGRCgnCQ3JNXDAzTBQ4fgbf21R0qgfC3sQXs9e07/2hiOkw/u5HZ8srVcrbvcPl6wWz8Q==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.5.2"
     "@fortawesome/free-regular-svg-icons" "^6.5.2"
@@ -5190,15 +5222,16 @@ chem-generic-ui@^1.4.9:
     "@fortawesome/react-fontawesome" "^0.2.1"
     ag-grid-community "^32.0.1"
     ag-grid-react "^32.0.1"
-    date-fns "^2.29.3"
-    generic-ui-core "^1.5.0"
+    generic-ui-core "^1.5.1-rc6"
     html-to-image "^1.11.11"
+    humps "^2.0.1"
     lodash "^4.17.21"
     moment "^2.29.4"
     moment-precise-range-plugin "^1.3.0"
     numeral "^2.0.6"
     prop-types "^15.8.1"
-    react-datepicker "^6.9.0"
+    react-bootstrap "~2.10.5"
+    react-datepicker "~7.3.0"
     react-dnd "^14.0.3"
     react-dnd-html5-backend "^14.0.3"
     react-draggable "^4.4.5"
@@ -6435,13 +6468,6 @@ date-arithmetic@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/date-arithmetic/-/date-arithmetic-4.1.0.tgz#e5d6434e9deb71f79760a37b729e4a515e730ddf"
   integrity sha512-QWxYLR5P/6GStZcdem+V1xoto6DMadYWpMXU82ES3/RfR3Wdwr3D0+be7mgOJ+Ov0G9D5Dmb9T17sNLQYj9XOg==
-
-date-fns@^2.29.3:
-  version "2.30.0"
-  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.30.0.tgz#f367e644839ff57894ec6ac480de40cae4b0f4d0"
-  integrity sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==
-  dependencies:
-    "@babel/runtime" "^7.21.0"
 
 date-fns@^3.3.1:
   version "3.6.0"
@@ -7922,10 +7948,10 @@ gauge@^4.0.3:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
-generic-ui-core@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.5.0.tgz#2ed2d11901f90c1df2b946de1e82e56101e27728"
-  integrity sha512-MkoNSd2KompcjgfoSa+sGH2OAs2vowMJv13Pfas6nzJVDwSCmRTYFxMIKFjzJIhXd70QwAR4DcJ5T2UbwUyjmg==
+generic-ui-core@^1.5.1-rc6:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.5.1.tgz#ab37123284b36983d8ee23e06f324acce9a74e83"
+  integrity sha512-vYRrzDwZMgcYajRu3K3mWID+3Zq3z4PVeDjeS1LrC2hekqgc88BfPolHK10nvZtsEcYqCNfHqTRHOYyZkWJRTQ==
   dependencies:
     chem-units "^1.2.0"
     lodash "^4.17.21"
@@ -12154,6 +12180,25 @@ react-bootstrap@~2.10.2:
     uncontrollable "^7.2.1"
     warning "^4.0.3"
 
+react-bootstrap@~2.10.5:
+  version "2.10.7"
+  resolved "https://registry.yarnpkg.com/react-bootstrap/-/react-bootstrap-2.10.7.tgz#63954e8faa6f0d28d9c755e5f8fbd27b5b09764a"
+  integrity sha512-w6mWb3uytB5A18S2oTZpYghcOUK30neMBBvZ/bEfA+WIF2dF4OGqjzoFVMpVXBjtyf92gkmRToHlddiMAVhQqQ==
+  dependencies:
+    "@babel/runtime" "^7.24.7"
+    "@restart/hooks" "^0.4.9"
+    "@restart/ui" "^1.9.2"
+    "@types/prop-types" "^15.7.12"
+    "@types/react-transition-group" "^4.4.6"
+    classnames "^2.3.2"
+    dom-helpers "^5.2.1"
+    invariant "^2.2.4"
+    prop-types "^15.8.1"
+    prop-types-extra "^1.1.0"
+    react-transition-group "^4.4.5"
+    uncontrollable "^7.2.1"
+    warning "^4.0.3"
+
 react-calendar@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/react-calendar/-/react-calendar-4.0.0.tgz#99ad73dd0c7c5b25aa535a5fdeee3d71bfe45faa"
@@ -12225,17 +12270,6 @@ react-date-picker@^9.2.0:
     react-calendar "^4.0.0"
     react-fit "^1.4.0"
     update-input-width "^1.2.2"
-
-react-datepicker@^6.9.0:
-  version "6.9.0"
-  resolved "https://registry.yarnpkg.com/react-datepicker/-/react-datepicker-6.9.0.tgz#0ad234dad81d567ae64cad79697bbad69c95490b"
-  integrity sha512-QTxuzeem7BUfVFWv+g5WuvzT0c5BPo+XTCNbMTZKSZQLU+cMMwSUHwspaxuIcDlwNcOH0tiJ+bh1fJ2yxOGYWA==
-  dependencies:
-    "@floating-ui/react" "^0.26.2"
-    clsx "^2.1.0"
-    date-fns "^3.3.1"
-    prop-types "^15.7.2"
-    react-onclickoutside "^6.13.0"
 
 react-datepicker@~7.3.0:
   version "7.3.0"
@@ -14352,7 +14386,7 @@ uncontrollable@^7.2.1:
     invariant "^2.2.4"
     react-lifecycles-compat "^3.0.4"
 
-uncontrollable@^8.0.1:
+uncontrollable@^8.0.1, uncontrollable@^8.0.4:
   version "8.0.4"
   resolved "https://registry.yarnpkg.com/uncontrollable/-/uncontrollable-8.0.4.tgz#a0a8307f638795162fafd0550f4a1efa0f8c5eb6"
   integrity sha512-ulRWYWHvscPFc0QQXvyJjY6LIXU56f0h8pQFvhxiKk5V1fcI8gp9Ht9leVAhrVjzqMw0BgjspBINx9r6oyJUvQ==
