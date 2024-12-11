@@ -530,6 +530,9 @@ export default class Reaction extends Element {
     copy.container = Container.init();
     copy.can_update = true;
     copy.can_copy = false;
+
+    copy.variations = [];
+
     return copy;
   }
   
