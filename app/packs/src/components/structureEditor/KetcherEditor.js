@@ -450,9 +450,8 @@ const onAtomDelete = async (editor) => {
       await fetchKetcherData(editor);
 
       // when mol is deleted
-      if (mols_copy.length > mols.length && imagesList.length === imgList_copy.length) { // when atom is dragged to another atom
+      if (mols_copy.length > mols.length && imagesList.length == imgList_copy.length) { // when atom is dragged to another atom
         await fetchKetcherData(editor);
-        await removeNodeByIndex(last_alias_index);
         await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
         deleted_atoms_list = [];
         _selection = null;
@@ -461,7 +460,6 @@ const onAtomDelete = async (editor) => {
 
       // when mols and images are changed
       if (mols_copy.length > mols.length && imagesList.length > imgList_copy.length) {
-        // await editor.structureDef.editor.setMolecule(JSON.stringify(data));
         const data = await handleOnDeleteAtom(); // rebase atom aliases
         image_used_counter -= deleted_atoms_list.length; // update image used counter
         await saveMoveCanvas(data, false, true);
@@ -471,7 +469,7 @@ const onAtomDelete = async (editor) => {
       }
 
       // when one template is deleted
-      if (mols_copy.length === mols.length && imagesList.length === imgList_copy.length) { // deleted item is one
+      if (mols_copy.length == mols.length && imagesList.length == imgList_copy.length) { // deleted item is one
         await removeNodeByIndex(last_alias_index);
       }
 
@@ -507,24 +505,30 @@ const KetcherEditor = forwardRef((props, ref) => {
       await fetchKetcherData(editor);
       if (re_render_canvas) await onTemplateMove(editor);
     },
-    "Move image": async (_) => {
+    "Move image": async (eventItem) => {
+      console.log("move image", eventItem);
       addEventToFILOStack("Move image");
     },
-    "Add atom": async (_) => {
+    "Add atom": async (eventItem) => {
+      console.log("Add atom", eventItem);
       addEventToFILOStack("Add atom");
     },
-    "Upsert image": async (_) => {
+    "Upsert image": async (eventItem) => {
+      console.log("Upsert image", eventItem);
       addEventToFILOStack("Upsert image");
     },
     "Move atom": async (eventItem) => {
+      console.log("move atom", eventItem);
       const { exists } = should_canvas_update_on_movement(eventItem);
       allowed_to_process_setter(exists);
       addEventToFILOStack("Move atom");
     },
-    "Delete image": async (_) => {
+    "Delete image": async (eventItem) => {
+      console.log("Delete image", eventItem);
       addEventToFILOStack("Delete image");
     },
     "Delete atom": async (eventItem) => {
+      console.log("Delete atom", eventItem);
       let atom_counter = -1;
       if (eventItem.label === inspired_label) {
         for (let m = 0; m < mols?.length; m++) {
@@ -540,7 +544,15 @@ const KetcherEditor = forwardRef((props, ref) => {
         addEventToFILOStack("Delete atom");
       }
     },
-    "Update": async (_) => { },
+    "Update": async (eventItem) => {
+      console.log(eventItem, "update");
+    },
+    "Move bond": async (eventItem) => {
+      console.log(eventItem, "bond");
+    },
+    "Move loop": async (eventItem) => {
+      console.log(eventItem, "loop");
+    },
   };
 
   // action based on event-name
@@ -704,6 +716,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
 
     for (const eventItem of data) {
+      console.log(eventItem);
       const operationHandler = eventOperationHandlers[eventItem?.operation];
       if (operationHandler) {
         await operationHandler(eventItem);
