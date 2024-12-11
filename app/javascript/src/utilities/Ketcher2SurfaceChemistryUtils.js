@@ -1,5 +1,5 @@
 import { fuelKetcherData, mols } from "src/components/structureEditor/KetcherEditor";
-import template_list_for_storage from 'src/surfaceChemistryTemplates.json';
+import template_list_for_storage from '/public/json/surfaceChemistryTemplates.json';
 import { template_list_data } from "../surfaceChemistryImages";
 
 // pattern's for alias identification
