@@ -10,3 +10,12 @@ shared:
   port: 5432
   database: chemotion
 
+development:
+  database: chemotion_dev
+
+test:
+  database: chemotion_test
+
+production:
+  database: chemotion
+
