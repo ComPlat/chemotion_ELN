@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import React from 'react';
+import { List } from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
@@ -25,6 +26,7 @@ import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import ChevronIcon from 'src/components/common/ChevronIcon';
+import Sheet from 'src/components/common/Sheet';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -34,7 +36,11 @@ export default class ElementsTable extends React.Component {
     this.state = {
       elements: [],
       currentElement: null,
-      ui: {},
+      ui: {
+        checkedAll: false,
+        checkedIds: List(),
+        uncheckedIds: List(),
+      },
       collapseAll: false,
       moleculeSort: false,
       searchResult: false,
@@ -323,14 +329,11 @@ export default class ElementsTable extends React.Component {
 
   renderPagination() {
     const { page, pages } = this.state;
-    const items = [];
+
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
 
-    items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
-    if (page > 1) {
-      items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);
-    }
+    const items = [];
     for (let currentPage = minPage; currentPage <= maxPage; currentPage += 1) {
       items.push(
         <Pagination.Item
@@ -343,17 +346,14 @@ export default class ElementsTable extends React.Component {
       );
     }
 
-    if (pages > maxPage) {
-      items.push(<Pagination.Ellipsis key="Ell" />);
-    }
-    if (page !== pages) {
-      items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page + 1)} />);
-    }
-    items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
-
     return pages > 1 && (
-      <Pagination>
+      <Pagination className="m-0">
+        <Pagination.First disabled={page === 1} onClick={() => this.handlePaginationSelect(1)} />
+        <Pagination.Prev disabled={page === 1} onClick={() => this.handlePaginationSelect(page - 1)} />
         {items}
+        {pages > maxPage && (<Pagination.Ellipsis />)}
+        <Pagination.Next disabled={page === pages} onClick={() => this.handlePaginationSelect(page + 1)} />
+        <Pagination.Last disabled={page === pages} onClick={() => this.handlePaginationSelect(pages)} />
       </Pagination>
     );
   }
@@ -550,7 +550,7 @@ export default class ElementsTable extends React.Component {
   renderHeader = () => {
     const { filterCreatedAt, ui } = this.state;
     const { type, genericEl } = this.props;
-    const { fromDate, toDate, userLabel } = ui;
+    const { checkedAll, checkedIds, fromDate, toDate, userLabel } = ui;
 
     let searchLabel = <span />;
     let typeSpecificHeader = <span />;
@@ -574,11 +574,12 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="elements-table-header">
-        <div className="select-all">
+      <Sheet className="elements-table-header">
+        <div className="d-flex gap-1 align-items-center">
           <ElementAllCheckbox
             type={type}
-            ui={ui}
+            checkedAll={checkedAll}
+            checkedIds={checkedIds}
           />
         </div>
         <div
@@ -616,7 +617,7 @@ export default class ElementsTable extends React.Component {
           </div>
           {typeSpecificHeader}
         </div>
-      </div>
+      </Sheet>
     );
   };
 
@@ -677,21 +678,21 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div ref={this.elementRef} className="elements-list">
+      <div ref={this.elementRef} className="elements-list flex-grow-1 h-0 overflow-y-auto pb-3">
         {elementsTableEntries}
+        <Sheet className="mt-2 d-flex justify-content-between">
+          {this.renderPagination()}
+          {this.renderNumberOfResultsInput()}
+        </Sheet>
       </div>
     );
   }
 
   render() {
     return (
-      <div className="list-container">
+      <div className="list-container d-flex flex-column h-100">
         {this.renderHeader()}
         {this.renderEntries()}
-        <div className="d-flex flex-row-reverse justify-content-between">
-          {this.renderNumberOfResultsInput()}
-          {this.renderPagination()}
-        </div>
       </div>
     );
   }
