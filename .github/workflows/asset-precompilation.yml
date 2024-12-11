@@ -14,12 +14,16 @@ jobs:
 
     services:
       postgres:
-        image: postgres    # https://hub.docker.com/_/postgres
+        image: postgres:16    # https://hub.docker.com/_/postgres
+        env:
+          POSTGRES_PASSWORD: postgres    # env variable required by postgres Docker container
+          POSTGRES_USER: chemotion    # optional env variable used in conjunction with POSTGRES_PASSWORD to set a user and their password
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
 
     steps:
       - name: checkout repository
@@ -41,9 +45,14 @@ jobs:
       - name: yarn install
         run:  yarn install --production=false
 
+      # @todo user AR nulladapter (DISABLE_DATABASE_ENVIRONMENT_CHECK) instead of setting up a real db
       - name: prepare postgres
-        run: |
-          RAILS_ENV=production bundle exec rake db:migrate
+        run: RAILS_ENV=production bundle exec rake db:migrate
 
       - name: precompile
         run: RAILS_ENV=production bundle exec rake assets:precompile
+
+      - name: list browsers targets
+        run: yarn browserslist
+
+  
