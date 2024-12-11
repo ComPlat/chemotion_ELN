@@ -1371,15 +1371,15 @@ export default class SampleDetails extends React.Component {
         </Card.Header>
         <Card.Body>
           {this.sampleInfo(sample)}
-          <ElementDetailSortTab
-            type="sample"
-            availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-            addInventoryTab={sample.inventory_sample}
-          />
           {this.state.sfn && <ScifinderSearch el={sample} />}
           <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="sample"
+              availableTabs={Object.keys(tabContentsMap)}
+              tabTitles={tabTitlesMap}
+              onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={sample.inventory_sample}
+            />
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {tabContents}
             </Tabs>
