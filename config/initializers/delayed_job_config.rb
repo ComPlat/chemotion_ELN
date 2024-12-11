@@ -40,6 +40,7 @@ ActiveSupport.on_load(:active_record) do
     { job_class: PubchemCidJob,        enabled: :default, cron_variable: 'CRON_CONFIG_PC_CID' },
     { job_class: PubchemLcssJob,       enabled: :default, cron_variable: 'CRON_CONFIG_PC_LCSS' },
     { job_class: RefreshElementTagJob, enabled: :default, cron_variable: 'CRON_CONFIG_REFRESH_ELEMENT_TAG' },
+    { job_class: DiskUsageJob,         enabled: :default, cron_variable: 'CRON_CONFIG_DISK_USAGE' },
     { job_class: ChemrepoIdJob,        enabled: false,    cron_variable: 'CRON_CONFIG_CHEMREPO_ID' },
   ]
 
