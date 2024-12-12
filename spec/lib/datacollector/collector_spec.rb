@@ -150,23 +150,42 @@ RSpec.describe Datacollector::Collector, type: :model do
   end
 
   describe 'when a file cannot be deleted' do
-    let(:device) do
-      create(:device, :file_sftp)
-    end
-    let(:read_only_data) do
-      build(:data_for_file_collector,
-            device: device, user_identifiers: name_abbrs[0..0], data_count: data_count, mode: 0o755, file_mode: 0o644)
-    end
+    let(:device) { create(:device, :file_sftp) }
+    let(:user_identifiers) { name_abbrs[0..1] }
 
-    it 'does not process the file twice' do
+    it 'does not process non writeable(deletable) file twice' do
       # rubocop:disable Performance/Count
       collector = described_class.new(device)
-      file_count = read_only_data.glob('**/*').select(&:file?).size
-      expect(file_count).to eq(data_count)
+      read_only_data = build(
+        :data_for_file_collector,
+        device: device,
+        user_identifiers: user_identifiers,
+        data_count: data_count,
+        mode: 0o755,
+        file_mode: 0o644,
+      )
 
-      expect { 3.times { collector.execute } }.to change(Attachment, :count).by(data_count)
-      expect(read_only_data.glob('**/*').select(&:file?).size).to eq(file_count)
+      file_count = read_only_data.glob('*').select(&:file?).size
+      expected_count = data_count * user_identifiers.size
+      path = Pathname.new(collector.config.collector_dir)
+      # factory checks
+      expect([file_count, path.to_s]).to eq([expected_count, read_only_data.to_s])
+      # expectation: file can not be deleted and remains and should be processed only once
+      expect { 3.times { collector.execute } }.to change(Attachment, :count).by(expected_count)
+      expect(path.glob('*').select(&:file?).size).to eq(file_count)
       # rubocop:enable Performance/Count
+    end
+
+    it 'does not stall on non-readable files' do
+      path = build(:data_for_collector, device: device,
+                                        user_identifiers: user_identifiers, data_count: data_count)
+      expected_count = data_count * user_identifiers.size # number of files to be processed
+      collector = described_class.new(device)
+      build(:data_file, root: path, mode: 0o600) # additional file with wrong permissions
+
+      # expectation: 1 file can not be read and processed, and remains while the others are processed
+      expect { collector.execute }.to change(Attachment, :count).by(expected_count)
+      # expect(path.glob('*').select(&:file?).size).to eq(1)
     end
   end
 end
