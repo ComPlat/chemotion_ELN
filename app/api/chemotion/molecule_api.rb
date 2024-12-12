@@ -45,7 +45,6 @@ module Chemotion
               rd_mol = rw_mol.mol_to_mol_block unless rw_mol.nil?
             rescue StandardError => e
               Rails.logger.error ["with smiles: #{smiles}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
-              rw_mol = Chemotion::MolfileValidation.validate_and_clear_molfile(rw_mol) unless rw_mol.nil?
               rd_mol = rw_mol.mol_to_mol_block(true, -1, false) unless rw_mol.nil?
             end
             if rd_mol.nil?

@@ -3,7 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe Chemotion::MolfileValidation, type: :module do
-  let(:invalid_molfile) { "Status: 400\nCode: PUGREST.BadRequest\nMessage: Unable to standardize the given structure" }
+  let(:corrupt_molfile) { "Status: 400\nCode: PUGREST.BadRequest\nMessage: Unable to standardize the given structure" }
+  let(:invalid_molfile) { Rails.root.join('spec/fixtures/structures/invalid_01.mol').read }
   let(:valid_molfile) { Rails.root.join('spec/fixtures/structures/valid_01.mol').read }
 
   describe '.validate_and_clear_molfile' do
@@ -20,24 +21,37 @@ RSpec.describe Chemotion::MolfileValidation, type: :module do
 
     context 'when the molfile is invalid' do
       before do
-        allow(Chemotion::OpenBabelService).to receive(:molfile_clear_hydrogens).and_return(invalid_molfile)
+        allow(Chemotion::OpenBabelService).to receive(:molfile_clear_hydrogens).and_return(corrupt_molfile)
       end
 
       it 'returns nil if the molfile is invalid' do
         expect(Chemotion::OpenBabelService).not_to have_received(:molfile_clear_hydrogens)
-        result = described_class.validate_and_clear_molfile(invalid_molfile)
+        result = described_class.validate_and_clear_molfile(corrupt_molfile)
         expect(result).to be_nil
+      end
+    end
+
+    context 'when the fetched molfile using PubchemService is corrupt' do
+      let(:faulty_smile) { Chemotion::OpenBabelService.get_smiles_from_molfile(invalid_molfile) }
+
+      before do
+        allow(Chemotion::PubchemService).to receive(:molfile_from_smiles).with(faulty_smile).and_return(corrupt_molfile)
+      end
+
+      it 'returns nil if the molfile is invalid' do
+        resulting_corrupt_molfile = Chemotion::PubchemService.molfile_from_smiles(faulty_smile)
+        expect(resulting_corrupt_molfile).to eq(corrupt_molfile)
       end
     end
   end
 
   describe '.validate_molfile' do
-    it 'returns true for a valid molfile' do
+    it 'returns false for a valid molfile' do
       expect(described_class.invalid_molfile?(valid_molfile)).to be(false)
     end
 
-    it 'returns false for an invalid molfile' do
-      expect(described_class.invalid_molfile?(invalid_molfile)).to be(true)
+    it 'returns true for an invalid molfile' do
+      expect(described_class.invalid_molfile?(corrupt_molfile)).to be(true)
     end
   end
 
