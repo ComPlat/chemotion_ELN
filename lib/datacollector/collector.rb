@@ -44,7 +44,7 @@ module Datacollector
     end
 
     def error_tracker
-      @error_tracker ||= ErrorTracker.new(device)
+      @error_tracker ||= ErrorTracker.new(device.id)
     end
 
     # config aliases

@@ -148,4 +148,23 @@ RSpec.describe Datacollector::Collector, type: :model do
       end
     end
   end
+  describe 'when a file cannot be deleted' do
+    let(:device) do
+      create(:device, :file_sftp)
+    end
+    let(:read_only_data) do
+      build(:data_for_file_collector,
+            device: device, user_identifiers: name_abbrs[0..0], data_count: data_count, mode: 0o755, file_mode: 0o644)
+    end
+
+    it 'does not process the file twice' do
+      collector = described_class.new(device)
+      file_count = read_only_data.glob('**/*').select(&:file?).size
+      byebug
+      expect(file_count).to eq(data_count)
+
+      expect { 3.times { collector.execute } }.to change(Attachment, :count).by(data_count)
+      expect(read_only_data.glob('**/*').select(&:file?).size).to eq(file_count)
+    end
+  end
 end
