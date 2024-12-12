@@ -20,19 +20,20 @@ describe Datacollector::CorrespondenceArray do
   let(:device) { create(:device) }
   let(:unregistered_device) { build(:device) }
 
-  describe described_class do
-    context 'when the sender is a device' do
-      let(:correspondences) { described_class.new(device, [person]) }
+  context 'when the sender is a device' do
+    let(:correspondences) { described_class.new(device, [person]) }
 
-      describe '.new' do
-        it 'returns a new instance of the class' do
-          expect(correspondences).to be_a(described_class)
-        end
-
-        it 'raises an error when correspondences has no sender' do
-          expect { described_class.new(unregistered_device.email, [person]) }.to raise_error(Errors::DatacollectorError)
-        end
+    describe '.new' do
+      it 'returns a new instance of the class' do
+        expect(correspondences).to be_a(described_class)
       end
+
+      it 'raises an error when correspondences has no sender' do
+        expect do
+          described_class.new(unregistered_device.email, [person])
+        end.to raise_error(Errors::DatacollectorError)
+      end
+    end
 
     describe '#recipients' do
       it 'returns the recipients' do
@@ -45,27 +46,27 @@ describe Datacollector::CorrespondenceArray do
         expect(correspondences.sender).to eq(device)
       end
     end
-      end
-    context 'when the sender is not a device' do
-      it 'raises an error when correspondences has no sender or the user sender is not sending to self' do
-        expect { described_class.new(unregistered_person.email, [person]) }.to raise_error(Errors::DatacollectorError)
-        expect { described_class.new(person, [another_person]) }.to raise_error(Errors::DatacollectorError)
-      end
+  end
 
-      it 'can only send to self' do
-        expect(described_class.new(person, [person]).recipients).to eq([person])
-        expect(described_class.new(person, []).recipients).to eq([person])
-        expect(described_class.new(person, [another_person, person]).recipients).to eq([person])
-      end
+  context 'when the sender is not a device' do
+    it 'raises an error when correspondences has no sender or the user sender is not sending to self' do
+      expect { described_class.new(unregistered_person.email, [person]) }.to raise_error(Errors::DatacollectorError)
+      expect { described_class.new(person, [another_person]) }.to raise_error(Errors::DatacollectorError)
     end
 
-    context 'when some recipients are not found' do
-      let(:correspondences) { described_class.new(device, [unregistered_person.email, person.email]) }
+    it 'can only send to self' do
+      expect(described_class.new(person, [person]).recipients).to eq([person])
+      expect(described_class.new(person, []).recipients).to eq([person])
+      expect(described_class.new(person, [another_person, person]).recipients).to eq([person])
+    end
+  end
 
-      it 'ignores them' do
-        expect(correspondences).to be_a(described_class)
-        expect(correspondences.recipients).to eq([person])
-      end
+  context 'when some recipients are not found' do
+    let(:correspondences) { described_class.new(device, [unregistered_person.email, person.email]) }
+
+    it 'ignores them' do
+      expect(correspondences).to be_a(described_class)
+      expect(correspondences.recipients).to eq([person])
     end
   end
 end

@@ -41,10 +41,15 @@ module Datacollector
     #   |
     #   |__ Logout
     #
+    # @note if the sender is known but not the recipient, the email is currently marked as read
+    #  as when the sender is not known
     def execute
       imap.search(%w[NOT SEEN]).each do |message_id|
         open_envelope(message_id)
-        next if correspondences.empty?
+        if correspondences.empty?
+          imap.store(message_id, '+FLAGS', [:Seen])
+          next
+        end
 
         handle_message(message_id)
         imap.store(message_id, '+FLAGS', [:Deleted])
@@ -70,7 +75,7 @@ module Datacollector
     #  (initialize the imap instance variable)
     def login
       response = imap.login(mail_address, password)
-      raise unless response['name'] != 'OK'
+      raise if response['name'] != 'OK'
 
       log.info('Login...')
       imap.select(INBOX)
@@ -89,10 +94,12 @@ module Datacollector
     end
 
     # Set the IMAP instance
-    #
+    # @todo: use new syntax (server, **options) as (server, port, ssl) is obsolete
+    #  However login does not work with the new syntax. .authenticate should be used instead of .login
     # @return [Net::IMAP]
     def imap
-      @imap ||= Net::IMAP.new(server, port: port, ssl: ssl)
+      # @imap ||= Net::IMAP.new(server, port: port, ssl: ssl)
+      @imap ||= Net::IMAP.new(server, port, ssl)
     end
 
     ############################################################################################################
@@ -105,6 +112,10 @@ module Datacollector
     # @return [Array<Datacollector::Correspondence>] the correspondence array
     def correspondences
       @correspondences ||= CorrespondenceArray.new(sender_email, receiver_emails)
+    rescue Errors::DatacollectorError => e
+      log.error __method__, e.message
+
+      []
     end
 
     # Check if the the given email address is the ELN system email address or one of the aliases
@@ -170,24 +181,22 @@ module Datacollector
       return if message&.attachments.blank?
 
       log.info(message.from, message.subject)
-      message.attachments.each(&:handle_attachment)
+      message.attachments.each { |attachment| handle_attachment(attachment, message.subject) }
     rescue StandardError => e
       log.error __method__, e.backtrace.join('\n')
-    ensure
-      reset_envelope
     end
 
     # Attach the attachments of the email message to the receiver Inbox
     #
     #  @param attachment [Mail::Attachment] the attachment to handle
-    def handle_attachment(attachment)
+    def handle_attachment(attachment, subject)
       tempfile = Tempfile.new('mail_attachment')
       tempfile.binmode
       tempfile.write(attachment.decoded)
       tempfile.rewind
       correspondences.each do |correspondence|
-        correspondence.attach(attachment.filename, tempfile.path)
-        log.info("Attached #{attachment.filename} to #{correspondence.recipient}")
+        correspondence.attach(attachment.filename, tempfile.path, subject)
+        log.info("Attached #{attachment.filename} to #{correspondence.recipient.id}")
         tempfile.rewind
       end
     rescue StandardError => e

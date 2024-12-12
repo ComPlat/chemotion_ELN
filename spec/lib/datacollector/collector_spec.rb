@@ -148,6 +148,7 @@ RSpec.describe Datacollector::Collector, type: :model do
       end
     end
   end
+
   describe 'when a file cannot be deleted' do
     let(:device) do
       create(:device, :file_sftp)
@@ -158,13 +159,14 @@ RSpec.describe Datacollector::Collector, type: :model do
     end
 
     it 'does not process the file twice' do
+      # rubocop:disable Performance/Count
       collector = described_class.new(device)
       file_count = read_only_data.glob('**/*').select(&:file?).size
-      byebug
       expect(file_count).to eq(data_count)
 
       expect { 3.times { collector.execute } }.to change(Attachment, :count).by(data_count)
       expect(read_only_data.glob('**/*').select(&:file?).size).to eq(file_count)
+      # rubocop:enable Performance/Count
     end
   end
 end
