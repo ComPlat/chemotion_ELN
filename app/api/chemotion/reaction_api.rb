@@ -146,8 +146,8 @@ module Chemotion
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
         optional :observation, type: Hash
-        optional :purification, type: Array[String]
-        optional :dangerous_products, type: Array[String]
+        optional :purification, type: [String]
+        optional :dangerous_products, type: [String]
         optional :conditions, type: String
         optional :tlc_solvents, type: String
         optional :solvent, type: String
@@ -224,8 +224,8 @@ module Chemotion
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
         optional :observation, type: Hash
-        optional :purification, type: Array[String]
-        optional :dangerous_products, type: Array[String]
+        optional :purification, type: [String]
+        optional :dangerous_products, type: [String]
         optional :conditions, type: String
         optional :tlc_solvents, type: String
         optional :solvent, type: String
@@ -259,7 +259,7 @@ module Chemotion
         attributes.delete(:segments)
         attributes.delete(:user_labels)
 
-        collection = current_user.collections.where(id: collection_id).take
+        collection = current_user.collections.find_by(id: collection_id)
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -298,7 +298,7 @@ module Chemotion
 
         is_shared_collection = false
         if collection.blank?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: collection_id).take
+          sync_collection = current_user.all_sync_in_collections_users.find_by(id: collection_id)
           if sync_collection.present?
             is_shared_collection = true
             sync_in_collection_receiver = Collection.find(sync_collection['collection_id'])
@@ -332,6 +332,10 @@ module Chemotion
             reaction_vessel_size,
           ).execute!
           reaction.reload
+
+          reaction.update!(variations: Usecases::Reactions::UpdateVariations.new(
+            reaction,
+          ).execute!)
 
           # save to profile
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
