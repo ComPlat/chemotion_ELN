@@ -49,11 +49,8 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-
-# rubocop: disable Metrics/ClassLength, Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
-# rubocop: disable Metrics/MethodLength
+# rubocop: disable Metrics/ClassLength, Metrics/CyclomaticComplexity
 # rubocop: disable Metrics/AbcSize
-# rubocop: disable Metrics/CyclicComplexity
 # rubocop: disable Metrics/PerceivedComplexity
 
 class User < ApplicationRecord
@@ -134,6 +131,7 @@ class User < ApplicationRecord
   after_create :create_all_collection
   after_create :update_matrix
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
+  after_create :set_default_avail_space
   before_destroy :delete_data
 
   scope :by_name, lambda { |query|
@@ -450,6 +448,11 @@ class User < ApplicationRecord
     WelcomeMailer.delay.mail_welcome_message(id)
   end
 
+  def set_default_avail_space
+    self.available_space = Admin.find(1).available_space # first admin
+    save!
+  end
+
   def delete_data
     # TODO: logic to check if user can be really destroy or which data can be deleted
     count = samples.count
@@ -496,8 +499,6 @@ class Group < User
   end
 end
 
-# rubocop: enable Metrics/ClassLength, Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
-# rubocop: enable Metrics/MethodLength
+# rubocop: enable Metrics/ClassLength, Metrics/CyclomaticComplexity
 # rubocop: enable Metrics/AbcSize
-# rubocop: enable Metrics/CyclicComplexity
 # rubocop: enable Metrics/PerceivedComplexity
