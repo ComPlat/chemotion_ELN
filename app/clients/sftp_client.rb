@@ -153,7 +153,7 @@ class SFTPClient
   def mtime(remote_path)
     with_session(remote_path) do |sftp|
       result = nil
-      request = sftp.lstat(remote_path){ |response|  result = response[:attrs].mtime }
+      request = sftp.lstat(remote_path) { |response| result = response[:attrs].mtime }
       request.wait
       result
     end

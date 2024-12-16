@@ -193,7 +193,7 @@ module Datacollector
       Dir.mktmpdir do |tmpdir|
         @sftp.download_directory!(@path, tmpdir) if sftp?
         ::Zip::File.open(tmp_zip.path, ::Zip::File::CREATE) do |zipfile|
-          (sftp? ? CollectorFile.entries(tmpdir, **options) : entries_sftp(**options)).each do |entry|
+          (sftp? ? CollectorFile.entries(tmpdir, **options) : entries_as(**options)).each do |entry|
             zipfile.add(entry.relative_path, entry.path)
           end
         end
