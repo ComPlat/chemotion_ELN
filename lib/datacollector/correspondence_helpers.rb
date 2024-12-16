@@ -66,7 +66,7 @@ module Datacollector
     #    see User#name_abbreviation_format
     def parse_identifier(info)
       # remove potential path
-      info = info.split('/').last.strip
+      info = info.split('/').last.strip.encode('UTF-8', invalid: :replace, undef: :replace, replace: '?')
       # check if email
       info.include?('@') ? info : info.split('-').first.strip
     end
