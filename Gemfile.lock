@@ -845,7 +845,7 @@ GEM
       rails (>= 3.0)
       rake (>= 0.8.7)
     yard (0.9.36)
-    zeitwerk (2.7.0)
+    zeitwerk (2.6.18)
 
 PLATFORMS
   x86_64-linux

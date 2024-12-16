@@ -35,6 +35,7 @@
 #  account_active         :boolean
 #  matrix                 :integer          default(0)
 #  providers              :jsonb
+#  inventory_labels       :jsonb
 #
 # Indexes
 #

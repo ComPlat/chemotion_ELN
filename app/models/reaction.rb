@@ -36,6 +36,8 @@
 #  variations             :jsonb
 #  plain_text_description :text
 #  plain_text_observation :text
+#  vessel_size            :jsonb
+#  gaseous                :boolean          default(FALSE)
 #
 # Indexes
 #
