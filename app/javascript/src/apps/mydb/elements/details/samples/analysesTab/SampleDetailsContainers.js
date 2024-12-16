@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {OverlayTrigger, Button, Tooltip} from 'react-bootstrap';
+import {
+  OverlayTrigger, Button, Tooltip, ButtonGroup
+} from 'react-bootstrap';
 
-import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
-
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import ViewSpectraCompare from 'src/apps/mydb/elements/details/ViewSpectraCompare';
 import {
   RndNotAvailable, RndNoAnalyses,
   ReactionsDisplay
@@ -81,9 +82,9 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
-  handleAdd() {
+  handleAdd(isComparison = false) {
     const { sample, setState } = this.props;
-    const newContainer = addNewAnalyses(sample);
+    const newContainer = addNewAnalyses(sample, isComparison);
     setState(
       (prevState) => ({ ...prevState, sample }),
       this.handleAccordionOpen(newContainer.id),
@@ -127,7 +128,7 @@ export default class SampleDetailsContainers extends Component {
       return null;
     }
     return (
-      <>
+      <ButtonGroup>
         <UploadField
           disabled={!sample.can_update}
           element={sample}
@@ -140,14 +141,23 @@ export default class SampleDetailsContainers extends Component {
         <Button
           size="sm"
           variant="success"
-          onClick={this.handleAdd}
+          onClick={() => this.handleAdd(true)}
+          disabled={!sample.can_update}
+        >
+          <i className="fa fa-plus me-1" />
+          Add comparisons
+        </Button>
+        </OverlayTrigger>
+        <Button
+          size="xsm"
+          variant="success"
+          onClick={() => this.handleAdd(false)}
           disabled={!sample.can_update}
         >
           <i className="fa fa-plus me-1" />
           Add analysis
         </Button>
-        </OverlayTrigger>
-      </>
+      </ButtonGroup>
     );
   }
 
@@ -215,6 +225,11 @@ export default class SampleDetailsContainers extends Component {
           />
           <NMRiumDisplayer
             sample={sample}
+            handleSampleChanged={handleSampleChanged}
+            handleSubmit={handleSubmit}
+          />
+          <ViewSpectraCompare
+            elementData={sample}
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />

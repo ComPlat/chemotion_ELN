@@ -540,16 +540,36 @@ export default class AttachmentFetcher {
     );
   }
 
-  static combineSpectra(jcampIds, curveIdx, extraParams = null) {
-    const body = { spectra_ids: jcampIds, front_spectra_idx: curveIdx };
-    if (extraParams != null) {
-      body.extras = JSON.stringify(decamelizeKeys(extraParams));
-    }
-    return ApiClient.postJson(
+  static combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra, extraParams = null) {
+    const extras = JSON.stringify(decamelizeKeys(extraParams))
+    const promise = fetch(
       '/api/v1/chemspectra/file/combine_spectra',
-      { body }
-    );
-  }
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+        {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          spectra_ids: jcampIds,
+          front_spectra_idx: curveIdx,
+          extras: extras,
+          container_id: containerId,
+          edited_data_spectra: editedDataSpectra,
+        }),
+      },
+    )
+      .then((response) => response.json())
+      .then((json) => {
+        return json;
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
 
   static filterAllAttachments(files, containers) {
     containers.forEach((container) => {
