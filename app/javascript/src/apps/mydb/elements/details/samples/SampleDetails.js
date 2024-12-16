@@ -27,6 +27,7 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import QcStore from 'src/stores/alt/stores/QcStore';
+import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
@@ -67,6 +68,7 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import { ProcessSampleWithComparisonAnalyses } from 'src/utilities/SpectraHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
@@ -443,7 +445,9 @@ export default class SampleDetails extends React.Component {
       ElementActions.createSample(sample, closeView);
     } else {
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const spectraStore = SpectraStore.getState();
+      const newSample = ProcessSampleWithComparisonAnalyses(sample, spectraStore);
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {
