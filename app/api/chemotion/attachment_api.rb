@@ -7,6 +7,7 @@ require 'digest'
 
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
+    helpers ContainerHelpers
     helpers do
       def thumbnail_obj(att)
         { id: att.id, thumbnail: att.thumbnail_base64 }

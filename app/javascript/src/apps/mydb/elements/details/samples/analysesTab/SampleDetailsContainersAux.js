@@ -5,7 +5,13 @@ import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
+import {
+  BuildSpcInfos,
+  JcampIds,
+  BuildSpcInfosForNMRDisplayer,
+  isNMRKind,
+  BuildSpectraComparedInfos,
+} from 'src/utilities/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,6 +22,8 @@ import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import SpectraCompareButton from 'src/components/common/SpectraCompareButton';
+import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 
 const qCheckPass = () => (
@@ -138,6 +146,15 @@ const headerBtnGroup = (
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
+  const spcCompareInfo = BuildSpectraComparedInfos(sample, container);
+  const toggleCompareModal = (e) => {
+    e.stopPropagation();
+    SpectraActions.ToggleCompareModal(container);
+    SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
+  };
+
+  const { spectraCompare } = SpectraStore.getState();
+
   return (deleted ?
     <Button
       size="xxsm"
@@ -147,9 +164,9 @@ const headerBtnGroup = (
       <i className="fa fa-undo" />
     </Button> :
     <div
-      className="d-flex gap-1 align-items-center"
-      onClick={(e) => e.stopPropagation()}
-    >
+    className="d-flex gap-1 align-items-center"
+    onClick={(e) => e.stopPropagation()}
+  >
       <Form.Check
         id={`add-sample-${sample.id}-to-report`}
         type="checkbox"
@@ -159,18 +176,29 @@ const headerBtnGroup = (
         className="mx-2"
       />
       <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
-      <SpectraEditorButton
-        element={sample}
-        hasJcamp={hasJcamp}
-        spcInfos={spcInfos}
-        hasChemSpectra={hasChemSpectra}
-        hasEditedJcamp={hasEditedJcamp}
-        toggleSpectraModal={toggleSpectraModal}
-        confirmRegenerate={confirmRegenerate}
-        confirmRegenerateEdited={confirmRegenerateEdited}
-        toggleNMRDisplayerModal={toggleNMRDisplayerModal}
-        hasNMRium={hasNMRium}
-      />
+      {
+      container.extended_metadata.is_comparison ? (
+        <SpectraCompareButton
+          sample={sample}
+          spectraCompare={spectraCompare}
+          spcInfos={spcCompareInfo}
+          toggleSpectraModal={toggleCompareModal}
+        />
+      ) : (
+        <SpectraEditorButton
+          element={sample}
+          hasJcamp={hasJcamp}
+          spcInfos={spcInfos}
+          hasChemSpectra={hasChemSpectra}
+          hasEditedJcamp={hasEditedJcamp}
+          toggleSpectraModal={toggleSpectraModal}
+          confirmRegenerate={confirmRegenerate}
+          confirmRegenerateEdited={confirmRegenerateEdited}
+          toggleNMRDisplayerModal={toggleNMRDisplayerModal}
+          hasNMRium={hasNMRium}
+        />
+        )
+      }
       <PrintCodeButton
         element={sample}
         analyses={[container]}
@@ -205,8 +233,12 @@ const AnalysesHeader = ({
       return c;
     }),
   };
-   const attachment = getAttachmentFromContainer(container);
- 
+
+  const attachment = getAttachmentFromContainer(container);
+  const is_comparison = container.extended_metadata && container.extended_metadata.is_comparison;
+  const comparisonLayout = container.comparable_info && container.comparable_info.layout ? container.comparable_info.layout : '';
+  const comparisonSpectraNames = container.comparable_info && container.comparable_info.list_attachments ? container.comparable_info.list_attachments.map((attachment) => attachment.filename).join(', ') : '';
+
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
@@ -230,19 +262,37 @@ const AnalysesHeader = ({
             )
           }
         </div>
-        <div className={deleted ? "text-body-tertiary" : ""}>
-          Type: {kind}
-          <br />
-          Status: <span className='me-4'>{status} {qCheckMsg(sample, container)}</span>{insText}
-        </div>
-        {!deleted &&
-          <div className="d-flex gap-2">
-            <span>Content:</span>
-            <div className="flex-grow-1">
-              <QuillViewer value={contentOneLine} className="p-0"/>
+        {
+          is_comparison ? (
+          <>
+            <div className={deleted ? 'text-body-tertiary' : ''}>
+              Layout: {comparisonLayout}
             </div>
-          </div>
-        }
+            <div className={deleted ? 'text-body-tertiary' : ''}>
+              Spectra: {comparisonSpectraNames}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={deleted ? 'text-body-tertiary' : ''}>
+              Type : {kind}
+              <br />
+              Statut :{' '}
+              <span className="me-4">
+                {status} {qCheckMsg(sample, container)}
+              </span>
+              {insText}
+            </div>
+            {!deleted && (
+              <div className="d-flex gap-2">
+                <span>Content:</span>
+                <div className="flex-grow-1">
+                  <QuillViewer value={contentOneLine} className="p-0" />
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
