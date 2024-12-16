@@ -24,6 +24,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
+import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
@@ -71,6 +72,7 @@ import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElemen
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import { ProcessSampleWithComparisonAnalyses } from 'src/utilities/SpectraHelper';
 
 const MWPrecision = 6;
 
@@ -358,7 +360,9 @@ export default class SampleDetails extends React.Component {
       ElementActions.createSample(sample, closeView);
     } else {
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const spectraStore = SpectraStore.getState();
+      const newSample = ProcessSampleWithComparisonAnalyses(sample, spectraStore);
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {

@@ -58,6 +58,41 @@ module ContainerHelpers
         # Update container
         next unless container = Container.find_by(id: child[:id])
 
+        if extended_metadata['analyses_compared'].present?
+          analyses_compared = extended_metadata['analyses_compared']
+          list_file = []
+          list_file_names = []
+          combined_image_filename = "#{container.name}.new_combined.png"
+          created_by_user = -1
+
+          analyses_compared.each do |attachment_info|
+            attachment = Attachment.find_by(id: attachment_info['file']['id'])
+            unless attachment.nil?
+              created_by_user = attachment.created_by
+              list_file_names.push(attachment.filename)
+              list_file.push(attachment.abs_path)
+            end
+          end
+
+          _, image = Chemotion::Jcamp::CombineImg.combine(
+            list_file, 0, list_file_names, nil
+          )
+
+          unless image.nil?
+            att = Attachment.find_by(filename: combined_image_filename, attachable_id: container.id)
+            att.destroy! unless att.nil?
+            att = Attachment.new(
+              filename: combined_image_filename,
+              created_by: created_by_user,
+              created_for: created_by_user,
+              file_path: image.path,
+              attachable_type: 'Container',
+              attachable_id: container.id,
+            )
+            att.save!
+          end
+        end
+
         container.update!(
           name: child[:name],
           container_type: child[:container_type],
@@ -122,4 +157,35 @@ module ContainerHelpers
       true
     end
   end
-end # module
+
+  def comparable_info(object)
+    return unless object.container_type == 'analysis'
+
+    is_comparison = object.extended_metadata['is_comparison'].present? && object.extended_metadata['is_comparison'] == 'true'
+
+    list_attachments = []
+    list_dataset = []
+    list_analyses = []
+    layout = ''
+    if object.extended_metadata['analyses_compared'].present?
+      analyses_compared = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':'))
+      analyses_compared.each do |attachment_info|
+        layout = attachment_info['layout']
+        attachment = attachment_info['file']['id']
+        dataset = attachment_info['dataset']['id']
+        analyis = attachment_info['analysis']['id']
+        list_attachments.push(attachment)
+        list_dataset.push(dataset)
+        list_analyses.push(analyis)
+      end
+    end
+
+    {
+      is_comparison: is_comparison,
+      list_attachments: list_attachments,
+      list_dataset: list_dataset,
+      list_analyses: list_analyses,
+      layout: layout,
+    }
+  end
+end

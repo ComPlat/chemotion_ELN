@@ -4,6 +4,7 @@ import {
   Button, Form, OverlayTrigger, Tooltip, ButtonToolbar, Accordion, Card
 } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
+import ContainerCompareAnalyses from 'src/components/container/ContainerCompareAnalyses';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
 import {
   AnalysesHeader,
@@ -75,7 +76,7 @@ function ReactionsDisplay({
       </OverlayTrigger>
     );
   }
-  
+
   const renderCommentBox = (sample, handleCommentTextChange) => {
     const { container } = sample;
     return (
@@ -130,18 +131,29 @@ function ReactionsDisplay({
                       handleSubmit={handleSubmit}
                       toggleAddToReport={toggleAddToReport}
                     />
-                  </AccordionHeaderWithButtons> 
+                  </AccordionHeaderWithButtons>
                 </Card.Header>
                 {!container.is_deleted && (
                   <Accordion.Collapse eventKey={id}>
                     <Card.Body>
-                      <ContainerComponent
-                        templateType="sample"
-                        readOnly={readOnly}
-                        container={container}
-                        disabled={isDisabled}
-                        onChange={handleChange}
-                      />
+                      {container.extended_metadata && container.extended_metadata.is_comparison ? (
+                        <ContainerCompareAnalyses
+                          templateType="sample"
+                          readOnly={readOnly}
+                          sample={sample}
+                          container={container}
+                          disabled={isDisabled}
+                          onChange={handleChange}
+                        />
+                      ) : (
+                        <ContainerComponent
+                          templateType="sample"
+                          readOnly={readOnly}
+                          container={container}
+                          disabled={isDisabled}
+                          onChange={handleChange}
+                        />
+                      )}
                     </Card.Body>
                   </Accordion.Collapse>
                 )}

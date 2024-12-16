@@ -6,15 +6,15 @@ export default class Element {
 
   constructor(args) {
     Object.assign(this, args);
-    if(!this.id) {
+    if (!this.id) {
       this.id = Element.buildID();
-      this.is_new = true
+      this.is_new = true;
     }
     this.updateChecksum();
   }
 
   isMethodDisabled(m) {
-    return this[m] == '***'
+    return this[m] == '***';
   }
 
   static buildID() {
@@ -121,6 +121,25 @@ export default class Element {
       target = [...target, ...dts];
     });
     return target;
+  }
+
+  getAnalysisContainersComparable() {
+    const result = {};
+    const analysisContainers = this.analysisContainers();
+    analysisContainers.forEach((aic) => {
+      const { extended_metadata } = aic;
+      const layout = (extended_metadata && extended_metadata.kind) ? extended_metadata.kind : '';
+      if (layout !== '') {
+        const splittedStr = layout.split('|');
+        const cleanedLayout = splittedStr.length > 1 ? splittedStr[1] : layout;
+        let listAics = result[cleanedLayout] ? result[cleanedLayout] : [];
+        const dts = aic.children.filter(el => ~el.container_type.indexOf('dataset'));
+        const aicWithDataset = Object.assign({}, aic, { children: dts });
+        listAics.push(aicWithDataset);
+        result[cleanedLayout] = listAics;
+      }
+    });
+    return result;
   }
 
   // Return true if the element has at least one analysis
