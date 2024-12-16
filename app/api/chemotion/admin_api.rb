@@ -20,6 +20,26 @@ module Chemotion
         { percent_used: stat.percent_used.round(2), mb_available: mb_available }
       end
 
+      namespace :usersDefault do
+        get do
+          default = User.find(1).available_space # first admin
+          { users_available: default }
+        end
+        put do
+          params do
+            require :usersAvailable, type: Integer, desc: 'users default available space'
+          end
+          User.find_each do |user|
+            user.available_space = if user.id == 1 # first admin
+                                     params[:usersAvailable]
+                                   else
+                                     [user.available_space, params[:usersAvailable].to_i].max
+                                   end
+            user.save!
+          end
+        end
+      end
+
       namespace :listLocalCollector do
         desc 'List all local collectors'
         get 'all' do
@@ -103,14 +123,19 @@ module Chemotion
               obj = Group.find(params[:id]) if %w[Group].include?(params[:rootType])
               obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])
               if %w[Person Group].include?(params[:actionType])
-                new_users = (params[:add_users] || []).map(&:to_i) - obj.users.pluck(:id)
+                new_user_ids = (params[:add_users] || []).map(&:to_i) - obj.users.pluck(:id)
+                new_user_ids.each do |uid|
+                  user = Person.find(uid)
+                  user.available_space = [user.available_space, obj.available_space].max
+                  user.save!
+                end
               end
               if %w[Device].include?(params[:actionType])
-                new_users = (params[:add_users] || []).map(&:to_i) - obj.devices.pluck(:id)
+                new_user_ids = (params[:add_users] || []).map(&:to_i) - obj.devices.pluck(:id)
               end
-              obj.users << Person.where(id: new_users) if %w[Person].include?(params[:actionType])
-              obj.users << Group.where(id: new_users) if %w[Group].include?(params[:actionType])
-              obj.devices << Device.where(id: new_users) if %w[Device].include?(params[:actionType])
+              obj.users << Person.where(id: new_user_ids) if %w[Person].include?(params[:actionType])
+              obj.users << Group.where(id: new_user_ids) if %w[Group].include?(params[:actionType])
+              obj.devices << Device.where(id: new_user_ids) if %w[Device].include?(params[:actionType])
               obj.save!
 
               if obj.is_a?(Device)
@@ -164,7 +189,7 @@ module Chemotion
           # rewrite edited json file
           result = Entities::OlsTermEntity.represent(
             OlsTerm.where(owl_name: params[:owl_name], is_enabled: true).select(
-              <<~SQL
+              <<~SQL.squish,
                 id, owl_name, term_id, label, synonym, synonyms, 'desc' as desc,
                 case when (ancestry is null) then null else
                   (select array_to_string(array(
@@ -248,7 +273,7 @@ module Chemotion
           end
 
           put do
-            Delayed::Job.find(params[:id]).update_columns(run_at: 1.minutes.from_now, failed_at: nil)
+            Delayed::Job.find(params[:id]).update_columns(run_at: 1.minute.from_now, failed_at: nil)
 
             {} # FE does not use the result
           end

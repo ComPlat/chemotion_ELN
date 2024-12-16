@@ -8,13 +8,17 @@ export default class AdminDashboard extends React.Component {
     this.state = {
       diskAvailable: 0,
       diskPercentUsed: 0,
+      usersAvailable: 0,
       showDiskInfo: false,
     };
     this.handleDiskspace = this.handleDiskspace.bind(this);
+    this.getUsersAvailable = this.getUsersAvailable.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
   componentDidMount() {
     this.handleDiskspace();
+    this.getUsersAvailable();
   }
 
   handleDiskspace() {
@@ -28,30 +32,51 @@ export default class AdminDashboard extends React.Component {
       });
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  handleChange(event) {
+    AdminFetcher.setUsersAvailable(event.target.value);
+  }
+
+  getUsersAvailable() {
+    AdminFetcher.getUsersAvailable()
+      .then((result) => {
+        this.setState({
+          usersAvailable: result.users_available,
+        });
+      });
+  }
+
   renderDiskInfo() {
-    const { diskAvailable, diskPercentUsed } = this.state;
-    let className = diskPercentUsed > 80 ? 'text-danger' : '';
+    const { diskAvailable, diskPercentUsed, usersAvailable } = this.state;
+    const className = diskPercentUsed > 80 ? 'text-danger' : '';
 
     return (
-        <Card>
-          <Card.Body className='p-0'>
-            <InputGroup >
-              <InputGroup.Text >Disk Available (MB)</InputGroup.Text>
-              <Form.Control
-                type="text"
-                defaultValue={diskAvailable || ''}
-                readOnly
-              />
-              <InputGroup.Text >Disk Percent Used (%)</InputGroup.Text>
-              <Form.Control
-                type="text"
-                className={className}
-                defaultValue={`${diskPercentUsed}%` || ''}
-                readOnly
-              />
-            </InputGroup>
-          </Card.Body>
-        </Card>
+      <Card>
+        <Card.Body className="p-0">
+          <InputGroup>
+            <InputGroup.Text>Disk Available (MB)</InputGroup.Text>
+            <Form.Control
+              type="text"
+              defaultValue={diskAvailable || ''}
+              readOnly
+            />
+            <InputGroup.Text>Disk Percent Used (%)</InputGroup.Text>
+            <Form.Control
+              type="text"
+              className={className}
+              defaultValue={`${diskPercentUsed}%` || ''}
+              readOnly
+            />
+            <InputGroup.Text>Default User Available (B)</InputGroup.Text>
+            <Form.Control
+              type="number"
+              min="0"
+              defaultValue={usersAvailable || ''}
+              onChange={this.handleChange}
+            />
+          </InputGroup>
+        </Card.Body>
+      </Card>
     );
   }
 
