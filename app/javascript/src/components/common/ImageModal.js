@@ -37,16 +37,22 @@ export default class ImageModal extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    if (
-      this.state.numOfPages === nextState.numOfPages
-      && this.state.numOfPages !== 0
-      && this.state.pageIndex === nextState.pageIndex
-      && this.state.showModal === nextState.showModal
-    ) {
-      return false;
+    if (this.props.attachment?.id !== nextProps.attachment?.id) {
+      return true;
     }
 
-    return true;
+    if (
+      this.state.numOfPages !== nextState.numOfPages
+      || this.state.pageIndex !== nextState.pageIndex
+      || this.state.showModal !== nextState.showModal
+      || this.state.thumbnail !== nextState.thumbnail
+      || this.state.fetchSrc !== nextState.fetchSrc
+      || this.state.isPdf !== nextState.isPdf
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   componentDidUpdate(prevProps) {

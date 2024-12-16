@@ -1,4 +1,6 @@
 import { FN } from '@complat/react-spectra-editor';
+import Sample from 'src/models/Sample';
+
 const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf', 'zip'];
 
 const JcampIds = (container) => {
@@ -316,4 +318,172 @@ const inlineNotation = (layout, data, metadata) => {
   return { quillData, formattedString };
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData, inlineNotation }; // eslint-disable-line
+const BuildSpectraComparedInfos = (sample, container) => {
+  if (!sample || !container) return [];
+  const { analyses_compared } = container.extended_metadata;
+  if (!analyses_compared) return [];
+  return analyses_compared.map(data => (
+    {
+      idx: data.file.id,
+      info: data
+    }
+  ));
+}
+
+const BuildSpectraComparedSelection = (sample, comparisonContainer) => {
+
+  if (!sample) {
+    return { menuItems: [], selectedFiles: [] };
+  }
+
+  const filteredAttachments = (dataset) => {
+    if (dataset) {
+      const filtered = dataset.attachments.filter((attch) => {
+        const position = attch.filename.search(/[.](edit|peak)[.]jdx$/);
+        return position > 0;
+      });
+      return filtered;
+    }
+    return false;
+  };
+
+  const listComparible = sample.getAnalysisContainersComparable();
+  const listComparibleKeys = Object.keys(listComparible);
+
+  const menuItems = listComparibleKeys.map((layout) => {
+    const listAics = listComparible[layout].map((aic)=> {
+      const { children } = aic;
+      let subSubMenu = null;
+      if (children) {
+        subSubMenu = children.map((dts) => {
+          const attachments = filteredAttachments(dts);
+          const dataSetName = dts.name;
+          if (!attachments) {
+            return { title: dataSetName, value: dts, checkable: false };
+          }
+          const spectraItems = attachments.map((item) => {
+            return { title: item.filename, key: item.id, value: item.id };
+          });
+          return { title: `Dataset: ${dts.name}`, key: dts.id, value: dts.id, checkable: false, children: spectraItems };
+        });
+      }
+      return { title: `Analysis: ${aic.name}`, value: aic.id, key: aic.id, children: subSubMenu, checkable: false };
+    });
+    return { title: `Type: ${layout}`, key: layout, value: layout, children: listAics, checkable: false };
+  });
+
+  const allAICs = typeof sample.analysisContainers === 'function'
+    ? sample.analysisContainers()
+    : (sample.analysisContainers || []);
+
+  let targetComparison = null;
+
+  if (comparisonContainer) {
+    if (comparisonContainer?.comparable_info?.is_comparison === true) {
+      targetComparison = comparisonContainer;
+    } else {
+      const targetId = typeof comparisonContainer === 'object' ? comparisonContainer.id : comparisonContainer;
+      if (targetId != null) {
+        targetComparison = allAICs.find(
+          (aic) => aic?.id === targetId && aic?.comparable_info?.is_comparison === true
+        ) || null;
+      }
+    }
+  }
+
+  const selectedSet = new Set();
+  if (targetComparison?.comparable_info?.is_comparison === true) {
+    const la = targetComparison.comparable_info.list_attachments;
+    if (Array.isArray(la)) {
+      la.forEach((att) => {
+        const id = typeof att === 'object' ? att?.id : att;
+        if (id != null) selectedSet.add(id);
+      });
+    }
+  }
+
+  const validIds = new Set();
+  const collectIds = (nodes) => {
+    nodes?.forEach((n) => {
+      if (n.children && n.children.length) collectIds(n.children);
+      if (!n.children && n.key != null) validIds.add(n.key);
+    });
+  };
+  menuItems.forEach((t) => collectIds(t.children));
+  const selectedFiles = Array.from(selectedSet).filter((id) => validIds.has(id));
+
+  return { menuItems, selectedFiles };
+};
+
+
+
+const GetSelectedComparedAnalyses = (container, treeData, selectedFiles, info) => {
+  if (!selectedFiles || !info) return [];
+  if (selectedFiles.length > info.length) return [];
+
+  const getParentNode = (key, tree) => {
+    let parentNode;
+    for (let i = 0; i < tree.length; i++) {
+      const node = tree[i];
+      if (node.children) {
+        if (node.children.some(item => item.key === key)) {
+          parentNode = node;
+        } else if (getParentNode(key, node.children)) {
+          parentNode = getParentNode (key, node.children);
+        }
+      }
+    }
+    return parentNode;
+  }
+
+  const selectedData = selectedFiles.map((fileID, idx) => {
+    const dataset = getParentNode(fileID, treeData);
+    const analysis = getParentNode(dataset.key, treeData);
+    const layout = getParentNode(analysis.key, treeData);
+    return { 
+      file: { name: info[idx], id: fileID },
+      dataset: { name: dataset.title, id: dataset.key },
+      analysis: { name: analysis.title, id: analysis.key },
+      layout: layout.title,
+     }
+  });
+  return selectedData;
+};
+
+const ProcessSampleWithComparisonAnalyses = (sample, spectraStore) => {
+  const { spcIdx, prevIdx } = spectraStore;
+  const newSample = new Sample(sample);
+  const comparableContainers = newSample.getAnalysisContainersComparable();
+  const listComparibleKeys = Object.keys(comparableContainers);
+  let comparisonContainers = [];
+  listComparibleKeys.forEach((layout) => {
+    const listAics = comparableContainers[layout];
+    comparisonContainers = listAics.filter((aic) => {
+      const { comparable_info } = aic;
+      return comparable_info ? comparable_info.is_comparison : false;
+    });
+  });
+
+  comparisonContainers.forEach((container) => {
+    const { extended_metadata } = container;
+    const { analyses_compared } = extended_metadata;
+    if (analyses_compared) {
+      const newListAtts = analyses_compared.map((att) => {
+        const { file } = att;
+        if (file.id === prevIdx) {
+          const newFileInfo = Object.assign({}, file, { id: spcIdx });
+          return Object.assign({}, att, { file: newFileInfo });
+        }
+        return att;
+      });
+      extended_metadata.analyses_compared = newListAtts;
+    }
+  });
+  return newSample;
+};
+
+export {
+  BuildSpcInfos, BuildSpcInfosForNMRDisplayer,
+  JcampIds, isNMRKind, cleaningNMRiumData, inlineNotation, BuildSpectraComparedInfos,
+  BuildSpectraComparedSelection, GetSelectedComparedAnalyses, ProcessSampleWithComparisonAnalyses,
+}; // eslint-disable-line

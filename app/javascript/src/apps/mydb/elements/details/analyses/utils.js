@@ -2,10 +2,11 @@ import ElementContainer from 'src/models/Container';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import Attachment from 'src/models/Attachment';
 
-function buildEmptyAnalyContainer() {
+function buildEmptyAnalyContainer(isComparison = false) {
   const newContainer = ElementContainer.buildEmpty();
   newContainer.container_type = 'analysis';
   newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
+  newContainer.extended_metadata.is_comparison = isComparison;
   return newContainer;
 }
 
@@ -22,8 +23,8 @@ function indexedContainers(containers) {
   });
 }
 
-function addNewAnalyses(element) {
-  const newContainer = buildEmptyAnalyContainer();
+function addNewAnalyses(element, isComparison = false) {
+  const newContainer = buildEmptyAnalyContainer(isComparison);
 
   const sortedConts = sortedContainers(element);
   const newSortConts = [...sortedConts, newContainer];

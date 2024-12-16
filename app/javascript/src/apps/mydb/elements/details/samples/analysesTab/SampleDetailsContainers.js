@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, ButtonGroup } from 'react-bootstrap';
 
-import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { reOrderArr } from 'src/utilities/DndControl';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
-
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import ViewSpectraCompare from 'src/apps/mydb/elements/details/ViewSpectraCompare';
 import {
   RndNotAvailable, RndNoAnalyses,
   ReactionsDisplay
@@ -73,9 +72,9 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
-  handleAdd() {
+  handleAdd(isComparison = false) {
     const { sample, setState } = this.props;
-    const newContainer = addNewAnalyses(sample);
+    const newContainer = addNewAnalyses(sample, isComparison);
     setState(
       (prevState) => ({ ...prevState, sample }),
       this.handleAccordionOpen(newContainer.id),
@@ -93,7 +92,11 @@ export default class SampleDetailsContainers extends Component {
     this.props.setState((prevState) => ({ ...prevState, sample }));
   }
 
-  // eslint-disable-next-line class-methods-use-this
+  sortedContainers(sample) {
+    const containers = sample.analysesContainers()[0].children;
+    return ArrayUtils.sortArrByIndex(containers);
+  }
+
   isEqCId(container, tagEl) {
     return container.id === tagEl.id;
   }
@@ -133,7 +136,7 @@ export default class SampleDetailsContainers extends Component {
       return null;
     }
     return (
-      <>
+      <ButtonGroup>
         <UploadField
           disabled={!sample.can_update}
           element={sample}
@@ -142,13 +145,22 @@ export default class SampleDetailsContainers extends Component {
         <Button
           size="xsm"
           variant="success"
-          onClick={this.handleAdd}
+          onClick={() => this.handleAdd(true)}
           disabled={!sample.can_update}
         >
           <i className="fa fa-plus me-1" />
-          Add analysis
+          Add comparisons
         </Button>
-      </>
+        <Button
+            size="xsm"
+            variant="success"
+            onClick={() => this.handleAdd(false)}
+            disabled={!sample.can_update}
+          >
+            <i className="fa fa-plus me-1" />
+            Add analysis
+          </Button>
+      </ButtonGroup>
     );
   }
 
@@ -202,6 +214,11 @@ export default class SampleDetailsContainers extends Component {
           />
           <NMRiumDisplayer
             sample={sample}
+            handleSampleChanged={handleSampleChanged}
+            handleSubmit={handleSubmit}
+          />
+          <ViewSpectraCompare
+            elementData={sample}
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />

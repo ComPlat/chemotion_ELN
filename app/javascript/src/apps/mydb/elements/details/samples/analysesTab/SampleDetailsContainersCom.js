@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ButtonToolbar, Accordion, Card } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
+import ContainerCompareAnalyses from 'src/components/container/ContainerCompareAnalyses';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
 import {
   AnalysesHeader,
@@ -98,15 +99,27 @@ function ReactionsDisplay({
                 {!container.is_deleted && (
                   <Accordion.Collapse eventKey={id}>
                     <Card.Body>
-                      <ContainerComponent
-                        templateType="sample"
-                        readOnly={readOnly}
-                        container={container}
-                        rootContainer={rootContainer}
-                        index={i}
-                        disabled={isDisabled}
-                        onChange={handleChange}
-                      />
+                      {container.extended_metadata && container.extended_metadata.is_comparison ? (
+                        <ContainerCompareAnalyses
+                          templateType="sample"
+                          readOnly={readOnly}
+                          sample={sample}
+                          container={container}
+                          handleSubmit={handleSubmit}
+                          disabled={isDisabled}
+                          onChange={handleChange}
+                        />
+                      ) : (
+                        <ContainerComponent
+                          templateType="sample"
+                          readOnly={readOnly}
+                          container={container}
+                          rootContainer={rootContainer}
+                          index={i}
+                          disabled={isDisabled}
+                          onChange={handleChange}
+                        />
+                      )}
                     </Card.Body>
                   </Accordion.Collapse>
                 )}

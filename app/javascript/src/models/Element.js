@@ -123,6 +123,25 @@ export default class Element {
     return target;
   }
 
+  getAnalysisContainersComparable() {
+    const result = {};
+    const analysisContainers = this.analysisContainers();
+    analysisContainers.forEach((aic) => {
+      const { extended_metadata } = aic;
+      const layout = (extended_metadata && extended_metadata.kind) ? extended_metadata.kind : '';
+      if (layout !== '') {
+        const splittedStr = layout.split('|');
+        const cleanedLayout = splittedStr.length > 1 ? splittedStr[1] : layout;
+        let listAics = result[cleanedLayout] ? result[cleanedLayout] : [];
+        const dts = aic.children.filter(el => ~el.container_type.indexOf('dataset'));
+        const aicWithDataset = Object.assign({}, aic, { children: dts });
+        listAics.push(aicWithDataset);
+        result[cleanedLayout] = listAics;
+      }
+    });
+    return result;
+  }
+
   // Return true if the element has at least one analysis
   analysesPresent() {
     if (!this.container) { return false; }
