@@ -46,6 +46,11 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/upload.json') }
     end
 
+    trait :with_infer_json_file do
+      filename { 'infer.json' }
+      file_path { Rails.root.join('spec/fixtures/infer.json') }
+    end
+
     trait :with_csv_file do
       filename { 'upload.csv' }
       file_path { Rails.root.join('spec/fixtures/upload.csv') }

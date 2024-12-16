@@ -7,6 +7,11 @@ class SpectraActions {
     return null;
   }
 
+  ToggleCompareModal(container) {
+    return container;
+  }
+
+
   LoadSpectra(spcInfos) {
     const infos = Array.isArray(spcInfos) ? spcInfos : [];
     const groups = infos.reduce((acc, si) => {
@@ -41,6 +46,22 @@ class SpectraActions {
       AttachmentFetcher.fetchFiles(idxs)
         .then((fetchedFiles) => {
           dispatch({ fetchedFiles, spcInfos: infos });
+        }).catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+        });
+    };
+  }
+
+  LoadSpectraCompare(spcInfos) {
+    const idxs = spcInfos && spcInfos.map(si => si.idx);
+    if (idxs.length === 0) {
+      return null;
+    }
+
+    return (dispatch) => {
+      AttachmentFetcher.fetchFiles(idxs)
+        .then((fetchedFiles) => {
+          dispatch({ fetchedFiles, spcInfos });
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });
@@ -222,6 +243,17 @@ class SpectraActions {
         console.error('LoadSpectraForNMRDisplayer failed:', error);
       }
     };
+  }
+
+  SaveMultiSpectraComparison(jcampIds, containerId, curveIdx=0, editedDataSpectra = []) {
+    return (dispatch) => {
+      AttachmentFetcher.combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra)
+        .then(() => {
+          dispatch();
+        }).catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+        })
+    }
   }
 }
 
