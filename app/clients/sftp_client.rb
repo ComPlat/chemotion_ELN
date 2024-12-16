@@ -98,7 +98,7 @@ class SFTPClient
 
   def remove_dir!(remote_path)
     with_session(remote_path) do |sftp|
-      sftp.session.exec!("rm -rf #{remote_path}")
+      sftp.session.exec!("rm -rf '#{remote_path}'")
     end
   end
 
@@ -147,6 +147,15 @@ class SFTPClient
   def glob(remote_path, pattern, flags = 0)
     with_session do |sftp|
       sftp.dir.glob(remote_path, pattern, flags)
+    end
+  end
+
+  def mtime(remote_path)
+    with_session(remote_path) do |sftp|
+      result = nil
+      request = sftp.lstat(remote_path) { |response| result = response[:attrs].mtime }
+      request.wait
+      result
     end
   end
 

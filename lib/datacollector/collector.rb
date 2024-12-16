@@ -43,6 +43,10 @@ module Datacollector
       @config = Configuration.new!(device)
     end
 
+    def error_tracker
+      @error_tracker ||= ErrorTracker.new(device.id)
+    end
+
     # config aliases
     delegate :collector_dir, to: :config
     delegate :expected_count, to: :config
@@ -154,14 +158,14 @@ module Datacollector
     # @param dir_path [String] The path to the directory being monitored.
     # @return [Array<String>] An array of new directory paths found in the specified directory.
     def new_folders(dir)
-      CollectorFile.entries(dir, dir_only: true, top_level: true, sftp: @sftp) || []
+      CollectorFile.entries(dir, dir_only: true, top_level: true, sftp: sftp) || []
     end
 
     # Gets the new files in the monitored folder
     #
     # @return [Array<String>] the list of files
     def new_files(dir)
-      CollectorFile.entries(dir, file_only: true, top_level: true, sftp: @sftp)
+      CollectorFile.entries(dir, file_only: true, top_level: true, sftp: sftp)
                    &.reject { |file| file.to_s.end_with?('.filepart', '.part') } || []
     end
 
@@ -212,11 +216,11 @@ module Datacollector
     end
 
     def try_delete_or_create_error(file)
-      try_delete(file) || CollectorError.find_or_create_by_path(file.path, file.mtime)
+      try_delete(file) || error_tracker.find_or_create_by_path(file.path, file.mtime)
     end
 
     def previous_failure?(file)
-      return false unless CollectorError.find_by_path(file.path, file.mtime)
+      return false unless error_tracker.find_by_path(file.path, file.mtime)
 
       try_delete(file)
       true
@@ -231,7 +235,7 @@ module Datacollector
 
     # Wait some time before if dir just created and no fixed number of files expected
     def ready?(path)
-      return log.info(__method__, 'Folder not ready!') && false unless modification_time_diff(path).positive?
+      return log.info('Folder not ready!', path.to_s) && false unless modification_time_diff(path).positive?
       return true if expected_count.zero? || file_collector?
 
       path.directory? && correct_file_count?(path.file_count)

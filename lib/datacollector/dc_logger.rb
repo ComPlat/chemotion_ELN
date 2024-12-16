@@ -7,7 +7,7 @@ module Datacollector
       @log = Logger.new(Rails.root.join('log/datacollector.log').to_s)
       @context = context
       @format = lambda do |subcontext, msg = nil|
-        "#{@context} - #{subcontext} >> #{msg}\n"
+        "#{@context} - #{subcontext} >> #{msg}\n".encode('UTF-8', invalid: :replace, undef: :replace, replace: '?')
       end
     end
 
