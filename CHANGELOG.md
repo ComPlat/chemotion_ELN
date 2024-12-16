@@ -1,6 +1,12 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v1.10.5]
+> (2024-12-16)
+
+* Code refactoring
+  * datacollector: track file causing errors through file cache rather db ([#2267](https://github.com/ComPlat/chemotion_ELN/pull/2267
+
 ## [v1.10.4]
 > (2024-12-09)
 
