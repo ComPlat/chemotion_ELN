@@ -2,7 +2,7 @@ import assert from 'assert';
 import expect from 'expect';
 
 // ketcher2 component
-import { _selection, _selectionSetter, all_atoms, allNodes, deleteAtomListSetter, deleted_atoms_list, FILOStack, fuelKetcherData, handleAddAtom, handleOnDeleteAtom, handleOnDeleteImage, image_used_counter, imagesList, imageUsedCounterSetter, isAliasConsistent, latestData, latestdataSetter, mols, moveTemplate, placeImageOnAtoms, re_render_canvas, resetStore, saveMolefile, setKetcherData, uniqueEvents } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
+import { canvaSelection, canvaSelectionSetter, all_atoms, allNodes, deleteAtomListSetter, deleted_atoms_list, FILOStack, fuelKetcherData, handleAddAtom, handleOnDeleteAtom, handleOnDeleteImage, image_used_counter, imagesList, imageUsedCounterSetter, isAliasConsistent, latestData, latestdataSetter, mols, moveTemplate, placeImageOnAtoms, re_render_canvas, resetStore, saveMolefile, setKetcherData, uniqueEvents } from '../../../../../app/packs/src/components/structureEditor/KetcherEditor';
 
 // ketcher/mofiles mockups
 import { areAllAliasesConsistent_ket, deleteAtomAndRemoveImage_ket, deleteAtomAndRemoveImageMulti_ket, empty_mol_file, hasConsistentAliases_ket, hasValidMolsAndImages, imageCountAdjuster_ket, isImageSelectionValid_ket, isMoleculeEmpty_ket, mock_ketcher_mols, mock_ketcher_mols_images_nodes, molfile_with_polymer_list, molfile_without_polymer_list, molfileData_save, molfileData_save_invalid_spacing, one_image_ketfile_rg, one_image_molfile, onMultiImageDelete_ket, resetOtherAliasesOnAnyDelete, wiht2Aliases_ket } from '../../../data/ketcher2_mockups';
@@ -1191,7 +1191,7 @@ describe('Ketcher2', () => {
 
   describe('on single-image delete of template', async () => {
     it('should delete and update alias with image-count', async () => {
-      _selectionSetter({
+      canvaSelectionSetter({
         images: [0]
       });
       latestdataSetter(imageCountAdjuster_ket);
@@ -1205,7 +1205,7 @@ describe('Ketcher2', () => {
     });
 
     it('should delete complete mol when there are not bonds and only atom with alias', async () => {
-      _selectionSetter({
+      canvaSelectionSetter({
         images: [0]
       });
       latestdataSetter(isMoleculeEmpty_ket);
@@ -1218,7 +1218,7 @@ describe('Ketcher2', () => {
     });
 
     it('should not process when selection has not images', async () => {
-      _selectionSetter();
+      canvaSelectionSetter();
       latestdataSetter(isImageSelectionValid_ket);
       await fuelKetcherData(isImageSelectionValid_ket);
       await imageUsedCounterSetter(0);
@@ -1231,7 +1231,7 @@ describe('Ketcher2', () => {
 
   describe('on multi-image delete of template', async () => {
     it('should delete and update alias with image-count', async () => {
-      _selectionSetter({
+      canvaSelectionSetter({
         images: [0, 1]
       });
       latestdataSetter(onMultiImageDelete_ket);
@@ -1245,7 +1245,7 @@ describe('Ketcher2', () => {
     });
 
     it('should delete and update alias with image-count when there is only atoms with alias and result should be empty ketfile', async () => {
-      _selectionSetter({
+      canvaSelectionSetter({
         images: [0, 1]
       });
       latestdataSetter(wiht2Aliases_ket);
@@ -1258,7 +1258,7 @@ describe('Ketcher2', () => {
     });
 
     it('when image index is invalid', async () => {
-      await _selectionSetter({
+      await canvaSelectionSetter({
         images: [0, 22]
       });
       await latestdataSetter({
