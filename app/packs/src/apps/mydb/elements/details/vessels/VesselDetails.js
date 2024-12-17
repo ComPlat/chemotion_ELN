@@ -10,13 +10,14 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 import { ButtonToolbar, Button, Card, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
+import AttachmentsContainer from "src/apps/mydb/elements/details/vessels/attachmentsTab/AttachmentsContainer";
 
 function VesselDetails({ vesselItem, toggleFullScreen }) {
 
   const isReadOnly = () => {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
-    return CollectionUtils.isReadOnly(currentCollection, currentUser.id, isSync);
+    // return CollectionUtils.isReadOnly(currentCollection, currentUser.id, isSync);
   };
   const context = useContext(StoreContext);
 
@@ -167,7 +168,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
               <VesselProperties item={vesselItem} readOnly={readOnly} />
             </Tab>
             <Tab eventKey="tab2" title="Attachments" key="tab2">
-                  Attachments will appear here          {/* <AnalysesContainer item={vesselItem} readOnly={readOnly} /> */}
+            <AttachmentsContainer item={vesselItem} />
             </Tab>
           </Tabs>
         </div>
