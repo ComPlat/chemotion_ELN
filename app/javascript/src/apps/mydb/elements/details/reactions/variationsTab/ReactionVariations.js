@@ -228,7 +228,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
-            names: ['Temperature'],
+            names: ['T'],
             entries: { temperature: temperatureUnits }
           }
         },
@@ -241,7 +241,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
-            names: ['Duration'],
+            names: ['t'],
             entries: { duration: durationUnits }
           }
         },
