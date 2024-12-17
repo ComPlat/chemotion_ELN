@@ -4,7 +4,8 @@ import React, {
   useRef, useState, useEffect, useCallback
 } from 'react';
 import {
-  Button, OverlayTrigger, Tooltip, Alert
+  Button, OverlayTrigger, Tooltip, Alert,
+  ButtonGroup, Modal
 } from 'react-bootstrap';
 import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
@@ -404,26 +405,71 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     gridRef.current.api.autoSizeColumns([column], false);
   };
 
+  const removeAllVariations = () => {
+    const [showModal, setShowModal] = useState(false);
+
+    const handleClose = () => setShowModal(false);
+    const handleShow = () => setShowModal(true);
+    const handleConfirm = () => {
+      setReactionVariations([]);
+      handleClose();
+    };
+
+    return (
+      <>
+        <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
+          <i className="fa fa-trash me-1" />
+          {' '}
+          Remove all Variations
+        </Button>
+
+        <Modal show={showModal} onHide={handleClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm Removal</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>Are you sure you want to remove all variations?</Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Keep variations
+            </Button>
+            <Button variant="danger" onClick={handleConfirm}>
+              Remove variations
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </>
+    );
+  };
+
+  const addVariation = () => (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={(
+        <Tooltip>
+          Add row with current data from &quot;Scheme&quot; tab.
+          <br />
+          Changes in &quot;Scheme&quot; tab are not applied to
+          {' '}
+          <i>existing</i>
+          {' '}
+          rows.
+        </Tooltip>
+          )}
+    >
+      <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+        <i className="fa fa-plus me-1" />
+        {' '}
+        Add Variation
+      </Button>
+    </OverlayTrigger>
+  );
+
   return (
     <div>
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip>
-            Add row with current data from &quot;Scheme&quot; tab.
-            <br />
-            Changes in &quot;Scheme&quot; tab are not applied to
-            {' '}
-            <i>existing</i>
-            {' '}
-            rows.
-          </Tooltip>
-        )}
-      >
-        <Button size="sm" variant="success" onClick={addRow} className="mb-2">
-          <i className="fa fa-plus me-1" /> Add Variation
-        </Button>
-      </OverlayTrigger>
+      <ButtonGroup>
+        {addVariation()}
+        {removeAllVariations()}
+      </ButtonGroup>
       <div className="ag-theme-alpine">
         <AgGridReact
           ref={gridRef}
