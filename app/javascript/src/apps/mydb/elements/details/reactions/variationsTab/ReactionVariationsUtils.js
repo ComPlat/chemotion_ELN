@@ -34,6 +34,23 @@ function getStandardUnit(entry) {
   }
 }
 
+function getUserFacingUnit(unit) {
+  switch (unit) {
+    case 'Second(s)':
+      return 's';
+    case 'Minute(s)':
+      return 'm';
+    case 'Hour(s)':
+      return 'h';
+    case 'Day(s)':
+      return 'd';
+    case 'Week(s)':
+      return 'w';
+    default:
+      return unit;
+  }
+}
+
 function convertUnit(value, fromUnit, toUnit) {
   if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
     return convertTemperature(value, fromUnit, toUnit);
@@ -173,5 +190,6 @@ export {
   copyVariationsRow,
   updateVariationsRow,
   updateColumnDefinitions,
-  getCellDataType
+  getCellDataType,
+  getUserFacingUnit,
 };

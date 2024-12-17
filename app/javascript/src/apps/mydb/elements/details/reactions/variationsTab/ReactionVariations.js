@@ -13,6 +13,7 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType,
   temperatureUnits, durationUnits, getStandardUnit, materialTypes, updateColumnDefinitions,
+  getUserFacingUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
@@ -82,7 +83,7 @@ function MenuHeader({
       style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
       onClick={onUnitChanged}
     >
-      {unit}
+      {getUserFacingUnit(unit)}
     </Button>
   );
 
