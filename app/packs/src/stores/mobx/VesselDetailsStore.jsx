@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { types } from 'mobx-state-tree';
+import Container from 'src/models/Container';
 
 const VesselItem = types
   .model({
@@ -85,6 +86,11 @@ export const VesselDetailsStore = types
     changeQrCode(id, newQrCode) {
       self.vessels.get(id).changed = true;
       self.vessels.get(id).qrCode = newQrCode;
+    },
+    addEmptyContainer(id) {
+      const container = Container.buildEmpty();
+      container.container_type = "attachments";
+      return container;
     },
     convertVesselToModel(jsVesselModel) {
       if (self.vessels.has(jsVesselModel.id)) {
