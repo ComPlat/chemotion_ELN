@@ -17,5 +17,6 @@ module Entities
     expose! :waste
     expose! :gas_type
     expose! :gas_phase_data
+    expose! :conversion_rate
   end
 end

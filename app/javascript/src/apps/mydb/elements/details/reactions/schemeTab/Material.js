@@ -120,6 +120,7 @@ class Material extends Component {
     this.gasFieldsUnitsChanged = this.gasFieldsUnitsChanged.bind(this);
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
+    this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
   }
 
   handleMaterialClick(sample) {
@@ -242,33 +243,65 @@ class Material extends Component {
     return result > 1 ? '100%' : `${(result * 100).toFixed(0)}%`;
   }
 
-  equivalentOrYield(material) {
-    const { reaction, materialGroup } = this.props;
-    if (materialGroup === 'products') {
-      const refMaterial = reaction.getReferenceMaterial();
-      let calculateYield = material.equivalent;
-      if (material.gas_type === 'gas') {
-        calculateYield = this.recalculateYieldForGasProduct(material, reaction);
-      } else if (reaction.hasPolymers()) {
-        calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
-      } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
-        calculateYield = 'n.a.';
-      } else if (material.purity < 1 && material.equivalent > 1) {
-        calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
-      } else {
-        calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
-      }
+  calculateYield(material, reaction) {
+    const refMaterial = reaction.getReferenceMaterial();
+    let calculateYield = material.equivalent;
+    if (material.gas_type === 'gas') {
+      calculateYield = this.recalculateYieldForGasProduct(material, reaction);
+    } else if (reaction.hasPolymers()) {
+      calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
+    } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
+      calculateYield = 'n.a.';
+    } else if (material.purity < 1 && material.equivalent > 1) {
+      calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
+    } else {
+      calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
+    }
+    return calculateYield;
+  }
+
+  conversionRateField(material) {
+    const { reaction } = this.props;
+    const condition = material.conversion_rate / 100 > 1;
+    const allowedConversionRateValue = material.conversion_rate && condition
+      ? 100 : material.conversion_rate;
+    return (
+      <div>
+        <NumeralInputWithUnitsCompo
+          precision={4}
+          value={allowedConversionRateValue || 'n.d.'}
+          unit="%"
+          disabled={!permitOn(reaction)}
+          onChange={(e) => this.handleConversionRateChange(e)}
+          size="sm"
+        />
+      </div>
+    );
+  }
+
+  yieldOrConversionRate(material) {
+    const { reaction, displayYieldField } = this.props;
+    if (displayYieldField === true || displayYieldField === null) {
       return (
         <div>
           <Form.Control
             name="yield"
             type="text"
+            bsClass="bs-form--compact form-control"
             size="sm"
-            value={calculateYield || 'n.d.'}
+            value={this.calculateYield(material, reaction) || 'n.d.'}
             disabled
           />
         </div>
       );
+    }
+    return this.conversionRateField(material);
+  }
+
+  equivalentOrYield(material) {
+    const { materialGroup } = this.props;
+    if (materialGroup === 'products') {
+      return this.yieldOrConversionRate(material);
     }
     return (
       <NumeralInputWithUnitsCompo
@@ -519,6 +552,20 @@ class Material extends Component {
         equivalent
       };
       this.props.onChange(event);
+    }
+  }
+
+  handleConversionRateChange(e) {
+    const { onChange, materialGroup } = this.props;
+    const conversionRate = e.value;
+    if (onChange && e) {
+      const event = {
+        type: 'conversionRateChanged',
+        materialGroup,
+        sampleID: this.materialId(),
+        conversionRate
+      };
+      onChange(event);
     }
   }
 
@@ -1075,4 +1122,5 @@ Material.propTypes = {
   canDrop: PropTypes.bool,
   isOver: PropTypes.bool,
   lockEquivColumn: PropTypes.bool.isRequired,
+  displayYieldField: PropTypes.bool,
 };
