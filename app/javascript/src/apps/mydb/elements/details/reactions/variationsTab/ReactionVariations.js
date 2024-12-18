@@ -195,6 +195,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
       sortable: false,
+      maxWidth: 100,
       cellDataType: false,
     },
     {
