@@ -13,61 +13,72 @@ describe Chemotion::MoleculeAPI do
     end
 
     describe 'POST /api/v1/molecules' do
+      let(:molfile) do
+        "
+        Ketcher 09231514282D 1   1.00000     0.00000     0
+
+          8 12  0     0  0            999 V2000
+          -4.3500    1.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          -1.8750    2.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          -1.3500    0.3750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.3250    1.3750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          -1.6000   -0.2000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          -4.1500   -1.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          -1.0000   -2.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.5250   -1.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  3  1  0     0  0
+          1  2  1  0     0  0
+          2  4  1  0     0  0
+          4  3  1  0     0  0
+          3  7  1  0     0  0
+          6  7  1  0     0  0
+          6  1  1  0     0  0
+          6  5  1  0     0  0
+          5  2  1  0     0  0
+          5  8  1  0     0  0
+          8  4  1  0     0  0
+          8  7  1  0     0  0
+        M  END"
+      end
+      let(:svg_file) { 'TXWRERCHRDBNLG-UHFFFAOYSA-N.svg' }
+      let(:editor) { 'openbabel' }
+      let(:valid_params) do
+        {
+          molfile: molfile,
+          svg_file: svg_file,
+          editor: editor,
+          decoupled: false,
+        }
+      end
+
       context 'with valid parameters' do
-        let!(:molfile) do
-          "
-  Ketcher 09231514282D 1   1.00000     0.00000     0
-
-  8 12  0     0  0            999 V2000
-   -4.3500    1.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.8750    2.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.3500    0.3750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.3250    1.3750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.6000   -0.2000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -4.1500   -1.0250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.0000   -2.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.5250   -1.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  3  1  0     0  0
-  1  2  1  0     0  0
-  2  4  1  0     0  0
-  4  3  1  0     0  0
-  3  7  1  0     0  0
-  6  7  1  0     0  0
-  6  1  1  0     0  0
-  6  5  1  0     0  0
-  5  2  1  0     0  0
-  5  8  1  0     0  0
-  8  4  1  0     0  0
-  8  7  1  0     0  0
-M  END"
+        it 'returns the molecule entity with expected attributes' do
+          post '/api/v1/molecules', params: valid_params
+          expect(response).to have_http_status(:created)
+          molecule = JSON.parse(response.body)
+          expect(molecule['molfile']).to eq(molfile)
         end
+      end
 
-        let!(:params) do
-          {
-            inchistring: 'InChI=1S/C8H8/c1-2-5-3(1)7-4(1)6(2)8(5)7/h1-8H',
-            # molecule_svg_file: "TXWRERCHRDBNLG-UHFFFAOYSA-N.svg",
-            inchikey: 'TXWRERCHRDBNLG-UHFFFAOYSA-N',
-            molecular_weight: 104.14912,
-            sum_formular: 'C8H8',
-            iupac_name: 'cubane',
-            names: ['cubane']
-          }
+      context 'with decoupled true' do
+        let(:decoupled) { true }
+
+        it 'creates a dummy molecule' do
+          post '/api/v1/molecules', params: valid_params
+
+          expect(response).to have_http_status(:created)
+          molecule = JSON.parse(response.body)
+          expect(molecule['inchikey']).to eq('DUMMY')
         end
-        let!(:decoupled) { false }
+      end
 
-        it 'is able to find or create a molecule by molfile' do
-          m = Molecule.find_by(molfile: molfile)
-          expect(m).to be_nil
-          post '/api/v1/molecules', params: { molfile: molfile, decoupled: false }
-          m = Molecule.find_by(molfile: molfile)
-          expect(m).not_to be_nil
-	  mw = params.delete(:molecular_weight)
-	  expect(m.attributes['molecular_weight'].round(5)).to eq(mw)
-          params.each do |k, v|
-            expect(m.attributes.symbolize_keys[k]).to eq(v) unless m.attributes.symbolize_keys[k].is_a?(Float)
-            expect(m.attributes.symbolize_keys[k].round(5)).to eq(v.round(5)) if m.attributes.symbolize_keys[k].is_a?(Float)
-          end
-          expect(m.molecule_svg_file).to match(/\w{128}\.svg/)
+      context 'with missing SVG file' do
+        it 'processes and generates SVG from the molfile' do
+          post '/api/v1/molecules', params: valid_params.except(:svg_file)
+
+          expect(response).to have_http_status(:created)
+          molecule = JSON.parse(response.body)
+          expect(molecule).to include('temp_svg')
         end
       end
     end

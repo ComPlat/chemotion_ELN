@@ -930,7 +930,7 @@ export default class Sample extends Element {
       
   set molecule(molecule) {
     this._molecule = new Molecule(molecule);
-    if (molecule.temp_svg) { this.sample_svg_file = molecule.temp_svg; }
+    if (molecule.temp_svg && !molecule.molecule_svg_file) { this.sample_svg_file = molecule.temp_svg; }
   }
       
   get polymer_formula() {
