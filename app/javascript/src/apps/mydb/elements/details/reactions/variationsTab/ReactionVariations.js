@@ -282,8 +282,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     editable: true,
     sortable: true,
     resizable: false,
-    minWidth: 120,
-    maxWidth: 200,
     wrapHeaderText: true,
     autoHeaderHeight: true,
   };
