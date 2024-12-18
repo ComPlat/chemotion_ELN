@@ -1,10 +1,14 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, Form, Accordion } from 'react-bootstrap';
+import {
+  Button, ButtonToolbar, Form, Accordion
+} from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import StructureEditor from 'src/models/StructureEditor';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { togglePanel, showErrorMessage, AccordeonHeaderButtonForSearchForm, panelVariables } from 'src/components/searchModal/forms/SearchModalFunctions';
+import {
+  togglePanel, showErrorMessage, AccordeonHeaderButtonForSearchForm, panelVariables
+} from 'src/components/searchModal/forms/SearchModalFunctions';
 import SearchResult from 'src/components/searchModal/forms/SearchResult';
 
 function KetcherRailsform() {
@@ -28,19 +32,19 @@ function KetcherRailsform() {
   const { pgCartridge } = UIStore.getState();
   let iframe;
   const iframeHeight = panelVars.invisibleClassName ? '88.3vh' : '85vh';
-  
+
   useEffect(() => {
     iframe = document.getElementById('ketcher');
     iframe.onload = () => {
       if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
         editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
       }
-    }
+    };
   }, [iframe]);
- 
+
   const handleSearchTypeChange = (e) => {
     searchStore.changeKetcherRailsValue('searchType', e.target.value);
-  }
+  };
 
   const searchValuesByMolfile = () => {
     searchStore.changeSearchValues([searchStore.ketcherRailsValues.queryMolfile]);
@@ -68,19 +72,6 @@ function KetcherRailsform() {
     });
     searchStore.clearSearchAndTabResults();
     searchValuesByMolfile();
-  };
-
-  useEffect(() => {
-    iframe = document.getElementById('ketcher');
-    iframe.onload = () => {
-      if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
-        editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
-      }
-    };
-  }, [iframe]);
-
-  const handleSearchTypeChange = (e) => {
-    searchStore.changeKetcherRailsValue('searchType', e.target.value);
   };
 
   const handleTanimotoChange = (e) => {
@@ -139,7 +130,7 @@ function KetcherRailsform() {
               src="/ketcher"
               title="Ketcher Rails"
               width="100%"
-              style={{ border: 'none', minHeight: 'calc(' + iframeHeight + ' - 242px)' }}
+              style={{ border: 'none', minHeight: `calc(${iframeHeight} - 242px)` }}
             />
             <div className="ketcher-buttons">
               <ButtonToolbar className="gap-2">
@@ -169,7 +160,8 @@ function KetcherRailsform() {
                 <Form.Check
                   type="radio"
                   value="sub"
-                  label={pgCartridge ? `Substructure Search with ${pgCartridge}` : 'Substructure Search'}
+                  label={pgCartridge !== 'development'
+                    ? `Substructure Search with ${pgCartridge}` : 'Substructure Search'}
                   checked={searchStore.ketcherRailsValues.searchType === 'sub'}
                   onChange={handleSearchTypeChange}
                 />
