@@ -120,6 +120,7 @@ class Material extends Component {
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
+    this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
   }
 
   handleMaterialClick(sample) {
@@ -221,21 +222,42 @@ class Material extends Component {
     );
   }
 
-  equivalentOrYield(material) {
-    const { reaction, materialGroup } = this.props;
-    if (materialGroup === 'products') {
-      const refMaterial = reaction.getReferenceMaterial();
-      let calculateYield = material.equivalent;
-      if (reaction.hasPolymers()) {
-        calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
-      } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
-        calculateYield = 'n.a.';
-      } else if (material.purity < 1 && material.equivalent > 1) {
-        calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
-      }
-      else {
-        calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
-      }
+  calculateYield(material, reaction) {
+    const refMaterial = reaction.getReferenceMaterial();
+    let calculateYield = material.equivalent;
+    if (reaction.hasPolymers()) {
+      calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
+    } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
+      calculateYield = 'n.a.';
+    } else if (material.purity < 1 && material.equivalent > 1) {
+      calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
+    } else {
+      calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
+    }
+    return calculateYield;
+  }
+
+  conversionRateField(material) {
+    const { reaction } = this.props;
+    const condition = material.conversion_rate / 100 > 1;
+    const allowedConversionRateValue = material.conversion_rate && condition
+      ? 100 : material.conversion_rate;
+    return (
+      <div>
+        <NumeralInputWithUnitsCompo
+          precision={4}
+          value={allowedConversionRateValue || 'n.d.'}
+          unit="%"
+          disabled={!permitOn(reaction)}
+          onChange={(e) => this.handleConversionRateChange(e)}
+        />
+      </div>
+    );
+  }
+
+  yieldOrConversionRate(material) {
+    const { reaction, displayYieldField } = this.props;
+    if (displayYieldField === true || displayYieldField === null) {
       return (
         <div>
           <FormControl
@@ -243,11 +265,19 @@ class Material extends Component {
             type="text"
             bsClass="bs-form--compact form-control"
             bsSize="small"
-            value={calculateYield}
+            value={this.calculateYield(material, reaction) || 'n.d.'}
             disabled
           />
         </div>
       );
+    }
+    return this.conversionRateField(material);
+  }
+
+  equivalentOrYield(material) {
+    const { materialGroup } = this.props;
+    if (materialGroup === 'products') {
+      return this.yieldOrConversionRate(material);
     }
     return (
       <NumeralInputWithUnitsCompo
@@ -398,6 +428,20 @@ class Material extends Component {
         equivalent
       };
       this.props.onChange(event);
+    }
+  }
+
+  handleConversionRateChange(e) {
+    const { onChange, materialGroup } = this.props;
+    const conversionRate = e.value;
+    if (onChange && e) {
+      const event = {
+        type: 'conversionRateChanged',
+        materialGroup,
+        sampleID: this.materialId(),
+        conversionRate
+      };
+      onChange(event);
     }
   }
 
@@ -857,5 +901,6 @@ Material.propTypes = {
   isDragging: PropTypes.bool,
   canDrop: PropTypes.bool,
   isOver: PropTypes.bool,
-  lockEquivColumn: PropTypes.bool.isRequired
+  lockEquivColumn: PropTypes.bool.isRequired,
+  displayYieldField: PropTypes.bool,
 };

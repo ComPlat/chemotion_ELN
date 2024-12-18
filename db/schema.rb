@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_07_09_095243) do
+ActiveRecord::Schema.define(version: 2024_09_17_085816) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -949,6 +949,7 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
+    t.float "conversion_rate"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end

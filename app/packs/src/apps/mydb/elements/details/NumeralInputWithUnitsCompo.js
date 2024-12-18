@@ -109,8 +109,12 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
   }
 
-  togglePrefix() {
+  togglePrefix(currentUnit) {
     const { metricPrefixes } = this.props;
+    const excludedUnits = ['%'];
+    if (excludedUnits.includes(currentUnit)) {
+      return null;
+    }
     let ind = metricPrefixes.indexOf(this.state.metricPrefix);
     if (ind < metricPrefixes.length - 1) {
       ind += 1;
@@ -152,7 +156,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           <Button
             disabled={inputDisabled}
             active
-            onClick={() => { this.togglePrefix(); }}
+            onClick={() => { this.togglePrefix(unit); }}
             bsStyle={bsStyleBtnAfter}
             bsSize={bsSize}
           >

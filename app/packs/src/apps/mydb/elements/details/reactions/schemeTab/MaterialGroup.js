@@ -12,11 +12,13 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
+import ToggleButton from 'src/components/common/ToggleButton';
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, addDefaultSolvent, headIndex,
-  dropMaterial, dropSample, switchEquiv, lockEquivColumn
+  dropMaterial, dropSample, switchEquiv, lockEquivColumn, displayYieldField,
+  switchYield
 }) => {
   const contents = [];
   let index = headIndex;
@@ -36,6 +38,7 @@ const MaterialGroup = ({
           dropMaterial={dropMaterial}
           dropSample={dropSample}
           lockEquivColumn={lockEquivColumn}
+          displayYieldField={displayYieldField}
         />
       ));
 
@@ -74,6 +77,8 @@ const MaterialGroup = ({
       addDefaultSolvent={addDefaultSolvent}
       switchEquiv={switchEquiv}
       lockEquivColumn={lockEquivColumn}
+      displayYieldField={displayYieldField}
+      switchYield={switchYield}
     />
   );
 };
@@ -99,7 +104,7 @@ const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
 
 const GeneralMaterialGroup = ({
   contents, materialGroup, showLoadingColumn, reaction, addDefaultSolvent,
-  switchEquiv, lockEquivColumn
+  switchEquiv, lockEquivColumn, displayYieldField, switchYield
 }) => {
   const isReactants = materialGroup === 'reactants';
   let headers = {
@@ -151,9 +156,36 @@ const GeneralMaterialGroup = ({
     );
   }
 
+  const yieldConversionRateFields = () => {
+    const conversionText = 'Click to switch to conversion field.'
+    + ' The conversion will not be displayed as part of the reaction scheme';
+    const yieldText = 'Click to switch to yield field.'
+    + ' The yield will be displayed as part of the reaction scheme';
+    let conversionOrYield = displayYieldField;
+    if (displayYieldField || displayYieldField === null) {
+      conversionOrYield = true;
+    }
+    return (
+      <div>
+        <ToggleButton
+          isToggledInitial={conversionOrYield}
+          onToggle={switchYield}
+          onLabel="Yield"
+          offLabel="Conv."
+          onColor="transparent"
+          offColor="transparent"
+          tooltipOn={conversionText}
+          tooltipOff={yieldText}
+          fontSize="14px"
+          fontWeight="bold"
+        />
+      </div>
+    );
+  };
+
   if (materialGroup === 'products') {
     headers.group = 'Products';
-    headers.eq = 'Yield';
+    headers.eq = yieldConversionRateFields();
   }
 
   const refTHead = (materialGroup !== 'products') ? headers.ref : null;
@@ -201,7 +233,7 @@ const GeneralMaterialGroup = ({
             {!isReactants && <th />}
             {showLoadingColumn && !isReactants && <th>{headers.loading}</th>}
             {!isReactants && <th>{headers.concn}</th>}
-            {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
+            {!isReactants && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
           </tr>
         </thead>
         <tbody>
@@ -300,7 +332,9 @@ MaterialGroup.propTypes = {
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
   switchEquiv: PropTypes.func.isRequired,
-  lockEquivColumn: PropTypes.bool
+  lockEquivColumn: PropTypes.bool,
+  displayYieldField: PropTypes.bool,
+  switchYield: PropTypes.func.isRequired
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -310,7 +344,9 @@ GeneralMaterialGroup.propTypes = {
   addDefaultSolvent: PropTypes.func.isRequired,
   contents: PropTypes.arrayOf(PropTypes.shape).isRequired,
   switchEquiv: PropTypes.func.isRequired,
-  lockEquivColumn: PropTypes.bool
+  lockEquivColumn: PropTypes.bool,
+  displayYieldField: PropTypes.bool,
+  switchYield: PropTypes.func.isRequired
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -322,12 +358,14 @@ SolventsMaterialGroup.propTypes = {
 
 MaterialGroup.defaultProps = {
   showLoadingColumn: false,
-  lockEquivColumn: false
+  lockEquivColumn: false,
+  displayYieldField: null
 };
 
 GeneralMaterialGroup.defaultProps = {
   showLoadingColumn: false,
-  lockEquivColumn: false
+  lockEquivColumn: false,
+  displayYieldField: null
 };
 
 
