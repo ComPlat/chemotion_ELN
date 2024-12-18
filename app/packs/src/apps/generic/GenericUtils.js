@@ -27,6 +27,7 @@ const createMenu = (text, type) => {
       key={type}
       href={href}
       active={text === type}
+      className={`custom-nav-link ${text === type ? 'fw-bold' : ''}`}
     >
       {contentComponents[type]}
     </Nav.Link>

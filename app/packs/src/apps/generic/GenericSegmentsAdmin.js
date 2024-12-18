@@ -4,7 +4,6 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { orderBy } from 'lodash';
 import { Constants, Designer } from 'chem-generic-ui';
-import SyncBtn from 'src/apps/generic/SyncButton';
 import LoadingModal from 'src/components/common/LoadingModal';
 import Notifications from 'src/components/Notifications';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
@@ -17,7 +16,7 @@ import { notification, submit } from 'src/apps/generic/Utils';
 
 const FN_ID = 'GenericSegments';
 
-const validateInput = element => {
+const validateInput = (element) => {
   if (element.klass_element === '') {
     notification({
       title: 'Create Segment Error',
@@ -44,9 +43,7 @@ export default class GenericSegmentsAdmin extends React.Component {
       elements: [],
       klasses: [],
       show: { tab: '', modal: '' },
-      propTabKey: 1,
       revisions: [],
-      repoData: [],
       user: {},
     };
 
@@ -60,8 +57,6 @@ export default class GenericSegmentsAdmin extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.delRevision = this.delRevision.bind(this);
     this.fetchRevisions = this.fetchRevisions.bind(this);
-    this.handleCreateRepo = this.handleCreateRepo.bind(this);
-    this.handleShowRepo = this.handleShowRepo.bind(this);
     this.fetchElementKlasses = this.fetchElementKlasses.bind(this);
     this.handleUploadKlass = this.handleUploadKlass.bind(this);
     this.handleDownloadKlass = this.handleDownloadKlass.bind(this);
@@ -76,7 +71,6 @@ export default class GenericSegmentsAdmin extends React.Component {
           GenericElsFetcher.fetchElementKlasses(),
           UsersFetcher.fetchCurrentUser()
         ]);
-
         const klasses = klassResult.error ? [] : klassResult?.klass?.sort((a, b) => a.place - b.place) || [];
         this.setState({
           elements: segmentResult.error ? [] : segmentResult.klass,
@@ -89,104 +83,11 @@ export default class GenericSegmentsAdmin extends React.Component {
         LoadingActions.stop();
       }
     };
-
     fetchData();
-  }
-
-  getShowState(att, val) {
-    return { ...this.state.show, [att]: val };
-  }
-
-  fetchRevisions(_element) {
-    const element = _element;
-    if (element?.id) {
-      LoadingActions.start();
-      GenericSgsFetcher.fetchKlassRevisions(element.id, 'SegmentKlass')
-        .then(result => {
-          let curr = Object.assign({}, { ...element.properties_template });
-          curr = Object.assign(
-            {},
-            { properties_release: curr },
-            { uuid: 'current' }
-          );
-          const revisions = [].concat(curr, result.revisions);
-          this.setState({ revisions });
-        })
-        .finally(() => {
-          LoadingActions.stop();
-        });
-    }
-  }
-
-  delRevision(params) {
-    const { id, data, uuid } = params;
-    LoadingActions.start();
-    GenericSgsFetcher.deleteKlassRevision({
-      id: id,
-      klass_id: data?.id,
-      klass: 'SegmentKlass',
-    })
-      .then(response => {
-        if (response.error) {
-          notification({
-            title: 'Delete Revision',
-            lvl: 'error',
-            msg: response.error,
-          });
-        } else {
-          this.fetchRevisions(data);
-          notification({
-            title: `Revision [${uuid}] deleted successfully`,
-            lvl: 'info',
-            msg: 'Deleted successfully',
-          });
-        }
-      })
-      .finally(() => {
-        LoadingActions.stop();
-      });
   }
 
   handleShowState(att, val, cb = () => {}) {
     this.setState({ show: this.getShowState(att, val) }, cb);
-  }
-  closeModal(cb = () => {}) {
-    this.handleShowState('modal', '', cb);
-  }
-
-  handleShowRepo() {
-    LoadingActions.start();
-    GenericSgsFetcher.fetchRepo().then(result => {
-      if (result.error) {
-        notification({
-          title: 'Cannot connect to Chemotion Repository',
-          lvl: 'error',
-          msg: result.error,
-        });
-        LoadingActions.stop();
-      } else {
-        this.setState(
-          { repoData: result, show: this.getShowState('modal', 'NewRepo') },
-          () => LoadingActions.stop()
-        );
-      }
-    });
-  }
-
-  handleCreateRepo(element) {
-    GenericSgsFetcher.createRepo({ identifier: element['identifier'] }).then(
-      result => {
-        if (result?.status === 'success') {
-          this.setState({ elements: result?.klass || this.state.elements });
-        }
-        notification({
-          title: 'Sync from LabIMotion Hub',
-          lvl: result?.status || 'error',
-          msg: result?.message || 'Unknown error',
-        });
-      }
-    );
-    this.closeModal(this.fetchElements);
   }
 
   handleCreateKlass(_response) {
@@ -197,7 +98,7 @@ export default class GenericSegmentsAdmin extends React.Component {
     }
     if (!validateInput(element)) return;
     GenericSgsFetcher.createKlass(element)
-      .then(result => {
+      .then((result) => {
         if (result.error) {
           notification({
             title: 'Create Segment fail',
@@ -213,13 +114,14 @@ export default class GenericSegmentsAdmin extends React.Component {
           this.fetchElements();
         }
       })
-      .catch(errorMessage => {
+      .catch((errorMessage) => {
         console.log(errorMessage);
       })
       .finally(() => {
         LoadingActions.stop();
       });
   }
+
 
   handleUpdateKlass(_response) {
     const { element, notify } = _response;
@@ -230,7 +132,7 @@ export default class GenericSegmentsAdmin extends React.Component {
     const inputs = element;
     if (!validateInput(inputs)) return;
     GenericSgsFetcher.updateSegmentKlass(inputs)
-      .then(result => {
+      .then((result) => {
         if (result.error) {
           notification({
             title: 'Update Segment fail',
@@ -246,8 +148,41 @@ export default class GenericSegmentsAdmin extends React.Component {
           this.fetchElements();
         }
       })
-      .catch(errorMessage => {
+      .catch((errorMessage) => {
         console.log(errorMessage);
+      })
+      .finally(() => {
+        LoadingActions.stop();
+      });
+  }
+
+  closeModal(cb = () => {}) {
+    this.handleShowState('modal', '', cb);
+  }
+
+  delRevision(params) {
+    const { id, data, uuid } = params;
+    LoadingActions.start();
+    GenericSgsFetcher.deleteKlassRevision({
+      id,
+      klass_id: data?.id,
+      klass: 'SegmentKlass',
+    })
+      .then((response) => {
+        if (response.error) {
+          notification({
+            title: 'Delete Revision',
+            lvl: 'error',
+            msg: response.error,
+          });
+        } else {
+          this.fetchRevisions(data);
+          notification({
+            title: `Revision [${uuid}] deleted successfully`,
+            lvl: 'info',
+            msg: 'Deleted successfully',
+          });
+        }
       })
       .finally(() => {
         LoadingActions.stop();
@@ -323,6 +258,34 @@ export default class GenericSegmentsAdmin extends React.Component {
     }
   }
 
+  getShowState(att, val) {
+    const { show } = this.state;
+    return { ...show, [att]: val };
+  }
+
+  fetchRevisions(_element) {
+    const element = _element;
+    if (element?.id) {
+      LoadingActions.start();
+      GenericSgsFetcher.fetchKlassRevisions(element.id, 'SegmentKlass')
+        .then((result) => {
+          // eslint-disable-next-line prefer-object-spread
+          let curr = Object.assign({}, { ...element.properties_template });
+          // eslint-disable-next-line prefer-object-spread
+          curr = Object.assign(
+            {},
+            { properties_release: curr },
+            { uuid: 'current' }
+          );
+          const revisions = [].concat(curr, result.revisions);
+          this.setState({ revisions });
+        })
+        .finally(() => {
+          LoadingActions.stop();
+        });
+    }
+  }
+
   handleDownloadKlass(e) {
     LoadingActions.start();
     GenericKlassFetcher.downloadKlass(e.id, 'SegmentKlass')
@@ -363,13 +326,14 @@ export default class GenericSegmentsAdmin extends React.Component {
   }
 
   fetchElements() {
-    GenericSgsFetcher.listSegmentKlass().then(result => {
+    LoadingActions.start();
+    GenericSgsFetcher.listSegmentKlass().then((result) => {
       this.setState({ elements: result.klass }, () => LoadingActions.stop());
     });
   }
 
   fetchElementKlasses() {
-    GenericElsFetcher.fetchElementKlasses().then(result => {
+    GenericElsFetcher.fetchElementKlasses().then((result) => {
       const klasses = result?.klass?.sort((a, b) => a.place - b.place) || [];
       this.setState({ klasses });
     });
@@ -404,7 +368,8 @@ export default class GenericSegmentsAdmin extends React.Component {
         fnUpdate={this.handleUpdateKlass}
         fnUpload={this.handleUploadKlass}
         fnDownload={this.handleDownloadKlass}
-        genericType="Segment"
+        fnRefresh={this.fetchElements}
+        genericType={Constants.GENERIC_TYPES.SEGMENT}
         gridData={els}
         klasses={this.state.klasses}
         preview={{
@@ -424,18 +389,8 @@ export default class GenericSegmentsAdmin extends React.Component {
     return (
       <div className="vw-90 my-auto mx-auto">
         <GenericMenu userName={user.name} text={FN_ID} />
-        <hr />
-        <div className="mt-5 pt-5">
+        <div className="mt-3">
           <FunctionLocation name={FN_ID} />
-          <SyncBtn
-            data={this.state.repoData}
-            fnCreate={this.handleCreateRepo}
-            fnModalClose={this.closeModal}
-            fnModalOpen={this.handleShowRepo}
-            genericType={Constants.GENERIC_TYPES.SEGMENT}
-            klasses={this.state.klasses}
-            showModal={this.state.show.modal === 'NewRepo'}
-          />
           {this.renderGrid()}
         </div>
         <Notifications />
@@ -447,11 +402,12 @@ export default class GenericSegmentsAdmin extends React.Component {
 
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById(`${FN_ID}Admin`);
-  if (domElement)
+  if (domElement) {
     ReactDOM.render(
       <DndProvider backend={HTML5Backend}>
         <GenericSegmentsAdmin />
       </DndProvider>,
       domElement
     );
+  }
 });

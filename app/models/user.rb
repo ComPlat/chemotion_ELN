@@ -401,7 +401,7 @@ class User < ApplicationRecord
         name = group.split(':')
         if name.size == 3
           group = Group.find_by(first_name: name[2], last_name: name[1])
-          user.groups << group if group.present?
+          user.groups << group if group.present? && user.groups.exclude?(group)
         end
       end
     end
