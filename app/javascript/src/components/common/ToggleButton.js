@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 export default function ToggleButton({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
-  onColor, offColor, tooltipOn, tooltipOff, fontType, fontColor
+  onColor, offColor, tooltipOn, tooltipOff, additionalClasses,
 }) {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
 
@@ -25,11 +25,10 @@ export default function ToggleButton({
   return (
     <OverlayTrigger placement="top" overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}>
       <Button
-        className={`bg-${buttonColor} border-0 p-0 toggle-button-${isToggled ? 'on' : 'off'}`}
-        size="xs"
+        className={`bg-${buttonColor} border-0 p-0`}
         onClick={handleChange}
       >
-        <span className={`fs-6 ${fontType} ${fontColor}`}>
+        <span className={`fs-6 ${additionalClasses}`}>
           {isToggled ? onLabel : offLabel}
         </span>
       </Button>
@@ -47,8 +46,7 @@ ToggleButton.propTypes = {
   offColor: PropTypes.string,
   tooltipOn: PropTypes.string,
   tooltipOff: PropTypes.string,
-  fontType: PropTypes.string,
-  fontColor: PropTypes.string,
+  additionalClasses: PropTypes.string,
 };
 
 ToggleButton.defaultProps = {
@@ -60,6 +58,5 @@ ToggleButton.defaultProps = {
   offColor: '#d3d3d3',
   tooltipOn: 'Click to switch off',
   tooltipOff: 'Click to switch on',
-  fontType: 'normal',
-  fontColor: '1em',
+  additionalClasses: '',
 };

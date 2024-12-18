@@ -179,8 +179,7 @@ function GeneralMaterialGroup({
           offColor="transparent"
           tooltipOn={conversionText}
           tooltipOff={yieldText}
-          fontType="fw-bold"
-          fontColor="text-dark"
+          additionalClasses="fw-bold text-dark"
         />
       </div>
     );
