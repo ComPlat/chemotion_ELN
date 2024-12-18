@@ -124,7 +124,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   togglePrefix(currentUnit) {
     const units = ['TON/h', 'TON/m', 'TON/s', '°C', '°F', 'K', 'h', 'm', 's'];
-    const excludedUnits = ['ppm', 'TON'];
+    const excludedUnits = ['ppm', 'TON', '%'];
     const { onMetricsChange, unit } = this.props;
     if (units.includes(currentUnit)) {
       // eslint-disable-next-line no-unused-expressions
