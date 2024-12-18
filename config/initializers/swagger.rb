@@ -3,5 +3,6 @@ GrapeSwaggerRails.options.before_action do
 end
 
 GrapeSwaggerRails.options.url = Rails.env.development? ? '/api/v1/swagger_doc' : '/swagger_doc.json'
+GrapeSwaggerRails.options.url = '/api/v1/swagger_doc'
 GrapeSwaggerRails.options.app_url  = "#{ENV['APPLICATION_URL']}"
 
