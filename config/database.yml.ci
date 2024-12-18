@@ -3,8 +3,8 @@ shared:
   encoding: unicode
   pool: 5
   timeout: 5000
-  username: postgres
-  password:
+  username: chemotion
+  password: postgres
   template: template0
   host: postgres
   port: 5432

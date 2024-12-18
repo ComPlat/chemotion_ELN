@@ -139,7 +139,8 @@
   "scripts": {
     "postinstall": "./package_postinstall.sh",
     "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
-    "coverage": "yarn nyc npm test;yarn nyc report --reporter=html"
+    "coverage": "yarn nyc npm test;yarn nyc report --reporter=html",
+    "update-browserslist-db": "node_modules/.bin/update-browserslist-db"
   },
   "nyc": {
     "exclude": [
