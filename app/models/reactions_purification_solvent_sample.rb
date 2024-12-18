@@ -2,17 +2,18 @@
 #
 # Table name: reactions_samples
 #
-#  id          :integer          not null, primary key
-#  reaction_id :integer
-#  sample_id   :integer
-#  reference   :boolean
-#  equivalent  :float
-#  position    :integer
-#  type        :string
-#  deleted_at  :datetime
-#  waste       :boolean          default(FALSE)
-#  coefficient :float            default(1.0)
-#  show_label  :boolean          default(FALSE), not null
+#  id                      :integer          not null, primary key
+#  reaction_id             :integer
+#  sample_id               :integer
+#  reference               :boolean
+#  equivalent              :float
+#  position                :integer
+#  type                    :string
+#  deleted_at              :datetime
+#  waste                   :boolean          default(FALSE)
+#  coefficient             :float            default(1.0)
+#  show_label              :boolean          default(FALSE), not null
+#  conversion_rate         :float
 #
 # Indexes
 #

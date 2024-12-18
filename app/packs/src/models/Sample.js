@@ -944,6 +944,7 @@ export default class Sample extends Element {
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
       coefficient: this.coefficient,
+      conversion_rate: this.conversion_rate,
     };
     _.merge(params, extra_params);
     return params;
