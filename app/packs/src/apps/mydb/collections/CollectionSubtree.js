@@ -1,13 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import { Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfos from 'src/apps/mydb/collections/UserInfos';
+import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import GatePushButton from 'src/components/common/GatePushButton';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
 
 export default class CollectionSubtree extends React.Component {
@@ -26,6 +27,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   componentDidMount() {
+    this.onChange(UIStore.getState());
     UIStore.listen(this.onChange);
   }
 
@@ -47,8 +49,8 @@ export default class CollectionSubtree extends React.Component {
       );
 
       this.setState({
-          selected: selectedCol,
-          visible
+        selected: selectedCol,
+        visible
       });
     }
   }
@@ -61,11 +63,6 @@ export default class CollectionSubtree extends React.Component {
 
     let { visibleRootsIds } = CollectionStore.getState();
     return (visibleRootsIds.indexOf(node.id) > -1)
-  }
-
-  children() {
-    const { root } = this.props;
-    return root.children || [];
   }
 
   canTakeOwnership() {
@@ -136,28 +133,36 @@ export default class CollectionSubtree extends React.Component {
   }
 
   render() {
-    const { root, isRemote } = this.props;
+    const { root, isRemote, level } = this.props;
     const { visible, selected } = this.state;
     const sharedUsers = root.sync_collections_users;
-    const children = this.children();
+    const children = root.children || [];
 
     const showGatePushButton = root && root.is_locked && root.label === 'chemotion-repository.net';
 
     return (
-      <div className="tree-view" key={root.id}>
+      <div key={root.id}>
         <div
           id={`tree-id-${root.label}`}
-          className={`title ${selected ? 'selected' : ''} d-flex align-items-baseline gap-1`}
+          className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
           onClick={this.handleClick}
+          style={{ paddingLeft: `${level * 12}px` }}
         >
+          {children.length > 0 ? (
+            <ChevronIcon
+              direction={visible ? 'down' : 'right'}
+              onClick={this.toggleExpansion}
+            />) :
+            (<i className="fa fa-fw" />)
+          }
           {showGatePushButton && (<GatePushButton collectionId={root.id} />)}
-          <span className="me-auto">{root.label}</span>
+          <span className="tree-view_title">{root.label}</span>
           {root.inventory_prefix && (
             <OverlayTrigger
               placement="top"
-              overlay={<Tooltip id="collection_inventory_label">Inventory Label</Tooltip>}
+              overlay={<Tooltip id="collection_inventory_label">{root.inventory_prefix}</Tooltip>}
             >
-              <Badge bg="secondary">{root.inventory_prefix}</Badge>
+              <i className="fa fa-tag"/>
             </OverlayTrigger>
           )}
           {this.canTakeOwnership() && (
@@ -167,25 +172,17 @@ export default class CollectionSubtree extends React.Component {
             />
           )}
           {(sharedUsers && sharedUsers.length > 0) && (
-            <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers })}>
+            <OverlayTrigger placement="top" overlay={<UserInfosTooltip users={sharedUsers} />}>
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
-          {children.length > 0 && (
-            <i
-              className={`fa fa-${visible ? 'minus' : 'plus'}`}
-              onClick={this.toggleExpansion}
-            />
-          )}
         </div>
         {visible && (
-          <ul>
+          <div className="tree-view">
             {children.map((child) => (
-              <li key={`collection-${child.id}`}>
-                <CollectionSubtree root={child} isRemote={isRemote} />
-              </li>
+              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} level={level+1}/>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     );
@@ -194,5 +191,6 @@ export default class CollectionSubtree extends React.Component {
 
 CollectionSubtree.propTypes = {
   isRemote: PropTypes.bool,
-  root: PropTypes.object
+  root: PropTypes.object,
+  level: PropTypes.number
 };
