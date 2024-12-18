@@ -513,6 +513,24 @@ export default class ReactionDetails extends Component {
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
+    const schemeTitle = reaction && activeTab === 'scheme' ? (
+      <div style={{ display: 'flex' }}>
+        <div style={{ paddingRight: '2px' }}>
+          <ToggleButton
+            isToggledInitial={reaction.gaseous}
+            onToggle={this.handleGaseousChange}
+            onLabel="Gas Scheme"
+            offLabel="Default Scheme"
+            onColor="#afcfee"
+            offColor="#d3d3d3"
+            tooltipOn="Click to enable Default mode"
+            tooltipOff="Click to enable Gas mode"
+            fontSize="14px"
+            fontWeight="normal"
+          />
+        </div>
+      </div>
+    ) : 'Scheme';
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
