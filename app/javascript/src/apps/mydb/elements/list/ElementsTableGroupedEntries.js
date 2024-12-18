@@ -356,7 +356,6 @@ export default class ElementsTableGroupedEntries extends Component {
             />
           </td>
           <td
-            role="gridcell"
             onClick={() => this.showDetails(element.id)}
             role="button"
           >
