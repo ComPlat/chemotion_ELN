@@ -614,6 +614,7 @@ module ReportHelpers
         # reactions_sample:
         equivalent: ['r_s.equivalent', '"r eq"', 10],
         reference: ['r_s.reference', '"r ref"', 10],
+        conversion_rate: ['r_s.conversion_rate', '"r conversion rate"', 10],
       },
       analysis: {
         name: ['anac."name"', '"name"', 10],
@@ -723,6 +724,7 @@ module ReportHelpers
       equivalent
       reference
       type
+      conversion_rate
     ],
     sample: %i[
       sample_svg_file

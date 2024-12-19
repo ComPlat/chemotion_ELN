@@ -6,6 +6,7 @@ FactoryBot.define do
     association :sample
     reference { false }
     equivalent { 1.0 }
+    conversion_rate { 1.0 }
     position { 0 }
     type { 'ReactionsSample' }
     waste { false }
