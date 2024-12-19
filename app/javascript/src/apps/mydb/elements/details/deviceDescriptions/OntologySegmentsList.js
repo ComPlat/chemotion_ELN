@@ -4,7 +4,7 @@ import { cloneDeep } from 'lodash';
 import { GenInterface, GenButtonReload } from 'chem-generic-ui';
 import { GenFlowViewerBtn } from 'chem-generic-ui';
 import { renderFlowModal } from 'src/apps/generic/Utils';
-import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
+// import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
@@ -57,7 +57,7 @@ const OntologySegmentsList = ({ store, element, handleSegmentsChange, handleRetr
         <div onClick={() => setSelectedSegmentId(segment)}>
           GenFlowViewerBtn
           <br />
-          RevisionViewerBtn
+      { /*          RevisionViewerBtn */ }
         </div>
         GenButtonReload
       </ButtonToolbar>
