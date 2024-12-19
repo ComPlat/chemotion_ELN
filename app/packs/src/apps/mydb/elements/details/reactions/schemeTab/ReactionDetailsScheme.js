@@ -47,6 +47,7 @@ export default class ReactionDetailsScheme extends Component {
       reaction,
       lockEquivColumn: false,
       cCon: false,
+      displayYieldField: null,
       reactionDescTemplate: textTemplate.toJS(),
       open: true,
     };
@@ -63,6 +64,7 @@ export default class ReactionDetailsScheme extends Component {
     this.dropMaterial = this.dropMaterial.bind(this);
     this.dropSample = this.dropSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
+    this.switchYield = this.switchYield.bind(this);
     this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
     this.reactionVesselSize = this.reactionVesselSize.bind(this);
@@ -136,6 +138,11 @@ export default class ReactionDetailsScheme extends Component {
     const { lockEquivColumn } = this.state;
     this.setState({ lockEquivColumn: !lockEquivColumn });
   }
+
+  switchYield = (shouldDisplayYield) => {
+    const { displayYieldField } = this.state;
+    this.setState({ displayYieldField: shouldDisplayYield ?? !displayYieldField });
+  };
 
   handleOnConditionSelect(eventKey) {
     const { reaction } = this.props;
@@ -361,6 +368,11 @@ export default class ReactionDetailsScheme extends Component {
       case 'gasFieldsUnitsChanged':
         this.onReactionChange(
           this.updatedReactionForGasFieldsUnitsChange(changeEvent)
+        );
+        break;
+      case 'conversionRateChanged':
+        this.onReactionChange(
+          this.updatedReactionForConversionRateChange(changeEvent)
         );
         break;
       default:
@@ -633,6 +645,22 @@ export default class ReactionDetailsScheme extends Component {
       updatedSample,
       field
     );
+  }
+
+  updatedReactionForConversionRateChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, conversionRate } = changeEvent;
+    const updatedSample = reaction.sampleById(sampleID);
+
+    updatedSample.conversion_rate = conversionRate;
+    if (conversionRate / 100 > 1) {
+      NotificationActions.add({
+        message: 'conversion rate cannot be more than 100%',
+        level: 'warning'
+      });
+    }
+
+    return this.updatedReactionWithSample(this.updatedSamplesForConversionRateChange.bind(this), updatedSample);
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -1031,6 +1059,15 @@ export default class ReactionDetailsScheme extends Component {
     return reaction;
   }
 
+  updatedSamplesForConversionRateChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.conversion_rate = updatedSample.conversion_rate;
+      }
+      return sample;
+    });
+  }
+
   solventCollapseBtn() {
     const { open } = this.state;
     const arrow = open
@@ -1138,7 +1175,8 @@ export default class ReactionDetailsScheme extends Component {
     const {
       reaction,
       lockEquivColumn,
-      reactionDescTemplate
+      reactionDescTemplate,
+      displayYieldField
     } = this.state;
     const minPadding = { padding: '1px 2px 2px 0px' };
     if (reaction.editedSample !== undefined) {
@@ -1174,6 +1212,15 @@ export default class ReactionDetailsScheme extends Component {
     const refM = this.props.reaction.starting_materials[0];
     if (!this.props.reaction.referenceMaterial && refM) {
       reaction.markSampleAsReference(refM.id);
+    }
+
+    if (displayYieldField === null) {
+      const allHaveNoConversion = reaction.products.every(
+        (material) => material.conversion_rate && material.conversion_rate !== 0
+      );
+      if (allHaveNoConversion) {
+        this.switchYield(!allHaveNoConversion);
+      }
     }
 
     const headReactants = reaction.starting_materials.length ?? 0;
@@ -1229,6 +1276,8 @@ export default class ReactionDetailsScheme extends Component {
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
               switchEquiv={this.switchEquiv}
               lockEquivColumn={this.state.lockEquivColumn}
+              switchYield={this.switchYield}
+              displayYieldField={displayYieldField}
               headIndex={0}
             />
           </ListGroupItem>
