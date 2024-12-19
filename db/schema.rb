@@ -10,13 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_07_26_064022) do
+ActiveRecord::Schema.define(version: 2024_08_08_125802) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "btree_gist"
   enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -1715,12 +1717,6 @@ ActiveRecord::Schema.define(version: 2024_07_26_064022) do
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
-
-
-  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
-  SQL
-
   create_view "v_samples_collections", sql_definition: <<-SQL
       SELECT cols.id AS cols_id,
       cols.user_id AS cols_user_id,
