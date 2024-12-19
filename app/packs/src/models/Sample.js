@@ -1047,6 +1047,7 @@ export default class Sample extends Element {
       coefficient: this.coefficient,
       gas_type: this.gas_type || false,
       gas_phase_data: this.gas_phase_data,
+      conversion_rate: this.conversion_rate,
     };
     _.merge(params, extra_params);
     return params;
