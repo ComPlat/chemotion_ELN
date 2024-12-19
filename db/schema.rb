@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_08_06_082351) do
+ActiveRecord::Schema.define(version: 2024_09_17_085816) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -983,6 +983,7 @@ ActiveRecord::Schema.define(version: 2024_08_06_082351) do
     t.boolean "show_label", default: false, null: false
     t.integer "gas_type", default: 0
     t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
+    t.float "conversion_rate"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end

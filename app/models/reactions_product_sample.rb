@@ -15,6 +15,7 @@
 #  show_label     :boolean          default(FALSE), not null
 #  gas_type       :integer          default("off")
 #  gas_phase_data :jsonb
+#  conversion_rate :float
 #
 # Indexes
 #
