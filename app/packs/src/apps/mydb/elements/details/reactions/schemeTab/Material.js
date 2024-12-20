@@ -563,7 +563,8 @@ class Material extends Component {
         value: e.value,
         unit: e.unit,
         field,
-      }
+      };
+      onChange(event);
     }
   }
 
