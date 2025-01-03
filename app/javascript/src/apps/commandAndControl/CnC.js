@@ -6,7 +6,7 @@ import { uniq } from 'lodash';
 import DeviceActions from 'src/stores/alt/actions/UserActions';
 import DeviceStore from 'src/stores/alt/stores/UserStore';
 import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
-import Navigation from 'src/apps/commandAndControl/Navigation';
+import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 // Timeout before disconnection when not focused
@@ -305,41 +305,45 @@ class CnC extends React.Component {
     const showList = showDeviceList && isNotFocused;
 
     return (
-      <Container fluid>
-        <Navigation toggleDeviceList={this.toggleDeviceList} />
-        <Row className="pt-3">
-          {showList && (
-            <Col xs={2}>
-              <div className="d-flex gap-2 align-items-baseline">
-                <i className="fa fa-list" />
-                <span>Devices</span>
-              </div>
+      <>
+        <BaseNavigation toggleDeviceList={this.toggleDeviceList} />
+        <Container fluid>
+          <Row className="pt-3">
+            {showList && (
+              <Col xs={2}>
+                <div className="d-flex gap-2 align-items-baseline">
+                  <i className="fa fa-list" />
+                  <span>Devices</span>
+                </div>
 
-              {this.renderDeviceList()}
+                {this.renderDeviceList()}
+              </Col>
+            )}
+            <Col xs={showList ? 10 : 12} className="d-flex flex-column gap-2">
+              <FocusNovnc
+                isNotFocused={isNotFocused}
+                isForcedScreenResizing={isForcedScreenResizing}
+                handleFocus={this.handleFocus}
+                handleBlur={this.handleBlur}
+                handleForceScreenResizing={this.handleForceScreenResizing}
+                toggleDeviceList={this.toggleDeviceList}
+                isDeviceListVisible={showList}
+                connected={connected}
+                watching={watching}
+                using={using}
+                forceCursor={forceCursor}
+                handleCursor={this.handleCursor}
+              />
+              <div
+                className={forceCursor ? 'force-mouse-pointer' : ''}
+                ref={this.canvasRef}
+                onMouseEnter={this.handleMouseEnter}
+                onMouseLeave={this.handleMouseLeave}
+              />
             </Col>
-          )}
-          <Col xs={showList ? 10 : 12} className="d-flex flex-column gap-2">
-            <FocusNovnc
-              isNotFocused={isNotFocused}
-              isForcedScreenResizing={isForcedScreenResizing}
-              handleFocus={this.handleFocus}
-              handleBlur={this.handleBlur}
-              handleForceScreenResizing={this.handleForceScreenResizing}
-              connected={connected}
-              watching={watching}
-              using={using}
-              forceCursor={forceCursor}
-              handleCursor={this.handleCursor}
-            />
-            <div
-              className={forceCursor ? 'force-mouse-pointer' : ''}
-              ref={this.canvasRef}
-              onMouseEnter={this.handleMouseEnter}
-              onMouseLeave={this.handleMouseLeave}
-            />
-          </Col>
-        </Row>
-      </Container>
+          </Row>
+        </Container>
+      </>
     );
   }
 }

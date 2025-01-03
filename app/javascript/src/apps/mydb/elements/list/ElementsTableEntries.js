@@ -334,22 +334,18 @@ export default class ElementsTableEntries extends Component {
     const { keyboardElementIndex } = this.state;
 
     return (
-      <Table className="elements" bordered hover style={{ borderTop: 0 }}>
-        <tbody>
+      <Table className="elements" hover>
+        <tbody className="sheet">
           {elements.map((element, index) => {
             const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name : '';
-            let style = {};
+            let className = "";
             if (this.isElementSelected(element)
               || (keyboardElementIndex != null && keyboardElementIndex === index)) {
-              style = {
-                color: '#000',
-                background: '#ddd',
-                border: '4px solid #337ab7'
-              };
+              className = "text-bg-primary";
             }
 
             return (
-              <tr key={element.id} style={style}>
+              <tr key={element.id} className={className}>
                 <td width="30px">
                   <ElementCheckbox
                     element={element}
