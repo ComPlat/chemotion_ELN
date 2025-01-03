@@ -1,0 +1,17 @@
+.nav-tabs.sheet-tabs {
+  @extend .mb-2;
+  @extend .border-bottom-0;
+  .nav-link {
+    @extend .text-body;
+    border-width: 0 0 3px 0;
+    @extend .border-active;
+    --bs-border-opacity: 0;
+    &.active {
+      --bs-border-opacity: 1;
+      @extend .bg-white;
+      i {
+        @extend .text-active;
+      }
+    }
+  }
+}
