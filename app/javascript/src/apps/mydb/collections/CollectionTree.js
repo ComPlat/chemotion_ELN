@@ -1,4 +1,5 @@
 import React, { Fragment, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -7,13 +8,13 @@ import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 
-export default function CollectionTree({ isCollapsed, expandSidebar }) {
+function CollectionTree({ isCollapsed, expandSidebar }) {
   const [collections, setCollections] = useState(CollectionStore.getState());
   const [activeCollection, setActiveCollection] = useState('collections');
   const setCollection = (collection) => {
     if (isCollapsed) {
       expandSidebar();
-      setActiveCollection(collection)
+      setActiveCollection(collection);
     } else {
       setActiveCollection(collection !== activeCollection ? collection : null);
     }
@@ -65,7 +66,7 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
       collectionKey: 'syncedWithMe',
       roots: syncInRoots,
     }
-  ]
+  ];
 
   return (
     <div className="collection-tree">
@@ -96,3 +97,10 @@ export default function CollectionTree({ isCollapsed, expandSidebar }) {
     </div>
   );
 }
+
+CollectionTree.propTypes = {
+  isCollapsed: PropTypes.bool.isRequired,
+  expandSidebar: PropTypes.func.isRequired,
+};
+
+export default CollectionTree;
