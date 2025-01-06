@@ -1,10 +1,7 @@
 import React from 'react';
-import { Accordion, ButtonToolbar } from 'react-bootstrap';
+import { Accordion } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
-import { GenInterface, GenButtonReload } from 'chem-generic-ui';
-import { GenFlowViewerBtn } from 'chem-generic-ui';
-import { renderFlowModal } from 'src/apps/generic/Utils';
-import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
+import { GenInterface, GenToolbar } from 'chem-generic-ui';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
@@ -29,38 +26,20 @@ const OntologySegmentsList = ({ store, element, handleSegmentsChange, handleRetr
     //);
   };
 
-  const setSelectedSegmentId = (segment) => {
-    store.setSelectedSegmentId(segment.id);
-  }
-
   const toggleSegment = (segment) => {
     store.toggleSegment(segment);
   }
 
-  // <GenFlowViewerBtn generic={segment} fnClick={renderFlowModal} />
-  // <RevisionViewerBtn
-  //   fnRetrieve={handleRetrieveRevision}
-  //   generic={segment}
-  //   key={`revision-viewer-button-${index}-${j}`}
-  // />
-
-  // <GenButtonReload
-  //   klass={segmentKlass}
-  //   generic={segment}
-  //   fnReload={handleSegmentsChange}
-  //   key={`revision-reload-button-${index}-${j}`}
-  // />
-
   const segmentVersionToolbar = (segment, segmentKlass, index, j) => {
     return (
-      <ButtonToolbar className="my-2" key={`revisions-buttons-${index}-${j}`}>
-        <div onClick={() => setSelectedSegmentId(segment)}>
-          GenFlowViewerBtn
-          <br />
-          RevisionViewerBtn
-        </div>
-        GenButtonReload
-      </ButtonToolbar>
+      <GenToolbar
+        generic={segment}
+        genericType="Segment"
+        klass={segmentKlass}
+        fnReload={handleSegmentsChange}
+        fnRetrieve={handleRetrieveRevision}
+        key={`revisions-buttons-${index}-${j}`}
+      />
     );
   }
 
@@ -84,20 +63,19 @@ const OntologySegmentsList = ({ store, element, handleSegmentsChange, handleRetr
           const segmentElement = existingSegment ? existingSegment : Segment.buildEmpty(cloneDeep(segmentKlass));
 
           rows.push(segmentVersionToolbar(segmentElement, segmentKlass, index, j));
-          rows.push(<div key={`interface-${index}-${j}`}>GenInterface</div>);
-          // rows.push(
-          //   <GenInterface
-          //     generic={segmentElement}
-          //     fnChange={handleSegmentsChange}
-          //     extLayers={[]}
-          //     genId={0}
-          //     isPreview={false}
-          //     isSearch={false}
-          //     isActiveWF={false}
-          //     fnNavi={onNaviClick}
-          //     key={`ontology-${i}-${j}`}
-          //   />
-          // );
+          rows.push(
+            <GenInterface
+              generic={segmentElement}
+              fnChange={handleSegmentsChange}
+              extLayers={[]}
+              genId={0}
+              isPreview={false}
+              isSearch={false}
+              isActiveWF={false}
+              fnNavi={onNaviClick}
+              key={`ontology-${index}-${j}`}
+            />
+          );
         });
 
         let deletedClass = '';
