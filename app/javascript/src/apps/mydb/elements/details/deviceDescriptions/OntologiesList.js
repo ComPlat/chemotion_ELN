@@ -1,25 +1,13 @@
 import React from 'react';
 import { Modal, Button, ListGroup, ButtonGroup } from 'react-bootstrap';
 import OntologySelect from './OntologySelect';
-import { useDrag, useDrop } from 'react-dnd';
+import OntologySortableList from './OntologySortableList';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import { observer } from 'mobx-react';
 
 const OntologiesList = ({ store, element }) => {
-  const dndType = { LISTITEM: 'ListItem' };
   const ontologies = element['ontologies'] || [];
-
-  const moveOntologyListItem = (dragIndex, hoverIndex) => {
-    const dragItem = element['ontologies'][dragIndex];
-    let newItems = [...element['ontologies']];
-    newItems.splice(dragIndex, 1);
-    newItems.splice(hoverIndex, 0, dragItem);
-    newItems.forEach((element, index) => {
-      element.index = index;
-    });
-    store.changeDeviceDescription('ontologies', newItems);
-  };
 
   const addOntology = (selectedData, paths) => {
     let newOntology = { data: selectedData, paths: paths };
@@ -178,81 +166,46 @@ const OntologiesList = ({ store, element }) => {
     );
   }
 
-  const dndButton = () => {
-    return (
-      <div className="dnd-button">
-        <i className="dnd-arrow-enable text-info fa fa-arrows" />
-      </div>
-    );
-  }
-
   const ontologyListItem = () => {
     let rows = [];
 
     ontologies
       .sort((a, b) => a.index - b.index)
       .map((ontology, index) => {
-        const [{ isDragging }, drag] = useDrag({
-          type: dndType.LISTITEM,
-          item: { index },
-          collect: (monitor) => ({
-            isDragging: monitor.isDragging(),
-          }),
-        });
-
-        const [{ isOver, canDrop }, drop] = useDrop({
-          accept: dndType.LISTITEM,
-          collect: (monitor) => ({
-            isOver: monitor.isOver(),
-            canDrop: monitor.canDrop(),
-          }),
-          drop: (item) => {
-            if (item.index === index) { return; }
-
-            moveOntologyListItem(item.index, index);
-            item.index = index;
-          },
-        });
-
         const deletedClass = ontology.data.is_deleted ? ' text-decoration-line-through' : '';
         const backgroundColor = index % 2 === 0 ? 'bg-gray-100' : 'bg-white';
         const hasNoSegmentsClass = !ontology.segments ? ' text-gray-600' : '';
-        const orderClass = store.ontology_mode == 'order' ? ' d-flex align-items-center gap-3' : '';
 
-        let dndClass = '';
-        if (orderClass && canDrop) {
-          dndClass = ' dnd-zone-list-item mb-1';
-        }
-        if (orderClass && isOver) {
-          dndClass += ' dnd-zone-over';
-        }
-        if (orderClass && isDragging) {
-          dndClass += ' dnd-dragging';
-        }
-
-        rows.push(
-          <ListGroup.Item
-            key={`${store.key_prefix}-${ontology.data.label}-${index}`}
-            className={`${backgroundColor}${orderClass}${deletedClass}${hasNoSegmentsClass}${dndClass}`}
-            ref={store.ontology_mode == 'order' ? (node) => drag(drop(node)) : null}
-            as="li"
-          >
-            {store.ontology_mode == 'order' && dndButton()}
-            <div>
-              <h4>{ontology.data.label}</h4>
-              <div className="d-flex justify-content-between align-items-center gap-2">
-                {ontology.paths.map((p) => p.label).join(' / ')}
-                {
-                  store.ontology_mode == 'edit' && 
+        if (store.ontology_mode == 'order') {
+          rows.push(
+            <OntologySortableList
+              store={store}
+              element={element}
+              ontology={ontology}
+              index={index}
+              key={`sortable-list-${index}`}
+            />
+          );
+        } else {
+          rows.push(
+            <ListGroup.Item
+              key={`${store.key_prefix}-${ontology.data.label}-${index}`}
+              className={`${backgroundColor}${deletedClass}${hasNoSegmentsClass}`}
+              as="li"
+            >
+              <div>
+                <h4>{ontology.data.label}</h4>
+                <div className="d-flex justify-content-between align-items-center gap-2">
+                  {ontology.paths.map((p) => p.label).join(' / ')}
                   <div>
                     {undoDeleteButton(index)}
                     {deleteOntologyButton(index)}
                   </div>
-                }
+                </div>
               </div>
-            </div>
-          </ListGroup.Item>
-        );
+            </ListGroup.Item>
+          );
+        }
       });
     return rows;
   }
