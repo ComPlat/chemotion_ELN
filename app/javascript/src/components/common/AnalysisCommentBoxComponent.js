@@ -38,6 +38,7 @@ function CommentBox({ isVisible, value, handleCommentTextChange }) {
         value={value}
         onChange={handleCommentTextChange}
         className="my-3"
+        placeholder="Add a comment here"
       />
     </Form.Group>
   );
