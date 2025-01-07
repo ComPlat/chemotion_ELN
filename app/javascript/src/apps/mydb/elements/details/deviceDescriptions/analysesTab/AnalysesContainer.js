@@ -6,13 +6,11 @@ import {
 
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import AnalysisHeader from './AnalysisHeader';
-import Container from 'src/models/Container';
+import AnalysesSortableContainer from './AnalysesSortableContainer';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
-import { useDrag, useDrop } from 'react-dnd';
-import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { observer } from 'mobx-react';
@@ -30,6 +28,7 @@ const AnalysesContainer = ({ readonly }) => {
 
   const addEmptyAnalysis = () => {
     deviceDescriptionsStore.addEmptyAnalysisContainer();
+    changeMode();
   }
 
   const changeMode = () => {
@@ -57,14 +56,6 @@ const AnalysesContainer = ({ readonly }) => {
     // TODO: spectra submit
   }
 
-  const moveAnalyse = (idToMove, idOfPredecessor) => {
-    Container.switchPositionOfChildContainer(
-      containers,
-      idToMove,
-      idOfPredecessor
-    );
-  }
-
   const addButton = () => {
     return (
       <div className="add-button">
@@ -82,7 +73,7 @@ const AnalysesContainer = ({ readonly }) => {
   }
 
   const modeButton = () => {
-    const readonly = !readonly && containers.length < 1 ? true : false;
+    const isReadonly = !readonly && containers.length < 1 ? true : false;
 
     return (
       <ButtonGroup>
@@ -90,7 +81,7 @@ const AnalysesContainer = ({ readonly }) => {
           size="xsm"
           active={deviceDescriptionsStore.analysis_mode === 'edit'}
           onClick={() => changeMode()}
-          disabled={readonly}
+          disabled={isReadonly}
         >
           <i className="fa fa-edit me-1" />
           Edit mode
@@ -99,7 +90,7 @@ const AnalysesContainer = ({ readonly }) => {
           size="xsm"
           active={deviceDescriptionsStore.analysis_mode === 'order'}
           onClick={() => changeMode()}
-          disabled={readonly}
+          disabled={isReadonly}
         >
           <i className="fa fa-reorder me-1" />
           Order mode
@@ -151,70 +142,16 @@ const AnalysesContainer = ({ readonly }) => {
     );
   }
 
-  const accoridonHeaderOrCardHeader = (container) => {
-    if (mode === 'edit') {
-      return (
-        <AccordionHeaderWithButtons eventKey={container.id}>
-          <AnalysisHeader container={container} readonly={readonly} />
-        </AccordionHeaderWithButtons>
-      );
-    } else {
-      return (
-        <>
-          <div className="dnd-button">
-            <i className="dnd-arrow-enable text-info fa fa-arrows" />
-          </div>
-          <AnalysisHeader container={container} readonly={readonly} />
-        </>
-      );
-    }
-  }
-
   const analysisContainer = () => {
     let items = [];
 
     containers.forEach((container, index) => {
-      const [{ isDragging }, drag] = useDrag({
-        type: DragDropItemTypes.CONTAINER,
-        item: { container },
-        collect: (monitor) => ({
-          isDragging: monitor.isDragging(),
-        }),
-      });
-
-      const [{ isOver, canDrop }, drop] = useDrop({
-        accept: DragDropItemTypes.CONTAINER,
-        collect: (monitor) => ({
-          isOver: monitor.isOver(),
-          canDrop: monitor.canDrop(),
-        }),
-        drop: (item) => {
-          if (item.container.id === container.id) { return; }
-
-          moveAnalyse(item.container.id, container.id);
-        },
-      });
-
-      const orderClass = mode === 'order' ? ' d-flex align-items-center gap-2 px-2 py-3' : '';
-      let dndClass = mode === 'edit' ? ` border-0${index === 0 ? '' : 'border-top'}` : ' mb-3 rounded border';
-      if (orderClass && canDrop) {
-        dndClass = ' dnd-zone-list-item';
-      }
-      if (orderClass && isOver) {
-        dndClass += ' dnd-zone-over';
-      }
-      if (orderClass && isDragging) {
-        dndClass += ' dnd-dragging';
-      }
-
       items.push(
-        <Card
-          key={`container_${container.id}`}
-          className={dndClass}
-          ref={mode == 'order' ? (node) => drag(drop(node)) : null}
-        >
-          <Card.Header className={`rounded-0 p-0 border-bottom-0${orderClass}`}>
-            {accoridonHeaderOrCardHeader(container)}
+        <Card key={`container_${container.id}`} className={`border-0${index === 0 ? '' : 'border-top'}`}>
+          <Card.Header className={`rounded-0 p-0 border-bottom-0`}>
+            <AccordionHeaderWithButtons eventKey={container.id}>
+              <AnalysisHeader container={container} readonly={readonly} />
+            </AccordionHeaderWithButtons>
           </Card.Header>
           {
             !container.is_deleted && mode === 'edit' && (
@@ -265,7 +202,10 @@ const AnalysesContainer = ({ readonly }) => {
                 {analysisContainer()}
               </Accordion>
             ) : (
-              analysisContainer()
+              <AnalysesSortableContainer
+                readonly={readonly}
+                key={`analyses-sortable-${container.id}`}
+              />
             )}
           </div>
         ) : (
