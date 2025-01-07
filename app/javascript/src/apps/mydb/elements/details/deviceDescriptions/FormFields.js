@@ -654,7 +654,7 @@ const numericInput = (element, store, field, label, type, info) => {
         name={field}
         type="number"
         key={`${store.key_prefix}-${field}`}
-        value={parseFloat(value)}
+        value={value !== '' ? parseFloat(value) : ''}
         onChange={handleFieldChanged(store, field, type, element.type)}
       />
     </Form.Group>
