@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_11_04_100001) do
+ActiveRecord::Schema.define(version: 2025_01_01_000000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -71,8 +71,8 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
     t.string "aasm_state"
     t.bigint "filesize"
     t.jsonb "attachment_data"
-    t.integer "con_state"
     t.jsonb "log_data"
+    t.integer "con_state"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -341,9 +341,9 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.text "plain_text_content"
     t.jsonb "log_data"
     t.datetime "deleted_at"
+    t.text "plain_text_content"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
@@ -962,12 +962,12 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
     t.string "duration"
     t.string "rxno"
     t.string "conditions"
+    t.jsonb "log_data"
     t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
-    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.boolean "gaseous", default: false
-    t.jsonb "log_data"
+    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -986,12 +986,12 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
-    t.integer "gas_type", default: 0
-    t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
-    t.float "conversion_rate"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "log_data"
+    t.integer "gas_type", default: 0
+    t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
+    t.float "conversion_rate"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1182,8 +1182,8 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
     t.string "sum_formula"
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
-    t.boolean "inventory_sample", default: false
     t.jsonb "log_data"
+    t.boolean "inventory_sample", default: false
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1222,9 +1222,9 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.jsonb "log_data"
     t.jsonb "component_graph_data", default: {}
     t.text "plain_text_description"
-    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_screens_on_deleted_at"
   end
 
@@ -1347,9 +1347,9 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
   create_table "third_party_apps", force: :cascade do |t|
     t.string "url"
     t.string "name", limit: 100, null: false
+    t.string "file_types", limit: 100
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.string "file_types", limit: 100
     t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
@@ -1478,10 +1478,10 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
     t.datetime "deleted_at"
     t.string "short_label"
     t.jsonb "readout_titles", default: ["Readout"]
+    t.jsonb "log_data"
     t.text "plain_text_description"
     t.integer "width", default: 12
     t.integer "height", default: 8
-    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_wellplates_on_deleted_at"
   end
 
@@ -2157,7 +2157,7 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
           where collection_id = collectionId;
 
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(reaction_id, 'Reaction')) into used_space_reactions
           from collections_reactions
           where collection_id = collectionId;
@@ -2206,7 +2206,7 @@ ActiveRecord::Schema.define(version: 2024_11_04_100001) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
