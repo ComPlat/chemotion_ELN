@@ -277,7 +277,7 @@ class Attachment < ApplicationRecord
     attachment_attacher.destroy
   end
 
-  def check_user_quota
+  def user_quota_exceeded?
     user = User.find(created_for.nil? ? created_by : created_for)
     if (user.used_space + attachment_data['metadata']['size']) > user.available_space &&
        !user.available_space.zero?
@@ -296,7 +296,7 @@ class Attachment < ApplicationRecord
     attachment_attacher.attach(File.open(file_path, binmode: true))
     raise 'File to large' unless valid?
 
-    raise 'User quota exceeded' unless check_user_quota
+    raise 'User quota exceeded' unless user_quota_exceeded?
 
     attachment_attacher.create_derivatives
 

@@ -416,7 +416,7 @@ export default class UserManagement extends React.Component {
       last_name: this.u_lastname.value.trim(),
       name_abbreviation: this.u_abbr.value.trim(),
       type: this.u_type.value,
-      available_space: this.u_avail.value === '' ? 0 : this.u_avail.value
+      available_space: this.u_avail.value === '' ? 0 : this.u_avail.value * 1024 * 1024
     })
       .then((result) => {
         if (result.error) {
@@ -445,7 +445,7 @@ export default class UserManagement extends React.Component {
     if (this.u_type.value === 'Group') { // update available space for all users of group
       AdminFetcher.updateUsersOfGroup({
         id: user.id,
-        available_space: this.u_avail.value === '' ? 0 : this.u_avail.value
+        available_space: this.u_avail.value === '' ? 0 : this.u_avail.value * 1024 * 1024
       })
         .then((result) => JSON.parse(result))
         .then((json) => {
@@ -1038,14 +1038,14 @@ export default class UserManagement extends React.Component {
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAvail">
                     <Form.Label column sm="3" className="fs-6">
-                      Available Space:
+                      Available Space (MB):
                     </Form.Label>
                     <Col sm="7">
                       <Form.Control
                         type="number"
                         min="1"
                         name="u_avail"
-                        defaultValue={user.available_space === 0 ? '' : user.available_space}
+                        defaultValue={user.available_space === 0 ? '' : user.available_space / 1024 / 1024}
                         ref={(ref) => { this.u_avail = ref; }}
                         className="fs-6"
                       />
@@ -1523,7 +1523,7 @@ export default class UserManagement extends React.Component {
         </td>
         <td className="col-md-2 py-3">
           {g.available_space === 0 ? ''
-            : `${Math.round((g.used_space / g.available_space) * 100)}% of ${g.available_space}B`}
+            : `${Math.round((g.used_space / g.available_space) * 100)}% of ${g.available_space / 1024 / 1024}MB`}
         </td>
         <td className="col-md-2 py-3">
           {g.current_sign_in_at}

@@ -304,7 +304,7 @@ class User < ApplicationRecord
       'INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id',
     ).where(
       '(ua.user_id = ?) and (ua.deleted_at ISNULL) and (ua.to ISNULL or ua.to > ?)',
-      id, Time.now
+      id, Time.zone.now
     ).order('ua.from DESC')
   end
 
@@ -347,7 +347,7 @@ class User < ApplicationRecord
       sql = ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
       ApplicationRecord.connection.exec_query(sql)
     end
-  rescue StandardError => e
+  rescue StandardError
     log_error 'Error on update_matrix'
   end
 
@@ -372,7 +372,7 @@ class User < ApplicationRecord
             end
       ApplicationRecord.connection.exec_query(sql)
     end
-  rescue StandardError => e
+  rescue StandardError
     log_error 'Error on update_matrix'
   end
 
@@ -449,7 +449,7 @@ class User < ApplicationRecord
   end
 
   def set_default_avail_space
-    self.available_space = Admin.find(1).available_space # first admin
+    self.available_space = Admin.first.nil? ? 0 : Admin.first.available_space
     save!
   end
 

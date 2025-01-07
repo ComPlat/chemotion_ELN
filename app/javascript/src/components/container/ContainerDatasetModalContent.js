@@ -83,7 +83,7 @@ export class ContainerDatasetModalContent extends Component {
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
     this.classifyAttachments = this.classifyAttachments.bind(this);
-    this.checkUserQuota = this.checkUserQuota.bind(this);
+    this.isUserQuotaExceeded = this.isUserQuotaExceeded.bind(this);
     this.state.attachmentGroups = this.classifyAttachments(props.datasetContainer.attachments);
   }
 
@@ -468,7 +468,7 @@ export class ContainerDatasetModalContent extends Component {
     );
   }
 
-  checkUserQuota() {
+  isUserQuotaExceeded() {
     const { filteredAttachments } = this.state;
     const totalSize = filteredAttachments.filter((attachment) => attachment.is_new === true && !attachment.is_deleted)
       .reduce((acc, attachment) => acc + attachment.filesize, 0);
@@ -649,7 +649,7 @@ export class ContainerDatasetModalContent extends Component {
                   && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
               {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
             </div>
-            <Alert variant="warning" show={this.checkUserQuota()}>
+            <Alert variant="warning" show={this.isUserQuotaExceeded()}>
               Uploading attachments will fail; User quota will be exceeded.
             </Alert>
           </>
