@@ -1,7 +1,7 @@
 import React from 'react';
 import { Accordion } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
-import { GenInterface, GenToolbar } from 'chem-generic-ui';
+import { Constants, GenInterface, GenToolbar } from 'chem-generic-ui';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
@@ -15,17 +15,6 @@ const OntologySegmentsList = ({ store, element, handleSegmentsChange, handleRetr
   const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
   let existingSegment = {}
 
-  const onNaviClick = (type, id) => {
-    console.log('navi', type, id);
-    //const { currentCollection, isSync } = UIStore.getState();
-    //const collectionUrl = !isNaN(id)
-    //  ? `${currentCollection.id}/${type}/${id}`
-    //  : `${currentCollection.id}/${type}`;
-    //Aviator.navigate(
-    //  isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`
-    //);
-  };
-
   const toggleSegment = (segment) => {
     store.toggleSegment(segment);
   }
@@ -34,7 +23,7 @@ const OntologySegmentsList = ({ store, element, handleSegmentsChange, handleRetr
     return (
       <GenToolbar
         generic={segment}
-        genericType="Segment"
+        genericType={Constants.GENERIC_TYPES.SEGMENT}
         klass={segmentKlass}
         fnReload={handleSegmentsChange}
         fnRetrieve={handleRetrieveRevision}
@@ -72,7 +61,7 @@ const OntologySegmentsList = ({ store, element, handleSegmentsChange, handleRetr
               isPreview={false}
               isSearch={false}
               isActiveWF={false}
-              fnNavi={onNaviClick}
+              fnNavi={() => {}}
               key={`ontology-${index}-${j}`}
             />
           );

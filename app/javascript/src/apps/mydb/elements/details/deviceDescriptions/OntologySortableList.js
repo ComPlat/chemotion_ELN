@@ -52,13 +52,13 @@ const OntologySortableList = ({ store, element, ontology, index }) => {
   const orderClass = ' d-flex align-items-center gap-3';
 
   let dndClass = '';
-  if (orderClass && canDrop) {
+  if (canDrop) {
     dndClass = ' dnd-zone-list-item mb-1';
   }
-  if (orderClass && isOver) {
+  if (isOver) {
     dndClass += ' dnd-zone-over';
   }
-  if (orderClass && isDragging) {
+  if (isDragging) {
     dndClass += ' dnd-dragging';
   }
 

@@ -147,8 +147,8 @@ const AnalysesContainer = ({ readonly }) => {
 
     containers.forEach((container, index) => {
       items.push(
-        <Card key={`container_${container.id}`} className={`border-0${index === 0 ? '' : 'border-top'}`}>
-          <Card.Header className={`rounded-0 p-0 border-bottom-0`}>
+        <Card key={`container_${container.id}`} className={`rounded-0 border-0${index === 0 ? '' : ' border-top'}`}>
+          <Card.Header className="rounded-0 p-0 border-bottom-0">
             <AccordionHeaderWithButtons eventKey={container.id}>
               <AnalysisHeader container={container} readonly={readonly} />
             </AccordionHeaderWithButtons>
