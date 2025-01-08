@@ -1,9 +1,9 @@
+/* eslint-disable react/function-component-definition */
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Modal, Button,
 } from 'react-bootstrap';
-import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
 import AttachmentsModalContent from 'src/apps/mydb/elements/details/vessels/attachmentsTab/AttachmentsModalContent';
 
 const AttachmentsModal = ({
@@ -13,21 +13,26 @@ const AttachmentsModal = ({
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [localName, setLocalName] = useState(datasetContainer.name);
 
+  const handleSave = () => {
+    if (datasetInput.current) {
+      datasetInput.current.handleSave();
+      const updatedAttachments = datasetInput.current.getUpdatedAttachments();
+      const updatedDatasetContainer = {
+        ...datasetContainer,
+        attachments: updatedAttachments,
+        name: localName,
+      };
+      onChange(updatedDatasetContainer);
+      onHide();
+    }
+  };
+
   const handleModalClose = (event) => {
     if (event && event.type === 'keydown' && event.key === 'Escape') {
       handleSave();
     } else {
       onHide();
     }
-  };
-
-  const handleSave = () => {
-    datasetInput.current.handleSave();
-    onChange({
-      ...datasetContainer,
-    //   ...datasetInput.current.state.datasetContainer,
-      name: localName,
-    });
   };
 
   const handleNameChange = (newName) => {
@@ -83,7 +88,6 @@ const AttachmentsModal = ({
             ref={datasetInput}
             readOnly={false}
             datasetContainer={datasetContainer}
-            // kind={null}
             onModalHide={onHide}
             onChange={onChange}
           />

@@ -1,3 +1,5 @@
+/* eslint-disable react/display-name */
+/* eslint-disable arrow-body-style */
 import React, { useImperativeHandle, forwardRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
@@ -35,10 +37,15 @@ const AttachmentsModalContent = forwardRef(({ datasetContainer, onChange, readOn
 
   useImperativeHandle(ref, () => ({
     handleSave: () => {
-      console.log('Saving changes in AttachmentsModalContent...');
-      // Add any additional save logic here
-      onChange({ ...datasetContainer, attachments });
+      const savedAttachments = attachments.map((attachment) => ({
+        ...attachment,
+        is_pending: false,
+      }));
+      setAttachments(savedAttachments);
+      setAttachmentGroups(classifyAttachments(savedAttachments));
+      onChange({ ...datasetContainer, attachments: savedAttachments });
     },
+    getUpdatedAttachments: () => attachments,
   }));
 
   const handleFileDrop = (files) => {
@@ -55,16 +62,12 @@ const AttachmentsModalContent = forwardRef(({ datasetContainer, onChange, readOn
   };
 
   const handleAttachmentRemove = (attachment) => {
-    const updatedAttachments = attachments.map((a) =>
-      a.id === attachment.id ? { ...a, is_deleted: true } : a
-    );
+    const updatedAttachments = attachments.map((a) => (a.id === attachment.id ? { ...a, is_deleted: true } : a));
     updateAttachments(updatedAttachments);
   };
 
   const handleUndo = (attachment) => {
-    const updatedAttachments = attachments.map((a) =>
-      a.id === attachment.id ? { ...a, is_deleted: false } : a
-    );
+    const updatedAttachments = attachments.map((a) => (a.id === attachment.id ? { ...a, is_deleted: false } : a));
     updateAttachments(updatedAttachments);
   };
 
@@ -75,7 +78,12 @@ const AttachmentsModalContent = forwardRef(({ datasetContainer, onChange, readOn
         {attachment.is_deleted ? <strike>{attachment.filename}</strike> : attachment.filename}
         <div className="attachment-row-subtext">
           <div>
-            Created: <span className="ms-1">{formatDate(attachment.created_at || Date.now())} </span>
+            Created:
+            {' '}
+            <span className="ms-1">
+              {formatDate(attachment.created_at || Date.now())}
+              {' '}
+            </span>
           </div>
           <span className="ms-2 me-2">|</span>
           <div>
@@ -97,16 +105,14 @@ const AttachmentsModalContent = forwardRef(({ datasetContainer, onChange, readOn
             <i className="fa fa-undo" aria-hidden="true" />
           </Button>
         ) : (
-          <>
-            <ButtonToolbar className="gap-1">
-              {downloadButton(attachment)}
-              {annotateButton(attachment, () => {
-                setImageEditModalShown(true);
-                setChosenAttachment(attachment);
-              })}
-              {removeButton(attachment, handleAttachmentRemove, readOnly)}
-            </ButtonToolbar>
-          </>
+          <ButtonToolbar className="gap-1">
+            {downloadButton(attachment)}
+            {annotateButton(attachment, () => {
+              setImageEditModalShown(true);
+              setChosenAttachment(attachment);
+            })}
+            {removeButton(attachment, handleAttachmentRemove, readOnly)}
+          </ButtonToolbar>
         )}
       </div>
       {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
@@ -141,21 +147,14 @@ const AttachmentsModalContent = forwardRef(({ datasetContainer, onChange, readOn
         <div className="no-attachments-text">There are currently no attachments.</div>
       ) : (
         <>
-          {attachmentGroups.Pending.length > 0 &&
-            renderGroup(attachmentGroups.Pending, 'Pending')}
-          {attachmentGroups.Original.length > 0 &&
-            renderGroup(attachmentGroups.Original, 'Original')}
+          {attachmentGroups.Pending.length > 0
+            && renderGroup(attachmentGroups.Pending, 'Pending')}
+          {attachmentGroups.Original.length > 0
+            && renderGroup(attachmentGroups.Original, 'Original')}
         </>
       )}
-      {/* <HyperLinksSection
-        data={datasetContainer.hyperlinks}
-        onAddLink={() => {}}
-        onRemoveLink={() => {}}
-        disabled={disabled}
-      /> */}
     </div>
   );
-
   return <div>{renderAttachments()}</div>;
 });
 
