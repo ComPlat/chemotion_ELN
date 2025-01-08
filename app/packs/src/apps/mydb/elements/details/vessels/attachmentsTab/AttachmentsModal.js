@@ -80,7 +80,7 @@ const AttachmentsModal = ({
         </Modal.Header>
         <Modal.Body>
           <AttachmentsModalContent
-            // ref={datasetInput}
+            ref={datasetInput}
             readOnly={false}
             datasetContainer={datasetContainer}
             // kind={null}

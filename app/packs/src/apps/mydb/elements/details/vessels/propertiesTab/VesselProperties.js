@@ -13,7 +13,6 @@ const VesselProperties = ({ item, readOnly }) => {
   const vesselId = item.id;
   // const vesselItem = vesselDetailsStore.vessels.get(vesselId);
   const vesselItem = vesselDetailsStore.getVessel(vesselId);
-  console.log(vesselItem?.vesselName);
 
   return (
     <Accordion className="vessel-properties" defaultActiveKey="common-properties">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useImperativeHandle, forwardRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
@@ -11,7 +11,6 @@ import {
   attachmentThumbnail,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { observer } from 'mobx-react';
 
@@ -22,12 +21,7 @@ const classifyAttachments = (attachments) => {
   };
 };
 
-const AttachmentsModalContent = ({
-  datasetContainer,
-  onChange,
-  readOnly = false,
-  disabled = false,
-}) => {
+const AttachmentsModalContent = forwardRef(({ datasetContainer, onChange, readOnly }, ref) => {
   const [attachments, setAttachments] = useState([...datasetContainer.attachments]);
   const [attachmentGroups, setAttachmentGroups] = useState(classifyAttachments(datasetContainer.attachments));
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
@@ -38,6 +32,14 @@ const AttachmentsModalContent = ({
     setAttachmentGroups(classifyAttachments(newAttachments));
     onChange({ ...datasetContainer, attachments: newAttachments });
   };
+
+  useImperativeHandle(ref, () => ({
+    handleSave: () => {
+      console.log('Saving changes in AttachmentsModalContent...');
+      // Add any additional save logic here
+      onChange({ ...datasetContainer, attachments });
+    },
+  }));
 
   const handleFileDrop = (files) => {
     const newAttachments = files.map((file) => ({
@@ -155,7 +157,7 @@ const AttachmentsModalContent = ({
   );
 
   return <div>{renderAttachments()}</div>;
-};
+});
 
 AttachmentsModalContent.propTypes = {
   datasetContainer: PropTypes.shape({

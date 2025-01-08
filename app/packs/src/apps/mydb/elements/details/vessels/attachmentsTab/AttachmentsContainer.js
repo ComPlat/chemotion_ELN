@@ -27,7 +27,19 @@ const AttachmentsContainer = ({ item }) => {
           datasetContainer,
           show: true,
         });
-      };
+    };
+  
+    const handleModalHide = (setModal) => {
+      setModal((prevModal) => ({
+        ...prevModal,
+        show: false,
+        datasetContainer: null,
+      }));
+    
+      // Ensure the body class is updated
+      document.body.className = document.body.className.replace('modal-open', '');
+    };
+  
     const handleAdd = () => {
         const datasetContainer = Container.buildEmpty();
         datasetContainer.container_type = 'dataset';
@@ -89,7 +101,7 @@ const AttachmentsContainer = ({ item }) => {
       </div>
       {modal.show && modal.datasetContainer && (
         <AttachmentsModal
-         onHide={() => this.handleModalHide()}
+         onHide={() => handleModalHide(setModal)}
          onChange={(datasetContainer) => handleChange(datasetContainer)}
          kind={null}
          show={modal.show}
