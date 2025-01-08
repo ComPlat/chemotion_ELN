@@ -85,6 +85,12 @@ export default class SplitElementBtn extends React.Component {
         >
           Split Wellplate
         </MenuItem>
+        <MenuItem
+          onSelect={() => ElementActions.splitAsSubCellLines(UIStore.getState())}
+          disabled={this.noSelected('cell_line') || this.isAllCollection()}
+        >
+          Split Cell line
+        </MenuItem>
         {itemTables}
       </DropdownButton>
     );
