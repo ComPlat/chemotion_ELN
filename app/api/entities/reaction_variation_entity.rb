@@ -59,25 +59,29 @@ module Entities
   end
 
   class ProductMaterialEntity < ApplicationEntity
+    IS_GAS = ->(object, _) { (object[:aux][:gasType] == 'gas') }.freeze
+
     expose :mass, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :amount, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :yield, using: 'Entities::ReactionVariationMaterialEntryEntity'
 
-    expose :duration, if: lambda { |object, _| object[:aux][:gasType] == 'gas' }, using: 'Entities::ReactionVariationMaterialEntryEntity'
-    expose :temperature, if: lambda { |object, _| object[:aux][:gasType] == 'gas' }, using: 'Entities::ReactionVariationMaterialEntryEntity'
-    expose :concentration, if: lambda { |object, _| object[:aux][:gasType] == 'gas' }, using: 'Entities::ReactionVariationMaterialEntryEntity'
-    expose :turnoverNumber, if: lambda { |object, _| object[:aux][:gasType] == 'gas' }, using: 'Entities::ReactionVariationMaterialEntryEntity'
-    expose :turnoverFrequency, if: lambda { |object, _| object[:aux][:gasType] == 'gas' }, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :duration, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :temperature, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :concentration, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :turnoverNumber, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :turnoverFrequency, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
 
     expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
   end
 
   class StartingMaterialEntity < ApplicationEntity
+    IS_FEEDSTOCK = ->(object, _) { (object[:aux][:gasType] == 'feedstock') }.freeze
+
     expose :mass, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :amount, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :equivalent, using: 'Entities::ReactionVariationMaterialEntryEntity'
 
-    expose :volume, if: lambda { |object, _| (object[:aux][:gasType] == 'feedstock') }, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :volume, if: IS_FEEDSTOCK, using: 'Entities::ReactionVariationMaterialEntryEntity'
 
     expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
   end
