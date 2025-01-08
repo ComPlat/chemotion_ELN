@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/LetSetup, RSpec/NestedGroups
+# rubocop:disable RSpec/LetSetup, RSpec/NestedGroups, RSpec/AnyInstance
 
 require 'rails_helper'
 
@@ -249,5 +249,122 @@ describe Chemotion::CellLineAPI do
       end
     end
   end
+
+  describe 'POST /api/v1/cell_lines/copy' do
+    let(:collection) { create(:collection, label: 'other collection') }
+    let!(:user) { create(:user, collections: [collection]) }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+    let(:allow_creation) { true }
+    let(:container_param)  do
+      { 'name' => 'new',
+        'children' =>
+[{ 'name' => 'new',
+   'children' => [],
+   'attachments' => [],
+   'is_deleted' => false,
+   'description' => '',
+   'extended_metadata' => { 'report' => true },
+   'container_type' => 'analyses',
+   'id' => '656936a0-0627-11ef-b812-d3c35856aafa',
+   'is_new' => true,
+   '_checksum' => '6901ba2b29f8464ede2dce839d1dfba710dbbfa6d2c4ad80f6bd3a933e792028' }],
+        'attachments' => [],
+        'is_deleted' => false,
+        'description' => '',
+        'extended_metadata' => { 'report' => true },
+        'container_type' => 'root',
+        'id' => '65690f90-0627-11ef-b812-d3c35856aafa',
+        'is_new' => true,
+        '_checksum' => '7a0f02ddb8c73d674640466b84ce50e53465a7d91265aa0e8ece271f099d04f5' }
+    end
+    let(:params) do
+      {
+        id: cell_line.id,
+        collection_id: collection.id,
+        container: container_param,
+      }
+    end
+
+    before do
+      allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(allow_creation)
+      post '/api/v1/cell_lines/copy', params: params
+    end
+
+    context 'when cell line not accessable' do
+      let(:params) { { id: '-1', collection_id: collection.id, container: container_param } }
+
+      it 'returns correct response code 400' do
+        expect(response).to have_http_status :bad_request
+      end
+    end
+
+    context 'when user only has read access' do
+      let(:allow_creation) { false }
+
+      before do
+        allow_any_instance_of(ElementPolicy).to receive(:update?).and_return(false)
+        post '/api/v1/cell_lines/copy', params: params
+      end
+
+      it 'returns correct response code 401' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when user has write access' do
+      it 'returns correct response code' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'copied cell line sample was created' do
+        loaded_cell_line_sample = CelllineSample.find(parsed_json_response['id'])
+        expect(loaded_cell_line_sample).not_to be_nil
+      end
+
+      it 'copied cell line added to all and original collection' do
+        loaded_cell_line_sample = CelllineSample.find(parsed_json_response['id'])
+        collection_labels = loaded_cell_line_sample.collections.order(:label).pluck(:label)
+        expect(collection_labels).to eq ['All', 'other collection']
+      end
+    end
+  end
+
+  describe 'POST /api/v1/cell_lines/split' do
+    let(:collection) { create(:collection, label: 'other collection') }
+    let!(:user) { create(:user, collections: [collection]) }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+    let(:allow_creation) { true }
+    let(:params) do
+      {
+        id: cell_line.id,
+        collection_id: collection.id,
+      }
+    end
+
+    context 'when user has write access' do
+      before do
+        allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(allow_creation)
+        post '/api/v1/cell_lines/split', params: params
+      end
+
+      it 'returns correct response code' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'splitted cell_line_sample was created' do
+        expect(parsed_json_response['id']).not_to be cell_line.id
+      end
+
+      it 'splitted cell_line short label is correct' do
+        expect(parsed_json_response['short_label']).to eq "#{cell_line.short_label}-1"
+      end
+
+      it 'check if ancestry relationship is correct' do
+        splitted_cellline = CelllineSample.find(parsed_json_response['id'])
+        expect(splitted_cellline.parent.id).to be cell_line.id
+        expect(cell_line.reload.children.first.id).to be splitted_cellline.id
+      end
+    end
+  end
 end
-# rubocop:enable RSpec/LetSetup, RSpec/NestedGroups
+# rubocop:enable RSpec/LetSetup, RSpec/NestedGroups, RSpec/AnyInstance

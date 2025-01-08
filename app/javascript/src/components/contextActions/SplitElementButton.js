@@ -91,6 +91,12 @@ export default class SplitElementButton extends React.Component {
         >
           Split Wellplate
         </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => ElementActions.splitAsSubCellLines(UIStore.getState())}
+          disabled={this.noSelected('cell_line') || this.isAllCollection()}
+        >
+          Split Cell line
+        </Dropdown.Item>
         {sortedGenericEls.map((el) => (
           <Dropdown.Item
             id={`split-${el.name}-button`}
