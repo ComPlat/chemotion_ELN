@@ -480,6 +480,17 @@ class ElementActions {
     return cellLineSample;
   }
 
+  copyCellLineFromId(id,collectionId ) {
+    return (dispatch) => {
+      CellLinesFetcher.copyCellLine(id,collectionId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   splitAsSubsamples(ui_state) {
     return (dispatch) => {
       SamplesFetcher.splitAsSubsamples(ui_state)
@@ -675,6 +686,20 @@ class ElementActions {
         });
     };
   }
+
+    splitAsSubCellLines(ui_state) {
+      return (dispatch) => {
+        const ids = ui_state["cell_line"].checkedIds.toArray();
+        const collection_id = ui_state.currentCollection.id;
+        
+        CellLinesFetcher.splitAsSubCellLines(ids,collection_id)
+          .then((result) => {
+            dispatch(ui_state);
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+      };
+    }
 
   bulkCreateWellplatesFromSamples(params) {
     let { collection_id, samples, wellplateCount } = params;

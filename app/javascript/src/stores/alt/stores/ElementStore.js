@@ -189,6 +189,7 @@ class ElementStore {
       handleCopyReaction: ElementActions.copyReaction,
       handleCopyResearchPlan: ElementActions.copyResearchPlan,
       handleCopyElement: ElementActions.copyElement,
+      handleCopyCellLine: ElementActions.copyCellLineFromId,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples:
@@ -244,6 +245,7 @@ class ElementStore {
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
+      handleSplitAsSubCellLines: ElementActions.splitAsSubCellLines,
       // formerly from DetailStore
       handleSelect: DetailActions.select,
       handleClose: DetailActions.close,
@@ -750,6 +752,10 @@ class ElementStore {
     );
   }
 
+  handleSplitAsSubCellLines(ui_state) {
+    ElementActions.fetchCellLinesByCollectionId(ui_state.currentCollection.id);
+  }
+
   // Molecules
   handleFetchMoleculeByMolfile(result) {
     // Attention: This is intended to update SampleDetails
@@ -1005,6 +1011,11 @@ class ElementStore {
   handleCopyElement(result) {
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
     Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
+  }
+
+  handleCopyCellLine(result){
+    UserActions.fetchCurrentUser(); //Needed to update the cell line counter in frontend
+    Aviator.navigate(`/collection/${result.collectionId}/cell_line/${result.id}`);
   }
 
   handleOpenReactionDetails(reaction) {

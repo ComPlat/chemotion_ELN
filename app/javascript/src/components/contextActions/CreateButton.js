@@ -75,6 +75,11 @@ export default class CreateButton extends React.Component {
     return uiState.reaction.checkedIds.first();
   }
 
+  getCellLineId(){
+    let uiState = UIStore.getState();
+    return uiState.cell_line.checkedIds.first();
+  }
+
   isCopySampleDisabled() {
     let sampleFilter = this.getSampleFilter();
     return !sampleFilter.all && sampleFilter.included_ids.size == 0;
@@ -100,6 +105,17 @@ export default class CreateButton extends React.Component {
   copyReaction() {
     let reactionId = this.getReactionId();
     ElementActions.copyReactionFromId(reactionId);
+  }
+
+  isCopyCellLineDisabled() {
+    let cellLineId = this.getCellLineId();
+    return !cellLineId;
+  }
+
+  copyCellLine() {
+    let uiState = UIStore.getState();
+    let cellLineId = this.getCellLineId();
+    ElementActions.copyCellLineFromId(parseInt(cellLineId),uiState.currentCollection.id);
   }
 
   createWellplateFromSamples() {
@@ -289,6 +305,9 @@ export default class CreateButton extends React.Component {
         </Dropdown.Item>
         <Dropdown.Item onClick={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>
           Copy Reaction
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.copyCellLine()} disabled={this.isCopyCellLineDisabled()}>
+          Copy Cell line
         </Dropdown.Item>
       </SplitButton>
     );
