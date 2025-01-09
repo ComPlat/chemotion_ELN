@@ -14,7 +14,7 @@ module Usecases
         new(user, params).execute!
       end
 
-      def execute! # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+      def execute! # rubocop:disable Metrics/AbcSize
         file_name = ActiveStorage::Filename.new(params[:filename]).sanitized
         FileUtils.mkdir_p(Rails.root.join('tmp/uploads/full'))
         entries = Dir["#{Rails.root.join('tmp/uploads/chunks', params[:key])}*"].sort_by do |s|
@@ -41,7 +41,8 @@ module Usecases
         FileUtils.rm_f(file_path)
       end
 
-      def create_attachment(file_name, file_path) # rubocop:disable Metrics/MethodLength
+      def create_attachment(file_name, file_path)
+        ok = true
         attachment = Attachment.new(
           bucket: nil,
           filename: file_name,
@@ -54,13 +55,13 @@ module Usecases
         status_text = []
         begin
           attachment.save!
-        rescue StandardError
-          status_text = [attachment.errors.to_h[:attachment]] # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+        rescue StandardError => e
+          status_text = [e.message.empty? ? attachment.errors.to_h[:attachment] : e.message] # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+          ok = false
         end
 
-        { ok: true, statusText: status_text }
+        { ok: ok, statusText: status_text }
       end
-
     end
   end
 end

@@ -16,7 +16,7 @@ module Chemotion
       end
 
       def time_now
-        Time.now.strftime('%Y-%m-%dT%H-%M-%S')
+        Time.zone.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
 
       def is_int?
@@ -36,7 +36,7 @@ module Chemotion
         env['api.format'] = :binary
         header(
           'Content-Disposition',
-          "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
+          "attachment; filename*=UTF-8''#{CGI.escape(filename)}",
         )
         docx
       end
@@ -107,8 +107,8 @@ module Chemotion
 
         results = reaction_smiles_hash(
           real_coll_id,
-          p_t[:checkedAll] && p_t[:uncheckedIds] || p_t[:checkedIds],
-          p_t[:checkedAll]
+          (p_t[:checkedAll] && p_t[:uncheckedIds]) || p_t[:checkedIds],
+          p_t[:checkedAll],
         ) || {}
         smiles_construct = "r_smiles_#{params[:exportType]}"
         results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
@@ -123,7 +123,7 @@ module Chemotion
         header(
           'Content-Disposition',
           "attachment; filename*=UTF-8''#{CGI.escape("Wellplate_#{params[:id]}_\
-          Samples Excel.xlsx")}"
+          Samples Excel.xlsx")}",
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_wellplate, current_user.id)
@@ -145,7 +145,7 @@ module Chemotion
         header(
           'Content-Disposition',
           "attachment; filename*=UTF-8''#{CGI.escape("Reaction_#{params[:id]}_\
-          Samples Excel.xlsx")}"
+          Samples Excel.xlsx")}",
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_reaction, current_user.id)
@@ -174,7 +174,7 @@ module Chemotion
 
       desc 'return reports which can be downloaded now'
       params do
-        requires :ids, type: Array[Integer]
+        requires :ids, type: [Integer]
       end
       post :downloadable do
         reports = current_user.reports.where(id: params[:ids]).where.not(generated_at: nil)
@@ -198,15 +198,15 @@ module Chemotion
 
     desc 'returns a created report'
     params do
-      requires :objTags, type: Array[Hash]
-      requires :splSettings, type: Array[Hash]
-      requires :rxnSettings, type: Array[Hash]
-      requires :siRxnSettings, type: Array[Hash]
-      requires :configs, type: Array[Hash]
-      requires :molSerials, type: Array[Hash]
-      requires :prdAtts, type: Array[Hash]
+      requires :objTags, type: [Hash]
+      requires :splSettings, type: [Hash]
+      requires :rxnSettings, type: [Hash]
+      requires :siRxnSettings, type: [Hash]
+      requires :configs, type: [Hash]
+      requires :molSerials, type: [Hash]
+      requires :prdAtts, type: [Hash]
       requires :imgFormat, type: String, default: 'png', values: %w[png eps emf]
-      requires :fileName, type: String, default: 'ELN_Report_' + Time.now.strftime('%Y-%m-%dT%H-%M-%S')
+      requires :fileName, type: String, default: "ELN_Report_#{Time.zone.now.strftime('%Y-%m-%dT%H-%M-%S')}"
       requires :templateId, type: String
       optional :templateType, type: String, default: 'standard', values: ReportTemplate::REPORT_TYPES
       optional :fileDescription
@@ -229,13 +229,17 @@ module Chemotion
         objects: params[:objTags],
         img_format: params[:imgFormat],
         template: params[:templateType],
-        report_templates_id: !!/\A\d+\z/.match(params[:templateId]) ? params[:templateId].to_i : nil,
-        author_id: current_user.id
+        report_templates_id: /\A\d+\z/.match(params[:templateId]).nil? ? nil : params[:templateId].to_i,
+        author_id: current_user.id,
       }
 
       report = Report.create(attributes)
       current_user.reports << report
-      report.create_docx
+      begin
+        report.create_docx
+      rescue StandardError => e
+        report.file_description = "Report could not be generated: #{e.message}"
+      end
 
       present report, with: Entities::ReportEntity, root: :report
     end
@@ -249,7 +253,7 @@ module Chemotion
       end
 
       get :file do
-        ext = params[:ext]
+        params[:ext]
         report = current_user.reports.find(params[:id])
 
         if report
@@ -262,7 +266,7 @@ module Chemotion
           env['api.format'] = :binary
           header(
             'Content-Disposition',
-            "attachment; filename*=UTF-8''#{CGI.escape(att.filename)}"
+            "attachment; filename*=UTF-8''#{CGI.escape(att.filename)}",
           )
           att.read_file
         end
