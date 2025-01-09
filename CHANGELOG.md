@@ -1,6 +1,36 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v1.10.5]
+> (2024-12-16)
+
+* Code refactoring
+  * datacollector: track file causing errors through file cache rather db ([#2267](https://github.com/ComPlat/chemotion_ELN/pull/2267
+
+## [v1.10.4]
+> (2024-12-09)
+
+* Bug fixes
+
+  * skip uploading new but discarded attachments  ([#2251](https://github.com/ComPlat/chemotion_ELN/pull/2251))
+  * reaction report generation for gas products when the vessel size is not given  ([#2254](https://github.com/ComPlat/chemotion_ELN/pull/2254))
+  * selecting all pages with advanced/detail search corrected  ([#2215](#2215))
+  * allow multiple delayed_job named-queue pools in the worker container  ([#2258](https://github.com/ComPlat/chemotion_ELN/pull/2258))
+  * ELN upgrade: correct matrice sequence  ([#2257](https://github.com/ComPlat/chemotion_ELN/pull/2257))
+
+  ChemSpectra and NMRIUM
+  * bump service chem-spectra-app to v.1.2.4  ([#2253](https://github.com/ComPlat/chemotion_ELN/pull/2253))
+
+* Code refactoring
+  * datacollector  ([#2240](https://github.com/ComPlat/chemotion_ELN/pull/2240))
+
+* Chores
+  * Bump actionmailer from 6.1.7.8 to 6.1.7.9  ([#2221](https://github.com/ComPlat/chemotion_ELN/pull/2221))
+  * Bump actionpack from 6.1.7.8 to 6.1.7.9  ([#2220](https://github.com/ComPlat/chemotion_ELN/pull/2220))
+  * Bump actiontext from 6.1.7.8 to 6.1.7.9  ([#2219](https://github.com/ComPlat/chemotion_ELN/pull/2219))
+  * Bump rexml from 3.3.6 to 3.3.9  ([#2231](https://github.com/ComPlat/chemotion_ELN/pull/2231))
+  * Bump labimotion from 1.4.0.2 to 1.4.1  ([#2228](https://github.com/ComPlat/chemotion_ELN/pull/2228))
+
 ## [v1.10.3]
 > (2024-10-02)
 
@@ -1194,3 +1224,4 @@ ton to element view
 
 * Features
   * ELN for (organic) chemistry
+
