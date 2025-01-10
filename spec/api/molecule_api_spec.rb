@@ -94,5 +94,33 @@ M  END"
         expect(mns).to include(m.sum_formular)
       end
     end
+
+    describe 'Post /api/v1/molecules/smiles' do
+      before do
+        allow(Chemotion::OpenBabelService).to receive(:molfile_clear_hydrogens)
+          .with(any_args)
+          .and_return(
+            "<<~BODY
+            Status: 400\n OpenBabel01092512342D\nMessage: Unable to standardize the given structure
+            - perhaps some special charac\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n
+            BODY",
+          )
+      end
+
+      JSON.parse(File.read('spec/fixtures/structures/bad_smiles.json')).each_value do |data|
+        context 'when testing SMILES entry' do
+          let(:params) { { smiles: data['smiles'] } }
+
+          it "handles SMILES #{data['smiles']} correctly and returns molecule" do
+            post '/api/v1/molecules/smiles', params: params
+            response_body = JSON.parse(response.body)
+
+            expect(response_body).to be_a(Hash)
+            molfile = response_body['molfile']
+            expect(molfile).not_to start_with('Status: 400')
+          end
+        end
+      end
+    end
   end
 end
