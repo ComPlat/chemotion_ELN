@@ -1,49 +1,56 @@
+# frozen_string_literal: true
+
 class DownloadAnalysesJob < ApplicationJob
   include ActiveJob::Status
 
   queue_as :download_analyses
 
   after_perform do |job|
-    if @rt == false
+    if @rt == false && @success
       begin
         CleanExportFilesJob.set(queue: "remove_files_#{job.job_id}", wait: 24.hours)
-                          .perform_later(job.job_id, 'zip')
+                           .perform_later(job.job_id, 'zip')
 
         # Notify ELNer
         Message.create_msg_notification(
           channel_subject: Channel::DOWNLOAD_ANALYSES_ZIP,
-          data_args: { expires_at: @expires_at, sample_name: @sample.short_label },
+          data_args: { expires_at: @expires_at, element_name: @element.short_label },
           message_from: @user_id,
-          url: @link
+          url: @link,
         )
 
         AnalysesMailer.mail_export_completed(
           @user_id,
-          @sample.short_label,
+          @element.short_label,
           @link,
-          @expires_at
+          @expires_at,
         ).deliver_now
       rescue StandardError => e
         Delayed::Worker.logger.error e
-      end if @success
+      end
     end
   end
 
-  def perform(sid, user_id, rt=true)
-    @sample = Sample.find(sid)
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/PerceivedComplexity
+  # rubocop:disable Style/OptionalBooleanParameter
+
+  def perform(id, user_id, ret = true, element = 'sample')
+    @element = element.camelize.constantize.find(id)
     @filename = "#{job_id}.zip"
-    @rt = rt
+    @rt = ret
     @success = true
     @user_id = user_id
     @file_path = Rails.public_path.join('zip', @filename)
 
     begin
       @link = "#{Rails.application.config.root_url}/zip/#{@filename}"
-      @expires_at = Time.now + 24.hours
+      @expires_at = 24.hours.from_now
 
-      zip = Zip::OutputStream.write_buffer do |zip|
-
-        @sample.analyses.each do |analysis|
+      zip_file = Zip::OutputStream.write_buffer do |zip|
+        @element.analyses.each do |analysis|
           analysis.children.each do |dataset|
             dataset.attachments.each do |att|
               zip.put_next_entry att.filename
@@ -52,16 +59,16 @@ class DownloadAnalysesJob < ApplicationJob
           end
         end
 
-        zip.put_next_entry "sample_#{@sample.short_label} analytical_files.txt"
+        zip.put_next_entry "#{element}_#{@element.short_label} analytical_files.txt"
         zip.write <<~DESC
-        sample short label: #{@sample.short_label}
-        sample id: #{@sample.id}
-        analyses count: #{@sample.analyses&.length || 0}
+          #{element} short label: #{@element.short_label}
+          #{element} id: #{@element.id}
+          analyses count: #{@element.analyses&.length || 0}
 
-        Files:
+          Files:
         DESC
 
-        @sample.analyses&.each do |analysis|
+        @element.analyses&.each do |analysis|
           zip.write "analysis name: #{analysis.name}\n"
           zip.write "analysis type: #{analysis.extended_metadata.fetch('kind', nil)}\n\n"
           analysis.children.each do |dataset|
@@ -76,12 +83,17 @@ class DownloadAnalysesJob < ApplicationJob
       end
 
       if rt == false
-        zip.rewind
-        File.write(@file_path, zip.read)
+        zip_file.rewind
+        File.write(@file_path, zip_file.read)
       end
     rescue StandardError => e
-
+      Delayed::Worker.logger.error e
     end
-    zip
+    zip_file
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/PerceivedComplexity
+  # rubocop:enable Style/OptionalBooleanParameter
 end

@@ -8,6 +8,7 @@ import { DevicesStore } from 'src/stores/mobx/DevicesStore';
 import { DeviceMetadataStore } from 'src/stores/mobx/DeviceMetadataStore';
 import { AttachmentNotificationStore } from 'src/stores/mobx/AttachmentNotificationStore';
 import { CalendarStore } from 'src/stores/mobx/CalendarStore';
+import { DeviceDescriptionsStore } from 'src/stores/mobx/DeviceDescriptionsStore';
 
 export const RootStore = types
   .model({
@@ -19,6 +20,7 @@ export const RootStore = types
     deviceMetadataStore: types.optional(DeviceMetadataStore, {}),
     attachmentNotificationStore: types.optional(AttachmentNotificationStore, {}),
     calendarStore: types.optional(CalendarStore, {}),
+    deviceDescriptionsStore: types.optional(DeviceDescriptionsStore, {}),
   })
   .views(self => ({
     get measurements() { return self.measurementsStore },
@@ -29,5 +31,6 @@ export const RootStore = types
     get deviceMetadata() { return self.deviceMetadataStore },
     get attachmentNotifications() { return self.attachmentNotificationStore },
     get calendar() { return self.calendarStore },
+    get deviceDescriptions() { return self.deviceDescriptionsStore },
   }));
 export const StoreContext = React.createContext(RootStore.create({}));

@@ -128,6 +128,8 @@ const Calendar = () => {
         return 'icon-research_plan';
       case 'Screen':
         return 'icon-screen';
+      case 'DeviceDescription':
+        return 'icon-device_description';
     }
   }
 

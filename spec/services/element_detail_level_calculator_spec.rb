@@ -43,6 +43,7 @@ describe ElementDetailLevelCalculator do
         Well => 0,
         Wellplate => 0,
         CelllineSample => 0,
+        DeviceDescription => 0,
       })
     end
 
