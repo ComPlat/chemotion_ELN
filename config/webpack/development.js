@@ -4,19 +4,26 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const { merge } = require('shakapacker');
 const webpackConfig = require('./base');
 const developmentConfig = {
-  devServer: {
+  /*
+    devServer: {
     port: '3035',
-    host: '0.0.0.0',
+    host: 'localhost',
     compress: true,
     hot: true,
+    allowedHosts: 'all',
     headers: {
       'Access-Control-Allow-Origin': '*',
     }
   },
+  */
   target: 'web',
   plugins: [
     new ReactRefreshWebpackPlugin()
   ],
+  watchOptions: {
+    ignored: /node_modules/, // Ignore node_modules directory
+    poll: 1000, // Optional: Use polling with a delay of 1 second
+  },
   module: {
     rules: [
       {
@@ -37,4 +44,4 @@ const developmentConfig = {
   }
 };
 
-module.exports = merge(webpackConfig, developmentConfig)
+module.exports = merge(webpackConfig, developmentConfig);
