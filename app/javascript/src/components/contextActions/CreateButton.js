@@ -98,11 +98,6 @@ export default class CreateButton extends React.Component {
     ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'copy_sample');
   }
 
-  getReactionId() {
-    let uiState = UIStore.getState();
-    return uiState.reaction.checkedIds.first();
-  }
-
   isCopyReactionDisabled() {
     let reactionId = this.getReactionId();
     return !reactionId;
