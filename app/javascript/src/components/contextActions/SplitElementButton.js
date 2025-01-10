@@ -54,6 +54,23 @@ export default class SplitElementButton extends React.Component {
     ElementActions.splitAsSubwellplates(UIStore.getState());
   }
 
+  splitSelectionAsSubDeviceDescription() {
+    const uiState = UIStore.getState()
+    let params = {
+      ui_state: {
+        device_description: {
+          all: uiState.device_description.checkedAll,
+          included_ids: uiState.device_description.checkedIds,
+          excluded_ids: uiState.device_description.uncheckedIds,
+        },
+        currentCollectionId: uiState.currentCollection.id,
+        isSync: uiState.isSync,
+      }
+    }
+
+    ElementActions.splitAsSubDeviceDescription(params);
+  }
+
   render() {
     const { layout } = this.state;
     let genericEls = [];
@@ -96,6 +113,12 @@ export default class SplitElementButton extends React.Component {
           disabled={this.noSelected('cell_line') || this.isAllCollection()}
         >
           Split Cell line
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => this.splitSelectionAsSubDeviceDescription()}
+          disabled={this.noSelected('device_description') || this.isAllCollection()}
+        >
+          Split Device Description
         </Dropdown.Item>
         {sortedGenericEls.map((el) => (
           <Dropdown.Item

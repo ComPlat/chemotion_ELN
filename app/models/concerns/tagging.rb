@@ -33,7 +33,7 @@ module Tagging
              end
       element = 'sample'
     when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'Labimotion::CollectionsElement',
-      'CollectionsScreen', 'CollectionsResearchPlan'
+      'CollectionsScreen', 'CollectionsResearchPlan', 'CollectionsDeviceDescription'
       args = { collection_tag: true }
       element = Labimotion::Utils.elname_by_collection(klass)
     when 'CollectionsCellline'

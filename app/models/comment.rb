@@ -24,7 +24,7 @@
 #
 
 class Comment < ApplicationRecord
-  COMMENTABLE_TYPE = %w[Sample Reaction Screen Wellplate ResearchPlan].freeze
+  COMMENTABLE_TYPE = %w[Sample Reaction Screen Wellplate ResearchPlan DeviceDescription].freeze
 
   enum sample_section: {
     properties: 'sample_properties',
@@ -63,12 +63,21 @@ class Comment < ApplicationRecord
     metadata: 'research_plan_metadata',
   }, _prefix: true
 
+  enum device_description_section: {
+    properties: 'device_description_properties',
+    detail: 'device_description_detail',
+    analyses: 'device_description_analyses',
+    attachments: 'device_description_attachments',
+    maintenance: 'device_description_maintenance',
+  }, _prefix: true
+
   enum header_section: {
     sample: 'sample_header',
     reaction: 'reaction_header',
     wellplate: 'wellplate_header',
     screen: 'screen_header',
     research_plan: 'research_plan_header',
+    device_description: 'device_description_header',
   }, _prefix: true
 
   belongs_to :commentable, polymorphic: true

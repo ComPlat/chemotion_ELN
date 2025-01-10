@@ -18,6 +18,7 @@
 #  updated_at                  :datetime
 #  element_detail_level        :integer          default(10)
 #  celllinesample_detail_level :integer          default(10)
+#  devicedescription_detail_level :integer          default(10)
 #
 # Indexes
 #
@@ -37,6 +38,7 @@ class SyncCollectionsUser < ApplicationRecord
   has_many :screens, through: :collection
   has_many :research_plans, through: :collection
   has_many :cellline_samples, through: :collection
+  has_many :device_descriptions, through: :collection
 
   before_create :auto_set_synchronized_flag
   after_destroy :check_collection_if_synced

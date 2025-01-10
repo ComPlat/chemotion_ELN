@@ -233,45 +233,45 @@ class UserLabelModal extends Component {
             name="userLabel"
             options={accessList}
             onChange={this.handleAccessChange}
-            value={accessList.find(({value}) => value === label.access_level)}
+            value={accessList.find(({ value }) => value === label.access_level)}
           />
         </Form.Group>
         <Form.Group controlId="titleInput" className="mb-2">
           <Form.Label>
             Title
           </Form.Label>
-            <Form.Control
-              type="text"
-              ref={(m) => { this.titleInput = m; }}
-              defaultValue={label.title || ''}
-            />
+          <Form.Control
+            type="text"
+            ref={(m) => { this.titleInput = m; }}
+            defaultValue={label.title || ''}
+          />
         </Form.Group>
         <Form.Group controlId="descInput" className="mb-2">
           <Form.Label>
             Description
           </Form.Label>
-            <Form.Control
-              type="text"
-              ref={(m) => { this.descInput = m; }}
-              defaultValue={label.description || ''}
-            />
+          <Form.Control
+            type="text"
+            ref={(m) => { this.descInput = m; }}
+            defaultValue={label.description || ''}
+          />
         </Form.Group>
         <Form.Group controlId="colorInput" className="mb-2">
           <Form.Label>
             Background Color
           </Form.Label>
           <InputGroup className="mb-3">
-              <InputGroup.Text style={bcStyle} />
-              <Form.Control
-                type="text"
-                readOnly
-                ref={(m) => { this.colorInput = m; }}
-                value={label.color || this.state.defaultColor}
-              />
-            </InputGroup>
+            <InputGroup.Text style={bcStyle} />
+            <Form.Control
+              type="text"
+              readOnly
+              ref={(m) => { this.colorInput = m; }}
+              value={label.color || this.state.defaultColor}
+            />
+          </InputGroup>
         </Form.Group>
         <Form.Group controlId="formHorizontalPicker" className="m-2">
-            <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
+          <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
         </Form.Group>
       </Form>
     );

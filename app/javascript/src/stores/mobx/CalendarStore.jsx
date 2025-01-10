@@ -12,6 +12,7 @@ const CalendarTypes = {
   Sample: ['handover', 'reminder', 'report'],
   ResearchPlan: ['handover', 'reminder', 'report'],
   Screen: ['reminder', 'report'],
+  DeviceDescription: ['reminder', 'report'],
   // Element all types like default
 };
 
