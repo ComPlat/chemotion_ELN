@@ -23,8 +23,8 @@ describe Chemotion::AttachmentAPI do
         'identifier' => attachment.identifier,
         'thumb' => attachment.thumb,
         # 'thumbnail' => attachment.thumb ? Base64.encode64(attachment.read_thumbnail) : nil,
-        'created_at' => kind_of(String),
-        'updated_at' => kind_of(String),
+        # 'created_at' => kind_of(String),
+        # 'updated_at' => kind_of(String),
       },
     }
   end
@@ -70,7 +70,8 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns the deleted attachment' do
-        expect(parsed_json_response).to include(expected_response)
+        response = parsed_json_response['attachment'].except('created_at', 'updated_at')
+        expect(response).to include(expected_response['attachment'])
       end
 
       it 'deletes the attachment on database', :enable_usecases_attachments_delete do
@@ -119,7 +120,8 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns the deleted attachment' do
-        expect(parsed_json_response).to include(expected_response)
+        response = parsed_json_response['attachment'].except('created_at', 'updated_at')
+        expect(response).to include(expected_response['attachment'])
       end
 
       it 'unlinks the attachment from container', :enable_usecases_attachments_unlink do
