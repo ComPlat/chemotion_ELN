@@ -185,17 +185,6 @@ $color-default: #777;
   }
 }
 
-.input-form {
-  .input-group-addon {
-    font-weight: bold;
-  }
-  .help {
-    font-size: 80%;
-    margin: 6px;
-    font-style: italic;
-  }
-}
-
 .g-ds-note {
   color: black !important;
   float: left !important;
@@ -489,4 +478,14 @@ $color-default: #777;
   position: sticky;
   top: 0px;
   z-index: 10;
+}
+
+.custom-nav-link {
+  color: #007bff !important;
+  text-decoration: none;
+}
+
+.custom-nav-link:hover {
+  text-decoration: underline;
+  color: #0056b3;
 }

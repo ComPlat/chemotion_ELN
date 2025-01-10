@@ -2,14 +2,8 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  GenInterface, GenButtonReload, GenButtonExport, GenFlowViewerBtn
-} from 'chem-generic-ui';
-import { ButtonToolbar } from 'react-bootstrap';
-import { renderFlowModal } from 'src/apps/generic/Utils';
-import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
+import { GenInterface, GenToolbar } from 'chem-generic-ui';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 class GenericSGDetails extends Component {
   constructor(props) {
@@ -54,41 +48,20 @@ class GenericSGDetails extends Component {
     return <div style={{ margin: '5px' }}>{layersLayout}</div>;
   }
 
-  elementalToolbar() {
-    const { segment, klass } = this.props;
-    return (
-      <ButtonToolbar style={{ margin: '5px 0px' }}>
-        <GenButtonExport
-          generic={segment}
-          fnExport={this.handleExport}
-        />
-        <GenFlowViewerBtn generic={segment} fnClick={renderFlowModal} />
-        <RevisionViewerBtn
-          fnRetrieve={this.handleRetrieveRevision}
-          generic={segment}
-        />
-        <GenButtonReload
-          klass={klass}
-          generic={segment}
-          fnReload={this.handleReload}
-        />
-      </ButtonToolbar>
-    );
-  }
-
   render() {
-    const { uiCtrl, segment } = this.props;
+    const { uiCtrl, segment, klass } = this.props;
     if (!uiCtrl || Object.keys(segment).length === 0) return null;
     return (
       <div>
-        {this.elementalToolbar()}
-        <Panel>
-          <Panel.Body
-            style={{ position: 'relative', minHeight: 260, overflowY: 'unset' }}
-          >
-            {this.elementalPropertiesItem(segment)}
-          </Panel.Body>
-        </Panel>
+        <GenToolbar
+          generic={segment}
+          genericType="Segment"
+          klass={klass}
+          fnExport={this.handleExport}
+          fnReload={this.handleReload}
+          fnRetrieve={this.handleRetrieveRevision}
+        />
+        {this.elementalPropertiesItem(segment)}
       </div>
     );
   }
