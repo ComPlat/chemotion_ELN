@@ -133,7 +133,7 @@ export default class VesselsFetcher {
         body: JSON.stringify(params)
       }))
       .then((response) => response.json())
-    //   .then(() => {BaseFetcher.updateAnnotationsInContainer(cellLineItem)})
+      .then(() => {BaseFetcher.updateAnnotationsInContainer(vesselItem)})
       .then(() => VesselsFetcher.fetchById(vesselItem.id))
       .then((loadedVesselInstance) => {
         NotificationActions.add(successfullyUpdatedParameter);

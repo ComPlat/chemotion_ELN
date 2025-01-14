@@ -7,20 +7,17 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
 import { ButtonToolbar, Button, Card, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
-import AttachmentsContainer from "src/apps/mydb/elements/details/vessels/attachmentsTab/AttachmentsContainer";
+import VesselAttachmentsContainer from "src/apps/mydb/elements/details/vessels/attachmentsTab/VesselAttachmentsContainer";
 
 function VesselDetails({ vesselItem, toggleFullScreen }) {
 
   const isReadOnly = () => {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
-    // return CollectionUtils.isReadOnly(currentCollection, currentUser.id, isSync);
   };
   const context = useContext(StoreContext);
-
   const [activeTab, setActiveTab] = useState('tab1');
   const [readOnly, setReadOnly] = useState(isReadOnly());
 
@@ -168,7 +165,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
               <VesselProperties item={vesselItem} readOnly={readOnly} />
             </Tab>
             <Tab eventKey="tab2" title="Attachments" key="tab2">
-            <AttachmentsContainer item={vesselItem} />
+              <VesselAttachmentsContainer item={vesselItem} />
             </Tab>
           </Tabs>
         </div>

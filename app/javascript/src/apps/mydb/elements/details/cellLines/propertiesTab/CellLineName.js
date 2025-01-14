@@ -50,7 +50,6 @@ export default class CellLineName extends React.Component {
     const { cellLineDetailsStore } = this.context;
     const { nameSuggestions, cellLineNameInputValue } = this.state;
     const { id, name, readOnly } = this.props;
-    console.log(id, name, readOnly);
 
     if (readOnly) {
       return (
