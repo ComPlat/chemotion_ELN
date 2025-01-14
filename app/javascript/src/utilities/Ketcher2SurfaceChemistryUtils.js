@@ -293,14 +293,14 @@ const reAttachPolymerList = async ({
 }) => {
   let lines_copy = [...lines];
   const list_alias = lines_copy.slice(extra_data_start, extra_data_end);
-  const { linesCopy, atomAliasList } = await processAtomLines(lines_copy, molfile_header_line_number, atoms_count);
+  const { linesCopy, atomAliasList } = await processAtomLines(lines_copy, molfileHeaderLinenumber, atoms_count);
   linesCopy.splice(extra_data_start, extra_data_end - extra_data_start);
   lines_copy = linesCopy;
   let counter = 0;
   for (let i = 1; i < list_alias.length; i += 2) {
     const t_id = list_alias[i].split('_')[1];
     if (t_id) {
-      atomAliasList[counter] += t_id == template_surface ? 's' : '';
+      atomAliasList[counter] += t_id == templateSurface ? 's' : '';
       counter++;
     }
   }
