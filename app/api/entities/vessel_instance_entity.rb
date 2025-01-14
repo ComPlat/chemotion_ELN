@@ -9,6 +9,7 @@ module Entities
     expose :vessel_template
     expose :bar_code
     expose :qr_code
-    # expose :container, using: 'Entities::ContainerEntity'
+    expose :tag
+    expose :container, using: 'Entities::ContainerEntity'
   end
 end
