@@ -191,7 +191,7 @@ class UIStore {
     const { elements } = ElementStore.getState();
 
     if (range === 'all') {
-      if (this.state.currentSearchSelection && elements[type + "s"].ids) {
+      if (elements[`${type}s`].ids) {
         const { ids } = elements[`${type}s`];
         this.state[type].checkedAll = false;
         this.state[type].checkedIds = List(ids);
