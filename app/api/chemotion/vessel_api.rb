@@ -100,7 +100,7 @@ module Chemotion
         requires :collection_id, type: Integer, desc: 'collection of the vessel sample'
         optional :description, type: String, desc: 'description of a vessel sample'
         optional :short_label, type: String, desc: 'short label of a vessel sample'
-        optional :container, type: Hash, desc: 'root Container of element'
+        requires :container, type: Hash, desc: 'root Container of element'
       end
       post do
         error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
@@ -165,7 +165,7 @@ module Chemotion
         optional :collection_id, type: Integer, desc: 'collection of the vessel sample'
         optional :description, type: String, desc: 'description of a vessel sample'
         optional :short_label, type: String, desc: 'short label of a vessel sample'
-        optional :container, type: Hash, desc: 'root Container of element'
+        requires :container, type: Hash, desc: 'root Container of element'
       end
       put do
         ActiveRecord::Base.transaction do
@@ -201,10 +201,22 @@ module Chemotion
               weight_unit: params[:weight_unit],
             }.compact
             vessel_template.update!(template_params) if template_params.present?
-          end      
+          end
+      
+          # Process the container
+          if params[:container]
+            begin
+              vessel.container = update_datamodel(params[:container])
+            rescue StandardError => e
+              Rails.logger.error "Error updating container: #{e.message}"
+              error!("Container update failed: #{e.message}", 400)
+            end
+          end
+      
           present vessel, with: Entities::VesselInstanceEntity
         end
       end
+      
       
 
       resource :names do
