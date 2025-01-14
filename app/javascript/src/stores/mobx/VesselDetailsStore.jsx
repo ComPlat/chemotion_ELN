@@ -2,6 +2,21 @@
 import { types } from 'mobx-state-tree';
 import Container from 'src/models/Container';
 
+const VesselContainer = types
+  .model({
+    id: types.optional(types.string, ''),
+    children: types.array(types.late(() => VesselContainer)),
+    name: types.optional(types.string, ''),
+    container_type: types.optional(types.string, ''),
+    extended_metadata: types.optional(types.string, ''),
+    description: types.optional(types.string, ''),
+  })
+  .actions((self) => ({
+    setDescription(newValue) {
+      self.description = newValue;
+    },
+  }));
+
 const VesselItem = types
   .model({
     id: '',
@@ -91,6 +106,14 @@ export const VesselDetailsStore = types
       const container = Container.buildEmpty();
       container.container_type = "attachments";
       return container;
+    },
+    convertJsModelToMobxModel(container) {
+      return VesselContainer.create({
+        id: container.id,
+        children: [],
+        name: container.name,
+        container_type: container.container_type
+      });
     },
     convertVesselToModel(jsVesselModel) {
       if (self.vessels.has(jsVesselModel.id)) {
