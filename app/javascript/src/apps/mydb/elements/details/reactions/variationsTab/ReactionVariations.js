@@ -469,7 +469,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         {addVariation()}
         {removeAllVariations()}
       </ButtonGroup>
-      <div className="ag-theme-alpine">
+      <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
           ref={gridRef}
           rowData={reactionVariations}
