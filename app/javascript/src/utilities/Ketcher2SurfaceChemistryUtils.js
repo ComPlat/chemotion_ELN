@@ -1,20 +1,37 @@
 /* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable radix */
-/* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
+/* eslint-disable radix */
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
-import { fuelKetcherData, mols } from 'src/components/structureEditor/KetcherEditor';
-// import templateListStorage from '/public/json/surfaceChemistryTemplates.json';
-import { templateListData } from 'src/surfaceChemistryImages';
+import { loadKetcherData, mols } from 'src/components/structureEditor/KetcherEditor';
 
 // pattern's for alias identification
-const threePartsPattern = /t_\d{1,3}_\d{1,3}/;
-const twoPartsPattern = /^t_\d{1,3}$/;
+const ALIAS_PATTERNS = Object.freeze({
+  threeParts: /t_\d{1,3}_\d{1,3}/,
+  twoParts: /^t_\d{1,3}$/
+});
 
 // enable/disable text labels Matching label A and putting images in the end
-const skipTemplateNameHide = false;
-const skipImageLayering = false;
+const LAYERING_FLAGS = Object.freeze({
+  skipTemplateName: false,
+  skipImageLayering: false
+});
+
+// tags
+const KET_TAGS = Object.freeze({
+  inspiredLabel: 'A',
+  RGroupTag: 'R#',
+  templateSurface: 2,
+  templateBead: 1,
+  polymerIdentifier: '> <PolymersList>',
+  fileEndIdentifier: '$$$$',
+  molfileHeaderLinenumber: 4,
+  rgLabel: 'rg-label',
+  shapes: ['Bead', 'Surface'],
+  moleculeIdentifier: '> <MoleculesList>' // New tag
+});
 
 // image exists in dom
 let ImagesToBeUpdated = false;
@@ -22,21 +39,10 @@ let ImagesToBeUpdated = false;
 // allowed to process based on atom
 let allowProcessing = true;
 
-// tags
-const inspiredLabel = 'A';
-const RGroupTag = 'R#';
-const templateSurface = 2;
-const templateBead = 1;
-const polymerIdentifier = '> <PolymersList>';
-const fileEndIdentifier = '$$$$';
-const molfileHeaderLinenumber = 4;
-const rgLabel = 'rg-label';
-const shapes = ['Bead', 'Surface'];
-
 // Helper to initialize Ketcher data
 const initializeKetcherData = async (data) => {
   try {
-    await fuelKetcherData(data);
+    await loadKetcherData(data);
   } catch (err) {
     throw new Error(`Failed to initialize Ketcher data: ${err.message}`);
   }
@@ -61,7 +67,7 @@ const hasKetcherData = async (molfile) => {
       const lines = molfile.trim().split('\n');
       let polymersLine = -1;
       for (let i = lines.length - 1; i > -1; i--) {
-        if (lines[i].indexOf(polymerIdentifier) !== -1) {
+        if (lines[i].indexOf(KET_TAGS.polymerIdentifier) !== -1) {
           polymersLine = lines[i + 1].trim();
           break;
         }
@@ -76,18 +82,22 @@ const hasKetcherData = async (molfile) => {
 };
 
 // Helper to determine template type based on polymer value
-const getTemplateType = (polymerValue) => (polymerValue.includes('s') ? templateSurface : templateBead);
+const getTemplateType = (polymerValue) => {
+  const hasSurface = polymerValue.includes('s');
+  return hasSurface ? KET_TAGS.templateSurface : KET_TAGS.templateBead;
+};
 
 // Helper to update an atom with K2SC labels and aliases
 const updateAtom = (atomLocation, templateType, imageCounter) => ({
-  label: inspiredLabel,
+  label: KET_TAGS.inspiredLabel,
   alias: `t_${templateType}_${imageCounter}`,
   location: atomLocation
 });
 
 // Helper to create a bounding box for a template with atom location
-const templateWithBoundingBox = (templateType, atomLocation) => {
-  const template = templateListData[templateType];
+const templateWithBoundingBox = async (templateType, atomLocation) => {
+  const list = await fetchSurfaceChemistryImageData();
+  const template = list[templateType];
   const boundingBox = { ...template.boundingBox };
   boundingBox.x = atomLocation[0];
   boundingBox.y = atomLocation[1];
@@ -96,7 +106,7 @@ const templateWithBoundingBox = (templateType, atomLocation) => {
 };
 
 // helper function to process ketcher-rails files and adding image to ketcher2 canvas
-const addingPolymersToKetcher = async (railsPolymersList, _, data, imageNodeCounter) => {
+const addingPolymersToKetcher = async (railsPolymersList, data, imageNodeCounter) => {
   try {
     const polymerList = railsPolymersList.split(' '); // e.g., ["10", "11s", "12", "13s"]
     let visitedAtoms = 0;
@@ -109,16 +119,16 @@ const addingPolymersToKetcher = async (railsPolymersList, _, data, imageNodeCoun
       for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
         const atom = molecule.atoms[atomIndex];
         const polymerItem = polymerList[visitedAtoms];
-        if ((atom.type === rgLabel || threePartsPattern.test(atom.label))) {
+        if ((atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.label))) {
           // counters
-          ++imageNodeCounter;
-          ++visitedAtoms;
+          imageNodeCounter += 1;
+          visitedAtoms += 1;
           // step 1: get template type
           const templateType = getTemplateType(polymerItem);
           // step 2: update atom with alias
           data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
           // step 3: sync bounding box with atom location
-          const newTemplate = templateWithBoundingBox(templateType, atom.location);
+          const newTemplate = await templateWithBoundingBox(templateType, atom.location);
           // step 4: add to the list
           collectedImages.push(newTemplate);
         }
@@ -131,12 +141,19 @@ const addingPolymersToKetcher = async (railsPolymersList, _, data, imageNodeCoun
   }
 };
 
+// helper function to fetch list of all surface chemistry shape/image list
+const fetchSurfaceChemistryImageData = async () => {
+  const response = await fetch('/json/surfaceChemistryImages.json');
+  return response.json();
+};
+
 // helper function to return a new template-image for imagesList with new location
-const prepareImageFromTemplateList = (idx, location) => {
-  templateListData[idx].boundingBox.x = location[0];
-  templateListData[idx].boundingBox.y = location[1];
-  templateListData[idx].boundingBox.z = location[2];
-  return templateListData[idx];
+const prepareImageFromTemplateList = async (idx, location) => {
+  const list = await fetchSurfaceChemistryImageData();
+  list[idx].boundingBox.x = location[0];
+  list[idx].boundingBox.y = location[1];
+  list[idx].boundingBox.z = location[2];
+  return list[idx];
 };
 
 // helper function to update counter for other mols when a image-template is removed
@@ -146,7 +163,7 @@ const resetOtherAliasCounters = (atom, molList, latestData) => {
     const atoms = latestData[mol]?.atoms;
     for (let a = 0; a < atoms?.length; a++) {
       const item = atoms[a];
-      if (threePartsPattern.test(item.alias)) {
+      if (ALIAS_PATTERNS.threeParts.test(item.alias)) {
         const atomSplits = atom?.alias?.split('_');
         const itemSplits = item?.alias?.split('_');
         if (parseInt(atomSplits[2]) <= parseInt(itemSplits[2])) {
@@ -163,7 +180,7 @@ const resetOtherAliasCounters = (atom, molList, latestData) => {
 };
 
 // to find is new atom
-const isNewAtom = (eventItem) => eventItem.label === inspiredLabel;
+const isNewAtom = (eventItem) => eventItem.label === KET_TAGS.inspiredLabel;
 
 // filter out mol-node from ket2 format
 const removeMoleculeFromData = (data, molKey) => data.root.nodes.filter((node) => node.$ref !== molKey);
@@ -176,7 +193,7 @@ const updateMoleculeAliases = async (container, atomList) => {
   for (const imgIdx of container) {
     for (let i = 0; i < atomList.length; i++) {
       const atom = atomList[i];
-      if (threePartsPattern.test(atom.alias)) {
+      if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
         const splits = atom.alias.split('_');
         if (parseInt(splits[2]) > imgIdx) {
           atomList[i].alias = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
@@ -208,7 +225,7 @@ const removeAndUpdateAtoms = async (atomsList, bondsList, images, container) => 
   for (let i = atomsList.length - 1; i >= 0; i--) {
     const atom = atomsList[i];
 
-    if (atom?.alias && atom.label === inspiredLabel) {
+    if (atom?.alias && atom.label === KET_TAGS.inspiredLabel) {
       const imgIndex = parseInt(atom.alias.split('_')[2]);
       if (images.has(imgIndex)) {
         container.add(imgIndex);
@@ -242,7 +259,6 @@ const removeImageTemplateAtom = async (images, molList, data) => {
     let imageFoundIndexCount = 0;
 
     for (const molKey of molList) {
-      console.log({ molList });
       const molecule = data[molKey];
       // if (!molecule || !molecule.atoms) continue;
       if (molecule && molecule.atoms) {
@@ -252,6 +268,7 @@ const removeImageTemplateAtom = async (images, molList, data) => {
         // step 1: remove atoms and bonds based on images list
         const {
           updatedAtoms, updatedBonds, removedIndices, removedCount
+          // eslint-disable-next-line no-await-in-loop
         } = await removeAndUpdateAtoms(atomList, bondList, images, removeIndexList);
 
         // step 2: data filler
@@ -281,9 +298,9 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
 
   for (let i = atomStarts; i < atomsCount + atomStarts; i++) {
     const line = linesCopy[i].split(' ');
-    const idx = line.indexOf(inspiredLabel);
+    const idx = line.indexOf(KET_TAGS.inspiredLabel);
     if (idx !== -1) {
-      line[idx] = RGroupTag;
+      line[idx] = KET_TAGS.RGroupTag;
       atomAliasList.push(`${i - atomStarts}`);
     }
     linesCopy[i] = line.join(' ');
@@ -300,18 +317,19 @@ const reAttachPolymerList = async ({
 }) => {
   let lineCopy = [...lines];
   const aliasesList = lineCopy.slice(additionalDataStart, additionalDataEnd);
-  const { linesCopy, atomAliasList } = await processAtomLines(lineCopy, molfileHeaderLinenumber, atomsCount);
+  const { linesCopy, atomAliasList } = await processAtomLines(lineCopy, KET_TAGS.molfileHeaderLinenumber, atomsCount);
   linesCopy.splice(additionalDataStart, additionalDataEnd - additionalDataStart);
   lineCopy = linesCopy;
   let counter = 0;
   for (let i = 1; i < aliasesList.length; i += 2) {
-    const templateId = aliasesList[i].split('_')[1];
+    const templateId = parseInt(aliasesList[i].split('_')[1]);
     if (templateId) {
-      atomAliasList[counter] += templateId === templateSurface ? 's' : '';
+      atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : '';
       counter++;
     }
   }
-  lineCopy.splice(lineCopy.length, 0, ...[polymerIdentifier, atomAliasList.join(' '), fileEndIdentifier]);
+  const collectedLines = [KET_TAGS.polymerIdentifier, atomAliasList.join(' '), KET_TAGS.fileEndIdentifier];
+  lineCopy.splice(lineCopy.length, 0, ...collectedLines);
   return lineCopy.join('\n');
 };
 
@@ -332,7 +350,7 @@ const makeTransparentByTitle = (iframeDocument) => {
   const elements = iframeDocument.querySelectorAll('[title]');
   /* istanbul ignore next */
   elements.forEach((element) => {
-    if (shapes.indexOf(element.getAttribute('title')) !== -1) {
+    if (KET_TAGS.shapes.indexOf(element.getAttribute('title')) !== -1) {
       element.querySelectorAll('path, text').forEach((child) => {
         if (
           (child.getAttribute('stroke-width') === '2'
@@ -389,7 +407,7 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
     const textElements = svg.querySelectorAll('text'); // Select all text elements
     textElements.forEach((textElem) => {
       const { textContent } = textElem; // Get the text content of the <text> element
-      if (textContent === inspiredLabel) { // Check if it matches the pattern
+      if (textContent === KET_TAGS.inspiredLabel) { // Check if it matches the pattern
         textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
       }
     });
@@ -408,15 +426,12 @@ const allowProcessingSetter = (data) => {
 
 export {
   // data patterns
-  threePartsPattern,
-  twoPartsPattern,
-
+  ALIAS_PATTERNS,
+  KET_TAGS,
   // flags
-  skipTemplateNameHide,
-  skipImageLayering,
+  LAYERING_FLAGS,
   ImagesToBeUpdated,
   allowProcessing,
-  molfileHeaderLinenumber,
 
   // methods
   hasKetcherData,
@@ -440,7 +455,4 @@ export {
   ImagesToBeUpdatedSetter,
 
   allowProcessingSetter,
-
-  // tags
-  inspiredLabel,
 };
