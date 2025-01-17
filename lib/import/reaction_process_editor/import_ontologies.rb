@@ -37,10 +37,10 @@ module Import
       end
 
       def create_from_csv(csv)
-        chmo_id = csv['Ontology ID'] || csv['Onthology ID'] || csv['CHMO']
-        return if chmo_id.blank?
+        ontology_id = csv['Ontology ID'] || csv['Onthology ID'] || csv['CHMO']
+        return if ontology_id.blank?
 
-        ontology = ::ReactionProcessEditor::Ontology.find_or_initialize_by(chmo_id: chmo_id)
+        ontology = ::ReactionProcessEditor::Ontology.find_or_initialize_by(ontology_id: ontology_id)
 
         ontology.update!(
           name: csv['Ontology Name'],
@@ -52,7 +52,7 @@ module Import
           active: true,
         )
       rescue StandardError => e
-        Rails.logger.error("Failed to import Ontology with CHMO_ID: #{ontology.chmo_id}: \n #{e.inspect}")
+        Rails.logger.error("Failed to import Ontology with ONTOLOGY_ID: #{ontology.ontology_id}: \n #{e.inspect}")
         Rails.logger.error(ontology.errors.full_messages)
       end
 
@@ -74,9 +74,9 @@ module Import
 
       def role_dependencies(dependencies)
         options = {}
-        dependencies&.scan(VALUES_WITH_BRACKET)&.each do |chmo_id, dep_type|
-          options[dep_type.strip.tr(' ', '_')] ||= []
-          options[dep_type.strip.tr(' ', '_')] << chmo_id.strip
+        dependencies&.scan(VALUES_WITH_BRACKET)&.each do |ontology_id, dependency_type|
+          options[dependency_type.strip.tr(' ', '_')] ||= []
+          options[dependency_type.strip.tr(' ', '_')] << ontology_id.strip
         end
         options['automation_mode'] ||= options['mode'].presence if options['mode'].presence
         options.delete('mode')
