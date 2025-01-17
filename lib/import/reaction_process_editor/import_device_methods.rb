@@ -87,7 +87,8 @@ module Import
         detector_name = name_and_defaults[0].strip
         analysis_default_values = name_and_defaults[1]
 
-        options = { label: detector_name, value: chmo_id(detector_name), source: 'ImportDeviceMethods.rb' }
+        # TODO: Remove debug_source attribute required for debug examinations only.
+        options = { label: detector_name, value: ontology_id(detector_name), debug_source: 'ImportDeviceMethods.rb' }
 
         return options if analysis_default_values.blank?
 
@@ -112,14 +113,14 @@ module Import
         []
       end
 
-      def chmo_id(detector_name)
+      def ontology_id(detector_name)
         DETECTOR_TYPES[detector_name]&.first || detector_name
       end
 
       def detector_analysis_defaults(detector_name, values)
-        chmo_id, data_type, metric, unit, label = DETECTOR_TYPES[detector_name]
+        ontology_id, data_type, metric, unit, label = DETECTOR_TYPES[detector_name]
 
-        return [] unless chmo_id
+        return [] unless ontology_id
 
         # TODO: A detector might have multiple metrics /metric_names (therefore we return an array).
         # Current files have only one. Adapt CSV parsing once/if File format changes. cbuggle, 14.10.2024.
