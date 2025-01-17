@@ -77,10 +77,9 @@ function MenuHeader({
 
   const unitSelection = (
     <Button
-      className="unitSelection"
+      className={`unitSelection ${entry === 'equivalent' ? 'd-none' : 'd-inline'}`}
       variant="success"
       size="sm"
-      style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
       onClick={onUnitChanged}
     >
       {getUserFacingUnit(unit)}
@@ -113,10 +112,9 @@ function MenuHeader({
 
   const entrySelection = (
     <Button
-      className="entrySelection"
+      className={`entrySelection ${['temperature', 'duration'].includes(entry) ? 'd-none' : 'd-inline'}`}
       variant="light"
       size="sm"
-      style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
       disabled={Object.keys(entries).length === 1}
       onClick={onEntryChanged}
     >
@@ -125,7 +123,7 @@ function MenuHeader({
   );
 
   const sortMenu = (
-    <div className="sortHeader" style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
+    <div className="sortHeader d-flex align-items-center">
       <div
         onClick={(event) => onSortRequested('asc', event)}
         onTouchEnd={(event) => onSortRequested('asc', event)}
@@ -151,7 +149,7 @@ function MenuHeader({
   );
 
   return (
-    <div style={{ display: 'grid' }}>
+    <div className="d-grid">
       <span
         className="header-title"
         onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}

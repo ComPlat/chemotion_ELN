@@ -43,7 +43,7 @@ function AnalysisOverlay({ value: analyses }) {
     <div className="tooltip show">
       <div className="tooltip-inner text-start">
         Linked analyses:
-        <ul style={{ paddingLeft: '15px' }}>
+        <ul className="ps-3">
           {analyses.map((analysis) => (
             <li key={analysis.id}>{analysis.name}</li>
           ))}
@@ -128,10 +128,10 @@ function AnalysesCellEditor({
   };
 
   const analysesSelection = (
-    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+    <div className="max-height-200 overflow-y-auto">
       <Form.Group>
         {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => (
-          <div key={analysis.id} style={{ display: 'flex', alignItems: 'center' }}>
+          <div key={analysis.id} className="d-flex align-items-center">
             <Form.Check
               type="checkbox"
               onChange={() => onChange(analysis.id)}
