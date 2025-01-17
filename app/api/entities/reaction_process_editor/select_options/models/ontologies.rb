@@ -6,11 +6,11 @@ module Entities
       module Models
         class Ontologies < Base
           def all
-            ::ReactionProcessEditor::Ontology.includes([:device_methods]).order(:chmo_id).map do |ontology|
+            ::ReactionProcessEditor::Ontology.includes([:device_methods]).order(:ontology_id).map do |ontology|
               ontology.attributes
-                      .slice(*%w[label chmo_id solvents link roles active])
+                      .slice(*%w[label ontology_id solvents link roles active])
                       .merge({
-                               value: ontology.chmo_id,
+                               value: ontology.ontology_id,
                                methods: SelectOptions::Models::DeviceMethods.new.select_options_for(
                                  ontology.device_methods,
                                ),
