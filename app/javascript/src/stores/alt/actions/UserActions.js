@@ -3,7 +3,7 @@ import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import alt from 'src/stores/alt/alt';
-
+import { templateParser } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 
 class UserActions {
@@ -68,7 +68,7 @@ class UserActions {
       credentials: 'same-origin',
       data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') }
     })
-      .then(response => {
+      .then((response) => {
         if (response.status == 204) {
           location = '/home';
         }
@@ -88,7 +88,10 @@ class UserActions {
     UsersFetcher.fetchProfile().then((res) => {
       if (res?.user_templates) {
         localStorage.setItem(storageKey, '');
-        localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
+        templateParser().then((list) => {
+          res.user_templates.push(...list);
+          localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
+        });
       }
     });
   }
@@ -133,7 +136,7 @@ class UserActions {
   fetchNoVNCDevices() {
     return (dispatch) => {
       UsersFetcher.fetchNoVNCDevices()
-        .then(result => { dispatch(result); })
+        .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -167,7 +170,7 @@ class UserActions {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'cache-control': 'no-cache' }
-      }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
+      }).then((response) => response.json()).then((json) => dispatch(json)).catch((errorMessage) => {
         console.log(errorMessage);
       });
     };
