@@ -283,8 +283,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     editable: true,
     sortable: true,
     resizable: false,
-    wrapHeaderText: true,
-    autoHeaderHeight: true,
   };
 
   const setReactionVariations = (updatedReactionVariations) => {
@@ -475,6 +473,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           rowData={reactionVariations}
           rowDragEntireRow
           rowDragManaged
+          headerHeight={70}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={defaultColumnDefinitions}
