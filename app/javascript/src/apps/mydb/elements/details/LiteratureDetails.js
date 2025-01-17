@@ -394,7 +394,7 @@ export default class LiteratureDetails extends Component {
           <Accordion>
             <Accordion.Item eventKey="2">
               <Accordion.Header>
-                {this.renderSectionHeader('Refenrecs for Samples', contentSamples)}
+                {this.renderSectionHeader('References for Samples', contentSamples)}
               </Accordion.Header>
               <Accordion.Body>
                 {sampleRefs.map((lit) => (
