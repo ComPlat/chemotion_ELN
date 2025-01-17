@@ -62,19 +62,15 @@ const templateParser = async () => {
 
 // helper function to examine the file coming ketcher rails
 const hasKetcherData = async (molfile) => {
+  if (!molfile) {
+    console.error('Invalid molfile source.');
+    return null;
+  }
+
   try {
-    if (molfile) {
-      const lines = molfile.trim().split('\n');
-      let polymersLine = -1;
-      for (let i = lines.length - 1; i > -1; i--) {
-        if (lines[i].indexOf(KET_TAGS.polymerIdentifier) !== -1) {
-          polymersLine = lines[i + 1].trim();
-          break;
-        }
-      }
-      return polymersLine === -1 ? null : polymersLine;
-    }
-    throw new 'Invalid molfile source.'();
+    const lines = molfile.trim().split('\n');
+    const polymerLine = lines.reverse().find((line) => line.includes(KET_TAGS.polymerIdentifier));
+    return polymerLine ? lines[lines.indexOf(polymerLine) - 1]?.trim() || null : null;
   } catch (err) {
     console.error('Opening this molfile is not correct. Please report this molfile to dev team.');
     return null;
