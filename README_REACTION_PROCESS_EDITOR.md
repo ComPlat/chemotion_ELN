@@ -1,7 +1,6 @@
 # ReactionProcessEditor
 
-The Reaction Process Editor is a separate React project allowing to visually compose and edit the actual reaction processes
-which uses the ELN as API backend.
+The Reaction Process Editor is a separate React project allowing to visually compose and edit the actual reaction processes. It uses the ELN as API backend.
 
 The current version of the Reaction Process Editor (RPE) is still privately hosted on
 <https://github.com/cbuggle/eln-reaction-procedure-editor>

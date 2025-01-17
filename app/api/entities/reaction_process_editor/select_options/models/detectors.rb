@@ -24,7 +24,7 @@ module Entities
           private
 
           def detector_analysis_defaults(detector_type)
-            _chmo_id, data_type, metric, _unit, label = detector_type
+            _ontology_id, data_type, metric, _unit, label = detector_type
 
             return [] unless data_type
 

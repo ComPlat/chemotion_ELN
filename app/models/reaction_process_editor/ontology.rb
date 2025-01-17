@@ -5,7 +5,7 @@
 # Table name: ontologies
 #
 #  id          :uuid             not null, primary key
-#  chmo_id     :string
+#  ontology_id     :string
 #  device_code :string
 #  name        :string
 #  label       :string
@@ -20,7 +20,7 @@
 
 module ReactionProcessEditor
   class Ontology < ApplicationRecord
-    validates :chmo_id, presence: true, uniqueness: true
+    validates :ontology_id, presence: true, uniqueness: true
     has_many :device_methods, class_name: '::ReactionProcessEditor::OntologyDeviceMethod',
                               inverse_of: :ontology, dependent: :nullify
 
