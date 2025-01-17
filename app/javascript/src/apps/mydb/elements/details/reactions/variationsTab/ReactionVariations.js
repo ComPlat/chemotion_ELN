@@ -13,6 +13,7 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType,
   temperatureUnits, durationUnits, getStandardUnit, materialTypes, updateColumnDefinitions,
+  getUserFacingUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
@@ -76,13 +77,12 @@ function MenuHeader({
 
   const unitSelection = (
     <Button
-      className="unitSelection"
+      className={`unitSelection ${entry === 'equivalent' ? 'd-none' : 'd-inline'}`}
       variant="success"
       size="sm"
-      style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
       onClick={onUnitChanged}
     >
-      {unit}
+      {getUserFacingUnit(unit)}
     </Button>
   );
 
@@ -112,10 +112,9 @@ function MenuHeader({
 
   const entrySelection = (
     <Button
-      className="entrySelection"
+      className={`entrySelection ${['temperature', 'duration'].includes(entry) ? 'd-none' : 'd-inline'}`}
       variant="light"
       size="sm"
-      style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
       disabled={Object.keys(entries).length === 1}
       onClick={onEntryChanged}
     >
@@ -124,7 +123,7 @@ function MenuHeader({
   );
 
   const sortMenu = (
-    <div className="sortHeader" style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
+    <div className="sortHeader d-flex align-items-center">
       <div
         onClick={(event) => onSortRequested('asc', event)}
         onTouchEnd={(event) => onSortRequested('asc', event)}
@@ -150,7 +149,7 @@ function MenuHeader({
   );
 
   return (
-    <div style={{ display: 'grid' }}>
+    <div className="d-grid">
       <span
         className="header-title"
         onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
@@ -194,7 +193,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
       sortable: false,
-      minWidth: 140,
+      maxWidth: 100,
       cellDataType: false,
     },
     {
@@ -229,7 +228,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
-            names: ['Temperature'],
+            names: ['T'],
             entries: { temperature: temperatureUnits }
           }
         },
@@ -242,7 +241,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           },
           headerComponent: MenuHeader,
           headerComponentParams: {
-            names: ['Duration'],
+            names: ['t'],
             entries: { duration: durationUnits }
           }
         },
@@ -282,10 +281,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     editable: true,
     sortable: true,
     resizable: false,
-    minWidth: 120,
-    maxWidth: 200,
-    wrapHeaderText: true,
-    autoHeaderHeight: true,
   };
 
   const setReactionVariations = (updatedReactionVariations) => {
@@ -470,12 +465,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         {addVariation()}
         {removeAllVariations()}
       </ButtonGroup>
-      <div className="ag-theme-alpine">
+      <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
           ref={gridRef}
           rowData={reactionVariations}
           rowDragEntireRow
           rowDragManaged
+          headerHeight={70}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={defaultColumnDefinitions}

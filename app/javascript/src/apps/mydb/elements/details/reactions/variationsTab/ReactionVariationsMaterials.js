@@ -202,12 +202,14 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent) {
       entries.equivalent = [];
     }
   }
-  const names = [`ID: ${materialCopy.id.toString()}`];
+  let names = new Set([`ID: ${materialCopy.id.toString()}`]);
   ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
     if (materialCopy[name]) {
-      names.push(materialCopy[name]);
+      names.add(materialCopy[name]);
     }
   });
+  names = Array.from(names);
+
   const entry = materialType === 'solvents' ? 'volume' : 'mass';
   return {
     field: `${materialType}.${materialCopy.id}`, // Must be unique.
