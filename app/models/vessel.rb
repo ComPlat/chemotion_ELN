@@ -24,6 +24,8 @@
 #
 class Vessel < ApplicationRecord
   acts_as_paranoid
+  include Taggable
+  include ElementUIStateScopes
 
   belongs_to :vessel_template
   belongs_to :creator, class_name: 'User', foreign_key: :user_id, inverse_of: :created_vessels

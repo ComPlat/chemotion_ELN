@@ -39,6 +39,9 @@ module Tagging
     when 'CollectionsCellline'
       args = { collection_tag: true }
       element = 'cellline_sample'
+    when 'CollectionsVessel'
+      args = { collection_tag: true }
+      element = 'vessel'
     end
 
     element && send(element)&.update_tag!(args)
