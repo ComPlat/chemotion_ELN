@@ -224,11 +224,9 @@ export default class AnalysisEditor extends React.Component {
           overlay={templateCreatorPopover}
           onHide={this.onCloseTemplateCreator}
         >
-          <span className="ql-formats">
-            <button>
-              <span className="fa fa-cog" />
-            </button>
-          </span>
+          <button className="ql-formats">
+            <i as="button" className="fa fa-cog" />
+          </button>
         </OverlayTrigger>
       </DynamicToolbarEditor>
     );

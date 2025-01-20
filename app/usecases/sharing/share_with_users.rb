@@ -20,6 +20,7 @@ module Usecases
             screen_ids: @params.fetch(:screen_ids, []),
             research_plan_ids: @params.fetch(:research_plan_ids, []),
             cell_line_ids: @params.fetch(:cell_line_ids, []),
+            device_description_ids: @params.fetch(:device_description_ids, []),
             element_ids: @params.fetch(:element_ids, [])
           ).execute!
         end

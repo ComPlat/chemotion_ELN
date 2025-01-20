@@ -7,6 +7,15 @@
   @extend .text-center;
 }
 
+.dnd-zone-list-item {
+  @extend .w-100;
+  @extend .border;
+  @extend .border-dashed;
+  @extend .border-3;
+  @extend .p-3;
+  @extend .text-start;
+}
+
 .dnd-zone-over {
   @extend .border-primary;
 }

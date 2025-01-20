@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_09_17_085816) do
+ActiveRecord::Schema.define(version: 2025_01_20_162008) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -192,6 +192,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
+    t.integer "devicedescription_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
@@ -207,6 +208,15 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.index ["cellline_sample_id", "collection_id"], name: "index_collections_celllines_on_cellsample_id_and_coll_id", unique: true
     t.index ["collection_id"], name: "index_collections_celllines_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_celllines_on_deleted_at"
+  end
+
+  create_table "collections_device_descriptions", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "device_description_id"
+    t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_device_descriptions_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_device_descriptions_on_deleted_at"
+    t.index ["device_description_id", "collection_id"], name: "index_on_device_description_and_collection", unique: true
   end
 
   create_table "collections_elements", id: :serial, force: :cascade do |t|
@@ -422,6 +432,65 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.datetime "updated_at"
     t.string "cron"
     t.index ["priority", "run_at"], name: "delayed_jobs_priority"
+  end
+
+  create_table "device_descriptions", force: :cascade do |t|
+    t.integer "device_id"
+    t.string "name"
+    t.string "short_label"
+    t.string "vendor_id"
+    t.string "vendor_url"
+    t.string "serial_number"
+    t.string "version_doi"
+    t.string "version_doi_url"
+    t.string "device_type"
+    t.string "device_type_detail"
+    t.string "operation_mode"
+    t.datetime "version_installation_start_date"
+    t.datetime "version_installation_end_date"
+    t.text "description"
+    t.jsonb "operators"
+    t.string "university_campus"
+    t.string "institute"
+    t.string "building"
+    t.string "room"
+    t.string "infrastructure_assignment"
+    t.string "access_options"
+    t.string "access_comments"
+    t.string "size"
+    t.string "weight"
+    t.string "application_name"
+    t.string "application_version"
+    t.text "description_for_methods_part"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "vendor_device_name"
+    t.string "vendor_device_id"
+    t.string "vendor_company_name"
+    t.string "general_tags", default: [], array: true
+    t.text "policies_and_user_information"
+    t.string "version_number"
+    t.text "version_characterization"
+    t.datetime "deleted_at"
+    t.integer "created_by"
+    t.jsonb "ontologies"
+    t.string "ancestry"
+    t.string "version_identifier_type"
+    t.boolean "helpers_uploaded", default: false
+    t.jsonb "setup_descriptions"
+    t.string "maintenance_contract_available"
+    t.string "maintenance_scheduling"
+    t.jsonb "contact_for_maintenance"
+    t.jsonb "planned_maintenance"
+    t.jsonb "consumables_needed_for_maintenance"
+    t.jsonb "unexpected_maintenance"
+    t.text "measures_after_full_shut_down"
+    t.text "measures_after_short_shut_down"
+    t.text "measures_to_plan_offline_period"
+    t.text "restart_after_planned_offline_period"
+    t.string "weight_unit"
+    t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
+    t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
 
   create_table "device_metadata", id: :serial, force: :cascade do |t|
@@ -1345,6 +1414,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.datetime "updated_at"
     t.integer "element_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
+    t.integer "devicedescription_detail_level", default: 10
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"

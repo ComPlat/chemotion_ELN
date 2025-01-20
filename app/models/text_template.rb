@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: text_templates
@@ -22,16 +24,18 @@ class TextTemplate < ApplicationRecord
   belongs_to :user
 
   TYPES = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate
-             ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate].freeze
+             ResearchPlanTextTemplate ReactionDescriptionTextTemplate DeviceDescriptionTextTemplate
+             ElementTextTemplate].freeze
 
   DEFAULT_TEMPLATES = {
-    'MS': %w[ei fab esi apci asap maldi m+ hr hr-ei hr-fab aa bb],
-    '_toolbar': %w[ndash h-nmr c-nmr ir uv ea]
+    MS: %w[ei fab esi apci asap maldi m+ hr hr-ei hr-fab aa bb],
+    _toolbar: %w[ndash h-nmr c-nmr ir uv ea],
   }.freeze
 
   def self.default_templates
     def_names = {}
-    name.to_s.constantize::DEFAULT_TEMPLATES.each { |k, v| def_names[k] = PredefinedTextTemplate.where(name: v).pluck(:name) }
+    name.to_s.constantize::DEFAULT_TEMPLATES
+      .each { |k, v| def_names[k] = PredefinedTextTemplate.where(name: v).pluck(:name) }
     def_names
   end
 
@@ -65,9 +69,13 @@ end
 class ElementTextTemplate < TextTemplate
 end
 
+class DeviceDescriptionTextTemplate < TextTemplate
+end
+
 class PredefinedTextTemplate < TextTemplate
   def self.init_seeds
-    predefined_template_seeds_path = File.join(Rails.root, 'db', 'seeds', 'json', 'text_template_seeds.json')
+    filepath = Rails.root.join('db/seeds/json/text_template_seeds.json')
+    predefined_template_seeds_path = File.join(filepath)
     predefined_templates = JSON.parse(File.read(predefined_template_seeds_path))
 
     predefined_templates.each do |template|
@@ -78,7 +86,7 @@ class PredefinedTextTemplate < TextTemplate
         type: 'PredefinedTextTemplate',
         name: template_name,
         data: template,
-        user_id: Admin.first&.id
+        user_id: Admin.first&.id,
       )
     end
   end
@@ -86,10 +94,10 @@ end
 
 class ReactionDescriptionTextTemplate < TextTemplate
   DEFAULT_TEMPLATES = {
-    '_toolbar': %w[
+    _toolbar: %w[
       ndash water-free resin-solvent resin-solvent-reagent hand-stop
       reaction-procedure gpx-a gpx-b washed-nahco3 acidified-hcl tlc-control
       dried isolated residue-purified residue-adsorbed residue-dissolved
-    ]
+    ],
   }.freeze
 end

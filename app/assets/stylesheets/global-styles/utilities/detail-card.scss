@@ -2,7 +2,7 @@
   > .card-header {
     @extend .text-bg-primary;
   }
-  &.detail-card--unsaved .card-header {
+  &.detail-card--unsaved > .card-header {
     @extend .text-bg-info;
   }
 }
