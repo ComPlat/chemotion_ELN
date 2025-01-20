@@ -18,6 +18,10 @@ module OrdKit
           def addition_order
             # ELN is 0-indexed, ORD is 1-indexed.
             action.siblings.select(&:adds_compound?).index(@action) + 1
+          rescue StandardError
+            Rails.logger.error('Error on determining addition_order in action:')
+            Rails.logger.error(action)
+            0
           end
 
           def conditions
