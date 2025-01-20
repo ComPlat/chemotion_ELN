@@ -9,7 +9,7 @@ module OrdKit
         def action_type_attributes
           {
             removal: OrdKit::ReactionProcessAction::ActionRemove.new(
-              { automation: automation }.merge(origin_fields),
+              { automation: automation }.merge(remove_fields_per_origin),
             ),
           }
         end
@@ -20,7 +20,7 @@ module OrdKit
           Automation::AutomationMode::UNSPECIFIED
         end
 
-        def origin_fields
+        def remove_fields_per_origin
           case workup['origin_type']
           when 'FROM_REACTION'
             { from_reaction: from_reaction_fields }.stringify_keys
@@ -67,7 +67,7 @@ module OrdKit
         def stepwise_fields
           { stepwise: {
             starter_conditions: starter_conditions,
-            limits: limits_to_ord(Array(workup['limits'])),
+            limits: limits_to_ord([workup['limits']]),
           } }
         end
 

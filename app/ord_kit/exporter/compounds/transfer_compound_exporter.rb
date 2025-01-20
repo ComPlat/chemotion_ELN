@@ -42,14 +42,6 @@ module OrdKit
             Preparations::CompoundPreparationsExporter.new(@action).to_ord,
           ].compact
         end
-
-        def compound_source
-          OrdKit::Compound::Source.new(
-            vendor: nil, # TODO: hardcoded empty. clarify.
-            id: nil,
-            lot: nil,
-          )
-        end
       end
     end
   end

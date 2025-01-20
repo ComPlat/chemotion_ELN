@@ -7,6 +7,8 @@ module OrdKit
         LENGTH_UNIT_MAPPING = { CM: 'CENTIMETER' }.stringify_keys.freeze
 
         def to_ord
+          return unless @value
+
           Length.new(
             value: @value.to_f,
             precision: nil,

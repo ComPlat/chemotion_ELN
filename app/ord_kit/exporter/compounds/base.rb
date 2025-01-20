@@ -18,9 +18,6 @@ module OrdKit
             percentage: percentage,
             reaction_role: reaction_role,
             preparations: preparations,
-            source: compound_source,
-            features: nil,
-            analyses: nil,
             purity: purity,
             is_waterfree_solvent: workup['is_waterfree_solvent'],
             location: workup['location'],
@@ -48,10 +45,6 @@ module OrdKit
         end
 
         def preparations
-          nil
-        end
-
-        def compound_source
           nil
         end
 

@@ -16,7 +16,7 @@ module OrdKit
 
         def details
           if action.sample
-            action.sample.name # TODO: inchi? iupac? smiles?
+            action.sample.name
           elsif action.medium
             action.medium.sample_name
           end
@@ -25,7 +25,7 @@ module OrdKit
         def value
           if action.sample
             action.sample.preferred_label || action.sample.short_label
-          elsif action.medium?
+          elsif action.medium
             action.medium.label
           end
         end
@@ -50,14 +50,6 @@ module OrdKit
           [
             Preparations::CompoundPreparationsExporter.new(@action).to_ord,
           ].compact
-        end
-
-        def compound_source
-          OrdKit::Compound::Source.new(
-            vendor: nil, # TODO: hardcoded empty. clarify.
-            id: nil,
-            lot: nil,
-          )
         end
       end
     end

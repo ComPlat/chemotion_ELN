@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module OrdKit
   module Exporter
     module Conditions
       class ReactionConditionLimitsExporter < OrdKit::Exporter::Conditions::Base
         def to_ord
-          return unless workup
+          return {} unless workup
 
           condition_workup = workup.dup
           duration = condition_workup.delete('duration')
