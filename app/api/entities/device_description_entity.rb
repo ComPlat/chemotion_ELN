@@ -33,6 +33,7 @@ module Entities
     expose :access_comments
     expose :size
     expose :weight
+    expose :weight_unit
     expose :application_name
     expose :application_version
     expose :vendor_url

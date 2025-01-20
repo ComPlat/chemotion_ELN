@@ -84,10 +84,8 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   }
 
   visibleTabs.forEach((key, i) => {
-    let title = key.charAt(0).toUpperCase() + key.slice(1);
-
     tabContents.push(
-      <Tab eventKey={key} title={title} key={`${key}_${deviceDescription.id}`} disabled={disabled(i)}>
+      <Tab eventKey={key} title={tabTitles[key]} key={`${key}_${deviceDescription.id}`} disabled={disabled(i)}>
         {
           !deviceDescription.isNew &&
           <CommentSection section={`device_description_${key}`} element={deviceDescription} />

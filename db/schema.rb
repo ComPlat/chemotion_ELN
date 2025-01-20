@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_09_17_085816) do
+ActiveRecord::Schema.define(version: 2025_01_20_162008) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -488,6 +488,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.text "measures_after_short_shut_down"
     t.text "measures_to_plan_offline_period"
     t.text "restart_after_planned_offline_period"
+    t.string "weight_unit"
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end

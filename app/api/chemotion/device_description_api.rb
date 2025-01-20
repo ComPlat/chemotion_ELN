@@ -54,6 +54,7 @@ module Chemotion
         optional :access_comments, type: String
         optional :size, type: String
         optional :weight, type: String
+        optional :weight_unit, type: String
         optional :application_name, type: String
         optional :application_version, type: String
         optional :vendor_url, type: String
