@@ -18,6 +18,12 @@ module OrdKit
             wavelengths: wavelengths,
             generic: generic_conditions,
           )
+        rescue StandardError => e
+          Rails.logger.error('ReactionConditionsExporter: WORKUP ERROR')
+          Rails.logger.error(e)
+
+          Rails.logger.error(workup)
+          nil
         end
 
         def temperature

@@ -7,16 +7,64 @@ module OrdKit
         class ChromatographyExporter < Actions::Purification::Base
           def to_ord
             { chromatography: OrdKit::ReactionProcessAction::ActionPurificationChromatography.new(
-              { steps: steps }.merge(automation[workup['automation']] || {}),
+              {
+                type: ontology_ord(workup['type']),
+                subtype: ontology_ord(workup['subtype']),
+                stationary_phase: workup['stationary_phase'],
+                steps: steps,
+              }.merge(automation_specific_fields),
             ) }
           end
 
           private
 
-          def automation
-            { AUTOMATED: { automated: automated_fields }.stringify_keys,
-              MANUAL: { manual: manual_fields },
-              SEMI_AUTOMATED: { semi_automated: automated_fields } }.stringify_keys
+          def manual?
+            %w[MANUAL].include?(automation_ontology_device_code)
+          end
+
+          def automated?
+            %w[AUTOMATED SEMIAUTOMATED].include?(automation_ontology_device_code)
+          end
+
+          def automation_ontology_device_code
+            ReactionProcessEditor::Ontology.find_by(ontology_id: workup['automation_mode'])&.device_code
+          end
+
+          def automation_specific_fields
+            return automation_manual_fields if manual?
+            return automation_automated_fields if automated?
+
+            {}
+          end
+
+          def automation_manual_fields
+            {
+              material: ontology_ord(workup['jar_material']),
+              diameter: Metrics::LengthExporter.new(workup['jar_diameter']).to_ord,
+              height: Metrics::LengthExporter.new(workup['jar_height']).to_ord,
+              filling_height: Metrics::LengthExporter.new(workup['jar_filling_height']).to_ord,
+            }
+          end
+
+          def automation_automated_fields
+            {
+              device: ontology_ord(workup['device']),
+              detectors: detectors,
+              method: workup['method'],
+              mobile_phase: workup['mobile_phase'],
+              stationary_phase_temperature: stationary_phase_temperature,
+              volume: volume,
+            }
+          end
+
+          def ontology_ord(ontology_id)
+            OrdKit::Exporter::Models::OntologyExporter.new(ontology_id).to_ord
+          end
+
+          def detectors
+            workup['detectors']&.map do |detector_ontology_id|
+              ontology_ord(detector_ontology_id)
+            end
           end
 
           def steps
@@ -30,37 +78,6 @@ module OrdKit
                 duration: Metrics::TimeSpanExporter.new(chromatography_step['duration']).to_ord,
               )
             end
-          end
-
-          def manual_fields
-            OrdKit::ReactionProcessAction::ActionPurificationChromatography::Manual.new(
-              material: Materials::MaterialExporter.new(workup['jar_material']).to_ord,
-              diameter: Metrics::LengthExporter.new(workup['jar_diameter']).to_ord,
-              height: Metrics::LengthExporter.new(workup['jar_height']).to_ord,
-              filling_height: Metrics::LengthExporter.new(workup['jar_filling_height']).to_ord,
-            )
-          end
-
-          def automated_fields
-            OrdKit::ReactionProcessAction::ActionPurificationChromatography::Automated.new(
-              chromatography_type: workup['chromatography_type'],
-              chromatography_subtype: workup['chromatography_subtype'],
-              device: workup['device'],
-              detectors: detectors,
-              method: workup['method'],
-              mobile_phase: mobile_phase,
-              stationary_phase: workup['stationary_phase'],
-              stationary_phase_temperature: stationary_phase_temperature,
-              volume: volume,
-            )
-          end
-
-          def detectors
-            DetectorExporter.new(workup).to_ord
-          end
-
-          def mobile_phase
-            workup['mobile_phase']
           end
 
           def stationary_phase_temperature
@@ -85,7 +102,7 @@ module OrdKit
           end
 
           def solvents(chromatography_step)
-            OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(chromatography_step['solvents']).to_ord
+            OrdKit::Exporter::Samples::OntologySolventsWithRatioExporter.new(chromatography_step['solvents']).to_ord
           end
 
           def ord_step(stepname)

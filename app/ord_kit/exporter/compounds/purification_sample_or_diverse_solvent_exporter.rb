@@ -10,7 +10,7 @@ module OrdKit
           # they are merged together into ReactionProcessStepEntity#materials_options
           # and consequently the ids of 2 different actions are stored in a single array.
           # Maybe there is a better way as this creates some issues.
-          # We need to .find in multiple actions (DiverseSolvent have uuid, so sort of ok)
+          # We need to .find in multiple ActiveRecords (DiverseSolvent have uuid, so sort of ok)
 
           @sample = Sample.find_by(id: sample_id) || Medium::DiverseSolvent.find_by(id: sample_id)
         end
