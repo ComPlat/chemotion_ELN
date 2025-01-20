@@ -1,4 +1,4 @@
-// Copyright 2023 KIT ELN Reaction Database Authors
+// Copyright 2023-2025 KIT ELN Reaction Database Authors
 // Nicole Jung <nicole.jung@kit.edu>, Christian Buggle <christian@buggle.net>
 //
 // Ord::Kit for KIT IOC
@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (loosely based on the original ORD Schema).
 //
-// v0.7.0
-// (draft, 10.10.2024)
+// v0.8.0
+// (draft, 18.01.2025)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -45,10 +45,10 @@ package ord_kit;
  * enums that support custom types.
  */
 message Reaction {
-  string reaction_id = 10;
-  ReactionProvenance provenance = 9;
-  ReactionConditions conditions = 4;
-  repeated ReactionStep reaction_steps = 11;
+  string reaction_id = 1;
+  ReactionProvenance provenance = 2;
+  ReactionConditions conditions = 3;
+  repeated ReactionStep reaction_steps = 4;
 }
 
 /**
@@ -71,6 +71,17 @@ message ReactionStep {
   ReactionSetup setup = 5;
   // The indivdual actions defining the ReactionStep.
   repeated ReactionProcessAction actions = 6;
+}
+
+/**
+ * An Ontology is a reference to a CHMO or a genericly defined Ontology
+ *
+ **/
+
+message Ontology {
+  string id = 1;
+  string label = 2;
+  string name = 3;
 }
 
 /**
@@ -223,55 +234,31 @@ message ReactionProcessAction {
         NONE = 3;
       }
 
-      // Once specified by hardcoding here.
-      // Detectors are now parsed from CSV files as AnaylsisType. delete this?
-      // cbuggle, 11.10.2024 enum Detector {
-      //   DETECTOR_UNSPECIFIED = 0;
-      //   NO_DETECTOR = 1;
-      //   PHOTODIODE_ARRAY = 2;
-      //   VARIABLE_WAVELENGTH = 3;
-      //   REFRACTIVE_INDEX = 4;
-      //   FLUORESCENCE = 5;
-      //   EVAPORATIVE_LIGHT_SCATTERING = 6;
-      //   FLAME_IONIZATION = 7;
-      //   BARRIER_IONIZATION_DISCHARGE = 8;
-      //   THERMAL_CONDUCTIVIT = 9;
-      // }
-
       TimeSpan duration = 1;
-      repeated CompoundWithRatio solvents = 2;
+      repeated OntologySolventWithRatio solvents = 2;
       Amount amount = 3;
       FlowRate flow_rate = 4;
       Step step = 5;
       Prod prod = 6;
     }
 
-    message Manual {
-      Material material = 1;
-      Length diameter = 2;
-      Length height = 3;
-      Length filling_height = 4;
-    }
+    Ontology automation = 1;
+    Ontology type = 2;
+    Ontology subtype = 3;
+    optional Ontology device = 4;
+    repeated Ontology detectors = 6;
+    repeated Ontology mobile_phase = 7;
+    optional string method = 8;
+    string stationary_phase = 9;
+    TemperatureConditions stationary_phase_temperature = 10;
+    Volume volume = 11;
 
-    message Automated {
-      string chromatography_type = 2;
-      string chromatography_subtype = 3;
-      string device = 4;
-      // repeated Analysis.AnalysisType detectors = 5;
-      repeated Detector detectors = 6;
-      repeated string mobile_phase = 7;
-      string method = 8;
-      string stationary_phase = 9;
-      TemperatureConditions stationary_phase_temperature = 10;
-      Volume volume = 11;
-    }
+    optional Ontology material = 12;
+    optional Length diameter = 13;
+    optional Length height = 14;
+    optional Length filling_height = 15;
 
-    repeated ChromatographyStep steps = 1;
-    oneof automation {
-      Manual manual = 2;
-      Automated automated = 3;
-      Automated semi_automated = 4;
-    }
+    repeated ChromatographyStep steps = 16;
   }
 
   message ActionPurificationExtraction {
@@ -319,17 +306,16 @@ message ReactionProcessAction {
     Automation.AutomationMode automation = 5;
   }
 
-  message ActionSpectroscopy {
-    string device = 1;
-  }
-  message ActionSpectrometry {
-    string device = 1;
-  }
+  message ActionSpectroscopy { string device = 1; }
+
+  message ActionSpectrometry { string device = 1; }
+
   message ActionAnalysis {
     oneof type {
       ActionSpectroscopy spectroscopy = 1;
       ActionSpectrometry spectrometry = 2;
-      ActionPurificationChromatography chromatography = 3; // for now identical, AnalysisChromatography might diverge soon.
+      ActionPurificationChromatography chromatography =
+          3; // for now identical, AnalysisChromatography might diverge soon.
     }
     Automation.AutomationMode automation = 4;
   }
@@ -380,38 +366,8 @@ message Amount {
     Mass mass = 1;
     Moles moles = 2;
     Volume volume = 3;
-    UnmeasuredAmount unmeasured = 5;
-    Percentage percentage = 6;
+    Percentage percentage = 4;
   }
-  // Whether the volume measurement refers to the pure substance or to the
-  // total volume of the reaction input. An example of when this field should
-  // be TRUE is when stock solutions are prepared by adding solvent to a
-  // volumetric flask already containing solute(s).
-  optional bool volume_includes_solutes = 4;
-}
-
-/**
- * Compounds may be defined with qualitative amounts in situations where a
- * precise quantity is not measured or reported.
- */
-message UnmeasuredAmount {
-  enum UnmeasuredAmountType {
-    UNSPECIFIED = 0;
-    CUSTOM = 1;
-    // Solute species present at saturation limit. Should only be used for
-    // compounds when a solvent compound is also present in he same input.
-    SATURATED = 2;
-    // An unmeasured drop or scoop of compound intended to introduce it only
-    // at a catalytic (very low) concentration.
-    CATALYTIC = 3;
-    // Compound was titrated in, but the actual amount added was not recorded.
-    // Details of how the amount of compound added was decided, e.g., a change
-    // in color, should be included in the details field.
-    TITRATED = 4;
-  }
-  UnmeasuredAmountType type = 1;
-  // Full description of the unmeasured amount if more details are known.
-  string details = 2;
 }
 
 /**
@@ -428,26 +384,9 @@ message Compound {
   optional Percentage percentage = 3;
   ReactionRole.ReactionRoleType reaction_role = 4;
   repeated CompoundPreparation preparations = 5;
-  message Source {
-    // Name of the vendor or supplier the compound was purchased from.
-    string vendor = 1;
-    // Compound ID in the vendor database or catalog.
-    string id = 2;
-    // Batch/lot identification.
-    string lot = 3;
-  }
-  Source source = 6;
-  // Compounds can accommodate any number of features. These may include simple
-  // properties of the compound (e.g., molecular weight), heuristic estimates
-  // of physical properties (e.g., ClogP), optimized geometries (e.g., through
-  // DFT), and calculated stereoelectronic descriptors.
-  map<string, Data> features = 7;
-  // Compounds may be assayed for quality control; analytical data should be
-  // defined in the analyses map.
-  map<string, Analysis> analyses = 8;
 
   // The purity of the compound.
-  Percentage purity = 9;
+  Percentage purity = 6;
 
   // Optional flag when adding solvents.
   optional bool is_waterfree_solvent = 10;
@@ -457,6 +396,11 @@ message Compound {
 
 message CompoundWithRatio {
   Compound compound = 1;
+  string ratio = 2;
+}
+
+message OntologySolventWithRatio {
+  Ontology solvent = 1;
   string ratio = 2;
 }
 
@@ -753,12 +697,7 @@ message VesselPreparation {
 
 message ReactionSetup {
   Vessel vessel = 1;
-  // Specification of automated protocols.
-  optional bool is_automated = 2;
-  // Automated platform name, brand, or model number.
-  string automation_platform = 3;
-  // Raw automation code or synthetic recipe definition.
-  map<string, Data> automation_code = 4;
+
   message ReactionEnvironment {
     enum ReactionEnvironmentType {
       UNSPECIFIED = 0;
@@ -893,7 +832,6 @@ message PressureConditions {
   }
   Atmosphere atmosphere = 3;
   message Measurement {
-    // TODO(ccoley) get input on how to expand this enum, among others
     enum MeasurementType {
       UNSPECIFIED = 0;
       CUSTOM = 1;
@@ -1032,60 +970,6 @@ message FlowConditions {
 }
 
 message DateTime { string value = 1; }
-
-message Analysis {
-  // TODO(ccoley): Solicit more feedback from experimentalists
-  enum AnalysisType {
-    UNSPECIFIED = 0;
-    CUSTOM = 1;
-    LC = 2;        // Liquid chromatography, including HPLC and UPLC.
-    GC = 3;        // Gas chromatography.
-    IR = 4;        // Infrared spectroscopy, including ReactIR.
-    NMR_1H = 5;    // 1H NMR spectroscopy.
-    NMR_13C = 6;   // 13C NMR spectroscopy.
-    NMR_OTHER = 7; // Specify type and details in "details".
-    MP = 8;        // Melting point characterization.
-    UV = 9;        // Ultraviolet spectroscopy.
-    TLC = 10;      // Thin-layer chromatography.
-    MS = 11;       // Mass spectrometry.
-    HRMS = 12;     // High resolution mass spectrometry.
-    MSMS = 13;     // Two-dimensional mass spectrometry.
-    WEIGHT = 14;   // Weight of an isolated compound.
-    LCMS = 15;     // Combined LC/MS.
-    GCMS = 16;     // Combined GC/MS.
-    ELSD = 17;     // Evaporative light scattering detector.
-    CD = 18;       // Circular Dichroism.
-    SFC = 19;      // Supercritical fluid chromatography.
-    EPR = 20;      // Electron paramagnetic resonance spectroscopy.
-    XRD = 21;      // X-ray diffraction, including single-crystal XRD.
-    RAMAN = 22;    // Raman spectroscopy.
-    ED = 23;       // Electron diffraction, including MicroED.
-    PDA = 24;      // Photodiode Array (DAD or PDA)
-    VWD = 25;      // Variable Wavelength (VWD)
-    RID = 26;      // Refractive Index (RI)
-    FLD = 27;      // Fluorescence (FLD)
-  }
-  AnalysisType type = 1;
-  // Any details about analysis (e.g., NMR type, columns, gradients).
-  string details = 2;
-  // Whether this analysis is intended to be of an isolated species. If false
-  // RSC Chemical Methods Ontology ID to define the analytical method with
-  // greater specificity. Defined at https://github.com/rsc-ontologies/rsc-cmo.
-  int32 chmo_id = 3;
-  // or unspecified, the assumption is that it is of a crude product mixture
-  // (or a partially worked-up product mixture).
-  optional bool is_of_isolated_species = 4;
-  // Data values or files (raw, processed, or annotated).
-  map<string, Data> data = 5;
-  string instrument_manufacturer = 6;
-  DateTime instrument_last_calibrated = 7;
-  string number = 8;
-}
-
-message Detector {
-  Analysis.AnalysisType type = 1;
-  ReactionConditions conditions = 2;
-}
 
 message ReactionProvenance {
   Person experimenter = 1;

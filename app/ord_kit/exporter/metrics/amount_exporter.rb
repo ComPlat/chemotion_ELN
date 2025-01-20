@@ -16,12 +16,6 @@ module OrdKit
             Amount.new(percentage: Amounts::PercentageExporter.new(@amount).to_ord)
           end
         end
-
-        private
-
-        def volume_includes_solutes
-          nil # hardcoded empty. Unknown in ELN.
-        end
       end
     end
   end
