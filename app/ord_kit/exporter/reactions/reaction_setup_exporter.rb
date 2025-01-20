@@ -4,13 +4,12 @@ module OrdKit
   module Exporter
     module Reactions
       class ReactionSetupExporter < OrdKit::Exporter::Base
-        # TODO: This is sort of an error when ProcedureStep has no vessel set.
+        # TODO: It is sort of a semantical error when ProcedureStep has no vessel set. We do not cope yet.
         def to_ord
           return unless model
 
           OrdKit::ReactionSetup.new(
             vessel: Vessels::ReactionProcessVesselExporter.new(model.reaction_process_vessel).to_ord,
-            is_automated: false, # NYI in ELN/RPE.
           )
         end
       end
