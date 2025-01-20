@@ -8,17 +8,17 @@ export default class AdminDashboard extends React.Component {
     this.state = {
       diskAvailable: 0,
       diskPercentUsed: 0,
-      usersAvailable: 0,
+      availableUserSpace: 0,
       showDiskInfo: false,
     };
     this.handleDiskspace = this.handleDiskspace.bind(this);
-    this.getUsersAvailable = this.getUsersAvailable.bind(this);
+    this.getAvailableUserSpace = this.getAvailableUserSpace.bind(this);
     this.handleChange = this.handleChange.bind(this);
   }
 
   componentDidMount() {
     this.handleDiskspace();
-    this.getUsersAvailable();
+    this.getAvailableUserSpace();
   }
 
   handleDiskspace() {
@@ -34,20 +34,20 @@ export default class AdminDashboard extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   handleChange(event) {
-    AdminFetcher.setUsersAvailable(event.target.value);
+    AdminFetcher.setAvailableUserSpace(event.target.value * 1024 * 1024);
   }
 
-  getUsersAvailable() {
-    AdminFetcher.getUsersAvailable()
+  getAvailableUserSpace() {
+    AdminFetcher.getAvailableUserSpace()
       .then((result) => {
         this.setState({
-          usersAvailable: result.users_available,
+          availableUserSpace: result.available_user_space,
         });
       });
   }
 
   renderDiskInfo() {
-    const { diskAvailable, diskPercentUsed, usersAvailable } = this.state;
+    const { diskAvailable, diskPercentUsed, availableUserSpace } = this.state;
     const className = diskPercentUsed > 80 ? 'text-danger' : '';
 
     return (
@@ -67,11 +67,11 @@ export default class AdminDashboard extends React.Component {
               defaultValue={`${diskPercentUsed}%` || ''}
               readOnly
             />
-            <InputGroup.Text>Default User Available (B)</InputGroup.Text>
+            <InputGroup.Text>Default User Available Space (MB)</InputGroup.Text>
             <Form.Control
               type="number"
               min="0"
-              defaultValue={usersAvailable || ''}
+              defaultValue={availableUserSpace || ''}
               onChange={this.handleChange}
             />
           </InputGroup>
