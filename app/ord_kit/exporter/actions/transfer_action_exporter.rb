@@ -27,7 +27,7 @@ module OrdKit
         end
 
         def percentage
-          # percentag redundantly denotes the fraction of the original sample amount, piggybacked onto target_amount.
+          # percentage redundantly denotes the fraction of the original sample amount, piggybacked onto target_amount.
           percentage_workup = { value: workup.dig('target_amount', 'percentage'), unit: 'PERCENT' }.stringify_keys
           Metrics::Amounts::PercentageExporter.new(percentage_workup).to_ord
         end
