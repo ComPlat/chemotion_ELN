@@ -1,0 +1,76 @@
+# This docker-compose file sets up the dev environment.
+# It builds an app container based on Dockerfile.chemotion.dev
+#
+# USAGE:
+# - Run development environment:
+#     docker-compose -f docker-compose.dev.yml up postgres app webpacker
+# - Open a bash shell in the app container:
+#     docker exec -it NAME_OF_APP_CONTAINER_FROM_DOCKER_PS /bin/bash
+# - Run tests:
+#     bundle exec rspec
+#
+services:
+  postgres:
+    image: 'postgres:14'
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+    expose:
+      # expose port to app container
+      - '5432'
+    ports:
+      # expose port to host machine in case we want to use external db gui tools
+      - '5432:5432'
+    volumes:
+      - 'database:/var/lib/postgresql/data'
+
+  app:
+    #build:
+    #  context: '.'
+    #  dockerfile: 'Dockerfile.chemotion-dev'
+    image: ${DOCKER_DEV_IMAGE:-complat/dev:v1.10.3-33-g9aef940c1}
+    depends_on:
+      - 'postgres'
+    healthcheck:
+      test: [ "CMD", "bundle", "check" ] # exit 0 if all gems from Gemfile are installed, otherwise exit 1
+      interval: 30s
+      timeout: 10s
+    environment:
+      - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
+      - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
+      - 'THOR_SILENCE_DEPRECATION=true'
+    ports:
+      # expose default rails port to host machine
+      - "3000:3000"
+    volumes:
+      - 'homedirb:/home/chemotion-dev/'
+      - '.:/home/chemotion-dev/app'
+    working_dir: "/home/chemotion-dev/app"
+    command: "./run-ruby-dev.sh"
+
+  webpacker:
+    # build:
+    #  context: '.'
+    #  dockerfile: 'Dockerfile.chemotion-dev'
+    image: ${DOCKER_DEV_IMAGE:-complat/dev:v1.10.3-33-g9aef940c1}
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      - 'NODE_ENV=development'
+      - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
+      - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
+    env_file: ./.env
+    volumes:
+      - 'homedirb:/home/chemotion-dev/'
+      - '.:/home/chemotion-dev/app'
+    ports:
+      # expose webpacker dev server port to app container
+      - '3035:3035'
+    expose:
+      - '3035'
+    working_dir: "/home/chemotion-dev/app"
+    command: './run-js-dev.sh'
+
+volumes:
+  database:
+  homedirb:
