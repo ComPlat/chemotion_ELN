@@ -7,6 +7,7 @@ import DatePicker from 'react-datepicker';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ChevronIcon from 'src/components/common/ChevronIcon';
+import { handleFloatNumbers } from 'src/utilities/UnitsConversion';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
 
@@ -76,6 +77,35 @@ const handleFieldChanged = (store, field, type, element_type) => (event) => {
 
   if (element_type == 'device_description') {
     store.changeDeviceDescription(field, value);
+  }
+}
+
+const weightConversion = (value, multiplier) => value * multiplier;
+
+const weightConversionMap = {
+  t: { convertedUnit: 'kg', conversionFactor: 1000 },
+  kg: { convertedUnit: 'g', conversionFactor: 1000 },
+  g: { convertedUnit: 't', conversionFactor: 0.000001 },
+};
+
+const convertByUnit = (valueToFormat, currentUnit) => {
+  const { convertedUnit, conversionFactor } = weightConversionMap[currentUnit];
+  const decimalPlaces = 7;
+  const formattedValue = weightConversion(valueToFormat, conversionFactor);
+  const convertedValue = handleFloatNumbers(formattedValue, decimalPlaces);
+  return [convertedValue, convertedUnit];
+};
+
+const changeWeightUnit = (element, store, field, field_unit, element_type) => {
+  const oldValue = element[field];
+  const oldUnitValue = element[field_unit] || 'kg';
+  const [newValue, newUnitValue] = convertByUnit(oldValue, oldUnitValue);
+
+  if (element_type == 'device_description') {
+    if (newValue !== 0) {
+      store.changeDeviceDescription(field, newValue);
+    }
+    store.changeDeviceDescription(field_unit, newUnitValue);
   }
 }
 
@@ -482,9 +512,43 @@ const checkboxInput = (element, label, field, store) => {
   );
 }
 
+const inputGroupWithWeightUnit = (element, store, field, field_unit, label, info) => {
+  let value = elementFieldValue(element, store, field);
+
+  return (
+    <Form.Group>
+      {labelWithInfo(label, info)}
+      <InputGroup>
+        <Form.Control
+          name={field}
+          type="text"
+          key={`${store.key_prefix}-${field}`}
+          value={value}
+          onChange={handleFieldChanged(store, field, 'text', element.type)}
+        />
+        <Button
+          variant="success"
+          onClick={() => changeWeightUnit(element, store, field, field_unit, element.type)}
+        >
+          {element[field_unit] || 'kg'}
+        </Button>
+      </InputGroup>
+    </Form.Group>
+  );
+}
+
 const identifierMultipleInputGroups = (element, label, options, store, info) => {
   let formGroupKey = 'version_identifier_type_doi_url';
   let idOrNew = element.id !== '' ? element.id : 'new';
+  let link = '';
+
+  if (element.version_doi_url) {
+    link = (
+      <div className="pt-2">
+        <a href={element.version_doi_url}>{element.version_doi_url}</a>
+      </div>
+    );
+  }
 
   return (
     <Form.Group key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
@@ -509,6 +573,7 @@ const identifierMultipleInputGroups = (element, label, options, store, info) => 
           onChange={handleFieldChanged(store, 'version_doi_url', 'text', element.type)}
         />
       </InputGroup>
+      {link}
     </Form.Group>
   );
 }
@@ -682,5 +747,5 @@ export {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
   mulipleRowInput, annotationButton, checkboxInput, componentInput,
-  identifierMultipleInputGroups, toggleContent,
+  identifierMultipleInputGroups, toggleContent, inputGroupWithWeightUnit
 }

@@ -4,6 +4,7 @@ import {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, mulipleRowInput, toggleContent,
   checkboxInput, componentInput, identifierMultipleInputGroups,
+  inputGroupWithWeightUnit,
 } from '../FormFields';
 
 import { observer } from 'mobx-react';
@@ -135,7 +136,7 @@ const PropertiesForm = () => {
   const versionDoiLabel = 'Persistent identifier';
 
   const location = [
-    { value: 'university_campus', label: 'University - Campus', type: 'text' },
+    { value: 'university_campus', label: 'Institution', type: 'text' },
     { value: 'institute', label: 'Institute', type: 'text' },
     { value: 'building', label: 'Building', type: 'text' },
     { value: 'room', label: 'Room', type: 'text' },
@@ -305,16 +306,6 @@ const PropertiesForm = () => {
                 }
               </Col>
             </Row>
-            <Row className="mb-4">
-              <Col>
-                <div className="mb-2">
-                  Previous versions of this device
-                </div>
-                <div>
-                  Later versions of this device
-                </div>
-              </Col>
-            </Row>
             <Row className="mb-3">
               <Col>
                 {
@@ -454,7 +445,7 @@ const PropertiesForm = () => {
       >
         <Accordion.Item eventKey="physical_data">
           <Accordion.Header>
-            Information for Publications
+            Physical descriptions
           </Accordion.Header>
           <Accordion.Body>
             <Row className="mb-3">
@@ -462,7 +453,10 @@ const PropertiesForm = () => {
                 {textInput(deviceDescription, deviceDescriptionsStore, 'size', 'Size')}
               </Col>
               <Col>
-                {textInput(deviceDescription, deviceDescriptionsStore, 'weight', 'Weight [kg]', 'Weight in kilogram')}
+                {inputGroupWithWeightUnit(
+                  deviceDescription, deviceDescriptionsStore,
+                  'weight', 'weight_unit', 'Weight', 'Weight in kilogram'
+                )}
               </Col>
             </Row>
           </Accordion.Body>
