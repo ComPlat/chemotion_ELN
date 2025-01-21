@@ -16,6 +16,8 @@
 #
 
 class ElementalComposition < ApplicationRecord
+  has_logidze
+
   belongs_to :sample
 
   TYPES = {

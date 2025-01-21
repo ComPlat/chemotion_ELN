@@ -48,6 +48,7 @@ gem 'haml-rails'
 gem 'hashie-forbidden_attributes'
 gem 'httparty'
 
+gem 'icalendar'
 gem 'image_processing', '~> 1.8'
 gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
 
@@ -60,6 +61,7 @@ gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: 'd4ae864a0e2d9e853eac8e4fc4ce7e3ab8174f80'
 
 gem 'labimotion', '2.0.0.rc2'
+gem 'logidze'
 
 gem 'mimemagic', '0.3.10'
 gem 'mime-types'
@@ -124,7 +126,6 @@ gem 'whenever', require: false
 
 gem 'yaml_db'
 
-gem 'icalendar'
 
 group :development do
   gem 'better_errors' # allows to debug exception on backend from browser

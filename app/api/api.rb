@@ -205,6 +205,7 @@ class API < Grape::API
   mount Chemotion::AdminDeviceMetadataAPI
   mount Chemotion::ChemicalAPI
   mount Chemotion::DeviceDescriptionAPI
+  mount Chemotion::VersionAPI
 
     add_swagger_documentation(info: {
                                 title: 'Chemotion ELN',

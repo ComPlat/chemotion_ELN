@@ -16,6 +16,8 @@
 #  gas_type                :integer          default("off")
 #  gas_phase_data          :jsonb
 #  conversion_rate         :float
+#  created_at              :datetime         default(Fri, 01 Oct 2021 00:00:00 UTC +00:00), not null
+#  updated_at              :datetime         default(Fri, 01 Oct 2021 00:00:00 UTC +00:00), not null
 #
 # Indexes
 #

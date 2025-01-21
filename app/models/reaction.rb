@@ -50,6 +50,7 @@
 
 # rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model
