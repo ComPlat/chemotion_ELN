@@ -67,8 +67,6 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const renderSaveButton = (closeAfterClick = false) => {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
-    // const validationInfo = vesselDetailsStore.checkInputValidity(vesselItem.id);
-    // const disabled = validationInfo.length > 0 || !mobXItem.changed;
     const disabled = false;
     // if (disabled) { return null; }
 
@@ -111,10 +109,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const renderSubmitButton = () => {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
-    // const validationInfo = vesselDetailsStore.checkInputValidity(vesselItem.id);
     const disabled = false;
-    // const disabled = validationInfo.length > 0 || !mobXItem.changed;
-    // const disabled = !mobXItem.changed;
     const buttonText = vesselItem.is_new ? 'Create' : 'Save';
 
     return (
@@ -180,15 +175,15 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   );
 }
 
-// VesselDetails.propTypes = {
-//   vesselItem: PropTypes.shape({
-//     id: PropTypes.string.isRequired,
-//     itemName: PropTypes.string.isRequired,
-//     name: PropTypes.string.isRequired,
-//     short_label: PropTypes.string.isRequired,
-//     is_new: PropTypes.bool.isRequired,
-//   }).isRequired,
-//   toggleFullScreen: PropTypes.func.isRequired
-// };
+VesselDetails.propTypes = {
+  vesselItem: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    itemName: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    short_label: PropTypes.string.isRequired,
+    is_new: PropTypes.bool.isRequired,
+  }).isRequired,
+  toggleFullScreen: PropTypes.func.isRequired
+};
 
 export default observer(VesselDetails);
