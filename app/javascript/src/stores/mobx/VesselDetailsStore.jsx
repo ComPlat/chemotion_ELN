@@ -50,6 +50,44 @@ export const VesselDetailsStore = types
     removeVesselFromStore(id) {
       self.vessels.delete(id);
     },
+    addEmptyContainer(id) {
+      const container = Container.buildEmpty();
+      container.container_type = "dataset";
+      container.children = container.children || [];
+      return container;
+    },
+    initializeContainer(vesselId) {
+      const vessel = self.vessels.get(vesselId);
+      if (!vessel) {
+        console.error(`Vessel not found in store for id: ${vesselId}`);
+        return;
+      }
+      if (!vessel.container) {
+        vessel.container = { children: [] };
+      } else if (!Array.isArray(vessel.container.children)) {
+        vessel.container.children = [];
+      }
+    },
+    addContainerToVessel(vesselId) {
+      console.log("Adding container to vessel:", vesselId);
+      const vessel = self.vessels.get(vesselId);
+      if (!vessel) {
+        console.error("Vessel not found");
+        return;
+      }
+      const newContainer = self.addEmptyContainer(vesselId);
+      vessel.container.children.push(newContainer);
+      vessel.markChanged(true);
+    },
+    updateVesselContainer(vesselId, updatedContainer) {
+      const vessel = self.vessels.get(vesselId);
+      if (!vessel) {
+        console.error("Vessel not found");
+        return;
+      }
+      vessel.container = updatedContainer; 
+      vessel.markChanged(true);
+    },
     changeVesselName(id, newName) {
       self.vessels.get(id).changed = true;
       self.vessels.get(id).vesselName = newName;
@@ -101,11 +139,6 @@ export const VesselDetailsStore = types
     changeQrCode(id, newQrCode) {
       self.vessels.get(id).changed = true;
       self.vessels.get(id).qrCode = newQrCode;
-    },
-    addEmptyContainer(id) {
-      const container = Container.buildEmpty();
-      container.container_type = "attachments";
-      return container;
     },
     convertJsModelToMobxModel(container) {
       return VesselContainer.create({

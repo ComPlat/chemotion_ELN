@@ -28,7 +28,7 @@ export default class Vessel extends Element {
     vessel.barCode = response.bar_code;
     vessel.qrCode = response.qr_code;
     vessel.id = response.id || '';
-    // Vessel.tag = response.tag;
+    Vessel.tag = response.tag;
 
     vessel.vesselTemplateId = response?.vessel_template?.id || '';
     vessel.vesselName = response?.vessel_template?.name || '';
@@ -42,7 +42,13 @@ export default class Vessel extends Element {
     vessel.details = response?.vessel_template?.details || '';
     vessel.is_new = false;
 
-    Vessel.container = response.container;
+    vessel.container = response.container || { children: [] };
+
+    vessel.container = response.container || { children: [] };
+    if (!Array.isArray(vessel.container.children)) {
+      vessel.container.children = [];
+    }
+  
 
     return vessel;
   }
