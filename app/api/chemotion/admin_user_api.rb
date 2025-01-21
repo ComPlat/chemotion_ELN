@@ -110,6 +110,7 @@ module Chemotion
             optional :last_name, type: String, desc: 'user last_name'
             optional :name_abbreviation, type: String, desc: 'user name name_abbreviation'
             optional :type, type: String, desc: 'user type'
+            optional :available_space, type: Integer, desc: 'user available_space'
             optional :account_active, type: Boolean, desc: '(in)activate or activate user account'
             # special params
             optional :enable, type: Boolean, desc: '(un)lock user account'
@@ -219,10 +220,29 @@ module Chemotion
           # rubocop:enable Rails/HelperInstanceVariable
         end
       end
+      namespace :groups do
+        route_param :group_id, type: Integer, desc: 'group ID' do
+          desc 'update users belonging to group'
+          params do
+            requires :available_space, type: Integer, desc: 'group available_space'
+          end
+          put do
+            result = []
+            group = Group.find(params.delete(:group_id))
+            group.users.each do |user|
+              user = User.find(user.id)
+              user.available_space = [user.available_space, params[:available_space]].max
+              user.save!
+              result.append({ id: user.id, available_space: user.available_space })
+            end
+            result.to_json
+          end
+        end
+      end
       resource :matrix do
         desc 'Find all matrices'
         get do
-          present Matrice.all.order('id'), with: Entities::MatriceEntity, root: 'matrices'
+          present Matrice.order('id'), with: Entities::MatriceEntity, root: 'matrices'
         end
 
         desc 'update matrice'

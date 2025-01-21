@@ -24,6 +24,29 @@ export default class AdminFetcher {
       });
   }
 
+  static getAvailableUserSpace() {
+    return fetch('/api/v1/admin/usersDefault', {
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static setAvailableUserSpace(availableUserSpace) {
+    return fetch('/api/v1/admin/usersDefault', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ availableUserSpace }),
+    });
+  }
+
   static resetUserPassword(params) {
     const { user_id, ...otherParams } = params;
     return fetch(`/api/v1/admin/users/${user_id}/resetPassword/`, {
@@ -62,6 +85,24 @@ export default class AdminFetcher {
   static updateUser(params) {
     const { id, ...otherParams } = params;
     return fetch(`/api/v1/admin/users/${id}`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(otherParams),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static updateUsersOfGroup(params) {
+    const { id, ...otherParams } = params;
+    return fetch(`/api/v1/admin/groups/${id}`, {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {
@@ -224,9 +265,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }

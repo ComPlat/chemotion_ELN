@@ -47,15 +47,11 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   validate :check_file_size
 
   before_create :generate_key
-  # TODO: rm this during legacy store cleaning
-  # before_create :add_content_type
 
   # reload to get identifier:uuid
   after_create :reload
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
-  # TODO: rm this during legacy store cleaning
-  # after_save :update_filesize
   # TODO: rm this during legacy store cleaning
   # after_save :add_checksum, if: :new_upload
 
@@ -193,26 +189,10 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     self
   end
 
-  def update_filesize
-    self.filesize = file_data.bytesize if file_data.present?
-    self.filesize = File.size(file_path) if file_path.present? && File.exist?(file_path)
-    update_column('filesize', filesize) # rubocop:disable Rails/SkipsModelValidations
-  end
-
   # Rewrite read attribute for filesize
   def filesize
     # read_attribute(:filesize).presence || attachment['size']
     attachment && attachment['size']
-  end
-
-  def add_content_type
-    return if content_type.present?
-
-    self.content_type = begin
-      MimeMagic.by_path(filename)&.type
-    rescue StandardError
-      nil
-    end
   end
 
   # Rewrite read attribute for content_type
@@ -298,12 +278,26 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attachment_attacher.destroy
   end
 
+  def check_user_quota
+    user = User.find(created_for.nil? ? created_by : created_for)
+    if (user.used_space + attachment_data['metadata']['size']) > user.available_space &&
+       !user.available_space.zero?
+      return false
+    end
+
+    true
+  rescue ActiveRecord::RecordNotFound
+    true # creating attachments without user is allowed (for tests)
+  end
+
   def attach_file
     return if file_path.nil?
     return unless File.exist?(file_path)
 
     attachment_attacher.attach(File.open(file_path, binmode: true))
     raise 'File to large' unless valid?
+
+    raise 'User quota exceeded' unless check_user_quota
 
     attachment_attacher.create_derivatives
 

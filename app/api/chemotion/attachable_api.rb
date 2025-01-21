@@ -6,11 +6,11 @@ module Chemotion
   class AttachableAPI < Grape::API
     resource :attachable do
       params do
-        optional :files, type: Array[File], desc: 'files', default: []
+        optional :files, type: [File], desc: 'files', default: []
         optional :attachable_type, type: String, desc: 'attachable_type'
         optional :attachable_id, type: Integer, desc: 'attachable id'
-        optional :attfilesIdentifier, type: Array[String], desc: 'file identifier'
-        optional :del_files, type: Array[Integer], desc: 'del file id', default: []
+        optional :attfilesIdentifier, type: [String], desc: 'file identifier'
+        optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
         case params[:attachable_type]
@@ -51,6 +51,8 @@ module Chemotion
               if a.attachable_type.in?(%w[ResearchPlan Wellplate DeviceDescription Labimotion::Element])
                 rp_attach_ary.push(a.id)
               end
+            rescue StandardError
+              status 413
             ensure
               tempfile.close
               tempfile.unlink
