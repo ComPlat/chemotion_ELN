@@ -9,22 +9,35 @@ import PropTypes from 'prop-types';
 const VesselAttachmentsContainer = ({ item }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
   const { currentElement } = ElementStore.getState();
+  const currentContainer = currentElement?.container?.children?.[0] || { children: [] };
+  const [container, setContainer] = useState(currentContainer);
 
+  const handleAddAttachment = () => {
+    const newContainer = vesselDetailsStore.addEmptyContainer(item.id);
+    container.children.push(newContainer);
+    setContainer({ ...container });
+    vesselDetailsStore.getVessel(item.id).markChanged(true);
+  };
 
-  const handleChange = (changed = false) => {
-    if (changed) {
-      vesselDetailsStore.getVessel(item.id).markChanged(true);
-    }
+  const handleChange = (updatedContainer) => {
+    vesselDetailsStore.getVessel(item.id).markChanged(true);
+    setContainer(updatedContainer);
   };
 
   return (
     <div className="analysis-container">
+      {container.children.length === 0 ? (
+        <Button variant="success" size="xsm" onClick={handleAddAttachment}>
+          Add Attachment
+        </Button>
+      ) : (
         <ContainerDatasets
-          container={currentElement.container.children[0]}
-          readOnly={false} 
-          disabled={false} 
+          container={container}
+          readOnly={false}
+          disabled={false}
           onChange={handleChange}
         />
+      )}
     </div>
   );
 };
