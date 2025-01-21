@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
-  getVariationsRowName, convertUnit, getStandardUnits
+  getVariationsRowName, convertUnit, getStandardUnits, getUserFacingUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -409,14 +409,13 @@ function MenuHeader({
 
   const unitSelection = (
     <Button
-      className="unitSelection"
+      className={`unitSelection ${displayUnit === null ? 'd-none' : 'd-inline'}`}
       variant="success"
       size="sm"
-      style={{ display: displayUnit === null ? 'none' : 'inline' }}
       disabled={units.length === 1}
       onClick={onUnitChanged}
     >
-      {displayUnit}
+      {getUserFacingUnit(displayUnit)}
     </Button>
   );
 
@@ -447,7 +446,7 @@ function MenuHeader({
   );
 
   const sortMenu = (
-    <div className="sortHeader" style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
+    <div className="sortHeader d-flex align-items-center">
       <div
         onClick={(event) => onSortRequested('asc', event)}
         onTouchEnd={(event) => onSortRequested('asc', event)}
@@ -473,7 +472,7 @@ function MenuHeader({
   );
 
   return (
-    <div style={{ display: 'grid' }}>
+    <div className="d-grid">
       <span
         className="header-title"
         onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
