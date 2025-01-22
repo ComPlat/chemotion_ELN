@@ -19,7 +19,8 @@ const DragDropItemTypes = {
   ELEMENT_FIELD: 'element_field',
   GENERIC_GRID: 'generic_grid',
   CELL_LINE: 'cell_line',
-  DEVICE_DESCRIPTION: 'device_description'
+  DEVICE_DESCRIPTION: 'device_description',
+  VESSEL: 'vessel'
 };
 
 const dropTargetTypes = [
