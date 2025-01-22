@@ -9,9 +9,11 @@ module OrdKit
         end
 
         def to_ord
-          { id: @ontology_id || 'Export ERROR: Ontology without ontology_id',
-            label: ontology&.label,
-            name: ontology&.name }
+          return unless @ontology_id
+
+          { id: @ontology_id,
+            label: ontology&.label || 'Error: Ontology undefined',
+            name: ontology&.name || 'Error: Ontology undefined' }
         end
 
         private
