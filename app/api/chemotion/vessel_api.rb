@@ -220,9 +220,10 @@ module Chemotion
       
 
       resource :names do
-        desc 'Returns all accessable vessel templates material names and their id'
+        desc 'Returns all accessible vessel templates material names and their id'
         get 'all' do
-          return present VesselTemplate.all, with: Entities::VesselTemplateEntity
+          vessel_templates = VesselTemplate.select(:id, :name, :vessel_type, :material_type, :volume_amount, :volume_unit).distinct
+          present vessel_templates, with: Entities::VesselTemplateEntity
         end
       end
       resource :material do
