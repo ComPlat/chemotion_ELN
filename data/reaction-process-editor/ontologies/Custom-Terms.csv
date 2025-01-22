@@ -21,6 +21,8 @@ CHEBI:33681;helium(0);He;http://purl.obolibrary.org/obo/CHEBI_33681;=mobile phas
 CHEBI:17997;dinitrogen;N2;http://purl.obolibrary.org/obo/CHEBI_17997;=mobile phase, CHMO:0001002(type);;;;;;;;;;;;;;;;;;;
 CHEBI:38472;acetonitrile;MeCN;http://purl.obolibrary.org/obo/CHEBI_38472;"=solvent;";;;;;;;;;;;;;;;;;;;
 CHEBI:15767;dichloromethane;DCM;http://purl.obolibrary.org/obo/CHEBI_15767;"=solvent;";;;;;;;;;;;;;;;;;;;
+CHEBI:26911;tetrahydrofuran;THF;http://purl.obolibrary.org/obo/CHEBI_26911;"=solvent; =mobile phase, CHMO:0001004(type)";;;;;;;;;;;;;;;;;;;
+CHEBI:30751;formic acid;FA;http://purl.obolibrary.org/obo/CHEBI_30751;=mobile phase, CHMO:0001004(type);;;;;;;;;;;;;;;;;;;
 NCIT:C45790;Device;device;http://purl.obolibrary.org/obo/NCIT_C45790;;;;;;;;;;;;;;;;;;;;
 NCIT:C25571;Mode;mode;http://purl.obolibrary.org/obo/NCIT_C25571;;;;;;;;;;;;;;;;;;;;
 NCIT:C48187;Material;material;http://purl.obolibrary.org/obo/NCIT_C48187;;;;;;;;;;;;;;;;;;;;
