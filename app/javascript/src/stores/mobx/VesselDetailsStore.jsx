@@ -178,15 +178,15 @@ export const VesselDetailsStore = types
         throw new Error(`No vessel with id found: ${id}`);
       }
       //name vs vesselName to be verified
-      item.vesselName = properties.vesselName;
+      item.vesselName = properties.name;
       item.details = properties.details || '';
-      item.materialDetails = properties.materialDetails || '';
-      item.materialType = properties.materialType || '';
-      item.vesselType = properties.vesselType || '';
-      item.volumeAmount = properties.volumeAmount || 0;
-      item.volumeUnit = properties.volumeUnit || '';
-      item.weightAmount = properties.weightAmount || 0;
-      item.weightUnit = properties.weightUnit || '';
+      item.materialDetails = properties.material_details || '';
+      item.materialType = properties.material_type || '';
+      item.vesselType = properties.vessel_type || '';
+      item.volumeAmount = properties.volume_amount || 0;
+      item.volumeUnit = properties.volume_unit || '';
+      item.weightAmount = properties.weight_amount || 0;
+      item.weightUnit = properties.weight_unit || '';
     }
   }))
   .views((self) => ({
