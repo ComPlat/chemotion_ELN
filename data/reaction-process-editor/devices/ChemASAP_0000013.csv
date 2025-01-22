@@ -1,0 +1,4 @@
+Method Name;Detectors;Solvent;Stationary Phase;Default Inj. Vol.;Description;Steps
+ChemASAP_Prep_LC-MS_ACN-H2O_iso-20-20min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);"CHEBI:38472 (); CHEBI:15377 (); CHEBI:17790 (0,1% CHEBI:30751)";Interchim, US5C18HQ-250/212, C18 5um 250x21.2mm;5000;ACN/H2O, isocratic 20% ACN for 20min.;
+ChemASAP_Prep_LC-MS_ACN-H2O_gra-5-99-20min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);"CHEBI:38472 (); CHEBI:15377 (); CHEBI:17790 (0,1% CHEBI:30751)";VDS Optilab, VDSpher, 5 um C18-E 100, 250x20mm;5000;ACN/H2O, Gradient 5% -> 99% for 20min.;
+ChemASAP_Prep_LC-MS_ACN-MeOH_gra-5-99-30min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);"CHEBI:38472 (); CHEBI:17790 (); CHEBI:17790 (0,1% CHEBI:30751)";US10C18HQ-250/500, C18 10um 250x50mm;20000;ACN/MeOH, Gradient 5% -> 99% for 30min.;

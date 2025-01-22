@@ -976,7 +976,6 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
 
   create_table "ontologies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "ontology_id"
-    t.string "device_code"
     t.string "name"
     t.string "label"
     t.string "link"
@@ -986,12 +985,12 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "stationary_phase", array: true
   end
 
   create_table "ontology_device_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "ontology_id"
     t.string "label"
-    t.string "device_code"
     t.jsonb "detectors"
     t.jsonb "mobile_phase", default: [], array: true
     t.jsonb "stationary_phase", default: [], array: true
