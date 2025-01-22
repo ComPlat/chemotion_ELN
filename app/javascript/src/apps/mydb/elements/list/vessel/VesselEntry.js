@@ -22,20 +22,71 @@ const VesselEntry = ({ vesselItems }) => {
           <VesselItemEntry key={vesselItem.id} vesselItem={vesselItem} />
         ))
       : [];
+  
+      const findThumbnailAttachment = (container) => {
+        if (!container || !container.children) return null;
+    
+        for (const child of container.children) {
+          if (child.attachments?.length) {
+            const thumbnail = child.attachments.find((attachment) => attachment.preview);
+            console.log('thumbnail', thumbnail);
+            if (thumbnail) return thumbnail;
+          }
+          const nestedThumbnail = findThumbnailAttachment(child);
+          if (nestedThumbnail) return nestedThumbnail;
+        }
+    
+        return null;
+      };
+  
 
-  const renderNameHeader = (firstVesselItem) => (
-    <div className="d-flex gap-2 align-items-center">
-      <div className="flex-grow-1 fs-5">
-        {`${firstVesselItem.vessel_template.name}`}
+   const renderNameHeader = (firstVesselItem) => {
+    const thumbnail = findThumbnailAttachment(firstVesselItem.container);
+    const imgSrc = thumbnail ? thumbnail.preview : null;
+
+     console.log(imgSrc);
+     
+    return (
+      <div className="d-flex gap-2 align-items-center">
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={firstVesselItem.vesselName || 'Vessel'}
+            className="vessel-header-image"
+            style={{
+              width: '100px',
+              height: '100px',
+              objectFit: 'cover',
+              marginRight: '10px',
+              borderRadius: '5px',
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: '100px',
+              height: '100px',
+              //backgroundColor: '#ddd',
+              marginRight: '10px',
+              borderRadius: '5px',
+              }}
+              className="bg-gray-2"
+          />
+        )}
+
+        <div className="flex-grow-1 fs-5">
+          {`${firstVesselItem.vessel_template.name}`}
+        </div>
+        {renderCreateSubSampleButton()}
+        {renderDetailedInfoButton()}
+        <ChevronIcon
+          color="primary"
+          direction={showEntries ? 'down' : 'right'}
+        />
       </div>
-      {renderCreateSubSampleButton()}
-      {renderDetailedInfoButton()}
-      <ChevronIcon
-        color="primary"
-        direction={showEntries ? 'down' : 'right'}
-      />
-    </div>
-  );
+    );
+  };
+  
 
   const renderDetailedInfos = (firstVesselItem) => {
     if (!detailedInformation) return null;
