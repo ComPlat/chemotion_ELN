@@ -19,15 +19,15 @@ module OrdKit
           private
 
           def manual?
-            %w[MANUAL].include?(automation_ontology_device_code)
+            %w[manual].include?(automation_ontology_label)
           end
 
           def automated?
-            %w[AUTOMATED SEMIAUTOMATED].include?(automation_ontology_device_code)
+            %w[automated semi-automated].include?(automation_ontology_label)
           end
 
-          def automation_ontology_device_code
-            ReactionProcessEditor::Ontology.find_by(ontology_id: workup['automation_mode'])&.device_code
+          def automation_ontology_label
+            ReactionProcessEditor::Ontology.find_by(ontology_id: workup['automation_mode'])&.label
           end
 
           def automation_specific_fields

@@ -7,7 +7,6 @@
 #  id                    :uuid             not null, primary key
 #  ontology_id           :uuid
 #  label                 :string
-#  device_code           :string
 #  detectors             :jsonb
 #  mobile_phase          :jsonb            is an Array
 #  stationary_phase      :jsonb            is an Array
@@ -23,6 +22,6 @@ module ReactionProcessEditor
   class OntologyDeviceMethod < ApplicationRecord
     belongs_to :ontology, class_name: '::ReactionProcessEditor::Ontology', optional: true
 
-    validates :label, presence: true, uniqueness: { scope: [:device_code] }
+    validates :label, presence: true, uniqueness: { scope: [:ontology] }
   end
 end
