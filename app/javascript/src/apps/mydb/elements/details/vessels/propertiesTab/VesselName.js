@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { Col, Row, Form } from 'react-bootstrap';
 import { CreatableSelect } from 'src/components/common/Select';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 
-function VesselName({ id, name, readOnly }) {
+const VesselName = ({ id, name, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
   const [nameSuggestions, setNameSuggestions] = useState([]);
 
@@ -24,16 +25,21 @@ function VesselName({ id, name, readOnly }) {
   }, []);
 
   const handleChange = (e) => {
-    if (typeof e.value === 'string') {
-      const currentEntry = nameSuggestions.filter((x) => x.value === e.value);
-      if (currentEntry.length > 0) {
-        vesselDetailsStore.changeVesselName(id, currentEntry[0].name);
+    if (e && typeof e.value === 'string') {
+      const currentEntry = nameSuggestions.find((x) => x.value === e.value);
+      if (currentEntry) {
+        vesselDetailsStore.changeVesselName(id, currentEntry.name);
         VesselsFetcher.getVesselMaterialById(e.value)
           .then((result) => {
             vesselDetailsStore.setMaterialProperties(id, result);
+          })
+          .catch((error) => {
+            console.error('Error fetching vessel material properties:', error);
           });
+      } else {
+        vesselDetailsStore.changeVesselName(id, e.value);
       }
-    } else {
+    } else if (e?.value) {
       vesselDetailsStore.changeVesselName(id, e.value);
     }
   };
@@ -43,15 +49,6 @@ function VesselName({ id, name, readOnly }) {
       vesselDetailsStore.changeVesselName(id, e);
     }
   };
-
-  const renderNameSuggestion = (name, src) => (
-    <span className="d-block text-start">
-      {name}
-      (
-      {src}
-      )
-    </span>
-  );
 
   if (readOnly) {
     return (
@@ -67,22 +64,21 @@ function VesselName({ id, name, readOnly }) {
       </Form.Group>
     );
   }
-
-  // const className = vesselDetailsStore.getVessel(id).vesselName
-  //   ? 'cell-line-name-autocomplete'
-  //   : 'cell-line-name-autocomplete invalid';
-
+  
   return (
     <Form.Group as={Row}>
       <Form.Label column sm={3}>Vessel name *</Form.Label>
       <Col sm={9}>
         <CreatableSelect
-          // className={className}
+          value={
+            name
+              ? nameSuggestions.find((x) => x.name === name) || { value: name, label: name }
+              : null
+          }
           onChange={handleChange}
           onInputChange={handleInputChange}
           options={nameSuggestions}
           placeholder="Enter new vessel name or choose from existing ones"
-          defaultInputValue={name}
         />
       </Col>
     </Form.Group>
@@ -95,4 +91,4 @@ VesselName.propTypes = {
   name: PropTypes.string.isRequired,
 };
 
-export default VesselName;
+export default observer(VesselName);
