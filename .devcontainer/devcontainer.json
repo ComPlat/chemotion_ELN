@@ -2,7 +2,7 @@
 {
   "name": "Chemotion Dockerfile",
   "dockerComposeFile": [
-    "../docker-compose.dev.yml"
+    "docker-compose.dev.yml"
   ],
   "service": "app",
   "workspaceFolder": "/home/chemotion-dev/app",
