@@ -1,3 +1,6 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useState } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import VesselItemEntry from 'src/apps/mydb/elements/list/vessel/VesselItemEntry';
@@ -7,71 +10,55 @@ import { elementShowOrNew } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 
-const VesselEntry = ({ vesselItems }) => {
+function VesselEntry({ vesselItems }) {
   const [detailedInformation, setDetailedInformation] = useState(false);
   const [showEntries, setShowEntries] = useState(true);
 
   const getBorderStyle = () =>
-    showEntries
+    (showEntries
       ? 'list-container title-panel p-3'
-      : 'list-container title-panel p-3 cell-line-group-bottom-border';
+      : 'list-container title-panel p-3 cell-line-group-bottom-border');
 
-  const renderItemEntries = () =>
-    showEntries
-      ? vesselItems.map((vesselItem) => (
-          <VesselItemEntry key={vesselItem.id} vesselItem={vesselItem} />
-        ))
-      : [];
-  
-      const findThumbnailAttachment = (container) => {
-        if (!container || !container.children) return null;
-    
-        for (const child of container.children) {
-          if (child.attachments?.length) {
-            const thumbnail = child.attachments.find((attachment) => attachment.preview);
-            console.log('thumbnail', thumbnail);
-            if (thumbnail) return thumbnail;
-          }
-          const nestedThumbnail = findThumbnailAttachment(child);
-          if (nestedThumbnail) return nestedThumbnail;
-        }
-    
-        return null;
-      };
-  
+  const renderItemEntries = () => (showEntries
+    ? vesselItems.map((vesselItem) => (
+      <VesselItemEntry key={vesselItem.id} vesselItem={vesselItem} />
+    ))
+    : []);
 
-   const renderNameHeader = (firstVesselItem) => {
+  const findThumbnailAttachment = (container) => {
+    if (!container || !container.children) return null;
+
+    for (const child of container.children) {
+      if (child.attachments?.length) {
+        const thumbnail = child.attachments.find((attachment) => attachment.preview);
+        if (thumbnail) return thumbnail;
+      }
+      const nestedThumbnail = findThumbnailAttachment(child);
+      if (nestedThumbnail) return nestedThumbnail;
+    }
+
+    return null;
+  };
+
+  const renderNameHeader = (firstVesselItem) => {
     const thumbnail = findThumbnailAttachment(firstVesselItem.container);
     const imgSrc = thumbnail ? thumbnail.preview : null;
 
-     console.log(imgSrc);
-     
     return (
       <div className="d-flex gap-2 align-items-center">
         {imgSrc ? (
           <img
             src={imgSrc}
             alt={firstVesselItem.vesselName || 'Vessel'}
-            className="vessel-header-image"
+            className="vessel-header-image me-2 border rounded"
             style={{
               width: '100px',
               height: '100px',
               objectFit: 'cover',
-              marginRight: '10px',
-              borderRadius: '5px',
             }}
           />
         ) : (
-          <div
-            style={{
-              width: '100px',
-              height: '100px',
-              //backgroundColor: '#ddd',
-              marginRight: '10px',
-              borderRadius: '5px',
-              }}
-              className="bg-gray-2"
-          />
+          <div className="me-2" />
         )}
 
         <div className="flex-grow-1 fs-5">
@@ -86,18 +73,18 @@ const VesselEntry = ({ vesselItems }) => {
       </div>
     );
   };
-  
 
   const renderDetailedInfos = (firstVesselItem) => {
     if (!detailedInformation) return null;
 
     return (
       <div className="mt-2">
-        {renderProperty('Name', firstVesselItem.vesselName)}
-        {renderProperty('Vessel type', firstVesselItem.vesselType)}
-        {renderProperty('Material type', firstVesselItem.materialType)}
-        {renderProperty('Volume amount', firstVesselItem.volumeAmount)}
-        {renderProperty('Volume unit', firstVesselItem.volumeUnit)}
+        {renderProperty('Name', firstVesselItem.vessel_template.name)}
+        {renderProperty('Details', firstVesselItem.vessel_template.details)}
+        {renderProperty('Vessel type', firstVesselItem.vessel_template.vessel_type)}
+        {renderProperty('Material type', firstVesselItem.vessel_template.material_type)}
+        {renderProperty('Volume amount', firstVesselItem.vessel_template.volume_amount)}
+        {renderProperty('Volume unit', firstVesselItem.vessel_template.volume_unit)}
       </div>
     );
   };
@@ -106,11 +93,11 @@ const VesselEntry = ({ vesselItems }) => {
     <OverlayTrigger
       key="detailedInfoButton"
       placement="top"
-      overlay={
+      overlay={(
         <Tooltip id="detailed-info-button">
           Show detailed information about the material
         </Tooltip>
-      }
+      )}
     >
       <Button
         variant="info"
@@ -130,18 +117,17 @@ const VesselEntry = ({ vesselItems }) => {
     const { currentCollection, isSync } = UIStore.getState();
 
     if (currentCollection.label === 'All') return null;
-    if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0)
-      return null;
+    if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) return null;
 
     return (
       <OverlayTrigger
         key="subSampleButton"
         placement="top"
-        overlay={
+        overlay={(
           <Tooltip id="detailed-info-button">
             Create sample of vessel template
           </Tooltip>
-        }
+        )}
       >
         <Button
           size="sm"
@@ -196,7 +182,7 @@ const VesselEntry = ({ vesselItems }) => {
       {renderItemEntries()}
     </div>
   );
-};
+}
 
 VesselEntry.propTypes = {
   vesselItems: PropTypes.arrayOf(
