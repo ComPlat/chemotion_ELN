@@ -3,11 +3,11 @@
 module Export
   class ExportChemicals
     CHEMICAL_FIELDS = %w[
-      chemical_sample_id cas status vendor order_number amount price person required_date owner
-      ordered_date expiration_date storage_temperature required_by pictograms h_statements
-      p_statements safety_sheet_link_merck safety_sheet_link_thermofischer product_link_merck
-      product_link_thermofischer host_building host_room host_cabinet host_group important_notes
-      borrowed_by current_building current_room current_cabinet current_group disposal_info
+      chemical_sample_id cas status vendor order_number amount volume price person required_date
+      ordered_date storage_temperature expiration_date required_by pictograms h_statements p_statements safety_sheet_link_merck
+      safety_sheet_link_thermofischer product_link_merck product_link_thermofischer
+      host_building host_room host_cabinet host_group owner borrowed_by current_building
+      current_room current_cabinet current_group disposal_info important_notes
     ].freeze
     MERCK_SDS_LINK = 'c."chemical_data"->0->\'merckProductInfo\'->\'sdsLink\''
     ALFA_SDS_LINK = 'c."chemical_data"->0->\'alfaProductInfo\'->\'sdsLink\''
@@ -20,6 +20,7 @@ module Export
       person: ['c."chemical_data"->0->\'person\'', '"person"', nil],
       price: ['c."chemical_data"->0->\'price\'', '"price"', nil],
       amount: ['c."chemical_data"->0->\'amount\'', '"amount"', nil],
+      volume: ['c."chemical_data"->0->\'volume\'', '"volume"', nil],
       order_number: ['c."chemical_data"->0->\'order_number\'', '"order_number"', nil],
       required_date: ['c."chemical_data"->0->\'required_date\'', '"required_date"', nil],
       expiration_date: ['c."chemical_data"->0->\'expiration_date\'', '"expiration_date"', nil],
@@ -69,9 +70,8 @@ module Export
     end
 
     def self.construct_column_name(column_name, index, columns_index)
-      format_chemical_column = ['p statements', 'h statements', 'amount', 'storage temperature',
-                                'safety sheet link thermofischer', 'safety sheet link merck',
-                                'product link thermofischer', 'product link merck'].freeze
+      format_chemical_column = ['p statements', 'h statements', 'amount', 'volume', 'storage temperature', 'safety sheet link thermofischer',
+                                'safety sheet link merck', 'product link thermofischer', 'product link merck'].freeze
       if column_name.is_a?(String) && CHEMICAL_FIELDS.include?(column_name)
         column_name = column_name.tr('_', ' ')
         construct_column_name_hash(columns_index, column_name, index) if format_chemical_column.include?(column_name)
@@ -87,14 +87,14 @@ module Export
         columns_index['p_statements'] = index
       when 'h statements'
         columns_index['h_statements'] = index
-      when 'amount'
-        columns_index['amount'] = index
       when 'storage temperature'
         columns_index['storage_temperature'] = index
       when 'safety sheet link merck', 'safety sheet link thermofischer'
         columns_index['safety_sheet_link'].push(index)
       when 'product link merck', 'product link thermofischer'
         columns_index['product_link'].push(index)
+      else
+        columns_index[column_name] = index
       end
     end
 
@@ -115,8 +115,8 @@ module Export
         case index
         when columns_index['p_statements'], columns_index['h_statements']
           value = format_p_and_h_statements(value)
-        when columns_index['amount'], columns_index['storage_temperature']
-          value = format_chemical_fields_with_unit(value)
+        when columns_index['amount'], columns_index['volume'], columns_index['storage_temperature']
+          value = format_chemical_amount_or_volume(value)
         when columns_index['safety_sheet_link'][0]
           value = format_link(value, row, columns_index['safety_sheet_link'][1], indexes_to_delete)
         when columns_index['product_link'][0]
@@ -131,10 +131,10 @@ module Export
       keys.join('-')
     end
 
-    def self.format_chemical_fields_with_unit(value)
-      field_values = JSON.parse(value).values
-      sorted = field_values.sort_by { |element| [element.is_a?(Integer) || element.is_a?(Float) ? 0 : 1, element] }
-      sorted.join
+    def self.format_chemical_amount_or_volume(value)
+      value_unit = JSON.parse(value).values
+      sorted = value_unit.sort_by { |element| [element.is_a?(Integer) || element.is_a?(Float) ? 0 : 1, element] }
+      sorted.join(' ')
     end
 
     def self.format_link(value, row, next_index, indexes_to_delete)
