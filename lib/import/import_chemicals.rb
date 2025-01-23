@@ -19,8 +19,15 @@ module Import
       'cas', 'status', 'vendor', 'order number', 'amount', 'volume', 'price', 'person', 'required date', 'ordered date',
       'required by', 'pictograms', 'h statements', 'p statements', 'safety sheet link', 'product link', 'host building',
       'host room', 'host cabinet', 'host group', 'owner', 'borrowed by', 'current building', 'current room',
-      'current cabinet', 'current group', 'disposal info', 'important notes', 'expiration date'
+      'current cabinet', 'current group', 'disposal info', 'important notes', 'expiration date', 'storage temperature'
     ].freeze
+    MAP_ACTION = {
+      SAFETY_SHEET => ->(chemical, key, formatted_value) { set_safety_sheet(chemical, key, formatted_value) },
+      SAFETY_PHRASES => ->(chemical, key, formatted_value) { set_safety_phrases(chemical, key, formatted_value) },
+      AMOUNT + VOLUME => ->(chemical, key, formatted_value) { set_amount_or_volume(chemical, key, formatted_value) },
+      STORAGE_TEMPERATURE => ->(chemical, _key, formatted_value) { set_storage_temperature(chemical, formatted_value) },
+    }.freeze
+
     GHS_VALUES = %w[GHS01 GHS02 GHS03 GHS04 GHS05 GHS06 GHS07 GHS08 GHS09].freeze
     AMOUNT_UNITS = %w[g mg μg].freeze
     VOLUME_UNITS = %w[ml l μl].freeze
@@ -49,23 +56,28 @@ module Import
       value.blank? || column_header.nil?
     end
 
-    def self.build_chemical_data(map_column, chemical, key, formated_value)
+    def self.build_chemical_data(map_column, chemical, key, formatted_value)
       if map_column.present? && should_process_key(key)
-        chemical['chemical_data'][0][key] = formated_value
-      elsif SAFETY_SHEET.include?(key)
-        set_safety_sheet(chemical, key, formated_value)
-      elsif SAFETY_PHRASES.include?(key)
-        set_safety_phrases(chemical, key, formated_value)
-      elsif AMOUNT.include?(key) || VOLUME.include?(key)
-        set_chemical_amount_or_volume(chemical, key, formated_value)
+        process_map_column(chemical, key, formatted_value)
+      else
+        MAP_ACTION.each do |keys, action|
+          if keys.include?(key)
+            action.call(chemical, key, formatted_value)
+            break
+          end
+        end
       end
+    end
+
+    def self.process_map_column(chemical, key, formatted_value)
+      chemical['chemical_data'][0][key] = formatted_value
     end
 
     def self.process_column(chemical, column_header, value)
       map_column = CHEMICAL_FIELDS.find { |e| e == column_header.downcase.rstrip }
       key = to_snake_case(column_header)
-      formated_value = value.strip
-      build_chemical_data(map_column, chemical, key, formated_value)
+      formatted_value = value.strip
+      build_chemical_data(map_column, chemical, key, formatted_value)
     end
 
     def self.to_snake_case(column_header)
@@ -74,7 +86,7 @@ module Import
     end
 
     def self.should_process_key(key)
-      KEYS_TO_EXCLUDE.exclude?(key) && (AMOUNT + VOLUME + SAFETY_PHRASES).exclude?(key)
+      KEYS_TO_EXCLUDE.exclude?(key) && (AMOUNT + VOLUME + SAFETY_PHRASES + STORAGE_TEMPERATURE).exclude?(key)
     end
 
     def self.set_safety_sheet(chemical, key, value)
@@ -181,7 +193,7 @@ module Import
       chemical
     end
 
-    def self.set_chemical_amount_or_volume(chemical, key, value)
+    def self.set_amount_or_volume(chemical, key, value)
       quantity = extract_quantity(value)
       unit = extract_unit(value)
 
@@ -193,7 +205,7 @@ module Import
     end
 
     def self.set_storage_temperature(chemical, value)
-      unit_is_celsius = value.gsub(/\d+(\.\d+)?/, '') == '°C'
+      unit_is_celsius = value.gsub(/\d+(\.\d+)?/, '').strip == '°C'
       return chemical unless unit_is_celsius
 
       if chemical['chemical_data'][0]['storage_temperature'].nil?
