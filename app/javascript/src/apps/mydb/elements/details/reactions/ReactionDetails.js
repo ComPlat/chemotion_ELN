@@ -98,7 +98,7 @@ export default class ReactionDetails extends Component {
 
   componentDidUpdate(prevProps) {
     const { reaction } = this.props;
-    if (reaction.id !== prevProps.reaction.id) {
+    if (reaction !== prevProps.reaction) {
       this.setState({ reaction });
     }
   }
