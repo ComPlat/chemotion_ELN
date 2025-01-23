@@ -56,38 +56,6 @@ export const VesselDetailsStore = types
       container.children = container.children || [];
       return container;
     },
-    initializeContainer(vesselId) {
-      const vessel = self.vessels.get(vesselId);
-      if (!vessel) {
-        console.error(`Vessel not found in store for id: ${vesselId}`);
-        return;
-      }
-      if (!vessel.container) {
-        vessel.container = { children: [] };
-      } else if (!Array.isArray(vessel.container.children)) {
-        vessel.container.children = [];
-      }
-    },
-    addContainerToVessel(vesselId) {
-      console.log("Adding container to vessel:", vesselId);
-      const vessel = self.vessels.get(vesselId);
-      if (!vessel) {
-        console.error("Vessel not found");
-        return;
-      }
-      const newContainer = self.addEmptyContainer(vesselId);
-      vessel.container.children.push(newContainer);
-      vessel.markChanged(true);
-    },
-    updateVesselContainer(vesselId, updatedContainer) {
-      const vessel = self.vessels.get(vesselId);
-      if (!vessel) {
-        console.error("Vessel not found");
-        return;
-      }
-      vessel.container = updatedContainer; 
-      vessel.markChanged(true);
-    },
     changeVesselName(id, newName) {
       self.vessels.get(id).changed = true;
       self.vessels.get(id).vesselName = newName;
@@ -177,7 +145,6 @@ export const VesselDetailsStore = types
       if (item === undefined) {
         throw new Error(`No vessel with id found: ${id}`);
       }
-      //name vs vesselName to be verified
       item.vesselName = properties.name;
       item.details = properties.details || '';
       item.materialDetails = properties.material_details || '';
@@ -193,14 +160,4 @@ export const VesselDetailsStore = types
     getVessel(id) {
       return self.vessels.get(id);
     },
-    checkInputValidity(id) {
-      const result = [];
-      const item = self.vessels.get(id);
-      if (item.name.trim() === '') { result.push('name'); }
-      // if (item.source.trim() === '') { result.push('source'); }
-      if (item.unit.trim() === '') { result.push('unit'); }
-      if (!item.isAmountValid()) { result.push('amount'); }
-      // if (!Number.isInteger(item.passage) || item.passage === 0) { result.push('passage'); }
-      return result;
-    }
   }));

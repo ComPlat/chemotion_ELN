@@ -4,6 +4,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import CollectionUtils from 'src/models/collection/CollectionUtils';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -12,15 +13,18 @@ import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesT
 import VesselAttachmentsContainer from "src/apps/mydb/elements/details/vessels/attachmentsTab/VesselAttachmentsContainer";
 
 function VesselDetails({ vesselItem, toggleFullScreen }) {
-
   const isReadOnly = () => {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
+    return CollectionUtils.isReadOnly(
+      currentCollection,
+      currentUser.id,
+      isSync
+    );
   };
   const context = useContext(StoreContext);
   const [activeTab, setActiveTab] = useState('tab1');
   const [readOnly, setReadOnly] = useState(isReadOnly());
-
 
   useEffect(() => {
     context.vesselDetailsStore.convertVesselToModel(vesselItem);
@@ -68,7 +72,6 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
     const disabled = false;
-    // if (disabled) { return null; }
 
     const action = closeAfterClick
       ? () => { handleSubmit(vesselItem); DetailActions.close(vesselItem, true); }
