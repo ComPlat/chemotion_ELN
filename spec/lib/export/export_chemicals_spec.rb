@@ -5,17 +5,17 @@ require 'rails_helper'
 # rubocop: disable Style/OpenStructUse
 
 describe Export::ExportChemicals do
-  describe '.format_chemical_amount_or_volume' do
+  describe '.format_chemical_fields' do
     it 'formats chemical amount correctly' do
       input_value = '{"value": 50, "unit": "mg"}'
-      formatted_amount = described_class.format_chemical_amount_or_volume(input_value)
+      formatted_amount = described_class.format_chemical_fields(input_value)
       expect(formatted_amount).to eq('50 mg')
     end
 
     it 'formats chemical storage temperature correctly' do
       input_value = '{"value": 30, "unit": "°C"}'
-      formatted_amount = described_class.format_chemical_fields_with_unit(input_value)
-      expect(formatted_amount).to eq('30°C')
+      formatted_amount = described_class.format_chemical_fields(input_value)
+      expect(formatted_amount).to eq('30 °C')
     end
   end
 
