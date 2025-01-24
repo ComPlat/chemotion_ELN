@@ -22,21 +22,14 @@ module Chemotion
 
       namespace :usersDefault do
         get do
-          default = Admin.first.available_space / 1024 / 1024
+          default = User.default_disk_space / 1024 / 1024
           { available_user_space: default }
         end
         put do
           params do
             require :availableUserSpace, type: Integer, desc: 'users default available space'
           end
-          User.find_each do |user|
-            user.available_space = if user.id == Admin.first.id
-                                     params[:availableUserSpace]
-                                   else
-                                     [user.available_space, params[:availableUserSpace].to_i].max
-                                   end
-            user.save!
-          end
+          User.default_disk_space = params[:availableUserSpace]
         end
       end
 

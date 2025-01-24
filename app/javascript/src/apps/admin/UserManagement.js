@@ -441,23 +441,6 @@ export default class UserManagement extends React.Component {
         this.u_avail.value = 0;
         return true;
       });
-
-    if (this.u_type.value === 'Group') { // update available space for all users of group
-      AdminFetcher.updateUsersOfGroup({
-        id: user.id,
-        available_space: this.u_avail.value === '' ? 0 : this.u_avail.value * 1024 * 1024
-      })
-        .then((result) => JSON.parse(result))
-        .then((json) => {
-          const { users } = this.state;
-          json.forEach((gUser) => {
-            const index = users.findIndex((u) => u.id === gUser.id);
-            users[index].available_space = gUser.available_space;
-          });
-          this.setState({ users });
-          return true;
-        });
-    }
     return true;
   }
 

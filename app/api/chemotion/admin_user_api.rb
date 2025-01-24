@@ -220,25 +220,6 @@ module Chemotion
           # rubocop:enable Rails/HelperInstanceVariable
         end
       end
-      namespace :groups do
-        route_param :group_id, type: Integer, desc: 'group ID' do
-          desc 'update users belonging to group'
-          params do
-            requires :available_space, type: Integer, desc: 'group available_space'
-          end
-          put do
-            result = []
-            group = Group.find(params.delete(:group_id))
-            group.users.each do |user|
-              user = User.find(user.id)
-              user.available_space = [user.available_space, params[:available_space]].max
-              user.save!
-              result.append({ id: user.id, available_space: user.available_space })
-            end
-            result.to_json
-          end
-        end
-      end
       resource :matrix do
         desc 'Find all matrices'
         get do

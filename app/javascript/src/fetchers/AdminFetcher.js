@@ -100,24 +100,6 @@ export default class AdminFetcher {
       });
   }
 
-  static updateUsersOfGroup(params) {
-    const { id, ...otherParams } = params;
-    return fetch(`/api/v1/admin/groups/${id}`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(otherParams),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
   static deleteUser({ id }) {
     return fetch(`/api/v1/admin/users/${id}`, {
       credentials: 'same-origin',

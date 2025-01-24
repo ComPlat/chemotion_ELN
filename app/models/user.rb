@@ -422,6 +422,20 @@ class User < ApplicationRecord
     Matrice.extra_rules || {}
   end
 
+  def self.default_disk_space=(value)
+    value = value.to_i
+    return true if value == default_disk_space
+
+    find_each do |user|
+      user.update(available_space: [user.available_space, value].max)
+    end
+    Admin.first&.update(available_space: value)
+  end
+
+  def self.default_disk_space
+    Admin.first.available_space
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -449,7 +463,7 @@ class User < ApplicationRecord
   end
 
   def set_default_avail_space
-    self.available_space = Admin.first.nil? ? 0 : Admin.first.available_space
+    self.available_space = User.default_disk_space
     save!
   end
 
@@ -484,7 +498,7 @@ class Group < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins, through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
-
+  around_save :update_available_space
   before_destroy :remove_from_matrices
 
   def administrated_by?(user)
@@ -496,6 +510,15 @@ class Group < User
   def user_ids
     # Override method to return an array of user IDs in the group
     users.ids
+  end
+
+  def update_available_space
+    return unless available_space_changed?
+
+    yield
+    users.each do |user|
+      user.update(available_space: [available_space, user.available_space].max)
+    end
   end
 end
 
