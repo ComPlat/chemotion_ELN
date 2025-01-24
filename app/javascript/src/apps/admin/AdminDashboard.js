@@ -1,5 +1,7 @@
 import React from 'react';
-import { InputGroup, Card, Form } from 'react-bootstrap';
+import {
+  InputGroup, Card, Form, Button
+} from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 export default class AdminDashboard extends React.Component {
@@ -12,8 +14,7 @@ export default class AdminDashboard extends React.Component {
       showDiskInfo: false,
     };
     this.handleDiskspace = this.handleDiskspace.bind(this);
-    this.getAvailableUserSpace = this.getAvailableUserSpace.bind(this);
-    this.handleChange = this.handleChange.bind(this);
+    this.handleSaveBtn = this.handleSaveBtn.bind(this);
   }
 
   componentDidMount() {
@@ -32,9 +33,9 @@ export default class AdminDashboard extends React.Component {
       });
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  handleChange(event) {
-    AdminFetcher.setAvailableUserSpace(event.target.value * 1024 * 1024);
+  handleSaveBtn() {
+    const { availableUserSpace } = this.state;
+    AdminFetcher.setAvailableUserSpace(availableUserSpace * 1024 * 1024);
   }
 
   getAvailableUserSpace() {
@@ -47,33 +48,41 @@ export default class AdminDashboard extends React.Component {
   }
 
   renderDiskInfo() {
-    const { diskAvailable, diskPercentUsed, availableUserSpace } = this.state;
+    const {
+      diskAvailable, diskPercentUsed, availableUserSpace
+    } = this.state;
     const className = diskPercentUsed > 80 ? 'text-danger' : '';
 
     return (
-      <Card>
+      <Card style={{ width: '30rem' }}>
         <Card.Body className="p-0">
+          <InputGroup.Text>Disk Available (MB)</InputGroup.Text>
+          <Form.Control
+            type="text"
+            defaultValue={diskAvailable || ''}
+            readOnly
+          />
+          <InputGroup.Text>Disk Percent Used (%)</InputGroup.Text>
+          <Form.Control
+            type="text"
+            className={className}
+            defaultValue={`${diskPercentUsed}%` || ''}
+            readOnly
+          />
+          <InputGroup.Text>Default User Available Space (MB)</InputGroup.Text>
           <InputGroup>
-            <InputGroup.Text>Disk Available (MB)</InputGroup.Text>
-            <Form.Control
-              type="text"
-              defaultValue={diskAvailable || ''}
-              readOnly
-            />
-            <InputGroup.Text>Disk Percent Used (%)</InputGroup.Text>
-            <Form.Control
-              type="text"
-              className={className}
-              defaultValue={`${diskPercentUsed}%` || ''}
-              readOnly
-            />
-            <InputGroup.Text>Default User Available Space (MB)</InputGroup.Text>
             <Form.Control
               type="number"
               min="0"
               defaultValue={availableUserSpace || ''}
-              onChange={this.handleChange}
+              onChange={(event) => this.setState({ availableUserSpace: event.target.value })}
             />
+            <Button
+              variant="warning"
+              onClick={() => this.handleSaveBtn()}
+            >
+              Save
+            </Button>
           </InputGroup>
         </Card.Body>
       </Card>

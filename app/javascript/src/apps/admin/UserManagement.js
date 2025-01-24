@@ -1337,15 +1337,15 @@ export default class UserManagement extends React.Component {
     const tcolumn = (
       <thead className="bg-gray-200">
         <tr className="align-middle fs-4 py-3">
-          <th className="col-auto fs-4 py-3">#</th>
-          <th className="col-2 col-md-3 fs-4 py-3">Actions</th>
-          <th className="col-3 col-md-2 fs-4 py-3">Name</th>
-          <th className="col-2 fs-4 py-3">Abbr.</th>
-          <th className="col-3 col-md-2 fs-4 py-3">Email</th>
-          <th className="col-2 fs-4 py-3">Type</th>
-          <th className="col-3 col-md-2 fs-4 py-3">Disk Usage</th>
-          <th className="col-3 col-md-2 fs-4 py-3">Login at</th>
-          <th className="col-1 fs-4 py-3">ID</th>
+          <th className="fs-4 py-3">#</th>
+          <th className="fs-4 py-3">Actions</th>
+          <th className="fs-4 py-3">Name</th>
+          <th className="fs-4 py-3">Abbr.</th>
+          <th className="fs-4 py-3">Email</th>
+          <th className="fs-4 py-3">Type</th>
+          <th className="fs-4 py-3">Disk Usage</th>
+          <th className="fs-4 py-3">Login at</th>
+          <th className="fs-4 py-3">ID</th>
         </tr>
         <tr>
           <th aria-label="Empty header for the '#' column" />
@@ -1413,10 +1413,10 @@ export default class UserManagement extends React.Component {
 
     const tbody = filteredUsers.map((g, idx) => (
       <tr key={`row_${g.id}`} className="align-middle">
-        <td className="col-auto py-3">
+        <td className="py-3">
           {idx + 1}
         </td>
-        <td className="col-md-3 col-lg-2">
+        <td>
           <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
               size="sm"
@@ -1509,26 +1509,26 @@ export default class UserManagement extends React.Component {
           {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
           {renderReConfirmButton(g.unconfirmed_email, g.id)}
         </td>
-        <td className="col-md-2 py-3">
+        <td className="py-3">
           {g.name}
         </td>
-        <td className="col-md-1 py-3">
+        <td className="py-3">
           {g.initials}
         </td>
-        <td className="col-md-2 py-3">
+        <td className="py-3">
           {g.email}
         </td>
-        <td className="col-md-1 py-3">
+        <td className="py-3">
           {g.type}
         </td>
-        <td className="col-md-2 py-3">
+        <td className="py-3">
           {g.available_space === 0 ? ''
             : `${Math.round((g.used_space / g.available_space) * 100)}% of ${g.available_space / 1024 / 1024}MB`}
         </td>
-        <td className="col-md-2 py-3">
+        <td className="py-3">
           {g.current_sign_in_at}
         </td>
-        <td className="col-auto py-3">
+        <td className="py-3">
           {g.id}
         </td>
       </tr>
