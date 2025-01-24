@@ -335,14 +335,27 @@ function MaterialOverlay({ value: cellData }) {
   return (
     <div className="tooltip show">
       <div className="tooltip-inner text-start">
-        {aux?.isReference && (
-          <div>Reference</div>
-        )}
+        {aux?.isReference && <div>Reference</div>}
         {aux?.coefficient !== null && (
-          <div>{`Coefficient: ${Number(aux.coefficient).toPrecision(4)}`}</div>
+        <div>
+          Coefficient:
+          {aux.coefficient.toPrecision(4)}
+        </div>
         )}
         {aux?.molecularWeight !== null && (
-          <div>{`Molar mass: ${Number(aux.molecularWeight).toPrecision(2)} g/mol`}</div>
+        <div>
+          Molar mass:
+          {aux.molecularWeight.toPrecision(2)}
+          {' '}
+          g/mol
+        </div>
+        )}
+        {Object.entries(cellData).map(
+          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry && 'unit' in entry ? (
+            <div key={key}>
+              {`${key.charAt(0).toUpperCase() + key.slice(1)}: ${entry.value} ${entry.unit}`}
+            </div>
+          ) : null)
         )}
       </div>
     </div>
