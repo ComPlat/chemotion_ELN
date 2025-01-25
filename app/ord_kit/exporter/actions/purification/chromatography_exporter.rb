@@ -12,27 +12,28 @@ module OrdKit
                 subtype: ontology_ord(workup['subtype']),
                 stationary_phase: workup['stationary_phase'],
                 steps: steps,
+                automation_mode: ontology_ord(workup['automation_mode']),
               }.merge(automation_specific_fields),
             ) }
           end
 
           private
 
-          def manual?
-            %w[manual].include?(automation_ontology_label)
+          def automation_mode_ontology
+            ReactionProcessEditor::Ontology.find_by(ontology_id: workup['automation_mode'])
           end
 
-          def automated?
-            %w[automated semi-automated].include?(automation_ontology_label)
+          def automation_mode_manual?
+            %w[manual].include?(automation_mode_ontology&.label)
           end
 
-          def automation_ontology_label
-            ReactionProcessEditor::Ontology.find_by(ontology_id: workup['automation_mode'])&.label
+          def automation_mode_automated?
+            %w[automated semi-automated].include?(automation_mode_ontology&.label)
           end
 
           def automation_specific_fields
-            return automation_manual_fields if manual?
-            return automation_automated_fields if automated?
+            return automation_manual_fields if automation_mode_manual?
+            return automation_automated_fields if automation_mode_automated?
 
             {}
           end
