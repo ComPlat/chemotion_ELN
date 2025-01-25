@@ -25,10 +25,10 @@ module ReactionProcessEditor
     QUANTIFIER_PREFIXES = { n: '', m: 'm', u: 'mc' }.stringify_keys
 
     def self.to_eln(workup)
-      value = workup.dig('target_amount', 'value') || 0
+      value = workup.dig('target_amount', 'value')
       eln_metric = ELN_METRICS[workup.dig('target_amount', 'unit')]
 
-      if eln_metric
+      if value && eln_metric
         value = value.to_f / eln_metric[:factor]
         unit = eln_metric[:base_unit]
         metrics = eln_metric[:metrics_string]
@@ -41,13 +41,17 @@ module ReactionProcessEditor
     def self.to_rpe(sample)
       return { value: sample.target_amount_value, unit: sample.target_amount_unit } unless sample.is_a?(Sample)
 
-      quantifier_position = QUANTIFIER_POSITION[sample.target_amount_unit]
-      quantifier = sample.metrics && quantifier_position ? sample.metrics[quantifier_position] : 'n'
+      if sample.target_amount_value
+        quantifier_position = QUANTIFIER_POSITION[sample.target_amount_unit]
+        quantifier = sample.metrics && quantifier_position ? sample.metrics[quantifier_position] : 'n'
 
-      factor = QUANTIFIER_FACTOR[quantifier] || 1
-      prefix = QUANTIFIER_PREFIXES[quantifier] || ''
+        factor = QUANTIFIER_FACTOR[quantifier] || 1
+        prefix = QUANTIFIER_PREFIXES[quantifier] || ''
 
-      { value: factor * sample.target_amount_value, unit: "#{prefix}#{sample.target_amount_unit}" }
+        { value: factor * sample.target_amount_value, unit: "#{prefix}#{sample.target_amount_unit}" }
+      else
+        { unit: sample.target_amount_unit }
+      end
     end
   end
 end
