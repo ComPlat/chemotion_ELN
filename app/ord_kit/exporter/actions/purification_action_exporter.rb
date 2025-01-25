@@ -17,16 +17,8 @@ module OrdKit
           { purification: purification_type_action }
         end
 
-        def automation
-          Automation::AutomationMode.const_get workup['automation'].to_s
-        rescue NameError
-          Automation::AutomationMode::UNSPECIFIED
-        end
-
         def purification_type_action
-          { automation: automation }.merge(
-            PURIFICATION_EXPORTER[workup['purification_type']].new(workup).to_ord,
-          )
+          PURIFICATION_EXPORTER[workup['purification_type']].new(workup).to_ord
         end
       end
     end

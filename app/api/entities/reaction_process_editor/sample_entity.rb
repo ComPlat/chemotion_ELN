@@ -14,7 +14,15 @@ module Entities
       expose :amounts
       expose :icon
 
+      expose :intermediate_type
+
       private
+
+      def intermediate_type
+        ReactionsIntermediateSample
+          .find_by(sample: object)
+          &.intermediate_type
+      end
 
       def target_amount
         ::ReactionProcessEditor::SampleAmountsConverter.to_rpe(object)

@@ -192,7 +192,7 @@ message ReactionProcessAction {
       repeated ReactionConditionLimits limits = 2;
     }
 
-    Automation.AutomationMode automation = 1;
+    Automation.AutomationMode automation_mode = 1;
     oneof origin {
       FromReaction from_reaction = 2;
       FromReaction from_reaction_step = 3;
@@ -242,7 +242,7 @@ message ReactionProcessAction {
       Prod prod = 6;
     }
 
-    Ontology automation = 1;
+    Ontology automation_mode = 1;
     Ontology type = 2;
     Ontology subtype = 3;
     optional Ontology device = 4;
@@ -274,8 +274,9 @@ message ReactionProcessAction {
       ORGANIC = 2;
     }
 
-    ExtractionPhase phase = 1;
-    repeated ExtractionStep steps = 2;
+    Automation.AutomationMode automation_mode = 1;
+    ExtractionPhase phase = 2;
+    repeated ExtractionStep steps = 3;
   }
 
   message ActionPurificationFiltration {
@@ -294,6 +295,7 @@ message ReactionProcessAction {
     }
     FiltrationMode filtration_mode = 1;
     repeated FiltrationStep steps = 2;
+    Automation.AutomationMode automation_mode = 5;
   }
 
   message ActionPurification {
@@ -303,21 +305,24 @@ message ReactionProcessAction {
       ActionPurificationCrystallization crystallization = 3;
       ActionPurificationChromatography chromatography = 4;
     }
-    Automation.AutomationMode automation = 5;
   }
 
-  message ActionSpectroscopy { string device = 1; }
+  message ActionSpectroscopy {
+    Automation.AutomationMode automation_mode = 1;
+    string device = 2;
+  }
 
-  message ActionSpectrometry { string device = 1; }
+  message ActionSpectrometry {
+    Automation.AutomationMode automation_mode = 1;
+    string device = 2;
+  }
 
   message ActionAnalysis {
     oneof type {
       ActionSpectroscopy spectroscopy = 1;
       ActionSpectrometry spectrometry = 2;
-      ActionPurificationChromatography chromatography =
-          3; // for now identical, AnalysisChromatography might diverge soon.
+      ActionPurificationChromatography chromatography = 3; // for now identical, AnalysisChr. might diverge soon.
     }
-    Automation.AutomationMode automation = 4;
   }
 
   message ActionTransfer {
@@ -354,6 +359,7 @@ message ReactionProcessAction {
     optional PurificationOrigin purification_origin = 5;
   }
 }
+
 /**
  * The quantitative amount of a Compound used in a particular reaction.
  * Compounds added in their pure form should have their value defined by
@@ -873,7 +879,7 @@ message StirringConditions {
   string details = 2;
   StirringRate rate = 3;
 
-  Automation.AutomationMode automation = 4;
+  Automation.AutomationMode automation_mode = 4;
 }
 
 message IlluminationConditions {

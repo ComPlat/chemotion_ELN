@@ -9,13 +9,13 @@ module OrdKit
         def action_type_attributes
           {
             removal: OrdKit::ReactionProcessAction::ActionRemove.new(
-              { automation: automation }.merge(remove_fields_per_origin),
+              { automation_mode: automation_mode }.merge(remove_fields_per_origin),
             ),
           }
         end
 
-        def automation
-          Automation::AutomationMode.const_get workup['automation'].to_s
+        def automation_mode
+          Automation::AutomationMode.const_get workup['automation_mode'].to_s
         rescue NameError
           Automation::AutomationMode::UNSPECIFIED
         end

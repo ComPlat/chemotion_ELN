@@ -10,11 +10,18 @@ module OrdKit
               filtration: OrdKit::ReactionProcessAction::ActionPurificationFiltration.new(
                 filtration_mode: filtration_mode,
                 steps: steps,
+                automation_mode: automation_mode,
               ),
             }
           end
 
           private
+
+          def automation_mode
+            Automation::AutomationMode.const_get workup['automation_mode'].to_s
+          rescue NameError
+            Automation::AutomationMode::UNSPECIFIED
+          end
 
           def filtration_mode
             OrdKit::ReactionProcessAction::ActionPurificationFiltration::FiltrationMode
