@@ -10,8 +10,17 @@ module OrdKit
               extraction: {
                 phase: extraction_phase,
                 steps: steps,
+                automation_mode: automation_mode,
               },
             }
+          end
+
+          private
+
+          def automation_mode
+            Automation::AutomationMode.const_get workup['automation_mode'].to_s
+          rescue NameError
+            Automation::AutomationMode::UNSPECIFIED
           end
 
           def steps
