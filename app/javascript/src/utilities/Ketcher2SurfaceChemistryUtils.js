@@ -23,7 +23,7 @@ const LAYERING_FLAGS = Object.freeze({
 const KET_TAGS = Object.freeze({
   inspiredLabel: 'A',
   RGroupTag: 'R#',
-  templateSurface: 2,
+  templateSurface: 5,
   templateBead: 1,
   polymerIdentifier: '> <PolymersList>',
   fileEndIdentifier: '$$$$',
@@ -48,18 +48,6 @@ const initializeKetcherData = async (data) => {
   }
 };
 
-// helper to stringify Surface chemistry template because it only takes stringified structs
-const templateParser = async () => {
-  const response = await fetch('/json/surfaceChemistryTemplates.json');
-  const templateListStorage = await response.json();
-  const outputData = templateListStorage.map((item) => {
-    const structObject = item.struct; // Parse the struct field
-    item.struct = JSON.stringify(structObject, null, 4); // Re-stringify with formatting
-    return item;
-  });
-  return outputData;
-};
-
 // helper function to examine the file coming ketcher rails
 const hasKetcherData = async (molfile) => {
   if (!molfile) {
@@ -80,6 +68,10 @@ const hasKetcherData = async (molfile) => {
 // Helper to determine template type based on polymer value
 const getTemplateType = (polymerValue) => {
   const hasSurface = polymerValue.includes('s');
+  if (!hasSurface && polymerValue.includes('.')) {
+    const getTemplateIdFromSplit = polymerValue.split('.');
+    return getTemplateIdFromSplit[1];
+  }
   return hasSurface ? KET_TAGS.templateSurface : KET_TAGS.templateBead;
 };
 
@@ -92,13 +84,11 @@ const updateAtom = (atomLocation, templateType, imageCounter) => ({
 
 // Helper to create a bounding box for a template with atom location
 const templateWithBoundingBox = async (templateType, atomLocation) => {
-  const list = await fetchSurfaceChemistryImageData();
-  const template = list[templateType];
-  const boundingBox = { ...template.boundingBox };
-  boundingBox.x = atomLocation[0];
-  boundingBox.y = atomLocation[1];
-  boundingBox.z = 0;
-  return { ...template, boundingBox };
+  const template = await fetchSurfaceChemistryImageData(templateType);
+  template.boundingBox.x = atomLocation[0];
+  template.boundingBox.y = atomLocation[1];
+  template.boundingBox.z = 0;
+  return template;
 };
 
 // helper function to process ketcher-rails files and adding image to ketcher2 canvas
@@ -138,18 +128,44 @@ const addingPolymersToKetcher = async (railsPolymersList, data, imageNodeCounter
 };
 
 // helper function to fetch list of all surface chemistry shape/image list
-const fetchSurfaceChemistryImageData = async () => {
-  const response = await fetch('/json/surfaceChemistryImages.json');
-  return response.json();
+const fetchSurfaceChemistryImageData = async (templateId) => {
+  const response = await fetch('/json/surfaceChemistryShapes.json');
+  const data = await response.json();
+  for (const tab of data) {
+    for (const subTab of tab.subTabs) {
+      for (const shape of subTab.shapes) {
+        if (shape.template_id === parseInt(templateId)) {
+          const constructImageObj = {
+            type: 'image',
+            format: 'image/svg+xml',
+            boundingBox: {
+              width: shape.width,
+              height: shape.height,
+              x: 8.700000000000001,
+              y: -5.824999999999999,
+              z: 0
+            },
+            data: shape.payload
+          };
+          return constructImageObj;
+        }
+      }
+    }
+  }
+  return null; // Return null if no matching template_id found
 };
 
 // helper function to return a new template-image for imagesList with new location
 const prepareImageFromTemplateList = async (idx, location) => {
-  const list = await fetchSurfaceChemistryImageData();
-  list[idx].boundingBox.x = location[0];
-  list[idx].boundingBox.y = location[1];
-  list[idx].boundingBox.z = location[2];
-  return list[idx];
+  const template = await fetchSurfaceChemistryImageData(idx);
+  if (!template) {
+    console.error('template not found', template);
+    return null;
+  }
+  template.boundingBox.x = location[0];
+  template.boundingBox.y = location[1];
+  template.boundingBox.z = location[2];
+  return template;
 };
 
 // helper function to update counter for other mols when a image-template is removed
@@ -320,7 +336,7 @@ const reAttachPolymerList = async ({
   for (let i = 1; i < aliasesList.length; i += 2) {
     const templateId = parseInt(aliasesList[i].split('_')[1]);
     if (templateId) {
-      atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : '';
+      atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : `.${templateId}`;
       counter++;
     }
   }
@@ -437,8 +453,8 @@ export {
   isNewAtom,
   removeImageTemplateAtom,
   reAttachPolymerList,
-  templateParser,
   removeImagesFromData,
+  fetchSurfaceChemistryImageData,
 
   // DOM Methods
   disableButton,
