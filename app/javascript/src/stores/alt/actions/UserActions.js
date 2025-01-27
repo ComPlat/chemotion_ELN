@@ -4,7 +4,6 @@ import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import alt from 'src/stores/alt/alt';
 import DocumentHelper from 'src/utilities/DocumentHelper';
-import { templateParser } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 
 class UserActions {
   fetchOlsRxno() {
@@ -88,10 +87,7 @@ class UserActions {
     UsersFetcher.fetchProfile().then((res) => {
       if (res?.user_templates) {
         localStorage.setItem(storageKey, '');
-        templateParser().then((list) => {
-          res.user_templates.push(...list);
-          localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
-        });
+        localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
       }
     });
     return null;
