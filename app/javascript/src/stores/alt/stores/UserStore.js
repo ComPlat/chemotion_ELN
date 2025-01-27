@@ -76,9 +76,7 @@ class UserStore {
     const { layout } = this.state.profile.data;
     if (this.state.currentType === '') {
       const { currentTab } = this.state;
-      const type = Object.keys(layout).filter((e) => {
-        return layout[e] === currentTab + 1;
-      })[0];
+      const type = Object.keys(layout).filter((e) => layout[e] === currentTab + 1)[0];
       this.state.currentType = type;
     }
   }
@@ -91,9 +89,7 @@ class UserStore {
 
   handleSelectTab(tab) {
     const { layout } = this.state.profile.data;
-    const type = Object.keys(layout).filter((e) => {
-      return layout[e] === tab + 1;
-    })[0];
+    const type = Object.keys(layout).filter((e) => layout[e] === tab + 1)[0];
 
     this.state.currentTab = tab;
     this.state.currentType = type;
@@ -118,6 +114,14 @@ class UserStore {
   handleOmniauthProviders(result) {
     this.state.omniauthProviders = result.omniauth_providers;
     this.state.extraRules = result.extra_rules;
+  }
+
+  static isUserQuotaExceeded(filteredAttachments) {
+    const totalSize = filteredAttachments.filter((attachment) => attachment.is_new && !attachment.is_deleted)
+      .reduce((acc, attachment) => acc + attachment.filesize, 0);
+    const { currentUser } = this.state;
+    return currentUser !== null && currentUser.available_space !== 0
+      && totalSize > (currentUser.available_space - currentUser.used_space);
   }
 }
 

@@ -7,7 +7,7 @@ import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
 import {
-  Button, ButtonGroup, OverlayTrigger, Popover
+  Button, ButtonGroup, OverlayTrigger, Popover, Alert
 } from 'react-bootstrap';
 import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -27,6 +27,7 @@ import {
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
@@ -139,7 +140,7 @@ export class WellplateDetailsAttachments extends Component {
     const { filterText, sortBy } = this.state;
 
     const filteredAttachments = this.props.attachments.filter(
-      attachment => attachment.filename.toLowerCase().includes(filterText.toLowerCase())
+      (attachment) => attachment.filename.toLowerCase().includes(filterText.toLowerCase())
     );
 
     filteredAttachments.sort((a, b) => {
@@ -168,7 +169,7 @@ export class WellplateDetailsAttachments extends Component {
 
   createAttachmentPreviews() {
     const { attachments } = this.props;
-    attachments.map(attachment => {
+    attachments.map((attachment) => {
       if (attachment.thumb) {
         AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
           (result) => {
@@ -274,11 +275,11 @@ export class WellplateDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const { onUndoDelete, attachments,wellplate } = this.props;
+    const { onUndoDelete, attachments, wellplate } = this.props;
 
     let combinedAttachments = filteredAttachments;
-    if(this.context.attachmentNotificationStore ){
-      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments,"Wellplate",wellplate);
+    if (this.context.attachmentNotificationStore) {
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Wellplate', wellplate);
     }
 
     return (
@@ -293,12 +294,12 @@ export class WellplateDetailsAttachments extends Component {
             {
               attachments.length > 0
                 && sortingAndFilteringUI(
-                    sortDirection,
-                    this.handleSortChange,
-                    this.toggleSortDirection,
-                    this.handleFilterChange,
-                    true
-                  )
+                  sortDirection,
+                  this.handleSortChange,
+                  this.toggleSortDirection,
+                  this.handleFilterChange,
+                  true
+                )
             }
           </div>
         </div>
@@ -307,76 +308,81 @@ export class WellplateDetailsAttachments extends Component {
             There are currently no attachments.
           </div>
         ) : (
-          combinedAttachments.map((attachment) => (
-            <div className="attachment-row" key={attachment.id}>
-              {attachmentThumbnail(attachment)}
+          <>
+            {combinedAttachments.map((attachment) => (
+              <div className="attachment-row" key={attachment.id}>
+                {attachmentThumbnail(attachment)}
 
-              <div className="attachment-row-text" title={attachment.filename}>
-                {attachment.is_deleted ? (
-                  <strike>{attachment.filename}</strike>
-                ) : (
-                  attachment.filename
-                )}
-                <div className="attachment-row-subtext">
-                  <div>
-                    Created:&nbsp;
-                    {formatDate(attachment.created_at)}
-                  </div>
-                  <span className="mx-2">|</span>
-                  <div>
-                    Size:&nbsp;
-                    <strong>
-                      {formatFileSize(attachment.filesize)}
-                    </strong>
+                <div className="attachment-row-text" title={attachment.filename}>
+                  {attachment.is_deleted ? (
+                    <strike>{attachment.filename}</strike>
+                  ) : (
+                    attachment.filename
+                  )}
+                  <div className="attachment-row-subtext">
+                    <div>
+                      Created:&nbsp;
+                      {formatDate(attachment.created_at)}
+                    </div>
+                    <span className="mx-2">|</span>
+                    <div>
+                      Size:&nbsp;
+                      <strong>
+                        {formatFileSize(attachment.filesize)}
+                      </strong>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="attachment-row-actions d-flex align-items-center gap-1">
-                {attachment.is_deleted ? (
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    className="attachment-button-size"
-                    onClick={() => onUndoDelete(attachment)}
-                  >
-                    <i className="fa fa-undo" aria-hidden="true" />
-                  </Button>
-                ) : (
-                  <>
-                    {downloadButton(attachment)}
-                    <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-                    {editButton(
-                      attachment,
-                      extension,
-                      attachmentEditor,
-                      attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                <div className="attachment-row-actions d-flex align-items-center gap-1">
+                  {attachment.is_deleted ? (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      className="attachment-button-size"
+                      onClick={() => onUndoDelete(attachment)}
+                    >
+                      <i className="fa fa-undo" aria-hidden="true" />
+                    </Button>
+                  ) : (
+                    <>
+                      {downloadButton(attachment)}
+                      <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
+                      {editButton(
+                        attachment,
+                        extension,
+                        attachmentEditor,
+                        attachment.aasm_state === 'oo_editing' && new Date().getTime()
                           < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                      !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                        !attachmentEditor || attachment.aasm_state === 'oo_editing'
                           || attachment.is_new || this.documentType(attachment.filename) === null,
-                      this.handleEdit
-                    )}
-                    {annotateButton(attachment, () => {
-                      this.setState({
-                        imageEditModalShown: true,
-                        chosenAttachment: attachment,
-                      });
-                    })}
-                    {importButton(
-                      attachment,
-                      this.state.showImportConfirm,
-                      this.props.wellplate.changed,
-                      this.showImportConfirm,
-                      this.hideImportConfirm,
-                      this.confirmAttachmentImport
-                    )}
+                        this.handleEdit
+                      )}
+                      {annotateButton(attachment, () => {
+                        this.setState({
+                          imageEditModalShown: true,
+                          chosenAttachment: attachment,
+                        });
+                      })}
+                      {importButton(
+                        attachment,
+                        this.state.showImportConfirm,
+                        this.props.wellplate.changed,
+                        this.showImportConfirm,
+                        this.hideImportConfirm,
+                        this.confirmAttachmentImport
+                      )}
                     &nbsp;
-                    {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
-                  </>
-                )}
+                      {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
+                    </>
+                  )}
+                </div>
+                {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
               </div>
-              {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
-            </div>
-          ))
+            ))}
+            <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
+              Uploading attachments will fail; User quota will be exceeded.
+            </Alert>
+          </>
         )}
       </div>
     );

@@ -59,7 +59,6 @@ class ResearchPlanDetailsAttachments extends Component {
     this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
     this.showImportConfirm = this.showImportConfirm.bind(this);
     this.hideImportConfirm = this.hideImportConfirm.bind(this);
-    this.isUserQuotaExceeded = this.isUserQuotaExceeded.bind(this);
   }
 
   componentDidMount() {
@@ -220,15 +219,6 @@ class ResearchPlanDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
-  isUserQuotaExceeded() {
-    const { filteredAttachments } = this.state;
-    const totalSize = filteredAttachments.filter((attachment) => attachment.is_new && !attachment.is_deleted)
-      .reduce((acc, attachment) => acc + attachment.filesize, 0);
-    const { currentUser } = UserStore.getState();
-    return currentUser !== null && currentUser.available_space !== 0
-      && totalSize > (currentUser.available_space - currentUser.used_space);
-  }
-
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
@@ -369,7 +359,7 @@ class ResearchPlanDetailsAttachments extends Component {
                 )}
               </div>
             ))}
-            <Alert variant="warning" show={this.isUserQuotaExceeded()}>
+            <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
               Uploading attachments will fail; User quota will be exceeded.
             </Alert>
           </>
