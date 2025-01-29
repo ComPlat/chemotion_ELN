@@ -382,28 +382,30 @@ export const saveMolfile = async (svgElement, canvasData) => {
 // helper function for saving molfile => re-layering images from iframe
 const reArrangeImagesOnCanvas = async (iframeRef) => {
   const iframeDocument = iframeRef.current.contentWindow.document;
-  const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+  const svg = iframeDocument.querySelector('svg');
   const imageElements = iframeDocument.querySelectorAll('image');
 
   imageElements.forEach((img) => {
-    svg.removeChild(img);
-  });
-
-  imageElements.forEach((img) => {
-    // const temp_num = all_templates_consumed[idx];
+    // const imageBoundingBox = imagesList[idx].boundingBox;
+    // const { width, height } = imageBoundingBox;
+    // console.log({ width, height });
     const width = img.getAttribute('width');
     const height = img.getAttribute('height');
     const x = img.getAttribute('x');
     const y = img.getAttribute('y');
-    const newImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
 
+    const newImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
     newImg.setAttribute('x', x);
     newImg.setAttribute('y', y);
     newImg.setAttribute('width', width);
     newImg.setAttribute('height', height);
     newImg.setAttribute('href', img.getAttribute('href'));
-    svg.appendChild(newImg);
+
+    img.replaceWith(newImg);
   });
+
+  // Ensure SVG has a proper viewBox
+  svg.setAttribute('viewBox', '0 0 500 500');
 
   const svgElement = new XMLSerializer().serializeToString(svg);
   return svgElement;
@@ -431,7 +433,8 @@ const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired) => 
 // container function for template move
 const onTemplateMove = async (editor) => {
   if (editor && editor.structureDef) {
-    await saveMoveCanvas(editor, null, true, false);
+    await fetchKetcherData(editor);
+    await saveMoveCanvas(editor, latestData, true, false);
     const molCopy = mols;
     const imageListCopy = imagesList;
     await fetchKetcherData(editor);

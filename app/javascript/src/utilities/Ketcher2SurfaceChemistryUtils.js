@@ -5,7 +5,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
-import { loadKetcherData, mols } from 'src/components/structureEditor/KetcherEditor';
+import { loadKetcherData, mols, imagesList } from 'src/components/structureEditor/KetcherEditor';
 
 // pattern's for alias identification
 const ALIAS_PATTERNS = Object.freeze({
@@ -68,11 +68,12 @@ const hasKetcherData = async (molfile) => {
 // Helper to determine template type based on polymer value
 const getTemplateType = (polymerValue) => {
   const hasSurface = polymerValue.includes('s');
-  if (!hasSurface && polymerValue.includes('.')) {
-    const getTemplateIdFromSplit = polymerValue.split('.');
-    return getTemplateIdFromSplit[1];
+  const templateSplits = polymerValue.split('/');
+  if (!hasSurface) {
+    return { type: templateSplits[1], size: templateSplits[2] };
   }
-  return hasSurface ? KET_TAGS.templateSurface : KET_TAGS.templateBead;
+  const binaryTemplates = hasSurface ? KET_TAGS.templateSurface : KET_TAGS.templateBead;
+  return { type: binaryTemplates, size: templateSplits[1] };
 };
 
 // Helper to update an atom with K2SC labels and aliases
@@ -83,11 +84,15 @@ const updateAtom = (atomLocation, templateType, imageCounter) => ({
 });
 
 // Helper to create a bounding box for a template with atom location
-const templateWithBoundingBox = async (templateType, atomLocation) => {
+const templateWithBoundingBox = async (templateType, atomLocation, templateSize) => {
   const template = await fetchSurfaceChemistryImageData(templateType);
+  const defaultSize = [template.boundingBox.height, template.boundingBox.width];
+  const [height, width] = templateSize?.split('-') || defaultSize;
   template.boundingBox.x = atomLocation[0];
   template.boundingBox.y = atomLocation[1];
   template.boundingBox.z = 0;
+  template.boundingBox.height = height * 1;
+  template.boundingBox.width = width * 1;
   return template;
 };
 
@@ -110,11 +115,11 @@ const addingPolymersToKetcher = async (railsPolymersList, data, imageNodeCounter
           imageNodeCounter += 1;
           visitedAtoms += 1;
           // step 1: get template type
-          const templateType = getTemplateType(polymerItem);
+          const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
           // step 2: update atom with alias
           data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
           // step 3: sync bounding box with atom location
-          const newTemplate = await templateWithBoundingBox(templateType, atom.location);
+          const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
           // step 4: add to the list
           collectedImages.push(newTemplate);
         }
@@ -335,8 +340,11 @@ const reAttachPolymerList = async ({
   let counter = 0;
   for (let i = 1; i < aliasesList.length; i += 2) {
     const templateId = parseInt(aliasesList[i].split('_')[1]);
+    const imagePlace = parseInt(aliasesList[i].split('_')[2]);
+    const { height, width } = imagesList[imagePlace].boundingBox;
     if (templateId) {
-      atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : `.${templateId}`;
+      atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
+      atomAliasList[counter] += `/${height.toFixed(2)}-${width.toFixed(2)}`;
       counter++;
     }
   }
