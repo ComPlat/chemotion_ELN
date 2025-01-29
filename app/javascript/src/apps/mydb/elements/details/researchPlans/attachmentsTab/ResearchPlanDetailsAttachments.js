@@ -244,6 +244,7 @@ class ResearchPlanDetailsAttachments extends Component {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
     const { researchPlan } = this.props;
+    const { currentUser } = UserStore.getState();
 
     // Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
 
@@ -360,7 +361,9 @@ class ResearchPlanDetailsAttachments extends Component {
               </div>
             ))}
             <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
-              Uploading attachments will fail; User quota will be exceeded.
+              Uploading attachments will fail; User quota
+              {currentUser !== null ? ` (${currentUser.available_space / 1024 / 1024} MB) ` : ' '}
+              will be exceeded.
             </Alert>
           </>
         )}

@@ -433,6 +433,8 @@ class User < ApplicationRecord
   end
 
   def self.default_disk_space
+    return 0 if Admin.first.nil?
+
     Admin.first.available_space
   end
 
@@ -513,11 +515,13 @@ class Group < User
   end
 
   def update_available_space
-    return unless available_space_changed?
+    return yield unless available_space_changed?
 
     yield
     users.each do |user|
-      user.update(available_space: [available_space, user.available_space].max)
+      next if user.available_space >= available_space
+
+      user.update(available_space: available_space)
     end
   end
 end

@@ -281,12 +281,12 @@ class Attachment < ApplicationRecord
     user = User.find(created_for.nil? ? created_by : created_for)
     if (user.used_space + attachment_data['metadata']['size']) > user.available_space &&
        !user.available_space.zero?
-      return false
+      return true
     end
 
-    true
+    false
   rescue ActiveRecord::RecordNotFound
-    true # creating attachments without user is allowed (for tests)
+    false # creating attachments without user is allowed (for tests)
   end
 
   def attach_file
@@ -296,7 +296,7 @@ class Attachment < ApplicationRecord
     attachment_attacher.attach(File.open(file_path, binmode: true))
     raise 'File to large' unless valid?
 
-    raise 'User quota exceeded' unless user_quota_exceeded?
+    raise 'User quota exceeded' if user_quota_exceeded?
 
     attachment_attacher.create_derivatives
 

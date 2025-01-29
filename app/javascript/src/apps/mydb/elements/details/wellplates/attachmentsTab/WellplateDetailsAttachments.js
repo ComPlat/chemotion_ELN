@@ -276,6 +276,7 @@ export class WellplateDetailsAttachments extends Component {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
     const { onUndoDelete, attachments, wellplate } = this.props;
+    const { currentUser } = UserStore.getState();
 
     let combinedAttachments = filteredAttachments;
     if (this.context.attachmentNotificationStore) {
@@ -380,7 +381,9 @@ export class WellplateDetailsAttachments extends Component {
               </div>
             ))}
             <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
-              Uploading attachments will fail; User quota will be exceeded.
+              Uploading attachments will fail; User quota
+              {currentUser !== null ? ` (${currentUser.available_space / 1024 / 1024} MB) ` : ' '}
+              will be exceeded.
             </Alert>
           </>
         )}

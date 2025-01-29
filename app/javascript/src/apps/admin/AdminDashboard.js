@@ -35,7 +35,7 @@ export default class AdminDashboard extends React.Component {
 
   handleSaveBtn() {
     const { availableUserSpace } = this.state;
-    AdminFetcher.setAvailableUserSpace(availableUserSpace * 1024 * 1024);
+    AdminFetcher.setAvailableUserSpace(Math.round(availableUserSpace) * 1024 * 1024);
   }
 
   getAvailableUserSpace() {

@@ -416,7 +416,7 @@ export default class UserManagement extends React.Component {
       last_name: this.u_lastname.value.trim(),
       name_abbreviation: this.u_abbr.value.trim(),
       type: this.u_type.value,
-      available_space: this.u_avail.value === '' ? 0 : this.u_avail.value * 1024 * 1024
+      available_space: this.u_avail.value === '' ? 0 : Math.round(this.u_avail.value) * 1024 * 1024
     })
       .then((result) => {
         if (result.error) {
@@ -1506,7 +1506,7 @@ export default class UserManagement extends React.Component {
         </td>
         <td className="py-3">
           {g.available_space === 0 ? ''
-            : `${Math.round((g.used_space / g.available_space) * 100)}% of ${g.available_space / 1024 / 1024}MB`}
+            : `${Math.round((g.used_space / g.available_space) * 100)}% of ${g.available_space / 1024 / 1024} MB`}
         </td>
         <td className="py-3">
           {g.current_sign_in_at}

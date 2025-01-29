@@ -589,6 +589,7 @@ export class ContainerDatasetModalContent extends Component {
       filteredAttachments, sortDirection, attachmentGroups
     } = this.state;
     const { datasetContainer } = this.props;
+    const { currentUser } = UserStore.getState();
 
     const renderGroup = (attachments, title, key) => (
       <div key={key} className="mt-2">
@@ -641,7 +642,9 @@ export class ContainerDatasetModalContent extends Component {
               {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
             </div>
             <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
-              Uploading attachments will fail; User quota will be exceeded.
+              Uploading attachments will fail; User quota
+              {currentUser !== null ? ` (${currentUser.available_space / 1024 / 1024} MB) ` : ' '}
+              will be exceeded.
             </Alert>
           </>
         )}
