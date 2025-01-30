@@ -788,7 +788,7 @@ export default class ReactionDetailsScheme extends Component {
               if (updatedSample.gas_type === 'gas') {
                 const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
                 sample.equivalent = equivalent > 1 ? 1 : equivalent;
-              } else {
+              } else if (!lockEquivColumn) {
                 sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
               }
             } else {
@@ -806,13 +806,12 @@ export default class ReactionDetailsScheme extends Component {
                     unit: 'mol'
                   });
                 }
-
               }
             }
           } else {
             if (materialGroup === 'products' && sample.gas_type !== 'gas') {
               sample.equivalent = 0.0;
-            } else {
+            } else if (!lockEquivColumn) {
               sample.equivalent = 1.0;
             }
           }
@@ -833,7 +832,7 @@ export default class ReactionDetailsScheme extends Component {
           }
         }
 
-        if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && !sample.reference) {
+        if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && !sample.reference && !lockEquivColumn) {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
         } else if (materialGroup === 'products'
@@ -855,7 +854,7 @@ export default class ReactionDetailsScheme extends Component {
 
       if (materialGroup === 'products') {
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
-          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);;
+          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
         }
       }
       return sample;
