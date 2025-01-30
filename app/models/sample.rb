@@ -169,8 +169,8 @@ class Sample < ApplicationRecord
   }
 
   scope :search_by_fingerprint_sub, lambda { |molfile, as_array = false|
-    if Chemotion::Application.config.pg_cartridge == 'RDKit'
-      where("samples.id in (select id from rdk.mols
+    if Chemotion::Application.config.pg_cartridge == 'rdkit'
+      where("samples.id in (select id from rdkit.mols
         where m operator(@>) mol_from_ctab(encode('#{molfile}', 'escape')::cstring) )")
     else
       fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)

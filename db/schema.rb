@@ -1717,6 +1717,8 @@ ActiveRecord::Schema.define(version: 2024_08_08_125802) do
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
+
+
   create_view "v_samples_collections", sql_definition: <<-SQL
       SELECT cols.id AS cols_id,
       cols.user_id AS cols_user_id,
