@@ -86,7 +86,7 @@ module Chemotion
       desc 'Create a new Vessel sample'
       params do
         requires :template_name, type: String, desc: 'name of a vessel template'
-        optional :vessel_name, type: String, desc: 'name of a vessel sample'
+        optional :vessel_name, type: String, desc: 'name of a vessel sample (for single instance)'
         optional :material_details, type: String, desc: 'details of the vessel template'
         optional :details, type: String, desc: 'additional details'
         optional :material_type, type: String, desc: 'vessel material type of the vessel'
@@ -95,19 +95,22 @@ module Chemotion
         optional :volume_unit, type: String, desc: 'volume unit'
         optional :weight_amount, type: Float, desc: 'weight of the vessel'
         optional :weight_unit, type: String, desc: 'weight unit of the vessel'
-        optional :bar_code, type: String, desc: 'bar code of the vessel'
-        optional :qr_code, type: String, desc: 'qr code of the vessel'
-        requires :collection_id, type: Integer, desc: 'collection of the vessel sample'
-        optional :description, type: String, desc: 'description of a vessel sample'
+        optional :bar_code, type: String, desc: 'bar code of the vessel (for single instance)'
+        optional :qr_code, type: String, desc: 'qr code of the vessel (for single instance)'
+        optional :description, type: String, desc: 'description of a vessel sample (for single instance)'
         optional :short_label, type: String, desc: 'short label of a vessel sample'
-        requires :container, type: Hash, desc: 'root Container of element'
+        requires :collection_id, type: Integer, desc: 'collection of the vessel sample'
+        optional :instances, type: Array, desc: 'array of vessel instances', documentation: { is_array: true } do
+          requires :vessel_name, type: String, desc: 'name of the vessel instance'
+          optional :description, type: String, desc: 'description of the vessel instance'
+          optional :bar_code, type: String, desc: 'bar code of the vessel instance'
+          optional :qr_code, type: String, desc: 'qr code of the vessel instance'
+        end
+        requires :container, type: Hash, desc: 'root container of element'
       end
       post do
         error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
-
-        vessel_template = VesselTemplate.find_by(
-          name: params[:name],
-        ) || VesselTemplate.create!(
+        vessel_template = VesselTemplate.find_or_create_by!(
           name: params[:template_name],
           details: params[:details],
           material_details: params[:material_details],
@@ -116,34 +119,42 @@ module Chemotion
           volume_amount: params[:volume_amount],
           volume_unit: params[:volume_unit],
           weight_amount: params[:weight_amount],
-          weight_unit: params[:weight_unit],
+          weight_unit: params[:weight_unit]
         )
-
-        vessel = Vessel.create!(
-          vessel_template: vessel_template,
-          name: params[:vessel_name],
-          user_id: current_user.id,
-          description: params[:description],
-          bar_code: params[:bar_code],
-          qr_code: params[:qr_code],
-          short_label: params[:short_label],
-        )
-
-        if params[:collection_id]
-          collection = current_user.collections.find_by(id: params[:collection_id])
-          vessel.collections << collection if collection.present?
-        end
-
-        if params[:container]
-          begin
-            vessel.container = update_datamodel(params[:container])
-          rescue StandardError => e
-            Rails.logger.error "Error updating container: #{e.message}"
-            error!("Container update failed: #{e.message}", 400)
+      
+        created_vessels = []
+      
+        ActiveRecord::Base.transaction do
+          (params[:instances] || []).each do |instance_params|
+            vessel = Vessel.create!(
+              vessel_template: vessel_template,
+              name: instance_params[:vessel_name],
+              user_id: current_user.id,
+              description: instance_params[:description],
+              bar_code: instance_params[:bar_code],
+              qr_code: instance_params[:qr_code],
+              short_label: params[:short_label]
+            )
+      
+            if params[:collection_id]
+              collection = current_user.collections.find_by(id: params[:collection_id])
+              vessel.collections << collection if collection.present?
+            end
+      
+            if params[:container]
+              begin
+                vessel.container = update_datamodel(params[:container].deep_dup)
+              rescue StandardError => e
+                Rails.logger.error "Error updating container: #{e.message}"
+                error!("Container update failed: #{e.message}", 400)
+              end
+            end
+      
+            created_vessels << vessel
           end
         end
-
-        present vessel, with: Entities::VesselInstanceEntity
+      
+        present created_vessels, with: Entities::VesselInstanceEntity
       end
 
       desc 'Update a vessel instance or associated vessel template'
@@ -203,7 +214,6 @@ module Chemotion
             vessel_template.update!(template_params) if template_params.present?
           end
       
-          # Process the container
           if params[:container]
             begin
               vessel.container = update_datamodel(params[:container])

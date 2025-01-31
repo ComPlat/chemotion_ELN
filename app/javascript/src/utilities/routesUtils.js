@@ -7,6 +7,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { elementNames } from 'src/apps/generic/Utils';
+import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
 
 const collectionShow = (e) => {
   UserActions.fetchCurrentUser();
@@ -140,13 +141,21 @@ const cellLineShowOrNew = (e) => {
 
 const vesselShowOrNew = (e) => {
   if (e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselID === 'new')) {
-    // ElementActions.generateEmptyVessel(e.params.collectionID, e.params.vessel_template);
     ElementActions.generateEmptyVessel(e.params.collectionID);
   } else {
     if (e.params.vesselID) {
       e.params.vesselId = e.params.vesselID;
     }
-    ElementActions.fetchVesselElById.defer(e.params.vesselId);
+
+    const latestVesselIds = getLatestVesselIds();
+    if (latestVesselIds.length > 0) {
+      latestVesselIds.forEach((vesselId) => {
+        ElementActions.fetchVesselElById.defer(vesselId);
+      });
+      clearLatestVesselIds();
+    } else {
+      ElementActions.fetchVesselElById.defer(e.params.vesselId);
+    }
   }
 };
 
