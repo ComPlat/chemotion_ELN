@@ -5,6 +5,7 @@ import {
   updateVariationsRowOnReferenceMaterialChange, getMaterialData
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
+const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
 const massUnits = ['g', 'mg', 'μg'];
@@ -247,4 +248,5 @@ export {
   getCellDataType,
   getUserFacingUnit,
   getStandardValue,
+  REACTION_VARIATIONS_TAB_KEY
 };

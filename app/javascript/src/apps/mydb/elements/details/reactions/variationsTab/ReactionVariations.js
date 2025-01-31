@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useCallback, useReducer
+  useRef, useState, useCallback, useReducer, useEffect
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert,
@@ -33,7 +33,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-export default function ReactionVariations({ reaction, onReactionChange }) {
+export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
@@ -153,6 +153,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     sortable: true,
     resizable: false,
   };
+
+  useEffect(() => {
+    // Auto-size columns when the parent tab is (re-)entered.
+    if (isActive && gridRef.current?.api) {
+      gridRef.current.api.autoSizeAllColumns();
+    }
+  }, [isActive]);
 
   const setReactionVariations = (updatedReactionVariations) => {
     reaction.variations = updatedReactionVariations;
@@ -421,7 +428,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           */
           readOnlyEdit
           onCellEditRequest={updateRow}
-          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
           onCellValueChanged={(event) => fitColumnToContent(event)}
           onColumnHeaderClicked={(event) => fitColumnToContent(event)}
         />
@@ -433,4 +439,5 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onReactionChange: PropTypes.func.isRequired,
+  isActive: PropTypes.bool.isRequired,
 };
