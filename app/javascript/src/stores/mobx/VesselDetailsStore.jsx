@@ -17,6 +17,13 @@ const VesselContainer = types
     },
   }));
 
+const VesselInstance = types.model({
+  vesselInstanceName: types.maybeNull(types.string),
+  vesselInstanceDescription: types.maybeNull(types.string),
+  barCode: types.maybeNull(types.string),
+  qrCode: types.maybeNull(types.string),
+});
+
 const VesselItem = types
   .model({
     id: '',
@@ -34,7 +41,9 @@ const VesselItem = types
     qrCode: '',
     barCode: '',
     shortLabel: types.maybeNull(types.string),
-    changed: false
+    changed: false,
+    instances: types.optional(types.array(VesselInstance), []),
+    is_new: types.optional(types.boolean, false),
   })
   .actions((self) => ({
     markChanged(newChanged) {
@@ -50,9 +59,44 @@ export const VesselDetailsStore = types
     removeVesselFromStore(id) {
       self.vessels.delete(id);
     },
+    replaceVessel(tempId, serverVesselData) {
+      if (self.vessels.has(tempId)) {
+        self.vessels.delete(tempId);
+      }
+      self.convertVesselToModel(serverVesselData);
+    },
+    getInstances(vesselId) {
+      const vessel = self.vessels.get(vesselId);
+      return vessel ? vessel.instances : [];
+    },
+    addInstance(vesselId) {
+      const vessel = self.vessels.get(vesselId);
+      if (vessel) {
+        vessel.instances.push(
+          VesselInstance.create({
+            vesselInstanceName: '',
+            vesselInstanceDescription: '',
+            barCode: '',
+            qrCode: '',
+          })
+        );
+      }
+    },
+    removeInstance(vesselId, index) {
+      const vessel = self.vessels.get(vesselId);
+      if (vessel && vessel.instances.length > index) {
+        vessel.instances.splice(index, 1);
+      }
+    },
+    updateInstance(vesselId, index, field, value) {
+      const vessel = self.vessels.get(vesselId);
+      if (vessel && vessel.instances[index]) {
+        vessel.instances[index][field] = value;
+      }
+    },
     addEmptyContainer(id) {
       const container = Container.buildEmpty();
-      container.container_type = "dataset";
+      container.container_type = 'dataset';
       container.children = container.children || [];
       return container;
     },
@@ -113,14 +157,14 @@ export const VesselDetailsStore = types
         id: container.id,
         children: [],
         name: container.name,
-        container_type: container.container_type
+        container_type: container.container_type,
       });
     },
+
     convertVesselToModel(jsVesselModel) {
       if (self.vessels.has(jsVesselModel.id)) {
         return;
       }
-
       self.vessels.set(jsVesselModel.id, VesselItem.create({
         id: jsVesselModel.id || '',
         vesselName: jsVesselModel.vesselName || '',
@@ -132,12 +176,20 @@ export const VesselDetailsStore = types
         volumeUnit: jsVesselModel.volumeUnit || '',
         weightAmount: jsVesselModel.weightAmount || 0,
         weightUnit: jsVesselModel.weightUnit || '',
+        shortLabel: jsVesselModel.short_label || '',
+        is_new: jsVesselModel.is_new,
         vesselInstanceName: jsVesselModel.vesselInstanceName || '',
         vesselInstanceDescription: jsVesselModel.vesselInstanceDescription || '',
-        qrCode: jsVesselModel.qrCode || '',
         barCode: jsVesselModel.barCode || '',
-        shortLabel: jsVesselModel.short_label || '',
-        is_new: !jsVesselModel.id,
+        qrCode: jsVesselModel.qrCode || '',
+        instances: jsVesselModel.instances?.length
+          ? jsVesselModel.instances.map((instance) => ({
+            vesselInstanceName: instance.vesselInstanceName || '',
+            vesselInstanceDescription: instance.vesselInstanceDescription || '',
+            barCode: instance.barCode || '',
+            qrCode: instance.qrCode || '',
+          }))
+          : [],
       }));
     },
     setMaterialProperties(id, properties) {
@@ -154,7 +206,7 @@ export const VesselDetailsStore = types
       item.volumeUnit = properties.volume_unit || '';
       item.weightAmount = properties.weight_amount || 0;
       item.weightUnit = properties.weight_unit || '';
-    }
+    },
   }))
   .views((self) => ({
     getVessel(id) {

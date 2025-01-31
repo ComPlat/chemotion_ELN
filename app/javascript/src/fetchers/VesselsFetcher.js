@@ -1,10 +1,10 @@
 import Vessel from 'src/models/vessel/Vessel';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
-import {extractVesselApiParameter} from 'src/utilities/VesselUtilities';
+// eslint-disable-next-line max-len
+import { extractCreateVesselApiParameter, extractUpdateVesselApiParameter, storeLatestVesselIds } from 'src/utilities/VesselUtilities';
 
 const successfullyCreatedParameter = {
   title: 'Element created',
@@ -48,7 +48,10 @@ export default class VesselsFetcher {
       method: 'GET'
     })
       .then((response) => response.json())
-      .then((json) => Vessel.createFromRestResponse(0, json))
+      .then((json) => {
+        const result = Vessel.createFromRestResponse(0, json);
+        return Array.isArray(result) ? result[0] : result;
+      })
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -56,33 +59,41 @@ export default class VesselsFetcher {
   }
 
   static create(vessel, user) {
-    const params = extractVesselApiParameter(vessel);
+    const params = extractCreateVesselApiParameter(vessel);
 
-    const promise = VesselsFetcher.uploadAttachments(vessel)
-    .then(() => fetch('/api/v1/vessels', {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'POST',
-      body: JSON.stringify(params)  
-    }))
-
-      .then((response) => response.json())
-      .then((json) => Vessel.createFromRestResponse(params.collection_id, json))
-      .then((vesselItem) => {
-        NotificationActions.add(successfullyCreatedParameter);
-        user.vessels_count = user.vessels_count +1;
-        return vesselItem;
+    return VesselsFetcher.uploadAttachments(vessel)
+      .then(() => fetch('/api/v1/vessels', {
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify(params)
+      }))
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
       })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
+      .then((json) => {
+        const vessels = Array.isArray(json)
+          ? json.map((item) => Vessel.createFromRestResponse(params.collection_id, item))
+          : [Vessel.createFromRestResponse(params.collection_id, json)];
+        const newVesselIds = vessels.map((v) => v.id).filter(Boolean);
+        storeLatestVesselIds(newVesselIds);
+
+        vessels.forEach(() => NotificationActions.add(successfullyCreatedParameter));
+        user.vessels_count += vessels.length;
+
+        return vessels;
+      })
+      .catch((error) => {
+        console.error('Vessel creation failed:', error);
         NotificationActions.add(errorMessageParameter);
         return vessel;
       });
-
-    return promise;
   }
 
   static uploadAttachments(vessel) {
@@ -121,7 +132,7 @@ export default class VesselsFetcher {
   }
 
   static update(vesselItem) {
-    const params = extractVesselApiParameter(vesselItem);
+    const params = extractUpdateVesselApiParameter(vesselItem);
     const promise = VesselsFetcher.uploadAttachments(vesselItem)
       .then(() => fetch('/api/v1/vessels', {
         credentials: 'same-origin',
@@ -145,5 +156,11 @@ export default class VesselsFetcher {
         return vesselItem;
       });
     return promise;
+  }
+
+  static lastCreatedVesselIds = new Set();
+
+  static isValidVesselId(id) {
+    return this.lastCreatedVesselIds.has(id);
   }
 }
