@@ -10,7 +10,7 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import PropTypes from 'prop-types';
 
-const VesselItemEntry = ({ vesselItem }) => {
+function VesselItemEntry({ vesselItem }) {
   const showDetails = () => {
     const { currentCollection, isSync } = UIStore.getState();
     const { id, type } = vesselItem;
@@ -84,7 +84,7 @@ const VesselItemEntry = ({ vesselItem }) => {
       </Table>
     </div>
   );
-};
+}
 
 VesselItemEntry.propTypes = {
   vesselItem: PropTypes.shape({

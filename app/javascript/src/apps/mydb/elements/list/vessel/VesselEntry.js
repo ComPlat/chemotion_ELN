@@ -25,23 +25,19 @@ function VesselEntry({ vesselItems }) {
     ))
     : []);
 
-  const findThumbnailAttachment = (container) => {
-    if (!container || !container.children) return null;
+  const findThumbnailAttachment = (vessels) => {
+    const searchContainer = (container) => {
+      if (!container) return null;
 
-    for (const child of container.children) {
-      if (child.attachments?.length) {
-        const thumbnail = child.attachments.find((attachment) => attachment.preview);
-        if (thumbnail) return thumbnail;
-      }
-      const nestedThumbnail = findThumbnailAttachment(child);
-      if (nestedThumbnail) return nestedThumbnail;
-    }
-
-    return null;
+      const thumbnail = container.attachments?.find((attachment) => attachment.preview);
+      if (thumbnail) return thumbnail;
+      return container.children?.map(searchContainer).find(Boolean) || null;
+    };
+    return vessels.map((vessel) => searchContainer(vessel.container)).find(Boolean) || null;
   };
 
   const renderNameHeader = (firstVesselItem) => {
-    const thumbnail = findThumbnailAttachment(firstVesselItem.container);
+    const thumbnail = findThumbnailAttachment(vesselItems);
     const imgSrc = thumbnail ? thumbnail.preview : null;
 
     return (
@@ -50,12 +46,7 @@ function VesselEntry({ vesselItems }) {
           <img
             src={imgSrc}
             alt={firstVesselItem.vesselName || 'Vessel'}
-            className="vessel-header-image me-2 border rounded"
-            style={{
-              width: '100px',
-              height: '100px',
-              objectFit: 'cover',
-            }}
+            className="me-2 border rounded img-fluid"
           />
         ) : (
           <div className="me-2" />
@@ -102,7 +93,7 @@ function VesselEntry({ vesselItems }) {
       <Button
         variant="info"
         className={detailedInformation ? 'border border-primary' : ''}
-        size="sm"
+        size="xsm"
         onClick={(e) => {
           e.stopPropagation();
           setDetailedInformation(!detailedInformation);
@@ -130,7 +121,7 @@ function VesselEntry({ vesselItems }) {
         )}
       >
         <Button
-          size="sm"
+          size="xsm"
           onClick={(event) => {
             event.stopPropagation();
 
@@ -160,10 +151,10 @@ function VesselEntry({ vesselItems }) {
     if (!propertyValue) return null;
 
     return (
-      <div>
-        <div className="property-key floating">{propertyName}</div>
-        <div className="property-key-minus floating">-</div>
-        <div className="property-value">{propertyValue}</div>
+      <div className="ms-4 d-flex align-items-center">
+        <div className="flex-shrink-0">{propertyName}</div>
+        <div className="flex-shrink-0 text-center mx-1"> : </div>
+        <div className="flex-grow-1">{propertyValue}</div>
       </div>
     );
   };
@@ -188,11 +179,14 @@ VesselEntry.propTypes = {
   vesselItems: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
-      vesselName: PropTypes.string,
-      vesselType: PropTypes.string,
-      materialType: PropTypes.string,
-      volumeAmount: PropTypes.number,
-      volumeUnit: PropTypes.string,
+      vessel_template: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        details: PropTypes.string,
+        vessel_type: PropTypes.string,
+        material_type: PropTypes.string,
+        volume_amount: PropTypes.number,
+        volume_unit: PropTypes.string,
+      }).isRequired,
     })
   ).isRequired,
 };

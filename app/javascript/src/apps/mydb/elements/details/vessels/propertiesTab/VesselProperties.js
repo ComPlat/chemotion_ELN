@@ -1,6 +1,6 @@
 /* eslint-disable react/function-component-definition */
 import React, { useContext } from 'react';
-import { Accordion } from 'react-bootstrap';
+import { Accordion, Button } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -10,14 +10,25 @@ import VesselName from 'src/apps/mydb/elements/details/vessels/propertiesTab/Ves
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
   const vesselId = item.id;
-  const vesselItem = vesselDetailsStore.getVessel(vesselId);
+  const vesselFromStore = vesselDetailsStore.getVessel(vesselId);
+  const vesselItem = vesselFromStore ? JSON.parse(JSON.stringify(vesselFromStore)) : {};
+
+  const isCreateMode = vesselItem?.is_new || false;
+  const instances = isCreateMode
+    ? vesselDetailsStore.getInstances(vesselId)
+    : [
+      {
+        vesselInstanceName: vesselItem?.vesselInstanceName || '',
+        vesselInstanceDescription: vesselItem?.vesselInstanceDescription || '',
+        barCode: vesselItem?.barCode || '',
+        qrCode: vesselItem?.qrCode || '',
+      },
+    ];
 
   return (
     <Accordion className="vessel-properties" defaultActiveKey="common-properties">
       <Accordion.Item eventKey="common-properties">
-        <Accordion.Header>
-          Common vessel properties
-        </Accordion.Header>
+        <Accordion.Header>Common Vessel Properties</Accordion.Header>
         <Accordion.Body>
           <VesselName
             id={vesselId}
@@ -77,46 +88,73 @@ const VesselProperties = ({ item, readOnly }) => {
         </Accordion.Body>
       </Accordion.Item>
 
-      <Accordion.Item eventKey="specific-properties">
-        <Accordion.Header>
-          Item specific vessel properties
-        </Accordion.Header>
-        <Accordion.Body>
-          <VesselProperty
-            label="Vessel instance name"
-            value={vesselItem?.vesselInstanceName}
-            onChange={(e) => vesselDetailsStore.changeVesselInstanceName(vesselId, e.target.value)}
-            readOnly={readOnly}
-          />
-          <VesselProperty
-            label="Vessel instance description"
-            value={vesselItem?.vesselInstanceDescription}
-            onChange={(e) => vesselDetailsStore.changeVesselInstanceDescription(vesselId, e.target.value)}
-            readOnly={readOnly}
-          />
-          <VesselProperty
-            label="Barcode"
-            value={vesselItem?.barCode}
-            onChange={(e) => vesselDetailsStore.changeBarCode(vesselId, e.target.value)}
-            readOnly={readOnly}
-          />
-          <VesselProperty
-            label="QR Code"
-            value={vesselItem?.qrCode}
-            onChange={(e) => vesselDetailsStore.changeQrCode(vesselId, e.target.value)}
-            readOnly={readOnly}
-          />
-        </Accordion.Body>
-      </Accordion.Item>
+      {instances.map((instance, index) => (
+        <Accordion.Item eventKey={`instance-${index}`} key={index}>
+          <Accordion.Header>
+            Item Specific Properties
+            {index + 1}
+          </Accordion.Header>
+          <Accordion.Body>
+            <VesselProperty
+              label="Vessel Instance Name"
+              value={instance.vesselInstanceName}
+              onChange={(e) => (isCreateMode
+                ? vesselDetailsStore.updateInstance(vesselId, index, 'vesselInstanceName', e.target.value)
+                : vesselDetailsStore.changeVesselInstanceName(vesselId, e.target.value))}
+              readOnly={readOnly}
+            />
+            <VesselProperty
+              label="Vessel Instance Description"
+              value={instance.vesselInstanceDescription}
+              onChange={(e) => (isCreateMode
+                ? vesselDetailsStore.updateInstance(vesselId, index, 'vesselInstanceDescription', e.target.value)
+                : vesselDetailsStore.changeVesselInstanceDescription(vesselId, e.target.value))}
+              readOnly={readOnly}
+            />
+            <VesselProperty
+              label="Barcode"
+              value={instance.barCode}
+              onChange={(e) => (isCreateMode
+                ? vesselDetailsStore.updateInstance(vesselId, index, 'barCode', e.target.value)
+                : vesselDetailsStore.changeBarCode(vesselId, e.target.value))}
+              readOnly={readOnly}
+            />
+            <VesselProperty
+              label="QR Code"
+              value={instance.qrCode}
+              onChange={(e) => (isCreateMode
+                ? vesselDetailsStore.updateInstance(vesselId, index, 'qrCode', e.target.value)
+                : vesselDetailsStore.changeQrCode(vesselId, e.target.value))}
+              readOnly={readOnly}
+            />
+            {isCreateMode && (
+              <Button
+                variant="danger"
+                size="xsm"
+                className="mt-2"
+                onClick={() => vesselDetailsStore.removeInstance(vesselId, index)}
+                disabled={instances.length === 1}
+              >
+                Remove Instance
+              </Button>
+            )}
+          </Accordion.Body>
+        </Accordion.Item>
+      ))}
+      {isCreateMode && (
+        <div className="mt-3 ms-3">
+          <Button variant="primary" size="xsm" onClick={() => vesselDetailsStore.addInstance(vesselId)}>
+            Add vessel instance
+          </Button>
+        </div>
+      )}
     </Accordion>
   );
 };
 
 VesselProperties.propTypes = {
+  item: PropTypes.object.isRequired,
   readOnly: PropTypes.bool.isRequired,
-  item: PropTypes.shape({
-    id: PropTypes.string.isRequired
-  }).isRequired
 };
 
 export default observer(VesselProperties);

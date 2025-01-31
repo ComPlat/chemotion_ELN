@@ -28,7 +28,7 @@ export default class Vessel extends Element {
     vessel.barCode = response.bar_code;
     vessel.qrCode = response.qr_code;
     vessel.id = response.id || '';
-    Vessel.tag = response.tag;
+    vessel.tag = response.tag;
 
     vessel.vesselTemplateId = response?.vessel_template?.id || '';
     vessel.vesselName = response?.vessel_template?.name || '';
@@ -40,15 +40,13 @@ export default class Vessel extends Element {
     vessel.weightAmount = response?.vessel_template?.weight_amount || 0;
     vessel.weightUnit = response?.vessel_template?.weight_unit || '';
     vessel.details = response?.vessel_template?.details || '';
-    vessel.is_new = false;
-
-    vessel.container = response.container || { children: [] };
+    vessel.is_new = response?.is_new || false;
+    vessel.instances = response.is_new ? response.instances || [] : [];
 
     vessel.container = response.container || { children: [] };
     if (!Array.isArray(vessel.container.children)) {
       vessel.container.children = [];
     }
-  
 
     return vessel;
   }
@@ -79,5 +77,6 @@ export default class Vessel extends Element {
     this.vesselInstanceDescription = mobx.vesselInstanceDescription;
     this.qrCode = mobx.qrCode;
     this.barCode = mobx.barCode;
+    this.instances = mobx.instances.map((instance) => ({ ...instance }));
   }
 }
