@@ -10,13 +10,13 @@ describe('ReactionVariationsComponents', async () => {
       const cellData = { value: 1.2345, unit: 'Second(s)' };
       const colDef = { entryDefs: { displayUnit: 'Minute(s)' } };
 
-      expect(PropertyFormatter({ value: cellData, colDef })).toEqual('0.02057');
+      expect(PropertyFormatter({ value: cellData, colDef })).toEqual(0.02057);
     });
     it('MaterialFormatter returns number string with correct precision', () => {
       const cellData = { amount: { value: 1.2345, unit: 'mol' } };
       const colDef = { entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
 
-      expect(MaterialFormatter({ value: cellData, colDef })).toEqual('1235');
+      expect(MaterialFormatter({ value: cellData, colDef })).toEqual(1235);
     });
   });
   describe('EquivalentParser', async () => {

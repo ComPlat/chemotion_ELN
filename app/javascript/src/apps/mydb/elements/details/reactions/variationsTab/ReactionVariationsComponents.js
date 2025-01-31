@@ -77,7 +77,7 @@ function PropertyFormatter({ value: cellData, colDef }) {
   const { displayUnit } = colDef.entryDefs;
   const valueInDisplayUnit = convertUnit(Number(cellData.value), cellData.unit, displayUnit);
 
-  return `${Number(valueInDisplayUnit).toPrecision(4)}`;
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
 }
 
 function PropertyParser({
@@ -102,7 +102,7 @@ function MaterialFormatter({ value: cellData, colDef }) {
     displayUnit
   );
 
-  return `${Number(valueInDisplayUnit).toPrecision(4)}`;
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
 }
 
 function MaterialParser({

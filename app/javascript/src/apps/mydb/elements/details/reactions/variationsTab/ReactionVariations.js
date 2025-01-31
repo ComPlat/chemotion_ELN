@@ -126,13 +126,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     equivalent: {
       extendsDataType: 'object',
       baseDataType: 'object',
-      valueFormatter: (params) => `${Number(params.value.equivalent.value).toPrecision(4)}`,
+      valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(4)),
       valueParser: EquivalentParser,
     },
     yield: {
       extendsDataType: 'object',
       baseDataType: 'object',
-      valueFormatter: (params) => `${Number(params.value.yield.value).toPrecision(4)}`,
+      valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(4)),
     },
     gas: {
       extendsDataType: 'object',
