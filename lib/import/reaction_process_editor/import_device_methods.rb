@@ -59,7 +59,7 @@ module Import
           active: true,
           detectors: detectors(method_csv['Detectors']),
           mobile_phase: mobile_phase_options(method_csv['Solvent']),
-          stationary_phase: stationary_phase_options(method_csv['Stationary Phase']),
+          stationary_phase: [method_csv['Stationary Phase']],
           default_inject_volume: { value: method_csv['Default Inj. Vol.'], unit: 'ml' },
           description: method_csv['Description'],
           steps: steps(method_csv),
@@ -84,8 +84,7 @@ module Import
         detector_name = name_and_defaults[0].strip
         analysis_default_values = name_and_defaults[1]
 
-        # TODO: Remove debug_source attribute required for debug examinations only.
-        options = { label: detector_name, value: ontology_id(detector_name), debug_source: 'ImportDeviceMethods.rb' }
+        options = { label: detector_name, value: ontology_id(detector_name) }
 
         return options if analysis_default_values.blank?
 
@@ -120,7 +119,7 @@ module Import
         return [] unless ontology_id
 
         # TODO: A detector might have multiple metrics /metric_names (therefore we return an array).
-        # Current files have only one. Adapt CSV parsing once/if File format changes. cbuggle, 14.10.2024.
+        # Current files have only one. Adapt CSV parsing once/if file format ever changes. cbuggle, 14.10.2024.
         [{
           label: label,
           data_type: data_type,
@@ -130,20 +129,7 @@ module Import
       end
 
       def mobile_phase_options(mobile_phase)
-        mobile_phase.split('; ').map do |mp|
-          res = mp.match(REGEX_NAMES_AND_BRACKET_VALUES)
-
-          if res[2].present?
-            solute = res[2].split('% ')
-            "#{ontology_label(res[1])} (#{solute[0]}% #{ontology_label(solute[1])})"
-          else
-            ontology_label(res[1].tr(' ()', ''))
-          end
-        end
-      end
-
-      def stationary_phase_options(phase)
-        [{ label: phase, value: phase }]
+        mobile_phase.split(';').map(&:strip)
       end
 
       def stationary_phase_analysis_defaults(value)
@@ -159,10 +145,6 @@ module Import
         ontology_id = File.basename(filename, '.csv').tr('_', ':')
 
         ::ReactionProcessEditor::Ontology.find_by(ontology_id: ontology_id)
-      end
-
-      def ontology_label(ontology_id)
-        ::ReactionProcessEditor::Ontology.find_by(ontology_id: ontology_id)&.label
       end
 
       def device_methods_files
