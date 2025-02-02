@@ -1,4 +1,4 @@
-Method Name;Detectors;Solvent;Stationary Phase;Default  Inj. Vol.;Description;Steps
+Method Name;Detectors;Solvent;Stationary Phase;Default Inj. Vol.;Description;Steps
 ChemASAP_Analyt_LC-MS_ACN-H2O_gra-5-99-7min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);CHEBI:38472 (), CHEBI:15377 (0,1% CHEBI:30751);Interchim, US5C18HQ-250/040, C18 5um 250x4mm;5;ACN/H2O with 0,1% Formic Acid, Gradient 5% -> 99%;
 ChemASAP_Analyt_LC-MS_ACN-H2O_iso-75-15min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);CHEBI:38472 (), CHEBI:15377 (0,1% CHEBI:30751);Interchim, US5C18HQ-250/040, C18 5um 250x4mm;5;ACN/H2O with 0,1% Formic Acid, Isocratic 75% ACN;
 ChemASAP_Analyt_LC-MS_THF-MeOH_gra-5-99-7min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);CHEBI:26911 (), CHEBI:17790 (0,1% CHEBI:30751);Interchim, US5C18HQ-250/040, C18 5um 250x4mm;5;THF/MeOH with 0,1% Formic Acid, Gradient 10% -> 95%;
