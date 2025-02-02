@@ -14,6 +14,17 @@ module Entities
           end
         end
 
+        def pseudo_ontology_option_for(base_ontology:, role:, value:)
+          # Some ontologies (e.g. devices) define specific fields as preselection when the selected.
+          # Therefore they needs to resemble an actual Ontology, i.e. be "active", have a proper ontology_id,
+          # and have their "role" defined (with no actual dependencies).
+          option_for(value).merge(
+            { active: base_ontology&.active,
+              ontology_id: value,
+              roles: { "#{role}": [{}] } },
+          )
+        end
+
         def titlecase_options_for(values)
           Array(values).map do |string|
             { value: string.to_s.strip, label: string.to_s.strip.titlecase }
