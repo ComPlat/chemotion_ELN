@@ -556,7 +556,10 @@ module ReportHelpers
         # deleted_at: ['wp.deleted_at', nil, 10],
         molecule_name: ['mn."name"', '"molecule name"', 1],
         molarity_value: ['s."molarity_value"', '"molarity_value"', 0],
+        molarity_unit: ['s."molarity_unit"', '"molarity_unit"', 0],
         dry_solvent: ['s."dry_solvent"', '"dry_solvent"', 0],
+        flash_point: ['s."flash_point"', '"flash point"', 0],
+        refractive_index: ['s."refractive_index"', '"refractive index"', 0],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -635,14 +638,18 @@ module ReportHelpers
     }.freeze
 
   def custom_column_query(table, col, selection, user_id, attrs)
-    if col == 'user_labels'
-      selection << "labels_by_user_sample(#{user_id}, s_id) as user_labels"
-    elsif col == 'literature'
-      selection << "literatures_by_element('Sample', s_id) as literatures"
-    elsif col == 'cas'
-      selection << "s.xref->>'cas' as cas"
+    column_map = {
+      'user_labels' => "labels_by_user_sample(#{user_id}, s_id) as user_labels",
+      'literature' => "literatures_by_element('Sample', s_id) as literatures",
+      'cas' => "s.xref->>'cas' as cas",
+      'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
+      'flash_point' => "s.xref->>'flash_point' as flash_point",
+    }
+
+    if column_map[col]
+      selection << column_map[col]
     elsif (s = attrs[table][col.to_sym])
-      selection << ("#{s[1] && s[0]} as #{s[1] || s[0]}")
+      selection << "#{s[1] && s[0]} as #{s[1] || s[0]}"
     end
   end
 

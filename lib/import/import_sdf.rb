@@ -50,6 +50,8 @@ class Import::ImportSdf < Import::ImportSamples
       cas: { field: 'cas', displayName: 'Cas' },
       solvent: { field: 'solvent', displayName: 'Solvent' },
       dry_solvent: { field: 'dry_solvent', displayName: 'Dry Solvent' },
+      refractive_index: { field: 'refractive_index', displayName: 'Refractive index' },
+      flash_point: { field: 'flash_point', displayName: 'Flash point' },
     }
   end
 
@@ -175,12 +177,21 @@ class Import::ImportSdf < Import::ImportSamples
             sample['description'] = row['description'] if row['description'].present?
             sample['location'] = row['location'] if row['location'].present?
             sample['external_label'] = row['external_label'] if row['external_label'].present?
-            sample['density'] = row['density'] if row['density'].present?
             sample['name'] = row['name'] if row['name'].present?
             sample['xref']['cas'] = row['cas'] if row['cas'].present?
             sample['short_label'] = row['short_label'] if row['short_label'].present?
-            sample['molarity_value'] = row['molarity']&.scan(/\d+\.*\d*/)[0] if row['molarity'].present?
             sample['dry_solvent'] = row['dry_solvent'] if row['dry_solvent'].present?
+            sample['purity'] = row['purity'] if row['purity'].present?
+            sample['density'] = row['density'].to_f if row['density'].present? && row['density'].match?(DENSITY_UNIT)
+            sample['xref']['refractive_index'] = row['refractive_index'] if row['refractive_index'].present?
+            if row['flash_point'].present?
+              flash_point = to_value_unit_format(row['flash_point'], 'flash_point')
+              handle_flash_point(sample, flash_point)
+            end
+            if row['molarity'].present? && row['molarity'].match?(MOLARITY_UNIT) && row['density'].blank?
+              molarity = to_value_unit_format(row['molarity'], 'molarity')
+              handle_molarity(sample, molarity)
+            end
             properties = process_molfile_opt_data(molfile)
             sample.validate_stereo('abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'])
             sample.target_amount_value = properties['TARGET_AMOUNT'] unless properties['TARGET_AMOUNT'].blank?
