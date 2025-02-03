@@ -68,4 +68,27 @@ RSpec.describe Molecule, type: :model do
       expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).not_to be_nil
     end
   end
+
+  describe 'find or create molecule using smiles' do
+    context 'when smiles are faulty' do
+      let(:faulty_smile01) { 'C1CCCCN1(C)[Al]([H])(I)(I)N1(C)CCCCC1' }
+
+      it 'RDKitChem raises a MolSanitizeException for invalid SMILES' do
+        expect { RDKitChem::RWMol.mol_from_smiles(faulty_smile01) }.to raise_error do |error|
+          expect(error.class.name).to eq('MolSanitizeException')
+        end
+      end
+    end
+
+    context 'when molfile is invalid' do
+      let(:invalid_molfile) { Rails.root.join('spec/fixtures/structures/invalid_01.mol').read }
+      let(:faulty_smiles02) { Chemotion::OpenBabelService.get_smiles_from_molfile(invalid_molfile) }
+
+      it 'RDKitChem raises a MolSanitizeException for invalid molfile' do
+        expect { RDKitChem::RWMol.mol_from_smiles(faulty_smiles02) }.to raise_error do |error|
+          expect(error.class.name).to eq('MolSanitizeException')
+        end
+      end
+    end
+  end
 end

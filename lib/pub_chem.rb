@@ -80,7 +80,10 @@ module PubChem
     @auth = { username: '', password: '' }
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
     encoded_smiles = URI.encode(smiles, '[]/()+-.@#=\\')
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/smiles/' + encoded_smiles + '/record/SDF', options).body
+    response = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/smiles/' + encoded_smiles + '/record/SDF', options)
+    return nil unless response.success?
+
+    response.body
   rescue StandardError => e
     Rails.logger.error ["with smiles: #{smiles}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
