@@ -283,6 +283,13 @@ module Import
                      # Create dummy only for decoupled samples with no structure data
                      Molecule.find_or_create_dummy
                    end
+
+        if molecule.nil?
+          inchikey = @data.fetch('Molecule').fetch(fields.fetch('molecule_id')).fetch('inchikey')
+          molecule = Molecule.find_or_create_by!(inchikey: inchikey)
+          molecule.molfile = molfile
+        end
+
         unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
           molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
         end
