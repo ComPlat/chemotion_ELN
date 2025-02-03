@@ -12,6 +12,7 @@ class TextTemplateStore {
       screen: Map(),
       wellplate: Map(),
       researchPlan: Map(),
+      deviceDescription: Map(),
       reactionDescription: Map(),
       predefinedTemplateNames: OrderedSet(),
       fetchedPredefinedTemplates: Map()

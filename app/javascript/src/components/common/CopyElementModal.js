@@ -9,16 +9,16 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const Notification = props =>
-  (
-    NotificationActions.add({
-      title: props.title,
-      message: props.msg,
-      level: props.lvl,
-      position: 'tc',
-      dismissible: 'button',
-      uid: uuid.v4()
-    })
-  );
+(
+  NotificationActions.add({
+    title: props.title,
+    message: props.msg,
+    level: props.lvl,
+    position: 'tc',
+    dismissible: 'button',
+    uid: uuid.v4()
+  })
+);
 
 export default class CopyElementModal extends React.Component {
   constructor(props) {
@@ -59,6 +59,8 @@ export default class CopyElementModal extends React.Component {
       ElementActions.copyReaction(element, selectedCol);
     } else if (element.type === 'research_plan') {
       ElementActions.copyResearchPlan(element, selectedCol);
+    } else if (element.type === 'device_description') {
+      ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol, 'copy_device_description');
     } else {
       ElementActions.copyElement(element, selectedCol);
     }
