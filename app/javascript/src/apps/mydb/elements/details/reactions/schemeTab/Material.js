@@ -599,7 +599,7 @@ class Material extends Component {
     const solVol = vol.slice(0, -2);
     const mol = molUnit ? `${molUnit}mol, ` : '';
     const mlt = m.molarity_value === 0.0 ?
-      '' : `${validDigit(m.molarity_value, 3)}${m.molarity_unit}, `;
+      '' : `${validDigit(m.molarity_value, 3)} ${m.molarity_unit}, `;
     const eqv = `${validDigit(m.equivalent, 3)}`;
     const yld = `${Math.round(m.equivalent * 100)}%`;
 
