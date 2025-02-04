@@ -52,10 +52,14 @@ module OrdKit
               device: ontology_ord(workup['device']),
               detectors: detectors,
               method: workup['method'],
-              mobile_phase: workup['mobile_phase'],
+              mobile_phase: mobile_phase_ontologies(workup['mobile_phase']),
               stationary_phase_temperature: stationary_phase_temperature,
               volume: volume,
             }
+          end
+
+          def mobile_phase_ontologies(ontology_ids)
+            ontology_ids&.map { |ontology_id| ontology_ord(ontology_id) }
           end
 
           def ontology_ord(ontology_id)
