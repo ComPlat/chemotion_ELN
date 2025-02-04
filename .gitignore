@@ -34,7 +34,7 @@
 .env.test
 .dockerenv
 /.devcontainer/Dockerfile*
-/.devcontainer/docker-compose*
+/.devcontainer/docker-compose.dev*
 
 /config/matrices.json
 /config/mailcollector.yml
