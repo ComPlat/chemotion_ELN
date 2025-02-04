@@ -171,20 +171,22 @@ module Chemotion
       chem_properties_names.map.with_index do |string, index|
         hash_lookup = { 'mp' => 'melting_point', 'bp' => 'boiling_point' }
         property_name = hash_lookup[string] || string
-        chemical_properties[property_name] = chem_properties_values[index]
+        cleaned_value = CGI.unescapeHTML(chem_properties_values[index]) if chem_properties_values[index]
+        cleaned_value = Nokogiri::HTML.fragment(cleaned_value).text.strip if cleaned_value
+        chemical_properties[property_name] = cleaned_value
       end
       chemical_properties
     end
 
     def self.chemical_properties_merck(product_link)
       merck_req = HTTParty.get(product_link, request_options)
-      search_string = 'MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-md-9'
-      properties = Nokogiri::HTML.parse(merck_req.body).xpath("//*[contains(@class, '#{search_string}')]")
-      chem_properties_names = names_properties_merck(properties)
-      chem_properties_values = properties.search('p.MuiTypography-root')
-                                         .map(&:text).map { |str| str.gsub('(lit.)', '') }
+      json_data = Nokogiri::HTML.parse(merck_req.body).at_xpath("//script[@type='application/ld+json']")&.children&.text
+      properties = JSON.parse(json_data)['additionalProperty'] if json_data
+      chem_properties_names = properties.pluck('name')
+      chem_properties_values = properties.map { |property| property['value'].join(', ') }
+      chem_properties_values.compact_blank!
       chem_properties_merck(chem_properties_names, chem_properties_values)
-    rescue StandardError
+    rescue StandardError => e
       'Could not find additional chemical properties'
     end
 
