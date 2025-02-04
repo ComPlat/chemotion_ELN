@@ -33,8 +33,18 @@ export default class ContainerCompareAnalyses extends Component {
 
   componentDidMount() {
     TextTemplateStore.listen(this.handleTemplateChange);
-    const { menuItems, selectedFiles } = this.buildSelectAnalysesMenu();
-    this.setState({ menuItems, selectedFilesIds: selectedFiles});
+    
+    const { menuItems } = this.buildSelectAnalysesMenu();
+    const { container } = this.props;
+    const { analyses_compared } = container.extended_metadata || {};
+    const selectedFiles = analyses_compared 
+      ? analyses_compared.map((item) => item.file.id)
+      : [];
+  
+    this.setState({ 
+      menuItems, 
+      selectedFilesIds: selectedFiles
+    });
   }
 
   // eslint-disable-next-line camelcase
@@ -143,7 +153,7 @@ export default class ContainerCompareAnalyses extends Component {
               name='status'
               multi={false}
               options={confirmOptions}
-              value={selectedStatus}
+              value={confirmOptions.find(opt => opt.value === this.state.container.extended_metadata.status) || null}
               disabled={readOnly || disabled}
               // eslint-disable-next-line react/jsx-no-bind
               onChange={this.handleInputChange.bind(this, 'status')}
