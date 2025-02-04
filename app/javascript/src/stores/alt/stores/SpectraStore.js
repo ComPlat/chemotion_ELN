@@ -123,8 +123,17 @@ class SpectraStore {
     });
   }
 
-  handleLoadSpectraCompare({ fetchedFiles, spcInfos }) {
+  handleLoadSpectraCompare(payload) {
+    if (!payload || !payload.fetchedFiles) {
+      this.setState({
+        spectraCompare: [],
+        fetched: true,
+      });
+      return;
+    }
+    const { fetchedFiles } = payload;
     const spcMetas = this.decodeSpectra(fetchedFiles);
+    
     this.setState({
       spectraCompare: spcMetas,
       fetched: true,

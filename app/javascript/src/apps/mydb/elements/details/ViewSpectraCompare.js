@@ -51,7 +51,9 @@ class ViewSpectraCompare extends React.Component {
     container.extended_metadata.analyses_compared = selectedData;
     handleSampleChanged(elementData);
     const spcCompareInfo = BuildSpectraComparedInfos(elementData, container);
-    SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
+    if (spcCompareInfo) {
+      SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
+    }
   }
 
   closeOp() {
@@ -170,6 +172,7 @@ class ViewSpectraCompare extends React.Component {
             value={selectedFiles}
             onChange={(value, label, extra) => this.handleChangeSelectAnalyses(menuItems, value, extra)}
             maxTagCount={1}
+            getPopupContainer={(triggerNode) => triggerNode.parentNode}
           />
         </div>
         <Button
