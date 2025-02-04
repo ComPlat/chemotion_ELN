@@ -53,6 +53,18 @@
       "label": "mocha - unit tests current file",
       "type": "shell",
       "command": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --watch --exit --require '@babel/register' './spec/javascripts/helper/setup.js' '${file}'"
+    },
+    {
+      "label": "Dev Docker Compose Up",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "-f", "docker-compose.dev.yml", "--env-file", ".dockerenv", "up", "-d"]
+    },
+    {
+      "label": "Dev Docker Compose Down",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "-f", "docker-compose.dev.yml", "--env-file", ".dockerenv", "down", "--remove-orphans"]
     }
   ]
 }
