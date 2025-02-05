@@ -58,6 +58,26 @@ export default class ContainerCompareAnalyses extends Component {
     TextTemplateStore.unlisten(this.handleTemplateChange);
   }
 
+  componentDidUpdate(prevProps) {  
+    if (prevProps.container !== this.props.container) {
+      const { menuItems } = this.buildSelectAnalysesMenu();
+      const { analyses_compared } = this.props.container.extended_metadata || {};
+      const selectedFiles = analyses_compared ? analyses_compared.map((item) => item.file.id) : [];
+
+      let selectedLayout = analyses_compared.length > 0 ? analyses_compared[0].layout : null;
+      let filteredMenuItems = menuItems;
+      if (selectedLayout) {
+        filteredMenuItems = menuItems.filter(item => item.title === selectedLayout);
+      }
+
+      this.setState({
+        container: this.props.container,
+        menuItems: filteredMenuItems,
+        selectedFilesIds: selectedFiles
+      });
+    }
+  }
+
   onChange(container) {
     this.props.onChange(container);
   }
@@ -105,7 +125,16 @@ export default class ContainerCompareAnalyses extends Component {
     } else {
       newSelectedFilesIds = [...selectedFiles];
     }
-    this.setState({selectedFilesIds: newSelectedFilesIds});
+    let selectedLayout = selectedData.length > 0 ? selectedData[0].layout : null;
+    let { menuItems } = this.buildSelectAnalysesMenu();
+    if (selectedLayout) {
+      menuItems = menuItems.filter(item => item.title === selectedLayout);
+    }
+
+    this.setState({
+        selectedFilesIds: newSelectedFilesIds,
+        menuItems
+    });
     container.extended_metadata.analyses_compared = selectedData;
     this.onChange(container);
   }
@@ -169,6 +198,7 @@ export default class ContainerCompareAnalyses extends Component {
                 treeCheckable={true}
                 value={selectedFilesIds}
                 treeData={menuItems}
+                getPopupContainer={triggerNode => triggerNode.parentNode}
                 onChange={this.handleChangeSelectAnalyses.bind(this, menuItems)}
             />
           </div>
