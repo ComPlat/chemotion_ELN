@@ -39,9 +39,29 @@ class ViewSpectraCompare extends React.Component {
     SpectraStore.unlisten(this.onChange);
   }
 
+  filterMenuItemsBySelectedLayout(container, menuItems) {
+    if (
+      container &&
+      container.extended_metadata &&
+      container.extended_metadata.analyses_compared &&
+      container.extended_metadata.analyses_compared.length > 0
+    ) {
+      const selectedLayout = container.extended_metadata.analyses_compared[0]?.layout ?? null;
+      if (selectedLayout) {
+        return menuItems.filter(item => item.title === selectedLayout);
+      }
+    }
+    return menuItems;
+  }
+
   onChange(newState) {
-    const origState = this.state;
-    this.setState({ ...origState, ...newState });
+    let { menuItems } = BuildSpectraComparedSelection(this.props.elementData);
+    menuItems = this.filterMenuItemsBySelectedLayout(newState.container, menuItems);
+  
+    this.setState({
+      ...newState,
+      menuItems
+    });
   }
 
   handleChangeSelectAnalyses(treeData, selectedFiles, info) {
@@ -54,6 +74,10 @@ class ViewSpectraCompare extends React.Component {
     if (spcCompareInfo) {
       SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
     }
+
+    let { menuItems } = BuildSpectraComparedSelection(elementData);
+    menuItems = this.filterMenuItemsBySelectedLayout(container, menuItems);
+     this.setState({ menuItems });
   }
 
   closeOp() {
@@ -143,8 +167,7 @@ class ViewSpectraCompare extends React.Component {
   }
 
   renderTitle() {
-    const { elementData } = this.props;
-    const { menuItems } = BuildSpectraComparedSelection(elementData);
+    const { menuItems } = this.state;
     const { container } = this.state;
     let modalTitle = '';
     let selectedFiles = [];
