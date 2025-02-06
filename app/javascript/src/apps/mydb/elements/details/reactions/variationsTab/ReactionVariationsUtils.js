@@ -2,7 +2,9 @@ import { set, cloneDeep } from 'lodash';
 import { convertTemperature, convertDuration } from 'src/models/Reaction';
 import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
-  updateVariationsRowOnReferenceMaterialChange, getMaterialData
+  updateVariationsRowOnReferenceMaterialChange,
+  updateVariationsRowOnCatalystMaterialChange,
+  getMaterialData
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
@@ -190,8 +192,8 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   mass              | amount^, equivalent^, concentration^, temperature^
   amount            | mass^, equivalent^, concentration^, temperature^
   yield             | mass^, amount^x, concentration^, temperature^, reference material's mass~, reference material's amount~
-  turnoverNumber    | concentration^, temperature^
-  turnoverFrequency | concentration^, temperature^, duration^
+  turnoverNumber    | concentration^, temperature^, catalyst material's amount~
+  turnoverFrequency | concentration^, temperature^, duration^, turnoverNumber^, catalyst material's amount~
 
   ^: handled in cell parsers (changes within single material)
   ~: handled here (row-wide changes across materials)
@@ -201,6 +203,9 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   set(updatedRow, field, value);
   if (value.aux?.isReference) {
     updatedRow = updateVariationsRowOnReferenceMaterialChange(updatedRow, reactionHasPolymers);
+  }
+  if (value.aux?.gasType === 'catalyst') {
+    updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow, value.amount.value);
   }
 
   return updatedRow;

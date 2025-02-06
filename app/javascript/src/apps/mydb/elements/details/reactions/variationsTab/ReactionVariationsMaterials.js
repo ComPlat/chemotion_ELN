@@ -1,10 +1,11 @@
 import { get, cloneDeep } from 'lodash';
 import {
-  materialTypes, getStandardUnits, getCellDataType, updateColumnDefinitions, getStandardValue
+  materialTypes, getStandardUnits, getCellDataType, updateColumnDefinitions, getStandardValue, convertUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   MaterialOverlay, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import { calculateTON } from 'src/utilities/UnitsConversion';
 
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
@@ -321,6 +322,30 @@ function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) 
   return updatedRow;
 }
 
+function updateVariationsRowOnCatalystMaterialChange(row, catalystMaterialAmount) {
+  const updatedRow = cloneDeep(row);
+
+  Object.values(updatedRow.products).forEach((productMaterial) => {
+    if (productMaterial.aux.gasType === 'gas') {
+      const updatedTurnoverNumber = calculateTON(
+        productMaterial.amount.value,
+        catalystMaterialAmount,
+      );
+      const durationInHours = convertUnit(
+        productMaterial.duration.value,
+        productMaterial.duration.unit,
+        'Hour(s)'
+      );
+      const updatedTurnoverFrequency = updatedTurnoverNumber / (durationInHours || 1);
+
+      productMaterial.turnoverNumber.value = updatedTurnoverNumber;
+      productMaterial.turnoverFrequency.value = updatedTurnoverFrequency;
+    }
+  });
+
+  return updatedRow;
+}
+
 export {
   getMaterialColumnGroupChild,
   getReactionMaterials,
@@ -330,6 +355,7 @@ export {
   updateColumnDefinitionsMaterials,
   updateColumnDefinitionsMaterialTypes,
   updateVariationsRowOnReferenceMaterialChange,
+  updateVariationsRowOnCatalystMaterialChange,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
   updateVariationsGasTypes,

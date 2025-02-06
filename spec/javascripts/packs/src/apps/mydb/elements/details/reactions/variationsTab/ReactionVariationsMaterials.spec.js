@@ -2,7 +2,7 @@ import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
-  updateColumnDefinitionsMaterials,
+  updateColumnDefinitionsMaterials, updateVariationsRowOnCatalystMaterialChange,
   getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes,
   getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
@@ -217,5 +217,20 @@ describe('ReactionVariationsMaterials', () => {
     };
     const params = { colDef, data };
     expect(cellIsEditable(params)).toBe(false);
+  });
+  it("updates turnoverNumber and turnoverFrequency when catalyst material's amount changes", async () => {
+    const reaction = await setUpGaseousReaction();
+    const productID = reaction.products[0].id;
+    const variationsRow = reaction.variations[0];
+    variationsRow.products[productID].duration.value = 1;
+    variationsRow.products[productID].amount.value = 1;
+
+    expect(variationsRow.products[productID].turnoverNumber.value).toBe(1);
+    expect(variationsRow.products[productID].turnoverFrequency.value).toBe(1);
+
+    const updatedVariationsRow = updateVariationsRowOnCatalystMaterialChange(variationsRow, 2);
+
+    expect(updatedVariationsRow.products[productID].turnoverNumber.value).toBe(0.5);
+    expect(updatedVariationsRow.products[productID].turnoverFrequency.value).toBe(1800);
   });
 });
