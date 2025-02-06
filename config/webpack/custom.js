@@ -16,6 +16,9 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       'process.version': JSON.stringify(process.version),
+      'process.env.HEADLESS_REACTION_SVG': JSON.stringify(
+        process.env.HEADLESS_REACTION_SVG
+      ),
       'process.env.SENTRY_FRONTEND_DSN': JSON.stringify(
         process.env.SENTRY_FRONTEND_DSN
       ),
