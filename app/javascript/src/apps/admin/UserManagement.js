@@ -416,7 +416,7 @@ export default class UserManagement extends React.Component {
       last_name: this.u_lastname.value.trim(),
       name_abbreviation: this.u_abbr.value.trim(),
       type: this.u_type.value,
-      available_space: this.u_avail.value === '' ? 0 : Math.round(this.u_avail.value) * 1024 * 1024
+      allocated_space: this.u_avail.value === '' ? 0 : Math.round(this.u_avail.value) * 1024 * 1024
     })
       .then((result) => {
         if (result.error) {
@@ -1021,14 +1021,14 @@ export default class UserManagement extends React.Component {
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAvail">
                     <Form.Label column sm="3" className="fs-6">
-                      Available Space (MB):
+                      Allocated Space (MB):
                     </Form.Label>
                     <Col sm="7">
                       <Form.Control
                         type="number"
                         min="1"
                         name="u_avail"
-                        defaultValue={user.available_space === 0 ? '' : user.available_space / 1024 / 1024}
+                        defaultValue={user.allocated_space === 0 ? '' : user.allocated_space / 1024 / 1024}
                         ref={(ref) => { this.u_avail = ref; }}
                         className="fs-6"
                       />
@@ -1505,8 +1505,8 @@ export default class UserManagement extends React.Component {
           {g.type}
         </td>
         <td className="py-3">
-          {g.available_space === 0 ? ''
-            : `${Math.round((g.used_space / g.available_space) * 100)}% of ${g.available_space / 1024 / 1024} MB`}
+          {g.allocated_space === 0 ? ''
+            : `${Math.round((g.used_space / g.allocated_space) * 100)}% of ${g.allocated_space / 1024 / 1024} MB`}
         </td>
         <td className="py-3">
           {g.current_sign_in_at}

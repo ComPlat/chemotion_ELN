@@ -110,7 +110,7 @@ module Chemotion
             optional :last_name, type: String, desc: 'user last_name'
             optional :name_abbreviation, type: String, desc: 'user name name_abbreviation'
             optional :type, type: String, desc: 'user type'
-            optional :available_space, type: Integer, desc: 'user available_space'
+            optional :allocated_space, type: Integer, desc: 'user allocated_space'
             optional :account_active, type: Boolean, desc: '(in)activate or activate user account'
             # special params
             optional :enable, type: Boolean, desc: '(un)lock user account'

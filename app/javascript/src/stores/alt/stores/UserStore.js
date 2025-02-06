@@ -120,8 +120,8 @@ class UserStore {
     const totalSize = filteredAttachments.filter((attachment) => attachment.is_new && !attachment.is_deleted)
       .reduce((acc, attachment) => acc + attachment.filesize, 0);
     const { currentUser } = this.state;
-    return currentUser !== null && currentUser.available_space !== 0
-      && totalSize > (currentUser.available_space - currentUser.used_space);
+    return currentUser !== null && currentUser.allocated_space !== 0
+      && totalSize > (currentUser.allocated_space - currentUser.used_space);
   }
 }
 

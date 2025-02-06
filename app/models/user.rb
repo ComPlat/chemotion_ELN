@@ -427,15 +427,15 @@ class User < ApplicationRecord
     return true if value == default_disk_space
 
     find_each do |user|
-      user.update(available_space: [user.available_space, value].max)
+      user.update(allocated_space: [user.allocated_space, value].max)
     end
-    Admin.first&.update(available_space: value)
+    Admin.first&.update(allocated_space: value)
   end
 
   def self.default_disk_space
     return 0 if Admin.first.nil?
 
-    Admin.first.available_space
+    Admin.first.allocated_space
   end
 
   private
@@ -465,7 +465,7 @@ class User < ApplicationRecord
   end
 
   def set_default_avail_space
-    self.available_space = User.default_disk_space
+    self.allocated_space = User.default_disk_space
     save!
   end
 
@@ -500,7 +500,7 @@ class Group < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins, through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
-  around_save :update_available_space
+  around_save :update_allocated_space
   before_destroy :remove_from_matrices
 
   def administrated_by?(user)
@@ -514,14 +514,14 @@ class Group < User
     users.ids
   end
 
-  def update_available_space
-    return yield unless available_space_changed?
+  def update_allocated_space
+    return yield unless allocated_space_changed?
 
     yield
     users.each do |user|
-      next if user.available_space >= available_space
+      next if user.allocated_space >= allocated_space
 
-      user.update(available_space: available_space)
+      user.update(allocated_space: allocated_space)
     end
   end
 end

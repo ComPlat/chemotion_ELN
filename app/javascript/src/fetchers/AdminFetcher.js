@@ -24,7 +24,7 @@ export default class AdminFetcher {
       });
   }
 
-  static getAvailableUserSpace() {
+  static getAllocatedUserSpace() {
     return fetch('/api/v1/admin/usersDefault', {
       credentials: 'same-origin',
     })
@@ -35,7 +35,7 @@ export default class AdminFetcher {
       });
   }
 
-  static setAvailableUserSpace(availableUserSpace) {
+  static setAllocatedUserSpace(allocatedUserSpace) {
     return fetch('/api/v1/admin/usersDefault', {
       credentials: 'same-origin',
       method: 'PUT',
@@ -43,7 +43,7 @@ export default class AdminFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ availableUserSpace }),
+      body: JSON.stringify({ allocatedUserSpace }),
     });
   }
 

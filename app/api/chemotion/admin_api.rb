@@ -23,13 +23,13 @@ module Chemotion
       namespace :usersDefault do
         get do
           default = User.default_disk_space / 1024 / 1024
-          { available_user_space: default }
+          { allocated_user_space: default }
         end
         put do
           params do
-            require :availableUserSpace, type: Integer, desc: 'users default available space'
+            require :allocatedUserSpace, type: Integer, desc: 'users default allocated space'
           end
-          User.default_disk_space = params[:availableUserSpace]
+          User.default_disk_space = params[:allocatedUserSpace]
         end
       end
 
@@ -119,7 +119,7 @@ module Chemotion
                 new_user_ids = (params[:add_users] || []).map(&:to_i) - obj.users.pluck(:id)
                 new_user_ids.each do |uid|
                   user = Person.find(uid)
-                  user.available_space = [user.available_space, obj.available_space].max
+                  user.allocated_space = [user.allocated_space, obj.allocated_space].max
                   user.save!
                 end
               end

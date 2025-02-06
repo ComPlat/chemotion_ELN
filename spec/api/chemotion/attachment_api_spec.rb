@@ -298,7 +298,7 @@ describe Chemotion::AttachmentAPI do
 
     context 'when upload is not allowed' do
       before do
-        user.available_space = 1
+        user.allocated_space = 1
         user.save!
         post '/api/v1/attachments/upload_to_inbox', params: file_upload
       end

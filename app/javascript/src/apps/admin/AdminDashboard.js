@@ -10,7 +10,7 @@ export default class AdminDashboard extends React.Component {
     this.state = {
       diskAvailable: 0,
       diskPercentUsed: 0,
-      availableUserSpace: 0,
+      allocatedUserSpace: 0,
       showDiskInfo: false,
     };
     this.handleDiskspace = this.handleDiskspace.bind(this);
@@ -19,7 +19,7 @@ export default class AdminDashboard extends React.Component {
 
   componentDidMount() {
     this.handleDiskspace();
-    this.getAvailableUserSpace();
+    this.getAllocatedUserSpace();
   }
 
   handleDiskspace() {
@@ -34,22 +34,22 @@ export default class AdminDashboard extends React.Component {
   }
 
   handleSaveBtn() {
-    const { availableUserSpace } = this.state;
-    AdminFetcher.setAvailableUserSpace(Math.round(availableUserSpace) * 1024 * 1024);
+    const { allocatedUserSpace } = this.state;
+    AdminFetcher.setAllocatedUserSpace(Math.round(allocatedUserSpace) * 1024 * 1024);
   }
 
-  getAvailableUserSpace() {
-    AdminFetcher.getAvailableUserSpace()
+  getAllocatedUserSpace() {
+    AdminFetcher.getAllocatedUserSpace()
       .then((result) => {
         this.setState({
-          availableUserSpace: result.available_user_space,
+          allocatedUserSpace: result.allocated_user_space,
         });
       });
   }
 
   renderDiskInfo() {
     const {
-      diskAvailable, diskPercentUsed, availableUserSpace
+      diskAvailable, diskPercentUsed, allocatedUserSpace
     } = this.state;
     const className = diskPercentUsed > 80 ? 'text-danger' : '';
 
@@ -69,13 +69,13 @@ export default class AdminDashboard extends React.Component {
             defaultValue={`${diskPercentUsed}%` || ''}
             readOnly
           />
-          <InputGroup.Text>Default User Available Space (MB)</InputGroup.Text>
+          <InputGroup.Text>Default User Allocated Space (MB)</InputGroup.Text>
           <InputGroup>
             <Form.Control
               type="number"
               min="0"
-              defaultValue={availableUserSpace || ''}
-              onChange={(event) => this.setState({ availableUserSpace: event.target.value })}
+              defaultValue={allocatedUserSpace || ''}
+              onChange={(event) => this.setState({ allocatedUserSpace: event.target.value })}
             />
             <Button
               variant="warning"

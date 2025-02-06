@@ -382,7 +382,7 @@ export class WellplateDetailsAttachments extends Component {
             ))}
             <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
               Uploading attachments will fail; User quota
-              {currentUser !== null ? ` (${currentUser.available_space / 1024 / 1024} MB) ` : ' '}
+              {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
               will be exceeded.
             </Alert>
           </>

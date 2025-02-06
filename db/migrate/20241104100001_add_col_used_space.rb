@@ -1,7 +1,7 @@
 class AddColUsedSpace < ActiveRecord::Migration[6.1]
   def up
     add_column :users, :used_space, :bigint, :default => 0
-    add_column :users, :available_space, :bigint, :default => 0
+    add_column :users, :allocated_space, :bigint, :default => 0
 
     create_function :calculate_dataset_space
     create_function :calculate_element_space
@@ -14,7 +14,7 @@ class AddColUsedSpace < ActiveRecord::Migration[6.1]
     drop_function :calculate_collection_space
     drop_function :calculate_element_space
     drop_function :calculate_dataset_space
-    remove_column :users, :available_space, :bigint
+    remove_column :users, :allocated_space, :bigint
     remove_column :users, :used_space, :bigint
   end
 end

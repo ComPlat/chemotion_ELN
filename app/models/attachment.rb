@@ -279,8 +279,8 @@ class Attachment < ApplicationRecord
 
   def user_quota_exceeded?
     user = User.find(created_for.nil? ? created_by : created_for)
-    if (user.used_space + attachment_data['metadata']['size']) > user.available_space &&
-       !user.available_space.zero?
+    if (user.used_space + attachment_data['metadata']['size']) > user.allocated_space &&
+       !user.allocated_space.zero?
       return true
     end
 
