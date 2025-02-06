@@ -41,6 +41,7 @@ import {
   fetchSurfaceChemistryImageData
 } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 import { PolymerListIconKetcherToolbarButton, PolymerListModal } from 'src/components/structureEditor/PolymerListModal';
+import { mainImageSizingOnRerender, redoKetcher, undoKetcher, updateBondList } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -347,35 +348,24 @@ export const handleOnDeleteAtom = async (deleteCopy) => {
 };
 
 // function when a canvas is saved using main "SAVE" button
-export const saveMolfile = async (svgElement, canvasData) => {
+export const saveMolfile = async (canvasData) => {
   mols.forEach((item) => latestData[item]?.atoms.map((i) => allAtoms.push(i)));
   const editorData = canvasData.trim();
   const lines = ['', ...editorData.split('\n')];
   if (lines.length < 5) return { ket2Molfile: null, svgElement: null };
   const elementsInfo = lines[3];
-  const templatesConsumed = [];
 
   const headers = elementsInfo.trim().split(' ').filter((i) => i !== '');
   const atomsCount = parseInt(headers[0]);
   const bondsCount = parseInt(headers[1]);
 
   const additionalDataStart = KET_TAGS.molfileHeaderLinenumber + atomsCount + bondsCount;
-
   const additionalDataEnd = lines.length - 1;
 
-  for (let i = additionalDataStart; i <= additionalDataEnd; i++) {
-    const alias = lines[i];
-    if (ALIAS_PATTERNS.threeParts.test(alias)) {
-      const splits = parseInt(alias.split('_')[2]);
-      if (imagesList[splits]) { // image found
-        templatesConsumed.push(parseInt(alias.split('_')[1]));
-      }
-    }
-  }
   const ket2Molfile = await reAttachPolymerList({
     lines, atomsCount, additionalDataStart, additionalDataEnd, allAtoms
   });
-  return { ket2Molfile, svgElement };
+  return ket2Molfile;
 };
 
 /* istanbul ignore next */
@@ -441,6 +431,7 @@ const onTemplateMove = async (editor) => {
     await placeImageOnAtoms(molCopy, imageListCopy, editor);
     await saveMoveCanvas(editor, null, true, false);
     ImagesToBeUpdatedSetter(true);
+    reloadCanvas = false;
   }
 };
 
@@ -474,6 +465,39 @@ const removeNodeByIndex = async (index) => {
   latestData.root.nodes.splice(index + mols.length, 1);
 };
 
+const findImagesDeletedWithoutAtomSelected = async (deleteCopy, deletedImages) => {
+  const deleteCopyIndexes = deleteCopy.map(item => parseInt(item.alias.split("_")[2]));
+  const extraValues = deletedImages.filter(index => !deleteCopyIndexes.includes(index));
+  extraValues.forEach((item) => deleteCopy.push({
+    "label": "A",
+    "alias": `t_5_${item}`
+  }));
+  return deleteCopy;
+};
+
+const removeMatchingAliases = async (referenceArray, data) => {
+  // Extract aliases to be removed
+  const aliasesToRemove = new Set(referenceArray.map(item => item.alias).filter(Boolean));
+
+  // Filter out atoms with matching aliases
+  mols.forEach((item) => {
+    const indices = [];
+    const molecule = data[item];
+    molecule.atoms = molecule.atoms.filter((atom, idx) => {
+      if (!aliasesToRemove.has(atom.alias)) {
+        return atom;
+      }
+      indices.push(idx);
+    });
+    indices.forEach((item) => {
+      molecule.bonds = updateBondList(item, molecule.bonds);
+    });
+
+    data[item] = molecule;
+  });
+  return data;
+};
+
 /* istanbul ignore next */
 /* container function on atom delete
   removes an atom: atoms should always be consistent
@@ -485,38 +509,59 @@ const onAtomDelete = async (editor) => {
     const molCopy = mols;
     const imageListCopy = imagesList;
     let deleteCopy = deletedAtoms;
+
     const alias = deletedAtoms[0]?.alias;
     const lastAliasInd = parseInt(alias?.split('_')[2]);
     await fetchKetcherData(editor);
 
     // when mols and images are changed
     if (molCopy.length > mols.length && imagesList.length > imageListCopy.length) {
+      console.log(1);
       await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-      canvasSelection = null;
       return;
     }
 
     // when one template is deleted
     if (molCopy.length === mols.length && imagesList.length === imageListCopy.length) { // deleted item is one
+      console.log(2, lastAliasInd);
       await removeNodeByIndex(lastAliasInd);
+      imagesList.splice(lastAliasInd, 1);
     }
 
     // when mol is deleted
     if (molCopy.length > mols.length && imagesList.length === imageListCopy.length) { // when atom is dragged to another atom
+      console.log(3);
       const removalNotRequired = isAliasConsistent();
       if (removalNotRequired && imageNodeCounter !== lastAliasInd) {
+        console.log(3.1);
         canvasSelection = null;
         return;
       }
       await removeNodeByIndex(lastAliasInd);
+      imagesList.splice(lastAliasInd, 1);
     }
 
+    if (molCopy.length === mols.length && imagesList.length < imageListCopy.length) { // when atom is dragged to another atom
+      console.log(4);
+      const deletedImages = deepCompare(oldImagePack, imagesList);
+      deleteCopy = await findImagesDeletedWithoutAtomSelected(deleteCopy, deletedImages);
+      const currentData = await removeMatchingAliases(deleteCopy, latestData);
+      latestData = { ...currentData };
+    }
+
+    if (molCopy.length > mols.length && imageListCopy.length > imagesList.length) {
+      console.log(5);
+    }
+
+    console.log(6, "--open", { molCopy, imageListCopy, mols, imagesList });
+
     // save and go
-    const data = await handleOnDeleteAtom(deleteCopy); // rebase atom aliases
     imageNodeCounter -= deleteCopy.length; // update image used counter
-    await saveMoveCanvas(editor, data, false, true);
-    deleteCopy = [];
-    canvasSelection = null;
+    const data = await handleOnDeleteAtom(deleteCopy); // rebase atom aliases
+    latestData = { ...data };
+    await placeImageOnAtoms(molCopy, imagesList, editor);
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    await saveMoveCanvas(editor, null, false, true);
   }
 };
 
@@ -573,109 +618,49 @@ const KetcherEditor = forwardRef((props, ref) => {
             }
           }
         }
+        oldImagePack = [...imagesList];
         addEventToFILOStack('Delete atom');
       }
-    },
-    // Update: async (e) => {
-    // },
-    // 'Move bond': async () => {
-    // },
-    // 'Move loop': async () => {
-    // },
+    }
   };
 
   // action based on event-name
   const eventHandlers = {
     'Move image': async () => onTemplateMove(editor),
+    'Delete image': async () => {
+      await fetchKetcherData(editor);
+      await onDeleteImage(editor);
+    },
     'Move atom': async () => {
       await fetchKetcherData(editor);
       await onTemplateMove(editor);
     },
     'Add atom': async () => onAddAtom(editor),
-    'Delete image': async () => {
-      await fetchKetcherData(editor);
-      await onDeleteImage(editor);
-    },
     'Delete atom': async () => {
       await onAtomDelete(editor);
+      deletedAtoms = [];
+      canvasSelection = null;
     },
   };
 
   // DOM button events with scope
   const buttonEvents = {
-    "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => {
-      await fetchKetcherData(editor);
-      reloadCanvas = true;
-    },
+    "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => reloadCanvas = true,
     "[title='Layout \\(Ctrl\\+L\\)']": async () => {
-      await fetchKetcherData(editor);
-      // await addEventToFILOStack("Move image");
-      reloadCanvas = true;
-      // addEventToFILOStack("Load canvas");
-    },
-    "[title='Calculate CIP  \\(Ctrl\\+P\\)']": async () => {
-      await fetchKetcherData(editor);
+      oldImagePack = [...imagesList];
+      // await mainImageSizingOnRerender(editor, oldImagePack);
       reloadCanvas = true;
     },
+    "[title='Calculate CIP  \\(Ctrl\\+P\\)']": async () => reloadCanvas = true,
+    "[title='Undo \\(Ctrl\\+Z\\)']": async () => undoKetcher(editor),
+    "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => redoKetcher(editor),
+    "[title='Add/Remove explicit hydrogens']": async () => reloadCanvas = true,
+    "[title='Polymer List']": async () => setShowShapes(!showShapes),
     "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
       imageNodeCounter = -1;
       resetStore();
     },
-    "[title='Undo \\(Ctrl\\+Z\\)']": async () => {
-      try {
-        const list = [...editor._structureDef.editor.editor.historyStack];
-        const { historyPtr } = editor._structureDef.editor.editor;
-        let operationIdx = 0;
-        for (let i = historyPtr - 1; i >= 0; i--) {
-          if (list[i]?.operations[0]?.type !== 'Load canvas') {
-            break;
-          } else {
-            operationIdx++;
-          }
-        }
-        for (let j = 0; j < operationIdx; j++) {
-          editor._structureDef.editor.editor.undo();
-        }
-      } catch (error) {
-        console.error({ undo: error });
-      }
-    },
-    "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => {
-      try {
-        const list = [...editor._structureDef.editor.editor.historyStack];
-        const { historyPtr } = editor._structureDef.editor.editor;
-        let operationIdx = 1;
-
-        for (let i = historyPtr; i < list.length; i++) {
-          if (list[i]?.operations[0]?.type !== 'Load canvas') {
-            break;
-          } else {
-            operationIdx++;
-          }
-        }
-        for (let j = 0; j < operationIdx; j++) {
-          editor._structureDef.editor.editor.redo();
-        }
-        setTimeout(async () => {
-          await fetchKetcherData(editor);
-          const data = await handleAddAtom(); // rebase atom aliases
-          await saveMoveCanvas(editor, data, false, true);
-        }, [500]);
-      } catch (error) {
-        console.error({ redo: error });
-      }
-    },
-    'Erase \\(Del\\)': async () => {
-      // on click event is can be access is function eraseStateAlert
-    },
-    "[title='Add/Remove explicit hydrogens']": async () => {
-      await fetchKetcherData(editor);
-      reloadCanvas = true;
-    },
-    "[title='Polymer List']": async () => {
-      setShowShapes(!showShapes);
-      // on click event is can be access is function eraseStateAlert
-    },
+    'Erase \\(Del\\)': async () => { },
   };
 
   useEffect(() => {
@@ -739,7 +724,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         await eventHandlers[event]();
       }
     }
-    await runImageLayering(); // add all the images at the end of the canvas
+    await runImageLayering(); // post all the images at the end of the canvas not duplicate
+
   };
 
   // main function to capture all events from editor
@@ -875,10 +861,10 @@ const KetcherEditor = forwardRef((props, ref) => {
     onSaveFileK2SC: async () => {
       await fetchKetcherData(editor);
       const canvasDataMol = await editor.structureDef.editor.getMolfile();
-      const svgElement = await reArrangeImagesOnCanvas(iframeRef);
-      const result = await saveMolfile(svgElement, canvasDataMol);
+      let svgElement = await reArrangeImagesOnCanvas(iframeRef);
+      const ket2Molfile = await saveMolfile(canvasDataMol);
       resetStore();
-      return result;
+      return { ket2Molfile, svgElement };
     }
   }));
 

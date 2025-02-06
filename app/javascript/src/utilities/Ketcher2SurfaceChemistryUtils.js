@@ -5,7 +5,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
-import { loadKetcherData, mols, imagesList } from 'src/components/structureEditor/KetcherEditor';
+import { loadKetcherData, mols, imagesList, latestData } from 'src/components/structureEditor/KetcherEditor';
 
 // pattern's for alias identification
 const ALIAS_PATTERNS = Object.freeze({
@@ -110,7 +110,7 @@ const addingPolymersToKetcher = async (railsPolymersList, data, imageNodeCounter
       for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
         const atom = molecule.atoms[atomIndex];
         const polymerItem = polymerList[visitedAtoms];
-        if ((atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.label))) {
+        if (polymerItem && polymerItem.split("/").length >= 2 && (atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.label))) {
           // counters
           imageNodeCounter += 1;
           visitedAtoms += 1;
@@ -333,24 +333,45 @@ const reAttachPolymerList = async ({
   lines, atomsCount, additionalDataStart, additionalDataEnd
 }) => {
   let lineCopy = [...lines];
-  const aliasesList = lineCopy.slice(additionalDataStart, additionalDataEnd);
-  const { linesCopy, atomAliasList } = await processAtomLines(lineCopy, KET_TAGS.molfileHeaderLinenumber, atomsCount);
-  linesCopy.splice(additionalDataStart, additionalDataEnd - additionalDataStart);
-  lineCopy = linesCopy;
-  let counter = 0;
-  for (let i = 1; i < aliasesList.length; i += 2) {
-    const templateId = parseInt(aliasesList[i].split('_')[1]);
-    const imagePlace = parseInt(aliasesList[i].split('_')[2]);
-    const { height, width } = imagesList[imagePlace].boundingBox;
-    if (templateId) {
-      atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
-      atomAliasList[counter] += `/${height.toFixed(2)}-${width.toFixed(2)}`;
-      counter++;
+  const aliasesList = [];
+  for (let i = additionalDataStart; i <= additionalDataEnd; i++) {
+    if (ALIAS_PATTERNS.threeParts.test(lines[i])) {
+      aliasesList.push(lines[i - 1], lines[i]);
+      lines.splice(i - 1, 2); // Remove 2 elements starting from index i - 1
+      i -= 2;
     }
   }
-  const collectedLines = [KET_TAGS.polymerIdentifier, atomAliasList.join(' '), KET_TAGS.fileEndIdentifier];
-  lineCopy.splice(lineCopy.length, 0, ...collectedLines);
-  return lineCopy.join('\n');
+
+  // change atoms to R# for ketcher rails compatibilty
+  const { linesCopy, atomAliasList } = await processAtomLines(lines, KET_TAGS.molfileHeaderLinenumber, atomsCount);
+
+  // helper to combine and prepare alias into a polymer list
+  // 0/3/1.30-1.28 7/1/0.90-0.91 => 2 aliases combined with space to form a string
+  // 0/3/1.30-1.28 => what a single alias has atomIndex/template#/height-width
+  const preparedAliasPolymerLine = await templateAliasesPrepare(aliasesList, atomAliasList);
+  const collectedLines = [KET_TAGS.polymerIdentifier, preparedAliasPolymerLine, KET_TAGS.fileEndIdentifier];
+  linesCopy.splice(lineCopy.length, 0, ...collectedLines);
+  return linesCopy.join('\n');
+};
+
+
+// helper to combine and prepare alias into a polymer list
+const templateAliasesPrepare = async (aliasesList, atomAliasList) => {
+  let counter = 0;
+
+  for (let i = 1; i < aliasesList.length; i += 2) {
+    if (ALIAS_PATTERNS.threeParts.test(aliasesList)) {
+      const templateId = parseInt(aliasesList[i].split('_')[1]);
+      const imagePlace = parseInt(aliasesList[i].split('_')[2]);
+      const { height, width } = imagesList[imagePlace]?.boundingBox;
+      if (templateId) {
+        atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
+        atomAliasList[counter] += `/${height.toFixed(2)}-${width.toFixed(2)}`;
+        counter++;
+      }
+    }
+  }
+  return atomAliasList.join(' ');
 };
 
 // DOM functions
@@ -434,6 +455,76 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
   }
 };
 
+// helper function to handle ketcher undo DOM element
+const undoKetcher = (editor) => {
+  try {
+    const list = [...editor._structureDef.editor.editor.historyStack];
+    const { historyPtr } = editor._structureDef.editor.editor;
+    let operationIdx = 0;
+    for (let i = historyPtr - 1; i >= 0; i--) {
+      if (list[i]?.operations[0]?.type !== 'Load canvas') {
+        break;
+      } else {
+        operationIdx++;
+      }
+    }
+    for (let j = 0; j < operationIdx; j++) {
+      editor._structureDef.editor.editor.undo();
+    }
+  } catch (error) {
+    console.error({ undo: error });
+  }
+};
+
+// helper function to handle ketcher undo DOM element
+const redoKetcher = (editor) => {
+  try {
+    const list = [...editor._structureDef.editor.editor.historyStack];
+    const { historyPtr } = editor._structureDef.editor.editor;
+    let operationIdx = 1;
+
+    for (let i = historyPtr; i < list.length; i++) {
+      if (list[i]?.operations[0]?.type !== 'Load canvas') {
+        break;
+      } else {
+        operationIdx++;
+      }
+    }
+    for (let j = 0; j < operationIdx; j++) {
+      editor._structureDef.editor.editor.redo();
+    }
+    setTimeout(async () => {
+      await fetchKetcherData(editor);
+      const data = await handleAddAtom(); // rebase atom aliases
+      await saveMoveCanvas(editor, data, false, true);
+    }, [500]);
+  } catch (error) {
+    console.error({ redo: error });
+  }
+};
+
+// helper function on layout to keep the images on the latest styles
+const mainImageSizingOnRerender = async (editor, images) => {
+  try {
+    console.log(images);
+    // fetch latest data
+    // update old images on the root list
+    // place images on A atoms
+    // save molfile
+    // await placeImageOnAtoms(mols, images, editor);
+    // console.log(latestData);
+    const imagesL = removeImagesFromData(latestData);
+    latestData.root.nodes.push(imagesL);
+    setTimeout(async () => {
+      console.log(latestData);
+      await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
+    }, 500);
+  } catch (error) {
+    console.error({ mainImageSizingOnRerender: error });
+  }
+};
+
+
 // setter
 const ImagesToBeUpdatedSetter = (status) => {
   ImagesToBeUpdated = status;
@@ -463,6 +554,7 @@ export {
   reAttachPolymerList,
   removeImagesFromData,
   fetchSurfaceChemistryImageData,
+  updateBondList,
 
   // DOM Methods
   disableButton,
@@ -470,9 +562,11 @@ export {
   updateImagesInTheCanvas,
   updateTemplatesInTheCanvas,
   makeTransparentByTitle,
+  undoKetcher,
+  redoKetcher,
+  mainImageSizingOnRerender,
 
   // setters
   ImagesToBeUpdatedSetter,
-
   allowProcessingSetter,
 };

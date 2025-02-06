@@ -115,11 +115,16 @@ function PolymerListModal({
 
 const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
-  const container = parentElement.querySelector('.css-6qnjre');
+  const container = parentElement?.querySelector('.css-6qnjre');
   if (container) {
     const newButton = iframeDocument.createElement('button');
     newButton.classList.add('css-9c2fhu');
     newButton.title = 'Polymer List';
+
+    // Apply styles directly - different ketcher version has differnet style to the button ie 2.24.0
+    newButton.style.backgroundColor = 'transparent';
+    newButton.style.border = '0';
+
     // SVG content to be added inside the button
     const svgIcon = PolymerShapes;
 
