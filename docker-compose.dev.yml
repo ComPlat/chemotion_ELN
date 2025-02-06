@@ -9,11 +9,15 @@
 # - Run tests:
 #     bundle exec rspec
 #
+# - see .dockerenv.example for environment variables usage
+
+x-common-volumes:
+  - &vhome homedir:/home/chemotion-dev
+  - &vapp .:/home/chemotion-dev/app
+
 services:
   postgres:
-    build:
-      context: '.'
-      dockerfile: 'Dockerfile.RDKit'
+    image: ${DOCKER_PG_IMAGE:-postgres:14}
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     expose: # expose port to app container
@@ -21,27 +25,34 @@ services:
     ports: # expose port to host machine in case we want to use external db gui tools
       - '5432:5432'
     volumes:
-      - 'database:/var/lib/postgresql/data'
+      - database:/var/lib/postgresql/data
 
   app:
     build:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
+      # args:
+        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:jammy}  # Build ARG for base image
+        # FULL_BUILD: ${FULL_BUILD:-}
+    image: ${DOCKER_DEV_IMAGE:-}
     depends_on:
       - 'postgres'
     healthcheck:
       test: ["CMD", "bundle", "check"] # exit 0 if all gems from Gemfile are installed, otherwise exit 1
       interval: 30s
       timeout: 10s
+    env_file:
+      - ./.env
     environment:
       - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
       - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
       - 'THOR_SILENCE_DEPRECATION=true'
+      - RAKE_DB_MIGRATE=${RAKE_DB_MIGRATE:-never}
     ports: # expose default rails port to host machine
       - "3000:3000"
     volumes:
-      - 'homedir:/home/chemotion-dev/'
-      - '.:/home/chemotion-dev/app'
+      - *vhome
+      - *vapp
     working_dir: "/home/chemotion-dev/app"
     command: "./run-ruby-dev.sh"
 
@@ -49,6 +60,10 @@ services:
     build:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
+      # args:
+        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:jammy}  # Build ARG for base image
+        # FULL_BUILD: ${FULL_BUILD:-}
+    image: ${DOCKER_DEV_IMAGE:-}
     depends_on:
       app:
         condition: service_healthy
@@ -56,10 +71,12 @@ services:
       - 'NODE_ENV=development'
       - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
       - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
-    env_file: ./.env
+    env_file:
+      - ./.env
+      #- ./.env.development
     volumes:
-      - 'homedir:/home/chemotion-dev/'
-      - '.:/home/chemotion-dev/app'
+      - *vhome
+      - *vapp
     ports: # expose webpacker dev server port to app container
       - '3035:3035'
     expose:
@@ -69,4 +86,6 @@ services:
 
 volumes:
   database:
+    name: ${VOLUME_NAME_DB:-chemotion_eln_database}
   homedir:
+    name: ${VOLUME_NAME_HOMEDIR:-chemotion_eln_homedir}
