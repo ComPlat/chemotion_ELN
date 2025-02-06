@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 module.exports = {
   resolve: {
@@ -29,6 +30,14 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: 'process/browser',
     }),
+    new webpack.NormalModuleReplacementPlugin(
+      /^node:/u,
+      (resource) => {
+        // eslint-disable-next-line no-param-reassign
+        resource.request = resource.request.replace(/^node:/u, '');
+      }
+    ),
+    new NodePolyfillPlugin(),
   ],
   module: {
     rules: [

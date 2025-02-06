@@ -47,7 +47,7 @@
     "immutable": "^4.0.0-rc.12",
     "jcampconverter": "^2.11.0",
     "js-yaml": "^3.13.1",
-    "jsdom": "^22.1.0",
+    "jsdom": "^22",
     "lodash": "^4.17.20",
     "mime-types": "^2.1.35",
     "mobx": "^6.6.0",
@@ -55,6 +55,7 @@
     "mobx-state-tree": "^5.1.5",
     "moment": "^2.29.4",
     "moment-precise-range-plugin": "^1.2.4",
+    "node-polyfill-webpack-plugin": "^4.1.0",
     "npm": "^8.11.0",
     "numeral": "^1.5.3",
     "path": "^0.12.7",
@@ -115,7 +116,7 @@
     "yarn": "^1.22.19"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.15.0",
+    "@babel/eslint-parser": "^7",
     "@babel/register": "^7.11.5",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.5",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.3",
@@ -152,7 +153,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": "^18.19.1"
+    "node": "^18"
   },
   "browserslist": [
     "defaults"
