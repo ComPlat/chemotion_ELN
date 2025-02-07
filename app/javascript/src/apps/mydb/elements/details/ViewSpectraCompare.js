@@ -20,6 +20,8 @@ class ViewSpectraCompare extends React.Component {
 
     this.state = {
       ...SpectraStore.getState(),
+      originalAnalyses: null,
+      showUndo: false,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -29,6 +31,7 @@ class ViewSpectraCompare extends React.Component {
     this.renderSpectraEditor = this.renderSpectraEditor.bind(this);
     this.handleChangeSelectAnalyses = this.handleChangeSelectAnalyses.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
+    this.handleUndo = this.handleUndo.bind(this);
   }
 
   componentDidMount() {
@@ -58,6 +61,12 @@ class ViewSpectraCompare extends React.Component {
     let { menuItems } = BuildSpectraComparedSelection(this.props.elementData);
     menuItems = this.filterMenuItemsBySelectedLayout(newState.container, menuItems);
   
+    if (!this.state.originalAnalyses && newState?.container?.extended_metadata?.analyses_compared) {
+      this.setState({
+        originalAnalyses: [...newState.container.extended_metadata.analyses_compared],
+      });
+    }
+
     this.setState({
       ...newState,
       menuItems
@@ -66,7 +75,7 @@ class ViewSpectraCompare extends React.Component {
 
   handleChangeSelectAnalyses(treeData, selectedFiles, info) {
     const { elementData, handleSampleChanged } = this.props;
-    const { container } = this.state;
+    const { container, originalAnalyses } = this.state;
     const selectedData = GetSelectedComparedAnalyses(container, treeData, selectedFiles, info);
     container.extended_metadata.analyses_compared = selectedData;
     handleSampleChanged(elementData);
@@ -77,8 +86,39 @@ class ViewSpectraCompare extends React.Component {
 
     let { menuItems } = BuildSpectraComparedSelection(elementData);
     menuItems = this.filterMenuItemsBySelectedLayout(container, menuItems);
-     this.setState({ menuItems });
+    const originalCount = originalAnalyses?.length || 0;
+    const currentCount = selectedData?.length || 0;
+    
+    this.setState({ 
+      menuItems,
+      showUndo: currentCount < originalCount
+    });
   }
+
+  handleUndo() {
+    const { elementData, handleSampleChanged } = this.props;
+    const { container, originalAnalyses } = this.state;
+  
+    if (container && originalAnalyses) {
+      container.extended_metadata.analyses_compared = [...originalAnalyses];
+  
+      handleSampleChanged(elementData);
+  
+      const spcCompareInfo = BuildSpectraComparedInfos(elementData, container);
+      if (spcCompareInfo) {
+        SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
+      }
+  
+      let { menuItems } = BuildSpectraComparedSelection(elementData);
+      menuItems = this.filterMenuItemsBySelectedLayout(container, menuItems);
+  
+      this.setState({
+        menuItems,
+        showUndo: false
+      });
+    }
+  }
+  
 
   closeOp() {
     SpectraActions.ToggleCompareModal.defer(null);
@@ -197,6 +237,16 @@ class ViewSpectraCompare extends React.Component {
             maxTagCount={1}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
           />
+         <Button
+            className="ms-auto"
+            size="sm"
+            variant="danger"
+            onClick={this.handleUndo}
+            style={{ display: this.state.showUndo ? 'inline-block' : 'none' }}
+          >
+            <i className="fa fa-undo" />
+          </Button>
+
         </div>
         <Button
           variant="danger"
