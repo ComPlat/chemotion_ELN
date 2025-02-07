@@ -1,21 +1,22 @@
 import React, { useContext, useState } from 'react';
-import { Modal, Button, ButtonToolbar, Alert, Tabs, Tab, Stack } from 'react-bootstrap';
-import Draggable from "react-draggable";
-import DevicePropertiesTab from './DevicePropertiesTab';
-import DeviceUserGroupsTab from './DeviceUserGroupsTab';
-import DeviceDataCollectorTab from './DeviceDataCollectorTab';
-import DeviceNovncTab from './DeviceNovncTab';
-import DeviceMetadataTab from './DeviceMetadataTab';
+import {
+  Modal, Button, ButtonToolbar, Alert, Tabs, Tab, Stack
+} from 'react-bootstrap';
+import Draggable from 'react-draggable';
 import { endsWith } from 'lodash';
-
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import DevicePropertiesTab from 'src/apps/admin/devices/DevicePropertiesTab';
+import DeviceUserGroupsTab from 'src/apps/admin/devices/DeviceUserGroupsTab';
+import DeviceDataCollectorTab from 'src/apps/admin/devices/DeviceDataCollectorTab';
+import DeviceNovncTab from 'src/apps/admin/devices/DeviceNovncTab';
+import DeviceMetadataTab from 'src/apps/admin/devices/DeviceMetadataTab';
 
-const DeviceModal = () => {
+function DeviceModal() {
   const devicesStore = useContext(StoreContext).devices;
   const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
-  let device = devicesStore.device;
-  const disableTab = devicesStore.create_or_update == 'update' ? false : true;
+  let { device } = devicesStore;
+  const disableTab = devicesStore.create_or_update !== 'update';
   const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
 
   const errorMessage = devicesStore.error_message + deviceMetadataStore.error_message;
@@ -24,7 +25,7 @@ const DeviceModal = () => {
 
   const minimizedClass = devicesStore.modalMinimized ? ' minimized' : '';
   let deviceParams = {};
-  let datacollectorFields = [
+  const datacollectorFields = [
     'datacollector_method', 'datacollector_user', 'datacollector_host',
     'datacollector_key_name', 'datacollector_dir'
   ];
@@ -32,16 +33,16 @@ const DeviceModal = () => {
   const trimDeviceStringValues = () => {
     deviceParams = { ...device };
     Object.keys(deviceParams).forEach((key) => {
-      if (key !== 'id' && typeof deviceParams[key] == 'string') {
+      if (key !== 'id' && typeof deviceParams[key] === 'string') {
         deviceParams[key] = deviceParams[key].trim();
       }
     });
     return deviceParams;
-  }
+  };
 
   const collectUserOrGroupIds = (deviceParams, type) => {
     if (deviceParams[type].length >= 1) {
-      let users = [];
+      const users = [];
       deviceParams[type].map((u) => {
         if (u.id) {
           users.push(u.id);
@@ -50,21 +51,19 @@ const DeviceModal = () => {
       deviceParams[type] = users;
     }
     return deviceParams;
-  }
+  };
 
   const prepareDeviceParams = () => {
     deviceParams = trimDeviceStringValues();
     deviceParams = collectUserOrGroupIds(deviceParams, 'people');
     deviceParams = collectUserOrGroupIds(deviceParams, 'groups');
     return deviceParams;
-  }
+  };
 
-  const anyDatacollectorFields = () => {
-    return datacollectorFields.filter(field => device[field] !== '' && device[field] !== null);
-  }
+  const anyDatacollectorFields = () => datacollectorFields.filter((field) => device[field] !== '' && device[field] !== null);
 
   const handleValidationState = () => {
-    let errorMessages = ['Please fill out all needed fields'];
+    const errorMessages = ['Please fill out all needed fields'];
 
     const nameValue = device.name.trim() === '' ? 'is-invalid' : '';
     if (nameValue) { errorMessages.push('Please enter a name'); }
@@ -76,26 +75,26 @@ const DeviceModal = () => {
 
     if (anyDatacollectorFields().length >= 1) {
       devicesStore.changeDevice('datacollector_fields', true);
-    
+
       const methodValue = !device.datacollector_method ? 'is-invalid' : '';
       if (methodValue) { errorMessages.push('Please select watch method'); }
       devicesStore.changeDevice('valid_datacollector_method', methodValue);
-    
+
       const dirValue = !device.datacollector_dir ? 'is-invalid' : '';
       if (dirValue) { errorMessages.push('Please enter a watch directory'); }
       devicesStore.changeDevice('valid_datacollector_dir', dirValue);
-    
+
       if (endsWith(device.datacollector_method, 'sftp')) {
         const userValue = !device.datacollector_user ? 'is-invalid' : '';
         if (userValue) { errorMessages.push('Please enter a user'); }
         devicesStore.changeDevice('valid_datacollector_user', userValue);
-    
+
         const hostValue = !device.datacollector_host ? 'is-invalid' : '';
         if (hostValue) { errorMessages.push('Please enter a host'); }
         devicesStore.changeDevice('valid_datacollector_host', hostValue);
-    
-        const keyNameValue =
-          device.datacollector_authentication === 'keyfile' && !device.datacollector_key_name ? 'is-invalid' : '';
+
+        const keyNameValue = device.datacollector_authentication === 'keyfile' && !device.datacollector_key_name
+          ? 'is-invalid' : '';
         if (keyNameValue) { errorMessages.push('Use key file, Please enter a key path'); }
         devicesStore.changeDevice('valid_datacollector_key_name', keyNameValue);
       }
@@ -103,53 +102,14 @@ const DeviceModal = () => {
       devicesStore.changeDevice('datacollector_fields', false);
     }
 
-    if (devicesStore.active_tab_key == 4) {
+    if (devicesStore.active_tab_key === 4) {
       const novncTarget = !device.novnc_target ? 'is-invalid' : '';
       if (novncTarget) { errorMessages.push('Please type a Target for the device'); }
       devicesStore.changeDevice('valid_novnc_target', novncTarget);
     }
 
     return errorMessages;
-  }
-
-  const saveDeviceOrRelation = () => {
-    if (devicesStore.active_tab_key == 5) {
-      saveDeviceMetadata();
-    } else {
-      saveDevice();
-    }
-  }
-
-  const saveDevice = () => {
-    let errorMessages = handleValidationState();
-    devicesStore.changeErrorMessage(errorMessages.join('\n'));
-    device = devicesStore.device;
-
-    if (errorMessages.length <= 1) {
-      removeErrors();
-
-      if (devicesStore.create_or_update == 'update') {
-        devicesStore.updateDevice(prepareDeviceParams());
-      } else {
-        devicesStore.createDevice(prepareDeviceParams());
-      }
-    }
-  }
-
-  const saveDeviceMetadata = () => {
-    // validation?
-    removeErrors();
-    const deviceMetadata = deviceMetadataStore.device_metadata;
-    deviceMetadataStore.updateDeviceMetadata(deviceMetadata);
-  }
-
-  const handleCancel = () => {
-    devicesStore.hideDeviceModal();
-    devicesStore.clearDevice();
-    devicesStore.setActiveTabKey(1);
-    deviceMetadataStore.clearDeviceMetadata();
-    removeErrors();
-  }
+  };
 
   const removeErrors = () => {
     devicesStore.changeErrorMessage('');
@@ -157,27 +117,65 @@ const DeviceModal = () => {
     deviceMetadataStore.changeErrorMessage('');
     deviceMetadataStore.changeSuccessMessage('');
     devicesStore.setChangeNovncPassword(false);
-  }
+  };
+
+  const saveDevice = () => {
+    const errorMessages = handleValidationState();
+    devicesStore.changeErrorMessage(errorMessages.join('\n'));
+    device = devicesStore.device;
+
+    if (errorMessages.length <= 1) {
+      removeErrors();
+
+      if (devicesStore.create_or_update === 'update') {
+        devicesStore.updateDevice(prepareDeviceParams());
+      } else {
+        devicesStore.createDevice(prepareDeviceParams());
+      }
+    }
+  };
+
+  const saveDeviceMetadata = () => {
+    // validation?
+    removeErrors();
+    const deviceMetadata = deviceMetadataStore.device_metadata;
+    deviceMetadataStore.updateDeviceMetadata(deviceMetadata);
+  };
+
+  const saveDeviceOrRelation = () => {
+    if (devicesStore.active_tab_key === 5) {
+      saveDeviceMetadata();
+    } else {
+      saveDevice();
+    }
+  };
+
+  const handleCancel = () => {
+    devicesStore.hideDeviceModal();
+    devicesStore.clearDevice();
+    devicesStore.setActiveTabKey(1);
+    deviceMetadataStore.clearDeviceMetadata();
+    removeErrors();
+  };
 
   const handleSelectTab = (key) => {
     devicesStore.setActiveTabKey(key);
-  }
+  };
 
   const modalTitle = () => {
-    if (devicesStore.create_or_update == 'update') {
+    if (devicesStore.create_or_update === 'update') {
       return `Edit ${device.name}`;
-    } else {
-      return 'Add new device';
     }
-  }
+    return 'Add new device';
+  };
 
   const showMessage = () => {
     if (errorMessage !== '') {
       return <Alert variant="danger" className="device-alert">{errorMessage}</Alert>;
-    } else if (successMessage !== '') {
+    } if (successMessage !== '') {
       return <Alert variant="success" className="device-alert">{successMessage}</Alert>;
     }
-  }
+  };
 
   const handleDrag = (e, ui) => {
     const { x, y } = deltaPosition;
@@ -185,7 +183,7 @@ const DeviceModal = () => {
       x: x + ui.deltaX,
       y: y + ui.deltaY,
     });
-  }
+  };
 
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
@@ -212,7 +210,8 @@ const DeviceModal = () => {
               <Button className="ms-auto ms-lg-5 pt-2 align-self-start bg-transparent border-0">
                 <i
                   className="fa fa-window-minimize window-minimize"
-                  onClick={() => devicesStore.toggleModalMinimized()} />
+                  onClick={() => devicesStore.toggleModalMinimized()}
+                />
               </Button>
             </Stack>
           </Modal.Header>
@@ -271,7 +270,7 @@ const DeviceModal = () => {
                   <Button variant="warning" onClick={() => handleCancel()}>
                     Cancel
                   </Button>
-                  <Button variant="primary" onClick={saveDeviceOrRelation} >
+                  <Button variant="primary" onClick={saveDeviceOrRelation}>
                     Save
                   </Button>
                 </ButtonToolbar>
