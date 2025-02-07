@@ -73,6 +73,11 @@ function DeviceModal() {
     if (nameAbbreviationValue) { errorMessages.push('Please enter a name abbreviation'); }
     devicesStore.changeDevice('valid_name_abbreviation', nameAbbreviationValue);
 
+    const emailValue = device.email === '' || /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,63})+$/.test(device.email)
+      ? '' : 'is-invalid';
+    if (emailValue) { errorMessages.push('Please enter a valid email'); }
+    devicesStore.changeDevice('valid_email', emailValue);
+
     if (anyDatacollectorFields().length >= 1) {
       devicesStore.changeDevice('datacollector_fields', true);
 

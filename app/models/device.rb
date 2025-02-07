@@ -122,6 +122,8 @@ class Device < ApplicationRecord
   end
 
   def mail_checker
+    return true if email.blank?
+
     MailChecker.valid?(email) || errors.add(
       :email, 'from throwable email providers not accepted'
     )

@@ -50,8 +50,8 @@ function DevicePropertiesTab() {
         <Form.Control
           type="text"
           value={device.email}
-          readOnly
-          disabled
+          className={device.email}
+          onChange={(event) => onChange('email', event.target.value)}
         />
       </Form.Group>
 
