@@ -38,6 +38,17 @@ module Chemotion
         { ok: false, statusText: 'File key is not valid' }
       end
 
+
+      def upload_raw_error_message
+        { ok: false, statusText: 'File is not valid' }
+      end
+
+      def upload_device
+        return current_user if current_user.is_a?(Device)
+        return @device ||= Device.find_by(id: params[:device_id]) if params.has_key? :device_id
+        nil
+      end
+
       def remove_duplicated(att)
         old_att = Attachment.find_by(filename: att.filename, attachable_id: att.attachable_id)
         return unless old_att.id != att.id
@@ -162,6 +173,33 @@ module Chemotion
                 with: Entities::AttachmentEntity,
                 root: :attachment
       end
+
+      desc 'Upload raw data completed'
+      params do
+        requires :filename, type: String
+        requires :key, type: String
+        requires :checksum, type: String
+        optional :device_id, type: Integer, desc: 'Id of device only needed if current user is not a device'
+      end # frozen_string_literal: true
+
+      post 'upload_raw_chunk_complete' do
+        break upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
+
+        complete_file = Usecases::Attachments::UploadRawComplete.execute!(current_user, params)
+        begin
+          current_collector = DataReceiverFile.new(params[:filename], complete_file[:file_path])
+          break upload_raw_error_message if upload_device.nil?
+          break { ok: false } unless (att = current_collector.collect_from(upload_device))
+          break { ok: true, path: att.backup_file }
+        rescue
+          break { ok: false }
+        ensure
+          FileUtils.rm_f(complete_file[:file_path])
+        end
+
+      end
+
+
 
       # TODO: Remove this endpoint. It is not used by the FE
       desc 'Upload attachments'
