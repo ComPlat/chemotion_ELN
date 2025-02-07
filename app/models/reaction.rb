@@ -212,6 +212,7 @@ class Reaction < ApplicationRecord
   def update_svg_file!
     svg = reaction_svg_file
     if svg.present? && svg.end_with?('</svg>')
+      Loofah.fragment(svg).scrub!(:strip).to_html
       svg_file_name = "#{SecureRandom.hex(64)}.svg"
       svg_path = Rails.public_path.join('images', 'reactions', svg_file_name)
       svg_file = File.new(svg_path, 'w+')
@@ -235,12 +236,8 @@ class Reaction < ApplicationRecord
         end
       end
       begin
-        composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
-                                                    duration: duration,
-                                                    solvents: solvents_in_svg,
-                                                    conditions: conditions,
-                                                    show_yield: true)
-        self.reaction_svg_file = composer.compose_reaction_svg_and_save
+        svg = Chemotion::ReactionSvgComposer.new.svg(self)
+        self.reaction_svg_file = svg
       rescue StandardError => _e
         Rails.logger.info('**** SVG::ReactionComposer failed ***')
       end
