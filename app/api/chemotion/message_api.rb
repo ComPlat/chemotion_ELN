@@ -23,7 +23,7 @@ module Chemotion
 
         # .ids does not work here as it uses the primary key which the database view notify_messages does not have
         channel_5_ids = messages.where(channel_type: 5).pluck(:id)
-        Notification.where(id: channel_5_ids).each do |notification|
+        Notification.where(id: channel_5_ids).find_each do |notification|
           notification.update!(is_ack: 1)
         end
       end
@@ -35,7 +35,7 @@ module Chemotion
       get 'spectra' do
         messages = NotifyMessage.where(receiver_id: current_user.id, subject: 'Chem Spectra Notification')
         messages = messages.where(is_ack: params[:is_ack]) if params[:is_ack] < 9
-        messages.where(channel_type: 8).each do |msg|
+        messages.where(channel_type: 8).find_each do |msg|
           Notification.find(msg.id)&.update!(is_ack: 1)
         end
 
@@ -55,7 +55,7 @@ module Chemotion
       get 'channels_user' do
         channels = Channel.where(channels: 8)
                           .select(
-                            <<~SQL
+                            <<~SQL.squish,
                               id, subject, created_at, updated_at, msg_template,
                               (select user_id from subscriptions
                               where channel_id = channels.id
@@ -101,10 +101,10 @@ module Chemotion
           return if channel.nil?
 
           subscription = if params[:subscribe]
-            Subscription.create(channel_id: channel.id, user_id: current_user.id)
-          else
-            Subscription.find_by(channel_id: channel.id, user_id: current_user.id).destroy
-          end
+                           Subscription.create(channel_id: channel.id, user_id: current_user.id)
+                         else
+                           Subscription.find_by(channel_id: channel.id, user_id: current_user.id).destroy
+                         end
 
           present subscription, with: Entities::SubscriptionEntity
         end
@@ -115,14 +115,18 @@ module Chemotion
         params do
           requires :channel_id, type: Integer, desc: 'channel id'
           requires :content, type: String, desc: 'message content'
-          optional :user_ids, type: Array, desc: 'notification user ids'
+          requires :user_ids, type: Array, desc: 'notification user ids', coerce_with: lambda { |val|
+                                                                                         val.filter do |id|
+                                                                                           id.is_a?(Integer)
+                                                                                         end
+                                                                                       }
         end
         post do
           message = Message.create_msg_notification(
             channel_id: params[:channel_id],
-            message_content: { 'data': params[:content] },
+            message_content: { data: params[:content] },
             message_from: current_user.id,
-            message_to: params[:user_ids]
+            message_to: params[:user_ids],
           )
           status 204 if message
         end
