@@ -18,6 +18,7 @@ import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import Screen from 'src/models/Screen';
+import DeviceDescription from 'src/models/DeviceDescription';
 
 import Device from 'src/models/Device';
 import Container from 'src/models/Container';
@@ -103,6 +104,13 @@ class ElementStore {
         pages: null,
         perPage: null
       },
+      device_descriptions: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
     };
 
     this.state = {
@@ -157,6 +165,7 @@ class ElementStore {
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
       handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
+      handlefetchDeviceDescriptionsByCollectionId: ElementActions.fetchDeviceDescriptionsByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -189,6 +198,7 @@ class ElementStore {
       handleCopyReaction: ElementActions.copyReaction,
       handleCopyResearchPlan: ElementActions.copyResearchPlan,
       handleCopyElement: ElementActions.copyElement,
+      handleCopyCellLine: ElementActions.copyCellLineFromId,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples:
@@ -210,6 +220,10 @@ class ElementStore {
       handleImportWellplateIntoResearchPlan: ElementActions.importWellplateIntoResearchPlan,
       handleImportTableFromSpreadsheet: ElementActions.importTableFromSpreadsheet,
 
+      handlefetchDeviceDescriptionById: ElementActions.fetchDeviceDescriptionById,
+      handleCreateDeviceDescription: ElementActions.createDeviceDescription,
+      handleCopyDeviceDescriptionFromClipboard: ElementActions.copyDeviceDescriptionFromClipboard,
+
       handleCreatePrivateNote: ElementActions.createPrivateNote,
       handleUpdatePrivateNote: ElementActions.updatePrivateNote,
 
@@ -227,6 +241,7 @@ class ElementStore {
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
           ElementActions.generateEmptyCellLine,
+          ElementActions.generateEmptyDeviceDescription,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
@@ -244,6 +259,8 @@ class ElementStore {
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
+      handleSplitAsSubCellLines: ElementActions.splitAsSubCellLines,
+      handleSplitAsSubDeviceDescription: ElementActions.splitAsSubDeviceDescription,
       // formerly from DetailStore
       handleSelect: DetailActions.select,
       handleClose: DetailActions.close,
@@ -264,6 +281,7 @@ class ElementStore {
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan,
         ElementActions.updateCellLine,
+        ElementActions.updateDeviceDescription,
         ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
@@ -535,7 +553,7 @@ class ElementStore {
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line } = ui_state;
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line, device_description } = ui_state;
     const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
     const params = {
       options,
@@ -546,7 +564,8 @@ class ElementStore {
       research_plan,
       currentCollection,
       selecteds,
-      cell_line
+      cell_line,
+      device_description
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -599,6 +618,7 @@ class ElementStore {
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
+        if (layout.device_description && layout.device_description > 0) { this.handleRefreshElements('device_description'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
@@ -655,6 +675,10 @@ class ElementStore {
   }
   handlefetchCellLinesByCollectionId(result) {
     this.state.elements.cell_lines = result;
+  }
+
+  handlefetchDeviceDescriptionsByCollectionId(result) {
+    this.state.elements.device_descriptions = result;
   }
 
   // -- Samples --
@@ -748,6 +772,10 @@ class ElementStore {
       ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort
     );
+  }
+
+  handleSplitAsSubCellLines(ui_state) {
+    ElementActions.fetchCellLinesByCollectionId(ui_state.currentCollection.id);
   }
 
   // Molecules
@@ -937,6 +965,30 @@ class ElementStore {
     this.setState({ selecteds: newSelecteds });
   }
 
+  // -- DeviceDescriptions --
+
+  handlefetchDeviceDescriptionById(result) {
+    this.changeCurrentElement(result);
+  }
+
+  handleCreateDeviceDescription(device_description) {
+    this.handleRefreshElements('device_description');
+    this.navigateToNewElement(device_description);
+  }
+
+  handleCopyDeviceDescriptionFromClipboard(collection_id) {
+    const clipboardDeviceDescriptions = ClipboardStore.getState().device_descriptions;
+    if (clipboardDeviceDescriptions && clipboardDeviceDescriptions.length > 0) {
+      this.changeCurrentElement(DeviceDescription.copyFromDeviceDescriptionAndCollectionId(clipboardDeviceDescriptions[0], collection_id));
+    }
+  }
+
+  handleSplitAsSubDeviceDescription(ui_state) {
+    ElementActions.fetchDeviceDescriptionsByCollectionId(
+      ui_state.currentCollectionId, {}, ui_state.isSync
+    );
+  }
+
   // -- Reactions --
 
   handleFetchReactionById(result) {
@@ -1005,6 +1057,11 @@ class ElementStore {
   handleCopyElement(result) {
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
     Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
+  }
+
+  handleCopyCellLine(result) {
+    UserActions.fetchCurrentUser(); //Needed to update the cell line counter in frontend
+    Aviator.navigate(`/collection/${result.collectionId}/cell_line/${result.id}`);
   }
 
   handleOpenReactionDetails(reaction) {
@@ -1104,7 +1161,8 @@ class ElementStore {
         'fetchWellplatesByCollectionId',
         'fetchScreensByCollectionId',
         'fetchResearchPlansByCollectionId',
-        'fetchCellLinesByCollectionId'
+        'fetchCellLinesByCollectionId',
+        'fetchDeviceDescriptionsByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
@@ -1352,6 +1410,10 @@ class ElementStore {
         this.handleRefreshElements('wellplate');
         this.handleUpdateWellplateAttaches(updatedElement);
         this.handleRefreshElements('sample');
+        break;
+      case 'device_description':
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements('device_description');
         break;
       case 'genericEl':
         this.handleRefreshElements('genericEl');

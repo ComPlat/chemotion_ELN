@@ -1,10 +1,10 @@
+/* eslint-disable prefer-object-spread */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { orderBy } from 'lodash';
 import { Constants, Designer } from 'chem-generic-ui';
-import SyncBtn from 'src/apps/generic/SyncButton';
 import LoadingModal from 'src/components/common/LoadingModal';
 import Notifications from 'src/components/Notifications';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
@@ -22,7 +22,6 @@ export default class GenericDatasetsAdmin extends React.Component {
       elements: [],
       show: { tab: '', modal: '' },
       revisions: [],
-      repoData: [],
       user: {},
     };
     this.handleShowState = this.handleShowState.bind(this);
@@ -31,31 +30,19 @@ export default class GenericDatasetsAdmin extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.delRevision = this.delRevision.bind(this);
     this.fetchRevisions = this.fetchRevisions.bind(this);
-    this.handleCreateRepo = this.handleCreateRepo.bind(this);
-    this.handleShowRepo = this.handleShowRepo.bind(this);
   }
 
   componentDidMount() {
     this.fetchElements();
     UsersFetcher.fetchCurrentUser()
-      .then(result => {
+      .then((result) => {
         if (!result.error) {
           this.setState({ user: result.user });
         }
       })
-      .catch(errorMessage => {
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
-  }
-
-  getShowState(att, val) {
-    return { ...this.state.show, [att]: val };
-  }
-
-  fetchElements() {
-    GenericDSsFetcher.listDatasetKlass().then(result => {
-      this.setState({ elements: result.klass });
-    });
   }
 
   handleActivateKlass(e) {
@@ -65,7 +52,7 @@ export default class GenericDatasetsAdmin extends React.Component {
       is_active: !e.is_active,
       klass: 'DatasetKlass',
     })
-      .then(result => {
+      .then((result) => {
         if (result.error) {
           notification({
             title: `${act} Dataset fail`,
@@ -82,13 +69,43 @@ export default class GenericDatasetsAdmin extends React.Component {
           // this.fetchElements();
         }
       })
-      .catch(errorMessage => {
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
 
   handleShowState(att, val, cb = () => {}) {
     this.setState({ show: this.getShowState(att, val) }, cb);
+  }
+
+  async handleSubmit(_element, _release = 'draft') {
+    const [element, release] = [_element, _release];
+    element.release = release;
+    LoadingActions.start();
+    const result = await submit(GenericDSsFetcher, { update: Constants.GENERIC_TYPES.DATASET, element, release });
+    if (result.isSuccess) {
+      notification(result);
+      this.fetchElements();
+      // eslint-disable-next-line react/no-unused-state
+      this.setState({ element: result.response }, () => LoadingActions.stop());
+    } else {
+      notification(result);
+    }
+    LoadingActions.stop();
+  }
+
+  getShowState(att, val) {
+    const { show } = this.state;
+    return { ...show, [att]: val };
+  }
+
+  fetchElements() {
+    LoadingActions.start();
+    GenericDSsFetcher.listDatasetKlass().then((result) => {
+      this.setState({ elements: result.klass });
+    }).finally(() => {
+      LoadingActions.stop();
+    });
   }
 
   closeModal(cb = () => {}) {
@@ -99,7 +116,7 @@ export default class GenericDatasetsAdmin extends React.Component {
     const element = _element;
     if (element?.id) {
       GenericDSsFetcher.fetchKlassRevisions(element.id, 'DatasetKlass').then(
-        result => {
+        (result) => {
           let curr = Object.assign({}, { ...element.properties_template });
           curr = Object.assign(
             {},
@@ -116,10 +133,10 @@ export default class GenericDatasetsAdmin extends React.Component {
   delRevision(params) {
     const { id, data, uuid } = params;
     GenericDSsFetcher.deleteKlassRevision({
-      id: id,
+      id,
       klass_id: data?.id,
       klass: 'DatasetKlass',
-    }).then(response => {
+    }).then((response) => {
       if (response.error) {
         notification({
           title: 'Delete Revision',
@@ -137,59 +154,8 @@ export default class GenericDatasetsAdmin extends React.Component {
     });
   }
 
-  handleShowRepo() {
-    LoadingActions.start();
-    GenericDSsFetcher.fetchRepo().then(result => {
-      if (result.error) {
-        notification({
-          title: 'Cannot connect to Chemotion Repository',
-          lvl: 'error',
-          msg: result.error,
-        });
-        LoadingActions.stop();
-      } else {
-        this.setState(
-          { repoData: result, show: this.getShowState('modal', 'NewRepo') },
-          () => LoadingActions.stop()
-        );
-      }
-
-    });
-  }
-
-  handleCreateRepo(element) {
-    GenericDSsFetcher.createRepo({ identifier: element['identifier'] }).then(
-      result => {
-        if (result?.status === 'success') {
-          this.setState({ elements: result?.klass || this.state.elements });
-        }
-        notification({
-          title: 'Sync from LabIMotion Hub',
-          lvl: result?.status || 'error',
-          msg: result?.message || 'Unknown error',
-        });
-      }
-    );
-    this.closeModal();
-  }
-
-  async handleSubmit(_element, _release = 'draft') {
-    const [element, release] = [_element, _release];
-    element.release = release;
-    LoadingActions.start();
-    const result = await submit(GenericDSsFetcher, { update: Constants.GENERIC_TYPES.DATASET, element, release });
-    if (result.isSuccess) {
-      notification(result);
-      this.fetchElements();
-      this.setState({ element: result.response }, () => LoadingActions.stop());
-    } else {
-      notification(result);
-    }
-    LoadingActions.stop();
-  }
-
   renderGrid() {
-    const { elements } = this.state;
+    const { elements, revisions } = this.state;
     const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
     return (
       <Designer
@@ -199,12 +165,13 @@ export default class GenericDatasetsAdmin extends React.Component {
         fnActive={this.handleActivateKlass}
         fnDerive={() => {}}
         fnUpdate={() => {}}
+        fnRefresh={this.fetchElements}
         preview={{
           fnDelRevisions: this.delRevision,
           fnRevisions: this.fetchRevisions,
-          revisions: this.state.revisions,
+          revisions,
         }}
-        genericType="Dataset"
+        genericType={Constants.GENERIC_TYPES.DATASET}
         gridData={els}
       />
     );
@@ -219,17 +186,8 @@ export default class GenericDatasetsAdmin extends React.Component {
     return (
       <div className="vw-90 my-auto mx-auto">
         <GenericMenu userName={user.name} text={FN_ID} />
-        <div className="mt-5 pt-5">
+        <div className="mt-3">
           <FunctionLocation name={FN_ID} />
-          <SyncBtn
-            data={this.state.repoData}
-            fnCreate={this.handleCreateRepo}
-            fnModalClose={this.closeModal}
-            fnModalOpen={this.handleShowRepo}
-            genericType={Constants.GENERIC_TYPES.DATASET}
-            klasses={this.state.klasses}
-            showModal={this.state.show.modal === 'NewRepo'}
-          />
           {this.renderGrid()}
         </div>
         <Notifications />
@@ -241,11 +199,12 @@ export default class GenericDatasetsAdmin extends React.Component {
 
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById(`${FN_ID}Admin`);
-  if (domElement)
+  if (domElement) {
     ReactDOM.render(
       <DndProvider backend={HTML5Backend}>
         <GenericDatasetsAdmin />
       </DndProvider>,
       domElement
     );
+  }
 });

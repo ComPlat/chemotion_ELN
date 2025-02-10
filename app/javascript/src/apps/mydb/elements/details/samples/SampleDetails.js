@@ -746,15 +746,13 @@ export default class SampleDetails extends React.Component {
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
         />
-        <div className="my-2">
+        <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
+          {sample.molecule_formula && (
+            this.elementalPropertiesItem(sample)
+          )}
         </div>
         <EditUserLabels element={sample} fnCb={this.handleSampleChanged} />
-        {sample.molecule_formula && (
-          <div className="mt-2">
-            {this.elementalPropertiesItem(sample)}
-          </div>
-        )}
         <div className="mt-2">
           <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </div>

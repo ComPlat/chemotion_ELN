@@ -135,7 +135,11 @@ export default class ElementsList extends React.Component {
       const { klasses } = UIStore.getState();
       genericKlasses = klasses;
     }
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericKlasses);
+    const elNames = [
+      'sample', 'reaction', 'screen',
+      'wellplate', 'research_plan',
+      'cell_line', 'device_description'
+    ].concat(genericKlasses);
 
     const newTotalCheckedElements = {};
     let needsUpdate = false;
@@ -194,7 +198,8 @@ export default class ElementsList extends React.Component {
       'screen',
       'wellplate',
       'research_plan',
-      'cell_line'
+      'cell_line',
+      'device_description'
     ]);
     const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;

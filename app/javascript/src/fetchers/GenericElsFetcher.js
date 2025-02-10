@@ -26,7 +26,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
 
   static export(element, klass, exportFormat) {
     let fileName;
-    const promise = fetch(`/api/v1/generic_elements/export.json?id=${element.id}&klass=${klass}&export_format=${exportFormat}`, {
+    const api = `/api/v1/generic_elements/export.json?id=${element.id}&klass=${klass}&export_format=${exportFormat}`;
+    const promise = fetch(api, {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
@@ -203,24 +204,12 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     return this.execData(params, 'create_element_klass');
   }
 
-  static fetchElementRevisions(id) {
-    return this.exec(`element_revisions.json?id=${id}`, 'GET');
-  }
-
-  static fetchSegmentRevisions(id) {
-    return this.exec(`segment_revisions.json?id=${id}`, 'GET');
-  }
-
   static fetchElementKlasses() {
     return this.exec('klasses_all.json', 'GET');
   }
 
   static fetchElementKlass(klassName) {
     return this.exec(`klass.json?name=${klassName}`, 'GET');
-  }
-
-  static deleteRevisions(params) {
-    return this.execData(params, 'delete_revision');
   }
 
   static updateElementKlass(params) {

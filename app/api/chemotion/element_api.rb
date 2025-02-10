@@ -38,6 +38,9 @@ module Chemotion
         optional :cell_line, type: Hash do
           use :ui_state_params
         end
+        optional :device_description, type: Hash do
+          use :ui_state_params
+        end
         optional :selecteds, desc: 'Elements currently opened in detail tabs', type: Array do
           optional :type, type: String
           optional :id, type: Integer
@@ -77,7 +80,7 @@ module Chemotion
       desc "delete element from ui state selection."
       delete do
         deleted = { 'sample' => [] }
-        %w[sample reaction wellplate screen research_plan cell_line].each do |element|
+        %w[sample reaction wellplate screen research_plan cell_line device_description].each do |element|
           next unless params[element]
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
 

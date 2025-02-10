@@ -161,19 +161,17 @@ export default class ToolbarTemplateCreator extends React.Component {
       return (
         <div key={`ttc_dd_${name}_${id}`}>
           <hr />
-          <div
-            className="d-flex gap-2 mt-2"
-            style={{ maxWidth: '775px' }}
+          <div className="d-flex gap-2 mt-2" style={{ minWidth: '475px', maxWidth: '775px' }}
           >
             <Form.Control
-              className="col"
+              className="col2"
               onChange={e => this.onChangeDropdown('DropdownName', e, id)}
               ref={titleRef.ref}
               type="text"
               defaultValue={name}
             />
             <Select
-              className="me-2 col-10 f-5"
+              className="me-2 col-9 f-5"
               ref={selectRef.ref}
               options={options}
               defaultValue={ddSelected}
@@ -213,15 +211,16 @@ export default class ToolbarTemplateCreator extends React.Component {
             </Button>
           </ButtonToolbar>
           <hr />
-          <div className="d-flex gap-2 mt-2" style={{ maxWidth: '775px' }}>
+          <div className="d-flex gap-2 mt-2" style={{ minWidth: '475px', maxWidth: '775px' }}>
             <Form.Control
               type="text"
-              className="col"
+              className="col2"
               disabled
               defaultValue="Toolbar"
+              
             />
             <Select
-              className="me-5 col-10 f-5"
+              className="me-5 col-9 f-5"
               ref={this.toolbarSelectRef}
               defaultValue={iconSelected}
               options={options}
@@ -231,7 +230,7 @@ export default class ToolbarTemplateCreator extends React.Component {
             />
           </div>
           {dropdownTemplateSelector}
-        </Popover.Body>
+        </Popover.Body >
       </>
     );
   }

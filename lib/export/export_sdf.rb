@@ -34,6 +34,28 @@ module Export
 
     private
 
+    def concatenate_data(sample, data, headers = @headers)
+      headers.each do |column|
+        next unless column
+
+        raw_value = case column
+                    when 'molarity'
+                      "#{sample['molarity_value']} #{sample['molarity_unit']}"
+                    when 'flash point'
+                      sample['flash_point']
+                    when 'refractive index'
+                      sample['refractive_index']
+                    when 'density'
+                      "#{sample['density']} g/mL"
+                    else
+                      sample[column]
+                    end
+        column_data = format_field(column, raw_value)
+        data.concat(column_data)
+      end
+      data
+    end
+
     def filter_with_permission_and_detail_level(sample)
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
         data = validate_molfile(sample['molfile'])
@@ -44,10 +66,7 @@ module Export
         end
         data = data.rstrip
         data += "\n"
-        @headers.each do |column|
-          column_data = format_field(column, sample[column])
-          data.concat(column_data)
-        end
+        data = concatenate_data(sample, data)
       else
         # return no data if molfile not allowed
         return nil if sample['dl_s'].zero?
@@ -62,12 +81,8 @@ module Export
         # NB: as of now , only dl 0 and 10 are implemented
         dl = 10 if dl.positive?
         headers = instance_variable_get("headers#{sample['dl_s']}#{dl}")
-        headers.each do |column|
-          next unless column
+        data = concatenate_data(sample, data, headers)
 
-          column_data = format_field(column, sample[column])
-          data.concat(column_data)
-        end
       end
       data.concat("\$\$\$\$\n")
     end
@@ -81,11 +96,14 @@ module Export
     def format_field(column, raw_value)
       field = column.gsub(/\s+/, '_').upcase
       reference_values = ['melting pt', 'boiling pt']
+      flash_point = ['flash point', 'flash_point']
       sample_column =
         if reference_values.include?(column)
           extract_reference_values(raw_value)
         elsif column == 'solvent'
           extract_label_from_solvent_column(raw_value) || ''
+        elsif flash_point.include?(column)
+          flash_point_format(raw_value)
         else
           raw_value
         end

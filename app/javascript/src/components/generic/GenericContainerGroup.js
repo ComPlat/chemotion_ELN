@@ -2,18 +2,18 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Accordion } from 'react-bootstrap';
 import { AiHeader, AiHeaderDeleted } from 'src/components/generic/GenericContainer';
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const GenericContainerGroup = (props) => {
   const {
-    ae, readOnly, generic, fnUndo, fnChange, fnRemove, noAct, linkedAis, handleSubmit
+    ae, readOnly, generic, fnUndo, fnChange, fnRemove, noAct, linkedAis, handleSubmit, activeKey
   } = props;
   // if (ae.length < 1 || ae[0].children.length < 0 || ae[0].children.filter(x => linkedAis.includes(x.id).length < 1)) return null;
   if (ae.length < 1 || ae[0].children.length < 0) return null;
   const ais = noAct ? ae[0].children.filter(x => linkedAis.includes(x.id)) : ae[0].children;
   return (
-    <PanelGroup
+    <Accordion
       id="gen_el_analysis_list"
       defaultActiveKey={0}
       accordion
@@ -45,7 +45,7 @@ const GenericContainerGroup = (props) => {
           />
         );
       })}
-    </PanelGroup>
+    </Accordion>
   );
 };
 

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 export default function ToggleButton({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
-  onColor, offColor, tooltipOn, tooltipOff
+  onColor, offColor, tooltipOn, tooltipOff, additionalClasses,
 }) {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
 
@@ -15,18 +15,20 @@ export default function ToggleButton({
     if (onChange) onChange(newToggledState);
   };
 
+  useEffect(() => {
+    setIsToggled(isToggledInitial);
+  }, [isToggledInitial]);
+
   const buttonColor = isToggled ? onColor : offColor;
   const toolTipMessage = isToggled ? tooltipOn : tooltipOff;
 
   return (
     <OverlayTrigger placement="top" overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}>
       <Button
-        className={`toggle-button ${isToggled ? 'on' : 'off'}`}
-        size="xs"
+        className={`bg-${buttonColor} border-0 p-0`}
         onClick={handleChange}
-        style={{ backgroundColor: buttonColor, minWidth: '50px', border: 'none' }}
       >
-        <span className="fs-6">
+        <span className={`fs-6 ${additionalClasses}`}>
           {isToggled ? onLabel : offLabel}
         </span>
       </Button>
@@ -44,6 +46,7 @@ ToggleButton.propTypes = {
   offColor: PropTypes.string,
   tooltipOn: PropTypes.string,
   tooltipOff: PropTypes.string,
+  additionalClasses: PropTypes.string,
 };
 
 ToggleButton.defaultProps = {
@@ -55,4 +58,5 @@ ToggleButton.defaultProps = {
   offColor: '#d3d3d3',
   tooltipOn: 'Click to switch off',
   tooltipOff: 'Click to switch on',
+  additionalClasses: '',
 };

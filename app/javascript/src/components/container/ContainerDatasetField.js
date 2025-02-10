@@ -70,8 +70,8 @@ class ContainerDatasetField extends Component {
           {datasetContainer.name || 'new'}
         </a>
         <div className="ms-auto">
-          {gdsDownload}
           <ButtonToolbar className="gap-1">
+            {gdsDownload}
             <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
               <Button size="xxsm" variant="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
                 <i className="fa fa-download" />

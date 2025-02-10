@@ -24,5 +24,4 @@ fi
 
 echo '>>> Installing JS packages...'
 yarn install --production=false
-yarn install
 

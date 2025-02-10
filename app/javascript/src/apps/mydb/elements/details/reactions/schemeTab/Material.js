@@ -96,6 +96,7 @@ const iupacNameTooltip = material => (
         <tr><td>IUPAC&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</td></tr>
         <tr><td>Name&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.name || ''}</td></tr>
         <tr><td>Ext.Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</td></tr>
+        <tr><td>Short Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</td></tr>
       </tbody>
     </table>
   </Tooltip>);
@@ -120,6 +121,7 @@ class Material extends Component {
     this.gasFieldsUnitsChanged = this.gasFieldsUnitsChanged.bind(this);
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
+    this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
   }
 
   handleMaterialClick(sample) {
@@ -242,33 +244,65 @@ class Material extends Component {
     return result > 1 ? '100%' : `${(result * 100).toFixed(0)}%`;
   }
 
-  equivalentOrYield(material) {
-    const { reaction, materialGroup } = this.props;
-    if (materialGroup === 'products') {
-      const refMaterial = reaction.getReferenceMaterial();
-      let calculateYield = material.equivalent;
-      if (material.gas_type === 'gas') {
-        calculateYield = this.recalculateYieldForGasProduct(material, reaction);
-      } else if (reaction.hasPolymers()) {
-        calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
-      } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
-        calculateYield = 'n.a.';
-      } else if (material.purity < 1 && material.equivalent > 1) {
-        calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
-      } else {
-        calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
-      }
+  calculateYield(material, reaction) {
+    const refMaterial = reaction.getReferenceMaterial();
+    let calculateYield = material.equivalent;
+    if (material.gas_type === 'gas') {
+      calculateYield = this.recalculateYieldForGasProduct(material, reaction);
+    } else if (reaction.hasPolymers()) {
+      calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
+    } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
+      calculateYield = 'n.a.';
+    } else if (material.purity < 1 && material.equivalent > 1) {
+      calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
+    } else {
+      calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
+    }
+    return calculateYield;
+  }
+
+  conversionRateField(material) {
+    const { reaction } = this.props;
+    const condition = material.conversion_rate / 100 > 1;
+    const allowedConversionRateValue = material.conversion_rate && condition
+      ? 100 : material.conversion_rate;
+    return (
+      <div>
+        <NumeralInputWithUnitsCompo
+          precision={4}
+          value={allowedConversionRateValue || 'n.d.'}
+          unit="%"
+          disabled={!permitOn(reaction)}
+          onChange={(e) => this.handleConversionRateChange(e)}
+          size="sm"
+        />
+      </div>
+    );
+  }
+
+  yieldOrConversionRate(material) {
+    const { reaction, displayYieldField } = this.props;
+    if (displayYieldField === true || displayYieldField === null) {
       return (
         <div>
           <Form.Control
             name="yield"
             type="text"
+            bsClass="bs-form--compact form-control"
             size="sm"
-            value={calculateYield || 'n.d.'}
+            value={this.calculateYield(material, reaction) || 'n.d.'}
             disabled
           />
         </div>
       );
+    }
+    return this.conversionRateField(material);
+  }
+
+  equivalentOrYield(material) {
+    const { materialGroup } = this.props;
+    if (materialGroup === 'products') {
+      return this.yieldOrConversionRate(material);
     }
     return (
       <NumeralInputWithUnitsCompo
@@ -522,6 +556,20 @@ class Material extends Component {
     }
   }
 
+  handleConversionRateChange(e) {
+    const { onChange, materialGroup } = this.props;
+    const conversionRate = e.value;
+    if (onChange && e) {
+      const event = {
+        type: 'conversionRateChanged',
+        materialGroup,
+        sampleID: this.materialId(),
+        conversionRate
+      };
+      onChange(event);
+    }
+  }
+
   handleGasFieldsChange(field, e, currentValue) {
     const { materialGroup, onChange } = this.props;
     if (onChange && e.value !== undefined && e.unit !== undefined && e.value !== currentValue) {
@@ -552,7 +600,7 @@ class Material extends Component {
     const solVol = vol.slice(0, -2);
     const mol = molUnit ? `${molUnit}mol, ` : '';
     const mlt = m.molarity_value === 0.0 ?
-      '' : `${validDigit(m.molarity_value, 3)}${m.molarity_unit}, `;
+      '' : `${validDigit(m.molarity_value, 3)} ${m.molarity_unit}, `;
     const eqv = `${validDigit(m.equivalent, 3)}`;
     const yld = `${Math.round(m.equivalent * 100)}%`;
 
@@ -1075,4 +1123,5 @@ Material.propTypes = {
   canDrop: PropTypes.bool,
   isOver: PropTypes.bool,
   lockEquivColumn: PropTypes.bool.isRequired,
+  displayYieldField: PropTypes.bool,
 };

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Badge, Modal, Form, OverlayTrigger, Tooltip
+  Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
@@ -21,8 +21,13 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
-      <Badge bg='secondary' className='me-2'>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
       <ButtonGroup>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Tooltip>}
+        >
+          <Button size="xsm" variant="secondary">{variationsRow.id}</Button>
+        </OverlayTrigger>
         <Button size="xsm" variant="success" onClick={() => copyRow(variationsRow)}>
           <i className="fa fa-clone" />
         </Button>

@@ -7,6 +7,7 @@
 
 set -e
 
+echo '>>> check nodejs version as set in package.json: install if mismatch, and correct .tool-versions'
 # Get the currently installed Node.js version using asdf
 CURRENT_NODE_VERSION=$(asdf current nodejs 2>/dev/null | awk '{print $2}')
 
