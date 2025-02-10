@@ -151,7 +151,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": "^18.19.1"
+    "node": "^22.14"
   },
   "browserslist": [
     "defaults"
