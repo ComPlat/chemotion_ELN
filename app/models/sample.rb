@@ -496,7 +496,9 @@ class Sample < ApplicationRecord
       File.write(full_svg_path(svg_file_name), Chemotion::Sanitizer.scrub_svg(svg))
       self.sample_svg_file = svg_file_name
     end
-    self.sample_svg_file = nil unless /\A[0-9a-f]{128}.svg\z/.match?(sample_svg_file)
+    return if /\A[0-9a-f]{128}.svg\z/.match?(sample_svg_file)
+
+    self.sample_svg_file = nil
   end
 
   def init_elemental_compositions
