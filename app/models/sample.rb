@@ -427,9 +427,9 @@ class Sample < ApplicationRecord
     self.molfile = molfile.presence || molecule&.molfile
   end
 
-  def validate_stereo(stereo = {})
+  def validate_stereo(_stereo = {})
     self.stereo ||= Sample::STEREO_DEF
-    self.stereo.merge!(stereo.slice('abs', 'rel'))
+    self.stereo.merge!(_stereo.slice('abs', 'rel'))
     self.stereo['abs'] = 'any' unless Sample::STEREO_ABS.include?(self.stereo['abs'])
     self.stereo['rel'] = 'any' unless Sample::STEREO_REL.include?(self.stereo['rel'])
     self.stereo
