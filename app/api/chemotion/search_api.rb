@@ -90,6 +90,7 @@ module Chemotion
         params[:selection][:list_filter_params]
       end
 
+      # TODO: move to Sample (DRY Usecases::Search::StructureSearch::basic_scope)
       def sample_structure_search(c_id = @c_id, not_permitted = @dl_s && @dl_s < 1)
         return Sample.none if not_permitted
 
@@ -521,11 +522,12 @@ module Chemotion
         end
 
         post do
-          samples = sample_structure_search
-          serialization_by_elements_and_page(
-            elements_by_scope(samples),
-            params[:page],
-          )
+          Usecases::Search::StructureSearch.new(
+            collection_id: @c_id,
+            params: params,
+            user: current_user,
+            detail_levels: @dl,
+          ).perform!
         end
       end
 
