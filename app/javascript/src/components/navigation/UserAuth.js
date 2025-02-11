@@ -612,7 +612,7 @@ export default class UserAuth extends Component {
           <NavDropdown
             title={`${currentUser.name}`}
             id="bg-nested-dropdown"
-            className="me-3"
+            className="me-5 ms-3"
           >
             <NavDropdown.Item eventKey="1" href="/pages/settings">
               Account &amp; Profile

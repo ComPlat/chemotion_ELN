@@ -363,7 +363,7 @@ export default class AutoCompleteInput extends React.Component {
     return (
       <div className="d-flex flex-column w-100">
         <Form.Group ref={this.overlayTarget}>
-          <InputGroup className="d-flex flex-nowrap w-100">
+          <InputGroup className="d-flex flex-nowrap w-100 z-4">
             {this.props.buttonBefore}
             <Form.Control
               placeholder="IUPAC, InChI, SMILES, RInChI..."
