@@ -115,21 +115,23 @@ class Sample < ApplicationRecord
 
   # scopes for suggestions
   scope :by_residues_custom_info, lambda { |info, val|
-                                    joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")
+                                    joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?",
+                                                           "%#{sanitize_sql_like(val)}%")
                                   }
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_sample_xref_cas,
         ->(query) { where("xref ? 'cas'").where("xref ->> 'cas' ILIKE ?", "%#{sanitize_sql_like(query)}%") }
   scope :by_exact_name, lambda { |query|
-                          where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)', "^([a-zA-Z0-9]+-)?
-                            #{sanitize_sql_like(query)}(-?[a-zA-Z])$", "^([a-zA-Z0-9]+-)?
-                            #{sanitize_sql_like(query)}(-?[a-zA-Z])$")
+                          sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$"
+                          where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)',
+                                sanitized_query, sanitized_query)
                         }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_molecule_sum_formular, lambda { |query|
     decoupled_collection = where(decoupled: true).where('sum_formula ILIKE ?', "%#{sanitize_sql_like(query)}%")
-    coupled_collection = where(decoupled: false).joins(:molecule).where('molecules.sum_formular ILIKE ?', "%#{sanitize_sql_like(query)}%")
+    coupled_collection = where(decoupled: false).joins(:molecule).where('molecules.sum_formular ILIKE ?',
+                                                                        "%#{sanitize_sql_like(query)}%")
     where(id: decoupled_collection + coupled_collection)
   }
   scope :with_reactions, lambda {
@@ -146,7 +148,8 @@ class Sample < ApplicationRecord
                                      joins(:reactions_product_samples).where(reactions_samples: { reaction_id: ids })
                                    }
   scope :by_reaction_material_ids, lambda { |ids|
-                                     joins(:reactions_starting_material_samples).where(reactions_samples: { reaction_id: ids })
+                                     joins(:reactions_starting_material_samples)
+                                       .where(reactions_samples: { reaction_id: ids })
                                    }
   scope :by_reaction_solvent_ids,  lambda { |ids|
                                      joins(:reactions_solvent_samples).where(reactions_samples: { reaction_id: ids })
@@ -159,7 +162,8 @@ class Sample < ApplicationRecord
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, lambda {
-    joins('left join reactions_samples rs on rs.sample_id = samples.id').where("rs.id isnull or rs.\"type\" in ('ReactionsProductSample', 'ReactionsStartingMaterialSample')")
+    joins('left join reactions_samples rs on rs.sample_id = samples.id')
+      .where("rs.id isnull or rs.\"type\" in ('ReactionsProductSample', 'ReactionsStartingMaterialSample')")
   }
 
   scope :search_by_fingerprint_sim, lambda { |molfile, threshold = 0.01|
