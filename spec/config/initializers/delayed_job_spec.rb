@@ -12,9 +12,10 @@ RSpec.describe 'queuing of a reccuring job through delayed_job initializer' do
       CRON_CONFIG_PC_CID
       CRON_CONFIG_PC_LCSS
       CRON_CONFIG_REFRESH_ELEMENT_TAG
+      CRON_CONFIG_DISK_USAGE
     ]
   end
-  let(:days_from_now) { [2, 3, 4] }
+  let(:days_from_now) { [2, 3, 4, 5] }
   # map to week day as integers
   let(:wdays_from_now) { days_from_now.map { |num| Time.zone.now.next_day(num).wday } }
   # map to weekly cron schedules starting in x days
@@ -33,7 +34,7 @@ RSpec.describe 'queuing of a reccuring job through delayed_job initializer' do
                        .count
     end
   end
-  let(:expected_count) { [1, 1, 1] }
+  let(:expected_count) { [1, 1, 1, 1] }
 
   # rubocop:disable RSpec/BeforeAfterAll
   before(:all) do

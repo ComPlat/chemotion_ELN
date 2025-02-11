@@ -2,6 +2,16 @@
   %h1
     Account &amp; Profile
 
+  - if current_user.allocated_space != 0
+    .card
+      .card-header Quota
+      .card-body
+        .row.mb-3
+          .col-3.offset-3.col-form-label
+            Used Space / Allocated Space
+          .col
+            = "#{current_user.used_space / 1024 /1024} MB \/ #{current_user.allocated_space / 1024 /1024} MB"
+  
   .card
     .card-header Reaction Label
     .card-body

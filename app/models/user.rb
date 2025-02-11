@@ -49,11 +49,8 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-
-# rubocop: disable Metrics/ClassLength, Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
-# rubocop: disable Metrics/MethodLength
+# rubocop: disable Metrics/ClassLength, Metrics/CyclomaticComplexity
 # rubocop: disable Metrics/AbcSize
-# rubocop: disable Metrics/CyclicComplexity
 # rubocop: disable Metrics/PerceivedComplexity
 
 class User < ApplicationRecord
@@ -134,6 +131,7 @@ class User < ApplicationRecord
   after_create :create_all_collection
   after_create :update_matrix
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
+  after_create :set_default_avail_space
   before_destroy :delete_data
 
   scope :by_name, lambda { |query|
@@ -306,7 +304,7 @@ class User < ApplicationRecord
       'INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id',
     ).where(
       '(ua.user_id = ?) and (ua.deleted_at ISNULL) and (ua.to ISNULL or ua.to > ?)',
-      id, Time.now
+      id, Time.zone.now
     ).order('ua.from DESC')
   end
 
@@ -349,7 +347,7 @@ class User < ApplicationRecord
       sql = ApplicationRecord.send(:sanitize_sql_array, ['select generate_users_matrix(array[?])', id])
       ApplicationRecord.connection.exec_query(sql)
     end
-  rescue StandardError => e
+  rescue StandardError
     log_error 'Error on update_matrix'
   end
 
@@ -374,7 +372,7 @@ class User < ApplicationRecord
             end
       ApplicationRecord.connection.exec_query(sql)
     end
-  rescue StandardError => e
+  rescue StandardError
     log_error 'Error on update_matrix'
   end
 
@@ -424,6 +422,22 @@ class User < ApplicationRecord
     Matrice.extra_rules || {}
   end
 
+  def self.default_disk_space=(value)
+    value = value.to_i
+    return true if value == default_disk_space
+
+    find_each do |user|
+      user.update(allocated_space: [user.allocated_space, value].max)
+    end
+    Admin.first&.update(allocated_space: value)
+  end
+
+  def self.default_disk_space
+    return 0 if Admin.first.nil?
+
+    Admin.first.allocated_space
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -448,6 +462,11 @@ class User < ApplicationRecord
 
   def send_welcome_email
     WelcomeMailer.delay.mail_welcome_message(id)
+  end
+
+  def set_default_avail_space
+    self.allocated_space = User.default_disk_space
+    save!
   end
 
   def delete_data
@@ -481,7 +500,7 @@ class Group < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins, through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
-
+  around_save :update_allocated_space
   before_destroy :remove_from_matrices
 
   def administrated_by?(user)
@@ -494,10 +513,19 @@ class Group < User
     # Override method to return an array of user IDs in the group
     users.ids
   end
+
+  def update_allocated_space
+    return yield unless allocated_space_changed?
+
+    yield
+    users.each do |user|
+      next if user.allocated_space >= allocated_space
+
+      user.update(allocated_space: allocated_space)
+    end
+  end
 end
 
-# rubocop: enable Metrics/ClassLength, Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
-# rubocop: enable Metrics/MethodLength
+# rubocop: enable Metrics/ClassLength, Metrics/CyclomaticComplexity
 # rubocop: enable Metrics/AbcSize
-# rubocop: enable Metrics/CyclicComplexity
 # rubocop: enable Metrics/PerceivedComplexity

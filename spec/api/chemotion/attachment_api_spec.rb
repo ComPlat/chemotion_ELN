@@ -279,7 +279,34 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'POST /api/v1/attachments/upload_to_inbox' do
-    pending 'not yet implemented'
+    let(:user) { create(:person) }
+    let(:file_upload) do
+      {
+        file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt'), 'text/plain'),
+      }
+    end
+
+    context 'when upload works' do
+      before do
+        post '/api/v1/attachments/upload_to_inbox', params: file_upload
+      end
+
+      it 'expecting return code 201' do
+        expect(response).to have_http_status :created
+      end
+    end
+
+    context 'when upload is not allowed' do
+      before do
+        user.allocated_space = 1
+        user.save!
+        post '/api/v1/attachments/upload_to_inbox', params: file_upload
+      end
+
+      it 'expecting return code 413' do
+        expect(response).to have_http_status 413
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/{attachment_id}' do

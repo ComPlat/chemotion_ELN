@@ -120,7 +120,7 @@ const accountInActiveTooltip = (
 );
 
 const renderDeletedUsersTable = (deletedUsers) => (
-  <Table striped bordered hover className='mt-3'>
+  <Table striped bordered hover className="mt-3">
     <thead>
       <tr>
         <th>ID</th>
@@ -407,13 +407,16 @@ export default class UserManagement extends React.Component {
       this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
       return false;
     }
+    if (this.u_avail.value < 0) this.u_avail.value = 0;
+
     AdminFetcher.updateUser({
       id: user.id,
       email: this.u_email.value.trim(),
       first_name: this.u_firstname.value.trim(),
       last_name: this.u_lastname.value.trim(),
       name_abbreviation: this.u_abbr.value.trim(),
-      type: this.u_type.value
+      type: this.u_type.value,
+      allocated_space: this.u_avail.value === '' ? 0 : Math.round(this.u_avail.value) * 1024 * 1024
     })
       .then((result) => {
         if (result.error) {
@@ -426,12 +429,16 @@ export default class UserManagement extends React.Component {
         users[index] = result;
 
         this.setState({
-          users, showEditUserModal: false, messageEditUserModal: '', alertMessage: `User ${user.id} account has been updated.`
+          users,
+          showEditUserModal: false,
+          messageEditUserModal: '',
+          alertMessage: `User ${user.id} account has been updated.`
         });
         this.u_email.value = '';
         this.u_firstname.value = '';
         this.u_lastname.value = '';
         this.u_abbr.value = '';
+        this.u_avail.value = 0;
         return true;
       });
     return true;
@@ -709,7 +716,6 @@ export default class UserManagement extends React.Component {
         this.myMessage.value = '';
         this.setState({ selectedUsers: null });
         this.handleMsgClose();
-
       } catch (error) {
         console.error('Error sending message:', error);
         this.handleShowAlert('An error occured: Try again later or contact your system administrator if it persists.');
@@ -739,7 +745,7 @@ export default class UserManagement extends React.Component {
                 ref={(ref) => { this.myMessage = ref; }}
               />
             </Form.Group>
-            <Form.Group className='my-3'>
+            <Form.Group className="my-3">
               <AsyncSelect
                 isMulti
                 value={selectedUsers}
@@ -767,89 +773,97 @@ export default class UserManagement extends React.Component {
         centered
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
-        size='lg'
-        backdrop='static'
+        size="lg"
+        backdrop="static"
       >
         <Modal.Header closeButton>
           <Modal.Title>New User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tabs id="createUserTabs" className='fs-6'>
+          <Tabs id="createUserTabs" className="fs-6">
             <Tab eventKey="singleUser" title="Single user">
               <Form
-                className='ms-2 mt-2'
+                className="ms-2 mt-2"
               >
                 <Form.Group
-                  className='w-75 mb-3'
-                  controlId="formControlEmail">
-                  <Form.Label
-                  >
+                  className="w-75 mb-3"
+                  controlId="formControlEmail"
+                >
+                  <Form.Label>
                     Email:
                   </Form.Label>
                   <Form.Control type="email" name="email" ref={(ref) => { this.email = ref; }} />
                 </Form.Group>
                 <Form.Group
-                  className='w-75 mb-3'
-                  controlId="formControlPassword">
-                  <Form.Label
-                  >
-                    Password: </Form.Label>
+                  className="w-75 mb-3"
+                  controlId="formControlPassword"
+                >
+                  <Form.Label>
+                    Password:
+                  </Form.Label>
                   <Form.Control type="password" name="password" ref={(ref) => { this.password = ref; }} />
                 </Form.Group>
                 <Form.Group
-                  className='w-75 mb-3'
-                  controlId="formControlPasswordConfirmation">
-                  <Form.Label
-                  >
-                    Password Confirmation:</Form.Label>
+                  className="w-75 mb-3"
+                  controlId="formControlPasswordConfirmation"
+                >
+                  <Form.Label>
+                    Password Confirmation:
+                  </Form.Label>
                   <Form.Control type="password" ref={(ref) => { this.passwordConfirm = ref; }} />
                 </Form.Group>
                 <Form.Group
-                  className='w-75 mb-3'
-                  controlId="formControlFirstName">
-                  <Form.Label
-                  >
-                    First name: </Form.Label>
+                  className="w-75 mb-3"
+                  controlId="formControlFirstName"
+                >
+                  <Form.Label>
+                    First name:
+                  </Form.Label>
                   <Form.Control type="text" name="firstname" ref={(ref) => { this.firstname = ref; }} />
                 </Form.Group>
                 <Form.Group
-                  className='w-75 mb-3'
-                  controlId="formControlLastName">
-                  <Form.Label
-                  > Last name:  </Form.Label>
+                  className="w-75 mb-3"
+                  controlId="formControlLastName"
+                >
+                  <Form.Label>
+                    {' '}
+                    Last name:
+                  </Form.Label>
                   <Form.Control type="text" name="lastname" ref={(ref) => { this.lastname = ref; }} />
                 </Form.Group>
                 <Form.Group
-                  className='w-75 mb-3'
-                  controlId="formControlAbbr">
-                  <Form.Label
-                  >
-                    Abbr (3) *: </Form.Label>
+                  className="w-75 mb-3"
+                  controlId="formControlAbbr"
+                >
+                  <Form.Label>
+                    Abbr (3) *:
+                  </Form.Label>
                   <Form.Control type="text" name="nameAbbr" ref={(ref) => { this.nameAbbr = ref; }} />
                 </Form.Group>
                 <Form.Group
-                  className='w-75 mb-3'
-                  controlId="formControlsType">
-                  <Form.Label
-                  >
-                    Type:</Form.Label>
+                  className="w-75 mb-3"
+                  controlId="formControlsType"
+                >
+                  <Form.Label>
+                    Type:
+                  </Form.Label>
                   <Form.Select ref={(ref) => { this.type = ref; }}>
                     <option value="Person">Person</option>
                     <option value="Admin">Admin</option>
                   </Form.Select>
                 </Form.Group>
               </Form>
-              <Button variant="primary" className='mt-3 ms-2' onClick={() => this.handleCreateNewUser()}>
+              <Button variant="primary" className="mt-3 ms-2" onClick={() => this.handleCreateNewUser()}>
                 Create user
                 <i className="fa fa-plus ms-1" />
               </Button>
 
             </Tab>
             <Tab eventKey="multiUser" title="Multiple users from file">
-              <Form className='my-3'>
+              <Form className="my-3">
                 <Form.Group>
                   <Form.Label>Please format the user file like the table below.</Form.Label>
-                  <Table striped bordered hover className='mt-1'>
+                  <Table striped bordered hover className="mt-1">
                     <thead>
                       <tr>
                         <th>email</th>
@@ -887,7 +901,7 @@ export default class UserManagement extends React.Component {
                     config={{ header: true, skipEmptyLines: true }}
                     addRemoveButton
                     onRemoveFile={this.handleOnRemoveUserFile}
-                    className='my-1'
+                    className="my-1"
                   >
                     <span>
                       Drop a CSV user file here or click to upload.
@@ -895,7 +909,7 @@ export default class UserManagement extends React.Component {
                     </span>
                   </CSVReader>
                 </Form.Group>
-                <Button variant="primary" className='my-3' onClick={() => this.handleCreateNewUsersFromFile()}>
+                <Button variant="primary" className="my-3" onClick={() => this.handleCreateNewUsersFromFile()}>
                   Create users
                   <i className="fa fa-plus ms-1" />
                 </Button>
@@ -917,7 +931,7 @@ export default class UserManagement extends React.Component {
           <Form.Group controlId="formControlMessage" className="flex-grow-1">
             <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
           </Form.Group>
-          <Button variant="warning" className='fs-6' onClick={() => this.handleNewUserClose()}>Cancel</Button>
+          <Button variant="warning" className="fs-6" onClick={() => this.handleNewUserClose()}>Cancel</Button>
         </Modal.Footer>
       </Modal>
     );
@@ -931,21 +945,21 @@ export default class UserManagement extends React.Component {
           centered
           show={this.state.showEditUserModal}
           onHide={this.handleEditUserClose}
-          backdrop='static'
+          backdrop="static"
         >
           <Modal.Header closeButton>
             <Modal.Title>
               <Nav variant="tabs">
-                <NavItem >
+                <NavItem>
                   <Nav.Link eventKey="first">Edit user account </Nav.Link>
                 </NavItem>
-                <NavItem >
+                <NavItem>
                   <Nav.Link eventKey="second">Delete user</Nav.Link>
                 </NavItem>
               </Nav>
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body >
+          <Modal.Body>
             <Tab.Content animation>
               <Tab.Pane eventKey="first">
                 <Form>
@@ -959,7 +973,7 @@ export default class UserManagement extends React.Component {
                         name="u_email"
                         defaultValue={user.email}
                         ref={(ref) => { this.u_email = ref; }}
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -973,7 +987,7 @@ export default class UserManagement extends React.Component {
                         name="u_firstname"
                         defaultValue={user.first_name}
                         ref={(ref) => { this.u_firstname = ref; }}
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -987,7 +1001,7 @@ export default class UserManagement extends React.Component {
                         name="u_lastname"
                         defaultValue={user.last_name}
                         ref={(ref) => { this.u_lastname = ref; }}
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1001,7 +1015,22 @@ export default class UserManagement extends React.Component {
                         name="u_abbr"
                         defaultValue={user.initials}
                         ref={(ref) => { this.u_abbr = ref; }}
-                        className='fs-6'
+                        className="fs-6"
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAvail">
+                    <Form.Label column sm="3" className="fs-6">
+                      Allocated Space (MB):
+                    </Form.Label>
+                    <Col sm="7">
+                      <Form.Control
+                        type="number"
+                        min="1"
+                        name="u_avail"
+                        defaultValue={user.allocated_space === 0 ? '' : user.allocated_space / 1024 / 1024}
+                        ref={(ref) => { this.u_avail = ref; }}
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1013,7 +1042,7 @@ export default class UserManagement extends React.Component {
                       <Form.Select
                         defaultValue={user.type}
                         ref={(ref) => { this.u_type = ref; }}
-                        className='fs-6'
+                        className="fs-6"
                       >
                         <option value="Person">Person</option>
                         <option value="Group">Group</option>
@@ -1059,7 +1088,7 @@ export default class UserManagement extends React.Component {
                         name="u_email"
                         defaultValue={user.email}
                         disabled
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1073,7 +1102,7 @@ export default class UserManagement extends React.Component {
                         name="u_firstname"
                         defaultValue={user.first_name}
                         disabled
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1087,7 +1116,7 @@ export default class UserManagement extends React.Component {
                         name="u_lastname"
                         defaultValue={user.last_name}
                         disabled
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1101,7 +1130,7 @@ export default class UserManagement extends React.Component {
                         name="u_abbr"
                         defaultValue={user.initials}
                         disabled
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1113,7 +1142,7 @@ export default class UserManagement extends React.Component {
                       <Form.Control
                         disabled
                         defaultValue={user.type}
-                        className='fs-6'
+                        className="fs-6"
                       />
                     </Col>
                   </Form.Group>
@@ -1156,19 +1185,19 @@ export default class UserManagement extends React.Component {
         <Modal.Header closeButton>
           <Modal.Title>Restore account</Modal.Title>
         </Modal.Header>
-        <Modal.Body className='d-flex justify-content-center align-items-center' >
-          <Form className='w-75'>
+        <Modal.Body className="d-flex justify-content-center align-items-center">
+          <Form className="w-75">
             <Form.Group controlId="formControlAbbr">
               <Row className="mb-3">
                 <Col column sm={3}>
-                  <Form.Label column sm={3} className=' fs-6'>Abbr: </Form.Label>
-                </Col >
+                  <Form.Label column sm={3} className=" fs-6">Abbr: </Form.Label>
+                </Col>
                 <Col sm={9}>
                   <Form.Control
                     type="text"
                     name="nameAbbreviation"
                     placeholder="Please enter the name abbreviation .."
-                    className='flex-grow-1'
+                    className="flex-grow-1"
                     ref={(ref) => {
                       this.nameAbbreviation = ref;
                     }}
@@ -1179,7 +1208,7 @@ export default class UserManagement extends React.Component {
             <Form.Group controlId="formControlID">
               <Row className="mb-3">
                 <Col column sm={3}>
-                  <Form.Label className='fs-6'>ID:</Form.Label>
+                  <Form.Label className="fs-6">ID:</Form.Label>
                 </Col>
                 <Col sm={9}>
                   <Form.Control
@@ -1196,10 +1225,10 @@ export default class UserManagement extends React.Component {
               </Row>
 
             </Form.Group>
-            <Form.Group controlId="formControlMessage" >
+            <Form.Group controlId="formControlMessage">
               <Col sm={12}>
                 <Form.Control
-                  className='mt-3'
+                  className="mt-3"
                   type="text"
                   readOnly
                   name="messageRestoreAccountModal"
@@ -1209,16 +1238,16 @@ export default class UserManagement extends React.Component {
                 />
               </Col>
             </Form.Group>
-              {this.state.deletedUsers.length > 0
+            {this.state.deletedUsers.length > 0
                 && renderDeletedUsersTable(this.state.deletedUsers)}
           </Form>
         </Modal.Body>
         <Modal.Footer className="modal-footer border-0">
-          <Button variant="primary" className='fs-6' onClick={() => this.handleRestoreAccount()}>
+          <Button variant="primary" className="fs-6" onClick={() => this.handleRestoreAccount()}>
             Restore
             <i className="fa fa-save ms-1" />
           </Button>
-          <Button variant="warning" className='fs-6' onClick={() => this.handleRestoreAccountClose()}>
+          <Button variant="warning" className="fs-6" onClick={() => this.handleRestoreAccountClose()}>
             Cancel
           </Button>
         </Modal.Footer>
@@ -1291,18 +1320,19 @@ export default class UserManagement extends React.Component {
     const tcolumn = (
       <thead className="bg-gray-200">
         <tr className="align-middle fs-4 py-3">
-          <th className="col-auto fs-4 py-3">#</th>
-          <th className="col-2 col-md-3 fs-4 py-3">Actions</th>
-          <th className="col-3 col-md-2 fs-4 py-3">Name</th>
-          <th className="col-2 fs-4 py-3">Abbr.</th>
-          <th className="col-3 col-md-2 fs-4 py-3">Email</th>
-          <th className="col-2 fs-4 py-3">Type</th>
-          <th className="col-3 col-md-2 fs-4 py-3">Login at</th>
-          <th className="col-1 fs-4 py-3">ID</th>
+          <th className="fs-4 py-3">#</th>
+          <th className="fs-4 py-3">Actions</th>
+          <th className="fs-4 py-3">Name</th>
+          <th className="fs-4 py-3">Abbr.</th>
+          <th className="fs-4 py-3">Email</th>
+          <th className="fs-4 py-3">Type</th>
+          <th className="fs-4 py-3">Disk Usage</th>
+          <th className="fs-4 py-3">Login at</th>
+          <th className="fs-4 py-3">ID</th>
         </tr>
         <tr>
           <th aria-label="Empty header for the '#' column" />
-          <th className='fs-6 py-3'>
+          <th className="fs-6 py-3">
             <div className="d-flex justify-content-between">
               <Col xs={5}>
                 <Form.Select
@@ -1326,28 +1356,28 @@ export default class UserManagement extends React.Component {
               </Col>
             </div>
           </th>
-          <th className='fs-6 py-3'>
+          <th className="fs-6 py-3">
             <Form.Control
               type="text"
               placeholder="Name"
               onChange={(e) => this.updateFilter('name', e.target.value)}
             />
           </th>
-          <th className='fs-6 py-3'>
+          <th className="fs-6 py-3">
             <Form.Control
               type="text"
               placeholder="Abbr."
               onChange={(e) => this.updateFilter('initials', e.target.value)}
             />
           </th>
-          <th className='fs-6 py-3'>
+          <th className="fs-6 py-3">
             <Form.Control
               type="text"
               placeholder="Email"
               onChange={(e) => this.updateFilter('email', e.target.value)}
             />
           </th>
-          <th className='fs-6 py-3'>
+          <th className="fs-6 py-3">
             <Form.Select
               aria-label="Filter Person-Admin"
               onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
@@ -1357,18 +1387,19 @@ export default class UserManagement extends React.Component {
               <option value="Admin">Admin</option>
             </Form.Select>
           </th>
-          <th className='fs-6 py-3' aria-label="Empty header for the 'Login at' column" />
-          <th className='fs-6 py-3' aria-label="Empty header for the 'ID' column" />
+          <th className="fs-6 py-3" aria-label="Empty header for the 'Disk Usage' column" />
+          <th className="fs-6 py-3" aria-label="Empty header for the 'Login at' column" />
+          <th className="fs-6 py-3" aria-label="Empty header for the 'ID' column" />
         </tr>
       </thead>
     );
 
     const tbody = filteredUsers.map((g, idx) => (
-      <tr key={`row_${g.id}`} className="align-middle" >
-        <td className="col-auto py-3">
+      <tr key={`row_${g.id}`} className="align-middle">
+        <td className="py-3">
           {idx + 1}
         </td>
-        <td className="col-md-3 col-lg-2">
+        <td>
           <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
               size="sm"
@@ -1461,22 +1492,26 @@ export default class UserManagement extends React.Component {
           {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
           {renderReConfirmButton(g.unconfirmed_email, g.id)}
         </td>
-        <td className="col-md-2 py-3">
+        <td className="py-3">
           {g.name}
         </td>
-        <td className="col-md-1 py-3">
+        <td className="py-3">
           {g.initials}
         </td>
-        <td className="col-md-2 py-3">
+        <td className="py-3">
           {g.email}
         </td>
-        <td className="col-md-1 py-3">
+        <td className="py-3">
           {g.type}
         </td>
-        <td className="col-md-2 py-3">
+        <td className="py-3">
+          {g.allocated_space === 0 ? ''
+            : `${Math.round((g.used_space / g.allocated_space) * 100)}% of ${g.allocated_space / 1024 / 1024} MB`}
+        </td>
+        <td className="py-3">
           {g.current_sign_in_at}
         </td>
-        <td className="col-auto py-3">
+        <td className="py-3">
           {g.id}
         </td>
       </tr>
@@ -1487,11 +1522,11 @@ export default class UserManagement extends React.Component {
         <MessageAlert message={this.state.alertMessage} onHide={this.handleDismissAlert} />
         <Card>
           <Card.Body>
-            <Button variant="warning" size="md" className='me-1' onClick={() => this.handleMsgShow()}>
+            <Button variant="warning" size="md" className="me-1" onClick={() => this.handleMsgShow()}>
               Send Message
               <i className="fa fa-commenting-o ms-1" />
             </Button>
-            <Button variant="primary" size="md" className='me-1' onClick={() => this.handleNewUserShow()} data-cy="create-user">
+            <Button variant="primary" size="md" className="me-1" onClick={() => this.handleNewUserShow()} data-cy="create-user">
               New User
               <i className="fa fa-plus ms-1" />
             </Button>
@@ -1500,7 +1535,7 @@ export default class UserManagement extends React.Component {
               size="md"
               onClick={() => this.handleRestoreAccountShow()}
               data-cy="restore-user"
-              className='me-1'
+              className="me-1"
             >
               Restore Account
               <i className="fa fa-undo ms-1" />
@@ -1508,7 +1543,7 @@ export default class UserManagement extends React.Component {
           </Card.Body>
         </Card>
         <div ref={this.tableBodyRef}>
-          <Table responsive className='table border'>
+          <Table responsive className="table border">
             {tcolumn}
             <tbody>
               {tbody}

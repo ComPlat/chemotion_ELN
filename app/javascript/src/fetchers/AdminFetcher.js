@@ -24,6 +24,29 @@ export default class AdminFetcher {
       });
   }
 
+  static getAllocatedUserSpace() {
+    return fetch('/api/v1/admin/usersDefault', {
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static setAllocatedUserSpace(allocatedUserSpace) {
+    return fetch('/api/v1/admin/usersDefault', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ allocatedUserSpace }),
+    });
+  }
+
   static resetUserPassword(params) {
     const { user_id, ...otherParams } = params;
     return fetch(`/api/v1/admin/users/${user_id}/resetPassword/`, {
@@ -224,9 +247,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }

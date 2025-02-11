@@ -82,8 +82,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.string "token", null: false
     t.integer "user_id"
     t.inet "ip"
-    t.string "fqdn"
     t.string "role"
+    t.string "fqdn"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["user_id"], name: "index_authentication_keys_on_user_id"
@@ -148,6 +148,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "short_label"
+    t.string "ancestry"
+    t.index ["ancestry"], name: "index_cellline_samples_on_ancestry"
   end
 
   create_table "channels", id: :serial, force: :cascade do |t|
@@ -194,9 +196,9 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
-    t.integer "devicedescription_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
+    t.integer "devicedescription_detail_level", default: 10
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -1027,7 +1029,6 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
-    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
@@ -1064,8 +1065,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
-    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.boolean "gaseous", default: false
+    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1438,9 +1439,9 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
   create_table "third_party_apps", force: :cascade do |t|
     t.string "url"
     t.string "name", limit: 100, null: false
+    t.string "file_types", limit: 100
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.string "file_types", limit: 100
     t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
@@ -1500,6 +1501,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.boolean "account_active"
     t.integer "matrix", default: 0
     t.jsonb "providers"
+    t.bigint "used_space", default: 0
+    t.bigint "allocated_space", default: 0
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -1615,53 +1618,116 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  create_function :user_instrument, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
+       RETURNS TABLE(instrument text)
+       LANGUAGE sql
+      AS $function$
+         select distinct extended_metadata -> 'instrument' as instrument from containers c
+         where c.container_type='dataset' and c.id in
+         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+         order by extended_metadata -> 'instrument' limit 10
+       $function$
+  SQL
   create_function :collection_shared_names, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
        LANGUAGE sql
       AS $function$
-           select array_to_json(array_agg(row_to_json(result))) from (
-           SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
-           sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
-           FROM sync_collections_users
-           INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
-           WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
-           group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
-           ) as result
-           $function$
+       select array_to_json(array_agg(row_to_json(result))) from (
+       SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
+       sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
+       FROM sync_collections_users
+       INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
+       WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
+       group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
+       ) as result
+       $function$
+  SQL
+  create_function :user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+          select $1 as id
+          union
+          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+         and users.type in ('Group') and users_groups.user_id = $1)
+        $function$
+  SQL
+  create_function :user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
+       LANGUAGE sql
+      AS $function$
+         select row_to_json(result) from (
+           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           from users where id = $1
+         ) as result
+       $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+         begin
+          if (in_user_id = in_current_user_id) then
+            return null;
+          else
+            return (select row_to_json(result) from (
+            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+            from users where id = $1
+            ) as result);
+          end if;
+          end;
+       $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
        RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
        LANGUAGE plpgsql
       AS $function$
-          declare
-          	i_detail_level_wellplate integer default 0;
-          	i_detail_level_sample integer default 0;
-          begin
-          	select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
-          	into i_detail_level_sample, i_detail_level_wellplate
-          	from
-          	(
-          		select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
-          			from v_samples_collections v_sams_cols
-          			where v_sams_cols.sams_id = in_sample_id
-          			and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
-          		union
-          		select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
-          			from sync_collections_users sync_cols
-          			inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
-          			where sync_cols.collection_id in
-          			(
-          				select v_sams_cols.cols_id
-          				from v_samples_collections v_sams_cols
-          				where v_sams_cols.sams_id = in_sample_id
-          			)
-          			and sync_cols.user_id in (select user_ids(in_user_id))
-          	) all_cols;
+      declare
+        i_detail_level_wellplate integer default 0;
+        i_detail_level_sample integer default 0;
+      begin
+        select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
+        into i_detail_level_sample, i_detail_level_wellplate
+        from
+        (
+          select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
+            from v_samples_collections v_sams_cols
+            where v_sams_cols.sams_id = in_sample_id
+            and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
+          union
+          select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
+            from sync_collections_users sync_cols
+            inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
+            where sync_cols.collection_id in
+            (
+              select v_sams_cols.cols_id
+              from v_samples_collections v_sams_cols
+              where v_sams_cols.sams_id = in_sample_id
+            )
+            and sync_cols.user_id in (select user_ids(in_user_id))
+        ) all_cols;
 
-              return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
-          end;$function$
+          return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
+      end;$function$
+  SQL
+  create_function :group_user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select id from users where type='Person' and id= $1
+             union
+             select user_id from users_groups where group_id = $1
+      $function$
   SQL
   create_function :generate_notifications, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
@@ -1693,6 +1759,21 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       	end case;
       	return in_message_id;
       end;$function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
   SQL
   create_function :generate_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
@@ -1729,58 +1810,6 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       end
       $function$
   SQL
-  create_function :group_user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
-  SQL
-  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-             begin
-             	if (in_user_id = in_current_user_id) then
-             		return null;
-             	else
-             		return (select row_to_json(result) from (
-             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-             		from users where id = $1
-             		) as result);
-             	end if;
-              end;
-           $function$
-  SQL
   create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1804,41 +1833,15 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       end
       $function$
   SQL
-  create_function :user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-             select row_to_json(result) from (
-            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           	   from users where id = $1
-         	   ) as result
-           $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select $1 as id
-             union
-             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-             and users.type in ('Group') and users_groups.user_id = $1)
-           $function$
-  SQL
-  create_function :user_instrument, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-             select distinct extended_metadata -> 'instrument' as instrument from containers c
-             where c.container_type='dataset' and c.id in
-             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-             order by extended_metadata -> 'instrument' limit 10
-           $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
+       $function$
   SQL
   create_function :lab_record_layers_changes, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.lab_record_layers_changes()
@@ -1857,6 +1860,130 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       END;
       $function$
   SQL
+  create_function :calculate_dataset_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_dataset_space(cid integer)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space bigint default 0;
+      begin
+          select sum((attachment_data->'metadata'->'size')::bigint) into used_space
+          from attachments
+          where attachable_type = 'Container' and attachable_id = cid
+              and attachable_id in (select id from containers where container_type = 'dataset');
+          return COALESCE(used_space,0);
+      end;$function$
+  SQL
+  create_function :calculate_element_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_element_space(el_id integer, el_type text)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space_attachments bigint default 0;
+          used_space_datasets bigint default 0;
+          used_space bigint default 0;
+      begin
+          select sum((attachment_data->'metadata'->'size')::bigint) into used_space_attachments
+          from attachments
+          where attachable_type = el_type and attachable_id = el_id;
+          used_space = COALESCE(used_space_attachments, 0);
+
+          select sum(calculate_dataset_space(descendant_id)) into used_space_datasets
+          from container_hierarchies where ancestor_id = (select id from containers where containable_id = el_id and containable_type = el_type);
+          used_space = used_space + COALESCE(used_space_datasets, 0);
+
+          return COALESCE(used_space, 0);
+      end;$function$
+  SQL
+  create_function :calculate_collection_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_collection_space(collectionid integer)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space bigint default 0;
+          element_types text[] := array['Sample', 'Reaction', 'Wellplate', 'Screen', 'ResearchPlan'];
+          element_table text;
+          element_space bigint;
+      begin
+          foreach element_table in array element_types loop
+              execute format('select sum(calculate_element_space(id, $1)) from collections_%s where collection_id = $2', lower(element_table))
+              into element_space
+              using element_table, collectionId;
+              used_space := used_space + coalesce(element_space, 0);
+          end loop;
+          return coalesce(used_space, 0);
+      end;
+      $function$
+  SQL
+  create_function :calculate_used_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_used_space(userid integer)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space_samples bigint default 0;
+          used_space_reactions bigint default 0;
+          used_space_wellplates bigint default 0;
+          used_space_screens bigint default 0;
+          used_space_research_plans bigint default 0;
+          used_space_reports bigint default 0;
+          used_space_inbox bigint default 0;
+          used_space bigint default 0;
+      begin
+          select sum(calculate_element_space(s.sample_id, 'Sample')) into used_space_samples from (
+              select distinct sample_id
+              from collections_samples
+              where collection_id in (select id from collections where user_id = userId)
+          ) s;
+          used_space = COALESCE(used_space_samples,0);
+          
+          select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
+              select distinct reaction_id
+              from collections_reactions
+              where collection_id in (select id from collections where user_id = userId)
+          ) r;
+          used_space = used_space + COALESCE(used_space_reactions,0);
+
+          select sum(calculate_element_space(wp.wellplate_id, 'Wellplate')) into used_space_wellplates from (
+              select distinct wellplate_id
+              from collections_wellplates
+              where collection_id in (select id from collections where user_id = userId)
+          ) wp;
+          used_space = used_space + COALESCE(used_space_wellplates,0);
+
+          select sum(calculate_element_space(wp.screen_id, 'Screen')) into used_space_screens from (
+              select distinct screen_id
+              from collections_screens
+              where collection_id in (select id from collections where user_id = userId)
+          ) wp;
+          used_space = used_space + COALESCE(used_space_screens,0);
+
+          select sum(calculate_element_space(rp.research_plan_id, 'ResearchPlan')) into used_space_research_plans from (
+              select distinct research_plan_id
+              from collections_research_plans
+              where collection_id in (select id from collections where user_id = userId)
+          ) rp;
+          used_space = used_space + COALESCE(used_space_research_plans,0);
+
+          select sum(calculate_element_space(id, 'Report')) into used_space_reports
+          from reports
+          where author_id = userId;
+          used_space = used_space + COALESCE(used_space_reports,0);
+
+          select sum((attachment_data->'metadata'->'size')::bigint) into used_space_inbox
+          from attachments
+          where attachable_type = 'Container'
+              and attachable_id is null and created_for = userId;
+              -- attachable_id is missing (why?), if this is a bug (and was fixed) change statement to
+              -- and attachable_id = (select id from containers where containable_type='User' and containable_id=UserID);
+          used_space = used_space + COALESCE(used_space_inbox,0);
+
+          return COALESCE(used_space,0);
+      end;$function$
+  SQL
 
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
@@ -1866,6 +1993,20 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
 
+  create_view "v_samples_collections", sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
+  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
@@ -1908,19 +2049,5 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       channels,
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
-  SQL
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
   SQL
 end

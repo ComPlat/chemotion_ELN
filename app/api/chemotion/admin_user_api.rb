@@ -110,6 +110,7 @@ module Chemotion
             optional :last_name, type: String, desc: 'user last_name'
             optional :name_abbreviation, type: String, desc: 'user name name_abbreviation'
             optional :type, type: String, desc: 'user type'
+            optional :allocated_space, type: Integer, desc: 'user allocated_space'
             optional :account_active, type: Boolean, desc: '(in)activate or activate user account'
             # special params
             optional :enable, type: Boolean, desc: '(un)lock user account'
@@ -222,7 +223,7 @@ module Chemotion
       resource :matrix do
         desc 'Find all matrices'
         get do
-          present Matrice.all.order('id'), with: Entities::MatriceEntity, root: 'matrices'
+          present Matrice.order('id'), with: Entities::MatriceEntity, root: 'matrices'
         end
 
         desc 'update matrice'
