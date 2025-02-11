@@ -713,7 +713,7 @@ class ViewSpectra extends React.Component {
         operations={operations}
         forecast={forecast}
         molSvg={sample.svgPath}
-        theoryMass={sample.molecule_molecular_weight}
+        exactMass={sample.molecule_exact_molecular_weight}
         descriptions={descriptions}
         canChangeDescription
         onDescriptionChanged={this.onSpectraDescriptionChanged}

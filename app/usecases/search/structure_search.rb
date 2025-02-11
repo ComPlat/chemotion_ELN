@@ -41,6 +41,7 @@ module Usecases
 
       private
 
+      # TODO: DRY : see search_api.rb helper method sample_structure_search
       def basic_scope
         not_permitted = @dl_s && @dl_s < 1
         return Sample.none if not_permitted
