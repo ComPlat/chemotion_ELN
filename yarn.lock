@@ -1673,12 +1673,12 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@complat/chem-spectra-client@1.3.2":
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.3.2.tgz#1bd718c4cbcca3fae42c483bbbb16e5f89cfdb82"
-  integrity sha512-fY4qcfq2R+3LxA+uf7vOgM1PlEqAdd+ceg7Qtl44Y7jNt8nrjb7pqHpkxfQY/IcuE3MaH73oysqwZXdGYbXAMA==
+"@complat/chem-spectra-client@1.3.5":
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.3.5.tgz#b8926a7481bc6ed9a3b5132fe35d9411841cad44"
+  integrity sha512-10dEy3xu6m5KrGeQ61uLKeNV6utujww0FwQjq4jOoo+L4f48aWUwI6WDuVCZ8kCjweGN1PRpiQnJHYME3zFTvw==
   dependencies:
-    "@complat/react-spectra-editor" "1.3.2"
+    "@complat/react-spectra-editor" "1.3.5"
     "@emotion/react" "^11.11.1"
     "@emotion/styled" "^11.11.0"
     "@mui/icons-material" "^5.14.9"
@@ -1706,10 +1706,10 @@
     prop-types "^15.8.1"
     react-select "5.2.2"
 
-"@complat/react-spectra-editor@1.3.2":
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.2.tgz#5545621b4832c96c22a6ac0e64bfc5fc31b018e4"
-  integrity sha512-THIn3Bm+WqD5qBxMFJ+d1xtCCHK1UfArXy3wELktalLbUOD1BoR8zHC+zHGd9EQyA6jbdmty4eU8m2AvJuyZFQ==
+"@complat/react-spectra-editor@1.3.5":
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.5.tgz#67413be000949a19a715706fd8314aa4096f7ffd"
+  integrity sha512-9au3vqAna6BC1VfIuIhC9/D2iI5nUCAtwqibEmlZabqDur4B83Gr6lzefWh/xcrAPQKtAoGydBBVuBA2Y38NLg==
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.4"
     "@emotion/react" "^11.11.1"
@@ -1719,6 +1719,7 @@
     "@mui/icons-material" "^5.14.9"
     "@mui/material" "^5.14.9"
     "@mui/styles" "^5.14.9"
+    "@popperjs/core" "^2.11.8"
     "@types/jest" "^29.5.0"
     "@types/node" "^18.15.11"
     "@types/react" "^18.0.34"
