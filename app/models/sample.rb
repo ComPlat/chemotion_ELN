@@ -173,15 +173,20 @@ class Sample < ApplicationRecord
   }
 
   scope :search_by_fingerprint_sub, lambda { |molfile, as_array = false|
-    fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
-    smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
-    samples = joins(:fingerprint).merge(Fingerprint.screen_sub(fp_vector))
-    samples = samples.select do |sample|
-      Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
-    end
-    return samples if as_array
+    if Chemotion::Application.config.pg_cartridge == 'rdkit'
+      where("samples.id in (select id from rdkit.mols
+        where m operator(@>) mol_from_ctab(encode('#{molfile}', 'escape')::cstring) )")
+    else
+      fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
+      smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
+      samples = joins(:fingerprint).merge(Fingerprint.screen_sub(fp_vector))
+      samples = samples.select do |sample|
+        Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
+      end
+      return samples if as_array
 
-    Sample.where(id: samples.map(&:id))
+      Sample.where(id: samples.map(&:id))
+    end
   }
 
   before_save :auto_set_molfile_to_molecules_molfile
@@ -404,7 +409,6 @@ class Sample < ApplicationRecord
     subsample.collections << collections
 
     subsample.container = Container.create_root_container
-    subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save!
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
     subsample
@@ -646,7 +650,7 @@ class Sample < ApplicationRecord
       (m_end_index = index) && break if /M\s+END/.match?(line)
     end
 
-    reg = /(> <PolymersList>[\W\w.\n]+[\d]+)/m
+    reg = /(> <PolymersList>[\W\w.\n]+\d+)/m
     unless (lines[5 + m_end_index].to_s + lines[6 + m_end_index].to_s).match reg
       if lines[5 + m_end_index].to_s.include? '> <PolymersList>'
         lines.insert(6 + m_end_index, "#{polymers.join(' ')}\n")

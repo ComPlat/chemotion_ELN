@@ -90,6 +90,7 @@ module Chemotion
         params[:selection][:list_filter_params]
       end
 
+      # TODO: move to Sample (DRY Usecases::Search::StructureSearch::basic_scope)
       def sample_structure_search(c_id = @c_id, not_permitted = @dl_s && @dl_s < 1)
         return Sample.none if not_permitted
 
@@ -98,9 +99,10 @@ module Chemotion
 
         # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
         scope =
-          if params[:selection][:search_type] == 'similar'
+          case params[:selection][:search_type]
+          when 'similar'
             Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
-          else
+          when 'sub'
             Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
           end
         order_by_molecule(scope)

@@ -11,6 +11,7 @@
 
 DOCKER_DEV_IMAGE=complat/dev:v1.10.3-37-ga95534401
 #DOCKER_PG_IMAGE=postgres:16
+#DOCKER_PG_IMAGE=complat/dev:postgres16-rdkit
 
 ## - VOLUME_NAME_HOMEDIR: Use another named volume for homedir (asdf, gems, etc)
 ## - VOLUME_NAME_DB: or database

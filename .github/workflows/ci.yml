@@ -52,7 +52,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16    # https://hub.docker.com/_/postgres
+        image: complat/dev:postgres16-rdkit
         env:
           POSTGRES_PASSWORD: postgres    # env variable required by postgres Docker container
           POSTGRES_USER: chemotion    # optional env variable used in conjunction with POSTGRES_PASSWORD to set a user and their password
