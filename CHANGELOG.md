@@ -1,8 +1,89 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v2.0.0-rc1]
+> (2025-02-25)
+
 * Features and enhancements
-  * Reaction variations table can now represent gaseous materials
+  * labimotion-2.0.0  ([#2261](https://github.com/ComPlat/chemotion_ELN/pull/2261))
+  * device description - a new element for user to define a device set up  ([#2281](https://github.com/ComPlat/chemotion_ELN/pull/2281))
+  * advanced search for analyses datasets  ([#2179](https://github.com/ComPlat/chemotion_ELN/pull/2179))
+  * sample conversion rate (%) in a reaction scheme  ([#2159](https://github.com/ComPlat/chemotion_ELN/pull/2159))
+  * cell line -split/copy  ([#2276](https://github.com/ComPlat/chemotion_ELN/pull/2276))
+  * import samples - additional attributes  ([#2214](https://github.com/ComPlat/chemotion_ELN/pull/2214))
+  * expiration date and storage temperature fields in inventory  ([#2152](https://github.com/ComPlat/chemotion_ELN/pull/2152))
+  * sample inventory label tag in sample list  ([#2222](https://github.com/ComPlat/chemotion_ELN/pull/2222))
+  * substructure search with RDKIT postgres extension  ([#2055](https://github.com/ComPlat/chemotion_ELN/pull/2055))
+  * general comment field to analysis section of any element ([#2241](https://github.com/ComPlat/chemotion_ELN/pull/2241))
+  * Gas Scheme" feature in reaction variations table ([#2250](https://github.com/ComPlat/chemotion_ELN/pull/2250))
+  * data change history tracker([#2068](https://github.com/ComPlat/chemotion_ELN/pull/2068))
+  * user storage space ([#2274](htts://github.com/ComPlat/chemotion_ELN/pull/2274))
+  * sample SVG rendering service to use indigo ([#2051](https://github.com/ComPlat/chemotion_ELN/pull/2051))
+  * tagging with user defined labels of screen well-plate and research plan ([#2231](https://github.com/ComPlat/chemotion_ELN/pull/2231))
+ 
+
+* Bug fixes
+  * quill editor and other warnings  ([#2218](https://github.com/ComPlat/chemotion_ELN/pull/2218))
+  * bootstrap styles  ([#2225](https://github.com/ComPlat/chemotion_ELN/pull/2225))
+  * skip uploading new but discarded attachments  ([#2251](https://github.com/ComPlat/chemotion_ELN/pull/2251))
+  * reaction report generation for gas products when the vessel size is not given  ([#2254](https://github.com/ComPlat/chemotion_ELN/pull/2254))
+  * matrice sequence  ([#2257](https://github.com/ComPlat/chemotion_ELN/pull/2257))
+  * allow multiple delayed_job named-queue pools in the worker container  ([#2258](https://github.com/ComPlat/chemotion_ELN/pull/2258))
+  * Reaction Variations: Update variations' sample IDs when reaction is copied  ([#2265](https://github.com/ComPlat/chemotion_ELN/pull/2265))
+  * allow header for yield/equiv. column in reaction scheme for shared collections with read only rights  ([#2271](https://github.com/ComPlat/chemotion_ELN/pull/2271))
+  * creating molecules with invalid molfile using faulty smiles  ([#2255](https://github.com/ComPlat/chemotion_ELN/pull/2255))
+
+  ChemSpectra and NMRIUM
+  * bump service chem-spectra-app to v.1.2.4  ([#2253](https://github.com/ComPlat/chemotion_ELN/pull/2253))
+  * display exact mass instead of theoretical mass  ([#2298](https://github.com/ComPlat/chemotion_ELN/pull/2298))
+
+  UX/UI
+  * reaction variations table style and appearance   ([#2285](https://github.com/ComPlat/chemotion_ELN/pull/2285))
+  * color-coding of save-status in reaction detail card  ([#2306](https://github.com/ComPlat/chemotion_ELN/pull/2306))
+  * Display short label on reaction scheme hover  ([#2310](https://github.com/ComPlat/chemotion_ELN/pull/2310))
+
+* Documentation
+  * update changelog 1.10. with links to chemotion.net docs  ([#2289](https://github.com/ComPlat/chemotion_ELN/pull/2289))
+
+* Styles
+
+  UX/UI
+  * correct formatting of a sample molarity added to the description of a reaction  ([#2315](https://github.com/ComPlat/chemotion_ELN/pull/2315))
+  * rubocop app/models/sample.rb  ([#2325](https://github.com/ComPlat/chemotion_ELN/pull/2325))
+
+* Code refactoring
+  * update react-bootstrap library  ([#1930](https://github.com/ComPlat/chemotion_ELN/pull/1930))
+  * Remove UNSAFE_ react lifecycle hooks  ([#2196](https://github.com/ComPlat/chemotion_ELN/pull/2196))
+  * datacollector  ([#2240](https://github.com/ComPlat/chemotion_ELN/pull/2240))
+  * track file causing errors through file cache rather db  ([#2267](https://github.com/ComPlat/chemotion_ELN/pull/2267))
+  * migrate to shakapacker  ([#2236](https://github.com/ComPlat/chemotion_ELN/pull/2236))
+
+  UX/UI
+  * Rearrange the order of elemental composition  ([#2305](https://github.com/ComPlat/chemotion_ELN/pull/2305))
+
+* Chores
+  * Bump actionmailer from 6.1.7.8 to 6.1.7.9  ([#2221](https://github.com/ComPlat/chemotion_ELN/pull/2221))
+  * Bump actionpack from 6.1.7.8 to 6.1.7.9  ([#2220](https://github.com/ComPlat/chemotion_ELN/pull/2220))
+  * Bump actiontext from 6.1.7.8 to 6.1.7.9  ([#2219](https://github.com/ComPlat/chemotion_ELN/pull/2219))
+  * Remove unused/obsolete dependencies and code, render fewer HTML tags  ([#2223](https://github.com/ComPlat/chemotion_ELN/pull/2223))
+  * Bump http-proxy-middleware from 2.0.4 to 2.0.7  ([#2229](https://github.com/ComPlat/chemotion_ELN/pull/2229))
+  * Bump rexml from 3.3.6 to 3.3.9  ([#2231](https://github.com/ComPlat/chemotion_ELN/pull/2231))
+  * Minor fixes & improvements  ([#2232](https://github.com/ComPlat/chemotion_ELN/pull/2232))
+  * Bump labimotion from 1.4.0.2 to 1.4.1  ([#2228](https://github.com/ComPlat/chemotion_ELN/pull/2228))
+  * upd Gemfile.lock and model annotation  ([#2269](https://github.com/ComPlat/chemotion_ELN/pull/2269))
+  * proper .service-dependencies spectra tag name  ([#2270](https://github.com/ComPlat/chemotion_ELN/pull/2270))
+  * Bump cross-spawn from 7.0.3 to 7.0.6  ([#2243](https://github.com/ComPlat/chemotion_ELN/pull/2243))
+  * bump github action for test coverage - lcov report (#2317)  ([#2317](https://github.com/ComPlat/chemotion_ELN/pull/2317))
+  * Bump net-imap from 0.4.17 to 0.4.19  ([#2323](https://github.com/ComPlat/chemotion_ELN/pull/2323))
+
+* Build
+  * Add missing jq package in docker dev env  ([#2278](https://github.com/ComPlat/chemotion_ELN/pull/2278))
+  * fix shakpacker config for the webpack-dev-server   ([#2280](https://github.com/ComPlat/chemotion_ELN/pull/2280))
+  * option for setting service image and volume names  ([#2288](https://github.com/ComPlat/chemotion_ELN/pull/2288))
+
+* Ci
+  * fix asset compilation testing workflow  ([#2268](https://github.com/ComPlat/chemotion_ELN/pull/2268))
+
 
 ## [v1.10.5]
 > (2024-12-16)
