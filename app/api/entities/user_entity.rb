@@ -14,6 +14,7 @@ module Entities
     expose :cell_lines_count, documentation: { type: 'Integer', desc: 'Cellline Samples count' }
     expose :device_descriptions_count, documentation: { type: 'Integer', desc: 'Device Descriptions count' }
     expose :vessels_count, documentation: { type: 'Integer', desc: 'Vessel instances count' }
+    expose :sequence_based_macromolecules_count, documentation: { type: 'Integer', desc: 'Sequence-based macromolecules count' }
     expose :type, if: ->(obj, _opts) { obj.respond_to? :type }
     expose :reaction_name_prefix, if: ->(obj, _opts) { obj.respond_to? :reaction_name_prefix }
     expose :layout, if: ->(obj, _opts) { obj.respond_to? :layout }
@@ -48,6 +49,10 @@ module Entities
 
     def vessels_count
       object.counters['vessels'].to_i
+    end
+
+    def sequence_based_macromolecules_count
+      object.counters['sequence_based_macromolecules'].to_i
     end
 
     expose :current_sign_in_at do |obj|
