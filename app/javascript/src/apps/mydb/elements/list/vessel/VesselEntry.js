@@ -55,7 +55,6 @@ function VesselEntry({ vesselItems }) {
         <div className="flex-grow-1 fs-5">
           {`${firstVesselItem.vessel_template.name}`}
         </div>
-        {renderCreateSubSampleButton()}
         {renderDetailedInfoButton()}
         <ChevronIcon
           color="primary"
@@ -103,49 +102,6 @@ function VesselEntry({ vesselItems }) {
       </Button>
     </OverlayTrigger>
   );
-
-  const renderCreateSubSampleButton = () => {
-    const { currentCollection, isSync } = UIStore.getState();
-
-    if (currentCollection.label === 'All') return null;
-    if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) return null;
-
-    return (
-      <OverlayTrigger
-        key="subSampleButton"
-        placement="top"
-        overlay={(
-          <Tooltip id="detailed-info-button">
-            Create sample of vessel template
-          </Tooltip>
-        )}
-      >
-        <Button
-          size="xsm"
-          onClick={(event) => {
-            event.stopPropagation();
-
-            const uri = isSync
-              ? `/scollection/${currentCollection.id}/vessel/new`
-              : `/collection/${currentCollection.id}/vessel/new`;
-            Aviator.navigate(uri, { silent: true });
-
-            const creationEvent = {
-              type: 'vessel',
-              params: {
-                collectionID: currentCollection.id,
-                vesselID: 'new',
-                vessel_template: vesselItems[0],
-              },
-            };
-            elementShowOrNew(creationEvent);
-          }}
-        >
-          <i className="fa fa-plus" aria-hidden="true" />
-        </Button>
-      </OverlayTrigger>
-    );
-  };
 
   const renderProperty = (propertyName, propertyValue) => {
     if (!propertyValue) return null;
