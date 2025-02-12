@@ -12,11 +12,10 @@
 #  updated_at :datetime         not null
 #
 
-
 # Publish-Subscription Model
 class Message < ApplicationRecord
   belongs_to :channel
-  scope :where_content, ->(field, value) { where("content ->> ? = ?", field, value) }
+  scope :where_content, ->(field, value) { where('content ->> ? = ?', field, value) }
 
   def self.create_msg_notification(**args)
     channel_id = args[:channel_id]
@@ -29,7 +28,7 @@ class Message < ApplicationRecord
     message = Message.create(
       content: content.as_json,
       channel_id: channel_id,
-      created_by: user_id
+      created_by: user_id,
     )
     bulk_create_notifications(channel_id, message.id, user_id, user_ids) if message
     message
