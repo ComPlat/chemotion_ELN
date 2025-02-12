@@ -20,6 +20,7 @@ export default class Wellplate extends Element {
         height,
         description: Wellplate.quillDefault(),
         wells: [],
+        user_labels: [],
         readout_titles: [],
         container: Container.init(),
         segments: [],
@@ -91,6 +92,14 @@ export default class Wellplate extends Element {
     this._wells = wells.map((w) => new Well(w));
   }
 
+  userLabels() {
+    return this.user_labels;
+  }
+
+  setUserLabels(userLabels) {
+    this.user_labels = userLabels;
+  }
+
   set segments(segments) {
     this._segments = (segments && segments.map((s) => new Segment(s))) || [];
   }
@@ -118,6 +127,7 @@ export default class Wellplate extends Element {
       container: this.container,
       height: this.height,
       width: this.width,
+      user_labels: this.user_labels || [],
       attachments: this.attachments,
       segments: this.segments.map((s) => s.serialize())
     });
@@ -150,7 +160,7 @@ export default class Wellplate extends Element {
 
   #initEmptyWells() {
     if (!this.isNew) return
-    
+
     this.wells = Array(this.size).fill({});
     this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));
     this._checksum = this.checksum();

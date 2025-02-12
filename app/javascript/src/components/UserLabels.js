@@ -465,13 +465,16 @@ class SearchUserLabels extends React.Component {
   }
 
   render() {
-    const { labels } = this.state;
+    const { currentUser, labels } = this.state;
     const { userLabel } = this.props;
+    const list = (labels || []).filter(
+      (r) => r.access_level === 2 || r.user_id === (currentUser && currentUser.id)
+    );
 
     return (
       <Select
         isClearable
-        options={labels}
+        options={list}
         getOptionValue={(label) => label.id}
         getOptionLabel={(label) => label.title}
         formatOptionLabel={UserLabel}

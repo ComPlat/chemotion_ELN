@@ -38,6 +38,7 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
+import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
 export default class WellplateDetails extends Component {
   static contextType = StoreContext;
@@ -246,6 +247,7 @@ export default class WellplateDetails extends Component {
               <span className="mx-2">{wellplate.name}</span>
             </span>
           </OverlayTrigger>
+          <ShowUserLabels element={wellplate} />
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
         </div>
@@ -324,6 +326,10 @@ export default class WellplateDetails extends Component {
             changeProperties={(c) => this.handleChangeProperties(c)}
             handleAddReadout={(c) => this.handleAddReadout(c)}
             handleRemoveReadout={(c) => this.handleRemoveReadout(c)}
+          />
+          <EditUserLabels
+            element={wellplate}
+            fnCb={this.handleWellplateChanged}
           />
           <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
           {' '}

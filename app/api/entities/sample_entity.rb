@@ -24,6 +24,7 @@ module Entities
       expose :dry_solvent
       expose! :gas_type
       expose! :gas_phase_data
+      expose! :user_labels
     end
 
     # Level 1 attributes
@@ -71,7 +72,6 @@ module Entities
       expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
       expose! :target_amount_value,     unless: :displayed_in_list
-      expose! :user_labels
       expose! :xref
     end
     # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
