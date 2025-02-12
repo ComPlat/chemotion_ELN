@@ -19,6 +19,7 @@ export default class Screen extends Element {
       result: '',
       description: descriptionDefault,
       wellplates: [],
+      user_labels: [],
       research_plans: [],
       container: Container.init(),
       segments: [],
@@ -45,6 +46,7 @@ export default class Screen extends Element {
       description: descriptionDefault,
       wellplates: clipboardWellplates,
       research_plans: [],
+      user_labels: [],
       container: Container.init(),
       segments: [],
       component_graph_data: {
@@ -64,6 +66,7 @@ export default class Screen extends Element {
       description: this.description,
       wellplate_ids: this.wellplateIDs,
       research_plan_ids: this.researchPlanIDs,
+      user_labels: this.user_labels || [],
       container: this.container,
       segments: this.segments.map(s => s.serialize()),
       component_graph_data: this.component_graph_data
@@ -84,6 +87,14 @@ export default class Screen extends Element {
 
   set collaborator(collaborator) {
     this._collaborator = collaborator;
+  }
+
+  userLabels() {
+    return this.user_labels;
+  }
+
+  setUserLabels(userLabels) {
+    this.user_labels = userLabels;
   }
 
   get requirements() {

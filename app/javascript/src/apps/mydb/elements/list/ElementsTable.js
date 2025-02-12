@@ -554,20 +554,18 @@ export default class ElementsTable extends React.Component {
     const { type, genericEl } = this.props;
     const { fromDate, toDate, userLabel } = ui;
 
-    let searchLabel = null;
     let typeSpecificHeader = null;
     if (type === 'sample') {
       typeSpecificHeader = this.renderSamplesHeader();
-      searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} />;
     } else if (type === 'reaction') {
       typeSpecificHeader = this.renderReactionsHeader();
-      searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} />;
     } else if (type === 'device_description') {
       typeSpecificHeader = <DeviceDescriptionListHeader />;
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
-      searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} />;
     }
+
+    const searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} />;
 
     const filterTitle = filterCreatedAt === true
       ? 'click to filter by update date - currently filtered by creation date'
@@ -671,7 +669,7 @@ export default class ElementsTable extends React.Component {
       );
     } else if (type === 'device_description') {
       elementsTableEntries = (
-        <DeviceDescriptionList 
+        <DeviceDescriptionList
           elements={elements}
           currentElement={currentElement}
           ui={ui}

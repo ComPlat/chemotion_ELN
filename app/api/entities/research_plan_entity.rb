@@ -13,6 +13,7 @@ module Entities
       expose! :thumb_svg
       expose! :type
       expose! :comment_count
+      expose! :user_labels
     end
 
     with_options(anonymize_below: 10) do

@@ -36,6 +36,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -197,6 +198,7 @@ export default class ScreenDetails extends Component {
               {screen.name}
             </span>
           </OverlayTrigger>
+          <ShowUserLabels element={screen} />
           <ElementCollectionLabels element={screen} placement="right" />
           <HeaderCommentSection element={screen} />
         </div>
@@ -319,6 +321,10 @@ export default class ScreenDetails extends Component {
         </Row>
         <Row className="mb-4">
           <Col>
+            <EditUserLabels
+              element={screen}
+              fnCb={this.handleScreenChanged}
+            />
             <PrivateNoteElement element={screen} disabled={screen.can_update} />
           </Col>
         </Row>

@@ -11,13 +11,13 @@ export default class ResearchPlanMetadata extends Component {
   constructor(props) {
     super(props);
     const { researchPlan } = props;
-    this.state = this.buildMetadataState(researchPlan.research_plan_metadata);
+    this.state = this.buildMetadataState(researchPlan.research_plan_metadata || {});
   }
 
   componentDidUpdate(prevProps) {
     const { researchPlan } = this.props;
     if (researchPlan !== prevProps.researchPlan) {
-      this.setState(this.buildMetadataState(researchPlan.research_plan_metadata));
+      this.setState(this.buildMetadataState(researchPlan.research_plan_metadata || {}));
     }
   }
 
