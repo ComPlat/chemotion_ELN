@@ -57,22 +57,23 @@ module ContainerHelpers
       else
         # Update container
         next unless container = Container.find_by(id: child[:id])
+      end 
+      if extended_metadata['analyses_compared'].present?
+        analyses_compared = extended_metadata['analyses_compared']
+        list_file = []
+        list_file_names = []
+        combined_image_filename = "#{container.name}.new_combined.png"
+        created_by_user = -1
 
-        if extended_metadata['analyses_compared'].present?
-          analyses_compared = extended_metadata['analyses_compared']
-          list_file = []
-          list_file_names = []
-          combined_image_filename = "#{container.name}.new_combined.png"
-          created_by_user = -1
-
-          analyses_compared.each do |attachment_info|
-            attachment = Attachment.find_by(id: attachment_info['file']['id'])
-            unless attachment.nil?
-              created_by_user = attachment.created_by
-              list_file_names.push(attachment.filename)
-              list_file.push(attachment.abs_path)
-            end
+        analyses_compared.each do |attachment_info|
+          attachment = Attachment.find_by(id: attachment_info['file']['id'])
+          unless attachment.nil?
+            created_by_user = attachment.created_by
+            list_file_names.push(attachment.filename)
+            list_file.push(attachment.abs_path)
           end
+        end
+        if list_file.any?
 
           _, image = Chemotion::Jcamp::CombineImg.combine(
             list_file, 0, list_file_names, nil
@@ -92,6 +93,11 @@ module ContainerHelpers
             att.save!
           end
         end
+      else
+        combined_image_filename = "#{container.name}.new_combined.png"
+        att = Attachment.find_by(filename: combined_image_filename, attachable_id: container.id)
+        att&.destroy!
+      end
 
         container.update!(
           name: child[:name],
@@ -99,7 +105,6 @@ module ContainerHelpers
           description: child[:description],
           extended_metadata: extended_metadata,
         )
-      end
 
       create_or_update_attachments(container, child[:attachments]) if child[:attachments]
 
