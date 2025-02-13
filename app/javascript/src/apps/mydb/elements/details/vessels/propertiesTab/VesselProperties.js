@@ -1,6 +1,6 @@
 /* eslint-disable react/function-component-definition */
 import React, { useContext } from 'react';
-import { Accordion, Button } from 'react-bootstrap';
+import { Accordion, Button, Form, InputGroup, Row, Col } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -24,6 +24,26 @@ const VesselProperties = ({ item, readOnly }) => {
         qrCode: vesselItem?.qrCode || '',
       },
     ];
+
+  const handleVolumeChange = (e) => {
+    const value = parseFloat(e.target.value) ;
+    vesselDetailsStore.changeVolumeAmount(vesselId, value);
+  };
+
+  const handleUnitChange = () => {
+    const newUnit = vesselItem?.volumeUnit === 'ml' ? 'l' : 'ml';
+    vesselDetailsStore.changeVolumeUnit(vesselId, newUnit);
+  };
+
+  const handleWeightChange = (e) => {
+    const value = parseFloat(e.target.value);
+    vesselDetailsStore.changeWeightAmount(vesselId, value);
+  };
+
+  const handleWeightUnitChange = () => {
+    const newUnit = vesselItem?.weightUnit === 'g' ? 'kg' : 'g';
+    vesselDetailsStore.changeWeightUnit(vesselId, newUnit);
+  };
 
   return (
     <Accordion className="vessel-properties" defaultActiveKey="common-properties">
@@ -55,36 +75,29 @@ const VesselProperties = ({ item, readOnly }) => {
             readOnly={readOnly}
             optional
           />
-          <VesselProperty
-            label="Volume amount"
-            value={vesselItem?.volumeAmount || 0}
-            onChange={(e) => vesselDetailsStore.changeVolumeAmount(vesselId, parseFloat(e.target.value))}
-            readOnly={readOnly}
-            isNumeric
-            optional
-          />
-          <VesselProperty
-            label="Volume unit"
-            value={vesselItem?.volumeUnit || ''}
-            onChange={(e) => vesselDetailsStore.changeVolumeUnit(vesselId, e.target.value)}
-            readOnly={readOnly}
-            optional
-          />
-          <VesselProperty
-            label="Weight amount"
-            value={vesselItem?.weightAmount || 0}
-            onChange={(e) => vesselDetailsStore.changeWeightAmount(vesselId, parseFloat(e.target.value))}
-            readOnly={readOnly}
-            isNumeric
-            optional
-          />
-          <VesselProperty
-            label="Weight unit"
-            value={vesselItem?.weightUnit || ''}
-            onChange={(e) => vesselDetailsStore.changeWeightUnit(vesselId, e.target.value)}
-            readOnly={readOnly}
-            optional
-          />
+          <Form.Group as={Row} className="mt-3">
+            <Form.Label column sm={3}>Volume</Form.Label>
+            <Col sm={6}>
+              <InputGroup>
+                <Form.Control
+                  name="vessel volume"
+                  type="number"
+                  step="any"
+                  value={vesselItem?.volumeAmount}
+                  disabled={false}
+                  onChange={handleVolumeChange}
+                  className="flex-grow-1"
+                />
+                <Button
+                  disabled={false}
+                  variant="success"
+                  onClick={handleUnitChange}
+                >
+                  {vesselItem?.volumeUnit || 'ml'}
+                </Button>
+              </InputGroup>
+            </Col>
+          </Form.Group>
         </Accordion.Body>
       </Accordion.Item>
 
@@ -127,6 +140,29 @@ const VesselProperties = ({ item, readOnly }) => {
                 : vesselDetailsStore.changeQrCode(vesselId, e.target.value))}
               readOnly={readOnly}
             />
+            <Form.Group as={Row} className="mt-3">
+              <Form.Label column sm={3}>Weight</Form.Label>
+              <Col sm={6}>
+                <InputGroup>
+                  <Form.Control
+                    name="vessel weight"
+                    type="number"
+                    step="any"
+                    value={vesselItem?.weightAmount}
+                    disabled={false}
+                    onChange={handleWeightChange}
+                    className="flex-grow-1"
+                  />
+                  <Button
+                    disabled={false}
+                    variant="success"
+                    onClick={handleWeightUnitChange}
+                  >
+                    {vesselItem?.weightUnit || 'g'}
+                  </Button>
+                </InputGroup>
+              </Col>
+            </Form.Group>
             {isCreateMode && (
               <Button
                 variant="danger"
