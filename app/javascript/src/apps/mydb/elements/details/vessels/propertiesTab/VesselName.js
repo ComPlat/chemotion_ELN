@@ -6,7 +6,7 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { CreatableSelect } from 'src/components/common/Select';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 
-const VesselName = ({ id, name, readOnly }) => {
+function VesselName({ id, name, readOnly }) {
   const { vesselDetailsStore } = useContext(StoreContext);
   const [nameSuggestions, setNameSuggestions] = useState([]);
 
@@ -54,7 +54,7 @@ const VesselName = ({ id, name, readOnly }) => {
     return (
       <Form.Group as={Row}>
         <Form.Label column sm={3}>Vessel name *</Form.Label>
-        <Col sm={9}>
+        <Col sm={6}>
           <Form.Control
             disabled
             type="text"
@@ -64,11 +64,11 @@ const VesselName = ({ id, name, readOnly }) => {
       </Form.Group>
     );
   }
-  
+
   return (
     <Form.Group as={Row}>
       <Form.Label column sm={3}>Vessel name *</Form.Label>
-      <Col sm={9}>
+      <Col sm={6}>
         <CreatableSelect
           value={
             name
