@@ -3714,6 +3714,13 @@
   resolved "https://registry.yarnpkg.com/@types/range-parser/-/range-parser-1.2.4.tgz#cd667bcfdd025213aafb7ca5915a932590acdcdc"
   integrity sha512-EEhsLsD6UsDM1yFhAvy0Cjr6VwmpMWqFBCb9w07wVugF7w9nfajxLuVmngTIpgS6svCnm6Vaw+MZhoDCKnOfsw==
 
+"@types/react-calendar@^3.0.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@types/react-calendar/-/react-calendar-3.9.0.tgz#b345707c9b593331a48963514f3e30ce0b3ca195"
+  integrity sha512-KpAu1MKAGFw5hNwlDnWsHWqI9i/igAB+8jH97YV7QpC2v7rlwNEU5i6VMFb73lGRacuejM/Zd2LklnEzkFV3XA==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-dom@^18.0.11":
   version "18.2.4"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.2.4.tgz#13f25bfbf4e404d26f62ac6e406591451acba9e0"
@@ -9886,7 +9893,7 @@ make-dir@^3.0.0, make-dir@^3.0.2, make-dir@^3.1.0:
   dependencies:
     semver "^6.0.0"
 
-make-event-props@^1.1.0, make-event-props@^1.4.2, make-event-props@^1.6.0:
+make-event-props@^1.1.0, make-event-props@^1.6.0:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/make-event-props/-/make-event-props-1.6.2.tgz#c8e0e48eb28b9b808730de38359f6341de7ec5a2"
   integrity sha512-iDwf7mA03WPiR8QxvcVHmVWEPfMY1RZXerDVNCRYW7dUr2ppH3J58Rwb39/WG39yTZdRSxr3x+2v22tvI0VEvA==
@@ -12128,7 +12135,7 @@ react-bootstrap@~2.10.5:
     uncontrollable "^7.2.1"
     warning "^4.0.3"
 
-react-calendar@^4.2.0:
+react-calendar@^4.0.0:
   version "4.8.0"
   resolved "https://registry.yarnpkg.com/react-calendar/-/react-calendar-4.8.0.tgz#61edbba6d17e7ef8a8012de9143b5e5ff41104c8"
   integrity sha512-qFgwo+p58sgv1QYMI1oGNaop90eJVKuHTZ3ZgBfrrpUb+9cAexxsKat0sAszgsizPMVo7vOXedV7Lqa0GQGMvA==
@@ -12196,18 +12203,19 @@ react-copy-to-clipboard@^5.1.0:
     prop-types "^15.8.1"
 
 react-date-picker@^9.2.0:
-  version "9.3.0"
-  resolved "https://registry.yarnpkg.com/react-date-picker/-/react-date-picker-9.3.0.tgz#efec200f76518f9805fb0ceff7b79067cec2bfd3"
-  integrity sha512-2CB8u7J+EClgaGL4yYAuqUT0nHn+Jb0RbJeRpNTTWX3ei0AvxpjVR5htrbEXhMKVs5CtnNuc1vsAdajbbv01Uw==
+  version "9.2.0"
+  resolved "https://registry.yarnpkg.com/react-date-picker/-/react-date-picker-9.2.0.tgz#ee194a694fa9891d93e4d40e76fbcdae7eafbe86"
+  integrity sha512-kAE7HFLq1ic4pS0Pk9SyPTjejIfjTyPov04a2eZzLxfZh8ss8EPaaaX7bBUP4RUCkbxHpR0P4UHloD0/fFDCZw==
   dependencies:
-    "@wojtekmaj/date-utils" "^1.1.3"
+    "@types/react-calendar" "^3.0.0"
+    "@wojtekmaj/date-utils" "^1.0.3"
     clsx "^1.2.1"
-    get-user-locale "^2.2.1"
-    make-event-props "^1.4.2"
+    get-user-locale "^1.2.0"
+    make-event-props "^1.1.0"
     prop-types "^15.6.0"
-    react-calendar "^4.2.0"
-    react-fit "^1.5.1"
-    update-input-width "^1.3.1"
+    react-calendar "^4.0.0"
+    react-fit "^1.4.0"
+    update-input-width "^1.2.2"
 
 react-datepicker@~7.3.0:
   version "7.3.0"
@@ -12289,7 +12297,7 @@ react-dropzone@^8.0.3:
     prop-types "^15.6.2"
     prop-types-extra "^1.1.0"
 
-react-fit@^1.4.0, react-fit@^1.5.1:
+react-fit@^1.4.0:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/react-fit/-/react-fit-1.7.1.tgz#95259e90cfa9c4d243a8013d03ea59c9c5c51a6f"
   integrity sha512-y/TYovCCBzfIwRJsbLj0rH4Es40wPQhU5GPPq9GlbdF09b0OdzTdMSkBza0QixSlgFzTm6dkM7oTFzaVvaBx+w==
@@ -14464,7 +14472,7 @@ update-browserslist-db@^1.1.1:
     escalade "^3.2.0"
     picocolors "^1.1.1"
 
-update-input-width@^1.2.2, update-input-width@^1.3.1:
+update-input-width@^1.2.2:
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/update-input-width/-/update-input-width-1.4.2.tgz#49d327a39395185b0fd440b9c3b1d6f81173655c"
   integrity sha512-/p0XLhrQQQ4bMWD7bL9duYObwYCO1qGr8R19xcMmoMSmXuQ7/1//veUnCObQ7/iW6E2pGS6rFkS4TfH4ur7e/g==
