@@ -26,6 +26,8 @@ const KET_TAGS = Object.freeze({
   templateSurface: 5,
   templateBead: 1,
   polymerIdentifier: '> <PolymersList>',
+  textNodeIdentifier: '> <TextNode>',
+  textNodeIdentifierClose: '> </TextNode>',
   fileEndIdentifier: '$$$$',
   molfileHeaderLinenumber: 4,
   rgLabel: 'rg-label',
@@ -59,6 +61,24 @@ const hasKetcherData = async (molfile) => {
     const lines = molfile.trim().split('\n');
     const polymerLine = lines.reverse().find((line) => line.includes(KET_TAGS.polymerIdentifier));
     return polymerLine ? lines[lines.indexOf(polymerLine) - 1]?.trim() || null : null;
+  } catch (err) {
+    console.error('Opening this molfile is not correct. Please report this molfile to dev team.');
+    return null;
+  }
+};
+
+// helper function to examine the file coming ketcher rails
+const hasTextNodes = async (molfile) => {
+  if (!molfile) {
+    console.error('Invalid molfile source.');
+    return null;
+  }
+  try {
+    const lines = molfile.trim().split('\n');
+    const start = lines.indexOf(KET_TAGS.textNodeIdentifier);
+    const end = lines.indexOf(KET_TAGS.textNodeIdentifierClose);
+    const sliceOfTextNodes = lines.slice(start + 1, end);
+    return sliceOfTextNodes;
   } catch (err) {
     console.error('Opening this molfile is not correct. Please report this molfile to dev team.');
     return null;
@@ -205,6 +225,9 @@ const removeMoleculeFromData = (data, molKey) => data.root.nodes.filter((node) =
 // filter images from nodes
 const removeImagesFromData = (data) => data.root.nodes.filter((node) => node.type !== 'image');
 
+// filter images from nodes
+const removeTextFromData = (data) => data.root.nodes.filter((node) => node.type !== 'text');
+
 // Updates atom aliases in a molecule after removing certain images and updates the molecule data.
 const updateMoleculeAliases = async (container, atomList) => {
   for (const imgIdx of container) {
@@ -309,6 +332,21 @@ const removeImageTemplateAtom = async (images, molList, data) => {
   }
 };
 
+// helper function to find atom in ket format by image idx referenced with alias 3rd part
+const findAtomByImageIndex = async (imgIdx) => {
+  for (const molName of mols) {
+    const molecule = latestData[molName];
+    for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
+      const atom = molecule.atoms[atomIndex];
+      if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
+        const aliasLastPart = parseInt(atom.alias.split("_")[2]);
+        if (imgIdx === aliasLastPart) return { atomLocation: atom.location, alias: atom.alias };
+      }
+    }
+  }
+  return { atomLocation: null, alias: '' };
+};
+
 // collect polymers atom list from molfile
 const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
   const atomAliasList = [];
@@ -349,9 +387,9 @@ const reAttachPolymerList = async ({
   // 0/3/1.30-1.28 7/1/0.90-0.91 => 2 aliases combined with space to form a string
   // 0/3/1.30-1.28 => what a single alias has atomIndex/template#/height-width
   const preparedAliasPolymerLine = await templateAliasesPrepare(aliasesList, atomAliasList);
-  const collectedLines = [KET_TAGS.polymerIdentifier, preparedAliasPolymerLine, KET_TAGS.fileEndIdentifier];
+  const collectedLines = [KET_TAGS.polymerIdentifier, preparedAliasPolymerLine];
   linesCopy.splice(lineCopy.length, 0, ...collectedLines);
-  return linesCopy.join('\n');
+  return linesCopy;
 };
 
 
@@ -504,23 +542,37 @@ const redoKetcher = (editor) => {
 };
 
 // helper function on layout to keep the images on the latest styles
-const mainImageSizingOnRerender = async (editor, images) => {
+const mainImageSizingOnRerender = async (editor, images, oldLatestData) => {
   try {
-    console.log(images);
     // fetch latest data
     // update old images on the root list
     // place images on A atoms
     // save molfile
     // await placeImageOnAtoms(mols, images, editor);
-    // console.log(latestData);
-    const imagesL = removeImagesFromData(latestData);
-    latestData.root.nodes.push(imagesL);
-    setTimeout(async () => {
-      console.log(latestData);
-      await editor.structureDef.editor.setMolecule(JSON.stringify(latestData));
-    }, 500);
+    const imagesL = removeImagesFromData(oldLatestData);
+    oldLatestData.root.nodes.push(imagesL);
+    await editor.structureDef.editor.setMolecule(JSON.stringify(oldLatestData));
   } catch (error) {
     console.error({ mainImageSizingOnRerender: error });
+  }
+};
+
+const addTextNodeDescriptionOnTextPopup = async (node) => {
+  if (node?.classList?.contains('Select-module_selectContainer__yXT-t') && node?.classList?.contains('Modal-module_modalOverlay__AzVeg')) {
+    // Your existing logic
+    const parentElement = node.querySelector('.Dialog-module_body__EWh4H.Dialog-module_withMargin__-zVS4');
+
+
+    let newParagraph;  // Declare the variable to store the added paragraph
+
+    if (parentElement) {  // Ensure showTextNode is used properly
+      newParagraph = document.createElement('p');
+      const firstChild = parentElement.lastChild;
+
+      newParagraph.textContent = 'You are adding a text description to the selected template';
+      parentElement.insertBefore(newParagraph, firstChild.nextSibling);
+    }
+
   }
 };
 
@@ -546,6 +598,7 @@ export {
 
   // methods
   hasKetcherData,
+  hasTextNodes,
   addingPolymersToKetcher,
   prepareImageFromTemplateList,
   resetOtherAliasCounters,
@@ -553,8 +606,10 @@ export {
   removeImageTemplateAtom,
   reAttachPolymerList,
   removeImagesFromData,
+  removeTextFromData,
   fetchSurfaceChemistryImageData,
   updateBondList,
+  findAtomByImageIndex,
 
   // DOM Methods
   disableButton,
@@ -565,6 +620,7 @@ export {
   undoKetcher,
   redoKetcher,
   mainImageSizingOnRerender,
+  addTextNodeDescriptionOnTextPopup,
 
   // setters
   ImagesToBeUpdatedSetter,

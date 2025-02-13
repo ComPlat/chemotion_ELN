@@ -5,10 +5,17 @@ import {
   Accordion, Button, Card, Modal
 } from 'react-bootstrap';
 import {
-  BodyRectangleIcon, MultiHatched, NotFound, PhaseSeparatedSupportSolidDivided, PorousHatched, ActivePhasePromotors, PolymerShapes,
+  BodyRectangleIcon,
+  MultiHatched,
+  NotFound,
+  PhaseSeparatedSupportSolidDivided,
+  PorousHatched,
+  ActivePhasePromotors,
+  PolymerShapes,
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
-  BodySolid
+  BodySolid,
+  AddTextIcon
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
 
 const iconMap = {
@@ -86,7 +93,7 @@ function PolymerListModal({
                                   key={shape.template_id}
                                   variant="normal"
                                   onClick={async () => {
-                                    if (shape.template_id) {
+                                    if (shape.template_id && shape.template_id < 6) {
                                       onShapeSelection(shape.template_id);
                                       return;
                                     }
@@ -125,11 +132,8 @@ const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
     newButton.style.backgroundColor = 'transparent';
     newButton.style.border = '0';
 
-    // SVG content to be added inside the button
-    const svgIcon = PolymerShapes;
-
     // Set the SVG as the innerHTML of the button
-    newButton.innerHTML = svgIcon;
+    newButton.innerHTML = PolymerShapes;
     container.appendChild(newButton);
   }
 };
