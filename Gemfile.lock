@@ -568,7 +568,7 @@ GEM
       activesupport (>= 3.0.0)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (2.2.9)
+    rack (2.2.11)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-contrib (2.5.0)
