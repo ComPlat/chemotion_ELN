@@ -137,6 +137,23 @@ function getUserFacingUnit(unit) {
   }
 }
 
+function getInternalUnit(unit) {
+  switch (unit) {
+    case 's':
+      return 'Second(s)';
+    case 'm':
+      return 'Minute(s)';
+    case 'h':
+      return 'Hour(s)';
+    case 'd':
+      return 'Day(s)';
+    case 'w':
+      return 'Week(s)';
+    default:
+      return unit;
+  }
+}
+
 function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-${variationsRowId}`;
 }
