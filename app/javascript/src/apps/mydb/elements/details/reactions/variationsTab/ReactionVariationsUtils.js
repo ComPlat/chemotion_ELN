@@ -205,7 +205,7 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
     updatedRow = updateVariationsRowOnReferenceMaterialChange(updatedRow, reactionHasPolymers);
   }
   if (value.aux?.gasType === 'catalyst') {
-    updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow, value.amount.value);
+    updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow);
   }
 
   return updatedRow;
