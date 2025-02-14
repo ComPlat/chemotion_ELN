@@ -17,7 +17,6 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
-  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -1577,6 +1576,8 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.datetime "deleted_at"
     t.string "bar_code"
     t.string "qr_code"
+    t.float "weight_amount"
+    t.string "weight_unit"
     t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
     t.index ["user_id"], name: "index_vessels_on_user_id"
     t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
