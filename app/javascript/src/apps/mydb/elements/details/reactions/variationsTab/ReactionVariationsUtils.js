@@ -73,6 +73,40 @@ function getStandardUnits(entry) {
   }
 }
 
+function getUserFacingUnit(unit) {
+  switch (unit) {
+    case 'Second(s)':
+      return 's';
+    case 'Minute(s)':
+      return 'm';
+    case 'Hour(s)':
+      return 'h';
+    case 'Day(s)':
+      return 'd';
+    case 'Week(s)':
+      return 'w';
+    default:
+      return unit;
+  }
+}
+
+function getInternalUnit(unit) {
+  switch (unit) {
+    case 's':
+      return 'Second(s)';
+    case 'm':
+      return 'Minute(s)';
+    case 'h':
+      return 'Hour(s)';
+    case 'd':
+      return 'Day(s)';
+    case 'w':
+      return 'Week(s)';
+    default:
+      return unit;
+  }
+}
+
 function getStandardValue(entry, material) {
   switch (entry) {
     case 'volume':
@@ -117,40 +151,6 @@ function getCellDataType(entry, gasType = 'off') {
       return 'yield';
     default:
       return null;
-  }
-}
-
-function getUserFacingUnit(unit) {
-  switch (unit) {
-    case 'Second(s)':
-      return 's';
-    case 'Minute(s)':
-      return 'm';
-    case 'Hour(s)':
-      return 'h';
-    case 'Day(s)':
-      return 'd';
-    case 'Week(s)':
-      return 'w';
-    default:
-      return unit;
-  }
-}
-
-function getInternalUnit(unit) {
-  switch (unit) {
-    case 's':
-      return 'Second(s)';
-    case 'm':
-      return 'Minute(s)';
-    case 'h':
-      return 'Hour(s)';
-    case 'd':
-      return 'Day(s)';
-    case 'w':
-      return 'Week(s)';
-    default:
-      return unit;
   }
 }
 
