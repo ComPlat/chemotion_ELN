@@ -10,7 +10,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
-  computeEquivalent, computePercentYield
+  computeEquivalent, computePercentYield, computePercentYieldGas
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { parseNumericString } from 'src/utilities/MathUtils';
 import {
@@ -174,9 +174,7 @@ function GasParser({
       const catalystAmount = catalyst?.amount.value ?? 0;
       const turnoverNumber = calculateTON(amount, catalystAmount);
 
-      const feedstockPurity = getFeedstockMaterial(variationsRow)?.aux.purity || 1;
-      const feedstockAmount = calculateFeedstockMoles(vesselVolume, feedstockPurity);
-      const percentYield = (amount / feedstockAmount) * 100;
+      const percentYield = computePercentYieldGas(amount, getFeedstockMaterial(variationsRow), vesselVolume);
 
       updatedCellData = {
         ...updatedCellData,

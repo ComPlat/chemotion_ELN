@@ -5,7 +5,7 @@ import {
 import {
   MaterialOverlay, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-import { calculateTON } from 'src/utilities/UnitsConversion';
+import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
@@ -58,6 +58,12 @@ function computePercentYield(material, referenceMaterial, reactionHasPolymers) {
     / stoichiometryCoefficient;
   return reactionHasPolymers ? (equivalent * 100)
     : ((equivalent <= 1 ? equivalent : 1) * 100);
+}
+
+function computePercentYieldGas(materialAmount, feedstockMaterial, vesselVolume) {
+  const feedstockPurity = feedstockMaterial?.aux.purity || 1;
+  const feedstockAmount = calculateFeedstockMoles(vesselVolume, feedstockPurity);
+  return (materialAmount / feedstockAmount) * 100;
 }
 
 function getReactionMaterials(reaction) {
@@ -366,5 +372,6 @@ export {
   getGramFromMol,
   computeEquivalent,
   computePercentYield,
+  computePercentYieldGas,
   cellIsEditable,
 };
