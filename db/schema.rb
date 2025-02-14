@@ -10,15 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_01_20_162008) do
+ActiveRecord::Schema.define(version: 2025_02_11_171435) do
 
   # These are extensions that must be enabled in order to support this database
-  enable_extension "btree_gist"
   enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
-  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -1557,6 +1555,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.datetime "deleted_at"
     t.string "bar_code"
     t.string "qr_code"
+    t.float "weight_amount"
+    t.string "weight_unit"
     t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
     t.index ["user_id"], name: "index_vessels_on_user_id"
     t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
