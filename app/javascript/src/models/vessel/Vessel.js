@@ -28,6 +28,8 @@ export default class Vessel extends Element {
     vessel.barCode = response.bar_code;
     vessel.qrCode = response.qr_code;
     vessel.id = response.id || '';
+    vessel.weightAmount = response?.weight_amount || 0;
+    vessel.weightUnit = response?.weight_unit || '';
     vessel.tag = response.tag;
 
     vessel.vesselTemplateId = response?.vessel_template?.id || '';
@@ -37,8 +39,6 @@ export default class Vessel extends Element {
     vessel.vesselType = response?.vessel_template?.vessel_type || '';
     vessel.volumeAmount = response?.vessel_template?.volume_amount || 0;
     vessel.volumeUnit = response?.vessel_template?.volume_unit || '';
-    vessel.weightAmount = response?.vessel_template?.weight_amount || 0;
-    vessel.weightUnit = response?.vessel_template?.weight_unit || '';
     vessel.details = response?.vessel_template?.details || '';
     vessel.is_new = response?.is_new || false;
     vessel.instances = response.is_new ? response.instances || [] : [];
@@ -58,8 +58,6 @@ export default class Vessel extends Element {
     this.vesselType = VesselItem.vesselType;
     this.volumeAmount = VesselItem.volumeAmount;
     this.volumeUnit = VesselItem.volumeUnit;
-    this.weightAmount = VesselItem.weightAmount;
-    this.weightUnit = VesselItem.weightUnit;
     this.details = VesselItem.details;
   }
 

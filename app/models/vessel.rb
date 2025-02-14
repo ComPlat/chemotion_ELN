@@ -37,5 +37,5 @@ class Vessel < ApplicationRecord
   accepts_nested_attributes_for :container
 
   delegate :details, :material_details, :material_type, :vessel_type, :volume_amount, :volume_unit,
-           :weight_amount, :weight_unit, to: :vessel_template
+           to: :vessel_template
 end

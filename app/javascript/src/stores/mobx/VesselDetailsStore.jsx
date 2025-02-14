@@ -22,6 +22,8 @@ const VesselInstance = types.model({
   vesselInstanceDescription: types.maybeNull(types.string),
   barCode: types.maybeNull(types.string),
   qrCode: types.maybeNull(types.string),
+  weightAmount: types.maybeNull(types.string),
+  weightUnit: types.maybeNull(types.string),
 });
 
 const VesselItem = types
@@ -34,12 +36,12 @@ const VesselItem = types
     vesselType: '',
     volumeAmount: 0,
     volumeUnit: types.string,
-    weightAmount: 0,
-    weightUnit: types.string,
     vesselInstanceName: '',
     vesselInstanceDescription: '',
-    qrCode: '',
     barCode: '',
+    qrCode: '',
+    weightAmount: 0,
+    weightUnit: types.string,
     shortLabel: types.maybeNull(types.string),
     changed: false,
     instances: types.optional(types.array(VesselInstance), []),
@@ -78,6 +80,8 @@ export const VesselDetailsStore = types
             vesselInstanceDescription: '',
             barCode: '',
             qrCode: '',
+            weightAmount: '',
+            weightUnit: '',
           })
         );
       }
@@ -174,20 +178,22 @@ export const VesselDetailsStore = types
         vesselType: jsVesselModel.vesselType || '',
         volumeAmount: jsVesselModel.volumeAmount || 0,
         volumeUnit: jsVesselModel.volumeUnit || '',
-        weightAmount: jsVesselModel.weightAmount || 0,
-        weightUnit: jsVesselModel.weightUnit || '',
         shortLabel: jsVesselModel.short_label || '',
         is_new: jsVesselModel.is_new,
         vesselInstanceName: jsVesselModel.vesselInstanceName || '',
         vesselInstanceDescription: jsVesselModel.vesselInstanceDescription || '',
         barCode: jsVesselModel.barCode || '',
         qrCode: jsVesselModel.qrCode || '',
+        weightAmount: jsVesselModel.weightAmount || 0,
+        weightUnit: jsVesselModel.weightUnit || '',
         instances: jsVesselModel.instances?.length
           ? jsVesselModel.instances.map((instance) => ({
             vesselInstanceName: instance.vesselInstanceName || '',
             vesselInstanceDescription: instance.vesselInstanceDescription || '',
             barCode: instance.barCode || '',
             qrCode: instance.qrCode || '',
+            weightAmount: instance.weightAmount || '',
+            weightUnit: instance.weightUnit || '',
           }))
           : [],
       }));
@@ -204,8 +210,6 @@ export const VesselDetailsStore = types
       item.vesselType = properties.vessel_type || '';
       item.volumeAmount = properties.volume_amount || 0;
       item.volumeUnit = properties.volume_unit || '';
-      item.weightAmount = properties.weight_amount || 0;
-      item.weightUnit = properties.weight_unit || '';
     },
   }))
   .views((self) => ({
