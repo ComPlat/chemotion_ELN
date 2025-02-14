@@ -121,6 +121,10 @@ function getStandardValue(entry, material) {
       const { value = null, unit = null } = material.gas_phase_data?.temperature ?? {};
       return convertUnit(value, unit, getStandardUnits('temperature')[0]);
     }
+    case 'duration': {
+      const { value = null, unit = null } = material.gas_phase_data?.time ?? {};
+      return convertUnit(value, getInternalUnit(unit), getStandardUnits('duration')[0]);
+    }
     case 'concentration':
       return material.gas_phase_data?.part_per_million ?? null;
     case 'turnoverNumber':
