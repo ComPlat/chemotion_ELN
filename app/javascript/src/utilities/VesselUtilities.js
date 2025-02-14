@@ -9,8 +9,6 @@ const extractCreateVesselApiParameter = (vessel) => {
     vessel_type: vessel.vesselType,
     volume_amount: vessel.volumeAmount,
     volume_unit: vessel.volumeUnit,
-    weight_amount: vessel.weightAmount,
-    weight_unit: vessel.weightUnit,
     details: vessel.details,
     short_label: vessel.short_label,
     container: vessel.container,
@@ -19,6 +17,8 @@ const extractCreateVesselApiParameter = (vessel) => {
       description: instance.vesselInstanceDescription,
       bar_code: instance.barCode,
       qr_code: instance.qrCode,
+      weight_amount: vessel.weightAmount,
+      weight_unit: vessel.weightUnit,
     })),
   };
 
@@ -38,15 +38,19 @@ const extractUpdateVesselApiParameter = (vessel) => {
     volume_unit: vessel.volumeUnit,
     weight_amount: vessel.weightAmount,
     weight_unit: vessel.weightUnit,
+    bar_code: vessel.barCode,
+    qr_code: vessel.qrCode,
     details: vessel.details,
     short_label: vessel.short_label,
     container: vessel.container,
-    instances: vessel.instances.map((instance) => ({
-      vessel_name: instance.vesselInstanceName,
-      description: instance.vesselInstanceDescription,
-      bar_code: instance.barCode,
-      qr_code: instance.qrCode,
-    })),
+    // instances: vessel.instances.map((instance) => ({
+    //   vessel_name: instance.vesselInstanceName,
+    //   description: instance.vesselInstanceDescription,
+    //   bar_code: instance.barCode,
+    //   qr_code: instance.qrCode,
+    //   weight_amount: vessel.weightAmount,
+    //   weight_unit: vessel.weightUnit,
+    // })),
   };
 
   return baseParams;
