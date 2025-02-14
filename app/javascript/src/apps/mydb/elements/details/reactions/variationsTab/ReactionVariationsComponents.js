@@ -337,12 +337,14 @@ function MaterialOverlay({ value: cellData }) {
         {aux?.coefficient !== null && (
         <div>
           Coefficient:
+          {' '}
           {aux.coefficient.toPrecision(4)}
         </div>
         )}
         {aux?.molecularWeight !== null && (
         <div>
           Molar mass:
+          {' '}
           {aux.molecularWeight.toPrecision(2)}
           {' '}
           g/mol
