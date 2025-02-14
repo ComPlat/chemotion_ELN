@@ -4,6 +4,7 @@ import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
+  updateVariationsRowOnFeedstockMaterialChange,
   getMaterialData
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
@@ -195,6 +196,7 @@ function createVariationsRow(reaction, variations, gasMode = false, vesselVolume
   let updatedRow = updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);
   if (gasMode) {
     updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow);
+    updatedRow = updateVariationsRowOnFeedstockMaterialChange(updatedRow);
   }
   return updatedRow;
 }

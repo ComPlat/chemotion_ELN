@@ -232,4 +232,12 @@ describe('ReactionVariationsMaterials', () => {
     expect(updatedVariationsRow.products[productID].turnoverNumber.value).toBe(initialTurnoverNumber * 2);
     expect(updatedVariationsRow.products[productID].turnoverFrequency.value).toBe(initialTurnoverFrequency * 2);
   });
+  it("initializes gas product yield", async () => {
+    const reaction = await setUpGaseousReaction();
+    const productID = reaction.products[0].id;
+    const variationsRow = reaction.variations[0];
+    const initialYield = variationsRow.products[productID].yield.value;
+
+    expect(initialYield).not.toBe(null);
+  });
 });

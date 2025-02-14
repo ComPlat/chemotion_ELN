@@ -353,6 +353,22 @@ function updateVariationsRowOnCatalystMaterialChange(row) {
   return updatedRow;
 }
 
+function updateVariationsRowOnFeedstockMaterialChange(row) {
+  const updatedRow = cloneDeep(row);
+
+  Object.values(updatedRow.products).forEach((productMaterial) => {
+    if (productMaterial.aux.gasType === 'gas') {
+      productMaterial.yield.value = computePercentYieldGas(
+        productMaterial.amount.value,
+        getFeedstockMaterial(updatedRow),
+        productMaterial.aux.vesselVolume
+      );
+    }
+  });
+
+  return updatedRow;
+}
+
 export {
   getMaterialColumnGroupChild,
   getReactionMaterials,
@@ -363,6 +379,7 @@ export {
   updateColumnDefinitionsMaterialTypes,
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
+  updateVariationsRowOnFeedstockMaterialChange,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
   updateVariationsGasTypes,
