@@ -7,7 +7,7 @@ module Chemotion
     helpers ContainerHelpers
 
     rescue_from ActiveRecord::RecordNotFound do
-      error!('Ressource not found', 401)
+      error!('Resource not found', 401)
     end
     resource :vessels do
       desc 'return vessels of a collection'
@@ -40,7 +40,6 @@ module Chemotion
                     Vessel.none
                   end
                 else
-                  # All collection of current_user
                   Vessel.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 
@@ -93,10 +92,10 @@ module Chemotion
         optional :vessel_type, type: String, desc: 'type of the vessel'
         optional :volume_amount, type: Float, desc: 'volume amount'
         optional :volume_unit, type: String, desc: 'volume unit'
-        optional :weight_amount, type: Float, desc: 'weight of the vessel'
-        optional :weight_unit, type: String, desc: 'weight unit of the vessel'
         optional :bar_code, type: String, desc: 'bar code of the vessel (for single instance)'
         optional :qr_code, type: String, desc: 'qr code of the vessel (for single instance)'
+        optional :weight_amount, type: Float, desc: 'weight of the vessel'
+        optional :weight_unit, type: String, desc: 'weight unit of the vessel'
         optional :description, type: String, desc: 'description of a vessel sample (for single instance)'
         optional :short_label, type: String, desc: 'short label of a vessel sample'
         requires :collection_id, type: Integer, desc: 'collection of the vessel sample'
@@ -105,6 +104,8 @@ module Chemotion
           optional :description, type: String, desc: 'description of the vessel instance'
           optional :bar_code, type: String, desc: 'bar code of the vessel instance'
           optional :qr_code, type: String, desc: 'qr code of the vessel instance'
+          optional :weight_amount, type: Float, desc: 'weight of the vessel'
+          optional :weight_unit, type: String, desc: 'weight unit of the vessel'
         end
         requires :container, type: Hash, desc: 'root container of element'
       end
@@ -118,8 +119,6 @@ module Chemotion
           vessel_type: params[:vessel_type],
           volume_amount: params[:volume_amount],
           volume_unit: params[:volume_unit],
-          weight_amount: params[:weight_amount],
-          weight_unit: params[:weight_unit]
         )
       
         created_vessels = []
@@ -133,7 +132,9 @@ module Chemotion
               description: instance_params[:description],
               bar_code: instance_params[:bar_code],
               qr_code: instance_params[:qr_code],
-              short_label: params[:short_label]
+              weight_amount: instance_params[:weight_amount],
+              weight_unit: instance_params[:weight_unit],
+              short_label: params[:short_label],
             )
       
             if params[:collection_id]
@@ -188,6 +189,8 @@ module Chemotion
             description: params[:description],
             bar_code: params[:bar_code],
             qr_code: params[:qr_code],
+            weight_amount: params[:weight_amount],
+            weight_unit: params[:weight_unit],
             short_label: params[:short_label],
           }.compact
           vessel.update!(vessel_params) if vessel_params.present?
@@ -208,8 +211,6 @@ module Chemotion
               vessel_type: params[:vessel_type],
               volume_amount: params[:volume_amount],
               volume_unit: params[:volume_unit],
-              weight_amount: params[:weight_amount],
-              weight_unit: params[:weight_unit],
             }.compact
             vessel_template.update!(template_params) if template_params.present?
           end
