@@ -35,6 +35,8 @@ async function setUpGaseousReaction() {
     part_per_million: 1,
     turnover_frequency: { unit: 'TON/h', value: 1 }
   };
+  reaction.products[0].amount_unit = 'mol';
+  reaction.products[0].amount_value = 1;
 
   const variations = [];
   for (let id = 0; id < 3; id++) {

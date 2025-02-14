@@ -191,7 +191,12 @@ function createVariationsRow(reaction, variations, gasMode = false, vesselVolume
       { ...a, [v.id]: getMaterialData(v, materialType, gasMode, vesselVolume) }), {});
   });
 
-  return updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);
+  // Compute dependent values that aren't supplied by initial data.
+  let updatedRow = updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);
+  if (gasMode) {
+    updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow);
+  }
+  return updatedRow;
 }
 
 function copyVariationsRow(row, variations) {

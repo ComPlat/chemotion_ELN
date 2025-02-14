@@ -223,18 +223,13 @@ describe('ReactionVariationsMaterials', () => {
     const productID = reaction.products[0].id;
     const catalystID = reaction.starting_materials[0].id;
     const variationsRow = reaction.variations[0];
+    const initialTurnoverNumber = variationsRow.products[productID].turnoverNumber.value;
+    const initialTurnoverFrequency = variationsRow.products[productID].turnoverFrequency.value;
 
-    variationsRow.products[productID].duration.value = 1;
-    variationsRow.products[productID].amount.value = 1;
-
-    expect(variationsRow.products[productID].turnoverNumber.value).toBe(1);
-    expect(variationsRow.products[productID].turnoverFrequency.value).toBe(1);
-
-    variationsRow.startingMaterials[catalystID].amount.value = 2;
-
+    variationsRow.startingMaterials[catalystID].amount.value /= 2;
     const updatedVariationsRow = updateVariationsRowOnCatalystMaterialChange(variationsRow);
 
-    expect(updatedVariationsRow.products[productID].turnoverNumber.value).toBe(0.5);
-    expect(updatedVariationsRow.products[productID].turnoverFrequency.value).toBe(1800);
+    expect(updatedVariationsRow.products[productID].turnoverNumber.value).toBe(initialTurnoverNumber * 2);
+    expect(updatedVariationsRow.products[productID].turnoverFrequency.value).toBe(initialTurnoverFrequency * 2);
   });
 });
