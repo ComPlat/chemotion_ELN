@@ -40,6 +40,7 @@ module Chemotion
       params do
         requires :name, type: String
         requires :name_abbreviation, type: String
+        optional :email, type: String
         optional :serial_number, type: String
         optional :verification_status, type: String
         optional :account_active, type: Boolean
@@ -47,7 +48,6 @@ module Chemotion
       end
       after_validation do
         @attributes = declared(params, include_missing: false)
-        @attributes[:email] = format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
       end
       post do
         device = Device.new(@attributes)
@@ -62,6 +62,7 @@ module Chemotion
         requires :id, type: Integer
         requires :name, type: String
         requires :name_abbreviation, type: String
+        optional :email, type: String
         optional :serial_number, type: String
         optional :verification_status, type: String
         optional :account_active, type: Boolean
