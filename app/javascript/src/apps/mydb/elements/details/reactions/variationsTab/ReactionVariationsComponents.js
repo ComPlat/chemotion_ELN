@@ -351,9 +351,9 @@ function MaterialOverlay({ value: cellData }) {
         </div>
         )}
         {Object.entries(cellData).map(
-          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry && 'unit' in entry ? (
+          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry ? (
             <div key={key}>
-              {`${key.charAt(0).toUpperCase() + key.slice(1)}: ${entry.value} ${entry.unit}`}
+              {`${key.charAt(0).toUpperCase() + key.slice(1)}: ${entry.value}${entry.unit ? ` ${entry.unit}` : ''}`}
             </div>
           ) : null)
         )}
