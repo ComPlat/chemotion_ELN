@@ -110,4 +110,20 @@ RSpec.describe User do
       expect(User.try_find_by_name_abbreviation(user_lower.name_abbreviation.downcase)).to be_nil
     end
   end
+
+  describe '#increment_counter' do
+    let(:described_method) { :increment_counter }
+    let(:element) { described_class::COUNTER_KEYS.sample }
+    let(:some_key) { Faker::Lorem.word }
+    let(:counters) { { some_key => '0' } }
+    let(:user) { create(:user, counters: counters) }
+
+    it 'increments the counter when no value is set for default elements' do
+      expect { user.send(described_method, element) }.to change { user.reload.counters[element].to_i }.by(1)
+    end
+
+    it 'increments the counter for non default element when a value preset' do
+      expect { user.send(described_method, some_key) }.to change { user.reload.counters[some_key].to_i }.by(1)
+    end
+  end
 end
