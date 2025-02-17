@@ -60,23 +60,25 @@ module Reporter
             'startingMaterials' => variation_materials(var, :startingMaterials),
             'reactants' => variation_materials(var, :reactants),
             'solvents' => variation_materials(var, :solvents),
-            'products' => variation_products(var),
+            'products' => variation_materials(var, :products),
             'notes' => var[:notes],
           }
         end
       end
 
       def variation_materials(variation, type)
-        variation[type].map do |_, v|
-          "#{v[:aux][:sumFormula]}:\n#{v[:value]} #{v[:unit]} " \
-          "; #{v[:aux].fetch(:equivalent, 'n/a')} Equiv " +
-            (v[:aux][:isReference] ? '; Ref' : '')
-        end
-      end
+        variation[type].map do |_, vi|
+          result = "#{vi[:aux][:sumFormula]}:\n"
 
-      def variation_products(variation)
-        variation[:products].map do |_, v|
-          "#{v[:aux][:sumFormula]}:\n#{v[:value]} #{v[:unit]}; (#{v[:aux][:yield]} % yield)"
+          meta_data = [vi[:aux][:isReference] ? 'Ref' : '', vi[:aux][:gasType] == 'off' ? '' : vi[:aux][:gasType]]
+          meta_data = meta_data.reject(&:empty?).join(', ')
+          result += "(#{meta_data})\n" if meta_data.present?
+
+          result + vi.map do |k, vj|
+            next if k == :aux
+
+            "#{k.to_s.gsub(/([A-Z])/, ' \1').downcase.strip}: #{vj[:value]} #{vj[:unit]};\n"
+          end.join
         end
       end
 

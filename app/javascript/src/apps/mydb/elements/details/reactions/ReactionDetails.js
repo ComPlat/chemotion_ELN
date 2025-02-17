@@ -15,6 +15,9 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
+import {
+  REACTION_VARIATIONS_TAB_KEY
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
@@ -585,10 +588,16 @@ export default class ReactionDetails extends Component {
         </Tab>
       ),
       variations: (
-        <Tab eventKey="variations" title="Variations" key={`variations_${reaction.id}`} unmountOnExit={false}>
+        <Tab
+          eventKey={REACTION_VARIATIONS_TAB_KEY}
+          title="Variations"
+          key={`variations_${reaction.id}`}
+          unmountOnExit={false}
+        >
           <ReactionVariations
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
+            isActive={activeTab === REACTION_VARIATIONS_TAB_KEY}
           />
         </Tab>
       )

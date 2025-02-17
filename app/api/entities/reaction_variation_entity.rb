@@ -20,28 +20,28 @@ module Entities
       end
     end
 
-    def materials(material_type)
+    def materials(material_type, entity)
       {}.tap do |materials|
         object[material_type]&.each do |k, v|
-          materials[k] = ReactionVariationMaterialEntity.represent(v)
+          materials[k] = entity.represent(v)
         end
       end
     end
 
     def starting_materials
-      materials(:startingMaterials)
+      materials(:startingMaterials, StartingMaterialEntity)
     end
 
     def reactants
-      materials(:reactants)
+      materials(:reactants, StartingMaterialEntity)
     end
 
     def products
-      materials(:products)
+      materials(:products, ProductMaterialEntity)
     end
 
     def solvents
-      materials(:solvents)
+      materials(:solvents, SolventMaterialEntity)
     end
   end
 
@@ -52,10 +52,37 @@ module Entities
     )
   end
 
-  class ReactionVariationMaterialEntity < ApplicationEntity
+  class SolventMaterialEntity < ApplicationEntity
+    expose :volume, using: 'Entities::ReactionVariationMaterialEntryEntity'
+
+    expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
+  end
+
+  class ProductMaterialEntity < ApplicationEntity
+    IS_GAS = ->(object, _) { (object[:aux][:gasType] == 'gas') }.freeze
+
     expose :mass, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :amount, using: 'Entities::ReactionVariationMaterialEntryEntity'
-    expose :volume, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :yield, using: 'Entities::ReactionVariationMaterialEntryEntity'
+
+    expose :duration, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :temperature, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :concentration, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :turnoverNumber, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :turnoverFrequency, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
+
+    expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
+  end
+
+  class StartingMaterialEntity < ApplicationEntity
+    IS_FEEDSTOCK = ->(object, _) { (object[:aux][:gasType] == 'feedstock') }.freeze
+
+    expose :mass, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :amount, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :equivalent, using: 'Entities::ReactionVariationMaterialEntryEntity'
+
+    expose :volume, if: IS_FEEDSTOCK, using: 'Entities::ReactionVariationMaterialEntryEntity'
+
     expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
   end
 
@@ -68,8 +95,9 @@ module Entities
       :molarity,
       :molecularWeight,
       :sumFormula,
-      :yield,
-      :equivalent,
+      :gasType,
+      :vesselVolume,
+      :materialType,
     )
   end
 
