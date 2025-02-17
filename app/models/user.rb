@@ -267,12 +267,20 @@ class User < ApplicationRecord
     save!
   end
 
+  # The element models for which the counters that can be incremented
+  COUNTER_KEYS = %w[samples reactions wellplates celllines device_descriptions].freeze
+
+  # Increment a counter for a given key
+  #   - samples, reactions, wellplates, celllines, device_descriptions
+  #   - or a Generic Element
+  # The counter is use to generate short labels as the first counter part of the label (ex the 5 in `JD-5-2`)
+  # @param [String] key The key of the counter to increment
+  # @return [String] The new integer value of the counter as String
   def increment_counter(key)
-    return if counters[key].nil?
+    return if counters[key].blank? && !key.in?(COUNTER_KEYS)
 
-    counters[key] = counters[key].succ
+    counters[key] = counters[key].to_i.next
     save!
-
     counters[key]
   end
 
