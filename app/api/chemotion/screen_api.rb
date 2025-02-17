@@ -7,6 +7,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers ProfileHelpers
+    helpers UserLabelHelpers
 
     resource :screens do
       desc "Return serialized screens"
@@ -14,6 +15,7 @@ module Chemotion
         optional :collection_id, type: Integer, desc: "Collection id"
         optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
       end
@@ -38,16 +40,18 @@ module Chemotion
                 else
                   # All collection of current_user
                   Screen.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.includes(collections: :sync_collections_users).order('created_at DESC')
+                end.includes(collections: :sync_collections_users).order('screens.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
+        user_label = params[:user_label]
         by_created_at = params[:filter_created_at] || false
 
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
         scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.by_user_label(user_label) if user_label
 
         reset_pagination_page(scope)
 
@@ -116,6 +120,7 @@ module Chemotion
         requires :research_plan_ids, type: Array
         requires :container, type: Hash
         optional :segments, type: Array, desc: 'Segments'
+        optional :user_labels, type: Array
         optional :component_graph_data, type: Hash do
           optional :edges, type: Array
           optional :nodes, type: Array
@@ -129,10 +134,9 @@ module Chemotion
         put do
           update_datamodel(params[:container])
           params.delete(:container)
-
-          attributes = declared(params.except(:wellplate_ids, :segments), include_missing: false)
-
+          attributes = declared(params.except(:wellplate_ids, :segments, :user_labels), include_missing: false)
           screen = Screen.find(params[:id])
+          update_element_labels(screen, params[:user_labels], current_user.id)
           screen.update(attributes)
           screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
           old_wellplate_ids = screen.wellplates.pluck(:id)
@@ -171,6 +175,7 @@ module Chemotion
         requires :research_plan_ids, type: Array
         requires :container, type: Hash
         optional :segments, type: Array, desc: 'Segments'
+        optional :user_labels, type: Array
         optional :component_graph_data, type: JSON
       end
       post do
@@ -188,6 +193,7 @@ module Chemotion
         screen = Screen.create(attributes)
 
         screen.container = update_datamodel(params[:container])
+        update_element_labels(screen, params[:user_labels], current_user.id)
         screen.save!
         screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
 

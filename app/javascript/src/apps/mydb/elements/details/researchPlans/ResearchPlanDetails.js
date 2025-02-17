@@ -42,6 +42,8 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
+import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+
 
 export default class ResearchPlanDetails extends Component {
   static contextType = StoreContext;
@@ -489,6 +491,7 @@ export default class ResearchPlanDetails extends Component {
                 <span className="mx-1">{researchPlan.name}</span>
               </span>
             </OverlayTrigger>
+            <ShowUserLabels element={researchPlan} />
             <ElementCollectionLabels element={researchPlan} placement="right" />
             <HeaderCommentSection element={researchPlan} />
           </div>
@@ -528,6 +531,10 @@ export default class ResearchPlanDetails extends Component {
             !researchPlan.isNew && <CommentSection section="research_plan_research_plan" element={researchPlan} />
           }
           {this.renderResearchPlanMain(researchPlan)}
+          <EditUserLabels
+            element={researchPlan}
+            fnCb={this.handleResearchPlanChange}
+          />
           <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
         </Tab>
       ),

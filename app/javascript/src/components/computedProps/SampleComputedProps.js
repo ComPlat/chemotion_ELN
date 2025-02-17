@@ -20,7 +20,7 @@ export default class SampleComputedProps extends React.Component {
     if (cprops != prevProps.cprops && this.gridApi) {
       // Is this even necessary?
       // Should updating the prop not simply update 'rowData' when rendering the AgGridReact?
-      this.gridApi.setGridOption('rowData', nextProps.cprops);
+      this.gridApi.setGridOption('rowData', cprops);
     }
   }
 

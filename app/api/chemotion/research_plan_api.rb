@@ -8,6 +8,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers ContainerHelpers
+    helpers UserLabelHelpers
 
     namespace :research_plans do
       desc 'Return serialized research plans of current user'
@@ -15,6 +16,7 @@ module Chemotion
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
       end
@@ -36,10 +38,11 @@ module Chemotion
         else
           # All collection of current_user
           ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
+        end.order('research_plans.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
+        user_label = params[:user_label]
         by_created_at = params[:filter_created_at] || false
 
         scope = scope.includes_for_list_display
@@ -47,6 +50,7 @@ module Chemotion
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
         scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.by_user_label(user_label) if user_label
 
         reset_pagination_page(scope)
 
@@ -67,6 +71,7 @@ module Chemotion
         optional :body, type: Array, desc: 'Research plan body'
         optional :collection_id, type: Integer, desc: 'Collection ID'
         requires :container, type: Hash, desc: 'Containers'
+        optional :user_labels, type: Array
         optional :segments, type: Array, desc: 'Segments'
         optional :attachments, type: Array, desc: 'Attachments'
       end
@@ -104,6 +109,8 @@ module Chemotion
           all_coll = Collection.get_all_collection_for_user(current_user.id)
           research_plan.collections << all_coll
         end
+
+        update_element_labels(research_plan, params[:user_labels], current_user.id)
 
         present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
       end
@@ -189,6 +196,7 @@ module Chemotion
         optional :body, type: Array, desc: 'Research plan body'
         optional :wellplate_ids, type: Array, desc: 'Research plan Wellplates'
         requires :container, type: Hash, desc: 'Research plan analyses'
+        optional :user_labels, type: Array
         optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
@@ -197,13 +205,14 @@ module Chemotion
         end
 
         put do
-          attributes = declared(params.except(:segments), include_missing: false)
+          attributes = declared(params.except(:segments, :user_labels), include_missing: false)
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
           if research_plan = ResearchPlan.find(params[:id])
             research_plan.update!(attributes)
             research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
+            update_element_labels(research_plan, params[:user_labels], current_user.id)
           end
 
           detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels

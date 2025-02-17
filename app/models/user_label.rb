@@ -18,7 +18,7 @@ class UserLabel < ApplicationRecord
   acts_as_paranoid
 
   def self.my_labels(current_user)
-    UserLabel.where('(user_id = ? AND access_level in (0, 1)) OR access_level = 2', current_user.id)
+    UserLabel.where('(user_id = ? AND access_level = 0) OR access_level in (1, 2)', current_user.id)
              .order('access_level desc, position, title')
   end
 end
