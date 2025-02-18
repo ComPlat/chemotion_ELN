@@ -1,11 +1,17 @@
 import React, { Component } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
-import { Accordion, Button, ListGroup } from 'react-bootstrap';
+import {
+  Accordion,
+  Button,
+  ListGroup,
+  ButtonToolbar
+} from 'react-bootstrap';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeRow';
 import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 class AnalysesContainer extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -14,7 +20,8 @@ class AnalysesContainer extends Component {
   constructor() {
     super();
     this.state = {
-      mode: 'edit'
+      mode: 'edit',
+      commentBoxVisible: false,
     };
   }
 
@@ -25,18 +32,18 @@ class AnalysesContainer extends Component {
     const { currentElement } = ElementStore.getState();
     currentElement.container.children[0].children.push(newContainer);
     this.handleChange(true);
-  }
+  };
 
   handleStartDrag = (container) => {
     this.setState({ draggingContainer: container.id });
-  }
+  };
 
   handleEndDrag = () => {
     this.setState({
       draggingContainer: '',
       lastHoveredContainer: ''
     });
-  }
+  };
 
   handleModeToggle = () => {
     const { mode } = this.state;
@@ -45,7 +52,7 @@ class AnalysesContainer extends Component {
     } else {
       this.setState({ mode: 'edit' });
     }
-  }
+  };
 
   handleHoverOver = (containerId) => {
     const { lastHoveredContainer } = this.state;
@@ -55,7 +62,7 @@ class AnalysesContainer extends Component {
     }
 
     this.setState({ lastHoveredContainer: containerId });
-  }
+  };
 
   handleChange = (changed = false) => {
     const { item } = this.props;
@@ -64,7 +71,13 @@ class AnalysesContainer extends Component {
       cellLineDetailsStore.cellLines(item.id).setChanged(true);
     }
     this.forceUpdate();
-  }
+  };
+
+  handleCommentTextChange = (e) => {
+    const { currentElement } = ElementStore.getState();
+    currentElement.container.description = e.target.value;
+    this.handleChange(true);
+  };
 
   renderAddButton = () => {
     const { readOnly } = this.props;
@@ -79,7 +92,11 @@ class AnalysesContainer extends Component {
         Add analysis
       </Button>
     );
-  }
+  };
+
+  toggleCommentBox = () => {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
+  };
 
   renderModeButton = () => {
     const { mode } = this.state;
@@ -168,15 +185,25 @@ class AnalysesContainer extends Component {
     return (mode === 'edit')
       ? this.renderEditModeContainer()
       : this.renderOrderModeContainer();
-  }
+  };
 
   render() {
+    const { commentBoxVisible } = this.state;
+    const { currentElement } = ElementStore.getState();
     return (
       <div className="analysis-container">
         <div className="d-flex justify-content-between mb-3">
           {this.renderModeButton()}
-          {this.renderAddButton()}
+          <ButtonToolbar className="gap-2">
+            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" disable={false} />
+            {this.renderAddButton()}
+          </ButtonToolbar>
         </div>
+        <CommentBox
+          isVisible={commentBoxVisible}
+          value={currentElement.container.description}
+          handleCommentTextChange={this.handleCommentTextChange}
+        />
         {this.renderContainerPanel()}
       </div>
     );

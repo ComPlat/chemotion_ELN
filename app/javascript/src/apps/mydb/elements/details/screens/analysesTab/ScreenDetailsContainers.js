@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Accordion, Card } from 'react-bootstrap';
+import { Button, Accordion, Card, ButtonToolbar } from 'react-bootstrap';
 
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
-
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 export default class ScreenDetailsContainers extends Component {
   constructor(props) {
@@ -15,7 +15,8 @@ export default class ScreenDetailsContainers extends Component {
     const { screen } = props;
     this.state = {
       screen,
-      activeContainer: 0
+      activeContainer: 0,
+      commentBoxVisible: false,
     };
     this.analysesContainer = screen.container.children.filter(element => ~element.container_type.indexOf('analyses'));
   }
@@ -179,16 +180,35 @@ export default class ScreenDetailsContainers extends Component {
     )
   }
 
-  render() {
+  handleCommentTextChange = (e) => {
     const { screen } = this.state;
+    screen.container.description = e.target.value;
+    this.handleChange(screen);
+  };
 
+  toggleCommentBox = () => {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
+  };
+
+  render() {
+    const { screen, commentBoxVisible } = this.state;
     if (screen.container != null) {
       if (this.analysesContainer.length == 1 && this.analysesContainer[0].children.length > 0) {
         return (
           <div>
             <div className="mb-2 me-1 d-flex flex-row-reverse">
-              {this.addButton()}
+              <ButtonToolbar className="gap-2">
+                <div className="mt-2">
+                  <CommentButton toggleCommentBox={this.toggleCommentBox} size="xxsm" />
+                </div>
+                {this.addButton()}
+              </ButtonToolbar>
             </div>
+            <CommentBox
+              isVisible={commentBoxVisible}
+              value={screen.container.description}
+              handleCommentTextChange={this.handleCommentTextChange}
+            />
             <Accordion className="border rounded overflow-hidden">
               {this.analysesContainer[0].children.map((container, key) => {
                 const isFirstTab = key === 0;
