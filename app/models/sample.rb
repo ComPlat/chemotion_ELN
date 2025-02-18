@@ -445,7 +445,7 @@ class Sample < ApplicationRecord
     return if inchikey.blank?
 
     is_partial = babel_info[:is_partial]
-    babel_info[:version]
+    molfile_version = babel_info[:version]
     return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
 
     self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
