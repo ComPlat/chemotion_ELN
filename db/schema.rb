@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_01_20_162008) do
+ActiveRecord::Schema.define(version: 2025_01_01_000000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
@@ -18,7 +18,6 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
-  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -73,8 +72,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.string "aasm_state"
     t.bigint "filesize"
     t.jsonb "attachment_data"
-    t.integer "con_state"
     t.jsonb "log_data"
+    t.integer "con_state"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -355,9 +354,9 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.text "plain_text_content"
     t.jsonb "log_data"
     t.datetime "deleted_at"
+    t.text "plain_text_content"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
@@ -1066,12 +1065,12 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.string "duration"
     t.string "rxno"
     t.string "conditions"
+    t.jsonb "log_data"
     t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
-    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1090,12 +1089,12 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "log_data"
     t.integer "gas_type", default: 0
     t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
     t.float "conversion_rate"
-    t.datetime "created_at", default: "2021-10-01 00:00:00", null: false
-    t.datetime "updated_at", default: "2021-10-01 00:00:00", null: false
-    t.jsonb "log_data"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1285,9 +1284,9 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
+    t.jsonb "log_data"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
-    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1327,8 +1326,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.jsonb "component_graph_data", default: {}
-    t.text "plain_text_description"
     t.jsonb "log_data"
+    t.text "plain_text_description"
     t.index ["deleted_at"], name: "index_screens_on_deleted_at"
   end
 
@@ -1848,16 +1847,6 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
       end
       $function$
   SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
   create_function :logidze_snapshot, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.logidze_snapshot(item jsonb, ts_column text DEFAULT NULL::text, columns text[] DEFAULT NULL::text[], include_columns boolean DEFAULT false)
        RETURNS jsonb
@@ -2232,8 +2221,8 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -2333,7 +2322,7 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
@@ -2380,44 +2369,47 @@ ActiveRecord::Schema.define(version: 2025_01_20_162008) do
   SQL
 
 
-  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_containers, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
-  SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_residues, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_screens, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_wells, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_wells, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_screens, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_residues, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_containers, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+  SQL
+  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
+      CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL
