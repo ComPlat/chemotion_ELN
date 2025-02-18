@@ -10,10 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_01_01_000000) do
+ActiveRecord::Schema.define(version: 2025_02_18_161800) do
 
   # These are extensions that must be enabled in order to support this database
-  enable_extension "btree_gist"
   enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
@@ -72,8 +71,8 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
     t.string "aasm_state"
     t.bigint "filesize"
     t.jsonb "attachment_data"
-    t.jsonb "log_data"
     t.integer "con_state"
+    t.jsonb "log_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -354,9 +353,9 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.jsonb "log_data"
     t.datetime "deleted_at"
     t.text "plain_text_content"
+    t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
@@ -1065,12 +1064,12 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
     t.string "duration"
     t.string "rxno"
     t.string "conditions"
-    t.jsonb "log_data"
     t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1089,12 +1088,12 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.jsonb "log_data"
     t.integer "gas_type", default: 0
     t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
     t.float "conversion_rate"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "log_data"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1284,9 +1283,9 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
-    t.jsonb "log_data"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1326,8 +1325,8 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.jsonb "component_graph_data", default: {}
-    t.jsonb "log_data"
     t.text "plain_text_description"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_screens_on_deleted_at"
   end
 
@@ -1847,6 +1846,157 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
       end
       $function$
   SQL
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
+       $function$
+  SQL
+  create_function :lab_record_layers_changes, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.lab_record_layers_changes()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+      BEGIN
+          BEGIN
+              INSERT INTO layer_tracks (name, label, description, properties, identifier, created_by, created_at, updated_by, updated_at, deleted_by, deleted_at)
+              VALUES (OLD.name, OLD.label, OLD.description, OLD.properties, OLD.identifier, OLD.created_by, OLD.created_at, OLD.updated_by, OLD.updated_at, OLD.deleted_by, OLD.deleted_at);
+          EXCEPTION
+              WHEN OTHERS THEN
+                  -- Ensure the main operation still completes successfully
+          END;
+          RETURN NEW;
+      END;
+      $function$
+  SQL
+  create_function :calculate_dataset_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_dataset_space(cid integer)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space bigint default 0;
+      begin
+          select sum((attachment_data->'metadata'->'size')::bigint) into used_space
+          from attachments
+          where attachable_type = 'Container' and attachable_id = cid
+              and attachable_id in (select id from containers where container_type = 'dataset');
+          return COALESCE(used_space,0);
+      end;$function$
+  SQL
+  create_function :calculate_element_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_element_space(el_id integer, el_type text)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space_attachments bigint default 0;
+          used_space_datasets bigint default 0;
+          used_space bigint default 0;
+      begin
+          select sum((attachment_data->'metadata'->'size')::bigint) into used_space_attachments
+          from attachments
+          where attachable_type = el_type and attachable_id = el_id;
+          used_space = COALESCE(used_space_attachments, 0);
+
+          select sum(calculate_dataset_space(descendant_id)) into used_space_datasets
+          from container_hierarchies where ancestor_id = (select id from containers where containable_id = el_id and containable_type = el_type);
+          used_space = used_space + COALESCE(used_space_datasets, 0);
+
+          return COALESCE(used_space, 0);
+      end;$function$
+  SQL
+  create_function :calculate_collection_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_collection_space(collectionid integer)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space bigint default 0;
+          element_types text[] := array['Sample', 'Reaction', 'Wellplate', 'Screen', 'ResearchPlan'];
+          element_table text;
+          element_space bigint;
+      begin
+          foreach element_table in array element_types loop
+              execute format('select sum(calculate_element_space(id, $1)) from collections_%s where collection_id = $2', lower(element_table))
+              into element_space
+              using element_table, collectionId;
+              used_space := used_space + coalesce(element_space, 0);
+          end loop;
+          return coalesce(used_space, 0);
+      end;
+      $function$
+  SQL
+  create_function :calculate_used_space, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.calculate_used_space(userid integer)
+       RETURNS bigint
+       LANGUAGE plpgsql
+      AS $function$
+      declare
+          used_space_samples bigint default 0;
+          used_space_reactions bigint default 0;
+          used_space_wellplates bigint default 0;
+          used_space_screens bigint default 0;
+          used_space_research_plans bigint default 0;
+          used_space_reports bigint default 0;
+          used_space_inbox bigint default 0;
+          used_space bigint default 0;
+      begin
+          select sum(calculate_element_space(s.sample_id, 'Sample')) into used_space_samples from (
+              select distinct sample_id
+              from collections_samples
+              where collection_id in (select id from collections where user_id = userId)
+          ) s;
+          used_space = COALESCE(used_space_samples,0);
+          
+          select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
+              select distinct reaction_id
+              from collections_reactions
+              where collection_id in (select id from collections where user_id = userId)
+          ) r;
+          used_space = used_space + COALESCE(used_space_reactions,0);
+
+          select sum(calculate_element_space(wp.wellplate_id, 'Wellplate')) into used_space_wellplates from (
+              select distinct wellplate_id
+              from collections_wellplates
+              where collection_id in (select id from collections where user_id = userId)
+          ) wp;
+          used_space = used_space + COALESCE(used_space_wellplates,0);
+
+          select sum(calculate_element_space(wp.screen_id, 'Screen')) into used_space_screens from (
+              select distinct screen_id
+              from collections_screens
+              where collection_id in (select id from collections where user_id = userId)
+          ) wp;
+          used_space = used_space + COALESCE(used_space_screens,0);
+
+          select sum(calculate_element_space(rp.research_plan_id, 'ResearchPlan')) into used_space_research_plans from (
+              select distinct research_plan_id
+              from collections_research_plans
+              where collection_id in (select id from collections where user_id = userId)
+          ) rp;
+          used_space = used_space + COALESCE(used_space_research_plans,0);
+
+          select sum(calculate_element_space(id, 'Report')) into used_space_reports
+          from reports
+          where author_id = userId;
+          used_space = used_space + COALESCE(used_space_reports,0);
+
+          select sum((attachment_data->'metadata'->'size')::bigint) into used_space_inbox
+          from attachments
+          where attachable_type = 'Container'
+              and attachable_id is null and created_for = userId;
+              -- attachable_id is missing (why?), if this is a bug (and was fixed) change statement to
+              -- and attachable_id = (select id from containers where containable_type='User' and containable_id=UserID);
+          used_space = used_space + COALESCE(used_space_inbox,0);
+
+          return COALESCE(used_space,0);
+      end;$function$
+  SQL
   create_function :logidze_snapshot, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.logidze_snapshot(item jsonb, ts_column text DEFAULT NULL::text, columns text[] DEFAULT NULL::text[], include_columns boolean DEFAULT false)
        RETURNS jsonb
@@ -2215,157 +2365,6 @@ ActiveRecord::Schema.define(version: 2025_01_01_000000) do
           RETURN res;
         END;
       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
-  create_function :lab_record_layers_changes, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.lab_record_layers_changes()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      BEGIN
-          BEGIN
-              INSERT INTO layer_tracks (name, label, description, properties, identifier, created_by, created_at, updated_by, updated_at, deleted_by, deleted_at)
-              VALUES (OLD.name, OLD.label, OLD.description, OLD.properties, OLD.identifier, OLD.created_by, OLD.created_at, OLD.updated_by, OLD.updated_at, OLD.deleted_by, OLD.deleted_at);
-          EXCEPTION
-              WHEN OTHERS THEN
-                  -- Ensure the main operation still completes successfully
-          END;
-          RETURN NEW;
-      END;
-      $function$
-  SQL
-  create_function :calculate_dataset_space, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.calculate_dataset_space(cid integer)
-       RETURNS bigint
-       LANGUAGE plpgsql
-      AS $function$
-      declare
-          used_space bigint default 0;
-      begin
-          select sum((attachment_data->'metadata'->'size')::bigint) into used_space
-          from attachments
-          where attachable_type = 'Container' and attachable_id = cid
-              and attachable_id in (select id from containers where container_type = 'dataset');
-          return COALESCE(used_space,0);
-      end;$function$
-  SQL
-  create_function :calculate_element_space, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.calculate_element_space(el_id integer, el_type text)
-       RETURNS bigint
-       LANGUAGE plpgsql
-      AS $function$
-      declare
-          used_space_attachments bigint default 0;
-          used_space_datasets bigint default 0;
-          used_space bigint default 0;
-      begin
-          select sum((attachment_data->'metadata'->'size')::bigint) into used_space_attachments
-          from attachments
-          where attachable_type = el_type and attachable_id = el_id;
-          used_space = COALESCE(used_space_attachments, 0);
-
-          select sum(calculate_dataset_space(descendant_id)) into used_space_datasets
-          from container_hierarchies where ancestor_id = (select id from containers where containable_id = el_id and containable_type = el_type);
-          used_space = used_space + COALESCE(used_space_datasets, 0);
-
-          return COALESCE(used_space, 0);
-      end;$function$
-  SQL
-  create_function :calculate_collection_space, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.calculate_collection_space(collectionid integer)
-       RETURNS bigint
-       LANGUAGE plpgsql
-      AS $function$
-      declare
-          used_space bigint default 0;
-          element_types text[] := array['Sample', 'Reaction', 'Wellplate', 'Screen', 'ResearchPlan'];
-          element_table text;
-          element_space bigint;
-      begin
-          foreach element_table in array element_types loop
-              execute format('select sum(calculate_element_space(id, $1)) from collections_%s where collection_id = $2', lower(element_table))
-              into element_space
-              using element_table, collectionId;
-              used_space := used_space + coalesce(element_space, 0);
-          end loop;
-          return coalesce(used_space, 0);
-      end;
-      $function$
-  SQL
-  create_function :calculate_used_space, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.calculate_used_space(userid integer)
-       RETURNS bigint
-       LANGUAGE plpgsql
-      AS $function$
-      declare
-          used_space_samples bigint default 0;
-          used_space_reactions bigint default 0;
-          used_space_wellplates bigint default 0;
-          used_space_screens bigint default 0;
-          used_space_research_plans bigint default 0;
-          used_space_reports bigint default 0;
-          used_space_inbox bigint default 0;
-          used_space bigint default 0;
-      begin
-          select sum(calculate_element_space(s.sample_id, 'Sample')) into used_space_samples from (
-              select distinct sample_id
-              from collections_samples
-              where collection_id in (select id from collections where user_id = userId)
-          ) s;
-          used_space = COALESCE(used_space_samples,0);
-          
-          select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
-              select distinct reaction_id
-              from collections_reactions
-              where collection_id in (select id from collections where user_id = userId)
-          ) r;
-          used_space = used_space + COALESCE(used_space_reactions,0);
-
-          select sum(calculate_element_space(wp.wellplate_id, 'Wellplate')) into used_space_wellplates from (
-              select distinct wellplate_id
-              from collections_wellplates
-              where collection_id in (select id from collections where user_id = userId)
-          ) wp;
-          used_space = used_space + COALESCE(used_space_wellplates,0);
-
-          select sum(calculate_element_space(wp.screen_id, 'Screen')) into used_space_screens from (
-              select distinct screen_id
-              from collections_screens
-              where collection_id in (select id from collections where user_id = userId)
-          ) wp;
-          used_space = used_space + COALESCE(used_space_screens,0);
-
-          select sum(calculate_element_space(rp.research_plan_id, 'ResearchPlan')) into used_space_research_plans from (
-              select distinct research_plan_id
-              from collections_research_plans
-              where collection_id in (select id from collections where user_id = userId)
-          ) rp;
-          used_space = used_space + COALESCE(used_space_research_plans,0);
-
-          select sum(calculate_element_space(id, 'Report')) into used_space_reports
-          from reports
-          where author_id = userId;
-          used_space = used_space + COALESCE(used_space_reports,0);
-
-          select sum((attachment_data->'metadata'->'size')::bigint) into used_space_inbox
-          from attachments
-          where attachable_type = 'Container'
-              and attachable_id is null and created_for = userId;
-              -- attachable_id is missing (why?), if this is a bug (and was fixed) change statement to
-              -- and attachable_id = (select id from containers where containable_type='User' and containable_id=UserID);
-          used_space = used_space + COALESCE(used_space_inbox,0);
-
-          return COALESCE(used_space,0);
-      end;$function$
   SQL
 
 
