@@ -5,9 +5,9 @@ import { Select } from 'src/components/common/Select';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const DevicePropertiesTab = () => {
+function DevicePropertiesTab() {
   const devicesStore = useContext(StoreContext).devices;
-  let device = devicesStore.device;
+  const { device } = devicesStore;
 
   const verificationOptions = [
     { label: 'None', value: 'none' },
@@ -15,12 +15,13 @@ const DevicePropertiesTab = () => {
     { label: 'Unverified sub-version', value: 'unverified_sub_version' },
     { label: 'Verified sub-version', value: 'verified_sub_version' },
   ];
-  const verificationStatusValue = device ? verificationOptions.filter(f => f.value == device.verification_status) : '';
+  const verificationStatusValue = device
+    ? verificationOptions.filter((f) => f.value === device.verification_status) : '';
 
   const onChange = (field, value) => {
-    let newValue = value ? value : '';
+    const newValue = value || '';
     devicesStore.changeDevice(field, newValue);
-  }
+  };
 
   return (
     <Form>
@@ -49,8 +50,8 @@ const DevicePropertiesTab = () => {
         <Form.Control
           type="text"
           value={device.email}
-          readOnly
-          disabled
+          className={device.email}
+          onChange={(event) => onChange('email', event.target.value)}
         />
       </Form.Group>
 
