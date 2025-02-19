@@ -17,6 +17,7 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
+import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import {
   Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
@@ -135,6 +136,8 @@ export default class ElementDetails extends Component {
     }
   }
 
+
+
   content(el) {
     if (el && el.klassType === 'GenericEl' && el.type != null) {
       return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
@@ -199,6 +202,8 @@ export default class ElementDetails extends Component {
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
         return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
+      case 'vessel':
+        return <VesselDetails vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
       default:
         return (
           <div style={{ textAlign: 'center' }}>

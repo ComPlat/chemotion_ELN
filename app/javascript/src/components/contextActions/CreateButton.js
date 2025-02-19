@@ -20,7 +20,8 @@ const elementList = () => {
     { name: 'screen', label: 'Screen' },
     { name: 'research_plan', label: 'Research Plan' },
     { name: 'cell_line', label: 'Cell Line' },
-    { name: 'device_description', label: 'Device Description' }
+    { name: 'device_description', label: 'Device Description' },
+    { name: 'vessel', label: 'Vessel' }
   ];
   let genericEls = [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -258,7 +259,7 @@ export default class CreateButton extends React.Component {
   createBtn(type) {
     let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description'];
+    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description', 'vessel'];
     if (!constEls.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
       const genericEl = (genericEls && genericEls.find(el => el.name == type)) || {};
       iconClass = `${genericEl.icon_name}`;
@@ -281,16 +282,21 @@ export default class CreateButton extends React.Component {
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
     const { elements, genericEls } = elementList();
+    const itemTables = [];
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 
-    const sortedGenericEls = [];
-    sortedLayout.forEach(([sl]) => {
+    sortedLayout?.forEach(([sl]) => {
       const el = elements.concat(genericEls).find((ael) => ael.name === sl);
-      if (typeof el !== 'undefined') {
-        sortedGenericEls.push(el);
-      }
+      if (el) itemTables.push(
+        <Dropdown.Item
+          id={`create-${el.name}-button`}
+          key={el.name}
+          onClick={() => this.createElementOfType(`${el.name}`)}
+        >
+          Create {el.label}
+        </Dropdown.Item>);
     });
 
     return (
@@ -303,15 +309,8 @@ export default class CreateButton extends React.Component {
         onClick={() => this.createElementOfType(type)}
       >
         {this.createWellplateModal()}
-        {sortedGenericEls.map((el) => (
-          <Dropdown.Item
-            key={el.name}
-            id={`create-${el.name}-button`}
-            onClick={() => this.createElementOfType(el.name)}
-          >
-            {`Create ${el.label}`}
-          </Dropdown.Item>
-        ))}
+        {itemTables}
+
         <Dropdown.Divider />
         <Dropdown.Item onClick={() => this.createWellplateFromSamples()}>
           Create Wellplate from Samples
