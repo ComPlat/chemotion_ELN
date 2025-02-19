@@ -1216,6 +1216,7 @@ ActiveRecord::Schema.define(version: 2025_02_18_161800) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.jsonb "log_data"
     t.index ["research_plan_id"], name: "index_research_plans_wellplates_on_research_plan_id"
     t.index ["wellplate_id"], name: "index_research_plans_wellplates_on_wellplate_id"
   end
@@ -1997,6 +1998,131 @@ ActiveRecord::Schema.define(version: 2025_02_18_161800) do
           return COALESCE(used_space,0);
       end;$function$
   SQL
+  create_function :logidze_version, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_version(v bigint, data jsonb, ts timestamp with time zone)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 2
+        DECLARE
+          buf jsonb;
+        BEGIN
+          data = data - 'log_data';
+          buf := jsonb_build_object(
+                    'ts',
+                    (extract(epoch from ts) * 1000)::bigint,
+                    'v',
+                    v,
+                    'c',
+                    data
+                    );
+          IF coalesce(current_setting('logidze.meta', true), '') <> '' THEN
+            buf := jsonb_insert(buf, '{m}', current_setting('logidze.meta')::jsonb);
+          END IF;
+          RETURN buf;
+        END;
+      $function$
+  SQL
+  create_function :logidze_filter_keys, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_filter_keys(obj jsonb, keys text[], include_columns boolean DEFAULT false)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 1
+        DECLARE
+          res jsonb;
+          key text;
+        BEGIN
+          res := '{}';
+
+          IF include_columns THEN
+            FOREACH key IN ARRAY keys
+            LOOP
+              IF obj ? key THEN
+                res = jsonb_insert(res, ARRAY[key], obj->key);
+              END IF;
+            END LOOP;
+          ELSE
+            res = obj;
+            FOREACH key IN ARRAY keys
+            LOOP
+              res = res - key;
+            END LOOP;
+          END IF;
+
+          RETURN res;
+        END;
+      $function$
+  SQL
+  create_function :logidze_compact_history, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_compact_history(log_data jsonb, cutoff integer DEFAULT 1)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 1
+        DECLARE
+          merged jsonb;
+        BEGIN
+          LOOP
+            merged := jsonb_build_object(
+              'ts',
+              log_data#>'{h,1,ts}',
+              'v',
+              log_data#>'{h,1,v}',
+              'c',
+              (log_data#>'{h,0,c}') || (log_data#>'{h,1,c}')
+            );
+
+            IF (log_data#>'{h,1}' ? 'm') THEN
+              merged := jsonb_set(merged, ARRAY['m'], log_data#>'{h,1,m}');
+            END IF;
+
+            log_data := jsonb_set(
+              log_data,
+              '{h}',
+              jsonb_set(
+                log_data->'h',
+                '{1}',
+                merged
+              ) - 0
+            );
+
+            cutoff := cutoff - 1;
+
+            EXIT WHEN cutoff <= 0;
+          END LOOP;
+
+          return log_data;
+        END;
+      $function$
+  SQL
+  create_function :logidze_capture_exception, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_capture_exception(error_data jsonb)
+       RETURNS boolean
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 1
+      BEGIN
+        -- Feel free to change this function to change Logidze behavior on exception.
+        --
+        -- Return `false` to raise exception or `true` to commit record changes.
+        --
+        -- `error_data` contains:
+        --   - returned_sqlstate
+        --   - message_text
+        --   - pg_exception_detail
+        --   - pg_exception_hint
+        --   - pg_exception_context
+        --   - schema_name
+        --   - table_name
+        -- Learn more about available keys:
+        -- https://www.postgresql.org/docs/9.6/plpgsql-control-structures.html#PLPGSQL-EXCEPTION-DIAGNOSTICS-VALUES
+        --
+
+        return false;
+      END;
+      $function$
+  SQL
   create_function :logidze_snapshot, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.logidze_snapshot(item jsonb, ts_column text DEFAULT NULL::text, columns text[] DEFAULT NULL::text[], include_columns boolean DEFAULT false)
        RETURNS jsonb
@@ -2241,129 +2367,22 @@ ActiveRecord::Schema.define(version: 2025_02_18_161800) do
         END;
       $function$
   SQL
-  create_function :logidze_version, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.logidze_version(v bigint, data jsonb, ts timestamp with time zone)
-       RETURNS jsonb
+  create_function :create_logidze_trigger, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.create_logidze_trigger(table_name text, trigger_name text, timestamp_column text)
+       RETURNS void
        LANGUAGE plpgsql
       AS $function$
-        -- version: 2
-        DECLARE
-          buf jsonb;
-        BEGIN
-          data = data - 'log_data';
-          buf := jsonb_build_object(
-                    'ts',
-                    (extract(epoch from ts) * 1000)::bigint,
-                    'v',
-                    v,
-                    'c',
-                    data
-                    );
-          IF coalesce(current_setting('logidze.meta', true), '') <> '' THEN
-            buf := jsonb_insert(buf, '{m}', current_setting('logidze.meta')::jsonb);
-          END IF;
-          RETURN buf;
-        END;
-      $function$
-  SQL
-  create_function :logidze_compact_history, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.logidze_compact_history(log_data jsonb, cutoff integer DEFAULT 1)
-       RETURNS jsonb
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 1
-        DECLARE
-          merged jsonb;
-        BEGIN
-          LOOP
-            merged := jsonb_build_object(
-              'ts',
-              log_data#>'{h,1,ts}',
-              'v',
-              log_data#>'{h,1,v}',
-              'c',
-              (log_data#>'{h,0,c}') || (log_data#>'{h,1,c}')
-            );
-
-            IF (log_data#>'{h,1}' ? 'm') THEN
-              merged := jsonb_set(merged, ARRAY['m'], log_data#>'{h,1,m}');
-            END IF;
-
-            log_data := jsonb_set(
-              log_data,
-              '{h}',
-              jsonb_set(
-                log_data->'h',
-                '{1}',
-                merged
-              ) - 0
-            );
-
-            cutoff := cutoff - 1;
-
-            EXIT WHEN cutoff <= 0;
-          END LOOP;
-
-          return log_data;
-        END;
-      $function$
-  SQL
-  create_function :logidze_capture_exception, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.logidze_capture_exception(error_data jsonb)
-       RETURNS boolean
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 1
       BEGIN
-        -- Feel free to change this function to change Logidze behavior on exception.
-        --
-        -- Return `false` to raise exception or `true` to commit record changes.
-        --
-        -- `error_data` contains:
-        --   - returned_sqlstate
-        --   - message_text
-        --   - pg_exception_detail
-        --   - pg_exception_hint
-        --   - pg_exception_context
-        --   - schema_name
-        --   - table_name
-        -- Learn more about available keys:
-        -- https://www.postgresql.org/docs/9.6/plpgsql-control-structures.html#PLPGSQL-EXCEPTION-DIAGNOSTICS-VALUES
-        --
-
-        return false;
+          -- CREATE TRIGGER logidze_on_{table_name}
+          -- Parameters: history_size_limit (integer), timestamp_column (text), filtered_columns (text[]),
+          -- include_columns (boolean), debounce_time_ms (integer)
+          EXECUTE format( '
+              CREATE TRIGGER %I
+              BEFORE UPDATE OR INSERT ON %I
+              FOR EACH ROW
+              WHEN (coalesce(current_setting(''logidze.disabled'', true), '''') <> ''on'')
+              EXECUTE PROCEDURE logidze_logger(null, %L)', trigger_name, table_name, timestamp_column);
       END;
-      $function$
-  SQL
-  create_function :logidze_filter_keys, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.logidze_filter_keys(obj jsonb, keys text[], include_columns boolean DEFAULT false)
-       RETURNS jsonb
-       LANGUAGE plpgsql
-      AS $function$
-        -- version: 1
-        DECLARE
-          res jsonb;
-          key text;
-        BEGIN
-          res := '{}';
-
-          IF include_columns THEN
-            FOREACH key IN ARRAY keys
-            LOOP
-              IF obj ? key THEN
-                res = jsonb_insert(res, ARRAY[key], obj->key);
-              END IF;
-            END LOOP;
-          ELSE
-            res = obj;
-            FOREACH key IN ARRAY keys
-            LOOP
-              res = res - key;
-            END LOOP;
-          END IF;
-
-          RETURN res;
-        END;
       $function$
   SQL
 
@@ -2406,6 +2425,9 @@ ActiveRecord::Schema.define(version: 2025_02_18_161800) do
   SQL
   create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()

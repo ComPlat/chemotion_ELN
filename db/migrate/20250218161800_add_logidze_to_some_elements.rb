@@ -8,6 +8,7 @@ class AddLogidzeToSomeElements < ActiveRecord::Migration[6.1]
     Reaction
     ReactionsSample
     ResearchPlan
+    ResearchPlansWellplate
     ResearchPlanMetadata
     Screen
     Well
@@ -18,6 +19,7 @@ class AddLogidzeToSomeElements < ActiveRecord::Migration[6.1]
 
   # AR models might not be fully loaded and table_name is not necessarily available
   # TABLES = MODELS.map(&:constantize).map(&:table_name).map(&:to_sym).freeze
+
   TABLES = %i[
     samples
     residues
@@ -25,6 +27,7 @@ class AddLogidzeToSomeElements < ActiveRecord::Migration[6.1]
     reactions
     reactions_samples
     research_plans
+    research_plans_wellplates
     research_plan_metadata
     screens
     wells
@@ -39,20 +42,18 @@ class AddLogidzeToSomeElements < ActiveRecord::Migration[6.1]
 
       reversible do |dir|
         dir.up do
-          create_trigger "logidze_on_#{table}", on: table
-        end
+          execute <<~SQL.squish
+            SELECT create_logidze_trigger('#{table}', 'logidze_on_#{table}', 'updated_at');
+          SQL
 
-        dir.down do
-          execute "DROP TRIGGER IF EXISTS logidze_on_#{table} on #{table};"
-        end
-      end
-
-      reversible do |dir|
-        dir.up do
           execute <<~SQL.squish
             UPDATE #{table} as t
             SET log_data = logidze_snapshot(to_jsonb(t), 'updated_at');
           SQL
+        end
+
+        dir.down do
+          execute "DROP TRIGGER IF EXISTS logidze_on_#{table} on #{table};"
         end
       end
     end
