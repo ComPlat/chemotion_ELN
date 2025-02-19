@@ -4,7 +4,7 @@
 --   table_name: The name of the table to create the trigger for.
 --   trigger_name: The name of the trigger to create.
 --   timestamp_column: The name of the column to use as the timestamp for the history.
-CREATE OR REPLACE FUNCTION create_logidze_trigger (table_name text, trigger_name text, timestamp_column text)
+CREATE OR REPLACE FUNCTION logidze_create_trigger_on_table (table_name text, trigger_name text, timestamp_column text)
     RETURNS VOID
     AS $$
 BEGIN

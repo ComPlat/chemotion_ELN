@@ -43,7 +43,7 @@ class AddLogidzeToSomeElements < ActiveRecord::Migration[6.1]
       reversible do |dir|
         dir.up do
           execute <<~SQL.squish
-            SELECT create_logidze_trigger('#{table}', 'logidze_on_#{table}', 'updated_at');
+            SELECT logidze_create_trigger_on_table('#{table}', 'logidze_on_#{table}', 'updated_at');
           SQL
 
           execute <<~SQL.squish

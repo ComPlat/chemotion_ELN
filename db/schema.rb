@@ -2367,8 +2367,8 @@ ActiveRecord::Schema.define(version: 2025_02_18_161800) do
         END;
       $function$
   SQL
-  create_function :create_logidze_trigger, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.create_logidze_trigger(table_name text, trigger_name text, timestamp_column text)
+  create_function :logidze_create_trigger_on_table, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_create_trigger_on_table(table_name text, trigger_name text, timestamp_column text)
        RETURNS void
        LANGUAGE plpgsql
       AS $function$
