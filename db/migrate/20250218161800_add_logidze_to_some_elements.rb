@@ -1,23 +1,40 @@
 # frozen_string_literal: true
 
 class AddLogidzeToSomeElements < ActiveRecord::Migration[6.1]
-  MODELS = [
-    Sample,
-    Residue,
-    ElementalComposition,
-    ReactionsSample,
-    Reaction,
-    ResearchPlan,
-    ResearchPlanMetadata,
-    Screen,
-    Well,
-    Wellplate,
-    Attachment,
-    Container,
+  MODELS = %w[
+    Sample
+    Residue
+    ElementalComposition
+    Reaction
+    ReactionsSample
+    ResearchPlan
+    ResearchPlanMetadata
+    Screen
+    Well
+    Wellplate
+    Attachment
+    Container
+  ].freeze
+
+  # AR models might not be fully loaded and table_name is not necessarily available
+  # TABLES = MODELS.map(&:constantize).map(&:table_name).map(&:to_sym).freeze
+  TABLES = %i[
+    samples
+    residues
+    elemental_compositions
+    reactions
+    reactions_samples
+    research_plans
+    research_plan_metadata
+    screens
+    wells
+    wellplates
+    attachments
+    containers
   ].freeze
 
   def change
-    MODELS.map(&:table_name).map(&:to_sym).each do |table|
+    TABLES.each do |table|
       add_column table, :log_data, :jsonb
 
       reversible do |dir|
