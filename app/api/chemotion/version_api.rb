@@ -8,6 +8,14 @@ module Chemotion
     helpers ParamsHelpers
 
     namespace :versions do
+      after_validation do
+        resource = namespace.split('/')[2]
+        if resource != 'revert' && !ElementPolicy.new(current_user,
+                                                      resource.classify.constantize.find(params[:id])).read?
+
+          error!('401 Unauthorized', 401)
+        end
+      end
       resource :samples do
         desc 'Return versions of the given sample'
 

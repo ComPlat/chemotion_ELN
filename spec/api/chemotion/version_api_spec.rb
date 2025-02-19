@@ -5,6 +5,10 @@ require 'rails_helper'
 describe Chemotion::VersionAPI do
   include_context 'api request authorization context'
 
+  before do
+    allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
+  end
+
   describe 'GET /api/v1/versions/samples/:id' do
     let(:sample) { create(:sample) }
 
