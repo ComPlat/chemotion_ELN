@@ -4,9 +4,11 @@ require 'rails_helper'
 
 describe Chemotion::VersionAPI do
   include_context 'api request authorization context'
+  let(:my_instance) { instance_double(ElementPolicy) }
 
   before do
-    allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
+    allow(ElementPolicy).to receive(:new).and_return(my_instance)
+    allow(my_instance).to receive_messages(read?: true, update?: true)
   end
 
   describe 'GET /api/v1/versions/samples/:id' do
