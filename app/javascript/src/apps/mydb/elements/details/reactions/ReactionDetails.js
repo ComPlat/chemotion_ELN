@@ -2,12 +2,13 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
+import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
-import { findIndex } from 'lodash';
+import { findIndex, isEmpty } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
@@ -53,6 +54,32 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+
+const handleProductClick = (product) => {
+  const uri = Aviator.getCurrentURI();
+  const uriArray = uri.split(/\//);
+  Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
+  sampleShowOrNew({ params: { sampleID: product.id } });
+};
+
+const productLink = (product) => (
+  <span>
+    Analysis: &nbsp;
+    <span
+      aria-hidden="true"
+      className="pseudo-link"
+      onClick={() => handleProductClick(product)}
+      style={{ cursor: 'pointer' }}
+      title="Open sample window"
+    >
+      <i className="icon-sample" />
+      &nbsp;
+      {product.title()}
+    </span>
+  </span>
+);
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -60,7 +87,7 @@ export default class ReactionDetails extends Component {
 
     const { reaction } = props;
     this.state = {
-      reaction: reaction,
+      reaction,
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
@@ -116,28 +143,18 @@ export default class ReactionDetails extends Component {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
     } = this.state;
     return (
-      reactionFromNextProps.id !== reactionFromCurrentState.id ||
-      reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at ||
-      reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file ||
-      !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample ||
-      nextActiveTab !== activeTab || nextVisible !== visible ||
-      nextActiveAnalysisTab !== activeAnalysisTab
+      reactionFromNextProps.id !== reactionFromCurrentState.id
+      || reactionFromNextProps.updated_at !== reactionFromCurrentState.updated_at
+      || reactionFromNextProps.reaction_svg_file !== reactionFromCurrentState.reaction_svg_file
+      || !!reactionFromNextProps.changed || !!reactionFromNextProps.editedSample
+      || nextActiveTab !== activeTab || nextVisible !== visible
+      || nextActiveAnalysisTab !== activeAnalysisTab
       || reactionFromNextState !== reactionFromCurrentState
     );
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
-  }
-
-  onUIStoreChange(state) {
-    if (state.reaction.activeTab != this.state.activeTab ||
-      state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
-      this.setState({
-        activeTab: state.reaction.activeTab,
-        activeAnalysisTab: state.reaction.activeAnalysisTab
-      });
-    }
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
   handleSubmit(closeView = false) {
@@ -153,11 +170,6 @@ export default class ReactionDetails extends Component {
     if (reaction.is_new || closeView) {
       DetailActions.close(reaction, true);
     }
-  }
-
-  reactionIsValid() {
-    const { reaction } = this.state;
-    return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
   handleReactionChange(reaction, options = {}) {
@@ -191,42 +203,66 @@ export default class ReactionDetails extends Component {
     this.handleReactionChange(newReaction, options);
   }
 
-  handleProductClick(product) {
-    const uri = Aviator.getCurrentURI();
-    const uriArray = uri.split(/\//);
-    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
-    sampleShowOrNew({ params: { sampleID: product.id } });
-  }
-
   handleProductChange(product, cb) {
-    let { reaction } = this.state
+    const { reaction } = this.state;
 
-    reaction.updateMaterial(product)
-    reaction.changed = true
+    reaction.updateMaterial(product);
+    reaction.changed = true;
 
-    this.setState({ reaction }, cb)
+    this.setState({ reaction }, cb);
   }
 
-  productLink(product) {
-    return (
-      <span>
-        Analysis:
-        <span className="pseudo-link"
-          onClick={() => this.handleProductClick(product)}
-          role="button"
-          title="Open sample window">
-          <i className="icon-sample" />{product.title()}
-        </span>
-      </span>
-    )
+  handleSelect = (key) => {
+    UIActions.selectTab({ tabKey: key, type: 'reaction' });
+    this.setState({
+      activeTab: key
+    });
+  };
+
+  handleSelectActiveAnalysisTab = (key) => {
+    UIActions.selectActiveAnalysisTab(key);
+    this.setState({
+      activeAnalysisTab: key
+    });
+  };
+
+  handleSegmentsChange(se) {
+    const { reaction } = this.state;
+    const { segments } = reaction;
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
+    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    reaction.segments = segments;
+    reaction.changed = true;
+    this.setState({ reaction });
+  }
+
+  onUIStoreChange(state) {
+    const { activeTab } = this.state;
+    const { activeAnalysisTab } = this.state;
+    if (state.reaction.activeTab !== activeTab
+      || state.reaction.activeAnalysisTab !== activeAnalysisTab) {
+      this.setState({
+        activeTab: state.reaction.activeTab,
+        activeAnalysisTab: state.reaction.activeAnalysisTab
+      });
+    }
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  reactionIsValid() {
+    const { reaction } = this.state;
+    return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
   productData(reaction) {
-    const { products } = this.state.reaction;
+    const { products } = reaction;
     const { activeAnalysisTab } = this.state;
 
     const tabs = products.map((product, key) => {
-      const title = this.productLink(product);
+      const title = productLink(product);
       const setState = () => this.handleProductChange(product);
       const handleSampleChanged = (_, cb) => this.handleProductChange(product, cb);
 
@@ -313,8 +349,8 @@ export default class ReactionDetails extends Component {
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
-    const rsPlanLabel = !(reaction.isNew || _.isEmpty(reaction.research_plans)) && (
-      <ElementResearchPlanLabels plans={reaction.research_plans} placement="right" />
+    const rsPlanLabel = (reaction.isNew || isEmpty(reaction.research_plans)) ? null : (
+      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
     );
 
     return (
@@ -336,8 +372,7 @@ export default class ReactionDetails extends Component {
           <ButtonToolbar className="gap-1 justify-content-end">
             <PrintCodeButton element={reaction} />
             {!reaction.isNew
-              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />
-            }
+              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
             <OverlayTrigger
               placement="bottom"
               overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
@@ -410,46 +445,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  handleSelect(key) {
-    UIActions.selectTab({ tabKey: key, type: 'reaction' });
-    this.setState({
-      activeTab: key
-    });
-  }
-
-  handleSelectActiveAnalysisTab(key) {
-    UIActions.selectActiveAnalysisTab(key);
-    this.setState({
-      activeAnalysisTab: key
-    });
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
-  reactionIsValid() {
-    const { reaction } = this.state;
-    return reaction.hasMaterials() && reaction.SMGroupValid();
-  }
-
-  productLink(product) {
-    return (
-      <span>
-        Analysis:
-        <span
-          className="pseudo-link"
-          onClick={() => this.handleProductClick(product)}
-          role="button"
-          title="Open sample window"
-        >
-          <i className="icon-sample me-1 ms-1" />
-          {product.title()}
-        </span>
-      </span>
-    );
-  }
-
   updateReactionSvg() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
@@ -473,16 +468,6 @@ export default class ReactionDetails extends Component {
         reaction.reaction_svg_file = result.reaction_svg;
         this.setState(reaction);
       });
-  }
-
-  handleSegmentsChange(se) {
-    const { reaction } = this.state;
-    const { segments } = reaction;
-    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
-    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
-    reaction.segments = segments;
-    reaction.changed = true;
-    this.setState({ reaction });
   }
 
   handleGaseousChange() {
@@ -538,7 +523,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsScheme
             reaction={reaction}
-            onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+            onReactionChange={(r, options) => this.handleReactionChange(r, options)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
           />
         </Tab>
@@ -600,7 +585,22 @@ export default class ReactionDetails extends Component {
             isActive={activeTab === REACTION_VARIATIONS_TAB_KEY}
           />
         </Tab>
-      )
+      ),
+      versions: (
+        <Tab
+          eventKey="versioning"
+          title="Versions"
+          key={`Versions_Reaction_${reaction.id.toString()}`}
+        >
+          <VersionsTable
+            type="reactions"
+            id={reaction.id}
+            element={reaction}
+            parent={this}
+            isEdited={reaction.changed}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -618,10 +618,10 @@ export default class ReactionDetails extends Component {
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
 
-    const currentTab = (activeTab !== 0 && activeTab) || visible[0];
+    const currentActiveTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <Card className={"detail-card" + (reaction.isPendingToSave ? " detail-card--unsaved" : "")}>
+      <Card className={`detail-card${reaction.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.reactionHeader(reaction)}
         </Card.Header>
@@ -635,7 +635,13 @@ export default class ReactionDetails extends Component {
           />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
           <div className="tabs-container--with-borders">
-            <Tabs activeKey={currentTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
+            <Tabs
+              mountOnEnter
+              activeKey={currentActiveTab}
+              onSelect={this.handleSelect}
+              id="reaction-detail-tab"
+              unmountOnExit
+            >
               {tabContents}
             </Tabs>
             <CommentModal element={reaction} />

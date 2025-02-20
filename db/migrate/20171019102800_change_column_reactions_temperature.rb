@@ -2,6 +2,7 @@
 # type text (rails hash serialized) to postgres jsonb (and down)
 class ChangeColumnReactionsTemperature < ActiveRecord::Migration[4.2]
   def up
+    Reaction.reset_column_information
     Reaction.with_deleted.find_each do |r|
       tmp = r.temperature
       tmp = "---\nvalueUnit: \"°C\"\nuserText: ''\ndata: []\n" if tmp.empty?

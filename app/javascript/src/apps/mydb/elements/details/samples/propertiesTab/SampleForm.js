@@ -13,6 +13,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
+import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
@@ -106,6 +107,31 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  infoMessage = () => (
+    <Tooltip id="assignButton">
+      Information mirrored to the reaction table describing the content of pure
+      compound or amount of pure compound in a given solution
+    </Tooltip>
+  );
+
+  // Input components of sample details should be disabled if detail level
+  // does not allow to read their content
+  topSecretCheckbox(sample) {
+    if (sample.can_update) {
+      return (
+        <Checkbox
+          inputRef={(ref) => { this.topSecretInput = ref; }}
+          checked={sample.is_top_secret}
+          onChange={(e) => this.handleFieldChanged('is_top_secret', e.target.checked)}
+        >
+          Top secret
+        </Checkbox>
+      );
+    }
+
+    return (<span />);
+  }
+
   drySolventCheckbox(sample) {
     if (sample.can_update) {
       return (
@@ -145,12 +171,12 @@ export default class SampleForm extends React.Component {
 
   addMolName(moleculeName) {
     this.setState({ isMolNameLoading: true });
-    DetailActions.updateMoleculeNames(this.props.sample, moleculeName);
+    DetailActions.updateMoleculeNames(this.props.sample, moleculeName.label);
   }
 
   updateMolName(e) {
     const { sample } = this.props;
-    sample.molecule_name = e.value;
+    sample.molecule_name = e;
     this.props.handleSampleChanged(sample);
   }
 
@@ -255,9 +281,9 @@ export default class SampleForm extends React.Component {
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
             isLoading={this.state.isMolNameLoading}
-            value={moleculeNames.find(({ value }) => value == mno?.value)}
-            onCreateOption={this.addMolName}
-            className="flex-grow-1"
+            value={!newMolecule && mno && mno.value}
+            onNewOptionClick={this.addMolName}
+            clearable={false}
           />
           {this.structureEditorButton(!sample.can_update)}
         </InputGroup>
@@ -504,6 +530,22 @@ export default class SampleForm extends React.Component {
         unit={unit}
         numericValue={value}
         label={label}
+      />
+    );
+  }
+
+  sampleSolvent(sample) {
+    return (
+      <Select
+        ref={(input) => { this.solventInput = input; }}
+        id="solventInput"
+        name="solvents"
+        style={{ marginBottom: '15px' }}
+        multi={false}
+        options={solventOptions}
+        value={sample.solvent}
+        disabled={!sample.can_update}
+        onChange={(e) => this.handleFieldChanged('solvent', e)}
       />
     );
   }
@@ -850,7 +892,7 @@ export default class SampleForm extends React.Component {
 }
 
 SampleForm.propTypes = {
-  sample: PropTypes.object,
+  sample: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
   showStructureEditor: PropTypes.func.isRequired,
   customizableField: PropTypes.func.isRequired,

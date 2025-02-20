@@ -71,6 +71,8 @@ import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElemen
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const MWPrecision = 6;
 
@@ -104,6 +106,8 @@ const rangeCheck = (field, sample) => {
 };
 
 export default class SampleDetails extends React.Component {
+  // eslint-disable-next-line react/static-property-placement
+
   constructor(props) {
     super(props);
 
@@ -482,7 +486,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInventoryTab(ind) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
     const { saveInventoryAction } = this.state;
 
     return (
@@ -544,7 +548,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleImportReadoutTab(ind) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
     return (
       <Tab
         eventKey={ind}
@@ -570,7 +574,7 @@ export default class SampleDetails extends React.Component {
   }
 
   measurementsTab(index) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
 
     return (
       <Tab
@@ -579,6 +583,28 @@ export default class SampleDetails extends React.Component {
         key={`Measurements${sample.id.toString()}`}
       >
         <MeasurementsTab sample={sample} />
+      </Tab>
+    );
+  }
+
+  versioningTable(index) {
+    const { sample } = this.state;
+
+    return (
+      <Tab
+        eventKey={index}
+        title="Versions"
+        key={`Versions_Sample_${sample.id.toString()}`}
+      >
+        <ListGroupItem>
+          <VersionsTable
+            type="samples"
+            id={sample.id}
+            element={sample}
+            parent={this}
+            isEdited={sample.isEdited}
+          />
+        </ListGroupItem>
       </Tab>
     );
   }
@@ -733,7 +759,7 @@ export default class SampleDetails extends React.Component {
   }
 
   samplePropertiesTab(ind) {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
 
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
@@ -814,7 +840,7 @@ export default class SampleDetails extends React.Component {
             onChange={(e) => this.updateCas(e)}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
-            value={options.find(({value}) => value === cas)}
+            value={options.find(({ value }) => value === cas)}
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"
@@ -877,7 +903,8 @@ export default class SampleDetails extends React.Component {
     const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
-    const saveAndClose = (saveBtnDisplay &&
+    const saveAndClose = (saveBtnDisplay
+      && (
       <OverlayTrigger
         placement="bottom"
         overlay={(
@@ -888,8 +915,10 @@ export default class SampleDetails extends React.Component {
       >
         {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
       </OverlayTrigger>
+      )
     );
-    const save = (saveBtnDisplay &&
+    const save = (saveBtnDisplay
+      && (
       <OverlayTrigger
         placement="bottom"
         overlay={(
@@ -900,6 +929,7 @@ export default class SampleDetails extends React.Component {
       >
         {this.saveButton(sampleUpdateCondition, floppyTag)}
       </OverlayTrigger>
+      )
     );
 
     const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
@@ -1294,7 +1324,7 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
-    const sample = this.state.sample || {};
+    const { sample } = this.state;
     const { visible, isChemicalEdited } = this.state;
     const tabContentsMap = {
       properties: this.samplePropertiesTab('properties'),
@@ -1302,7 +1332,8 @@ export default class SampleDetails extends React.Component {
       references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
-      measurements: this.measurementsTab('measurements')
+      measurements: this.measurementsTab('measurements'),
+      versioning: this.versioningTable('versioning')
     };
 
     if (this.enableComputedProps) {
@@ -1378,7 +1409,7 @@ export default class SampleDetails extends React.Component {
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
 
     return (
-      <Card className={"detail-card" + (pendingToSave ? " detail-card--unsaved" : "")}>
+      <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.sampleHeader(sample)}
           {messageBlock}
@@ -1394,7 +1425,7 @@ export default class SampleDetails extends React.Component {
           />
           {this.state.sfn && <ScifinderSearch el={sample} />}
           <div className="tabs-container--with-borders">
-            <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+            <Tabs mountOnEnter unmountOnExit activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {tabContents}
             </Tabs>
           </div>
