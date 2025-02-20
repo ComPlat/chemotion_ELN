@@ -128,12 +128,15 @@ function DeviceModal() {
     const errorMessages = handleValidationState();
     devicesStore.changeErrorMessage(errorMessages.join('\n'));
     device = devicesStore.device;
-
+    const passwordChange = devicesStore.change_novnc_password;
     if (errorMessages.length <= 1) {
       removeErrors();
-
       if (devicesStore.create_or_update === 'update') {
-        devicesStore.updateDevice(prepareDeviceParams());
+        const data = prepareDeviceParams();
+        if (!passwordChange) {
+          data.novnc_password = data.novnc_password_decrypted;
+        }
+        devicesStore.updateDevice(data);
       } else {
         devicesStore.createDevice(prepareDeviceParams());
       }
