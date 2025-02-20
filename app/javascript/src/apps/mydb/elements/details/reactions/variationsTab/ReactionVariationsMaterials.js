@@ -243,20 +243,6 @@ function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
   return updatedVariations;
 }
 
-function addMissingMaterialsToVariations(variations, currentMaterials, gasMode) {
-  const updatedVariations = cloneDeep(variations);
-  updatedVariations.forEach((row) => {
-    Object.keys(materialTypes).forEach((materialType) => {
-      currentMaterials[materialType].forEach((material) => {
-        if (!(material.id in row[materialType])) {
-          row[materialType][material.id] = getMaterialData(material, materialType, gasMode);
-        }
-      });
-    });
-  });
-  return updatedVariations;
-}
-
 function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
@@ -285,36 +271,6 @@ function updateColumnDefinitionsMaterialTypes(columnDefinitions, currentMaterial
       'children',
       updatedMaterials
     );
-  });
-
-  return updatedColumnDefinitions;
-}
-
-function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, headerComponent, gasMode) {
-  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
-
-  Object.entries(currentMaterials).forEach(([materialType, materials]) => {
-    const materialIDs = materials.map((material) => material.id.toString());
-    const materialColumnGroup = updatedColumnDefinitions.find((columnGroup) => columnGroup.groupId === materialType);
-
-    // Remove obsolete materials.
-    materialColumnGroup.children = materialColumnGroup.children.filter((child) => {
-      const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
-      return materialIDs.includes(childID);
-    });
-    // Add missing materials.
-    materials.forEach((material) => {
-      if (!materialColumnGroup.children.some((child) => child.field === `${materialType}.${material.id}`)) {
-        materialColumnGroup.children.push(
-          getMaterialColumnGroupChild(
-            material,
-            materialType,
-            headerComponent,
-            gasMode
-          )
-        );
-      }
-    });
   });
 
   return updatedColumnDefinitions;
@@ -375,13 +331,11 @@ export {
   getReactionMaterialsIDs,
   getReactionMaterialsGasTypes,
   getMaterialData,
-  updateColumnDefinitionsMaterials,
   updateColumnDefinitionsMaterialTypes,
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
   updateVariationsRowOnFeedstockMaterialChange,
   removeObsoleteMaterialsFromVariations,
-  addMissingMaterialsToVariations,
   updateVariationsGasTypes,
   getReferenceMaterial,
   getCatalystMaterial,

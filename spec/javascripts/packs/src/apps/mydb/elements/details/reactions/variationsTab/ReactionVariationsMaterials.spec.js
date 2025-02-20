@@ -1,8 +1,7 @@
 import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
-  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
-  updateColumnDefinitionsMaterials, updateVariationsRowOnCatalystMaterialChange,
+  removeObsoleteMaterialsFromVariations, updateVariationsRowOnCatalystMaterialChange,
   getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes,
   getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
@@ -30,23 +29,6 @@ describe('ReactionVariationsMaterials', () => {
     updatedVariations
       .forEach((variation) => {
         expect(Object.keys(variation.products)).toEqual(updatedProductIDs);
-      });
-  });
-  it('adds missing materials', async () => {
-    const reaction = await setUpReaction();
-    const material = await setUpMaterial();
-    const startingMaterialIDs = reaction.starting_materials.map((startingMaterial) => startingMaterial.id);
-    reaction.variations.forEach((variation) => {
-      expect(Object.keys(variation.startingMaterials)).toEqual(startingMaterialIDs);
-    });
-
-    reaction.starting_materials.push(material);
-    const updatedStartingMaterialIDs = reaction.starting_materials.map((startingMaterial) => startingMaterial.id);
-    const currentMaterials = getReactionMaterials(reaction);
-    const updatedVariations = addMissingMaterialsToVariations(reaction.variations, currentMaterials, false);
-    updatedVariations
-      .forEach((variation) => {
-        expect(Object.keys(variation.startingMaterials)).toEqual(updatedStartingMaterialIDs);
       });
   });
   it('updates yield when product mass changes', async () => {
@@ -87,25 +69,6 @@ describe('ReactionVariationsMaterials', () => {
       oldValue: reactant,
       newValue: Number(-42).toString()
     }).mass.value).toBe(0);
-  });
-  it('removes obsolete materials from column definitions', async () => {
-    const reaction = await setUpReaction();
-    const reactionMaterials = getReactionMaterials(reaction);
-    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
-      groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
-    }));
-
-    const startingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
-    expect(getColumnDefinitionsMaterialIDs(columnDefinitions, 'startingMaterials')).toEqual(startingMaterialIDs);
-
-    reactionMaterials.startingMaterials.pop();
-    const updatedStartingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, reactionMaterials, null, false);
-    expect(getColumnDefinitionsMaterialIDs(
-      updatedColumnDefinitions,
-      'startingMaterials'
-    )).toEqual(updatedStartingMaterialIDs);
   });
   it('retrieves reaction material IDs', async () => {
     const reaction = await setUpReaction();

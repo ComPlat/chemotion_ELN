@@ -1,6 +1,5 @@
-import { MenuHeader } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  updateColumnDefinitionsMaterials, updateColumnDefinitionsMaterialTypes
+  updateColumnDefinitionsMaterialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   getCellDataType,
@@ -9,14 +8,6 @@ import {
 
 function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
-    case 'update_material_set': {
-      return updateColumnDefinitionsMaterials(
-        columnDefinitions,
-        action.reactionMaterials,
-        MenuHeader,
-        action.gasMode
-      );
-    }
     case 'update_entry_defs': {
       let updatedColumnDefinitions = updateColumnDefinitions(
         columnDefinitions,
