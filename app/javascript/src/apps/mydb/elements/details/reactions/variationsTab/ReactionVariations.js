@@ -406,7 +406,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           headerHeight={70}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
-          stopEditingWhenCellsLoseFocus
           defaultColDef={defaultColumnDefinitions}
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}
