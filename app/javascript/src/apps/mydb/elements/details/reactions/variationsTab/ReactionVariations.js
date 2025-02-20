@@ -19,7 +19,7 @@ import {
 import {
   getMaterialColumnGroupChild, updateVariationsGasTypes,
   getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
+  removeObsoleteMaterialsFromVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -188,21 +188,9 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       getReactionMaterialsIDs(updatedReactionMaterials)
     )
   ) {
-    let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
-    updatedReactionVariations = addMissingMaterialsToVariations(
-      updatedReactionVariations,
-      updatedReactionMaterials,
-      updatedGasMode
-    );
+    const updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
 
     setReactionVariations(updatedReactionVariations);
-    setColumnDefinitions(
-      {
-        type: 'update_material_set',
-        gasMode: updatedGasMode,
-        reactionMaterials: updatedReactionMaterials
-      }
-    );
     setReactionMaterials(updatedReactionMaterials);
   }
 
