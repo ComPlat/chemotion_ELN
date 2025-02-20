@@ -1,5 +1,5 @@
 import {
-  updateColumnDefinitionsMaterialTypes
+  updateColumnDefinitionsMaterialTypes, removeObsoleteMaterialsFromColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   getCellDataType,
@@ -8,6 +8,12 @@ import {
 
 function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
+    case 'remove_obsolete_materials': {
+      return removeObsoleteMaterialsFromColumnDefinitions(
+        columnDefinitions,
+        action.reactionMaterialIDs,
+      );
+    }
     case 'update_entry_defs': {
       let updatedColumnDefinitions = updateColumnDefinitions(
         columnDefinitions,
@@ -33,6 +39,7 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
         updatedColumnDefinitions,
         action.reactionMaterials,
+        action.selectedReactionMaterialIDs,
         action.gasMode
       );
 
@@ -42,6 +49,7 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       return updateColumnDefinitionsMaterialTypes(
         columnDefinitions,
         action.reactionMaterials,
+        action.selectedReactionMaterialIDs,
         action.gasMode
       );
     }

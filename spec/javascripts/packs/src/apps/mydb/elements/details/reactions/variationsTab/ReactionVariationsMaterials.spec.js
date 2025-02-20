@@ -1,21 +1,21 @@
 import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
-  removeObsoleteMaterialsFromVariations, updateVariationsRowOnCatalystMaterialChange,
-  getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes,
-  getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
+  removeObsoleteMaterialsFromVariations, removeObsoleteMaterialsFromColumnDefinitions,
+  updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
+  updateColumnDefinitionsMaterialTypes, getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  setUpMaterial, setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
+  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
 } from 'helper/reactionVariationsHelpers';
 import { materialTypes } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
 describe('ReactionVariationsMaterials', () => {
-  it('removes obsolete materials', async () => {
+  it('removes obsolete materials from variations', async () => {
     const reaction = await setUpReaction();
     const productIDs = reaction.products.map((product) => product.id);
     reaction.variations.forEach((variation) => {
@@ -31,6 +31,29 @@ describe('ReactionVariationsMaterials', () => {
         expect(Object.keys(variation.products)).toEqual(updatedProductIDs);
       });
   });
+  it('removes obsolete materials from column definitions', async () => {
+    const reaction = await setUpReaction();
+    const reactionMaterials = getReactionMaterials(reaction);
+    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
+      groupId: materialType,
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
+    }));
+
+    const startingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
+    expect(getColumnDefinitionsMaterialIDs(columnDefinitions, 'startingMaterials')).toEqual(startingMaterialIDs);
+
+    reactionMaterials.startingMaterials.pop();
+    const updatedStartingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
+    const updatedColumnDefinitions = removeObsoleteMaterialsFromColumnDefinitions(
+      columnDefinitions,
+      getReactionMaterialsIDs(reactionMaterials)
+    );
+    expect(getColumnDefinitionsMaterialIDs(
+      updatedColumnDefinitions,
+      'startingMaterials'
+    )).toEqual(updatedStartingMaterialIDs);
+  });
+
   it('updates yield when product mass changes', async () => {
     const reaction = await setUpReaction();
     const productID = reaction.products[0].id;
@@ -74,8 +97,8 @@ describe('ReactionVariationsMaterials', () => {
     const reaction = await setUpReaction();
     const reactionMaterials = getReactionMaterials(reaction);
     const reactionMaterialsIDs = getReactionMaterialsIDs(reactionMaterials);
-    expect(Array.isArray(reactionMaterialsIDs)).toBe(true);
-    expect(new Set(reactionMaterialsIDs).size).toBe(5);
+    expect(typeof reactionMaterialsIDs).toBe('object');
+    expect(Object.values(reactionMaterialsIDs).flat().length).toEqual(5);
   });
   it('retrieves reaction material gas types', async () => {
     const reaction = await setUpGaseousReaction();
@@ -137,6 +160,7 @@ describe('ReactionVariationsMaterials', () => {
     const updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
       columnDefinitions,
       reactionMaterials,
+      getReactionMaterialsIDs(reactionMaterials),
       true
     );
 
@@ -195,7 +219,7 @@ describe('ReactionVariationsMaterials', () => {
     expect(updatedVariationsRow.products[productID].turnoverNumber.value).toBe(initialTurnoverNumber * 2);
     expect(updatedVariationsRow.products[productID].turnoverFrequency.value).toBe(initialTurnoverFrequency * 2);
   });
-  it("initializes gas product yield", async () => {
+  it('initializes gas product yield', async () => {
     const reaction = await setUpGaseousReaction();
     const productID = reaction.products[0].id;
     const variationsRow = reaction.variations[0];
