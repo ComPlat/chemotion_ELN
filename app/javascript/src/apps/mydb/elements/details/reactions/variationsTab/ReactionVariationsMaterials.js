@@ -74,8 +74,20 @@ function getReactionMaterials(reaction) {
   }, {});
 }
 
+function instantiateSelectedReactionMaterialIDs() {
+  return Object.entries(materialTypes).reduce((materialsByType, [materialType]) => {
+    materialsByType[materialType] = [];
+    return materialsByType;
+  }, {});
+}
+
 function getReactionMaterialsIDs(reactionMaterials) {
-  return Object.values(reactionMaterials).flat().map((material) => material.id);
+  return Object.fromEntries(
+    Object.entries(reactionMaterials).map(([materialType, materials]) => [
+      materialType,
+      materials.map((material) => material.id.toString())
+    ])
+  );
 }
 
 function getReactionMaterialsGasTypes(reactionMaterials) {
@@ -243,12 +255,42 @@ function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
   return updatedVariations;
 }
 
+function removeObsoleteSelectedReactionMaterialIDs(selectedReactionMaterialIDs, currentMaterials) {
+  const updatedSelectedReactionMaterialIDs = cloneDeep(selectedReactionMaterialIDs);
+
+  Object.entries(currentMaterials).forEach(([materialType, materials]) => {
+    updatedSelectedReactionMaterialIDs[materialType] = updatedSelectedReactionMaterialIDs[materialType].filter(
+      (materialID) => materials.map((material) => material.id.toString()).includes(materialID)
+    );
+  });
+
+  return updatedSelectedReactionMaterialIDs;
+}
+
+function removeObsoleteMaterialsFromColumnDefinitions(columnDefinitions, currentMaterialIDs) {
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
+
+  Object.entries(currentMaterialIDs).forEach(([materialType, materialIDs]) => {
+    const materialColumnGroup = updatedColumnDefinitions.find((columnGroup) => columnGroup.groupId === materialType);
+
+    materialColumnGroup.children = materialColumnGroup.children.filter((child) => {
+      const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
+      return materialIDs.includes(childID);
+    });
+  });
+
+  return updatedColumnDefinitions;
+}
+
 function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     Object.keys(materialTypes).forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         const currentGasType = material.gas_type ?? 'off';
+        if (!Object.prototype.hasOwnProperty.call(row[materialType], material.id)) {
+          return;
+        }
         if (currentGasType !== row[materialType][material.id].aux.gasType) {
           row[materialType][material.id] = getMaterialData(material, materialType, gasMode);
         }
@@ -258,13 +300,17 @@ function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
   return updatedVariations;
 }
 
-function updateColumnDefinitionsMaterialTypes(columnDefinitions, currentMaterials, gasMode) {
+function updateColumnDefinitionsMaterialTypes(columnDefinitions, currentMaterials, selectedMaterialIDs, gasMode) {
   let updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
   Object.entries(currentMaterials).forEach(([materialType, materials]) => {
-    const updatedMaterials = materials.map(
+    const selectedMaterials = materials.filter(
+      (material) => selectedMaterialIDs[materialType].includes(material.id.toString())
+    );
+    const updatedMaterials = selectedMaterials.map(
       (material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode)
     );
+
     updatedColumnDefinitions = updateColumnDefinitions(
       updatedColumnDefinitions,
       materialType,
@@ -336,6 +382,8 @@ export {
   updateVariationsRowOnCatalystMaterialChange,
   updateVariationsRowOnFeedstockMaterialChange,
   removeObsoleteMaterialsFromVariations,
+  removeObsoleteMaterialsFromColumnDefinitions,
+  removeObsoleteSelectedReactionMaterialIDs,
   updateVariationsGasTypes,
   getReferenceMaterial,
   getCatalystMaterial,
@@ -346,4 +394,5 @@ export {
   computePercentYield,
   computePercentYieldGas,
   cellIsEditable,
+  instantiateSelectedReactionMaterialIDs,
 };

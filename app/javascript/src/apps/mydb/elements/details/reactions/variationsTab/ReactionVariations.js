@@ -11,15 +11,15 @@ import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType, getStandardUnits, materialTypes
+  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType, getStandardUnits
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  getMaterialColumnGroupChild, updateVariationsGasTypes,
+  updateVariationsGasTypes, instantiateSelectedReactionMaterialIDs,
   getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  removeObsoleteMaterialsFromVariations
+  removeObsoleteMaterialsFromVariations, removeObsoleteSelectedReactionMaterialIDs
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -40,6 +40,9 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
+  const [selectedReactionMaterialIDs, setSelectedReactionMaterialIDs] = useState(
+    instantiateSelectedReactionMaterialIDs
+  );
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
     {
       headerName: 'Tools',
@@ -101,14 +104,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         },
       ]
     },
-  ].concat(
-    Object.entries(reactionMaterials).map(([materialType, materials]) => ({
-      headerName: materialTypes[materialType].label,
-      groupId: materialType,
-      marryChildren: true,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode))
-    }))
-  ));
+  ]);
 
   const dataTypeDefinitions = {
     property: {
@@ -180,7 +176,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   /*
   Keep set of materials up-to-date.
   Materials could have been added or removed in the "Scheme" tab.
-  These changes need to be reflected in the variations.
   */
   if (
     !isEqual(
@@ -188,10 +183,24 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       getReactionMaterialsIDs(updatedReactionMaterials)
     )
   ) {
-    const updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
+    const updatedReactionVariations = removeObsoleteMaterialsFromVariations(
+      reactionVariations,
+      updatedReactionMaterials
+    );
+    const updatedSelectedReactionMaterialIDs = removeObsoleteSelectedReactionMaterialIDs(
+      selectedReactionMaterialIDs,
+      updatedReactionMaterials
+    );
 
+    setColumnDefinitions(
+      {
+        type: 'remove_obsolete_materials',
+        reactionMaterialIDs: updatedSelectedReactionMaterialIDs
+      }
+    );
     setReactionVariations(updatedReactionVariations);
     setReactionMaterials(updatedReactionMaterials);
+    setSelectedReactionMaterialIDs(updatedSelectedReactionMaterialIDs);
   }
 
   /*
@@ -202,7 +211,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       {
         type: 'toggle_gas_mode',
         gasMode: updatedGasMode,
-        reactionMaterials: updatedReactionMaterials
+        reactionMaterials: updatedReactionMaterials,
+        selectedReactionMaterialIDs: instantiateSelectedReactionMaterialIDs
       }
     );
     setGasMode(updatedGasMode);
@@ -229,6 +239,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       {
         type: 'update_gas_type',
         gasMode: updatedGasMode,
+        selectedReactionMaterialIDs,
         reactionMaterials: updatedReactionMaterials
       }
     );
