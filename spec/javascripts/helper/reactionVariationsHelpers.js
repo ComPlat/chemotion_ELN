@@ -3,6 +3,10 @@ import SampleFactory from 'factories/SampleFactory';
 import {
   createVariationsRow,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  getReactionMaterials,
+  getReactionMaterialsIDs
+} from '../../../app/javascript/src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 async function setUpMaterial() {
   return SampleFactory.build('SampleFactory.water_100g');
@@ -12,9 +16,11 @@ async function setUpReaction() {
   reaction.starting_materials[0].reference = true;
   reaction.reactants = [await setUpMaterial()];
 
+  const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, variations));
+    variations.push(createVariationsRow(reaction, materialIDs, variations));
   }
   reaction.variations = variations;
 
@@ -38,9 +44,11 @@ async function setUpGaseousReaction() {
   reaction.products[0].amount_unit = 'mol';
   reaction.products[0].amount_value = 1;
 
+  const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, variations, true, 10));
+    variations.push(createVariationsRow(reaction, materialIDs, variations, true, 10));
   }
   reaction.variations = variations;
 
