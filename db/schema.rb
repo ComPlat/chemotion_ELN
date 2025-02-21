@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_02_18_161800) do
+ActiveRecord::Schema.define(version: 2025_02_21_105051) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -131,6 +131,7 @@ ActiveRecord::Schema.define(version: 2025_02_18_161800) do
     t.datetime "deleted_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["name", "source"], name: "index_cellline_materials_on_name_and_source", unique: true
   end
 
   create_table "cellline_samples", force: :cascade do |t|
