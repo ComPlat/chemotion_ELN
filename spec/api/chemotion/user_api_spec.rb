@@ -100,7 +100,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'returns a list of user labels' do
-        expect(parsed_json_response['labels'].length).to eq(1)
+        expect(parsed_json_response['labels'].length).to eq(2)
       end
     end
 
