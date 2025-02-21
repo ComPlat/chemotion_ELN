@@ -5129,10 +5129,10 @@ cheerio@^1.0.0-rc.3:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chem-generic-ui@2.0.0-rc15:
-  version "2.0.0-rc15"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.0.0-rc15.tgz#0cc3a4896715b6639515e1371d633e42b40062f3"
-  integrity sha512-ic/sVW6Xy7zTf3S+C/AQo0HaVtdqXJQSYPpD3NnRbWHpzHlu4L1PErx1A/cnUzQWEP6x3VxHTdrtaDdib5FHxw==
+chem-generic-ui@2.0.0-rc17:
+  version "2.0.0-rc17"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.0.0-rc17.tgz#210367008b3b80e65bb1945e31b53ff803e56b67"
+  integrity sha512-2CSAhD2ltua/BnDn3e/3jljf6eJOs6+NSnzfwI3B6EBswVbqbAoCmhvrA2C2+uRVXf2ZgwTy5iTuF8wAD0fePA==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.5.2"
     "@fortawesome/free-regular-svg-icons" "^6.5.2"
@@ -5140,7 +5140,8 @@ chem-generic-ui@2.0.0-rc15:
     "@fortawesome/react-fontawesome" "^0.2.1"
     ag-grid-community "^32.3.3"
     ag-grid-react "^32.3.3"
-    generic-ui-core "^1.5.0"
+    copy-to-clipboard "^3.3.3"
+    generic-ui-core "1.5.2"
     html-to-image "^1.11.11"
     humps "^2.0.1"
     lodash "^4.17.21"
@@ -7851,10 +7852,10 @@ gauge@^4.0.3:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
-generic-ui-core@^1.5.0:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.5.1.tgz#ab37123284b36983d8ee23e06f324acce9a74e83"
-  integrity sha512-vYRrzDwZMgcYajRu3K3mWID+3Zq3z4PVeDjeS1LrC2hekqgc88BfPolHK10nvZtsEcYqCNfHqTRHOYyZkWJRTQ==
+generic-ui-core@1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.5.2.tgz#d5b01974196808083d7d2c65f3dd84126b0cbc9c"
+  integrity sha512-zzA/I2m2Lo4POIeCBV44vmOt9lVAgd3BvNWpwjOIaXlnXlA5/a7zfnNgNwZcU62QQPxO+cRjm84hvDPCDKg76A==
   dependencies:
     chem-units "^1.2.0"
     lodash "^4.17.21"
