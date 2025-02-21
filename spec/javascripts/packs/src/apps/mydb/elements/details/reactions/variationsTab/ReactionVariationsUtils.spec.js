@@ -23,10 +23,21 @@ describe('ReactionVariationsUtils', () => {
 
     expect(Object.keys(reaction.variations[0].products).length).toBe(2);
 
-    const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+    const materials = getReactionMaterials(reaction);
+    const materialIDs = getReactionMaterialsIDs(materials);
     materialIDs.products.pop();
 
-    const row = createVariationsRow(reaction, materialIDs, reaction.variations);
+    const row = createVariationsRow(
+      {
+        materials,
+        materialIDs,
+        variations: reaction.variations,
+        durationValue: '',
+        durationUnit: 'Hour(s)',
+        temperatureValue: '',
+        temperatureUnit: '°C'
+      }
+    );
 
     expect(Object.keys(row.products).length).toBe(1);
 
