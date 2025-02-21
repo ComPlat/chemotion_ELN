@@ -6,6 +6,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
 import { loadKetcherData, mols, imagesList, latestData } from 'src/components/structureEditor/KetcherEditor';
+import { textNodeStruct } from '../components/structureEditor/KetcherEditor';
 
 // pattern's for alias identification
 const ALIAS_PATTERNS = Object.freeze({
@@ -32,7 +33,8 @@ const KET_TAGS = Object.freeze({
   molfileHeaderLinenumber: 4,
   rgLabel: 'rg-label',
   shapes: ['Bead', 'Surface'],
-  moleculeIdentifier: '> <MoleculesList>' // New tag
+  moleculeIdentifier: '> <MoleculesList>', // New tag
+  textIdentifier: "#"
 });
 
 // image exists in dom
@@ -236,7 +238,14 @@ const updateMoleculeAliases = async (container, atomList) => {
       if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
         const splits = atom.alias.split('_');
         if (parseInt(splits[2]) > imgIdx) {
-          atomList[i].alias = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
+          const newValue = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
+          const oldValue = `t_${splits[1]}_${parseInt(splits[2])}`;
+          const textNode = textNodeStruct[oldValue];
+          if (textNode) {
+            textNodeStruct[newValue] = textNode;
+            delete textNodeStruct[oldValue];
+          }
+          atomList[i].alias = newValue;
         }
       }
     }
