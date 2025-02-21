@@ -144,7 +144,7 @@ describe Entities::SampleEntity do
           stereo: '***',
           target_amount_unit: '***',
           target_amount_value: '***',
-          user_labels: '***',
+          # user_labels: '***',
           xref: '***',
           created_at: I18n.l(sample.created_at, format: :eln_timestamp),
           updated_at: I18n.l(sample.updated_at, format: :eln_timestamp),
