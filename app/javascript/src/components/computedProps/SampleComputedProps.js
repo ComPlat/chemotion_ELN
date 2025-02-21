@@ -121,7 +121,7 @@ export default class SampleComputedProps extends React.Component {
     ];
 
     return (
-      <div className="ag-theme-balham">
+      <div className="ag-theme-balham flex-grow-1">
         <AgGridReact
           onGridReady={this.onGridReady}
           suppressCellFocus
