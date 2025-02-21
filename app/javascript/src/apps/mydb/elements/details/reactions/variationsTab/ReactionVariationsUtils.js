@@ -168,10 +168,18 @@ function getSequentialId(variations) {
   return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
 }
 
-function createVariationsRow(reaction, selectedReactionMaterialIDs, variations, gasMode = false, vesselVolume = null) {
-  const reactionCopy = cloneDeep(reaction);
-  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reactionCopy.durationDisplay ?? {};
-  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reactionCopy.temperature ?? {};
+function createVariationsRow({
+  materials,
+  materialIDs,
+  variations,
+  reactionHasPolymers = false,
+  durationValue = null,
+  durationUnit = 'None',
+  temperatureValue = null,
+  temperatureUnit = 'None',
+  gasMode = false,
+  vesselVolume = null
+}) {
   const row = {
     id: getSequentialId(variations),
     properties: {
@@ -187,16 +195,16 @@ function createVariationsRow(reaction, selectedReactionMaterialIDs, variations, 
     analyses: [],
     notes: '',
   };
-  Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
-    row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
-      selectedReactionMaterialIDs[materialType].includes(v.id)
-        ? { ...a, [v.id]: getMaterialData(v, materialType, gasMode, vesselVolume) }
-        : a
+  Object.entries(materials).forEach(([materialType, materialsOfType]) => {
+    row[materialType] = materialsOfType.reduce((entry, material) => (
+      materialIDs[materialType].includes(material.id)
+        ? { ...entry, [material.id]: getMaterialData(material, materialType, gasMode, vesselVolume) }
+        : entry
     ), {});
   });
 
   // Compute dependent values that aren't supplied by initial data.
-  let updatedRow = updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);
+  let updatedRow = updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers);
   if (gasMode) {
     updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow);
     updatedRow = updateVariationsRowOnFeedstockMaterialChange(updatedRow);

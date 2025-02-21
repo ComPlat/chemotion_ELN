@@ -16,11 +16,22 @@ async function setUpReaction() {
   reaction.starting_materials[0].reference = true;
   reaction.reactants = [await setUpMaterial()];
 
-  const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+  const materials = getReactionMaterials(reaction);
+  const materialIDs = getReactionMaterialsIDs(materials);
 
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, materialIDs, variations));
+    variations.push(createVariationsRow(
+      {
+        materials,
+        materialIDs,
+        variations,
+        durationValue: '',
+        durationUnit: 'Hour(s)',
+        temperatureValue: '',
+        temperatureUnit: '°C',
+      }
+    ));
   }
   reaction.variations = variations;
 
@@ -44,11 +55,20 @@ async function setUpGaseousReaction() {
   reaction.products[0].amount_unit = 'mol';
   reaction.products[0].amount_value = 1;
 
-  const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+  const materials = getReactionMaterials(reaction);
+  const materialIDs = getReactionMaterialsIDs(materials);
 
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, materialIDs, variations, true, 10));
+    variations.push(createVariationsRow(
+      {
+        materials,
+        materialIDs,
+        variations,
+        gasMode: true,
+        vesselVolume: 10
+      }
+    ));
   }
   reaction.variations = variations;
 
