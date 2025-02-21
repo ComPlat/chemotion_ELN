@@ -65,16 +65,16 @@ export default class ComputedPropsContainer extends React.Component {
       <>
         <div className="d-flex align-items-center">
           <SampleComputedProps cprops={cprops} />
-          <Button
-            variant="success"
-            size="sm"
-            onClick={this.onClickComputeBtn}
-            className="my-2 ms-auto"
-          >
-            <i className="fa fa-paper-plane me-1" />
-            Compute
-          </Button>
         </div>
+        <Button
+          variant="success"
+          size="sm"
+          onClick={this.onClickComputeBtn}
+          className="my-2 ms-auto d-flex"
+        >
+          <i className="fa fa-paper-plane me-1" />
+          Compute
+        </Button>
         <Button
           size="sm"
           className="w-100 bg-gray-300 p-0 text-gray-600 mt-3"
