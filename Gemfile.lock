@@ -425,7 +425,7 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.0.0.rc2)
+    labimotion (2.0.0.rc6)
       rails (~> 6.1.7)
     language_server-protocol (3.17.0.3)
     latex-decode (0.4.0)
@@ -909,7 +909,7 @@ DEPENDENCIES
   kaminari
   kaminari-grape
   ketcherails!
-  labimotion (= 2.0.0.rc2)
+  labimotion (= 2.0.0.rc6)
   launchy
   listen
   memory_profiler

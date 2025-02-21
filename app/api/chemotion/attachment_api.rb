@@ -63,11 +63,11 @@ module Chemotion
       desc 'Download the dataset attachment file'
       get 'dataset/:container_id' do
         env['api.format'] = :binary
-        export = Labimotion::ExportDataset.new
-        export.export(params[:container_id])
-        export.spectra(params[:container_id])
+        export = Labimotion::ExportDataset.new(params[:container_id])
+        export.export
+        export.spectra
         content_type('application/vnd.ms-excel')
-        ds_filename = export.res_name(params[:container_id])
+        ds_filename = export.res_name
         filename = URI.escape(ds_filename)
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         export.read
@@ -312,10 +312,10 @@ module Chemotion
           end
 
           if Labimotion::Dataset.find_by(element_id: params[:container_id], element_type: 'Container').present?
-            export = Labimotion::ExportDataset.new
-            export.export(params[:container_id])
-            export.spectra(params[:container_id])
-            zip.put_next_entry export.res_name(params[:container_id])
+            export = Labimotion::ExportDataset.new(params[:container_id])
+            export.export
+            export.spectra
+            zip.put_next_entry export.res_name
             zip.write export.read
           end
 
