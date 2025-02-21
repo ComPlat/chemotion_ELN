@@ -111,8 +111,7 @@ module Chemotion
         end
 
         update_element_labels(research_plan, params[:user_labels], current_user.id)
-
-        present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
+        present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan
       end
 
       namespace :table_schemas do
@@ -209,14 +208,16 @@ module Chemotion
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
-          if research_plan = ResearchPlan.find(params[:id])
+          if (research_plan = ResearchPlan.find(params[:id]))
             research_plan.update!(attributes)
             research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
             update_element_labels(research_plan, params[:user_labels], current_user.id)
           end
 
           detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
-          present research_plan, with: Entities::ResearchPlanEntity, detail_levels: detail_levels, root: :research_plan
+          present research_plan.reload, with: Entities::ResearchPlanEntity,
+                                        detail_levels: detail_levels,
+                                        root: :research_plan
         end
       end
 
