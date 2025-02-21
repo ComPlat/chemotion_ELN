@@ -18,7 +18,7 @@ export default class CellLineName extends React.Component {
 
   componentDidMount() {
     CellLinesFetcher.getAllCellLineNames()
-      .then((data) => data.map((x) => ({ value: x.id, label: x.name, name: x.name })))
+      .then((data) => data.map((x) => ({ value: x.id, label: `${x.name} - ${x.source}`, name: x.name })))
       .then((data) => {
         this.setState({ nameSuggestions: data });
       });
