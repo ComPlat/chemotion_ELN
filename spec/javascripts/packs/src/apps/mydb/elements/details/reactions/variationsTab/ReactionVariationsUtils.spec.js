@@ -3,7 +3,7 @@ import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  getReactionMaterials, getMaterialColumnGroupChild
+  getReactionMaterials, getMaterialColumnGroupChild, getReactionMaterialsIDs
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpReaction, getColumnGroupChild } from 'helper/reactionVariationsHelpers';
 
@@ -18,9 +18,18 @@ describe('ReactionVariationsUtils', () => {
     expect(convertUnit(1, 'Second(s)', 'Minute(s)')).toBeCloseTo(0.0167, 0.00001);
     expect(convertUnit(1, 'Minute(s)', 'Second(s)')).toBe(60);
   });
-  it('creates a row in the variations table', async () => {
+  it('creates a row in the variations table with selected materials', async () => {
     const reaction = await setUpReaction();
-    const row = createVariationsRow(reaction, reaction.variations);
+
+    expect(Object.keys(reaction.variations[0].products).length).toBe(2);
+
+    const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+    materialIDs.products.pop();
+
+    const row = createVariationsRow(reaction, materialIDs, reaction.variations);
+
+    expect(Object.keys(row.products).length).toBe(1);
+
     const nonReferenceStartingMaterial = Object.values(row.startingMaterials).find(
       (material) => !material.aux.isReference
     );
@@ -32,7 +41,7 @@ describe('ReactionVariationsUtils', () => {
       temperature: { value: '', unit: '°C' },
       duration: { value: NaN, unit: 'Second(s)' },
     });
-    expect(Object.values(row.products).map((product) => product.yield.value)).toEqual([100, 100]);
+    expect(Object.values(row.products).map((product) => product.yield.value)).toEqual([100]);
     expect(nonReferenceStartingMaterial.equivalent.value).toBe(1);
     expect(reactant.equivalent.value).toBe(1);
   });

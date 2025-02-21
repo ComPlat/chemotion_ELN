@@ -168,7 +168,7 @@ function getSequentialId(variations) {
   return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
 }
 
-function createVariationsRow(reaction, variations, gasMode = false, vesselVolume = null) {
+function createVariationsRow(reaction, selectedReactionMaterialIDs, variations, gasMode = false, vesselVolume = null) {
   const reactionCopy = cloneDeep(reaction);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reactionCopy.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reactionCopy.temperature ?? {};
@@ -189,7 +189,10 @@ function createVariationsRow(reaction, variations, gasMode = false, vesselVolume
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v, materialType, gasMode, vesselVolume) }), {});
+      selectedReactionMaterialIDs[materialType].includes(v.id)
+        ? { ...a, [v.id]: getMaterialData(v, materialType, gasMode, vesselVolume) }
+        : a
+    ), {});
   });
 
   // Compute dependent values that aren't supplied by initial data.

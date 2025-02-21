@@ -296,7 +296,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const addRow = useCallback(() => {
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     setReactionVariations(
-      [...reactionVariations, createVariationsRow(reaction, reactionVariations, gasMode, vesselVolume)]
+      [
+        ...reactionVariations,
+        createVariationsRow(reaction, selectedReactionMaterialIDs, reactionVariations, gasMode, vesselVolume)
+      ]
     );
   }, [reaction, reactionVariations, gasMode]);
 
