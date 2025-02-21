@@ -1,5 +1,5 @@
 import {
-  updateColumnDefinitionsMaterialTypes, removeObsoleteMaterialsFromColumnDefinitions
+  resetColumnDefinitionsMaterials, removeObsoleteMaterialsFromColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   getCellDataType,
@@ -36,7 +36,7 @@ function columnDefinitionsReducer(columnDefinitions, action) {
         'editable',
         !action.gasMode
       );
-      updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
+      updatedColumnDefinitions = resetColumnDefinitionsMaterials(
         updatedColumnDefinitions,
         action.reactionMaterials,
         action.selectedReactionMaterialIDs,
@@ -46,7 +46,7 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       return updatedColumnDefinitions;
     }
     case 'update_gas_type': {
-      return updateColumnDefinitionsMaterialTypes(
+      return resetColumnDefinitionsMaterials(
         columnDefinitions,
         action.reactionMaterials,
         action.selectedReactionMaterialIDs,
