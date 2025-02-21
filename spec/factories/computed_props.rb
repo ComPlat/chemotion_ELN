@@ -10,9 +10,8 @@ FactoryBot.define do
   #   - cover different status values.
 
   factory :computed_prop do
-    creator factory: :person
-    # creator { Faker::Number.number(digits: 3) }
-    molecule_id { Faker::Number.number(digits: 6) }
+    user factory: :person
+    molecule factory: :molecule
     sample_id { Faker::Number.number(digits: 6) }
     max_potential { Faker::Number.between(from: -1000.0, to: 1000.0) }
     min_potential { Faker::Number.between(from: -1000.0, to: 1000.0) }

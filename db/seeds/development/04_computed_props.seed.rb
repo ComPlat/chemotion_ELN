@@ -9,8 +9,8 @@ require_relative '../../../spec/factories/computed_props'
 
 Person.find_each do |user|
   user.samples.limit(50).each do |sample|
-    FactoryBot.create(:computed_prop, creator: user.id, sample_id: sample.id, molecule_id: sample.molecule.id)
+    FactoryBot.create(:computed_prop, user: user, sample_id: sample.id, molecule: sample.molecule)
   rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.debug { "ComputedProp already exists: #{e.record.name}" }
+    Rails.logger.debug { "ComputedProp already exists: #{e.record}" }
   end
 end
