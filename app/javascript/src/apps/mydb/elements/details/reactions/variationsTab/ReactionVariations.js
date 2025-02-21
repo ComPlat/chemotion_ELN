@@ -37,6 +37,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
+  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
+  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
@@ -298,7 +300,20 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setReactionVariations(
       [
         ...reactionVariations,
-        createVariationsRow(reaction, selectedReactionMaterialIDs, reactionVariations, gasMode, vesselVolume)
+        createVariationsRow(
+          {
+            materials: reactionMaterials,
+            materialIDs: selectedReactionMaterialIDs,
+            variations: reactionVariations,
+            reactionHasPolymers,
+            durationValue,
+            durationUnit,
+            temperatureValue,
+            temperatureUnit,
+            gasMode,
+            vesselVolume
+          }
+        )
       ]
     );
   }, [reaction, reactionVariations, gasMode]);
