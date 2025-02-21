@@ -17,8 +17,16 @@
 class UserLabel < ApplicationRecord
   acts_as_paranoid
 
-  def self.my_labels(current_user)
-    UserLabel.where('(user_id = ? AND access_level in (0, 1)) OR access_level = 2', current_user.id)
-             .order('access_level desc, position, title')
-  end
+  # Scope to fetch labels accessible to a specific user.
+  #
+  # A user can see:
+  # - Their own labels (`access_level = 0`)
+  # - Labels with `access_level` of 1 or 2 (shared/global labels)
+  #
+  # @param user [User] The user for whom to fetch labels.
+  # @return [ActiveRecord::Relation] The filtered and ordered user labels.
+  scope :my_labels, lambda { |user|
+    where('(user_id = ? AND access_level = 0) OR access_level IN (1, 2)', user.id)
+      .order(access_level: :desc, position: :asc, title: :asc)
+  }
 end
