@@ -3,7 +3,7 @@ import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, removeObsoleteMaterialsFromColumnDefinitions,
   updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
-  updateColumnDefinitionsMaterialTypes, getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
+  resetColumnDefinitionsMaterials, getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -157,7 +157,7 @@ describe('ReactionVariationsMaterials', () => {
       });
     });
 
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
+    const updatedColumnDefinitions = resetColumnDefinitionsMaterials(
       columnDefinitions,
       reactionMaterials,
       getReactionMaterialsIDs(reactionMaterials),

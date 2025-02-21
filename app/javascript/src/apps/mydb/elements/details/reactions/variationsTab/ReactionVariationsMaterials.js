@@ -300,7 +300,7 @@ function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
   return updatedVariations;
 }
 
-function updateColumnDefinitionsMaterialTypes(columnDefinitions, currentMaterials, selectedMaterialIDs, gasMode) {
+function resetColumnDefinitionsMaterials(columnDefinitions, currentMaterials, selectedMaterialIDs, gasMode) {
   let updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
   Object.entries(currentMaterials).forEach(([materialType, materials]) => {
@@ -377,7 +377,7 @@ export {
   getReactionMaterialsIDs,
   getReactionMaterialsGasTypes,
   getMaterialData,
-  updateColumnDefinitionsMaterialTypes,
+  resetColumnDefinitionsMaterials,
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
   updateVariationsRowOnFeedstockMaterialChange,
