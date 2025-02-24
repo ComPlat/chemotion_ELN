@@ -34,7 +34,11 @@ const KET_TAGS = Object.freeze({
   rgLabel: 'rg-label',
   shapes: ['Bead', 'Surface'],
   moleculeIdentifier: '> <MoleculesList>', // New tag
-  textIdentifier: "#"
+  textIdentifier: "#",
+  templateEditProps: {
+    text: 'You are adding a text description to the selected template',
+    id: 'templateSelectedInfo'
+  }
 });
 
 // image exists in dom
@@ -577,8 +581,9 @@ const addTextNodeDescriptionOnTextPopup = async (node) => {
     if (parentElement) {  // Ensure showTextNode is used properly
       newParagraph = document.createElement('p');
       const firstChild = parentElement.lastChild;
+      newParagraph.id = KET_TAGS.templateEditProps.id; // Add an ID to the paragraph
 
-      newParagraph.textContent = 'You are adding a text description to the selected template';
+      newParagraph.textContent = KET_TAGS.templateEditProps.text;
       parentElement.insertBefore(newParagraph, firstChild.nextSibling);
     }
 
