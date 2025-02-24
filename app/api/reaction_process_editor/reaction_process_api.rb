@@ -4,7 +4,7 @@ module ReactionProcessEditor
   class ReactionProcessAPI < Grape::API
     helpers StrongParamsHelpers
 
-    # rescue_from :all
+    rescue_from :all
 
     namespace :reaction_processes do
       route_param :id do

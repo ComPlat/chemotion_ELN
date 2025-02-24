@@ -21,8 +21,7 @@ RSpec.shared_examples 'acts_as_paranoid soft-deletable model' do |factory_name|
       expect { subject.destroy }.to change {
         subject.deleted_at
       }.from(nil).to(
-        # destroying can take up to 2 seconds!
-        within(2.seconds).of(Time.zone.now),
+        within(2.seconds).of(Time.zone.now), # destroying can take up to 2 seconds!
       )
     end
   end

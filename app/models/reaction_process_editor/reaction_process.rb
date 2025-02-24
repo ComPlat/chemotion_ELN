@@ -24,7 +24,6 @@ module ReactionProcessEditor
     has_many :samples_preparations, dependent: :destroy
 
     has_many :reaction_process_vessels, dependent: :destroy
-    has_many :vessels, through: :reaction_process_vessels
 
     delegate :creator, :reaction_svg_file, :short_label, :collections, to: :reaction
 
