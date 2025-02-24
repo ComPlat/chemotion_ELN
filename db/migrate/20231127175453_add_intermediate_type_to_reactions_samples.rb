@@ -4,7 +4,5 @@ class AddIntermediateTypeToReactionsSamples < ActiveRecord::Migration[6.1]
   def change
     add_column :reactions_samples, :reaction_process_step_id, :uuid
     add_column :reactions_samples, :intermediate_type, :string
-
-    add_timestamps :reactions_samples, null: true
   end
 end

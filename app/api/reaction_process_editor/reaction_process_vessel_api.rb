@@ -6,7 +6,7 @@ module ReactionProcessEditor
 
     helpers StrongParamsHelpers
 
-    # rescue_from :all
+    rescue_from :all
 
     namespace :reaction_process_vessels do
       route_param :id do
@@ -18,7 +18,8 @@ module ReactionProcessEditor
         params do
           requires :reaction_process_vessel, type: Hash do
             optional :preparations, type: Array, desc: 'The preparations of the vessel for this reaction.'
-            optional :vessel_id
+            optional :vesselable_id
+            optional :vesselable_type
           end
         end
 

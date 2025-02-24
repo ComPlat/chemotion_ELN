@@ -9,7 +9,6 @@ RSpec.describe ReactionProcessEditor::ReactionProcess do
 
   it { is_expected.to belong_to(:reaction) }
   it { is_expected.to have_many(:reaction_process_vessels).dependent(:destroy) }
-  it { is_expected.to have_many(:vessels).through(:reaction_process_vessels) }
 
   it { is_expected.to have_many(:reaction_process_steps).dependent(:destroy) }
   it { is_expected.to have_many(:samples_preparations).dependent(:destroy) }
