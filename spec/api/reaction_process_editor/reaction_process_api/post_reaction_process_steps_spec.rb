@@ -21,7 +21,9 @@ describe ReactionProcessEditor::ReactionProcessAPI, '.post /reaction_process_ste
   let(:authorization_header) { authorized_header(reaction_process.creator) }
 
   let(:vessel) { create(:vessel) }
-  let(:reaction_process_vessel_params) { { vessel_id: vessel.id, preparations: ['DRIED'] } }
+  let(:reaction_process_vessel_params) do
+    { vesselable_id: vessel.id, vesselable_type: 'Vessel', preparations: ['DRIED'] }
+  end
 
   it_behaves_like 'authorization restricted API call'
 
