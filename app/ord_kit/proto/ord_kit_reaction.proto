@@ -569,12 +569,7 @@ message Vessel {
   // Vessel attachments (septum, cap, gas adapter, etc.).
   repeated VesselAttachment attachments = 13;
   // Identifier number for a microtiter plate or parallel reactor run.
-  string vessel_id = 14;
-  // If a well-plate was used, the position of the well for this experiment,
-  // e.g., "A4".
-  string position = 15;
-  string row = 16;
-  string col = 17;
+  string vessel_class = 14;
 }
 
 message Material {

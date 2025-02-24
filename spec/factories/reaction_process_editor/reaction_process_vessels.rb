@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :reaction_process_vessel, class: 'ReactionProcessEditor::ReactionProcessVessel' do
-    vessel
+    vesselable { create :vessel }
     reaction_process
     preparations { [] }
   end

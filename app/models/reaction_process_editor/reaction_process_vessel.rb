@@ -5,7 +5,7 @@ module ReactionProcessEditor
     acts_as_paranoid
 
     belongs_to :reaction_process
-    belongs_to :vessel
+    belongs_to :vesselable, polymorphic: true
     has_many :reaction_process_steps, dependent: :nullify
 
     delegate :creator, to: :reaction_process

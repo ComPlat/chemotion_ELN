@@ -9,30 +9,43 @@ module OrdKit
         def to_ord
           return unless model
 
-          @vessel = model.vessel
+          @vessel = model.vesselable
 
           OrdKit::Vessel.new(
             id: vessel.id,
             name: vessel.name,
-            label: vessel.short_label,
-            description: vessel.description,
+            label: short_label,
+            description: description,
             details: vessel.details,
             type: vessel_type,
             material: vessel_material,
             volume: volume,
             weight: weight,
-            bar_code: vessel.bar_code,
-            qr_code: vessel.qr_code,
+            bar_code: bar_code,
+            qr_code: qr_code,
             preparations: preparations,
             attachments: attachments,
-            vessel_id: nil, # Unknown in ELN.
-            position: nil, # Unknown in ELN.
-            row: nil, # Unknown in ELN.
-            col: nil, # Unknown in ELN.
+            vessel_class: vessel.class.to_s,
           )
         end
 
         private
+
+        def description
+          vessel.try(:description)
+        end
+
+        def short_label
+          vessel.try(:short_label)
+        end
+
+        def bar_code
+          vessel.try(:bar_code)
+        end
+
+        def qr_code
+          vessel.try(:qr_code)
+        end
 
         def vessel_type
           VesselTypeExporter.new(vessel).to_ord

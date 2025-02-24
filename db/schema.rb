@@ -1151,11 +1151,12 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
 
   create_table "reaction_process_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "reaction_process_id"
-    t.uuid "vessel_id"
+    t.uuid "vesselable_id"
     t.string "preparations", default: [], array: true
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
+    t.string "vesselable_type"
   end
 
   create_table "reaction_processes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1222,15 +1223,13 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
+    t.integer "gas_type", default: 0
+    t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
+    t.float "conversion_rate"
     t.uuid "reaction_process_activity_id"
     t.string "intermediate_type"
     t.datetime "created_at", precision: 6
     t.datetime "updated_at", precision: 6
-    t.integer "gas_type", default: 0
-    t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
-    t.float "conversion_rate"
-    t.datetime "created_at"
-    t.datetime "updated_at"
     t.jsonb "log_data"
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
@@ -1430,7 +1429,9 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.jsonb "log_data"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.boolean "dry_solvent", default: false
+    t.boolean "inventory_sample", default: false
     t.boolean "hide_in_eln"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"

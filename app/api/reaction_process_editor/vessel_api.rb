@@ -7,9 +7,10 @@ module ReactionProcessEditor
     namespace :vessels do
       get do
         vessels = current_user.created_vessels.includes([:vessel_template]) +
-                  current_user.vessels.includes([:vessel_template])
+                  current_user.vessels.includes([:vessel_template]) +
+                  VesselTemplate.all
 
-        present vessels, with: Entities::ReactionProcessEditor::VesselEntity, root: :vessels
+        present vessels, with: Entities::ReactionProcessEditor::VesselableEntity, root: :vesselables
       end
     end
   end

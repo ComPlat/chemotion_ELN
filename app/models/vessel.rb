@@ -37,7 +37,8 @@ class Vessel < ApplicationRecord
   has_many :collections_vessels, dependent: :destroy
   has_many :collections, through: :collections_vessels
 
-  has_many :reaction_process_vessels, dependent: :destroy, class_name: 'ReactionProcessEditor::ReactionProcessVessel'
+  has_many :reaction_process_vessels, dependent: :destroy, class_name: 'ReactionProcessEditor::ReactionProcessVessel',
+                                      inverse_of: :vesselable, foreign_key: :vesselable_id
   has_many :reaction_processes, through: :reaction_process_vessels,
                                 class_name: 'ReactionProcessEditor::ReactionProcess'
 
