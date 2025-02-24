@@ -31,4 +31,6 @@ class VesselTemplate < ApplicationRecord
   has_one :container, as: :containable, dependent: :destroy
 
   accepts_nested_attributes_for :container
+  has_many :reaction_process_vessels, dependent: :destroy, class_name: 'ReactionProcessEditor::ReactionProcessVessel',
+                                      inverse_of: :vesselable, foreign_key: :vesselable_id
 end
