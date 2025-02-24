@@ -51,4 +51,17 @@ describe('Reaction', async () => {
       });
     });
   });
+  describe('Reaction.buildCopy()', () => {
+    it('should copy starting materials with _real_amount_value set to null', () => {
+      const copy = reaction.buildCopy({ collection_id: 'newCollectionId' });
+      expect(copy.starting_materials[0]._real_amount_value).toBe(null);
+      expect(copy.starting_materials[1]._real_amount_value).toBe(null);
+    });
+
+    it('should handle empty starting_materials', () => {
+      reaction.starting_materials = [];
+      const copy = reaction.buildCopy({ collection_id: 'newCollectionId' });
+      expect(copy.starting_materials).toEqual([]);
+    });
+  });
 });
