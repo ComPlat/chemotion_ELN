@@ -438,7 +438,7 @@ export default class Reaction extends Element {
     Object.assign(copy, params);
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map(
-      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+      sample => ({ ...Sample.copyFromSampleAndCollectionId(sample, copy.collection_id), _real_amount_value: null })
     );
     copy.reactants = this.reactants.map(
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
