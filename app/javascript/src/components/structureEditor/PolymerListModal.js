@@ -15,7 +15,7 @@ import {
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
   BodySolid,
-  AddTextIcon
+  RescaleCanvas
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
 
 const iconMap = {
@@ -138,7 +138,24 @@ const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   }
 };
 
-export { PolymerListModal, PolymerListIconKetcherToolbarButton };
+const rescaleToolBarButoon = (iframeDocument) => {
+  const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
+  const container = parentElement?.querySelector('.css-6qnjre');
+  if (container) {
+    const newButton = iframeDocument.createElement('button');
+    newButton.classList.add('css-9c2fhu');
+    newButton.title = 'Rescale Polymer Canvas';
+
+    // Apply styles directly - different ketcher version has differnet style to the button ie 2.24.0
+    newButton.style.backgroundColor = 'transparent';
+    newButton.style.border = '0';
+
+    // Set the SVG as the innerHTML of the button
+    newButton.innerHTML = RescaleCanvas;
+    container.appendChild(newButton);
+  }
+};
+export { PolymerListModal, PolymerListIconKetcherToolbarButton, rescaleToolBarButoon };
 
 PolymerListModal.propTypes = {
   loading: PropTypes.bool,
