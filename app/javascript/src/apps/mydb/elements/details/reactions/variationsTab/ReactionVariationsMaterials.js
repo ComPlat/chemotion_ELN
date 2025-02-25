@@ -241,12 +241,12 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent, ga
   };
 }
 
-function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
+function removeObsoleteMaterialsFromVariations(variations, materialIDs) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     Object.keys(materialTypes).forEach((materialType) => {
       Object.keys(row[materialType]).forEach((materialName) => {
-        if (!currentMaterials[materialType].map((material) => material.id.toString()).includes(materialName)) {
+        if (!materialIDs[materialType].includes(materialName)) {
           delete row[materialType][materialName];
         }
       });

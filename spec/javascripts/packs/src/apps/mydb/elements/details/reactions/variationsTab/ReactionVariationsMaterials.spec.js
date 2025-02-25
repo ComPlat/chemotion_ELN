@@ -24,8 +24,8 @@ describe('ReactionVariationsMaterials', () => {
 
     reaction.products.pop();
     const updatedProductIDs = reaction.products.map((product) => product.id);
-    const currentMaterials = getReactionMaterials(reaction);
-    const updatedVariations = removeObsoleteMaterialsFromVariations(reaction.variations, currentMaterials);
+    const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+    const updatedVariations = removeObsoleteMaterialsFromVariations(reaction.variations, materialIDs);
     updatedVariations
       .forEach((variation) => {
         expect(Object.keys(variation.products)).toEqual(updatedProductIDs);
