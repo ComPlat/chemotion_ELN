@@ -1,5 +1,9 @@
-$sidebar-logo-height: 88px;
-$header-height: 61.5px;
+$sidebar-logo-height: 72px;
+
+.topbar {
+  height: $sidebar-logo-height;
+}
+
 .sidebar {
   @extend .d-flex;
   @extend .text-bg-paper;
@@ -32,7 +36,7 @@ $header-height: 61.5px;
     padding-top: $sidebar-logo-height; //logo height
   }
   &-collapse-button-container {
-    margin-top: $header-height; //hack to compensate header height
+    margin-top: $sidebar-logo-height; //hack to compensate header height
     @extend .d-flex;
     @extend .flex-column;
     @extend .justify-content-center;
