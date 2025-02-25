@@ -879,7 +879,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     "[title='Aromatize \\(Alt\\+A\\)']": async () => fetchAndReplace(),
     "[title='3D Viewer']": async () => fetchAndReplace(),
     // others
-    "[title='Rescale Polymer Canvas']": async () => onTemplateMove(editor, true),
+    "[title='Rescale Polymer Canvas']": async () => {
+      await saveMoveCanvas(editor, null, true, true, true);
+      ImagesToBeUpdatedSetter(true);
+      await runImageLayering();
+    },
     "[title='Open... \\(Ctrl\\+O\\)']": async () => removeTextNodeDescriptionOnTextPopup(),
     "[title='Save as... \\(Ctrl\\+S\\)']": async () => removeTextNodeDescriptionOnTextPopup(),
     "[title='Undo \\(Ctrl\\+Z\\)']": async () => undoKetcher(editor),
