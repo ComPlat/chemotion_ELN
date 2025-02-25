@@ -35,9 +35,7 @@ const notifyError = (message) => {
   });
 };
 
-const key = 'ketcher-tmpls';
-
-const loadEditor = (editor, scripts) => {
+export const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
       es: scripts,
@@ -59,7 +57,7 @@ const createEditorInstance = (editor, available, configs) => ({
   }),
 });
 
-const createEditor = (configs, availableEditors) => {
+export const createEditor = (configs, availableEditors) => {
   if (!availableEditors) return null;
   const available = availableEditors[configs.editor];
   if (available) {
@@ -91,12 +89,13 @@ const createEditors = (_state = {}) => {
 };
 
 function Editor({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb
+  type, editor, molfile, iframeHeight, iframeStyle, forwardedRef
 }) {
   switch (type) {
     case 'ketcher2':
       return (
         <KetcherEditor
+          ref={forwardedRef} // Forwarding the ref to the KetcherEditor
           editor={editor}
           molfile={molfile}
           iH={iframeHeight}
@@ -205,7 +204,7 @@ WarningBox.propTypes = {
   hideWarning: PropTypes.func.isRequired
 };
 
-const initEditor = () => {
+export const initEditor = () => {
   const userProfile = UserStore.getState().profile;
   const eId = userProfile?.data?.default_structure_editor || 'ketcher';
   const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
@@ -230,6 +229,7 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
+    this.ketcher2Ref = React.createRef();
   }
 
   componentDidMount() {
@@ -254,7 +254,7 @@ export default class StructureEditorModal extends React.Component {
     if (onCancel) { onCancel(); }
   }
 
-  handleSaveBtn() {
+  async handleSaveBtn() {
     const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
@@ -265,13 +265,7 @@ export default class StructureEditorModal extends React.Component {
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
     } else if (editor.id === 'ketcher2') {
-      structure.editor.getMolfile().then((molfile) => {
-        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
-          imgfile.text().then((text) => {
-            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
-          });
-        });
-      });
+      this.saveKetcher2(editor.id);
     } else {
       try {
         const { molfile, info } = structure;
@@ -285,6 +279,35 @@ export default class StructureEditorModal extends React.Component {
       } catch (e) {
         notifyError(`The drawing is not supported! ${e}`);
       }
+    }
+  }
+
+  // function to store ketcher2
+  async saveKetcher2(editorId) {
+    const { onSaveFileK2SC } = this.ketcher2Ref.current;
+    const { onSave, hasChildren, hasParent } = this.props;
+
+    // Ensure the function exists before calling it
+    if (typeof onSaveFileK2SC !== 'function') {
+      console.error('onSaveFileK2SC is not a function');
+      return;
+    }
+
+    try {
+      // Call onSaveFileK2SC and get the required data
+      const { ket2Molfile, svgElement } = await onSaveFileK2SC();
+
+      // Update state and invoke onSave callback after state has been updated
+      this.setState(
+        { showModal: false, showWarning: hasChildren || hasParent },
+        () => {
+          if (onSave) {
+            onSave(ket2Molfile, svgElement, { smiles: '' }, editorId);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error during save operation for Ketcher2:', error);
     }
   }
 
@@ -355,6 +378,7 @@ export default class StructureEditorModal extends React.Component {
         iframeHeight={iframeHeight}
         iframeStyle={iframeStyle}
         fnCb={this.updateEditor}
+        forwardedRef={this.ketcher2Ref}
       />
     );
     const editorOptions = Object.keys(this.editors).map((e) => ({

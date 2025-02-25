@@ -8,7 +8,6 @@ module SVG
     def structure_svg(editor, svg, hexdigest, is_centered = false)
       processor = case editor
                   when /marvinjs/i
-                  when /ketcher2/i
                     Chemotion::MarvinjsSvgProcessor.new(svg)
                   when /chemdraw/i
                     Chemotion::ChemdrawSvgProcessor.new(svg)
@@ -17,7 +16,8 @@ module SVG
                   else
                     Chemotion::OpenBabelSvgProcessor.new(svg)
                   end
-      svg = processor.centered_and_scaled_svg unless is_centered == true
+
+      svg = processor.centered_and_scaled_svg unless is_centered
       info = generate_svg_info('samples', hexdigest)
       svg_file = File.new(info[:svg_file_path], 'w+')
       svg_file.write(svg)
