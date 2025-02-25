@@ -332,7 +332,7 @@ function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) 
 
 function updateVariationsRowOnCatalystMaterialChange(row) {
   const updatedRow = cloneDeep(row);
-  const catalystMaterialAmount = getCatalystMaterial(updatedRow).amount.value;
+  const catalystMaterialAmount = getCatalystMaterial(updatedRow)?.amount.value;
 
   Object.values(updatedRow.products).forEach((productMaterial) => {
     if (productMaterial.aux.gasType === 'gas') {
