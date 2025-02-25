@@ -27,8 +27,8 @@ function updateAnalyses(variations, allReactionAnalyses) {
   return updatedVariations;
 }
 
-function getAnalysesOverlay({ data: variationsRow, context }) {
-  const { analyses: analysesIDs } = variationsRow;
+function getAnalysesOverlay({ data: row, context }) {
+  const { analyses: analysesIDs } = row;
   const { allReactionAnalyses } = context;
 
   return allReactionAnalyses.filter((analysis) => analysesIDs.includes(analysis.id));
@@ -94,7 +94,7 @@ AnalysesCellRenderer.propTypes = {
 };
 
 function AnalysesCellEditor({
-  data: variationsRow,
+  data: row,
   value: analysesIDs,
   onValueChange,
   stopEditing,
@@ -150,7 +150,7 @@ function AnalysesCellEditor({
   const cellContent = (
     <Modal centered show>
       <Modal.Header>
-        {`Link analyses to ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
+        {`Link analyses to ${getVariationsRowName(reactionShortLabel, row.id)}`}
       </Modal.Header>
       <Modal.Body>{analysesSelection}</Modal.Body>
       <Modal.Footer>
