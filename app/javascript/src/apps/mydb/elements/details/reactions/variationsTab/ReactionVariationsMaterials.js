@@ -28,21 +28,21 @@ function getGramFromMol(mol, material) {
   return (mol / (material.aux.purity ?? 1.0)) * material.aux.molecularWeight;
 }
 
-function getReferenceMaterial(variationsRow) {
-  const variationsRowCopy = cloneDeep(variationsRow);
-  const potentialReferenceMaterials = { ...variationsRowCopy.startingMaterials, ...variationsRowCopy.reactants };
+function getReferenceMaterial(row) {
+  const rowCopy = cloneDeep(row);
+  const potentialReferenceMaterials = { ...rowCopy.startingMaterials, ...rowCopy.reactants };
   return Object.values(potentialReferenceMaterials).find((material) => material.aux?.isReference || false);
 }
 
-function getCatalystMaterial(variationsRow) {
-  const variationsRowCopy = cloneDeep(variationsRow);
-  const potentialCatalystMaterials = { ...variationsRowCopy.startingMaterials, ...variationsRowCopy.reactants };
+function getCatalystMaterial(row) {
+  const rowCopy = cloneDeep(row);
+  const potentialCatalystMaterials = { ...rowCopy.startingMaterials, ...rowCopy.reactants };
   return Object.values(potentialCatalystMaterials).find((material) => material.aux?.gasType === 'catalyst' || false);
 }
 
-function getFeedstockMaterial(variationsRow) {
-  const variationsRowCopy = cloneDeep(variationsRow);
-  const potentialFeedstockMaterials = { ...variationsRowCopy.startingMaterials, ...variationsRowCopy.reactants };
+function getFeedstockMaterial(row) {
+  const rowCopy = cloneDeep(row);
+  const potentialFeedstockMaterials = { ...rowCopy.startingMaterials, ...rowCopy.reactants };
   return Object.values(potentialFeedstockMaterials).find((material) => material.aux?.gasType === 'feedstock' || false);
 }
 
@@ -81,24 +81,24 @@ function instantiateSelectedReactionMaterialIDs() {
   }, {});
 }
 
-function getReactionMaterialsIDs(reactionMaterials) {
+function getReactionMaterialsIDs(materials) {
   return Object.fromEntries(
-    Object.entries(reactionMaterials).map(([materialType, materials]) => [
+    Object.entries(materials).map(([materialType, materialsOfType]) => [
       materialType,
-      materials.map((material) => material.id.toString())
+      materialsOfType.map((material) => material.id.toString())
     ])
   );
 }
 
-function getReactionMaterialsGasTypes(reactionMaterials) {
-  return Object.values(reactionMaterials).flat().map((material) => material.gas_type);
+function getReactionMaterialsGasTypes(materials) {
+  return Object.values(materials).flat().map((material) => material.gas_type);
 }
 
-function updateYields(variationsRow, reactionHasPolymers) {
-  const updatedVariationsRow = cloneDeep(variationsRow);
-  const referenceMaterial = getReferenceMaterial(updatedVariationsRow);
+function updateYields(row, reactionHasPolymers) {
+  const updatedRow = cloneDeep(row);
+  const referenceMaterial = getReferenceMaterial(updatedRow);
 
-  Object.values(updatedVariationsRow.products).forEach((productMaterial) => {
+  Object.values(updatedRow.products).forEach((productMaterial) => {
     if (productMaterial.aux.gasType === 'gas') { return; }
     productMaterial.yield.value = computePercentYield(
       productMaterial,
@@ -107,21 +107,21 @@ function updateYields(variationsRow, reactionHasPolymers) {
     );
   });
 
-  return updatedVariationsRow;
+  return updatedRow;
 }
 
-function updateEquivalents(variationsRow) {
-  const updatedVariationsRow = cloneDeep(variationsRow);
-  const referenceMaterial = getReferenceMaterial(updatedVariationsRow);
+function updateEquivalents(row) {
+  const updatedRow = cloneDeep(row);
+  const referenceMaterial = getReferenceMaterial(updatedRow);
 
   ['startingMaterials', 'reactants'].forEach((materialType) => {
-    Object.values(updatedVariationsRow[materialType]).forEach((material) => {
+    Object.values(updatedRow[materialType]).forEach((material) => {
       if (material.aux.isReference) { return; }
       const updatedEquivalent = computeEquivalent(material, referenceMaterial);
       material.equivalent.value = updatedEquivalent;
     });
   });
-  return updatedVariationsRow;
+  return updatedRow;
 }
 
 function getMaterialEntries(materialType, gasType) {
@@ -255,38 +255,38 @@ function removeObsoleteMaterialsFromVariations(variations, materialIDs) {
   return updatedVariations;
 }
 
-function removeObsoleteSelectedReactionMaterialIDs(selectedReactionMaterialIDs, currentMaterials) {
-  const updatedSelectedReactionMaterialIDs = cloneDeep(selectedReactionMaterialIDs);
+function removeObsoleteSelectedReactionMaterialIDs(materialIDs, materials) {
+  const updatedSelectedReactionMaterialIDs = cloneDeep(materialIDs);
 
-  Object.entries(currentMaterials).forEach(([materialType, materials]) => {
+  Object.entries(materials).forEach(([materialType, materialsOfType]) => {
     updatedSelectedReactionMaterialIDs[materialType] = updatedSelectedReactionMaterialIDs[materialType].filter(
-      (materialID) => materials.map((material) => material.id.toString()).includes(materialID)
+      (materialID) => materialsOfType.map((material) => material.id.toString()).includes(materialID)
     );
   });
 
   return updatedSelectedReactionMaterialIDs;
 }
 
-function removeObsoleteMaterialsFromColumnDefinitions(columnDefinitions, currentMaterialIDs) {
+function removeObsoleteMaterialsFromColumnDefinitions(columnDefinitions, materialIDs) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(currentMaterialIDs).forEach(([materialType, materialIDs]) => {
+  Object.entries(materialIDs).forEach(([materialType, iDs]) => {
     const materialColumnGroup = updatedColumnDefinitions.find((columnGroup) => columnGroup.groupId === materialType);
 
     materialColumnGroup.children = materialColumnGroup.children.filter((child) => {
       const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
-      return materialIDs.includes(childID);
+      return iDs.includes(childID);
     });
   });
 
   return updatedColumnDefinitions;
 }
 
-function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
+function updateVariationsGasTypes(variations, materials, gasMode) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     Object.keys(materialTypes).forEach((materialType) => {
-      currentMaterials[materialType].forEach((material) => {
+      materials[materialType].forEach((material) => {
         const currentGasType = material.gas_type ?? 'off';
         if (!Object.prototype.hasOwnProperty.call(row[materialType], material.id)) {
           return;
@@ -300,12 +300,12 @@ function updateVariationsGasTypes(variations, currentMaterials, gasMode) {
   return updatedVariations;
 }
 
-function resetColumnDefinitionsMaterials(columnDefinitions, currentMaterials, selectedMaterialIDs, gasMode) {
+function resetColumnDefinitionsMaterials(columnDefinitions, materials, materialIDs, gasMode) {
   let updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(currentMaterials).forEach(([materialType, materials]) => {
-    const selectedMaterials = materials.filter(
-      (material) => selectedMaterialIDs[materialType].includes(material.id.toString())
+  Object.entries(materials).forEach(([materialType, materialsOfType]) => {
+    const selectedMaterials = materialsOfType.filter(
+      (material) => materialIDs[materialType].includes(material.id.toString())
     );
     const updatedMaterials = selectedMaterials.map(
       (material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode)
