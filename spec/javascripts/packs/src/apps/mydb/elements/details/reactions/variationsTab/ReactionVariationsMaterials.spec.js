@@ -36,7 +36,7 @@ describe('ReactionVariationsMaterials', () => {
     const reactionMaterials = getReactionMaterials(reaction);
     const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
       groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, false))
     }));
 
     const startingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
@@ -136,7 +136,7 @@ describe('ReactionVariationsMaterials', () => {
     const reactionMaterials = getReactionMaterials(reaction);
     const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
       groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, false))
     }));
 
     Object.keys(materialTypes).forEach((materialType) => {

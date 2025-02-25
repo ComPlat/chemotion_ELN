@@ -202,7 +202,7 @@ function getMaterialData(material, materialType, gasMode = false, vesselVolume =
   return materialData;
 }
 
-function getMaterialColumnGroupChild(material, materialType, headerComponent, gasMode) {
+function getMaterialColumnGroupChild(material, materialType, gasMode) {
   const materialCopy = cloneDeep(material);
 
   let gasType = materialCopy.gas_type ?? 'off';
@@ -233,7 +233,7 @@ function getMaterialColumnGroupChild(material, materialType, headerComponent, ga
     },
     editable: (params) => cellIsEditable(params),
     cellDataType: getCellDataType(entry, gasType),
-    headerComponent,
+    headerComponent: MenuHeader,
     headerComponentParams: {
       names,
       gasType,
@@ -308,7 +308,7 @@ function resetColumnDefinitionsMaterials(columnDefinitions, materials, materialI
       (material) => materialIDs[materialType].includes(material.id.toString())
     );
     const updatedMaterials = selectedMaterials.map(
-      (material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode)
+      (material) => getMaterialColumnGroupChild(material, materialType, gasMode)
     );
 
     updatedColumnDefinitions = updateColumnDefinitions(

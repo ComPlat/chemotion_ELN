@@ -94,7 +94,7 @@ describe('ReactionVariationsUtils', () => {
     const field = `startingMaterials.${reactionMaterials.startingMaterials[0].id}`;
     const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
       groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, false))
     }));
     expect(getColumnGroupChild(columnDefinitions, 'startingMaterials', field).cellDataType).toBe('material');
     const updatedColumnDefinitions = updateColumnDefinitions(
