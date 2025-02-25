@@ -5,8 +5,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
-import { loadKetcherData, mols, imagesList, latestData } from 'src/components/structureEditor/KetcherEditor';
-import { textNodeStruct } from '../components/structureEditor/KetcherEditor';
+import {
+  loadKetcherData, mols, imagesList, latestData
+} from 'src/components/structureEditor/KetcherEditor';
+import {
+  allAtoms, fetchKetcherData, handleAddAtom, imageNodeCounter, imageNodeForTextNodeSetter, imageUsedCounterSetter, saveMoveCanvas, textList, textNodeStruct
+} from 'src/components/structureEditor/KetcherEditor';
+import { allTemplates } from 'src/components/structureEditor/KetcherEditor';
 
 // pattern's for alias identification
 const ALIAS_PATTERNS = Object.freeze({
@@ -34,7 +39,7 @@ const KET_TAGS = Object.freeze({
   rgLabel: 'rg-label',
   shapes: ['Bead', 'Surface'],
   moleculeIdentifier: '> <MoleculesList>', // New tag
-  textIdentifier: "#",
+  textIdentifier: '#',
   templateEditProps: {
     text: 'You are adding a text description to the selected template',
     id: 'templateSelectedInfo'
@@ -136,7 +141,7 @@ const addingPolymersToKetcher = async (railsPolymersList, data, imageNodeCounter
       for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
         const atom = molecule.atoms[atomIndex];
         const polymerItem = polymerList[visitedAtoms];
-        if (polymerItem && polymerItem.split("/").length >= 2 && (atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.label))) {
+        if (polymerItem && polymerItem.split('/').length >= 2 && (atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.label))) {
           // counters
           imageNodeCounter += 1;
           visitedAtoms += 1;
@@ -160,9 +165,7 @@ const addingPolymersToKetcher = async (railsPolymersList, data, imageNodeCounter
 
 // helper function to fetch list of all surface chemistry shape/image list
 const fetchSurfaceChemistryImageData = async (templateId) => {
-  const response = await fetch('/json/surfaceChemistryShapes.json');
-  const data = await response.json();
-  for (const tab of data) {
+  for (const tab of allTemplates) {
     for (const subTab of tab.subTabs) {
       for (const shape of subTab.shapes) {
         if (shape.template_id === parseInt(templateId)) {
@@ -330,7 +333,7 @@ const removeImageTemplateAtom = async (images, molList, data) => {
 
         // step 3: Updates molecule data or delete atoms if empty
         if (atomList.length) {
-          data[molKey] = await updateOrRemoveMolecule(molecule, removeIndexList, updatedAtoms, updatedBonds);
+          data[molKey] = await updateOrRemoveMolecule(molecule, images, updatedAtoms, updatedBonds);
         } else {
           // Molecule has no atoms, remove it from the data
           data.root.nodes = removeMoleculeFromData(data, molKey);
@@ -352,13 +355,21 @@ const findAtomByImageIndex = async (imgIdx) => {
     for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
       const atom = molecule.atoms[atomIndex];
       if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
-        const aliasLastPart = parseInt(atom.alias.split("_")[2]);
+        const aliasLastPart = parseInt(atom.alias.split('_')[2]);
         if (imgIdx === aliasLastPart) return { atomLocation: atom.location, alias: atom.alias };
       }
     }
   }
   return { atomLocation: null, alias: '' };
 };
+
+// helper function set image coordinates
+const adjustImageCoordinatesAtomDependent = (imageCoordinates, location) => ({
+  ...imageCoordinates,
+  x: location[0] - imageCoordinates.width / 2,
+  y: location[1] + imageCoordinates.height / 2,
+  z: 0,
+});
 
 // collect polymers atom list from molfile
 const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
@@ -376,6 +387,207 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
   return { linesCopy, atomAliasList };
 };
 
+// generates list of images with atom location based on alias present in ket2 format
+const placeImageOnAtoms = async (mols_, imagesList_) => {
+  try {
+    const imageListParam = imagesList_;
+    mols_.forEach(async (item) => {
+      latestData[item]?.atoms.forEach((atom) => {
+        if (atom && ALIAS_PATTERNS.threeParts.test(atom?.alias)) {
+          const aliasSplits = atom.alias.split('_');
+          const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
+          if (!imageCoordinates) {
+            throw new ('Invalid alias')();
+          }
+          const boundingBox = adjustImageCoordinatesAtomDependent(imageCoordinates, atom.location, aliasSplits[1]);
+          imageListParam[aliasSplits[2]].boundingBox = boundingBox;
+        }
+      });
+    });
+    return [...removeImagesFromData(latestData), ...imageListParam];
+  } catch (err) {
+    console.error('placeImageOnAtoms', err.message);
+  }
+};
+
+// place text nodes on atom with matching aliases
+const placeTextOnAtoms = async (mols_, textList) => {
+  try {
+    mols_.forEach(async (item) => {
+      latestData[item]?.atoms.forEach(async (atom) => {
+        const textNodeKey = textNodeStruct[atom.alias];
+        if (atom && ALIAS_PATTERNS.threeParts.test(atom?.alias) && textNodeKey) {
+          textList = await findByKeyAndUpdateTextNodePosition(textList, textNodeKey, atom.location, atom?.alias);
+        }
+      });
+    });
+    return [...removeTextFromData(latestData), ...textList];
+  } catch (err) {
+    console.error('placeImageOnAtoms', err.message);
+  }
+};
+
+// helper function to remove template by image
+const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
+  let images = canvasSelection?.images || [];
+  if (!images.length) images = deepCompare(oldImagePack, imagesList);
+  const filteredTextList = removeTextNodeFromStruct(images, textL);
+  const { data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
+  const remainingCount = imageNodeCounter - imageFoundIndexCount;
+  imageUsedCounterSetter(remainingCount);
+  const dataRoot = removeTextFromData(data);
+  dataRoot.push(...filteredTextList);
+  data.root.nodes = dataRoot;
+  return data;
+};
+
+// compare two arrays to find index changed differences
+function deepCompare(oldArray, newArray) {
+  const removedIndexes = [];
+
+  // Loop through the old array to find missing elements
+  for (let i = 0; i < oldArray.length; i++) {
+    let isFound = false;
+    for (let j = 0; j < newArray.length; j++) {
+      if (JSON.stringify(oldArray[i]) === JSON.stringify(newArray[j])) {
+        isFound = true;
+        break;
+      }
+    }
+    // If element from old array not found in new array, mark it as removed
+    if (!isFound) {
+      removedIndexes.push(i);
+    }
+  }
+  return removedIndexes;
+}
+
+// generating images for ket2 format from molfile polymers list
+const addPolymerTags = async (polymerTag, data) => {
+  const collectedImages = [];
+  if (polymerTag && polymerTag.length) {
+    const processedResponse = await addingPolymersToKetcher(polymerTag, data, imageNodeCounter);
+    imageUsedCounterSetter(processedResponse.image_counter);
+    processedResponse.molfileData?.root?.nodes.push(...processedResponse.c_images);
+    return {
+      collected_images: processedResponse.c_images,
+      molfileData: processedResponse.molfileData
+    };
+  }
+  return { collectedImages, molfileData: data };
+};
+
+// generating images for ket2 format from molfile polymers list
+const addTextNodes = async (textNodes) => textNodes.map((item) => {
+  const [idx, key, alias, description] = item.split(KET_TAGS.textIdentifier);
+  if (alias && key) {
+    textNodeStruct[alias] = key;
+    return {
+      type: 'text',
+      data: {
+        content: `{\"blocks\":[{\"key\":\"${key}\",\"text\":\"${description}\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}`,
+        position: {
+          x: 10.325000000000001,
+          y: -11.325000000000001,
+          z: 0
+        },
+        pos: [
+          {
+            x: 10.325000000000001,
+            y: -11.325000000000001,
+            z: 0
+          },
+          {
+            x: 10.325000000000001,
+            y: -11.700000000000001,
+            z: 0
+          },
+          {
+            x: 10.68671875,
+            y: -11.700000000000001,
+            z: 0
+          },
+          {
+            x: 10.68671875,
+            y: -11.325000000000001,
+            z: 0
+          }
+        ]
+      }
+    };
+  }
+});
+
+// helper function to test alias list consistency 0,1,2,3,4...
+const isAliasConsistent = () => {
+  const indicesList = [];
+  mols.forEach((mol) => {
+    const molecule = latestData[mol];
+    const atoms = molecule?.atoms;
+
+    atoms?.forEach((item) => {
+      if (item.alias) {
+        const splits = item.alias.split('_');
+        const index = parseInt(splits[2], 10);
+
+        // Check for duplicates
+        if (indicesList.indexOf(index) === -1) {
+          indicesList.push(index);
+        }
+      }
+    });
+  });
+
+  indicesList.sort((a, b) => a - b);
+  for (let i = 0; i < indicesList.length; i++) {
+    if (indicesList[i] !== i) {
+      return false; // Missing or incorrect number sequence
+    }
+  }
+  return true; // Passed all checks
+};
+
+// remove text node from struct
+const removeTextNodeFromStruct = (images, textL) => {
+  const keysToDel = [];
+  images.forEach((num) => {
+    Object.keys(textNodeStruct).forEach((key) => {
+      // Split the key by underscores and check if the third part matches the number
+      const parts = key.split('_');
+      if (parts[2] && parseInt(parts[2]) === num) {
+        keysToDel.push(textNodeStruct[key]);
+      }
+    });
+  });
+
+  textL.forEach((item, idx) => {
+    if (keysToDel.indexOf(JSON.parse(item.data.content).blocks[0].key) != -1) {
+      textL.splice(idx, 1);
+    }
+  });
+  return textL;
+};
+
+// find by key and update text node position from alias matching atoms
+const findByKeyAndUpdateTextNodePosition = async (textL, key, atomLocation, alias) => {
+  // Iterate through each item in the textList
+  const splits = alias.split('_')[2];
+  const width = imagesList[splits]?.boundingBox?.width || 1;
+  return textL?.map((textNode) => {
+    // Check if the key matches
+    const content = JSON.parse(textNode.data.content); // Parse the content to access blocks
+    if (content.blocks[0].key === key) {
+      textNode.data.position = {
+        x: atomLocation[0] + width / 2,
+        y: atomLocation[1],
+        z: atomLocation[2]
+      };
+      return textNode;
+    }
+    return textNode;
+  });
+};
+
 /* attaching polymers list is ketcher rails standards to a molfile
   s => S means its a surface polymers
   final output is expected a string:  "11 12s 13"
@@ -383,11 +595,12 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
 const reAttachPolymerList = async ({
   lines, atomsCount, additionalDataStart, additionalDataEnd
 }) => {
-  let lineCopy = [...lines];
+  const lineCopy = [...lines];
   const aliasesList = [];
   for (let i = additionalDataStart; i <= additionalDataEnd; i++) {
     if (ALIAS_PATTERNS.threeParts.test(lines[i])) {
-      aliasesList.push(lines[i - 1], lines[i]);
+      const splitTemp = parseInt(lines[i].split('_')[1]);
+      splitTemp < 50 && aliasesList.push(lines[i - 1], lines[i]);
       lines.splice(i - 1, 2); // Remove 2 elements starting from index i - 1
       i -= 2;
     }
@@ -404,7 +617,6 @@ const reAttachPolymerList = async ({
   linesCopy.splice(lineCopy.length, 0, ...collectedLines);
   return linesCopy;
 };
-
 
 // helper to combine and prepare alias into a polymer list
 const templateAliasesPrepare = async (aliasesList, atomAliasList) => {
@@ -433,6 +645,14 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
   if (button && !button.hasClickListener) {
     button.addEventListener('click', buttonEvents[selector]);
     button.hasClickListener = true;
+  }
+};
+
+const buttonClickForRectangleSelection = async (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  const button = iframeDocument?.querySelector('[data-testid="select-rectangle"]');
+  if (button) {
+    button.click();
   }
 };
 
@@ -554,31 +774,14 @@ const redoKetcher = (editor) => {
   }
 };
 
-// helper function on layout to keep the images on the latest styles
-const mainImageSizingOnRerender = async (editor, images, oldLatestData) => {
-  try {
-    // fetch latest data
-    // update old images on the root list
-    // place images on A atoms
-    // save molfile
-    // await placeImageOnAtoms(mols, images, editor);
-    const imagesL = removeImagesFromData(oldLatestData);
-    oldLatestData.root.nodes.push(imagesL);
-    await editor.structureDef.editor.setMolecule(JSON.stringify(oldLatestData));
-  } catch (error) {
-    console.error({ mainImageSizingOnRerender: error });
-  }
-};
-
 const addTextNodeDescriptionOnTextPopup = async (node) => {
   if (node?.classList?.contains('Select-module_selectContainer__yXT-t') && node?.classList?.contains('Modal-module_modalOverlay__AzVeg')) {
     // Your existing logic
     const parentElement = node.querySelector('.Dialog-module_body__EWh4H.Dialog-module_withMargin__-zVS4');
 
+    let newParagraph; // Declare the variable to store the added paragraph
 
-    let newParagraph;  // Declare the variable to store the added paragraph
-
-    if (parentElement) {  // Ensure showTextNode is used properly
+    if (parentElement) { // Ensure showTextNode is used properly
       newParagraph = document.createElement('p');
       const firstChild = parentElement.lastChild;
       newParagraph.id = KET_TAGS.templateEditProps.id; // Add an ID to the paragraph
@@ -586,10 +789,8 @@ const addTextNodeDescriptionOnTextPopup = async (node) => {
       newParagraph.textContent = KET_TAGS.templateEditProps.text;
       parentElement.insertBefore(newParagraph, firstChild.nextSibling);
     }
-
   }
 };
-
 
 // setter
 const ImagesToBeUpdatedSetter = (status) => {
@@ -599,6 +800,265 @@ const ImagesToBeUpdatedSetter = (status) => {
 // setter
 const allowProcessingSetter = (data) => {
   allowProcessing = data;
+};
+
+// canvas actions
+
+const removeUnfamiliarRgLabels = async (lines) => {
+  const removeableAtoms = [];
+  for (let i = lines.length - 1; i > 0; i--) { // Looping backwards to avoid index shifting issues
+    if (ALIAS_PATTERNS.threeParts.test(lines[i])) {
+      const template = parseInt(lines[i].split('_')[1]);
+
+      if (template > 50) {
+        removeableAtoms.push(lines[i - 1].split('   ')[1]);
+        // Remove both previous (i-1) and current (i) item
+        lines.splice(i - 1, 2);
+        i--;
+      }
+    }
+  }
+  return removeAtomFromLineByIndex(lines, removeableAtoms);
+};
+
+const removeAtomFromLineByIndex = (lines, removeableAtoms) => {
+  const elementsInfo = lines[3];
+  const headers = elementsInfo.trim().split(' ').filter((i) => i !== '');
+  const atomsCount = parseInt(headers[0]);
+  for (let i = elementsInfo; i > atomsCount.length; i--) {
+    console.log(item);
+  }
+  return lines;
+};
+
+// function when a canvas is saved using main "SAVE" button
+const arrangePolymers = async (canvasData) => {
+  mols.forEach((item) => latestData[item]?.atoms.map((i) => allAtoms.push(i)));
+  const editorData = canvasData.trim();
+  let lines = ['', ...editorData.split('\n')];
+  lines = await removeUnfamiliarRgLabels(lines);
+
+  if (lines.length < 5) return { ket2Molfile: null, svgElement: null };
+  const elementsInfo = lines[3];
+
+  const headers = elementsInfo.trim().split(' ').filter((i) => i !== '');
+  const atomsCount = parseInt(headers[0]);
+  const bondsCount = parseInt(headers[1]);
+
+  const additionalDataStart = KET_TAGS.molfileHeaderLinenumber + atomsCount + bondsCount;
+  const additionalDataEnd = lines.length - 1;
+
+  const ket2Lines = await reAttachPolymerList({
+    lines, atomsCount, additionalDataStart, additionalDataEnd, allAtoms
+  });
+  return ket2Lines;
+};
+
+// helper functon to arrange text nodes for formula
+const arrangeTextNodes = async (ket2Molfile) => {
+  ket2Molfile.push(KET_TAGS.textNodeIdentifier);
+  let atomCount = 0;
+  const assembleTextList = [];
+  mols.forEach(async (item) => {
+    const textSeparator = KET_TAGS.textIdentifier;
+    latestData[item]?.atoms.forEach(async (atom) => {
+      const textNodeKey = textNodeStruct[atom.alias];
+      if (textNodeKey) {
+        textList.forEach((item) => {
+          const block = JSON.parse(item.data.content).blocks[0];
+          if (textNodeKey === block.key) {
+            const line = [
+              atomCount,
+              textSeparator,
+              textNodeKey,
+              textSeparator,
+              atom.alias,
+              textSeparator,
+              block.text
+            ].join('').trim();
+            assembleTextList.push(line);
+          }
+        });
+      } else {
+        console.log();
+      }
+      atomCount += 1;
+    });
+  });
+  ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
+  return ket2Molfile;
+};
+
+// process text nodes into for formula
+const assembleTextDescriptionFormula = async (ket2Lines) => {
+  const startAtoms = 3;
+  const atomsCount = ket2Lines[3].trim().split(' ')[0];
+  const startTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifier);
+  const endTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifierClose);
+  const endAtom = parseInt(atomsCount) + 3;
+  const textNodesPairs = await collectTextListing(ket2Lines, startTextNode, endTextNode);
+  const formula = await treverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
+  return formula;
+};
+
+// collect text node with index
+const collectTextListing = async (ket2Lines, startTextNode, endTextNode) => {
+  const struct = {};
+  for (let i = startTextNode + 1; i < endTextNode; i++) {
+    const item = ket2Lines[i].split(KET_TAGS.textIdentifier);
+    if (item.length == 4) {
+      const [idx, , , text] = item;
+      struct[idx] = text;
+    }
+  }
+  return struct;
+};
+
+/* istanbul ignore next */
+// container function for onAddAtom
+const onAddAtom = async (editor) => {
+  if (editor && editor.structureDef) {
+    await fetchKetcherData(editor);
+    const { d, isConsistent } = await handleAddAtom();
+    if (!isConsistent) {
+      console.error('Generated aliases are inconsistent. Please try reopening the canvas again.');
+      return null;
+    }
+    await saveMoveCanvas(editor, d, true, true);
+    ImagesToBeUpdatedSetter(true);
+  }
+  return null;
+};
+
+// helper function to delete a pair of textnode by value
+const deleteKeyByValue = (valueToDelete, textNodeStruct) => {
+  // Iterate over each key-value pair in the object
+  for (const key in textNodeStruct) {
+    if (textNodeStruct.hasOwnProperty(key) && textNodeStruct[key] === valueToDelete) {
+      delete textNodeStruct[key]; // Delete the key if the value matches
+    }
+  }
+  return textNodeStruct;
+};
+
+// helper function when a text node is deleted
+const onDeleteText = async (editor, textList, textNodeStruct) => {
+  console.log('Delete text in in?');
+  await fetchKetcherData(editor);
+  textList.forEach((item, idx) => {
+    const { key } = JSON.parse(item.data.content).blocks[0];
+    if (!Object.values(textNodeStruct).includes(key)) {
+      textNodeStruct = deleteKeyByValue(key, textNodeStruct);
+      textList.splice(idx, 1);
+    }
+  });
+  return { textNodeStruct, textList };
+};
+
+/* istanbul ignore next */
+// container function for on image delete
+const onDeleteImage = async (editor, canvasSelection, oldImagePack, textL) => {
+  const data = await handleOnDeleteImage(canvasSelection, oldImagePack, textL);
+  await saveMoveCanvas(editor, data, false, true);
+};
+
+// sort and join / text nodes
+const treverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
+  let count = 0;
+  for (let i = startAtoms + 1; i <= endAtom; i++) {
+    const pairValue = textNodesPairs[count];
+    if (pairValue) {
+      delete textNodesPairs[count];
+      const Y = parseFloat(ket2Lines[i].trim().split('   ')[1]);
+      textNodesPairs[Y.toFixed(4)] = pairValue;
+    }
+    count++;
+  }
+  const sortedYIndices = Object.fromEntries(
+    Object.entries(textNodesPairs).sort(([a], [b]) => parseFloat(b) - parseFloat(a))
+  );
+  return Object.values(sortedYIndices).join('/');
+};
+
+// function to add text nodes to canvas/struct
+const onAddText = async (editor, selectedImageForTextNode) => {
+  if (editor && editor.structureDef && selectedImageForTextNode) {
+    await fetchKetcherData(editor);
+    const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+    if (!atomLocation && !atomLocation?.length) return null;
+
+    // sync positions between atom alias, and textnode
+    const { width } = imagesList[selectedImageForTextNode[0]]?.boundingBox || 10;
+    const lastTextNode = textList[textList.length - 1];
+    lastTextNode.data.position = {
+      x: atomLocation[0] + width / 2,
+      y: atomLocation[1],
+      z: atomLocation[2]
+    };
+    textList[textList.length - 1] = lastTextNode;
+    // prepare data nodes
+    const dataRoot = removeTextFromData(latestData);
+    dataRoot.push(...textList);
+    latestData.root.nodes = dataRoot;
+
+    await editor.structureDef.editor.setMolecule(JSON.stringify(latestData), false);
+    textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
+  }
+  imageNodeForTextNodeSetter(null);
+};
+
+async function getSvgFromBlob(imageBlob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      resolve(event.target.result); // Return the SVG string
+    };
+
+    reader.onerror = function(error) {
+      reject(error);
+    };
+
+    reader.readAsText(imageBlob);
+  });
+}
+
+const reArrangeImagesOnCanvasViaKetcher = async (editor) => {
+  try {
+    const latestDataCopy = JSON.stringify(latestData);
+    const imageBlob = await editor.structureDef.editor.generateImage(latestDataCopy, { outputFormat: 'svg' });
+    const svgString = await getSvgFromBlob(imageBlob);
+    return svgString;
+  } catch (err) {
+    console.log(err.message);
+    return null;
+  }
+};
+
+/* istanbul ignore next */
+// helper function for saving molfile => re-layering images from iframe
+const reArrangeImagesOnCanvas = async (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  const svg = iframeDocument.querySelector('svg');
+  const imageElements = iframeDocument.querySelectorAll('image');
+
+  imageElements.forEach((img) => {
+    const width = img.getAttribute('width');
+    const height = img.getAttribute('height');
+    const x = img.getAttribute('x');
+    const y = img.getAttribute('y');
+
+    const newImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    newImg.setAttribute('x', x);
+    newImg.setAttribute('y', y);
+    newImg.setAttribute('width', width);
+    newImg.setAttribute('height', height);
+    newImg.setAttribute('href', img.getAttribute('href'));
+    newImg.setAttribute('preserveAspectRatio', 'none');
+    img.replaceWith(newImg);
+  });
+  const svgElement = new XMLSerializer().serializeToString(svg);
+  return svgElement;
 };
 
 export {
@@ -624,6 +1084,23 @@ export {
   fetchSurfaceChemistryImageData,
   updateBondList,
   findAtomByImageIndex,
+  adjustImageCoordinatesAtomDependent,
+  placeImageOnAtoms,
+  findByKeyAndUpdateTextNodePosition,
+  placeTextOnAtoms,
+  addPolymerTags,
+  addTextNodes,
+  isAliasConsistent,
+  removeTextNodeFromStruct,
+  handleOnDeleteImage,
+  arrangePolymers,
+  arrangeTextNodes,
+  assembleTextDescriptionFormula,
+  onAddAtom,
+  deleteKeyByValue,
+  onDeleteText,
+  onAddText,
+  onDeleteImage,
 
   // DOM Methods
   disableButton,
@@ -633,8 +1110,10 @@ export {
   makeTransparentByTitle,
   undoKetcher,
   redoKetcher,
-  mainImageSizingOnRerender,
   addTextNodeDescriptionOnTextPopup,
+  reArrangeImagesOnCanvas,
+  reArrangeImagesOnCanvasViaKetcher,
+  buttonClickForRectangleSelection,
 
   // setters
   ImagesToBeUpdatedSetter,
