@@ -41,6 +41,7 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
 export default class WellplateDetails extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -252,6 +253,7 @@ export default class WellplateDetails extends Component {
               <span className="mx-2">{wellplate.name}</span>
             </span>
           </OverlayTrigger>
+          <ShowUserLabels element={wellplate} />
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
         </div>
@@ -330,6 +332,10 @@ export default class WellplateDetails extends Component {
             changeProperties={(c) => this.handleChangeProperties(c)}
             handleAddReadout={(c) => this.handleAddReadout(c)}
             handleRemoveReadout={(c) => this.handleRemoveReadout(c)}
+          />
+          <EditUserLabels
+            element={wellplate}
+            fnCb={this.handleWellplateChanged}
           />
           <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
           {' '}

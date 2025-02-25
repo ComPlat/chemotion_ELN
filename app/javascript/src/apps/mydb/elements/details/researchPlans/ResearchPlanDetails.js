@@ -44,6 +44,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
 export default class ResearchPlanDetails extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -502,6 +503,7 @@ export default class ResearchPlanDetails extends Component {
                 <span className="mx-1">{researchPlan.name}</span>
               </span>
             </OverlayTrigger>
+            <ShowUserLabels element={researchPlan} />
             <ElementCollectionLabels element={researchPlan} placement="right" />
             <HeaderCommentSection element={researchPlan} />
           </div>
@@ -541,6 +543,10 @@ export default class ResearchPlanDetails extends Component {
             !researchPlan.isNew && <CommentSection section="research_plan_research_plan" element={researchPlan} />
           }
           {this.renderResearchPlanMain(researchPlan)}
+          <EditUserLabels
+            element={researchPlan}
+            fnCb={this.handleResearchPlanChange}
+          />
           <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
         </Tab>
       ),

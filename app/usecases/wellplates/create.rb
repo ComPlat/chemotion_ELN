@@ -3,6 +3,7 @@
 module Usecases
   module Wellplates
     class Create
+      include UserLabelHelpers
       attr_reader :params, :current_user
 
       def initialize(params, current_user)
@@ -12,10 +13,11 @@ module Usecases
 
       def execute! # rubocop:disable Metrics/AbcSize
         ActiveRecord::Base.transaction do
-          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments, :size))
+          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments, :size, :user_labels))
           wellplate.set_short_label(user: @current_user)
           wellplate.reload
           wellplate.save_segments(segments: params[:segments], current_user_id: @current_user.id)
+          update_element_labels(wellplate, params[:user_labels], @user_id)
 
           is_shared_collection = false
           if user_collection

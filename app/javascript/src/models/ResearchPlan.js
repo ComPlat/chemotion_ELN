@@ -56,6 +56,7 @@ export default class ResearchPlan extends Element {
       container: Container.init(),
       changed: true,
       can_update: true,
+      user_labels: [],
       attachments: [],
       wellplates: [],
       segments: []
@@ -69,6 +70,7 @@ export default class ResearchPlan extends Element {
       attachments: this.attachments,
       container: this.container,
       wellplate_ids: this.wellplateIDs,
+      user_labels: this.user_labels || [],
       segments: this.segments.map((s) => s.serialize())
     });
   }
@@ -189,6 +191,14 @@ export default class ResearchPlan extends Element {
 
   get segments() {
     return this._segments || [];
+  }
+
+  userLabels() {
+    return this.user_labels;
+  }
+
+  setUserLabels(userLabels) {
+    this.user_labels = userLabels;
   }
 
   set wellplates(wellplates) {
