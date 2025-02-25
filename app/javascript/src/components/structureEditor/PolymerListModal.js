@@ -38,17 +38,16 @@ function PolymerListModal({
   useEffect(() => {
     const fetchTemplateList = async () => {
       try {
-        const response = await fetch('/json/surfaceChemistryShapes.json'); // Path to your JSON file
-        const templateListStorage = await response.json(); // Parse the JSON response
-        setShapeList(templateListStorage); // Set the fetched data in the state
+        const response = await fetch('/json/surfaceChemistryShapes.json');
+        const templateListStorage = await response.json();
+        setShapeList(templateListStorage);
       } catch (error) {
-        console.error('Error fetching the JSON data:', error); // Handle any errors
+        console.error('Error fetching the JSON data:', error);
       }
     };
 
-    fetchTemplateList(); // Call the fetch function when the component mounts
-  }, []); // Empty dependency array means this effect runs once when the component mounts
-
+    fetchTemplateList();
+  }, []);
   return (
     <Modal
       centered

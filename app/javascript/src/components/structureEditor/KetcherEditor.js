@@ -14,11 +14,26 @@ import React, {
 import {
   // methods
   hasKetcherData,
-  addingPolymersToKetcher,
   prepareImageFromTemplateList,
-  removeImageTemplateAtom,
-  reAttachPolymerList,
   removeImagesFromData,
+  addPolymerTags,
+  addTextNodeDescriptionOnTextPopup,
+  addTextNodes,
+  arrangePolymers,
+  arrangeTextNodes,
+  assembleTextDescriptionFormula,
+  hasTextNodes,
+  isAliasConsistent,
+  onAddAtom,
+  onAddText,
+  onDeleteImage,
+  onDeleteText,
+  placeImageOnAtoms,
+  placeTextOnAtoms,
+  reArrangeImagesOnCanvas,
+  redoKetcher,
+  removeTextFromData,
+  undoKetcher,
 
   // DOM Methods
   attachListenerForTitle,
@@ -39,9 +54,14 @@ import {
   ImagesToBeUpdated,
   allowProcessing,
   fetchSurfaceChemistryImageData
+
 } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
-import { PolymerListIconKetcherToolbarButton, PolymerListModal, rescaleToolBarButoon } from 'src/components/structureEditor/PolymerListModal';
-import { addTextNodeDescriptionOnTextPopup, findAtomByImageIndex, hasTextNodes, redoKetcher, removeTextFromData, undoKetcher } from '../../utilities/Ketcher2SurfaceChemistryUtils';
+import {
+  PolymerListIconKetcherToolbarButton,
+  PolymerListModal,
+  rescaleToolBarButoon
+} from 'src/components/structureEditor/PolymerListModal';
+import { buttonClickForRectangleSelection } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -56,7 +76,7 @@ export let canvasSelection = null; // contains list of images, atoms, bonds sele
 export let deletedAtoms = []; // has a list of deleted atoms on delete "atom event"
 export let textList = []; // contains a list of original images when tool bar buttons are called
 export let textNodeStruct = {}; // contains a list of original text when tool bar buttons are called
-
+export let allTemplates = {};
 // local
 let oldImagePack = [];
 let selectedImageForTextNode = null;
@@ -100,6 +120,14 @@ export const canvasSelectionSetter = async (data) => {
   canvasSelection = data;
 };
 
+export const imageNodeForTextNodeSetter = async (data) => {
+  selectedImageForTextNode = data;
+};
+
+export const templateListSetter = async (data) => {
+  allTemplates = data;
+};
+
 // image counter is strictly related and synced with how many images are there in the canvas
 export const imageUsedCounterSetter = async (count) => {
   imageNodeCounter = count;
@@ -112,7 +140,7 @@ export const deleteAtomListSetter = async (data) => {
 
 /* istanbul ignore next */
 // helper function to rebase with the ketcher canvas data
-const fetchKetcherData = async (editor) => {
+export const fetchKetcherData = async (editor) => {
   try {
     if (!editor) throw new 'Editor instance is invalid'();
     latestData = JSON.parse(await editor.structureDef.editor.getKet());
@@ -122,165 +150,14 @@ const fetchKetcherData = async (editor) => {
   }
 };
 
-// helper function to remove images from the ket file on atom move or manual atom move
-export const moveTemplate = async () => {
+const fetchTemplateList = async () => {
   try {
-    // if (!latestData) await fetchKetcherData(editor);
-    latestData.root.nodes = removeImagesFromData(latestData);
-  } catch (err) {
-    console.error('moveTemplate', err.message);
+    const response = await fetch('/json/surfaceChemistryShapes.json'); // Path to your JSON file
+    const templateListStorage = await response.json(); // Parse the JSON response
+    return templateListStorage;
+  } catch (error) {
+    console.error('Error fetching the JSON data:', error); // Handle any errors
   }
-};
-
-// helper function set image coordinates
-const adjustImageCoordinatesAtomDependent = (imageCoordinates, location) => ({
-  ...imageCoordinates,
-  x: location[0] - imageCoordinates.width / 2,
-  y: location[1] + imageCoordinates.height / 2,
-  z: 0,
-});
-
-// generates list of images with atom location based on alias present in ket2 format
-export const placeImageOnAtoms = async (mols_, imagesList_) => {
-  try {
-    const imageListParam = imagesList_;
-    mols_.forEach(async (item) => {
-      latestData[item]?.atoms.forEach((atom) => {
-        if (atom && ALIAS_PATTERNS.threeParts.test(atom?.alias)) {
-          const aliasSplits = atom.alias.split('_');
-          const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
-          if (!imageCoordinates) {
-            throw new ('Invalid alias')();
-          }
-          const boundingBox = adjustImageCoordinatesAtomDependent(imageCoordinates, atom.location, aliasSplits[1]);
-          imageListParam[aliasSplits[2]].boundingBox = boundingBox;
-        }
-      });
-    });
-    latestData.root.nodes = [...removeImagesFromData(latestData), ...imageListParam];
-  } catch (err) {
-    console.error('placeImageOnAtoms', err.message);
-  }
-};
-
-const findByKeyAndUpdateTextNodePositon = async (key, atomLocation, alias) => {
-  // Iterate through each item in the textList
-  const splits = alias.split("_")[2];
-  const width = imagesList[splits]?.boundingBox?.width || 1;
-  textList?.map((textNode) => {
-    // Check if the key matches
-    const content = JSON.parse(textNode.data.content); // Parse the content to access blocks
-    if (content.blocks[0].key === key) {
-      textNode.data.position = {
-        x: atomLocation[0] + width / 2,
-        y: atomLocation[1],
-        z: atomLocation[2]
-      };
-      return textNode;
-    }
-    return textNode;
-  });
-};
-
-export const placeTextOnAtoms = async (mols_) => {
-  try {
-    mols_.forEach(async (item) => {
-      latestData[item]?.atoms.forEach(async (atom) => {
-        const textNodeKey = textNodeStruct[atom.alias];
-        if (atom && ALIAS_PATTERNS.threeParts.test(atom?.alias) && textNodeKey) {
-          await findByKeyAndUpdateTextNodePositon(textNodeKey, atom.location, atom?.alias);
-        }
-      });
-    });
-    latestData.root.nodes = [...removeTextFromData(latestData), ...textList];
-  } catch (err) {
-    console.error('placeImageOnAtoms', err.message);
-  }
-};
-
-// generating images for ket2 format from molfile polymers list
-export const addPolymerTags = async (polymerTag, data) => {
-  const collectedImages = [];
-  if (polymerTag && polymerTag.length) {
-    const processedResponse = await addingPolymersToKetcher(polymerTag, data, imageNodeCounter);
-    imageNodeCounter = processedResponse.image_counter;
-    processedResponse.molfileData?.root?.nodes.push(...processedResponse.c_images);
-    return {
-      collected_images: processedResponse.c_images,
-      molfileData: processedResponse.molfileData
-    };
-  }
-  return { collectedImages, molfileData: data };
-};
-
-// generating images for ket2 format from molfile polymers list
-export const addTextNodes = async (textNodes) => {
-  return textNodes.map((item) => {
-    const [idx, key, alias, description] = item.split(KET_TAGS.textIdentifier);
-    textNodeStruct[alias] = key;
-    return {
-      "type": "text",
-      "data": {
-        "content": `{\"blocks\":[{\"key\":\"${key}\",\"text\":\"${description}\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}`,
-        "position": {
-          "x": 10.325000000000001,
-          "y": -11.325000000000001,
-          "z": 0
-        },
-        "pos": [
-          {
-            "x": 10.325000000000001,
-            "y": -11.325000000000001,
-            "z": 0
-          },
-          {
-            "x": 10.325000000000001,
-            "y": -11.700000000000001,
-            "z": 0
-          },
-          {
-            "x": 10.68671875,
-            "y": -11.700000000000001,
-            "z": 0
-          },
-          {
-            "x": 10.68671875,
-            "y": -11.325000000000001,
-            "z": 0
-          }
-        ]
-      }
-    };
-  });
-};
-
-// helper function to test alias list consistency 0,1,2,3,4...
-export const isAliasConsistent = () => {
-  const indicesList = [];
-  mols.forEach((mol) => {
-    const molecule = latestData[mol];
-    const atoms = molecule?.atoms;
-
-    atoms?.forEach((item) => {
-      if (item.alias) {
-        const splits = item.alias.split('_');
-        const index = parseInt(splits[2], 10);
-
-        // Check for duplicates
-        if (indicesList.indexOf(index) === -1) {
-          indicesList.push(index);
-        }
-      }
-    });
-  });
-
-  indicesList.sort((a, b) => a - b);
-  for (let i = 0; i < indicesList.length; i++) {
-    if (indicesList[i] !== i) {
-      return false; // Missing or incorrect number sequence
-    }
-  }
-  return true; // Passed all checks
 };
 
 /* IMP: helper function when new atom is added or rebase for alias
@@ -344,7 +221,7 @@ const addAtomAliasHelper = async (processedAtoms) => {
     return { d, isConsistent: isAliasConsistent() };
   } catch (err) {
     console.error('addAtomAliasHelper', err.message);
-    return null;
+    return { d: null, isConsistent: false };
   }
 };
 
@@ -370,69 +247,12 @@ export const handleAddAtom = async () => {
   return addAtomAliasHelper(processedAtoms);
 };
 
-const removeTextNodeFromStruct = (images, data) => {
-  const keysToDel = [];
-  images.forEach(num => {
-    Object.keys(textNodeStruct).forEach(key => {
-      // Split the key by underscores and check if the third part matches the number
-      const parts = key.split('_');
-      if (parts[2] && parseInt(parts[2]) === num) {
-        keysToDel.push(textNodeStruct[key]);
-      }
-    });
-  });
-
-  textList.forEach((item, idx) => {
-    if (keysToDel.indexOf(JSON.parse(item.data.content).blocks[0].key) != -1) {
-      textList.splice(idx, 1);
-    }
-  });
-
-  return textList;
-
-};
-
-// helper function to remove template by image
-export const handleOnDeleteImage = async () => {
-  mols = mols.filter((item) => item != null);
-  let images = canvasSelection?.images || [];
-  if (!images.length) images = deepCompare(oldImagePack, imagesList);
-  const filteredTextList = removeTextNodeFromStruct(images, latestData);
-
-  const { data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
-  imageNodeCounter -= imageFoundIndexCount;
-
-  const dataRoot = removeTextFromData(data);
-  dataRoot.push(...filteredTextList);
-  latestData.root.nodes = dataRoot;
-  return latestData;
-};
-
-function deepCompare(oldArray, newArray) {
-  const removedIndexes = [];
-
-  // Loop through the old array to find missing elements
-  for (let i = 0; i < oldArray.length; i++) {
-    let isFound = false;
-    for (let j = 0; j < newArray.length; j++) {
-      if (JSON.stringify(oldArray[i]) === JSON.stringify(newArray[j])) {
-        isFound = true;
-        break;
-      }
-    }
-    // If element from old array not found in new array, mark it as removed
-    if (!isFound) {
-      removedIndexes.push(i);
-    }
-  }
-  return removedIndexes;
-}
-
 // helper function to remove template by atom with alias
 export const handleOnDeleteAtom = async (deleteCopy) => {
   try {
     const data = { ...latestData };
-    deleteCopy.forEach((item) => {
+    console.log({ deleteCopy }, 'delete copy from handle');
+    deleteCopy?.forEach((item) => {
       if (ALIAS_PATTERNS.threeParts.test(item.alias)) {
         const deletedSplits = parseInt(item.alias.split('_')[2]);
 
@@ -461,101 +281,17 @@ export const handleOnDeleteAtom = async (deleteCopy) => {
   }
 };
 
-// function when a canvas is saved using main "SAVE" button
-export const arrangePolymers = async (canvasData) => {
-  mols.forEach((item) => latestData[item]?.atoms.map((i) => allAtoms.push(i)));
-  const editorData = canvasData.trim();
-  const lines = ['', ...editorData.split('\n')];
-  if (lines.length < 5) return { ket2Molfile: null, svgElement: null };
-  const elementsInfo = lines[3];
-
-  const headers = elementsInfo.trim().split(' ').filter((i) => i !== '');
-  const atomsCount = parseInt(headers[0]);
-  const bondsCount = parseInt(headers[1]);
-
-  const additionalDataStart = KET_TAGS.molfileHeaderLinenumber + atomsCount + bondsCount;
-  const additionalDataEnd = lines.length - 1;
-
-  const ket2Molfile = await reAttachPolymerList({
-    lines, atomsCount, additionalDataStart, additionalDataEnd, allAtoms
-  });
-  return ket2Molfile;
-};
-
-export const arrangeTextNodes = async (ket2Molfile) => {
-  ket2Molfile.push(KET_TAGS.textNodeIdentifier);
-  let atomCount = 0;
-  const assembleTextList = [];
-  mols.forEach(async (item) => {
-    const textSeparator = KET_TAGS.textIdentifier;
-    latestData[item]?.atoms.forEach(async (atom) => {
-      const textNodeKey = textNodeStruct[atom.alias];
-      if (textNodeKey) {
-        textList.forEach(item => {
-          const block = JSON.parse(item.data.content).blocks[0];
-          if (textNodeKey === block.key) {
-            const line = [
-              atomCount,
-              textSeparator,
-              textNodeKey,
-              textSeparator,
-              atom.alias,
-              textSeparator,
-              block.text
-            ].join('').trim();
-            assembleTextList.push(line);
-          }
-        });
-      } else {
-        console.log();
-      }
-      atomCount += 1;
-    });
-  });
-  ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
-  return ket2Molfile;
-};
-
-/* istanbul ignore next */
-// helper function for saving molfile => re-layering images from iframe
-const reArrangeImagesOnCanvas = async (iframeRef) => {
-  const iframeDocument = iframeRef?.current?.contentWindow?.document;
-  const svg = iframeDocument.querySelector('svg');
-  const imageElements = iframeDocument.querySelectorAll('image');
-
-  imageElements.forEach((img) => {
-    const width = img.getAttribute('width');
-    const height = img.getAttribute('height');
-    const x = img.getAttribute('x');
-    const y = img.getAttribute('y');
-
-    const newImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-    newImg.setAttribute('x', x);
-    newImg.setAttribute('y', y);
-    newImg.setAttribute('width', width);
-    newImg.setAttribute('height', height);
-    newImg.setAttribute('href', img.getAttribute('href'));
-
-    img.replaceWith(newImg);
-  });
-
-  // Ensure SVG has a proper viewBox
-  svg.setAttribute('viewBox', '0 0 500 500');
-
-  const svgElement = new XMLSerializer().serializeToString(svg);
-  return svgElement;
-};
-
 /* istanbul ignore next */
 // save molfile with source, should_fetch, should_move
-const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
+export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
   const dataCopy = data || latestData;
   if (editor) {
-    if (recenter || !imagesList.length) {
-      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
+    if (recenter || (latestData && !imagesList.length)) {
+      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), true);
     } else {
-      await editor.structureDef.editor.setMoleculeWithoutStructCenter(JSON.stringify(dataCopy));
+      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
     }
+
     if (isFetchRequired) {
       fetchKetcherData(editor);
     }
@@ -574,7 +310,7 @@ const onTemplateMove = async (editor, recenter = false) => {
   if (!editor || !editor.structureDef) return;
 
   // for tool bar button events
-  if (!recenter && imageListCopyContainer.length || textListCopyContainer.length) {
+  if (!recenter && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
 
@@ -586,89 +322,17 @@ const onTemplateMove = async (editor, recenter = false) => {
 
   // second fetch save and place
   await fetchKetcherData(editor);
-  await placeImageOnAtoms(molCopy, imageListCopy);
-  await placeTextOnAtoms(molCopy, textListCopy);
+  const imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
+  latestData.root.nodes = imageNodes;
+  const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
+  latestData.root.nodes = textNodes;
   await saveMoveCanvas(editor, null, true, false, recenter);
 
   // clear required
-  ImagesToBeUpdatedSetter(true);// perform image layer in DOM
+  ImagesToBeUpdatedSetter(true); // perform image layer in DOM
   reloadCanvas = false; // stop load canvas
   imageListCopyContainer = [];
   textListCopyContainer = [];
-};
-
-/* istanbul ignore next */
-// container function for onAddAtom
-const onAddAtom = async (editor) => {
-  if (editor && editor.structureDef) {
-    await fetchKetcherData(editor);
-    const { d, isConsistent } = await handleAddAtom();
-    if (!isConsistent) {
-      console.error('Generated aliases are inconsistent. Please try reopening the canvas again.');
-      return null;
-    }
-    await saveMoveCanvas(editor, d, true, true);
-    ImagesToBeUpdatedSetter(true);
-  }
-  return null;
-};
-
-// helper function to delete a pair of textnode by value
-const deleteKeyByValue = (valueToDelete) => {
-  // Iterate over each key-value pair in the object
-  for (const key in textNodeStruct) {
-    if (textNodeStruct.hasOwnProperty(key) && textNodeStruct[key] === valueToDelete) {
-      delete textNodeStruct[key]; // Delete the key if the value matches
-    }
-  }
-};
-
-// helper function when a text node is deleted
-const onDeleteText = async (editor) => {
-  console.log('Delete text in in?');
-  await fetchKetcherData(editor);
-  textList.forEach((item, idx) => {
-    const key = JSON.parse(item.data.content).blocks[0].key;
-    if (!Object.values(textNodeStruct).includes(key)) {
-      deleteKeyByValue(key);
-      textList.splice(idx, 1);
-    }
-  });
-};
-
-const onAddText = async (editor) => {
-  if (editor && editor.structureDef && selectedImageForTextNode) {
-    await fetchKetcherData(editor);
-    const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
-    if (!atomLocation && !atomLocation?.length) return null;
-
-    // sync positions between atom alias, and textnode
-    const { width } = imagesList[selectedImageForTextNode[0]]?.boundingBox || 10;
-    const lastTextNode = textList[textList.length - 1];
-    lastTextNode.data.position = {
-      x: atomLocation[0] + width / 2,
-      y: atomLocation[1],
-      z: atomLocation[2]
-    };
-    textList[textList.length - 1] = lastTextNode;
-    // prepare data nodes
-    const dataRoot = removeTextFromData(latestData);
-    dataRoot.push(...textList);
-    latestData.root.nodes = dataRoot;
-
-    await editor.structureDef.editor.setMoleculeWithoutStructCenter(JSON.stringify(latestData));
-    textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
-  }
-  selectedImageForTextNode = null;
-};
-
-/* istanbul ignore next */
-// container function for on image delete
-const onDeleteImage = async (editor) => {
-  if (editor && editor.structureDef && !deletedAtoms.length) {
-    const data = await handleOnDeleteImage();
-    await saveMoveCanvas(editor, data, false, true);
-  }
 };
 
 // remove a node from root.nodes by index num
@@ -686,15 +350,21 @@ const onAtomDelete = async (editor) => {
   if (editor && editor.structureDef) {
     const molCopy = mols;
     const imageListCopy = imagesList;
-    let deleteCopy = deletedAtoms;
+    const deleteCopy = deletedAtoms;
     const alias = deletedAtoms[0]?.alias;
     const lastAliasInd = parseInt(alias?.split('_')[2]);
     await fetchKetcherData(editor);
 
+    if (!deleteCopy.length) {
+      FILOStack = [];
+      uniqueEvents.clear();
+      return;
+    }
+
     // when mols and images are changed
     if (molCopy.length > mols.length && imagesList.length > imageListCopy.length) {
       console.log(685);
-      await editor.structureDef.editor.setMoleculeWithoutStructCenter(JSON.stringify(latestData));
+      await editor.structureDef.editor.setMolecule(JSON.stringify(latestData), false);
       return;
     }
 
@@ -723,40 +393,46 @@ const onAtomDelete = async (editor) => {
       imagesList.splice(lastAliasInd, 1);
     }
 
-    console.log("out");
+    console.log('out');
     imageNodeCounter -= deleteCopy.length; // update image used counter
 
     await filterTextList(deleteCopy); // rever text node structure
     await revaluateTextStructureIndecies(deleteCopy); // rever text node structure
 
     latestData = await handleOnDeleteAtom(deleteCopy); // rebase atom aliases
-    await placeImageOnAtoms(molCopy, imagesList);
+    const nodes = await placeImageOnAtoms(molCopy, imagesList);
+    latestData.root.nodes = nodes;
     await saveMoveCanvas(editor, null, false, true);
     deletedAtoms = [];
+  } else {
+    console.log("else---out");
   }
 };
 
+// filter text nodes by key, key as in text key
 const filterTextList = async (deleteCopy) => {
   // re-verb all the index when deleted index is small then existing third part
-  const deleteLiasAlias = deleteCopy.map(i => i.alias);
-  let valuesList = deleteLiasAlias.map(i => textNodeStruct[i]).filter(v => v != null);;
+  const deleteLiasAlias = deleteCopy.map((i) => i.alias);
+  const valuesList = deleteLiasAlias.map((i) => textNodeStruct[i]).filter((v) => v != null);
 
   const newTextList = textList.map((i) => {
-    if (valuesList.indexOf(JSON.parse(i.data.content).blocks[0].key) == -1) {
+    if (valuesList.indexOf(JSON.parse(i.data.content).blocks[0].key) === -1) {
       return i;
     }
-  }).filter(v => v != null);
+  }).filter((v) => v != null);
 
   if (valuesList.length) {
     latestData.root.nodes = [...removeTextFromData(latestData), ...newTextList];
     textList = [...newTextList];
   }
 };
+
+// re-evalute text nodes and aliases
 const revaluateTextStructureIndecies = async (deleteCopy) => {
-  const deleteLiasAlias = deleteCopy.filter(i => textNodeStruct[i.alias]);
+  const deleteLiasAlias = deleteCopy.filter((i) => textNodeStruct[i.alias]);
   if (deleteLiasAlias.length) {
     const textNodeCopy = {};
-    Object.keys(textNodeStruct).forEach(item => {
+    Object.keys(textNodeStruct).forEach((item) => {
       const value = textNodeStruct[item];
       const splits = item.split('_');
       if (deleteLiasAlias.indexOf(item) != -1) {
@@ -767,6 +443,20 @@ const revaluateTextStructureIndecies = async (deleteCopy) => {
     });
     textNodeStruct = { ...textNodeCopy };
   }
+};
+
+const fetchAndReplace = () => {
+  imageListCopyContainer = [...imagesList];
+  textListCopyContainer = [...textList];
+  // addEventToFILOStack('Move atom');
+};
+
+const removeTextNodeDescriptionOnTextPopup = () => {
+  const paragraph = document.getElementById(KET_TAGS.templateEditProps.id);
+  if (paragraph) {
+    paragraph.remove();
+  }
+  selectedImageForTextNode = null;
 };
 
 /* istanbul ignore next */
@@ -784,6 +474,8 @@ const KetcherEditor = forwardRef((props, ref) => {
   const eventOperationHandlers = {
     'Load canvas': async () => {
       if (reloadCanvas) onTemplateMove(editor, true);
+      ImagesToBeUpdatedSetter(true);
+      await runImageLayering();
     },
     'Move image': async () => {
       console.log('Move image');
@@ -794,21 +486,22 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack('Add atom');
     },
     'Upsert image': async () => {
+      oldImagePack = [...imagesList];
       console.log('Upsert image');
       addEventToFILOStack('Upsert image');
     },
     'Move atom': async (eventItem) => {
       console.log('Move atom');
-      const { exists } = isCanvasUpdateRequiredOnMove(eventItem);
-      allowProcessingSetter(exists);
+      // const { exists } = isCanvasUpdateRequiredOnMove(eventItem);
+      allowProcessingSetter(true);
       addEventToFILOStack('Move atom');
     },
     'Delete image': async () => {
+      console.log('Delete image');
       oldImagePack = [...imagesList];
       addEventToFILOStack('Delete image');
     },
     'Delete atom': async (eventItem) => {
-      console.log('Delete atom', eventItem);
       let atomCount = -1;
       if (eventItem.label === KET_TAGS.inspiredLabel) {
         for (let m = 0; m < mols?.length; m++) {
@@ -822,8 +515,8 @@ const KetcherEditor = forwardRef((props, ref) => {
           }
         }
         oldImagePack = [...imagesList];
-        addEventToFILOStack('Delete atom');
       }
+      addEventToFILOStack('Delete atom');
     },
     'Add text': async () => {
       addEventToFILOStack('Add text');
@@ -840,33 +533,28 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Move image': async () => onTemplateMove(editor),
     'Delete image': async () => {
       await fetchKetcherData(editor);
-      await onDeleteImage(editor);
+      mols = mols.filter((item) => item != null);
+      await onDeleteImage(editor, canvasSelection, oldImagePack, textList, deletedAtoms);
     },
     'Move atom': async () => {
       await fetchKetcherData(editor);
       await onTemplateMove(editor, false);
     },
-    'Add atom': async () => onAddAtom(editor),
+    'Add atom': async () => await onAddAtom(editor),
     'Delete atom': async () => {
       await onAtomDelete(editor);
       canvasSelection = null;
     },
-    'Add text': async () => onAddText(editor),
-    'Delete text': async () => onDeleteText(editor)
-  };
-
-  const fetchAndReplace = () => {
-    imageListCopyContainer = [...imagesList];
-    textListCopyContainer = [...textList];
-    addEventToFILOStack('Move atom');
-  };
-
-  const removeTextNodeDescriptionOnTextPopup = () => {
-    const paragraph = document.getElementById(KET_TAGS.templateEditProps.id);
-    if (paragraph) {
-      paragraph.remove();
+    'Add text': async () => onAddText(editor, selectedImageForTextNode),
+    'Delete text': async () => {
+      const response = await onDeleteText(editor, textList, textNodeStruct);
+      textList = response.textList;
+      textNodeStruct = { ...response.textNodeStruct };
+    },
+    'Upsert image': async () => {
+      await fetchKetcherData(editor);
+      await onImageAddedOrCopied();
     }
-    selectedImageForTextNode = null;
   };
 
   // DOM button events with scope
@@ -879,7 +567,12 @@ const KetcherEditor = forwardRef((props, ref) => {
     "[title='Aromatize \\(Alt\\+A\\)']": async () => fetchAndReplace(),
     "[title='3D Viewer']": async () => fetchAndReplace(),
     // others
-    "[title='Rescale Polymer Canvas']": async () => onTemplateMove(editor, true),
+    "[title='Rescale Polymer Canvas']": async () => {
+      await fetchKetcherData(editor);
+      await saveMoveCanvas(editor, null, true, true, true);
+      ImagesToBeUpdatedSetter(true);
+      await runImageLayering();
+    },
     "[title='Open... \\(Ctrl\\+O\\)']": async () => removeTextNodeDescriptionOnTextPopup(),
     "[title='Save as... \\(Ctrl\\+S\\)']": async () => removeTextNodeDescriptionOnTextPopup(),
     "[title='Undo \\(Ctrl\\+Z\\)']": async () => undoKetcher(editor),
@@ -900,6 +593,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         iframe.addEventListener('load', attachClickListeners); // DOM change listener
       }
       window.addEventListener('message', loadContent); // molfile initializer
+      loadTemplates();
     }
     return () => {
       if (iframe) {
@@ -909,6 +603,15 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
   }, [editor]);
 
+  // add all the images at the end of the canvas
+  const runImageLayering = async () => {
+    if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
+      setTimeout(async () => {
+        await updateImagesInTheCanvas(iframeRef);
+      }, [100]);
+    }
+  };
+
   // enable editor change listener
   const onEditorContentChange = () => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
@@ -916,12 +619,17 @@ const KetcherEditor = forwardRef((props, ref) => {
       const result = await eventData;
       handleEventCapture(result);
     });
-    editor._structureDef.editor.editor.subscribe('selectionChange', async (eventData) => {
-      const currentSeletion = editor._structureDef.editor.editor._selection;
-      if (currentSeletion?.images) {
+    editor._structureDef.editor.editor.subscribe('selectionChange', async () => {
+      const currentSelection = editor._structureDef.editor.editor._selection;
+      if (currentSelection?.images) {
         selectedImageForTextNode = editor._structureDef.editor.editor._selection?.images;
       }
     });
+  };
+
+  const loadTemplates = async () => {
+    const response = await fetch('/json/surfaceChemistryShapes.json');
+    allTemplates = await response.json();
   };
 
   // Load the editor content and set up the molecule
@@ -936,11 +644,13 @@ const KetcherEditor = forwardRef((props, ref) => {
           console.error('invalid molfile. Please try again', err.message);
         });
         const fileContent = JSON.parse(ketFile.struct);
+
         // process polymers
         const { molfileData } = await addPolymerTags(polymerTag, fileContent);
         const textNodeList = await addTextNodes(textNodes, molfileData);
-        molfileData.root.nodes.push(...textNodeList);
-        saveMoveCanvas(editor, molfileData, true, true);
+        const filteredTextNodeList = textNodeList.filter((i) => i !== undefined);
+        if (filteredTextNodeList.length) molfileData.root.nodes.push(...filteredTextNodeList);
+        saveMoveCanvas(editor, molfileData, true, true, false);
         ImagesToBeUpdatedSetter(true);
       }
     }
@@ -998,34 +708,30 @@ const KetcherEditor = forwardRef((props, ref) => {
     return { exists: true, atom: targetAtom };
   };
 
-  // add all the images at the end of the canvas
-  const runImageLayering = async () => {
-    if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
-      setTimeout(async () => {
-        await updateImagesInTheCanvas(iframeRef);
-      }, [500]);
-    }
-  };
-
   // helper function to add event to stack
   const addEventToFILOStack = (event) => {
     if (event === 'Delete image' && FILOStack.includes('Delete atom')) {
-      // console.log('Cannot add "Delete image" after "Delete atom" event.');
+      console.log('Cannot add "Delete image" after "Delete atom" event.');
       return;
     }
 
     if (event === 'Delete atom' && FILOStack.includes('Move atom')) {
-      // console.log('Cannot add "Delete atom" after "Delete move" event.');
+      console.log('Cannot add "Delete atom" after "Move atom" event.');
       return;
     }
 
     if (event === 'Delete atom' && FILOStack.includes('Delete text')) {
-      // console.log('Cannot add "Delete atom" after "Delete text" event.');
+      console.log('Cannot add "Delete atom" after "Delete text" event.');
       return;
     }
 
     if (event === 'Delete image' && FILOStack.includes('Delete text')) {
-      // console.log('Cannot add "Delete image" after "Delete text" event.');
+      console.log('Cannot add "Delete image" after "Delete text" event.');
+      return;
+    }
+
+    if (event === 'Upsert image' && FILOStack.includes('Add atom')) {
+      console.log('Cannot add "Upsert image" after "Add atom" event.');
       return;
     }
 
@@ -1068,13 +774,13 @@ const KetcherEditor = forwardRef((props, ref) => {
 
         if (cancelButton) {
           cancelButton?.addEventListener('click', () => {
-            console.log("Cancel button clicked");
+            console.log('Cancel button clicked');
             selectedImageForTextNode = null;
           });
         }
         if (crossButton) {
           crossButton?.addEventListener('click', () => {
-            console.log("cross button clicked");
+            console.log('cross button clicked');
             selectedImageForTextNode = null;
           });
         }
@@ -1100,11 +806,9 @@ const KetcherEditor = forwardRef((props, ref) => {
         if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
           PolymerListIconKetcherToolbarButton(iframeDocument);
           rescaleToolBarButoon(iframeDocument);
-        } else {
-          if (iframeRef?.current?.onload) {
-            iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
-            iframeRef.current.onload = rescaleToolBarButoon;
-          }
+        } else if (iframeRef?.current?.onload) {
+          iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
+          iframeRef.current.onload = rescaleToolBarButoon;
         }
       }, 1000);
 
@@ -1126,20 +830,48 @@ const KetcherEditor = forwardRef((props, ref) => {
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
     onSaveFileK2SC: async () => {
-      await fetchKetcherData(editor);
-      const canvasDataMol = await editor.structureDef.editor.getMolfile();
-      let svgElement = await reArrangeImagesOnCanvas(iframeRef);
-      const ket2MolfilePolymerArranged = await arrangePolymers(canvasDataMol);
-      const ket2MolfileTextArranged = await arrangeTextNodes(ket2MolfilePolymerArranged);
-      resetStore();
-      ket2MolfileTextArranged.push(KET_TAGS.fileEndIdentifier);
-
-
-      return { ket2Molfile: ket2MolfileTextArranged.join('\n'), svgElement };
+      try {
+        let textNodesFormula = '';
+        await fetchKetcherData(editor);
+        const canvasDataMol = await editor.structureDef.editor.getMolfile();
+        const svgElement = await reArrangeImagesOnCanvas(iframeRef); // svg display
+        const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
+        const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
+        if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
+        ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
+        resetStore();
+        return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
+      } catch (e) {
+        console.log(e);
+        return e.message;
+      }
     }
   }));
 
-  const onShapeSelection = async (tempId) => {
+  const findTemplateId = async (templateList, targetPayload) => {
+    for (const category of templateList) {
+      for (const subTab of category.subTabs) {
+        for (const shape of subTab.shapes) {
+          if (shape.payload === targetPayload) {
+            return shape.template_id;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const onImageAddedOrCopied = async () => {
+    const item = imagesList[imagesList.length - 1];
+    const templateList = await fetchTemplateList();
+    const templateId = await findTemplateId(templateList, item.data);
+    if (templateId != null) {
+      await onShapeSelection(templateId, false);
+    }
+  };
+
+  const onShapeSelection = async (tempId, imageToBeAdded = true) => {
+    console.log(tempId);
     const rootStruct = {
       nodes: [
         {
@@ -1177,17 +909,22 @@ const KetcherEditor = forwardRef((props, ref) => {
     setShowShapes(false);
     dummyContentToCopy.root = { ...rootStruct };
     const dummyAlias = { ...dummyContentToCopy };
-    const imageItem = await fetchSurfaceChemistryImageData(tempId);
+    if (imageToBeAdded) {
+      const imageItem = await fetchSurfaceChemistryImageData(tempId);
+      dummyAlias.root.nodes.push(imageItem);
+    }
 
-    dummyAlias.root.nodes.push(imageItem);
     dummyAlias.mol0.atoms[0].alias = `t_${tempId}`;
     dummyAlias.mol0.atoms.selected = true;
     await editor._structureDef.editor.addFragment(
       JSON.stringify(dummyAlias)
     );
 
-    fetchKetcherData(editor);
-    onAddAtom(editor);
+    await fetchKetcherData(editor);
+    await onAddAtom(editor);
+    await buttonClickForRectangleSelection(iframeRef);
+    FILOStack = [];
+    allAtoms = [];
   };
 
   return (
