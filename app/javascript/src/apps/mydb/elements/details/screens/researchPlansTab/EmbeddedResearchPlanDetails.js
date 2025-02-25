@@ -57,7 +57,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    let { researchPlan } = this.props;
+    let { researchPlan, expanded } = this.props;
     if (researchPlan !== prevProps.researchPlan) {
       if (!(researchPlan instanceof ResearchPlan)) {
         researchPlan = new ResearchPlan(researchPlan);
@@ -66,7 +66,6 @@ export default class EmbeddedResearchPlanDetails extends Component {
       this.setState({ researchPlan, expanded });
     }
 
-    const { expanded } = this.props;
     if (expanded !== prevProps.expanded) {
       this.setState({ expanded });
     }
