@@ -18,7 +18,7 @@ import {
 } from 'src/utilities/UnitsConversion';
 
 function RowToolsCellRenderer({
-  data: variationsRow, context
+  data: row, context
 }) {
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
@@ -26,14 +26,14 @@ function RowToolsCellRenderer({
       <ButtonGroup>
         <OverlayTrigger
           placement="bottom"
-          overlay={<Tooltip>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Tooltip>}
+          overlay={<Tooltip>{getVariationsRowName(reactionShortLabel, row.id)}</Tooltip>}
         >
-          <Button size="xsm" variant="secondary">{variationsRow.id}</Button>
+          <Button size="xsm" variant="secondary">{row.id}</Button>
         </OverlayTrigger>
-        <Button size="xsm" variant="success" onClick={() => copyRow(variationsRow)}>
+        <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
           <i className="fa fa-clone" />
         </Button>
-        <Button size="xsm" variant="danger" onClick={() => removeRow(variationsRow)}>
+        <Button size="xsm" variant="danger" onClick={() => removeRow(row)}>
           <i className="fa fa-trash-o" />
         </Button>
       </ButtonGroup>
@@ -52,13 +52,13 @@ RowToolsCellRenderer.propTypes = {
   }).isRequired,
 };
 
-function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue }) {
+function EquivalentParser({ data: row, oldValue: cellData, newValue }) {
   let equivalent = parseNumericString(newValue);
   if (equivalent < 0) {
     equivalent = 0;
   }
   // Adapt mass to updated equivalent.
-  const referenceMaterial = getReferenceMaterial(variationsRow);
+  const referenceMaterial = getReferenceMaterial(row);
   const referenceMol = getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
   const mass = getGramFromMol(referenceMol * equivalent, cellData);
 
@@ -106,7 +106,7 @@ function MaterialFormatter({ value: cellData, colDef }) {
 }
 
 function MaterialParser({
-  data: variationsRow, oldValue: cellData, newValue, colDef, context
+  data: row, oldValue: cellData, newValue, colDef, context
 }) {
   const { currentEntry, displayUnit } = colDef.entryDefs;
   let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
@@ -129,7 +129,7 @@ function MaterialParser({
     return updatedCellData;
   }
 
-  const referenceMaterial = getReferenceMaterial(variationsRow);
+  const referenceMaterial = getReferenceMaterial(row);
 
   // Adapt equivalent to updated mass.
   if ('equivalent' in updatedCellData) {
@@ -147,7 +147,7 @@ function MaterialParser({
 }
 
 function GasParser({
-  data: variationsRow, oldValue: cellData, newValue, colDef
+  data: row, oldValue: cellData, newValue, colDef
 }) {
   const { currentEntry, displayUnit } = colDef.entryDefs;
   let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
@@ -170,11 +170,11 @@ function GasParser({
       const amount = calculateGasMoles(vesselVolume, concentration, temperatureInKelvin);
       const mass = getGramFromMol(amount, updatedCellData);
 
-      const catalyst = getCatalystMaterial(variationsRow);
+      const catalyst = getCatalystMaterial(row);
       const catalystAmount = catalyst?.amount.value ?? 0;
       const turnoverNumber = calculateTON(amount, catalystAmount);
 
-      const percentYield = computePercentYieldGas(amount, getFeedstockMaterial(variationsRow), vesselVolume);
+      const percentYield = computePercentYieldGas(amount, getFeedstockMaterial(row), vesselVolume);
 
       updatedCellData = {
         ...updatedCellData,
@@ -204,7 +204,7 @@ function GasParser({
 }
 
 function FeedstockParser({
-  data: variationsRow, oldValue: cellData, newValue, colDef
+  data: row, oldValue: cellData, newValue, colDef
 }) {
   const { currentEntry, displayUnit } = colDef.entryDefs;
   let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
@@ -253,7 +253,7 @@ function FeedstockParser({
     return updatedCellData;
   }
 
-  const referenceMaterial = getReferenceMaterial(variationsRow);
+  const referenceMaterial = getReferenceMaterial(row);
   const equivalent = computeEquivalent(updatedCellData, referenceMaterial);
 
   return { ...updatedCellData, equivalent: { ...updatedCellData.equivalent, value: equivalent } };
@@ -275,7 +275,7 @@ function NoteCellRenderer(props) {
 }
 
 function NoteCellEditor({
-  data: variationsRow,
+  data: row,
   value,
   onValueChange,
   stopEditing,
@@ -296,7 +296,7 @@ function NoteCellEditor({
   const cellContent = (
     <Modal show onHide={onClose}>
       <Modal.Header closeButton>
-        {`Edit note for ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
+        {`Edit note for ${getVariationsRowName(reactionShortLabel, row.id)}`}
       </Modal.Header>
       <Modal.Body>
         <Form.Control
