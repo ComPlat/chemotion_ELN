@@ -185,13 +185,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       getReactionMaterialsIDs(updatedReactionMaterials)
     )
   ) {
-    const updatedReactionVariations = removeObsoleteMaterialsFromVariations(
-      reactionVariations,
-      updatedReactionMaterials
-    );
     const updatedSelectedReactionMaterialIDs = removeObsoleteSelectedReactionMaterialIDs(
       selectedReactionMaterialIDs,
       updatedReactionMaterials
+    );
+    const updatedReactionVariations = removeObsoleteMaterialsFromVariations(
+      reactionVariations,
+      updatedSelectedReactionMaterialIDs
     );
 
     setColumnDefinitions(
