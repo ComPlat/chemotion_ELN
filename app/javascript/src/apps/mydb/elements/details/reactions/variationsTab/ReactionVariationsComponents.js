@@ -1,5 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 import { AgGridReact } from 'ag-grid-react';
 import {
   Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip
@@ -514,6 +515,54 @@ MenuHeader.defaultProps = {
   gasType: 'off',
 };
 
+function ColumnConfiguration(selectedMaterialIDs, availableMaterialIDs, onChange, onApply) {
+  const [showModal, setShowModal] = useState(false);
+
+  const handleShow = () => setShowModal(true);
+  const handleApply = () => {
+    onApply();
+    setShowModal(false);
+  };
+
+  const handleSelectChange = (key) => (selectedOptions) => {
+    const updatedSelectedMaterialIDs = { ...selectedMaterialIDs };
+    updatedSelectedMaterialIDs[key] = selectedOptions ? selectedOptions.map((option) => option.value) : [];
+    onChange(updatedSelectedMaterialIDs);
+  };
+
+  return (
+    <>
+      <Button size="sm" variant="primary" onClick={handleShow} className="mb-2">
+        Configure Columns
+      </Button>
+
+      <Modal show={showModal} onHide={handleApply}>
+        <Modal.Header closeButton>
+          <Modal.Title>Column Configuration</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {Object.entries(availableMaterialIDs).map(([key, values]) => (
+            <div key={key}>
+              <h5>{key}</h5>
+              <Select
+                isMulti
+                options={values.map((value) => ({ value, label: value }))}
+                value={selectedMaterialIDs[key]?.map((value) => ({ value, label: value })) || []}
+                onChange={handleSelectChange(key)}
+              />
+            </div>
+          ))}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleApply}>
+            Apply
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+}
+
 export {
   RowToolsCellRenderer,
   EquivalentParser,
@@ -527,4 +576,5 @@ export {
   NoteCellEditor,
   MaterialOverlay,
   MenuHeader,
+  ColumnConfiguration,
 };
