@@ -1,18 +1,31 @@
 import {
-  resetColumnDefinitionsMaterials, removeObsoleteMaterialsFromColumnDefinitions
+  resetColumnDefinitionsMaterials, addMissingMaterialsToColumnDefinitions, removeObsoleteMaterialsFromColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   getCellDataType,
   updateColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
-function columnDefinitionsReducer(columnDefinitions, action) {
+export default function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
     case 'remove_obsolete_materials': {
       return removeObsoleteMaterialsFromColumnDefinitions(
         columnDefinitions,
-        action.reactionMaterialIDs,
+        action.materialIDs,
       );
+    }
+    case 'apply_material_selection': {
+      let updatedColumnDefinitions = addMissingMaterialsToColumnDefinitions(
+        columnDefinitions,
+        action.materials,
+        action.materialIDs,
+        action.gasMode
+      );
+      updatedColumnDefinitions = removeObsoleteMaterialsFromColumnDefinitions(
+        updatedColumnDefinitions,
+        action.materialIDs
+      );
+      return updatedColumnDefinitions;
     }
     case 'update_entry_defs': {
       let updatedColumnDefinitions = updateColumnDefinitions(
@@ -38,8 +51,8 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       );
       updatedColumnDefinitions = resetColumnDefinitionsMaterials(
         updatedColumnDefinitions,
-        action.reactionMaterials,
-        action.selectedReactionMaterialIDs,
+        action.materials,
+        action.materialIDs,
         action.gasMode
       );
 
@@ -48,8 +61,8 @@ function columnDefinitionsReducer(columnDefinitions, action) {
     case 'update_gas_type': {
       return resetColumnDefinitionsMaterials(
         columnDefinitions,
-        action.reactionMaterials,
-        action.selectedReactionMaterialIDs,
+        action.materials,
+        action.materialIDs,
         action.gasMode
       );
     }
@@ -58,7 +71,3 @@ function columnDefinitionsReducer(columnDefinitions, action) {
     }
   }
 }
-
-export {
-  columnDefinitionsReducer
-};
