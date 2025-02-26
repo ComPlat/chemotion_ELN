@@ -9,10 +9,28 @@ import PropTypes from 'prop-types';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
+
+  // eslint-disable-next-line class-methods-use-this
+  checkPermission(attributeName) {
+    const readonlyAttributes = [
+      'Disease', 'Organism', 'Tissue', 'Growth medium', 'Mutation', 'Variant', 'Biosafety level',
+      'Cryopreservation medium', 'Opt. growth temperature', 'Gender', 'Cell type', 'Material Description'
+    ];
+    const { item } = this.props;
+    const { currentUser } = UserStore.getState();
+    if (item.created_by == null) {
+      const { cellLineDetailsStore } = this.context;
+      const cellLine = cellLineDetailsStore.cellLines(item.id);
+      return readonlyAttributes.includes(attributeName)
+        && cellLine.created_by !== '' && cellLine.created_by !== currentUser.id.toString();
+    }
+    return readonlyAttributes.includes(attributeName) && item.created_by !== currentUser.id;
+  }
 
   renderOptionalAttribute(attributeName, defaultValue, onChangeCallBack) {
     return this.renderAttribute(attributeName, defaultValue, onChangeCallBack, true);
@@ -43,7 +61,7 @@ class GeneralProperties extends React.Component {
         <Form.Label column sm={3}>{attributeName}</Form.Label>
         <Col sm={9}>
           <Form.Control
-            disabled={readOnly}
+            disabled={readOnly || this.checkPermission(attributeName)}
             className={styleClass}
             type="text"
             value={defaultValue}
@@ -69,10 +87,10 @@ class GeneralProperties extends React.Component {
         <Form.Label column sm={3}>Biosafety level</Form.Label>
         <Col sm={9}>
           <Select
-            isDisabled={readOnly}
+            isDisabled={readOnly || this.checkPermission('Biosafety level')}
             options={options}
             isClearable={false}
-            value={options.find(({value}) => value === item.bioSafetyLevel)}
+            value={options.find(({ value }) => value === item.bioSafetyLevel)}
             onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
           />
         </Col>
@@ -117,7 +135,7 @@ class GeneralProperties extends React.Component {
           <Amount
             cellLineId={item.id}
             initialValue={item.amount}
-            readOnly={readOnly}
+            readOnly={readOnly || this.checkPermission('Amount')}
           />
         </Col>
         <Col sm={3} className="amount-unit">
@@ -187,7 +205,7 @@ class GeneralProperties extends React.Component {
             {this.renderOptionalAttribute('Cell type', cellLineItem.cellType, (e) => {
               cellLineDetailsStore.changeCellType(cellLineId, e.target.value);
             })}
-            {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => {
+            {this.renderOptionalAttribute('Material Description', cellLineItem.materialDescription, (e) => {
               cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value);
             })}
           </Accordion.Body>
@@ -209,7 +227,7 @@ class GeneralProperties extends React.Component {
             {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => {
               cellLineDetailsStore.changeItemName(cellLineId, e.target.value);
             })}
-            {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => {
+            {this.renderOptionalAttribute('Sample Description', cellLineItem.itemDescription, (e) => {
               cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value);
             })}
           </Accordion.Body>
@@ -224,6 +242,8 @@ export default observer(GeneralProperties);
 GeneralProperties.propTypes = {
   readOnly: PropTypes.bool.isRequired,
   item: PropTypes.shape({
-    id: PropTypes.string.isRequired
+    id: PropTypes.string.isRequired,
+    can_update: PropTypes.bool,
+    created_by: PropTypes.number
   }).isRequired
 };

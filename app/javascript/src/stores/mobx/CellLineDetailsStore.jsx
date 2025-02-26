@@ -44,6 +44,7 @@ const CellLineItem = types
     growthMedium: '',
     itemDescription: '',
     itemName: '',
+    created_by: '',
     changed: false
   }).views((self) => ({
     isAmountValid() {
@@ -165,6 +166,7 @@ export const CellLineDetailsStore = types
       item.mutation = properties.mutation;
       item.source = properties.source;
       item.growthMedium = properties.growth_medium;
+      item.created_by = properties.created_by?.toString();
     },
     convertJsModelToMobxModel(container) {
       return CellLineAnalysis.create({
@@ -203,6 +205,7 @@ export const CellLineDetailsStore = types
         growthMedium: jsCellLineModel.growthMedium,
         itemName: jsCellLineModel.itemName,
         shortLabel: jsCellLineModel.short_label,
+        created_by: jsCellLineModel.created_by?.toString(),
       }));
     }
   }))
