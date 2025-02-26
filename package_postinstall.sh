@@ -41,8 +41,8 @@ yellow "Finished adding symbolic link to jsmol in public folder"
 
 
 # copy pdfjs worker to public folder
-node_modules_folder_pdfjs="$(node -e 'const p = require.resolve("pdfjs-dist/build/pdf.worker"); console.log(p.slice(0, p.indexOf("pdfjs-dist/build/pdf.worker")))')"
-rm -f ./public/pdf.worker.min.js && ln -s "$node_modules_folder_pdfjs"pdfjs-dist/build/pdf.worker.min.js ./public/pdf.worker.min.js
+node_modules_folder_pdfjs="$(node -e 'const p = require.resolve("pdfjs-dist/build/pdf.worker.mjs"); console.log(p.slice(0, p.indexOf("pdf.worker.mjs")))')"
+rm -f ./public/pdf.worker.min.*js && ln -s "$node_modules_folder_pdfjs"pdf.worker.min.mjs ./public/pdf.worker.min.mjs
 yellow "Finished adding symbolic link to pdf worker in public folder"
 
 # d3js source files

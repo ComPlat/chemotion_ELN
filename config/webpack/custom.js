@@ -5,6 +5,7 @@ module.exports = {
     extensions: ['.json', '...'],
     alias: {
       process: 'process/browser',
+       'react/jsx-runtime': require.resolve('react/jsx-runtime'),
     },
     fallback: {
       util: require.resolve('util/'),
