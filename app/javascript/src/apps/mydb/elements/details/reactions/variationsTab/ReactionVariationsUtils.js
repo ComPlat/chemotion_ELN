@@ -5,7 +5,7 @@ import {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
   updateVariationsRowOnFeedstockMaterialChange,
-  getMaterialData
+  getMaterialData, getReferenceMaterial
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
@@ -197,14 +197,17 @@ function createVariationsRow({
   };
   Object.entries(materials).forEach(([materialType, materialsOfType]) => {
     row[materialType] = materialsOfType.reduce((entry, material) => (
-      materialIDs[materialType].includes(material.id)
+      materialIDs[materialType].includes(material.id.toString())
         ? { ...entry, [material.id]: getMaterialData(material, materialType, gasMode, vesselVolume) }
         : entry
     ), {});
   });
 
   // Compute dependent values that aren't supplied by initial data.
-  let updatedRow = updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers);
+  let updatedRow = row;
+  if (getReferenceMaterial(row)) {
+    updatedRow = updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers);
+  }
   if (gasMode) {
     updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow);
     updatedRow = updateVariationsRowOnFeedstockMaterialChange(updatedRow);
