@@ -30,6 +30,7 @@ if (!window.cancelAnimationFrame) {
   };
 }
 
-global.navigator = {
-  userAgent: 'node.js'
-};
+Object.defineProperty(global, 'navigator', {
+  value: { userAgent: 'node.js' },
+  writable: false,
+});
