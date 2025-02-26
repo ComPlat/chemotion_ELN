@@ -114,7 +114,7 @@
     "yarn": "^1.22.19"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.15.0",
+    "@babel/eslint-parser": "^7",
     "@babel/register": "^7.11.5",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.5",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.3",
