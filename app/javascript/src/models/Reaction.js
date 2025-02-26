@@ -74,7 +74,7 @@ const DurationDefault = {
 };
 
 export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
-.as(MomentUnit[newUnit]);
+  .as(MomentUnit[newUnit]);
 
 const durationDiff = (startAt, stopAt, precise = false) => {
   if (startAt && stopAt) {
@@ -134,19 +134,23 @@ export default class Reaction extends Element {
       gaseous: false
     })
 
+
     reaction.short_label = this.buildReactionShortLabel()
     reaction.rxno = '';
     return reaction
   }
 
+
   static buildReactionShortLabel() {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return 'New Reaction'; }
+
 
     const number = currentUser.reactions_count + 1;
     const prefix = currentUser.reaction_name_prefix;
     return `${currentUser.initials}-${prefix}${number}`;
   }
+
 
   static get temperature_unit() {
     return TemperatureUnit;
@@ -433,13 +437,16 @@ export default class Reaction extends Element {
     ];
   }
 
+
   buildCopy(params = {}) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
     copy.short_label = Reaction.buildReactionShortLabel();
-    copy.starting_materials = this.starting_materials.map(
-      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
-    );
+    copy.starting_materials = this.starting_materials.map(sample => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      copiedSample._real_amount_value = null; 
+      return copiedSample;
+    });
     copy.reactants = this.reactants.map(
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
     );
@@ -741,7 +748,7 @@ export default class Reaction extends Element {
       }
     }
     else
-    return `images/wild_card/no_image_180.svg`
+      return `images/wild_card/no_image_180.svg`
   }
 
   SMGroupValid() {
@@ -891,13 +898,13 @@ export default class Reaction extends Element {
         case 'gp':
         name = `General Procedure ${sLNum}`;
         break;
-        case 'parts':
+      case 'parts':
         name = this.extractNameFromOri();
         break;
-        case 'single':
+      case 'single':
         name = `Single ${sLNum}`;
         break;
-        default:
+      default:
         break;
       }
       return name;
