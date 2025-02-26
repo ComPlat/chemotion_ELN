@@ -554,22 +554,6 @@ const redoKetcher = (editor) => {
   }
 };
 
-// helper function on layout to keep the images on the latest styles
-const mainImageSizingOnRerender = async (editor, images, oldLatestData) => {
-  try {
-    // fetch latest data
-    // update old images on the root list
-    // place images on A atoms
-    // save molfile
-    // await placeImageOnAtoms(mols, images, editor);
-    const imagesL = removeImagesFromData(oldLatestData);
-    oldLatestData.root.nodes.push(imagesL);
-    await editor.structureDef.editor.setMolecule(JSON.stringify(oldLatestData));
-  } catch (error) {
-    console.error({ mainImageSizingOnRerender: error });
-  }
-};
-
 const addTextNodeDescriptionOnTextPopup = async (node) => {
   if (node?.classList?.contains('Select-module_selectContainer__yXT-t') && node?.classList?.contains('Modal-module_modalOverlay__AzVeg')) {
     // Your existing logic
@@ -633,7 +617,6 @@ export {
   makeTransparentByTitle,
   undoKetcher,
   redoKetcher,
-  mainImageSizingOnRerender,
   addTextNodeDescriptionOnTextPopup,
 
   // setters
