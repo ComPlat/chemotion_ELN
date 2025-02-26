@@ -3,7 +3,6 @@
 # rubocop: disable RSpec/NestedGroups
 # rubocop: disable RSpec/AnyInstance
 # rubocop: disable RSpec/LetSetup
-# rubocop: disable RSpec/FilePath
 # rubocop: disable RSpec/IndexedLet, Lint/RedundantCopDisableDirective, RSpec/Rails/HaveHttpStatus
 
 require 'rails_helper'
@@ -13,8 +12,13 @@ describe Chemotion::ElementAPI do
   let!(:collection) { create(:collection, user_id: user.id) }
 
   describe 'DELETE /api/v1/ui_state' do
-    let!(:cell_line_sample1) { create(:cellline_sample, collections: [collection, collection2]) }
-    let!(:cell_line_sample2) { create(:cellline_sample, collections: [collection, collection2]) }
+    let(:material) { create(:cellline_material) }
+    let!(:cell_line_sample1) do
+      create(:cellline_sample, collections: [collection, collection2], cellline_material: material)
+    end
+    let!(:cell_line_sample2) do
+      create(:cellline_sample, collections: [collection, collection2], cellline_material: material)
+    end
     let!(:collection2) { create(:collection, user_id: user.id) }
 
     context 'with user with delete access is logged in,' do
@@ -112,5 +116,4 @@ end
 # rubocop: enable RSpec/NestedGroups
 # rubocop: enable RSpec/AnyInstance
 # rubocop: enable RSpec/LetSetup
-# rubocop: enable RSpec/FilePath
 # rubocop: enable RSpec/IndexedLet, Lint/RedundantCopDisableDirective, RSpec/Rails/HaveHttpStatus

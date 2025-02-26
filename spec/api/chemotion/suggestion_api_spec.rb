@@ -5,6 +5,7 @@ require 'rails_helper'
 
 describe Chemotion::SuggestionAPI do
   let!(:user) { create(:person, first_name: 'tam', last_name: 'M') }
+  let(:material) { create(:cellline_material) }
   let(:collection) { create(:collection, user: user, is_shared: true, permission_level: 1, sample_detail_level: 10) }
   let(:query) { 'query' }
   let(:json_repsonse) { JSON.parse(response.body) }
@@ -19,9 +20,11 @@ describe Chemotion::SuggestionAPI do
 
   describe 'GET /api/v1/cell_lines/suggestions/cell_lines' do
     include_context 'api request authorization context'
-    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
-    let!(:cell_line2) { create(:cellline_sample, name: 'search-example', collections: [collection]) }
-    let!(:cell_line_without_col) { create(:cellline_sample, name: 'search-example') }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection], cellline_material: material) }
+    let!(:cell_line2) do
+      create(:cellline_sample, name: 'search-example', collections: [collection], cellline_material: material)
+    end
+    let!(:cell_line_without_col) { create(:cellline_sample, name: 'search-example', cellline_material: material) }
     let!(:sample) { create(:sample, name: 'search-example', collections: [collection]) }
 
     before do
@@ -59,8 +62,10 @@ describe Chemotion::SuggestionAPI do
 
   describe 'GET /api/v1/cell_lines/suggestions/all' do
     include_context 'api request authorization context'
-    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
-    let!(:cell_line2) { create(:cellline_sample, name: 'search-example', collections: [collection]) }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection], cellline_material: material) }
+    let!(:cell_line2) do
+      create(:cellline_sample, name: 'search-example', collections: [collection], cellline_material: material)
+    end
     let!(:sample) { create(:sample, name: 'search-example', collections: [collection]) }
 
     before do
