@@ -163,6 +163,7 @@ export const placeImageOnAtoms = async (mols_, imagesList_) => {
   }
 };
 
+// find by key and update text node position from alias matching atoms
 const findByKeyAndUpdateTextNodePositon = async (key, atomLocation, alias) => {
   // Iterate through each item in the textList
   const splits = alias.split("_")[2];
@@ -182,6 +183,7 @@ const findByKeyAndUpdateTextNodePositon = async (key, atomLocation, alias) => {
   });
 };
 
+// place text nodes on atom with matching aliases
 export const placeTextOnAtoms = async (mols_) => {
   try {
     mols_.forEach(async (item) => {
@@ -217,40 +219,42 @@ export const addPolymerTags = async (polymerTag, data) => {
 export const addTextNodes = async (textNodes) => {
   return textNodes.map((item) => {
     const [idx, key, alias, description] = item.split(KET_TAGS.textIdentifier);
-    textNodeStruct[alias] = key;
-    return {
-      "type": "text",
-      "data": {
-        "content": `{\"blocks\":[{\"key\":\"${key}\",\"text\":\"${description}\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}`,
-        "position": {
-          "x": 10.325000000000001,
-          "y": -11.325000000000001,
-          "z": 0
-        },
-        "pos": [
-          {
+    if (alias && key) {
+      textNodeStruct[alias] = key;
+      return {
+        "type": "text",
+        "data": {
+          "content": `{\"blocks\":[{\"key\":\"${key}\",\"text\":\"${description}\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}`,
+          "position": {
             "x": 10.325000000000001,
             "y": -11.325000000000001,
             "z": 0
           },
-          {
-            "x": 10.325000000000001,
-            "y": -11.700000000000001,
-            "z": 0
-          },
-          {
-            "x": 10.68671875,
-            "y": -11.700000000000001,
-            "z": 0
-          },
-          {
-            "x": 10.68671875,
-            "y": -11.325000000000001,
-            "z": 0
-          }
-        ]
-      }
-    };
+          "pos": [
+            {
+              "x": 10.325000000000001,
+              "y": -11.325000000000001,
+              "z": 0
+            },
+            {
+              "x": 10.325000000000001,
+              "y": -11.700000000000001,
+              "z": 0
+            },
+            {
+              "x": 10.68671875,
+              "y": -11.700000000000001,
+              "z": 0
+            },
+            {
+              "x": 10.68671875,
+              "y": -11.325000000000001,
+              "z": 0
+            }
+          ]
+        }
+      };
+    }
   });
 };
 
@@ -370,6 +374,7 @@ export const handleAddAtom = async () => {
   return addAtomAliasHelper(processedAtoms);
 };
 
+// remove text node from struct
 const removeTextNodeFromStruct = (images, data) => {
   const keysToDel = [];
   images.forEach(num => {
@@ -387,9 +392,7 @@ const removeTextNodeFromStruct = (images, data) => {
       textList.splice(idx, 1);
     }
   });
-
   return textList;
-
 };
 
 // helper function to remove template by image
@@ -408,6 +411,7 @@ export const handleOnDeleteImage = async () => {
   return latestData;
 };
 
+// compare two arrays to find index changed differences
 function deepCompare(oldArray, newArray) {
   const removedIndexes = [];
 
@@ -476,12 +480,13 @@ export const arrangePolymers = async (canvasData) => {
   const additionalDataStart = KET_TAGS.molfileHeaderLinenumber + atomsCount + bondsCount;
   const additionalDataEnd = lines.length - 1;
 
-  const ket2Molfile = await reAttachPolymerList({
+  const ket2Lines = await reAttachPolymerList({
     lines, atomsCount, additionalDataStart, additionalDataEnd, allAtoms
   });
-  return ket2Molfile;
+  return ket2Lines;
 };
 
+// helper functon to arrange text nodes for formula
 export const arrangeTextNodes = async (ket2Molfile) => {
   ket2Molfile.push(KET_TAGS.textNodeIdentifier);
   let atomCount = 0;
@@ -514,6 +519,46 @@ export const arrangeTextNodes = async (ket2Molfile) => {
   });
   ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
   return ket2Molfile;
+};
+
+// process text nodes into for formula
+const assembleTextDescriptionFormula = async (ket2Lines) => {
+  const startAtoms = 3;
+  const atomsCount = ket2Lines[3].trim().split(" ")[0];
+  const startTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifier);
+  const endTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifierClose);
+  const endAtom = parseInt(atomsCount) + 3;
+  const textNodesPairs = await collectTextListing(ket2Lines, startTextNode, endTextNode);
+  const formula = await treverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
+  return formula;
+};
+
+// collect text node with index
+const collectTextListing = async (ket2Lines, startTextNode, endTextNode) => {
+  const struct = {};
+  for (let i = startTextNode + 1; i < endTextNode; i++) {
+    const item = ket2Lines[i].split(KET_TAGS.textIdentifier);
+    if (item.length == 4) {
+      const [idx, , , text] = item;
+      struct[idx] = text;
+    }
+  }
+  return struct;
+};
+
+// sort and join / text nodes
+const treverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
+  let count = 0;
+  for (let i = startAtoms + 1; i <= endAtom; i++) {
+    const pairValue = textNodesPairs[count];
+    if (pairValue) {
+      delete textNodesPairs[count];
+      const Y = parseFloat(ket2Lines[i].trim().split("   ")[1]);
+      textNodesPairs[Y.toFixed(4)] = pairValue;
+    }
+    count++;
+  }
+  return Object.values(textNodesPairs).join('/');
 };
 
 /* istanbul ignore next */
@@ -551,11 +596,12 @@ const reArrangeImagesOnCanvas = async (iframeRef) => {
 const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
   const dataCopy = data || latestData;
   if (editor) {
-    if (recenter || !imagesList.length) {
+    if (recenter || latestData && !imagesList.length) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
     } else {
       await editor.structureDef.editor.setMoleculeWithoutStructCenter(JSON.stringify(dataCopy));
     }
+
     if (isFetchRequired) {
       fetchKetcherData(editor);
     }
@@ -636,6 +682,7 @@ const onDeleteText = async (editor) => {
   });
 };
 
+// function to add text nodes to canvas/struct
 const onAddText = async (editor) => {
   if (editor && editor.structureDef && selectedImageForTextNode) {
     await fetchKetcherData(editor);
@@ -736,6 +783,7 @@ const onAtomDelete = async (editor) => {
   }
 };
 
+// filter text nodes by key, key as in text key
 const filterTextList = async (deleteCopy) => {
   // re-verb all the index when deleted index is small then existing third part
   const deleteLiasAlias = deleteCopy.map(i => i.alias);
@@ -752,6 +800,8 @@ const filterTextList = async (deleteCopy) => {
     textList = [...newTextList];
   }
 };
+
+// re-evalute text nodes and aliases
 const revaluateTextStructureIndecies = async (deleteCopy) => {
   const deleteLiasAlias = deleteCopy.filter(i => textNodeStruct[i.alias]);
   if (deleteLiasAlias.length) {
@@ -784,6 +834,8 @@ const KetcherEditor = forwardRef((props, ref) => {
   const eventOperationHandlers = {
     'Load canvas': async () => {
       if (reloadCanvas) onTemplateMove(editor, true);
+      ImagesToBeUpdatedSetter(true);
+      await runImageLayering();
     },
     'Move image': async () => {
       console.log('Move image');
@@ -880,6 +932,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     "[title='3D Viewer']": async () => fetchAndReplace(),
     // others
     "[title='Rescale Polymer Canvas']": async () => {
+      await fetchKetcherData(editor);
       await saveMoveCanvas(editor, null, true, true, true);
       ImagesToBeUpdatedSetter(true);
       await runImageLayering();
@@ -940,11 +993,13 @@ const KetcherEditor = forwardRef((props, ref) => {
           console.error('invalid molfile. Please try again', err.message);
         });
         const fileContent = JSON.parse(ketFile.struct);
+
         // process polymers
         const { molfileData } = await addPolymerTags(polymerTag, fileContent);
         const textNodeList = await addTextNodes(textNodes, molfileData);
-        molfileData.root.nodes.push(...textNodeList);
-        saveMoveCanvas(editor, molfileData, true, true);
+        const filteredTextNodeList = textNodeList.filter(i => i != undefined);
+        filteredTextNodeList.length && molfileData.root.nodes.push(...filteredTextNodeList);
+        saveMoveCanvas(editor, molfileData, true, true, false);
         ImagesToBeUpdatedSetter(true);
       }
     }
@@ -1130,16 +1185,16 @@ const KetcherEditor = forwardRef((props, ref) => {
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
     onSaveFileK2SC: async () => {
+      let textNodesFormula = "";
       await fetchKetcherData(editor);
       const canvasDataMol = await editor.structureDef.editor.getMolfile();
       let svgElement = await reArrangeImagesOnCanvas(iframeRef);
-      const ket2MolfilePolymerArranged = await arrangePolymers(canvasDataMol);
-      const ket2MolfileTextArranged = await arrangeTextNodes(ket2MolfilePolymerArranged);
+      const ket2Lines = await arrangePolymers(canvasDataMol);
+      const ket2LineTextArranged = await arrangeTextNodes(ket2Lines);
+      if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged);
+      ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
       resetStore();
-      ket2MolfileTextArranged.push(KET_TAGS.fileEndIdentifier);
-
-
-      return { ket2Molfile: ket2MolfileTextArranged.join('\n'), svgElement };
+      return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
     }
   }));
 
