@@ -295,13 +295,14 @@ export default class StructureEditorModal extends React.Component {
 
     try {
       // Call onSaveFileK2SC and get the required data
-      const { ket2Molfile, svgElement } = await onSaveFileK2SC();
+      const { ket2Molfile, svgElement, textNodesFormula } = await onSaveFileK2SC();
 
       // Update state and invoke onSave callback after state has been updated
       this.setState(
         { showModal: false, showWarning: hasChildren || hasParent },
         () => {
           if (onSave) {
+            textNodesFormula.length && alert(`text description formula: ${textNodesFormula}`);
             onSave(ket2Molfile, svgElement, { smiles: '' }, editorId);
           }
         }
