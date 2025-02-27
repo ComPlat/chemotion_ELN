@@ -1,4 +1,4 @@
-import { factory } from "factory-bot";
+import { factory } from '@eflexsystems/factory-bot';
 import Container from "src/models/Container";
 import AttachmentFactory from "factories/AttachmentFactory";
 

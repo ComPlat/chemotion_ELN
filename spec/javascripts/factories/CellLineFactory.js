@@ -1,4 +1,4 @@
-import { factory } from 'factory-bot';
+import { factory } from '@eflexsystems/factory-bot';
 import CellLine from 'src/models/cellLine/CellLine';
 
 export default class CellLineFactory {
