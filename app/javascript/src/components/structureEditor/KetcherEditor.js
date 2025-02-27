@@ -275,9 +275,9 @@ export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequir
   const dataCopy = data || latestData;
   if (editor) {
     if (recenter || latestData && !imagesList.length) {
-      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
+      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), true);
     } else {
-      await editor.structureDef.editor.setMoleculeWithoutStructCenter(JSON.stringify(dataCopy));
+      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
     }
 
     if (isFetchRequired) {
@@ -346,7 +346,7 @@ const onAtomDelete = async (editor) => {
     // when mols and images are changed
     if (molCopy.length > mols.length && imagesList.length > imageListCopy.length) {
       console.log(685);
-      await editor.structureDef.editor.setMoleculeWithoutStructCenter(JSON.stringify(latestData));
+      await editor.structureDef.editor.setMolecule(JSON.stringify(latestData), false);
       return;
     }
 
