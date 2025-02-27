@@ -19,7 +19,7 @@
     cursor: pointer;
     background: $chemstrap-paper;
     font-size: 14px;
-    @extend .py-1;
+    @extend .py-2;
     @extend .pe-3;
     &:hover {
       background-color: $chemstrap-interaction-grey1;
@@ -30,6 +30,10 @@
       &:hover {
         background-color: $chemstrap-blue-light !important;
       }
+    }
+
+    i {
+      color: $gray-600;
     }
   }
 
