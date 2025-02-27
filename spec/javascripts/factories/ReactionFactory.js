@@ -1,4 +1,4 @@
-import { factory } from 'factory-bot';
+import { factory } from '@eflexsystems/factory-bot';
 import Reaction from 'src/models/Reaction';
 import SampleFactory from "factories/SampleFactory";
 

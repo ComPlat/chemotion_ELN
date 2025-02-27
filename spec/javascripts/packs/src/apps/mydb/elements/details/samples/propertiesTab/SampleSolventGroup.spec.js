@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from 'react-bootstrap';
 import expect from 'expect';
-import Enzyme, { shallow } from 'enzyme';
+import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { SampleSolventGroup, SolventDetails }
   from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
@@ -11,30 +11,29 @@ import {
   describe, it
 } from 'mocha';
 
-Enzyme.configure({
-  adapter: new Adapter(),
-});
+configure({ adapter: new Adapter() });
 
 describe('SampleSolventGroup', () => {
   const dropSample = () => {};
   const deleteSolvent = () => {};
   const onChangeSolvent = () => {};
   const materialGroup = 'none';
-
   describe('when sample has no solvents', () => {
     it('renders a blank solvent area', async () => {
       const sample = await SampleFactory.build('SampleFactory.water_100g');
       const wrapper = shallow(
-        <SampleSolventGroup
-          dropSample={dropSample}
-          deleteSolvent={deleteSolvent}
-          onChangeSolvent={onChangeSolvent}
-          sample={sample}
-          materialGroup={materialGroup}
-        />
+        React.createElement(
+          SampleSolventGroup,
+          {
+            dropSample: dropSample,
+            deleteSolvent: deleteSolvent,
+            onChangeSolvent: onChangeSolvent,
+            sample: sample,
+            materialGroup: materialGroup
+          }
+        )
       );
-
-      expect(wrapper.contains(<Card.Header>Solvents</Card.Header>)).toBeTruthy();
+      expect(wrapper.contains(React.createElement(Card.Header, {}, 'Solvents'))).toBeTruthy();
     });
   });
 
@@ -44,17 +43,20 @@ describe('SampleSolventGroup', () => {
       sample.solvent = [{ label: 'water', ratio: 1.0 }, { label: 'ethanol', ratio: 2.0 }];
 
       const wrapper = shallow(
-        <SampleSolventGroup
-          dropSample={dropSample}
-          deleteSolvent={deleteSolvent}
-          onChangeSolvent={onChangeSolvent}
-          sample={sample}
-          materialGroup={materialGroup}
-        />
+        React.createElement(
+          SampleSolventGroup,
+          {
+            dropSample: dropSample,
+            deleteSolvent: deleteSolvent,
+            onChangeSolvent: onChangeSolvent,
+            sample: sample,
+            materialGroup: materialGroup,
+          },
+        )
       );
 
-      expect(wrapper.contains(<Card.Header>Solvents</Card.Header>)).toBeTruthy();
-      expect(wrapper.find(SolventDetails)).toHaveLength(2);
+      expect(wrapper.contains(React.createElement(Card.Header, {}, 'Solvents'))).toBeTruthy();
+      expect(wrapper.find('SolventDetails')).toHaveLength(2);
     });
   });
 });
@@ -62,14 +64,12 @@ describe('SampleSolventGroup', () => {
 describe('SolventDetails', () => {
   const deleteSolvent = () => {};
   const onChangeSolvent = () => {};
-
   describe('when solvent prop is null', () => {
     const wrapper = shallow(
-      <SolventDetails
-        deleteSolvent={deleteSolvent}
-        onChangeSolvent={onChangeSolvent}
-        solvent={null}
-      />
+      React.createElement(
+        SolventDetails,
+        { deleteSolvent: deleteSolvent, onChangeSolvent: onChangeSolvent, solvent: null },
+      )
     );
 
     it('renders an empty fragment', () => {
@@ -81,11 +81,10 @@ describe('SolventDetails', () => {
   describe('when solvent prop is provided', () => {
     const solvent = { label: 'water', ratio: 1.0 };
     const wrapper = shallow(
-      <SolventDetails
-        deleteSolvent={deleteSolvent}
-        onChangeSolvent={onChangeSolvent}
-        solvent={solvent}
-      />
+      React.createElement(
+        SolventDetails,
+        { deleteSolvent: deleteSolvent, onChangeSolvent: onChangeSolvent, solvent: solvent },
+      )
     );
 
     it('renders a solvent details row', () => {

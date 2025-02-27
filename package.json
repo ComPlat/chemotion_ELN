@@ -9,7 +9,7 @@
     "@babel/plugin-transform-runtime": "7",
     "@babel/polyfill": "^7.10.4",
     "@babel/preset-env": "7",
-    "@babel/preset-react": "^7.10.4",
+    "@babel/preset-react": "^7.26.3",
     "@babel/runtime": "7",
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.3.5",
@@ -40,7 +40,6 @@
     "d3-selection": "^3.0.0",
     "deep-equal": "1.0.1",
     "es6-promise-debounce": "^1.0.1",
-    "factory-bot": "^6.3.1",
     "html2pdf.js": "^0.10.1",
     "humps": "^2.0.1",
     "immutable": "^4.0.0-rc.12",
@@ -114,8 +113,9 @@
     "yarn": "^1.22.19"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7",
-    "@babel/register": "^7",
+    "@babel/eslint-parser": "^7.26.8",
+    "@babel/register": "^7.25.9",
+    "@eflexsystems/factory-bot": "^9.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.5",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
     "babel-loader": "8",
@@ -129,6 +129,7 @@
     "eslint-plugin-no-relative-import-paths": "^1.4.0",
     "eslint-plugin-react": "^7.30.1",
     "expect": "^24.7.1",
+    "jsdom-global": "^3.0.2",
     "mocha": "^11",
     "nyc": "^15.1.0",
     "process": "^0.11.10",
@@ -138,7 +139,7 @@
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
-    "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
+    "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/**/*.spec.js'",
     "coverage": "yarn nyc npm test;yarn nyc report --reporter=html",
     "update-browserslist-db": "node_modules/.bin/update-browserslist-db"
   },
@@ -151,7 +152,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": "^18.19.1"
+    "node": "^22.14"
   },
   "browserslist": [
     "defaults"
