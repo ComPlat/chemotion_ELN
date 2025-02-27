@@ -108,7 +108,7 @@ jobs:
         run: bundle install
 
       - name: yarn install
-        run:  yarn install --production=false
+        run:  ./prepare-nodejs.sh && ./prepare-nodejspkg.sh
 
       - name: prepare postgres
         run: |
