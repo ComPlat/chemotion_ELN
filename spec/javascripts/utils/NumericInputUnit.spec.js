@@ -12,14 +12,7 @@ Enzyme.configure({ adapter: new Adapter() });
 const mockFn = sinon.spy();
 
 const createWrapper = (label, unit, value, field, inputDisable) => shallow(
-  <NumericInputUnit
-    field={field}
-    onInputChange={mockFn}
-    unit={unit}
-    numericValue={value}
-    label={label}
-    inputDisabled={inputDisable}
-  />
+  React.createElement(NumericInputUnit, { field: field, onInputChange: mockFn, unit: unit, numericValue: value, label: label, inputDisabled: inputDisable })
 );
 
 describe('NumericInputUnit component', () => {

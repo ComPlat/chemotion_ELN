@@ -1,5 +1,5 @@
 import React from 'react';
-import Enzyme, { shallow } from 'enzyme';
+import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import OlsTreeSelect from 'src/components/OlsComponent';
@@ -7,17 +7,20 @@ import {
   describe, it
 } from 'mocha';
 
-Enzyme.configure({ adapter: new Adapter() });
+configure({ adapter: new Adapter() });
 
 let currentSelectedValue;
 
 const createWrapper = () => shallow(
-  <OlsTreeSelect
-    selectName=""
-    selectedValue="startingValue"
-    onSelectChange={(value) => { currentSelectedValue = value; }}
-    selectedDisable={false}
-  />
+  React.createElement(
+    OlsTreeSelect,
+    {
+      selectName: "",
+      selectedValue: "startingValue",
+      onSelectChange: (value) => { currentSelectedValue = value; },
+      selectedDisable: false,
+    },
+  )
 );
 
 describe('OlsComponent', () => {

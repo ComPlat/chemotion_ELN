@@ -51,4 +51,4 @@ describe('Reaction', async () => {
       });
     });
   });
-});
+})

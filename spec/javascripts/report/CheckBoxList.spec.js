@@ -19,12 +19,7 @@ describe('CheckBoxList', () => {
   const checkedAll = true
   const wrapper = (items, toggleCheckbox, toggleCheckAll, checkedAll) => {
     return mount(
-      <CheckBoxList
-        items={items}
-        toggleCheckbox={toggleCheckbox}
-        toggleCheckAll={toggleCheckAll}
-        checkedAll={checkedAll}
-      />
+      React.createElement(CheckBoxList, { items: items, toggleCheckbox: toggleCheckbox, toggleCheckAll: toggleCheckAll, checkedAll: checkedAll })
     )
   }
 
