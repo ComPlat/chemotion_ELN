@@ -131,6 +131,7 @@
     "expect": "^24.7.1",
     "jsdom-global": "^3.0.2",
     "mocha": "^11",
+    "module-alias": "^2.2.3",
     "nyc": "^15.1.0",
     "process": "^0.11.10",
     "react-refresh": "^0.12.0",
@@ -172,5 +173,9 @@
   },
   "packageManager": "yarn@1.22.22",
   "private": true,
-  "version": "0.1.0"
+  "_moduleAliases": {
+    "@src": "./app/javascript/src",
+    "@tests": "./spec/javascripts"
+  },
+  "version": "2.0.0-rc1"
 }
