@@ -1,5 +1,5 @@
-import Container from 'src/models/Container';
-import ContainerFactory from 'factories/ContainerFactory';
+import Container from '@src/models/Container';
+import ContainerFactory from '@tests/factories/ContainerFactory';
 import expect from 'expect';
 
 import {

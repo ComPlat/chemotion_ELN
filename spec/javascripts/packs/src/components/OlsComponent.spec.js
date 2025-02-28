@@ -2,7 +2,7 @@ import React from 'react';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
-import OlsTreeSelect from 'src/components/OlsComponent';
+import OlsTreeSelect from '@src/components/OlsComponent';
 import {
   describe, it
 } from 'mocha';

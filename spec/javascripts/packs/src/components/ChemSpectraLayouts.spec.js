@@ -7,8 +7,8 @@ import {
 import assert from 'assert';
 import sinon from 'sinon';
 import expect from 'expect';
-import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
-import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
+import ChemSpectraFetcher from '@src/fetchers/ChemSpectraFetcher';
+import ChemSpectraLayouts from '@src/apps/admin/ChemSpectraLayouts';
 
 configure({ adapter: new Adapter() });
 

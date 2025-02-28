@@ -2,7 +2,7 @@ import expect from 'expect';
 
 import {
   fixDigit, validDigit, correctPrefix, parseNumericString,
-} from '../../../app/javascript/src/utilities/MathUtils';
+} from '@src/utilities/MathUtils';
 
 describe('fixDigit', () => {
   it('return number with correct precisons', () => {

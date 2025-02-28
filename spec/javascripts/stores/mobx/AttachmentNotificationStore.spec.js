@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved,no-undef */
 import expect from 'expect';
-import { AttachmentNotificationStore } from 'src/stores/mobx/AttachmentNotificationStore';
-import AttachmentNotificationFactory from 'factories/AttachmentNotificationFactory';
+import { AttachmentNotificationStore } from '@src/stores/mobx/AttachmentNotificationStore';
+import AttachmentNotificationFactory from '@tests/factories/AttachmentNotificationFactory';
 
 describe('AttachmentNotificationStore', async () => {
   const message1 = await AttachmentNotificationFactory.build('AttachmentNotificationFactory.new');

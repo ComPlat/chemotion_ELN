@@ -4,7 +4,7 @@ import base64 from 'base-64';
 
 import {
     parseBase64ToArrayBuffer
-} from '../../../app/javascript/src/utilities/FetcherHelper';
+} from '@src/utilities/FetcherHelper';
 
 describe('parseBase64ToArrayBuffer', () => {
   it('return array buffer', () => {

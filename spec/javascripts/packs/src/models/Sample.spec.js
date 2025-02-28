@@ -1,5 +1,5 @@
 import expect from 'expect';
-import SampleFactory from "factories/SampleFactory";
+import SampleFactory from "@tests/factories/SampleFactory";
 
 describe('Sample', async () => {
     const referenceSample = await SampleFactory.build("SampleFactory.water_100g")

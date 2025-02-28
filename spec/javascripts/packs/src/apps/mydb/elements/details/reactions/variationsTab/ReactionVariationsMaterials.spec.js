@@ -5,14 +5,14 @@ import {
   updateColumnDefinitionsMaterials, updateVariationsRowOnCatalystMaterialChange,
   getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes,
   getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
+} from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+} from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
   setUpMaterial, setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
 } from 'helper/reactionVariationsHelpers';
-import { materialTypes } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { materialTypes } from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
 describe('ReactionVariationsMaterials', () => {

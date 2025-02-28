@@ -5,9 +5,9 @@ import expect from 'expect';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 
-import Wellplate from 'src/models/Wellplate';
+import Wellplate from '@src/models/Wellplate';
 
-import WellplateProperties from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateProperties';
+import WellplateProperties from '@src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateProperties';
 
 // Empty function placeholder for required props
 function emptyFunc() {}
