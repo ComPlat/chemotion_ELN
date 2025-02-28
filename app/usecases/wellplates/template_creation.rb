@@ -49,7 +49,7 @@ module Usecases
       def create_data_content(sheet)
         mock_value_mg = 0.1
         mock_value_gw = 1
-        @wellplate.wells.each do |well|
+        @wellplate.wells.sort_by(&:sortable_alphanumeric_position).each do |well|
           well_data = [well.sortable_alphanumeric_position, '', '', '',
                        mock_value_mg.round(2), 'mg', mock_value_gw, 'GW']
           mock_value_gw += 1

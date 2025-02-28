@@ -804,6 +804,7 @@ class ElementActions {
     return (dispatch) => {
       WellplatesFetcher.importWellplateSpreadsheet(wellplateId, attachmentId)
         .then((result) => {
+          result.updated_at = new Date();
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
