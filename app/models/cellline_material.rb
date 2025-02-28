@@ -22,6 +22,7 @@
 #  deleted_at          :datetime
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
+#  created_by          :integer
 #
 class CelllineMaterial < ApplicationRecord
   acts_as_paranoid
