@@ -11,24 +11,23 @@ import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType, getStandardUnits, materialTypes
+  createVariationsRow, copyVariationsRow, updateVariationsRow,
+  materialTypes, instantiateSelectedColumns,
+  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
+  getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  updateVariationsGasTypes, instantiateSelectedReactionMaterialIDs,
+  updateVariationsGasTypes,
   getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  addMissingMaterialsToVariations, removeObsoleteMaterialsFromVariations,
-  removeObsoleteSelectedReactionMaterialIDs,
+  removeObsoleteMaterialColumns
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor,
-  RowToolsCellRenderer, MenuHeader,
-  ColumnConfiguration
+  RowToolsCellRenderer, ColumnSelection
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
@@ -44,8 +43,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
-  const [selectedReactionMaterialIDs, setSelectedReactionMaterialIDs] = useState(
-    instantiateSelectedReactionMaterialIDs
+  const [selectedColumns, setSelectedColumns] = useState(
+    instantiateSelectedColumns
   );
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
     {
@@ -57,56 +56,16 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       cellDataType: false,
     },
     {
-      headerName: 'Notes',
-      field: 'notes',
-      cellRenderer: NoteCellRenderer,
-      sortable: false,
-      cellDataType: 'text',
-      cellEditor: NoteCellEditor,
-    },
-    {
-      headerName: 'Analyses',
-      field: 'analyses',
-      tooltipValueGetter: getAnalysesOverlay,
-      tooltipComponent: AnalysisOverlay,
-      cellRenderer: AnalysesCellRenderer,
-      cellEditor: AnalysesCellEditor,
-      cellDataType: false,
-      sortable: false,
+      headerName: 'Metadata',
+      groupId: 'metadata',
+      marryChildren: true,
+      children: []
     },
     {
       headerName: 'Properties',
       groupId: 'properties',
       marryChildren: true,
-      children: [
-        {
-          field: 'properties.temperature',
-          cellDataType: getCellDataType('temperature'),
-          entryDefs: {
-            currentEntry: 'temperature',
-            displayUnit: getStandardUnits('temperature')[0],
-            availableEntries: ['temperature']
-          },
-          headerComponent: MenuHeader,
-          headerComponentParams: {
-            names: ['T'],
-          }
-        },
-        {
-          field: 'properties.duration',
-          cellDataType: getCellDataType('duration'),
-          editable: !gasMode,
-          entryDefs: {
-            currentEntry: 'duration',
-            displayUnit: getStandardUnits('duration')[0],
-            availableEntries: ['duration']
-          },
-          headerComponent: MenuHeader,
-          headerComponentParams: {
-            names: ['t'],
-          }
-        },
-      ]
+      children: []
     },
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({
@@ -195,22 +154,22 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       getReactionMaterialsIDs(updatedReactionMaterials)
     )
   ) {
-    const updatedSelectedReactionMaterialIDs = removeObsoleteSelectedReactionMaterialIDs(
+    const updatedSelectedColumns = removeObsoleteMaterialColumns(
       updatedReactionMaterials,
-      selectedReactionMaterialIDs
+      selectedColumns
     );
-    setSelectedReactionMaterialIDs(updatedSelectedReactionMaterialIDs);
+    setSelectedColumns(updatedSelectedColumns);
 
-    const updatedReactionVariations = removeObsoleteMaterialsFromVariations(
+    const updatedReactionVariations = removeObsoleteColumnsFromVariations(
       reactionVariations,
-      updatedSelectedReactionMaterialIDs
+      updatedSelectedColumns
     );
     setReactionVariations(updatedReactionVariations);
 
     setColumnDefinitions(
       {
         type: 'remove_obsolete_materials',
-        materialIDs: updatedSelectedReactionMaterialIDs
+        selectedColumns: updatedSelectedColumns
       }
     );
 
@@ -225,7 +184,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       {
         type: 'toggle_gas_mode',
         materials: updatedReactionMaterials,
-        materialIDs: instantiateSelectedReactionMaterialIDs(),
+        selectedColumns: instantiateSelectedColumns(),
         gasMode: updatedGasMode
       }
     );
@@ -252,7 +211,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setColumnDefinitions(
       {
         type: 'update_gas_type',
-        materialIDs: selectedReactionMaterialIDs,
+        selectedColumns,
         materials: updatedReactionMaterials,
         gasMode: updatedGasMode,
       }
@@ -314,7 +273,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         createVariationsRow(
           {
             materials: reactionMaterials,
-            materialIDs: selectedReactionMaterialIDs,
+            selectedColumns,
             variations: reactionVariations,
             reactionHasPolymers,
             durationValue,
@@ -348,28 +307,35 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     );
   }, [reactionVariations, reactionHasPolymers]);
 
-  const applyColumnSelection = () => {
-    let updatedReactionVariations = addMissingMaterialsToVariations(
-      reactionVariations,
-      reactionMaterials,
-      selectedReactionMaterialIDs,
+  const applyColumnSelection = (columns) => {
+    let updatedReactionVariations = addMissingColumnsToVariations({
+      materials: reactionMaterials,
+      selectedColumns: columns,
+      variations: reactionVariations,
+      reactionHasPolymers,
+      durationValue,
+      durationUnit,
+      temperatureValue,
+      temperatureUnit,
       gasMode,
       vesselVolume
-    );
-    updatedReactionVariations = removeObsoleteMaterialsFromVariations(
+    });
+    updatedReactionVariations = removeObsoleteColumnsFromVariations(
       updatedReactionVariations,
-      selectedReactionMaterialIDs
+      columns
     );
     setReactionVariations(updatedReactionVariations);
 
     setColumnDefinitions(
       {
-        type: 'apply_material_selection',
+        type: 'apply_column_selection',
         materials: reactionMaterials,
-        materialIDs: selectedReactionMaterialIDs,
+        selectedColumns: columns,
         gasMode
       }
     );
+
+    setSelectedColumns(columns);
   };
 
   const removeAllVariations = () => {
@@ -449,10 +415,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       <ButtonGroup>
         {addVariation()}
         {removeAllVariations()}
-        {ColumnConfiguration(
-          selectedReactionMaterialIDs,
-          getReactionMaterialsIDs(reactionMaterials),
-          setSelectedReactionMaterialIDs,
+        {ColumnSelection(
+          selectedColumns,
+          {
+            ...getReactionMaterialsIDs(reactionMaterials),
+            properties: ['duration', 'temperature'],
+            metadata: ['notes', 'analyses']
+          },
           applyColumnSelection,
         )}
       </ButtonGroup>

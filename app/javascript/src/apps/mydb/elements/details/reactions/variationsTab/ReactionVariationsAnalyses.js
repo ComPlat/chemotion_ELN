@@ -21,7 +21,7 @@ function updateAnalyses(variations, allReactionAnalyses) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     // eslint-disable-next-line no-param-reassign
-    row.analyses = row.analyses.filter((id) => analysesIDs.includes(id));
+    row.metadata.analyses = row.metadata.analyses.filter((id) => analysesIDs.includes(id));
   });
 
   return updatedVariations;
@@ -61,7 +61,7 @@ AnalysisOverlay.propTypes = {
 
 function AnalysisVariationLink({ reaction, analysisID }) {
   const { variations } = cloneDeep(reaction);
-  const linkedVariations = variations.filter((row) => row.analyses.includes(analysisID)) ?? [];
+  const linkedVariations = variations.filter((row) => row.metadata.analyses.includes(analysisID)) ?? [];
 
   if (linkedVariations.length === 0) {
     return null;

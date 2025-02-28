@@ -515,39 +515,42 @@ MenuHeader.defaultProps = {
   gasType: 'off',
 };
 
-function ColumnConfiguration(selectedMaterialIDs, availableMaterialIDs, onChange, onApply) {
+function ColumnSelection(selectedColumns, availableColumns, onApply) {
   const [showModal, setShowModal] = useState(false);
+  const [currentColumns, setCurrentColumns] = useState(selectedColumns);
 
-  const handleShow = () => setShowModal(true);
   const handleApply = () => {
-    onApply();
+    onApply(currentColumns);
     setShowModal(false);
   };
 
   const handleSelectChange = (key) => (selectedOptions) => {
-    const updatedSelectedMaterialIDs = { ...selectedMaterialIDs };
-    updatedSelectedMaterialIDs[key] = selectedOptions ? selectedOptions.map((option) => option.value) : [];
-    onChange(updatedSelectedMaterialIDs);
+    const updatedCurrentColumns = { ...currentColumns };
+    updatedCurrentColumns[key] = selectedOptions ? selectedOptions.map((option) => option.value) : [];
+    setCurrentColumns(updatedCurrentColumns);
   };
+
+  const splitCamelCase = (str) => str.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const toUpperCase = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
   return (
     <>
-      <Button size="sm" variant="primary" onClick={handleShow} className="mb-2">
-        Configure Columns
+      <Button size="sm" variant="primary" onClick={() => setShowModal(true)} className="mb-2">
+        Select Columns
       </Button>
 
-      <Modal show={showModal} onHide={handleApply}>
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Column Configuration</Modal.Title>
+          <Modal.Title>Column Selection</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {Object.entries(availableMaterialIDs).map(([key, values]) => (
+          {Object.entries(availableColumns).map(([key, values]) => (
             <div key={key}>
-              <h5>{key}</h5>
+              <h5>{toUpperCase(splitCamelCase(key))}</h5>
               <Select
                 isMulti
-                options={values.map((value) => ({ value, label: value }))}
-                value={selectedMaterialIDs[key]?.map((value) => ({ value, label: value })) || []}
+                options={values.map((value) => ({ value, label: toUpperCase(value) }))}
+                value={currentColumns[key]?.map((value) => ({ value, label: toUpperCase(value) })) || []}
                 onChange={handleSelectChange(key)}
               />
             </div>
@@ -576,5 +579,5 @@ export {
   NoteCellEditor,
   MaterialOverlay,
   MenuHeader,
-  ColumnConfiguration,
+  ColumnSelection,
 };

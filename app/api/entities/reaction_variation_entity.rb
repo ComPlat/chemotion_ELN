@@ -4,9 +4,8 @@ module Entities
   class ReactionVariationEntity < ApplicationEntity
     expose(
       :id,
-      :notes,
       :properties,
-      :analyses,
+      :metadata,
       :reactants,
       :products,
       :solvents,
@@ -17,6 +16,13 @@ module Entities
       {}.tap do |properties|
         properties[:temperature] = ReactionVariationPropertyEntity.represent(object[:properties][:temperature])
         properties[:duration] = ReactionVariationPropertyEntity.represent(object[:properties][:duration])
+      end
+    end
+
+    def metadata
+      {}.tap do |metadata|
+        metadata[:notes] = object[:metadata][:notes]
+        metadata[:analyses] = object[:metadata][:analyses]
       end
     end
 
