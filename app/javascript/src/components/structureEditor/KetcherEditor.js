@@ -49,9 +49,6 @@ import {
   arrangePolymers,
   arrangeTextNodes,
   assembleTextDescriptionFormula,
-  deleteKeyByValue,
-  findAtomByImageIndex,
-  handleOnDeleteImage,
   hasTextNodes,
   isAliasConsistent,
   onAddAtom,
@@ -64,7 +61,7 @@ import {
   redoKetcher,
   removeTextFromData,
   undoKetcher
-} from '../../utilities/Ketcher2SurfaceChemistryUtils';
+} from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -146,6 +143,16 @@ export const fetchKetcherData = async (editor) => {
     await loadKetcherData(latestData);
   } catch (err) {
     console.error('fetchKetcherData', err.message);
+  }
+};
+
+const fetchTemplateList = async () => {
+  try {
+    const response = await fetch('/json/surfaceChemistryShapes.json'); // Path to your JSON file
+    const templateListStorage = await response.json(); // Parse the JSON response
+    return templateListStorage;
+  } catch (error) {
+    console.error('Error fetching the JSON data:', error); // Handle any errors
   }
 };
 
@@ -343,6 +350,12 @@ const onAtomDelete = async (editor) => {
     const lastAliasInd = parseInt(alias?.split('_')[2]);
     await fetchKetcherData(editor);
 
+    if (!deleteCopy.length) {
+      FILOStack = [];
+      uniqueEvents.clear();
+      return;
+    }
+
     // when mols and images are changed
     if (molCopy.length > mols.length && imagesList.length > imageListCopy.length) {
       console.log(685);
@@ -468,6 +481,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack('Add atom');
     },
     'Upsert image': async () => {
+      oldImagePack = [...imagesList];
       console.log('Upsert image');
       addEventToFILOStack('Upsert image');
     },
@@ -478,6 +492,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack('Move atom');
     },
     'Delete image': async () => {
+      console.log("Delete image");
       oldImagePack = [...imagesList];
       addEventToFILOStack('Delete image');
     },
@@ -496,8 +511,8 @@ const KetcherEditor = forwardRef((props, ref) => {
           }
         }
         oldImagePack = [...imagesList];
-        addEventToFILOStack('Delete atom');
       }
+      addEventToFILOStack('Delete atom');
     },
     'Add text': async () => {
       addEventToFILOStack('Add text');
@@ -531,6 +546,10 @@ const KetcherEditor = forwardRef((props, ref) => {
       const response = await onDeleteText(editor, textList, textNodeStruct);
       textList = response.textList;
       textNodeStruct = { ...response.textNodeStruct };
+    },
+    'Upsert image': async () => {
+      await fetchKetcherData(editor);
+      await onImageAddedOrCopied();
     }
   };
 
@@ -701,6 +720,11 @@ const KetcherEditor = forwardRef((props, ref) => {
       return;
     }
 
+    if (event === 'Upsert image' && FILOStack.includes('Add atom')) {
+      // console.log('Cannot add "Upsert image" after "Add atom" event.');
+      return;
+    }
+
     // Add event to FILO stack only if it's not already in uniqueEvents
     if (!uniqueEvents.has(event)) {
       FILOStack.push(event);
@@ -813,7 +837,30 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   }));
 
-  const onShapeSelection = async (tempId) => {
+  const findTemplateId = async (templateList, targetPayload) => {
+    for (const category of templateList) {
+      for (const subTab of category.subTabs) {
+        for (const shape of subTab.shapes) {
+          if (shape.payload === targetPayload) {
+            return shape.template_id;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const onImageAddedOrCopied = async () => {
+    const item = imagesList[imagesList.length - 1];
+    const templateList = await fetchTemplateList();
+    const template_id = await findTemplateId(templateList, item.data);
+    if (template_id != null) {
+      await onShapeSelection(template_id, false);
+    }
+  };
+
+  const onShapeSelection = async (tempId, imageToBeAdded = true) => {
+    console.log(tempId);
     const rootStruct = {
       nodes: [
         {
@@ -851,9 +898,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     setShowShapes(false);
     dummyContentToCopy.root = { ...rootStruct };
     const dummyAlias = { ...dummyContentToCopy };
-    const imageItem = await fetchSurfaceChemistryImageData(tempId);
+    if (imageToBeAdded) {
+      const imageItem = await fetchSurfaceChemistryImageData(tempId);
+      dummyAlias.root.nodes.push(imageItem);
+    }
 
-    dummyAlias.root.nodes.push(imageItem);
     dummyAlias.mol0.atoms[0].alias = `t_${tempId}`;
     dummyAlias.mol0.atoms.selected = true;
     await editor._structureDef.editor.addFragment(
