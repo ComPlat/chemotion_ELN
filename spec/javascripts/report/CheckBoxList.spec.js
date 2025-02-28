@@ -6,7 +6,7 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 
 
 import sinon from 'sinon'
-import CheckBoxList from '../../../app/javascript/src/components/common/CheckBoxList'
+import CheckBoxList from '@src/components/common/CheckBoxList'
 
 Enzyme.configure({ adapter: new Adapter() });
 

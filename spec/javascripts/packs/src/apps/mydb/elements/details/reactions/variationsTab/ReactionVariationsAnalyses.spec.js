@@ -1,8 +1,8 @@
 import expect from 'expect';
-import Container from 'src/models/Container';
+import Container from '@src/models/Container';
 import {
   updateAnalyses, getReactionAnalyses
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+} from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
 function buildAnalysis(name) {

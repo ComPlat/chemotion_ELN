@@ -5,7 +5,7 @@ import {
   parseDate,
   formatDate,
   formatTimeStampsOfElement
-} from 'src/utilities/timezoneHelper';
+} from '@src/utilities/timezoneHelper';
 
 describe('parseDate', () => {
   it('should return a valid moment instance when date is iso8601', () => {

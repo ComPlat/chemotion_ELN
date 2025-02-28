@@ -4,9 +4,9 @@ import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import ResearchPlanDetailsFieldImage from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldImage';
-import ResearchPlan from 'src/models/ResearchPlan';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import ResearchPlanDetailsFieldImage from '@src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldImage';
+import ResearchPlan from '@src/models/ResearchPlan';
+import AttachmentFetcher from '@src/fetchers/AttachmentFetcher';
 import sinon from 'sinon';
 
 Enzyme.configure({ adapter: new Adapter() });

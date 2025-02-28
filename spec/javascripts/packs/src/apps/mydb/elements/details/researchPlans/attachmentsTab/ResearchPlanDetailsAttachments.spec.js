@@ -6,13 +6,13 @@ import { configure, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import sinon from 'sinon';
 
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import ResearchPlanFactory from 'factories/ResearchPlanFactory';
+import AttachmentFetcher from '@src/fetchers/AttachmentFetcher';
+import ResearchPlanFactory from '@tests/factories/ResearchPlanFactory';
 // eslint-disable-next-line no-unused-vars
 
-import EditorFetcher from 'src/fetchers/EditorFetcher';
+import EditorFetcher from '@src/fetchers/EditorFetcher';
 import ResearchPlanDetailsAttachments from
-  'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
+  '@src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
 
 configure({ adapter: new Adapter() });
 

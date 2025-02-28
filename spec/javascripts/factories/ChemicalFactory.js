@@ -1,4 +1,4 @@
-import Chemical from 'src/models/Chemical';
+import Chemical from '@src/models/Chemical';
 
 class ChemicalFactory {
   static createChemical(chemicalData = [{ }], cas = null) {

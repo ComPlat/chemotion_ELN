@@ -1,7 +1,7 @@
 import expect from 'expect';
 import {
   EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+} from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsComponents', async () => {

@@ -8,9 +8,9 @@ import {
 import sinon, { spy } from 'sinon';
 import { configure, shallow, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
-import wellplate2x3EmptyJson from 'fixture/wellplates/wellplate_2_3_empty';
-import Wellplate from 'src/models/Wellplate';
+import CustomSizeModal from '@src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
+import wellplate2x3EmptyJson from '@tests/fixture/wellplates/wellplate_2_3_empty';
+import Wellplate from '@src/models/Wellplate';
 
 configure({ adapter: new Adapter() });
 

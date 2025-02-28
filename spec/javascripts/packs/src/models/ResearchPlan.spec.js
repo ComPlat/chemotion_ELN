@@ -1,5 +1,5 @@
-import Attachment from 'src/models/Attachment';
-import ResearchPlan from 'src/models/ResearchPlan';
+import Attachment from '@src/models/Attachment';
+import ResearchPlan from '@src/models/ResearchPlan';
 import expect from 'expect';
 import {
   describe, it

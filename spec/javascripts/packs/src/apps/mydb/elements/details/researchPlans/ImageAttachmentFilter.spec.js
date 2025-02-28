@@ -1,9 +1,9 @@
 import expect from 'expect';
 import Enzyme from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import ResearchPlan from 'src/models/ResearchPlan';
-import Attachment from 'src/models/Attachment';
-import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
+import ResearchPlan from '@src/models/ResearchPlan';
+import Attachment from '@src/models/Attachment';
+import ImageAttachmentFilter from '@src/utilities/ImageAttachmentFilter';
 
 Enzyme.configure({ adapter: new Adapter() });
 

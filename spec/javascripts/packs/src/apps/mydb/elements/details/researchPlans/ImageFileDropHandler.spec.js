@@ -1,9 +1,9 @@
 import expect from 'expect';
 import Enzyme from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import ResearchPlan from 'src/models/ResearchPlan';
-import Attachment from 'src/models/Attachment';
-import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
+import ResearchPlan from '@src/models/ResearchPlan';
+import Attachment from '@src/models/Attachment';
+import ImageFileDropHandler from '@src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 
 Enzyme.configure({ adapter: new Adapter() });
 

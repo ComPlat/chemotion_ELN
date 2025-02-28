@@ -7,10 +7,10 @@ import {
 } from 'mocha';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
-import wellplate2x3EmptyJson from 'fixture/wellplates/wellplate_2_3_empty';
-import wellplate8x12EmptyJson from 'fixture/wellplates/wellplate_8_12_empty';
-import Wellplate from 'src/models/Wellplate';
+import WellplateSizeDropdown from '@src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
+import wellplate2x3EmptyJson from '@tests/fixture/wellplates/wellplate_2_3_empty';
+import wellplate8x12EmptyJson from '@tests/fixture/wellplates/wellplate_8_12_empty';
+import Wellplate from '@src/models/Wellplate';
 
 configure({ adapter: new Adapter() });
 

@@ -1,5 +1,5 @@
 import expect from 'expect';
-import { keepSupSub } from '../../../app/javascript/src/utilities/quillFormat';
+import { keepSupSub } from '@src/utilities/quillFormat';
 
 describe('keepSupSub', () => {
   it('does nothing special if empty ops', () => {
