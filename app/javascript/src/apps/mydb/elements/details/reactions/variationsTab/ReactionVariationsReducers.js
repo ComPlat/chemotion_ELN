@@ -1,29 +1,28 @@
 import {
-  resetColumnDefinitionsMaterials, addMissingMaterialsToColumnDefinitions, removeObsoleteMaterialsFromColumnDefinitions
+  resetColumnDefinitionsMaterials
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  getCellDataType,
-  updateColumnDefinitions
+  getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
     case 'remove_obsolete_materials': {
-      return removeObsoleteMaterialsFromColumnDefinitions(
+      return removeObsoleteColumnDefinitions(
         columnDefinitions,
-        action.materialIDs,
+        action.selectedColumns,
       );
     }
-    case 'apply_material_selection': {
-      let updatedColumnDefinitions = addMissingMaterialsToColumnDefinitions(
+    case 'apply_column_selection': {
+      let updatedColumnDefinitions = addMissingColumnDefinitions(
         columnDefinitions,
+        action.selectedColumns,
         action.materials,
-        action.materialIDs,
         action.gasMode
       );
-      updatedColumnDefinitions = removeObsoleteMaterialsFromColumnDefinitions(
+      updatedColumnDefinitions = removeObsoleteColumnDefinitions(
         updatedColumnDefinitions,
-        action.materialIDs
+        action.selectedColumns
       );
       return updatedColumnDefinitions;
     }
@@ -52,7 +51,7 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
       updatedColumnDefinitions = resetColumnDefinitionsMaterials(
         updatedColumnDefinitions,
         action.materials,
-        action.materialIDs,
+        action.selectedColumns,
         action.gasMode
       );
 
@@ -62,7 +61,7 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
       return resetColumnDefinitionsMaterials(
         columnDefinitions,
         action.materials,
-        action.materialIDs,
+        action.selectedColumns,
         action.gasMode
       );
     }

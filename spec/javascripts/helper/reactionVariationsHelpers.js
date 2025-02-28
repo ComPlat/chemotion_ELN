@@ -11,6 +11,11 @@ import {
 async function setUpMaterial() {
   return SampleFactory.build('SampleFactory.water_100g');
 }
+
+function getSelectedColumns(materialIDs) {
+  return { ...materialIDs, properties: ['duration', 'temperature'], metadata: ['analyses', 'notes'] };
+}
+
 async function setUpReaction() {
   const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
   reaction.starting_materials[0].reference = true;
@@ -24,7 +29,7 @@ async function setUpReaction() {
     variations.push(createVariationsRow(
       {
         materials,
-        materialIDs,
+        selectedColumns: getSelectedColumns(materialIDs),
         variations,
         durationValue: '',
         durationUnit: 'Hour(s)',
@@ -63,7 +68,7 @@ async function setUpGaseousReaction() {
     variations.push(createVariationsRow(
       {
         materials,
-        materialIDs,
+        selectedColumns: getSelectedColumns(materialIDs),
         variations,
         gasMode: true,
         vesselVolume: 10
@@ -93,5 +98,10 @@ function getColumnDefinitionsMaterialIDs(columnDefinitions, materialType) {
 }
 
 export {
-  setUpMaterial, setUpReaction, setUpGaseousReaction, getColumnGroupChild, getColumnDefinitionsMaterialIDs
+  setUpMaterial,
+  setUpReaction,
+  setUpGaseousReaction,
+  getColumnGroupChild,
+  getColumnDefinitionsMaterialIDs,
+  getSelectedColumns
 };

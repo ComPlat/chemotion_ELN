@@ -1,7 +1,6 @@
 import expect from 'expect';
 import {
-  getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
-  removeObsoleteMaterialsFromVariations, removeObsoleteMaterialsFromColumnDefinitions,
+  getReactionMaterials, updateVariationsRowOnReferenceMaterialChange, removeObsoleteMaterialColumns,
   updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
   resetColumnDefinitionsMaterials, getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
@@ -11,49 +10,13 @@ import {
 import {
   setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
 } from 'helper/reactionVariationsHelpers';
-import { materialTypes } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  materialTypes,
+
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
 describe('ReactionVariationsMaterials', () => {
-  it('removes obsolete materials from variations', async () => {
-    const reaction = await setUpReaction();
-    const productIDs = reaction.products.map((product) => product.id);
-    reaction.variations.forEach((variation) => {
-      expect(Object.keys(variation.products)).toEqual(productIDs);
-    });
-
-    reaction.products.pop();
-    const updatedProductIDs = reaction.products.map((product) => product.id);
-    const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
-    const updatedVariations = removeObsoleteMaterialsFromVariations(reaction.variations, materialIDs);
-    updatedVariations
-      .forEach((variation) => {
-        expect(Object.keys(variation.products)).toEqual(updatedProductIDs);
-      });
-  });
-  it('removes obsolete materials from column definitions', async () => {
-    const reaction = await setUpReaction();
-    const reactionMaterials = getReactionMaterials(reaction);
-    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
-      groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, false))
-    }));
-
-    const startingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
-    expect(getColumnDefinitionsMaterialIDs(columnDefinitions, 'startingMaterials')).toEqual(startingMaterialIDs);
-
-    reactionMaterials.startingMaterials.pop();
-    const updatedStartingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
-    const updatedColumnDefinitions = removeObsoleteMaterialsFromColumnDefinitions(
-      columnDefinitions,
-      getReactionMaterialsIDs(reactionMaterials)
-    );
-    expect(getColumnDefinitionsMaterialIDs(
-      updatedColumnDefinitions,
-      'startingMaterials'
-    )).toEqual(updatedStartingMaterialIDs);
-  });
-
   it('updates yield when product mass changes', async () => {
     const reaction = await setUpReaction();
     const productID = reaction.products[0].id;
@@ -226,5 +189,17 @@ describe('ReactionVariationsMaterials', () => {
     const initialYield = variationsRow.products[productID].yield.value;
 
     expect(initialYield).not.toBe(null);
+  });
+  it('removes obsolete material columns', async () => {
+    const reaction = await setUpReaction();
+    const materials = getReactionMaterials(reaction);
+    const columns = getReactionMaterialsIDs(materials);
+    materials.products.pop();
+
+    expect(columns.products.length).toEqual(2);
+
+    const updatedColumns = removeObsoleteMaterialColumns(materials, columns);
+
+    expect(updatedColumns.products.length).toEqual(1);
   });
 });
