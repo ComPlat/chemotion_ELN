@@ -4,58 +4,69 @@ module Uniprot
   class Entry
     attr_reader :raw_response
 
+    delegate :dig, to: :@raw_response
+
     def initialize(raw_response)
       @raw_response = raw_response
     end
 
-    def uniprot_id
-      accession = data.dig('accession')
-      accession.is_a?(Array) ? accession.first : accession
+    def primary_accession
+      dig('primaryAccession')
     end
 
-    def name
-      data.dig('name')
+    def accessions
+      [primary_accession, dig('secondaryAccessions')].flatten
+    end
+
+    def identifier
+      dig('uniProtkbId')
     end
 
     def full_name
-      protein.dig('recommendedName', 'fullName')
+      dig('proteinDescription', 'recommendedName', 'fullName', 'value')
     end
 
     def short_name
-      protein.dig('recommendedName', 'shortName')
+      dig('proteinDescription', 'recommendedName', 'shortNames', 0, 'value')
     end
 
     def ec_numbers
-      ecn = protein.dig('recommendedName', 'ecNumber')
-      ecn.is_a?(Array) ? ecn.map { |v| v['__content__'] } : Array(ecn)
+      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |entry| entry['value'] } || []
     end
 
     def sequence
-      sequence_data.dig('__content__')
-    end
-
-    def sequence_of_structure
-      sequence_data.dig('__content__')
+      dig('sequence', 'value')
     end
 
     def molecular_weight
-      sequence_data.dig('mass')
+      dig('sequence', 'molWeight')
     end
 
     def link_uniprot
       "https://www.uniprot.org/uniprotkb/#{uniprot_id}/entry"
     end
 
-    def data
-      @raw_response.dig('uniprot', 'entry') || {}
+    def organism
+      dig('organism', 'scientificName')
     end
 
-    def protein
-      data.dig('protein') || {}
+    def taxon_id
+      dig('organism', 'taxonId')
     end
 
-    def sequence_data
-      data.dig('sequence') || {}
+    # TBD, every reference in the XML can have its own strain entry -> clarify which one we should use
+    def strain
+      ''
+    end
+
+    # TBD, every reference in the XML can have its own tissue entry -> clarify which one we should use
+    def tissue
+      ''
+    end
+
+    # TBD
+    def localisation
+      ''
     end
   end
 end

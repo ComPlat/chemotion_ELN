@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_07_01_134000) do
+ActiveRecord::Schema.define(version: 202501151333346) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -69,11 +69,11 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
-    t.datetime "deleted_at"
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
     t.jsonb "log_data"
+    t.datetime "deleted_at"
     t.string "created_by_type"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
@@ -206,6 +206,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
+    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -274,6 +275,18 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.index ["collection_id"], name: "index_collections_screens_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_screens_on_deleted_at"
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
+  end
+
+  create_table "collections_sequence_based_macromolecule_samples", force: :cascade do |t|
+    t.bigint "collection_id"
+    t.bigint "sequence_based_macromolecule_sample_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["collection_id", "sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_unique_joins", unique: true
+    t.index ["collection_id"], name: "idx_collections_sbmm_sample_collection"
+    t.index ["deleted_at"], name: "idx_collections_sbmm_sample_deleted_at"
+    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_sample"
   end
 
   create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1020,6 +1033,45 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
+  create_table "post_translational_modifications", force: :cascade do |t|
+    t.boolean "phosphorylation_enabled", default: false, null: false
+    t.boolean "phosphorylation_ser_enabled", default: false, null: false
+    t.string "phosphorylation_ser_details", default: ""
+    t.boolean "phosphorylation_thr_enabled", default: false, null: false
+    t.string "phosphorylation_thr_details", default: ""
+    t.boolean "phosphorylation_tyr_enabled", default: false, null: false
+    t.string "phosphorylation_tyr_details", default: ""
+    t.boolean "glycosylation_enabled", default: false, null: false
+    t.boolean "glycosylation_n_linked_asn_enabled", default: false, null: false
+    t.string "glycosylation_n_linked_asn_details", default: ""
+    t.boolean "glycosylation_o_linked_lys_enabled", default: false, null: false
+    t.string "glycosylation_o_linked_lys_details", default: ""
+    t.boolean "glycosylation_o_linked_ser_enabled", default: false, null: false
+    t.string "glycosylation_o_linked_ser_details", default: ""
+    t.boolean "glycosylation_o_linked_thr_enabled", default: false, null: false
+    t.string "glycosylation_o_linked_thr_details", default: ""
+    t.boolean "acetylation_enabled", default: false, null: false
+    t.float "acetylation_lysin_number"
+    t.boolean "hydroxylation_enabled", default: false, null: false
+    t.boolean "hydroxylation_lys_enabled", default: false, null: false
+    t.string "hydroxylation_lys_details", default: "t"
+    t.boolean "hydroxylation_pro_enabled", default: false, null: false
+    t.string "hydroxylation_pro_details", default: "t"
+    t.boolean "methylation_enabled", default: false, null: false
+    t.boolean "methylation_arg_enabled", default: false, null: false
+    t.string "methylation_arg_details", default: ""
+    t.boolean "methylation_glu_enabled", default: false, null: false
+    t.string "methylation_glu_details", default: ""
+    t.boolean "methylation_lys_enabled", default: false, null: false
+    t.string "methylation_lys_details", default: ""
+    t.boolean "other_modifications_enabled", default: false, null: false
+    t.string "other_modifications_details", default: ""
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "idx_sbmm_ptm_deleted_at"
+  end
+
   create_table "predictions", id: :serial, force: :cascade do |t|
     t.string "predictable_type"
     t.integer "predictable_id"
@@ -1053,6 +1105,25 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.boolean "show_sample_short_label", default: false
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
+  end
+
+  create_table "protein_sequence_modifications", force: :cascade do |t|
+    t.boolean "modification_n_terminal", default: false, null: false
+    t.string "modification_n_terminal_details", default: ""
+    t.boolean "modification_c_terminal", default: false, null: false
+    t.string "modification_c_terminal_details", default: ""
+    t.boolean "modification_insertion", default: false, null: false
+    t.string "modification_insertion_details", default: ""
+    t.boolean "modification_deletion", default: false, null: false
+    t.string "modification_deletion_details", default: ""
+    t.boolean "modification_mutation", default: false, null: false
+    t.string "modification_mutation_details", default: ""
+    t.boolean "modification_other", default: false, null: false
+    t.string "modification_other_details", default: ""
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
   create_table "reactions", id: :serial, force: :cascade do |t|
@@ -1306,9 +1377,9 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
+    t.jsonb "log_data"
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
-    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
@@ -1428,6 +1499,89 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.index ["segment_id"], name: "index_segments_revisions_on_segment_id"
   end
 
+  create_table "sequence_based_macromolecule_samples", force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "deleted_at"
+    t.string "external_label"
+    t.string "short_label", null: false
+    t.string "function_or_application"
+    t.float "concentration_value"
+    t.string "concentration_unit", default: "ng/L", null: false
+    t.float "molarity_value"
+    t.string "molarity_unit", default: "mol/L", null: false
+    t.float "activity_per_volume_value"
+    t.string "activity_per_volume_unit", default: "U/L", null: false
+    t.float "activity_per_mass_value"
+    t.string "activity_per_mass_unit", default: "U/g", null: false
+    t.float "volume_as_used_value"
+    t.string "volume_as_used_unit", default: "L", null: false
+    t.float "amount_as_used_mol_value"
+    t.string "amount_as_used_mol_unit", default: "mol", null: false
+    t.float "amount_as_used_mass_value"
+    t.string "amount_as_used_mass_unit", default: "g", null: false
+    t.float "activity_value"
+    t.string "activity_unit", default: "U", null: false
+    t.bigint "sequence_based_macromolecule_id"
+    t.bigint "user_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "ancestry"
+    t.string "heterologous_expression", default: "unknown", null: false
+    t.string "organism", default: ""
+    t.string "taxon_id", default: ""
+    t.string "strain", default: ""
+    t.string "tissue", default: ""
+    t.string "localisation", default: ""
+    t.index ["ancestry"], name: "idx_sbmm_samples_ancestry"
+    t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
+    t.index ["sequence_based_macromolecule_id"], name: "idx_sbmm_samples_sbmm"
+    t.index ["user_id"], name: "idx_sbmm_samples_user"
+  end
+
+  create_table "sequence_based_macromolecules", force: :cascade do |t|
+    t.jsonb "uniprot_source"
+    t.bigint "parent_id"
+    t.string "sbmm_type", null: false
+    t.string "sbmm_subtype", null: false
+    t.string "uniprot_derivation", null: false
+    t.string "primary_accession"
+    t.string "accessions", array: true
+    t.string "ec_numbers", array: true
+    t.string "pdb_doi"
+    t.string "systematic_name"
+    t.string "short_name", null: false
+    t.float "molecular_weight"
+    t.string "sequence", null: false
+    t.string "link_uniprot"
+    t.string "link_pdb"
+    t.bigint "protein_sequence_modification_id"
+    t.string "heterologous_expression", default: "unknown", null: false
+    t.string "organism", default: ""
+    t.string "taxon_id", default: ""
+    t.string "strain", default: ""
+    t.string "tissue", default: ""
+    t.string "localisation", default: ""
+    t.string "protein_source_details_comments", default: ""
+    t.string "protein_source_details_expression_system", default: ""
+    t.string "own_identifier", default: ""
+    t.string "other_identifier", default: ""
+    t.bigint "post_translational_modification_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["accessions"], name: "idx_sbmm_accessions"
+    t.index ["deleted_at"], name: "idx_sbmm_deleted_at"
+    t.index ["ec_numbers"], name: "idx_sbmm_ec_numbers"
+    t.index ["parent_id"], name: "idx_sbmm_parent"
+    t.index ["pdb_doi"], name: "idx_sbmm_pdb_doi"
+    t.index ["post_translational_modification_id"], name: "idx_sbmm_ptm_id"
+    t.index ["primary_accession"], name: "idx_sbmm_primary_accession"
+    t.index ["protein_sequence_modification_id"], name: "idx_sbmm_psm_id"
+    t.index ["sequence"], name: "idx_sbmm_sequence"
+    t.index ["short_name"], name: "idx_sbmm_short_name"
+    t.index ["systematic_name"], name: "idx_sbmm_systematic_name"
+  end
+
   create_table "subscriptions", id: :serial, force: :cascade do |t|
     t.integer "channel_id"
     t.integer "user_id"
@@ -1453,6 +1607,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.integer "element_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
     t.integer "devicedescription_detail_level", default: 10
+    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
@@ -1653,12 +1808,16 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
   end
 
   add_foreign_key "collections", "inventories"
+  add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
+  add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
+  add_foreign_key "sequence_based_macromolecule_samples", "users"
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
