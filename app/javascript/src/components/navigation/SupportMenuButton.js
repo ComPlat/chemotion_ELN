@@ -18,8 +18,8 @@ function ExternalItem({ title, href }) {
 
 export default function SupportMenuButton({ linkToEln = false }) {
   const [version, setVersion] = useState({});
-  const onUiStoreChange = ({ version }) => setVersion(version);
   useEffect(() => {
+    const onUiStoreChange = (state) => setVersion(state.version);
     UIStore.listen(onUiStoreChange);
     onUiStoreChange(UIStore.getState());
     return () => UIStore.unlisten(onUiStoreChange);
@@ -47,18 +47,19 @@ export default function SupportMenuButton({ linkToEln = false }) {
           : <Dropdown.Item href="/home">Home</Dropdown.Item>}
 
         {hasVersions && (
-          <>
-            <Dropdown.ItemText className="d-flex flex-column text-muted">
-              {Object.entries(version).map(([k, v]) => (
-                <span key={k} className="d-flex justify-content-between">
-                  <span>{k}:</span>
-                  <span style={{ userSelect: 'text' }}>
-                    {k == 'version' ? v : v.substring(0, 8)}
-                  </span>
+          <Dropdown.ItemText className="d-flex flex-column text-muted">
+            {Object.entries(version).map(([k, v]) => (
+              <span key={k} className="d-flex justify-content-between">
+                <span>
+                  {k}
+                  :
                 </span>
-              ))}
-            </Dropdown.ItemText>
-          </>
+                <span style={{ userSelect: 'text' }}>
+                  {k === 'version' ? v : (v ?? '').substring(0, 8)}
+                </span>
+              </span>
+            ))}
+          </Dropdown.ItemText>
         )}
       </Dropdown.Menu>
     </Dropdown>
