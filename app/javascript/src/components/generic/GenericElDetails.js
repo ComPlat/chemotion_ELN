@@ -67,7 +67,8 @@ export default class GenericElDetails extends Component {
       genericEl: props.genericEl,
       activeTab: 0,
       // List of all visible segment tabs.
-      visible: Immutable.List()
+      visible: Immutable.List(),
+      expandAll: undefined,
     };
     this.onChangeUI = this.onChangeUI.bind(this);
     this.onChangeElement = this.onChangeElement.bind(this);
@@ -84,6 +85,7 @@ export default class GenericElDetails extends Component {
     this.handleElChanged = this.handleElChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleExport = this.handleExport.bind(this);
+    this.handleExpandAll = this.handleExpandAll.bind(this);
   }
 
   componentDidMount() {
@@ -197,6 +199,10 @@ export default class GenericElDetails extends Component {
     ElementActions.exportElement(genericEl, 'Element', 'docx');
   }
 
+  handleExpandAll(expanded) {
+    this.setState({ expandAll: expanded });
+  }
+
   handleAttachmentDrop(files) {
     this.setState((prevState) => {
       const newAttachments = files.map((file) => Attachment.fromFile(file));
@@ -290,6 +296,7 @@ export default class GenericElDetails extends Component {
   }
 
   elementalPropertiesItem(genericEl) {
+    const { expandAll } = this.state;
     const options = [];
     options.push({
       generic: genericEl,
@@ -330,6 +337,7 @@ export default class GenericElDetails extends Component {
         isActiveWF
         fnNavi={onNaviClick}
         aiComp={aiComs}
+        expandAll={expandAll}
       />
     );
     return (
@@ -341,6 +349,7 @@ export default class GenericElDetails extends Component {
           fnExport={this.handleExport}
           fnReload={this.handleReload}
           fnRetrieve={this.handleRetrieveRevision}
+          onExpandAll={this.handleExpandAll}
         />
         {layersLayout}
         <EditUserLabels

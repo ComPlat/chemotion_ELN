@@ -8,9 +8,13 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 class GenericSGDetails extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      expandAll: undefined,
+    };
     this.handleReload = this.handleReload.bind(this);
     this.handleExport = this.handleExport.bind(this);
     this.handleRetrieveRevision = this.handleRetrieveRevision.bind(this);
+    this.handleExpandAll = this.handleExpandAll.bind(this);
   }
 
   handleReload(segment) {
@@ -23,6 +27,10 @@ class GenericSGDetails extends Component {
     ElementActions.exportElement(segment, 'Segment', 'docx');
   }
 
+  handleExpandAll(expanded) {
+    this.setState({ expandAll: expanded });
+  }
+
   handleRetrieveRevision(revision, cb) {
     const { segment, onChange } = this.props;
     segment.properties = revision;
@@ -33,6 +41,7 @@ class GenericSGDetails extends Component {
 
   elementalPropertiesItem(segment) {
     const { onChange, fnNavi, isSearch } = this.props;
+    const { expandAll } = this.state;
     const layersLayout = (
       <GenInterface
         generic={segment}
@@ -43,6 +52,7 @@ class GenericSGDetails extends Component {
         isSearch={isSearch}
         isActiveWF
         fnNavi={fnNavi}
+        expandAll={expandAll}
       />
     );
     return <div style={{ margin: '5px' }}>{layersLayout}</div>;
@@ -60,6 +70,7 @@ class GenericSGDetails extends Component {
           fnExport={this.handleExport}
           fnReload={this.handleReload}
           fnRetrieve={this.handleRetrieveRevision}
+          onExpandAll={this.handleExpandAll}
         />
         {this.elementalPropertiesItem(segment)}
       </div>
