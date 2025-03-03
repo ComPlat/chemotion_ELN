@@ -1,12 +1,13 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
-import Enzyme, { mount, shallow } from 'enzyme';
+import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
 import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ChemicalTab from 'src/components/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
@@ -18,7 +19,7 @@ const createChemical = (chemicalData = [{}], cas = null) => {
   return chemical;
 };
 
-Enzyme.configure({ adapter: new Adapter() });
+configure({ adapter: new Adapter() });
 
 const sample = Sample.buildEmpty(2);
 
@@ -27,14 +28,17 @@ describe('ChemicalTab basic rendering', () => {
 
   beforeEach(() => {
     wrapper = shallow(
-      <ChemicalTab
-        sample={sample}
-        saveInventory={false}
-        setSaveInventory={sinon.spy()}
-        handleUpdateSample={sinon.spy()}
-        editChemical={sinon.spy()}
-        key="ChemicalTab29"
-      />
+      React.createElement(
+        ChemicalTab,
+        {
+          sample: sample,
+          saveInventory: false,
+          setSaveInventory: sinon.spy(),
+          handleUpdateSample: sinon.spy(),
+          editChemical: sinon.spy(),
+          key: "ChemicalTab29",
+        },
+      )
     );
   });
 
@@ -67,14 +71,17 @@ describe('ChemicalTab basic rendering', () => {
 
 describe('ChemicalTab component', () => {
   const wrapper = shallow(
-    <ChemicalTab
-      sample={sample}
-      saveInventory={false}
-      editChemical={sinon.spy()}
-      setSaveInventory={sinon.spy()}
-      handleUpdateSample={sinon.spy()}
-      key="ChemicalTab29"
-    />
+    React.createElement(
+      ChemicalTab,
+      {
+        sample: sample,
+        saveInventory: false,
+        editChemical: sinon.spy(),
+        setSaveInventory: sinon.spy(),
+        handleUpdateSample: sinon.spy(),
+        key: "ChemicalTab29",
+      }
+    )
   );
 
   it('fetches chemical data on componentDidMount', () => {

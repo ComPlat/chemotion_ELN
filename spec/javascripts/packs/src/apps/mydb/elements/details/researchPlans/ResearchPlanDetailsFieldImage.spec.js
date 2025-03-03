@@ -19,7 +19,7 @@ describe('ResearchPlanDetailsFieldImage', () => {
       rp.value = {};
       rp.value.public_name = null;
 
-      const wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} attachments={[]} />);
+      const wrapper = shallow(React.createElement(ResearchPlanDetailsFieldImage, { field: rp, attachments: [] }));
 
       expect(wrapper.find('img').length).toEqual(0);
     });
@@ -31,7 +31,7 @@ describe('ResearchPlanDetailsFieldImage', () => {
       rp.value.public_name = 'blob://...';
       rp.value.file_name = 'myFile.png';
 
-      const wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} attachments={[]} />);
+      const wrapper = shallow(React.createElement(ResearchPlanDetailsFieldImage, { field: rp, attachments: [] }));
 
       expect(wrapper.find('img').length).toEqual(1);
       expect(wrapper.find('img').prop('src')).toEqual('blob://...');
@@ -44,7 +44,7 @@ describe('ResearchPlanDetailsFieldImage', () => {
       rp.value.public_name = 'xxx.png';
       rp.value.file_name = 'xxx.png';
 
-      const wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} attachments={[]} />);
+      const wrapper = shallow(React.createElement(ResearchPlanDetailsFieldImage, { field: rp, attachments: [] }));
 
       expect(wrapper.find('img').length).toEqual(1);
       expect(wrapper.find('img').prop('src')).toEqual(
@@ -63,7 +63,7 @@ describe('ResearchPlanDetailsFieldImage', () => {
       rp.value.public_name = 'xxx';
       rp.value.file_name = 'xxx';
 
-      const wrapper = shallow(<ResearchPlanDetailsFieldImage field={rp} attachments={[]} />);
+      const wrapper = shallow(React.createElement(ResearchPlanDetailsFieldImage, { field: rp, attachments: [] }));
 
       expect(wrapper.find('img').length).toEqual(1);
 

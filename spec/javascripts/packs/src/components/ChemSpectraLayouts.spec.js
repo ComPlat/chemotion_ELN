@@ -1,13 +1,16 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { configure, shallow } from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
 import assert from 'assert';
 import sinon from 'sinon';
-import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import expect from 'expect';
+import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
+
+configure({ adapter: new Adapter() });
 
 describe('ChemSpectraLayouts', () => {
   let component;
@@ -26,7 +29,7 @@ describe('ChemSpectraLayouts', () => {
     sinon.stub(global, 'fetch').callsFake(() => Promise.resolve({
       json: () => Promise.resolve({ some: 'data' }),
     }));
-    component = shallow(<ChemSpectraLayouts />);
+    component = shallow(React.createElement(ChemSpectraLayouts, {}));
     updateDataTypeStub = sinon.stub(ChemSpectraFetcher, 'updateDataTypes');
     fetchSpectraLayoutsStub = sinon.stub(ChemSpectraFetcher, 'fetchSpectraLayouts').resolves(mockData);
     fetchUpdatedSpectraLayoutsStub = sinon.stub(ChemSpectraFetcher, 'fetchUpdatedSpectraLayouts');

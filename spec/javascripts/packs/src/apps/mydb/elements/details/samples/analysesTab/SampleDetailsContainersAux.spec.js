@@ -1,7 +1,7 @@
 import React from 'react';
 import expect from 'expect';
 import sinon from 'sinon';
-import Enzyme, { mount, shallow } from 'enzyme';
+import { configure, mount, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import {
   describe, it, beforeEach
@@ -14,7 +14,7 @@ import {
 import Container from 'src/models/Container';
 import Sample from 'src/models/Sample';
 
-Enzyme.configure({ adapter: new Adapter() });
+configure({ adapter: new Adapter() });
 
 describe('SampleDetailsContainersAux', () => {
   describe('AnalysesHeader deleted', () => {
@@ -29,7 +29,7 @@ describe('SampleDetailsContainersAux', () => {
       });
 
       it('Render without kind and status', () => {
-        const wrapper = shallow(<AnalysesHeader container={container} sample={sample} />);
+        const wrapper = shallow(React.createElement(AnalysesHeader, { container: container, sample: sample }));
         expect(wrapper.html()).toEqual(expect.stringContaining(
           `<h4 class="flex-grow-1 text-decoration-line-through">${container.name}</h4>`
         ));
@@ -37,20 +37,20 @@ describe('SampleDetailsContainersAux', () => {
 
       it('Render with kind', () => {
         container.extended_metadata.kind = 'Just a kind string';
-        const wrapper = shallow(<AnalysesHeader container={container} sample={sample} />);
+        const wrapper = shallow(React.createElement(AnalysesHeader, { container: container, sample: sample }));
         expect(wrapper.html()).toEqual(expect.stringContaining('Just a kind string'));
       });
 
       it('Render with status', () => {
         container.extended_metadata.status = 'Just a status string';
-        const wrapper = shallow(<AnalysesHeader container={container} sample={sample} />);
+        const wrapper = shallow(React.createElement(AnalysesHeader, { container: container, sample: sample }));
         expect(wrapper.html()).toEqual(expect.stringContaining('Just a status string'));
       });
 
       it('Render with kind and status', () => {
         container.extended_metadata.kind = 'Just a kind string';
         container.extended_metadata.status = 'Just a status string';
-        const wrapper = shallow(<AnalysesHeader container={container} sample={sample} />);
+        const wrapper = shallow(React.createElement(AnalysesHeader, { container: container, sample: sample }));
         expect(wrapper.html()).toEqual(expect.stringContaining('Just a kind string'));
         expect(wrapper.html()).toEqual(expect.stringContaining('Just a status string'));
       });
@@ -64,7 +64,7 @@ describe('SampleDetailsContainersAux', () => {
       const sample = Sample.buildEmpty();
 
       it('Render without kind and status', () => {
-        const wrapper = shallow(<AnalysesHeader container={container} sample={sample} mode="edit" />);
+        const wrapper = shallow(React.createElement(AnalysesHeader, { container: container, sample: sample, mode: "edit" }));
         const title = wrapper.find('h4');
         expect(title.text()).toEqual(container.name);
         expect(title.prop('className')).toEqual(expect.stringContaining('text-decoration-line-through'));
@@ -73,7 +73,7 @@ describe('SampleDetailsContainersAux', () => {
       it('Check undo delete handler', () => {
         const testOnClick = sinon.spy();
         const wrapper = mount(
-          <AnalysesHeader container={container} sample={sample} mode="edit" handleUndo={testOnClick} />
+          React.createElement(AnalysesHeader, { container: container, sample: sample, mode: "edit", handleUndo: testOnClick })
         );
         wrapper.find('button').simulate('click');
         expect(testOnClick.calledWith(container)).toBeTruthy();
@@ -94,7 +94,7 @@ describe('SampleDetailsContainersAux', () => {
       });
 
       it('Render without status', () => {
-        const wrapper = shallow(<AnalysesHeader container={container} sample={sample} />);
+        const wrapper = shallow(React.createElement(AnalysesHeader, { container: container, sample: sample }));
 
         const title = wrapper.find('h4');
         expect(title.text()).toEqual(container.name);

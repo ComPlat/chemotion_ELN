@@ -137,4 +137,6 @@ const wellplate2x2fromServer = {
         },
         "created_at": "12.07.2024, 12:00:57 +0000",
         "updated_at": "12.07.2024, 12:00:57 +0000"
-}
+};
+
+export default wellplate2x2fromServer;

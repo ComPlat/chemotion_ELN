@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unresolved,no-underscore-dangle */
-import { factory } from 'factory-bot';
+import { factory } from '@eflexsystems/factory-bot';
 import AttachmentFactory from 'factories/AttachmentFactory';
 import AttachmentNotification from 'factories/models/AttachmentNotification';
 

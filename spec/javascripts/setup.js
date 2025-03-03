@@ -1,4 +1,5 @@
 require('@babel/register')();
+require('jsdom-global')();
 
 const jsdom = require('jsdom');
 
@@ -30,6 +31,7 @@ if (!window.cancelAnimationFrame) {
   };
 }
 
-global.navigator = {
-  userAgent: 'node.js'
-};
+Object.defineProperty(global, 'navigator', {
+  value: { userAgent: 'node.js' },
+  writable: false,
+});

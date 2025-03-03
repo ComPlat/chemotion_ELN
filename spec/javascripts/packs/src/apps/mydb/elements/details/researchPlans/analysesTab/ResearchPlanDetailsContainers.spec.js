@@ -21,13 +21,13 @@ describe('ResearchPlanDetailsContainers', () => {
   describe('when it does not have any analysis', () => {
     const researchPlan = ResearchPlan.buildEmpty();
     it('Render without any analysis and readonly', () => {
-      const wrapper = shallow(<ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly />);
+      const wrapper = shallow(React.createElement(ResearchPlanDetailsContainers, { researchPlan: researchPlan, readOnly: true }));
       expect(wrapper.text()).toEqual(expect.stringContaining('There are currently no Analyses.'));
       expect(wrapper.find(Button)).toHaveLength(0);
     });
 
     it('Render without any analysis', () => {
-      const wrapper = shallow(<ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} />);
+      const wrapper = shallow(React.createElement(ResearchPlanDetailsContainers, { researchPlan: researchPlan, readOnly: false }));
       expect(wrapper.text()).toEqual(expect.stringContaining('There are currently no Analyses.'));
       const button = wrapper.find(Button);
       expect(button.text()).toEqual('Add analysis');
@@ -51,7 +51,7 @@ describe('ResearchPlanDetailsContainers', () => {
       researchPlan.container.children[0].children.push(analysis);
 
       const wrapper = shallow(
-        <ResearchPlanDetailsContainers researchPlan={researchPlan} readOnly={false} />
+        React.createElement(ResearchPlanDetailsContainers, { researchPlan: researchPlan, readOnly: false })
       );
 
       const deletedHeader = wrapper.find(AccordionHeaderWithButtons).shallow().find('strike');
@@ -59,13 +59,9 @@ describe('ResearchPlanDetailsContainers', () => {
 
       const button = wrapper.find(AccordionHeaderWithButtons).find(Button);
       expect(button.html()).toEqual(shallow(
-        <Button
-          className="ms-auto"
-          size="xsm"
-          variant="danger"
-        >
-          <i className="fa fa-undo" />
-        </Button>
+        React.createElement(Button, { className: "ms-auto", size: "xsm", variant: "danger" }, 
+          React.createElement("i", { className: "fa fa-undo" })
+        )
       ).html());
     });
   });

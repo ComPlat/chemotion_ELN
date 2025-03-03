@@ -1,5 +1,6 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { configure, shallow } from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
 import {
@@ -7,7 +8,9 @@ import {
 } from 'mocha';
 import ToggleButton from 'src/components/common/ToggleButton';
 
-describe('<ToggleButton />', () => {
+configure({ adapter: new Adapter() });
+
+describe('React.createElement(ToggleButton, {})', () => {
   let wrapper;
   let onToggleSpy;
   let onChangeSpy;
@@ -17,17 +20,7 @@ describe('<ToggleButton />', () => {
     onChangeSpy = sinon.spy();
 
     wrapper = shallow(
-      <ToggleButton
-        isToggledInitial={false}
-        onToggle={onToggleSpy}
-        onChange={onChangeSpy}
-        onLabel="Conv."
-        offLabel="Yield"
-        onColor="#afcfee"
-        offColor="#d3d3d3"
-        tooltipOn="Click to enable Default mode"
-        tooltipOff="Click to enable Gas mode"
-      />
+      React.createElement(ToggleButton, { isToggledInitial: false, onToggle: onToggleSpy, onChange: onChangeSpy, onLabel: "Conv.", offLabel: "Yield", onColor: "#afcfee", offColor: "#d3d3d3", tooltipOn: "Click to enable Default mode", tooltipOff: "Click to enable Gas mode" })
     );
   });
 

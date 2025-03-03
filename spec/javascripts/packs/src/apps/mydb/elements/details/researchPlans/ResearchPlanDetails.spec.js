@@ -2,12 +2,13 @@
 
 import React from 'react';
 import expect from 'expect';
-import Enzyme, { shallow } from 'enzyme';
+import uuid from 'uuid';
+import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import sinon from 'sinon';
 
 import ResearchPlanFactory from 'factories/ResearchPlanFactory';
 import AttachmentFactory from 'factories/AttachmentFactory';
-import uuid from 'uuid';
 // although not used import of ElementStore needed to initialize
 // the ResearchPlanDetails.js component. It must be executed before
 // the import of ResearchPlanDetails. Beware of the linter which
@@ -17,14 +18,13 @@ import uuid from 'uuid';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
-import sinon from 'sinon';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 
-Enzyme.configure({
-  adapter: new Adapter(),
-});
+configure({ adapter: new Adapter() });
 
-describe('ResearchPlanDetails', async () => {
+function emptyFunc() {}
+
+describe('ResearchPlanDetails', () => {
   let stub;
 
   beforeEach(() => {
@@ -37,17 +37,18 @@ describe('ResearchPlanDetails', async () => {
 
   const FIELD_ID_IMAGE = 'entry-001';
   const FIELD_ID_NO_IMAGE = 'entry-002';
-  describe('.handleBodyChange', async () => {
-    context('on non existing field', async () => {
+
+  describe('.handleBodyChange', () => {
+    context('on non existing field', () => {
       it(' expecting nothing was changed', async () => {
         const researchPlanWithImage = await ResearchPlanFactory.build(
           'ResearchPlanFactory.with_image_body_field'
         );
         const wrapper = shallow(
-          <ResearchPlanDetails
-            researchPlan={researchPlanWithImage}
-            toggleFullScreen={() => {}}
-          />
+          React.createElement(
+            ResearchPlanDetails,
+            { researchPlan: researchPlanWithImage, toggleFullScreen: emptyFunc },
+          )
         );
         wrapper.instance().handleBodyChange({}, 'nonExistingFieldId', []);
 
@@ -55,17 +56,17 @@ describe('ResearchPlanDetails', async () => {
       });
     });
 
-    context('on non image field', async () => {
+    context('on non image field', () => {
       it(' expected to be changed', async () => {
         const researchPlanWithoutImage = await ResearchPlanFactory.build(
           'ResearchPlanFactory.with_not_image_body_field'
         );
 
         const wrapper = shallow(
-          <ResearchPlanDetails
-            researchPlan={researchPlanWithoutImage}
-            toggleFullScreen={() => {}}
-          />
+          React.createElement(
+            ResearchPlanDetails,
+            { researchPlan: researchPlanWithoutImage, toggleFullScreen: emptyFunc },
+          )
         );
 
         wrapper.instance().handleBodyChange(
@@ -89,7 +90,7 @@ describe('ResearchPlanDetails', async () => {
         ]);
       });
     });
-    context('replacing an image field for the first time', async () => {
+    context('replacing an image field for the first time', () => {
       it('expecting to be replaced', async () => {
         const researchPlanWithImage = await ResearchPlanFactory.build(
           'ResearchPlanFactory.with_image_body_field'
@@ -108,10 +109,10 @@ describe('ResearchPlanDetails', async () => {
         };
 
         const wrapper = shallow(
-          <ResearchPlanDetails
-            researchPlan={researchPlanWithImage}
-            toggleFullScreen={() => {}}
-          />
+          React.createElement(
+            ResearchPlanDetails,
+            { researchPlan: researchPlanWithImage, toggleFullScreen: emptyFunc },
+          )
         );
 
         wrapper
@@ -130,7 +131,7 @@ describe('ResearchPlanDetails', async () => {
     });
     context(
       'replacing an image field for the second time - replacing an temporary image',
-      async () => {
+      () => {
         it('expecting to be replaced with old value in memory', async () => {
           const attachmentToAdd = await AttachmentFactory.build('AttachmentFactory.new', {
             id: uuid.v1(),
@@ -152,10 +153,10 @@ describe('ResearchPlanDetails', async () => {
           };
 
           const wrapper = shallow(
-            <ResearchPlanDetails
-              researchPlan={researchPlanWithImage}
-              toggleFullScreen={() => {}}
-            />
+            React.createElement(
+              ResearchPlanDetails,
+              { researchPlan: researchPlanWithImage, toggleFullScreen: emptyFunc }
+            )
           );
 
           wrapper
@@ -168,5 +169,6 @@ describe('ResearchPlanDetails', async () => {
         });
       }
     );
+
   });
 });
