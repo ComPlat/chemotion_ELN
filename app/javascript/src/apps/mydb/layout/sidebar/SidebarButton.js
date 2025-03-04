@@ -1,9 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Badge, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 
-export default function SidebarButton({ isCollapsed, onClick, label, icon, variant,
-  badgeCount, }) {
+export default function SidebarButton({
+  isCollapsed, onClick, label, icon, variant,
+  badgeCount
+}) {
   return isCollapsed ? (
     <OverlayTrigger
       placement="right"
@@ -15,7 +19,7 @@ export default function SidebarButton({ isCollapsed, onClick, label, icon, varia
         onClick={onClick}
       >
         <i className={`fa fa-fw ${icon}`} />
-        {badgeCount > 0 && (
+        {badgeCount !== null && badgeCount > 0 && (
           <Badge
             pill
             bg="warning"
@@ -41,14 +45,15 @@ export default function SidebarButton({ isCollapsed, onClick, label, icon, varia
 
 SidebarButton.propTypes = {
   label: PropTypes.string.isRequired,
-  icon: PropTypes.string,
+  icon: PropTypes.string.isRequired,
   isCollapsed: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
-  variant: PropTypes.string.isRequired,
+  variant: PropTypes.string,
+  badgeCount: PropTypes.number,
 };
 
 SidebarButton.defaultProps = {
   isCollapsed: true,
   variant: 'paper',
+  badgeCount: null,
 };
-
