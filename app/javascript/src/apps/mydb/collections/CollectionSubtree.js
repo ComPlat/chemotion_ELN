@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -17,12 +18,12 @@ export default class CollectionSubtree extends React.Component {
     this.state = {
       selected: false,
       visible: false
-    }
+    };
 
-    this.onChange = this.onChange.bind(this)
-    this.toggleExpansion = this.toggleExpansion.bind(this)
-    this.handleClick = this.handleClick.bind(this)
-    this.handleTakeOwnership = this.handleTakeOwnership.bind(this)
+    this.onChange = this.onChange.bind(this);
+    this.toggleExpansion = this.toggleExpansion.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+    this.handleTakeOwnership = this.handleTakeOwnership.bind(this);
   }
 
   componentDidMount() {
@@ -34,16 +35,40 @@ export default class CollectionSubtree extends React.Component {
     UIStore.unlisten(this.onChange);
   }
 
+  handleTakeOwnership() {
+    const { root: { sharer, id } } = this.props;
+    const isSync = !!sharer;
+    CollectionActions.takeOwnership({ id, isSync });
+  }
+
+  handleClick() {
+    const { root } = this.props;
+    const { visible } = this.state;
+    const uiState = UIStore.getState();
+    if (uiState.showCollectionManagement) {
+      UIActions.toggleCollectionManagement();
+    }
+    this.setState({ visible: visible || this.isVisible(root, uiState) });
+
+    const url = (root.sharer)
+      ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
+      : `/collection/${root.id}/${this.urlForCurrentElement()}`;
+    Aviator.navigate(url, { silent: true });
+
+    const collShow = root.sharer ? scollectionShow : collectionShow;
+    collShow({ params: { collectionID: root.id } });
+  }
+
   onChange(state) {
     const { root } = this.props;
 
     if (state.currentCollection) {
-      const visible = this.isVisible(root, state)
+      const visible = this.isVisible(root, state);
       const selectedCol = (
-        state.currentCollection.id == root.id
+        state.currentCollection.id === root.id
         && (
-          state.currentCollection.is_synchronized == root.is_synchronized
-          || state.currentCollection.isRemote == root.isRemote
+          state.currentCollection.is_synchronized === root.is_synchronized
+          || state.currentCollection.isRemote === root.isRemote
         )
       );
 
@@ -71,27 +96,6 @@ export default class CollectionSubtree extends React.Component {
     return (isRemote || isSync) && isTakeOwnershipAllowed;
   }
 
-  handleTakeOwnership() {
-    const { root: { sharer, id } } = this.props;
-    const isSync = !!sharer;
-    CollectionActions.takeOwnership({ id, isSync });
-  }
-
-  handleClick(e) {
-    const { root } = this.props;
-    const { visible } = this.state;
-    const uiState = UIStore.getState();
-    this.setState({ visible: visible || this.isVisible(root, uiState) });
-
-    const url = (root.sharer)
-      ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
-      : `/collection/${root.id}/${this.urlForCurrentElement()}`;
-    Aviator.navigate(url, { silent: true });
-
-    const collShow = root.sharer ? scollectionShow : collectionShow;
-    collShow({ params: { collectionID: root.id } });
-  }
-
   urlForCurrentElement() {
     const { currentElement } = ElementStore.getState();
     if (currentElement) {
@@ -103,26 +107,26 @@ export default class CollectionSubtree extends React.Component {
   }
 
   toggleExpansion(e) {
-    e.stopPropagation()
+    e.stopPropagation();
     const { root } = this.props;
-    let { visible } = this.state
-    visible = !visible
-    this.setState({ visible: visible })
+    let { visible } = this.state;
+    visible = !visible;
+    this.setState({ visible });
 
-    let { visibleRootsIds } = CollectionStore.getState()
+    let { visibleRootsIds } = CollectionStore.getState();
     if (visible) {
-      visibleRootsIds.push(root.id)
+      visibleRootsIds.push(root.id);
     } else {
-      let descendantIds = root.descendant_ids
+      const descendantIds = root.descendant_ids
         ? root.descendant_ids
         : root.children.map((s) => s.id);
-      descendantIds.push(root.id)
-      visibleRootsIds = visibleRootsIds.filter(x => descendantIds.indexOf(x) == -1)
+      descendantIds.push(root.id);
+      visibleRootsIds = visibleRootsIds.filter((x) => descendantIds.indexOf(x) === -1);
     }
 
     // Remove duplicate
-    let newIds = Array.from(new Set(visibleRootsIds))
-    CollectionActions.updateCollectrionTree(newIds)
+    const newIds = Array.from(new Set(visibleRootsIds));
+    CollectionActions.updateCollectrionTree(newIds);
   }
 
   render() {

@@ -35,7 +35,7 @@ export default function Sidebar() {
           />
         </div>
         <div className={classNames(
-          'sidebar-button-frame justify-content-center',
+          'sidebar-button-frame justify-content-center mx-auto',
           { 'flex-column': isCollapsed }
         )}>
           <InboxButton isCollapsed={isCollapsed} />

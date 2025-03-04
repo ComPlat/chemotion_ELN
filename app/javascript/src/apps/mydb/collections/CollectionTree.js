@@ -98,47 +98,42 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
   }
 
   return (
-    <div className="collection-tree">
-      {collectionGroups.map(({
-        label, icon, collectionKey, roots, onClickOpenCollection,
-      }) => {
-        const isActive = activeCollection === collectionKey;
-        return (
-          <Fragment key={collectionKey}>
-            <SidebarButton
-              label={label}
-              icon={icon}
-              isCollapsed={isCollapsed}
-              onClick={() => {
-                setCollection(collectionKey);
-                if (onClickOpenCollection !== undefined) {
-                  Aviator.navigate(`/collection/${onClickOpenCollection}`, { silent: true });
-                  collectionShow({ params: { collectionID: onClickOpenCollection } });
-                }
-              }}
-              appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
-                <GatePushButton collectionId={chemotionRepository.id} />
-              ) : null}
-              variant={isActive ? 'primary' : 'paper'}
-            />
-            {isActive && !isCollapsed && roots !== undefined && (
-              <div className="tree-view_container">
-                {roots.length === 0 ? (
-                  <div className="text-muted text-center p-2">
-                    No collections
-                  </div>
-                ) : (
-                  roots.map((root) => (
-                    <CollectionSubtree key={root.id} root={root} level={1} />
-                  ))
-                )}
-              </div>
-            )}
-          </Fragment>
-        );
-      })}
-
-      <CollectionManagementButton isCollapsed={isCollapsed} />
+    <div className="mh-100 d-flex flex-column">
+      <div className="sidebar-button-frame tree-view_frame flex-column">
+        {collectionGroups.map(({
+          label, icon, collectionKey, roots, onClickOpenCollection,
+        }) => {
+          const isActive = activeCollection === collectionKey;
+          return (
+            <Fragment key={collectionKey}>
+              <SidebarButton
+                label={label}
+                icon={icon}
+                isCollapsed={isCollapsed}
+                onClick={() => {
+                  setCollection(collectionKey);
+                  if (onClickOpenCollection !== undefined) {
+                    Aviator.navigate(`/collection/${onClickOpenCollection}`, { silent: true });
+                    collectionShow({ params: { collectionID: onClickOpenCollection } });
+                  }
+                }}
+                appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
+                  <GatePushButton collectionId={chemotionRepository.id} />
+                ) : null}
+                variant={isActive ? 'primary' : 'paper'}
+              />
+              {isActive && !isCollapsed && roots !== undefined && (
+                <div className="tree-view_container">
+                  {roots.length === 0
+                    ? <div className="text-muted text-center p-2">No collections</div>
+                    : roots.map((root) => <CollectionSubtree key={root.id} root={root} level={1} />)}
+                </div>
+              )}
+            </Fragment>
+          );
+        })}
+        <CollectionManagementButton isCollapsed={isCollapsed} />
+      </div>
     </div>
   );
 }

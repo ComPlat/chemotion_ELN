@@ -12,7 +12,6 @@ $sidebar-logo-height: 72px;
   width: 300px;
   &-button-frame {
     @extend .d-flex;
-    @extend .mx-auto;
     background-color: $chemstrap-grey1;
     gap: 1px;
     padding: 1px;
@@ -59,4 +58,8 @@ $sidebar-logo-height: 72px;
       z-index: 2;
     }
   }
+}
+
+.collection-management-button {
+  @extend .rounded-0;
 }
