@@ -8,6 +8,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
+import GatePushButton from 'src/components/common/GatePushButton';
 
 import Aviator from 'aviator';
 import { collectionShow } from 'src/utilities/routesUtils';
@@ -115,6 +116,9 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
                   collectionShow({ params: { collectionID: onClickOpenCollection } });
                 }
               }}
+              appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
+                <GatePushButton collectionId={chemotionRepository.id} />
+              ) : null}
               variant={isActive ? 'primary' : 'paper'}
             />
             {isActive && !isCollapsed && roots !== undefined && (

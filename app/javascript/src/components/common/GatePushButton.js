@@ -147,7 +147,7 @@ class GatePushButton extends React.Component {
           onClick={() => this.transmit()}
           ref={this.buttonRef}
         >
-          <i className="fa fa-cloud" />
+          <i className="fa fa-refresh" />
         </Button>
 
         <Overlay
