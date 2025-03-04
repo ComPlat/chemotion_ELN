@@ -2,12 +2,12 @@
 
 class InitRdkitTable < ActiveRecord::Migration[6.1]
   def up
-    if Chemotion::Application.config.pg_cartridge == 'rdkit'
-      create_table 'rdkit.mols', as:
-        "select id, mol_from_ctab(encode(molfile, 'escape')::cstring) m from samples
+    return unless Chemotion::Application.config.pg_cartridge == 'rdkit'
+
+    create_table 'rdkit.mols', as:
+      "select id, mol_from_ctab(encode(molfile, 'escape')::cstring) m from samples
           where mol_from_ctab(encode(molfile, 'escape')::cstring) is not null;"
-      add_index 'rdkit.mols', :m, using: 'gist'
-    end
+    add_index 'rdkit.mols', :m, using: 'gist'
   end
 
   def down
