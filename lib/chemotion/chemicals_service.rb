@@ -2,6 +2,29 @@
 
 module Chemotion
   class ChemicalsService
+    MAP_GERMAN_TO_ENGLISH_PROPERTIES = {
+      'qualitätsniveau' => 'quality level',
+      'form' => 'form',
+      'schmelzpunkt' => 'melting point',
+      'siedepunkt' => 'boiling point',
+      'dichte' => 'density',
+      'dampfdichte' => 'vapor density',
+      'dampfdruck' => 'vapor pressure',
+      'brechungsindex' => 'refractive_index',
+      'farbe' => 'color',
+      'löslichkeit' => 'solubility',
+      'flammpunkt' => 'flash_point',
+      'ph-wert' => 'ph',
+      'grad' => 'grade',
+      'optische aktivität' => 'optical_activity',
+      'funktionelle gruppe' => 'functional_group',
+    }.freeze
+
+    PROPERTY_ABBREVIATIONS = {
+      'mp' => 'melting_point',
+      'bp' => 'boiling_point'
+    }.freeze
+
     def self.request_options
       { headers: {
           'Access-Control-Request-Method' => 'GET',
@@ -165,15 +188,32 @@ module Chemotion
                 .css('span').map(&:text).map { |str| str.tr(' ', '_').downcase }
     end
 
+    def self.clean_property_name(property_name)
+      return nil if property_name.nil? || property_name.empty?
+      
+      property_name = property_name.downcase.strip
+      return PROPERTY_ABBREVIATIONS[property_name] if PROPERTY_ABBREVIATIONS[property_name]
+      
+      # Handle cases like "mp (schmelzpunkt)" or "bp (siedepunkt)"
+      if property_name.include?('(')
+        main_term = property_name.split('(').first.strip
+        german_term = property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
+        
+        return PROPERTY_ABBREVIATIONS[main_term] if PROPERTY_ABBREVIATIONS[main_term]
+        
+        return MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term] if MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term]
+      end
+      MAP_GERMAN_TO_ENGLISH_PROPERTIES[property_name] || property_name
+    end
+
     def self.chem_properties_merck(chem_properties_names, chem_properties_values)
       chemical_properties = {}
       chem_properties_values.pop
       chem_properties_names.map.with_index do |string, index|
-        hash_lookup = { 'mp' => 'melting_point', 'bp' => 'boiling_point' }
-        property_name = hash_lookup[string] || string
+        property_name = clean_property_name(string)
         cleaned_value = CGI.unescapeHTML(chem_properties_values[index]) if chem_properties_values[index]
         cleaned_value = Nokogiri::HTML.fragment(cleaned_value).text.strip if cleaned_value
-        chemical_properties[property_name] = cleaned_value
+        chemical_properties[property_name] = cleaned_value if property_name
       end
       chemical_properties
     end
