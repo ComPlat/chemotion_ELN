@@ -337,6 +337,38 @@ describe Chemotion::SearchAPI do
     end
 
     context 'when search_by_fingerprint_sub' do
+      context 'when searching with explicit hydrogen' do
+        let(:aromatic_molfiles) { build_list(:molfile, 2, type: :aromatics) }
+        let(:query_molfile) { build(:molfile, type: :aromatic_explicit_hydrogen) }
+        let(:aromatic_samples) do
+          create_list(:sample, 2) do |sample, i|
+            sample.molfile = aromatic_molfiles[i]
+          end
+        end
+        let(:aromatic_collection) { create(:collection, user: user, samples: aromatic_samples) }
+        let(:params) do
+          {
+            selection: {
+              elementType: :structure,
+              molfile: query_molfile,
+              search_type: 'sub',
+              search_by_method: :structure,
+              structure_search: true,
+            },
+            collection_id: aromatic_collection.id,
+            page: 1,
+            per_page: 15,
+            molecule_sort: true,
+          }
+        end
+
+        it 'returns the proper samples' do
+          result = JSON.parse(response.body)
+          expected_count = Rails.configuration.pg_cartridge == 'rdkit' ? 1 : 2
+          expect(result.dig('samples', 'totalElements')).to eq expected_count
+        end
+      end
+
       context 'when searching a molfile in samples in correct collection' do
         let(:molfile) { sample_a.molfile }
 
@@ -357,11 +389,14 @@ describe Chemotion::SearchAPI do
         end
 
         it 'returns the sample and all other objects referencing the sample from the requested collection' do
+          expected_count = Rails.configuration.pg_cartridge == 'none' ? 2 : 1
+          expected_ids = Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id]
+
           result = JSON.parse(response.body)
           expect(result.dig('reactions', 'totalElements')).to eq 1
           expect(result.dig('reactions', 'ids')).to eq [reaction.id]
-          expect(result.dig('samples', 'totalElements')).to eq 2
-          expect(result.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
+          expect(result.dig('samples', 'totalElements')).to eq expected_count
+          expect(result.dig('samples', 'ids')).to include(*expected_ids)
           expect(result.dig('screens', 'totalElements')).to eq 1
           expect(result.dig('screens', 'ids')).to eq [screen.id]
           expect(result.dig('wellplates', 'totalElements')).to eq 1
