@@ -1,13 +1,11 @@
-.collection-tree {
-  @extend .sidebar-button-frame;
-  @extend .flex-column;
-  @extend .mh-100;
-}
 .tree-view {
   @extend .d-flex;
   @extend .flex-column;
   padding-top: 1px;
   gap: 1px;
+  &_frame {
+    min-height: 0;
+  }
   &_container {
     @extend .tree-view;
     @extend .overflow-y-auto;
