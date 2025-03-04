@@ -265,7 +265,7 @@ class CnC extends React.Component {
 
   renderDeviceList() {
     const { devices, connected, selected } = this.state;
-    const sortedDevices = devices.sort((a, b) => a.name.localCompare(b.name));
+    const sortedDevices = devices.sort((a, b) => a.name.localeCompare(b.name));
 
     return (
       <ListGroup>
