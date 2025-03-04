@@ -7,7 +7,6 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
-import GatePushButton from 'src/components/common/GatePushButton';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
 
@@ -84,12 +83,6 @@ export default class CollectionSubtree extends React.Component {
     const uiState = UIStore.getState();
     this.setState({ visible: visible || this.isVisible(root, uiState) });
 
-    if (root.label === 'All' && root.is_locked) {
-      Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`, { silent: true });
-      collectionShow({ params: { collectionID: 'all' } });
-      return;
-    }
-
     const url = (root.sharer)
       ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
       : `/collection/${root.id}/${this.urlForCurrentElement()}`;
@@ -138,8 +131,6 @@ export default class CollectionSubtree extends React.Component {
     const sharedUsers = root.sync_collections_users;
     const children = root.children || [];
 
-    const showGatePushButton = root && root.is_locked && root.label === 'chemotion-repository.net';
-
     return (
       <div key={root.id}>
         <div
@@ -155,7 +146,6 @@ export default class CollectionSubtree extends React.Component {
             />) :
             (<i className="fa fa-fw" />)
           }
-          {showGatePushButton && (<GatePushButton collectionId={root.id} />)}
           <span className="tree-view_title">{root.label}</span>
           {root.inventory_prefix && (
             <OverlayTrigger
