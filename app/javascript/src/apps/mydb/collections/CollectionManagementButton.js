@@ -1,41 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Aviator from 'aviator';
+import PropTypes from 'prop-types';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
-import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
-
-function urlForCurrentElement() {
-  const { currentElement } = ElementStore.getState();
-  if (!currentElement) return '';
-
-  return `${currentElement.type}/${currentElement.isNew ? 'new' : currentElement.id}`;
-}
-
-function handleCollectionManagementToggle() {
-  UIActions.toggleCollectionManagement();
-  const { showCollectionManagement, currentCollection, isSync } = UIStore.getState();
-  if (showCollectionManagement) {
-    Aviator.navigate('/collection/management');
-  } else {
-    if (currentCollection == null || currentCollection.label == 'All') {
-      Aviator.navigate(`/collection/all/${urlForCurrentElement()}`);
-    } else {
-      Aviator.navigate(isSync
-        ? `/scollection/${currentCollection.id}/${urlForCurrentElement()}`
-        : `/collection/${currentCollection.id}/${urlForCurrentElement()}`);
-    }
-  }
-}
+import { Button } from 'react-bootstrap';
 
 export default function CollectionManagementButton({ isCollapsed }) {
+  const [active, setActive] = useState(UIStore.getState().showCollectionManagement);
+
+  const openCollectionManagement = () => {
+    const { showCollectionManagement } = UIStore.getState();
+    if (!showCollectionManagement) {
+      UIActions.toggleCollectionManagement();
+      Aviator.navigate('/collection/management');
+      setActive(true);
+    }
+  };
+
   return (
-    <SidebarButton
-      isCollapsed={isCollapsed}
-      onClick={handleCollectionManagementToggle}
-      label="Manage Collections"
-      icon="fa-wrench"
-    />
+    <Button
+      className={`collection-management-button w-100${isCollapsed ? '' : ' text-end'}`}
+      variant="secondary"
+      onClick={openCollectionManagement}
+    >
+      {!isCollapsed && (
+        <span>Manage Collections</span>
+      )}
+      <i className={`fa fa-cog ${isCollapsed ? 'mx-auto' : 'ms-2'}${active ? ' text-primary' : ''}`} />
+    </Button>
   );
 }
+
+CollectionManagementButton.propTypes = {
+  isCollapsed: PropTypes.bool,
+};
+
+CollectionManagementButton.defaultProps = {
+  isCollapsed: true,
+};
