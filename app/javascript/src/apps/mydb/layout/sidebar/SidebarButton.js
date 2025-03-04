@@ -6,7 +6,7 @@ import {
 
 export default function SidebarButton({
   isCollapsed, onClick, label, icon, variant,
-  badgeCount
+  badgeCount, appendComponent,
 }) {
   return isCollapsed ? (
     <OverlayTrigger
@@ -33,12 +33,13 @@ export default function SidebarButton({
     </OverlayTrigger>
   ) : (
     <Button
-      className="sidebar-button text-start"
+      className="sidebar-button text-start gap-3"
       variant={variant}
       onClick={onClick}
     >
-      <i className={`fa ${icon} me-3`} />
+      <i className={`fa ${icon}`} />
       <span>{label}</span>
+      {appendComponent}
     </Button>
   );
 }
@@ -50,10 +51,12 @@ SidebarButton.propTypes = {
   onClick: PropTypes.func.isRequired,
   variant: PropTypes.string,
   badgeCount: PropTypes.number,
+  appendComponent: PropTypes.node,
 };
 
 SidebarButton.defaultProps = {
   isCollapsed: true,
   variant: 'paper',
   badgeCount: null,
+  appendComponent: null,
 };
