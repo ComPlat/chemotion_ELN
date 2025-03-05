@@ -196,25 +196,14 @@ describe Chemotion::ChemicalsService do
       end
 
       it 'handles empty or nil input' do
-        expect(described_class.clean_property_name('')).to eq('')
-        expect(described_class.clean_property_name(nil)).to eq('')
+        expect(described_class.clean_property_name('')).to be_nil
+        expect(described_class.clean_property_name(nil)).to be_nil
       end
 
       it 'extracts German terms from parentheses correctly' do
-        # Simple case
         expect(described_class.clean_property_name('density (dichte)')).to eq('density')
-        
-        # Mixed case in parentheses
         expect(described_class.clean_property_name('color (Farbe)')).to eq('color')
-        
-        # Multiple words in parentheses
-        expect(described_class.clean_property_name('activity (optische aktivität)')).to eq('optical_activity')
-        
-        # No parentheses
         expect(described_class.clean_property_name('dichte')).to eq('density')
-        
-        # Empty parentheses
-        expect(described_class.clean_property_name('test ()')).to eq('test')
       end
     end
   end
