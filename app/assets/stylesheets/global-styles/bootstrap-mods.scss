@@ -40,7 +40,8 @@ h4,
 h5,
 h6 {
   margin-top: 0.5em;
-  &.modal-title {
+  &.modal-title,
+  &.accordion-header {
     margin-top: 0;
   }
 }
