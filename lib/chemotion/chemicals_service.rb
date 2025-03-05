@@ -22,7 +22,7 @@ module Chemotion
 
     PROPERTY_ABBREVIATIONS = {
       'mp' => 'melting_point',
-      'bp' => 'boiling_point'
+      'bp' => 'boiling_point',
     }.freeze
 
     def self.request_options
@@ -189,18 +189,18 @@ module Chemotion
     end
 
     def self.clean_property_name(property_name)
-      return nil if property_name.nil? || property_name.empty?
-      
+      return nil if property_name.blank?
+
       property_name = property_name.downcase.strip
       return PROPERTY_ABBREVIATIONS[property_name] if PROPERTY_ABBREVIATIONS[property_name]
-      
+
       # Handle cases like "mp (schmelzpunkt)" or "bp (siedepunkt)"
       if property_name.include?('(')
         main_term = property_name.split('(').first.strip
         german_term = property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
-        
+
         return PROPERTY_ABBREVIATIONS[main_term] if PROPERTY_ABBREVIATIONS[main_term]
-        
+
         return MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term] if MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term]
       end
       MAP_GERMAN_TO_ENGLISH_PROPERTIES[property_name] || property_name

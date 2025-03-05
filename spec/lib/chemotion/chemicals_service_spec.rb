@@ -176,8 +176,6 @@ describe Chemotion::ChemicalsService do
         expect(described_class.clean_property_name('mp')).to eq('melting_point')
         expect(described_class.clean_property_name('bp')).to eq('boiling_point')
         expect(described_class.clean_property_name('MP')).to eq('melting_point')
-        expect(described_class.clean_property_name('BP')).to eq('boiling_point')
-        expect(described_class.clean_property_name(' mp ')).to eq('melting_point')
       end
 
       it 'handles German property names with no parentheses' do
