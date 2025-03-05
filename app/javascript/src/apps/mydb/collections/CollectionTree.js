@@ -69,13 +69,13 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
     },
     {
       label: 'Shared by me',
-      icon: 'fa-cloud-upload',
+      icon: 'fa-arrow-circle-right',
       collectionKey: 'sharedByMe',
       roots: sharedRoots,
     },
     {
       label: 'Shared with me',
-      icon: 'fa-cloud-download',
+      icon: 'fa-arrow-circle-left',
       collectionKey: 'sharedWithMe',
       roots: remoteRoots,
     },
