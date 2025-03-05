@@ -52,7 +52,8 @@ jobs:
 
     services:
       postgres:
-        image: complat/dev:postgres16-rdkit
+        # image: complat/dev:postgres16-rdkit
+        image: postgres:16
         env:
           POSTGRES_PASSWORD: postgres    # env variable required by postgres Docker container
           POSTGRES_USER: chemotion    # optional env variable used in conjunction with POSTGRES_PASSWORD to set a user and their password
@@ -62,9 +63,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      RAILS_ENV: test
+
     steps:
       - name: checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: create user for datacollectors testing
         run: |
@@ -84,7 +88,7 @@ jobs:
           mv public/welcome-message-sample.md public/welcome-message.md
           cp .env.test.example .env.test
           cd config
-          cp database.yml.gitlab database.yml
+          cp database.yml.ci database.yml
           cp -f datacollectors.yml.example datacollectors.yml
           cp -f profile_default.yml.example profile_default.yml
           cp -f shrine.yml.example shrine.yml
@@ -92,17 +96,6 @@ jobs:
           cp -f radar.yml.example radar.yml
           touch klasses.json
           bundle config set without ''
-
-      - name: configure postgres
-        env:
-          PG_ROLE: chemotion_test
-          PG_ROLE_PASSWORD: 123456
-          PG_DATABASE: chemotion_test
-          PGPASSWORD: postgres    # env variable required by psql client
-        run: |    # host is service container name
-            psql -h postgres -U chemotion -c "CREATE ROLE $PG_ROLE LOGIN CREATEDB NOSUPERUSER PASSWORD '$PG_ROLE_PASSWORD';"
-            psql -h postgres -U chemotion -c "CREATE DATABASE $PG_DATABASE OWNER $PG_ROLE;"
-            psql -d postgresql://$PG_ROLE:$PG_ROLE_PASSWORD@postgres/$PG_DATABASE -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm"; CREATE EXTENSION IF NOT EXISTS "hstore"; CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 
       - name: bundle install
         run: bundle install
@@ -112,9 +105,8 @@ jobs:
 
       - name: prepare postgres
         run: |
-          RAILS_ENV=test bundle exec rake db:migrate
-          RAILS_ENV=test bundle exec rake db:test:prepare
-          RAILS_ENV=test bundle exec rake db:seed
+          bundle exec rake db:create
+          bundle exec rake db:migrate
 
       - name: npm test
         run: npm test

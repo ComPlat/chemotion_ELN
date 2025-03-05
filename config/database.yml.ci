@@ -8,13 +8,12 @@ shared:
   template: template0
   host: postgres
   port: 5432
-  database: chemotion
 
 development:
   database: chemotion_dev
 
 test:
-  database: chemotion_test
+  database: chemotion
 
 production:
   database: chemotion
