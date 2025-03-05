@@ -62,26 +62,26 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
   const collectionGroups = [
     {
       label: 'My Collections',
-      icon: 'fa-list',
+      icon: 'fa fa-list',
       collectionKey: ALL_COLLECTIONS_KEY,
       roots: unsharedRoots,
       onClickOpenCollection: 'all',
     },
     {
       label: 'Shared by me',
-      icon: 'fa-arrow-circle-right',
+      icon: 'icon-outgoing',
       collectionKey: 'sharedByMe',
       roots: sharedRoots,
     },
     {
       label: 'Shared with me',
-      icon: 'fa-arrow-circle-left',
+      icon: 'icon-incoming',
       collectionKey: 'sharedWithMe',
       roots: remoteRoots,
     },
     {
       label: 'Synchronized with me',
-      icon: 'fa-share-alt',
+      icon: 'fa fa-share-alt',
       collectionKey: 'syncedWithMe',
       roots: syncInRoots,
     },
@@ -91,7 +91,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
   if (chemotionRepository) {
     collectionGroups.push({
       label: 'chemotion-repository.net',
-      icon: 'fa-cloud',
+      icon: 'fa fa-cloud',
       collectionKey: CHEMOTION_REPOSITORY_KEY,
       onClickOpenCollection: chemotionRepository.id,
     });

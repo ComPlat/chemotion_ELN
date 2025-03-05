@@ -37,7 +37,7 @@ export default function SidebarButton({
       variant={variant}
       onClick={onClick}
     >
-      <i className={`fa ${icon}`} />
+      <i className={icon} />
       <span>{label}</span>
       {appendComponent}
     </Button>
