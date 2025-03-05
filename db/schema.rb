@@ -708,8 +708,8 @@ ActiveRecord::Schema.define(version: 2025_02_18_161800) do
   end
 
   create_table "inventories", force: :cascade do |t|
-    t.string "prefix", null: false
-    t.string "name", null: false
+    t.string "prefix"
+    t.string "name"
     t.integer "counter", default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

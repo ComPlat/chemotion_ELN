@@ -8,25 +8,25 @@ import {
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import { find } from 'lodash';
 
-const InventoryLabelSettings = () => {
+function InventoryLabelSettings() {
   const [prefixValue, setPrefixValue] = useState('');
   const [nameValue, setNameValue] = useState('');
   const [counterValue, setCounterValue] = useState('');
   const [options, setOptions] = useState([]);
   const [selectedCollections, setSelectedValue] = useState([]);
   const [currentInventoryCollection, setInventoryLabels] = useState(null);
-  const [spinner, setSpinner] = useState(false);
+  const [updateSpinner, setUpdateSpinner] = useState(false);
+  const [resetSpinner, setResetSpinner] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
   const assignOptions = (inventoryCollections) => {
     const assignedOptions = [];
-    let groupCounter = 0;
 
     inventoryCollections.forEach((group) => {
       const { collections, inventory } = group;
 
-      // If the group has an inventory, create a group label
-      if (inventory?.id) {
+      if (inventory?.id && inventory?.name && inventory?.prefix) {
+        // Only group collections if they have a valid inventory with non-null values
         const groupLabel = `Collections in inventory: ${inventory.name}`;
         const groupObject = { value: groupLabel, title: groupLabel, children: [] };
 
@@ -35,11 +35,13 @@ const InventoryLabelSettings = () => {
           value: collection.id,
           title: collection.label,
         }));
-        groupCounter += 1;
       } else {
-        // If there's no inventory, treat each collection individually
+        // If there's no inventory or it has null values, treat each collection individually
         collections.forEach((collection) => {
-          assignedOptions.push({ value: collection.id, title: collection.label });
+          assignedOptions.push({
+            value: collection.id,
+            title: collection.label,
+          });
         });
       }
     });
@@ -94,23 +96,11 @@ const InventoryLabelSettings = () => {
   };
 
   const updateInventoryLabelsArray = (collectionIds, updatedCollectionInventories) => {
-    const updateInventoryLabels = [...currentInventoryCollection];
+    if (!updatedCollectionInventories?.inventory_collections) return;
 
-    updateInventoryLabels.forEach((obj) => {
-      if (collectionIds.includes(obj.id)) {
-        // eslint-disable-next-line no-param-reassign
-        obj.inventory = updatedCollectionInventories;
-      }
-      return obj;
-    });
-    const [inventoryCollections] = [
-      updatedCollectionInventories.inventory_collections,
-    ];
-    if (inventoryCollections) {
-      const optionsArray = assignOptions(inventoryCollections);
-      setOptions(optionsArray);
-      setInventoryLabels(inventoryCollections);
-    }
+    setInventoryLabels(updatedCollectionInventories.inventory_collections);
+    const optionsArray = assignOptions(updatedCollectionInventories.inventory_collections);
+    setOptions(optionsArray);
   };
 
   const findCollectionIds = (selectedOptions) => {
@@ -130,20 +120,24 @@ const InventoryLabelSettings = () => {
   };
 
   const collectCollectionIds = (selectedOptions) => {
-    // find collections of Group
-    const collectionsIds = selectedOptions;
-    selectedOptions?.map((group, index) => {
-      if (typeof group === 'string') {
-        const groupObject = find(options, { title: group });
-        collectionsIds[index] = groupObject.children.map((child) => child.value);
+    if (!selectedOptions || selectedOptions.length === 0) return [];
+
+    const collectionIds = selectedOptions.map((option) => {
+      if (typeof option === 'string') {
+        // If it's a group title, find the group and get all its collection IDs
+        const groupObject = find(options, { title: option });
+        return groupObject?.children?.map((child) => child.value) || [];
       }
-      return collectionsIds;
+      // If it's already a collection ID, return it directly
+      return option;
     });
-    return [].concat(...collectionsIds);
+
+    // Flatten the array and remove any undefined/null values
+    return collectionIds.flat().filter((id) => id != null);
   };
 
   const updateUserSettings = () => {
-    setSpinner(true);
+    setUpdateSpinner(true);
     const collectionIds = collectCollectionIds(selectedCollections);
     const prefixCondition = prefixValue !== undefined && prefixValue !== null && prefixValue !== '';
     const nameCondition = nameValue !== undefined && nameValue !== null && nameValue !== '';
@@ -156,7 +150,7 @@ const InventoryLabelSettings = () => {
         counter: counterValue,
         collection_ids: collectionIds
       }).then((result) => {
-        setSpinner(false);
+        setUpdateSpinner(false);
         if (result.error_message) {
           if (result.error_type === 'ActiveRecord::RecordNotUnique') {
             setErrorMessage('Entered Prefix is not available. Please use a different prefix');
@@ -172,7 +166,7 @@ const InventoryLabelSettings = () => {
       const message = 'Please select the desired collection(s) and enter a valid name, prefix, '
         + 'and counter inputs before updating user settings';
       setErrorMessage(message);
-      setSpinner(false);
+      setUpdateSpinner(false);
     }
   };
 
@@ -209,9 +203,9 @@ const InventoryLabelSettings = () => {
       setPrefixValue(inventory.prefix);
       setNameValue(inventory.name);
     } else {
-      setCounterValue(counterValue);
-      setPrefixValue(prefixValue);
-      setNameValue(nameValue);
+      setCounterValue('');
+      setPrefixValue('');
+      setNameValue('');
     }
   };
 
@@ -219,6 +213,37 @@ const InventoryLabelSettings = () => {
   const prefixCondition = prefixValue !== undefined && prefixValue !== null && prefixValue !== '';
   const nameCondition = nameValue !== undefined && nameValue !== null && nameValue !== '';
   const nextInventoryLabel = prefixCondition && nameCondition ? `${prefixValue}${nextValue}` : null;
+
+  const handleResetInventoryLabel = () => {
+    setResetSpinner(true);
+    const collectionIds = collectCollectionIds(selectedCollections);
+    if (collectionIds.length === 0) {
+      setErrorMessage('Please select collection(s) to reset');
+      setResetSpinner(false);
+      return;
+    }
+
+    InventoryFetcher.updateInventoryLabel({
+      prefix: null,
+      name: null,
+      counter: 0,
+      collection_ids: collectionIds
+    }).then((result) => {
+      if (result.error_message) {
+        setErrorMessage('Error resetting inventory label');
+      } else {
+        setPrefixValue('');
+        setNameValue('');
+        setCounterValue(0);
+        setSelectedValue([]);
+        updateInventoryLabelsArray(collectionIds, result, true);
+      }
+      setResetSpinner(false);
+    }).catch(() => {
+      setErrorMessage('Error resetting inventory label');
+      setResetSpinner(false);
+    });
+  };
 
   return (
     <Card>
@@ -272,18 +297,35 @@ const InventoryLabelSettings = () => {
           </Col>
         </Row>
         <Row>
-          <Col xs={{ offset: 8 }}>
-            <Button
-              variant="primary"
-              onClick={() => { updateUserSettings(); }}
-            >
-              {spinner
-                ? (
-                  <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
-                ) : (
-                  'Update user settings'
-                )}
-            </Button>
+          <Col xs={12} className="d-flex justify-content-end pe-5">
+            <div className="d-flex gap-2" style={{ width: '450px' }}>
+              <Button
+                variant="primary"
+                onClick={() => { updateUserSettings(); }}
+                style={{ width: '155px' }}
+                disabled={resetSpinner}
+              >
+                {updateSpinner
+                  ? (
+                    <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
+                  ) : (
+                    'Update user settings'
+                  )}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => { handleResetInventoryLabel(); }}
+                style={{ minWidth: '155px' }}
+                disabled={updateSpinner}
+              >
+                {resetSpinner
+                  ? (
+                    <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
+                  ) : (
+                    'Reset inventory label'
+                  )}
+              </Button>
+            </div>
           </Col>
         </Row>
         {errorMessage && (
@@ -298,7 +340,7 @@ const InventoryLabelSettings = () => {
       </Card.Body>
     </Card>
   );
-};
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('InventoryLabelSettings');
