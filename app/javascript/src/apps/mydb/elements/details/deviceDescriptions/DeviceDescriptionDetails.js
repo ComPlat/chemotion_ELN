@@ -197,13 +197,13 @@ const DeviceDescriptionDetails = () => {
         {deviceDescriptionHeader()}
       </Card.Header>
       <Card.Body>
-        <ElementDetailSortTab
-          type="device_description"
-          availableTabs={Object.keys(tabContentComponents)}
-          tabTitles={tabTitles}
-          onTabPositionChanged={onTabPositionChanged}
-        />
         <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="device_description"
+            availableTabs={Object.keys(tabContentComponents)}
+            tabTitles={tabTitles}
+            onTabPositionChanged={onTabPositionChanged}
+          />
           <Tabs
             activeKey={deviceDescriptionsStore.active_tab_key}
             onSelect={key => handleTabChange(key)}
