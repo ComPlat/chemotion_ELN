@@ -313,7 +313,7 @@ class ReportStore {
     let prefix = 'Supporting_Information_';
     let datetime = moment().format('YYYY-MM-DD[H]HH[M]mm[S]ss');
 
-    switch (template.value) {
+    switch (template) {
       case 'standard':
         prefix = this.stdReportPrefix(initial);
         datetime = moment().format('YYYYMMDD');
