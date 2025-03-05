@@ -65,7 +65,6 @@ module Chemotion
         env['api.format'] = :binary
         export = Labimotion::ExportDataset.new(params[:container_id])
         export.export
-        export.spectra
         content_type('application/vnd.ms-excel')
         ds_filename = export.res_name
         filename = URI.escape(ds_filename)
@@ -325,7 +324,6 @@ module Chemotion
           if Labimotion::Dataset.find_by(element_id: params[:container_id], element_type: 'Container').present?
             export = Labimotion::ExportDataset.new(params[:container_id])
             export.export
-            export.spectra
             zip.put_next_entry export.res_name
             zip.write export.read
           end
