@@ -10,10 +10,11 @@
 
 @font-face {
   font-family: "icons";
-  src: url("icons.eot");
-  src: url("icons.eot?#iefix") format("embedded-opentype"),
-    url("icons.woff2") format("woff2"), url("icons.woff") format("woff"),
-    url("icons.ttf") format("truetype"), url("icons.svg#icons") format("svg");
+  src: url("fontello.eot");
+  src: url("fontello.eot?#iefix") format("embedded-opentype"),
+    url("fontello.woff2") format("woff2"), url("fontello.woff") format("woff"),
+    url("fontello.ttf") format("truetype"),
+    url("fontello.svg#icons") format("svg");
   font-weight: normal;
   font-style: normal;
 }
@@ -21,7 +22,7 @@
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   @font-face {
     font-family: "icons";
-    src: url("icons.svg#icons") format("svg");
+    src: url("fontello.svg#icons") format("svg");
   }
 }
 
@@ -42,8 +43,10 @@
 .icon-hr:before,
 .icon-hr1:before,
 .icon-hr2:before,
+.icon-incoming:before,
 .icon-ir:before,
 .icon-isolated:before,
+.icon-outgoing:before,
 .icon-polymer:before,
 .icon-reaction:before,
 .icon-reaction-procedure:before,
@@ -110,11 +113,17 @@
 .icon-hr2:before {
   content: "\f11f";
 }
+.icon-incoming:before {
+  content: "\e820";
+}
 .icon-ir:before {
   content: "\f11b";
 }
 .icon-isolated:before {
   content: "\f10e";
+}
+.icon-outgoing:before {
+  content: "\e821";
 }
 .icon-polymer:before {
   content: "\f104";
@@ -180,8 +189,10 @@ $font-icons-hand-stop: "\f105";
 $font-icons-hr: "\f11a";
 $font-icons-hr1: "\f11e";
 $font-icons-hr2: "\f11f";
+$font-icons-incoming: "\e820";
 $font-icons-ir: "\f11b";
 $font-icons-isolated: "\f10e";
+$font-icons-outgoing: "\e821";
 $font-icons-polymer: "\f104";
 $font-icons-reaction: "\f100";
 $font-icons-reaction-procedure: "\f107";
