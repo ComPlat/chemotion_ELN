@@ -1,6 +1,23 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v1.11.0]
+> (2025-03-06)
+
+ported from main
+* features and enhancements
+  * Sample conversion rate (%) in a reaction scheme  ([#2272](https://github.com/ComPlat/chemotion_ELN/pull/2272))
+  * * feat: split cell lines ([#2275](https://github.com/ComPlat/chemotion_ELN/pull/2275))
+
+* bug Fixes
+  * Admin UI - filter invalid user ids to message to (#2322)
+  * prevent creating molecules with invalid molfile from faulty smiles
+
+* refactor
+  * set default element counter of the user on demand (#2337)
+
+
+
 ## [v1.10.5]
 > (2024-12-16)
 
