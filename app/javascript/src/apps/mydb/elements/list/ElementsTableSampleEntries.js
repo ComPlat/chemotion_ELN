@@ -226,9 +226,6 @@ export default class ElementsTableSampleEntries extends Component {
 
   componentDidUpdate(prevProps) {
     const { elements, moleculeSort, collapseAll } = this.props;
-    if (elements === prevProps.elements && moleculeSort === prevProps.moleculeSort) {
-      return;
-    }
 
     if (collapseAll !== prevProps.collapseAll) {
       this.setState({
@@ -236,7 +233,9 @@ export default class ElementsTableSampleEntries extends Component {
         userManuallyCollapsedLast: !collapseAll
       });
     }
-
+    if (elements === prevProps.elements && moleculeSort === prevProps.moleculeSort) {
+      return;
+    }
     const moleculeList = elements.reduce((acc, sample) => {
       const key = this.getMolId(sample);
       if (!acc[key]) {
@@ -441,7 +440,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   renderMoleculeGroup(moleculeGroup, index) {
     const { showDragColumn, collapseAll } = this.props;
-    const { showPreviews, moleculeGroupsShown, userManuallyCollapsedLast, targetType, moleculeToggle } = this.state;
+    const { showPreviews, moleculeGroupsShown, userManuallyCollapsedLast, targetType } = this.state;
     const { molecule } = moleculeGroup[0];
     const moleculeName = molecule.iupac_name || molecule.inchistring;
     const showGroup = collapseAll
