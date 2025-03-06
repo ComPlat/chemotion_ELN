@@ -21,14 +21,14 @@ function updateAnalyses(variations, allReactionAnalyses) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     // eslint-disable-next-line no-param-reassign
-    row.analyses = row.analyses.filter((id) => analysesIDs.includes(id));
+    row.metadata.analyses = row.metadata.analyses.filter((id) => analysesIDs.includes(id));
   });
 
   return updatedVariations;
 }
 
-function getAnalysesOverlay({ data: variationsRow, context }) {
-  const { analyses: analysesIDs } = variationsRow;
+function getAnalysesOverlay({ data: row, context }) {
+  const { analyses: analysesIDs } = row;
   const { allReactionAnalyses } = context;
 
   return allReactionAnalyses.filter((analysis) => analysesIDs.includes(analysis.id));
@@ -61,7 +61,7 @@ AnalysisOverlay.propTypes = {
 
 function AnalysisVariationLink({ reaction, analysisID }) {
   const { variations } = cloneDeep(reaction);
-  const linkedVariations = variations.filter((row) => row.analyses.includes(analysisID)) ?? [];
+  const linkedVariations = variations.filter((row) => row.metadata.analyses.includes(analysisID)) ?? [];
 
   if (linkedVariations.length === 0) {
     return null;
@@ -94,7 +94,7 @@ AnalysesCellRenderer.propTypes = {
 };
 
 function AnalysesCellEditor({
-  data: variationsRow,
+  data: row,
   value: analysesIDs,
   onValueChange,
   stopEditing,
@@ -150,7 +150,7 @@ function AnalysesCellEditor({
   const cellContent = (
     <Modal centered show>
       <Modal.Header>
-        {`Link analyses to ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
+        {`Link analyses to ${getVariationsRowName(reactionShortLabel, row.id)}`}
       </Modal.Header>
       <Modal.Body>{analysesSelection}</Modal.Body>
       <Modal.Footer>
