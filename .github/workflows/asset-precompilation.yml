@@ -23,6 +23,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    env:
+      RAILS_ENV: production
 
     steps:
       - name: checkout repository
@@ -44,16 +46,17 @@ jobs:
           echo "SECRET_KEY_BASE=$(bundle exec rake secret)" > .env
 
       - name: yarn install
-        run:  yarn install --production=false
+        run:  ./prepare-nodejs.sh && ./prepare-nodejspkg.sh
 
       # @todo user AR nulladapter (DISABLE_DATABASE_ENVIRONMENT_CHECK) instead of setting up a real db
       - name: prepare postgres
         run: |
-          RAILS_ENV=production bundle exec rake db:create
-          RAILS_ENV=production bundle exec rake db:schema:load
+          bundle exec rake db:create
+          bundle exec rake db:schema:load
 
       - name: precompile
-        run: RAILS_ENV=production bundle exec rake assets:precompile
+        run: |
+          bundle exec rake assets:precompile
 
       - name: list browsers targets
         run: yarn browserslist
