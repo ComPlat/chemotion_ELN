@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import TreeSelect from 'antd/lib/tree-select';
 import {
-  Alert, Button, Card, Row, Col, Form
+  Alert, Button, Card, Row, Col, Form, Modal, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import { find } from 'lodash';
@@ -18,6 +18,7 @@ function InventoryLabelSettings() {
   const [updateSpinner, setUpdateSpinner] = useState(false);
   const [resetSpinner, setResetSpinner] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
   const assignOptions = (inventoryCollections) => {
     const assignedOptions = [];
@@ -245,6 +246,19 @@ function InventoryLabelSettings() {
     });
   };
 
+  const handleResetConfirmation = () => {
+    setShowResetConfirmation(true);
+  };
+
+  const handleResetCancel = () => {
+    setShowResetConfirmation(false);
+  };
+
+  const handleResetConfirm = () => {
+    setShowResetConfirmation(false);
+    handleResetInventoryLabel();
+  };
+
   return (
     <Card>
       <Card.Header>Sample Inventory Label</Card.Header>
@@ -298,33 +312,42 @@ function InventoryLabelSettings() {
         </Row>
         <Row>
           <Col xs={12} className="d-flex justify-content-end pe-5">
-            <div className="d-flex gap-2" style={{ width: '450px' }}>
+            <div className="d-flex gap-2" style={{ width: '600px' }}>
               <Button
                 variant="primary"
                 onClick={() => { updateUserSettings(); }}
-                style={{ width: '155px' }}
+                style={{ width: '180px' }}
                 disabled={resetSpinner}
               >
                 {updateSpinner
                   ? (
                     <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
                   ) : (
-                    'Update user settings'
+                    'Update Inventory Label'
                   )}
               </Button>
-              <Button
-                variant="secondary"
-                onClick={() => { handleResetInventoryLabel(); }}
-                style={{ minWidth: '155px' }}
-                disabled={updateSpinner}
+              <OverlayTrigger
+                placement="top"
+                overlay={(
+                  <Tooltip>
+                    Reset the inventory label settings (prefix, name, counter) for selected collections
+                  </Tooltip>
+                )}
               >
-                {resetSpinner
-                  ? (
-                    <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
-                  ) : (
-                    'Reset inventory label'
-                  )}
-              </Button>
+                <Button
+                  variant="danger"
+                  onClick={handleResetConfirmation}
+                  style={{ minWidth: '180px' }}
+                  disabled={updateSpinner}
+                >
+                  {resetSpinner
+                    ? (
+                      <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
+                    ) : (
+                      'Reset inventory label'
+                    )}
+                </Button>
+              </OverlayTrigger>
             </div>
           </Col>
         </Row>
@@ -338,6 +361,24 @@ function InventoryLabelSettings() {
           </Row>
         )}
       </Card.Body>
+
+      <Modal show={showResetConfirmation} onHide={handleResetCancel}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Reset</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          You are about to delete the inventory label for selected collection(s).
+          Are you sure you want to delete the assigned prefix, name and counter?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={handleResetCancel}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleResetConfirm}>
+            Yes, Reset
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Card>
   );
 }
