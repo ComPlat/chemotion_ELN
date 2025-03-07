@@ -470,13 +470,16 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
-function instantiateSelectedColumns() {
+function getVariationsColumns(variations) {
+  const variationsRow = variations[0];
   const materialColumns = Object.entries(materialTypes).reduce((materialsByType, [materialType]) => {
-    materialsByType[materialType] = [];
+    materialsByType[materialType] = Object.keys(variationsRow ? variationsRow[materialType] : []);
     return materialsByType;
   }, {});
+  const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
+  const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});
 
-  return { ...materialColumns, properties: [], metadata: [] };
+  return { ...materialColumns, properties: propertyColumns, metadata: metadataColumns };
 }
 
 export {
@@ -490,6 +493,7 @@ export {
   convertUnit,
   materialTypes,
   getVariationsRowName,
+  getVariationsColumns,
   createVariationsRow,
   copyVariationsRow,
   updateVariationsRow,
@@ -497,10 +501,11 @@ export {
   getCellDataType,
   getUserFacingUnit,
   getStandardValue,
-  instantiateSelectedColumns,
   addMissingColumnsToVariations,
   removeObsoleteColumnsFromVariations,
   addMissingColumnDefinitions,
   removeObsoleteColumnDefinitions,
+  getMetadataColumnGroupChild,
+  getPropertyColumnGroupChild,
   REACTION_VARIATIONS_TAB_KEY
 };

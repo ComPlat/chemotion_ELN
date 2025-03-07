@@ -2,7 +2,7 @@ import expect from 'expect';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
-  addMissingColumnsToVariations
+  addMissingColumnsToVariations, getVariationsColumns
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionMaterials, getMaterialColumnGroupChild, getReactionMaterialsIDs
@@ -194,5 +194,19 @@ describe('ReactionVariationsUtils', () => {
       'equivalent'
     );
     expect(getColumnGroupChild(updatedColumnDefinitions, 'startingMaterials', field).cellDataType).toBe('equivalent');
+  });
+  it('gets column names from variations table', async () => {
+    const reaction = await setUpReaction();
+    const reactionMaterialsIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+    const variationsColumns = getVariationsColumns(reaction.variations);
+
+    expect(variationsColumns.startingMaterials).toEqual(reactionMaterialsIDs.startingMaterials);
+    expect(variationsColumns.properties).toEqual(expect.arrayContaining(['duration', 'temperature']));
+    expect(variationsColumns.metadata).toEqual(expect.arrayContaining(['notes', 'analyses']));
+
+    const emptyVariationsColumns = getVariationsColumns([]);
+    expect(emptyVariationsColumns.startingMaterials).toEqual([]);
+    expect(emptyVariationsColumns.properties).toEqual([]);
+    expect(emptyVariationsColumns.metadata).toEqual([]);
   });
 });
