@@ -23,4 +23,12 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.delete' do
     expect(Usecases::ReactionProcessEditor::ReactionProcessSteps::Destroy)
       .to have_received(:execute!).with(reaction_process_step: reaction_process_step)
   end
+
+  it 'triggers UseCase ReactionProcessEditor::ReactionProcessVessels::SweepUnused' do
+    allow(Usecases::ReactionProcessEditor::ReactionProcessVessels::SweepUnused).to receive(:execute!)
+    delete_reaction_process_step_request
+
+    expect(Usecases::ReactionProcessEditor::ReactionProcessVessels::SweepUnused)
+      .to have_received(:execute!).with(reaction_process_id: reaction_process_step.reaction_process_id)
+  end
 end
