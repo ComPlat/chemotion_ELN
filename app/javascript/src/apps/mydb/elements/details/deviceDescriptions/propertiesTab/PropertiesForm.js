@@ -269,11 +269,6 @@ const PropertiesForm = () => {
           <Accordion.Body>
             <Row className="mb-4">
               <Col>
-                {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
-              </Col>
-            </Row>
-            <Row className="mb-4">
-              <Col>
                 {
                   textInput(
                     deviceDescription, deviceDescriptionsStore, 'version_number',
