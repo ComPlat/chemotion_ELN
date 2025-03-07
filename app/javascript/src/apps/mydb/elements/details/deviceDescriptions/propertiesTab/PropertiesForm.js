@@ -171,6 +171,7 @@ const PropertiesForm = () => {
     const type = deviceDescription.device_type;
     if (!['setup', 'component'].includes(type)) { return ''; }
     const rowFields = type == 'setup' ? setupFields : componentFields;
+    const label = type == 'setup' ? 'Component' : 'Setup';
 
     return (
       <Accordion
@@ -185,7 +186,7 @@ const PropertiesForm = () => {
           <Accordion.Body>
             {
               componentInput(
-                deviceDescription, deviceDescriptionsStore, 'Component',
+                deviceDescription, deviceDescriptionsStore, label,
                 'setup_descriptions', type, rowFields, ''
               )
             }
