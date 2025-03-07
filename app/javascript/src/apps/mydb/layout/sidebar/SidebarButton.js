@@ -39,7 +39,7 @@ export default function SidebarButton({
     >
       <i className={icon} />
       <span>{label}</span>
-      {appendComponent}
+      <div onClick={(e) => e.stopPropagation()}>{appendComponent}</div>
     </Button>
   );
 }
