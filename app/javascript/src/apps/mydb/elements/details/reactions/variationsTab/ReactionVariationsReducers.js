@@ -2,7 +2,8 @@ import {
   resetColumnDefinitionsMaterials
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions
+  getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions,
+  getColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
@@ -42,20 +43,11 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
       return updatedColumnDefinitions;
     }
     case 'toggle_gas_mode': {
-      let updatedColumnDefinitions = updateColumnDefinitions(
-        columnDefinitions,
-        'properties.duration',
-        'editable',
-        !action.gasMode
-      );
-      updatedColumnDefinitions = resetColumnDefinitionsMaterials(
-        updatedColumnDefinitions,
-        action.materials,
+      return getColumnDefinitions(
         action.selectedColumns,
+        action.materials,
         action.gasMode
       );
-
-      return updatedColumnDefinitions;
     }
     case 'update_gas_type': {
       return resetColumnDefinitionsMaterials(

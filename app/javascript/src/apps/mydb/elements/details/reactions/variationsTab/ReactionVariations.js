@@ -11,10 +11,8 @@ import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-  createVariationsRow, copyVariationsRow, updateVariationsRow,
-  materialTypes, getVariationsColumns,
-  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations,
-  getMetadataColumnGroupChild, getPropertyColumnGroupChild
+  createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
+  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -22,13 +20,13 @@ import {
 import {
   updateVariationsGasTypes,
   getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  removeObsoleteMaterialColumns, getMaterialColumnGroupChild
+  removeObsoleteMaterialColumns
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
   EquivalentParser, GasParser, FeedstockParser,
-  RowToolsCellRenderer, ColumnSelection
+  ColumnSelection
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
@@ -45,41 +43,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
-  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
-    {
-      headerName: 'Tools',
-      cellRenderer: RowToolsCellRenderer,
-      lockPosition: 'left',
-      sortable: false,
-      maxWidth: 100,
-      cellDataType: false,
-    },
-    {
-      headerName: 'Metadata',
-      groupId: 'metadata',
-      marryChildren: true,
-      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
-    },
-    {
-      headerName: 'Properties',
-      groupId: 'properties',
-      marryChildren: true,
-      children: selectedColumns.properties.map((entry) => getPropertyColumnGroupChild(entry, gasMode))
-    },
-  ].concat(
-    Object.entries(materialTypes).map(([materialType, { label }]) => ({
-      headerName: label,
-      groupId: materialType,
-      marryChildren: true,
-      children: selectedColumns[materialType].map(
-        (materialID) => getMaterialColumnGroupChild(
-          reactionMaterials[materialType].find((material) => material.id.toString() === materialID),
-          materialType,
-          gasMode
-        )
-      )
-    }))
-  ));
+  const [columnDefinitions, setColumnDefinitions] = useReducer(
+    columnDefinitionsReducer,
+    getColumnDefinitions(selectedColumns, reactionMaterials, gasMode)
+  );
 
   const dataTypeDefinitions = {
     property: {
@@ -185,11 +152,16 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   Update gas mode according to "Scheme" tab.
   */
   if (gasMode !== updatedGasMode) {
+    const updatedSelectedColumns = getVariationsColumns([]);
+    setSelectedColumns(updatedSelectedColumns);
     setColumnDefinitions(
       {
         type: 'toggle_gas_mode',
-        materials: updatedReactionMaterials,
-        selectedColumns: instantiateSelectedColumns(),
+        materials: Object.keys(materialTypes).reduce((materials, materialType) => {
+          materials[materialType] = [];
+          return materials;
+        }, {}),
+        selectedColumns: updatedSelectedColumns,
         gasMode: updatedGasMode
       }
     );
