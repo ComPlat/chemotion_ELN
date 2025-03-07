@@ -10,7 +10,7 @@ import {
   AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  NoteCellRenderer, NoteCellEditor, MenuHeader,
+  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
@@ -470,6 +470,44 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
+function getColumnDefinitions(selectedColumns, materials, gasMode) {
+  return [
+    {
+      headerName: 'Tools',
+      cellRenderer: RowToolsCellRenderer,
+      lockPosition: 'left',
+      sortable: false,
+      maxWidth: 100,
+      cellDataType: false,
+    },
+    {
+      headerName: 'Metadata',
+      groupId: 'metadata',
+      marryChildren: true,
+      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
+    },
+    {
+      headerName: 'Properties',
+      groupId: 'properties',
+      marryChildren: true,
+      children: selectedColumns.properties.map((entry) => getPropertyColumnGroupChild(entry, gasMode))
+    },
+  ].concat(
+    Object.entries(materialTypes).map(([materialType, { label }]) => ({
+      headerName: label,
+      groupId: materialType,
+      marryChildren: true,
+      children: selectedColumns[materialType].map(
+        (materialID) => getMaterialColumnGroupChild(
+          materials[materialType].find((material) => material.id.toString() === materialID),
+          materialType,
+          gasMode
+        )
+      )
+    }))
+  );
+}
+
 function getVariationsColumns(variations) {
   const variationsRow = variations[0];
   const materialColumns = Object.entries(materialTypes).reduce((materialsByType, [materialType]) => {
@@ -498,6 +536,7 @@ export {
   copyVariationsRow,
   updateVariationsRow,
   updateColumnDefinitions,
+  getColumnDefinitions,
   getCellDataType,
   getUserFacingUnit,
   getStandardValue,
