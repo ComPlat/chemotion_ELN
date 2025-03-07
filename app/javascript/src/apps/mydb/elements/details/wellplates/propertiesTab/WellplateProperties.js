@@ -39,7 +39,7 @@ export default class WellplateProperties extends Component {
     currentTitles.splice(index, 1);
     changeProperties({ type: 'readoutTitles', value: currentTitles });
     handleRemoveReadout(index);
-    this.hideDeleteReadoutTitleConfirm(index);
+    // this.hideDeleteReadoutTitleConfirm(index);
   }
 
   updateReadoutTitle(index, newValue) {

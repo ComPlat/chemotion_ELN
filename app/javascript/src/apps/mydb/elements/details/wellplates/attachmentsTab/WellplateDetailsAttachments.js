@@ -80,6 +80,12 @@ export class WellplateDetailsAttachments extends Component {
   }
 
   componentDidMount() {
+    const { attachments } = this.props;
+    const updatedImportConfirm = attachments.reduce((acc, attachment) => {
+      acc[attachment.id] = false;
+      return acc;
+    }, {});
+    this.setState({ showImportConfirm: updatedImportConfirm });
     this.editorInitial();
     this.createAttachmentPreviews();
   }
@@ -294,13 +300,13 @@ export class WellplateDetailsAttachments extends Component {
           <div className="ms-3 align-self-center">
             {
               attachments.length > 0
-                && sortingAndFilteringUI(
-                  sortDirection,
-                  this.handleSortChange,
-                  this.toggleSortDirection,
-                  this.handleFilterChange,
-                  true
-                )
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                true
+              )
             }
           </div>
         </div>
@@ -353,9 +359,9 @@ export class WellplateDetailsAttachments extends Component {
                         extension,
                         attachmentEditor,
                         attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                          < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                         !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                          || attachment.is_new || this.documentType(attachment.filename) === null,
+                        || attachment.is_new || this.documentType(attachment.filename) === null,
                         this.handleEdit
                       )}
                       {annotateButton(attachment, () => {
@@ -372,7 +378,7 @@ export class WellplateDetailsAttachments extends Component {
                         this.hideImportConfirm,
                         this.confirmAttachmentImport
                       )}
-                    &nbsp;
+                      &nbsp;
                       {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
                     </>
                   )}
