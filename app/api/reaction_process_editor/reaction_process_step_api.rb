@@ -60,6 +60,10 @@ module ReactionProcessEditor
         delete do
           Usecases::ReactionProcessEditor::ReactionProcessSteps::Destroy
             .execute!(reaction_process_step: @reaction_process_step)
+
+          Usecases::ReactionProcessEditor::ReactionProcessVessels::SweepUnused.execute!(
+            reaction_process_id: @reaction_process_step.reaction_process_id,
+          )
         end
 
         namespace :activities do
