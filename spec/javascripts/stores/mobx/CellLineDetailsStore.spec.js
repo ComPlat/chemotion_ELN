@@ -1,6 +1,6 @@
 import expect from 'expect';
-import { CellLineDetailsStore } from 'src/stores/mobx/CellLineDetailsStore';
-import CellLineFactory from 'factories/CellLineFactory';
+import { CellLineDetailsStore } from '@src/stores/mobx/CellLineDetailsStore';
+import CellLineFactory from '@tests/factories/CellLineFactory';
 
 const newMaterialProperties = {
   biosafety_level: 'S2',

@@ -3,7 +3,7 @@ import expect from 'expect';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 
-import SpinnerPencilIcon from '../../../app/javascript/src/components/common/SpinnerPencilIcon';
+import SpinnerPencilIcon from '@src/components/common/SpinnerPencilIcon';
 
 configure({ adapter: new Adapter() });
 

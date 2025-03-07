@@ -1,4 +1,4 @@
-import InventoryFetcher from 'src/fetchers/InventoryFetcher';
+import InventoryFetcher from '@src/fetchers/InventoryFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
 import {

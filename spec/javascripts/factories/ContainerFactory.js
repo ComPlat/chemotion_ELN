@@ -1,6 +1,6 @@
 import { factory } from '@eflexsystems/factory-bot';
-import Container from "src/models/Container";
-import AttachmentFactory from "factories/AttachmentFactory";
+import Container from "@src/models/Container";
+import AttachmentFactory from "@tests/factories/AttachmentFactory";
 
 export default class ContainerFactory {
   static instance = undefined;

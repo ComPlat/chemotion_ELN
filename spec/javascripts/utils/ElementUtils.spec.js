@@ -4,14 +4,14 @@ import expect from 'expect';
 
 import {
   searchAndReplace
-} from '../../../app/javascript/src/utilities/markdownUtils';
+} from '@src/utilities/markdownUtils';
 import {
   sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat
-} from '../../../app/javascript/src/utilities/ElementUtils';
-import { contentToText } from '../../../app/javascript/src/utilities/quillFormat';
-import { nmrData1H } from '../fixture/nmr1H';
-import { nmrData13C } from '../fixture/nmr13C';
-import { rfValues } from '../fixture/rfvalue';
+} from '@src/utilities/ElementUtils';
+import { contentToText } from '@src/utilities/quillFormat';
+import { nmrData1H } from '@tests/fixture/nmr1H';
+import { nmrData13C } from '@tests/fixture/nmr13C';
+import { rfValues } from '@tests/fixture/rfvalue';
 
 describe('RF Value formating', () => {
   Object.keys(rfValues).map(k => (
