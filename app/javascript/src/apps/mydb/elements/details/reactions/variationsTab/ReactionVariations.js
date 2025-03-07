@@ -12,8 +12,9 @@ import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow,
-  materialTypes, instantiateSelectedColumns,
+  materialTypes, getVariationsColumns,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations,
+  getMetadataColumnGroupChild, getPropertyColumnGroupChild
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -21,7 +22,7 @@ import {
 import {
   updateVariationsGasTypes,
   getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  removeObsoleteMaterialColumns
+  removeObsoleteMaterialColumns, getMaterialColumnGroupChild
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -43,9 +44,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
-  const [selectedColumns, setSelectedColumns] = useState(
-    instantiateSelectedColumns
-  );
+  const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
     {
       headerName: 'Tools',
@@ -59,20 +58,26 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       headerName: 'Metadata',
       groupId: 'metadata',
       marryChildren: true,
-      children: []
+      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
     },
     {
       headerName: 'Properties',
       groupId: 'properties',
       marryChildren: true,
-      children: []
+      children: selectedColumns.properties.map((entry) => getPropertyColumnGroupChild(entry, gasMode))
     },
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({
       headerName: label,
       groupId: materialType,
       marryChildren: true,
-      children: []
+      children: selectedColumns[materialType].map(
+        (materialID) => getMaterialColumnGroupChild(
+          reactionMaterials[materialType].find((material) => material.id.toString() === materialID),
+          materialType,
+          gasMode
+        )
+      )
     }))
   ));
 
