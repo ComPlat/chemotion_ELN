@@ -564,7 +564,7 @@ export default class ElementsTable extends React.Component {
   };
 
   renderHeader = () => {
-    const { filterCreatedAt, ui } = this.state;
+    const { filterCreatedAt, ui, elements } = this.state;
     const { type, genericEl } = this.props;
     const { fromDate, toDate, userLabel } = ui;
 
@@ -574,7 +574,7 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'reaction') {
       typeSpecificHeader = this.renderReactionsHeader();
     } else if (type === 'device_description') {
-      typeSpecificHeader = <DeviceDescriptionListHeader />;
+      typeSpecificHeader = <DeviceDescriptionListHeader elements={elements} />;
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
     }

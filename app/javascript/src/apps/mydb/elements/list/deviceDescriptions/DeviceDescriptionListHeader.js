@@ -5,14 +5,28 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 
-const DeviceDescriptionListHeader = () => {
+const DeviceDescriptionListHeader = ({ elements }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
 
-  const options = [
+  let options = [
     { value: 'serial_number', label: 'Grouped by Serial no' },
-    { value: 'short_label', label: 'Grouped by short label' },
+    { value: 'short_label', label: 'Grouped by Short label' },
   ];
+  let ontologies = [];
+
+  elements.map((element) => {
+    if (!element.ontologies) { return null; }
+    element.ontologies.map((ontology) => {
+      const value = `ontology.${ontology.data.label.toLowerCase().replaceAll(' ', '-')}`;
+      const index = ontologies.findIndex((f) => f.value === value);
+      if (index === -1) {
+        ontologies.push({ value: value, label: `Grouped by ${ontology.data.label}` });
+      }
+    });
+  });
+
+  options.push.apply(options, ontologies.sort());
 
   const selectedValue = options.find(o => o.value === groupedByValue);
 
