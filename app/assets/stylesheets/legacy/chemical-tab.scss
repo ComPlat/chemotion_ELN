@@ -226,6 +226,7 @@ table.table-borderless {
 
 #fetch-properties {
     border-radius: 5px;
+    min-width: 200px !important;
 }
 
 @media (max-width: 1600px) {
@@ -239,4 +240,8 @@ table.table-borderless {
             overflow: auto;
         }
     }
+}
+
+.safety-sheet-width {
+    min-width: 850px !important;
 }
