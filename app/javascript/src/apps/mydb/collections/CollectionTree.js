@@ -29,6 +29,8 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
     // expect to be returned by `fetchLockedCollectionRoots`. We check the UI
     // state here to correctly restore the active collection on page load.
     const onUiStoreChange = ({ currentCollection }) => {
+      if (!currentCollection) return;
+
       if (currentCollection.label === 'All') {
         setActiveCollection(ALL_COLLECTIONS_KEY);
       }
