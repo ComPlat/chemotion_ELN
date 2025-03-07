@@ -802,7 +802,7 @@ export default class ChemicalTab extends React.Component {
       return (
         <div className="mt-3 w-100" key={key}>
           {isValidDocument ? (
-            <ListGroupItem key={`${key}-file`} className="p-3">
+            <ListGroupItem key={`${key}-file`} className="p-3 safety-sheet-width">
               {this.renderChildElements(document, index)}
             </ListGroupItem>
           ) : (
@@ -820,7 +820,9 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div data-component="SafetySheets">
-        <ListGroup className="my-3">{mappedSafetySheets}</ListGroup>
+        <ListGroup className="my-3 overflow-auto">
+          {mappedSafetySheets}
+        </ListGroup>
       </div>
     );
   };

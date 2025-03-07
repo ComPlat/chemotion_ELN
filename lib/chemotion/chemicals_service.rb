@@ -194,16 +194,25 @@ module Chemotion
       property_name = property_name.downcase.strip
       return PROPERTY_ABBREVIATIONS[property_name] if PROPERTY_ABBREVIATIONS[property_name]
 
-      # Handle cases like "mp (schmelzpunkt)" or "bp (siedepunkt)"
-      if property_name.include?('(')
-        main_term = property_name.split('(').first.strip
-        german_term = property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
+      handle_property_with_parentheses(property_name)
+    end
 
-        return PROPERTY_ABBREVIATIONS[main_term] if PROPERTY_ABBREVIATIONS[main_term]
+    def self.handle_property_with_parentheses(property_name)
+      return MAP_GERMAN_TO_ENGLISH_PROPERTIES[property_name] || property_name unless property_name.include?('(')
 
-        return MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term] if MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term]
-      end
-      MAP_GERMAN_TO_ENGLISH_PROPERTIES[property_name] || property_name
+      main_term = extract_main_term(property_name)
+      return PROPERTY_ABBREVIATIONS[main_term] if PROPERTY_ABBREVIATIONS[main_term]
+
+      german_term = extract_german_term(property_name)
+      MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term] || property_name
+    end
+
+    def self.extract_main_term(property_name)
+      property_name.split('(').first.strip
+    end
+
+    def self.extract_german_term(property_name)
+      property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
     end
 
     def self.chem_properties_merck(chem_properties_names, chem_properties_values)
