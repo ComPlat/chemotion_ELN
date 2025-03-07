@@ -77,7 +77,7 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
   }
 
   const identifierKey = (key) => {
-    return key === "" ? '[empty]' : key;
+    return key === "" || key === undefined ? '[empty]' : key;
   }
 
   const groupedElements = () => {
@@ -85,6 +85,13 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
 
     elements.forEach((element) => {
       let key = element[groupedByValue];
+
+      if (groupedByValue.includes('ontology') && element.ontologies) {
+        const ontology = groupedByValue.split('.');
+        const index = element.ontologies.findIndex((f) => f.data.label.toLowerCase().replaceAll(' ', '-') === ontology[1]);
+        key = index >= 0 ? `${ontology[0].charAt(0).toUpperCase() + ontology[0].slice(1)} ${ontology[1]}` : '[other]';        
+      }
+
       deviceDescriptionsStore.addGroupToAllGroups(identifierKey(key));
 
       if (groupedByValue == 'short_label') {
@@ -125,7 +132,10 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
     const groupKey = groupedByValue == 'short_label' ? group[0].short_label : key;
     const groupType = group[0].device_type ? `- ${group[0].device_type}` : '';
     const groupDeviceName = group[0].vendor_device_name ? group[0].vendor_device_name : group[0].name;
-    const groupName = groupKey === '[empty]' ? groupKey : `${groupDeviceName} - ${groupKey} ${groupType}`;
+    let groupName = groupKey;
+    if (groupKey !== '[empty]' && groupKey !== '[other]' && !key.includes('Ontology')) {
+      groupName = `${groupDeviceName} - ${groupKey} ${groupType}`;
+    }
 
     return (
       <div
