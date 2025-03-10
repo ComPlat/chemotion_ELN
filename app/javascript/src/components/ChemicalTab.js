@@ -715,7 +715,8 @@ export default class ChemicalTab extends React.Component {
       { label: 'Common Name', value: 'Common Name' },
       { label: 'CAS', value: 'CAS' }
     ];
-    const conditionalOverlay = 'Assign a cas number using the cas field in labels section for better search results using cas number';
+    const conditionalOverlay = `Assign a cas number using the cas field in labels section
+    for better search results using cas number`;
 
     return (
       <Form.Group>
@@ -723,7 +724,7 @@ export default class ChemicalTab extends React.Component {
           Query SDS using
           <OverlayTrigger
             placement="top"
-            overlay={cas && cas !== '' ? null : <Tooltip>{conditionalOverlay}</Tooltip>}
+            overlay={cas && cas !== '' ? <Tooltip>{conditionalOverlay}</Tooltip> : <div />}
           >
             <i className="fa fa-info-circle ms-1" />
           </OverlayTrigger>
