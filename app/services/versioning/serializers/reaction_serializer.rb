@@ -77,7 +77,6 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
       },
       variations: {
         label: 'Variations',
-        revert: %i[variations],
         formatter: array_formatter,
       },
       timestamp_start: {
