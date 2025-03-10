@@ -1,8 +1,8 @@
 /* global describe, it */
 
 import expect from 'expect';
-import ContainerFactory from 'factories/ContainerFactory';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import ContainerFactory from '@tests/factories/ContainerFactory';
+import BaseFetcher from '@src/fetchers/BaseFetcher';
 
 describe('BaseFetcher', () => {
   describe('.getAttachments()', () => {

@@ -1,6 +1,6 @@
 import expect from 'expect';
-import CellLineFactory from 'factories/CellLineFactory';
-import CellLineGroup from '../../../../../../app/javascript/src/models/cellLine/CellLineGroup';
+import CellLineFactory from '@tests/factories/CellLineFactory';
+import CellLineGroup from '@src/models/cellLine/CellLineGroup';
 
 describe('CellLineGroup', async () => {
   describe('buildFromElements()', async () => {

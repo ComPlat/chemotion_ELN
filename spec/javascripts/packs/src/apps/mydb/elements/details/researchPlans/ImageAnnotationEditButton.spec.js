@@ -5,8 +5,8 @@ import expect from 'expect';
 import { configure, shallow } from 'enzyme';
 import { spy } from 'sinon';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import Attachment from 'src/models/Attachment';
+import ImageAnnotationEditButton from '@src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
+import Attachment from '@src/models/Attachment';
 
 import { Button } from 'react-bootstrap';
 

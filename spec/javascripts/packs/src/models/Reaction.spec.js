@@ -1,4 +1,4 @@
-import ReactionFactory from 'factories/ReactionFactory';
+import ReactionFactory from '@tests/factories/ReactionFactory';
 import expect from 'expect';
 
 describe('Reaction', async () => {

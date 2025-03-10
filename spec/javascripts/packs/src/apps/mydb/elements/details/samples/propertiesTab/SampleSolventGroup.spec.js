@@ -4,8 +4,8 @@ import expect from 'expect';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { SampleSolventGroup, SolventDetails }
-  from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
-import SampleFactory from 'factories/SampleFactory';
+  from '@src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
+import SampleFactory from '@tests/factories/SampleFactory';
 
 import {
   describe, it

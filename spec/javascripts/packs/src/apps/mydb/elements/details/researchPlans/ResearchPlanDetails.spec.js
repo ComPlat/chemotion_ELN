@@ -7,18 +7,18 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import sinon from 'sinon';
 
-import ResearchPlanFactory from 'factories/ResearchPlanFactory';
-import AttachmentFactory from 'factories/AttachmentFactory';
+import ResearchPlanFactory from '@tests/factories/ResearchPlanFactory';
+import AttachmentFactory from '@tests/factories/AttachmentFactory';
 // although not used import of ElementStore needed to initialize
 // the ResearchPlanDetails.js component. It must be executed before
 // the import of ResearchPlanDetails. Beware of the linter which
 // may put it at the end of the imports !!!
 
 // eslint-disable-next-line no-unused-vars
-import ElementStore from 'src/stores/alt/stores/ElementStore';
+import ElementStore from '@src/stores/alt/stores/ElementStore';
 
-import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
-import CommentActions from 'src/stores/alt/actions/CommentActions';
+import ResearchPlanDetails from '@src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
+import CommentActions from '@src/stores/alt/actions/CommentActions';
 
 configure({ adapter: new Adapter() });
 

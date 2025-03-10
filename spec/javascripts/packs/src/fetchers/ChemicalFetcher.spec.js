@@ -1,4 +1,4 @@
-import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import ChemicalFetcher from '@src/fetchers/ChemicalFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
 import {

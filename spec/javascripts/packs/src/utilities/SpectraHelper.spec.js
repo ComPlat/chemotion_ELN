@@ -7,10 +7,10 @@ import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
   JcampIds, BuildSpcInfos, cleaningNMRiumData,
   inlineNotation,
-} from 'src/utilities/SpectraHelper';
-import Sample from 'src/models/Sample';
-import Container from 'src/models/Container';
-import { chmosFixture } from '../../../fixture/chmos';
+} from '@src/utilities/SpectraHelper';
+import Sample from '@src/models/Sample';
+import Container from '@src/models/Container';
+import { chmosFixture } from '@tests/fixture/chmos';
 
 describe('SpectraHelper', () => {
   describe('.isNMRKind()', () => {

@@ -8,12 +8,12 @@ import {
 
 import { Button } from 'react-bootstrap';
 
-import Container from 'src/models/Container';
-import ResearchPlan from 'src/models/ResearchPlan';
-import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import Container from '@src/models/Container';
+import ResearchPlan from '@src/models/ResearchPlan';
+import AccordionHeaderWithButtons from '@src/components/common/AccordionHeaderWithButtons';
 
 import ResearchPlanDetailsContainers
-  from 'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
+  from '@src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
 
 Enzyme.configure({ adapter: new Adapter() });
 

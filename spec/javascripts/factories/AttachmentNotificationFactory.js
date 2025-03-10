@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved,no-underscore-dangle */
 import { factory } from '@eflexsystems/factory-bot';
-import AttachmentFactory from 'factories/AttachmentFactory';
-import AttachmentNotification from 'factories/models/AttachmentNotification';
+import AttachmentFactory from '@tests/factories/AttachmentFactory';
+import AttachmentNotification from '@tests/factories/models/AttachmentNotification';
 
 export default class AttachmentNotificationFactory {
   static instance = undefined;
