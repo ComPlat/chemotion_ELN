@@ -235,7 +235,7 @@ module Chemotion
       chem_properties_values = properties.map { |property| property['value'].join(', ') }
       chem_properties_values.compact_blank!
       chem_properties_merck(chem_properties_names, chem_properties_values)
-    rescue StandardError => e
+    rescue StandardError
       'Could not find additional chemical properties'
     end
 
