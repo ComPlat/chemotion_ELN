@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_03_04_140809) do
+ActiveRecord::Schema.define(version: 2025_03_14_000000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -953,7 +953,7 @@ ActiveRecord::Schema.define(version: 2025_03_04_140809) do
     t.text "cas"
     t.string "molfile_version", limit: 20
     t.index ["deleted_at"], name: "index_molecules_on_deleted_at"
-    t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
+    t.index ["inchikey", "sum_formular", "is_partial"], name: "index_molecules_on_formula_and_inchikey_and_is_partial", unique: true
   end
 
   create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
@@ -2403,6 +2403,44 @@ ActiveRecord::Schema.define(version: 2025_03_04_140809) do
               FOR EACH ROW
               WHEN (coalesce(current_setting(''logidze.disabled'', true), '''') <> ''on'')
               EXECUTE PROCEDURE logidze_logger(null, %L)', trigger_name, table_name, timestamp_column);
+      END;
+      $function$
+  SQL
+  create_function :jsonb_diff, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.jsonb_diff(old jsonb, new jsonb)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+      DECLARE
+        result jsonb := '{}'::jsonb;
+        v RECORD;
+        nested_diff jsonb;
+      BEGIN
+        -- If old is NULL, return the new object as the full difference
+        IF old IS NULL OR jsonb_typeof(old) = 'null' THEN
+          RETURN new;
+        END IF;
+
+        -- If new is NULL, return an empty JSON
+        IF new IS NULL OR jsonb_typeof(new) = 'null' THEN
+          RETURN '{}'::jsonb;
+        END IF;
+
+        -- Iterate through each key-value pair in new
+        FOR v IN SELECT * FROM jsonb_each(new) LOOP
+          -- If the key is an object in both old and new, recurse
+          IF jsonb_typeof(old -> v.key) = 'object' AND jsonb_typeof(new -> v.key) = 'object' THEN
+            nested_diff := jsonb_diff(old -> v.key, new -> v.key);
+            IF nested_diff <> '{}'::jsonb THEN
+              result := result || jsonb_build_object(v.key, nested_diff);
+            END IF;
+          -- If values are different, add to the result
+          ELSIF (old -> v.key) IS DISTINCT FROM v.value THEN
+            result := result || jsonb_build_object(v.key, v.value);
+          END IF;
+        END LOOP;
+
+        RETURN result;
       END;
       $function$
   SQL
