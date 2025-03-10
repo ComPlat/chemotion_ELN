@@ -16,7 +16,10 @@ module Usecases
 
         @cell_line_sample.cellline_material = find_material || create_new_material
         update_sample_properties
-        update_material_properties(@cell_line_sample.cellline_material)
+        if @cell_line_sample.cellline_material.created_by.nil? ||
+           @cell_line_sample.cellline_material.created_by == @current_user.id
+          update_material_properties(@cell_line_sample.cellline_material)
+        end
         @cell_line_sample.save
         @cell_line_sample
       end
