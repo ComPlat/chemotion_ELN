@@ -165,5 +165,44 @@ describe Chemotion::ChemicalsService do
         expect(Rails.logger).to have_received(:error).with("Error: #{error_message}")
       end
     end
+
+    context 'when clean_property_name is called' do
+      it 'handles property names with abbreviations in parentheses' do
+        expect(described_class.clean_property_name('mp (schmelzpunkt)')).to eq('melting_point')
+        expect(described_class.clean_property_name('bp (siedepunkt)')).to eq('boiling_point')
+      end
+
+      it 'handles abbreviations without parentheses' do
+        expect(described_class.clean_property_name('mp')).to eq('melting_point')
+        expect(described_class.clean_property_name('bp')).to eq('boiling_point')
+        expect(described_class.clean_property_name('MP')).to eq('melting_point')
+      end
+
+      it 'handles German property names with no parentheses' do
+        expect(described_class.clean_property_name('qualitätsniveau')).to eq('quality level')
+        expect(described_class.clean_property_name('dampfdichte')).to eq('vapor density')
+        expect(described_class.clean_property_name('löslichkeit')).to eq('solubility')
+      end
+
+      it 'handles property names with German terms in parentheses' do
+        expect(described_class.clean_property_name('density (dichte)')).to eq('density')
+        expect(described_class.clean_property_name('color (farbe)')).to eq('color')
+      end
+
+      it 'returns lowercase original name when no mapping exists' do
+        expect(described_class.clean_property_name('unknown_property')).to eq('unknown_property')
+      end
+
+      it 'handles empty or nil input' do
+        expect(described_class.clean_property_name('')).to be_nil
+        expect(described_class.clean_property_name(nil)).to be_nil
+      end
+
+      it 'extracts German terms from parentheses correctly' do
+        expect(described_class.clean_property_name('density (dichte)')).to eq('density')
+        expect(described_class.clean_property_name('color (Farbe)')).to eq('color')
+        expect(described_class.clean_property_name('dichte')).to eq('density')
+      end
+    end
   end
 end

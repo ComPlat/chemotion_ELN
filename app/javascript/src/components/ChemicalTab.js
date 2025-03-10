@@ -715,7 +715,8 @@ export default class ChemicalTab extends React.Component {
       { label: 'Common Name', value: 'Common Name' },
       { label: 'CAS', value: 'CAS' }
     ];
-    const conditionalOverlay = 'Assign a cas number using the cas field in labels section for better search results using cas number';
+    const conditionalOverlay = `Assign a cas number using the cas field in labels section
+    for better search results using cas number`;
 
     return (
       <Form.Group>
@@ -723,7 +724,7 @@ export default class ChemicalTab extends React.Component {
           Query SDS using
           <OverlayTrigger
             placement="top"
-            overlay={cas && cas !== '' ? null : <Tooltip>{conditionalOverlay}</Tooltip>}
+            overlay={cas && cas !== '' ? <Tooltip>{conditionalOverlay}</Tooltip> : <div />}
           >
             <i className="fa fa-info-circle ms-1" />
           </OverlayTrigger>
@@ -802,7 +803,7 @@ export default class ChemicalTab extends React.Component {
       return (
         <div className="mt-3 w-100" key={key}>
           {isValidDocument ? (
-            <ListGroupItem key={`${key}-file`} className="p-3">
+            <ListGroupItem key={`${key}-file`} className="p-3 safety-sheet-width">
               {this.renderChildElements(document, index)}
             </ListGroupItem>
           ) : (
@@ -820,7 +821,9 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div data-component="SafetySheets">
-        <ListGroup className="my-3">{mappedSafetySheets}</ListGroup>
+        <ListGroup className="my-3 overflow-auto">
+          {mappedSafetySheets}
+        </ListGroup>
       </div>
     );
   };
