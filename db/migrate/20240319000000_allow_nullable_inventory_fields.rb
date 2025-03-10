@@ -5,4 +5,4 @@ class AllowNullableInventoryFields < ActiveRecord::Migration[6.1]
     change_column_null :inventories, :prefix, true
     change_column_null :inventories, :name, true
   end
-end 
+end
