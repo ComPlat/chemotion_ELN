@@ -4,9 +4,8 @@ module Entities
   class ReactionVariationEntity < ApplicationEntity
     expose(
       :id,
-      :notes,
       :properties,
-      :analyses,
+      :metadata,
       :reactants,
       :products,
       :solvents,
@@ -14,10 +13,13 @@ module Entities
     expose :starting_materials, as: :startingMaterials
 
     def properties
-      {}.tap do |properties|
-        properties[:temperature] = ReactionVariationPropertyEntity.represent(object[:properties][:temperature])
-        properties[:duration] = ReactionVariationPropertyEntity.represent(object[:properties][:duration])
+      object[:properties].slice(:duration, :temperature).transform_values do |value|
+        ReactionVariationPropertyEntity.represent(value)
       end
+    end
+
+    def metadata
+      object[:metadata].slice(:notes, :analyses)
     end
 
     def materials(material_type, entity)
