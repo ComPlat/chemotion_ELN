@@ -15,7 +15,6 @@ class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
-  // eslint-disable-next-line class-methods-use-this
   checkPermission(attributeName) {
     const readonlyAttributes = [
       'Disease', 'Organism', 'Tissue', 'Growth medium', 'Mutation', 'Variant', 'Biosafety level',

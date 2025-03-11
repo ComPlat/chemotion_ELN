@@ -34,7 +34,6 @@ module CellLineApiParamsHelpers
     optional :mutation, type: String, desc: 'mutation of a cell line'
     optional :description, type: String, desc: 'description of a cell line sample'
     optional :short_label, type: String, desc: 'short label of a cell line sample'
-    optional :created_by, type: Integer, desc: 'creator of cell line material'
     requires :container, type: Hash, desc: 'root Container of element'
   end
 
