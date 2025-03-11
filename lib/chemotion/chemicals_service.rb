@@ -2,6 +2,29 @@
 
 module Chemotion
   class ChemicalsService
+    MAP_GERMAN_TO_ENGLISH_PROPERTIES = {
+      'qualitätsniveau' => 'quality level',
+      'form' => 'form',
+      'schmelzpunkt' => 'melting point',
+      'siedepunkt' => 'boiling point',
+      'dichte' => 'density',
+      'dampfdichte' => 'vapor density',
+      'dampfdruck' => 'vapor pressure',
+      'brechungsindex' => 'refractive_index',
+      'farbe' => 'color',
+      'löslichkeit' => 'solubility',
+      'flammpunkt' => 'flash_point',
+      'ph-wert' => 'ph',
+      'grad' => 'grade',
+      'optische aktivität' => 'optical_activity',
+      'funktionelle gruppe' => 'functional_group',
+    }.freeze
+
+    PROPERTY_ABBREVIATIONS = {
+      'mp' => 'melting_point',
+      'bp' => 'boiling_point',
+    }.freeze
+
     def self.request_options
       { headers: {
           'Access-Control-Request-Method' => 'GET',
@@ -165,24 +188,52 @@ module Chemotion
                 .css('span').map(&:text).map { |str| str.tr(' ', '_').downcase }
     end
 
+    def self.clean_property_name(property_name)
+      return nil if property_name.blank?
+
+      property_name = property_name.downcase.strip
+      return PROPERTY_ABBREVIATIONS[property_name] if PROPERTY_ABBREVIATIONS[property_name]
+
+      handle_property_with_parentheses(property_name)
+    end
+
+    def self.handle_property_with_parentheses(property_name)
+      return MAP_GERMAN_TO_ENGLISH_PROPERTIES[property_name] || property_name unless property_name.include?('(')
+
+      main_term = extract_main_term(property_name)
+      return PROPERTY_ABBREVIATIONS[main_term] if PROPERTY_ABBREVIATIONS[main_term]
+
+      german_term = extract_german_term(property_name)
+      MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term] || property_name
+    end
+
+    def self.extract_main_term(property_name)
+      property_name.split('(').first.strip
+    end
+
+    def self.extract_german_term(property_name)
+      property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
+    end
+
     def self.chem_properties_merck(chem_properties_names, chem_properties_values)
       chemical_properties = {}
       chem_properties_values.pop
       chem_properties_names.map.with_index do |string, index|
-        hash_lookup = { 'mp' => 'melting_point', 'bp' => 'boiling_point' }
-        property_name = hash_lookup[string] || string
-        chemical_properties[property_name] = chem_properties_values[index]
+        property_name = clean_property_name(string)
+        cleaned_value = CGI.unescapeHTML(chem_properties_values[index]) if chem_properties_values[index]
+        cleaned_value = Nokogiri::HTML.fragment(cleaned_value).text.strip if cleaned_value
+        chemical_properties[property_name] = cleaned_value if property_name
       end
       chemical_properties
     end
 
     def self.chemical_properties_merck(product_link)
       merck_req = HTTParty.get(product_link, request_options)
-      search_string = 'MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-md-9'
-      properties = Nokogiri::HTML.parse(merck_req.body).xpath("//*[contains(@class, '#{search_string}')]")
-      chem_properties_names = names_properties_merck(properties)
-      chem_properties_values = properties.search('p.MuiTypography-root')
-                                         .map(&:text).map { |str| str.gsub('(lit.)', '') }
+      json_data = Nokogiri::HTML.parse(merck_req.body).at_xpath("//script[@type='application/ld+json']")&.children&.text
+      properties = JSON.parse(json_data)['additionalProperty'] if json_data
+      chem_properties_names = properties.pluck('name')
+      chem_properties_values = properties.map { |property| property['value'].join(', ') }
+      chem_properties_values.compact_blank!
       chem_properties_merck(chem_properties_names, chem_properties_values)
     rescue StandardError
       'Could not find additional chemical properties'
