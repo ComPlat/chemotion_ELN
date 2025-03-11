@@ -45,6 +45,7 @@ export default class CellLine extends Element {
     cellLine.cellType = response.cellline_material.cell_type;
     cellLine.bioSafetyLevel = response.cellline_material.biosafety_level;
     cellLine.cryopreservationMedium = response.cellline_material.cryo_pres_medium;
+    cellLine.created_by = response.cellline_material.created_by;
     cellLine.is_new = false;
 
     cellLine.container = response.container;
@@ -67,6 +68,7 @@ export default class CellLine extends Element {
     this.gender = cellLineItem.gender;
     this.materialDescription = cellLineItem.materialDescription;
     this.source = cellLineItem.source;
+    this.created_by = cellLineItem.created_by;
   }
 
   adoptPropsFromMobXModel(mobx) {
@@ -91,5 +93,6 @@ export default class CellLine extends Element {
     this.bioSafetyLevel = mobx.bioSafetyLevel;
     this.cellType = mobx.cellType;
     this.cryopreservationMedium = mobx.cryopreservationMedium;
+    this.created_by = mobx.created_by;
   }
 }
