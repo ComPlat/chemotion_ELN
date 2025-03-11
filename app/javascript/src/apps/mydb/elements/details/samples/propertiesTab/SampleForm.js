@@ -281,7 +281,7 @@ export default class SampleForm extends React.Component {
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
             isLoading={this.state.isMolNameLoading}
-            value={!newMolecule && mno && mno.value}
+            value={!newMolecule && mno}
             onNewOptionClick={this.addMolName}
             clearable={false}
           />
