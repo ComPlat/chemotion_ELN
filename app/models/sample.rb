@@ -230,6 +230,9 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
+  belongs_to :micromolecule, optional: true
+  has_many :components, dependent: :destroy
+
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
   belongs_to :molecule_name, optional: true
@@ -262,6 +265,7 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
+  delegate :molfile, :molfile_version, :stereo, to: :micromolecule, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
 
@@ -372,6 +376,18 @@ class Sample < ApplicationRecord
     end
   end
 
+  def create_components_for_mixture_subsample(subsample)
+    return if components.blank?
+
+    components.each do |component|
+      subsample.components.create!(
+        name: component.name,
+        position: component.position,
+        component_properties: component.component_properties,
+        )
+    end
+  end
+
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/PerceivedComplexity
@@ -411,7 +427,10 @@ class Sample < ApplicationRecord
 
     subsample.container = Container.create_root_container
     subsample.save!
+
+    create_components_for_mixture_subsample(subsample)
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
+
     subsample
   end
 
@@ -640,7 +659,7 @@ class Sample < ApplicationRecord
   end
 
   def check_molfile_polymer_section
-    return if decoupled
+    return if decoupled || sample_type == 'Mixture'
     return unless molfile.include? 'R#'
 
     lines = molfile.lines
