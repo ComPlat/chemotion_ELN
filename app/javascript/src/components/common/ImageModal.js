@@ -105,7 +105,7 @@ export default class ImageModal extends Component {
     const {
       hasPop, previewObject, popObject, imageStyle, showPopImage
     } = this.props;
-    const { pageIndex, numOfPages } = this.state;
+    const { pageIndex, numOfPages, isPdf, fetchSrc } = this.state;
 
     if (!hasPop) {
       return (
@@ -146,13 +146,13 @@ export default class ImageModal extends Component {
             <Modal.Title>{popObject.title}</Modal.Title>
           </Modal.Header>
           <Modal.Body style={{ overflow: 'auto', position: 'relative' }}>
-            {this.state.isPdf ? (
+            {isPdf ? (
               <div>
                 <Document
-                  file={{ url: this.state.fetchSrc }}
+                  file={{ url: fetchSrc }}
                   onLoadSuccess={(pdf) => this.onDocumentLoadSuccess(pdf.numPages)}
                 >
-                  <Page pageNumber={pageIndex} />
+                  <Page pageNumber={pageIndex} renderAnnotationLayer={false} renderTextLayer={false} />
                 </Document>
                 <div>
                   <p>

@@ -5,15 +5,15 @@
 # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 
 Rails.application.config.content_security_policy do |policy|
-#   policy.default_src :self, :https
-#   policy.font_src    :self, :https, :data
-#   policy.img_src     :self, :https, :data
-#   policy.object_src  :none
-#   policy.script_src  :self, :https
-#   policy.style_src   :self, :https
+  #   policy.default_src :self, :https
+  #   policy.font_src    :self, :https, :data
+  #   policy.img_src     :self, :https, :data
+  #   policy.object_src  :none
+  #   policy.script_src  :self, :https
+  #   policy.style_src   :self, :https
 
-#   # Specify URI for violation reports
-#   # policy.report_uri "/csp-violation-report-endpoint"
+  #   # Specify URI for violation reports
+  #   # policy.report_uri "/csp-violation-report-endpoint"
 
   # connect_src for log and webpack-dev-serverwebsockets in development
   if Rails.env.development?
@@ -27,7 +27,8 @@ Rails.application.config.content_security_policy do |policy|
     src += ["#{scheme}://#{host}:#{url.port}"] if host.present? && port.present?
     puts "connect_src: #{src}"
 
-    policy.connect_src *src
+    # policy.connect_src(*src)
+    policy.connect_src(*src, :blob)
   end
 end
 
