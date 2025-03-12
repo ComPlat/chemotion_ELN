@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, Form, Modal } from 'react-bootstrap';
+import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -16,11 +16,7 @@ export default class MySharedCollections extends React.Component {
       tree: {
         children: []
       },
-      modalProps: {
-        show: false,
-        title: "",
-        action: null
-      }
+      showSharingModal: false,
     }
 
     this.onStoreChange = this.onStoreChange.bind(this);
@@ -93,12 +89,12 @@ export default class MySharedCollections extends React.Component {
   }
 
   editShare(node) {
-    let { modalProps, active } = this.state
-    modalProps.title = "Update Share Settings for '" + node.label + "'"
-    modalProps.show = true
-    active = node
-    this.setState({ modalProps, active })
+    this.setState({
+      active: node,
+      showSharingModal: true,
+    })
   }
+
   deleteCollection(node) {
     let children = node.children || [];
     let parent = this.findParentById(this.state.tree, node.id);
@@ -163,11 +159,7 @@ export default class MySharedCollections extends React.Component {
 
   handleModalHide() {
     this.setState({
-      modalProps: {
-        show: false,
-        title: "",
-        action: null
-      }
+      showSharingModal: false
     });
   }
 
@@ -215,18 +207,7 @@ export default class MySharedCollections extends React.Component {
 
 
   render() {
-    let actNode = this.state.active
-    let trees = () => this.state.tree.children.map((e, i) => {
-      return (
-        <Tree
-          key={i}
-          paddingLeft={20}
-          tree={e}
-          onChange={this.handleChange}
-          renderNode={this.renderNode}
-        />
-      )
-    })
+    const { tree, active: actNode, showSharingModal } = this.state;
 
     return (
       <div>
@@ -241,21 +222,28 @@ export default class MySharedCollections extends React.Component {
             Update
           </Button>
         </div>
-        {trees()}
-        <Modal centered animation show={this.state.modalProps.show} onHide={this.handleModalHide}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.modalProps.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <ManagingModalSharing collectionId={actNode.id}
-              onHide={this.handleModalHide}
-              permissionLevel={actNode.permission_level}
-              sampleDetailLevel={actNode.sample_detail_level} reactionDetailLevel={actNode.reaction_detail_level}
-              wellplateDetailLevel={actNode.wellplate_detail_level} screenDetailLevel={actNode.screen_detail_level}
-              selectUsers={false}
-              collAction="Update" />
-          </Modal.Body>
-        </Modal>
+        {tree.children.map((e, i) => (
+          <Tree
+            key={i}
+            paddingLeft={20}
+            tree={e}
+            onChange={this.handleChange}
+            renderNode={this.renderNode}
+          />
+        ))}
+        {actNode && showSharingModal && (
+          <ManagingModalSharing
+            title={`Update Share Settings for '${actNode.label}'`}
+            collectionId={actNode.id}
+            onHide={this.handleModalHide}
+            permissionLevel={actNode.permission_level}
+            sampleDetailLevel={actNode.sample_detail_level}
+            reactionDetailLevel={actNode.reaction_detail_level}
+            wellplateDetailLevel={actNode.wellplate_detail_level}
+            screenDetailLevel={actNode.screen_detail_level}
+            selectUsers={false}
+            collAction="Update" />
+        )}
       </div>
     )
   }

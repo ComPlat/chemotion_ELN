@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
-import { Col, Row, Container } from 'react-bootstrap';
+
+import Sidebar from 'src/apps/mydb/layout/Sidebar';
+import Topbar from 'src/apps/mydb/layout/Topbar';
+
+import FlowViewerModal from 'src/apps/generic/FlowViewerModal';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
-import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 import Elements from 'src/apps/mydb/elements/Elements';
 import InboxModal from 'src/apps/mydb/inbox/InboxModal';
 import Calendar from 'src/components/calendar/Calendar';
 import LoadingModal from 'src/components/common/LoadingModal';
 import ProgressModal from 'src/components/common/ProgressModal';
-import Navigation from 'src/components/navigation/Navigation';
 import Notifications from 'src/components/Notifications';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
@@ -17,18 +19,13 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 
 class App extends Component {
-  constructor(_props) {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
-      showGenericWorkflow: false,
-      propGenericWorkflow: false,
       showCollectionManagement: false,
-      indicatorClassName: 'fa fa-chevron-circle-left',
-      showCollectionTree: true,
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
     this.documentKeyDown = this.documentKeyDown.bind(this);
-    this.toggleCollectionTree = this.toggleCollectionTree.bind(this);
   }
 
   componentDidMount() {
@@ -82,10 +79,6 @@ class App extends Component {
     if (this.state.klasses !== state.klasses) {
       this.setState({ klasses: state.klasses });
     }
-    if (this.state.showGenericWorkflow !== state.showGenericWorkflow ||
-      this.state.propGenericWorkflow !== state.propGenericWorkflow) {
-      this.setState({ showGenericWorkflow: state.showGenericWorkflow, propGenericWorkflow: state.propGenericWorkflow });
-    }
   }
 
   documentKeyDown(event) {
@@ -114,41 +107,43 @@ class App extends Component {
     });
   }
 
-  toggleCollectionTree() {
-    const { showCollectionTree } = this.state;
-    this.setState({
-      showCollectionTree: !showCollectionTree,
-      indicatorClassName: showCollectionTree ? 'fa fa-chevron-circle-right' : 'fa fa-chevron-circle-left'
-    });
-  }
-
   mainContent() {
     const { showCollectionManagement } = this.state;
     return (showCollectionManagement ? <CollectionManagement /> : <Elements />);
   }
 
-  render() {
-    const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
+  renderContent() {
     return (
-      <Container fluid className="mydb-app">
-        <Row className="bg-light z-5">
-          <Navigation toggleCollectionTree={this.toggleCollectionTree} />
-          <SampleTaskInbox />
-        </Row>
-        <div className="d-flex py-3 px-2 gap-3">
-          {showCollectionTree &&
-            <CollectionTree />
-          }
+      <div className="mydb-app d-flex vh-100">
+        <Sidebar />
+        <div className="d-flex flex-column flex-grow-1">
+          <Topbar />
           {this.mainContent()}
         </div>
-        <Row>
-          <Notifications />
-          <LoadingModal />
-          <ProgressModal />
-        </Row>
-        <InboxModal showCollectionTree={showCollectionTree} />
+      </div>
+    );
+  }
+
+  renderModals() {
+    return (
+      <>
+        <Notifications />
+        <LoadingModal />
+        <ProgressModal />
+        <FlowViewerModal />
+        <InboxModal />
+        <SampleTaskInbox />
         <Calendar />
-      </Container>
+      </>
+    );
+  }
+
+  render() {
+    return (
+      <>
+        {this.renderContent()}
+        {this.renderModals()}
+      </>
     );
   }
 }
