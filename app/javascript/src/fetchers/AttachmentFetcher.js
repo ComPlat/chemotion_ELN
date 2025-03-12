@@ -92,11 +92,22 @@ export default class AttachmentFetcher {
       },
       body: JSON.stringify({ ids }),
     })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .then((response) => {
+        if (response.ok === false) {
+          let msg = 'Fetching files failed: ';
+          if (response.status === 401) {
+            msg += 'You do not have permission to read the attachments!';
+          } else {
+            msg += response.statusText;
+          }
+          NotificationActions.add({
+            message: msg,
+            level: 'error',
+            position: 'tc',
+          });
+        }
+        return response.json();
+      }).then((json) => json);
 
     return promise;
   }

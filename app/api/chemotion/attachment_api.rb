@@ -446,6 +446,7 @@ module Chemotion
                       end
           can_dwnld ? raw_file_obj(att) : nil
         end
+        error!('401 Unauthorized', 401) if !files.empty? && files.compact.empty?
         { files: files }
       end
 
