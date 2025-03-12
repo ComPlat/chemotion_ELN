@@ -10,7 +10,7 @@ module ReactionProcessEditor
                   current_user.vessels.includes([:vessel_template]) +
                   VesselTemplate.all
 
-        present vessels, with: Entities::ReactionProcessEditor::VesselableEntity, root: :vesselables
+        present vessels.uniq, with: Entities::ReactionProcessEditor::VesselableEntity, root: :vesselables
       end
     end
   end
