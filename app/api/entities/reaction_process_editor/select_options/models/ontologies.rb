@@ -38,6 +38,8 @@ module Entities
           end
 
           def stationary_phase_options(ontology)
+            return [] unless ontology.stationary_phase
+
             ontology.stationary_phase.map do |stationary_phase|
               # The stationary_phases (which only exist for device ontologies) will be feed into a OntologySelectForm
               # for "stationary_phase" as preselection when the device is selected. Therefore it needs to resemble an
