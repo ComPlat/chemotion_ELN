@@ -39,7 +39,7 @@ module Entities
       end
 
       def short_label
-        is_vessel_template ? object.name : object.short_label
+        is_vessel_template ? '' : object.short_label
       end
 
       def vessel_template_id
