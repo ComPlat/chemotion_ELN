@@ -361,7 +361,7 @@ GEM
       grape-swagger (>= 1.2.0)
     grape-swagger-rails (0.5.0)
       railties (>= 6.0.6.1)
-    graphql (2.1.13)
+    graphql (2.1.14)
       racc (~> 1.4)
     haml (6.3.0)
       temple (>= 0.8.2)
