@@ -12,8 +12,13 @@ Rails.application.config.content_security_policy do |policy|
   #   policy.script_src  :self, :https
   #   policy.style_src   :self, :https
 
-  #   # Specify URI for violation reports
-  #   # policy.report_uri "/csp-violation-report-endpoint"
+  
+  # policy.default_src :self, :https :unsafe_inline, :unsafe_eval
+  
+  # Allow WebSocket, blob, and specific external connections
+  src = %i[self https data wss blob]
+  src += ['https://commonchemistry.cas.org', 'https://dx.doi.org', 'https://doi.org', 'https://api.crossref.org', 'https://service.tib.eu']
+
 
   # connect_src for log and webpack-dev-serverwebsockets in development
   if Rails.env.development?
@@ -22,14 +27,16 @@ Rails.application.config.content_security_policy do |policy|
     host = url.host
     port = url.port
 
-    src = [:self, 'http://localhost:3035', 'http://webpacker:3035', 'ws://localhost:3035', 'https://service.tib.eu']
+    src += ['http://localhost:3035', 'http://webpacker:3035', 'ws://localhost:3035']
     src += ["ws://#{host}:3035", "#{scheme}://#{host}:3035"] if host.present?
     src += ["#{scheme}://#{host}:#{url.port}"] if host.present? && port.present?
     puts "connect_src: #{src}"
 
-    # policy.connect_src(*src)
-    policy.connect_src(*src, :blob)
   end
+  policy.connect_src(*src)
+
+  # Specify URI for violation reports
+  policy.report_uri '/csp-violation-report-endpoint'
 end
 
 # If you are using UJS then enable automatic nonce generation
