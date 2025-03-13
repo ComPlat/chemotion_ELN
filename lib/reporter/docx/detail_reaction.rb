@@ -294,33 +294,32 @@ module Reporter
         output
       end
 
+      def calculate_vessel_volume(vessel_size)
+        return nil if vessel_size['amount'].blank? || vessel_size['unit'].blank?
+
+        case vessel_size['unit']
+        when 'ml'
+          vessel_size['amount'] * 0.001
+        when 'l'
+          vessel_size['amount']
+        else
+          0
+        end
+      end
+
       def calculate_amount_mmol(sample)
         return sample.real_amount_mmol unless sample.gas_type == 'gas'
 
-        vessel_size = @obj.vessel_size
-        return if vessel_size['amount'].blank? || vessel_size['unit'].blank?
-
-        vessel_volume = case vessel_size['unit']
-                        when 'ml'
-                          vessel_size['amount'] * 0.001
-                        when 'l'
-                          vessel_size['amount']
-                        else
-                          0
-                        end
+        vessel_volume = calculate_vessel_volume(@obj.vessel_size)
         return unless vessel_volume
 
         mole_value = calculate_mole_gas_product(
           sample.gas_phase_data['part_per_million'],
           sample.gas_phase_data['temperature'],
-          vessel_volume,
+          vessel_volume
         )
 
-        if mole_value
-          mole_value * 1000
-        else
-          0
-        end
+        mole_value ? mole_value * 1000 : 0
       end
 
       def assigned_amount(s, is_product = false)
