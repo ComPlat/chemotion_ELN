@@ -181,13 +181,15 @@ export default class NMRiumDisplayer extends React.Component {
 
     const data = { data: [], type: 'file' };
     for (let index = 0; index < files.length; index += 1) {
-      const fileToBeShowed = files[index].file;
-      const bufferData = parseBase64ToArrayBuffer(fileToBeShowed);
-      const spcInfo = spectraInfos[index];
-      const fileName = spcInfo.label;
-      const blobToBeSent = new Blob([bufferData]);
-      const dataItem = new File([blobToBeSent], fileName);
-      data.data.push(dataItem);
+      if (files[index] !== null) {
+        const fileToBeShowed = files[index].file;
+        const bufferData = parseBase64ToArrayBuffer(fileToBeShowed);
+        const spcInfo = spectraInfos[index];
+        const fileName = spcInfo.label;
+        const blobToBeSent = new Blob([bufferData]);
+        const dataItem = new File([blobToBeSent], fileName);
+        data.data.push(dataItem);
+      }
     }
     if (sample) {
       const { molfile } = sample;
@@ -208,8 +210,7 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     const nmriumSpec = arrNMRiumSpecs[0];
-
-    const arrNMRiumFiles = files.filter((file) => file.id === nmriumSpec.idx);
+    const arrNMRiumFiles = files.filter((file) => file !== null && file.id === nmriumSpec.idx);
     if (!arrNMRiumFiles || arrNMRiumFiles.length === 0) {
       return false;
     }
