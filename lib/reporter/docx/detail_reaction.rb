@@ -316,7 +316,11 @@ module Reporter
           vessel_volume,
         )
 
-        mole_value * 1000
+        if mole_value
+          mole_value * 1000
+        else
+          0
+        end
       end
 
       def assigned_amount(s, is_product = false)
