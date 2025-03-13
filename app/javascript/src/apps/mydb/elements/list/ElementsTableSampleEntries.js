@@ -27,6 +27,7 @@ import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ChevronIcon from 'src/components/common/ChevronIcon';
+import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
@@ -190,12 +191,10 @@ export default class ElementsTableSampleEntries extends Component {
     const { showPreviews } = UIStore.getState();
     this.state = {
       displayedMoleculeGroup: [],
-      moleculeGroupsShown: [],
       showPreviews,
       flattenSamplesId: [],
       keyboardIndex: null,
       keyboardSeletectedElementId: null,
-      userManuallyCollapsedLast: false,
     };
 
     this.sampleOnKeyDown = this.sampleOnKeyDown.bind(this);
@@ -214,64 +213,35 @@ export default class ElementsTableSampleEntries extends Component {
     }
   }
 
-  getMolId(sample) {
-    if (sample.decoupled && sample.molfile) {
-      return `M${sample.id}`;
-    } else if (sample.stereo == null) {
-      return `M${sample.molecule.id}_any_any`;
-    } else {
-      return `M${sample.molecule.id}_${sample.stereo.abs || 'any'}_${sample.stereo.rel || 'any'}`;
-    }
-  }
-
   componentDidUpdate(prevProps) {
     const { elements, moleculeSort, collapseAll } = this.props;
 
-    if (collapseAll !== prevProps.collapseAll) {
-      this.setState({
-        moleculeGroupsShown: collapseAll ? [] : this.state.displayedMoleculeGroup.map(group => this.getMolId(group[0])),
-        userManuallyCollapsedLast: !collapseAll
-      });
-    }
     if (elements === prevProps.elements && moleculeSort === prevProps.moleculeSort) {
       return;
     }
-    const moleculeList = elements.reduce((acc, sample) => {
-      const key = this.getMolId(sample);
-      if (!acc[key]) {
-        acc[key] = [sample];
-      } else {
-        acc[key].push(sample);
-      }
-      return acc;
-    }, {});
 
-    const displayedMoleculeGroup = Object.keys(moleculeList).map((molId) => {
-      const m = moleculeList[molId];
-      if (moleculeSort && m.length > 3) {
-        m.numSamples = 3;
-      } else {
-        m.numSamples = m.length;
-      }
-      return m;
-    });
+    const displayedMoleculeGroup = getDisplayedMoleculeGroup(elements, moleculeSort);
+    const moleculeGroupsShown = getMoleculeGroupsShown(displayedMoleculeGroup);
+
+    this.props.onChangeCollapse(collapseAll, 'moleculeGroupsShown', moleculeGroupsShown);
 
     const { currentElement } = ElementStore.getState();
     this.setState({
       displayedMoleculeGroup,
       targetType: currentElement && currentElement.type,
-      flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup)
+      flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup),
     }, this.forceUpdate());
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     const {
-      collapseAll, showDragColumn, moleculeSort, currentElement, elements, ui
+      collapseAll, showDragColumn, moleculeSort, currentElement, elements, ui, moleculeGroupsShown
     } = this.props;
     const { keyboardIndex, keyboardSeletectedElementId, showPreviews } = this.state;
     const { checkedAll, checkedIds, uncheckedIds } = ui;
     const nextUi = nextProps.ui;
     return collapseAll !== nextProps.collapseAll // Bool
+      || moleculeGroupsShown !== nextProps.moleculeGroupsShown
       || showPreviews !== nextState.showPreviews // Bool
       || showDragColumn !== nextProps.showDragColumn // Bool
       || moleculeSort !== nextProps.moleculeSort // Bool
@@ -289,23 +259,18 @@ export default class ElementsTableSampleEntries extends Component {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
-  handleMoleculeToggle(moleculeName) {
-    const { onChangeCollapse } = this.props;
-    this.setState((prevState) => {
-      let updatedMoleculeGroupsShown;
+  handleMoleculeToggle(moleculeName, showGroup) {
 
-      if (prevState.moleculeGroupsShown.includes(moleculeName)) {
-        updatedMoleculeGroupsShown = prevState.moleculeGroupsShown.filter(item => item !== moleculeName);
-      } else {
-        updatedMoleculeGroupsShown = [...prevState.moleculeGroupsShown, moleculeName];
-      }
+    const { moleculeGroupsShown } = this.props;
 
-      return {
-        moleculeGroupsShown: updatedMoleculeGroupsShown,
-        userManuallyCollapsedLast: true
-      };
-    }, this.forceUpdate());
-    onChangeCollapse(false);
+    let moleculeGroupsShownUpdated = [];
+    if (showGroup) {
+      moleculeGroupsShownUpdated = moleculeGroupsShown.filter((item) => item !== moleculeName);
+    }
+    else {
+      moleculeGroupsShownUpdated = moleculeGroupsShown.concat(moleculeName);
+    }
+    this.props.onChangeCollapse(false, 'moleculeGroupsShown', moleculeGroupsShownUpdated);
   }
 
   sampleOnKeyDown(state) {
@@ -439,13 +404,11 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderMoleculeGroup(moleculeGroup, index) {
-    const { showDragColumn, collapseAll } = this.props;
-    const { showPreviews, moleculeGroupsShown, userManuallyCollapsedLast, targetType } = this.state;
+    const { showDragColumn, moleculeGroupsShown } = this.props;
+    const { showPreviews, targetType } = this.state;
     const { molecule } = moleculeGroup[0];
     const moleculeName = molecule.iupac_name || molecule.inchistring;
-    const showGroup = collapseAll
-      ? false
-      : moleculeGroupsShown.includes(moleculeName) || (moleculeGroupsShown.length === 0 && !userManuallyCollapsedLast);
+    const showGroup = moleculeGroupsShown.includes(moleculeName);
 
     return (
       <tbody key={index}>
@@ -454,7 +417,7 @@ export default class ElementsTableSampleEntries extends Component {
           show={showGroup}
           showPreviews={showPreviews}
           showDragColumn={showDragColumn}
-          onClick={() => this.handleMoleculeToggle(moleculeName)}
+          onClick={() => this.handleMoleculeToggle(moleculeName, showGroup )}
           targetType={targetType}
         />
         {showGroup ? this.renderSamples(moleculeGroup, index) : null}
