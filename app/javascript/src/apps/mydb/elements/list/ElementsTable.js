@@ -27,6 +27,7 @@ import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineCont
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
+import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -38,6 +39,7 @@ export default class ElementsTable extends React.Component {
       currentElement: null,
       ui: {},
       collapseAll: false,
+      moleculeGroupsShown: [],
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
@@ -193,8 +195,11 @@ export default class ElementsTable extends React.Component {
     if (toDate !== date) UIActions.setToDate(date);
   }
 
-  changeCollapse = (collapseAll) => {
-    this.setState({ collapseAll: !collapseAll });
+  changeCollapse = (collapseAll, childPropName, childPropValue) => {
+    this.setState({
+        collapseAll: !collapseAll,
+        ...(childPropName ? { [childPropName]: childPropValue } : {})
+    });
   };
 
   changeSampleSort = () => {
@@ -264,13 +269,22 @@ export default class ElementsTable extends React.Component {
     );
   };
 
+  getMoleculeGroupsShownFromElement = (elements, moleculeSort) => {
+    const displayedMoleculeGroup = getDisplayedMoleculeGroup(elements, moleculeSort);
+    const moleculeGroupsShown = getMoleculeGroupsShown(displayedMoleculeGroup);
+    return moleculeGroupsShown;
+  }
+
   collapseButton = () => {
-    const { collapseAll } = this.state;
+    const { collapseAll, elements, moleculeSort} = this.state;
 
     return (
       <ChevronIcon
         direction={collapseAll ? 'right' : 'down'}
-        onClick={() => this.changeCollapse(collapseAll)}
+        onClick={() => this.setState((prevState) => ({
+          collapseAll: !prevState.collapseAll,
+         moleculeGroupsShown: !collapseAll ? [] : this.getMoleculeGroupsShownFromElement(elements, moleculeSort)
+         }))}
         color="primary"
         className="fs-5"
         role="button"
@@ -630,6 +644,7 @@ export default class ElementsTable extends React.Component {
       collapseAll,
       moleculeSort,
       elementsGroup,
+      moleculeGroupsShown
     } = this.state;
 
     const { overview, type, genericEl } = this.props;
@@ -644,7 +659,8 @@ export default class ElementsTable extends React.Component {
           showDragColumn={!overview}
           ui={ui}
           moleculeSort={moleculeSort}
-          onChangeCollapse={(checked) => this.changeCollapse(!checked)}
+          onChangeCollapse={(collapseAll, childPropName, childPropValue) => this.changeCollapse(!collapseAll, childPropName, childPropValue)}
+          moleculeGroupsShown = {moleculeGroupsShown}
         />
       );
     } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
