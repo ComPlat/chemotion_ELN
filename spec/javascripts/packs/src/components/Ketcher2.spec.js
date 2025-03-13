@@ -3,7 +3,6 @@ import assert from 'assert';
 
 // ketcher2 component
 import {
-  canvasSelectionSetter,
   allAtoms,
   allNodes,
   deleteAtomListSetter,
@@ -19,47 +18,24 @@ import {
   mols,
   reloadCanvas,
   resetStore,
+  uniqueEvents,
+  templateListSetter,
   saveMolefile,
-  uniqueEvents
 } from 'src/components/structureEditor/KetcherEditor';
 import {
   hasKetcherData,
-  resetOtherAliasCounters,
-  template_list_data,
-  templateParser,
   ALIAS_PATTERNS,
   handleOnDeleteImage,
-  isAliasConsistent,
+  addPolymerTags,
   moveTemplate,
-  placeImageOnAtoms,
-  addPolymerTags
+  template_list_data,
 } from '../../../../../app/javascript/src/utilities/Ketcher2SurfaceChemistryUtils.js';
 
 // ketcher/molfiles mockups
 import {
-  molFileWithOneMol,
   ketFormateFullyLoaded,
   twoMolsOneImageOneAtomWithWithoutAlias,
-  resetOtherAliasesOnAnyDelete,
-
-  areAllAliasesConsistent_ket,
-  deleteAtomAndRemoveImage_ket,
-  deleteAtomAndRemoveImageMulti_ket,
-  empty_mol_file,
-  hasConsistentAliases_ket,
-  hasValidMolsAndImages,
-  imageCountAdjuster_ket,
-  isImageSelectionValid_ket,
-  isMoleculeEmpty_ket,
-  mock_ketcher_mols,
-  mock_ketcher_mols_images_nodes,
-  molfileWithPolymerList,
-  molfile_without_polymer_list,
-  molfileData_save,
-  molfileData_save_invalid_spacing,
   oneImageMolfile,
-  onMultiImageDelete_ket,
-  wiht2Aliases_ket,
   emptyKet,
   oneImageKet,
   molfileWithoutPolymerList,
@@ -69,14 +45,20 @@ import {
   hasConsistentAliasesKet,
   oldImagePack,
   isMoleculeEmptyKet,
-  isImageSelectionValidKet,
   oldImagePackThree,
   deleteImageWithThreeOldPack,
   only2AliasAtomsKet,
   twoAliasAtomsOneImageKet,
   deleteAtomAndRemoveImageKet,
+  deleteAtomAndRemoveImage_ket,
+  deleteAtomAndRemoveImageMulti_ket,
+  empty_mol_file,
+  imageCountAdjuster_ket,
+  mock_ketcher_mols_images_nodes,
+  molfileWithPolymerList,
+  molfileData_save,
+  molfileData_save_invalid_spacing,
 } from '../../../data/ketcher2_mockups';
-import { fetchKetcherData, templateListSetter } from '../../../../../app/javascript/src/components/structureEditor/KetcherEditor.js';
 
 // ketcher2 helpers
 
