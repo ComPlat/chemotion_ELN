@@ -61,6 +61,7 @@ import {
   PolymerListModal,
   rescaleToolBarButoon
 } from 'src/components/structureEditor/PolymerListModal';
+import { buttonClickForRectangleSelection } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -285,7 +286,7 @@ export const handleOnDeleteAtom = async (deleteCopy) => {
 export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
   const dataCopy = data || latestData;
   if (editor) {
-    if (recenter || latestData && !imagesList.length) {
+    if (recenter || (latestData && !imagesList.length)) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), true);
     } else {
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
@@ -403,6 +404,8 @@ const onAtomDelete = async (editor) => {
     latestData.root.nodes = nodes;
     await saveMoveCanvas(editor, null, false, true);
     deletedAtoms = [];
+  } else {
+    console.log("else---out");
   }
 };
 
@@ -413,7 +416,7 @@ const filterTextList = async (deleteCopy) => {
   const valuesList = deleteLiasAlias.map((i) => textNodeStruct[i]).filter((v) => v != null);
 
   const newTextList = textList.map((i) => {
-    if (valuesList.indexOf(JSON.parse(i.data.content).blocks[0].key) == -1) {
+    if (valuesList.indexOf(JSON.parse(i.data.content).blocks[0].key) === -1) {
       return i;
     }
   }).filter((v) => v != null);
@@ -445,7 +448,7 @@ const revaluateTextStructureIndecies = async (deleteCopy) => {
 const fetchAndReplace = () => {
   imageListCopyContainer = [...imagesList];
   textListCopyContainer = [...textList];
-  addEventToFILOStack('Move atom');
+  // addEventToFILOStack('Move atom');
 };
 
 const removeTextNodeDescriptionOnTextPopup = () => {
@@ -489,8 +492,8 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     'Move atom': async (eventItem) => {
       console.log('Move atom');
-      const { exists } = isCanvasUpdateRequiredOnMove(eventItem);
-      allowProcessingSetter(exists);
+      // const { exists } = isCanvasUpdateRequiredOnMove(eventItem);
+      allowProcessingSetter(true);
       addEventToFILOStack('Move atom');
     },
     'Delete image': async () => {
@@ -499,7 +502,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack('Delete image');
     },
     'Delete atom': async (eventItem) => {
-      console.log('Delete atom', eventItem);
       let atomCount = -1;
       if (eventItem.label === KET_TAGS.inspiredLabel) {
         for (let m = 0; m < mols?.length; m++) {
@@ -606,7 +608,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
       setTimeout(async () => {
         await updateImagesInTheCanvas(iframeRef);
-      }, [500]);
+      }, [100]);
     }
   };
 
@@ -617,9 +619,9 @@ const KetcherEditor = forwardRef((props, ref) => {
       const result = await eventData;
       handleEventCapture(result);
     });
-    editor._structureDef.editor.editor.subscribe('selectionChange', async (eventData) => {
-      const currentSeletion = editor._structureDef.editor.editor._selection;
-      if (currentSeletion?.images) {
+    editor._structureDef.editor.editor.subscribe('selectionChange', async () => {
+      const currentSelection = editor._structureDef.editor.editor._selection;
+      if (currentSelection?.images) {
         selectedImageForTextNode = editor._structureDef.editor.editor._selection?.images;
       }
     });
@@ -709,27 +711,27 @@ const KetcherEditor = forwardRef((props, ref) => {
   // helper function to add event to stack
   const addEventToFILOStack = (event) => {
     if (event === 'Delete image' && FILOStack.includes('Delete atom')) {
-      // console.log('Cannot add "Delete image" after "Delete atom" event.');
+      console.log('Cannot add "Delete image" after "Delete atom" event.');
       return;
     }
 
     if (event === 'Delete atom' && FILOStack.includes('Move atom')) {
-      // console.log('Cannot add "Delete atom" after "Delete move" event.');
+      console.log('Cannot add "Delete atom" after "Move atom" event.');
       return;
     }
 
     if (event === 'Delete atom' && FILOStack.includes('Delete text')) {
-      // console.log('Cannot add "Delete atom" after "Delete text" event.');
+      console.log('Cannot add "Delete atom" after "Delete text" event.');
       return;
     }
 
     if (event === 'Delete image' && FILOStack.includes('Delete text')) {
-      // console.log('Cannot add "Delete image" after "Delete text" event.');
+      console.log('Cannot add "Delete image" after "Delete text" event.');
       return;
     }
 
     if (event === 'Upsert image' && FILOStack.includes('Add atom')) {
-      // console.log('Cannot add "Upsert image" after "Add atom" event.');
+      console.log('Cannot add "Upsert image" after "Add atom" event.');
       return;
     }
 
@@ -832,14 +834,17 @@ const KetcherEditor = forwardRef((props, ref) => {
         let textNodesFormula = '';
         await fetchKetcherData(editor);
         const canvasDataMol = await editor.structureDef.editor.getMolfile();
-        const svgElement = await reArrangeImagesOnCanvas(iframeRef);
-        const ket2Lines = await arrangePolymers(canvasDataMol);
-        const ket2LineTextArranged = await arrangeTextNodes(ket2Lines);
-        if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged);
+        const svgElement = await reArrangeImagesOnCanvas(iframeRef); // svg display
+        const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
+        const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
+        if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
         ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
         resetStore();
         return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
-      } catch (e) { console.log(e); }
+      } catch (e) {
+        console.log(e);
+        return e.message;
+      }
     }
   }));
 
@@ -859,9 +864,9 @@ const KetcherEditor = forwardRef((props, ref) => {
   const onImageAddedOrCopied = async () => {
     const item = imagesList[imagesList.length - 1];
     const templateList = await fetchTemplateList();
-    const template_id = await findTemplateId(templateList, item.data);
-    if (template_id != null) {
-      await onShapeSelection(template_id, false);
+    const templateId = await findTemplateId(templateList, item.data);
+    if (templateId != null) {
+      await onShapeSelection(templateId, false);
     }
   };
 
@@ -917,6 +922,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
     await fetchKetcherData(editor);
     await onAddAtom(editor);
+    await buttonClickForRectangleSelection(iframeRef);
     FILOStack = [];
     allAtoms = [];
   };

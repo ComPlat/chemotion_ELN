@@ -648,6 +648,14 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
   }
 };
 
+const buttonClickForRectangleSelection = async (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  const button = iframeDocument?.querySelector('[data-testid="select-rectangle"]');
+  if (button) {
+    button.click();
+  }
+};
+
 /* istanbul ignore next */
 // function to make template list extra content hidden
 const makeTransparentByTitle = (iframeDocument) => {
@@ -999,6 +1007,34 @@ const onAddText = async (editor, selectedImageForTextNode) => {
   imageNodeForTextNodeSetter(null);
 };
 
+async function getSvgFromBlob(imageBlob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      resolve(event.target.result); // Return the SVG string
+    };
+
+    reader.onerror = function(error) {
+      reject(error);
+    };
+
+    reader.readAsText(imageBlob);
+  });
+}
+
+const reArrangeImagesOnCanvasViaKetcher = async (editor) => {
+  try {
+    const latestDataCopy = JSON.stringify(latestData);
+    const imageBlob = await editor.structureDef.editor.generateImage(latestDataCopy, { outputFormat: 'svg' });
+    const svgString = await getSvgFromBlob(imageBlob);
+    return svgString;
+  } catch (err) {
+    console.log(err.message);
+    return null;
+  }
+};
+
 /* istanbul ignore next */
 // helper function for saving molfile => re-layering images from iframe
 const reArrangeImagesOnCanvas = async (iframeRef) => {
@@ -1021,10 +1057,6 @@ const reArrangeImagesOnCanvas = async (iframeRef) => {
     newImg.setAttribute('preserveAspectRatio', 'none');
     img.replaceWith(newImg);
   });
-
-  // Ensure SVG has a proper viewBox
-  svg.setAttribute('viewBox', '0 0 0 0');
-
   const svgElement = new XMLSerializer().serializeToString(svg);
   return svgElement;
 };
@@ -1080,6 +1112,8 @@ export {
   redoKetcher,
   addTextNodeDescriptionOnTextPopup,
   reArrangeImagesOnCanvas,
+  reArrangeImagesOnCanvasViaKetcher,
+  buttonClickForRectangleSelection,
 
   // setters
   ImagesToBeUpdatedSetter,
