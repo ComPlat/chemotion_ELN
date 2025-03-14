@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
-import VesselName from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselName';
+import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselSuggestProperties';
 
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
@@ -26,7 +26,7 @@ const VesselProperties = ({ item, readOnly }) => {
     ];
 
   const handleVolumeChange = (e) => {
-    const value = parseFloat(e.target.value) ;
+    const value = parseFloat(e.target.value);
     vesselDetailsStore.changeVolumeAmount(vesselId, value);
   };
 
@@ -50,30 +50,38 @@ const VesselProperties = ({ item, readOnly }) => {
       <Accordion.Item eventKey="common-properties">
         <Accordion.Header>Common Vessel Properties</Accordion.Header>
         <Accordion.Body>
-          <VesselName
+          <VesselSuggestProperties
             id={vesselId}
-            name={vesselItem?.vesselName || ''}
+            label="Vessel name"
+            field="vessel_name"
+            value={vesselItem?.vesselName || ''}
             readOnly={readOnly}
+            storeUpdater={vesselDetailsStore.changeVesselName}
           />
-          <VesselProperty
+          <VesselSuggestProperties
+            id={vesselId}
             label="Details"
+            field="details"
             value={vesselItem?.details || ''}
-            onChange={(e) => vesselDetailsStore.changeDetails(vesselId, e.target.value)}
             readOnly={readOnly}
-            optional
+            storeUpdater={vesselDetailsStore.changeDetails}
           />
-          <VesselProperty
-            label="Material type"
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Material Type"
+            field="material_type"
             value={vesselItem?.materialType || ''}
-            onChange={(e) => vesselDetailsStore.changeMaterialType(vesselId, e.target.value)}
             readOnly={readOnly}
+            storeUpdater={vesselDetailsStore.changeMaterialType}
           />
-          <VesselProperty
-            label="Vessel type"
+
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Vessel Type"
+            field="vessel_type"
             value={vesselItem?.vesselType || ''}
-            onChange={(e) => vesselDetailsStore.changeVesselType(vesselId, e.target.value)}
             readOnly={readOnly}
-            optional
+            storeUpdater={vesselDetailsStore.changeVesselType}
           />
           <Form.Group as={Row} className="mt-3">
             <Form.Label column sm={3}>Volume</Form.Label>
