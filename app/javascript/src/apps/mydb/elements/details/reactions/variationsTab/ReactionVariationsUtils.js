@@ -4,9 +4,14 @@ import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
-  updateVariationsRowOnFeedstockMaterialChange,
-  getMaterialData
+  getMaterialData, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
+import {
+  AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import {
+  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const temperatureUnits = ['°C', 'K', '°F'];
@@ -168,44 +173,78 @@ function getSequentialId(variations) {
   return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
 }
 
-function createVariationsRow(reaction, variations, gasMode = false, vesselVolume = null) {
-  const reactionCopy = cloneDeep(reaction);
-  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reactionCopy.durationDisplay ?? {};
-  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reactionCopy.temperature ?? {};
-  const row = {
-    id: getSequentialId(variations),
-    properties: {
-      temperature: {
+function getPropertyData(propertyType, durationValue, durationUnit, temperatureValue, temperatureUnit) {
+  switch (propertyType) {
+    case 'temperature':
+      return {
         value: convertUnit(temperatureValue, temperatureUnit, getStandardUnits('temperature')[0]),
         unit: getStandardUnits('temperature')[0]
-      },
-      duration: {
+      };
+    case 'duration':
+      return {
         value: convertUnit(durationValue, durationUnit, getStandardUnits('duration')[0]),
         unit: getStandardUnits('duration')[0],
-      },
-    },
-    analyses: [],
-    notes: '',
+      };
+    default:
+      return { value: null, unit: null };
+  }
+}
+
+function getMetaData(metadataType) {
+  switch (metadataType) {
+    case 'analyses':
+      return [];
+    case 'notes':
+      return '';
+    default:
+      return null;
+  }
+}
+
+function createVariationsRow({
+  materials,
+  selectedColumns,
+  variations,
+  reactionHasPolymers = false,
+  durationValue = null,
+  durationUnit = 'None',
+  temperatureValue = null,
+  temperatureUnit = 'None',
+  gasMode = false,
+  vesselVolume = null
+}) {
+  const row = {
+    id: getSequentialId(variations),
+    properties: Object.fromEntries(
+      selectedColumns.properties.map((propertyType) => [propertyType, getPropertyData(
+        propertyType,
+        durationValue,
+        durationUnit,
+        temperatureValue,
+        temperatureUnit
+      )])
+    ),
+    metadata: Object.fromEntries(
+      selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)])
+    ),
   };
-  Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
-    row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v, materialType, gasMode, vesselVolume) }), {});
+  Object.keys(materialTypes).forEach((materialType) => {
+    row[materialType] = {};
+    selectedColumns[materialType].forEach((materialID) => {
+      const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
+      row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
+    });
   });
 
   // Compute dependent values that aren't supplied by initial data.
-  let updatedRow = updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);
-  if (gasMode) {
-    updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow);
-    updatedRow = updateVariationsRowOnFeedstockMaterialChange(updatedRow);
-  }
-  return updatedRow;
+  return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
 }
 
 function copyVariationsRow(row, variations) {
   const copiedRow = cloneDeep(row);
   copiedRow.id = getSequentialId(variations);
-  copiedRow.analyses = [];
-  copiedRow.notes = '';
+  copiedRow.metadata.notes = getMetaData('notes');
+  copiedRow.metadata.analyses = getMetaData('analyses');
 
   return copiedRow;
 }
@@ -239,6 +278,174 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   return updatedRow;
 }
 
+function addMissingColumnsToVariations({
+  materials,
+  selectedColumns,
+  variations,
+  reactionHasPolymers = false,
+  durationValue = null,
+  durationUnit = 'None',
+  temperatureValue = null,
+  temperatureUnit = 'None',
+  gasMode = false,
+  vesselVolume = null
+}) {
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+      columnGroupChildIDs.forEach((childID) => {
+        if (row[columnGroupID][childID]) { return; }
+
+        if (Object.keys(materialTypes).includes(columnGroupID)) {
+          const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
+          row[columnGroupID][childID] = getMaterialData(
+            material,
+            columnGroupID,
+            gasMode,
+            vesselVolume
+          );
+        }
+        if (columnGroupID === 'properties') {
+          row.properties[childID] = getPropertyData(
+            childID,
+            durationValue,
+            durationUnit,
+            temperatureValue,
+            temperatureUnit
+          );
+        }
+        if (columnGroupID === 'metadata') {
+          row.metadata[childID] = getMetaData(childID);
+        }
+      });
+    });
+    return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
+  });
+
+  return updatedVariations;
+}
+
+function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+      row[columnGroupID] = Object.fromEntries(
+        Object.entries(row[columnGroupID]).filter(([key, value]) => columnGroupChildIDs.includes(key))
+      );
+    });
+  });
+
+  return updatedVariations;
+}
+
+function getPropertyColumnGroupChild(propertyType, gasMode) {
+  switch (propertyType) {
+    case 'temperature':
+      return {
+        field: 'properties.temperature',
+        cellDataType: getCellDataType('temperature'),
+        entryDefs: {
+          currentEntry: 'temperature',
+          displayUnit: getStandardUnits('temperature')[0],
+          availableEntries: ['temperature']
+        },
+        headerComponent: MenuHeader,
+        headerComponentParams: {
+          names: ['T'],
+        }
+      };
+    case 'duration':
+      return {
+        field: 'properties.duration',
+        cellDataType: getCellDataType('duration'),
+        editable: !gasMode,
+        entryDefs: {
+          currentEntry: 'duration',
+          displayUnit: getStandardUnits('duration')[0],
+          availableEntries: ['duration']
+        },
+        headerComponent: MenuHeader,
+        headerComponentParams: {
+          names: ['t'],
+        }
+      };
+    default:
+      return {};
+  }
+}
+
+function getMetadataColumnGroupChild(metadataType) {
+  switch (metadataType) {
+    case 'notes':
+      return {
+        headerName: 'Notes',
+        field: 'metadata.notes',
+        cellRenderer: NoteCellRenderer,
+        sortable: false,
+        cellDataType: 'text',
+        cellEditor: NoteCellEditor,
+      };
+    case 'analyses':
+      return {
+        headerName: 'Analyses',
+        field: 'metadata.analyses',
+        tooltipValueGetter: getAnalysesOverlay,
+        tooltipComponent: AnalysisOverlay,
+        cellRenderer: AnalysesCellRenderer,
+        cellEditor: AnalysesCellEditor,
+        cellDataType: false,
+        sortable: false,
+      };
+    default:
+      return {};
+  }
+}
+
+function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode) {
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
+
+  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+    const columnGroup = updatedColumnDefinitions.find(
+      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
+    );
+    columnGroupChildIDs.forEach((childID) => {
+      if (columnGroup.children.some((child) => child.field === `${columnGroupID}.${childID}`)) {
+        return;
+      }
+
+      if (Object.keys(materialTypes).includes(columnGroupID)) {
+        const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
+        columnGroup.children.push(getMaterialColumnGroupChild(material, columnGroupID, gasMode));
+      }
+      if (columnGroupID === 'properties') {
+        columnGroup.children.push(getPropertyColumnGroupChild(childID, gasMode));
+      }
+      if (columnGroupID === 'metadata') {
+        columnGroup.children.push(getMetadataColumnGroupChild(childID));
+      }
+    });
+  });
+
+  return updatedColumnDefinitions;
+}
+
+function removeObsoleteColumnDefinitions(columnDefinitions, selectedColumns) {
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
+
+  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+    const columnGroup = updatedColumnDefinitions.find(
+      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
+    );
+
+    columnGroup.children = columnGroup.children.filter((child) => {
+      const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
+      return columnGroupChildIDs.includes(childID);
+    });
+  });
+
+  return updatedColumnDefinitions;
+}
+
 function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
@@ -263,6 +470,56 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
+function getColumnDefinitions(selectedColumns, materials, gasMode) {
+  return [
+    {
+      headerName: 'Tools',
+      cellRenderer: RowToolsCellRenderer,
+      lockPosition: 'left',
+      sortable: false,
+      maxWidth: 100,
+      cellDataType: false,
+    },
+    {
+      headerName: 'Metadata',
+      groupId: 'metadata',
+      marryChildren: true,
+      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
+    },
+    {
+      headerName: 'Properties',
+      groupId: 'properties',
+      marryChildren: true,
+      children: selectedColumns.properties.map((entry) => getPropertyColumnGroupChild(entry, gasMode))
+    },
+  ].concat(
+    Object.entries(materialTypes).map(([materialType, { label }]) => ({
+      headerName: label,
+      groupId: materialType,
+      marryChildren: true,
+      children: selectedColumns[materialType].map(
+        (materialID) => getMaterialColumnGroupChild(
+          materials[materialType].find((material) => material.id.toString() === materialID),
+          materialType,
+          gasMode
+        )
+      )
+    }))
+  );
+}
+
+function getVariationsColumns(variations) {
+  const variationsRow = variations[0];
+  const materialColumns = Object.entries(materialTypes).reduce((materialsByType, [materialType]) => {
+    materialsByType[materialType] = Object.keys(variationsRow ? variationsRow[materialType] : []);
+    return materialsByType;
+  }, {});
+  const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
+  const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});
+
+  return { ...materialColumns, properties: propertyColumns, metadata: metadataColumns };
+}
+
 export {
   massUnits,
   volumeUnits,
@@ -274,12 +531,20 @@ export {
   convertUnit,
   materialTypes,
   getVariationsRowName,
+  getVariationsColumns,
   createVariationsRow,
   copyVariationsRow,
   updateVariationsRow,
   updateColumnDefinitions,
+  getColumnDefinitions,
   getCellDataType,
   getUserFacingUnit,
   getStandardValue,
+  addMissingColumnsToVariations,
+  removeObsoleteColumnsFromVariations,
+  addMissingColumnDefinitions,
+  removeObsoleteColumnDefinitions,
+  getMetadataColumnGroupChild,
+  getPropertyColumnGroupChild,
   REACTION_VARIATIONS_TAB_KEY
 };
