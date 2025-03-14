@@ -2,22 +2,18 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useState } from 'react';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import VesselItemEntry from 'src/apps/mydb/elements/list/vessel/VesselItemEntry';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
-import Aviator from 'aviator';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 
 function VesselEntry({ vesselItems }) {
   const [detailedInformation, setDetailedInformation] = useState(false);
   const [showEntries, setShowEntries] = useState(true);
 
-  const getBorderStyle = () =>
-    (showEntries
-      ? 'list-container title-panel p-3'
-      : 'list-container title-panel p-3 cell-line-group-bottom-border');
+  const getBorderStyle = () => (showEntries
+    ? 'list-container title-panel p-3'
+    : 'list-container title-panel p-3 cell-line-group-bottom-border');
 
   const renderItemEntries = () => (showEntries
     ? vesselItems.map((vesselItem) => (
@@ -37,14 +33,14 @@ function VesselEntry({ vesselItems }) {
   };
 
   const renderNameHeader = (firstVesselItem) => {
-    const thumbnail = findThumbnailAttachment(vesselItems);
-    const imgSrc = thumbnail ? thumbnail.preview : null;
+    const thumb = findThumbnailAttachment(vesselItems);
+    const imgSrc = thumb ? thumb.thumbnail : null;
 
     return (
       <div className="d-flex gap-2 align-items-center">
         {imgSrc ? (
           <img
-            src={imgSrc}
+            src={`data:image/png;base64,${thumb.thumbnail}`}
             alt={firstVesselItem.vesselName || 'Vessel'}
             className="me-2 border rounded img-fluid"
           />
