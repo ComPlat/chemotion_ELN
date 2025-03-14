@@ -155,7 +155,7 @@ export default class CollectionSubtree extends React.Component {
           {root.inventory_prefix && (
             <OverlayTrigger
               placement="top"
-              overlay={<Tooltip id="collection_inventory_label">Inventory Label</Tooltip>}
+              overlay={<Tooltip id="collection_inventory_label">Prefix of Inventory Label</Tooltip>}
             >
               <Badge bg="secondary">{root.inventory_prefix}</Badge>
             </OverlayTrigger>
