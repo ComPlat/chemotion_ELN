@@ -316,7 +316,7 @@ module Reporter
         mole_value = calculate_mole_gas_product(
           sample.gas_phase_data['part_per_million'],
           sample.gas_phase_data['temperature'],
-          vessel_volume
+          vessel_volume,
         )
 
         mole_value ? mole_value * 1000 : 0
