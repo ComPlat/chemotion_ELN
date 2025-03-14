@@ -31,7 +31,7 @@ module Usecases
 
         segment_ids = []
         segment_klasses.map do |segment_klass|
-          segment_ids << { segment_klass_id: segment_klass.segment_klass_id }
+          segment_ids << { segment_klass_id: segment_klass.segment_klass_id, show: true }
         end
         segment_ids
       end
@@ -64,23 +64,36 @@ module Usecases
         end
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def add_matching_segment_klasses(attributes)
         return attributes if attributes[:ontologies].blank?
         return attributes if attributes[:ontologies] == device_description[:ontologies]
 
         attributes[:ontologies].each_with_index do |ontology, i|
+          # TODO: has ontology segments? if not search for new segments
           segment_klasses = find_segment_klasses_by_ontology(ontology, attributes[:id])
           next if segment_klasses.blank?
 
           segment_ids = []
           segment_klasses.map do |segment_klass|
-            segment_ids << { segment_klass_id: segment_klass.segment_klass_id }
+            segment_index =
+              if ontology[:segments].present?
+                ontology[:segments].index { |s| s[:segment_klass_id] == segment_klass.segment_klass_id }
+              end
+            show_value =
+              if segment_index.present? && ontology[:segments][segment_index].key?('show')
+                ontology[:segments][segment_index][:show]
+              else
+                true
+              end
+            segment_ids << { segment_klass_id: segment_klass.segment_klass_id, show: show_value }
           end
           attributes[:ontologies][i][:segments] = segment_ids
         end
 
         attributes
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
       def find_segment_klasses_by_ontology(ontology, object_id)
         Labimotion::SegmentKlass

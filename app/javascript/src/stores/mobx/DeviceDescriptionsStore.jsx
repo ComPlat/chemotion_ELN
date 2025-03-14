@@ -52,8 +52,11 @@ export const DeviceDescriptionsStore = types
     attachment_sort_direction: types.optional(types.string, 'asc'),
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
     show_ontology_modal: types.optional(types.boolean, false),
+    show_ontology_select: types.optional(types.boolean, true),
+    show_ontology_form_selection: types.optional(types.boolean, false),
     ontology_mode: types.optional(types.string, 'edit'),
     selected_segment_id: types.optional(types.number, 0),
+    ontology_index_for_edit: types.optional(types.number, -1),
     list_grouped_by: types.optional(types.string, 'serial_number'),
     show_all_groups: types.optional(types.boolean, true),
     all_groups: types.optional(types.array(types.string), []),
@@ -225,11 +228,26 @@ export const DeviceDescriptionsStore = types
     toggleOntologyModal() {
       self.show_ontology_modal = !self.show_ontology_modal;
     },
+    closeOntologyModal() {
+      self.show_ontology_modal = false;
+      self.show_ontology_select = true;
+      self.show_ontology_form_selection = false;
+      self.ontology_index_for_edit = -1;
+    },
+    toggleOntologySelect() {
+      self.show_ontology_select = !self.show_ontology_select;
+    },
+    toggleOntologyFormSelection() {
+      self.show_ontology_form_selection = !self.show_ontology_form_selection;
+    },
     changeOntologyMode(mode) {
       self.ontology_mode = mode;
     },
     setSelectedSegmentId(segment_id) {
       self.selected_segment_id = segment_id;
+    },
+    setOntologyIndexForEdit(index) {
+      self.ontology_index_for_edit = index;
     },
     setListGroupedBy(value) {
       self.list_grouped_by = value;

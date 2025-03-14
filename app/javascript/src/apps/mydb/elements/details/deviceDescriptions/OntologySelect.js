@@ -93,7 +93,10 @@ const OntologySelect = props => {
       return constructOptions(result?.response?.docs);
     } catch (error) {
       console.error('Error fetching data:', error);
-      return [];
+      return [{
+        value: '',
+        label: 'TIB Service is out of order'
+      }];
     }
   };
 
