@@ -43,7 +43,6 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   const { currentCollection, isSync } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
-  const [activeTab, setActiveTab] = useState('properties'); // state from store
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
 
   const submitLabel = deviceDescription.isNew ? 'Create' : 'Save';
@@ -103,7 +102,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   }
 
   const handleTabChange = (key) => {
-    setActiveTab(key);
+    deviceDescriptionsStore.setActiveTabKey(key);
   }
 
   const handleSubmit = () => {
@@ -217,7 +216,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
         />
         <div className="tabs-container--with-borders">
           <Tabs
-            activeKey={activeTab}
+            activeKey={deviceDescriptionsStore.active_tab_key}
             onSelect={key => handleTabChange(key)}
             id="deviceDescriptionDetailsTab"
             unmountOnExit

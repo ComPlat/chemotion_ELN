@@ -11,6 +11,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { observer } from 'mobx-react';
@@ -28,20 +29,12 @@ const AnalysesContainer = ({ readonly }) => {
 
   const addEmptyAnalysis = () => {
     deviceDescriptionsStore.addEmptyAnalysisContainer();
-    changeMode();
+    deviceDescriptionsStore.changeAnalysisMode('edit');
   }
 
   const changeMode = () => {
     const newMode = deviceDescriptionsStore.analysis_mode == 'edit' ? 'order' : 'edit';
     deviceDescriptionsStore.changeAnalysisMode(newMode);
-  }
-
-  const toggleCommentBox = () => {
-    deviceDescriptionsStore.toggleAnalysisCommentBox();
-  }
-
-  const handleCommentTextChange = (e) => {
-    deviceDescriptionsStore.changeAnalysisComment(e.target.value);
   }
 
   const handleContainerChanged = (container) => {
@@ -99,49 +92,6 @@ const AnalysesContainer = ({ readonly }) => {
     );
   }
 
-  const commentButton = () => {
-    if (containers.length < 1) { return null; }
-
-    const disableMode = deviceDescriptionsStore.analysis_mode === 'order' ? true : false;
-
-    return (
-      <OverlayTrigger
-        placement="top"
-        overlay={(
-          <Tooltip id="analysisCommentBox">
-            general remarks that relate to all analytical data
-          </Tooltip>
-        )}
-      >
-        <Button
-          size="xsm"
-          variant="primary"
-          onClick={() => { toggleCommentBox() }}
-          disabled={disableMode}
-        >
-          Add comment
-        </Button>
-      </OverlayTrigger>
-    );
-  }
-
-  const commentBox = () => {
-    if (containers.length < 1) { return null; }
-    if (!deviceDescriptionsStore.analysis_comment_box) { return null; }
-
-    return (
-      <Form.Group>
-        <Form.Control
-          as="textarea"
-          style={{ height: '80px' }}
-          value={deviceDescription.container.description}
-          onChange={(e) => handleCommentTextChange(e)}
-          className="my-3"
-        />
-      </Form.Group>
-    );
-  }
-
   const analysisContainer = () => {
     let items = [];
 
@@ -192,11 +142,18 @@ const AnalysesContainer = ({ readonly }) => {
             <div className="d-flex justify-content-between align-items-center mb-3">
               {modeButton()}
               <ButtonToolbar className="gap-2">
-                {commentButton()}
+                <CommentButton
+                  toggleCommentBox={deviceDescriptionsStore.toggleAnalysisCommentBox}
+                  size="xsm"
+                />
                 {addButton()}
               </ButtonToolbar>
             </div>
-            {commentBox()}
+            <CommentBox
+              isVisible={deviceDescriptionsStore.analysis_comment_box}
+              value={deviceDescription.container.description}
+              handleCommentTextChange={deviceDescriptionsStore.changeAnalysisComment}
+            />
             {mode === 'edit' ? (
               <Accordion className="border rounded overflow-hidden">
                 {analysisContainer()}
