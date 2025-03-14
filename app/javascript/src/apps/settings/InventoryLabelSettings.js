@@ -99,9 +99,19 @@ function InventoryLabelSettings() {
   const updateInventoryLabelsArray = (collectionIds, updatedCollectionInventories) => {
     if (!updatedCollectionInventories?.inventory_collections) return;
 
-    setInventoryLabels(updatedCollectionInventories.inventory_collections);
-    const optionsArray = assignOptions(updatedCollectionInventories.inventory_collections);
+    const updatedInventories = updatedCollectionInventories.inventory_collections;
+    setInventoryLabels(updatedInventories);
+    const optionsArray = assignOptions(updatedInventories);
     setOptions(optionsArray);
+
+    // Keep only the valid collection IDs in the selection
+    const validCollectionIds = collectionIds.filter((id) => optionsArray.some((group) => {
+      if (group.children) {
+        return group.children.some((child) => child.value === id);
+      }
+      return group.value === id;
+    }));
+    setSelectedValue(validCollectionIds);
   };
 
   const findCollectionIds = (selectedOptions) => {
@@ -218,11 +228,6 @@ function InventoryLabelSettings() {
   const handleResetInventoryLabel = () => {
     setResetSpinner(true);
     const collectionIds = collectCollectionIds(selectedCollections);
-    if (collectionIds.length === 0) {
-      setErrorMessage('Please select collection(s) to reset');
-      setResetSpinner(false);
-      return;
-    }
 
     InventoryFetcher.updateInventoryLabel({
       prefix: null,
@@ -235,7 +240,7 @@ function InventoryLabelSettings() {
       } else {
         setPrefixValue('');
         setNameValue('');
-        setCounterValue(0);
+        setCounterValue('');
         setSelectedValue([]);
         updateInventoryLabelsArray(collectionIds, result, true);
       }
@@ -247,7 +252,14 @@ function InventoryLabelSettings() {
   };
 
   const handleResetConfirmation = () => {
-    setShowResetConfirmation(true);
+    const collectionIds = collectCollectionIds(selectedCollections);
+
+    if (collectionIds.length === 0) {
+      setErrorMessage('Please select collection(s) to reset');
+      setResetSpinner(false);
+    } else {
+      setShowResetConfirmation(true);
+    }
   };
 
   const handleResetCancel = () => {
@@ -306,7 +318,7 @@ function InventoryLabelSettings() {
         </Row>
         <Row className="mb-3">
           <Col xs={{ offset: 3 }}>
-            <b>Next sample inventory label will be:</b>
+            <b>Next sample inventory label will be: </b>
             {nextInventoryLabel}
           </Col>
         </Row>
