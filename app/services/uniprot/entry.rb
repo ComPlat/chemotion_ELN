@@ -43,7 +43,7 @@ module Uniprot
     end
 
     def link_uniprot
-      "https://www.uniprot.org/uniprotkb/#{uniprot_id}/entry"
+      "https://www.uniprot.org/uniprotkb/#{primary_accession}/entry"
     end
 
     def organism

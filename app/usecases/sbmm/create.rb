@@ -5,7 +5,7 @@ module Usecases
     class Create
       def find_or_create_by(params)
         if params[:uniprot_derivation] == 'uniprot'
-          find_or_create_uniprot_protein(params[:identifier])
+          find_or_create_uniprot_protein(params)
         elsif params[:uniprot_derivation] == 'uniprot_modified' 
           find_or_create_modified_protein(params)
         else
@@ -16,11 +16,18 @@ module Usecases
       private
 
       # raise ArgumentError if identifier is not a valid accession code
-      def find_or_create_uniprot_protein(identifier)
-        raise ArgumentError.new("'#{identifier}' is not a valid Uniprot accession") unless valid_accession?(identifier)
+      def find_or_create_uniprot_protein(params)
+        primary_accession = params[:identifier]
+        raise ArgumentError.new("'#{primary_accession}' is not a valid Uniprot accession") unless valid_accession?(primary_accession)
 
-        sbmm = Usecases::Sbmm::Finder.new.find_in_uniprot(primary_accession: identifier)
-        sbmm.save unless sbmm.persisted?
+        sbmm = SequenceBasedMacromolecule.find_by(primary_accession: primary_accession)
+        if sbmm.nil?
+          sbmm = Usecases::Sbmm::Finder.new.find_in_uniprot(primary_accession: primary_accession)
+          sbmm.sbmm_type = params[:sbmm_type]
+          sbmm.sbmm_subtype = params[:sbmm_subtype]
+          sbmm.uniprot_derivation = 'uniprot'
+        end
+        sbmm.save
         sbmm
       end
 
@@ -33,7 +40,10 @@ module Usecases
         end
 
         # TODO: Duplicate Check for modified or unknown SBMMs
-        sbmm =
+        sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier, :sample_attributes))
+        sbmm.parent = parent
+        sbmm.save
+        sbmm
       end
 
       def valid_accession?(accession)

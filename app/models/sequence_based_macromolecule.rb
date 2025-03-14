@@ -58,10 +58,15 @@ class SequenceBasedMacromolecule < ApplicationRecord
   has_many :collections, through: :sequence_based_macromolecule_samples
   belongs_to :protein_sequence_modification, optional: true
   belongs_to :post_translational_modification, optional: true
+  belongs_to :parent, class_name: :sequence_based_macromolecule, optional: true
 
   accepts_nested_attributes_for(
     :sequence_based_macromolecule_samples,
     :protein_sequence_modification,
     :post_translational_modification
   )
+
+  def primary_accession
+    accessions.first
+  end
 end

@@ -10,25 +10,30 @@ module Uniprot
 
     class NotFoundError < StandardError; end
 
-    def get(primary_accession)
-      handle_response do
+    def get(primary_accession, raw: false)
+      uniprot_result = handle_response do
         self.class.get("/uniprotkb/#{primary_accession}")
       end
+
+      return uniprot_result if raw
+
+      Uniprot::Entry.new(uniprot_result)
     end
 
-    def search(search_term:, search_field: :accession)
+    def search(search_term:, search_field: :accession, raw: false)
       search_params = {
         query: "#{search_field}:#{search_term}",
         fields: "id,accession,protein_name,organism_name",
         sort: "accession desc",
         size: 10
       }
-      handle_response do
-        self.class.get(
-          "/uniprotkb/search",
-          query: search_params
-        )
+      uniprot_result = handle_response do
+        self.class.get("/uniprotkb/search", query: search_params)
       end
+
+      return uniprot_result if raw
+
+      uniprot_result["results"].map { |result| Uniprot::SearchResult.new(result) }
     end
 
     private
