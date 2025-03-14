@@ -14,6 +14,7 @@ module Uniprot
         uniprot_source: entry.raw_response,
         uniprot_derivation: 'uniprot',
         accessions: entry.accessions,
+        primary_accession: entry.primary_accession,
         ec_numbers: entry.ec_numbers,
         systematic_name: entry.full_name,
         molecular_weight: entry.molecular_weight,

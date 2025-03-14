@@ -27,7 +27,12 @@ class InitSequenceBasedMacromoleculeAtElementKlasses < ActiveRecord::Migration[6
     )
     klass.save!
 
-    klass.create_klasses_revision(current_user = nil)
+    Labimotion::ElementKlassesRevision.create(
+      element_klass_id: klass.id,
+      uuid: klass.uuid,
+      properties_release: klass.properties_template,
+      released_at: klass.released_at
+    )
   end
 
   def down

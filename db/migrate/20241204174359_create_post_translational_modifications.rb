@@ -1,5 +1,6 @@
 class CreatePostTranslationalModifications < ActiveRecord::Migration[6.1]
   def change
+    index_prefix = 'idx_sbmm_ptm'
     create_table :post_translational_modifications do |t|
       t.boolean :phosphorylation_enabled, default: false, null: false
       t.boolean :phosphorylation_ser_enabled, default: false, null: false
@@ -46,7 +47,7 @@ class CreatePostTranslationalModifications < ActiveRecord::Migration[6.1]
 
       t.boolean :other_modifications_enabled, null: false, default: false
       t.string :other_modifications_details, null: true, default: ''
-      t.datetime :deleted_at, null: true, index: true
+      t.datetime :deleted_at, null: true, index: { name: "#{index_prefix}_deleted_at" }
       t.timestamps
     end
   end

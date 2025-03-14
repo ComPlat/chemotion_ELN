@@ -17,6 +17,8 @@ module Entities
     expose! :strain
     expose! :tissue
     expose! :localisation
+    expose! :parent, using: 'Entities::SequenceBasedMacromoleculeEntity'
+    expose! :sample, if: ->(instance, options) { options[:sample].present? }, using: 'Entities::SequenceBasedMacromoleculeSampleEntity'
 
     expose! :protein_sequence_modifications, using: 'Entities::ProteinSequenceModificationsEntity', unless: :uniprot_protein?
     expose! :post_translational_modifications, using: 'Entities::PostTranslationalModificationsEntity', unless: :uniprot_protein?
