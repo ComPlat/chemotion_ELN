@@ -7,6 +7,7 @@ module Entities
     expose :material_type
     expose :volume_amount
     expose :volume_unit
+    expose :details
     expose :id
   end
 end
