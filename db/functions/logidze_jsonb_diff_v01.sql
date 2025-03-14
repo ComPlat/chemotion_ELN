@@ -6,6 +6,7 @@ $$
 DECLARE
   result jsonb := '{}'::jsonb;
   v RECORD;
+  nested_diff jsonb;
 BEGIN
   -- If old is NULL, return the new object as the full difference
   IF old IS NULL OR jsonb_typeof(old) = 'null' THEN
@@ -21,7 +22,6 @@ BEGIN
   FOR v IN SELECT * FROM jsonb_each(new) LOOP
     -- If the key is an object in both old and new, recurse
     IF jsonb_typeof(old -> v.key) = 'object' AND jsonb_typeof(new -> v.key) = 'object' THEN
-      DECLARE nested_diff jsonb;
       nested_diff := jsonb_diff(old -> v.key, new -> v.key);
       IF nested_diff <> '{}'::jsonb THEN
         result := result || jsonb_build_object(v.key, nested_diff);
