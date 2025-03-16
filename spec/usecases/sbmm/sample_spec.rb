@@ -1,0 +1,36 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+describe Usecases::Sbmm::Sample do
+  before do
+    stub_request(:get, "https://rest.uniprot.org/uniprotkb/P12345")
+      .to_return(status: 200,
+                 body: file_fixture("uniprot/P12345.json").read,
+                 headers: { 'Content-Type' => 'application/json' })
+  end
+
+  describe '#create' do
+    let(:params) do
+      {
+        name: 'Testsample',
+        external_label: 'Testlabel',
+        function_or_application: 'Testing',
+        concentration: '0.5',
+        molarity: '1.2345',
+        volume_as_used: '3.21',
+        sequence_based_macromolecule_attributes: {
+          sbmm_type: 'protein',
+          sbmm_subtype: 'unmodified',
+          uniprot_derivation: 'uniprot',
+          identifier: 'P12345',
+        }
+      }
+    end
+    it 'creates a SBMM-Sample' do
+      expect {
+        described_class.new.create(params)
+      }.to change(SequenceBasedMacromolecule, :count).by(1)
+       .and change(SequenceBasedMacromoleculeSample, :count).by(1)
+    end
+  end
+end

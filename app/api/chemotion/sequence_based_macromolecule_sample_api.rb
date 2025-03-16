@@ -3,6 +3,13 @@
 module Chemotion
   class SequenceBasedMacromoleculeSampleAPI < Grape::API
     resource :sequence_based_macromolecule_samples do
+      desc 'Fetch a SBMM sample by id'
+      get ':id' do
+        sample = SequenceBasedMacromoleculeSample.find(params[:id])
+
+        present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
+      end
+
       desc 'Create SBMM sample'
       params do
         optional :name, type: String
@@ -104,10 +111,9 @@ module Chemotion
         end
       end
       post do
-        # TODO: what do we do with errors here? how are error messages from the server returned to the UI?
-        sbmm, sample = Usecases::SbmmSample::Create.new.find_or_create_by(params)
+        sample = Usecases::Sbmm::Sample.new.create(params)
 
-        present sbmm, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
+        present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
       end
     end
   end

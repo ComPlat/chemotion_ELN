@@ -33,16 +33,28 @@ module Usecases
 
       def find_or_create_modified_protein(params)
         if valid_accession?(params[:parent_identifier]) # parent is a uniprot sbmm
-          parent = find_or_create_uniprot_protein(params[:parent_identifier])
+          parent = find_or_create_uniprot_protein({
+            identifier: params[:parent_identifier],
+            sbmm_type: params[:sbmm_type],
+            sbmm_subtype: params[:sbmm_subtype]
+          })
         else
           id = params[:parent_identifier].to_i # TODO: remove .to_i if we ever change our IDs to UUIDs
           parent = SequenceBasedMacromolecule.find(id)
         end
 
-        # TODO: Duplicate Check for modified or unknown SBMMs
-        sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier, :sample_attributes))
-        sbmm.parent = parent
+        sbmm = Usecases::Sbmm::Finder.new.find_modified_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id))
+        if sbmm.nil?
+          sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier))
+          sbmm.parent = parent
+        end
         sbmm.save
+        sbmm
+      end
+
+      def find_or_create_unknown_protein(params)
+        sbmm = SequenceBasedMacromolecule.unknown.find_by(params)
+        sbmm ||= SequenceBasedMacromolecule.create(params)
         sbmm
       end
 

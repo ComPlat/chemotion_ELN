@@ -40,5 +40,9 @@ module Uniprot
     def ec_numbers
       dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |ecNumber| ecNumber['value'] } || []
     end
+
+    def taxon_id
+      dig('organism', 'taxonId')
+    end
   end
 end

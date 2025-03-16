@@ -2,8 +2,8 @@ class CreateSequenceBasedMacromolecule < ActiveRecord::Migration[6.1]
   def change
     index_prefix = 'idx_sbmm'
     create_table :sequence_based_macromolecules do |t|
-      t.string :identifier, null: false, index: { name: "#{index_prefix}_identifier", unique: true }
-      t.jsonb :uniprot_source, null: false
+      t.string :identifier, null: true, index: { name: "#{index_prefix}_identifier", unique: true }
+      t.jsonb :uniprot_source, null: true
       t.belongs_to :parent, index: { name: "#{index_prefix}_parent" }, null: true
       t.string :sbmm_type, null: false
       t.string :sbmm_subtype, null: false
@@ -17,7 +17,7 @@ class CreateSequenceBasedMacromolecule < ActiveRecord::Migration[6.1]
       t.string :sequence, null: false, index: { name: "#{index_prefix}_sequence" }
       t.string :link_uniprot, null: true
       t.string :link_pdb, null: true
-      t.belongs_to :protein_sequence_modifications, null: true, index: { name: "#{index_prefix}_psm_id" }
+      t.belongs_to :protein_sequence_modification, null: true, index: { name: "#{index_prefix}_psm_id" }
       t.string :heterologous_expression, null: false, default: 'unknown'
       t.string :organism, null: true, default: ''
       t.string :taxon_id, null: true, default: ''
@@ -26,7 +26,7 @@ class CreateSequenceBasedMacromolecule < ActiveRecord::Migration[6.1]
       t.string :localisation, null: true, default: ''
       t.string :protein_source_details_comments, null: true, default: ''
       t.string :protein_source_details_expression_system, null: true, default: ''
-      t.belongs_to :post_translational_modifications, null: true, index: { name: "#{index_prefix}_ptm_id" }
+      t.belongs_to :post_translational_modification, null: true, index: { name: "#{index_prefix}_ptm_id" }
 
       t.datetime :deleted_at, null: true, index: { name: "#{index_prefix}_deleted_at" }
       t.timestamps

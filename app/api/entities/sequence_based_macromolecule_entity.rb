@@ -2,11 +2,13 @@
 
 module Entities
   class SequenceBasedMacromoleculeEntity < ApplicationEntity
+    expose! :sbmm_type
+    expose! :sbmm_subtype
     expose! :identifier
-    expose! :primaryAccession
+    expose! :primary_accession
+    expose! :accessions
     expose! :uniprot_source
     expose! :uniprot_derivation
-    expose! :secondary_accessions
     expose! :ec_numbers
     expose! :systematic_name
     expose! :molecular_weight
@@ -26,24 +28,16 @@ module Entities
 
     private
 
-    def primary_accession
-      (represented_object.accessions || []).first
-    end
-
-    def secondary_accessions
-      (represented_object.accessions || [])[1..-1]
-    end
-
     def protein_sequence_modifications
-      represented_object.protein_sequence_modification
+      object.protein_sequence_modification
     end
 
     def post_translational_modifications
-      represented_object.post_translational_modification
+      object.post_translational_modification
     end
 
     def uniprot_protein?
-      represented_object.uniprot_derivation == 'uniprot'
+      object.uniprot_derivation == 'uniprot'
     end
   end
 end

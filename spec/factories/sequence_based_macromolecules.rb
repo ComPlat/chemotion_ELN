@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :sequence_based_macromolecule do 
+  factory(:sequence_based_macromolecule) do
     identifier {}
     uniprot_source { {} }
     sbmm_type { "protein" }
@@ -25,32 +25,44 @@ FactoryBot.define do
     protein_source_details_expression_system { }
     deleted_at { }
 
+    parent { nil }
+    protein_sequence_modification { association :protein_sequence_modification }
+    post_translational_modification { association :post_translational_modification }
 
     after(:build) do |sbmm, evaluator|
-      sbmm.parent { build(:uniprot_sbmm) } unless sbmm.parent.present?
-      if sbmm.uniprot_derivation == 'uniprot_modified' do
-        sbmm.protein_sequence_modifications = build(:protein_sequence_modification) unless sbmm.protein_sequence_modification.present?
-        sbmm.post_translational_modifications = build(:post_translational_modification) unless sbmm.post_translational_modification.present?
+      if sbmm.uniprot_derivation == 'uniprot_modified'
+        sbmm.parent = build(:uniprot_sbmm) unless sbmm.parent.present?
+        sbmm.protein_sequence_modification = build(:protein_sequence_modification) unless sbmm.protein_sequence_modification.present?
+        sbmm.post_translational_modification = build(:post_translational_modification) unless sbmm.post_translational_modification.present?
       end
     end
-  end
 
-  factory :uniprot_sbmm, parent: :sequence_based_macromolecule do 
-    identifier { "AATM_RABIT" }
-    uniprot_source { File.read(Rails.root.join('spec/fixtures/uniprot/P12345.json')) }
-    primary_accession { "P12345" }
-    accessions { ["P12345", "G1SKL2"] }
-    ec_numbers { ["2.6.1.1", "2.6.1.7"] }
-    molecular_weight { 47409 }
-    add_attribute(:sequence) { "MALLHSARVLSGVASAFHPGLAAAASARASSWWAHVEMGPPDPILGVTEAYKRDTNSKKMNLGVGAYRDDNGKPYVLPSVRKAEAQIAAKGLDKEYLPIGGLAEFCRASAELALGENSEVVKSGRFVTVQTISGTGALRIGASFLQRFFKFSRDVFLPKPSWGNHTPIFRDAGMQLQSYRYYDPKTCGFDFTGALEDISKIPEQSVLLLHACAHNPTGVDPRPEQWKEIATVVKKRNLFAFFDMAYQGFASGDGDKDAWAVRHFIEQGINVCLCQSYAKNMGLYGERVGAFTVICKDADEAKRVESQLKILIRPMYSNPPIHGARIASTILTSPDLRKQWLQEVKGMADRIIGMRTQLVSNLKKEGSTHSWQHITDQIGMFCFTGLKPEQVERLTKEFSIYMTKDGRISVAGVTSGNVGYLAHAIHQVTK" }
-    link_uniprot { "https://www.uniprot.org/uniprotkb/P12345/entry" }
-    organism { "Oryctolagus cuniculus" }
-    taxon_id { "9986" }
-  end
+    factory(:uniprot_sbmm) do
+      identifier { "AATM_RABIT" }
+      uniprot_source { File.read(Rails.root.join('spec/fixtures/uniprot/P12345.json')) }
+      primary_accession { "P12345" }
+      accessions { ["P12345", "G1SKL2"] }
+      ec_numbers { ["2.6.1.1", "2.6.1.7"] }
+      molecular_weight { 47409 }
+      add_attribute(:sequence) { "MALLHSARVLSGVASAFHPGLAAAASARASSWWAHVEMGPPDPILGVTEAYKRDTNSKKMNLGVGAYRDDNGKPYVLPSVRKAEAQIAAKGLDKEYLPIGGLAEFCRASAELALGENSEVVKSGRFVTVQTISGTGALRIGASFLQRFFKFSRDVFLPKPSWGNHTPIFRDAGMQLQSYRYYDPKTCGFDFTGALEDISKIPEQSVLLLHACAHNPTGVDPRPEQWKEIATVVKKRNLFAFFDMAYQGFASGDGDKDAWAVRHFIEQGINVCLCQSYAKNMGLYGERVGAFTVICKDADEAKRVESQLKILIRPMYSNPPIHGARIASTILTSPDLRKQWLQEVKGMADRIIGMRTQLVSNLKKEGSTHSWQHITDQIGMFCFTGLKPEQVERLTKEFSIYMTKDGRISVAGVTSGNVGYLAHAIHQVTK" }
+      link_uniprot { "https://www.uniprot.org/uniprotkb/P12345/entry" }
+      organism { "Oryctolagus cuniculus" }
+      taxon_id { "9986" }
+    end
 
-  factory :modified_uniprot_sbmm, parent: :sequence_based_macromolecule do
-    sequence(:identifier) { |n| "ELN_CUSTOM_PROTEIN_#{n}" }
-    molecular_weight { 12345 }
-    parent { cr}
+    factory(:modified_uniprot_sbmm) do
+      uniprot_derivation { 'uniprot_modified' }
+      sequence(:identifier) { |n| "MODIFIED_UNIPROT_PROTEIN_#{n}" }
+      molecular_weight { 12345 }
+      parent { build(:uniprot_sbmm) }
+      post_translational_modification do
+        build(
+          :post_translational_modification,
+          phosphorylation_enabled: true,
+          phosphorylation_ser_enabled: true,
+          phosphorylation_ser_details: "Something something"
+        )
+      end
+    end
   end
 end
