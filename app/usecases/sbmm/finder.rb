@@ -7,6 +7,19 @@ module Usecases
         SequenceBasedMacromolecule.find(id)
       end
 
+      def find_modified_protein_by(params)
+        joins = []
+        if params.key?(:protein_sequence_modification_attributes)
+          params[:protein_sequence_modification] ||= params.delete(:protein_sequence_modification_attributes)
+          joins << :protein_sequence_modification
+        end
+        if params.key?(:post_translational_modification_attributes)
+          params[:post_translational_modification] ||= params.delete(:post_translational_modification_attributes)
+          joins << :post_translational_modification
+        end
+        SequenceBasedMacromolecule.modified.joins(*joins).find_by(params)
+      end
+
       # returns an instance of SequenceBasedMacromolecule
       def find_in_uniprot(primary_accession:)
         uniprot_entry = Uniprot::Client.new.get(primary_accession)
@@ -16,7 +29,11 @@ module Usecases
 
       # returns an instance of 
       def search_in_eln(search_term:, search_field:)
-        SequenceBasedMacromolecule.where(search_field => search_term)
+        if search_field == 'ec'
+          SequenceBasedMacromolecule.with_ec_number(search_term)
+        else
+          SequenceBasedMacromolecule.where(search_field => search_term)
+        end
       end
 
       # returns an array of Uniprot::SearchResult instances

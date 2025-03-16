@@ -58,7 +58,12 @@ class SequenceBasedMacromolecule < ApplicationRecord
   has_many :collections, through: :sequence_based_macromolecule_samples
   belongs_to :protein_sequence_modification, optional: true
   belongs_to :post_translational_modification, optional: true
-  belongs_to :parent, class_name: :sequence_based_macromolecule, optional: true
+  belongs_to :parent, class_name: "SequenceBasedMacromolecule", optional: true
+
+  scope :uniprot, -> { where(uniprot_derivation: 'uniprot') }
+  scope :modified, -> { where(uniprot_derivation: 'uniprot_modified') }
+  scope :unknown, -> { where(uniprot_derivation: 'uniprot_unknown') }
+  scope :with_ec_number, ->(ec_number) { where('ec_numbers @> ARRAY[?]::varchar[]', [ec_number&.strip]) }
 
   accepts_nested_attributes_for(
     :sequence_based_macromolecule_samples,

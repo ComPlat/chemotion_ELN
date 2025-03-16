@@ -12,9 +12,9 @@ module Entities
     expose :available_sources
 
     def available_sources
-      if represented_object.respond_to?(:available_sources)
-        represented_object.available_sources
-      elsif represented_object.is_a?(SequenceBasedMacromolecule)
+      if object.respond_to?(:available_sources)
+        object.available_sources
+      elsif object.is_a?(SequenceBasedMacromolecule)
         ['eln']
       else
         ['unknown']

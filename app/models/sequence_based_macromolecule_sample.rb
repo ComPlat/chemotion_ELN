@@ -53,8 +53,15 @@
 class SequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid
 
+  before_create :auto_assign_short_label
+
   has_many :collections_sequence_based_macromolecule_samples, inverse_of: :sequence_based_macromolecule_sample, dependent: :destroy
   has_many :collections, through: :collections_sequence_based_macromolecule_samples
   belongs_to :sequence_based_macromolecule
 
+  def auto_assign_short_label
+    return if short_label
+
+    self.short_label = "SBMM-Sample-#{Random.uuid}"
+  end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :post_translational_modifications do
+  factory :post_translational_modification do
     phosphorylation_enabled { false }
     phosphorylation_ser_enabled { false }
     phosphorylation_ser_details { }
