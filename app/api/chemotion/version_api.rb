@@ -7,6 +7,24 @@ module Chemotion
     include Grape::Kaminari
     helpers ParamsHelpers
 
+    helpers do
+      def filter_hash(hash1, hash2)
+        result = {}
+
+        hash1.each do |key, value|
+          next unless hash2.key?(key)
+
+          result[key] = if value.is_a?(Hash)
+                          filter_hash(value, hash2[key])
+                        else
+                          hash2[key]
+                        end
+        end
+
+        result
+      end
+    end
+
     namespace :versions do
       after_validation do
         resource = namespace.split('/')[2]
@@ -53,6 +71,43 @@ module Chemotion
           get do
             reaction = Reaction.with_log_data.find(params[:id])
             versions = Versioning::Fetcher.call(reaction)
+            versions.each do |v|
+              v[:changes].each do |c|
+                next unless c[:fields]['variations']
+
+                old_value = c[:fields]['variations'][:old_value].split("\n")
+                                                                .map do |variation|
+                  variation.gsub('=>', ':').gsub('nil', 'null')
+                end
+                old_value = [{}] if old_value.empty?
+                new_value = c[:fields]['variations'][:new_value].split("\n")
+                                                                .map do |variation|
+                  variation.gsub('=>', ':').gsub('nil', 'null')
+                end
+                new_value = [{}] if new_value.empty?
+
+                c[:fields]['variations'][:old_value] = ActiveRecord::Base.connection.execute(
+                  "select jsonb_diff('#{new_value.join}', '#{old_value.join}');",
+                )[0]['jsonb_diff']
+                c[:fields]['variations'][:new_value] = ActiveRecord::Base.connection.execute(
+                  "select jsonb_diff('#{old_value.join}', '#{new_value.join}');",
+                )[0]['jsonb_diff']
+
+                if c[:fields]['variations'][:current_value].empty?
+                  c[:fields]['variations'][:current_value] = '{}'
+                else
+
+                  current_value_hash = JSON.parse(c[:fields]['variations'][:current_value].gsub('=>', ':').gsub('nil',
+                                                                                                                'null'))
+                  new_value_hash = JSON.parse(c[:fields]['variations'][:new_value].gsub('=>', ':').gsub('nil', 'null'))
+
+                  if new_value_hash.present?
+                    filtered_hash = filter_hash(new_value_hash, current_value_hash)
+                    c[:fields]['variations'][:current_value] = filtered_hash.to_json
+                  end
+                end
+              end
+            end
 
             { versions: paginate(Kaminari.paginate_array(versions)) }
           end
