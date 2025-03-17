@@ -70,8 +70,4 @@ class SequenceBasedMacromolecule < ApplicationRecord
     :protein_sequence_modification,
     :post_translational_modification
   )
-
-  def primary_accession
-    accessions.first
-  end
 end

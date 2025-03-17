@@ -7,6 +7,8 @@ module Usecases
         SequenceBasedMacromolecule.find(id)
       end
 
+      # TODO: API-Design klären: macht es überhaupt Sinn hier die nested attributes Konventionen zu benutzen wenn wir
+      #                          sie eigentlich nicht benutzen sondern wegen Duplikatprüfung eh die Objekte einzeln erstellen?
       def find_modified_protein_by(params)
         joins = []
         if params.key?(:protein_sequence_modification_attributes)
