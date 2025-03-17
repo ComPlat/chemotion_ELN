@@ -22,13 +22,12 @@ Rails.application.config.content_security_policy do |policy|
     host = url.host
     port = url.port
 
-    src = [:self, 'http://localhost:3035', 'http://webpacker:3035', 'ws://localhost:3035', 'https://service.tib.eu']
+    src = [:self, 'blob:', 'http://localhost:3035', 'http://webpacker:3035', 'ws://localhost:3035', 'https://service.tib.eu']
     src += ["ws://#{host}:3035", "#{scheme}://#{host}:3035"] if host.present?
     src += ["#{scheme}://#{host}:#{url.port}"] if host.present? && port.present?
     puts "connect_src: #{src}"
 
-    # policy.connect_src(*src)
-    policy.connect_src(*src, :blob)
+    policy.connect_src(*src)
   end
 end
 

@@ -226,8 +226,7 @@ module Chemotion
 
       desc 'get_annotated_image_of_attachment'
       get ':attachment_id/annotated_image' do
-        file_type = @attachment.annotated_filename.present? ? MIME::Types.type_for(@attachment.annotated_filename).first.to_s : MIME::Types.type_for(@attachment.filename).first.to_s
-        content_type file_type.presence || 'application/octet-stream'
+        content_type 'application/octet-stream'
         env['api.format'] = :binary
         annotation = @attachment.annotated_file_location.presence
         if annotation.present? && File.file?(annotation)

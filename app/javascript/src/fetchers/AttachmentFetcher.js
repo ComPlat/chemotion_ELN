@@ -17,10 +17,7 @@ const fileFromAttachment = (attachment, containerId) => {
 
 export default class AttachmentFetcher {
   static fetchImageAttachment(params) {
-    const url = params.annotated
-      ? `/api/v1/attachments/${params.id}/annotated_image`
-      : `/api/v1/attachments/image/${params.id}`;
-
+    const url = `/api/v1/attachments/${params.id}/annotated_image`;
     return fetch(url, {
       credentials: 'same-origin',
       method: 'GET',
@@ -585,7 +582,7 @@ export default class AttachmentFetcher {
         let jcampIds = oldSpcInfos.map((spc) => (spc.idx));
         const fetchedFilesIdxs = json.files.map((file) => (file.id));
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
-  
+
         return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params).then((res) => {
           return json;
         }).catch((errMsg) => {

@@ -90,12 +90,14 @@ export default class ImageModal extends Component {
   }
 
   fetchImage() {
-    if (!this.props.popObject.fetchId) { return null; }
+    const { popObject } = this.props;
+    if (!popObject.fetchId) { return null; }
+    const type = popObject?.fileName?.split('.').pop().toLowerCase();
 
-    AttachmentFetcher.fetchImageAttachment({ id: this.props.popObject.fetchId, annotated: true }).then(
+    AttachmentFetcher.fetchImageAttachment({ id: popObject.fetchId, annotated: true }).then(
       (result) => {
         if (result.data != null) {
-          this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
+          this.setState({ fetchSrc: result.data, isPdf: type === 'pdf' });
         }
       }
     );
@@ -209,6 +211,7 @@ ImageModal.propTypes = {
   popObject: PropTypes.shape({
     title: PropTypes.string,
     src: PropTypes.string,
+    fileName: PropTypes.string,
     fetchNeeded: PropTypes.bool,
     fetchId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
