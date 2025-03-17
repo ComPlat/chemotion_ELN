@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import CollectionUtils from '@src/models/collection/CollectionUtils';
 import expect from 'expect';
 import {
   describe, it

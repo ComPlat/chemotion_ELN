@@ -1,5 +1,5 @@
 import { factory } from '@eflexsystems/factory-bot';
-import CellLine from 'src/models/cellLine/CellLine';
+import CellLine from '@src/models/cellLine/CellLine';
 
 export default class CellLineFactory {
   static instance = undefined;

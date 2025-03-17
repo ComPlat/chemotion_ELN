@@ -1,10 +1,10 @@
 import expect from 'expect';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+} from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionMaterials, getMaterialColumnGroupChild
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
+} from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpReaction, getColumnGroupChild } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {

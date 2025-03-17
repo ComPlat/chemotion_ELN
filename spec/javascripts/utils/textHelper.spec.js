@@ -1,5 +1,5 @@
 import expect from 'expect';
-import { capitalizeWords } from 'src/utilities/textHelper';
+import { capitalizeWords } from '@src/utilities/textHelper';
 
 describe('capitalizeWords', () => {
   it('should capitalize the first letter of words in a string', () => {

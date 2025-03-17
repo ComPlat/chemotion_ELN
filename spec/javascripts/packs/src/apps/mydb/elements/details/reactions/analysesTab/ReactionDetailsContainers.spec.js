@@ -8,10 +8,10 @@ import {
 
 import { Button } from 'react-bootstrap';
 
-import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
-import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
-import Reaction from 'src/models/Reaction';
-import Container from 'src/models/Container';
+import ReactionDetailsContainers from '@src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
+import AccordionHeaderWithButtons from '@src/components/common/AccordionHeaderWithButtons';
+import Reaction from '@src/models/Reaction';
+import Container from '@src/models/Container';
 
 Enzyme.configure({ adapter: new Adapter() });
 

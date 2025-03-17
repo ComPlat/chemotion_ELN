@@ -7,10 +7,10 @@ import sinon from 'sinon';
 import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
-import ChemicalTab from 'src/components/ChemicalTab';
-import Sample from 'src/models/Sample';
-import Chemical from 'src/models/Chemical';
+import ElementStore from '@src/stores/alt/stores/ElementStore';
+import ChemicalTab from '@src/components/ChemicalTab';
+import Sample from '@src/models/Sample';
+import Chemical from '@src/models/Chemical';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();

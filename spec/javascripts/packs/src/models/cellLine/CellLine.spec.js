@@ -1,5 +1,5 @@
 import expect from 'expect';
-import CellLine from '../../../../../../app/javascript/src/models/cellLine/CellLine';
+import CellLine from '@src/models/cellLine/CellLine';
 
 describe('CellLine', async () => {
   describe('createEmpty()', () => {

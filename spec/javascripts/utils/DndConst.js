@@ -3,7 +3,7 @@ import expect from 'expect';
 import {
   DragDropItemTypes,
   targetContainerDataField
-} from 'src/utilities/DndConst';
+} from '@src/utilities/DndConst';
 
 const fakeMonitor = (dataType) => ({ getItemType: () => (DragDropItemTypes[dataType]) });
 

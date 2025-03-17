@@ -1,6 +1,6 @@
 import { factory } from '@eflexsystems/factory-bot';
-import Reaction from 'src/models/Reaction';
-import SampleFactory from "factories/SampleFactory";
+import Reaction from '@src/models/Reaction';
+import SampleFactory from "@tests/factories/SampleFactory";
 
 export default class ReactionFactory {
     static instance = undefined;

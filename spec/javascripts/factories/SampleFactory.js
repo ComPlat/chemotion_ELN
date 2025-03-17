@@ -1,6 +1,6 @@
 import { factory } from '@eflexsystems/factory-bot';
-import Sample from 'src/models/Sample';
-import Molecule from 'src/models/Molecule';
+import Sample from '@src/models/Sample';
+import Molecule from '@src/models/Molecule';
 
 export default class SampleFactory {
     static instance = undefined;

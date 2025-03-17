@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/no-unresolved
-import ChemicalFactory from 'factories/ChemicalFactory';
-import Chemical from 'src/models/Chemical';
+import ChemicalFactory from '@tests/factories/ChemicalFactory';
+import Chemical from '@src/models/Chemical';
 import expect from 'expect';
 import {
   describe, it

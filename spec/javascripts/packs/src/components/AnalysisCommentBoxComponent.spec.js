@@ -5,7 +5,7 @@ import { Form } from 'react-bootstrap';
 import { describe, it } from 'mocha';
 import expect from 'expect';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import { CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
+import { CommentBox } from '@src/components/common/AnalysisCommentBoxComponent';
 
 configure({ adapter: new Adapter() });
 

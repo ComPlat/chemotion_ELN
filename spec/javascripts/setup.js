@@ -1,3 +1,4 @@
+require('module-alias/register');
 require('@babel/register')();
 require('jsdom-global')();
 

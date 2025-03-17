@@ -1,8 +1,8 @@
-import ReactionFactory from 'factories/ReactionFactory';
-import SampleFactory from 'factories/SampleFactory';
+import ReactionFactory from '@tests/factories/ReactionFactory';
+import SampleFactory from '@tests/factories/SampleFactory';
 import {
   createVariationsRow,
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+} from '@src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 async function setUpMaterial() {
   return SampleFactory.build('SampleFactory.water_100g');

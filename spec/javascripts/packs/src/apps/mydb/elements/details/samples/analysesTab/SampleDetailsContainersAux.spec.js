@@ -9,10 +9,10 @@ import {
 
 import {
   AnalysesHeader
-} from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+} from '@src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 
-import Container from 'src/models/Container';
-import Sample from 'src/models/Sample';
+import Container from '@src/models/Container';
+import Sample from '@src/models/Sample';
 
 configure({ adapter: new Adapter() });
 
