@@ -389,7 +389,7 @@ export default class NoticeButton extends React.Component {
         <Modal.Header closeButton>
           <Modal.Title>Unread Notifications</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="vh-70">
+        <Modal.Body className="vh-70 overflow-auto">
           {this.renderBody()}
         </Modal.Body>
         <Modal.Footer>
