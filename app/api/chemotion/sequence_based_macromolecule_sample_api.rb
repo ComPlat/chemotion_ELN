@@ -33,7 +33,7 @@ module Chemotion
           # TODO: does uniprot_unknown require an individual identifier or does it not allow parent records?
 
           given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
-            requires(:protein_sequence_modifications_attributes, type: Hash) do
+            requires(:protein_sequence_modification_attributes, type: Hash) do
               optional :modification_n_terminal, type: Boolean, default: false
               optional :modification_n_terminal_details, type: String
               optional :modification_c_terminal, type: Boolean, default: false
@@ -48,7 +48,7 @@ module Chemotion
               optional :modification_other_details, type: String
             end
 
-            requires(:post_translational_modifications_attributes, type: Hash) do
+            requires(:post_translational_modification_attributes, type: Hash) do
               optional :phosphorylation_enabled, type: Boolean, default: false
               optional :phosphorylation_ser_enabled, type: Boolean, default: false
               optional :phosphorylation_ser_details, type: String, default: ''

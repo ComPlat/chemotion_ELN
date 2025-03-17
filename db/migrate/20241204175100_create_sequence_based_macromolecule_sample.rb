@@ -9,6 +9,7 @@ class CreateSequenceBasedMacromoleculeSample < ActiveRecord::Migration[6.1]
       t.string :function_or_application, null: true
       t.float :concentration, null: true
       t.float :molarity, null: true
+      t.float :amount_as_used, null: true
       t.float :volume_as_used, null: true
 
       t.belongs_to :sequence_based_macromolecule, foreign_key: true, index: { name: "#{index_prefix}_sbmm" }

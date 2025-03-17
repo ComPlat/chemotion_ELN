@@ -12,7 +12,7 @@ FactoryBot.define do
     ec_numbers { [] }
     pdb_doi { }
     systematic_name { }
-    molecular_weight { }
+    molecular_weight { 12345 }
     add_attribute(:sequence) { "ABCDEFG" }
     link_uniprot { }
     heterologous_expression { 'unknown' }
@@ -43,7 +43,6 @@ FactoryBot.define do
       primary_accession { "P12345" }
       accessions { ["P12345", "G1SKL2"] }
       ec_numbers { ["2.6.1.1", "2.6.1.7"] }
-      molecular_weight { 47409 }
       add_attribute(:sequence) { "MALLHSARVLSGVASAFHPGLAAAASARASSWWAHVEMGPPDPILGVTEAYKRDTNSKKMNLGVGAYRDDNGKPYVLPSVRKAEAQIAAKGLDKEYLPIGGLAEFCRASAELALGENSEVVKSGRFVTVQTISGTGALRIGASFLQRFFKFSRDVFLPKPSWGNHTPIFRDAGMQLQSYRYYDPKTCGFDFTGALEDISKIPEQSVLLLHACAHNPTGVDPRPEQWKEIATVVKKRNLFAFFDMAYQGFASGDGDKDAWAVRHFIEQGINVCLCQSYAKNMGLYGERVGAFTVICKDADEAKRVESQLKILIRPMYSNPPIHGARIASTILTSPDLRKQWLQEVKGMADRIIGMRTQLVSNLKKEGSTHSWQHITDQIGMFCFTGLKPEQVERLTKEFSIYMTKDGRISVAGVTSGNVGYLAHAIHQVTK" }
       link_uniprot { "https://www.uniprot.org/uniprotkb/P12345/entry" }
       organism { "Oryctolagus cuniculus" }
@@ -53,7 +52,6 @@ FactoryBot.define do
     factory(:modified_uniprot_sbmm) do
       uniprot_derivation { 'uniprot_modified' }
       sequence(:identifier) { |n| "MODIFIED_UNIPROT_PROTEIN_#{n}" }
-      molecular_weight { 12345 }
       parent { build(:uniprot_sbmm) }
       post_translational_modification do
         build(
@@ -63,6 +61,11 @@ FactoryBot.define do
           phosphorylation_ser_details: "Something something"
         )
       end
+    end
+
+    factory(:non_uniprot_sbmm) do
+      uniprot_derivation { 'uniprot_unknown' }
+      sequence(:identifier) { |n| "UNKNOWN_PROTEIN_#{n}" }
     end
   end
 end

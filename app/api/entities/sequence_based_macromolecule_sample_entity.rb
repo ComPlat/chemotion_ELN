@@ -9,6 +9,7 @@ module Entities
     expose! :function_or_application
     expose! :concentration
     expose! :molarity
+    expose! :amount_as_used
     expose! :volume_as_used
     expose! :sequence_based_macromolecule, using: "Entities::SequenceBasedMacromoleculeEntity"
 
