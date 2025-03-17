@@ -210,18 +210,6 @@ export default class ScreenDetails extends Component {
 
           <OverlayTrigger
             placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
           >
             <Button
@@ -419,12 +407,6 @@ export default class ScreenDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      properties: 'Properties',
-      analyses: 'Analyses',
-      research_plans: 'Research Plans',
-    };
-
     addSegmentTabs(screen, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -460,13 +442,12 @@ export default class ScreenDetails extends Component {
             researchplans={screen.research_plans}
             flowConfiguration={flowConfiguration}
           />
-          <ElementDetailSortTab
-            type="screen"
-            availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
           <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="screen"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
             <Tabs
               mountOnEnter
               unmountOnExit
@@ -500,5 +481,4 @@ export default class ScreenDetails extends Component {
 
 ScreenDetails.propTypes = {
   screen: PropTypes.instanceOf(Screen).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };

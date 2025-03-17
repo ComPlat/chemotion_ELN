@@ -1,0 +1,18 @@
+.tab-layout-editor {
+  &-list {
+    @extend .rounded-2;
+    @extend .px-2;
+    @extend .pt-2;
+    background-color: $body-bg;
+    &-item {
+      @extend .mb-2;
+      @extend .sheet-tab;
+      font-size: $font-size-root !important;
+      border-top-left-radius: $nav-tabs-border-radius !important;
+      border-top-right-radius: $nav-tabs-border-radius !important;
+      padding: var(--bs-list-group-item-padding-y)
+        var(--bs-list-group-item-padding-x);
+      cursor: grab;
+    }
+  }
+}
