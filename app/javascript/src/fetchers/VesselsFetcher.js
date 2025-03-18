@@ -120,6 +120,30 @@ export default class VesselsFetcher {
     }).then((response) => response.json());
   }
 
+  static suggestVesselName(params) {
+    const { details, vessel_type, material_type } = params;
+    const queryString = new URLSearchParams({
+      details: details,
+      vessel_type: vessel_type,
+      material_type: material_type,
+    }).toString();
+
+    console.log(queryString);
+
+    return fetch(`/api/v1/vessels/suggest/suggest_name/${queryString}`, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'GET',
+    })
+      .then((response) => response.json())
+      .catch((error) => {
+        console.error('Error fetching vessel name suggestions:', error);
+      });
+  }
+
   static getVesselMaterialById(id) {
     return fetch(`/api/v1/vessels/material/${id}`, {
       credentials: 'same-origin',
