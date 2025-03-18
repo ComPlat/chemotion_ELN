@@ -4,6 +4,7 @@ import { cloneDeep } from 'lodash';
 import { Constants, GenInterface, GenToolbar } from 'chem-generic-ui';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Segment from 'src/models/Segment';
 import { observer } from 'mobx-react';
 
@@ -40,7 +41,15 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
     } 
   }
 
-  const changeFormSelection = (segment, index_ontology, index_segment, event) => {
+  const handleExport = (segment) => {
+    ElementActions.exportElement(segment, 'Segment', 'docx');
+  }
+
+  const handleExpandAll = (expanded) => {
+    store.changeSegmentExpandAll(expanded)
+  }
+
+  const changeFormSelection = (index_ontology, index_segment, event) => {
     event.stopPropagation();
     let ontologies = [...element.ontologies];
     ontologies[index_ontology].segments[index_segment].show = event.target.checked;
@@ -53,8 +62,10 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
         generic={segment}
         genericType={Constants.GENERIC_TYPES.SEGMENT}
         klass={segmentKlass}
+        fnExport={handleExport}
         fnReload={handleSegmentsChange}
         fnRetrieve={handleRetrieveRevision}
+        onExpandAll={handleExpandAll}
         key={`revisions-buttons-${index}-${j}`}
       />
     );
@@ -87,7 +98,7 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
                       type="checkbox"
                       label="Use this form for"
                       checked={showValue}
-                      onChange={(event) => changeFormSelection(segment, index, j, event)}
+                      onChange={(event) => changeFormSelection(index, j, event)}
                     />
                   </div>
                   <b>{segmentKlass.label}</b>
@@ -104,6 +115,7 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
                     isSearch={false}
                     isActiveWF={false}
                     fnNavi={() => {}}
+                    expandAll={store.segment_expand_all}
                     key={`ontology-${index}-${j}`}
                   />
                 </div>
@@ -124,6 +136,7 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
               isSearch={false}
               isActiveWF={false}
               fnNavi={() => {}}
+              expandAll={store.segment_expand_all}
               key={`ontology-${index}-${j}`}
             />
           );
