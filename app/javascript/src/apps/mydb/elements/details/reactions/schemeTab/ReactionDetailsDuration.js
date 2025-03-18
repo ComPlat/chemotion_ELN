@@ -116,7 +116,7 @@ export default class ReactionDetailsDuration extends Component {
               type="text"
               value={reaction.durationDisplay.dispValue || ''}
               ref={this.refDuration}
-              placeholder="Input Duration..."
+              placeholder="Input duration..."
               onChange={event => this.handleDurationChange(event)}
             />
               <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>

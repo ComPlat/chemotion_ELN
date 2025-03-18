@@ -192,7 +192,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   return (
     show ?
       <div>
-        <h4><Badge bg="success">Starting Materials</Badge></h4>
+        <h4><Badge bg="success">Starting materials</Badge></h4>
         <div> {table(rows(starting_materials, false))} </div>
         <h4><Badge bg="warning">Reactants</Badge></h4>
         <div> {table(rows(reactants, false))} </div>
@@ -265,7 +265,7 @@ const DangerourProductsContent = ({ show, dang }) => {
   return (
     show
       ? <div>
-          <h4 className="d-inline"> Dangerous Products: </h4>
+          <h4 className="d-inline"> Dangerous products: </h4>
           <pre className="border-0 d-inline p-0">{dangText}</pre>
         </div>
       : null

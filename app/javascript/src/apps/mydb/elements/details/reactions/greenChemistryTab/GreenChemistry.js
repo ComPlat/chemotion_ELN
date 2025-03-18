@@ -31,7 +31,7 @@ export default class GreenChemistry extends Component {
 
     const columnDefs = [
       {
-        headerName: 'Industry Segment',
+        headerName: 'Industry segment',
         field: 'segment',
       },
       {

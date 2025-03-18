@@ -16,7 +16,7 @@ const volumeUnits = ['l', 'ml', 'μl'];
 const amountUnits = ['mol', 'mmol'];
 const concentrationUnits = ['ppm'];
 const materialTypes = {
-  startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
+  startingMaterials: { label: 'Starting materials', reactionAttributeName: 'starting_materials' },
   reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
   products: { label: 'Products', reactionAttributeName: 'products' },
   solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }

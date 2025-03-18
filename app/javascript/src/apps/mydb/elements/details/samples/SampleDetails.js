@@ -559,7 +559,7 @@ export default class SampleDetails extends React.Component {
           !sample.isNew && <CommentSection section="sample_results" element={sample} />
         }
         <Form.Group controlId="importedReadoutInput">
-          <Form.Label>Imported Readout</Form.Label>
+          <Form.Label>Imported readout</Form.Label>
           <InputGroup>
             <Form.Control
               type="text"

@@ -218,7 +218,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label>Stereo Abs</Form.Label>
+        <Form.Label>Stereo abs</Form.Label>
         <Select
           name="stereoAbs"
           isDisabled={!sample.can_update}
@@ -873,8 +873,8 @@ export default class SampleForm extends React.Component {
               tipOnText="Use space-separated value to input a Temperature range"
             />
           </Col>
-          <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash Point')}</Col>
-          <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}</Col>
+          <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
+          <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive index')}</Col>
         </Row>
 
         <Row>
