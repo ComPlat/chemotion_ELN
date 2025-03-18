@@ -3,8 +3,33 @@
 module Chemotion
   class SequenceBasedMacromoleculeSampleAPI < Grape::API
     resource :sequence_based_macromolecule_samples do
+      desc 'Get a list of SBMM-Samples, filtered by collection'
+      params do
+        optional :collection_id, type: Integer
+        optional :sync_collection_id, type: Integer
+        optional(:filter, type: Hash) do
+          optional :timestamp_field, type: String, default: 'created_at', values: %w[created_at updated_at]
+          optional :after_timestamp, type: Integer, desc: 'timestamp in ms'
+          optional :before_timestamp, type: Integer, desc: 'timestamp in ms'
+        end
+      end
+      paginate per_page: 7, offset: 0, max_per_page: 100
+      get do
+        sample_scope = Usecases::Sbmm::Samples.new.list(params, current_user: current_user)
+        sbmm_samples = []
+        paginate(sample_scope).find_each do |sbmm_sample|
+          sbmm_samples << Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample)
+        end
+
+        {
+          sequence_based_macromolecule_samples: sbmm_samples,
+          sequence_based_macromolecule_samples_count: sample_scope.count
+        }
+      end
+
       desc 'Fetch a SBMM sample by id'
       get ':id' do
+        # TODO: authorization!
         sample = SequenceBasedMacromoleculeSample.find(params[:id])
 
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
@@ -18,6 +43,7 @@ module Chemotion
         optional :concentration, type: Numeric
         optional :molarity, type: Numeric
         optional :volume_as_used, type: Numeric
+        optional :collection_id, type: Integer
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna]
@@ -111,7 +137,7 @@ module Chemotion
         end
       end
       post do
-        sample = Usecases::Sbmm::Sample.new.create(params)
+        sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(params)
 
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
       end

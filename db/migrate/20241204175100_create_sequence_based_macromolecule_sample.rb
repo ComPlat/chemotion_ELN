@@ -13,6 +13,7 @@ class CreateSequenceBasedMacromoleculeSample < ActiveRecord::Migration[6.1]
       t.float :volume_as_used, null: true
 
       t.belongs_to :sequence_based_macromolecule, foreign_key: true, index: { name: "#{index_prefix}_sbmm" }
+      t.belongs_to :user, foreign_key: true, index: { name: "#{index_prefix}_user" }
       t.timestamps
     end
   end

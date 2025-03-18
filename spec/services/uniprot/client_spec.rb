@@ -8,23 +8,23 @@ describe Uniprot::Client do
 
   describe '#get' do
     let(:body_data) do
-      file = Rails.root.join("spec/fixtures/uniprot/#{uniprot_id}.xml")
+      file = Rails.root.join("spec/fixtures/uniprot/#{uniprot_id}.json")
       File.exist?(file) ? File.read(file) : ''
     end
 
     let(:status) { 200 }
 
     before do
-      stub_request(:get, "https://rest.uniprot.org/uniprotkb/#{uniprot_id}.xml")
+      stub_request(:get, "https://rest.uniprot.org/uniprotkb/#{uniprot_id}")
         .to_return(status: status,
                    body: body_data,
-                   headers: { 'Content-Type' => 'application/xml' })
+                   headers: { 'Content-Type' => 'application/json' })
     end
 
     context 'when api returns a result' do
       let(:uniprot_id) { 'P12345' }
 
-      specify { expect(client.get(uniprot_id)).to be_a(Hash) }
+      specify { expect(client.get(uniprot_id)).to be_a(Uniprot::Entry) }
     end
 
     context 'when api returns no result' do

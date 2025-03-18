@@ -58,6 +58,7 @@ class Collection < ApplicationRecord
   has_many :collections_elements, dependent: :destroy, class_name: 'Labimotion::CollectionsElement'
   has_many :collections_vessels, dependent: :destroy
   has_many :collections_celllines, dependent: :destroy
+  has_many :collections_sequence_based_macromolecule_samples, dependent: :destroy
   has_many :samples, through: :collections_samples
   has_many :reactions, through: :collections_reactions
   has_many :wellplates, through: :collections_wellplates
@@ -67,6 +68,7 @@ class Collection < ApplicationRecord
   has_many :device_descriptions, through: :collections_device_descriptions
   has_many :elements, through: :collections_elements
   has_many :cellline_samples, through: :collections_celllines
+  has_many :sequence_based_macromolecule_samples, through: :collections_sequence_based_macromolecule_samples
 
   has_many :sync_collections_users, dependent: :destroy, inverse_of: :collection
   has_many :shared_users, through: :sync_collections_users, source: :user
