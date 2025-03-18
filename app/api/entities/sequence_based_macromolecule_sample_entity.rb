@@ -7,10 +7,23 @@ module Entities
     expose! :external_label
     expose! :short_label
     expose! :function_or_application
-    expose! :concentration
-    expose! :molarity
-    expose! :amount_as_used
-    expose! :volume_as_used
+    expose! :concentration_value
+    expose! :concentration_unit
+    expose! :molarity_value
+    expose! :molarity_unit
+    expose! :activity_per_volume_value
+    expose! :activity_per_volumne_unit
+    expose! :activity_per_mass_value
+    expose! :activity_per_mass_unit
+    expose! :volume_as_used_value
+    expose! :volume_as_used_unit
+    expose! :amount_as_used_mol_value
+    expose! :amount_as_used_mol_unit
+    expose! :amount_as_used_mass_value
+    expose! :amount_as_used_mass_unit
+    expose! :activity_value
+    expose! :activity_unit
+
     expose! :sequence_based_macromolecule, using: "Entities::SequenceBasedMacromoleculeEntity"
 
     expose_timestamps

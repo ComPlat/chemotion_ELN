@@ -38,12 +38,25 @@ module Chemotion
       desc 'Create SBMM sample'
       params do
         optional :name, type: String
+        optional :collection_id, type: Integer
         optional :external_label, type: String
         optional :function_or_application, type: String
-        optional :concentration, type: Numeric
-        optional :molarity, type: Numeric
-        optional :volume_as_used, type: Numeric
-        optional :collection_id, type: Integer
+        optional :concentration_value, type: Numeric
+        optional :concentration_unit, type: String, values: %w[ng/L mg/L g/L], default: 'ng/L'
+        optional :molarity_value, type: Numeric
+        optional :molarity_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
+        optional :activity_per_volume_value, type: Numeric
+        optional :activity_per_volumne_unit, type: String, values: %w[U/L U/mL], default: 'U/L'
+        optional :activity_per_mass_value, type: Numeric
+        optional :activity_per_mass_unit, type: String, values: %w[U/g U/mg], default: 'U/g'
+        optional :volume_as_used_value, type: Numeric
+        optional :volume_as_used_unit, type: String, values: %w[L mL µL nL], default: 'L'
+        optional :amount_as_used_mol_value, type: Numeric
+        optional :amount_as_used_mol_unit, type: String, values: %w[mol mmol µmol nmol pmol], default: 'mol'
+        optional :amount_as_used_mass_value, type: Numeric
+        optional :amount_as_used_mass_unit, type: String, values: %w[g kg µg mg], default: 'g'
+        optional :activity_value, type: Numeric
+        optional :activity_unit, type: String, values: %w[U mU kat mkat µkat nkat], default: 'U'
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna]
