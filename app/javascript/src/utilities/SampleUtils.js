@@ -1,8 +1,6 @@
-import Sample from 'src/models/Sample';
-
 const getDisplayedMoleculeGroup = (elements, moleculeSort) => {
   const moleculeList = elements.reduce((acc, sample) => {
-    const key = Sample.getMoleculeId(sample);
+    const key = sample.getMoleculeId(sample);
     if (!acc[key]) {
       acc[key] = [sample];
     } else {

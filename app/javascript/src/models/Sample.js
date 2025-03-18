@@ -226,13 +226,13 @@ export default class Sample extends Element {
     return sample;
   }
 
-  static getMoleculeId(sample) {
-    if (sample.decoupled && sample.molfile) {
-      return `M${sample.id}`;
-    } else if (sample.stereo == null) {
-      return `M${sample.molecule.id}_any_any`;
+  getMoleculeId() {
+    if (this.decoupled && this.molfile) {
+      return `M${this.id}`;
+    } else if (this.stereo == null) {
+      return `M${this.molecule.id}_any_any`;
     } else {
-      return `M${sample.molecule.id}_${sample.stereo.abs || 'any'}_${sample.stereo.rel || 'any'}`;
+      return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
     }
   }
 
