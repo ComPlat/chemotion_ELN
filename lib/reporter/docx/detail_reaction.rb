@@ -294,20 +294,37 @@ module Reporter
         output
       end
 
+      # Calculates the vessel volume in liters based on the vessel size and unit
+      # @param vessel_size [Hash] a hash containing 'amount' and 'unit' keys
+      # @return [Float, nil] the volume in liters, or nil if amount or unit is missing
+      # @example
+      #   calculate_vessel_volume({ 'amount' => 100, 'unit' => 'ml' }) #=> 0.1
+      #   calculate_vessel_volume({ 'amount' => 2, 'unit' => 'l' }) #=> 2.0
+      def calculate_vessel_volume(vessel_size)
+        return nil if vessel_size['amount'].blank? || vessel_size['unit'].blank?
+
+        case vessel_size['unit']
+        when 'ml'
+          vessel_size['amount'] * 0.001
+        when 'l'
+          vessel_size['amount']
+        else
+          0
+        end
+      end
+
+      # Calculates the amount in millimoles for a sample, handling both regular and gas samples
+      # For gas samples, calculates based on vessel volume and gas phase data
+      # @param sample [Sample] the sample to calculate amount for
+      # @return [Float, 0] the amount in millimoles, or 0 if mole_value is nil
+      # @note For gas samples, the calculation uses:
+      #   - Vessel volume (converted to liters)
+      #   - Gas phase data (part per million and temperature)
+      #   - Converts the result to millimoles (multiplies by 1000)
       def calculate_amount_mmol(sample)
         return sample.real_amount_mmol unless sample.gas_type == 'gas'
 
-        vessel_size = @obj.vessel_size
-        return if vessel_size['amount'].blank? || vessel_size['unit'].blank?
-
-        vessel_volume = case vessel_size['unit']
-                        when 'ml'
-                          vessel_size['amount'] * 0.001
-                        when 'l'
-                          vessel_size['amount']
-                        else
-                          0
-                        end
+        vessel_volume = calculate_vessel_volume(@obj.vessel_size)
         return unless vessel_volume
 
         mole_value = calculate_mole_gas_product(
@@ -316,7 +333,7 @@ module Reporter
           vessel_volume,
         )
 
-        mole_value * 1000
+        mole_value ? mole_value * 1000 : 0
       end
 
       def assigned_amount(s, is_product = false)
