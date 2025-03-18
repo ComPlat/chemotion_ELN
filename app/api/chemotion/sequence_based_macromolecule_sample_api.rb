@@ -29,8 +29,8 @@ module Chemotion
 
       desc 'Fetch a SBMM sample by id'
       get ':id' do
-        # TODO: authorization!
         sample = SequenceBasedMacromoleculeSample.find(params[:id])
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).read?
 
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
       end
