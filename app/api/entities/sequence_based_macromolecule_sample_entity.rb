@@ -12,7 +12,7 @@ module Entities
     expose! :molarity_value
     expose! :molarity_unit
     expose! :activity_per_volume_value
-    expose! :activity_per_volumne_unit
+    expose! :activity_per_volume_unit
     expose! :activity_per_mass_value
     expose! :activity_per_mass_unit
     expose! :volume_as_used_value
