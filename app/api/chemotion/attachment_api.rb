@@ -224,23 +224,6 @@ module Chemotion
         return loader.get_annotation_of_attachment(params[:attachment_id])
       end
 
-      desc 'get_annotated_image_of_attachment'
-      get ':attachment_id/annotated_image' do
-        content_type 'application/octet-stream'
-        env['api.format'] = :binary
-        annotation = @attachment.annotated_file_location.presence
-        if annotation.present? && File.file?(annotation)
-          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.annotated_filename}\""
-          file = File.open(annotation)
-        else
-          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
-          file = @attachment.attachment_attacher.file
-        end
-        file.read
-      ensure
-        file&.close
-      end
-
       desc 'update_annotation_of_attachment'
       post ':attachment_id/annotation' do
         params do
@@ -284,16 +267,23 @@ module Chemotion
       end
 
       desc 'Download the attachment file'
+      params do
+        optional :annotated, type: Boolean, desc: 'Return annotated image if possible'
+      end
       get ':attachment_id' do
-        content_type 'application/octet-stream'
+        content_type @attachment.content_type || 'application/octet-stream'
         header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
         env['api.format'] = :binary
-        uploaded_file = @attachment.attachment_attacher.file
+        file = @attachment.attachment
+        if params[:annotated] && @attachment.annotated?
+          annotation = @attachment.annotated_file_location.presence
+          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.annotated_filename}\""
+          file = File.open(annotation)
+        end
 
-        data = uploaded_file.read
-        uploaded_file.close
-
-        data
+        body file.read
+      ensure
+        file&.close
       end
 
       desc 'Download the zip attachment file'
