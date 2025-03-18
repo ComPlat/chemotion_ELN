@@ -294,6 +294,12 @@ module Reporter
         output
       end
 
+      # Calculates the vessel volume in liters based on the vessel size and unit
+      # @param vessel_size [Hash] a hash containing 'amount' and 'unit' keys
+      # @return [Float, nil] the volume in liters, or nil if amount or unit is missing
+      # @example
+      #   calculate_vessel_volume({ 'amount' => 100, 'unit' => 'ml' }) #=> 0.1
+      #   calculate_vessel_volume({ 'amount' => 2, 'unit' => 'l' }) #=> 2.0
       def calculate_vessel_volume(vessel_size)
         return nil if vessel_size['amount'].blank? || vessel_size['unit'].blank?
 
@@ -307,6 +313,14 @@ module Reporter
         end
       end
 
+      # Calculates the amount in millimoles for a sample, handling both regular and gas samples
+      # For gas samples, calculates based on vessel volume and gas phase data
+      # @param sample [Sample] the sample to calculate amount for
+      # @return [Float, 0] the amount in millimoles, or 0 if mole_value is nil
+      # @note For gas samples, the calculation uses:
+      #   - Vessel volume (converted to liters)
+      #   - Gas phase data (part per million and temperature)
+      #   - Converts the result to millimoles (multiplies by 1000)
       def calculate_amount_mmol(sample)
         return sample.real_amount_mmol unless sample.gas_type == 'gas'
 
