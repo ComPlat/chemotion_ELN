@@ -227,8 +227,25 @@ module Chemotion
           present vessel, with: Entities::VesselInstanceEntity
         end
       end
-      
-      
+
+      desc 'Suggest vessel template name if details, vesselType and materialType exists in the database'
+      params do
+        requires :details, type: String, desc: 'details of the vessel template'
+        requires :vessel_type, type: String, desc: 'vessel type of the template'
+        requires :material_type, type: String, desc: 'material type of the vessel'
+      end
+      namespace :suggest do  
+        get 'suggest_name' do
+          vessel_template = VesselTemplate.find_by(details: params[:details], vessel_type: params[:vessel_type], material_type: params[:material_type])
+          if vessel_template
+            present vessel_template
+          else
+            { message: 'No matching vessel template found' }
+          end
+        end
+      end
+
+
 
       resource :names do
         desc 'Returns all accessible vessel templates material names and their id'
@@ -237,6 +254,7 @@ module Chemotion
           present vessel_templates, with: Entities::VesselTemplateEntity
         end
       end
+      
       resource :material do
         params do
           requires :id, type: String, desc: 'id of vessel template to load'
@@ -245,6 +263,8 @@ module Chemotion
           return VesselTemplate.find(params[:id])
         end
       end
+
+
 
       desc 'Delete a Vessel'
       params do
