@@ -113,6 +113,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     } else {
       ElementActions.updateDeviceDescription(deviceDescription);
     }
+    deviceDescriptionsStore.setCurrentDeviceDescriptionIdToSave(`${deviceDescription.id}`);
   }
 
   const deviceDescriptionIsValid = () => {

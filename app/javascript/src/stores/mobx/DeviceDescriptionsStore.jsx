@@ -34,6 +34,7 @@ export const DeviceDescriptionsStore = types
     device_description: types.optional(types.frozen({}), {}),
     device_description_checksum: types.optional(types.string, ''),
     open_device_descriptions: types.optional(types.optional(types.array(types.frozen({})), [])),
+    saved_current_device_description_id: types.optional(types.string, ''),
     active_tab_key: types.optional(types.string, 'properties'),
     key_prefix: types.optional(types.string, ''),
     toggable_contents: types.optional(types.frozen({}), toggableContents),
@@ -67,13 +68,19 @@ export const DeviceDescriptionsStore = types
     addDeviceDescriptionToOpen(device_description) {
       let openDeviceDescription = [...self.open_device_descriptions];
       const index = openDeviceDescription.findIndex(s => s.id === device_description.id);
+      
       if (index === -1) { 
         self.setDeviceDescription(device_description, true);
         openDeviceDescription.push(self.device_description);
         self.open_device_descriptions = openDeviceDescription;
+      } else if (self.saved_current_device_description_id === `${device_description.id}`) {
+        self.device_description = device_description;
+        openDeviceDescription[index] = device_description;
+        self.open_device_descriptions = openDeviceDescription;
       } else {
         self.device_description = openDeviceDescription[index];
       }
+      self.saved_current_device_description_id = '';
     },
     editDeviceDescriptions(device_description) {
       let openDeviceDescription = [...self.open_device_descriptions];
@@ -134,6 +141,9 @@ export const DeviceDescriptionsStore = types
       }
       device_description[elementField] = device_description_field;
       return device_description;
+    },
+    setCurrentDeviceDescriptionIdToSave(value) {
+      self.saved_current_device_description_id = value;
     },
     setActiveTabKey(key) {
       self.active_tab_key = key;

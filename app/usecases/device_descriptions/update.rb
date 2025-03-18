@@ -15,7 +15,7 @@ module Usecases
       def execute
         ActiveRecord::Base.transaction do
           attributes = remove_ontologies_marked_as_deleted
-          attributes = add_matching_segment_klasses(attributes)
+          # attributes = add_matching_segment_klasses(attributes)
 
           save_segments
           device_description.reload

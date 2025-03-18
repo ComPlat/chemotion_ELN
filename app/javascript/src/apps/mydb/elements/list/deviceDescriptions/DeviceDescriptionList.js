@@ -84,24 +84,36 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
     let group = {};
 
     elements.forEach((element) => {
-      let key = element[groupedByValue];
+      let key = identifierKey(element[groupedByValue]);
 
-      if (groupedByValue.includes('ontology') && element.ontologies) {
-        const ontology = groupedByValue.split('.');
-        const index = element.ontologies.findIndex((f) => f.data.label.toLowerCase().replaceAll(' ', '-') === ontology[1]);
-        key = index >= 0 ? `${ontology[0].charAt(0).toUpperCase() + ontology[0].slice(1)} ${ontology[1]}` : '[other]';        
+      if (groupedByValue === 'ontology' && element.ontologies.length >= 1) {
+        element.ontologies.map((ontology) => {
+          key = ontology.data.label;
+
+          deviceDescriptionsStore.addGroupToAllGroups(key);
+
+          if (!Object.prototype.hasOwnProperty.call(group, key)) {
+            group[key] = [];
+          }
+          group[key].push(element);
+        });
+      } else {
+        if (groupedByValue === 'ontology_combinded' && element.ontologies.length >= 1) {
+          const sortedOntology = element.ontologies.map((ontology) => ontology.data.label).sort();
+          key = sortedOntology.join(' - ');
+        }
+
+        deviceDescriptionsStore.addGroupToAllGroups(key);
+
+        if (groupedByValue == 'short_label') {
+          key = element.ancestor_ids[0] || element.id;
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(group, key)) {
+          group[key] = [];
+        }
+        group[key].push(element);
       }
-
-      deviceDescriptionsStore.addGroupToAllGroups(identifierKey(key));
-
-      if (groupedByValue == 'short_label') {
-        key = element.ancestor_ids[0] || element.id;
-      }
-
-      if (!Object.prototype.hasOwnProperty.call(group, key)) {
-        group[key] = [];
-      }
-      group[key].push(element);
     });
 
     return group;
@@ -133,7 +145,7 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
     const groupType = group[0].device_type ? `- ${group[0].device_type}` : '';
     const groupDeviceName = group[0].vendor_device_name ? group[0].vendor_device_name : group[0].name;
     let groupName = groupKey;
-    if (groupKey !== '[empty]' && groupKey !== '[other]' && !key.includes('Ontology')) {
+    if (groupKey !== '[empty]' && groupKey !== '[other]' && !groupedByValue.includes('ontology')) {
       groupName = `${groupDeviceName} - ${groupKey} ${groupType}`;
     }
 
