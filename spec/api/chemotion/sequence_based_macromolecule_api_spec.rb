@@ -30,7 +30,7 @@ describe Chemotion::SequenceBasedMacromoleculeAPI do
 
         result = parsed_json_response['search_results']
         expect(result.count).to eq 3
-        expect(result.map { |entry| entry['accessions'] }).to eq %w[X2BBW9 W8C121 W8BRD0]
+        expect(result.map { |entry| entry['primary_accession'] }).to eq %w[X2BBW9 W8C121 W8BRD0]
       end
     end
   end

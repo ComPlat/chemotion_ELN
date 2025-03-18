@@ -4,8 +4,8 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
   include_context 'api request authorization context'
 
   describe 'INDEX /api/v1/sequence_based_macromolecule_samples' do
-    it 'returns a list view of all SBMM-Samples matching the search parameters' do
-      # TODO: mit Beate besprechen ob wir diesen Endpunkt brauchen oder ob der via Search API ersetzt wird
+    it 'returns a paginated list view of all SBMM-Samples' do
+
     end
   end
 
@@ -13,7 +13,8 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
     let(:sample) do
       create(
         :sequence_based_macromolecule_sample,
-        sequence_based_macromolecule: build(:modified_uniprot_sbmm)
+        sequence_based_macromolecule: build(:modified_uniprot_sbmm),
+        user: logged_in_user # from context above
       )
     end
 
@@ -196,7 +197,6 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
 
       it 'creates a new SBMM with the provided data' do
         non_uniprot_sbmm # create this before, so it does not mess up our count
-        binding.pry
         expect {
           post "/api/v1/sequence_based_macromolecule_samples", params: post_for_child_of_non_uniprot_sbmm
         }.to change(SequenceBasedMacromolecule, :count).by(1)

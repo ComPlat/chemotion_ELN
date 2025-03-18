@@ -10,6 +10,7 @@ describe Usecases::Sbmm::Sample do
   end
 
   describe '#create' do
+    let(:user) { create(:user) }
     let(:params) do
       {
         name: 'Testsample',
@@ -28,7 +29,7 @@ describe Usecases::Sbmm::Sample do
     end
     it 'creates a SBMM-Sample' do
       expect {
-        described_class.new.create(params)
+        described_class.new(current_user: user).create(params)
       }.to change(SequenceBasedMacromolecule, :count).by(1)
        .and change(SequenceBasedMacromoleculeSample, :count).by(1)
     end
