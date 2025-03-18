@@ -12,21 +12,9 @@ const DeviceDescriptionListHeader = ({ elements }) => {
   let options = [
     { value: 'serial_number', label: 'Grouped by Serial no' },
     { value: 'short_label', label: 'Grouped by Short label' },
+    { value: 'ontology', label: 'Grouped by Ontology' },
+    { value: 'ontology_combinded', label: 'Grouped by combined Ontologies' },
   ];
-  let ontologies = [];
-
-  elements.map((element) => {
-    if (!element.ontologies) { return null; }
-    element.ontologies.map((ontology) => {
-      const value = `ontology.${ontology.data.label.toLowerCase().replaceAll(' ', '-')}`;
-      const index = ontologies.findIndex((f) => f.value === value);
-      if (index === -1) {
-        ontologies.push({ value: value, label: `Grouped by ${ontology.data.label}` });
-      }
-    });
-  });
-
-  options.push.apply(options, ontologies.sort());
 
   const selectedValue = options.find(o => o.value === groupedByValue);
 
