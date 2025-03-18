@@ -56,6 +56,7 @@ export const DeviceDescriptionsStore = types
     show_ontology_form_selection: types.optional(types.boolean, false),
     ontology_mode: types.optional(types.string, 'edit'),
     selected_segment_id: types.optional(types.number, 0),
+    segment_expand_all: types.optional(types.boolean, false),
     ontology_index_for_edit: types.optional(types.number, -1),
     list_grouped_by: types.optional(types.string, 'serial_number'),
     show_all_groups: types.optional(types.boolean, true),
@@ -256,6 +257,9 @@ export const DeviceDescriptionsStore = types
     },
     setSelectedSegmentId(segment_id) {
       self.selected_segment_id = segment_id;
+    },
+    changeSegmentExpandAll(value) {
+      self.segment_expand_all = value;
     },
     setOntologyIndexForEdit(index) {
       self.ontology_index_for_edit = index;
