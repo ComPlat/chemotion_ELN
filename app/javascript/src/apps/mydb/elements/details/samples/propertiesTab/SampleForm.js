@@ -786,7 +786,6 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form>
-        <h5>Basic Properties:</h5>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
         </Row>
@@ -843,7 +842,6 @@ export default class SampleForm extends React.Component {
           </Col>
         </Row>
 
-        <h5 className="py-2">Additional properties of the pure compound:</h5>
         <Row className="mb-4">
           <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
           <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
