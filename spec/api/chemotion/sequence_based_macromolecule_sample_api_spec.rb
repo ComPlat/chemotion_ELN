@@ -3,6 +3,7 @@ require 'rails_helper'
 describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
   include_context 'api request authorization context'
 
+
   describe 'INDEX /api/v1/sequence_based_macromolecule_samples' do
     it 'returns a paginated list view of all SBMM-Samples' do
 
@@ -17,10 +18,20 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         user: logged_in_user # from context above
       )
     end
+    let(:collection) { create(:collection, user_id: user.id) }
+    let(:collections_sbmm_sample) do
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sample,
+        collection: collection
+      )
+    end
+
+    before do
+      collections_sbmm_sample
+    end
 
     it 'returns the given SBMM-Sample' do
       get "/api/v1/sequence_based_macromolecule_samples/#{sample.id}"
-
       expect(response.status).to eq 200
 
       result = parsed_json_response['sequence_based_macromolecule_sample']
@@ -64,9 +75,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           name: 'Testsample',
           external_label: 'Testlabel',
           function_or_application: 'Testing',
-          concentration: '0.5',
-          molarity: '1.2345',
-          volume_as_used: '3.21',
+          concentration_value: '0.5',
           sequence_based_macromolecule_attributes: {
             sbmm_type: 'protein',
             sbmm_subtype: 'unmodified',
@@ -106,9 +115,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           name: 'Testsample',
           external_label: 'Testlabel',
           function_or_application: 'Testing',
-          concentration: '0.5',
-          molarity: '1.2345',
-          volume_as_used: '3.21',
+          concentration_value: '0.5',
           sequence_based_macromolecule_attributes: {
             sbmm_type: 'protein',
             sbmm_subtype: 'unmodified',
@@ -173,9 +180,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           name: 'Testsample',
           external_label: 'Testlabel',
           function_or_application: 'Testing',
-          concentration: '0.5',
-          molarity: '1.2345',
-          volume_as_used: '3.21',
+          concentration_value: '0.5',
           sequence_based_macromolecule_attributes: {
             sbmm_type: 'protein',
             sbmm_subtype: 'unmodified',

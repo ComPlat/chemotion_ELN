@@ -16,9 +16,8 @@ describe Usecases::Sbmm::Sample do
         name: 'Testsample',
         external_label: 'Testlabel',
         function_or_application: 'Testing',
-        concentration: '0.5',
-        molarity: '1.2345',
-        volume_as_used: '3.21',
+        concentration_value: '0.5',
+        concentration_unit: 'ng/L',
         sequence_based_macromolecule_attributes: {
           sbmm_type: 'protein',
           sbmm_subtype: 'unmodified',

@@ -30,7 +30,7 @@ module Chemotion
       desc 'Fetch a SBMM sample by id'
       get ':id' do
         sample = SequenceBasedMacromoleculeSample.find(params[:id])
-        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).read?
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, sample).read?
 
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
       end
@@ -46,7 +46,7 @@ module Chemotion
         optional :molarity_value, type: Numeric
         optional :molarity_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
         optional :activity_per_volume_value, type: Numeric
-        optional :activity_per_volumne_unit, type: String, values: %w[U/L U/mL], default: 'U/L'
+        optional :activity_per_volume_unit, type: String, values: %w[U/L U/mL], default: 'U/L'
         optional :activity_per_mass_value, type: Numeric
         optional :activity_per_mass_unit, type: String, values: %w[U/g U/mg], default: 'U/g'
         optional :volume_as_used_value, type: Numeric
