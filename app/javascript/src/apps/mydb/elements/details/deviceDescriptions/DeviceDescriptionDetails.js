@@ -79,7 +79,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   }
 
   const disabled = (index) => {
-    return deviceDescription.id.toString().length < 30 || index === 0 ? false : true;
+    return deviceDescription.isNew && index !== 0 ? true : false;
   }
 
   visibleTabs.forEach((key, i) => {
