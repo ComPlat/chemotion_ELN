@@ -5,6 +5,7 @@ module Entities
     expose :name
     expose :vessel_type
     expose :material_type
+    expose :material_details
     expose :volume_amount
     expose :volume_unit
     expose :details
