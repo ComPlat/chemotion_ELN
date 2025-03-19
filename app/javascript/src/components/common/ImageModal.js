@@ -94,7 +94,7 @@ export default class ImageModal extends Component {
     if (!popObject.fetchId) { return null; }
     const type = popObject?.fileName?.split('.').pop().toLowerCase();
 
-    AttachmentFetcher.fetchImageAttachment({ id: popObject.fetchId, annotated: true }).then(
+    AttachmentFetcher.fetchImageAttachment({ id: popObject.fetchId }).then(
       (result) => {
         if (result.data != null) {
           this.setState({ fetchSrc: result.data, isPdf: type === 'pdf' });
