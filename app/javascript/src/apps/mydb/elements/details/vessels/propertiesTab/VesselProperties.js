@@ -83,6 +83,14 @@ const VesselProperties = ({ item, readOnly }) => {
             readOnly={readOnly}
             storeUpdater={vesselDetailsStore.changeVesselType}
           />
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Material details"
+            field="material_details"
+            value={vesselItem?.materialDetails || ''}
+            readOnly={readOnly}
+            storeUpdater={vesselDetailsStore.changeMaterialDetails}
+          />
           <Form.Group as={Row} className="mt-3">
             <Form.Label column sm={3}>Volume</Form.Label>
             <Col sm={6}>
