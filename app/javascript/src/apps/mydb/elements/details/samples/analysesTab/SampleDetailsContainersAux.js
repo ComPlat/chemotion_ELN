@@ -225,12 +225,10 @@ function AnalysesHeader({
   };
   let hasPop = true;
   let fetchNeeded = false;
-  let fileName = '';
   let fetchId = 0;
   if (previewImg.startsWith('data:image')) {
     fetchNeeded = true;
     fetchId = container.preview_img.id;
-    fileName = container.preview_img.filename;
   } else {
     hasPop = false;
   }
@@ -248,7 +246,6 @@ function AnalysesHeader({
               popObject={{
                 title: container.name,
                 src: previewImg,
-                fileName,
                 fetchNeeded,
                 fetchId
               }}
