@@ -104,6 +104,7 @@ export default class AttachmentFetcher {
             message: msg,
             level: 'error',
             position: 'tc',
+            autoDismiss: 0,
           });
         }
         return response.json();
