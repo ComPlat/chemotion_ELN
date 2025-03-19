@@ -58,6 +58,29 @@ export default class VesselsFetcher {
     return promise;
   }
 
+  static fetchVesselTemplateById(id, collectionId) {
+    // eslint-disable-next-line max-len
+    const url = `/api/v1/vessels/templates/${id}${collectionId ? `?collection_id=${encodeURIComponent(collectionId)}` : ''}`;
+
+    return fetch(url, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Error fetching vessel template: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
   static create(vessel, user) {
     const params = extractCreateVesselApiParameter(vessel);
 
@@ -123,9 +146,9 @@ export default class VesselsFetcher {
   static suggestVesselName(params) {
     const { details, vessel_type, material_type } = params;
     const queryString = new URLSearchParams({
-      details: details,
-      vessel_type: vessel_type,
-      material_type: material_type,
+      details,
+      vessel_type,
+      material_type,
     }).toString();
 
     console.log(queryString);
@@ -168,7 +191,7 @@ export default class VesselsFetcher {
         body: JSON.stringify(params)
       }))
       .then((response) => response.json())
-      .then(() => {BaseFetcher.updateAnnotationsInContainer(vesselItem)})
+      .then(() => { BaseFetcher.updateAnnotationsInContainer(vesselItem); })
       .then(() => VesselsFetcher.fetchById(vesselItem.id))
       .then((loadedVesselInstance) => {
         NotificationActions.add(successfullyUpdatedParameter);
