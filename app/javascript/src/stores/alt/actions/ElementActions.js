@@ -1019,6 +1019,17 @@ class ElementActions {
     };
   }
 
+  fetchVesselTemplateById(vesselTemplateId, collectionId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   createVessel(params) {
     return (dispatch) => {
       const { currentUser } = UserStore.getState();

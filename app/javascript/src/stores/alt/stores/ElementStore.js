@@ -204,6 +204,7 @@ class ElementStore {
       ],
       handleFetchCellLineById: ElementActions.tryFetchCellLineElById,
       handleFetchVesselById: ElementActions.fetchVesselElById,
+      handleFetchVesselTemplateById: ElementActions.fetchVesselTemplateById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -1113,6 +1114,10 @@ class ElementStore {
   }
 
   handleFetchVesselById(result) {
+    this.changeCurrentElement(result);
+  }
+
+  handleFetchVesselTemplateById(result) {
     this.changeCurrentElement(result);
   }
 

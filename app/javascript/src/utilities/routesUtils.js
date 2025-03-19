@@ -159,6 +159,13 @@ const vesselShowOrNew = (e) => {
   }
 };
 
+const vesselTemplateShowOrNew = (e) => {
+  if (e.params.vesselTemplateID) {
+    e.params.vesselTemplateId = e.params.vesselTemplateID;
+  }
+  ElementActions.fetchVesselTemplateById.defer(e.params.vesselTemplateID, e.params.collectionID);
+};
+
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
@@ -334,6 +341,9 @@ const elementShowOrNew = (e) => {
     case 'vessel':
       vesselShowOrNew(e);
       break;
+    case 'vessel_template':
+      vesselTemplateShowOrNew(e);
+      break;
     default:
       if (e && e.klassType == 'GenericEl') {
         genericElShowOrNew(e, type);
@@ -365,5 +375,6 @@ export {
   predictionShowFwdRxn,
   genericElShowOrNew,
   cellLineShowOrNew,
-  vesselShowOrNew
+  vesselShowOrNew,
+  vesselTemplateShowOrNew
 };
