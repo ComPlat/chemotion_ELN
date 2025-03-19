@@ -3,6 +3,12 @@
 module Usecases
   module Sbmm
     class Samples
+      attr_reader :current_user
+
+      def initialize(current_user:)
+        @current_user = current_user
+      end
+
       def list(params)
         scope = base_list_scope(params)
         scope = with_time_filter(scope, params)
@@ -13,7 +19,7 @@ module Usecases
 
       private
 
-      def base_list_scope(params, current_user:)
+      def base_list_scope(params)
         if params[:collection_id]
           Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                     .find(params[:collection_id])
