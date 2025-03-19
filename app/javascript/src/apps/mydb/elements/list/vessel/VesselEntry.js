@@ -2,12 +2,16 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useState } from 'react';
+import Aviator from 'aviator';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import VesselItemEntry from 'src/apps/mydb/elements/list/vessel/VesselItemEntry';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ChevronIcon from 'src/components/common/ChevronIcon';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 function VesselEntry({ vesselItems }) {
+  const { currentCollection } = UIStore.getState();
   const [detailedInformation, setDetailedInformation] = useState(false);
   const [showEntries, setShowEntries] = useState(true);
 
@@ -20,6 +24,23 @@ function VesselEntry({ vesselItems }) {
       <VesselItemEntry key={vesselItem.id} vesselItem={vesselItem} />
     ))
     : []);
+
+  const navigateToTemplate = (template) => {
+    if (!template.id) {
+      console.error('Vessel template ID is missing.');
+      return;
+    }
+    const uri = `/vessel_template/${template.id}`;
+    Aviator.navigate(uri, { silent: true });
+
+    elementShowOrNew({
+      type: 'vessel_template',
+      params: {
+        vesselTemplateID: template.id,
+        collectionID: currentCollection.id,
+      },
+    });
+  };
 
   const findThumbnailAttachment = (vessels) => {
     const searchContainer = (container) => {
@@ -47,15 +68,20 @@ function VesselEntry({ vesselItems }) {
         ) : (
           <div className="me-2" />
         )}
-
-        <div className="flex-grow-1 fs-5">
-          {`${firstVesselItem.vessel_template.name}`}
-        </div>
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="template-tooltip">Click to view vessel template details</Tooltip>}
+        >
+          <div
+            className="flex-grow-1 fs-5"
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigateToTemplate(firstVesselItem.vessel_template)}
+          >
+            {firstVesselItem.vessel_template.name}
+          </div>
+        </OverlayTrigger>
         {renderDetailedInfoButton()}
-        <ChevronIcon
-          color="primary"
-          direction={showEntries ? 'down' : 'right'}
-        />
+        <ChevronIcon color="primary" direction={showEntries ? 'down' : 'right'} />
       </div>
     );
   };
