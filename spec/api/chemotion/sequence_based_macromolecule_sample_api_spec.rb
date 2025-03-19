@@ -46,7 +46,9 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       expect(response.status).to be 200
       list = parsed_json_response['sequence_based_macromolecule_samples']
       expect(list.size).to eq 3
-      expect(list.map { |entry| entry["id"] }).to eq [sbmm_sample3.id, sbmm_sample2.id, sbmm_sample1.id]
+      ids = list.map { |entry| entry["id"] }
+      expected_ids = [sbmm_sample3.id, sbmm_sample2.id, sbmm_sample1.id]
+      expect(ids).to eq expected_ids
     end
   end
 
