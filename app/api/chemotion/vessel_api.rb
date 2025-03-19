@@ -245,8 +245,34 @@ module Chemotion
         end
       end
 
-
-
+      resource :templates do
+        desc 'fetch a vessel template and associated vessel instances for the current user and collection'
+        params do
+          requires :id, type: String, desc: 'vessel template ID'
+          optional :collection_id, type: Integer, desc: 'collection ID'
+        end
+        get ':id' do
+          vessel_template = VesselTemplate.includes(:vessels).find_by(id: params[:id])
+      
+          if vessel_template
+            user_vessels = vessel_template.vessels.where(user_id: current_user.id)
+      
+            if params[:collection_id]
+              user_vessels = user_vessels.joins(:collections).where(collections: { id: params[:collection_id] })
+            end
+      
+            present(
+              {
+                vessel_template: Entities::VesselTemplateEntity.represent(vessel_template),
+                vessels: user_vessels.map { |vessel| Entities::VesselInstanceEntity.represent(vessel) }
+              }
+            )
+          else
+            error!({ error: 'Vessel template not found' }, 404)
+          end
+        end
+      end
+            
       resource :names do
         desc 'Returns all accessible vessel templates material names and their id'
         get 'all' do
@@ -263,8 +289,6 @@ module Chemotion
           return VesselTemplate.find(params[:id])
         end
       end
-
-
 
       desc 'Delete a Vessel'
       params do
