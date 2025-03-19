@@ -18,6 +18,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
+import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
 import {
   Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
@@ -136,8 +137,6 @@ export default class ElementDetails extends Component {
     }
   }
 
-
-
   content(el) {
     if (el && el.klassType === 'GenericEl' && el.type != null) {
       return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
@@ -204,6 +203,14 @@ export default class ElementDetails extends Component {
         return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
       case 'vessel':
         return <VesselDetails vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
+      case 'vessel_template':
+        return (
+          <VesselTemplateDetails
+            template={el}
+            vesselInstances={el.vessels}
+            toggleFullScreen={this.toggleFullScreen}
+          />
+        );
       default:
         return (
           <div style={{ textAlign: 'center' }}>
@@ -226,8 +233,15 @@ export default class ElementDetails extends Component {
     const focusing = elKey === activeKey;
     const variant = el.isPendingToSave ? 'info' : 'primary';
 
+    if (!el.type) {
+      if (el.vessel_template.vessel_type && el.vessel_template.material_type && el.vessel_template.volume_amount !== undefined) {
+        el.type = 'vessel_template';
+        el.title = el.vessel_template.name;
+      }
+    }
+
     const tab = tabInfoHash[el.type] ?? {};
-    const title = tab.title ?? el.title();
+    const title = el.type === 'vessel_template' ? el.title : tab.title ?? el.title();
 
     const iconElement = el.element_klass
       ? (<i className={`${el.element_klass.icon_name}`} />)

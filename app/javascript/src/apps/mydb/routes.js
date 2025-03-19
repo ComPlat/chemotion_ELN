@@ -87,6 +87,12 @@ const routes = {
     },
     '/:vesselID': 'showOrNew'
   },
+  '/vessel_template': {
+    target: {
+      showOrNew: routesUtils.vesselTemplateShowOrNew
+    },
+    '/:vesselTemplateID': 'showOrNew'
+  },
   '/devicesAnalysis': {
     target: {
       create: routesUtils.devicesAnalysisCreate,
