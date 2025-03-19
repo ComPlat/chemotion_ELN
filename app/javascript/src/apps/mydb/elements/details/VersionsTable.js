@@ -140,7 +140,7 @@ export default class VersionsTable extends Component {
           onClick={() => this.handlePagerClick('prev')}
           disabled={page >= pages}
         >
-          &larr; Older Versions
+          &larr; Older versions
         </Pagination.Item>
         <Pagination.Item
           next
@@ -148,7 +148,7 @@ export default class VersionsTable extends Component {
           onClick={() => this.handlePagerClick('next')}
           disabled={page <= 1}
         >
-          Newer Versions &rarr;
+          Newer versions &rarr;
         </Pagination.Item>
       </Pagination>
     );

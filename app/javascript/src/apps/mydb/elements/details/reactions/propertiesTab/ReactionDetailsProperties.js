@@ -79,7 +79,7 @@ export default class ReactionDetailsProperties extends Component {
           />
         </Form.Group>
         <Form.Group className="mx-1 my-3">
-          <Form.Label>Dangerous Products</Form.Label>
+          <Form.Label>Dangerous products</Form.Label>
           <Select
             name="dangerous_products"
             isMulti

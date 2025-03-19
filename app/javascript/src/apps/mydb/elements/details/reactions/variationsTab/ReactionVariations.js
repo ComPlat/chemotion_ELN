@@ -340,7 +340,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
           <i className="fa fa-trash me-1" />
           {' '}
-          Remove all Variations
+          Remove all variations
         </Button>
 
         <Modal show={showModal} onHide={handleClose}>
@@ -379,7 +379,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       <Button size="sm" variant="success" onClick={addRow} className="mb-2">
         <i className="fa fa-plus me-1" />
         {' '}
-        Add Variation
+        Add variation
       </Button>
     </OverlayTrigger>
   );

@@ -83,7 +83,7 @@ export default class PrivateNoteElement extends React.Component {
       <div className="my-2">
         <Form.Group>
           <Form.Label>
-            Private Note
+            Private note
             <OverlayTrigger
               placement="top"
               overlay={

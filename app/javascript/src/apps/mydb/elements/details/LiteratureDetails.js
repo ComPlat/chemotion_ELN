@@ -394,7 +394,7 @@ export default class LiteratureDetails extends Component {
           <Accordion>
             <Accordion.Item eventKey="2">
               <Accordion.Header>
-                {this.renderSectionHeader('Refenrecs for Samples', contentSamples)}
+                {this.renderSectionHeader('References for samples', contentSamples)}
               </Accordion.Header>
               <Accordion.Body>
                 {sampleRefs.map((lit) => (
@@ -408,7 +408,7 @@ export default class LiteratureDetails extends Component {
 
             <Accordion.Item eventKey="3">
               <Accordion.Header>
-                {this.renderSectionHeader('References for Reactions', contentReactions)}
+                {this.renderSectionHeader('References for reactions', contentReactions)}
               </Accordion.Header>
               <Accordion.Body>
                 {reactionRefs.map((lit) => (
@@ -422,7 +422,7 @@ export default class LiteratureDetails extends Component {
 
             <Accordion.Item eventKey="4">
               <Accordion.Header>
-                {this.renderSectionHeader('References for selected Elements', contentElements)}
+                {this.renderSectionHeader('References for selected elements', contentElements)}
               </Accordion.Header>
               <Accordion.Body>
                 <ListGroup>

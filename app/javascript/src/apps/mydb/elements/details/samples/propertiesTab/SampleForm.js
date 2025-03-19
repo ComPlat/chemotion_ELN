@@ -218,7 +218,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label>Stereo Abs</Form.Label>
+        <Form.Label>Stereo abs</Form.Label>
         <Select
           name="stereoAbs"
           isDisabled={!sample.can_update}
@@ -786,7 +786,6 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form>
-        <h5>Basic Properties:</h5>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
         </Row>
@@ -843,7 +842,6 @@ export default class SampleForm extends React.Component {
           </Col>
         </Row>
 
-        <h5 className="py-2">Additional properties of the pure compound:</h5>
         <Row className="mb-4">
           <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
           <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
@@ -873,8 +871,8 @@ export default class SampleForm extends React.Component {
               tipOnText="Use space-separated value to input a Temperature range"
             />
           </Col>
-          <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash Point')}</Col>
-          <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}</Col>
+          <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
+          <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive index')}</Col>
         </Row>
 
         <Row>

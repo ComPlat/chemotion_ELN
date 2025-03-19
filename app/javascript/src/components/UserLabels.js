@@ -288,7 +288,7 @@ class UserLabelModal extends Component {
         onHide={this.props.onHide}
       >
         <Modal.Header closeButton>
-          <Modal.Title>My Labels</Modal.Title>
+          <Modal.Title>My labels</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {this.renderLabels()}
@@ -363,7 +363,7 @@ class EditUserLabels extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label>My Labels</Form.Label>
+        <Form.Label>My labels</Form.Label>
         <Select
           isMulti
           options={options}
