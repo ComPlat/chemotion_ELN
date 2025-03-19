@@ -5,7 +5,7 @@ module OrdKit
     module Vessels
       class VesselPreparationsExporter < OrdKit::Exporter::Base
         def to_ord
-          return unless model
+          model ||= ['NONE']
 
           model.map do |preparation|
             VesselPreparation.new(
