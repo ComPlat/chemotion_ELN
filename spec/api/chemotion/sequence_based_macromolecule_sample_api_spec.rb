@@ -5,8 +5,48 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
 
 
   describe 'INDEX /api/v1/sequence_based_macromolecule_samples' do
-    it 'returns a paginated list view of all SBMM-Samples' do
+    let(:collection) { create(:collection, user_id: logged_in_user.id) }
+    let(:sbmm_sample1) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(:uniprot_sbmm, systematic_name: 'Zoological Phenomenon Protein'),
+        user: logged_in_user
+      )
+    end
+    let(:sbmm_sample2) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(
+          :modified_uniprot_sbmm,
+          systematic_name: 'Foobar',
+          parent: sbmm_sample1.sequence_based_macromolecule
+        ),
+        user: logged_in_user
+      )
+    end
+    let(:sbmm_sample3) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(:non_uniprot_sbmm, systematic_name: 'Alphanumeric Ape Protein'),
+        user: logged_in_user
+      )
+    end
+    before do
+      sbmm_sample1
+      sbmm_sample2
+      sbmm_sample3
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample1, collection: collection)
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample2, collection: collection)
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample3, collection: collection)
+    end
 
+    it 'returns a list view of all SBMM-Samples' do
+      get '/api/v1/sequence_based_macromolecule_samples', params: { collection_id: collection.id }
+
+      expect(response.status).to be 200
+      list = parsed_json_response['sequence_based_macromolecule_samples']
+      expect(list.size).to eq 3
+      expect(list.map { |entry| entry["id"] }).to eq [sbmm_sample3.id, sbmm_sample2.id, sbmm_sample1.id]
     end
   end
 
