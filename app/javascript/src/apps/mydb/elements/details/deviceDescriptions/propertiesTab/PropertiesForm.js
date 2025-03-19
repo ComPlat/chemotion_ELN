@@ -284,7 +284,7 @@ const PropertiesForm = () => {
                 {
                   dateTimePickerInput(
                     deviceDescription, deviceDescriptionsStore,
-                    'version_installation_start_date', 'Started: Installation Date'
+                    'version_installation_start_date', 'Started: Installation date'
                   )
                 }
               </Col>
@@ -292,7 +292,7 @@ const PropertiesForm = () => {
                 {
                   dateTimePickerInput(
                     deviceDescription, deviceDescriptionsStore,
-                    'version_installation_end_date', 'End Date'
+                    'version_installation_end_date', 'End date'
                   )
                 }
               </Col>
@@ -367,7 +367,7 @@ const PropertiesForm = () => {
           <Accordion.Body>
             <Row className="mb-3">
               <Col>
-                {textInput(deviceDescription, deviceDescriptionsStore, 'application_name', 'Application Name')}
+                {textInput(deviceDescription, deviceDescriptionsStore, 'application_name', 'Application name')}
               </Col>
               <Col>
                 {textInput(deviceDescription, deviceDescriptionsStore, 'application_version', 'Version')}
@@ -405,7 +405,7 @@ const PropertiesForm = () => {
                 {
                   textareaInput(
                     deviceDescription, deviceDescriptionsStore, 'policies_and_user_information',
-                    'Policies and User Information', 3
+                    'Policies and user information', 3
                   )
                 }
               </Col>
@@ -421,7 +421,7 @@ const PropertiesForm = () => {
       >
         <Accordion.Item eventKey="publications">
           <Accordion.Header>
-            Information for Publications
+            Information for publications
           </Accordion.Header>
           <Accordion.Body>
             <Row className="mb-3">

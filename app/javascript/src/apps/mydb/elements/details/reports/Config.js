@@ -102,7 +102,7 @@ const Config = (props) => {
   return (
     <div className="d-flex flex-column gap-3">
       <Form.Group>
-        <Form.Label> Template Selection</Form.Label>
+        <Form.Label> Template selection</Form.Label>
         <Select
           options={templateOpts}
           value={template}
@@ -122,7 +122,7 @@ const Config = (props) => {
           }
         >
           <Form.Label>
-            File Name
+            File name
           </Form.Label>
         </OverlayTrigger>
         <Form.Control

@@ -14,7 +14,7 @@ import ModalImportCollection from 'src/components/contextActions/ModalImportColl
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 const importSampleFunction = (updateModalProps, importAsChemical) => {
-  const title = importAsChemical ? 'Import Chemicals from File' : 'Import Samples from File';
+  const title = importAsChemical ? 'Import chemicals from file' : 'Import samples from file';
   const component = ModalImport;
   const action = ElementActions.importSamplesFromFile;
   const listSharedCollections = false;
@@ -44,14 +44,14 @@ const exportReactionFunction = (updateModalProps) => {
   const component = ModalReactionExport;
   const modalProps = {
     show: true,
-    title: 'Reaction Smiles Export',
+    title: 'Reaction smiles export',
     component
   };
   updateModalProps(modalProps);
 };
 
 const exportCollectionFunction = (updateModalProps) => {
-  const title = 'Export Collections as ZIP archive';
+  const title = 'Export collections as zip archive';
   const component = ModalExportCollection;
   const action = CollectionActions.exportCollectionsToFile;
   const full = false;
