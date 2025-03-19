@@ -17,7 +17,7 @@ module Chemotion
       get do
         sample_scope = Usecases::Sbmm::Samples.new(current_user: current_user).list(params)
         sbmm_samples = []
-        paginate(sample_scope).find_each do |sbmm_sample|
+        paginate(sample_scope).each do |sbmm_sample|
           sbmm_samples << Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample)
         end
 
