@@ -59,16 +59,10 @@ function VesselItemEntry({ vesselItem }) {
               {vesselItem.short_label}
             </td>
             <td
-              className="item-text"
+              className="short_label"
               onClick={showDetails}
             >
-              <div>
-                <div className="item-properties floating">
-                  <div className="starting floating item-property-value">
-                    {vesselItem.itemName}
-                  </div>
-                </div>
-              </div>
+                {vesselItem.name}
             </td>
             <td>
               <ElementCollectionLabels element={vesselItem} />
