@@ -53,15 +53,22 @@ import {
   // flags
   ImagesToBeUpdated,
   allowProcessing,
-  fetchSurfaceChemistryImageData
+  fetchSurfaceChemistryImageData,
 
+  buttonClickForRectangleSelection,
+  collectMissingAliases,
+  deepCompare,
+  deepCompareNumbers,
+  deepCompareContent,
+  removeImageTemplateAtom,
+  handleOnDeleteAtom,
+  reArrangeImagesOnCanvasViaKetcher
 } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 import {
   PolymerListIconKetcherToolbarButton,
   PolymerListModal,
   rescaleToolBarButoon
 } from 'src/components/structureEditor/PolymerListModal';
-import { buttonClickForRectangleSelection } from '../../utilities/Ketcher2SurfaceChemistryUtils';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -128,6 +135,10 @@ export const templateListSetter = async (data) => {
   allTemplates = data;
 };
 
+export const TextListSetter = async (data) => {
+  textList = data;
+};
+
 // image counter is strictly related and synced with how many images are there in the canvas
 export const imageUsedCounterSetter = async (count) => {
   imageNodeCounter = count;
@@ -157,6 +168,7 @@ const fetchTemplateList = async () => {
     return templateListStorage;
   } catch (error) {
     console.error('Error fetching the JSON data:', error); // Handle any errors
+    return [];
   }
 };
 
@@ -173,6 +185,7 @@ const fetchTemplateList = async () => {
 -> isAliasConsistent before returning -> is a function to make sure all aliases generated are in order 0,1,2,3,4,5,6...
 */
 const addAtomAliasHelper = async (processedAtoms) => {
+  console.log('addAtomAliasHelper');
   try {
     const newImageNodes = [...imagesList];
     imageNodeCounter = processedAtoms.length - 1;
@@ -247,38 +260,16 @@ export const handleAddAtom = async () => {
   return addAtomAliasHelper(processedAtoms);
 };
 
-// helper function to remove template by atom with alias
-export const handleOnDeleteAtom = async (deleteCopy) => {
-  try {
-    const data = { ...latestData };
-    console.log({ deleteCopy }, 'delete copy from handle');
-    deleteCopy?.forEach((item) => {
-      if (ALIAS_PATTERNS.threeParts.test(item.alias)) {
-        const deletedSplits = parseInt(item.alias.split('_')[2]);
+const countLessThan = (set, number) => {
+  let count = 0;
 
-        for (let m = 0; m < mols.length; m++) {
-          const mol = data[mols[m]];
-          if (mol && mol?.atoms) {
-            const atoms = mol?.atoms || [];
-            for (let i = 0; i < atoms.length; i++) {
-              const atom = atoms[i];
-              if (ALIAS_PATTERNS.threeParts.test(atom?.alias)) {
-                const atomSplits = atom.alias.split('_');
-                if (parseInt(atomSplits[2]) > deletedSplits) {
-                  atom.alias = `t_${atomSplits[1]}_${parseInt(atomSplits[2]) - 1}`;
-                }
-              }
-            }
-            data[mols[m]].atoms = atoms;
-          }
-        }
-      }
-    });
-    return data;
-  } catch (err) {
-    console.error('handleDelete!!', err.message);
-    return null;
+  for (const value of set) {
+    if (value < number) {
+      count++;
+    }
   }
+
+  return count;
 };
 
 /* istanbul ignore next */
@@ -286,7 +277,12 @@ export const handleOnDeleteAtom = async (deleteCopy) => {
 export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
   const dataCopy = data || latestData;
   if (editor) {
-    if (recenter || (latestData && !imagesList.length)) {
+    // if (recenter || (latestData && !imagesList.length)) {
+    //   await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
+    // } else {
+    //   await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
+    // }
+    if (recenter) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), true);
     } else {
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
@@ -316,28 +312,26 @@ const onTemplateMove = async (editor, recenter = false) => {
 
   // first fetch to save values
   await fetchKetcherData(editor);
+
   const molCopy = mols;
   const imageListCopy = imageListCopyContainer.length ? imageListCopyContainer : imagesList;
   const textListCopy = textListCopyContainer.length ? textListCopyContainer : textList;
 
   // second fetch save and place
   await fetchKetcherData(editor);
+
   const imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
   latestData.root.nodes = imageNodes;
   const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
   latestData.root.nodes = textNodes;
-  await saveMoveCanvas(editor, null, true, false, recenter);
+  await saveMoveCanvas(editor, latestData, true, false, recenter);
 
   // clear required
   ImagesToBeUpdatedSetter(true); // perform image layer in DOM
   reloadCanvas = false; // stop load canvas
   imageListCopyContainer = [];
   textListCopyContainer = [];
-};
-
-// remove a node from root.nodes by index num
-const removeNodeByIndex = async (index) => {
-  latestData.root.nodes.splice(index + mols.length, 1);
+  deletedAtoms = [];
 };
 
 /* istanbul ignore next */
@@ -347,108 +341,71 @@ const removeNodeByIndex = async (index) => {
     case1: when any image is deleted means aliases are in-consistent
 */
 const onAtomDelete = async (editor) => {
-  if (editor && editor.structureDef) {
-    const molCopy = mols;
-    const imageListCopy = imagesList;
-    const deleteCopy = deletedAtoms;
-    const alias = deletedAtoms[0]?.alias;
-    const lastAliasInd = parseInt(alias?.split('_')[2]);
+  try {
+    if (!editor || !editor.structureDef) return;
+    const listOfAliasesBefore = await collectMissingAliases();
     await fetchKetcherData(editor);
+    const listOfAliasesAfter = await collectMissingAliases();
+    const aliasDifferences = await deepCompareNumbers(listOfAliasesBefore, listOfAliasesAfter);
+    let hasImageDifferences = await deepCompare(oldImagePack, imagesList);
+    const imageDifferences = await deepCompareContent(oldImagePack, imagesList);
 
-    if (!deleteCopy.length) {
-      FILOStack = [];
-      uniqueEvents.clear();
-      return;
-    }
-
-    // when mols and images are changed
-    if (molCopy.length > mols.length && imagesList.length > imageListCopy.length) {
-      console.log(685);
-      await editor.structureDef.editor.setMolecule(JSON.stringify(latestData), false);
-      return;
-    }
-
-    // when one template is deleted
-    if (molCopy.length === mols.length && imagesList.length === imageListCopy.length) { // deleted item is one
-      await removeNodeByIndex(lastAliasInd);
-      imagesList.splice(lastAliasInd, 1);
-      console.log(694);
-    }
-
-    // when mol is deleted
-    if (molCopy.length > mols.length && imagesList.length === imageListCopy.length) { // when atom is dragged to another atom
-      console.log(699);
-      const removalNotRequired = isAliasConsistent();
-      if (removalNotRequired && imageNodeCounter !== lastAliasInd) {
-        canvasSelection = null;
-        return;
+    if (hasImageDifferences && !aliasDifferences.length) { // image delete
+      // console.warn('image has to be deleted');
+      hasImageDifferences = true;
+      aliasDifferences.push(...imageDifferences);
+      latestData = await removeImageTemplateAtom(latestData, imageDifferences);
+    } else if (!hasImageDifferences) { // atom delete with not image diff
+      // console.warn('when image is not deleted?');
+      const templateList = await fetchTemplateList();
+      const filteredImages = [];
+      for (let i = 0; i < imagesList.length; i++) {
+        if (aliasDifferences.indexOf(i) !== -1) {
+          const templateId = await findTemplateByPayload(templateList, imagesList[i].data);
+          if (templateId == null) {
+            filteredImages.push(imagesList[i]);
+          }
+        } else {
+          filteredImages.push(imagesList[i]);
+        }
       }
-      await removeNodeByIndex(lastAliasInd);
-      imagesList.splice(lastAliasInd, 1);
+      imagesList = filteredImages;
+      imageNodeCounter = imagesList.length - 1;
+    } else if (hasImageDifferences) { // atom removed selected
+      // console.warn('image difference & missing numbers called');
+      imageNodeCounter = imagesList.length - 1;
     }
 
-    if (molCopy.length < mols.length && imagesList.length === imageListCopy.length) { // when atom is dragged to another atom
-      console.log(710);
-      await removeNodeByIndex(lastAliasInd);
-      imagesList.splice(lastAliasInd, 1);
-    }
-
-    console.log('out');
-    imageNodeCounter -= deleteCopy.length; // update image used counter
-
-    await filterTextList(deleteCopy); // rever text node structure
-    await revaluateTextStructureIndecies(deleteCopy); // rever text node structure
-
-    latestData = await handleOnDeleteAtom(deleteCopy); // rebase atom aliases
-    const nodes = await placeImageOnAtoms(molCopy, imagesList);
-    latestData.root.nodes = nodes;
-    await saveMoveCanvas(editor, null, false, true);
+    latestData = await handleOnDeleteAtom(aliasDifferences, latestData, imagesList);
+    await filterTextList(aliasDifferences); // text node structure
+    await saveMoveCanvas(editor, latestData, true, false);
     deletedAtoms = [];
-  } else {
-    console.log("else---out");
+    oldImagePack = [];
+  } catch (err) {
+    console.log(err);
   }
 };
 
 // filter text nodes by key, key as in text key
-const filterTextList = async (deleteCopy) => {
-  // re-verb all the index when deleted index is small then existing third part
-  const deleteLiasAlias = deleteCopy.map((i) => i.alias);
-  const valuesList = deleteLiasAlias.map((i) => textNodeStruct[i]).filter((v) => v != null);
-
-  const newTextList = textList.map((i) => {
-    if (valuesList.indexOf(JSON.parse(i.data.content).blocks[0].key) === -1) {
-      return i;
-    }
-  }).filter((v) => v != null);
-
-  if (valuesList.length) {
-    latestData.root.nodes = [...removeTextFromData(latestData), ...newTextList];
-    textList = [...newTextList];
-  }
-};
-
-// re-evalute text nodes and aliases
-const revaluateTextStructureIndecies = async (deleteCopy) => {
-  const deleteLiasAlias = deleteCopy.filter((i) => textNodeStruct[i.alias]);
-  if (deleteLiasAlias.length) {
-    const textNodeCopy = {};
-    Object.keys(textNodeStruct).forEach((item) => {
-      const value = textNodeStruct[item];
-      const splits = item.split('_');
-      if (deleteLiasAlias.indexOf(item) != -1) {
-        item = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
+const filterTextList = async (aliasDifferences) => {
+  // rewire all the index when deleted index is small then existing third part
+  const keys = Object.values(textNodeStruct);
+  const valueList = [];
+  if (aliasDifferences.length) {
+    textList.forEach((item) => {
+      if (keys.includes(JSON.parse(item.data.content).blocks[0].key)) {
+        valueList.push(item);
       }
-      const postCheck = parseInt(item.split('_')[2]) < 0;
-      if (!postCheck) textNodeCopy[item] = value;
     });
-    textNodeStruct = { ...textNodeCopy };
+    const diff = await deepCompareContent(textList, valueList);
+    latestData.root.nodes = [...removeTextFromData(latestData), ...valueList];
+    textList = [...valueList];
   }
 };
 
 const fetchAndReplace = () => {
   imageListCopyContainer = [...imagesList];
   textListCopyContainer = [...textList];
-  // addEventToFILOStack('Move atom');
 };
 
 const removeTextNodeDescriptionOnTextPopup = () => {
@@ -457,6 +414,19 @@ const removeTextNodeDescriptionOnTextPopup = () => {
     paragraph.remove();
   }
   selectedImageForTextNode = null;
+};
+
+const findTemplateByPayload = async (templateList, targetPayload) => {
+  for (const category of templateList) {
+    for (const subTab of category.subTabs) {
+      for (const shape of subTab.shapes) {
+        if (shape.payload === targetPayload) {
+          return shape.template_id;
+        }
+      }
+    }
+  }
+  return null;
 };
 
 /* istanbul ignore next */
@@ -486,22 +456,21 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack('Add atom');
     },
     'Upsert image': async () => {
-      oldImagePack = [...imagesList];
       console.log('Upsert image');
       addEventToFILOStack('Upsert image');
     },
-    'Move atom': async (eventItem) => {
+    'Move atom': async () => {
       console.log('Move atom');
       // const { exists } = isCanvasUpdateRequiredOnMove(eventItem);
       allowProcessingSetter(true);
       addEventToFILOStack('Move atom');
     },
     'Delete image': async () => {
-      console.log('Delete image');
-      oldImagePack = [...imagesList];
-      addEventToFILOStack('Delete image');
+      console.log('Delete image called delete atom!');
+      addEventToFILOStack('Delete atom');
     },
     'Delete atom': async (eventItem) => {
+      console.log('delete atom');
       let atomCount = -1;
       if (eventItem.label === KET_TAGS.inspiredLabel) {
         for (let m = 0; m < mols?.length; m++) {
@@ -514,7 +483,6 @@ const KetcherEditor = forwardRef((props, ref) => {
             }
           }
         }
-        oldImagePack = [...imagesList];
       }
       addEventToFILOStack('Delete atom');
     },
@@ -532,16 +500,18 @@ const KetcherEditor = forwardRef((props, ref) => {
   const eventHandlers = {
     'Move image': async () => onTemplateMove(editor),
     'Delete image': async () => {
+      oldImagePack = [...imagesList];
       await fetchKetcherData(editor);
       mols = mols.filter((item) => item != null);
       await onDeleteImage(editor, canvasSelection, oldImagePack, textList, deletedAtoms);
     },
     'Move atom': async () => {
-      await fetchKetcherData(editor);
+      oldImagePack = [...imagesList];
       await onTemplateMove(editor, false);
     },
-    'Add atom': async () => await onAddAtom(editor),
+    'Add atom': async () => onAddAtom(editor),
     'Delete atom': async () => {
+      oldImagePack = [...imagesList];
       await onAtomDelete(editor);
       canvasSelection = null;
     },
@@ -552,6 +522,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       textNodeStruct = { ...response.textNodeStruct };
     },
     'Upsert image': async () => {
+      oldImagePack = [...imagesList];
       await fetchKetcherData(editor);
       await onImageAddedOrCopied();
     }
@@ -637,6 +608,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     if (event.data.eventType === 'init') {
       window.editor = editor;
       if (editor && editor.structureDef) {
+        textNodeStruct = {};
         onEditorContentChange(editor);
         const polymerTag = await hasKetcherData(initMol);
         const textNodes = await hasTextNodes(initMol);
@@ -648,9 +620,9 @@ const KetcherEditor = forwardRef((props, ref) => {
         // process polymers
         const { molfileData } = await addPolymerTags(polymerTag, fileContent);
         const textNodeList = await addTextNodes(textNodes, molfileData);
-        const filteredTextNodeList = textNodeList.filter((i) => i !== undefined);
-        if (filteredTextNodeList.length) molfileData.root.nodes.push(...filteredTextNodeList);
-        saveMoveCanvas(editor, molfileData, true, true, false);
+        if (textNodeList.length) molfileData.root.nodes.push(...textNodeList);
+        const toRecenter = !polymerTag?.length;
+        saveMoveCanvas(editor, molfileData, true, true, !!toRecenter);
         ImagesToBeUpdatedSetter(true);
       }
     }
@@ -667,6 +639,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       const event = FILOStack.pop();
       uniqueEvents.delete(event);
       if (eventHandlers[event]) {
+        console.log(event);
         // eslint-disable-next-line no-await-in-loop
         await eventHandlers[event]();
       }
@@ -715,10 +688,10 @@ const KetcherEditor = forwardRef((props, ref) => {
       return;
     }
 
-    if (event === 'Delete atom' && FILOStack.includes('Move atom')) {
-      console.log('Cannot add "Delete atom" after "Move atom" event.');
-      return;
-    }
+    // if (event === 'Delete atom' && FILOStack.includes('Move atom')) {
+    //   console.log('Cannot add "Delete atom" after "Move atom" event.', '##');
+    //   return;
+    // }
 
     if (event === 'Delete atom' && FILOStack.includes('Delete text')) {
       console.log('Cannot add "Delete atom" after "Delete text" event.');
@@ -835,6 +808,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         await fetchKetcherData(editor);
         const canvasDataMol = await editor.structureDef.editor.getMolfile();
         const svgElement = await reArrangeImagesOnCanvas(iframeRef); // svg display
+        // const svgElement = await reArrangeImagesOnCanvasViaKetcher(editor); // svg display using ketcher service
         const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
         const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
         if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
@@ -848,30 +822,16 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   }));
 
-  const findTemplateId = async (templateList, targetPayload) => {
-    for (const category of templateList) {
-      for (const subTab of category.subTabs) {
-        for (const shape of subTab.shapes) {
-          if (shape.payload === targetPayload) {
-            return shape.template_id;
-          }
-        }
-      }
-    }
-    return null;
-  };
-
   const onImageAddedOrCopied = async () => {
     const item = imagesList[imagesList.length - 1];
     const templateList = await fetchTemplateList();
-    const templateId = await findTemplateId(templateList, item.data);
+    const templateId = await findTemplateByPayload(templateList, item.data);
     if (templateId != null) {
       await onShapeSelection(templateId, false);
     }
   };
 
   const onShapeSelection = async (tempId, imageToBeAdded = true) => {
-    console.log(tempId);
     const rootStruct = {
       nodes: [
         {
