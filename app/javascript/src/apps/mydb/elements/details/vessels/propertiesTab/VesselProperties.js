@@ -1,5 +1,5 @@
 /* eslint-disable react/function-component-definition */
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Accordion, Button, Form, InputGroup, Row, Col } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
@@ -12,8 +12,9 @@ const VesselProperties = ({ item, readOnly }) => {
   const vesselId = item.id;
   const vesselFromStore = vesselDetailsStore.getVessel(vesselId);
   const vesselItem = vesselFromStore ? JSON.parse(JSON.stringify(vesselFromStore)) : {};
-
   const isCreateMode = vesselItem?.is_new || false;
+  const [activeKey, setActiveKey] = useState(isCreateMode ? 'common-properties' : null);
+
   const instances = isCreateMode
     ? vesselDetailsStore.getInstances(vesselId)
     : [
@@ -24,6 +25,15 @@ const VesselProperties = ({ item, readOnly }) => {
         qrCode: vesselItem?.qrCode || '',
       },
     ];
+
+  useEffect(() => {
+    if (isCreateMode) {
+      setActiveKey('common-properties');
+    }
+    else {
+      setActiveKey('instance-0');
+    }
+  }, [isCreateMode]);
 
   const handleVolumeChange = (e) => {
     const value = parseFloat(e.target.value);
@@ -46,7 +56,11 @@ const VesselProperties = ({ item, readOnly }) => {
   };
 
   return (
-    <Accordion className="vessel-properties" defaultActiveKey="common-properties">
+    <Accordion
+      className="vessel-properties"
+      activeKey={activeKey}
+      onSelect={(key) => setActiveKey(key)}
+      >
       <Accordion.Item eventKey="common-properties">
         <Accordion.Header>Common Vessel Properties</Accordion.Header>
         <Accordion.Body>
