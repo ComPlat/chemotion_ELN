@@ -225,7 +225,17 @@ export default class Sample extends Element {
     sample.short_label = Sample.buildNewShortLabel();
     return sample;
   }
-  
+
+  getMoleculeId() {
+    if (this.decoupled && this.molfile) {
+      return `M${this.id}`;
+    } else if (this.stereo == null) {
+      return `M${this.molecule.id}_any_any`;
+    } else {
+      return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
+    }
+  }
+
   getChildrenCount() {
     return parseInt(Sample.children_count[this.id] || this.children_count, 10);
   }
