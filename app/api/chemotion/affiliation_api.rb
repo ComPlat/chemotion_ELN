@@ -98,6 +98,8 @@ module Chemotion
         u_affiliation.destroy!
         Affiliation.find_by(id: params[:id])&.destroy! if UserAffiliation.where(affiliation_id: params[:id]).empty?
         status 204
+        body nil
+        return
       rescue ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
       end
