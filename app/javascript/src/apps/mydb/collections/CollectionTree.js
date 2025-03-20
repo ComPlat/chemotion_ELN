@@ -96,6 +96,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
       icon: 'fa fa-cloud',
       collectionKey: CHEMOTION_REPOSITORY_KEY,
       onClickOpenCollection: chemotionRepository.id,
+      roots: chemotionRepository.children,
     });
   }
 
