@@ -53,16 +53,34 @@
 class SequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid
 
+  include Collectable
+  include ElementCodes
+  include AnalysisCodes
+  include Taggable
+  include Labimotion::Segmentable
+
+  acts_as_paranoid
+
   before_create :auto_assign_short_label
 
+  has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
+
+  has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
   has_many :collections_sequence_based_macromolecule_samples, inverse_of: :sequence_based_macromolecule_sample, dependent: :destroy
   has_many :collections, through: :collections_sequence_based_macromolecule_samples
+  has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
+  has_many :sync_collections_users, through: :collections
+
   belongs_to :sequence_based_macromolecule
   belongs_to :user
 
-  scope :for_user, ->(user_id) { where(user_id: user_id) }
+  scope :created_by, ->(user_id) { where(user_id: user_id) }
   scope :includes_for_list_display, -> { includes(:sequence_based_macromolecule) }
   scope :in_sbmm_order, -> { joins(:sequence_based_macromolecule).order("sequence_based_macromolecules.systematic_name" => :asc, updated_at: :desc) }
+
+  def analyses
+    container&.analyses || []
+  end
 
   def auto_assign_short_label
     return if short_label
