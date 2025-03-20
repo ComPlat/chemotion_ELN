@@ -6,6 +6,7 @@ import Attachment from 'src/models/Attachment';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import SparkMD5 from 'spark-md5';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { storeFile, getFileFromDB } from 'src/utilities/indexedDBHelper'
 
 const fileFromAttachment = (attachment, containerId) => {
   const { file } = attachment;
@@ -16,89 +17,189 @@ const fileFromAttachment = (attachment, containerId) => {
 };
 
 export default class AttachmentFetcher {
+  
   static fetchImageAttachment(params) {
-    const url = params.annotated
-      ? `/api/v1/attachments/${params.id}/annotated_image`
-      : `/api/v1/attachments/image/${params.id}`;
-
-    return fetch(url, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => response.blob())
-      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
+    // Attempt to retrieve cached file by id
+    return getFileFromDB(params.id).then(cachedFile => {
+      if (cachedFile) {
+        // Return cached file if found
+        return { type: cachedFile.contentType, data: URL.createObjectURL(cachedFile.data) };
+      } else {
+        // Fetch file from server if not cached
+        const url = `/api/v1/attachments/${params.id}?type=${params.annotated ? 'annotated' : 'original'}`;
+        return fetch(url, {
+          credentials: 'same-origin',
+          method: 'GET'
+        })
+        .then(response => response.blob())
+        .then(blob => {
+          // Store fetched file in cache
+          const fileToStore = {
+            id: params.id,
+            data: blob,
+            filename: params.filename || "",
+            contentType: blob.type,
+            timestamp: Date.now()
+          };
+          return storeFile(fileToStore).then(() => {
+            // Return fetched file
+            return { type: blob.type, data: URL.createObjectURL(blob) };
+          });
+        })
+        .catch(errorMessage => {
+          console.log(errorMessage);
+        });
+      }
+    });
+  }  
 
   static fetchImageAttachmentByIdentifier(params) {
-    const urlParams = new URLSearchParams({
-      identifier: params.identifier,
-      annotated: params.annotated,
+    const cacheKey = `identifier-${params.identifier}`;
+    // Attempt to retrieve cached file by identifier
+    return getFileFromDB(cacheKey).then(cachedFile => {
+      if (cachedFile) {
+        // Return cached file if found
+        return { type: cachedFile.contentType, data: URL.createObjectURL(cachedFile.data) };
+      } else {
+        // Fetch file from server if not cached
+        const urlParams = new URLSearchParams({
+          identifier: params.identifier,
+          annotated: params.annotated
+        });
+        const url = `/api/v1/attachments/image/-1?${urlParams}`;
+        return fetch(url, {
+          credentials: 'same-origin',
+          method: 'GET'
+        })
+        .then(response => response.blob())
+        .then(blob => {
+          // Store fetched file in cache
+          const fileToStore = {
+            id: cacheKey,
+            data: blob,
+            filename: params.filename || "",
+            contentType: blob.type,
+            timestamp: Date.now()
+          };
+          return storeFile(fileToStore).then(() => {
+            // Return fetched file
+            return { type: blob.type, data: URL.createObjectURL(blob) };
+          });
+        })
+        .catch(errorMessage => {
+          console.log(errorMessage);
+        });
+      }
     });
-
-    return fetch(`/api/v1/attachments/image/-1?${urlParams}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => response.blob())
-      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
+  }  
 
   static fetchThumbnail(params) {
-    const promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
+    // Attempt to retrieve cached thumbnail by id
+    return getFileFromDB(`thumbnail-${params.id}`).then(cachedFile => {
+      if (cachedFile) {
+        // Return cached thumbnail if found
+        return cachedFile.data;
+      } else {
+        // Fetch thumbnail from server if not cached
+        const url = `/api/v1/attachments/thumbnail/${params.id}`;
+        return fetch(url, {
+          credentials: 'same-origin',
+          method: 'GET'
+        })
+        .then(response => response.json())
+        .then(json => {
+          // Store fetched thumbnail in cache
+          const fileToStore = {
+            id: `thumbnail-${params.id}`,
+            data: json,
+            filename: params.filename || "",
+            contentType: 'text/plain',
+            timestamp: Date.now()
+          };
+          return storeFile(fileToStore).then(() => {
+            // Return fetched thumbnail
+            return json;
+          });
+        })
+        .catch(errorMessage => {
+          console.log(errorMessage);
+        });
+      }
+    });
+  }  
 
   static fetchThumbnails(ids) {
-    const promise = fetch('/api/v1/attachments/thumbnails/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ids }),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
+    const cacheKey = `thumbnails-${JSON.stringify(ids.sort())}`;
+    // Attempt to retrieve cached thumbnails by ids
+    return getFileFromDB(cacheKey).then(cachedData => {
+      if (cachedData) {
+        // Return cached thumbnails if found
+        return cachedData.data;
+      } else {
+        // Fetch thumbnails from server if not cached
+        return fetch('/api/v1/attachments/thumbnails/', {
+          credentials: 'same-origin',
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ids })
+        })
+        .then(response => response.json())
+        .then(json => {
+          // Store fetched thumbnails in cache
+          const fileToStore = {
+            id: cacheKey,
+            data: json,
+            filename: "",
+            contentType: "application/json",
+            timestamp: Date.now()
+          };
+          return storeFile(fileToStore).then(() => json);
+        })
+        .catch(errorMessage => {
+          console.log(errorMessage);
+        });
+      }
+    });
+  }  
 
   static fetchFiles(ids) {
-    const promise = fetch('/api/v1/attachments/files/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ids }),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    const cacheKey = `files-${JSON.stringify(ids.sort())}`;
+    // Attempt to retrieve cached files by ids
+    return getFileFromDB(cacheKey).then(cachedData => {
+      if (cachedData) {
+        // Return cached files if found
+        return cachedData.data;
+      } else {
+        // Fetch files from server if not cached
+        return fetch('/api/v1/attachments/files/', {
+          credentials: 'same-origin',
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ids })
+        })
+        .then(response => response.json())
+        .then(json => {
+          // Store fetched files in cache
+          const fileToStore = {
+            id: cacheKey,
+            data: json,
+            filename: "",
+            contentType: "application/json",
+            timestamp: Date.now()
+          };
+          return storeFile(fileToStore).then(() => json);
+        })
+        .catch(errorMessage => {
+          console.log(errorMessage);
+        });
+      }
+    });
   }
 
   static fetchJcamp(target) {

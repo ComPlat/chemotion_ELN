@@ -11,6 +11,7 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -46,12 +47,12 @@ export const attachmentThumbnail = (attachment) => (
           attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
             ? {
               fetchNeeded: true,
-              src: `/api/v1/attachments/${attachment.id}/annotated_image`,
+              src: `/api/v1/attachments/${attachment.id}?type=annotated`,
             }
             : {
               src: attachment.preview,
             }
-        }
+        }        
         disableClick
       />
     </div>
@@ -73,22 +74,18 @@ export const formatFileSize = (sizeInB) => {
   return `${sizeInB} bytes`;
 };
 
-const handleDownloadAnnotated = (attachment) => {
-  const isImage = isImageFile(attachment.filename);
-  if (isImage && !attachment.isNew) {
-    Utils.downloadFile({
-      contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
-      name: attachment.filename
-    });
-  }
-};
-
-const handleDownloadOriginal = (attachment) => {
-  Utils.downloadFile({
-    contents: `/api/v1/attachments/${attachment.id}`,
-    name: attachment.filename,
-  });
-};
+const handleDownloadAttachment = (attachment, type = 'original') => {
+  const annotated = type === 'annotated'
+  AttachmentFetcher.fetchImageAttachment({ id: attachment.id, annotated, filename: attachment.filename })
+  .then(result => {
+    if (result && result.data) {
+      Utils.downloadFile({ contents: result.data, name: attachment.filename })
+    }
+  })
+  .catch(errorMessage => {
+    console.log(errorMessage)
+  })
+}
 
 const handleOpenLocally = (attachment, option = 0) => {
   ThirdPartyAppFetcher.getHandlerUrl(attachment.id, option).then((url) => {
@@ -121,26 +118,18 @@ export const downloadButton = (attachment) => (
       <i className="fa fa-download" aria-hidden="true" />
     </Dropdown.Toggle>
     <Dropdown.Menu>
-      <Dropdown.Item eventKey="1" onClick={() => handleDownloadOriginal(attachment)}>
+      <Dropdown.Item eventKey="1" onClick={() => handleDownloadAttachment(attachment, 'original')}>
         Download Original
       </Dropdown.Item>
-      <Dropdown.Item
-        eventKey="2"
-        onClick={() => handleDownloadAnnotated(attachment)}
-        disabled={!isImageFile(attachment.filename) || attachment.isNew}
-      >
+      <Dropdown.Item eventKey="2" onClick={() => handleDownloadAttachment(attachment, 'annotated')} disabled={!isImageFile(attachment.filename) || attachment.isNew}>
         Download Annotated
       </Dropdown.Item>
-      <Dropdown.Item
-        eventKey="3"
-        onClick={() => handleOpenLocally(attachment, 0)}
-        disabled={attachment.isNew}
-      >
+      <Dropdown.Item eventKey="3" onClick={() => handleOpenLocally(attachment, 0)} disabled={attachment.isNew}>
         Open locally
       </Dropdown.Item>
     </Dropdown.Menu>
   </Dropdown>
-);
+)
 
 export const removeButton = (attachment, onDelete, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>

@@ -38,6 +38,7 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class WellplateDetails extends Component {
   static contextType = StoreContext;
@@ -203,9 +204,19 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
-  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
-    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
-  }
+  handleAttachmentDownload(attachment) {
+    AttachmentFetcher.fetchFile({ id: attachment.id, filename: attachment.filename })
+    .then(result => {
+      if (result && result.data) {
+        const url = URL.createObjectURL(result.data);
+        Utils.downloadFile({ contents: url, name: attachment.filename });
+        URL.revokeObjectURL(url);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  }  
 
   handleAttachmentEdit(attachment) {
     const { wellplate } = this.state;
