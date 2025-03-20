@@ -619,7 +619,7 @@ describe Chemotion::AttachmentAPI do
       let(:fixture_path) { Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg') }
 
       before do
-        # TODO move this to the factory: handling of fixture files for derivatives 
+        # TODO: move this to the factory: handling of fixture files for derivatives
         # should be done in the factory
         annotation_path = attachment.annotated_file_location
         FileUtils.rm_f(annotation_path)
