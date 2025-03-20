@@ -25,12 +25,22 @@ module Entities
     expose! :activity_unit
     expose! :type
 
+    expose! :attachments, using: 'Entities::AttachmentEntity'
+    expose! :comments, using: 'Entities::CommentEntity'
+    expose! :comment_count
+    expose! :container, using: 'Entities::ContainerEntity'
+    expose! :segments, using: 'Labimotion::SegmentEntity'
     expose! :sequence_based_macromolecule, using: "Entities::SequenceBasedMacromoleculeEntity"
+    expose! :tag, using: 'Entities::ElementTagEntity'
 
     expose_timestamps
 
     def type
       'sequence_based_macromolecule_sample'
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end
