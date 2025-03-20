@@ -18,8 +18,12 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  short_label          :string
+#  ancestry             :string
 #
-# rubocop:disable Rails/InverseOf, Rails/HasManyOrHasOneDependent
+# Indexes
+#
+#  index_cellline_samples_on_ancestry  (ancestry)
+#
 class CelllineSample < ApplicationRecord
   acts_as_paranoid
   has_ancestry
