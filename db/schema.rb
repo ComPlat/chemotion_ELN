@@ -132,6 +132,8 @@ ActiveRecord::Schema.define(version: 2025_03_04_140809) do
     t.datetime "deleted_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "created_by"
+    t.index ["name", "source"], name: "index_cellline_materials_on_name_and_source", unique: true
   end
 
   create_table "cellline_samples", force: :cascade do |t|
