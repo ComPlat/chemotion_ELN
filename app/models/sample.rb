@@ -421,10 +421,10 @@ class Sample < ApplicationRecord
     return unless inchikey.present?
 
     is_partial = babel_info[:is_partial]
-    molfile_version = babel_info[:version]
-    if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
-      self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
-    end
+    self.molfile_version = babel_info[:version]
+    return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
+
+    self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
   end
 
   def find_or_create_fingerprint
