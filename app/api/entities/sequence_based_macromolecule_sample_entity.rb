@@ -23,9 +23,14 @@ module Entities
     expose! :amount_as_used_mass_unit
     expose! :activity_value
     expose! :activity_unit
+    expose! :type
 
     expose! :sequence_based_macromolecule, using: "Entities::SequenceBasedMacromoleculeEntity"
 
     expose_timestamps
+
+    def type
+      'sequence_based_macromolecule_sample'
+    end
   end
 end
