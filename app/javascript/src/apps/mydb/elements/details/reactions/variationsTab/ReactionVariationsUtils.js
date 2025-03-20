@@ -474,6 +474,7 @@ function getColumnDefinitions(selectedColumns, materials, gasMode) {
   return [
     {
       headerName: 'Tools',
+      field: 'tools',
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
       sortable: false,
