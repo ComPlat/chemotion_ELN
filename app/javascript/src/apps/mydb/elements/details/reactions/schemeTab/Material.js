@@ -324,19 +324,36 @@ class Material extends Component {
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
+    const message = 'Unit switch only active with valid values';
+    const noSwitchUnits = ['ppm', 'TON'];
+
+    const inputComponent = (
+      <NumeralInputWithUnitsCompo
+        size="sm"
+        precision={4}
+        variant="success"
+        value={updateValue}
+        disabled={readOnly}
+        onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
+        onChange={(e) => this.handleGasFieldsChange(field, e, value)}
+        unit={unit}
+      />
+    );
 
     return (
       <td colSpan={colSpan} style={style}>
-        <NumeralInputWithUnitsCompo
-          size="sm"
-          precision={4}
-          variant="success"
-          value={updateValue}
-          disabled={readOnly}
-          onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
-          onChange={(e) => this.handleGasFieldsChange(field, e, value)}
-          unit={unit}
-        />
+        <div>
+          {(value === 'n.d' || !value) && !noSwitchUnits.includes(unit) ? (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id={`${field}-tooltip`}>{message}</Tooltip>}
+            >
+              <div>{inputComponent}</div>
+            </OverlayTrigger>
+          ) : (
+            <div>{inputComponent}</div>
+          )}
+        </div>
       </td>
     );
   }
