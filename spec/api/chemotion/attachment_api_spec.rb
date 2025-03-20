@@ -587,11 +587,11 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
-  describe 'GET /api/v1/attachments/{attachment_id}/annotated_image' do
+  describe 'GET /api/v1/attachments/{attachment_id}?annotated=true' do
     let(:attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
 
     before do
-      get "/api/v1/attachments/#{attachment_id}/annotated_image"
+      get "/api/v1/attachments/#{attachment_id}?annotated=true"
     end
 
     context 'when attachment not exists' do
@@ -631,7 +631,7 @@ describe Chemotion::AttachmentAPI do
         annotation = File.read(annotation_location)
         annotation = annotation.gsub('/46', "/#{attachment_id}")
         annotation_updater.update_annotation(annotation, attachment.id)
-        get "/api/v1/attachments/#{attachment_id}/annotated_image"
+        get "/api/v1/attachments/#{attachment_id}?annotate=true"
       end
 
       it('returning status 200') do
