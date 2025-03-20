@@ -29,7 +29,7 @@ export default class Elements extends Component {
   handleOnChange(state) {
     const { currentElement } = state;
     if (currentElement && currentElement.type == 'device_description') {
-      this.context.deviceDescriptions.setDeviceDescription(currentElement, true);
+      this.context.deviceDescriptions.addDeviceDescriptionToOpen(currentElement);
     }
     this.setState({ currentElement });
   }
