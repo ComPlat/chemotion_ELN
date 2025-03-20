@@ -63,15 +63,21 @@ const isCurrEleDropType = (sourceType, targetType) => {
   return sourceType && targetType && targets[sourceType].includes(targetType);
 };
 
-const dragColumn = (element, sourceType, targetType) => (
-  <td className="text-center align-middle">
-    <ElementContainer
-      key={element.id}
-      sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
-      element={element}
-    />
-  </td>
-);
+const dragColumn = (element, sourceType, targetType) => {
+  if (!targetType) {
+    targetType = ElementStore.getState()?.currentElement?.type || null;
+  }
+
+  return (
+    <td className="text-center align-middle">
+      <ElementContainer
+        key={element.id}
+        sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
+        element={element}
+      />
+    </td>
+  );
+};
 
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
