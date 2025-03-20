@@ -37,7 +37,8 @@ module Datacollector
     #   |         |        |__  `handle_attachment` for each attachment in the message
     #   |         |                  |__  `correspondence.attach` create the attachment in the recipient ELN user inbox
     #   |         |
-    #   |         |__ delete the email
+    #   |         |__ delete the email or mark the email as read
+    #   |         |__ reset the correspondence array
     #   |
     #   |__ Logout
     #
@@ -53,6 +54,8 @@ module Datacollector
 
         handle_message(message_id)
         imap.store(message_id, '+FLAGS', [:Deleted])
+      ensure
+        @correspondences = nil
       end
     rescue StandardError => e
       log.error __method__, e.backtrace.join('\n')
