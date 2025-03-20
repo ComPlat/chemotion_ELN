@@ -13,10 +13,6 @@ module Chemotion
         end
         put do
           collection_ids = params[:collection_ids]
-          unless params[:prefix].present? && params[:name].present? &&
-                 params[:counter].present? && collection_ids.present?
-            error!({ error: 'Missing required parameters' }, 400)
-          end
           begin
             Inventory.create_or_update_inventory_label(
               params[:prefix],
