@@ -32,6 +32,25 @@ RSpec.describe Molecule, type: :model do
     end
   end
 
+  describe '#delete' do
+    let(:molecule) { create(:molecule) }
+
+    it 'deletes the molecule' do
+      molecule.delete
+      expect(described_class.where(id: molecule.id).count).to eq(0)
+    end
+
+    it 'modifies the inchikey' do
+      id = molecule.id
+      inchikey = molecule.inchikey
+      molecule.save!
+      molecule.destroy!
+      deleted_molecule = described_class.only_deleted.find_by(id: id)
+      expect(deleted_molecule&.inchikey).to start_with("#{id}_")
+      expect(deleted_molecule&.inchikey).to end_with(inchikey)
+    end
+  end
+
   describe 'persistance' do
     let(:molecule) { build(:molecule) }
 
