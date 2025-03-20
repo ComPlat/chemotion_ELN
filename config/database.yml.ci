@@ -14,6 +14,7 @@ development:
 
 test:
   database: chemotion
+  schema_search_path: 'public,rdkit'
 
 production:
   database: chemotion
