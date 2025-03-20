@@ -123,7 +123,7 @@ module Datacollector
     # @param queue [String] The queue name
     def schedule_notification(queue)
       MessageIncomingDataJob.set(queue: queue, wait: 3.minutes).perform_later(
-        sender_container.name, sender.id, recipient.id
+        sender_container.name, sender, recipient
       )
     end
   end
