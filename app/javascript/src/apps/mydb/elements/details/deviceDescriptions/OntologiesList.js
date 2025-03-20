@@ -1,9 +1,10 @@
 import React from 'react';
-import { Modal, Button, ListGroup, ButtonGroup } from 'react-bootstrap';
+import { Modal, Button, ListGroup, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 import OntologySelect from './OntologySelect';
 import OntologySortableList from './OntologySortableList';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import OntologySegmentsList from './OntologySegmentsList';
 import { observer } from 'mobx-react';
 
 const OntologiesList = ({ store, element }) => {
@@ -25,13 +26,26 @@ const OntologiesList = ({ store, element }) => {
       .then((result) => {
         if (result.length >= 1) {
           newOntology.segments = result;
+          store.setOntologyIndexForEdit(ontologies.length);
+          store.toggleOntologySelect();
+          store.toggleOntologyFormSelection();
+        } else {
+          store.toggleOntologyModal();
         }
+
         const value = ontologies.concat(newOntology);
         store.changeDeviceDescription('ontologies', value);
-        store.toggleOntologyModal();
+        
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
+  }
+
+  const editOntologyForm = (index) => {
+    store.toggleOntologyModal();
+    store.toggleOntologySelect();
+    store.toggleOntologyFormSelection();
+    store.setOntologyIndexForEdit(index);
   }
 
   const deleteOntology = (index) => {
@@ -77,20 +91,49 @@ const OntologiesList = ({ store, element }) => {
 
   const ontologyModal = () => {
     if (!store.show_ontology_modal) { return null; }
+    let ontologyModalTitle = 'Select Ontology';
+    ontologyModalTitle = store.show_ontology_form_selection ? ontologyModalTitle + ' forms' : ontologyModalTitle;
+    const modalSize = store.show_ontology_form_selection ? 'lg' : 'md';
 
     return (
       <Modal
         backdrop="static"
         show={store.show_ontology_modal}
-        onHide={() => store.toggleOntologyModal()}
+        onHide={() => store.closeOntologyModal()}
+        size={modalSize}
         centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>Select Ontology</Modal.Title>
+          <Modal.Title>{ontologyModalTitle}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <OntologySelect fnSelected={addOntology} store={store} element={element} />
+          {
+            store.show_ontology_select && (
+              <OntologySelect fnSelected={addOntology} store={store} element={element} />
+            )
+          }
+          {
+            store.show_ontology_form_selection && (
+              <div className="overflow-auto vh-70">
+                <OntologySegmentsList
+                  key="ontology-segments-list-form-selection"
+                  store={store}
+                  element={element}
+                  isSelection={true}
+                />
+              </div>
+            )
+          }
         </Modal.Body>
+        {
+          store.show_ontology_form_selection && (
+            <Modal.Footer className="justify-content-start">
+              <Button variant="primary" onClick={() => store.closeOntologyModal()}>
+                Close
+              </Button>
+            </Modal.Footer>
+          )
+        }
       </Modal>
     );
   }
@@ -132,6 +175,21 @@ const OntologiesList = ({ store, element }) => {
           Order mode
         </ButtonGroupToggleButton>
       </ButtonGroup>
+    );
+  }
+
+  const editButton = (index, hasSegement) => {
+    if (ontologies[index].data.is_deleted || !hasSegement) { return null; }
+
+    return (
+      <Button
+        size="sm"
+        variant="warning"
+        onClick={() => editOntologyForm(index)}
+        className="px-2 py-1"
+      >
+        <i className="fa fa-edit" />
+      </Button>
     );
   }
 
@@ -198,8 +256,11 @@ const OntologiesList = ({ store, element }) => {
                 <div className="d-flex justify-content-between align-items-center gap-2">
                   {ontology.paths.map((p) => p.label).join(' / ')}
                   <div>
-                    {undoDeleteButton(index)}
-                    {deleteOntologyButton(index)}
+                    <ButtonToolbar className="flex-nowrap gap-2">
+                      {editButton(index, ontology.segments)}
+                      {undoDeleteButton(index)}
+                      {deleteOntologyButton(index)}
+                    </ButtonToolbar>
                   </div>
                 </div>
               </div>
