@@ -12,6 +12,8 @@ import {
   allAtoms, fetchKetcherData, handleAddAtom, imageNodeCounter, imageNodeForTextNodeSetter, imageUsedCounterSetter, saveMoveCanvas, textList, textNodeStruct
 } from 'src/components/structureEditor/KetcherEditor';
 import { allTemplates } from 'src/components/structureEditor/KetcherEditor';
+import { deletedAtoms } from 'src/components/structureEditor/KetcherEditor';
+import { TextListSetter } from 'src/components/structureEditor/KetcherEditor';
 
 // pattern's for alias identification
 const ALIAS_PATTERNS = Object.freeze({
@@ -239,6 +241,7 @@ const removeTextFromData = (data) => data.root.nodes.filter((node) => node.type 
 
 // Updates atom aliases in a molecule after removing certain images and updates the molecule data.
 const updateMoleculeAliases = async (container, atomList) => {
+  console.log('updateMoleculeAliases');
   for (const imgIdx of container) {
     for (let i = 0; i < atomList.length; i++) {
       const atom = atomList[i];
@@ -363,6 +366,35 @@ const findAtomByImageIndex = async (imgIdx) => {
   return { atomLocation: null, alias: '' };
 };
 
+const collectMissingAliases = async () => {
+  const aliasList = [];
+  for (let i = 0; i < mols.length; i++) {
+    const { atoms } = latestData[mols[i]];
+    for (let j = 0; j < atoms.length; j++) {
+      const split = atoms[j]?.alias?.split('_')[2];
+      if (split) {
+        aliasList.push(split);
+      }
+    }
+  }
+  return aliasList;
+};
+const findMissingNumbers = async (arr) => {
+  // Convert array to numbers and sort in ascending order
+  const nums = arr.map(Number).sort((a, b) => a - b);
+
+  const min = 0;
+  const max = Math.max(...nums);
+  const missing = [];
+
+  for (let i = min; i <= max; i++) {
+    if (!nums.includes(i)) {
+      missing.push(i);
+    }
+  }
+  return missing;
+};
+
 // helper function set image coordinates
 const adjustImageCoordinatesAtomDependent = (imageCoordinates, location) => ({
   ...imageCoordinates,
@@ -411,19 +443,23 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
 };
 
 // place text nodes on atom with matching aliases
-const placeTextOnAtoms = async (mols_, textList) => {
+const placeTextOnAtoms = async (mols_) => {
   try {
-    mols_.forEach(async (item) => {
-      latestData[item]?.atoms.forEach(async (atom) => {
+    const updatedTextList = [];
+    for (const item of mols_) {
+      for (const atom of latestData[item].atoms) {
         const textNodeKey = textNodeStruct[atom.alias];
-        if (atom && ALIAS_PATTERNS.threeParts.test(atom?.alias) && textNodeKey) {
-          textList = await findByKeyAndUpdateTextNodePosition(textList, textNodeKey, atom.location, atom?.alias);
+
+        if (atom && ALIAS_PATTERNS.threeParts.test(atom.alias) && textNodeKey) {
+          const res = await findByKeyAndUpdateTextNodePosition(textNodeKey, atom);
+          if (res) updatedTextList.push(res);
         }
-      });
-    });
-    return [...removeTextFromData(latestData), ...textList];
+      }
+    }
+    return [...removeTextFromData(latestData), ...updatedTextList];
   } catch (err) {
-    console.error('placeImageOnAtoms', err.message);
+    console.error('placeTextOnAtoms', err.message);
+    return [];
   }
 };
 
@@ -442,25 +478,10 @@ const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
 };
 
 // compare two arrays to find index changed differences
-function deepCompare(oldArray, newArray) {
-  const removedIndexes = [];
-
-  // Loop through the old array to find missing elements
-  for (let i = 0; i < oldArray.length; i++) {
-    let isFound = false;
-    for (let j = 0; j < newArray.length; j++) {
-      if (JSON.stringify(oldArray[i]) === JSON.stringify(newArray[j])) {
-        isFound = true;
-        break;
-      }
-    }
-    // If element from old array not found in new array, mark it as removed
-    if (!isFound) {
-      removedIndexes.push(i);
-    }
-  }
-  return removedIndexes;
-}
+const deepCompare = (oldArray, newArray) => {
+  const newSet = new Set(newArray); // Convert newArray to a Set for O(1) lookups
+  return oldArray.filter((item) => !newSet.has(item)); // Return missing values
+};
 
 // generating images for ket2 format from molfile polymers list
 const addPolymerTags = async (polymerTag, data) => {
@@ -569,23 +590,22 @@ const removeTextNodeFromStruct = (images, textL) => {
 };
 
 // find by key and update text node position from alias matching atoms
-const findByKeyAndUpdateTextNodePosition = async (textL, key, atomLocation, alias) => {
-  // Iterate through each item in the textList
-  const splits = alias.split('_')[2];
-  const width = imagesList[splits]?.boundingBox?.width || 1;
-  return textL?.map((textNode) => {
-    // Check if the key matches
-    const content = JSON.parse(textNode.data.content); // Parse the content to access blocks
-    if (content.blocks[0].key === key) {
-      textNode.data.position = {
-        x: atomLocation[0] + width / 2,
-        y: atomLocation[1],
-        z: atomLocation[2]
-      };
-      return textNode;
+const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
+  for (const key of Object.keys(textNodeStruct)) {
+    for (let textIdx = 0; textIdx < textList.length; textIdx++) {
+      const text = textList[textIdx];
+      const content = JSON.parse(text.data.content); // Parse content
+      if (content.blocks[0].key === textNodeKey) {
+        const split = atom.alias.split('_')[2];
+        text.data.position = {
+          x: atom.location[0] + imagesList[split].boundingBox.width / 2,
+          y: atom.location[1],
+          z: atom.location[2]
+        };
+        return text;
+      }
     }
-    return textNode;
-  });
+  }
 };
 
 /* attaching polymers list is ketcher rails standards to a molfile
@@ -1101,6 +1121,9 @@ export {
   onDeleteText,
   onAddText,
   onDeleteImage,
+  collectMissingAliases,
+  findMissingNumbers,
+  deepCompare,
 
   // DOM Methods
   disableButton,
