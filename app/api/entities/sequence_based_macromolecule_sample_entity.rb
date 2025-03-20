@@ -29,7 +29,6 @@ module Entities
     expose! :comments, using: 'Entities::CommentEntity'
     expose! :comment_count
     expose! :container, using: 'Entities::ContainerEntity'
-    expose! :segments, using: 'Labimotion::SegmentEntity'
     expose! :sequence_based_macromolecule, using: "Entities::SequenceBasedMacromoleculeEntity"
     expose! :tag, using: 'Entities::ElementTagEntity'
 

@@ -57,7 +57,6 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   include ElementCodes
   include AnalysisCodes
   include Taggable
-  include Labimotion::Segmentable
 
   acts_as_paranoid
 
