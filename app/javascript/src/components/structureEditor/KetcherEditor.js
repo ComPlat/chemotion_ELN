@@ -58,6 +58,7 @@ import {
   buttonClickForRectangleSelection,
   collectMissingAliases,
   deepCompare,
+  deepCompareNumbers
 } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 import {
   PolymerListIconKetcherToolbarButton,
@@ -292,6 +293,7 @@ export const handleOnDeleteAtom = async (missingNumbers, data, imageL) => {
     }
     data.root.nodes = data.root.nodes.filter((node) => node.type !== 'image');
     data.root.nodes.push(...imageL);
+    console.log({ final: data });
     return data;
   } catch (err) {
     console.error('handleDelete!!', err.message);
@@ -368,21 +370,28 @@ const onAtomDelete = async (editor) => {
     const listOfAliasesBefore = await collectMissingAliases();
     await fetchKetcherData(editor);
     const listOfAliasesAfter = await collectMissingAliases();
-    let aliasDifferences = deepCompare(listOfAliasesBefore, listOfAliasesAfter);
-    const imageDifferences = deepCompare(oldImagePack, imagesList);
+    let aliasDifferences = deepCompareNumbers(listOfAliasesBefore, listOfAliasesAfter);
+    let imageDifferences = deepCompare(oldImagePack, imagesList);
 
     console.log({
-      listOfAliasesBefore, listOfAliasesAfter, imageNodeCounter, aliasDifferences, imageDifferences,
+      listOfAliasesBefore,
+      listOfAliasesAfter,
+      imageNodeCounter,
+      aliasDifferences,
+      imageDifferences,
+      oldImagePack,
+      imagesList
     });
-    if (imagesList.length - 1 !== imageNodeCounter) { // atom removed selected
-      console.log('image difference & missing numbers called');
+
+    if (imageDifferences.length > 0) { // atom removed selected
+      console.warn('image difference & missing numbers called');
       imageNodeCounter = imagesList.length - 1;
     } else {
-      console.log('all deletions when image is not deleted?');
+      console.warn('when image is not deleted?');
       const templateList = await fetchTemplateList();
       const filteredImages = [];
       for (let i = 0; i < imagesList.length; i++) {
-        if (aliasDifferences.indexOf(i.toString()) !== -1) {
+        if (aliasDifferences.indexOf(i) !== -1) {
           const templateId = await findTemplateByPayload(templateList, imagesList[i].data);
           if (templateId == null) {
             filteredImages.push(imagesList[i]); // Keep item only if templateId is null
@@ -401,6 +410,7 @@ const onAtomDelete = async (editor) => {
     deletedAtoms = [];
     aliasDifferences = [];
     oldImagePack = [];
+    imageDifferences = [];
   } catch (err) {
     console.log(err);
   }

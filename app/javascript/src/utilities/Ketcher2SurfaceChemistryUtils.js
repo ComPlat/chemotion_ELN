@@ -373,7 +373,7 @@ const collectMissingAliases = async () => {
     for (let j = 0; j < atoms.length; j++) {
       const split = atoms[j]?.alias?.split('_')[2];
       if (split) {
-        aliasList.push(split);
+        aliasList.push(parseInt(split));
       }
     }
   }
@@ -478,9 +478,22 @@ const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
 };
 
 // compare two arrays to find index changed differences
-const deepCompare = (oldArray, newArray) => {
-  const newSet = new Set(newArray); // Convert newArray to a Set for O(1) lookups
-  return oldArray.filter((item) => !newSet.has(item)); // Return missing values
+function deepCompare(oldArray, newArray) {
+  const maxLength = Math.max(oldArray.length, newArray.length);
+  const changedIndices = [];
+
+  for (let i = 0; i < maxLength; i++) {
+    if (JSON.stringify(oldArray[i]) !== JSON.stringify(newArray[i])) {
+      changedIndices.push(i);
+    }
+  }
+  return changedIndices;
+}
+
+// compare two arrays to find index changed differences
+const deepCompareNumbers = (oldArray, newArray) => {
+  const newSet = new Set(newArray);
+  return [...oldArray.filter((value) => !newSet.has(value))];
 };
 
 // generating images for ket2 format from molfile polymers list
@@ -1124,6 +1137,7 @@ export {
   collectMissingAliases,
   findMissingNumbers,
   deepCompare,
+  deepCompareNumbers,
 
   // DOM Methods
   disableButton,
