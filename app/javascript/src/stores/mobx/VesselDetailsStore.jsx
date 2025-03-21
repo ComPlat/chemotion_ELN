@@ -29,6 +29,7 @@ const VesselInstance = types.model({
 const VesselItem = types
   .model({
     id: '',
+    vesselTemplateId: '',
     vesselName: '',
     details: '',
     materialDetails: '',
@@ -171,6 +172,7 @@ export const VesselDetailsStore = types
       }
       self.vessels.set(jsVesselModel.id, VesselItem.create({
         id: jsVesselModel.id || '',
+        vesselTemplateId: jsVesselModel.vesselTemplateId || '',
         vesselName: jsVesselModel.vesselName || '',
         details: jsVesselModel.details || '',
         materialDetails: jsVesselModel.materialDetails || '',

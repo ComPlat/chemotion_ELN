@@ -70,12 +70,8 @@ export default class VesselsFetcher {
       },
       method: 'GET',
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Error fetching vessel template: ${response.statusText}`);
-        }
-        return response.json();
-      })
+      .then((response) => response.json())
+      .then((json) => Vessel.createFromTemplateResponse(collectionId, json))
       .catch((error) => {
         console.error(error);
       });
@@ -151,8 +147,6 @@ export default class VesselsFetcher {
       material_type,
     }).toString();
 
-    console.log(queryString);
-
     return fetch(`/api/v1/vessels/suggest/suggest_name/${queryString}`, {
       credentials: 'same-origin',
       headers: {
@@ -203,6 +197,50 @@ export default class VesselsFetcher {
         return vesselItem;
       });
     return promise;
+  }
+
+  static updateVesselTemplate(templateId, updatedData, collectionId) {
+    return fetch(`/api/v1/vessels/templates/${templateId}`, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'PUT',
+      body: JSON.stringify(updatedData),
+    })
+      .then((response) => response.json())
+      .then(() => VesselsFetcher.fetchVesselTemplateById(templateId, collectionId))
+      .then((loadedVesselInstance) => {
+        NotificationActions.add(successfullyUpdatedParameter);
+        return loadedVesselInstance;
+      })
+      .catch((errorMessage) => {
+        console.error('Error updating vessel template:', errorMessage);
+        NotificationActions.add(errorMessageParameter);
+      });
+  }
+
+  static updateVesselInstance(vesselId, updatedData) {
+    return fetch(`/api/v1/vessels/${vesselId}`, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'PUT',
+      body: JSON.stringify(updatedData),
+    })
+      .then((response) => response.json())
+      .then(() => VesselsFetcher.fetchById(vesselId))
+      .then((loadedVesselInstance) => {
+        NotificationActions.add(successfullyUpdatedParameter);
+        return loadedVesselInstance;
+      })
+      .catch((errorMessage) => {
+        console.error('Error updating vessel instance:', errorMessage);
+        NotificationActions.add(errorMessageParameter);
+      });
   }
 
   static lastCreatedVesselIds = new Set();
