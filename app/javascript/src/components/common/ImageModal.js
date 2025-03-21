@@ -90,9 +90,10 @@ export default class ImageModal extends Component {
   }
 
   fetchImage() {
-    if (!this.props.popObject.fetchId) { return null; }
+    const { popObject } = this.props;
+    if (!popObject.fetchId) { return null; }
 
-    AttachmentFetcher.fetchImageAttachment({ id: this.props.popObject.fetchId, annotated: true }).then(
+    AttachmentFetcher.fetchImageAttachment({ id: popObject.fetchId, annotated: true }).then(
       (result) => {
         if (result.data != null) {
           this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
@@ -105,7 +106,7 @@ export default class ImageModal extends Component {
     const {
       hasPop, previewObject, popObject, imageStyle, showPopImage
     } = this.props;
-    const { pageIndex, numOfPages } = this.state;
+    const { pageIndex, numOfPages, isPdf, fetchSrc } = this.state;
 
     if (!hasPop) {
       return (
@@ -146,13 +147,13 @@ export default class ImageModal extends Component {
             <Modal.Title>{popObject.title}</Modal.Title>
           </Modal.Header>
           <Modal.Body style={{ overflow: 'auto', position: 'relative' }}>
-            {this.state.isPdf ? (
+            {isPdf ? (
               <div>
                 <Document
-                  file={{ url: this.state.fetchSrc }}
+                  file={{ url: fetchSrc }}
                   onLoadSuccess={(pdf) => this.onDocumentLoadSuccess(pdf.numPages)}
                 >
-                  <Page pageNumber={pageIndex} />
+                  <Page pageNumber={pageIndex} renderAnnotationLayer={false} renderTextLayer={false} />
                 </Document>
                 <div>
                   <p>
@@ -209,6 +210,7 @@ ImageModal.propTypes = {
   popObject: PropTypes.shape({
     title: PropTypes.string,
     src: PropTypes.string,
+    fileName: PropTypes.string,
     fetchNeeded: PropTypes.bool,
     fetchId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,

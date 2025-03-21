@@ -2,6 +2,7 @@
 #
 Rails.application.routes.draw do
   post '/graphql', to: 'graphql#execute' unless Rails.env.production?
+  post '/csp-violation-report', to: 'csp_reports#create'
 
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
     devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }, skip: [:registrations]

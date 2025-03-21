@@ -45,6 +45,7 @@ module Usecases
           cryo_pres_medium: @params[:cryo_pres_medium],
           gender: @params[:gender],
           description: @params[:material_description],
+          created_by: @current_user.id,
         )
       end
 

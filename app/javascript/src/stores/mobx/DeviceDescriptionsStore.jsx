@@ -33,13 +33,13 @@ export const DeviceDescriptionsStore = types
   .model({
     device_description: types.optional(types.frozen({}), {}),
     device_description_checksum: types.optional(types.string, ''),
-    devices_descriptions: types.optional(types.optional(types.array(types.frozen({})), [])),
-    active_tab_key: types.optional(types.number, 1),
+    open_device_descriptions: types.optional(types.optional(types.array(types.frozen({})), [])),
+    saved_current_device_description_id: types.optional(types.string, ''),
+    active_tab_key: types.optional(types.string, 'properties'),
     key_prefix: types.optional(types.string, ''),
     toggable_contents: types.optional(types.frozen({}), toggableContents),
     toggable_segments: types.optional(types.array(types.string), []),
     analysis_mode: types.optional(types.string, 'edit'),
-    analysis_open_panel: types.optional(types.union(types.string, types.number), 'none'),
     analysis_comment_box: types.optional(types.boolean, false),
     analysis_start_export: types.optional(types.boolean, false),
     attachment_editor: types.optional(types.boolean, false),
@@ -52,8 +52,12 @@ export const DeviceDescriptionsStore = types
     attachment_sort_direction: types.optional(types.string, 'asc'),
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
     show_ontology_modal: types.optional(types.boolean, false),
+    show_ontology_select: types.optional(types.boolean, true),
+    show_ontology_form_selection: types.optional(types.boolean, false),
     ontology_mode: types.optional(types.string, 'edit'),
     selected_segment_id: types.optional(types.number, 0),
+    segment_expand_all: types.optional(types.boolean, false),
+    ontology_index_for_edit: types.optional(types.number, -1),
     list_grouped_by: types.optional(types.string, 'serial_number'),
     show_all_groups: types.optional(types.boolean, true),
     all_groups: types.optional(types.array(types.string), []),
@@ -62,6 +66,34 @@ export const DeviceDescriptionsStore = types
     multi_row_fields: types.optional(types.array(types.string), multiRowFields),
   })
   .actions(self => ({
+    addDeviceDescriptionToOpen(device_description) {
+      let openDeviceDescription = [...self.open_device_descriptions];
+      const index = openDeviceDescription.findIndex(s => s.id === device_description.id);
+      
+      if (index === -1) { 
+        self.setDeviceDescription(device_description, true);
+        openDeviceDescription.push(self.device_description);
+        self.open_device_descriptions = openDeviceDescription;
+      } else if (self.saved_current_device_description_id === `${device_description.id}`) {
+        self.device_description = device_description;
+        openDeviceDescription[index] = device_description;
+        self.open_device_descriptions = openDeviceDescription;
+      } else {
+        self.device_description = openDeviceDescription[index];
+      }
+      self.saved_current_device_description_id = '';
+    },
+    editDeviceDescriptions(device_description) {
+      let openDeviceDescription = [...self.open_device_descriptions];
+      const index = openDeviceDescription.findIndex(s => s.id === device_description.id);
+      openDeviceDescription[index] = device_description;
+      self.open_device_descriptions = openDeviceDescription;
+    },
+    removeFromOpenDeviceDescriptions(device_description) {
+      const openDeviceDescription =
+        self.open_device_descriptions.filter((s) => { return s.id !== device_description.id });
+      self.open_device_descriptions = openDeviceDescription;
+    },
     setDeviceDescription(device_description, initial = false) {
       if (initial) {
         self.device_description_checksum = device_description._checksum;
@@ -73,12 +105,10 @@ export const DeviceDescriptionsStore = types
         deviceDescription.changed = true;
       }
       self.device_description = deviceDescription;
-    },
-    setDeviceDescriptions(devices_descriptions) {
-      self.devices_descriptions = devices_descriptions;
-    },
-    clearDeviceDescription() {
-      self.device_description = {};
+
+      if (!initial) {
+        self.editDeviceDescriptions(deviceDescription);
+      }
     },
     changeDeviceDescription(field, value, type) {
       let device_description = { ...self.device_description };
@@ -113,6 +143,9 @@ export const DeviceDescriptionsStore = types
       device_description[elementField] = device_description_field;
       return device_description;
     },
+    setCurrentDeviceDescriptionIdToSave(value) {
+      self.saved_current_device_description_id = value;
+    },
     setActiveTabKey(key) {
       self.active_tab_key = key;
     },
@@ -136,9 +169,6 @@ export const DeviceDescriptionsStore = types
     changeAnalysisMode(mode) {
       self.analysis_mode = mode;
     },
-    changeAnalysisOpenPanel(panel) {
-      self.analysis_open_panel = panel;
-    },
     addEmptyAnalysisContainer() {
       const container = Container.buildEmpty();
       container.container_type = "analysis"
@@ -160,10 +190,12 @@ export const DeviceDescriptionsStore = types
     toggleAnalysisCommentBox() {
       self.analysis_comment_box = !self.analysis_comment_box;
     },
-    changeAnalysisComment(comment) {
+    changeAnalysisComment(e) {
+      if (!e && !e?.target) { return null; }
+
       let device_description = { ...self.device_description };
       let container = { ...self.device_description.container }
-      container.description = comment;
+      container.description = e.target.value;
       device_description.container = container;
       self.setDeviceDescription(device_description);
     },
@@ -205,31 +237,32 @@ export const DeviceDescriptionsStore = types
       self.setFilteredAttachments(device_description.attachments);
       self.setDeviceDescription(device_description, initial);
     },
-    loadPreviewImagesOfAttachments(device_description) {
-      if (device_description.attachments.length === 0) { return device_description }
-      let deviceDescription = { ...device_description }
-
-      deviceDescription.attachments.map((attachment, index) => {
-        let attachment_object = { ...device_description.attachments[index] };
-        if (attachment.thumb) {
-          AttachmentFetcher.fetchThumbnail({ id: attachment.id })
-            .then((result) => {
-              let preview = result != null ? `data:image/png;base64,${result}` : '/images/wild_card/not_available.svg';
-              attachment_object.preview = preview;
-              deviceDescription.attachments[index] = attachment_object;
-              self.setFilteredAttachments(deviceDescription.attachments);
-            });
-        }
-      });
-    },
     toggleOntologyModal() {
       self.show_ontology_modal = !self.show_ontology_modal;
+    },
+    closeOntologyModal() {
+      self.show_ontology_modal = false;
+      self.show_ontology_select = true;
+      self.show_ontology_form_selection = false;
+      self.ontology_index_for_edit = -1;
+    },
+    toggleOntologySelect() {
+      self.show_ontology_select = !self.show_ontology_select;
+    },
+    toggleOntologyFormSelection() {
+      self.show_ontology_form_selection = !self.show_ontology_form_selection;
     },
     changeOntologyMode(mode) {
       self.ontology_mode = mode;
     },
     setSelectedSegmentId(segment_id) {
       self.selected_segment_id = segment_id;
+    },
+    changeSegmentExpandAll(value) {
+      self.segment_expand_all = value;
+    },
+    setOntologyIndexForEdit(index) {
+      self.ontology_index_for_edit = index;
     },
     setListGroupedBy(value) {
       self.list_grouped_by = value;
@@ -277,7 +310,6 @@ export const DeviceDescriptionsStore = types
     }
   }))
   .views(self => ({
-    get deviceDescriptionsValues() { return values(self.devices_descriptions) },
     get filteredAttachments() { return values(self.filtered_attachments) },
     get shownGroups() { return values(self.shown_groups) },
     get selectIsOpen() { return values(self.select_is_open) },
