@@ -465,8 +465,8 @@ const placeTextOnAtoms = async (mols_) => {
 
 // helper function to remove template by image
 const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
-  let images = canvasSelection?.images || [];
-  if (!images.length) images = deepCompare(oldImagePack, imagesList);
+  const images = canvasSelection?.images || [];
+  // if (!images.length) images = deepCompare(oldImagePack, imagesList);
   const filteredTextList = removeTextNodeFromStruct(images, textL);
   const { data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
   const remainingCount = imageNodeCounter - imageFoundIndexCount;
@@ -480,14 +480,13 @@ const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
 // compare two arrays to find index changed differences
 function deepCompare(oldArray, newArray) {
   const maxLength = Math.max(oldArray.length, newArray.length);
-  const changedIndices = [];
 
   for (let i = 0; i < maxLength; i++) {
-    if (JSON.stringify(oldArray[i]) !== JSON.stringify(newArray[i])) {
-      changedIndices.push(i);
+    if (oldArray[i].data !== newArray[i].data) {
+      return true;
     }
   }
-  return changedIndices;
+  return false;
 }
 
 // compare two arrays to find index changed differences

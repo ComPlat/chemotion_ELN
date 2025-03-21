@@ -271,29 +271,43 @@ const countLessThan = (set, number) => {
 // helper function to remove template by atom with alias
 export const handleOnDeleteAtom = async (missingNumbers, data, imageL) => {
   try {
-    for (let m = 0; m < mols.length; m++) {
-      const mol = data[mols[m]];
+    console.log({ missingNumbers });
+    const textNodeStructureCopy = { ...textNodeStruct };
+    const structureKeys = Object.keys(textNodeStruct);
+    structureKeys.forEach((i) => {
+      const split = parseInt(i.split('_')[2]);
+      if (missingNumbers.indexOf(split) !== -1) {
+        delete textNodeStruct[i];
+      }
+    });
+
+    for (const molKey of mols) {
+      const mol = data[molKey];
       if (mol && mol?.atoms) {
-        const atoms = mol?.atoms || [];
-        for (let i = 0; i < atoms.length; i++) {
-          const atom = atoms[i];
+        for (const atom of mol.atoms) {
           if (ALIAS_PATTERNS.threeParts.test(atom?.alias)) {
-            const atomSplits = atom.alias.split('_');
-            let currentAlias = parseInt(atomSplits[2]);
-            missingNumbers.forEach((missingNum) => {
-              if (currentAlias > missingNum) {
-                currentAlias -= 1;
+            const previousAlias = atom.alias;
+            const atomSplits = previousAlias.split('_');
+            const currentAlias = parseInt(atomSplits[2]);
+
+            // Count how many missing numbers are LESS than the current alias
+            const missingCount = missingNumbers.filter((num) => num < currentAlias).length;
+
+            if (missingCount > 0) {
+              atom.alias = `t_${atomSplits[1]}_${currentAlias - missingCount}`;
+
+              if (textNodeStructureCopy[previousAlias]) {
+                textNodeStruct[atom.alias] = textNodeStruct[previousAlias];
+                delete textNodeStruct[previousAlias];
               }
-            });
-            atom.alias = `t_${atomSplits[1]}_${currentAlias}`;
+            }
           }
         }
-        data[mols[m]].atoms = atoms;
       }
     }
+
     data.root.nodes = data.root.nodes.filter((node) => node.type !== 'image');
     data.root.nodes.push(...imageL);
-    console.log({ final: data });
     return data;
   } catch (err) {
     console.error('handleDelete!!', err.message);
@@ -370,20 +384,10 @@ const onAtomDelete = async (editor) => {
     const listOfAliasesBefore = await collectMissingAliases();
     await fetchKetcherData(editor);
     const listOfAliasesAfter = await collectMissingAliases();
-    let aliasDifferences = deepCompareNumbers(listOfAliasesBefore, listOfAliasesAfter);
-    let imageDifferences = deepCompare(oldImagePack, imagesList);
+    const aliasDifferences = deepCompareNumbers(listOfAliasesBefore, listOfAliasesAfter);
+    const hasImageDifferences = deepCompare(oldImagePack, imagesList);
 
-    console.log({
-      listOfAliasesBefore,
-      listOfAliasesAfter,
-      imageNodeCounter,
-      aliasDifferences,
-      imageDifferences,
-      oldImagePack,
-      imagesList
-    });
-
-    if (imageDifferences.length > 0) { // atom removed selected
+    if (hasImageDifferences) { // atom removed selected
       console.warn('image difference & missing numbers called');
       imageNodeCounter = imagesList.length - 1;
     } else {
@@ -394,23 +398,26 @@ const onAtomDelete = async (editor) => {
         if (aliasDifferences.indexOf(i) !== -1) {
           const templateId = await findTemplateByPayload(templateList, imagesList[i].data);
           if (templateId == null) {
-            filteredImages.push(imagesList[i]); // Keep item only if templateId is null
+            filteredImages.push(imagesList[i]);
           }
         } else {
-          filteredImages.push(imagesList[i]); // Keep items not in aliasDifferences
+          filteredImages.push(imagesList[i]);
         }
       }
       imagesList = filteredImages;
       imageNodeCounter = imagesList.length - 1;
     }
 
+    latestData = await handleOnDeleteAtom(aliasDifferences, latestData, imagesList);
     await filterTextList(aliasDifferences); // text node structure
-    latestData = await handleOnDeleteAtom(aliasDifferences, latestData, imagesList); // rebase atom aliases
+    console.log({
+      latestData,
+      imageNodeCounter,
+      imagesList
+    });
     await saveMoveCanvas(editor, latestData, true, false);
     deletedAtoms = [];
-    aliasDifferences = [];
     oldImagePack = [];
-    imageDifferences = [];
   } catch (err) {
     console.log(err);
   }
@@ -418,31 +425,17 @@ const onAtomDelete = async (editor) => {
 
 // filter text nodes by key, key as in text key
 const filterTextList = async (aliasDifferences) => {
-  // re-wa all the index when deleted index is small then existing third part
-  if (aliasDifferences.length && deletedAtoms.length) {
-    console.log({
-      aliasDifferences: [...aliasDifferences],
-      deletedAtoms
-    });
-  }
-  const keys = Object.keys(textNodeStruct);
-  const keyList = [];
+  // rewire all the index when deleted index is small then existing third part
+  const keys = Object.values(textNodeStruct);
   const valueList = [];
   if (aliasDifferences.length) {
-    aliasDifferences.forEach((i) => keys
-      .forEach((item) => {
-        const part = parseInt(item.split('_')[2]);
-        return part !== parseInt(i) && keyList.push(textNodeStruct[item]);
-      }));
-
     textList.forEach((item) => {
-      if (keyList.includes(JSON.parse(item.data.content).blocks[0].key)) {
+      if (keys.includes(JSON.parse(item.data.content).blocks[0].key)) {
         valueList.push(item);
       }
     });
     latestData.root.nodes = [...removeTextFromData(latestData), ...valueList];
     textList = [...valueList];
-    await reEvaluateTextStructureIndices(new Set([...aliasDifferences])); // text node structure
   }
 };
 
@@ -463,9 +456,7 @@ const reEvaluateTextStructureIndices = async (aliasDifferences) => {
         textNodeCopy[newKey] = value;
       }
     });
-    console.log(textNodeCopy);
     textNodeStruct = { ...textNodeCopy };
-    console.log({ textNodeStruct, imagesList });
   }
 };
 
