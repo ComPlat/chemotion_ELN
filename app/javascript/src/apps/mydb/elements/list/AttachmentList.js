@@ -46,7 +46,7 @@ export const attachmentThumbnail = (attachment) => (
           attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
             ? {
               fetchNeeded: true,
-              src: `/api/v1/attachments/${attachment.id}/annotated_image`,
+              src: `/api/v1/attachments/${attachment.id}?annotated=true`,
             }
             : {
               src: attachment.preview,
@@ -77,7 +77,7 @@ const handleDownloadAnnotated = (attachment) => {
   const isImage = isImageFile(attachment.filename);
   if (isImage && !attachment.isNew) {
     Utils.downloadFile({
-      contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+      contents: `/api/v1/attachments/${attachment.id}?annotated=true`,
       name: attachment.filename
     });
   }
