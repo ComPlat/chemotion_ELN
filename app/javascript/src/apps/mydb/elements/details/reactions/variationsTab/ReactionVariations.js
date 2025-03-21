@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useCallback, useReducer, useEffect
+  useRef, useState, useCallback, useReducer, useEffect, useMemo
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert,
@@ -43,10 +43,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
-  const [columnDefinitions, setColumnDefinitions] = useReducer(
-    columnDefinitionsReducer,
-    getColumnDefinitions(selectedColumns, reactionMaterials, gasMode)
-  );
+  const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
+  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
 
   const dataTypeDefinitions = {
     property: {
