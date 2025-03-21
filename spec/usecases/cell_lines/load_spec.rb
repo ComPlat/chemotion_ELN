@@ -5,8 +5,9 @@ require 'spec_helper'
 RSpec.describe Usecases::CellLines::Load do
   let(:user) { create(:user) }
   let(:collection) { create(:collection) }
-  let(:cellline_sample) { create(:cellline_sample) }
-  let(:cellline_sample2) { create(:cellline_sample) }
+  let(:material) { create(:cellline_material) }
+  let(:cellline_sample) { create(:cellline_sample, cellline_material: material) }
+  let(:cellline_sample2) { create(:cellline_sample, cellline_material: material) }
   let(:id) { cellline_sample.id }
 
   let(:loaded_cellline_sample) { described_class.new(id, user).execute! }
