@@ -6,6 +6,7 @@ import {
   Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import { cloneDeep, isEqual } from 'lodash';
 import {
   getVariationsRowName, convertUnit, getStandardUnits, getUserFacingUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
@@ -518,6 +519,19 @@ MenuHeader.defaultProps = {
 function ColumnSelection(selectedColumns, availableColumns, onApply) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
+
+  useEffect(() => {
+    // Remove currently selected columns that are no longer available.
+    const updatedCurrentColumns = cloneDeep(currentColumns);
+
+    Object.entries(updatedCurrentColumns).forEach(([key, values]) => {
+      const { [key]: availableValues } = availableColumns;
+      updatedCurrentColumns[key] = values.filter((value) => availableValues.includes(value));
+    });
+    if (!isEqual(updatedCurrentColumns, currentColumns)) {
+      setCurrentColumns(updatedCurrentColumns);
+    }
+  }, [availableColumns]);
 
   const handleApply = () => {
     onApply(currentColumns);
