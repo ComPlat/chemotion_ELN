@@ -90,6 +90,7 @@ const hasTextNodes = async (molfile) => {
     const lines = molfile.trim().split('\n');
     const start = lines.indexOf(KET_TAGS.textNodeIdentifier);
     const end = lines.indexOf(KET_TAGS.textNodeIdentifierClose);
+    if (start === -1 || end === -1) return [];
     const sliceOfTextNodes = lines.slice(start + 1, end);
     return sliceOfTextNodes;
   } catch (err) {
@@ -239,32 +240,8 @@ const removeImagesFromData = (data) => data.root.nodes.filter((node) => node.typ
 // filter images from nodes
 const removeTextFromData = (data) => data.root.nodes.filter((node) => node.type !== 'text');
 
-// Updates atom aliases in a molecule after removing certain images and updates the molecule data.
-const updateMoleculeAliases = async (container, atomList) => {
-  console.log('updateMoleculeAliases');
-  for (const imgIdx of container) {
-    for (let i = 0; i < atomList.length; i++) {
-      const atom = atomList[i];
-      if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
-        const splits = atom.alias.split('_');
-        if (parseInt(splits[2]) > imgIdx) {
-          const newValue = `t_${splits[1]}_${parseInt(splits[2]) - 1}`;
-          const oldValue = `t_${splits[1]}_${parseInt(splits[2])}`;
-          const textNode = textNodeStruct[oldValue];
-          if (textNode) {
-            textNodeStruct[newValue] = textNode;
-            delete textNodeStruct[oldValue];
-          }
-          atomList[i].alias = newValue;
-        }
-      }
-    }
-  }
-  return atomList;
-};
-
 // helper function to remove bonds by atom id
-const updateBondList = (indexToMatch, bondList) => {
+const updateBondList = async (indexToMatch, bondList) => {
   // Update bonds to reflect the removal of the atom
   const list = [];
   for (const ba of bondList) {
@@ -276,78 +253,86 @@ const updateBondList = (indexToMatch, bondList) => {
   return list;
 };
 
-// Removes atoms that match image index, updates bonds, and collects removed indices.
-const removeAndUpdateAtoms = async (atomsList, bondsList, images, container) => {
-  let imageFoundIndex = 0;
-
-  // Iterate backwards to avoid index-shifting issues
-  for (let i = atomsList.length - 1; i >= 0; i--) {
-    const atom = atomsList[i];
-
-    if (atom?.alias && atom.label === KET_TAGS.inspiredLabel) {
-      const imgIndex = parseInt(atom.alias.split('_')[2]);
-      if (images.has(imgIndex)) {
-        container.add(imgIndex);
-        bondsList = updateBondList(i, bondsList); // Update bonds to reflect the removal of the atom
-        atomsList.splice(i, 1); // Remove the atom
-        imageFoundIndex++; // Increment counter for found images
-      }
-    }
-  }
-  return {
-    updatedAtoms: atomsList,
-    updatedBonds: bondsList,
-    removedIndices: container,
-    removedCount: imageFoundIndex,
-    selectedImageList: images
-  };
-};
-
-// Updates molecule data or removes it from the dataset based on the atoms list.
-const updateOrRemoveMolecule = async (molecule, container, atomsList, bondsList) => {
-  // Molecule has atoms, update its data
-  molecule.atoms = await updateMoleculeAliases(container, atomsList);
-  molecule.bonds = bondsList;
-  return molecule;
-};
-
-// remove atoms from the template-list with alias,
-const removeImageTemplateAtom = async (images, molList, data) => {
+// helper function to remove template by atom with alias
+const handleOnDeleteAtom = async (missingNumbers, data, imageL) => {
   try {
-    const removeIndexList = new Set();
-    let imageFoundIndexCount = 0;
+    const textNodeStructureCopy = { ...textNodeStruct };
+    const structureKeys = Object.keys(textNodeStruct);
+    structureKeys.forEach((i) => {
+      const split = parseInt(i.split('_')[2]);
+      if (missingNumbers.indexOf(split) !== -1) {
+        delete textNodeStruct[i];
+      }
+    });
 
-    for (const molKey of molList) {
-      const molecule = data[molKey];
-      // if (!molecule || !molecule.atoms) continue;
-      if (molecule && molecule.atoms) {
-        const atomList = molecule?.atoms || [];
-        const bondList = molecule?.bonds || [];
+    for (const molKey of mols) {
+      const mol = data[molKey];
+      if (mol && mol?.atoms) {
+        for (const atom of mol.atoms) {
+          if (ALIAS_PATTERNS.threeParts.test(atom?.alias)) {
+            const previousAlias = atom.alias;
+            const atomSplits = previousAlias.split('_');
+            const currentAlias = parseInt(atomSplits[2]);
 
-        // step 1: remove atoms and bonds based on images list
-        const {
-          updatedAtoms, updatedBonds, removedIndices, removedCount
-          // eslint-disable-next-line no-await-in-loop
-        } = await removeAndUpdateAtoms(atomList, bondList, images, removeIndexList);
+            // Count how many missing numbers are LESS than the current alias
+            const missingCount = missingNumbers.filter((num) => num < currentAlias).length;
 
-        // step 2: data filler
-        imageFoundIndexCount += removedCount; // Update total found count
-        removedIndices.forEach((item) => removeIndexList.add(item)); // updated remove indices
+            if (missingCount > 0) {
+              atom.alias = `t_${atomSplits[1]}_${currentAlias - missingCount}`;
 
-        // step 3: Updates molecule data or delete atoms if empty
-        if (atomList.length) {
-          data[molKey] = await updateOrRemoveMolecule(molecule, images, updatedAtoms, updatedBonds);
-        } else {
-          // Molecule has no atoms, remove it from the data
-          data.root.nodes = removeMoleculeFromData(data, molKey);
-          delete data[molKey];
+              if (textNodeStructureCopy[previousAlias]) {
+                textNodeStruct[atom.alias] = textNodeStruct[previousAlias];
+                delete textNodeStruct[previousAlias];
+              }
+            }
+          }
         }
       }
     }
-    return { data, imageFoundIndexCount };
+
+    data.root.nodes = data.root.nodes.filter((node) => node.type !== 'image');
+    data.root.nodes.push(...imageL);
+    return data;
+  } catch (err) {
+    console.error('handleDelete!!', err.message);
+    return null;
+  }
+};
+
+// remove atoms from the template-list with alias,
+const removeImageTemplateAtom = async (data, aliasToBeRemoved) => {
+  try {
+    for (const molKey of mols) {
+      const molecule = data[molKey];
+      if (molecule && molecule.atoms) {
+        const atomList = molecule?.atoms || [];
+        const bondList = molecule?.bonds || [];
+        let removeIndex = -1;
+
+        for (let i = 0; i < atomList.length; i++) {
+          if (ALIAS_PATTERNS.threeParts.test(atomList[i].alias)) {
+            const split = parseInt(atomList[i].alias.split('_')[2]);
+            if (aliasToBeRemoved.indexOf(split) !== -1) {
+              atomList.splice(i, 1);
+              removeIndex = i;
+            }
+            if (!atomList?.length) {
+              data.root.nodes = removeMoleculeFromData(data, molKey);
+              delete data[molKey];
+            }
+          }
+        }
+
+        if (removeIndex !== -1 && bondList.length) {
+          data[molKey].bonds = await updateBondList(removeIndex, bondList);
+        }
+        if (atomList.length) data[molKey].atoms = atomList;
+      }
+    }
+    return data;
   } catch (err) {
     console.error('removeImageTemplateAtom', err.message);
-    return null;
+    return data;
   }
 };
 
@@ -379,6 +364,7 @@ const collectMissingAliases = async () => {
   }
   return aliasList;
 };
+
 const findMissingNumbers = async (arr) => {
   // Convert array to numbers and sort in ascending order
   const nums = arr.map(Number).sort((a, b) => a - b);
@@ -456,7 +442,8 @@ const placeTextOnAtoms = async (mols_) => {
         }
       }
     }
-    return [...removeTextFromData(latestData), ...updatedTextList];
+    const diff = await deepCompareContent(textList, updatedTextList); // extra text components without aliases
+    return [...removeTextFromData(latestData), ...updatedTextList, ...diff.map((i) => textList[i])];
   } catch (err) {
     console.error('placeTextOnAtoms', err.message);
     return [];
@@ -467,6 +454,8 @@ const placeTextOnAtoms = async (mols_) => {
 const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
   const images = canvasSelection?.images || [];
   // if (!images.length) images = deepCompare(oldImagePack, imagesList);
+  console.log(images);
+  return data;
   const filteredTextList = removeTextNodeFromStruct(images, textL);
   const { data, imageFoundIndexCount } = await removeImageTemplateAtom(new Set([...images]), mols, latestData);
   const remainingCount = imageNodeCounter - imageFoundIndexCount;
@@ -477,20 +466,35 @@ const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
   return data;
 };
 
-// compare two arrays to find index changed differences
-function deepCompare(oldArray, newArray) {
-  const maxLength = Math.max(oldArray.length, newArray.length);
+const deepCompareContent = async (oldArray, newArray) => {
+  const missingIndexes = [];
+  let shift = 0; // Tracks how much newArray is shifted
 
+  for (let i = 0; i < oldArray.length; i++) {
+    const newIndex = i - shift; // Adjust index based on shift
+
+    if (!newArray[newIndex] || oldArray[i].data !== newArray[newIndex].data) {
+      missingIndexes.push(i);
+      shift++; // Increase shift since an element is missing or changed
+    }
+  }
+
+  return missingIndexes;
+};
+
+// compare two arrays to find index changed differences
+const deepCompare = async (oldArray, newArray) => {
+  const maxLength = Math.max(oldArray.length, newArray.length);
   for (let i = 0; i < maxLength; i++) {
-    if (oldArray[i].data !== newArray[i].data) {
+    if (oldArray[i]?.data !== newArray[i]?.data) {
       return true;
     }
   }
   return false;
-}
+};
 
 // compare two arrays to find index changed differences
-const deepCompareNumbers = (oldArray, newArray) => {
+const deepCompareNumbers = async (oldArray, newArray) => {
   const newSet = new Set(newArray);
   return [...oldArray.filter((value) => !newSet.has(value))];
 };
@@ -682,6 +686,7 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
 
 const buttonClickForRectangleSelection = async (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  console.log(iframeDocument);
   const button = iframeDocument?.querySelector('[data-testid="select-rectangle"]');
   if (button) {
     button.click();
@@ -853,7 +858,7 @@ const removeUnfamiliarRgLabels = async (lines) => {
   return removeAtomFromLineByIndex(lines, removeableAtoms);
 };
 
-const removeAtomFromLineByIndex = (lines, removeableAtoms) => {
+const removeAtomFromLineByIndex = (lines) => {
   const elementsInfo = lines[3];
   const headers = elementsInfo.trim().split(' ').filter((i) => i !== '');
   const atomsCount = parseInt(headers[0]);
@@ -1137,6 +1142,8 @@ export {
   findMissingNumbers,
   deepCompare,
   deepCompareNumbers,
+  deepCompareContent,
+  handleOnDeleteAtom,
 
   // DOM Methods
   disableButton,
