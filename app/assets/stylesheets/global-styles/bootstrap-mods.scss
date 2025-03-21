@@ -41,7 +41,8 @@ h5,
 h6 {
   margin-top: 0.5em;
   &.modal-title,
-  &.accordion-header {
+  &.accordion-header,
+  &.popover-header {
     margin-top: 0;
   }
 }
