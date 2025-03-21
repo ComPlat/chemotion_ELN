@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CreatableSelect } from 'src/components/common/Select';
-import { Button, Modal, OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
+import { Button, Modal, OverlayTrigger, Table, Tooltip, Popover } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 
@@ -14,6 +14,7 @@ function Affiliations({ show, onHide }) {
   const [groupOptions, setGroupOptions] = useState([]);
   const [inputError, setInputError] = useState({});
   const [errorMsg, setErrorMsg] = useState('');
+  const [showConfirmIndex, setShowConfirmIndex] = useState(null);
 
   const currentEntries = affiliations.filter((entry) => entry.current);
 
@@ -35,7 +36,7 @@ function Affiliations({ show, onHide }) {
   useEffect(() => {
     UserSettingsFetcher.getAutoCompleteSuggestions('countries')
       .then((data) => {
-        setCountryOptions(data.map(item => ({ value: item.value, label: item.label })));
+        setCountryOptions(data.map((item) => ({ value: item.value, label: item.label })));
       })
       .catch((error) => {
         console.log(error);
@@ -44,7 +45,7 @@ function Affiliations({ show, onHide }) {
 
     UserSettingsFetcher.getAutoCompleteSuggestions('organizations')
       .then((data) => {
-        setOrgOptions(data.map(item => ({ value: item.value, label: item.label })));
+        setOrgOptions(data.map((item) => ({ value: item.value, label: item.label })));
       })
       .catch((error) => {
         console.log(error);
@@ -52,7 +53,7 @@ function Affiliations({ show, onHide }) {
 
     UserSettingsFetcher.getAutoCompleteSuggestions('departments')
       .then((data) => {
-        setDeptOptions(data.map(item => ({ value: item.value, label: item.label })));
+        setDeptOptions(data.map((item) => ({ value: item.value, label: item.label })));
       })
       .catch((error) => {
         console.log(error);
@@ -60,7 +61,7 @@ function Affiliations({ show, onHide }) {
 
     UserSettingsFetcher.getAutoCompleteSuggestions('groups')
       .then((data) => {
-        setGroupOptions(data.map(item => ({ value: item.value, label: item.label })));
+        setGroupOptions(data.map((item) => ({ value: item.value, label: item.label })));
       })
       .catch((error) => {
         console.log(error);
@@ -139,6 +140,35 @@ function Affiliations({ show, onHide }) {
       handleCreateOrUpdateAffiliation(index);
     }
   };
+
+  const popover = (index) => (
+    <Popover id={`delete-confirm-${index}`}>
+      <Popover.Header as="h3">Delete Confirmation</Popover.Header>
+      <Popover.Body>
+        Are you sure you want to delete this affiliation?
+        <div className="mt-2 d-flex justify-content-center">
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              handleDeleteAffiliation(index);
+              setShowConfirmIndex(null);
+            }}
+          >
+            Yes
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="ms-2"
+            onClick={() => setShowConfirmIndex(null)}
+          >
+            No
+          </Button>
+        </div>
+      </Popover.Body>
+    </Popover>
+  );
 
   return (
     <Modal
@@ -239,10 +269,10 @@ function Affiliations({ show, onHide }) {
                         options={countryOptions}
                         onCreateOption={(newValue) => {
                           const newOption = { value: newValue, label: newValue };
-                          setCountryOptions(prev => [...prev, newOption]);
+                          setCountryOptions((prev) => [...prev, newOption]);
                           onChangeHandler(index, 'country', newValue);
                         }}
-                        value={countryOptions.find(option => option.value === item.country) || null}
+                        value={countryOptions.find((option) => option.value === item.country) || null}
                         onChange={(choice) => onChangeHandler(index, 'country', !choice ? '' : choice.value)}
                       />
                     )}
@@ -256,10 +286,10 @@ function Affiliations({ show, onHide }) {
                           placeholder="Select or enter a new option"
                           className={inputError[index] && inputError[index].organization ? 'is-invalid' : ''}
                           options={orgOptions}
-                          value={orgOptions.find(option => option.value === item.organization) || null} 
+                          value={orgOptions.find((option) => option.value === item.organization) || null} 
                           onCreateOption={(newValue) => {
                             const newOption = { value: newValue, label: newValue };
-                            setOrgOptions(prev => [...prev, newOption]);
+                            setOrgOptions((prev) => [...prev, newOption]);
                             onChangeHandler(index, 'organization', newValue);
                           }}
                           onChange={(choice) => onChangeHandler(index, 'organization', !choice ? '' : choice.value)}
@@ -277,10 +307,10 @@ function Affiliations({ show, onHide }) {
                         disabled={item.disabled}
                         placeholder="Select or enter a new option"
                         options={deptOptions}
-                        value={deptOptions.find(option => option.value === item.department) || null}
+                        value={deptOptions.find((option) => option.value === item.department) || null}
                         onCreateOption={(newValue) => {
                           const newOption = { value: newValue, label: newValue };
-                          setDeptOptions(prev => [...prev, newOption]);
+                          setDeptOptions((prev) => [...prev, newOption]);
                           onChangeHandler(index, 'department', newValue);
                         }}
                         onChange={(choice) => onChangeHandler(index, 'department', !choice ? '' : choice.value)}
@@ -293,11 +323,11 @@ function Affiliations({ show, onHide }) {
                       <CreatableSelect
                         placeholder="Select or enter a new option"
                         disabled={item.disabled}
-                        value={groupOptions.find(option => option.value === item.group) || null}
+                        value={groupOptions.find((option) => option.value === item.group) || null}
                         options={groupOptions}
                         onCreateOption={(newValue) => {
                           const newOption = { value: newValue, label: newValue };
-                          setGroupOptions(prev => [...prev, newOption]);
+                          setGroupOptions((prev) => [...prev, newOption]);
                           onChangeHandler(index, 'group', newValue);
                         }}
                         onChange={(choice) => onChangeHandler(index, 'group', !choice ? '' : choice.value)}
@@ -370,9 +400,8 @@ function Affiliations({ show, onHide }) {
                               setAffiliations(updatedAffiliations);
                             }}
                           >
-                            <i className="fa fa-edit" />
+                            <i className="fa fa-edit" title="Edit affiliation" />
                           </Button>
-
                         </OverlayTrigger>
                       )
                       : (
@@ -390,25 +419,24 @@ function Affiliations({ show, onHide }) {
                             className="ms-auto"
                             onClick={() => handleSaveButtonClick(index)}
                           >
-                            <i className="fa fa-save" />
+                            <i className="fa fa-save" title="Save changes" />
                           </Button>
                         </OverlayTrigger>
                       )}
                     <OverlayTrigger
-                      placement="top"
-                      overlay={(
-                        <Tooltip id="affiliation_delete_tooltip">
-                          Delete affiliation
-                        </Tooltip>
-                      )}
+                      trigger="click"
+                      placement="left"
+                      show={showConfirmIndex === index}
+                      onToggle={(isOpen) => setShowConfirmIndex(isOpen ? index : null)}
+                      overlay={popover(index)}
                     >
                       <Button
                         className="ms-1"
                         size="sm"
                         variant="danger"
-                        onClick={() => handleDeleteAffiliation(index)}
+                        onClick={() => setShowConfirmIndex(index)}
                       >
-                        <i className="fa fa-trash-o" />
+                        <i className="fa fa-trash-o" title="Delete affiliation" />
                       </Button>
                     </OverlayTrigger>
                   </div>
