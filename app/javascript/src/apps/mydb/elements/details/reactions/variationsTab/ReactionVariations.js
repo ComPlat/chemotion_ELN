@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useCallback, useReducer, useEffect
+  useRef, useState, useCallback, useReducer, useEffect, useMemo
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert,
@@ -11,104 +11,40 @@ import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-  createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType, getStandardUnits, materialTypes
+  createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
+  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
+  getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  getMaterialColumnGroupChild, updateVariationsGasTypes,
+  updateVariationsGasTypes,
   getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
+  removeObsoleteMaterialColumns
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor,
-  RowToolsCellRenderer, MenuHeader
+  ColumnSelection
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-import {
-  columnDefinitionsReducer
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
+import columnDefinitionsReducer
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
+  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
+  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
+  const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
   const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
-  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, [
-    {
-      headerName: 'Tools',
-      cellRenderer: RowToolsCellRenderer,
-      lockPosition: 'left',
-      sortable: false,
-      maxWidth: 100,
-      cellDataType: false,
-    },
-    {
-      headerName: 'Notes',
-      field: 'notes',
-      cellRenderer: NoteCellRenderer,
-      sortable: false,
-      cellDataType: 'text',
-      cellEditor: NoteCellEditor,
-    },
-    {
-      headerName: 'Analyses',
-      field: 'analyses',
-      tooltipValueGetter: getAnalysesOverlay,
-      tooltipComponent: AnalysisOverlay,
-      cellRenderer: AnalysesCellRenderer,
-      cellEditor: AnalysesCellEditor,
-      cellDataType: false,
-      sortable: false,
-    },
-    {
-      headerName: 'Properties',
-      groupId: 'properties',
-      marryChildren: true,
-      children: [
-        {
-          field: 'properties.temperature',
-          cellDataType: getCellDataType('temperature'),
-          entryDefs: {
-            currentEntry: 'temperature',
-            displayUnit: getStandardUnits('temperature')[0],
-            availableEntries: ['temperature']
-          },
-          headerComponent: MenuHeader,
-          headerComponentParams: {
-            names: ['T'],
-          }
-        },
-        {
-          field: 'properties.duration',
-          cellDataType: getCellDataType('duration'),
-          editable: !gasMode,
-          entryDefs: {
-            currentEntry: 'duration',
-            displayUnit: getStandardUnits('duration')[0],
-            availableEntries: ['duration']
-          },
-          headerComponent: MenuHeader,
-          headerComponentParams: {
-            names: ['t'],
-          }
-        },
-      ]
-    },
-  ].concat(
-    Object.entries(reactionMaterials).map(([materialType, materials]) => ({
-      headerName: materialTypes[materialType].label,
-      groupId: materialType,
-      marryChildren: true,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, MenuHeader, gasMode))
-    }))
-  ));
+  const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
+  const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
+  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
 
   const dataTypeDefinitions = {
     property: {
@@ -180,7 +116,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   /*
   Keep set of materials up-to-date.
   Materials could have been added or removed in the "Scheme" tab.
-  These changes need to be reflected in the variations.
+  We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
   */
   if (
     !isEqual(
@@ -188,21 +124,25 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       getReactionMaterialsIDs(updatedReactionMaterials)
     )
   ) {
-    let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
-    updatedReactionVariations = addMissingMaterialsToVariations(
-      updatedReactionVariations,
+    const updatedSelectedColumns = removeObsoleteMaterialColumns(
       updatedReactionMaterials,
-      updatedGasMode
+      selectedColumns
     );
+    setSelectedColumns(updatedSelectedColumns);
 
+    const updatedReactionVariations = removeObsoleteColumnsFromVariations(
+      reactionVariations,
+      updatedSelectedColumns
+    );
     setReactionVariations(updatedReactionVariations);
+
     setColumnDefinitions(
       {
-        type: 'update_material_set',
-        gasMode: updatedGasMode,
-        reactionMaterials: updatedReactionMaterials
+        type: 'remove_obsolete_materials',
+        selectedColumns: updatedSelectedColumns
       }
     );
+
     setReactionMaterials(updatedReactionMaterials);
   }
 
@@ -210,11 +150,17 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   Update gas mode according to "Scheme" tab.
   */
   if (gasMode !== updatedGasMode) {
+    const updatedSelectedColumns = getVariationsColumns([]);
+    setSelectedColumns(updatedSelectedColumns);
     setColumnDefinitions(
       {
         type: 'toggle_gas_mode',
-        gasMode: updatedGasMode,
-        reactionMaterials: updatedReactionMaterials
+        materials: Object.keys(materialTypes).reduce((materials, materialType) => {
+          materials[materialType] = [];
+          return materials;
+        }, {}),
+        selectedColumns: updatedSelectedColumns,
+        gasMode: updatedGasMode
       }
     );
     setGasMode(updatedGasMode);
@@ -240,8 +186,9 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setColumnDefinitions(
       {
         type: 'update_gas_type',
+        selectedColumns,
+        materials: updatedReactionMaterials,
         gasMode: updatedGasMode,
-        reactionMaterials: updatedReactionMaterials
       }
     );
 
@@ -294,12 +241,27 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setAllReactionAnalyses(updatedAllReactionAnalyses);
   }
 
-  const addRow = useCallback(() => {
-    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+  const addRow = () => {
     setReactionVariations(
-      [...reactionVariations, createVariationsRow(reaction, reactionVariations, gasMode, vesselVolume)]
+      [
+        ...reactionVariations,
+        createVariationsRow(
+          {
+            materials: reactionMaterials,
+            selectedColumns,
+            variations: reactionVariations,
+            reactionHasPolymers,
+            durationValue,
+            durationUnit,
+            temperatureValue,
+            temperatureUnit,
+            gasMode,
+            vesselVolume
+          }
+        )
+      ]
     );
-  }, [reaction, reactionVariations, gasMode]);
+  };
 
   const copyRow = useCallback((data) => {
     const copiedRow = copyVariationsRow(data, reactionVariations);
@@ -320,9 +282,35 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     );
   }, [reactionVariations, reactionHasPolymers]);
 
-  const fitColumnToContent = (event) => {
-    const { column } = event;
-    gridRef.current.api.autoSizeColumns([column], false);
+  const applyColumnSelection = (columns) => {
+    let updatedReactionVariations = addMissingColumnsToVariations({
+      materials: reactionMaterials,
+      selectedColumns: columns,
+      variations: reactionVariations,
+      reactionHasPolymers,
+      durationValue,
+      durationUnit,
+      temperatureValue,
+      temperatureUnit,
+      gasMode,
+      vesselVolume
+    });
+    updatedReactionVariations = removeObsoleteColumnsFromVariations(
+      updatedReactionVariations,
+      columns
+    );
+    setReactionVariations(updatedReactionVariations);
+
+    setColumnDefinitions(
+      {
+        type: 'apply_column_selection',
+        materials: reactionMaterials,
+        selectedColumns: columns,
+        gasMode
+      }
+    );
+
+    setSelectedColumns(columns);
   };
 
   const removeAllVariations = () => {
@@ -392,11 +380,25 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     );
   }
 
+  const fitColumnToContent = (event) => {
+    const { column } = event;
+    gridRef.current.api.autoSizeColumns([column], false);
+  };
+
   return (
     <div>
       <ButtonGroup>
         {addVariation()}
         {removeAllVariations()}
+        {ColumnSelection(
+          selectedColumns,
+          {
+            ...getReactionMaterialsIDs(reactionMaterials),
+            properties: ['duration', 'temperature'],
+            metadata: ['notes', 'analyses']
+          },
+          applyColumnSelection,
+        )}
       </ButtonGroup>
       <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
@@ -407,7 +409,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           headerHeight={70}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
-          stopEditingWhenCellsLoseFocus
           defaultColDef={defaultColumnDefinitions}
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}

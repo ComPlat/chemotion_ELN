@@ -96,8 +96,10 @@ FactoryBot.define do
 
           {
             id: i.to_s,
-            analyses: [],
-            notes: '',
+            metadata: {
+              analyses: [],
+              notes: '',
+            },
             properties: {
               duration: { unit: 'Hour(s)', value: '42' },
               temperature: { unit: '°C', value: '42' },
