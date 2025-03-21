@@ -170,8 +170,7 @@ export default class ElementDetails extends Component {
       case 'vessel_template':
         return (
           <VesselTemplateDetails
-            template={el}
-            vesselInstances={el.vessels}
+            vessels={el}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
@@ -194,13 +193,10 @@ export default class ElementDetails extends Component {
 
   tabTitle(el) {
 
-    if (!el.type) {
-      if (el.vessel_template.vessel_type && el.vessel_template.material_type && el.vessel_template.volume_amount !== undefined) {
-        el.type = 'vessel_template';
-        el.title = el.vessel_template.name;
-      }
+    if (Array.isArray(el)) {
+      el.type = 'vessel_template';
+      el.title = el[0]?.vesselName;
     }
-
     const tab = tabInfoHash[el.type] ?? {};
     const title = el.type === 'vessel_template' ? el.title : tab.title ?? el.title();
 
