@@ -141,6 +141,35 @@ function Affiliations({ show, onHide }) {
     }
   };
 
+  const popover = (index) => (
+    <Popover id={`delete-confirm-${index}`}>
+      <Popover.Header as="h3">Delete Confirmation</Popover.Header>
+      <Popover.Body>
+        Are you sure you want to delete this affiliation?
+        <div className="mt-2 d-flex justify-content-center">
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              handleDeleteAffiliation(index);
+              setShowConfirmIndex(null);
+            }}
+          >
+            Yes
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="ms-2"
+            onClick={() => setShowConfirmIndex(null)}
+          >
+            No
+          </Button>
+        </div>
+      </Popover.Body>
+    </Popover>
+  );
+
   return (
     <Modal
       fullscreen
@@ -399,34 +428,7 @@ function Affiliations({ show, onHide }) {
                       placement="left"
                       show={showConfirmIndex === index}
                       onToggle={(isOpen) => setShowConfirmIndex(isOpen ? index : null)}
-                      overlay={(
-                        <Popover id={`delete-confirm-${index}`}>
-                          <Popover.Header as="h3">Confirm Delete</Popover.Header>
-                          <Popover.Body>
-                            Are you sure you want to delete this affiliation?
-                            <div className="mt-2 d-flex justify-content-center">
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                onClick={() => {
-                                  handleDeleteAffiliation(index);
-                                  setShowConfirmIndex(null);
-                                }}
-                              >
-                                Yes
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="ms-2"
-                                onClick={() => setShowConfirmIndex(null)}
-                              >
-                                No
-                              </Button>
-                            </div>
-                          </Popover.Body>
-                        </Popover>
-                      )}
+                      overlay={popover(index)}
                     >
                       <Button
                         className="ms-1"
