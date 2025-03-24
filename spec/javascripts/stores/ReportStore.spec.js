@@ -1,8 +1,8 @@
 import expect from 'expect'
 import { originalState } from '../fixture/report'
-import alt from '../../../app/javascript/src/stores/alt/alt'
-import ReportActions from '../../../app/javascript/src/stores/alt/actions/ReportActions'
-import ReportStore from '../../../app/javascript/src/stores/alt/stores/ReportStore'
+import alt from 'src/stores/alt/alt'
+import ReportActions from 'src/stores/alt/actions/ReportActions'
+import ReportStore from 'src/stores/alt/stores/ReportStore'
 
 describe('ReportStore', () => {
   beforeEach(() => {
