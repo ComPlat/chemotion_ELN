@@ -1,0 +1,245 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable no-restricted-syntax */
+import {
+  fetchSurfaceChemistryImageData
+} from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
+import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import {
+  allTemplates,
+  templateListSetter,
+  allAtoms,
+  allAtomsSetter,
+  allNodes,
+  allNodesSetter,
+  imagesList,
+  imagesListSetter,
+  mols,
+  molsSetter,
+  textList,
+  textListSetter,
+  textNodeStructSetter,
+  ImagesToBeUpdatedSetter
+} from 'src/utilities/ketcherSurfaceChemistry/stateManager';
+import {
+  latestDataSetter,
+} from 'src/components/structureEditor/KetcherEditor';
+import { addPolymerTags } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
+import {
+  addTextNodes
+} from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import {
+  centerPositionCanvas,
+  saveMoveCanvas,
+} from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
+
+const loadTemplates = async () => {
+  fetch('/json/surfaceChemistryShapes.json').then((response) => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  }).then((data) => {
+    templateListSetter(data);
+  }).catch((error) => {
+    console.error('Error fetching the JSON data:', error);
+  });
+};
+
+// prepare/load ket2 format data
+const loadKetcherData = async (data) => {
+  allAtomsSetter([]);
+  allNodesSetter([...data.root.nodes]);
+  imagesListSetter(allNodes.filter((item) => item.type === 'image'));
+  textListSetter(allNodes.filter((item) => item.type === 'text'));
+  const sliceEnd = Math.max(0, allNodes.length - imagesList.length - textList.length);
+  molsSetter(sliceEnd > 0 ? allNodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
+  mols.forEach((item) => data[item]?.atoms.map((i) => allAtoms.push(i)));
+};
+
+const setupEditorIframe = ({
+  iframeRef,
+  editor,
+  resetStore,
+  loadContent,
+  attachClickListeners,
+  buttonEvents,
+}) => {
+  resetStore();
+
+  const iframe = iframeRef.current;
+
+  const handleIframeLoad = () => {
+    attachClickListeners(iframeRef, buttonEvents);
+  };
+
+  if (editor?.structureDef) {
+    if (iframe) {
+      iframe.addEventListener('load', handleIframeLoad);
+    }
+    window.addEventListener('message', loadContent);
+    loadTemplates();
+  }
+
+  return () => {
+    if (iframe) {
+      iframe.removeEventListener('load', handleIframeLoad);
+    }
+    window.removeEventListener('message', loadContent);
+  };
+};
+
+// Helper to initialize Ketcher data
+const initializeKetcherData = async (data) => {
+  try {
+    await loadKetcherData(data);
+  } catch (err) {
+    throw new Error(`Failed to initialize Ketcher data: ${err.message}`);
+  }
+};
+
+// helper function to examine the file coming ketcher rails
+const hasKetcherData = async (molfile) => {
+  if (!molfile) {
+    console.error('Invalid molfile source.');
+    return null;
+  }
+
+  try {
+    const lines = molfile.trim().split('\n');
+    const polymerLine = lines.reverse().find((line) => line.includes(KET_TAGS.polymerIdentifier));
+    return polymerLine ? lines[lines.indexOf(polymerLine) - 1]?.trim() || null : null;
+  } catch (err) {
+    console.error('Opening this molfile is not correct. Please report this molfile to dev team.');
+    return null;
+  }
+};
+
+// helper function to examine the file coming ketcher rails
+const hasTextNodes = async (molfile) => {
+  if (!molfile) {
+    console.error('Invalid molfile source.');
+    return null;
+  }
+  try {
+    const lines = molfile.trim().split('\n');
+    const start = lines.indexOf(KET_TAGS.textNodeIdentifier);
+    const end = lines.indexOf(KET_TAGS.textNodeIdentifierClose);
+    if (start === -1 || end === -1) return [];
+    const sliceOfTextNodes = lines.slice(start + 1, end);
+    return sliceOfTextNodes;
+  } catch (err) {
+    console.error('Opening this molfile is not correct. Please report this molfile to dev team.');
+    return null;
+  }
+};
+
+const findTemplateById = (id) => {
+  for (const category of allTemplates) {
+    for (const subTab of category.subTabs) {
+      for (const shape of subTab.shapes) {
+        if (shape.template_id === id) {
+          return shape;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+// Helper to determine template type based on polymer value
+const getTemplateType = (polymerValue) => {
+  const hasSurface = polymerValue.includes('s');
+  const binaryTemplates = hasSurface ? KET_TAGS.templateSurface : KET_TAGS.templateBead;
+  const templateSplits = polymerValue.split('/');
+  if (templateSplits.length === 1) {
+    const template = findTemplateById(binaryTemplates);
+    return { type: binaryTemplates, size: `${template.height}-${template.width}` };
+  }
+  if (!hasSurface) {
+    return { type: templateSplits[1], size: templateSplits[2] };
+  }
+  return { type: binaryTemplates, size: templateSplits[1] };
+};
+
+// Helper to create a bounding box for a template with atom location
+const templateWithBoundingBox = async (templateType, atomLocation, templateSize) => {
+  const template = await fetchSurfaceChemistryImageData(templateType);
+  const defaultSize = [template.boundingBox.height, template.boundingBox.width];
+  const [height, width] = templateSize?.split('-') || defaultSize;
+  template.boundingBox.x = atomLocation[0];
+  template.boundingBox.y = atomLocation[1];
+  template.boundingBox.z = 0;
+  template.boundingBox.height = height * 1;
+  template.boundingBox.width = width * 1;
+  return template;
+};
+
+/* istanbul ignore next */
+// helper function to rebase with the ketcher canvas data
+const fetchKetcherData = async (editor) => {
+  try {
+    if (!editor) throw new 'Editor instance is invalid'();
+    const data = JSON.parse(await editor.structureDef.editor.getKet());
+    await latestDataSetter(data);
+    await loadKetcherData(data);
+  } catch (err) {
+    console.error('fetchKetcherData', err.message);
+  }
+};
+
+const prepareKetcherData = async (editor, initMol) => {
+  try {
+    const polymerTag = await hasKetcherData(initMol);
+    const textNodes = await hasTextNodes(initMol);
+    const ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
+      console.error('invalid molfile. Please try again', err.message);
+    });
+    const fileContent = JSON.parse(ketFile.struct);
+    textNodeStructSetter({});
+    await applyKetcherData(polymerTag, fileContent, textNodes, editor);
+  } catch (err) {
+    console.error('Error preparing Ketcher data:', err.message);
+    return null;
+  }
+};
+
+const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
+  try {
+    let molfileContent = fileContent;
+
+    if (polymerTag) {
+      const { molfileData } = await addPolymerTags(polymerTag, fileContent);
+      molfileContent = molfileData;
+
+      // Add text nodes if available
+      const textNodeList = await addTextNodes(textNodes, molfileContent);
+      if (textNodeList.length) {
+        molfileContent.root.nodes.push(...textNodeList);
+      }
+    }
+    const toRecenter = !polymerTag || !polymerTag.length;
+    saveMoveCanvas(editor, molfileContent, true, true, toRecenter);
+    setTimeout(() => {
+      centerPositionCanvas(editor);
+    }, 10);
+    ImagesToBeUpdatedSetter(true);
+    return { molfileContent, polymerTag };
+  } catch (err) {
+    console.error('Error applying Ketcher data:', err.message);
+    return null;
+  }
+};
+
+export {
+  setupEditorIframe,
+  initializeKetcherData,
+  hasKetcherData,
+  hasTextNodes,
+  getTemplateType,
+  templateWithBoundingBox,
+  fetchKetcherData,
+  loadKetcherData,
+  prepareKetcherData,
+  loadTemplates
+};

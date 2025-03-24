@@ -134,6 +134,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.datetime "deleted_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "created_by"
+    t.index ["name", "source"], name: "index_cellline_materials_on_name_and_source", unique: true
   end
 
   create_table "cellline_samples", force: :cascade do |t|
@@ -726,8 +728,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
   end
 
   create_table "inventories", force: :cascade do |t|
-    t.string "prefix", null: false
-    t.string "name", null: false
+    t.string "prefix"
+    t.string "name"
     t.integer "counter", default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

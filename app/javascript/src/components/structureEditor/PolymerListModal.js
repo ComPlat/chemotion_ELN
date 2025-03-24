@@ -15,7 +15,11 @@ import {
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
   BodySolid,
-  RescaleCanvas
+  RescaleCanvas,
+  Support,
+  SupportSinglePhase,
+  SupportSinglePhaseWhite,
+  BodySolidWhite
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
 
 const iconMap = {
@@ -27,7 +31,11 @@ const iconMap = {
   ActivePhasePromotors,
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
-  BodySolid
+  BodySolid,
+  Support,
+  SupportSinglePhase,
+  SupportSinglePhaseWhite,
+  BodySolidWhite
 };
 
 function PolymerListModal({
@@ -35,19 +43,23 @@ function PolymerListModal({
 }) {
   const [shapesList, setShapeList] = useState([]); // Initialize the state as an empty array
 
-  useEffect(() => {
-    const fetchTemplateList = async () => {
-      try {
-        const response = await fetch('/json/surfaceChemistryShapes.json');
-        const templateListStorage = await response.json();
-        setShapeList(templateListStorage);
-      } catch (error) {
-        console.error('Error fetching the JSON data:', error);
+  const loadTemplates = () => {
+    fetch('/json/surfaceChemistryShapes.json').then((response) => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    };
+      return response.json();
+    }).then((data) => {
+      setShapeList(data);
+    }).catch((error) => {
+      console.error('Error fetching the JSON data:', error);
+    });
+  };
 
-    fetchTemplateList();
+  useEffect(() => {
+    loadTemplates();
   }, []);
+
   return (
     <Modal
       centered
@@ -92,11 +104,9 @@ function PolymerListModal({
                                   key={shape.template_id}
                                   variant="normal"
                                   onClick={async () => {
-                                    if (shape.template_id && shape.template_id < 6) {
+                                    if (shape.template_id) {
                                       onShapeSelection(shape.template_id);
-                                      return;
                                     }
-                                    alert('Shape not allowed to use for now');
                                   }}
                                 >
                                   <PolymerIcon />
@@ -137,7 +147,7 @@ const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   }
 };
 
-const rescaleToolBarButoon = (iframeDocument) => {
+const rescaleToolBarButton = (iframeDocument) => {
   const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
   const container = parentElement?.querySelector('.css-6qnjre');
   if (container) {
@@ -154,7 +164,7 @@ const rescaleToolBarButoon = (iframeDocument) => {
     container.appendChild(newButton);
   }
 };
-export { PolymerListModal, PolymerListIconKetcherToolbarButton, rescaleToolBarButoon };
+export { PolymerListModal, PolymerListIconKetcherToolbarButton, rescaleToolBarButton };
 
 PolymerListModal.propTypes = {
   loading: PropTypes.bool,
