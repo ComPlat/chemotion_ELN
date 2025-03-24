@@ -69,7 +69,7 @@ const VesselProperties = ({ item, readOnly }) => {
             label="Vessel name"
             field="vessel_name"
             value={vesselItem?.vesselName || ''}
-            readOnly={readOnly}
+            readOnly={!isCreateMode}
             storeUpdater={vesselDetailsStore.changeVesselName}
           />
           <VesselSuggestProperties
@@ -77,7 +77,7 @@ const VesselProperties = ({ item, readOnly }) => {
             label="Details"
             field="details"
             value={vesselItem?.details || ''}
-            readOnly={readOnly}
+            readOnly={!isCreateMode}
             storeUpdater={vesselDetailsStore.changeDetails}
           />
           <VesselSuggestProperties
@@ -85,7 +85,7 @@ const VesselProperties = ({ item, readOnly }) => {
             label="Material Type"
             field="material_type"
             value={vesselItem?.materialType || ''}
-            readOnly={readOnly}
+            readOnly={!isCreateMode}
             storeUpdater={vesselDetailsStore.changeMaterialType}
           />
 
@@ -94,7 +94,7 @@ const VesselProperties = ({ item, readOnly }) => {
             label="Vessel Type"
             field="vessel_type"
             value={vesselItem?.vesselType || ''}
-            readOnly={readOnly}
+            readOnly={!isCreateMode}
             storeUpdater={vesselDetailsStore.changeVesselType}
           />
           <VesselSuggestProperties
@@ -102,7 +102,7 @@ const VesselProperties = ({ item, readOnly }) => {
             label="Material details"
             field="material_details"
             value={vesselItem?.materialDetails || ''}
-            readOnly={readOnly}
+            readOnly={!isCreateMode}
             storeUpdater={vesselDetailsStore.changeMaterialDetails}
           />
           <Form.Group as={Row} className="mt-3">
@@ -114,12 +114,12 @@ const VesselProperties = ({ item, readOnly }) => {
                   type="number"
                   step="any"
                   value={vesselItem?.volumeAmount}
-                  disabled={false}
+                  disabled={!isCreateMode}
                   onChange={handleVolumeChange}
                   className="flex-grow-1"
                 />
                 <Button
-                  disabled={false}
+                  disabled={!isCreateMode}
                   variant="success"
                   onClick={handleUnitChange}
                 >
