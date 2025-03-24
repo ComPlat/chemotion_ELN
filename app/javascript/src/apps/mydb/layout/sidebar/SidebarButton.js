@@ -37,7 +37,7 @@ export default function SidebarButton({
       variant={variant}
       onClick={onClick}
     >
-      <i className={icon} />
+      <i className={`fa-fw ${icon}`} />
       <span>{label}</span>
       <div onClick={(e) => e.stopPropagation()}>{appendComponent}</div>
     </Button>
