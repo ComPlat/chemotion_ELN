@@ -140,7 +140,7 @@
     "postinstall": "./package_postinstall.sh",
     "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/**/*.spec.js'",
     "coverage": "yarn nyc npm test;yarn nyc report --reporter=html",
-    "test:ketcher2": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/packs/src/components/Ketcher2.spec.js'"
+    "update-browserslist-db": "node_modules/.bin/update-browserslist-db"
   },
   "nyc": {
     "exclude": [
@@ -180,5 +180,7 @@
       "@babel/plugin-transform-private-methods"
     ]
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "private": true,
+  "version": "0.1.0"
 }

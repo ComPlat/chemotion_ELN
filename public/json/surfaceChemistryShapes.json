@@ -84,50 +84,43 @@
       },
       {
         "id": "2.2",
-        "label": "Phase separated Supports (solid, divided)",
+        "label": "Support Single Phase",
         "description": "Variations of Yellow",
         "shapes": [
           {
-            "template_id": 6,
-            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg==",
-            "iconName": "PhaseSeparatedSupportSolidDivided",
+            "template_id": 11,
+            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDEyMCAxMDAiPgogIDxyZWN0CiAgICB3aWR0aD0iMTIwIgogICAgaGVpZ2h0PSI0MCIKICAgIHk9IjM1IgogICAgcng9IjEiCiAgICByeT0iMSIKICAgIHN0cm9rZT0iIzQ0NzJjNCIKICAgIHN0cm9rZS13aWR0aD0iMyIKICAgIGZpbGw9IiNkOGUyZjMiCiAgICBzdHJva2UtZGFzaGFycmF5PSIxMCw3IgogIC8+Cjwvc3ZnPg==",
+            "iconName": "Support",
             "width": 2.0,
-            "height": 0.50
+            "height": 0.90
           }
         ]
       },
       {
         "id": "2.3",
-        "label": "Mixed Supports (hatched)",
+        "label": "Support Multi Phase",
         "description": "Variations of Yellow",
         "shapes": [
           {
-            "template_id": 7,
-            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPHJlY3QgeD0iMjAiIHk9IjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMDAiIGZpbGw9InJlZCIvPg0KPHJlY3QgeD0iMCIgeT0iMjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNjAiIGZpbGw9InJlZCIvPg0KPC9zdmc+",
-            "iconName": "NotFound",
-            "width": 2.0,
-            "height": 0.50
+            "template_id": 12,
+            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDEyMCAxMDAiPjxyZWN0IHdpZHRoPSIxMTIiIGhlaWdodD0iNDAiIHk9IjM3IiB4PSIyIiBzdHJva2U9IiNiYThjMDAiIGZpbGw9IiNmZmMwMDAiIHN0cm9rZS13aWR0aD0iNCIvPjwvc3ZnPg==",
+            "iconName": "SupportSinglePhase",
+            "width": 1.8,
+            "height": 0.90
           }
         ]
-      }
-    ]
-  },
-  {
-    "id": 3,
-    "label": "Layer (Rectangle with round edges)",
-    "description": "Types and filling options for Layer (Rectangle with round edges)",
-    "subTabs": [
+      },
       {
-        "id": "3.1",
-        "label": "Catalyst",
-        "description": "Selection of colors",
+        "id": "2.4",
+        "label": "Phase separated Supports (solid, divided)",
+        "description": "Variations of Yellow",
         "shapes": [
           {
-            "template_id": 8,
-            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPHJlY3QgeD0iMjAiIHk9IjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMDAiIGZpbGw9InJlZCIvPg0KPHJlY3QgeD0iMCIgeT0iMjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNjAiIGZpbGw9InJlZCIvPg0KPC9zdmc+",
-            "iconName": "NotFound",
-            "width": 2.0,
-            "height": 0.50
+            "template_id": 13,
+            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDEyMCAxMDAiPjxyZWN0IHdpZHRoPSIxMTIiIGhlaWdodD0iNDAiIHk9IjM3IiB4PSIyIiBzdHJva2U9IiNiYThjMDAiIGZpbGw9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIvPjwvc3ZnPg==",
+            "iconName": "SupportSinglePhaseWhite",
+            "width": 1.8,
+            "height": 0.90
           }
         ]
       }
@@ -145,25 +138,24 @@
         "shapes": [
           {
             "template_id": 9,
-            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPHJlY3QgeD0iMjAiIHk9IjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMDAiIGZpbGw9InJlZCIvPg0KPHJlY3QgeD0iMCIgeT0iMjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNjAiIGZpbGw9InJlZCIvPg0KPC9zdmc+",
-            "iconName": "NotFound",
+            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDEyMCAxMDAiPjxyZWN0IHdpZHRoPSIxMTIiIGhlaWdodD0iNDAiIHk9IjM3IiB4PSIyIiByeD0iMiIgcnk9IjIiIHN0cm9rZT0iIzAwMCIgZmlsbD0iIzc1NzA3MCIgc3Ryb2tlLXdpZHRoPSI0Ii8+PC9zdmc+",
+            "iconName": "BodySolid",
             "width": 2.0,
-            "height": 0.50
+            "height": 1
           }
         ]
       },
       {
         "id": "4.2",
-        "label": "Porous (hatched)",
+        "label": "Porous",
         "description": "Variations of Grey",
         "shapes": [
           {
-            "template_id": 10,
-            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg==",
-            "svg": "<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\">\n  <defs>\n    <radialGradient id=\"grad1\" cx=\"50%\" cy=\"50%\" r=\"50%\" fx=\"50%\" fy=\"50%\">\n      <stop offset=\"0%\" style=\"stop-color:rgb(255,255,255);stop-opacity:1\" />\n      <stop offset=\"100%\" style=\"stop-color:rgb(0,0,0);stop-opacity:1\" />\n    </radialGradient>\n  </defs>\n  <circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"url(#grad1)\" />\n</svg>",
-            "iconName": "PorousHatched",
+            "template_id": 15,
+            "payload": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDEyMCAxMDAiPjxyZWN0IHdpZHRoPSIxMTIiIGhlaWdodD0iNDAiIHk9IjM3IiB4PSIyIiByeD0iNSIgcnk9IjUiIHN0cm9rZT0iIzAwMCIgZmlsbD0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+PC9zdmc+",
+            "iconName": "BodySolidWhite",
             "width": 2.0,
-            "height": 0.50
+            "height": 1
           }
         ]
       }

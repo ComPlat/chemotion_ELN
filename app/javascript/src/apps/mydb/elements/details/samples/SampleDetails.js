@@ -893,7 +893,7 @@ export default class SampleDetails extends React.Component {
             }}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
-            value={options.find(({ value }) => value === cas)}
+            value={options.find(({ value }) => value === cas) || null}
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"

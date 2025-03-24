@@ -96,3 +96,23 @@ An example of some actions.
 🚀 Rebase all aliases:    
 📋 Aliases: [t_01_0, t_01_1], imageList: [0, 1], image_count: 1    
 
+#### Information on molfile
+
+M  END
+> <PolymersList>
+0s/0.24-2.29 5/4/0.46-0.46
+> <TextNode>
+5#ea82s#t_4_1#asdfasdf
+> </TextNode>
+$$$$
+
+#### 5/4/0.46-0.46 Explain parts of a polymerList identifier
+part 1: atom index
+part 2: template id from the templates datasource
+part 3: Height-width
+
+#### 5#ea82s#t_4_1#asdfasdf Explain parts of a text Node
+part 1: atom index
+part 2: key id for text-node in ketcher format
+part 3: Alias of the atom, text is connect with.
+part 4: Content of Text-Node
