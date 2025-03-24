@@ -17,7 +17,7 @@ $sidebar-logo-height: 72px;
     padding: 1px;
   }
   &.sidebar--collapsed {
-    width: 84px;
+    width: 78px;
   }
   &-logo {
     @extend .position-absolute;
@@ -44,8 +44,10 @@ $sidebar-logo-height: 72px;
     @extend .d-flex;
     @extend .align-items-center;
     @extend .rounded-0;
-    min-height: 48px;
-    min-width: 48px;
+    min-height: 44px;
+    min-width: 44px;
+    padding-left: 8px;
+    padding-right: 8px;
     &.btn-light {
       background-color: $chemstrap-paper;
     }
