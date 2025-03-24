@@ -196,15 +196,15 @@ class UIStore {
   handleCheckAllElements(params) {
     this.waitFor(ElementStore.dispatchToken);
 
-    let { type, range } = params;
-    let { elements } = ElementStore.getState();
+    const { type, range } = params;
+    const { elements } = ElementStore.getState();
 
-    if (range == 'all') {
-      if (this.state.currentSearchSelection && elements[type + "s"].ids) {
-        let ids = elements[type + "s"].ids
-        this.state[type].checkedAll = false
-        this.state[type].checkedIds = List(ids)
-        this.state[type].uncheckedIds = List()
+    if (range === 'all') {
+      if (elements[`${type}s`].ids) {
+        const { ids } = elements[`${type}s`];
+        this.state[type].checkedAll = false;
+        this.state[type].checkedIds = List(ids);
+        this.state[type].uncheckedIds = List();
       } else {
         this.state[type].checkedAll = true;
         this.state[type].checkedIds = List();
