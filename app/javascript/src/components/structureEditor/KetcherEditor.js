@@ -67,7 +67,7 @@ import {
 import {
   PolymerListIconKetcherToolbarButton,
   PolymerListModal,
-  rescaleToolBarButoon
+  rescaleToolBarButton
 } from 'src/components/structureEditor/PolymerListModal';
 
 export let FILOStack = []; // a stack to main a list of event triggered
@@ -89,6 +89,7 @@ let oldImagePack = [];
 let selectedImageForTextNode = null;
 let imageListCopyContainer = [];
 let textListCopyContainer = [];
+let upsertImageCalled = 0;
 
 // to reset all data containers
 export const resetStore = () => {
@@ -455,8 +456,9 @@ const KetcherEditor = forwardRef((props, ref) => {
       console.log('atom added?');
       addEventToFILOStack('Add atom');
     },
-    'Upsert image': async () => {
-      console.log('Upsert image');
+    'Upsert image': async (eventItem) => {
+      console.log('Upsert image', eventItem);
+      upsertImageCalled--;
       addEventToFILOStack('Upsert image');
     },
     'Move atom': async () => {
@@ -522,8 +524,8 @@ const KetcherEditor = forwardRef((props, ref) => {
       textNodeStruct = { ...response.textNodeStruct };
     },
     'Upsert image': async () => {
-      oldImagePack = [...imagesList];
       await fetchKetcherData(editor);
+      oldImagePack = [...imagesList];
       await onImageAddedOrCopied();
     }
   };
@@ -778,10 +780,10 @@ const KetcherEditor = forwardRef((props, ref) => {
         // Ensure iframe content is loaded before adding the button
         if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
           PolymerListIconKetcherToolbarButton(iframeDocument);
-          rescaleToolBarButoon(iframeDocument);
+          rescaleToolBarButton(iframeDocument);
         } else if (iframeRef?.current?.onload) {
           iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
-          iframeRef.current.onload = rescaleToolBarButoon;
+          iframeRef.current.onload = rescaleToolBarButton;
         }
       }, 1000);
 
@@ -823,12 +825,15 @@ const KetcherEditor = forwardRef((props, ref) => {
   }));
 
   const onImageAddedOrCopied = async () => {
-    const item = imagesList[imagesList.length - 1];
+    const imagesAddedList = imagesList.slice(upsertImageCalled);
     const templateList = await fetchTemplateList();
-    const templateId = await findTemplateByPayload(templateList, item.data);
-    if (templateId != null) {
-      await onShapeSelection(templateId, false);
-    }
+    imagesAddedList.forEach(async (item) => {
+      const templateId = await findTemplateByPayload(templateList, item.data);
+      if (templateId != null) {
+        await onShapeSelection(templateId, false);
+      }
+    });
+    upsertImageCalled = 0;
   };
 
   const onShapeSelection = async (tempId, imageToBeAdded = true) => {
@@ -851,18 +856,12 @@ const KetcherEditor = forwardRef((props, ref) => {
             label: 'A',
             alias: 't_1_0',
             location: [
-              21.07065471112727,
-              -12.001127313397285,
+              3,
+              -3,
               0
             ]
           },
-        ],
-        bonds: [],
-        stereoFlagPosition: {
-          x: 25.07065471112727,
-          y: -12.001127313397285,
-          z: 0
-        }
+        ]
       }
     };
 

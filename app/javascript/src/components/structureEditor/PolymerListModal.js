@@ -137,7 +137,7 @@ const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   }
 };
 
-const rescaleToolBarButoon = (iframeDocument) => {
+const rescaleToolBarButton = (iframeDocument) => {
   const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
   const container = parentElement?.querySelector('.css-6qnjre');
   if (container) {
@@ -154,7 +154,7 @@ const rescaleToolBarButoon = (iframeDocument) => {
     container.appendChild(newButton);
   }
 };
-export { PolymerListModal, PolymerListIconKetcherToolbarButton, rescaleToolBarButoon };
+export { PolymerListModal, PolymerListIconKetcherToolbarButton, rescaleToolBarButton };
 
 PolymerListModal.propTypes = {
   loading: PropTypes.bool,

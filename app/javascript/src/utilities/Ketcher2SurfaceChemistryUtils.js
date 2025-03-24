@@ -686,7 +686,6 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
 
 const buttonClickForRectangleSelection = async (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
-  console.log(iframeDocument);
   const button = iframeDocument?.querySelector('[data-testid="select-rectangle"]');
   if (button) {
     button.click();
