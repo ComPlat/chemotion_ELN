@@ -43,7 +43,7 @@ function VesselItemEntry({ vesselItem }) {
 
   return (
     <div className="group-entry">
-      <Table className="elements" hover>
+      <Table className="elements">
         <tbody>
           <tr className={`${backgroundColorClass} border-top`}>
             <td className="select-checkBox">
@@ -62,7 +62,7 @@ function VesselItemEntry({ vesselItem }) {
               className="short_label"
               onClick={showDetails}
             >
-                {vesselItem.name}
+              {vesselItem.name}
             </td>
             <td>
               <ElementCollectionLabels element={vesselItem} />
@@ -85,7 +85,7 @@ VesselItemEntry.propTypes = {
     id: PropTypes.string.isRequired,
     type: PropTypes.string,
     short_label: PropTypes.string,
-    itemName: PropTypes.string,
+    name: PropTypes.string,
   }).isRequired,
 };
 

@@ -6,13 +6,12 @@ import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import VesselItemEntry from 'src/apps/mydb/elements/list/vessel/VesselItemEntry';
 import PropTypes from 'prop-types';
-import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 function VesselEntry({ vesselItems }) {
   const { currentCollection } = UIStore.getState();
-  const [detailedInformation, setDetailedInformation] = useState(false);
   const [showEntries, setShowEntries] = useState(true);
 
   const getBorderStyle = () => (showEntries
@@ -73,66 +72,16 @@ function VesselEntry({ vesselItems }) {
           overlay={<Tooltip id="template-tooltip">Click to view vessel template details</Tooltip>}
         >
           <div
-            className="flex-grow-1 fs-5"
+            className="fs-5"
             style={{ cursor: 'pointer' }}
             onClick={() => navigateToTemplate(firstVesselItem.vessel_template)}
           >
             {firstVesselItem.vessel_template.name}
           </div>
         </OverlayTrigger>
-        {renderDetailedInfoButton()}
-        <ChevronIcon color="primary" direction={showEntries ? 'down' : 'right'} />
-      </div>
-    );
-  };
-
-  const renderDetailedInfos = (firstVesselItem) => {
-    if (!detailedInformation) return null;
-
-    return (
-      <div className="mt-2">
-        {renderProperty('Name', firstVesselItem.vessel_template.name)}
-        {renderProperty('Details', firstVesselItem.vessel_template.details)}
-        {renderProperty('Vessel type', firstVesselItem.vessel_template.vessel_type)}
-        {renderProperty('Material type', firstVesselItem.vessel_template.material_type)}
-        {renderProperty('Volume amount', firstVesselItem.vessel_template.volume_amount)}
-        {renderProperty('Volume unit', firstVesselItem.vessel_template.volume_unit)}
-      </div>
-    );
-  };
-
-  const renderDetailedInfoButton = () => (
-    <OverlayTrigger
-      key="detailedInfoButton"
-      placement="top"
-      overlay={(
-        <Tooltip id="detailed-info-button">
-          Show detailed information about the material
-        </Tooltip>
-      )}
-    >
-      <Button
-        variant="info"
-        className={detailedInformation ? 'border border-primary' : ''}
-        size="xsm"
-        onClick={(e) => {
-          e.stopPropagation();
-          setDetailedInformation(!detailedInformation);
-        }}
-      >
-        <i className="fa fa-info-circle" aria-hidden="true" />
-      </Button>
-    </OverlayTrigger>
-  );
-
-  const renderProperty = (propertyName, propertyValue) => {
-    if (!propertyValue) return null;
-
-    return (
-      <div className="ms-4 d-flex align-items-center">
-        <div className="flex-shrink-0">{propertyName}</div>
-        <div className="flex-shrink-0 text-center mx-1"> : </div>
-        <div className="flex-grow-1">{propertyValue}</div>
+        <div className="ms-auto" onClick={(e) => { e.stopPropagation(); setShowEntries((prev) => !prev); }}>
+          <ChevronIcon size="sm" color="primary" direction={showEntries ? 'down' : 'right'} />
+        </div>
       </div>
     );
   };
@@ -141,12 +90,8 @@ function VesselEntry({ vesselItems }) {
 
   return (
     <div className="cell-line-group">
-      <div
-        className={getBorderStyle()}
-        onClick={() => setShowEntries(!showEntries)}
-      >
+      <div className={getBorderStyle()}>
         {renderNameHeader(vesselItems[0])}
-        {renderDetailedInfos(vesselItems[0])}
       </div>
       {renderItemEntries()}
     </div>
