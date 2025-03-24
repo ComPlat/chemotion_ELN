@@ -214,22 +214,44 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
               'vesselType',
               'materialType',
               'materialDetails',
-              'volumeAmount',
-              'volumeUnit',
             ].map((field) => (
-                <Form.Group as={Row} key={field} className="mb-2 align-items-center">
-                  <Form.Label column sm={3} className="text-capitalize">
-                    {field}:
-                  </Form.Label>
-                  <Col sm={5}>
-                    <Form.Control
-                      type={['volumeAmount'].includes(field) ? 'number' : 'text'}
-                      value={templateStoreItem?.[field] || ''}
-                      onChange={(e) => handleTemplateChange(field, e.target.value)}
-                    />
-                  </Col>
-                </Form.Group>
-              ))}
+              <Form.Group as={Row} key={field} className="mb-2 align-items-center">
+                <Form.Label column sm={3} className="text-capitalize">
+                  {field}:
+                </Form.Label>
+                <Col sm={5}>
+                  <Form.Control
+                    type={['volumeAmount'].includes(field) ? 'number' : 'text'}
+                    value={templateStoreItem?.[field] || ''}
+                    onChange={(e) => handleTemplateChange(field, e.target.value)}
+                  />
+                </Col>
+              </Form.Group>
+            ))}
+            <Form.Group as={Row} className="mb-2 align-items-center">
+              <Form.Label column sm={3} className="text-capitalize">
+                Volume:
+              </Form.Label>
+              <Col sm={5}>
+                <InputGroup>
+                  <Form.Control
+                    type="number"
+                    value={templateStoreItem?.volumeAmount || ''}
+                    onChange={(e) => handleTemplateChange('volumeAmount', parseFloat(e.target.value) || 0)}
+                  />
+                  <Button
+                    variant="success"
+                    onClick={() => {
+                      const currentUnit = templateStoreItem?.volumeUnit || 'ml';
+                      const newUnit = currentUnit === 'ml' ? 'l' : 'ml';
+                      handleTemplateChange('volumeUnit', newUnit);
+                    }}
+                  >
+                    {templateStoreItem?.volumeUnit || 'ml'}
+                  </Button>
+                </InputGroup>
+              </Col>
+            </Form.Group>
             <div>
               <Button
                 variant="primary"
@@ -247,15 +269,14 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
       <Card className="detail-card shadow-sm">
         <Card.Body>
           <Card.Title classNME="mb-3">Vessel Instances</Card.Title>
-          <Table bordered hover responsive striped className="table-sm border-rounded">
+          <Table bordered hover responsive className="table-sm border-rounded">
             <thead className="table-light">
               <tr>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Barcode</th>
                 <th>QR Code</th>
-                <th>Weight amount</th>
-                <th>Weight unit</th>
+                <th>Weight</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -266,8 +287,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
                     'vesselInstanceDescription',
                     'barCode',
                     'qrCode',
-                    'weightAmount',
-                    'weightUnit',
                   ].map((field) => (
                     <td key={field} className="p-1">
                       <Form.Control
@@ -278,9 +297,34 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
                       />
                     </td>
                   ))}
-                  <td>
-                    <Button variant="primary" size="xsm" onClick={() => updateInstance(instance.id)}>
-                      Update
+                  <td className="p-1">
+                    <Form.Group className="m-0">
+                      <InputGroup >
+                        <Form.Control
+                          type="number"
+                          style={{ maxWidth: '100px' }}
+                          value={instance.weightAmount ?? ''}
+                          onChange={(e) => handleInstanceChange(instance.id, 'weightAmount', e.target.value)}
+                        />
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => {
+                            const units = ['g', 'kg', 'mg'];
+                            const currentIndex = units.indexOf(instance.weightUnit);
+                            const nextUnit = units[(currentIndex + 1) % units.length];
+                            handleInstanceChange(instance.id, 'weightUnit', nextUnit);
+                          }}
+                        >
+                          {instance.weightUnit || 'g'}
+                        </Button>
+                      </InputGroup>
+                    </Form.Group>
+                  </td>
+
+                  <td className="ms-auto">
+                    <Button variant="warning" size="xsm" onClick={() => updateInstance(instance.id)}>
+                      <i className="fa fa-save" />
                     </Button>
                   </td>
                 </tr>
