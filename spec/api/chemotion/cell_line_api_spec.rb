@@ -10,10 +10,12 @@ describe Chemotion::CellLineAPI do
   describe 'GET /api/v1/cell_lines/' do
     let(:collection) { create(:collection) }
     let!(:user) { create(:user, collections: [collection]) }
-    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+    let(:material) { create(:cellline_material) }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection], cellline_material: material) }
     let!(:cell_line2) do
       create(:cellline_sample,
              collections: [collection],
+             cellline_material: material,
              created_at: DateTime.parse('2000-01-01'),
              updated_at: DateTime.parse('2010-01-01'))
     end

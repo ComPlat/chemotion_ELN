@@ -48,6 +48,7 @@ describe Chemotion::CollectionAPI do
       create(:sync_collections_user, collection_id: c_sync_w.id, user_id: user.id, permission_level: 1,
                                      shared_by_id: owner.id, fake_ancestry: c_sync_ancestry.id.to_s)
     end
+    let(:material) { create(:cellline_material) }
 
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
@@ -184,7 +185,7 @@ describe Chemotion::CollectionAPI do
             JSON.parse(response.body)['collections'].map do |root|
               root['children'].pluck('id')
             end.flatten,
-          ).to match_array [c4.id, c6.id]
+          ).to contain_exactly(c4.id, c6.id)
         end
       end
     end
@@ -303,9 +304,9 @@ describe Chemotion::CollectionAPI do
         #   c_target.reload2
         # end
         describe 'PUT /api/v1/collections/elements' do
-          let!(:cell_line_1) { create(:cellline_sample, collections: [c_source]) }
-          let!(:cell_line_2) { create(:cellline_sample, collections: [c_source]) }
-          let!(:cell_line_3) { create(:cellline_sample, collections: [c_source]) }
+          let!(:cell_line_1) { create(:cellline_sample, collections: [c_source], cellline_material: material) }
+          let!(:cell_line_2) { create(:cellline_sample, collections: [c_source], cellline_material: material) }
+          let!(:cell_line_3) { create(:cellline_sample, collections: [c_source], cellline_material: material) }
           let(:cell_line_ids) { [] }
           let!(:ui_state) do
             {
@@ -354,7 +355,9 @@ describe Chemotion::CollectionAPI do
           end
 
           context 'when try to move cell line element into collection where it already exists' do
-            let!(:cellline_in_two_colls) { create(:cellline_sample, collections: [c_source, c_target]) }
+            let!(:cellline_in_two_colls) do
+              create(:cellline_sample, collections: [c_source, c_target], cellline_material: material)
+            end
             let(:target_collection_id) { c_target.id }
             let(:cell_line_ids) { [cellline_in_two_colls.id] }
 
@@ -392,7 +395,7 @@ describe Chemotion::CollectionAPI do
         end
 
         describe 'POST /api/v1/collections/elements' do
-          let!(:cell_line_sample) { create(:cellline_sample, collections: [c_source]) }
+          let!(:cell_line_sample) { create(:cellline_sample, collections: [c_source], cellline_material: material) }
           let!(:ui_state) do
             {
               cell_line: {
@@ -686,10 +689,10 @@ describe Chemotion::CollectionAPI do
             c = Collection.where(is_shared: true, user_id: u2.id, shared_by_id: user.id)
                           .where("label LIKE 'My project with%'").first
             expect(c).not_to be_nil
-            expect(c.samples).to match_array [s1, s3]
-            expect(c.reactions).to match_array [r1]
-            expect(c.wellplates).to match_array [w1]
-            expect(c.screens).to match_array []
+            expect(c.samples).to contain_exactly(s1, s3)
+            expect(c.reactions).to contain_exactly(r1)
+            expect(c.wellplates).to contain_exactly(w1)
+            expect(c.screens).to be_empty
           end
         end
 
