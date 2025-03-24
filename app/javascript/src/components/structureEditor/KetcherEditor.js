@@ -810,7 +810,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         await fetchKetcherData(editor);
         const canvasDataMol = await editor.structureDef.editor.getMolfile();
         const svgElement = await reArrangeImagesOnCanvas(iframeRef); // svg display
-        // const svgElement = await reArrangeImagesOnCanvasViaKetcher(editor); // svg display using ketcher service
         const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
         const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
         if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula

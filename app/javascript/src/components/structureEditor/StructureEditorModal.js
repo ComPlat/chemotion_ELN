@@ -302,7 +302,7 @@ export default class StructureEditorModal extends React.Component {
         { showModal: false, showWarning: hasChildren || hasParent },
         () => {
           if (onSave) {
-            textNodesFormula.length && alert(`text description formula: ${textNodesFormula}`);
+            textNodesFormula?.length && alert(`text description formula: ${textNodesFormula}`);
             onSave(ket2Molfile, svgElement, { smiles: '' }, editorId);
           }
         }
