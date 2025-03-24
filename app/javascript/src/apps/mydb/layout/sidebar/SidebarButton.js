@@ -24,7 +24,7 @@ export default function SidebarButton({
             pill
             bg="warning"
             text={variant}
-            className="position-absolute top-100 start-100 translate-middle"
+            className="position-absolute top-100 start-50 translate-middle"
           >
             {badgeCount}
           </Badge>
