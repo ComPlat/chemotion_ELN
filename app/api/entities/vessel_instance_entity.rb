@@ -6,11 +6,11 @@ module Entities
     expose :name
     expose :short_label
     expose :description
-    expose :vessel_template
     expose :bar_code
     expose :qr_code
     expose :weight_amount
     expose :weight_unit
+    expose :vessel_template
     expose :tag
     expose :container, using: 'Entities::ContainerEntity'
   end
