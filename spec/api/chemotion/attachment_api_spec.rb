@@ -587,11 +587,11 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
-  describe 'GET /api/v1/attachments/{attachment_id}/annotated_image' do
+  describe 'GET /api/v1/attachments/{attachment_id}?annotated=true' do
     let(:attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
 
     before do
-      get "/api/v1/attachments/#{attachment_id}/annotated_image"
+      get "/api/v1/attachments/#{attachment_id}?annotated=true"
     end
 
     context 'when attachment not exists' do
@@ -615,23 +615,17 @@ describe Chemotion::AttachmentAPI do
     end
 
     context 'when image attachment has an annotation' do
-      let(:attachment_id) { attachment.id }
-
-      let(:annotation_updater) { Usecases::Attachments::Annotation::AnnotationUpdater.new }
-      let(:annotation_location) do
-        Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg')
-      end
-      let(:expected_annotated_image_size) do
-        annotation_location = "#{updated_attachment.attachment.storage.directory}/#{updated_attachment.attachment_data['derivatives']['annotation']['annotated_file_location']}" # rubocop:disable Layout/LineLength
-        File.open(annotation_location).size
-      end
-      let(:updated_attachment) { Attachment.find(attachment.id) }
+      let(:attachment) { create(:attachment, :with_annotation, created_for: user.id, attachable_type: '') }
+      let(:fixture_path) { Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg') }
 
       before do
-        annotation = File.read(annotation_location)
-        annotation = annotation.gsub('/46', "/#{attachment_id}")
-        annotation_updater.update_annotation(annotation, attachment.id)
-        get "/api/v1/attachments/#{attachment_id}/annotated_image"
+        # TODO: move this to the factory: handling of fixture files for derivatives
+        # should be done in the factory
+        annotation_path = attachment.annotated_file_location
+        FileUtils.rm_f(annotation_path)
+        FileUtils.ln_s(fixture_path, annotation_path)
+
+        get "/api/v1/attachments/#{attachment_id}?annotate=true"
       end
 
       it('returning status 200') do
@@ -639,7 +633,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it('expecting that size of returned data equals annotated file size') do
-        expect(response.header['Content-Length'].to_i).to be expected_annotated_image_size
+        expect(response.header['Content-Length'].to_i).to be File.size(fixture_path)
       end
     end
 

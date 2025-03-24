@@ -108,9 +108,16 @@ export default class Header extends React.Component {
   renderImagePreview = () => {
     const { container, isEditHeader } = this.props;
     const previewImg = previewContainerImage(container);
-    const fetchNeeded = false;
-    const fetchId = 1;
-
+    // const fetchId = 1;
+    let hasPop = true;
+    let fetchNeeded = false;
+    let fetchId = 0;
+    if (previewImg.startsWith('data:image')) {
+      fetchNeeded = true;
+      fetchId = container.preview_img.id;
+    } else {
+      hasPop = false;
+    }
     return (
       <ImageModal
         hasPop={isEditHeader}
