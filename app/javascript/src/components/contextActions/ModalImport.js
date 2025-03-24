@@ -17,7 +17,7 @@ export default class ModalImport extends React.Component {
     const { onHide, action } = this.props;
     const { file } = this.state;
     const uiState = UIStore.getState();
-    const importSampleAs = uiState.modalParams.title === 'Import Chemicals from File' ? 'chemical' : 'sample';
+    const importSampleAs = uiState.modalParams.title === 'Import chemicals from file' ? 'chemical' : 'sample';
     const params = {
       file,
       currentCollectionId: uiState.currentCollection.id,

@@ -14,6 +14,7 @@ import ModalImportCollection from 'src/components/contextActions/ModalImportColl
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 const importSampleFunction = (updateModalProps, importAsChemical) => {
+  // caution: title is used in ModalImport.js, if you change it here, you need to change it there too
   const title = importAsChemical ? 'Import chemicals from file' : 'Import samples from file';
   const component = ModalImport;
   const action = ElementActions.importSamplesFromFile;
