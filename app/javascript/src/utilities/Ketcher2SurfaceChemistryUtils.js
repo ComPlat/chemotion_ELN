@@ -351,6 +351,7 @@ const findAtomByImageIndex = async (imgIdx) => {
   return { atomLocation: null, alias: '' };
 };
 
+// helper function to collect missing alias
 const collectMissingAliases = async () => {
   const aliasList = [];
   for (let i = 0; i < mols.length; i++) {
@@ -365,6 +366,7 @@ const collectMissingAliases = async () => {
   return aliasList;
 };
 
+// helper function to find missing number from 0 to imageNodeCounter
 const findMissingNumbers = async (arr) => {
   // Convert array to numbers and sort in ascending order
   const nums = arr.map(Number).sort((a, b) => a - b);
@@ -466,6 +468,7 @@ const handleOnDeleteImage = async (canvasSelection, oldImagePack, textL) => {
   return data;
 };
 
+// compare 2 array and fetch index content
 const deepCompareContent = async (oldArray, newArray) => {
   const missingIndexes = [];
   let shift = 0; // Tracks how much newArray is shifted
@@ -514,42 +517,24 @@ const addPolymerTags = async (polymerTag, data) => {
   return { collectedImages, molfileData: data };
 };
 
+// for text component
+const forTextNodeHeader = (key, description) => `{\"blocks\":[{\"key\":\"${key}\",\"text\":\"${description}\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}`;
+
 // generating images for ket2 format from molfile polymers list
 const addTextNodes = async (textNodes) => textNodes.map((item) => {
-  const [idx, key, alias, description] = item.split(KET_TAGS.textIdentifier);
+  const [_, key, alias, description] = item.split(KET_TAGS.textIdentifier);
   if (alias && key) {
     textNodeStruct[alias] = key;
     return {
       type: 'text',
       data: {
-        content: `{\"blocks\":[{\"key\":\"${key}\",\"text\":\"${description}\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}`,
+        content: forTextNodeHeader(key, description),
         position: {
           x: 10.325000000000001,
           y: -11.325000000000001,
           z: 0
         },
-        pos: [
-          {
-            x: 10.325000000000001,
-            y: -11.325000000000001,
-            z: 0
-          },
-          {
-            x: 10.325000000000001,
-            y: -11.700000000000001,
-            z: 0
-          },
-          {
-            x: 10.68671875,
-            y: -11.700000000000001,
-            z: 0
-          },
-          {
-            x: 10.68671875,
-            y: -11.325000000000001,
-            z: 0
-          }
-        ]
+        pos: []
       }
     };
   }
@@ -684,6 +669,7 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
   }
 };
 
+// function to switch back to selection button
 const buttonClickForRectangleSelection = async (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
   const button = iframeDocument?.querySelector('[data-testid="select-rectangle"]');
@@ -810,6 +796,7 @@ const redoKetcher = (editor) => {
   }
 };
 
+// helper function to show text on text popup
 const addTextNodeDescriptionOnTextPopup = async (node) => {
   if (node?.classList?.contains('Select-module_selectContainer__yXT-t') && node?.classList?.contains('Modal-module_modalOverlay__AzVeg')) {
     // Your existing logic
@@ -839,7 +826,6 @@ const allowProcessingSetter = (data) => {
 };
 
 // canvas actions
-
 const removeUnfamiliarRgLabels = async (lines) => {
   const removeableAtoms = [];
   for (let i = lines.length - 1; i > 0; i--) { // Looping backwards to avoid index shifting issues
@@ -857,6 +843,7 @@ const removeUnfamiliarRgLabels = async (lines) => {
   return removeAtomFromLineByIndex(lines, removeableAtoms);
 };
 
+// function to remove a line from molfile
 const removeAtomFromLineByIndex = (lines) => {
   const elementsInfo = lines[3];
   const headers = elementsInfo.trim().split(' ').filter((i) => i !== '');
@@ -890,7 +877,7 @@ const arrangePolymers = async (canvasData) => {
   return ket2Lines;
 };
 
-// helper functon to arrange text nodes for formula
+// helper function to arrange text nodes for formula
 const arrangeTextNodes = async (ket2Molfile) => {
   ket2Molfile.push(KET_TAGS.textNodeIdentifier);
   let atomCount = 0;
@@ -933,7 +920,7 @@ const assembleTextDescriptionFormula = async (ket2Lines) => {
   const endTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifierClose);
   const endAtom = parseInt(atomsCount) + 3;
   const textNodesPairs = await collectTextListing(ket2Lines, startTextNode, endTextNode);
-  const formula = await treverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
+  const formula = await traverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
   return formula;
 };
 
@@ -966,29 +953,29 @@ const onAddAtom = async (editor) => {
   return null;
 };
 
-// helper function to delete a pair of textnode by value
-const deleteKeyByValue = (valueToDelete, textNodeStruct) => {
+// helper function to delete a pair of text node by value
+const deleteKeyByValue = (valueToDelete) => {
   // Iterate over each key-value pair in the object
   for (const key in textNodeStruct) {
-    if (textNodeStruct.hasOwnProperty(key) && textNodeStruct[key] === valueToDelete) {
+    if (textNodeStruct[key] && textNodeStruct[key] === valueToDelete) {
       delete textNodeStruct[key]; // Delete the key if the value matches
     }
   }
-  return textNodeStruct;
+  // return textNodeStruct;
 };
 
 // helper function when a text node is deleted
-const onDeleteText = async (editor, textList, textNodeStruct) => {
+const onDeleteText = async (editor) => {
   console.log('Delete text in in?');
   await fetchKetcherData(editor);
   textList.forEach((item, idx) => {
     const { key } = JSON.parse(item.data.content).blocks[0];
     if (!Object.values(textNodeStruct).includes(key)) {
-      textNodeStruct = deleteKeyByValue(key, textNodeStruct);
+      deleteKeyByValue(key);
       textList.splice(idx, 1);
     }
   });
-  return { textNodeStruct, textList };
+  // return { textNodeStruct, textList };
 };
 
 /* istanbul ignore next */
@@ -999,7 +986,7 @@ const onDeleteImage = async (editor, canvasSelection, oldImagePack, textL) => {
 };
 
 // sort and join / text nodes
-const treverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
+const traverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
   let count = 0;
   for (let i = startAtoms + 1; i <= endAtom; i++) {
     const pairValue = textNodesPairs[count];
@@ -1020,10 +1007,11 @@ const treverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startA
 const onAddText = async (editor, selectedImageForTextNode) => {
   if (editor && editor.structureDef && selectedImageForTextNode) {
     await fetchKetcherData(editor);
+    const textListCopy = [];
     const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
     if (!atomLocation && !atomLocation?.length) return null;
 
-    // sync positions between atom alias, and textnode
+    // sync positions between atom alias, and text-node
     const { width } = imagesList[selectedImageForTextNode[0]]?.boundingBox || 10;
     const lastTextNode = textList[textList.length - 1];
     lastTextNode.data.position = {
@@ -1034,41 +1022,21 @@ const onAddText = async (editor, selectedImageForTextNode) => {
     textList[textList.length - 1] = lastTextNode;
     // prepare data nodes
     const dataRoot = removeTextFromData(latestData);
-    dataRoot.push(...textList);
+    if (textNodeStruct[alias]) {
+      const keyExists = textNodeStruct[alias];
+      textList.forEach((i) => {
+        const { key } = JSON.parse(i.data.content).blocks[0];
+        if (keyExists !== key) {
+          textListCopy.push(i);
+        }
+      });
+    }
+    dataRoot.push(...textListCopy);
     latestData.root.nodes = dataRoot;
-
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData), false);
     textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
   }
   imageNodeForTextNodeSetter(null);
-};
-
-async function getSvgFromBlob(imageBlob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-      resolve(event.target.result); // Return the SVG string
-    };
-
-    reader.onerror = function(error) {
-      reject(error);
-    };
-
-    reader.readAsText(imageBlob);
-  });
-}
-
-const reArrangeImagesOnCanvasViaKetcher = async (editor) => {
-  try {
-    const latestDataCopy = JSON.stringify(latestData);
-    const imageBlob = await editor.structureDef.editor.generateImage(latestDataCopy, { outputFormat: 'svg' });
-    const svgString = await getSvgFromBlob(imageBlob);
-    return svgString;
-  } catch (err) {
-    console.log(err.message);
-    return null;
-  }
 };
 
 /* istanbul ignore next */
@@ -1154,7 +1122,6 @@ export {
   redoKetcher,
   addTextNodeDescriptionOnTextPopup,
   reArrangeImagesOnCanvas,
-  reArrangeImagesOnCanvasViaKetcher,
   buttonClickForRectangleSelection,
 
   // setters
