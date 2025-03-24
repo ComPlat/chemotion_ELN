@@ -30,7 +30,7 @@ export default class ReactionDetailsPurification extends Component {
   }
 
   handlePurificationChange(selected) {
-    if (selected.lenth == 0) {
+    if (selected.length == 0) {
       return this.handleMultiselectChange('purification', []);
     }
 
