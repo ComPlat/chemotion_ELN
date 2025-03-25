@@ -6,7 +6,6 @@ import { Select } from 'src/components/common/Select';
 import DatePicker from 'react-datepicker';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import ChevronIcon from 'src/components/common/ChevronIcon';
 import { handleFloatNumbers } from 'src/utilities/UnitsConversion';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
@@ -111,62 +110,6 @@ const changeWeightUnit = (element, store, field, field_unit, element_type) => {
 
 const toggleContent = (store, content) => {
   store.toggleContent(content);
-}
-
-const allowedAnnotationFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
-
-const annotationButton = (store, attachment) => {
-  if (!attachment || !attachment.filename) { return null; }
-
-  const extension = attachment.filename.split('.').pop();
-  const isAllowedFileType = allowedAnnotationFileTypes.includes(extension);
-  const isActive = isAllowedFileType && !attachment.isNew;
-  const className = !isAllowedFileType ? 'attachment-gray-button' : '';
-  const tooltipText = isActive
-    ? 'Annotate image'
-    : 'Cannot annotate - invalid file type or the image is new';
-
-  return (
-    <OverlayTrigger
-      placement="top"
-      overlay={<Tooltip id="annotate_tooltip">{tooltipText}</Tooltip>}
-    >
-      <span>
-        <Button
-          size="xs"
-          variant="warning"
-          className={`attachment-button-size ${className}`}
-          onClick={() => {
-            if (isActive) {
-              store.toogleAttachmentModal();
-              store.setAttachmentSelected(attachment);
-            }
-          }}
-          disabled={!isActive}
-        >
-          <i className="fa fa-pencil-square-o" aria-hidden="true" />
-        </Button>
-      </span>
-    </OverlayTrigger>
-  );
-}
-
-const headlineWithToggle = (store, type, text) => {
-  const direction = store.toggable_contents[type] ? 'down' : 'right';
-  return (
-    <div
-      className="d-flex justify-content-between align-items-center bg-gray-200 py-2 px-3 border-bottom"
-      onClick={() => toggleContent(store, type)}
-      role="button"
-    >
-      <div className="fw-bold fs-5">{text}</div>
-      <ChevronIcon
-        direction={direction}
-        color="primary"
-        className="fs-5"
-      />
-    </div>
-  );
 }
 
 const labelWithInfo = (label, info) => {
@@ -745,7 +688,6 @@ const textInput = (element, store, field, label, info) => {
 
 export {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
-  textareaInput, dateTimePickerInput, headlineWithToggle,
-  mulipleRowInput, annotationButton, checkboxInput, componentInput,
+  textareaInput, dateTimePickerInput, mulipleRowInput, checkboxInput, componentInput,
   identifierMultipleInputGroups, toggleContent, inputGroupWithWeightUnit
 }

@@ -85,7 +85,7 @@ describe Chemotion::DeviceDescriptionAPI do
       it 'returns segment klass id' do
         put "/api/v1/device_descriptions/byontology/#{device_description.id}", params: params
 
-        expect(parsed_json_response).to eql([{ 'segment_klass_id' => segment_klass.id }])
+        expect(parsed_json_response).to eql([{ 'segment_klass_id' => segment_klass.id, 'show' => true }])
       end
 
       it 'returns empty array' do
