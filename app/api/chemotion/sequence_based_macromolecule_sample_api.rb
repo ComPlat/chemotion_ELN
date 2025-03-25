@@ -2,6 +2,9 @@
 
 module Chemotion
   class SequenceBasedMacromoleculeSampleAPI < Grape::API
+    helpers ParamsHelpers
+    helpers ContainerHelpers
+
     resource :sequence_based_macromolecule_samples do
       desc 'Get a list of SBMM-Samples, filtered by collection'
       params do
@@ -17,14 +20,13 @@ module Chemotion
       get do
         sample_scope = Usecases::Sbmm::Samples.new(current_user: current_user).list(params)
         sbmm_samples = []
+        reset_pagination_page(sample_scope) # prevent fetching pages without results
+
         paginate(sample_scope).each do |sbmm_sample|
           sbmm_samples << Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample)
         end
 
-        {
-          sequence_based_macromolecule_samples: sbmm_samples,
-          sequence_based_macromolecule_samples_count: sample_scope.count
-        }
+        { sequence_based_macromolecule_samples: sbmm_samples }
       end
 
       desc 'Fetch a SBMM sample by id'
