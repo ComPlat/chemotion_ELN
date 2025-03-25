@@ -77,10 +77,6 @@ class App extends Component {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
     }
-
-    if (this.state.klasses !== state.klasses) {
-      this.setState({ klasses: state.klasses });
-    }
   }
 
   documentKeyDown(event) {
