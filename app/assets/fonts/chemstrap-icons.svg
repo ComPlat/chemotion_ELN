@@ -3,12 +3,14 @@
 <svg xmlns="http://www.w3.org/2000/svg">
 <metadata>Copyright (C) 2025 by original authors @ fontello.com</metadata>
 <defs>
-<font id="fontello" horiz-adv-x="1000" >
-<font-face font-family="fontello" font-weight="400" font-stretch="normal" units-per-em="1000" ascent="850" descent="-150" />
+<font id="chemstrap-icons" horiz-adv-x="1000" >
+<font-face font-family="chemstrap-icons" font-weight="400" font-stretch="normal" units-per-em="1000" ascent="850" descent="-150" />
 <missing-glyph horiz-adv-x="1000" />
-<glyph glyph-name="incoming" unicode="&#xe820;" d="M813 413v-344c0-16-16-31-32-31h-562c-19 0-31 15-31 31v562c0 19 12 32 31 32h309v62h-309c-53 0-94-41-94-94v-562c0-50 41-94 94-94h562c50 0 94 44 94 94v344h-62z m-500 62v-312h343l-122 109 335 334-110 110-337-338-106 97z" horiz-adv-x="1000" />
+<glyph glyph-name="incoming" unicode="&#xe820;" d="M938 413l-133 132-422-422-110 110 422 422-132 133h375v-375z m-94-63v-328c0-9-7-16-16-16h-656c-9 0-16 7-16 16v656c0 9 7 16 16 16h328v94h-328c-60 0-109-50-109-110v-656c0-60 49-110 109-110h656c60 0 110 50 110 110v328h-94z" horiz-adv-x="1000" />
 
-<glyph glyph-name="outgoing" unicode="&#xe821;" d="M813 69c0-16-16-31-32-31h-562c-19 0-31 15-31 31v562c0 19 12 32 31 32h215v62h-215c-53 0-94-41-94-94v-562c0-50 41-94 94-94h562c50 0 94 44 94 94v250h-62v-250z m-282 656l122-112-334-335 109-109 338 340 106-96v312h-344z" horiz-adv-x="1000" />
+<glyph glyph-name="outgoing" unicode="&#xe821;" d="M524 263l132-132h-375v375l132-132 391 391 111-111-391-391z m320 118v-359c0-9-7-16-16-16h-656c-9 0-16 7-16 16v656c0 9 7 16 16 16h359v94h-359c-60 0-109-50-109-110v-656c0-60 49-110 109-110h656c60 0 110 50 110 110v359h-94z" horiz-adv-x="1000" />
+
+<glyph glyph-name="collection" unicode="&#xe822;" d="M250 788h688v-125h-688v125z m0-375h688v125h-688v-125z m0-250h688v125h-688v-125z m0-251h688v126h-688v-126z m-187 876h125v-125h-125v125z m0-375h125v125h-125v-125z m0-250h125v125h-125v-125z m0-251h125v126h-125v-126z" horiz-adv-x="1000" />
 
 <glyph glyph-name="reaction" unicode="&#xf100;" d="M660 49c4-6 6-13 6-21v0c0-24-19-41-43-41h-580c-23 0-43 17-43 41v0c0 8 2 15 6 21l228 442v170h-23c-12 0-21 11-21 23v0c0 12 9 22 21 22h244c12 0 22-10 22-22v0c0-12-10-23-22-23h-23v-170z m-381 432l-117-225s98 20 170 0 172 0 172 0l-117 225v180h-108v-180z" horiz-adv-x="666" />
 
