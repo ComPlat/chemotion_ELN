@@ -92,7 +92,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
   const chemotionRepository = lockedRoots.find((r) => r.label === 'chemotion-repository.net');
   if (chemotionRepository) {
     collectionGroups.push({
-      label: 'chemotion-repository.net',
+      label: 'chemotion-repo',
       icon: 'fa fa-cloud',
       collectionKey: CHEMOTION_REPOSITORY_KEY,
       onClickOpenCollection: chemotionRepository.id,
