@@ -2,6 +2,7 @@
 
 module Entities
   class ProteinSequenceModificationsEntity < ApplicationEntity
+    expose! :id
     expose! :modification_n_terminal
     expose! :modification_n_terminal_details
     expose! :modification_c_terminal

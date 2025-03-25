@@ -153,7 +153,7 @@ module Chemotion
         end
       end
       post do
-        sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(params)
+        sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(declared(params))
 
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
       end

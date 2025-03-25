@@ -2,6 +2,7 @@
 
 module Entities
   class SequenceBasedMacromoleculeEntity < ApplicationEntity
+    expose! :id
     expose! :sbmm_type
     expose! :sbmm_subtype
     expose! :identifier
