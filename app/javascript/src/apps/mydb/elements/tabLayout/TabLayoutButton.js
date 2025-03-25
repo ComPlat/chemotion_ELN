@@ -7,7 +7,7 @@ export default function TabLayoutButton({ popoverSettings, onToggle}) {
     <div className="position-absolute top-0 end-0">
       <OverlayTrigger
         trigger="click"
-        placement="bottom"
+        placement="left"
         overlay={popoverSettings}
         onToggle={onToggle}
         rootClose
