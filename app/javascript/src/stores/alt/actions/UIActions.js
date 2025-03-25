@@ -14,18 +14,6 @@ class UIActions {
   expandSidebar = () => null;
   toggleSidebar = () => null;
 
-  showCollectionManagement() {
-    return null;
-  }
-
-  toggleCollectionManagement() {
-    return null;
-  }
-
-  showElements() {
-    return null;
-  }
-
   showDeviceManagement() {
     return null
   }
