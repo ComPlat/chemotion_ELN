@@ -33,13 +33,17 @@ export default function SidebarButton({
     </OverlayTrigger>
   ) : (
     <Button
-      className="sidebar-button text-start gap-3"
+      className="sidebar-button text-start gap-2"
       variant={variant}
       onClick={onClick}
     >
-      <i className={`fa-fw ${icon}`} />
-      <span>{label}</span>
-      <div onClick={(e) => e.stopPropagation()}>{appendComponent}</div>
+      <span className="d-flex gap-2 align-items-center flex-grow-1">
+        <i className={`fa-fw ${icon}`} />
+        <span>{label}</span>
+      </span>
+      {appendComponent && (
+        <div onClick={(e) => e.stopPropagation()}>{appendComponent}</div>
+      )}
     </Button>
   );
 }
