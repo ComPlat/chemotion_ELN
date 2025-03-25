@@ -64,7 +64,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
   const collectionGroups = [
     {
       label: 'My Collections',
-      icon: 'fa fa-list',
+      icon: 'icon-collection',
       collectionKey: ALL_COLLECTIONS_KEY,
       roots: unsharedRoots,
       onClickOpenCollection: 'all',
