@@ -62,14 +62,6 @@ export default class BaseFetcher {
     if (queryParams.fromDate) getParams.from_date = `${dateToUnixTimestamp(queryParams.fromDate)}`;
     if (queryParams.toDate)  getParams.to_date = `${dateToUnixTimestamp(queryParams.toDate)}`;
     if (queryParams.userLabel) getParams.user_label = `${queryParams.userLabel}`;
-    let addQuery = '';
-    let userState;
-    let group;
-    let sort;
-    let direction;
-    let filters;
-    let reaction;
-    let sortColumn;
 
 
     // override some params based on what elements are being fetched
@@ -77,18 +69,18 @@ export default class BaseFetcher {
       getParams.molecule_sort = (queryParams.moleculeSort ? 1 : 0);
     }
     if (type == 'reactions') {
-      userState = UserStore.getState();
+      const userState = UserStore.getState();
+      const filters = userState?.profile?.data?.filters || {};
+
       // if the user has not updated its profile yet, we set the default sort to created_at
       if (!filters.reaction) {
         getParams.sort_column = 'created_at';
         getParams.sort_direction = 'DESC';
       } else {
-        filters = userState?.profile?.data?.filters || {};
-        reaction = userState?.profile?.data?.filters?.reaction || {};
-        group = filters.reaction?.group || 'created_at';
-        sort = filters.reaction?.sort || false;
-        direction = filters.reaction?.direction || 'DESC';
+        const group = filters.reaction?.group || 'created_at';
+        const sort = filters.reaction?.sort || false;
 
+        let sortColumn = null;
         if (group === 'none') {
           sortColumn = sort ? 'created_at' : 'updated_at';
         } else if (sort && group) {
@@ -98,7 +90,7 @@ export default class BaseFetcher {
         }
 
         getParams.sort_column = sortColumn;
-        getParams.sort_direction = direction;
+        getParams.sort_direction = filters.reaction?.direction || 'DESC';;
       }
     }
     if (type == 'generic_elements') {
@@ -113,7 +105,7 @@ export default class BaseFetcher {
 
     // build string from object
     const paramsString = Object.entries(getParams)
-                               .map(([key, value]) => { `${key}=${value}` })
+                               .map(([key, value]) => { return `${key}=${value}` })
                                .join("&")
     const apiURL = `/api/v1/${type}.json?`.concat(paramsString)
 
