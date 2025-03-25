@@ -58,8 +58,6 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   include AnalysisCodes
   include Taggable
 
-  acts_as_paranoid
-
   before_create :auto_assign_short_label
 
   has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
