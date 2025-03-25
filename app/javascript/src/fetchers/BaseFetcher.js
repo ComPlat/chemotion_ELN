@@ -50,17 +50,18 @@ export default class BaseFetcher {
   }
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false, type = 'samples', ElKlass) {
-    const page = queryParams.page || 1;
-    const perPage = queryParams.per_page || UIStore.getState().number_of_results;
-    const filterCreatedAt = queryParams.filterCreatedAt === true
-      ? '&filter_created_at=true' : '&filter_created_at=false';
-    const fromDate = queryParams.fromDate ? `&from_date=${dateToUnixTimestamp(queryParams.fromDate)}` : '';
-    const toDate = queryParams.toDate ? `&to_date=${dateToUnixTimestamp(queryParams.toDate)}` : '';
-    const userLabel = queryParams.userLabel ? `&user_label=${queryParams.userLabel}` : '';
-    const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
-    const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
-      + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-      + `${fromDate}${toDate}${userLabel}${filterCreatedAt}${productOnly}`;
+    const getParams = {}
+
+    getParams.page = queryParams.page || 1;
+    getParams.per_page = queryParams.per_page || UIStore.getState().number_of_results;
+    getParams.filter_created_at = (queryParams.filterCreatedAt === true);
+    getParams.product_only = (queryParams.productOnly === true);
+
+    if (isSync) getParams.sync_collection_id = id;
+    if (!isSync) getParams.collection_id = id;
+    if (queryParams.fromDate) getParams.from_date = `${dateToUnixTimestamp(queryParams.fromDate)}`;
+    if (queryParams.toDate)  getParams.to_date = `${dateToUnixTimestamp(queryParams.toDate)}`;
+    if (queryParams.userLabel) getParams.user_label = `${queryParams.userLabel}`;
     let addQuery = '';
     let userState;
     let group;
@@ -70,13 +71,18 @@ export default class BaseFetcher {
     let reaction;
     let sortColumn;
 
-    switch (type) {
-      case 'samples':
-        addQuery = `&product_only=${queryParams.productOnly || false}`
-          + `&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`;
-        break;
-      case 'reactions':
-        userState = UserStore.getState();
+
+    // override some params based on what elements are being fetched
+    if (type == 'samples') {
+      getParams.molecule_sort = (queryParams.moleculeSort ? 1 : 0);
+    }
+    if (type == 'reactions') {
+      userState = UserStore.getState();
+      // if the user has not updated its profile yet, we set the default sort to created_at
+      if (!filters.reaction) {
+        getParams.sort_column = 'created_at';
+        getParams.sort_direction = 'DESC';
+      } else {
         filters = userState?.profile?.data?.filters || {};
         reaction = userState?.profile?.data?.filters?.reaction || {};
         group = filters.reaction?.group || 'created_at';
@@ -91,24 +97,27 @@ export default class BaseFetcher {
           sortColumn = 'updated_at';
         }
 
-        addQuery = `&sort_column=${sortColumn}&sort_direction=${direction}`;
+        getParams.sort_column = sortColumn;
+        getParams.sort_direction = direction;
+      }
+    }
+    if (type == 'generic_elements') {
+      userState = UserStore.getState();
+      filters = userState?.profile?.data?.filters || {};
+      group = filters[queryParams.name]?.group || 'none';
+      sort = filters[queryParams.name]?.sort || false;
 
-        // if the user has not updated its profile yet, we set the default sort to created_at
-        if (!filters.reaction) {
-          addQuery = '&sort_column=created_at&sort_direction=DESC';
-        }
-        break;
-      case 'generic_elements':
-        userState = UserStore.getState();
-        filters = userState?.profile?.data?.filters || {};
-        group = filters[queryParams.name]?.group || 'none';
-        sort = filters[queryParams.name]?.sort || false;
-        addQuery = `&el_type=${queryParams.name}&sort_column=${(sort && group) || 'updated_at'}`;
-        break;
-      default:
+      getParams.el_type = queryParams.name
+      getParams.sort_column = (sort && group) || 'updated_at'
     }
 
-    return fetch(api.concat(addQuery), {
+    // build string from object
+    const paramsString = Object.entries(getParams)
+                               .map(([key, value]) => { `${key}=${value}` })
+                               .join("&")
+    const apiURL = `/api/v1/${type}.json?`.concat(paramsString)
+
+    return fetch(apiURL, {
       credentials: 'same-origin'
     }).then((response) => (
       response.json().then((json) => ({
