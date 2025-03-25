@@ -158,6 +158,21 @@ module Chemotion
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
       end
 
+      desc 'Delete a SBMM sample by id'
+        params do
+        requires :id, type: Integer, desc: 'Sample id'
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, SequenceBasedMacromoleculeSample.find(params[:id])).destroy?
+        end
+
+        delete do
+          sample = SequenceBasedMacromoleculeSample.find(params[:id])
+          sample.destroy
+        end
+      end
+
       namespace :ui_state do
         desc 'Get samples by UI state'
         params do
