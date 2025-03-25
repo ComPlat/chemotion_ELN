@@ -124,7 +124,7 @@ const SampleTaskInbox = ({}) => {
             </Modal.Title>
           </Modal.Header>
 
-          <Modal.Body>
+          <Modal.Body className="max-vh-60">
             {openSampleTasks()}
           </Modal.Body>
 
