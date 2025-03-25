@@ -111,10 +111,17 @@ h6 {
   }
 }
 
-.popover-header--additional {
-  border-top: var(--bs-popover-border-width) solid
-    var(--bs-popover-border-color);
-  border-radius: 0;
+.popover-multi-item {
+  &:not(:first-child) .popover-header {
+    border-top-left-radius: 0;
+  }
+  &:not(:last-child) {
+    border-right: var(--bs-popover-border-width) solid
+      var(--bs-popover-border-color);
+    .popover-header {
+      border-top-right-radius: 0;
+    }
+  }
 }
 
 .input-group {
