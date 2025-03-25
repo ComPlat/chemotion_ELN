@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonToolbar } from 'react-bootstrap';
+import { Button, ButtonToolbar, Form } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
@@ -9,15 +9,16 @@ export default class ModalImport extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      file: null
+      file: null,
+      importAsChemical: false
     };
   }
 
   handleClick() {
     const { onHide, action } = this.props;
-    const { file } = this.state;
+    const { file, importAsChemical } = this.state;
     const uiState = UIStore.getState();
-    const importSampleAs = uiState.modalParams.title === 'Import chemicals from file' ? 'chemical' : 'sample';
+    const importSampleAs = importAsChemical ? 'chemical' : 'sample';
     const params = {
       file,
       currentCollectionId: uiState.currentCollection.id,
@@ -47,7 +48,7 @@ export default class ModalImport extends React.Component {
   }
 
   dropzoneOrfilePreview() {
-    const { file } = this.state;
+    const { file, importAsChemical } = this.state;
     if (file) {
       return (
         <div className="d-flex justify-content-between">
@@ -57,8 +58,9 @@ export default class ModalImport extends React.Component {
           </Button>
         </div>
       );
-    } else {
-      return (
+    }
+    return (
+      <>
         <Dropzone
           onDrop={attachment_file => this.handleFileDrop(attachment_file)}
           style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
@@ -67,8 +69,17 @@ export default class ModalImport extends React.Component {
             Drop File, or Click to Select.
           </div>
         </Dropzone>
-      );
-    }
+        <div style={{ paddingTop: 12 }}>
+          <Form.Check
+            type="checkbox"
+            onChange={() => this.setState((prevState) => ({ importAsChemical: !prevState.importAsChemical }))}
+            label="Import as a chemical inventory"
+            checked={importAsChemical}
+            className="me-2"
+          />
+        </div>
+      </>
+    );
   }
 
   isDisabled() {

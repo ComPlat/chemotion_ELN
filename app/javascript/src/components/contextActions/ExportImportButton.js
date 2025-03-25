@@ -14,8 +14,7 @@ import ModalImportCollection from 'src/components/contextActions/ModalImportColl
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 const importSampleFunction = (updateModalProps, importAsChemical) => {
-  // caution: title is used in ModalImport.js, if you change it here, you need to change it there too
-  const title = importAsChemical ? 'Import chemicals from file' : 'Import samples from file';
+  const title = 'Import samples from file';
   const component = ModalImport;
   const action = ElementActions.importSamplesFromFile;
   const listSharedCollections = false;
@@ -144,13 +143,6 @@ function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
           title="Import from spreadsheet or sdf"
         >
           Import samples to collection
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => importSampleFunction(updateModalProps, true)}
-          disabled={isDisabled}
-          title="Import chemicals from spreadsheet"
-        >
-          Import chemicals to collection
         </Dropdown.Item>
         <Dropdown.Divider />
         <Dropdown.Item
