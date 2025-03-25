@@ -1,4 +1,5 @@
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class MoleculeAPI < Grape::API
     include Grape::Kaminari
 
@@ -41,11 +42,9 @@ module Chemotion
           unless molecule
             molfile = babel_info[:molfile] if babel_info
             begin
-              rw_mol = RDKitChem::RWMol.mol_from_smiles(smiles)
-              rd_mol = rw_mol.mol_to_mol_block unless rw_mol.nil?
+              rd_mol = RdkitExtensionService.smiles_to_ctab(smiles)
             rescue StandardError => e
               Rails.logger.error ["with smiles: #{smiles}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
-              rd_mol = rw_mol.mol_to_mol_block(true, -1, false) unless rw_mol.nil?
             end
             if rd_mol.nil?
               begin
@@ -325,4 +324,5 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
