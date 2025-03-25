@@ -53,7 +53,7 @@ module Usecases
       end
 
       def find_or_create_unknown_protein(params)
-        sbmm = SequenceBasedMacromolecule.unknown.find_by(params)
+        sbmm = SequenceBasedMacromolecule.unknown.find_by(params.except(:protein_sequence_modification_attributes, :post_translational_modification_attributes))
         sbmm ||= SequenceBasedMacromolecule.create(params)
         sbmm
       end
