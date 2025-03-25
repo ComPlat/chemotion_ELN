@@ -51,6 +51,7 @@ module CollectionHelpers
       element_detail_level: 0,
       celllinesample_detail_level: 0,
       devicedescription_detail_level: 0,
+      sequencebasedmacromoleculesample_detail_level: 0,
     }.merge(dl || {})
   end
 
@@ -126,6 +127,7 @@ module CollectionHelpers
       element_detail_level: 10,
       celllinesample_detail_level: 10,
       devicedescription_detail_level: 10,
+      sequencebasedmacromoleculesample_detail_level: 10,
     }
 
     @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
@@ -138,6 +140,7 @@ module CollectionHelpers
     @dl_e = @dl[:element_detail_level]
     @dl_cl = @dl[:celllinesample_detail_level]
     @dl_dd = @dl[:devicedescription_detail_level]
+    @dl_sbmms = @dl[:sequencebasedmacromoleculesample_detail_level]
   end
 end
 # rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
