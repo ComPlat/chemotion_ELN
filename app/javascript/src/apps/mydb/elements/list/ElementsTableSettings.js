@@ -184,23 +184,10 @@ export default class ElementsTableSettings extends React.Component {
 
     const showSettings = (currentType === 'sample' || currentType === 'reaction');
     const popoverSettings = (
-      <Popover>
-        <Popover.Header>
-          Tab Layout
-        </Popover.Header>
-        <Popover.Body>
-          <TabLayoutEditor
-            visible={visible}
-            hidden={hidden}
-            getItemComponent={TabItem}
-            onLayoutChange={(visible, hidden) => {
-              this.setState({ visible, hidden });
-            }}
-          />
-        </Popover.Body>
+      <Popover className="d-flex popover-multi">
         {showSettings && (
-          <>
-            <Popover.Header className="popover-header--additional">Settings</Popover.Header>
+          <div className="popover-multi-item">
+            <Popover.Header>Settings</Popover.Header>
             <Popover.Body>
               <Form>
                 <Form.Check
@@ -229,8 +216,23 @@ export default class ElementsTableSettings extends React.Component {
                 />
               </Form>
             </Popover.Body>
-          </>
+          </div>
         )}
+        <div className="popover-multi-item">
+          <Popover.Header>
+            Tab Layout
+          </Popover.Header>
+          <Popover.Body>
+            <TabLayoutEditor
+              visible={visible}
+              hidden={hidden}
+              getItemComponent={TabItem}
+              onLayoutChange={(visible, hidden) => {
+                this.setState({ visible, hidden });
+              }}
+            />
+          </Popover.Body>
+        </div>
       </Popover>
     );
 
