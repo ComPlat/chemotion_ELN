@@ -134,7 +134,7 @@ export default class ContainerDatasets extends Component {
                   />
                 </div>
               ))}
-              <div key="attachmentdropzone" className="list-group-item disabled" >
+              <div key="attachmentdropzone" className="list-group-item" >
                 <AttachmentDropzone
                   handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
                 />
@@ -162,7 +162,7 @@ export default class ContainerDatasets extends Component {
         <div className="border rounded p-2 mb-2">
           <p>There are currently no Datasets.</p>
           <div className="list-group">
-            <div key="attachmentdropzone" className="list-group-item disabled">
+            <div key="attachmentdropzone" className="list-group-item">
               <AttachmentDropzone
                 handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
               />
