@@ -4,7 +4,6 @@ import Sidebar from 'src/apps/mydb/layout/Sidebar';
 import Topbar from 'src/apps/mydb/layout/Topbar';
 
 import FlowViewerModal from 'src/apps/generic/FlowViewerModal';
-import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import Elements from 'src/apps/mydb/elements/Elements';
 import InboxModal from 'src/apps/mydb/inbox/InboxModal';
 import Calendar from 'src/components/calendar/Calendar';
@@ -20,14 +19,9 @@ import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      showCollectionManagement: false,
-    };
-    this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
   }
 
   componentDidMount() {
-    UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchOlsRxno();
     UserActions.fetchOlsChmo();
     UserActions.fetchOlsBao();
@@ -51,7 +45,6 @@ class App extends Component {
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.handleUiStoreChange);
     this.removeLocalStorageEventListener();
   }
 
@@ -65,12 +58,6 @@ class App extends Component {
       OnEventListen,
       false
     );
-  }
-
-  handleUiStoreChange(state) {
-    if (this.state.showCollectionManagement !== state.showCollectionManagement) {
-      this.setState({ showCollectionManagement: state.showCollectionManagement });
-    }
   }
 
   patchExternalLibraries() {
@@ -91,18 +78,13 @@ class App extends Component {
     });
   }
 
-  mainContent() {
-    const { showCollectionManagement } = this.state;
-    return (showCollectionManagement ? <CollectionManagement /> : <Elements />);
-  }
-
   renderContent() {
     return (
       <div className="mydb-app d-flex vh-100">
         <Sidebar />
         <div className="d-flex flex-column flex-grow-1">
           <Topbar />
-          {this.mainContent()}
+          <Elements />
         </div>
       </div>
     );
