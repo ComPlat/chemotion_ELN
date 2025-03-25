@@ -4,6 +4,7 @@ module Chemotion
   class SequenceBasedMacromoleculeSampleAPI < Grape::API
     helpers ParamsHelpers
     helpers ContainerHelpers
+    helpers CollectionHelpers
 
     resource :sequence_based_macromolecule_samples do
       desc 'Get a list of SBMM-Samples, filtered by collection'
@@ -155,6 +156,35 @@ module Chemotion
         sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(params)
 
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
+      end
+
+      namespace :ui_state do
+        desc 'Get samples by UI state'
+        params do
+          requires :ui_state, type: Hash, desc: 'Selected SBMM samples from the UI' do
+            optional :all, type: Boolean
+            optional :included_ids, type: Array
+            optional :excluded_ids, type: Array
+            optional :from_date, type: Date
+            optional :to_date, type: Date
+            optional :collection_id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
+          end
+          optional :limit, type: Integer, desc: 'Limit number of SBMM samples'
+        end
+
+        before do
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @sbmm_samples).read?
+        end
+
+        # we are using POST because the fetchers don't support GET requests with body data
+        post do
+          @sbmm_samples = @sbmm_samples.limit(params[:limit]) if params[:limit]
+
+          present @sbmm_samples, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_samples
+        end
       end
     end
   end

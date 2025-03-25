@@ -52,7 +52,7 @@
 #
 class SequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid
-
+  include ElementUIStateScopes
   include Collectable
   include ElementCodes
   include AnalysisCodes
