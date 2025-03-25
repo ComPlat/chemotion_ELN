@@ -2,8 +2,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Accordion, Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Modal, Row, Col,
+  Accordion, Form, Button, OverlayTrigger, Tooltip,
+  InputGroup, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
@@ -14,12 +14,13 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import SafetySheetsAttachments from 'src/components/chemicalTab/SafetySheetsAttachments';
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      chemical: undefined,
+      chemical: null,
       safetySheets: [],
       displayWell: false,
       checkSaveIconThermofischer: false,
@@ -31,13 +32,15 @@ export default class ChemicalTab extends React.Component {
       warningMessage: '',
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: false,
-      loadChemicalProperties: { vendor: '', loading: false },
+      loadChemicalProperties: { loading: false, vendor: '' },
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewModalForVendor: ''
     };
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.handleSubmitSave = this.handleSubmitSave.bind(this);
+    this.handleCheckMark = this.handleCheckMark.bind(this);
   }
 
   componentDidMount() {
@@ -219,7 +222,6 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
-  // eslint-disable-next-line class-methods-use-this
   stylePhrases = (str) => {
     const HazardPhrases = [];
     if (str && str.h_statements && str.h_statements.length !== 0) {
@@ -256,69 +258,6 @@ export default class ChemicalTab extends React.Component {
       </div>
     );
   };
-
-  fetchSafetyPhrases = (vendor) => {
-    const { sample } = this.props;
-    const queryParams = {
-      vendor, id: sample.id
-    };
-    const warningMessage = 'Please fetch and save corresponding safety data sheet first';
-    this.setState({ warningMessage: '' });
-    ChemicalFetcher.safetyPhrases(queryParams).then((result) => {
-      if (result === warningMessage || result === 204) {
-        this.setState({ warningMessage });
-      } else if (result === 'Could not find H and P phrases') {
-        this.setState({ warningMessage: result });
-      } else {
-        this.setState({ safetyPhrases: this.stylePhrases(result) });
-        this.handleFieldChanged('safetyPhrases', result);
-      }
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  };
-
-  fetchChemicalProperties = (vendor) => {
-    const { chemical } = this.state;
-    let productLink;
-    this.setState({ loadChemicalProperties: { vendor, loading: true } });
-    this.setState({ warningMessage: '' });
-
-    if (chemical && vendor === 'thermofischer') {
-      productLink = chemical._chemical_data[0].alfaProductInfo ? chemical._chemical_data[0].alfaProductInfo.productLink : '';
-    } else if (chemical && vendor === 'merck') {
-      productLink = chemical._chemical_data[0].merckProductInfo ? chemical._chemical_data[0].merckProductInfo.productLink : '';
-    }
-    const warningMessage = 'Please fetch and save corresponding safety data sheet first';
-
-    ChemicalFetcher.chemicalProperties(productLink).then((result) => {
-      this.setState({ loadChemicalProperties: { vendor: '', loading: false } });
-      if (result === 'Could not find additional chemical properties' || result === null) {
-        this.setState({ warningMessage });
-      } else {
-        if (chemical && vendor === 'thermofischer') {
-          chemical._chemical_data[0].alfaProductInfo.properties = result;
-        } else if (chemical && vendor === 'merck') {
-          if (chemical._chemical_data && chemical._chemical_data[0] && chemical._chemical_data[0].merckProductInfo) {
-            chemical._chemical_data[0].merckProductInfo.properties = result;
-          }
-        }
-        this.mapToSampleProperties(vendor);
-      }
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  };
-
-  querySafetyPhrases = (vendor) => (
-    <Button
-      id="safetyPhrases-btn"
-      onClick={() => this.fetchSafetyPhrases(vendor)}
-      variant="light"
-    >
-      fetch Safety Phrases
-    </Button>
-  );
 
   fetchChemical(sample) {
     if (sample === undefined || sample.is_new) {
@@ -436,45 +375,6 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  clipboardTooltip(value) {
-    const info = `product link (${value})`;
-    return (
-      <Tooltip id="productLink_button">{info}</Tooltip>
-    );
-  }
-
-  copyButton(document) {
-    const { chemical } = this.state;
-    let info = '';
-    let value;
-    if (chemical) {
-      if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-        info = chemical._chemical_data[0];
-      }
-    }
-    if (document.alfa_link !== undefined) {
-      if (info.alfaProductInfo) {
-        value = info.alfaProductInfo.productLink;
-      } else {
-        value = document.alfa_product_link || null;
-      }
-    } else if (info.merckProductInfo) {
-      value = info.merckProductInfo.productLink;
-    } else {
-      value = document.merck_product_link || null;
-    }
-    return (
-      <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip(value)}>
-        <Button active size="xsm" variant="light">
-          <a href={value} target="_blank" rel="noreferrer">
-            <i className="fa fa-external-link" />
-          </a>
-        </Button>
-      </OverlayTrigger>
-    );
-  }
-
   locationInput(data, parameter, domain) {
     const value = data?.[parameter] ?? '';
     const subLabel = (parameter.split('_'))[1];
@@ -534,155 +434,6 @@ export default class ChemicalTab extends React.Component {
     } else if (document.merck_link) {
       this.setState({ checkSaveIconMerck: false });
     }
-  }
-
-  checkMarkButton(document) {
-    const { checkSaveIconThermofischer, checkSaveIconMerck } = this.state;
-    let checkMark;
-    if (document.alfa_link) {
-      checkMark = (!checkSaveIconThermofischer && document.alfa_product_number !== undefined)
-        ? null : (
-          <OverlayTrigger placement="top" overlay={<Tooltip id="saveCheckIconThermo">Saved</Tooltip>}>
-            <i className="fa fa-check-circle" />
-          </OverlayTrigger>
-        );
-    } else if (document.merck_link) {
-      checkMark = (!checkSaveIconMerck && document.merck_product_number !== undefined) ? null : (
-        <OverlayTrigger placement="top" overlay={<Tooltip id="saveCheckIconMerck">Saved</Tooltip>}>
-          <i className="fa fa-check-circle" />
-        </OverlayTrigger>
-      );
-    }
-    return checkMark;
-  }
-
-  removeButton(index, document) {
-    return (
-      <Button
-        size="xsm"
-        variant="danger"
-        onClick={() => this.handleRemove(index, document)}
-      >
-        <i className="fa fa-trash-o" />
-      </Button>
-    );
-  }
-
-  saveSdsFile(productInfo) {
-    const { chemical } = this.state;
-    const { sample } = this.props;
-    let vendorProduct;
-    if (productInfo.vendor === 'Thermofisher') {
-      vendorProduct = 'alfaProductInfo';
-    } else if (productInfo.vendor === 'Merck') {
-      vendorProduct = 'merckProductInfo';
-      this.setState({ loadingSaveSafetySheets: true });
-    }
-    const cas = sample.xref?.cas ?? '';
-    // update chemical data before saving it in the database
-    this.handleFieldChanged(vendorProduct, productInfo);
-    const params = {
-      sample_id: sample.id,
-      cas,
-      chemical_data: chemical._chemical_data,
-      vendor_product: vendorProduct
-    };
-    ChemicalFetcher.saveSafetySheets(params).then((result) => {
-      if (result) {
-        const value = `/safety_sheets/${productInfo.productNumber}_${productInfo.vendor}.pdf`;
-        const chemicalData = chemical._chemical_data;
-        const pathArr = [];
-        const pathParams = {};
-        let vendorParams;
-        if (productInfo.vendor === 'Thermofisher') {
-          vendorParams = 'alfa_link';
-        } else {
-          vendorParams = 'merck_link';
-        }
-        pathParams[vendorParams] = value;
-        if (chemicalData[0].safetySheetPath === undefined
-          || chemicalData[0].safetySheetPath.length === 0) {
-          pathArr.push(pathParams);
-          this.handleFieldChanged('safetySheetPath', pathArr);
-        } else if (chemicalData[0].safetySheetPath.length === 1
-          && chemicalData[0].safetySheetPath[0][vendorParams]
-          === undefined) {
-          chemicalData[0].safetySheetPath.push(pathParams);
-        } else if (chemicalData[0].safetySheetPath.length === 1
-          && chemicalData[0].safetySheetPath[0][vendorParams]
-          !== undefined && chemicalData[0].safetySheetPath[0][vendorParams] !== value) {
-          chemicalData[0].safetySheetPath[0][vendorParams] = value;
-        } else {
-          for (let i = 0; i < chemicalData[0].safetySheetPath.length; i += 1) {
-            if (chemicalData[0].safetySheetPath[i][vendorParams]
-              !== undefined && chemicalData[0].safetySheetPath[i][vendorParams] !== value) {
-              chemicalData[0].safetySheetPath[i][vendorParams] = value;
-            }
-          }
-        }
-        chemical.isNew = false;
-        this.setState({ chemical });
-        this.handleSubmitSave();
-        this.setState({ loadingSaveSafetySheets: false });
-        this.handleCheckMark(productInfo.vendor);
-      }
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  }
-
-  saveSafetySheetsButton(sdsInfo, index) {
-    const {
-      checkSaveIconMerck, checkSaveIconThermofischer,
-      loadingSaveSafetySheets, chemical
-    } = this.state;
-    let vendor;
-    let sdsLink;
-    let productNumber;
-    let productLink;
-    let checkMark;
-    if (chemical && chemical._chemical_data) {
-      const { safetySheetPath } = chemical._chemical_data[0] || [];
-      if (sdsInfo.alfa_link !== undefined) {
-        vendor = 'Thermofisher';
-        sdsLink = sdsInfo.alfa_link;
-        productNumber = sdsInfo.alfa_product_number;
-        productLink = sdsInfo.alfa_product_link;
-        const hasAlfaLink = Boolean(safetySheetPath?.[index]?.alfa_link);
-        checkMark = checkSaveIconThermofischer || hasAlfaLink;
-      } else if (sdsInfo.merck_link !== undefined) {
-        vendor = 'Merck';
-        sdsLink = sdsInfo.merck_link;
-        productNumber = sdsInfo.merck_product_number;
-        productLink = sdsInfo.merck_product_link;
-        const hasMerckLink = Boolean(safetySheetPath?.[index]?.merck_link);
-        checkMark = checkSaveIconMerck || hasMerckLink;
-      }
-    }
-    const productInfo = {
-      vendor,
-      sdsLink,
-      productNumber,
-      productLink,
-    };
-
-    return (
-      <Button
-        id="saveSafetySheetButton"
-        size="xsm"
-        variant="warning"
-        disabled={checkMark}
-        onClick={() => this.saveSdsFile(productInfo)}
-      >
-        {loadingSaveSafetySheets === true && sdsInfo.merck_link !== undefined
-          ? (
-            <div>
-              <i className="fa fa-spinner fa-pulse fa-fw" />
-            </div>
-          )
-          : <i className="fa fa-save" />}
-      </Button>
-    );
   }
 
   chooseVendor() {
@@ -762,69 +513,17 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  renderChildElements = (document, index) => (
-    <div className="d-flex gap-3 align-items-center">
-      <div className=" d-flex me-auto gap-3">
-        <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" rel="noreferrer">
-          {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
-          {this.checkMarkButton(document)}
-        </a>
-        <ButtonToolbar className="gap-1">
-          {this.copyButton(document)}
-          {this.saveSafetySheetsButton(document, index)}
-          {this.removeButton(index, document)}
-        </ButtonToolbar>
-      </div>
-      <div className="me-auto">
-        {document.alfa_link !== undefined
-          ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck')}
-      </div>
-      <div className="justify-content-end">
-        {document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck')}
-      </div>
-    </div>
-  );
-
   renderSafetySheets = () => {
     const { safetySheets, chemical } = this.state;
-    if (!chemical || !chemical._chemical_data || !chemical._chemical_data.length) {
-      return null;
-    }
-    const savedSds = chemical._chemical_data[0]?.safetySheetPath;
-    const sdsStatus = safetySheets.length ? safetySheets : savedSds;
-    if (!Array.isArray(sdsStatus)) {
-      console.error('sdsStatus is not an array', sdsStatus);
-      return null;
-    }
-    const mappedSafetySheets = sdsStatus?.map((document, index) => {
-      const key = (document.alfa_product_number || document.merck_product_number) || index;
-      const isValidDocument = document !== 'Could not find safety data sheet from Thermofisher'
-        && document !== 'Could not find safety data sheet from Merck';
-      return (
-        <div className="mt-3 w-100" key={key}>
-          {isValidDocument ? (
-            <ListGroupItem key={`${key}-file`} className="p-3 safety-sheet-width">
-              {this.renderChildElements(document, index)}
-            </ListGroupItem>
-          ) : (
-            <ListGroupItem key={`${key}-no-document`}>
-              <div>
-                <p className="pt-2">
-                  {document}
-                </p>
-              </div>
-            </ListGroupItem>
-          )}
-        </div>
-      );
-    });
-
     return (
-      <div data-component="SafetySheets">
-        <ListGroup className="my-3 overflow-auto">
-          {mappedSafetySheets}
-        </ListGroup>
-      </div>
+      <SafetySheetsAttachments
+        safetySheets={safetySheets}
+        chemical={chemical}
+        sample={this.props.sample}
+        handleUpdateSample={this.props.handleUpdateSample}
+        handleFieldChanged={this.handleFieldChanged}
+        handleSubmitSave={this.handleSubmitSave}
+      />
     );
   };
 
@@ -842,52 +541,95 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
-  closePropertiesModal() {
-    this.setState({
-      viewChemicalPropertiesModal: false,
-      viewModalForVendor: ''
-    });
+  updateDisplayWell() {
+    const { chemical } = this.state;
+    let savedSds;
+    if (chemical) {
+      if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
+        savedSds = chemical._chemical_data[0].safetySheetPath;
+        if (savedSds && savedSds.length !== 0) {
+          this.setState({ displayWell: true });
+        }
+      }
+    }
   }
 
-  renderChemicalProperties = (vendor) => {
-    const { loadingQuerySafetySheets, loadChemicalProperties } = this.state;
+  querySafetySheetButton() {
+    const { loadingQuerySafetySheets, chemical } = this.state;
+    let checkSavedSds = false;
+    checkSavedSds = chemical?._chemical_data?.[0]?.safetySheetPath?.length !== undefined
+    && chemical?._chemical_data?.[0]?.safetySheetPath?.length !== 0;
+    console.log('safetySheetPath', chemical?._chemical_data?.[0]?.safetySheetPath);
+
+    const button = (
+      <Button
+        id="submit-sds-btn"
+        onClick={() => this.querySafetySheets()}
+        variant="light"
+        disabled={!!loadingQuerySafetySheets || checkSavedSds}
+      >
+        {loadingQuerySafetySheets === false ? 'Search for SDS'
+          : (
+            <div>
+              <i className="fa fa-spinner fa-pulse fa-fw" />
+              <span>
+                Loading...
+              </span>
+            </div>
+          )}
+      </Button>
+    );
+
+    const overlay = (
+      <Tooltip id="disabledSdsSearchButton">delete saved sheets to enable search button</Tooltip>
+    );
 
     return (
-      <div className="w-100 mt-0 ms-2">
-        <InputGroup>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="renderChemProp">Info, if any found, will be copied to properties fields in sample properties tab</Tooltip>}>
-            <Button
-              id="fetch-properties"
-              onClick={() => this.fetchChemicalProperties(vendor)}
-              disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties.loading}
-              variant="light"
-            >
-              {loadChemicalProperties.loading === true && loadChemicalProperties.vendor === vendor
-                ? (
-                  <div>
-                    <i className="fa fa-spinner fa-pulse fa-fw" />
-                    <span>Loading...</span>
-                  </div>
-
-                ) : 'fetch Chemical Properties'}
-            </Button>
+      <div className="mt-4">
+        {button}
+        {checkSavedSds && (
+          <OverlayTrigger placement="top" overlay={overlay}>
+            <div className="overlay-trigger-container" />
           </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}
-          >
-            <Button
-              active
-              onClick={() => this.handlePropertiesModal(vendor)}
-              variant="light"
-            >
-              <i className="fa fa-file-text" />
-            </Button>
-          </OverlayTrigger>
-        </InputGroup>
+        )}
       </div>
     );
-  };
+  }
+
+  safetyTab() {
+    const { displayWell } = this.state;
+    return (
+      <>
+        <Row className="mb-3 align-items-end">
+          <Col>
+            {this.chooseVendor()}
+          </Col>
+          <Col>
+            {this.queryOption()}
+          </Col>
+          <Col>
+            {this.safetySheetLanguage()}
+          </Col>
+          <Col>
+            {this.querySafetySheetButton()}
+          </Col>
+        </Row>
+
+        {displayWell && this.renderSafetySheets()}
+        {this.renderWarningMessage()}
+        {this.renderSafetyPhrases()}
+      </>
+    );
+  }
+
+  renderWarningMessage() {
+    const { warningMessage } = this.state;
+    return (
+      <div className="text-danger">
+        {warningMessage !== '' ? warningMessage : null}
+      </div>
+    );
+  }
 
   inventoryInformationTab(data) {
     const { switchRequiredOrderedDate } = this.state;
@@ -1006,144 +748,6 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  updateDisplayWell() {
-    const { chemical } = this.state;
-    let savedSds;
-    if (chemical) {
-      if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-        savedSds = chemical._chemical_data[0].safetySheetPath;
-        if (savedSds && savedSds.length !== 0) {
-          this.setState({ displayWell: true });
-        }
-      }
-    }
-  }
-
-  querySafetySheetButton() {
-    const { loadingQuerySafetySheets, chemical } = this.state;
-    let checkSavedSds = false;
-    checkSavedSds = chemical?._chemical_data?.[0]?.safetySheetPath?.length !== undefined
-    && chemical._chemical_data[0].safetySheetPath.length !== 0;
-
-    const button = (
-      <Button
-        id="submit-sds-btn"
-        onClick={() => this.querySafetySheets()}
-        variant="light"
-        disabled={!!loadingQuerySafetySheets || checkSavedSds}
-      >
-        {loadingQuerySafetySheets === false ? 'Search for SDS'
-          : (
-            <div>
-              <i className="fa fa-spinner fa-pulse fa-fw" />
-              <span>
-                Loading...
-              </span>
-            </div>
-          )}
-      </Button>
-    );
-
-    const overlay = (
-      <Tooltip id="disabledSdsSearchButton">delete saved sheets to enable search button</Tooltip>
-    );
-
-    return (
-      <div className="mt-4">
-        {button}
-        {checkSavedSds && (
-          <OverlayTrigger placement="top" overlay={overlay}>
-            <div className="overlay-trigger-container" />
-          </OverlayTrigger>
-        )}
-      </div>
-    );
-  }
-
-  safetyTab() {
-    const { displayWell } = this.state;
-    return (
-      <>
-        <Row className="mb-3 align-items-end">
-          <Col>
-            {this.chooseVendor()}
-          </Col>
-          <Col>
-            {this.queryOption()}
-          </Col>
-          <Col>
-            {this.safetySheetLanguage()}
-          </Col>
-          <Col>
-            {this.querySafetySheetButton()}
-          </Col>
-        </Row>
-
-        {displayWell && this.renderSafetySheets()}
-        {this.renderWarningMessage()}
-        {this.renderSafetyPhrases()}
-      </>
-    );
-  }
-
-  renderPropertiesModal() {
-    const { viewChemicalPropertiesModal, chemical, viewModalForVendor } = this.state;
-    let fetchedChemicalProperties = 'Please fetch chemical properties first to view results';
-    if (viewModalForVendor === 'thermofischer') {
-      const condition = chemical._chemical_data[0].alfaProductInfo
-      && chemical._chemical_data[0].alfaProductInfo.properties;
-      fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n')
-        : fetchedChemicalProperties;
-    } else if (viewModalForVendor === 'merck') {
-      const condition = chemical._chemical_data[0].merckProductInfo
-        && chemical._chemical_data[0].merckProductInfo.properties;
-      fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n')
-        : fetchedChemicalProperties;
-    }
-
-    return (
-      <Modal
-        centered
-        show={viewChemicalPropertiesModal}
-        onHide={() => this.closePropertiesModal()}
-        size="lg"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Fetched Chemical Properties</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group controlId="propertiesModal">
-            <Form.Control
-              as="textarea"
-              className="w-100"
-              readOnly
-              disabled
-              type="text"
-              rows={10}
-              value={fetchedChemicalProperties}
-            />
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer className="border-0">
-          <Button variant="warning" onClick={() => this.closePropertiesModal()}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    );
-  }
-
-  renderWarningMessage() {
-    const { warningMessage } = this.state;
-    return (
-      <div className="text-danger">
-        {warningMessage !== '' ? warningMessage : null}
-      </div>
-    );
-  }
-
   render() {
     const {
       chemical
@@ -1151,39 +755,35 @@ export default class ChemicalTab extends React.Component {
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
-      <>
-        <Accordion
-          alwaysOpen
-          defaultActiveKey={[
-            'inventoryInformationTab',
-            'safetyTab',
-            'locationTab',
-          ]}
-        >
-          <Accordion.Item eventKey="inventoryInformationTab">
-            <Accordion.Header>Inventory Information</Accordion.Header>
-            <Accordion.Body>
-              {this.inventoryInformationTab(data)}
-            </Accordion.Body>
-          </Accordion.Item>
+      <Accordion
+        alwaysOpen
+        defaultActiveKey={[
+          'inventoryInformationTab',
+          'safetyTab',
+          'locationTab',
+        ]}
+      >
+        <Accordion.Item eventKey="inventoryInformationTab">
+          <Accordion.Header>Inventory Information</Accordion.Header>
+          <Accordion.Body>
+            {this.inventoryInformationTab(data)}
+          </Accordion.Body>
+        </Accordion.Item>
 
-          <Accordion.Item eventKey="safetyTab">
-            <Accordion.Header>Safety</Accordion.Header>
-            <Accordion.Body>
-              {this.safetyTab()}
-            </Accordion.Body>
-          </Accordion.Item>
+        <Accordion.Item eventKey="safetyTab">
+          <Accordion.Header>Safety</Accordion.Header>
+          <Accordion.Body>
+            {this.safetyTab()}
+          </Accordion.Body>
+        </Accordion.Item>
 
-          <Accordion.Item eventKey="locationTab">
-            <Accordion.Header>Location and Information</Accordion.Header>
-            <Accordion.Body>
-              {this.locationTab(data)}
-            </Accordion.Body>
-          </Accordion.Item>
-        </Accordion>
-
-        {this.renderPropertiesModal()}
-      </>
+        <Accordion.Item eventKey="locationTab">
+          <Accordion.Header>Location and Information</Accordion.Header>
+          <Accordion.Body>
+            {this.locationTab(data)}
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     );
   }
 }
