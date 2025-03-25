@@ -45,15 +45,18 @@ module Usecases
 
         sbmm = Usecases::Sbmm::Finder.new.find_modified_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id))
         if sbmm.nil?
-          sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier))
+          sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier, :protein_sequence_modification_attributes, :post_translational_modification_attributes))
+
           sbmm.parent = parent
+          sbmm.protein_sequence_modification = ProteinSequenceModification.find_or_initialize_by(params[:protein_sequence_modification_attributes])
+          sbmm.post_translational_modification = PostTranslationalModification.find_or_initialize_by(params[:post_translational_modification_attributes])
         end
         sbmm.save
         sbmm
       end
 
       def find_or_create_unknown_protein(params)
-        sbmm = SequenceBasedMacromolecule.unknown.find_by(params.except(:protein_sequence_modification_attributes, :post_translational_modification_attributes))
+        sbmm = SequenceBasedMacromolecule.unknown.find_by(params.except())
         sbmm ||= SequenceBasedMacromolecule.create(params)
         sbmm
       end

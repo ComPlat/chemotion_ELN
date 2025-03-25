@@ -2,6 +2,7 @@
 
 module Entities
   class PostTranslationalModificationsEntity < ApplicationEntity
+    expose! :id
     expose! :phosphorylation_enabled
     expose! :phosphorylation_ser_enabled
     expose! :phosphorylation_ser_details

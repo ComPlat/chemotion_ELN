@@ -60,6 +60,27 @@ describe Usecases::Sbmm::Create do
         parent = create(:uniprot_sbmm)
         expect { described_class.new.find_or_create_by(post_for_modified_uniprot_sbmm) }.to change(SequenceBasedMacromolecule, :count).by(1)
       end
+
+      it 'creates entries for PSM/PTM if necessary' do
+        parent = create(:uniprot_sbmm)
+        expect {
+          sbmm = described_class.new.find_or_create_by(post_for_modified_uniprot_sbmm)
+        }.to change(SequenceBasedMacromolecule, :count).by(1)
+         .and change(PostTranslationalModification, :count).by(1)
+      end
+
+      it 'reuses existing records for PSM/PTM' do
+        existing_ptm = PostTranslationalModification.create(
+          phosphorylation_enabled: true,
+          phosphorylation_ser_enabled: true,
+          phosphorylation_ser_details: 'Something something'
+        )
+
+        sbmm = nil
+        parent = create(:uniprot_sbmm)
+        expect { sbmm = described_class.new.find_or_create_by(post_for_modified_uniprot_sbmm) }.to change(SequenceBasedMacromolecule, :count).by(1)
+        expect(sbmm.post_translational_modification.id).to eq existing_ptm.id
+      end
     end
 
     context 'when uniprot_derivation == uniprot_unknown' do
