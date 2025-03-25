@@ -80,7 +80,6 @@ class UIStore {
       currentCollection: null,
       currentSearchSelection: null,
       currentSearchByID: null,
-      showCollectionManagement: false,
       showDeviceManagement: false,
       isSync: false,
       hasChemSpectra: false,
@@ -113,9 +112,6 @@ class UIStore {
         UIActions.selectCollectionWithoutUpdating,
       handleClearSearchSelection: UIActions.clearSearchSelection,
       handleClearSearchById: UIActions.clearSearchById,
-      handleShowCollectionManagement: UIActions.showCollectionManagement,
-      handleShowElements: UIActions.showElements,
-      handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
       handleShowDeviceManagement: UIActions.showDeviceManagement,
@@ -157,24 +153,12 @@ class UIStore {
     this.state.showGenericWorkflow = show;
   }
 
-  handleToggleCollectionManagement() {
-    this.state.showCollectionManagement = !this.state.showCollectionManagement;
-  }
-
-  handleShowCollectionManagement() {
-    this.state.showCollectionManagement = true;
-  }
-
   handleShowDeviceManagement() {
     this.state.showDeviceManagement = true
   }
 
   handleCloseDeviceManagement() {
     this.state.showDeviceManagement = false
-  }
-
-  handleShowElements() {
-    this.state.showCollectionManagement = false;
   }
 
   handleSelectTab(params = {}) {
