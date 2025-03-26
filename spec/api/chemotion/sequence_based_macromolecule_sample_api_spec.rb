@@ -122,7 +122,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             sbmm_type: 'protein',
             sbmm_subtype: 'unmodified',
             uniprot_derivation: 'uniprot',
-            identifier: 'P12345',
+            primary_accession: 'P12345',
           }
         }
       end

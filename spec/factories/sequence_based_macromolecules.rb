@@ -2,7 +2,6 @@
 
 FactoryBot.define do
   factory(:sequence_based_macromolecule) do
-    identifier {}
     uniprot_source { {} }
     sbmm_type { "protein" }
     sbmm_subtype { "unmodified" }
@@ -38,7 +37,6 @@ FactoryBot.define do
     end
 
     factory(:uniprot_sbmm) do
-      identifier { "AATM_RABIT" }
       uniprot_source { File.read(Rails.root.join('spec/fixtures/uniprot/P12345.json')) }
       primary_accession { "P12345" }
       accessions { ["P12345", "G1SKL2"] }
@@ -51,7 +49,6 @@ FactoryBot.define do
 
     factory(:modified_uniprot_sbmm) do
       uniprot_derivation { 'uniprot_modified' }
-      sequence(:identifier) { |n| "MODIFIED_UNIPROT_PROTEIN_#{n}" }
       parent { build(:uniprot_sbmm) }
       post_translational_modification do
         build(
@@ -65,7 +62,6 @@ FactoryBot.define do
 
     factory(:non_uniprot_sbmm) do
       uniprot_derivation { 'uniprot_unknown' }
-      sequence(:identifier) { |n| "UNKNOWN_PROTEIN_#{n}" }
     end
   end
 end

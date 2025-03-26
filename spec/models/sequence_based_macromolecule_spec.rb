@@ -5,8 +5,8 @@ require 'rails_helper'
 describe SequenceBasedMacromolecule do
   describe '.with_ec_number' do
     it "returns only SBMM records that have the matching ec number" do
-      sbmm1 = create(:uniprot_sbmm, identifier: 'ABC123', ec_numbers: ["1.2.3", "1.2.4"])
-      sbmm2 = create(:uniprot_sbmm, identifier: 'ABC124', ec_numbers: ["1.2.1", "1.2.4"])
+      sbmm1 = create(:uniprot_sbmm, ec_numbers: ["1.2.3", "1.2.4"])
+      sbmm2 = create(:uniprot_sbmm, ec_numbers: ["1.2.1", "1.2.4"])
 
       result = described_class.with_ec_number("1.2.3")
 

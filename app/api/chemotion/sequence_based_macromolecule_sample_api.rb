@@ -67,7 +67,7 @@ module Chemotion
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown]
           
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot'} ) do
-            requires :identifier, type: String, desc: 'Uniprot accession code'
+            requires :primary_accession, type: String, desc: 'Uniprot accession code'
           end
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified'}) do
             requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record'
@@ -153,7 +153,7 @@ module Chemotion
         end
       end
       post do
-        sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(declared(params))
+        sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(declared(params, evaluate_given: true))
 
         present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
       end

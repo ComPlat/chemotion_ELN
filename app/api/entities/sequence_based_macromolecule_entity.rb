@@ -5,7 +5,6 @@ module Entities
     expose! :id
     expose! :sbmm_type
     expose! :sbmm_subtype
-    expose! :identifier
     expose! :primary_accession
     expose! :accessions
     expose! :uniprot_source

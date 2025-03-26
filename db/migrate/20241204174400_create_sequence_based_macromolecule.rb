@@ -2,7 +2,6 @@ class CreateSequenceBasedMacromolecule < ActiveRecord::Migration[6.1]
   def change
     index_prefix = 'idx_sbmm'
     create_table :sequence_based_macromolecules do |t|
-      t.string :identifier, null: true, index: { name: "#{index_prefix}_identifier", unique: true }
       t.jsonb :uniprot_source, null: true
       t.belongs_to :parent, index: { name: "#{index_prefix}_parent" }, null: true
       t.string :sbmm_type, null: false
