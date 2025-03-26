@@ -99,7 +99,6 @@ export default class ImageModal extends Component {
     AttachmentFetcher.fetchImageAttachment({ id: popObject.fetchId, annotated: true }).then(
       (result) => {
         if (result.data != null) {
-          console.log({result})
           this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
         }
       }
