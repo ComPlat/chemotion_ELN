@@ -14,7 +14,6 @@ export default class ElementsListGroupedEntries extends Component {
       .flatMap((elements) => elements.map(({ id }) => id));
 
     this.state = {
-      elementsShown: [],
       keyboardIndex: null,
       keyboardSelectedElementId: null,
       sortedElementIds,
@@ -39,20 +38,6 @@ export default class ElementsListGroupedEntries extends Component {
 
       this.setState({ sortedElementIds });
     }
-  }
-
-  handleGroupToggle(group) {
-    let { elementsShown } = this.state;
-
-    if (elementsShown.includes(group)) {
-      elementsShown = elementsShown.filter((item) => item !== group);
-    } else {
-      elementsShown = elementsShown.concat(group);
-    }
-
-    this.setState({ elementsShown });
-    const { onChangeCollapse } = this.props;
-    onChangeCollapse(false);
   }
 
   onKeyDown = (state) => {
@@ -98,15 +83,16 @@ export default class ElementsListGroupedEntries extends Component {
   renderGroup(group, elements) {
     const {
       showDragColumn,
-      collapseAll,
       showDetails,
       isElementSelected,
+      isGroupCollapsed,
+      toggleGroupCollapsed,
       headerComponent: GroupHeader,
       elementComponent: GroupElement
     } = this.props;
 
-    const { elementsShown, keyboardSelectedElementId } = this.state;
-    const showGroup = !elementsShown.includes(group) && !collapseAll;
+    const { keyboardSelectedElementId } = this.state;
+    const showGroup = !isGroupCollapsed(group);
 
     return (
       <tbody key={`group-header-${group}`} className="sheet">
@@ -115,7 +101,7 @@ export default class ElementsListGroupedEntries extends Component {
           element={elements[0]}
           show={showGroup}
           showDragColumn={showDragColumn}
-          toggleGroup={() => this.handleGroupToggle(group)}
+          toggleGroup={() => toggleGroupCollapsed(group)}
         />
         {showGroup && elements.map((element) => (
           <GroupElement
@@ -143,8 +129,8 @@ export default class ElementsListGroupedEntries extends Component {
 }
 
 ElementsListGroupedEntries.propTypes = {
-  onChangeCollapse: PropTypes.func.isRequired,
-  collapseAll: PropTypes.bool.isRequired,
+  isGroupCollapsed: PropTypes.func.isRequired,
+  toggleGroupCollapsed: PropTypes.func.isRequired,
   elementGroups: PropTypes.array.isRequired,
   isElementSelected: PropTypes.func.isRequired,
   showDragColumn: PropTypes.bool.isRequired,

@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import React from 'react';
+import Immutable from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
@@ -47,7 +48,10 @@ export default class ElementsList extends React.Component {
       elements: [],
       currentElement: null,
       ui: {},
-      collapseAll: false,
+      collapse: {
+        global: 'expanded',
+        except: new Immutable.Set(),
+      },
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
@@ -202,18 +206,100 @@ export default class ElementsList extends React.Component {
     if (toDate !== date) UIActions.setToDate(date);
   }
 
-  changeCollapse = (collapseAll) => {
+  collapseAll = () => {
     this.setState({
-        collapseAll: !collapseAll,
+      collapse: {
+        global: 'collapsed',
+        except: new Immutable.Set(),
+      },
     });
   };
 
+  expandAll = () => {
+    this.setState({
+      collapse: {
+        global: 'expanded',
+        except: new Immutable.Set(),
+      },
+    });
+  };
+
+  toggleGroupCollapsed = (groupKey) => {
+    if (this.isGroupCollapsed(groupKey)) {
+      this.expandGroup(groupKey);
+    } else {
+      this.collapseGroup(groupKey);
+    }
+  };
+
+  collapseGroup = (groupKey) => {
+    const { collapse } = this.state;
+    const { global, except } = collapse;
+
+    if (global === 'collapsed') {
+      this.setState({
+        collapse: {
+          ...collapse,
+          except: except.delete(groupKey),
+        }
+      });
+    } else if (global === 'expanded') {
+      this.setState({
+        collapse: {
+          ...collapse,
+          except: except.add(groupKey),
+        },
+      });
+    } else {
+      throw new Error(`Unknown collapse state: ${global}`);
+    }
+  };
+
+  expandGroup = (groupKey) => {
+    const { collapse } = this.state;
+    const { global, except } = collapse;
+
+    if (global === 'collapsed') {
+      this.setState({
+        collapse: {
+          ...collapse,
+          except: except.add(groupKey),
+        }
+      });
+    } else if (global === 'expanded') {
+      this.setState({
+        collapse: {
+          ...collapse,
+          except: except.delete(groupKey),
+        },
+      });
+    } else {
+      throw new Error(`Unknown collapse state: ${global}`);
+    }
+  };
+
+  isGroupCollapsed = (groupKey) => {
+    const { collapse } = this.state;
+    if (collapse.global === 'collapsed') {
+      return !collapse.except.has(groupKey);
+    }
+
+    if (collapse.global === 'expanded') {
+      return collapse.except.has(groupKey);
+    }
+
+    throw new Error(`Unknown collapse state: ${collapse.global}`);
+  };
+
   changeSampleSort = () => {
-    let { moleculeSort } = this.state;
-    moleculeSort = !moleculeSort;
+    const { moleculeSort, collapse } = this.state;
 
     this.setState({
-      moleculeSort
+      moleculeSort: !moleculeSort,
+      collapse: {
+        ...collapse,
+        except: new Immutable.Set(),
+      }
     }, () => ElementActions.changeSorting(moleculeSort));
   };
 
@@ -241,11 +327,15 @@ export default class ElementsList extends React.Component {
   };
 
   changeElementsGroup = ({ value: elementsGroup }) => {
-    const { elementsSort, sortDirection } = this.state;
+    const { elementsSort, sortDirection, collapse } = this.state;
 
     this.setState({
       elementsGroup,
       elementsSort,
+      collapse: {
+        ...collapse,
+        except: new Immutable.Set(),
+      }
     }, () => {
       this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
@@ -276,12 +366,12 @@ export default class ElementsList extends React.Component {
   };
 
   collapseButton = () => {
-    const { collapseAll } = this.state;
+    const { collapse: { global } } = this.state;
 
     return (
       <ChevronIcon
-        direction={collapseAll ? 'right' : 'down'}
-        onClick={() => this.changeCollapse(collapseAll)}
+        direction={global === 'expanded' ? 'down' : 'right'}
+        onClick={global === 'expanded' ? this.collapseAll : this.expandAll}
         color="primary"
         className="fs-5"
         role="button"
@@ -653,7 +743,6 @@ export default class ElementsList extends React.Component {
   renderEntries() {
     const {
       elements,
-      collapseAll,
       elementsGroup,
     } = this.state;
 
@@ -702,12 +791,12 @@ export default class ElementsList extends React.Component {
         <ElementsListGroupedEntries
           headerComponent={headerComponent}
           elementComponent={elementComponent}
-          collapseAll={collapseAll}
           elementGroups={elementGroups}
           isElementSelected={this.isElementSelected}
+          isGroupCollapsed={this.isGroupCollapsed}
+          toggleGroupCollapsed={this.toggleGroupCollapsed}
           showDragColumn={!overview}
           showDetails={this.showDetails}
-          onChangeCollapse={(checked) => this.changeCollapse(!checked)}
         />
       );
     } else if (type === 'device_description') {
