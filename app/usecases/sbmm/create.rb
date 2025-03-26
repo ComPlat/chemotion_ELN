@@ -15,9 +15,9 @@ module Usecases
 
       private
 
-      # raise ArgumentError if identifier is not a valid accession code
+      # raise ArgumentError if primary_accession is not a valid accession code
       def find_or_create_uniprot_protein(params)
-        primary_accession = params[:identifier]
+        primary_accession = params[:primary_accession]
         raise ArgumentError.new("'#{primary_accession}' is not a valid Uniprot accession") unless valid_accession?(primary_accession)
 
         sbmm = SequenceBasedMacromolecule.find_by(primary_accession: primary_accession)
@@ -34,7 +34,7 @@ module Usecases
       def find_or_create_modified_protein(params)
         if valid_accession?(params[:parent_identifier]) # parent is a uniprot sbmm
           parent = find_or_create_uniprot_protein({
-            identifier: params[:parent_identifier],
+            primary_accession: params[:parent_identifier],
             sbmm_type: params[:sbmm_type],
             sbmm_subtype: params[:sbmm_subtype]
           })

@@ -2,7 +2,6 @@
 
 module Entities
   class SequenceBasedMacromoleculeSearchResultEntity < ApplicationEntity
-    expose :identifier
     expose :full_name
     expose :short_name
     expose :primary_accession

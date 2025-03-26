@@ -10,7 +10,6 @@ module Uniprot
 
     def to_sequence_based_macromolecule
       sbmm = SequenceBasedMacromolecule.new(
-        identifier: entry.identifier,
         uniprot_source: entry.raw_response,
         uniprot_derivation: 'uniprot',
         accessions: entry.accessions,
