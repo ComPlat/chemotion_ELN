@@ -2,6 +2,7 @@
 
 module Chemotion
   class SequenceBasedMacromoleculeSampleAPI < Grape::API
+    include Grape::Kaminari
     helpers ParamsHelpers
     helpers ContainerHelpers
     helpers CollectionHelpers
@@ -71,10 +72,7 @@ module Chemotion
           end
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified'}) do
             requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record'
-          end
-          # TODO: does uniprot_unknown require an individual identifier or does it not allow parent records?
 
-          given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
             requires(:protein_sequence_modification_attributes, type: Hash) do
               optional :modification_n_terminal, type: Boolean, default: false
               optional :modification_n_terminal_details, type: String
@@ -89,7 +87,6 @@ module Chemotion
               optional :modification_other, type: Boolean, default: false
               optional :modification_other_details, type: String
             end
-
             requires(:post_translational_modification_attributes, type: Hash) do
               optional :phosphorylation_enabled, type: Boolean, default: false
               optional :phosphorylation_ser_enabled, type: Boolean, default: false
@@ -118,7 +115,9 @@ module Chemotion
               optional :glycosylation_o_linked_thr_details, type: String, default: ''
 
               optional :acetylation_enabled, type: Boolean, default: false
-              optional :acetylation_lysin_number, type: Numeric
+              given(:acetylation_enabled: ->(value) { value == true }) do
+                requires :acetylation_lysin_number, type: Numeric
+              end
 
               optional :hydroxylation_enabled, type: Boolean, default: false
               optional :hydroxylation_lys_enabled, type: Boolean, default: false
@@ -137,7 +136,9 @@ module Chemotion
               optional :other_modifications_enabled, type: Boolean, default: false
               optional :other_modifications_details, type: String, default: ''
             end
+          end
 
+          given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
             optional :ec_numbers, type: Array[String]
             optional :systematic_name, type: String
             requires :molecular_weight, type: Numeric
