@@ -32,10 +32,22 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
+function getInitialGridState(id) {
+  const gridState = JSON.parse(localStorage.getItem(`${id}-reactionVariationsGridState`));
+
+  return gridState;
+}
+
+const persistGridState = (id, event) => {
+  const { state: gridState } = event;
+  localStorage.setItem(`${id}-reactionVariationsGridState`, JSON.stringify(gridState));
+};
+
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
+  const reactionShortLabel = reaction.short_label;
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
@@ -45,6 +57,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
+  const initialGridState = useMemo(() => getInitialGridState(reactionShortLabel), []);
 
   const dataTypeDefinitions = {
     property: {
@@ -403,6 +416,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
           ref={gridRef}
+          initialState={initialGridState}
           rowData={reactionVariations}
           rowDragEntireRow
           rowDragManaged
@@ -413,12 +427,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           dataTypeDefinitions={dataTypeDefinitions}
           tooltipShowDelay={0}
           domLayout="autoHeight"
+          maintainColumnOrder
           context={{
             copyRow,
             removeRow,
             setColumnDefinitions,
             reactionHasPolymers,
-            reactionShortLabel: reaction.short_label,
+            reactionShortLabel,
             allReactionAnalyses
           }}
           /*
@@ -431,6 +446,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           onCellEditRequest={updateRow}
           onCellValueChanged={(event) => fitColumnToContent(event)}
           onColumnHeaderClicked={(event) => fitColumnToContent(event)}
+          onGridPreDestroyed={(event) => persistGridState(reactionShortLabel, event)}
         />
       </div>
     </div>
