@@ -24,6 +24,7 @@ module Entities
     expose! :activity_value
     expose! :activity_unit
     expose! :type
+    expose! :changed
 
     expose! :attachments, using: 'Entities::AttachmentEntity'
     expose! :comments, using: 'Entities::CommentEntity'
@@ -40,6 +41,11 @@ module Entities
 
     def comment_count
       object.comments.count
+    end
+
+    # The UI needs this field to track changes
+    def changed
+      false
     end
   end
 end
