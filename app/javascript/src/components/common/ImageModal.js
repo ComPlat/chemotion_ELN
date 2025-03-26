@@ -6,7 +6,10 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 export default class ImageModal extends Component {
   constructor(props) {
