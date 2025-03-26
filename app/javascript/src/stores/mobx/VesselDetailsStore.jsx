@@ -81,8 +81,8 @@ export const VesselDetailsStore = types
             vesselInstanceDescription: '',
             barCode: '',
             qrCode: '',
-            weightAmount: '',
-            weightUnit: '',
+            weightAmount: vessel.weightAmount || '',
+            weightUnit: vessel.weightUnit || 'g',
           })
         );
       }
