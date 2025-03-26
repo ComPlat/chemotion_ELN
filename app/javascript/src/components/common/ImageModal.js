@@ -6,7 +6,10 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 export default class ImageModal extends Component {
   constructor(props) {
@@ -96,6 +99,7 @@ export default class ImageModal extends Component {
     AttachmentFetcher.fetchImageAttachment({ id: popObject.fetchId, annotated: true }).then(
       (result) => {
         if (result.data != null) {
+          console.log({result})
           this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
         }
       }
