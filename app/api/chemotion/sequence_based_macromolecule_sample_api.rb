@@ -115,7 +115,7 @@ module Chemotion
               optional :glycosylation_o_linked_thr_details, type: String, default: ''
 
               optional :acetylation_enabled, type: Boolean, default: false
-              given(:acetylation_enabled: ->(value) { value == true }) do
+              given(acetylation_enabled: ->(value) { value == true }) do
                 requires :acetylation_lysin_number, type: Numeric
               end
 
