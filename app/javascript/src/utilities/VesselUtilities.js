@@ -12,13 +12,15 @@ const extractCreateVesselApiParameter = (vessel) => {
     details: vessel.details,
     short_label: vessel.short_label,
     container: vessel.container,
+    weight_amount: vessel.weightAmount,
+    weight_unit: vessel.weightUnit,
     instances: vessel.instances.map((instance) => ({
       vessel_name: instance.vesselInstanceName,
       description: instance.vesselInstanceDescription,
       bar_code: instance.barCode,
       qr_code: instance.qrCode,
-      weight_amount: vessel.weightAmount,
-      weight_unit: vessel.weightUnit,
+      weight_amount: instance.weightAmount || vessel.weightAmount,
+      weight_unit: instance.weightUnit || vessel.weightUnit,
     })),
   };
 
