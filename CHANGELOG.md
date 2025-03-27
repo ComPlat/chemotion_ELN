@@ -1,6 +1,77 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v2.0.0-rc2]
+> (2025-03-27)
+
+* Features and enhancements
+  * inventory label reset  ([#2367](https://github.com/ComPlat/chemotion_ELN/pull/2367))
+  * device description adjustments  ([#2395](https://github.com/ComPlat/chemotion_ELN/pull/2395))
+  * labimotion 2.0.0  ([#2418](https://github.com/ComPlat/chemotion_ELN/pull/2418))
+  * user-selectable columns for reaction variations table  ([#2364](https://github.com/ComPlat/chemotion_ELN/pull/2364))
+  * persist layout of reaction variations  ([#2419](https://github.com/ComPlat/chemotion_ELN/pull/2419))
+
+* Bug fixes
+
+  UX/UI
+  * blank page on dropping research plan into a screen  ([#2352](https://github.com/ComPlat/chemotion_ELN/pull/2352))
+  * value of Select input from Sample molecule name and report template  ([#2369](https://github.com/ComPlat/chemotion_ELN/pull/2369))
+  * improve unit switch behavior for reaction scheme gase phase inputs  ([#2396](https://github.com/ComPlat/chemotion_ELN/pull/2396))
+  * purification selection in Reaction - function length typo  ([#2415](https://github.com/ComPlat/chemotion_ELN/pull/2415))
+  * notifications rendered out of modal when too many.  ([#2392](https://github.com/ComPlat/chemotion_ELN/pull/2392))
+  * import action in import chemicals modal  ([#2414](https://github.com/ComPlat/chemotion_ELN/pull/2414))
+  * limit initialize when copy sample  ([#2350](https://github.com/ComPlat/chemotion_ELN/pull/2350))
+  * device command page blank  ([#2366](https://github.com/ComPlat/chemotion_ELN/pull/2366))
+  * enabling rdkit  ([#2361](https://github.com/ComPlat/chemotion_ELN/pull/2361))
+  * rdkit structure query   ([#2372](https://github.com/ComPlat/chemotion_ELN/pull/2372))
+  * reset real masses on copy reaction  ([#2349](https://github.com/ComPlat/chemotion_ELN/pull/2349))
+  * the lock equiv. not working  ([#2312](https://github.com/ComPlat/chemotion_ELN/pull/2312))
+  * import well-plate readouts w some templates - import button missing  ([#2358](https://github.com/ComPlat/chemotion_ELN/pull/2358))
+  * scroll reaction long description  ([#2376](https://github.com/ComPlat/chemotion_ELN/pull/2376))
+  * tab layout setting per collection  ([#2382](https://github.com/ComPlat/chemotion_ELN/pull/2382))
+  * generating report for gas scheme reaction  ([#2390](https://github.com/ComPlat/chemotion_ELN/pull/2390))
+  * element list (un)collapse of sample group  ([#2362](https://github.com/ComPlat/chemotion_ELN/pull/2362))
+  * blank page on requesting unauthorized files for nmrium  ([#2387](https://github.com/ComPlat/chemotion_ELN/pull/2387))
+  * disabled drag-and-drop handle for list samples and molecules to reaction scheme  ([#2400](https://github.com/ComPlat/chemotion_ELN/pull/2400))
+  * messaging user for incoming files from datacollector device  ([#2404](https://github.com/ComPlat/chemotion_ELN/pull/2404))
+  * silent network error on affiliation deletion api call  ([#2407](https://github.com/ComPlat/chemotion_ELN/pull/2407))
+  * pdf-reader for analysis preview  ([#2386](https://github.com/ComPlat/chemotion_ELN/pull/2386))
+  * permission on cellline-materials: add index and created_by column  ([#2353](https://github.com/ComPlat/chemotion_ELN/pull/2353))
+  * selecting all pages with advanced/detail search corrected  ([#2282](https://github.com/ComPlat/chemotion_ELN/pull/2282))
+  * Limit maximum SampleTaskInbox height  ([#2416](https://github.com/ComPlat/chemotion_ELN/pull/2416))
+  * drag-n-drop with touch and mouse event  ([#2398](https://github.com/ComPlat/chemotion_ELN/pull/2398))
+  * drag inbox file item on analysis having no dataset  ([#2420](https://github.com/ComPlat/chemotion_ELN/pull/2420))
+
+* Styles
+
+  UX/UI
+  * standardize capitalization for section titles  ([#2394](https://github.com/ComPlat/chemotion_ELN/pull/2394))
+
+* Code refactoring
+  * generic device description klass migration  ([#2397](https://github.com/ComPlat/chemotion_ELN/pull/2397))
+  * deprecate rdkit-gem in favor of using rdkit cartridge  ([#2417](https://github.com/ComPlat/chemotion_ELN/pull/2417))
+
+* Chores
+  * bump labimotion-2.0.0  ([#2348](https://github.com/ComPlat/chemotion_ELN/pull/2348))
+  * bump packages for @babel and test   ([#2355](https://github.com/ComPlat/chemotion_ELN/pull/2355))
+  * bump nodejs from 18.20.6 to latest LTS 22.14  ([#2328](https://github.com/ComPlat/chemotion_ELN/pull/2328))
+  * bump labimotion-2.0.0 rc  ([#2360](https://github.com/ComPlat/chemotion_ELN/pull/2360))
+  * Bumps rails-html-sanitizer from 1.6.0 to 1.6.2  ([#2294](https://github.com/ComPlat/chemotion_ELN/pull/2294))
+  * Bump rack from 2.2.11 to 2.2.12  ([#2370](https://github.com/ComPlat/chemotion_ELN/pull/2370))
+  * Bump rack from 2.2.12 to 2.2.13  ([#2377](https://github.com/ComPlat/chemotion_ELN/pull/2377))
+  * update chemical inventory msds mapper  ([#2318](https://github.com/ComPlat/chemotion_ELN/pull/2318))
+  * bump @complat/chemotion-converter-app from 0.12.0 to 0.13.0  ([#2379](https://github.com/ComPlat/chemotion_ELN/pull/2379))
+  * Bump @babel/runtime from 7.26.7 to 7.26.10  ([#2384](https://github.com/ComPlat/chemotion_ELN/pull/2384))
+  * Bump graphql from 2.1.13 to 2.1.15  ([#2389](https://github.com/ComPlat/chemotion_ELN/pull/2389))
+  * Bump @babel/helpers from 7.20.1 to 7.26.10  ([#2385](https://github.com/ComPlat/chemotion_ELN/pull/2385))
+  * Bump canvg from 3.0.10 to 3.0.11  ([#2393](https://github.com/ComPlat/chemotion_ELN/pull/2393))
+  * update Content Security Policy directives  ([#2399](https://github.com/ComPlat/chemotion_ELN/pull/2399))
+  * bump chemspectra-app requirement  ([#2409](https://github.com/ComPlat/chemotion_ELN/pull/2409))
+  * dependencies bump - minor and patch   ([#2422](https://github.com/ComPlat/chemotion_ELN/pull/2422))
+  * bump spectra-app and ketcher2 requirements  ([#2424](https://github.com/ComPlat/chemotion_ELN/pull/2424))
+
+* Ci
+  * simplify db setup for github action  ([#2365](https://github.com/ComPlat/chemotion_ELN/pull/2365))
 ## [v2.0.0-rc1]
 > (2025-02-25)
 
