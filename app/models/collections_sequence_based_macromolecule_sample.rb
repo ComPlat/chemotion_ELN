@@ -44,7 +44,7 @@ class CollectionsSequenceBasedMacromoleculeSample < ApplicationRecord
     [collection_ids].flatten.each do |cid|
       next unless cid.is_a?(Integer)
       # TODO: copy and adapt logic from CollectionsSample when SBMM-Sample gets relations to reaction/wellplate
-      delete_in_collection(ids, cid)
+      delete_in_collection(sample_ids, cid)
     end
   end
 
