@@ -1,6 +1,9 @@
 import React from 'react';
-import { Button, ButtonToolbar } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
+
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
 export default class ModalExportCollection extends React.Component {
   constructor(props) {
@@ -30,7 +33,7 @@ export default class ModalExportCollection extends React.Component {
 
   gatherCheckboxes(roots, checkboxes) {
     if (Array.isArray(roots) && roots.length > 0) {
-      roots.map((root, index) => {
+      roots.map((root) => {
         checkboxes[root.id] = false;
         this.gatherCheckboxes(root.children, checkboxes)
       })
@@ -67,7 +70,7 @@ export default class ModalExportCollection extends React.Component {
   }
 
   handleClick() {
-    const { onHide, action } = this.props;
+    const { onHide } = this.props;
     this.setState({ processing: true });
 
     const collections = [];
@@ -81,7 +84,7 @@ export default class ModalExportCollection extends React.Component {
       nested: false
     };
 
-    action(params);
+    CollectionActions.exportCollectionsToFile(params);
 
     setTimeout(() => {
       this.setState({ processing: false });
@@ -212,19 +215,26 @@ export default class ModalExportCollection extends React.Component {
   }
 
   render() {
-    const onChange = (v) => this.setState(
-      previousState => { return { ...previousState, value: v } }
-    )
-    const { full } = this.props;
+    const { onHide } = this.props;
+
     return (
-      <div className="export-collections-modal">
-        {this.renderCollections('Global collections', 'lockedRoots')}
-        {this.renderCollections('My collections', 'unsharedRoots')}
-        {this.renderSharedCollections('My shared collections', 'sharedRoots')}
-        {this.renderSharedCollections('Shared with me', 'remoteRoots')}
-        {this.renderCheckAll()}
-        {this.renderButtonBar()}
-      </div>
+      <Modal show onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>Export collections as zip archive</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {this.renderCollections('Global collections', 'lockedRoots')}
+          {this.renderCollections('My collections', 'unsharedRoots')}
+          {this.renderSharedCollections('My shared collections', 'sharedRoots')}
+          {this.renderSharedCollections('Shared with me', 'remoteRoots')}
+          {this.renderCheckAll()}
+          {this.renderButtonBar()}
+        </Modal.Body>
+      </Modal>
     )
   }
+}
+
+ModalExportCollection.propTypes = {
+  onHide: PropTypes.func.isRequired,
 }

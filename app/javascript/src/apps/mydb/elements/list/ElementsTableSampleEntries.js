@@ -239,27 +239,6 @@ export default class ElementsTableSampleEntries extends Component {
     }, this.forceUpdate());
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    const {
-      collapseAll, showDragColumn, moleculeSort, currentElement, elements, ui, moleculeGroupsShown
-    } = this.props;
-    const { keyboardIndex, keyboardSeletectedElementId, showPreviews } = this.state;
-    const { checkedAll, checkedIds, uncheckedIds } = ui;
-    const nextUi = nextProps.ui;
-    return collapseAll !== nextProps.collapseAll // Bool
-      || moleculeGroupsShown !== nextProps.moleculeGroupsShown
-      || showPreviews !== nextState.showPreviews // Bool
-      || showDragColumn !== nextProps.showDragColumn // Bool
-      || moleculeSort !== nextProps.moleculeSort // Bool
-      || currentElement !== nextProps.currentElement // instance of Sample
-      || elements !== nextProps.elements // Arr
-      || checkedAll !== nextUi.checkedAll // Bool
-      || checkedIds !== nextUi.checkedIds // Immutable List
-      || uncheckedIds !== nextUi.uncheckedIds // Immutable List
-      || keyboardIndex !== nextState.keyboardIndex // int
-      || keyboardSeletectedElementId !== nextState.keyboardSeletectedElementId; // int
-  }
-
   componentWillUnmount() {
     KeyboardStore.unlisten(this.sampleOnKeyDown);
     UIStore.unlisten(this.onUIStoreChange);

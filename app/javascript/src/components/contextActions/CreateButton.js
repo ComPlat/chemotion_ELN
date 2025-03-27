@@ -1,9 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {
   SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown
 } from 'react-bootstrap';
 import Aviator from 'aviator';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -36,6 +36,7 @@ export default class CreateButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      isDisabled: true,
       samples: [],
       collectionId: null,
       layout: UserStore.getState().profile?.data?.layout || {},
@@ -47,23 +48,50 @@ export default class CreateButton extends React.Component {
     }
 
     this.createBtn = this.createBtn.bind(this);
-    this.onChange = this.onChange.bind(this);
+    this.onUserStoreChange = this.onUserStoreChange.bind(this);
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentDidMount() {
-    UserStore.listen(this.onChange);
+    UserStore.listen(this.onUserStoreChange);
+    UIStore.listen(this.onUIStoreChange);
+    this.onUIStoreChange(UIStore.getState());
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
+    UserStore.unlisten(this.onUserStoreChange);
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
-  onChange(state) {
+  onUserStoreChange(state) {
     const layout = state.profile?.data?.layout;
     // eslint-disable-next-line react/destructuring-assignment
     if (typeof layout !== 'undefined' && layout !== null && layout !== this.state.layout) {
       this.setState({ layout });
     }
+  }
+
+  onUIStoreChange({ currentCollection }) {
+    if (!currentCollection) {
+      this.setState({ isDisabled: true });
+      return;
+    }
+
+    const {
+      label,
+      is_locked,
+      is_shared,
+      is_synchronized,
+      is_sync_to_me,
+      permission_level
+    } = currentCollection;
+
+    const newIsDisabled = (
+      (label === 'All' && is_locked)
+      || (is_shared && is_synchronized === false)
+      || (is_sync_to_me && permission_level < PermissionConst.Write)
+    );
+    this.setState({ isDisabled: newIsDisabled });
   }
 
   getSampleFilter() {
@@ -277,8 +305,7 @@ export default class CreateButton extends React.Component {
   }
 
   render() {
-    const { isDisabled, customClass } = this.props;
-    const { layout } = this.state;
+    const { isDisabled, layout } = this.state;
     const type = UserStore.getState().currentType;
     const { elements, genericEls } = elementList();
     const sortedLayout = Object.entries(layout)
@@ -296,8 +323,7 @@ export default class CreateButton extends React.Component {
     return (
       <SplitButton
         id="create-split-button"
-        variant={customClass ? null : 'primary'}
-        className={customClass}
+        variant="primary"
         title={this.createBtn(type)}
         disabled={isDisabled}
         onClick={() => this.createElementOfType(type)}
@@ -336,11 +362,3 @@ export default class CreateButton extends React.Component {
     );
   }
 }
-
-CreateButton.propTypes = {
-  customClass: PropTypes.string,
-};
-
-CreateButton.defaultProps = {
-  customClass: null,
-};
