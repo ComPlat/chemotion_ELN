@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import classNames from 'classnames';
+import classnames from 'classnames';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -23,9 +23,9 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <div className={"sidebar" + (isCollapsed ? " sidebar--collapsed" : "")} >
+    <div className={classnames('sidebar', { 'sidebar--collapsed': isCollapsed })}>
       <div className="sidebar-content">
-        <a href="/mydb" title="Link to mydb index page" className='sidebar-logo'>
+        <a href="/mydb" title="Link to mydb index page" className="sidebar-logo">
           <ChemotionLogo collapsed={isCollapsed} />
         </a>
         <div className="flex-grow-1 h-0">
@@ -34,10 +34,11 @@ export default function Sidebar() {
             expandSidebar={UIActions.expandSidebar}
           />
         </div>
-        <div className={classNames(
+        <div className={classnames(
           'sidebar-button-frame justify-content-center mx-auto',
           { 'flex-column': isCollapsed }
-        )}>
+        )}
+        >
           <InboxButton isCollapsed={isCollapsed} />
           <SampleTaskNavigationElement isCollapsed={isCollapsed} />
           <OpenCalendarButton isCollapsed={isCollapsed} />
