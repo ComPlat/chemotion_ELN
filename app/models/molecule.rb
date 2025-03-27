@@ -27,8 +27,8 @@
 #
 # Indexes
 #
-#  index_molecules_on_deleted_at               (deleted_at)
-#  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
+#  index_molecules_on_deleted_at                           (deleted_at)
+#  index_molecules_on_formula_and_inchikey_and_is_partial  (inchikey,sum_formular,is_partial) UNIQUE
 #
 
 # rubocop:disable Metrics/ClassLength
@@ -55,7 +55,7 @@ class Molecule < ApplicationRecord
   after_create :get_lcss
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
 
-  validates_uniqueness_of :inchikey, scope: :is_partial
+  #validates_uniqueness_of :inchikey, scope: :is_partial
 
   # scope for suggestions
   scope :by_iupac_name, -> (query) {
@@ -94,12 +94,14 @@ class Molecule < ApplicationRecord
     return unless inchikey.present?
     is_partial = babel_info[:is_partial]
     partial_molfile = babel_info[:molfile]
-    molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
-      pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-      molecule.molfile = is_partial && partial_molfile || molfile
-      molecule.assign_molecule_data(babel_info, pubchem_info)
+    formula = babel_info[:formula]
+    molecule = Molecule.with_deleted.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
+    molecule ||= Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
+      pubchem_info = {} #  Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+      mol.molfile = is_partial && partial_molfile || molfile
+      mol.assign_molecule_data(babel_info, pubchem_info)
     end
-
+    molecule.update(deleted_at: nil) if molecule.deleted?
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end

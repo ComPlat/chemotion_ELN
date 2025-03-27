@@ -31,6 +31,11 @@ Rails.application.configure do
   # Store uploaded files on the local file system in a temporary directory
   # config.active_storage.service = :test
 
+  # Using sql schema format to ensure addional schemas can be found
+  # Alternately, we should be able to set 'SET search_path TO public,rdkit;' with schema_search_path
+  # https://api.rubyonrails.org/v6.1/classes/ActiveRecord/ConnectionAdapters/PostgreSQL/SchemaStatements.html#method-i-schema_search_path 
+  config.active_record.schema_format = :sql
+
   # config.action_mailer.perform_caching = false
 
   # Tell Action Mailer not to deliver emails to the real world.
