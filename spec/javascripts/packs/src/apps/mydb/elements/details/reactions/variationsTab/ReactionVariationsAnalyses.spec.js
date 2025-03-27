@@ -28,30 +28,30 @@ describe('ReactionVariationsAnalyses', async () => {
     });
     it('when no update is necessary', async () => {
       let { variations } = reaction;
-      variations[0].analyses = [analysisFoo.id];
-      variations[1].analyses = [analysisBar.id];
+      variations[0].metadata.analyses = [analysisFoo.id];
+      variations[1].metadata.analyses = [analysisBar.id];
       expect(updateAnalyses(variations, getReactionAnalyses(reaction))).toEqual(variations);
     });
     it('when analysis is removed', async () => {
       let { variations } = reaction;
-      variations[0].analyses = [analysisFoo.id];
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].analyses).toEqual([analysisFoo.id]);
+      variations[0].metadata.analyses = [analysisFoo.id];
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses).toEqual([analysisFoo.id]);
       reaction.container.children[0].children = reaction.container.children[0].children.filter((child) => child.id !== analysisFoo.id);
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses).toEqual([]);
     });
     it('when analysis is marked as deleted', async () => {
       let { variations } = reaction;
-      variations[1].analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([analysisBar.id]);
+      variations[1].metadata.analyses = [analysisBar.id];
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([analysisBar.id]);
       analysisBar.is_deleted = true;
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([]);
     });
     it('when analysis is new', async () => {
       let { variations } = reaction;
-      variations[1].analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([analysisBar.id]);
+      variations[1].metadata.analyses = [analysisBar.id];
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([analysisBar.id]);
       analysisBar.is_new = true;
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([]);
     });
   });
 });

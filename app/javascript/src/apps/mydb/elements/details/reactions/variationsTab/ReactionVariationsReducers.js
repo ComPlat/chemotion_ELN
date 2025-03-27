@@ -1,21 +1,31 @@
-import { MenuHeader } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  updateColumnDefinitionsMaterials, updateColumnDefinitionsMaterialTypes
+  resetColumnDefinitionsMaterials
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  getCellDataType,
-  updateColumnDefinitions
+  getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions,
+  getColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
-function columnDefinitionsReducer(columnDefinitions, action) {
+export default function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
-    case 'update_material_set': {
-      return updateColumnDefinitionsMaterials(
+    case 'remove_obsolete_materials': {
+      return removeObsoleteColumnDefinitions(
         columnDefinitions,
-        action.reactionMaterials,
-        MenuHeader,
+        action.selectedColumns,
+      );
+    }
+    case 'apply_column_selection': {
+      let updatedColumnDefinitions = addMissingColumnDefinitions(
+        columnDefinitions,
+        action.selectedColumns,
+        action.materials,
         action.gasMode
       );
+      updatedColumnDefinitions = removeObsoleteColumnDefinitions(
+        updatedColumnDefinitions,
+        action.selectedColumns
+      );
+      return updatedColumnDefinitions;
     }
     case 'update_entry_defs': {
       let updatedColumnDefinitions = updateColumnDefinitions(
@@ -33,24 +43,17 @@ function columnDefinitionsReducer(columnDefinitions, action) {
       return updatedColumnDefinitions;
     }
     case 'toggle_gas_mode': {
-      let updatedColumnDefinitions = updateColumnDefinitions(
-        columnDefinitions,
-        'properties.duration',
-        'editable',
-        !action.gasMode
-      );
-      updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
-        updatedColumnDefinitions,
-        action.reactionMaterials,
+      return getColumnDefinitions(
+        action.selectedColumns,
+        action.materials,
         action.gasMode
       );
-
-      return updatedColumnDefinitions;
     }
     case 'update_gas_type': {
-      return updateColumnDefinitionsMaterialTypes(
+      return resetColumnDefinitionsMaterials(
         columnDefinitions,
-        action.reactionMaterials,
+        action.materials,
+        action.selectedColumns,
         action.gasMode
       );
     }
@@ -59,7 +62,3 @@ function columnDefinitionsReducer(columnDefinitions, action) {
     }
   }
 }
-
-export {
-  columnDefinitionsReducer
-};

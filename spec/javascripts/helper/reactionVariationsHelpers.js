@@ -3,18 +3,40 @@ import SampleFactory from 'factories/SampleFactory';
 import {
   createVariationsRow,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  getReactionMaterials,
+  getReactionMaterialsIDs
+} from '../../../app/javascript/src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 async function setUpMaterial() {
   return SampleFactory.build('SampleFactory.water_100g');
 }
+
+function getSelectedColumns(materialIDs) {
+  return { ...materialIDs, properties: ['duration', 'temperature'], metadata: ['analyses', 'notes'] };
+}
+
 async function setUpReaction() {
   const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
   reaction.starting_materials[0].reference = true;
   reaction.reactants = [await setUpMaterial()];
 
+  const materials = getReactionMaterials(reaction);
+  const materialIDs = getReactionMaterialsIDs(materials);
+
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, variations));
+    variations.push(createVariationsRow(
+      {
+        materials,
+        selectedColumns: getSelectedColumns(materialIDs),
+        variations,
+        durationValue: '',
+        durationUnit: 'Hour(s)',
+        temperatureValue: '',
+        temperatureUnit: '°C',
+      }
+    ));
   }
   reaction.variations = variations;
 
@@ -38,9 +60,20 @@ async function setUpGaseousReaction() {
   reaction.products[0].amount_unit = 'mol';
   reaction.products[0].amount_value = 1;
 
+  const materials = getReactionMaterials(reaction);
+  const materialIDs = getReactionMaterialsIDs(materials);
+
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, variations, true, 10));
+    variations.push(createVariationsRow(
+      {
+        materials,
+        selectedColumns: getSelectedColumns(materialIDs),
+        variations,
+        gasMode: true,
+        vesselVolume: 10
+      }
+    ));
   }
   reaction.variations = variations;
 
@@ -65,5 +98,10 @@ function getColumnDefinitionsMaterialIDs(columnDefinitions, materialType) {
 }
 
 export {
-  setUpMaterial, setUpReaction, setUpGaseousReaction, getColumnGroupChild, getColumnDefinitionsMaterialIDs
+  setUpMaterial,
+  setUpReaction,
+  setUpGaseousReaction,
+  getColumnGroupChild,
+  getColumnDefinitionsMaterialIDs,
+  getSelectedColumns
 };

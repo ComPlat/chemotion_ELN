@@ -1,54 +1,22 @@
 import expect from 'expect';
 import {
-  getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
-  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
-  updateColumnDefinitionsMaterials, updateVariationsRowOnCatalystMaterialChange,
-  getMaterialColumnGroupChild, getReactionMaterialsIDs, updateColumnDefinitionsMaterialTypes,
-  getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
+  getReactionMaterials, updateVariationsRowOnReferenceMaterialChange, removeObsoleteMaterialColumns,
+  updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
+  resetColumnDefinitionsMaterials, getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  setUpMaterial, setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
+  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
 } from 'helper/reactionVariationsHelpers';
-import { materialTypes } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  materialTypes,
+
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
 describe('ReactionVariationsMaterials', () => {
-  it('removes obsolete materials', async () => {
-    const reaction = await setUpReaction();
-    const productIDs = reaction.products.map((product) => product.id);
-    reaction.variations.forEach((variation) => {
-      expect(Object.keys(variation.products)).toEqual(productIDs);
-    });
-
-    reaction.products.pop();
-    const updatedProductIDs = reaction.products.map((product) => product.id);
-    const currentMaterials = getReactionMaterials(reaction);
-    const updatedVariations = removeObsoleteMaterialsFromVariations(reaction.variations, currentMaterials);
-    updatedVariations
-      .forEach((variation) => {
-        expect(Object.keys(variation.products)).toEqual(updatedProductIDs);
-      });
-  });
-  it('adds missing materials', async () => {
-    const reaction = await setUpReaction();
-    const material = await setUpMaterial();
-    const startingMaterialIDs = reaction.starting_materials.map((startingMaterial) => startingMaterial.id);
-    reaction.variations.forEach((variation) => {
-      expect(Object.keys(variation.startingMaterials)).toEqual(startingMaterialIDs);
-    });
-
-    reaction.starting_materials.push(material);
-    const updatedStartingMaterialIDs = reaction.starting_materials.map((startingMaterial) => startingMaterial.id);
-    const currentMaterials = getReactionMaterials(reaction);
-    const updatedVariations = addMissingMaterialsToVariations(reaction.variations, currentMaterials, false);
-    updatedVariations
-      .forEach((variation) => {
-        expect(Object.keys(variation.startingMaterials)).toEqual(updatedStartingMaterialIDs);
-      });
-  });
   it('updates yield when product mass changes', async () => {
     const reaction = await setUpReaction();
     const productID = reaction.products[0].id;
@@ -88,31 +56,12 @@ describe('ReactionVariationsMaterials', () => {
       newValue: Number(-42).toString()
     }).mass.value).toBe(0);
   });
-  it('removes obsolete materials from column definitions', async () => {
-    const reaction = await setUpReaction();
-    const reactionMaterials = getReactionMaterials(reaction);
-    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
-      groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
-    }));
-
-    const startingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
-    expect(getColumnDefinitionsMaterialIDs(columnDefinitions, 'startingMaterials')).toEqual(startingMaterialIDs);
-
-    reactionMaterials.startingMaterials.pop();
-    const updatedStartingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, reactionMaterials, null, false);
-    expect(getColumnDefinitionsMaterialIDs(
-      updatedColumnDefinitions,
-      'startingMaterials'
-    )).toEqual(updatedStartingMaterialIDs);
-  });
   it('retrieves reaction material IDs', async () => {
     const reaction = await setUpReaction();
     const reactionMaterials = getReactionMaterials(reaction);
     const reactionMaterialsIDs = getReactionMaterialsIDs(reactionMaterials);
-    expect(Array.isArray(reactionMaterialsIDs)).toBe(true);
-    expect(new Set(reactionMaterialsIDs).size).toBe(5);
+    expect(typeof reactionMaterialsIDs).toBe('object');
+    expect(Object.values(reactionMaterialsIDs).flat().length).toEqual(5);
   });
   it('retrieves reaction material gas types', async () => {
     const reaction = await setUpGaseousReaction();
@@ -150,7 +99,7 @@ describe('ReactionVariationsMaterials', () => {
     const reactionMaterials = getReactionMaterials(reaction);
     const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
       groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null, false))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, false))
     }));
 
     Object.keys(materialTypes).forEach((materialType) => {
@@ -171,9 +120,10 @@ describe('ReactionVariationsMaterials', () => {
       });
     });
 
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterialTypes(
+    const updatedColumnDefinitions = resetColumnDefinitionsMaterials(
       columnDefinitions,
       reactionMaterials,
+      getReactionMaterialsIDs(reactionMaterials),
       true
     );
 
@@ -232,12 +182,24 @@ describe('ReactionVariationsMaterials', () => {
     expect(updatedVariationsRow.products[productID].turnoverNumber.value).toBe(initialTurnoverNumber * 2);
     expect(updatedVariationsRow.products[productID].turnoverFrequency.value).toBe(initialTurnoverFrequency * 2);
   });
-  it("initializes gas product yield", async () => {
+  it('initializes gas product yield', async () => {
     const reaction = await setUpGaseousReaction();
     const productID = reaction.products[0].id;
     const variationsRow = reaction.variations[0];
     const initialYield = variationsRow.products[productID].yield.value;
 
     expect(initialYield).not.toBe(null);
+  });
+  it('removes obsolete material columns', async () => {
+    const reaction = await setUpReaction();
+    const materials = getReactionMaterials(reaction);
+    const columns = getReactionMaterialsIDs(materials);
+    materials.products.pop();
+
+    expect(columns.products.length).toEqual(2);
+
+    const updatedColumns = removeObsoleteMaterialColumns(materials, columns);
+
+    expect(updatedColumns.products.length).toEqual(1);
   });
 });
