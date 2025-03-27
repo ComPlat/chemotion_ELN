@@ -60,6 +60,9 @@
 /config/scifinder_n.yml
 /config/radar.yml
 
+# test env
+/db/structure.sql
+
 /doc/*
 
 /node_modules
