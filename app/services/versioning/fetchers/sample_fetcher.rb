@@ -34,7 +34,9 @@ class Versioning::Fetchers::SampleFetcher
         end
       end
     end
-    versions += Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
+    unless sample.chemical.nil?
+      versions += Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
+    end
 
     versions
   end
