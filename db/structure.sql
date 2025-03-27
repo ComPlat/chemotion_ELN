@@ -13,7 +13,7 @@ SET row_security = off;
 -- Name: rdkit; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA rdkit;
+-- CREATE SCHEMA rdkit;
 
 
 --
