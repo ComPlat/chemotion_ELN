@@ -1360,6 +1360,7 @@ CREATE TABLE public.chemicals (
     sample_id integer,
     cas text,
     chemical_data jsonb,
+    updated_at timestamp without time zone,
     log_data jsonb
 );
 
