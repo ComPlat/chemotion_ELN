@@ -77,13 +77,6 @@ GIT
     openbabel (2.4.90.3)
 
 GIT
-  remote: https://github.com/ptrxyz/rdkit_chem.git
-  revision: c8ddea813688df7014606a1c5802b25b1fcbe3f6
-  branch: pk01
-  specs:
-    rdkit_chem (2020.04.30.1)
-
-GIT
   remote: https://github.com/toretore/semacode.git
   revision: 4e31e0b79a1a63c98f2560359c1c6a527b00bacc
   branch: master
@@ -425,7 +418,7 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.0.0.rc8)
+    labimotion (2.0.0)
       rails (~> 6.1.7)
     language_server-protocol (3.17.0.3)
     latex-decode (0.4.0)
@@ -912,7 +905,7 @@ DEPENDENCIES
   kaminari
   kaminari-grape
   ketcherails!
-  labimotion (= 2.0.0.rc8)
+  labimotion (= 2.0.0)
   launchy
   listen
   logidze
@@ -944,7 +937,6 @@ DEPENDENCIES
   rack
   rack-cors
   rails (~> 6.1.7.7)
-  rdkit_chem!
   rinchi-gem (= 1.0.2)!
   rmagick
   roo
