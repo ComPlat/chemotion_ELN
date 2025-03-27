@@ -2,8 +2,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Draggable from 'react-draggable';
 import React, { useContext, useState } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
-import SampleTaskReloadButton from 'src/components/sampleTaskInbox/SampleTaskReloadButton';
-import { Button, Card, Col, Container, Modal, Row } from 'react-bootstrap';
+import { Card, Col, Modal } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
@@ -32,7 +31,7 @@ const SampleTaskInbox = ({}) => {
         let sampleTaskForSampleAlreadyExists = sampleTasksStore.sampleTaskForSample(sample.id);
         if (sampleTaskForSampleAlreadyExists) {
           // create notification
-          sendErrorNotification(`SampleTask for sample id ${sample.id} already exists`);
+          sendErrorNotification(`Weighing Task for sample id ${sample.id} already exists`);
         } else {
           sampleTasksStore.createSampleTask(sample.id, required_scan_results);
         }
@@ -119,8 +118,14 @@ const SampleTaskInbox = ({}) => {
         >
           <Modal.Header className="py-3 border-bottom border-gray-600 bg-gray-300" closeButton>
             <Modal.Title className="handle draggable-modal-stack-title">
-              <SampleTaskReloadButton />
-              {openSampleTaskCount()} open SampleTasks
+              <i
+                className="fa fa-refresh me-3"
+                aria-hidden="true"
+                role="button"
+                title="Reload Weighing tasks"
+                onClick={sampleTasksStore.load}
+              />
+              {openSampleTaskCount()} open Weighing Tasks
             </Modal.Title>
           </Modal.Header>
 

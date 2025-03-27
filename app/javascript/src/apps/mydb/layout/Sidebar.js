@@ -8,7 +8,7 @@ import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 
 import InboxButton from 'src/components/contextActions/InboxButton';
-import SampleTaskNavigationElement from 'src/components/sampleTaskInbox/SampleTaskNavigationElement';
+import SampleTaskSidebarButton from 'src/components/sampleTaskInbox/SampleTaskSidebarButton';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import NoticeButton from 'src/components/contextActions/NoticeButton';
 import PanelCollapseButton from 'src/apps/mydb/layout/PanelCollapseButton';
@@ -40,7 +40,7 @@ export default function Sidebar() {
         )}
         >
           <InboxButton isCollapsed={isCollapsed} />
-          <SampleTaskNavigationElement isCollapsed={isCollapsed} />
+          <SampleTaskSidebarButton isCollapsed={isCollapsed} />
           <OpenCalendarButton isCollapsed={isCollapsed} />
           <NoticeButton isCollapsed={isCollapsed} />
         </div>
