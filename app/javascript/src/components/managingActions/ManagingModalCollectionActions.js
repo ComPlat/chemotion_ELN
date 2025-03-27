@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Modal } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
@@ -92,6 +92,7 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   render() {
+    const { title, onHide } = this.props;
     const { selected } = this.state;
     const options = this.collectionOptions();
 
@@ -102,33 +103,41 @@ export default class ManagingModalCollectionActions extends React.Component {
     );
 
     return (
-      <Form>
-        <Form.Group className="mb-3">
-          <Form.Label>Select a Collection</Form.Label>
-          <Select
-            options={options}
-            value={selected}
-            getOptionValue={(o) => o.id}
-            formatOptionLabel={optionLabel}
-            onChange={this.onSelectChange}
-          />
-        </Form.Group>
+      <Modal show centered onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>{title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Select a Collection</Form.Label>
+              <Select
+                options={options}
+                value={selected}
+                getOptionValue={(o) => o.id}
+                formatOptionLabel={optionLabel}
+                onChange={this.onSelectChange}
+              />
+            </Form.Group>
 
-        <Form.Group className="mb-3">
-          <Form.Label>or Create a new Collection</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="-- Please insert collection name --"
-            onChange={this.onInputChange}
-          />
-        </Form.Group>
-        {this.submitButton()}
-      </Form>
+            <Form.Group className="mb-3">
+              <Form.Label>or Create a new Collection</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="-- Please insert collection name --"
+                onChange={this.onInputChange}
+              />
+            </Form.Group>
+            {this.submitButton()}
+          </Form>
+        </Modal.Body>
+      </Modal>
     );
   }
 }
 
 ManagingModalCollectionActions.propTypes = {
+  title: PropTypes.string.isRequired,
   action: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired,
   listSharedCollections: PropTypes.bool.isRequired,

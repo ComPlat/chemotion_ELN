@@ -115,14 +115,6 @@ class UIActions {
     return value;
   }
 
-  updateModalProps(params) {
-    return params
-  }
-
-  hideModal() {
-    return null
-  }
-
   setFilterCreatedAt(filterCreatedAt) {
     return filterCreatedAt;
   }
