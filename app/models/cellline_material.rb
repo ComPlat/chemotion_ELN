@@ -24,6 +24,10 @@
 #  updated_at          :datetime         not null
 #  created_by          :integer
 #
+# Indexes
+#
+#  index_cellline_materials_on_name_and_source  (name,source) UNIQUE
+#
 class CelllineMaterial < ApplicationRecord
   acts_as_paranoid
 
