@@ -24,7 +24,9 @@
 #
 
 class Comment < ApplicationRecord
-  COMMENTABLE_TYPE = %w[Sample Reaction Screen Wellplate ResearchPlan DeviceDescription].freeze
+  COMMENTABLE_TYPE = %w[
+    Sample Reaction Screen Wellplate ResearchPlan DeviceDescription SequenceBasedMacromoleculeSample
+  ].freeze
 
   enum sample_section: {
     properties: 'sample_properties',
@@ -71,6 +73,12 @@ class Comment < ApplicationRecord
     maintenance: 'device_description_maintenance',
   }, _prefix: true
 
+  enum sequence_based_macromolecule_sample_section: {
+    properties: 'sequence_based_macromolecule_sample_properties',
+    analyses: 'sequence_based_macromolecule_sample_properties',
+    attachments: 'sequence_based_macromolecule_sample_attachments'
+  }, _prefix: true
+
   enum header_section: {
     sample: 'sample_header',
     reaction: 'reaction_header',
@@ -78,6 +86,7 @@ class Comment < ApplicationRecord
     screen: 'screen_header',
     research_plan: 'research_plan_header',
     device_description: 'device_description_header',
+    sequence_based_macromolecule_sample: 'sequence_based_macromolecule_sample_header'
   }, _prefix: true
 
   belongs_to :commentable, polymorphic: true
