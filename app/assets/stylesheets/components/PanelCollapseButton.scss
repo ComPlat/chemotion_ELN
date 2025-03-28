@@ -1,0 +1,11 @@
+.panel-collapse-button {
+  @extend .btn-sm;
+  @extend .p-0;
+  @extend .rounded-0;
+  height: 48px;
+  width: 16px;
+  cursor: pointer !important;
+  * {
+    cursor: pointer !important;
+  }
+}

@@ -68,6 +68,7 @@ class UIStore {
         activeTab: 0,
         activeAnalysis: 0,
       },
+      isSidebarCollapsed: false,
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -79,13 +80,13 @@ class UIStore {
       currentCollection: null,
       currentSearchSelection: null,
       currentSearchByID: null,
-      showCollectionManagement: false,
       showDeviceManagement: false,
       isSync: false,
       hasChemSpectra: false,
       hasNmriumWrapper: false,
       matrices: {},
       thirdPartyApps: [],
+      version: {},
     };
 
     this.bindListeners({
@@ -111,9 +112,6 @@ class UIStore {
         UIActions.selectCollectionWithoutUpdating,
       handleClearSearchSelection: UIActions.clearSearchSelection,
       handleClearSearchById: UIActions.clearSearchById,
-      handleShowCollectionManagement: UIActions.showCollectionManagement,
-      handleShowElements: UIActions.showElements,
-      handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
       handleShowDeviceManagement: UIActions.showDeviceManagement,
@@ -125,6 +123,8 @@ class UIStore {
       handleSetProductOnly: UIActions.setProductOnly,
       handleRerenderGenericWorkflow: UIActions.rerenderGenericWorkflow,
       handleShowGenericWorkflowModal: UIActions.showGenericWorkflowModal,
+      handleExpandSidebar: UIActions.expandSidebar,
+      handleToggleSidebar: UIActions.toggleSidebar,
     });
   }
 
@@ -153,24 +153,12 @@ class UIStore {
     this.state.showGenericWorkflow = show;
   }
 
-  handleToggleCollectionManagement() {
-    this.state.showCollectionManagement = !this.state.showCollectionManagement;
-  }
-
-  handleShowCollectionManagement() {
-    this.state.showCollectionManagement = true;
-  }
-
   handleShowDeviceManagement() {
     this.state.showDeviceManagement = true
   }
 
   handleCloseDeviceManagement() {
     this.state.showDeviceManagement = false
-  }
-
-  handleShowElements() {
-    this.state.showCollectionManagement = false;
   }
 
   handleSelectTab(params = {}) {
@@ -508,6 +496,14 @@ class UIStore {
   handleSetProductOnly(productOnly) {
     this.state.productOnly = productOnly;
     this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleExpandSidebar() {
+    this.setState({ isSidebarCollapsed: false });
+  }
+
+  handleToggleSidebar() {
+    this.setState({ isSidebarCollapsed: !this.state.isSidebarCollapsed });
   }
 }
 
