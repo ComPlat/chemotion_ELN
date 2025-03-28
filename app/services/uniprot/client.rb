@@ -23,7 +23,7 @@ module Uniprot
     def search(search_term:, search_field: :accession, raw: false)
       search_params = {
         query: "#{search_field}:#{search_term}",
-        fields: "id,accession,protein_name,organism_name",
+        fields: "id,accession,ec,protein_name,organism_name",
         sort: "accession desc",
         size: 10
       }

@@ -31,10 +31,15 @@ module Usecases
 
       # returns an instance of 
       def search_in_eln(search_term:, search_field:)
-        if search_field == 'ec'
+        case search_field
+        when 'ec'
           SequenceBasedMacromolecule.with_ec_number(search_term)
+        when 'accession'
+          SequenceBasedMacromolecule.with_accession(search_term)
+        when 'name'
+          SequenceBasedMacromolecule.search_in_name(search_term)
         else
-          SequenceBasedMacromolecule.where(search_field => search_term)
+          SequenceBasedMacromolecule.none
         end
       end
 
