@@ -1,7 +1,9 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import PropTypes from 'prop-types';
-import { Card, Button, Form, Row, Col, Table, OverlayTrigger, Popover } from 'react-bootstrap';
+import {
+  Card, Button, Form, Row, Col, Table, OverlayTrigger, Popover, InputGroup, Modal
+} from 'react-bootstrap';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
