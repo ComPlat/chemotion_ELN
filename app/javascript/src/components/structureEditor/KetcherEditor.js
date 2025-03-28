@@ -86,6 +86,7 @@ export let allTemplates = {}; // contains all templates
 
 // local
 let oldImagePack = [];
+let allAtomsCopy = [];
 let selectedImageForTextNode = null;
 let imageListCopyContainer = [];
 let textListCopyContainer = [];
@@ -190,7 +191,6 @@ const fetchTemplateList = async () => {
 -> isAliasConsistent before returning -> is a function to make sure all aliases generated are in order 0,1,2,3,4,5,6...
 */
 const addAtomAliasHelper = async (processedAtoms) => {
-  console.log('addAtomAliasHelper');
   try {
     const newImageNodes = [...imagesList];
     imageNodeCounter = processedAtoms.length - 1;
@@ -344,37 +344,39 @@ const onAtomDelete = async (editor) => {
     let hasImageDifferences = await deepCompare(oldImagePack, imagesList);
     const imageDifferences = await deepCompareContent(oldImagePack, imagesList);
 
-    // 2nd remove images if not removed
-    if (hasImageDifferences && !aliasDifferences.length) { // image delete
-      // console.warn('image has to be deleted');
-      hasImageDifferences = true;
-      aliasDifferences.push(...imageDifferences);
-      latestData = await removeImageTemplateAtom(latestData, imageDifferences);
-    } else if (!hasImageDifferences) { // atom delete with not image diff
-      // console.warn('when image is not deleted?');
-      const templateList = await fetchTemplateList();
-      const filteredImages = [];
-      for (let i = 0; i < imagesList.length; i++) {
-        if (aliasDifferences.indexOf(i) !== -1) {
-          const templateId = await findTemplateByPayload(templateList, imagesList[i].data);
-          if (templateId == null) {
+    if ((hasImageDifferences && !aliasDifferences.length) || aliasDifferences.length) {
+      // 2nd remove images if not removed
+      if (hasImageDifferences && !aliasDifferences.length) { // image delete
+        // console.warn('image has to be deleted');
+        hasImageDifferences = true;
+        aliasDifferences.push(...imageDifferences);
+        latestData = await removeImageTemplateAtom(latestData, imageDifferences);
+      } else if (!hasImageDifferences) { // atom delete with not image diff
+        // console.warn('when image is not deleted?');
+        const templateList = await fetchTemplateList();
+        const filteredImages = [];
+        for (let i = 0; i < imagesList.length; i++) {
+          if (aliasDifferences.indexOf(i) !== -1) {
+            const templateId = await findTemplateByPayload(templateList, imagesList[i].data);
+            if (templateId == null) {
+              filteredImages.push(imagesList[i]);
+            }
+          } else {
             filteredImages.push(imagesList[i]);
           }
-        } else {
-          filteredImages.push(imagesList[i]);
         }
+        imagesList = filteredImages;
+        imageNodeCounter = imagesList.length - 1;
+      } else if (hasImageDifferences) { // atom removed selected
+        // console.warn('image difference & missing numbers called');
+        imageNodeCounter = imagesList.length - 1;
       }
-      imagesList = filteredImages;
-      imageNodeCounter = imagesList.length - 1;
-    } else if (hasImageDifferences) { // atom removed selected
-      // console.warn('image difference & missing numbers called');
-      imageNodeCounter = imagesList.length - 1;
+
+      // 3rd resettle aliases in inspired atom alias A
+      latestData = await handleOnDeleteAtom(aliasDifferences, latestData, imagesList);
+      await filterTextList(aliasDifferences); // remove text nodes
     }
 
-    // 3rd resettle aliases in inspired atom alias A
-    latestData = await handleOnDeleteAtom(aliasDifferences, latestData, imagesList);
-    // remove text nodes
-    await filterTextList(aliasDifferences); // text node structure
     await saveMoveCanvas(editor, latestData, true, false);
     deletedAtoms = [];
     oldImagePack = [];
@@ -385,7 +387,6 @@ const onAtomDelete = async (editor) => {
 
 // filter text nodes by key, key as in text key
 const filterTextList = async (aliasDifferences) => {
-  // rewire all the index when deleted index is small then existing third part
   const keys = Object.values(textNodeStruct);
   const valueList = [];
   if (aliasDifferences.length) {
@@ -395,7 +396,6 @@ const filterTextList = async (aliasDifferences) => {
       }
     });
     latestData.root.nodes = [...removeTextFromData(latestData), ...valueList];
-    // textList = [...valueList];
   }
 };
 
@@ -511,13 +511,15 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Add atom': async () => onAddAtom(editor),
     'Delete atom': async () => {
       oldImagePack = [...imagesList];
+      allAtomsCopy = [...allAtoms];
       await onAtomDelete(editor);
       canvasSelection = null;
     },
     'Add text': async () => {
+      console.log('Add Text!');
       await onAddText(editor, selectedImageForTextNode);
       await buttonClickForRectangleSelection(iframeRef);
-      removeTextNodeDescriptionOnTextPopup();
+      await removeTextNodeDescriptionOnTextPopup();
     },
     'Delete text': async () => onDeleteText(editor),
     'Upsert image': async () => {
@@ -811,6 +813,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
         ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
         resetStore();
+        console.log({ ket2LineTextArranged });
         return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
       } catch (e) {
         console.log(e);

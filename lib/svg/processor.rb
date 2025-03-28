@@ -11,11 +11,11 @@ module SVG
                     Chemotion::MarvinjsSvgProcessor.new(svg)
                   when /chemdraw/i
                     Chemotion::ChemdrawSvgProcessor.new(svg)
-                  when "ketcher"
+                  when 'ketcher'
                     Ketcherails::SVGProcessor.new(svg)
                   else
                     # ketcher2 goes
-                    Chemotion::OpenBabelSvgProcessor.new(svg)
+                    Chemotion::ChemdrawSvgProcessor.new(svg)
                   end
 
       svg = processor.centered_and_scaled_svg unless is_centered

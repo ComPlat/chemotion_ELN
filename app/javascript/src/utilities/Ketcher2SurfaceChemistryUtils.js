@@ -276,10 +276,8 @@ const handleOnDeleteAtom = async (missingNumbers, data, imageL) => {
 
             // Count how many missing numbers are LESS than the current alias
             const missingCount = missingNumbers.filter((num) => num < currentAlias).length;
-
             if (missingCount > 0) {
               atom.alias = `t_${atomSplits[1]}_${currentAlias - missingCount}`;
-
               if (textNodeStructureCopy[previousAlias]) {
                 textNodeStruct[atom.alias] = textNodeStruct[previousAlias];
                 delete textNodeStruct[previousAlias];
@@ -306,12 +304,13 @@ const removeImageTemplateAtom = async (data, aliasToBeRemoved) => {
       const molecule = data[molKey];
       if (molecule && molecule.atoms) {
         const atomList = molecule?.atoms || [];
+        const atomListCopy = molecule?.atoms || [];
         const bondList = molecule?.bonds || [];
         let removeIndex = -1;
 
-        for (let i = 0; i < atomList.length; i++) {
-          if (ALIAS_PATTERNS.threeParts.test(atomList[i].alias)) {
-            const split = parseInt(atomList[i].alias.split('_')[2]);
+        for (let i = 0; i < atomListCopy.length; i++) {
+          if (ALIAS_PATTERNS.threeParts.test(atomListCopy[i].alias)) {
+            const split = parseInt(atomListCopy[i].alias.split('_')[2]);
             if (aliasToBeRemoved.indexOf(split) !== -1) {
               atomList.splice(i, 1);
               removeIndex = i;
@@ -1009,34 +1008,41 @@ const onAddText = async (editor, selectedImageForTextNode) => {
     await fetchKetcherData(editor);
     const textListCopy = [];
     const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+
     if (!atomLocation && !atomLocation?.length) return null;
 
     // sync positions between atom alias, and text-node
     const { width } = imagesList[selectedImageForTextNode[0]]?.boundingBox || 10;
     const lastTextNode = textList[textList.length - 1];
+
     lastTextNode.data.position = {
       x: atomLocation[0] + width / 2,
       y: atomLocation[1],
       z: atomLocation[2]
     };
     textList[textList.length - 1] = lastTextNode;
+    textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
+
     // prepare data nodes
     const dataRoot = removeTextFromData(latestData);
     if (textNodeStruct[alias]) {
       const keyExists = textNodeStruct[alias];
+      console.log({ keyExists });
       textList.forEach((i) => {
         const { key } = JSON.parse(i.data.content).blocks[0];
-        if (keyExists !== key) {
-          textListCopy.push(i);
-        }
+        // if (keyExists !== key) {
+        textListCopy.push(i);
+        // }
       });
     }
+    console.log({ textListCopy });
+
     dataRoot.push(...textListCopy);
     latestData.root.nodes = dataRoot;
     await editor.structureDef.editor.setMolecule(JSON.stringify(latestData), false);
-    textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
   }
   imageNodeForTextNodeSetter(null);
+  return true;
 };
 
 /* istanbul ignore next */
