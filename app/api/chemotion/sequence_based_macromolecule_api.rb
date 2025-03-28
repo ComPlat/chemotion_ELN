@@ -17,7 +17,7 @@ module Chemotion
         present search_results, with: Entities::SequenceBasedMacromoleculeSearchResultEntity, root: :search_results
       end
 
-      desc 'Get Uniprot entry by ID'
+      desc 'Get SBMM entry by ID (if ELN) or accession (if Uniprot)'
       params do
         requires :type, type: String, values: %w[eln uniprot]
       end
