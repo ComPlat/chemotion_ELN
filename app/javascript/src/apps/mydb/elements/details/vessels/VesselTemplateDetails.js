@@ -24,6 +24,7 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
   if (!vessels.length) return null;
 
   const templateId = vessels[0].id;
+  const { vesselTemplateId } = vessels[0];
   const templateStoreItem = vesselDetailsStore.getVessel(templateId);
   const instanceStoreItems = vessels.map(v => vesselDetailsStore.getVessel(v.id)).filter(Boolean);
 
@@ -131,6 +132,77 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
     </div>
   );
 
+  const handleAddNewInstance = () => {
+    setNewInstances([...newInstances, {
+      vesselInstanceName: '',
+      vesselInstanceDescription: '',
+      barCode: '',
+      qrCode: '',
+      weightAmount: '',
+      weightUnit: 'g',
+    }]);
+  };
+
+  const handleCreateNewInstance = (instance, index) => {
+
+    console.log(instance);
+    const baseVessel = vessels[0];
+    const { vesselTemplateId } = baseVessel;
+    const collectionId = currentCollection.id;
+
+    const vesselToCreate = {
+      collectionId,
+      vesselName: baseVessel.vesselName,
+      materialDetails: baseVessel.materialDetails,
+      materialType: baseVessel.materialType,
+      vesselType: baseVessel.vesselType,
+      volumeAmount: baseVessel.volumeAmount,
+      volumeUnit: baseVessel.volumeUnit,
+      details: baseVessel.details,
+      short_label: baseVessel.short_label,
+      // container: baseVessel.container,
+      instances: [
+        {
+          vesselInstanceName: instance.vesselInstanceName,
+          vesselInstanceDescription: instance.vesselInstanceDescription,
+          barCode: instance.barCode,
+          qrCode: instance.qrCode,
+          weightAmount: instance.weightAmount,
+          weightUnit: instance.weightUnit,
+        },
+      ],
+    };
+
+    VesselsFetcher.create(vesselToCreate, currentUser)
+      .then((createdVessels) => {
+        if (Array.isArray(createdVessels) && createdVessels.length > 0) {
+          ElementActions.refreshElements('vessel');
+        }
+
+        return VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId);
+      })
+      .then((updatedVessels) => {
+        updatedVessels.forEach(vesselDetailsStore.convertVesselToModel);
+
+        const elementState = ElementStore.getState();
+        const currentEl = elementState.selecteds.find(
+          (el) => Array.isArray(el) && el[0]?.type === 'vessel_template'
+        );
+
+        if (currentEl) {
+          currentEl.length = 0;
+          updatedVessels.forEach(v => currentEl.push(v));
+          DetailActions.select(elementState.activeKey);
+        }
+
+        setNewInstances((prev) => prev.filter((_, i) => i !== index));
+      })
+
+      .catch((error) => {
+        console.error('Error creating vessel instance:', error);
+      });
+  };
+
   const formatLabel = (field) => field.replace('_', ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
   const handleTemplateChange = (field, value) => {
@@ -207,7 +279,7 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
           {renderHeaderContent()}
         </Card.Header>
         <Card.Body className="bg-light">
-          <Card.Title className="mb-3">Vessel template details</Card.Title>
+          <Card.Title className="mb-3">Vessel Template Details</Card.Title>
           <Form>
             {['vesselName',
               'details',
@@ -266,9 +338,14 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
           </Form>
         </Card.Body>
       </Card>
-      <Card className="detail-card shadow-sm">
+      <Card className="detail-card shadow-sm mt-3">
         <Card.Body>
-          <Card.Title classNME="mb-3">Vessel Instances</Card.Title>
+          <Card.Title className="mb-3 d-flex">
+            <span>Vessel Instances</span>
+            <Button variant="success" size="sm" className="ms-auto" onClick={handleAddNewInstance}>
+              <i className="fa fa-plus" />
+            </Button>
+          </Card.Title>
           <Table bordered hover responsive className="table-sm border-rounded">
             <thead className="table-light">
               <tr>
