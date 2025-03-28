@@ -263,7 +263,7 @@ function removeObsoleteMaterialColumns(materials, columns) {
   return updatedColumns;
 }
 
-function updateVariationsGasTypes(variations, materials, gasMode) {
+function updateVariationsGasTypes(variations, materials, gasMode, vesselVolume) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     Object.keys(materialTypes).forEach((materialType) => {
@@ -273,7 +273,7 @@ function updateVariationsGasTypes(variations, materials, gasMode) {
           return;
         }
         if (currentGasType !== row[materialType][material.id].aux.gasType) {
-          row[materialType][material.id] = getMaterialData(material, materialType, gasMode);
+          row[materialType][material.id] = getMaterialData(material, materialType, gasMode, vesselVolume);
         }
       });
     });
