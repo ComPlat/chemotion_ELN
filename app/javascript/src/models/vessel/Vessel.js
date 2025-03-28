@@ -11,7 +11,8 @@ export default class Vessel extends Element {
       collectionId: Number(collectionId),
       type: typeIn === 'vessel_template' ? 'vessel_template' : 'vessel',
       short_label: shortLabelIn,
-      is_new: typeIn !== 'vessel_template',
+      // is_new: typeIn !== 'vessel_template',
+      is_new: true,
     });
 
     return vessel;
@@ -75,7 +76,7 @@ export default class Vessel extends Element {
       vessel.vesselType = vesselInstance.vessel_template.vessel_type || '';
       vessel.volumeAmount = vesselInstance.vessel_template.volume_amount || 0;
       vessel.volumeUnit = vesselInstance.vessel_template.volume_unit || '';
-      vessel.is_new = false;
+      vessel.is_new = vesselInstance?.is_new || false;
 
       vessel.container = vesselInstance.container || { children: [] };
 
