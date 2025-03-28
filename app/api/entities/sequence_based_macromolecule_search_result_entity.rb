@@ -19,5 +19,9 @@ module Entities
         ['unknown']
       end
     end
+
+    def full_name
+      object.try(:full_name) || object.try(:systematic_name)
+    end
   end
 end
