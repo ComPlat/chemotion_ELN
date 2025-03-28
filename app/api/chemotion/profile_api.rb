@@ -134,7 +134,7 @@ module Chemotion
         declared_params[:data] = declared_params[:data].merge(generic_layouts)
 
         data = current_user.profile.data || {}
-        data['layout'] = {
+        data['layout'] ||= {
           'sample' => 1,
           'reaction' => 2,
           'wellplate' => 3,
@@ -142,8 +142,9 @@ module Chemotion
           'research_plan' => 5,
           'cell_line' => -1000,
           'device_description' => -1100,
-          'vessel' => -1100,
-        } if data['layout'].nil?
+          'sequence_based_macromolecule_sample' => -1200,
+          'vessel' => -1300,
+        }
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h

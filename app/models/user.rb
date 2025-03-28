@@ -270,7 +270,9 @@ class User < ApplicationRecord
   end
 
   # The element models for which the counters that can be incremented
-  COUNTER_KEYS = %w[samples reactions wellplates celllines device_descriptions].freeze
+  COUNTER_KEYS = %w[
+    samples reactions wellplates celllines device_descriptions sequence_based_macromolecule_samples
+  ].freeze
 
   # Increment a counter for a given key
   #   - samples, reactions, wellplates, celllines, device_descriptions

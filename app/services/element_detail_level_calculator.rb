@@ -13,6 +13,7 @@ class ElementDetailLevelCalculator
     screen_detail_level
     celllinesample_detail_level
     devicedescription_detail_level
+    sequencebasedmacromoleculesample_detail_level
   ].freeze
 
   def initialize(user:, element:)
@@ -35,6 +36,7 @@ class ElementDetailLevelCalculator
     detail_levels[Wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
     detail_levels[CelllineSample] = all_collections_detail_levels.pluck(:celllinesample_detail_level).max || 0
     detail_levels[DeviceDescription] = all_collections_detail_levels.pluck(:devicedescription_detail_level).max || 0
+    detail_levels[SequenceBasedMacromoleculeSample] = all_collections_detail_levels.pluck(:sequencebasedmacromoleculesample_detail_level).max || 0
     detail_levels[Well] = detail_levels[Wellplate]
 
     detail_levels

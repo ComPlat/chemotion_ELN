@@ -21,6 +21,7 @@ module Usecases
             research_plan_ids: @params.fetch(:research_plan_ids, []),
             cell_line_ids: @params.fetch(:cell_line_ids, []),
             device_description_ids: @params.fetch(:device_description_ids, []),
+            sequence_based_macromolecule_sample_ids: @params.fetch(:sequence_based_macromolecule_sample_ids, [])
             element_ids: @params.fetch(:element_ids, [])
           ).execute!
         end
