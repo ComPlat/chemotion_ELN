@@ -10,7 +10,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
 RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
       imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
-      build-essential sudo postgresql-client swig cmake \
+      build-essential sudo postgresql-common swig cmake \
       libnspr4 libnss3 libxss1 xdg-utils tzdata libpq-dev \
       gtk2-engines-pixbuf \
       libssl-dev libreadline-dev\
@@ -22,6 +22,10 @@ RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget a
       fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
       fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape \
       libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 xauth xvfb nano jq
+
+RUN /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+RUN apt-get update && apt-get install -yqq --fix-missing postgresql-client-16
+
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 RUN useradd -ms /bin/bash chemotion-dev \
