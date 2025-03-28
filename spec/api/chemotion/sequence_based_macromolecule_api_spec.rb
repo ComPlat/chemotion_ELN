@@ -15,7 +15,7 @@ describe Chemotion::SequenceBasedMacromoleculeAPI do
     before do
       stub_request(:get, "https://rest.uniprot.org/uniprotkb/search")
         .with(query: {
-          fields: "id,accession,protein_name,organism_name",
+          fields: "id,accession,ec,protein_name,organism_name",
           query: "ec:2.6.1.7",
           size: 10,
           sort: "accession desc"

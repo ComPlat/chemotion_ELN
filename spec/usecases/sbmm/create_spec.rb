@@ -29,6 +29,13 @@ describe Usecases::Sbmm::Create do
         expect { result = described_class.new.find_or_create_by(post_for_uniprot_sbmm) }.to change(SequenceBasedMacromolecule, :count).by(0)
         expect(result.id).to be uniprot_sbmm.id
       end
+
+      it 'raises an error if the given primary_accession does not match accession format' do
+        input = post_for_uniprot_sbmm
+        input[:primary_accession] = 'foobar'
+
+        expect { described_class.new.find_or_create_by(input) }.to raise_error(ArgumentError)
+      end
     end
 
     context 'when uniprot_derivation == uniprot_modified' do
