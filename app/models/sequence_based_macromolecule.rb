@@ -65,7 +65,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
   scope :unknown, -> { where(uniprot_derivation: 'uniprot_unknown') }
   scope :with_ec_number, ->(ec_number) { ec_number ? where('ec_numbers @> ARRAY[?]::varchar[]', [ec_number&.strip]) : none }
   scope :with_accession, ->(accession) { accession ? where('accessions @> ARRAY[?]::varchar[]', [accession&.strip]) : none }
-  scope :search_in_name, ->(text) { text ? where("systematic_name LIKE '%#{text}%'") : none }
+  scope :search_in_name, ->(text) { text ? where("systematic_name LIKE '%#{text}%' OR short_name LIKE '%#{text}%'") : none }
 
   accepts_nested_attributes_for(
     :sequence_based_macromolecule_samples,
