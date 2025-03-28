@@ -6,14 +6,26 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
-function VesselTemplateDetails({ vessels, toggleFullScreen }) {
+function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
   const closeBtnRef = useRef(null);
+  const { currentCollection } = UIStore.getState();
+  const { currentUser } = UserStore.getState();
   const { vesselDetailsStore } = useContext(StoreContext);
   const [isTemplateUpdated, setIsTemplateUpdated] = useState(false);
   const [showConfirmPopover, setShowConfirmPopover] = useState(false);
   const [popoverTarget, setPopoverTarget] = useState(null);
+  const [newInstances, setNewInstances] = useState([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
+  const collectionId = currentUser.id;
+
+  const openModal = () => setShowConfirm(true);
+  const closeModal = () => setShowConfirm(false);
 
   useEffect(() => {
     vessels.forEach((vessel) => {
@@ -203,7 +215,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
       });
   };
 
-  const formatLabel = (field) => field.replace('_', ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
   const handleTemplateChange = (field, value) => {
     const actions = {
@@ -223,6 +234,18 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
     // setVesselTemplate((prev) => ({ ...prev, [field]: value }));
     // setIsTemplateUpdated(true);
   };
+
+  const HandleDeleteInstance = (vesselId, vesselTemplateId) => {
+    setDeleting(true);
+    VesselsFetcher.deleteVesselInstance(vesselId)
+      .then(() => {
+        setDeleting(false);
+        setShowConfirm(false);
+        ElementActions.refreshElements('vessel');
+        return VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId);
+    })
+    vesselDetailsStore.removeVesselFromStore(vesselId);
+  }
 
   const updateTemplate = () => {
     const vesselToUpdate = vessels.find((v) => v.id === templateId);
@@ -368,7 +391,7 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
                     <td key={field} className="p-1">
                       <Form.Control
                         type={field === 'weightAmount' ? 'number' : 'text'}
-                        className="border-0 bg-transparent"
+                        // className="border-0 bg-transparent"
                         value={instance[field] ?? ''}
                         onChange={(e) => handleInstanceChange(instance.id, field, e.target.value)}
                       />
@@ -376,7 +399,7 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
                   ))}
                   <td className="p-1">
                     <Form.Group className="m-0">
-                      <InputGroup >
+                      <InputGroup>
                         <Form.Control
                           type="number"
                           style={{ maxWidth: '100px' }}
@@ -398,10 +421,102 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
                       </InputGroup>
                     </Form.Group>
                   </td>
-
-                  <td className="ms-auto">
-                    <Button variant="warning" size="xsm" onClick={() => updateInstance(instance.id)}>
-                      <i className="fa fa-save" />
+                  <td>
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      className="m-1 mt-2"
+                      onClick={() => updateInstance(instance.id)}
+                    >
+                      <i className="fa fa-save" title="Save changes" />
+                    </Button>
+                    <Button variant="danger" size="xxsm" className="m-1 mt-2"
+                      onClick={openModal}
+                    >
+                      <i className="fa fa-trash" title="Delete instance" />
+                    </Button>
+                    <Modal show={showConfirm} onHide={closeModal} backdrop="static" centered>
+                      <Modal.Header closeButton>
+                        <Modal.Title>Confirm Deletion</Modal.Title>
+                      </Modal.Header>
+                      <Modal.Body>
+                        Are you sure you want to delete this vessel instance? This action cannot be undone.
+                      </Modal.Body>
+                      <Modal.Footer>
+                        <Button variant="secondary" onClick={closeModal} disabled={deleting}>
+                          Cancel
+                        </Button>
+                        <Button variant="danger" onClick={() => HandleDeleteInstance(instance.id, vesselTemplateId)} disabled={deleting}>
+                          {deleting ? 'Deleting…' : 'Delete'}
+                        </Button>
+                      </Modal.Footer>
+                    </Modal>
+                  </td>
+                </tr>
+              ))}
+              {newInstances.map((instance, index) => (
+                <tr key={`new-${index}`}>
+                  {['vesselInstanceName', 'vesselInstanceDescription', 'barCode', 'qrCode'].map((field) => (
+                    <td key={field} className="p-1">
+                      <Form.Control
+                        type="text"
+                        value={instance[field] ?? ''}
+                        onChange={(e) => {
+                          const updated = [...newInstances];
+                          updated[index][field] = e.target.value;
+                          setNewInstances(updated);
+                        }}
+                      />
+                    </td>
+                  ))}
+                  <td className="p-1">
+                    <InputGroup>
+                      <Form.Control
+                        type="number"
+                        value={instance.weightAmount ?? ''}
+                        style={{ maxWidth: '100px' }}
+                        onChange={(e) => {
+                          const updated = [...newInstances];
+                          updated[index].weightAmount = e.target.value;
+                          setNewInstances(updated);
+                        }}
+                      />
+                      <Button
+                        variant="success"
+                        size="sm"
+                        onClick={() => {
+                          const updated = [...newInstances];
+                          const current = updated[index].weightUnit || 'g';
+                          const units = ['g', 'kg', 'mg'];
+                          const next = units[(units.indexOf(current) + 1) % units.length];
+                          updated[index].weightUnit = next;
+                          setNewInstances(updated);
+                        }}
+                      >
+                        {instance.weightUnit || 'g'}
+                      </Button>
+                    </InputGroup>
+                  </td>
+                  <td>
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      className="m-1 mt-2"
+                      onClick={() => handleCreateNewInstance(instance, index)}
+                    >
+                      <i className="fa fa-save" title="Save changes" />
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="xxsm"
+                      className="m-1 mt-2"
+                      onClick={() => {
+                        const updated = [...newInstances];
+                        updated.splice(index, 1);
+                        setNewInstances(updated);
+                      }}
+                    >
+                      <i className="fa fa-trash" title="Delete" />
                     </Button>
                   </td>
                 </tr>
