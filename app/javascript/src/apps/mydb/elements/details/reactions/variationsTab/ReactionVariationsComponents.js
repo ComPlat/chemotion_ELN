@@ -12,11 +12,11 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
-  computeEquivalent, computePercentYield, computePercentYieldGas
+  computeEquivalent, computePercentYield, computePercentYieldGas, getVolumeFromGram, getGramFromVolume
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { parseNumericString } from 'src/utilities/MathUtils';
 import {
-  calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume
+  calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume
 } from 'src/utilities/UnitsConversion';
 
 function RowToolsCellRenderer({
@@ -59,19 +59,19 @@ function EquivalentParser({ data: row, oldValue: cellData, newValue }) {
   if (equivalent < 0) {
     equivalent = 0;
   }
-  // Adapt mass to updated equivalent.
   const referenceMaterial = getReferenceMaterial(row);
   const referenceMol = getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
-  const mass = getGramFromMol(referenceMol * equivalent, cellData);
 
-  // Adapt amount to updated equivalent.
+  const mass = getGramFromMol(referenceMol * equivalent, cellData);
   const amount = getMolFromGram(mass, cellData);
+  const volume = getVolumeFromGram(mass, cellData);
 
   return {
     ...cellData,
     mass: { ...cellData.mass, value: mass },
     amount: { ...cellData.amount, value: amount },
-    equivalent: { ...cellData.equivalent, value: equivalent }
+    volume: { ...cellData.volume, value: volume },
+    equivalent: { ...cellData.equivalent, value: equivalent },
   };
 }
 
@@ -117,15 +117,39 @@ function MaterialParser({
   }
   let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
-  if (currentEntry === 'mass') {
-    // Adapt amount to updated mass.
-    const amount = getMolFromGram(value, updatedCellData);
-    updatedCellData = { ...updatedCellData, amount: { ...updatedCellData.amount, value: amount } };
-  }
-  if (currentEntry === 'amount') {
-    // Adapt mass to updated amount.
-    const mass = getGramFromMol(value, updatedCellData);
-    updatedCellData = { ...updatedCellData, mass: { ...updatedCellData.mass, value: mass } };
+  switch (currentEntry) {
+    case 'mass': {
+      const amount = getMolFromGram(value, updatedCellData);
+      const volume = getVolumeFromGram(value, updatedCellData);
+      updatedCellData = {
+        ...updatedCellData,
+        amount: { ...updatedCellData.amount, value: amount },
+        volume: { ...updatedCellData.volume, value: volume }
+      };
+      break;
+    }
+    case 'amount': {
+      const mass = getGramFromMol(value, updatedCellData);
+      const volume = getVolumeFromGram(mass, updatedCellData);
+      updatedCellData = {
+        ...updatedCellData,
+        mass: { ...updatedCellData.mass, value: mass },
+        volume: { ...updatedCellData.volume, value: volume }
+      };
+      break;
+    }
+    case 'volume': {
+      const mass = getGramFromVolume(value, updatedCellData);
+      const amount = getMolFromGram(mass, updatedCellData);
+      updatedCellData = {
+        ...updatedCellData,
+        mass: { ...updatedCellData.mass, value: mass },
+        amount: { ...updatedCellData.amount, value: amount }
+      };
+      break;
+    }
+    default:
+      break;
   }
   if (updatedCellData.aux.isReference) {
     return updatedCellData;
@@ -166,11 +190,15 @@ function GasParser({
         updatedCellData.temperature.unit,
         'K'
       );
-
       const concentration = updatedCellData.concentration.value;
       const { vesselVolume } = updatedCellData.aux;
+
       const amount = calculateGasMoles(vesselVolume, concentration, temperatureInKelvin);
       const mass = getGramFromMol(amount, updatedCellData);
+      const volume = calculateGasVolume(
+        amount,
+        { part_per_million: concentration, temperature: { value: temperatureInKelvin, unit: 'K' } }
+      );
 
       const catalyst = getCatalystMaterial(row);
       const catalystAmount = catalyst?.amount.value ?? 0;
@@ -182,6 +210,7 @@ function GasParser({
         ...updatedCellData,
         mass: { ...updatedCellData.mass, value: mass },
         amount: { ...updatedCellData.amount, value: amount },
+        volume: { ...updatedCellData.volume, value: volume },
         yield: { ...updatedCellData.yield, value: percentYield },
         turnoverNumber: { ...updatedCellData.turnoverNumber, value: turnoverNumber },
       };

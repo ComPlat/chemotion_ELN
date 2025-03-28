@@ -50,6 +50,7 @@ FactoryBot.define do
             gasType: get_gas_type(material_type),
             materialType: material_type,
             vesselVolume: 42,
+            density: 42,
           }
         end
 
@@ -70,6 +71,7 @@ FactoryBot.define do
               mass: { unit: 'g', value: 42 },
               amount: { unit: 'mol', value: 42 },
               equivalent: { unit: nil, value: 42 },
+              volume: { unit: 'ml', value: 42 },
             }
           end
 
@@ -84,6 +86,7 @@ FactoryBot.define do
               concentration: { unit: nil, value: 42 },
               turnoverNumber: { unit: nil, value: 42 },
               turnoverFrequency: { unit: nil, value: 42 },
+              volume: { unit: 'ml', value: 42 },
             }
           end
 
