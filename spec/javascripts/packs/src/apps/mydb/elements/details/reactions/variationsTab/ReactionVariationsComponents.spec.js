@@ -33,12 +33,13 @@ describe('ReactionVariationsComponents', async () => {
 
       expect(updatedCellData.equivalent.value).toEqual(0);
     });
-    it('updates mass and amount', () => {
+    it('adapts other entries when updating equivalent', () => {
       const newValue = '2';
       const updatedCellData = EquivalentParser({ data: variationsRow, oldValue: cellData, newValue });
 
-      expect(updatedCellData.mass.value).toBeCloseTo(cellData.mass.value * 2, 0.01);
-      expect(updatedCellData.amount.value).toBeCloseTo(cellData.amount.value * 2, 0.01);
+      expect(updatedCellData.mass.value).toBeCloseTo(cellData.mass.value * 2);
+      expect(updatedCellData.amount.value).toBeCloseTo(cellData.amount.value * 2);
+      expect(updatedCellData.volume.value).toBeCloseTo(cellData.volume.value * 2);
     });
   });
   describe('PropertyParser', async () => {
@@ -70,7 +71,7 @@ describe('ReactionVariationsComponents', async () => {
       context = { reactionHasPolymers: false };
     });
     it('rejects negative value', () => {
-      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
       const updatedCellData = MaterialParser({
         data: variationsRow, oldValue: cellData, newValue: '-1', colDef, context
       });
@@ -78,7 +79,7 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.amount.value).toEqual(0);
     });
     it('adapts mass when updating amount', () => {
-      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
 
       expect(cellData.mass.value).toBe(100);
 
@@ -86,21 +87,21 @@ describe('ReactionVariationsComponents', async () => {
         data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
       });
 
-      expect(updatedCellData.mass.value).toBeCloseTo(0.75, 0.1);
+      expect(updatedCellData.mass.value).toBeCloseTo(0.756);
     });
     it('adapts amount when updating mass', () => {
-      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
 
-      expect(cellData.amount.value).toBeCloseTo(5.5, 0.1);
+      expect(cellData.amount.value).toBeCloseTo(5.55);
 
       const updatedCellData = MaterialParser({
         data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
       });
 
-      expect(updatedCellData.amount.value).toBeCloseTo(2.33, 0.1);
+      expect(updatedCellData.amount.value).toBeCloseTo(2.33);
     });
     it("adapts non-reference materials' equivalent when updating mass", async () => {
-      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
 
       const updatedCellData = MaterialParser({
         data: variationsRow, oldValue: cellData, newValue: `${cellData.mass.value * 2}`, colDef, context
@@ -110,13 +111,84 @@ describe('ReactionVariationsComponents', async () => {
     });
     it("adapts non-reference materials' yield when updating mass", async () => {
       cellData = Object.values(variationsRow.products)[0];
-      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
 
       const updatedCellData = MaterialParser({
         data: variationsRow, oldValue: cellData, newValue: `${cellData.mass.value * 0.1}`, colDef, context
       });
 
       expect(updatedCellData.yield.value).toBeLessThan(cellData.yield.value);
+    });
+    it('adapts volume when updating mass', async () => {
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'mass', displayUnit: 'g' } };
+      cellData.volume.value = 3;
+      cellData.aux.molarity = 5;
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
+      });
+
+      expect(updatedCellData.volume.value).toBeCloseTo(0.466);
+    });
+    it('adapts volume when updating amount', async () => {
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'amount', displayUnit: 'mmol' } };
+      cellData.volume.value = 3;
+      cellData.aux.molarity = 5;
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
+      });
+
+      expect(updatedCellData.volume.value).toBeCloseTo(0.008);
+    });
+    it('adapts mass when updating volume', async () => {
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'volume', displayUnit: 'ml' } };
+      cellData.aux.molarity = 5;
+
+      expect(cellData.mass.value).toBe(100);
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
+      });
+
+      expect(updatedCellData.mass.value).toBeCloseTo(3.78);
+    });
+    it('adapts amount when updating volume', async () => {
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'volume', displayUnit: 'ml' } };
+      cellData.aux.molarity = 5;
+
+      expect(cellData.amount.value).toBeCloseTo(5.55);
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
+      });
+
+      expect(updatedCellData.amount.value).toBeCloseTo(0.21);
+    });
+    it('adapts equivalent when updating volume', async () => {
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'volume', displayUnit: 'ml' } };
+      cellData.aux.molarity = 5;
+
+      expect(cellData.equivalent.value).toBe(1);
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
+      });
+
+      expect(updatedCellData.equivalent.value).toBeCloseTo(0.037);
+    });
+    it('adapts yield when updating volume', async () => {
+      cellData = Object.values(variationsRow.products)[0];
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'volume', displayUnit: 'ml' } };
+      cellData.aux.molarity = 5;
+
+      expect(cellData.yield.value).toBe(100);
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow, oldValue: cellData, newValue: '42', colDef, context
+      });
+
+      expect(updatedCellData.yield.value).toBeCloseTo(9.455);
     });
   });
   describe('FeedstockParser', async () => {
@@ -130,7 +202,7 @@ describe('ReactionVariationsComponents', async () => {
       context = { reactionHasPolymers: false };
     });
     it('rejects negative value', () => {
-      const colDef = { field: 'reactants.42', entryDefs: { currentEntry: 'equivalent', displayUnit: null } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'equivalent', displayUnit: null } };
       const updatedCellData = FeedstockParser({
         data: variationsRow, oldValue: cellData, newValue: '-1', colDef, context
       });
@@ -138,7 +210,7 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.equivalent.value).toEqual(0);
     });
     it('adapts nothing when updating equivalent', () => {
-      const colDef = { field: 'reactant.42', entryDefs: { currentEntry: 'equivalent', displayUnit: null } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'equivalent', displayUnit: null } };
 
       const updatedCellData = FeedstockParser({
         data: variationsRow, oldValue: cellData, newValue: `${cellData.equivalent.value * 2}`, colDef, context
@@ -150,7 +222,7 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.volume.value).toBe(cellData.volume.value);
     });
     it('adapts other entries when updating volume', () => {
-      const colDef = { field: 'reactant.42', entryDefs: { currentEntry: 'volume', displayUnit: 'l' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'volume', displayUnit: 'l' } };
 
       const updatedCellData = FeedstockParser({
         data: variationsRow, oldValue: cellData, newValue: `${cellData.volume.value * 2}`, colDef, context
@@ -162,7 +234,7 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
     });
     it('adapts other entries when updating amount', () => {
-      const colDef = { field: 'reactant.42', entryDefs: { currentEntry: 'amount', displayUnit: 'mol' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'amount', displayUnit: 'mol' } };
 
       const updatedCellData = FeedstockParser({
         data: variationsRow, oldValue: cellData, newValue: `${cellData.amount.value * 2}`, colDef, context
@@ -185,7 +257,7 @@ describe('ReactionVariationsComponents', async () => {
       context = { reactionHasPolymers: false };
     });
     it('rejects negative value', () => {
-      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'duration', displayUnit: 'Hour(s)' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'duration', displayUnit: 'Hour(s)' } };
       const updatedCellData = GasParser({
         data: variationsRow, oldValue: cellData, newValue: '-1', colDef, context
       });
@@ -193,7 +265,7 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.duration.value).toEqual(0);
     });
     it('adapts only turnover frequency when updating duration', () => {
-      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'duration', displayUnit: 'Hour(s)' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'duration', displayUnit: 'Hour(s)' } };
 
       const updatedCellData = GasParser({
         data: variationsRow, oldValue: cellData, newValue: '2', colDef, context
@@ -207,7 +279,7 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.turnoverFrequency.value).toBeLessThan(cellData.turnoverFrequency.value);
     });
     it('adapts other entries when updating concentration', () => {
-      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'concentration', displayUnit: 'ppm' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'concentration', displayUnit: 'ppm' } };
 
       const updatedCellData = GasParser({
         data: variationsRow, oldValue: cellData, newValue: `${cellData.concentration.value * 2}`, colDef, context
@@ -215,12 +287,13 @@ describe('ReactionVariationsComponents', async () => {
 
       expect(updatedCellData.mass.value).not.toBe(cellData.mass.value);
       expect(updatedCellData.amount.value).not.toBe(cellData.amount.value);
+      expect(updatedCellData.volume.value).not.toBe(cellData.volume.value);
       expect(updatedCellData.yield.value).not.toBe(cellData.yield.value);
       expect(updatedCellData.turnoverNumber.value).not.toBe(cellData.turnoverNumber.value);
       expect(updatedCellData.turnoverFrequency.value).not.toBe(cellData.turnoverFrequency.value);
     });
     it('adapts other entries when updating temperature', () => {
-      const colDef = { field: 'products.42', entryDefs: { currentEntry: 'temperature', displayUnit: 'K' } };
+      const colDef = { field: 'foo.bar', entryDefs: { currentEntry: 'temperature', displayUnit: 'K' } };
 
       const updatedCellData = GasParser({
         data: variationsRow, oldValue: cellData, newValue: `${cellData.temperature.value / 2}`, colDef, context
@@ -228,6 +301,7 @@ describe('ReactionVariationsComponents', async () => {
 
       expect(updatedCellData.mass.value).not.toBe(cellData.mass.value);
       expect(updatedCellData.amount.value).not.toBe(cellData.amount.value);
+      expect(updatedCellData.volume.value).not.toBe(cellData.volume.value);
       expect(updatedCellData.yield.value).not.toBe(cellData.yield.value);
       expect(updatedCellData.turnoverNumber.value).not.toBe(cellData.turnoverNumber.value);
       expect(updatedCellData.turnoverFrequency.value).not.toBe(cellData.turnoverFrequency.value);
