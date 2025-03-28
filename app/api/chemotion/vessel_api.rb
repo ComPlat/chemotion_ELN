@@ -390,17 +390,21 @@ module Chemotion
       params do
         requires :id, type: String, desc: 'ID of the vessel instance to delete'
       end
-      delete ':id' do
-        vessel = Vessel.find_by(id: params[:id])
-        if vessel.nil?
-          error!('404 Vessel Not Found', 404)
-        else
-          vessel.destroy!
+      route_param :id do
+        before do
+          @vessel = Vessel.find_by(id: params[:id])
+          error!('404 Vessel Not Found', 404) unless @vessel
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @vessel).destroy?
+        end
+      
+        delete do
+          @vessel.destroy
           status 200
-          { message: 'Vessel successfully deleted', vessel_id: params[:id] }
+          { message: 'Vessel successfully deleted', vessel_id: @vessel.id }
         end
       end
 
+      #Not called from the UI yet
       desc 'Delete a Vessel Template'
       params do
         requires :id, type: String, desc: 'ID of the vessel template to delete'
