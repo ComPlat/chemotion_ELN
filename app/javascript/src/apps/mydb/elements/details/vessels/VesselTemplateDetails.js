@@ -17,6 +17,7 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
   const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
   const { vesselDetailsStore } = useContext(StoreContext);
+
   const [isTemplateUpdated, setIsTemplateUpdated] = useState(false);
   const [showConfirmPopover, setShowConfirmPopover] = useState(false);
   const [popoverTarget, setPopoverTarget] = useState(null);
@@ -217,7 +218,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
       });
   };
 
-
   const handleTemplateChange = (field, value) => {
     const actions = {
       vesselName: vesselDetailsStore.changeVesselName,
@@ -233,8 +233,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
       actions[field](templateId, value);
       setIsTemplateUpdated(true);
     }
-    // setVesselTemplate((prev) => ({ ...prev, [field]: value }));
-    // setIsTemplateUpdated(true);
   };
 
   const HandleDeleteInstance = (vesselId, vesselTemplateId) => {
@@ -245,9 +243,9 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
         setShowConfirm(false);
         ElementActions.refreshElements('vessel');
         return VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId);
-    })
+      });
     vesselDetailsStore.removeVesselFromStore(vesselId);
-  }
+  };
 
   const updateTemplate = () => {
     const vesselToUpdate = vessels.find((v) => v.id === templateId);
@@ -256,13 +254,10 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
     vesselToUpdate.adoptPropsFromMobXModel(updatedVessel);
 
     VesselsFetcher.update(vesselToUpdate)
-      .then(() => setIsTemplateUpdated(false))
-      .catch((err) => console.error('Error updating template:', err));
-    
-    
-    // ElementActions.updateVessel(templateStoreItem);
-    // VesselsFetcher.updateVesselTemplate(vesselTemplate.id, vesselTemplate);
-    // setIsTemplateUpdated(false);
+      .then(() => {
+        setIsTemplateUpdated(false);
+        ElementActions.refreshElements('vessel');
+      });
   };
 
   const handleInstanceChange = (vesselId, field, value) => {
@@ -279,11 +274,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
       instanceActions[field](vesselId, value);
     }
 
-    // setInstances((prevInstances) => {
-    //   const updatedInstances = [...prevInstances];
-    //   updatedInstances[index] = { ...updatedInstances[index], [field]: value };
-    //   return updatedInstances;
-    // });
   };
 
   const updateInstance = (vesselId) => {
@@ -293,8 +283,9 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
     vesselToUpdate.adoptPropsFromMobXModel(updatedVessel);
 
     VesselsFetcher.update(vesselToUpdate)
-      .catch((err) => console.error(`Error updating instance ${vesselId}:`, err));
-    // VesselsFetcher.updateVesselInstance(instances[index].id, instances[index]);
+    .then(() => {
+      ElementActions.refreshElements('vessel');
+    });
   };
 
   return (
