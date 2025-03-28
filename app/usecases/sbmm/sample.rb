@@ -22,6 +22,17 @@ module Usecases
         sample
       end
 
+      def update(sbmm_sample, params)
+        sample_params = params.except(:sequence_based_macromolecule_attributes, :collection_id)
+        sbmm = ::Usecases::Sbmm::Create.new.find_or_create_by(params[:sequence_based_macromolecule_attributes])
+
+        sbmm_sample.update!(sample_params.merge(sequence_based_macromolecule: sbmm))
+        # TODO: wie macht man sauber einen Collection Switch? soll das über diesen Endpunkt gehen?
+        # sbmm.collections << current_user.collections.find(params[:collection_id])
+
+        sbmm_sample
+      end
+
       private
 
       def target_collections(params)
