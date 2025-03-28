@@ -2,6 +2,7 @@
 
 module Entities
   class SequenceBasedMacromoleculeSearchResultEntity < ApplicationEntity
+    expose :id
     expose :full_name
     expose :short_name
     expose :primary_accession
@@ -22,6 +23,10 @@ module Entities
 
     def full_name
       object.try(:full_name) || object.try(:systematic_name)
+    end
+
+    def id
+      object.try(:id)
     end
   end
 end
