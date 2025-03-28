@@ -30,7 +30,6 @@ import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
-import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
 
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
@@ -178,6 +177,7 @@ class ElementStore {
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
+      handleImportSamplesFromFileDecline: ElementActions.importSamplesFromFileDecline,
       handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
 
       handleSetCurrentElement: ElementActions.setCurrentElement,
@@ -846,30 +846,19 @@ class ElementStore {
 
   handleImportSamplesFromFile(data) {
     if (data.sdf) {
-      UIActions.updateModalProps.defer({
-        show: true,
-        component: ModalImportConfirm,
-        title: 'Sample Import Confirmation',
-        action: null,
-        listSharedCollections: false,
-        customModal: 'modal-xl',
-        data: data.data,
-        //raw_data: data.raw_data,
-        custom_data_keys: data.custom_data_keys,
-        mapped_keys: data.mapped_keys,
-        collection_id: data.collection_id,
-      })
+      this.setState({sdfUploadData: data})
     } else {
       this.handleRefreshElements('sample');
     }
+  }
 
+  handleImportSamplesFromFileConfirm() {
+    this.setState({sdfUploadData: null})
     this.handleRefreshElements('sample');
   }
 
-  handleImportSamplesFromFileConfirm(data) {
-    if (data.sdf) {
-      this.handleRefreshElements('sample');
-    }
+  handleImportSamplesFromFileDecline() {
+    this.setState({sdfUploadData: null})
   }
 
   // -- Wellplates --

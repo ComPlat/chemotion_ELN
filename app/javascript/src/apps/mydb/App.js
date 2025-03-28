@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
 import { Col, Row, Container } from 'react-bootstrap';
+import FlowViewerModal from 'src/apps/generic/FlowViewerModal';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
+import Navigation from 'src/apps/mydb/Navigation';
 import Elements from 'src/apps/mydb/elements/Elements';
 import InboxModal from 'src/apps/mydb/inbox/InboxModal';
 import Calendar from 'src/components/calendar/Calendar';
 import LoadingModal from 'src/components/common/LoadingModal';
 import ProgressModal from 'src/components/common/ProgressModal';
-import Navigation from 'src/components/navigation/Navigation';
 import Notifications from 'src/components/Notifications';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
@@ -20,8 +21,6 @@ class App extends Component {
   constructor(_props) {
     super();
     this.state = {
-      showGenericWorkflow: false,
-      propGenericWorkflow: false,
       showCollectionManagement: false,
       indicatorClassName: 'fa fa-chevron-circle-left',
       showCollectionTree: true,
@@ -78,14 +77,6 @@ class App extends Component {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
     }
-
-    if (this.state.klasses !== state.klasses) {
-      this.setState({ klasses: state.klasses });
-    }
-    if (this.state.showGenericWorkflow !== state.showGenericWorkflow ||
-      this.state.propGenericWorkflow !== state.propGenericWorkflow) {
-      this.setState({ showGenericWorkflow: state.showGenericWorkflow, propGenericWorkflow: state.propGenericWorkflow });
-    }
   }
 
   documentKeyDown(event) {
@@ -128,7 +119,7 @@ class App extends Component {
   }
 
   render() {
-    const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
+    const { showCollectionTree } = this.state;
     return (
       <Container fluid className="mydb-app">
         <Row className="bg-light z-5">
@@ -146,7 +137,8 @@ class App extends Component {
           <LoadingModal />
           <ProgressModal />
         </Row>
-        <InboxModal showCollectionTree={showCollectionTree} />
+        <FlowViewerModal />
+        <InboxModal />
         <Calendar />
       </Container>
     );

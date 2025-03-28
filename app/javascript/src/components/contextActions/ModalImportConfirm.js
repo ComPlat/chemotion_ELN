@@ -3,14 +3,16 @@ import PropTypes from 'prop-types';
 import {
   Button,
   ButtonToolbar,
-  Form
+  Form,
+  Modal
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 
-const SvgCellRenderer = ({ value, ...props})=>{
+const SvgCellRenderer = ({ value })=>{
   return <SVG src={"/images/"+value} className="molecule-fixed-data" />
 }
 
@@ -18,8 +20,8 @@ SvgCellRenderer.propTypes = {
   value: PropTypes.string,
 }
 
-const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props }) => {
-  return props.data.inchikey
+const SelectCellRenderer = ({ value, onSelectChange, data, node: { rowIndex }}) => {
+  return data.inchikey
     ? <Form.Check
          onChange={(e)=>onSelectChange(e.target.checked, rowIndex)}
          defaultChecked={value}
@@ -27,54 +29,9 @@ const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props }) => {
     : null;
 }
 
-
-class SelectCellEditor extends React.Component {
-  constructor(props) {
-    super()
-    const value = props.value
-    this.state = {
-      value: value,
-    }
-  }
-
-  getValue() {
-    return this.state.value;
-  }
-
-  afterGuiAttached() {
-    let {node,api,onSelectChange} = this.props
-    let newVal = !this.state.value
-    let rowIndex = node ? node.rowIndex : null
-
-    if (rowIndex != null && rowIndex >= 0) {
-      onSelectChange(newVal,rowIndex)
-      api.setFocusedCell(rowIndex+1, "checked")
-    } else {api.setFocusedCell(0, "checked")}
-  }
-
-  inputField(){
-    let eGC = this.props.eGridCell
-    return eGC ? eGC.getElementsByTagName("INPUT")[0] : null
-  }
-
-  render() {
-    return <input type="text" value={this.state.scaled_value}
-      onChange={e=>this.onChangeListener(e)}
-    />
-  }
-
-}
-
 class CustomHeader extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-    }
-  }
-
-
   render(){
-    let {column,displayName,defaultSelected,mapped_keys}= this.props
+    const {displayName,defaultSelected,mapped_keys} = this.props
 
     return(
         <div className="ag-header-cell-label">
@@ -95,31 +52,72 @@ class CustomHeader extends React.Component {
 export default class ModalImportConfirm extends React.Component {
   constructor(props) {
     super(props);
-    let rows = []
-    props.data.map(
-      (e,i)=> {
-        rows.push({
-          index: i+1,
-          checked: !!e.inchikey,
-          ...e
-        })
-      })
-    let defaultSelected = {}
-    props.custom_data_keys.map(e=>{defaultSelected[e]=""})
+
     this.state = {
-      rows:rows,
-      defaultSelected: defaultSelected,
+      collection_id: null,
+      rows: [],
+      custom_data_keys: [],
+      mapped_keys: {},
     }
+
     this.onSelectChange = this.onSelectChange.bind(this)
     this.onHeaderSelect = this.onHeaderSelect.bind(this)
+    this.cancelImport = this.cancelImport.bind(this)
+    this.onElementStoreChange = this.onElementStoreChange.bind(this)
   }
 
+  cancelImport() {
+    ElementActions.importSamplesFromFileDecline();
+  }
+
+  componentDidMount() {
+    ElementStore.listen(this.onElementStoreChange);
+    this.onElementStoreChange(ElementStore.getState());
+  }
+
+  componentWillUnmount() {
+    ElementStore.unlisten(this.onElementStoreChange);
+  }
+
+  onElementStoreChange({ sdfUploadData }) {
+    if (!sdfUploadData) {
+      this.setState({ show: false });
+      return;
+    }
+
+    const { collection_id, custom_data_keys, mapped_keys } = this.state;
+    if (sdfUploadData.collection_id !== collection_id ||
+      sdfUploadData.custom_data_keys !== custom_data_keys ||
+      sdfUploadData.mapped_keys !== mapped_keys
+    ) {
+      const rows = sdfUploadData.data.map((e, i) => ({
+        ...e,
+        index: i + 1,
+        checked: !!e.inchikey,
+      }))
+
+      this.setState({
+        show: true,
+        rows,
+        collection_id: sdfUploadData.collection_id,
+        custom_data_keys: sdfUploadData.custom_data_keys,
+        mapped_keys: sdfUploadData.mapped_keys,
+        defaultSelected: sdfUploadData.custom_data_keys.reduce((acc, key) => {
+          acc[key] = '';
+          return acc;
+        }, {}),
+      });
+    }
+  }
 
   handleClick() {
-    const {onHide, action, custom_data_keys,collection_id} = this.props
-    let mapped_keys = this.props.mapped_keys
-
-    let {rows,defaultSelected} = this.state
+    const {
+      custom_data_keys,
+      collection_id,
+      mapped_keys,
+      rows,
+      defaultSelected
+    } = this.state;
 
     let filtered_mapped_keys = {}
 
@@ -155,19 +153,17 @@ export default class ModalImportConfirm extends React.Component {
     }
 
     ElementActions.importSamplesFromFileConfirm(params)
-    onHide();
-
+    this.setState({ show: false });
   }
 
-  onSelectChange(checked, rowIndex){
-    let {rows} = this.state
+  onSelectChange(checked, rowIndex) {
+    let { rows } = this.state
     rows[rowIndex].checked = checked
     this.setState({rows: rows})
   }
 
   onHeaderSelect(target,customHeader){
-    let {defaultSelected} = this.state
-    let {custom_data_keys, mapped_keys} = this.props
+    let {defaultSelected, custom_data_keys, mapped_keys} = this.state
     if (mapped_keys[target] && !mapped_keys[target].multiple){
       custom_data_keys.map(k =>{if (defaultSelected[k]== target){defaultSelected[k]=""} })
     }
@@ -176,18 +172,19 @@ export default class ModalImportConfirm extends React.Component {
   }
 
   render() {
-    let {rows,defaultSelected} = this.state
-    const {onHide,custom_data_keys} = this.props
+    let { show, rows, custom_data_keys, mapped_keys, defaultSelected } = this.state
 
     let columns={
           columnDefs: [
             {headerName: '#', field: 'index', width: 60, pinned: 'left'},
             {headerName: 'Structure', field: 'svg', cellRenderer: SvgCellRenderer, pinned: 'left', autoHeight: true },
             {headerName: 'name', field: 'name', editable:true},
-            {headerName: 'Select', field: 'checked', cellRenderer: SelectCellRenderer,
-              cellRendererParams:{onSelectChange: this.onSelectChange}, width: 30,
-              editable:true, cellEditor: SelectCellEditor,
-              cellEditorParams:{onSelectChange: this.onSelectChange}
+            {
+              headerName: 'Select',
+              field: 'checked',
+              cellRenderer: SelectCellRenderer,
+              cellRendererParams: {onSelectChange: this.onSelectChange},
+              width: 30,
             },
           ],
           defaultColDef: {
@@ -201,35 +198,43 @@ export default class ModalImportConfirm extends React.Component {
 
     custom_data_keys.map((e)=>{columns.columnDefs.push(
       {
-        headerName: e, field: e ,
+        headerName: e,
+        field: e ,
         headerComponent: CustomHeader,
         headerComponentParams:{
           onHeaderSelect: this.onHeaderSelect,
           defaultSelected: defaultSelected[e],
-          mapped_keys: this.props.mapped_keys,
+          mapped_keys: mapped_keys,
         }
       }
     )})
 
     return (
-      <div>
-        <div className="ag-theme-bootstrap" style={{height: '500px'}} >
-          <AgGridReact
-            columnDefs={columns.columnDefs}
-            defaultColDef={columns.defaultColDef}
-            rowData={rows}
-            rowHeight="100"
-            rowSelection="single"
-            getRowStyle={(params)=>{if (params.data.checked) {return null}
-             else {return {'background-color': 'red'}}}}
-          />
-        </div>
+      <Modal show={show} centered size="xl" onHide={this.cancelImport}>
+        <Modal.Header closeButton>
+          <Modal.Title>Sample Import Confirmation</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="ag-theme-bootstrap" style={{ height: '500px' }} >
+            <AgGridReact
+              columnDefs={columns.columnDefs}
+              defaultColDef={columns.defaultColDef}
+              rowData={rows}
+              rowHeight="100"
+              rowSelection="single"
+              getRowStyle={(params) => {
+                if (params.data.checked) { return null }
+                else { return { 'backgroundColor': 'red' } }
+              }}
+            />
+          </div>
 
-        <ButtonToolbar className="mt-2 justify-content-end gap-1">
-          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button variant="warning" onClick={() => this.handleClick()}>Import</Button>
-        </ButtonToolbar>
-      </div>
+          <ButtonToolbar className="mt-2 justify-content-end gap-1">
+            <Button variant="primary" onClick={() => this.cancelImport()}>Cancel</Button>
+            <Button variant="warning" onClick={() => this.handleClick()}>Import</Button>
+          </ButtonToolbar>
+        </Modal.Body>
+      </Modal>
     )
   }
 }

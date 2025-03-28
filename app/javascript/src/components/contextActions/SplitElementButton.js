@@ -9,26 +9,71 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 export default class SplitElementButton extends React.Component {
   constructor(props) {
     super(props);
+
+    const uiState = UIStore.getState();
+    const userState = UserStore.getState();
     this.state = {
-      layout: UserStore.getState().profile?.data?.layout || {},
+      currentCollection: uiState.currentCollection,
+      currentUser: {},
+      genericEls: [],
+      showGenericEls: MatrixCheck(userState.currentUser?.matrix, 'genericEl'),
+      layout: {},
+      selectedElements: {},
     };
 
-    this.onChange = this.onChange.bind(this);
+    this.onUserStoreChange = this.onUserStoreChange.bind(this);
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentDidMount() {
-    UserStore.listen(this.onChange);
+    UserStore.listen(this.onUserStoreChange);
+    UIStore.listen(this.onUIStoreChange);
+    this.onUserStoreChange(UserStore.getState());
+    this.onUIStoreChange(UIStore.getState());
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
+    UserStore.unlisten(this.onUserStoreChange);
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
-  onChange(state) {
-    const layout = state.profile?.data?.layout;
-    // eslint-disable-next-line react/destructuring-assignment
-    if (typeof layout !== 'undefined' && layout !== null && layout !== this.state.layout) {
-      this.setState({ layout });
+  onUserStoreChange(state) {
+    const { layout, showGenericEls, genericEls } = this.state;
+    const newLayout = state.profile?.data?.layout;
+    const newCurrentUser = state.currentUser;
+    const newGenericEls = state.genericEls;
+
+    if (typeof newLayout !== 'undefined' && newLayout !== null && newLayout !== layout) {
+      this.setState({ layout: newLayout });
+    }
+
+    const newShowGenericEls = MatrixCheck(newCurrentUser?.matrix, 'genericEl');
+    if (newShowGenericEls !== showGenericEls) {
+      this.setState({ currentUser: newCurrentUser });
+    }
+
+    if (newGenericEls !== genericEls) {
+      this.setState({ genericEls: newGenericEls });
+    }
+  }
+
+  onUIStoreChange(state) {
+    const { currentCollection, genericEls, selectedElements } = this.state;
+    const { currentCollection: newCurrentCollection } = state;
+    if (newCurrentCollection !== currentCollection) {
+      this.setState({ currentCollection: newCurrentCollection });
+    }
+
+    const newSelectedElements = ['sample', 'wellplate', ...genericEls.map((el) => el.name)].reduce(
+      (acc, el) => {
+        const { checkedIds, checkedAll } = state[el] || {};
+        const hasSelected = checkedIds?.size > 0 || checkedAll === true;
+        return { ...acc, [el]: hasSelected };
+      },
+      {}
+    );
+    if (JSON.stringify(newSelectedElements) !== JSON.stringify(selectedElements)) {
+      this.setState({ selectedElements: newSelectedElements });
     }
   }
 
@@ -41,12 +86,12 @@ export default class SplitElementButton extends React.Component {
   }
 
   noSelected(name) {
-    const state = UIStore.getState() || {};
-    return state[name]?.checkedIds?.size === 0 && state[name]?.checkedAll === false;
+    const { selectedElements } = this.state;
+    return !selectedElements[name];
   }
 
   isAllCollection() {
-    const { currentCollection } = UIStore.getState();
+    const { currentCollection } = this.state;
     return currentCollection && currentCollection.label === 'All';
   }
 
@@ -72,39 +117,41 @@ export default class SplitElementButton extends React.Component {
   }
 
   render() {
-    const { layout } = this.state;
-    let genericEls = [];
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-      genericEls = UserStore.getState().genericEls || [];
-    }
+    const { layout, genericEls, showGenericEls, selectedElements } = this.state;
+
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 
     const sortedGenericEls = [];
-    sortedLayout.forEach(([k]) => {
-      const el = genericEls.find((ael) => ael.name === k);
-      if (typeof el !== 'undefined') {
-        sortedGenericEls.push(el);
-      }
-    });
+    if (showGenericEls) {
+      sortedLayout.forEach(([k]) => {
+        const el = genericEls.find((ael) => ael.name === k);
+        if (typeof el !== 'undefined') {
+          sortedGenericEls.push(el);
+        }
+      });
+    }
+
+    const isDisabled = this.isAllCollection()
+      || Object.values(selectedElements).every((v) => !v);
 
     return (
       <DropdownButton
         as={ButtonGroup}
         variant="primary"
         title={<i className="fa fa-code-fork" />}
+        disabled={isDisabled}
       >
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubsamples()}
-          disabled={this.noSelected('sample') || this.isAllCollection()}
+          disabled={!selectedElements['sample']}
         >
           Split Sample
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubwellplates()}
-          disabled={this.noSelected('wellplate') || this.isAllCollection()}
+          disabled={!selectedElements['wellplate']}
         >
           Split Wellplate
         </Dropdown.Item>
@@ -125,9 +172,10 @@ export default class SplitElementButton extends React.Component {
             id={`split-${el.name}-button`}
             key={el.name}
             onClick={() => this.splitElements(`${el.name}`)}
-            disabled={this.noSelected(el.name) || this.isAllCollection()}
+            disabled={!selectedElements[el.name]}
           >
             Split
+            {' '}
             {el.label}
           </Dropdown.Item>
         ))}

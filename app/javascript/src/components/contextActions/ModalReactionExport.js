@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, ButtonToolbar, Form } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import { Button, ButtonToolbar, Form, Modal } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 
@@ -38,6 +38,7 @@ export default class ModalReactionExport extends React.Component {
   }
 
   render() {
+    const { onHide } = this.props;
     const onChange = (v) => this.setState(
       previousState => { return { ...previousState, value: v } }
     )
@@ -53,23 +54,30 @@ export default class ModalReactionExport extends React.Component {
     ];
 
     return (
-      <Form>
-        <Form.Group className="mb-3" name="options" value={this.state.value}>
-          {options.map(([label, value]) => (
-            <Form.Check
-              key={`reaction-export-option-${value}`}
-              id={`reaction-export-option-${value}`}
-              type="radio"
-              label={label}
-              onChange={() => onChange(value)}
-              checked={this.state.value == value}
-              value={value}
-            />
-          ))}
-        </Form.Group>
-        {this.buttonBar()}
-      </Form>
-    )
+      <Modal show onHide={onHide}>
+        <Modal.Header closeButton>
+          <Modal.Title>Reaction smiles export</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3" name="options" value={this.state.value}>
+              {options.map(([label, value]) => (
+                <Form.Check
+                  key={`reaction-export-option-${value}`}
+                  id={`reaction-export-option-${value}`}
+                  type="radio"
+                  label={label}
+                  onChange={() => onChange(value)}
+                  checked={this.state.value == value}
+                  value={value}
+                />
+              ))}
+            </Form.Group>
+            {this.buttonBar()}
+          </Form>
+        </Modal.Body>
+      </Modal>
+    );
   }
 }
 
