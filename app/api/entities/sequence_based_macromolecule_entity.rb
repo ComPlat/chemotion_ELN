@@ -11,6 +11,7 @@ module Entities
     expose! :uniprot_derivation
     expose! :ec_numbers
     expose! :systematic_name
+    expose! :short_name
     expose! :molecular_weight
     expose! :sequence
     expose! :link_uniprot

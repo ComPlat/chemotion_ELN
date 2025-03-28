@@ -11,6 +11,7 @@ FactoryBot.define do
     ec_numbers { [] }
     pdb_doi { }
     systematic_name { }
+    short_name { }
     molecular_weight { 12345 }
     add_attribute(:sequence) { "ABCDEFG" }
     link_uniprot { }
@@ -57,6 +58,9 @@ FactoryBot.define do
           phosphorylation_ser_enabled: true,
           phosphorylation_ser_details: "Something something"
         )
+      end
+      protein_sequence_modification do
+        build(:protein_sequence_modification)
       end
     end
 

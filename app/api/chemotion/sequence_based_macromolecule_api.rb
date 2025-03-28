@@ -5,7 +5,7 @@ module Chemotion
     resource :sequence_based_macromolecules do
       desc 'Search for sequence based macromolecules'
       params do
-        requires :search_field, type: String, desc: 'Field to search in', values: %w[accession ec name], default: 'accession'
+        requires :search_field, type: String, desc: 'Field to search in', values: %w[accession ec protein_name], default: 'accession'
         requires :search_term, type: String, desc: 'Text to search for'
       end
       get do

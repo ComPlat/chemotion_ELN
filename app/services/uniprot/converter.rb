@@ -16,6 +16,7 @@ module Uniprot
         primary_accession: entry.primary_accession,
         ec_numbers: entry.ec_numbers,
         systematic_name: entry.full_name,
+        short_name: entry.short_name,
         molecular_weight: entry.molecular_weight,
         sequence: entry.sequence,
         link_uniprot: entry.link_uniprot,

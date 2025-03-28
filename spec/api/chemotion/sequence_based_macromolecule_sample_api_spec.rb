@@ -258,4 +258,149 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       end
     end
   end
+
+  describe 'PUT /api/v1/sequence_based_macromolecule_samples/:id' do
+    let(:logger) {
+      ActiveRecord::Base.logger = Logger.new(STDOUT)
+    }
+    let(:log_red) do
+      # ->(message) { logger.debug ActiveSupport::LogSubscriber.new.send(:color, message, :red) }
+      ->(message) {} # do nothing
+    end
+    before do
+      # logger
+    end
+
+    let(:collection) do
+      log_red.call("=== Creating Collection ===")
+      collection = create(:collection, user_id: logged_in_user.id)
+      log_red.call("=== created collection with id #{collection.id}")
+      collection
+    end
+    let(:sbmm) do
+      log_red.call("=== Creating SBMM ===")
+      sbmm = create(:modified_uniprot_sbmm)
+      log_red.call("=== created SBMM with id #{sbmm.id}")
+      sbmm
+    end
+    let(:sbmm_sample) do
+      log_red.call("=== Creating SBMM Sample ===")
+      sample = create(
+        :sequence_based_macromolecule_sample,
+        amount_as_used_mass_value: 123,
+        amount_as_used_mass_unit: 'mg',
+        sequence_based_macromolecule: sbmm,
+        user: logged_in_user
+      )
+      sample.collections << collection
+      log_red.call("=== created SBMM sample with id #{sample.id}")
+      sample
+    end
+
+    context 'when updating only the sample' do
+      let(:put_data) do
+        {
+          amount_as_used_mass_value: 12345,
+          name: sbmm_sample.name,
+          sequence_based_macromolecule_attributes: {
+            sbmm_type: sbmm.sbmm_type,
+            sbmm_subtype: sbmm.sbmm_subtype,
+            uniprot_derivation: sbmm.uniprot_derivation,
+            parent_identifier: sbmm.parent_id,
+            molecular_weight: sbmm.molecular_weight,
+            sequence: sbmm.sequence,
+            # the following parameters are only there so grape's format validation does not complain about missing
+            # ptm/psm attributes
+            protein_sequence_modification_attributes: {
+              modification_n_terminal: false
+            },
+            post_translational_modification_attributes: {
+              phosphorylation_enabled: false
+            }
+          }
+        }
+      end
+
+      before do
+        sbmm_sample
+      end
+
+      it 'returns a 200 success' do
+        log_red.call("=== STARTING PUT ===")
+        put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+        expect(response.status).to eq 200
+      end
+
+      it 'does not touch the SBMM' do
+        expect do
+          log_red.call("=== STARTING PUT ===")
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+          sbmm_sample.reload
+        end.to change(sbmm_sample, :amount_as_used_mass_value).from(123).to(12345)
+           .and not_change(sbmm, :updated_at)
+      end
+    end
+
+    context 'when updating SBMM data as well' do
+      context 'when a SBMM with the updated data already exists' do
+        # sbmm and other_sbmm should only be different on sequence
+        let(:other_sbmm) do
+          log_red.call("=== Creating other_sbmm ===")
+          other_sbmm = create(:modified_uniprot_sbmm, sequence: 'FooBar')
+          log_red.call("=== created other_sbmm with id #{other_sbmm.id}")
+          other_sbmm
+        end
+        let(:put_data) do
+          {
+            amount_as_used_mass_value: 12345,
+            amount_as_used_mass_unit: 'mg',
+            name: sbmm_sample.name,
+            sequence_based_macromolecule_attributes: {
+              sbmm_type: sbmm.sbmm_type,
+              sbmm_subtype: sbmm.sbmm_subtype,
+              uniprot_derivation: sbmm.uniprot_derivation,
+              parent_identifier: sbmm.parent_id,
+              molecular_weight: sbmm.molecular_weight,
+              sequence: other_sbmm.sequence,
+              # the following parameters are only there so grape's format validation does not complain about missing
+              # ptm/psm attributes
+              protein_sequence_modification_attributes: sbmm.protein_sequence_modification.attributes,
+              post_translational_modification_attributes: sbmm.protein_sequence_modification.attributes
+            }
+          }
+        end
+
+        before do
+          other_sbmm
+        end
+
+        it 'returns a 200 success' do
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+          expect(response.status).to eq 200
+        end
+
+        it 'switches the sample to the new SBMM' do
+          expect do
+            log_red.call("=== STARTING PUT ===")
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+            sbmm_sample.reload
+          end.to change(sbmm_sample, :amount_as_used_mass_value).from(123).to(12345)
+             .and change(sbmm_sample, :sequence_based_macromolecule_id).from(sbmm.id).to(other_sbmm.id)
+        end
+
+        it 'does not delete the old SBMM yet' do
+          expect do
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+            sbmm_sample.reload
+          end.not_to change(SequenceBasedMacromolecule, :count)
+        end
+      end
+
+      context 'when no SBMM with the updated data exists' do
+        it 'updates the existing SBMM' do
+
+        end
+      end
+    end
+  end
 end

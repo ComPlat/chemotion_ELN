@@ -12,6 +12,7 @@ class CreateSequenceBasedMacromolecule < ActiveRecord::Migration[6.1]
       t.string :ec_numbers, null: true, index: { name: "#{index_prefix}_ec_numbers" }, array: true
       t.string :pdb_doi, null: true, index: { name: "#{index_prefix}_pdb_doi" }
       t.string :systematic_name, null: true, index: { name: "#{index_prefix}_systematic_name" }
+      t.string :short_name, null: true, index: { name: "#{index_prefix}_short_name" }
       t.float :molecular_weight, null: true
       t.string :sequence, null: false, index: { name: "#{index_prefix}_sequence" }
       t.string :link_uniprot, null: true

@@ -36,7 +36,7 @@ module Usecases
           SequenceBasedMacromolecule.with_ec_number(search_term)
         when 'accession'
           SequenceBasedMacromolecule.with_accession(search_term)
-        when 'name'
+        when 'protein_name'
           SequenceBasedMacromolecule.search_in_name(search_term)
         else
           SequenceBasedMacromolecule.none
