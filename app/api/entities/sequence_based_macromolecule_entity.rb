@@ -10,7 +10,7 @@ module Entities
     expose! :uniprot_source
     expose! :uniprot_derivation
     expose! :ec_numbers
-    expose! :systematic_name
+    expose! :full_name
     expose! :short_name
     expose! :molecular_weight
     expose! :sequence
@@ -39,6 +39,10 @@ module Entities
 
     def uniprot_protein?
       object.uniprot_derivation == 'uniprot'
+    end
+
+    def full_name
+      object.systematic_name
     end
   end
 end
