@@ -24,6 +24,15 @@ const successfullyUpdatedParameter = {
   position: 'tr'
 };
 
+const successfullyDeletedParameter = {
+  title: 'Element deleted',
+  message: 'Vessel instance successfully deleted',
+  level: 'info',
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr'
+};
+
 const errorMessageParameter = {
   title: 'Error',
   message: 'Unfortunately, the last action failed. Please try again or contact your admin.',
@@ -79,7 +88,7 @@ export default class VesselsFetcher {
 
   static create(vessel, user) {
     const params = extractCreateVesselApiParameter(vessel);
-
+    console.log(params);
     return VesselsFetcher.uploadAttachments(vessel)
       .then(() => fetch('/api/v1/vessels', {
         credentials: 'same-origin',
@@ -239,6 +248,28 @@ export default class VesselsFetcher {
       })
       .catch((errorMessage) => {
         console.error('Error updating vessel instance:', errorMessage);
+        NotificationActions.add(errorMessageParameter);
+      });
+  }
+
+  static deleteVesselInstance(vesselId) {
+    return fetch(`/api/v1/vessels/${vesselId}`, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'DELETE',
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to delete vessel. Status: ${response.status}`);
+        }
+        NotificationActions.add(successfullyDeletedParameter);
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('Error deleting vessel instance:', error);
         NotificationActions.add(errorMessageParameter);
       });
   }
