@@ -107,7 +107,8 @@ module Chemotion
           optional :weight_amount, type: Float, desc: 'weight of the vessel'
           optional :weight_unit, type: String, desc: 'weight unit of the vessel'
         end
-        requires :container, type: Hash, desc: 'root container of element'
+        # requires :container, type: Hash, desc: 'root container of element'
+        optional :container, type: Hash, desc: 'root container of element'
       end
       post do
         error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
