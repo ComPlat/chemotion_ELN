@@ -91,7 +91,7 @@ RSpec.describe Datacollector::Mailcollector do
       end
 
       it 'marks emails as Seen if none of the recipients are known' do
-        # expect not to define a correspondence for the envelope 2 since the person email is known
+        # expect not to define a correspondence for the envelope 2 since the email is not known to the system
         expect(imap).to have_received(:store).with(2, '+FLAGS', [:Seen])
       end
 
