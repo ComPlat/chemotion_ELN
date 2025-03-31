@@ -48,7 +48,7 @@ const dragColumn = (element) => (
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
 
 function ReactionsHeader({
-  group, element, show, showDragColumn, onClick
+  group, element, show, onClick
 }) {
   const { showPreviews } = UIStore.getState();
 
@@ -81,7 +81,7 @@ function ReactionsHeader({
           </OverlayTrigger>
         </div>
       </td>
-      {showDragColumn && dragColumn(element)}
+      {dragColumn(element)}
     </tr>
   );
 }
@@ -90,12 +90,11 @@ ReactionsHeader.propTypes = {
   group: PropTypes.string.isRequired,
   element: PropTypes.object.isRequired,
   show: PropTypes.bool.isRequired,
-  showDragColumn: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
 };
 
 function GenericElementsHeader({
-  group, element, show, showDragColumn, onClick
+  group, element, show, onClick
 }) {
   return (
     <tr
@@ -114,7 +113,7 @@ function GenericElementsHeader({
           </OverlayTrigger>
         </div>
       </td>
-      {showDragColumn && dragColumn(element)}
+      {dragColumn(element)}
     </tr>
   );
 }
@@ -123,7 +122,6 @@ GenericElementsHeader.propTypes = {
   group: PropTypes.string.isRequired,
   element: PropTypes.object.isRequired,
   show: PropTypes.bool.isRequired,
-  showDragColumn: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
 };
 
@@ -286,7 +284,6 @@ export default class ElementsTableGroupedEntries extends Component {
 
   renderReactionElements(elements) {
     const { keyboardSelectedElementId } = this.state;
-    const { showDragColumn } = this.props;
 
     const rows = elements.map((element) => {
       const selected = this.isElementSelected(element);
@@ -332,7 +329,7 @@ export default class ElementsTableGroupedEntries extends Component {
               <ElementCollectionLabels element={element} key={element.id} />
             </div>
           </td>
-          {showDragColumn && dragColumn(element)}
+          {dragColumn(element)}
         </tr>
       );
     });
@@ -342,7 +339,6 @@ export default class ElementsTableGroupedEntries extends Component {
 
   renderGenericElements(elements) {
     const { keyboardSelectedElementId } = this.state;
-    const { showDragColumn } = this.props;
 
     const rows = elements.map((element) => {
       const selected = this.isElementSelected(element);
@@ -372,7 +368,7 @@ export default class ElementsTableGroupedEntries extends Component {
               <ElementCollectionLabels element={element} key={element.id} />
             </div>
           </td>
-          {showDragColumn && dragColumn(element)}
+          {dragColumn(element)}
         </tr>
       );
     });
@@ -381,7 +377,7 @@ export default class ElementsTableGroupedEntries extends Component {
   }
 
   renderGroup(group, elements, index) {
-    const { showDragColumn, collapseAll, type } = this.props;
+    const { collapseAll, type } = this.props;
     const { elementsShown, targetType } = this.state;
 
     const showGroup = !elementsShown.includes(group) && !collapseAll;
@@ -395,7 +391,6 @@ export default class ElementsTableGroupedEntries extends Component {
           group={group}
           element={elements[0]}
           show={showGroup}
-          showDragColumn={showDragColumn}
           onClick={() => this.handleGroupToggle(group)}
           targetType={targetType}
         />
@@ -407,7 +402,6 @@ export default class ElementsTableGroupedEntries extends Component {
           group={group}
           element={elements[0]}
           show={showGroup}
-          showDragColumn={showDragColumn}
           onClick={() => this.handleGroupToggle(group)}
           targetType={targetType}
         />
@@ -445,7 +439,6 @@ ElementsTableGroupedEntries.propTypes = {
   collapseAll: PropTypes.bool.isRequired,
   elements: PropTypes.array.isRequired,
   currentElement: PropTypes.object,
-  showDragColumn: PropTypes.bool.isRequired,
   ui: PropTypes.object.isRequired,
   elementsGroup: PropTypes.string.isRequired,
   genericEl: PropTypes.object,
