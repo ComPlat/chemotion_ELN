@@ -4,13 +4,11 @@ import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
+import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
@@ -20,28 +18,9 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import Aviator from 'aviator';
 
-
-const dragHandle = (element) => {
-  const { currentElement } = ElementStore.getState();
-
-  let sourceType = '';
-
-  if (element.type === 'reaction' && currentElement && currentElement.type === 'research_plan') {
-    sourceType = DragDropItemTypes.REACTION;
-  }
-
-  return (
-    <ElementContainer
-      key={element.id}
-      sourceType={sourceType}
-      element={element}
-    />
-  );
-};
-
 const dragColumn = (element) => (
   <td className="text-center align-middle">
-    {dragHandle(element)}
+    <ElementDragHandle element={element} />
   </td>
 );
 

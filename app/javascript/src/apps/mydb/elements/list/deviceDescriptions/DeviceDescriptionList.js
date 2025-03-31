@@ -1,14 +1,13 @@
 import React, { useContext } from 'react';
 import { Tooltip, OverlayTrigger, Collapse } from 'react-bootstrap';
 
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
+import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import Aviator from 'aviator';
-import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import { observer } from 'mobx-react';
@@ -43,25 +42,6 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
     elementShowOrNew(e);
 
     return null;
-  }
-
-  const dragHandle = (element) => {
-    const sourceType = DragDropItemTypes.DEVICE_DESCRIPTION;
-    return (
-      <ElementContainer
-        key={element.id}
-        sourceType={sourceType}
-        element={element}
-      />
-    );
-  }
-
-  const dragColumn = (element) => {
-    return (
-      <div className="ms-3">
-        {dragHandle(element)}
-      </div>
-    );
   }
 
   const toggleShownGroup = (key, shownGroup) => {
@@ -189,7 +169,9 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
         <div className="d-flex gap-1">
           <CommentIcon commentCount={element.comment_count} />
           <ElementCollectionLabels element={element} key={element.id} />
-          {dragColumn(element)}
+          <div className="ms-3">
+            <ElementDragHandle element={element} />
+          </div>
         </div>
       </div>
     );
