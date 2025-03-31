@@ -136,6 +136,7 @@ function MoleculeHeader({ sample, show, showPreviews, onClick }) {
       role="button"
       onClick={onClick}
     >
+      {!isNoStructureSample && dragColumn(sample, DragDropItemTypes.MOLECULE)}
       {isNoStructureSample
         ? (
           <td colSpan="3" className="position-relative">
@@ -162,7 +163,6 @@ function MoleculeHeader({ sample, show, showPreviews, onClick }) {
             </div>
           </td>
         )}
-      {!isNoStructureSample && dragColumn(sample, DragDropItemTypes.MOLECULE)}
     </tr>
   );
 }
@@ -305,6 +305,7 @@ export default class ElementsTableSampleEntries extends Component {
 
       return (
         <tr key={sample.id} className={classnames({ 'text-bg-primary': applyHighlight })}>
+          {dragColumn(sample, DragDropItemTypes.SAMPLE)}
           <td width="30px">
             <ElementCheckbox
               element={sample}
@@ -336,7 +337,6 @@ export default class ElementsTableSampleEntries extends Component {
               </div>
             </div>
           </td>
-          {dragColumn(sample, DragDropItemTypes.SAMPLE)}
         </tr>
       );
     });

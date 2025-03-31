@@ -160,6 +160,7 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
         role="button"
       >
         <div className="d-flex gap-3">
+          <ElementDragHandle element={element} />
           <ElementCheckbox
             element={element}
             checked={isElementChecked(element)}
@@ -169,9 +170,6 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
         <div className="d-flex gap-1">
           <CommentIcon commentCount={element.comment_count} />
           <ElementCollectionLabels element={element} key={element.id} />
-          <div className="ms-3">
-            <ElementDragHandle element={element} />
-          </div>
         </div>
       </div>
     );

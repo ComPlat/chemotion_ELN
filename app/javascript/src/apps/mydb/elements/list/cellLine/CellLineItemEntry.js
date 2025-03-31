@@ -54,6 +54,7 @@ export default class CellLineItemEntry extends Component {
           <tbody>
             <tr className={`${backgroundColorClass} border-top`}>
               <td className="select-checkBox">
+                <ElementDragHandle element={cellLineItem} />
                 <ElementCheckbox
                   element={cellLineItem}
                   checked={this.isElementChecked(cellLineItem)}
@@ -79,9 +80,6 @@ export default class CellLineItemEntry extends Component {
               </td>
               <td>
                 <ElementCollectionLabels element={cellLineItem} />
-              </td>
-              <td className="arrow">
-                <ElementDragHandle element={cellLineItem} />
               </td>
             </tr>
           </tbody>

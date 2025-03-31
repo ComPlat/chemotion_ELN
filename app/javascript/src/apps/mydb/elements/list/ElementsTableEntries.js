@@ -286,6 +286,7 @@ export default class ElementsTableEntries extends Component {
             return (
               <tr key={element.id} className={className}>
                 <td width="30px">
+                  <ElementDragHandle element={element} />
                   <ElementCheckbox
                     element={element}
                     key={element.id}
@@ -329,9 +330,6 @@ export default class ElementsTableEntries extends Component {
                   </div>
                 </td>
                 {this.previewColumn(element)}
-                <td className="text-center align-middle">
-                  <ElementDragHandle element={element} />
-                </td>
               </tr>
             );
           })}

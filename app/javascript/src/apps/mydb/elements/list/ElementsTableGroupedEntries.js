@@ -37,6 +37,7 @@ function ReactionsHeader({
       onClick={onClick}
       role="button"
     >
+      {dragColumn(element)}
       <td colSpan="2" className="position-relative">
         {showPreviews && (
           <SvgWithPopover
@@ -61,7 +62,6 @@ function ReactionsHeader({
           </OverlayTrigger>
         </div>
       </td>
-      {dragColumn(element)}
     </tr>
   );
 }
@@ -81,6 +81,7 @@ function GenericElementsHeader({
       onClick={onClick}
       role="button"
     >
+      {dragColumn(element)}
       <td colSpan="2" className="position-relative">
         <div className="preview-table">
           {group}
@@ -93,7 +94,6 @@ function GenericElementsHeader({
           </OverlayTrigger>
         </div>
       </td>
-      {dragColumn(element)}
     </tr>
   );
 }
@@ -271,6 +271,7 @@ export default class ElementsTableGroupedEntries extends Component {
         "text-bg-primary" : "";
       return (
         <tr key={element.id} className={className}>
+          {dragColumn(element)}
           <td width="30px">
             <ElementCheckbox
               element={element}
@@ -307,7 +308,6 @@ export default class ElementsTableGroupedEntries extends Component {
               <ElementCollectionLabels element={element} key={element.id} />
             </div>
           </td>
-          {dragColumn(element)}
         </tr>
       );
     });
@@ -324,6 +324,7 @@ export default class ElementsTableGroupedEntries extends Component {
 
       return (
         <tr key={element.id} className={className}>
+          {dragColumn(element)}
           <td width="30px">
             <ElementCheckbox
               element={element}
@@ -343,7 +344,6 @@ export default class ElementsTableGroupedEntries extends Component {
               <ElementCollectionLabels element={element} key={element.id} />
             </div>
           </td>
-          {dragColumn(element)}
         </tr>
       );
     });
