@@ -71,7 +71,7 @@ function Elements() {
       >
         <div className="h-100 pt-3 px-3 overflow-x-auto">
           <div className="h-100" style={{ minWidth: '600px' }}>
-            <ElementsList overview={!showDetailView} />
+            <ElementsList />
           </div>
         </div>
       </Panel>

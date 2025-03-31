@@ -648,7 +648,7 @@ export default class ElementsTable extends React.Component {
       moleculeGroupsShown
     } = this.state;
 
-    const { overview, type, genericEl } = this.props;
+    const { type, genericEl } = this.props;
     let elementsTableEntries;
 
     if (type === 'sample') {
@@ -657,7 +657,6 @@ export default class ElementsTable extends React.Component {
           collapseAll={collapseAll}
           elements={elements}
           currentElement={currentElement}
-          showDragColumn={!overview}
           ui={ui}
           moleculeSort={moleculeSort}
           onChangeCollapse={(collapseAll, childPropName, childPropValue) => this.changeCollapse(!collapseAll, childPropName, childPropValue)}
@@ -670,7 +669,6 @@ export default class ElementsTable extends React.Component {
           collapseAll={collapseAll}
           elements={elements}
           currentElement={currentElement}
-          showDragColumn={!overview}
           ui={ui}
           elementsGroup={elementsGroup}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
@@ -697,7 +695,6 @@ export default class ElementsTable extends React.Component {
         <ElementsTableEntries
           elements={elements}
           currentElement={currentElement}
-          showDragColumn={!overview}
           ui={ui}
         />
       );
@@ -729,7 +726,6 @@ ElementsTable.defaultProps = {
 };
 
 ElementsTable.propTypes = {
-  overview: PropTypes.bool.isRequired,
   type: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   genericEl: PropTypes.object,

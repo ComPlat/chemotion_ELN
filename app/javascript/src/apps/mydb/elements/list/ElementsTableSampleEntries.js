@@ -148,7 +148,7 @@ const svgPreview = (sample) => (
   />
 );
 
-function MoleculeHeader({ sample, show, showPreviews, showDragColumn, onClick, targetType }) {
+function MoleculeHeader({ sample, show, showPreviews, onClick, targetType }) {
   const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
 
   return (
@@ -183,7 +183,6 @@ function MoleculeHeader({ sample, show, showPreviews, showDragColumn, onClick, t
           </td>
         )}
       {!isNoStructureSample
-          && showDragColumn
           && dragColumn(sample, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
@@ -320,7 +319,6 @@ export default class ElementsTableSampleEntries extends Component {
 
   renderSamples(samples, index) {
     const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
-    const { showDragColumn } = this.props;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
@@ -361,7 +359,7 @@ export default class ElementsTableSampleEntries extends Component {
               </div>
             </div>
           </td>
-          {showDragColumn && dragColumn(sample, DragDropItemTypes.SAMPLE, targetType)}
+          {dragColumn(sample, DragDropItemTypes.SAMPLE, targetType)}
         </tr>
       );
     });
@@ -388,7 +386,7 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderMoleculeGroup(moleculeGroup, index) {
-    const { showDragColumn, moleculeGroupsShown } = this.props;
+    const { moleculeGroupsShown } = this.props;
     const { showPreviews, targetType } = this.state;
     const { molecule } = moleculeGroup[0];
     const moleculeName = molecule.iupac_name || molecule.inchistring;
@@ -400,7 +398,6 @@ export default class ElementsTableSampleEntries extends Component {
           sample={moleculeGroup[0]}
           show={showGroup}
           showPreviews={showPreviews}
-          showDragColumn={showDragColumn}
           onClick={() => this.handleMoleculeToggle(moleculeName, showGroup )}
           targetType={targetType}
         />
@@ -428,7 +425,6 @@ ElementsTableSampleEntries.propTypes = {
   collapseAll: PropTypes.bool,
   elements: PropTypes.array,
   currentElement: PropTypes.object,
-  showDragColumn: PropTypes.bool,
   ui: PropTypes.object,
   moleculeSort: PropTypes.bool,
 };
