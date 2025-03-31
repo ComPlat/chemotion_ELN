@@ -414,20 +414,23 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
                       </InputGroup>
                     </Form.Group>
                   </td>
-                  <td>
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      className="m-1 mt-2"
-                      onClick={() => updateInstance(instance.id)}
-                    >
-                      <i className="fa fa-save" title="Save changes" />
-                    </Button>
-                    <Button variant="danger" size="xxsm" className="m-1 mt-2"
-                      onClick={openModal}
-                    >
-                      <i className="fa fa-trash" title="Delete instance" />
-                    </Button>
+                  <td className="align-middle">
+                    <div className="d-flex flex-wrap gap-1 justify-content-center align-items-center">
+                      <Button
+                        variant="warning"
+                        size="xxsm"
+                        onClick={() => updateInstance(instance.id)}
+                      >
+                        <i className="fa fa-save" title="Save changes" />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="xxsm"
+                        onClick={openModal}
+                      >
+                        <i className="fa fa-trash" title="Delete instance" />
+                      </Button>
+                    </div>
                     <Modal show={showConfirm} onHide={closeModal} backdrop="static" centered>
                       <Modal.Header closeButton>
                         <Modal.Title>Confirm Deletion</Modal.Title>
@@ -490,27 +493,27 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
                       </Button>
                     </InputGroup>
                   </td>
-                  <td>
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      className="m-1 mt-2"
-                      onClick={() => handleCreateNewInstance(instance, index)}
-                    >
-                      <i className="fa fa-save" title="Save changes" />
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="xxsm"
-                      className="m-1 mt-2"
-                      onClick={() => {
-                        const updated = [...newInstances];
-                        updated.splice(index, 1);
-                        setNewInstances(updated);
-                      }}
-                    >
-                      <i className="fa fa-trash" title="Delete" />
-                    </Button>
+                  <td className="align-middle">
+                    <div className="d-flex flex-wrap gap-1 justify-content-center align-items-center">
+                      <Button
+                        variant="warning"
+                        size="xxsm"
+                        onClick={() => handleCreateNewInstance(instance, index)}
+                      >
+                        <i className="fa fa-save" title="Save changes" />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="xxsm"
+                        onClick={() => {
+                          const updated = [...newInstances];
+                          updated.splice(index, 1);
+                          setNewInstances(updated);
+                        }}
+                      >
+                        <i className="fa fa-trash" title="Delete" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
