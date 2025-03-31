@@ -190,7 +190,6 @@ export default class ElementsList extends React.Component {
     const {
       visible, hidden, totalCheckedElements, totalElements, currentTab
     } = this.state;
-    const { overview } = this.props;
 
     const constEls = Immutable.Set([
       'sample',
@@ -243,7 +242,6 @@ export default class ElementsList extends React.Component {
           className={`elements-list-tab-${value}s`}
         >
           <ElementsTable
-            overview={overview}
             type={value}
             genericEl={genericEl}
           />
@@ -281,7 +279,3 @@ export default class ElementsList extends React.Component {
     );
   }
 }
-
-ElementsList.propTypes = {
-  overview: PropTypes.bool.isRequired,
-};

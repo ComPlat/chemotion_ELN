@@ -293,7 +293,7 @@ export default class ElementsTableEntries extends Component {
   }
 
   render() {
-    const { elements, showDragColumn } = this.props;
+    const { elements } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -353,11 +353,9 @@ export default class ElementsTableEntries extends Component {
                   </div>
                 </td>
                 {this.previewColumn(element)}
-                {showDragColumn && (
-                  <td className="text-center align-middle">
-                    {this.dragHandle(element)}
-                  </td>
-                )}
+                <td className="text-center align-middle">
+                  {this.dragHandle(element)}
+                </td>
               </tr>
             );
           })}
@@ -374,7 +372,6 @@ ElementsTableEntries.defaultProps = {
 /* eslint-disable react/forbid-prop-types */
 ElementsTableEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
-  showDragColumn: PropTypes.bool.isRequired,
   ui: PropTypes.object.isRequired,
   currentElement: PropTypes.object,
 };
