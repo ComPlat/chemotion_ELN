@@ -14,10 +14,9 @@ import GenericElementLabels from 'src/apps/mydb/elements/labels/GenericElementLa
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
+import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -51,33 +50,14 @@ const showDetails = (id) => {
   sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
 };
 
-const targets = {
-  sample: ['reaction', 'wellplate', 'device', 'research_plan'],
-  molecule: ['reaction'],
-};
-
-const isCurrEleDropType = (sourceType, targetType) => {
-  if (['molecule', 'sample'].includes(sourceType) && !['wellplate', 'device', 'research_plan'].includes(targetType)) {
-    return sourceType && targetType;
-  }
-  return sourceType && targetType && targets[sourceType].includes(targetType);
-};
-
-const dragColumn = (element, sourceType, targetType) => {
-  if (!targetType) {
-    targetType = ElementStore.getState()?.currentElement?.type || null;
-  }
-
-  return (
-    <td className="text-center align-middle">
-      <ElementContainer
-        key={element.id}
-        sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
-        element={element}
-      />
-    </td>
-  );
-};
+const dragColumn = (element, sourceType) => (
+  <td className="text-center align-middle">
+    <ElementDragHandle
+      sourceType={sourceType}
+      element={element}
+    />
+  </td>
+);
 
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
@@ -148,7 +128,7 @@ const svgPreview = (sample) => (
   />
 );
 
-function MoleculeHeader({ sample, show, showPreviews, onClick, targetType }) {
+function MoleculeHeader({ sample, show, showPreviews, onClick }) {
   const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
 
   return (
@@ -183,8 +163,7 @@ function MoleculeHeader({ sample, show, showPreviews, onClick, targetType }) {
             </div>
           </td>
         )}
-      {!isNoStructureSample
-          && dragColumn(sample, DragDropItemTypes.MOLECULE, targetType)}
+      {!isNoStructureSample && dragColumn(sample, DragDropItemTypes.MOLECULE)}
     </tr>
   );
 }
@@ -230,10 +209,8 @@ export default class ElementsTableSampleEntries extends Component {
 
     this.props.onChangeCollapse(collapseAll, 'moleculeGroupsShown', moleculeGroupsShown);
 
-    const { currentElement } = ElementStore.getState();
     this.setState({
       displayedMoleculeGroup,
-      targetType: currentElement && currentElement.type,
       flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup),
     }, this.forceUpdate());
   }
@@ -319,7 +296,7 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderSamples(samples, index) {
-    const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
+    const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
@@ -360,7 +337,7 @@ export default class ElementsTableSampleEntries extends Component {
               </div>
             </div>
           </td>
-          {dragColumn(sample, DragDropItemTypes.SAMPLE, targetType)}
+          {dragColumn(sample, DragDropItemTypes.SAMPLE)}
         </tr>
       );
     });
@@ -388,7 +365,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   renderMoleculeGroup(moleculeGroup, index) {
     const { moleculeGroupsShown } = this.props;
-    const { showPreviews, targetType } = this.state;
+    const { showPreviews } = this.state;
     const { molecule } = moleculeGroup[0];
     const moleculeName = molecule.iupac_name || molecule.inchistring;
     const showGroup = moleculeGroupsShown.includes(moleculeName);
@@ -400,7 +377,6 @@ export default class ElementsTableSampleEntries extends Component {
           show={showGroup}
           showPreviews={showPreviews}
           onClick={() => this.handleMoleculeToggle(moleculeName, showGroup )}
-          targetType={targetType}
         />
         {showGroup ? this.renderSamples(moleculeGroup, index) : null}
       </tbody>

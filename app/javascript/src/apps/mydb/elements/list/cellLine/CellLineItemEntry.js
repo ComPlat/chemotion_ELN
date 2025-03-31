@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { Table } from 'react-bootstrap';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
+import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
-import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Aviator from 'aviator';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
@@ -82,10 +81,7 @@ export default class CellLineItemEntry extends Component {
                 <ElementCollectionLabels element={cellLineItem} />
               </td>
               <td className="arrow">
-                <ElementContainer
-                  sourceType={DragDropItemTypes.CELL_LINE}
-                  element={cellLineItem}
-                />
+                <ElementDragHandle element={cellLineItem} />
               </td>
             </tr>
           </tbody>
