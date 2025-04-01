@@ -14,7 +14,10 @@ module Entities
     expose! :short_name
     expose! :molecular_weight
     expose! :sequence
+    expose! :sequence_length
     expose! :link_uniprot
+    expose! :link_pdb
+    expose! :heterologous_expression
     expose! :organism
     expose! :taxon_id
     expose! :strain
@@ -43,6 +46,10 @@ module Entities
 
     def full_name
       object.systematic_name
+    end
+
+    def sequence_length
+      (object.sequence || "").length
     end
   end
 end

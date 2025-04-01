@@ -45,21 +45,21 @@ module Chemotion
         optional :collection_id, type: Integer
         optional :external_label, type: String
         optional :function_or_application, type: String
-        optional :concentration_value, type: Numeric
+        optional :concentration_value, type: Float
         optional :concentration_unit, type: String, values: %w[ng/L mg/L g/L], default: 'ng/L'
-        optional :molarity_value, type: Numeric
+        optional :molarity_value, type: Float
         optional :molarity_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
-        optional :activity_per_volume_value, type: Numeric
+        optional :activity_per_volume_value, type: Float
         optional :activity_per_volume_unit, type: String, values: %w[U/L U/mL], default: 'U/L'
-        optional :activity_per_mass_value, type: Numeric
+        optional :activity_per_mass_value, type: Float
         optional :activity_per_mass_unit, type: String, values: %w[U/g U/mg], default: 'U/g'
-        optional :volume_as_used_value, type: Numeric
+        optional :volume_as_used_value, type: Float
         optional :volume_as_used_unit, type: String, values: %w[L mL µL nL], default: 'L'
-        optional :amount_as_used_mol_value, type: Numeric
+        optional :amount_as_used_mol_value, type: Float
         optional :amount_as_used_mol_unit, type: String, values: %w[mol mmol µmol nmol pmol], default: 'mol'
-        optional :amount_as_used_mass_value, type: Numeric
+        optional :amount_as_used_mass_value, type: Float
         optional :amount_as_used_mass_unit, type: String, values: %w[g kg µg mg], default: 'g'
-        optional :activity_value, type: Numeric
+        optional :activity_value, type: Float
         optional :activity_unit, type: String, values: %w[U mU kat mkat µkat nkat], default: 'U'
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
@@ -116,7 +116,7 @@ module Chemotion
 
               optional :acetylation_enabled, type: Boolean, default: false
               given(acetylation_enabled: ->(value) { value == true }) do
-                requires :acetylation_lysin_number, type: Numeric
+                requires :acetylation_lysin_number, type: Float
               end
 
               optional :hydroxylation_enabled, type: Boolean, default: false
@@ -142,13 +142,16 @@ module Chemotion
             optional :ec_numbers, type: Array[String]
             optional :full_name, type: String, as: :systematic_name # uniprot calls it fullName, but in our DB it's systematic_name
             optional :short_name, type: String
-            requires :molecular_weight, type: Numeric
+            requires :molecular_weight, type: Float
             requires :sequence, type: String
             optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown'
             optional :organism, type: String
             optional :taxon_id, type: String
             optional :tissue, type: String
             optional :localisation, type: String
+            optional :link_pdb, type: String
+            optional :pdb_doi, type: String
+            optional :strain, type: String
             optional :protein_source_details_comments, type: String
             optional :protein_source_details_expression_system, type: String
           end
@@ -166,21 +169,21 @@ module Chemotion
         optional :collection_id, type: Integer # TODO: klären ob Collection Wechsel möglich sein soll
         optional :external_label, type: String
         optional :function_or_application, type: String
-        optional :concentration_value, type: Numeric
+        optional :concentration_value, type: Float
         optional :concentration_unit, type: String, values: %w[ng/L mg/L g/L], default: 'ng/L'
-        optional :molarity_value, type: Numeric
+        optional :molarity_value, type: Float
         optional :molarity_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
-        optional :activity_per_volume_value, type: Numeric
+        optional :activity_per_volume_value, type: Float
         optional :activity_per_volume_unit, type: String, values: %w[U/L U/mL], default: 'U/L'
-        optional :activity_per_mass_value, type: Numeric
+        optional :activity_per_mass_value, type: Float
         optional :activity_per_mass_unit, type: String, values: %w[U/g U/mg], default: 'U/g'
-        optional :volume_as_used_value, type: Numeric
+        optional :volume_as_used_value, type: Float
         optional :volume_as_used_unit, type: String, values: %w[L mL µL nL], default: 'L'
-        optional :amount_as_used_mol_value, type: Numeric
+        optional :amount_as_used_mol_value, type: Float
         optional :amount_as_used_mol_unit, type: String, values: %w[mol mmol µmol nmol pmol], default: 'mol'
-        optional :amount_as_used_mass_value, type: Numeric
+        optional :amount_as_used_mass_value, type: Float
         optional :amount_as_used_mass_unit, type: String, values: %w[g kg µg mg], default: 'g'
-        optional :activity_value, type: Numeric
+        optional :activity_value, type: Float
         optional :activity_unit, type: String, values: %w[U mU kat mkat µkat nkat], default: 'U'
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
@@ -237,7 +240,7 @@ module Chemotion
 
               optional :acetylation_enabled, type: Boolean, default: false
               given(acetylation_enabled: ->(value) { value == true }) do
-                requires :acetylation_lysin_number, type: Numeric
+                requires :acetylation_lysin_number, type: Float
               end
 
               optional :hydroxylation_enabled, type: Boolean, default: false
@@ -263,13 +266,16 @@ module Chemotion
             optional :ec_numbers, type: Array[String]
             optional :full_name, type: String, as: :systematic_name # uniprot calls it fullName, but in our DB it's systematic_name
             optional :short_name, type: String
-            requires :molecular_weight, type: Numeric
+            requires :molecular_weight, type: Float
             requires :sequence, type: String
             optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown'
             optional :organism, type: String
             optional :taxon_id, type: String
             optional :tissue, type: String
             optional :localisation, type: String
+            optional :link_pdb, type: String
+            optional :pdb_doi, type: String
+            optional :strain, type: String
             optional :protein_source_details_comments, type: String
             optional :protein_source_details_expression_system, type: String
           end
