@@ -8,7 +8,7 @@ describe Chemotion::MoleculeAPI do
 
     before do
       allow_any_instance_of(WardenAuthentication).to(
-        receive(:current_user).and_return(user)
+        receive(:current_user).and_return(user),
       )
     end
 
@@ -50,7 +50,7 @@ M  END"
             molecular_weight: 104.14912,
             sum_formular: 'C8H8',
             iupac_name: 'cubane',
-            names: ['cubane']
+            names: ['cubane'],
           }
         end
         let!(:decoupled) { false }
@@ -61,11 +61,13 @@ M  END"
           post '/api/v1/molecules', params: { molfile: molfile, decoupled: false }
           m = Molecule.find_by(molfile: molfile)
           expect(m).not_to be_nil
-	  mw = params.delete(:molecular_weight)
-	  expect(m.attributes['molecular_weight'].round(5)).to eq(mw)
+          mw = params.delete(:molecular_weight)
+          expect(m.attributes['molecular_weight'].round(5)).to eq(mw)
           params.each do |k, v|
             expect(m.attributes.symbolize_keys[k]).to eq(v) unless m.attributes.symbolize_keys[k].is_a?(Float)
-            expect(m.attributes.symbolize_keys[k].round(5)).to eq(v.round(5)) if m.attributes.symbolize_keys[k].is_a?(Float)
+            if m.attributes.symbolize_keys[k].is_a?(Float)
+              expect(m.attributes.symbolize_keys[k].round(5)).to eq(v.round(5))
+            end
           end
           expect(m.molecule_svg_file).to match(/\w{128}\.svg/)
         end
@@ -85,8 +87,7 @@ M  END"
     end
 
     describe 'Get /api/v1/molecules/names' do
-      let!(:m) { create(:molecule) }
-      let!(:nn) { 'this_is_a_new_name' }
+      let(:m) { create(:molecule) }
 
       it 'returns molecule_names hash' do
         get "/api/v1/molecules/names?inchikey=#{m.inchikey}"
@@ -96,29 +97,24 @@ M  END"
     end
 
     describe 'Post /api/v1/molecules/smiles' do
+      let(:bad_smiles) { build(:smiles_set, from: :bad_smiles) }
+      let(:pc_smiles) { build(:smiles_set, from: :pc400) } # rubocop:disable
+
       before do
-        allow(Chemotion::OpenBabelService).to receive(:molfile_clear_hydrogens)
-          .with(any_args)
-          .and_return(
-            "<<~BODY
-            Status: 400\n OpenBabel01092512342D\nMessage: Unable to standardize the given structure
-            - perhaps some special charac\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n
-            BODY",
-          )
+        allow(PubChem).to receive_messages(
+          get_record_from_inchikey: nil,
+          get_molfile_by_smiles: nil,
+        )
       end
 
-      JSON.parse(File.read('spec/fixtures/structures/bad_smiles.json')).each_value do |data|
-        context 'when testing SMILES entry' do
-          let(:params) { { smiles: data['smiles'] } }
-
-          it "handles SMILES #{data['smiles']} correctly and returns molecule" do
-            post '/api/v1/molecules/smiles', params: params
-            response_body = JSON.parse(response.body)
-
-            expect(response_body).to be_a(Hash)
-            molfile = response_body['molfile']
-            expect(molfile).not_to start_with('Status: 400')
-          end
+      it 'handles SMILES correctly and returns molecule' do
+        (bad_smiles + pc_smiles).each do |smiles|
+          post '/api/v1/molecules/smiles', params: { smiles: smiles }
+          puts smiles
+          response_body = JSON.parse(response.body)
+          expect(response_body).to include('molfile' => satisfy { |molfile|
+            molfile.present? && !molfile.start_with?('Status: 400')
+          })
         end
       end
     end
