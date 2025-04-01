@@ -15,6 +15,7 @@
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  parent_id          :integer
+#  deleted_at         :datetime
 #  plain_text_content :text
 #
 # Indexes
