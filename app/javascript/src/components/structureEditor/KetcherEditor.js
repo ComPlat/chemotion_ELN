@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
@@ -26,7 +27,6 @@ import {
   isAliasConsistent,
   onAddAtom,
   onAddText,
-  onDeleteImage,
   onDeleteText,
   placeImageOnAtoms,
   placeTextOnAtoms,
@@ -66,7 +66,6 @@ import {
 import {
   PolymerListIconKetcherToolbarButton,
   PolymerListModal,
-  rescaleToolBarButton
 } from 'src/components/structureEditor/PolymerListModal';
 
 export let FILOStack = []; // a stack to main a list of event triggered
@@ -86,7 +85,6 @@ export let allTemplates = {}; // contains all templates
 
 // local
 let oldImagePack = [];
-let allAtomsCopy = [];
 let selectedImageForTextNode = null;
 let imageListCopyContainer = [];
 let textListCopyContainer = [];
@@ -265,24 +263,19 @@ export const handleAddAtom = async () => {
   return addAtomAliasHelper(processedAtoms);
 };
 
+const centerPositionCanvas = async (editor) => {
+  await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
+  await fetchKetcherData(editor);
+  saveMoveCanvas(editor, latestData, true, true, false);
+  await fetchKetcherData(editor);
+};
+
 /* istanbul ignore next */
 // save molfile with source, should_fetch, should_move
 export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
   const dataCopy = data || latestData;
   if (editor) {
-    // if (recenter || (latestData && !imagesList.length)) {
-    //   await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
-    // } else {
-    //   await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
-    // }
-    // const size = editor._structureDef.editor.editor.render.sz;
-    const size = {
-      x: 0,
-      y: 0
-    };
-    // , { position: { x: size.x, y: size.y } }
     if (recenter) {
-      // await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
     } else {
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), { rescale: false });
@@ -358,6 +351,7 @@ const onAtomDelete = async (editor) => {
         hasImageDifferences = true;
         aliasDifferences.push(...imageDifferences);
         latestData = await removeImageTemplateAtom(latestData, imageDifferences);
+        imageNodeCounter = imagesList.length - 1;
       } else if (!hasImageDifferences) { // atom delete with not image diff
         // console.warn('when image is not deleted?');
         const templateList = await fetchTemplateList();
@@ -384,11 +378,11 @@ const onAtomDelete = async (editor) => {
       await filterTextList(aliasDifferences); // remove text nodes
     }
 
-    await saveMoveCanvas(editor, latestData, true, false);
+    await saveMoveCanvas(editor, latestData, true, false, false);
     deletedAtoms = [];
     oldImagePack = [];
   } catch (err) {
-    console.log(err);
+    console.error('onAtomDelete', err);
   }
 };
 
@@ -472,7 +466,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack('Move atom');
     },
     'Delete image': async () => {
-      console.log('Delete image');
+      console.log('Delete image as atom');
       addEventToFILOStack('Delete atom');
     },
     'Delete atom': async (eventItem) => {
@@ -496,21 +490,13 @@ const KetcherEditor = forwardRef((props, ref) => {
       addEventToFILOStack('Add text');
     },
     'Delete text': async () => {
-      if (!FILOStack.includes('Delete atom') && !FILOStack.includes('Delete image')) {
-        addEventToFILOStack('Delete text');
-      }
+      addEventToFILOStack('Delete text');
     }
   };
 
   // action based on event-name
   const eventHandlers = {
     'Move image': async () => onTemplateMove(editor),
-    'Delete image': async () => {
-      oldImagePack = [...imagesList];
-      await fetchKetcherData(editor);
-      mols = mols.filter((item) => item != null);
-      await onDeleteImage(editor, canvasSelection, oldImagePack, textList, deletedAtoms);
-    },
     'Move atom': async () => {
       oldImagePack = [...imagesList];
       await onTemplateMove(editor, false);
@@ -548,7 +534,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     // others
     "[title='Rescale Polymer Canvas']": async () => {
       await fetchKetcherData(editor);
-      await saveMoveCanvas(editor, null, true, true, true);
+      await centerPositionCanvas(editor);
       ImagesToBeUpdatedSetter(true);
       await runImageLayering();
     },
@@ -631,6 +617,9 @@ const KetcherEditor = forwardRef((props, ref) => {
         if (textNodeList.length) molfileData.root.nodes.push(...textNodeList);
         const toRecenter = !polymerTag?.length;
         saveMoveCanvas(editor, molfileData, true, true, !!toRecenter);
+        setTimeout(async () => {
+          await centerPositionCanvas(editor);
+        }, 10);
         ImagesToBeUpdatedSetter(true);
       }
     }
@@ -678,35 +667,25 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   };
 
-  // all logic implementation if move atom has an alias which passed three part regex
-  const isCanvasUpdateRequiredOnMove = (eventItem) => {
-    const { id } = eventItem;
-    const targetAtom = allAtoms[id];
-    if (targetAtom) {
-      return { exists: ALIAS_PATTERNS.threeParts.test(targetAtom.alias), atom: targetAtom };
-    }
-    return { exists: true, atom: targetAtom };
-  };
-
   // helper function to add event to stack
   const addEventToFILOStack = (event) => {
-    if (event === 'Delete image' && FILOStack.includes('Delete atom')) {
-      console.log('Cannot add "Delete image" after "Delete atom" event.');
-      return;
-    }
+    // if (event === 'Delete image' && FILOStack.includes('Delete atom')) {
+    //   console.log('Cannot add "Delete image" after "Delete atom" event.');
+    //   return;
+    // }
 
     // if (event === 'Delete atom' && FILOStack.includes('Move atom')) {
     //   console.log('Cannot add "Delete atom" after "Move atom" event.', '##');
     //   return;
     // }
 
+    // if (event === 'Delete image' && FILOStack.includes('Delete text')) {
+    //   console.log('Cannot add "Delete image" after "Delete text" event.');
+    //   return;
+    // }
+
     if (event === 'Delete atom' && FILOStack.includes('Delete text')) {
       console.log('Cannot add "Delete atom" after "Delete text" event.');
-      return;
-    }
-
-    if (event === 'Delete image' && FILOStack.includes('Delete text')) {
-      console.log('Cannot add "Delete image" after "Delete text" event.');
       return;
     }
 
@@ -754,13 +733,11 @@ const KetcherEditor = forwardRef((props, ref) => {
 
         if (cancelButton) {
           cancelButton?.addEventListener('click', () => {
-            console.log('Cancel button clicked');
             selectedImageForTextNode = null;
           });
         }
         if (crossButton) {
           crossButton?.addEventListener('click', () => {
-            console.log('cross button clicked');
             selectedImageForTextNode = null;
           });
         }
@@ -785,10 +762,10 @@ const KetcherEditor = forwardRef((props, ref) => {
         // Ensure iframe content is loaded before adding the button
         if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
           PolymerListIconKetcherToolbarButton(iframeDocument);
-          rescaleToolBarButton(iframeDocument);
+          // rescaleToolBarButton(iframeDocument);
         } else if (iframeRef?.current?.onload) {
           iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
-          iframeRef.current.onload = rescaleToolBarButton;
+          // iframeRef.current.onload = rescaleToolBarButton;
         }
       }, 1000);
 
@@ -813,6 +790,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       try {
         let textNodesFormula = '';
         await fetchKetcherData(editor);
+        await centerPositionCanvas(editor);
         const canvasDataMol = await editor.structureDef.editor.getMolfile();
         const svgElement = await reArrangeImagesOnCanvas(iframeRef); // svg display
         const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
@@ -820,10 +798,9 @@ const KetcherEditor = forwardRef((props, ref) => {
         if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
         ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
         resetStore();
-        console.log({ ket2LineTextArranged });
         return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
       } catch (e) {
-        console.log(e);
+        console.error('onSaveFileK2SC', e);
         return e.message;
       }
     }
@@ -866,7 +843,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         },
       ]
     };
-    saveMoveCanvas(editor, latestData, false, true, false);
+    saveMoveCanvas(editor, latestData, true, true, false);
     await buttonClickForRectangleSelection(iframeRef);
     setShowShapes(false);
     FILOStack = [];
@@ -896,9 +873,9 @@ const KetcherEditor = forwardRef((props, ref) => {
 
 KetcherEditor.propTypes = {
   molfile: PropTypes.string,
-  editor: PropTypes.object.isRequired,
+  editor: PropTypes.object?.isRequired,
   iH: PropTypes.string.isRequired,
-  iS: PropTypes.object.isRequired,
+  iS: PropTypes.object?.isRequired,
 };
 
 KetcherEditor.displayName = 'KetcherEditor';
