@@ -275,10 +275,17 @@ export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequir
     // } else {
     //   await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
     // }
+    // const size = editor._structureDef.editor.editor.render.sz;
+    const size = {
+      x: 0,
+      y: 0
+    };
+    // , { position: { x: size.x, y: size.y } }
     if (recenter) {
-      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), true);
+      // await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
+      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
     } else {
-      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), false);
+      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), { rescale: false });
     }
 
     if (isFetchRequired) {
@@ -835,51 +842,33 @@ const KetcherEditor = forwardRef((props, ref) => {
   };
 
   const onShapeSelection = async (tempId, imageToBeAdded = true) => {
-    const rootStruct = {
-      nodes: [
-        {
-          $ref: 'mol0'
-        },
-
-      ],
-      connections: [],
-      templates: []
-    };
-    const dummyContentToCopy = {
-      root: {},
-      mol0: {
-        type: 'molecule',
-        atoms: [
-          {
-            label: 'A',
-            alias: 't_1_0',
-            location: [
-              3,
-              -3,
-              0
-            ]
-          },
-        ]
-      }
-    };
-
-    setShowShapes(false);
-    dummyContentToCopy.root = { ...rootStruct };
-    const dummyAlias = { ...dummyContentToCopy };
+    const combo = [];
+    combo.push({
+      $ref: `mol${mols.length}`
+    });
     if (imageToBeAdded) {
       const imageItem = await fetchSurfaceChemistryImageData(tempId);
-      dummyAlias.root.nodes.push(imageItem);
+      combo.push(imageItem);
     }
-
-    dummyAlias.mol0.atoms[0].alias = `t_${tempId}`;
-    dummyAlias.mol0.atoms.selected = true;
-    await editor._structureDef.editor.addFragment(
-      JSON.stringify(dummyAlias)
-    );
-
-    await fetchKetcherData(editor);
-    await onAddAtom(editor);
+    imageNodeCounter++;
+    latestData.root.nodes.push(...combo);
+    latestData[`mol${mols.length}`] = {
+      type: 'molecule',
+      atoms: [
+        {
+          label: 'A',
+          alias: `t_${tempId}_${imageNodeCounter}`,
+          location: [
+            2,
+            -2,
+            0
+          ]
+        },
+      ]
+    };
+    saveMoveCanvas(editor, latestData, false, true, false);
     await buttonClickForRectangleSelection(iframeRef);
+    setShowShapes(false);
     FILOStack = [];
     allAtoms = [];
   };
