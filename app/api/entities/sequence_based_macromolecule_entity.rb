@@ -17,6 +17,7 @@ module Entities
     expose! :sequence_length
     expose! :link_uniprot
     expose! :link_pdb
+    expose! :pdb_doi
     expose! :heterologous_expression
     expose! :organism
     expose! :taxon_id
