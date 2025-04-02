@@ -83,7 +83,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
     },
     {
       label: 'Synchronized with me',
-      icon: 'fa fa-share-alt',
+      icon: 'fa fa-refresh',
       collectionKey: 'syncedWithMe',
       roots: syncInRoots,
     },
