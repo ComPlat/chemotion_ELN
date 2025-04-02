@@ -1,5 +1,6 @@
 require 'resolv-replace'
 
+# rubocop:disable Metrics/ModuleLength
 module PubChem
   include HTTParty
 
@@ -24,7 +25,11 @@ module PubChem
   def self.get_record_from_inchikey(inchikey)
     @auth = { username: '', password: '' }
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/record/JSON', options)
+    response = HTTParty.get(
+      "#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/inchikey/#{inchikey}/record/JSON",
+      options,
+    )
+    response.success? ? response : nil
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -230,3 +235,4 @@ module PubChem
     arr.group_by(&:to_s).values.max_by(&:size).try(:first)
   end
 end
+# rubocop:enable Metrics/ModuleLength
