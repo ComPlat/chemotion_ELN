@@ -828,6 +828,15 @@ const KetcherEditor = forwardRef((props, ref) => {
       combo.push(imageItem);
     }
     imageNodeCounter++;
+    if (!latestData) {
+      latestData = {
+        root: {
+          nodes: [],
+          connections: [],
+          templates: []
+        }
+      };
+    }
     latestData.root.nodes.push(...combo);
     latestData[`mol${mols.length}`] = {
       type: 'molecule',
@@ -843,6 +852,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         },
       ]
     };
+    console.log(latestData);
+
     saveMoveCanvas(editor, latestData, true, true, false);
     await buttonClickForRectangleSelection(iframeRef);
     setShowShapes(false);
