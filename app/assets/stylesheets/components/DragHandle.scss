@@ -1,0 +1,23 @@
+.drag-handle {
+  cursor: move;
+  min-width: 16px;
+  @extend .d-flex;
+  @extend .align-items-center;
+  @extend .bg-draggable;
+  @extend .rounded-start;
+  @extend .px-1;
+  @extend .py-2;
+  &:after {
+    content: "";
+    @extend .w-100;
+    @extend .h-100;
+    max-height: 32px;
+    background-image: radial-gradient($chemstrap-paper 1px, transparent 2px);
+    background-position: 0.5px 0;
+    background-size: 4px 4px;
+  }
+  &.drag-handle--disabled {
+    cursor: not-allowed;
+    @extend .bg-gray-500;
+  }
+}

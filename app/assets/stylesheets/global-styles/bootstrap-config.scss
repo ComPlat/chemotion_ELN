@@ -20,6 +20,7 @@ $zindex-levels: (
 $chemstrap-theme-colors: (
   "active": $chemstrap-blue-dark,
   "paper": $chemstrap-paper,
+  "draggable": $chemstrap-blue-dull,
 );
 
 @import "bootstrap/functions";

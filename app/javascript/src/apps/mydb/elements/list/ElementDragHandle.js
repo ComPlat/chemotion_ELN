@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { useDrag } from 'react-dnd';
+import { useDrag, DragPreviewImage } from 'react-dnd';
 import { observer } from 'mobx-react';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import DragHandle from 'src/components/common/DragHandle';
 
 function inferElementSourceType(element) {
   if (!element.type) return null;
@@ -32,16 +33,21 @@ function inferElementSourceType(element) {
   }
 }
 
-function DragHandle({ element, sourceType }) {
-  const [, drag] = useDrag({
+function EnabledHandle({ element, sourceType }) {
+  const [, drag, preview] = useDrag({
     type: sourceType,
     item: { element },
   });
 
-  return <span ref={drag} className="fa fa-arrows dnd-arrow-enable text-info" />;
+  return (
+    <>
+      <DragPreviewImage connect={preview} src="/apple-touch-icon.png" />
+      <DragHandle ref={drag} />
+    </>
+  );
 }
 
-DragHandle.propTypes = {
+EnabledHandle.propTypes = {
   sourceType: PropTypes.oneOf(Object.values(DragDropItemTypes)).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   element: PropTypes.any.isRequired,
@@ -117,8 +123,8 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
   };
 
   return (sourceType !== null && hasDropTarget(sourceType))
-    ? <DragHandle element={element} sourceType={sourceType} />
-    : <span className="fa fa-arrows dnd-arrow-disable" />;
+    ? <EnabledHandle element={element} sourceType={sourceType} />
+    : <DragHandle enabled={false} />;
 }
 
 ElementDragHandle.propTypes = {
