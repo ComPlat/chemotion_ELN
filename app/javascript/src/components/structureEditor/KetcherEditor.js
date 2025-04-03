@@ -378,7 +378,7 @@ const onAtomDelete = async (editor) => {
       await filterTextList(aliasDifferences); // remove text nodes
     }
 
-    await saveMoveCanvas(editor, latestData, true, false, false);
+    await saveMoveCanvas(editor, latestData, true, true, false);
     deletedAtoms = [];
     oldImagePack = [];
   } catch (err) {
@@ -504,7 +504,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Add atom': async () => onAddAtom(editor),
     'Delete atom': async () => {
       oldImagePack = [...imagesList];
-      allAtomsCopy = [...allAtoms];
       await onAtomDelete(editor);
       canvasSelection = null;
     },
