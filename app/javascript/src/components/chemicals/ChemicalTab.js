@@ -14,6 +14,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import SDSAttachmentModel from 'src/components/chemicals/SDSAttachmentModel';
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
@@ -34,7 +35,9 @@ export default class ChemicalTab extends React.Component {
       loadChemicalProperties: { vendor: '', loading: false },
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
-      viewModalForVendor: ''
+      viewModalForVendor: '',
+      showModal: false,
+      attachedFile: null,
     };
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
@@ -685,6 +688,20 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  handleAdd() {
+    this.setState({ showModal: true });
+  }
+
+  addButton() {
+    return (
+      <div>
+        <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
+          <i className="fa fa-plus" />
+        </Button>
+      </div>
+    );
+  }
+
   chooseVendor() {
     const { vendorValue } = this.state;
     const vendorOptions = [
@@ -1065,6 +1082,9 @@ export default class ChemicalTab extends React.Component {
     return (
       <>
         <Row className="mb-3 align-items-end">
+          <Col xs="auto" className="mb-0">
+            {this.addButton()}
+          </Col>
           <Col>
             {this.chooseVendor()}
           </Col>
@@ -1144,9 +1164,17 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  handleAttachmentSubmit = ({ productNumber, vendorName, attachedFile }) => {
+    // Handle the attachment logic here
+/*     console.log('Product Number:', productNumber);
+    console.log('Vendor Name:', vendorName);
+    console.log('Attached File:', attachedFile); */
+    this.setState({ showModal: false }); // Close the modal after submission
+  };
   render() {
     const {
-      chemical
+      chemical,
+      showModal,
     } = this.state;
 
     const data = chemical?._chemical_data?.[0] ?? [];
@@ -1183,6 +1211,12 @@ export default class ChemicalTab extends React.Component {
         </Accordion>
 
         {this.renderPropertiesModal()}
+
+        <SDSAttachmentModel
+          show={showModal}
+          onHide={() => this.setState({ showModal: false })}
+          onSubmit={this.handleAttachmentSubmit}
+        />
       </>
     );
   }

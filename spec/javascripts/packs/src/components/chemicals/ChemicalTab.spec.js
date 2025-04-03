@@ -7,8 +7,7 @@ import sinon from 'sinon';
 import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
-import ChemicalTab from 'src/components/ChemicalTab';
+import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
 
