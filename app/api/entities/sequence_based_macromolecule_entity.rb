@@ -24,6 +24,8 @@ module Entities
     expose! :strain
     expose! :tissue
     expose! :localisation
+    expose! :own_identifier
+    expose! :other_identifier
     expose! :parent, using: 'Entities::SequenceBasedMacromoleculeEntity'
     expose! :sample, if: ->(instance, options) { options[:sample].present? }, using: 'Entities::SequenceBasedMacromoleculeSampleEntity'
 

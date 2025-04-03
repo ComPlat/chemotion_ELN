@@ -14,14 +14,6 @@ module Entities
     expose! :glycosylation_enabled
     expose! :glycosylation_n_linked_asn_enabled
     expose! :glycosylation_n_linked_asn_details
-    expose! :glycosylation_n_linked_lys_enabled
-    expose! :glycosylation_n_linked_lys_details
-    expose! :glycosylation_n_linked_ser_enabled
-    expose! :glycosylation_n_linked_ser_details
-    expose! :glycosylation_n_linked_thr_enabled
-    expose! :glycosylation_n_linked_thr_details
-    expose! :glycosylation_o_linked_asn_enabled
-    expose! :glycosylation_o_linked_asn_details
     expose! :glycosylation_o_linked_lys_enabled
     expose! :glycosylation_o_linked_lys_details
     expose! :glycosylation_o_linked_ser_enabled

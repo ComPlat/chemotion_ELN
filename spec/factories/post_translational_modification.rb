@@ -13,14 +13,6 @@ FactoryBot.define do
     glycosylation_enabled { false }
     glycosylation_n_linked_asn_enabled { false }
     glycosylation_n_linked_asn_details { }
-    glycosylation_n_linked_lys_enabled { false }
-    glycosylation_n_linked_lys_details { }
-    glycosylation_n_linked_ser_enabled { false }
-    glycosylation_n_linked_ser_details { }
-    glycosylation_n_linked_thr_enabled { false }
-    glycosylation_n_linked_thr_details { }
-    glycosylation_o_linked_asn_enabled { false }
-    glycosylation_o_linked_asn_details { }
     glycosylation_o_linked_lys_enabled { false }
     glycosylation_o_linked_lys_details { }
     glycosylation_o_linked_ser_enabled { false }
