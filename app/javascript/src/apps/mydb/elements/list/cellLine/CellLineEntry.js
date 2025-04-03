@@ -20,13 +20,6 @@ export default class CellLineEntry extends Component {
     };
   }
 
-  getBorderStyle() {
-    const { showEntries } = this.state;
-    return showEntries
-      ? 'list-container title-panel p-3'
-      : 'list-container title-panel p-3 cell-line-group-bottom-border';
-  }
-
   renderItemEntries(cellLineItems) {
     const { showEntries } = this.state;
     return showEntries ? cellLineItems.map(
@@ -155,9 +148,8 @@ export default class CellLineEntry extends Component {
     const { showEntries } = this.state;
     if (cellLineItems.length === 0) { return (null); }
     return (
-      <div className="cell-line-group">
+      <div className="cell-line-group bg-gray-200 mb-2">
         <div
-          className={this.getBorderStyle()}
           onClick={() => { this.setState({ showEntries: !showEntries }); }}
         >
           {this.renderNameHeader(cellLineItems[0])}

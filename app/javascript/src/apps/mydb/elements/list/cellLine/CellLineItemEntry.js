@@ -46,44 +46,26 @@ export default class CellLineItemEntry extends Component {
   render() {
     const { cellLineItem } = this.props;
     const { currentElement } = ElementStore.getState();
-    const backgroundColorClass = currentElement?.id === cellLineItem.id ? 'text-bg-primary' : '';
+    const backgroundColorClass = currentElement?.id === cellLineItem.id
+      ? 'text-bg-primary'
+      : 'bg-gray-100';
 
     return (
-      <div className="group-entry">
-        <Table className="elements" hover>
-          <tbody>
-            <tr className={`${backgroundColorClass} border-top`}>
-              <td className="select-checkBox">
-                <ElementDragHandle element={cellLineItem} />
-                <ElementCheckbox
-                  element={cellLineItem}
-                  checked={this.isElementChecked(cellLineItem)}
-                />
-              </td>
-              <td
-                className="short_label"
-                onClick={this.showDetails}
-              >
-                {cellLineItem.short_label}
-              </td>
-              <td
-                className="item-text"
-                onClick={this.showDetails}
-              >
-                <div>
-                  <div className="item-properties floating">
-                    <div className="starting floating item-property-value">
-                      {cellLineItem.itemName}
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <ElementCollectionLabels element={cellLineItem} />
-              </td>
-            </tr>
-          </tbody>
-        </Table>
+      <div className={`d-flex mb-1 ${backgroundColorClass}`}>
+        <div className="d-flex align-items-center gap-2 me-2">
+          <ElementDragHandle element={cellLineItem} />
+          <ElementCheckbox
+            element={cellLineItem}
+            checked={this.isElementChecked(cellLineItem)}
+          />
+        </div>
+        <div className="flex-grow-1">
+          {cellLineItem.short_label}
+          {cellLineItem.itemName}
+        </div>
+        <div>
+          <ElementCollectionLabels element={cellLineItem} />
+        </div>
       </div>
     );
   }
