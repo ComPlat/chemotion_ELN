@@ -67,6 +67,8 @@ module Chemotion
           requires :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein]
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown]
           
+          optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier'
+
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot'} ) do
             requires :primary_accession, type: String, desc: 'Uniprot accession code'
           end
@@ -99,14 +101,6 @@ module Chemotion
               optional :glycosylation_enabled, type: Boolean, default: false
               optional :glycosylation_n_linked_asn_enabled, type: Boolean, default: false
               optional :glycosylation_n_linked_asn_details, type: String, default: ''
-              optional :glycosylation_n_linked_lys_enabled, type: Boolean, default: false
-              optional :glycosylation_n_linked_lys_details, type: String, default: ''
-              optional :glycosylation_n_linked_ser_enabled, type: Boolean, default: false
-              optional :glycosylation_n_linked_ser_details, type: String, default: ''
-              optional :glycosylation_n_linked_thr_enabled, type: Boolean, default: false
-              optional :glycosylation_n_linked_thr_details, type: String, default: ''
-              optional :glycosylation_o_linked_asn_enabled, type: Boolean, default: false
-              optional :glycosylation_o_linked_asn_details, type: String, default: ''
               optional :glycosylation_o_linked_lys_enabled, type: Boolean, default: false
               optional :glycosylation_o_linked_lys_details, type: String, default: ''
               optional :glycosylation_o_linked_ser_enabled, type: Boolean, default: false
@@ -139,6 +133,7 @@ module Chemotion
           end
 
           given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
+            optional :own_identifier, type: String, desc: 'Freetext field for a internal identifier'
             optional :ec_numbers, type: Array[String]
             optional :full_name, type: String, as: :systematic_name # uniprot calls it fullName, but in our DB it's systematic_name
             optional :short_name, type: String
@@ -191,6 +186,8 @@ module Chemotion
           requires :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein]
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown]
 
+          optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier'
+
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot'} ) do
             requires :primary_accession, type: String, desc: 'Uniprot accession code'
           end
@@ -223,14 +220,6 @@ module Chemotion
               optional :glycosylation_enabled, type: Boolean, default: false
               optional :glycosylation_n_linked_asn_enabled, type: Boolean, default: false
               optional :glycosylation_n_linked_asn_details, type: String, default: ''
-              optional :glycosylation_n_linked_lys_enabled, type: Boolean, default: false
-              optional :glycosylation_n_linked_lys_details, type: String, default: ''
-              optional :glycosylation_n_linked_ser_enabled, type: Boolean, default: false
-              optional :glycosylation_n_linked_ser_details, type: String, default: ''
-              optional :glycosylation_n_linked_thr_enabled, type: Boolean, default: false
-              optional :glycosylation_n_linked_thr_details, type: String, default: ''
-              optional :glycosylation_o_linked_asn_enabled, type: Boolean, default: false
-              optional :glycosylation_o_linked_asn_details, type: String, default: ''
               optional :glycosylation_o_linked_lys_enabled, type: Boolean, default: false
               optional :glycosylation_o_linked_lys_details, type: String, default: ''
               optional :glycosylation_o_linked_ser_enabled, type: Boolean, default: false
@@ -263,6 +252,7 @@ module Chemotion
           end
 
           given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
+            optional :own_identifier, type: String, desc: 'Freetext field for a internal identifier'
             optional :ec_numbers, type: Array[String]
             optional :full_name, type: String, as: :systematic_name # uniprot calls it fullName, but in our DB it's systematic_name
             optional :short_name, type: String

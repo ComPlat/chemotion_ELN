@@ -13,14 +13,6 @@ class CreatePostTranslationalModifications < ActiveRecord::Migration[6.1]
       t.boolean :glycosylation_enabled, null: false, default: false
       t.boolean :glycosylation_n_linked_asn_enabled, null: false, default: false
       t.string :glycosylation_n_linked_asn_details, null: true, default: ''
-      t.boolean :glycosylation_n_linked_lys_enabled, null: false, default: false
-      t.string :glycosylation_n_linked_lys_details, null: true, default: ''
-      t.boolean :glycosylation_n_linked_ser_enabled, null: false, default: false
-      t.string :glycosylation_n_linked_ser_details, null: true, default: ''
-      t.boolean :glycosylation_n_linked_thr_enabled, null: false, default: false
-      t.string :glycosylation_n_linked_thr_details, null: true, default: ''
-      t.boolean :glycosylation_o_linked_asn_enabled, null: false, default: false
-      t.string :glycosylation_o_linked_asn_details, null: true, default: ''
       t.boolean :glycosylation_o_linked_lys_enabled, null: false, default: false
       t.string :glycosylation_o_linked_lys_details, null: true, default: ''
       t.boolean :glycosylation_o_linked_ser_enabled, null: false, default: false

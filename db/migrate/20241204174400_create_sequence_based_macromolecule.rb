@@ -26,6 +26,8 @@ class CreateSequenceBasedMacromolecule < ActiveRecord::Migration[6.1]
       t.string :localisation, null: true, default: ''
       t.string :protein_source_details_comments, null: true, default: ''
       t.string :protein_source_details_expression_system, null: true, default: ''
+      t.string :own_identifier, null: true, default: ''
+      t.string :other_identifier, null: true, default: ''
       t.belongs_to :post_translational_modification, null: true, index: { name: "#{index_prefix}_ptm_id" }
 
       t.datetime :deleted_at, null: true, index: { name: "#{index_prefix}_deleted_at" }

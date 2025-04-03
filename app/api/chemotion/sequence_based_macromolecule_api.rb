@@ -30,7 +30,6 @@ module Chemotion
           sbmm = fetcher.find_in_uniprot(primary_accession: params[:identifier])
         end
 
-
         present sbmm, with: Entities::SequenceBasedMacromoleculeEntity, root: :sequence_based_macromolecule
       end
     end
