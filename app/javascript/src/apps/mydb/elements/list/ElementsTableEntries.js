@@ -8,7 +8,6 @@ import classnames from 'classnames';
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
@@ -82,16 +81,6 @@ function showDetails(element) {
   return null;
 }
 
-function sampleAnalysesLabels(element) {
-  if (element.type === 'sample') {
-    return (
-      <ElementAnalysesLabels element={element} key={`${element.id}_analyses`} />
-    );
-  }
-
-  return null;
-}
-
 export function reactionStatus(element) {
   if (element.type === 'reaction' && element.status) {
     const tooltip = (
@@ -135,19 +124,6 @@ export function reactionStatus(element) {
       default:
         return null;
     }
-  }
-
-  return null;
-}
-
-function topSecretIcon(element) {
-  if (element.type === 'sample' && element.is_top_secret === true) {
-    const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
-    return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        <i className="fa fa-user-secret" />
-      </OverlayTrigger>
-    );
   }
 
   return null;
@@ -220,8 +196,6 @@ export default class ElementsTableEntries extends Component {
 
   previewColumn(element) {
     const classNames = classnames({
-      molecule: element.type === 'sample',
-      'molecule-selected': element.type === 'sample' && this.isElementSelected(element),
       reaction: element.type === 'reaction',
       research_plan: element.type === 'research_plan',
     });
@@ -276,7 +250,6 @@ export default class ElementsTableEntries extends Component {
       <Table className="elements" hover>
         <tbody className="sheet">
           {elements.map((element, index) => {
-            const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name : '';
             let className = "";
             if (this.isElementSelected(element)
               || (keyboardElementIndex != null && keyboardElementIndex === index)) {
@@ -322,11 +295,8 @@ export default class ElementsTableEntries extends Component {
                     <ShowUserLabels element={element} />
                     {reactionVariations(element)}
                     <br />
-                    {sampleMoleculeName}
                     <CommentIcon commentCount={element.comment_count} />
                     <ElementCollectionLabels element={element} key={element.id} />
-                    {sampleAnalysesLabels(element)}
-                    {topSecretIcon(element)}
                   </div>
                 </td>
                 {this.previewColumn(element)}
