@@ -6,7 +6,10 @@ module Entities
     expose :name
     expose :short_label
     expose :description
-    expose :bar_code
+    # expose :bar_code
+    expose :bar_code do |vessel|
+      vessel.code_log&.value_sm
+    end
     expose :qr_code
     expose :weight_amount
     expose :weight_unit

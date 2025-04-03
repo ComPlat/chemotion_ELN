@@ -25,6 +25,7 @@
 class Vessel < ApplicationRecord
   acts_as_paranoid
   include Taggable
+  include ElementCodes
   include ElementUIStateScopes
 
   belongs_to :vessel_template
