@@ -50,15 +50,6 @@ const showDetails = (id) => {
   sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
 };
 
-const dragColumn = (element, sourceType) => (
-  <td className="text-center align-middle">
-    <ElementDragHandle
-      sourceType={sourceType}
-      element={element}
-    />
-  </td>
-);
-
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
     const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
@@ -132,38 +123,44 @@ function MoleculeHeader({ sample, show, showPreviews, onClick }) {
   const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
 
   return (
-    <tr
-      role="button"
-      onClick={onClick}
-    >
-      {!isNoStructureSample && dragColumn(sample, DragDropItemTypes.MOLECULE)}
-      {isNoStructureSample
-        ? (
-          <td colSpan="3" className="position-relative">
+    <div className="d-flex mb-1">
+      {!isNoStructureSample && (
+        <ElementDragHandle
+          sourceType={DragDropItemTypes.MOLECULE}
+          element={sample}
+        />
+      )}
+      <button
+        type="button"
+        onClick={onClick}
+        className="neutral-button d-flex align-items-stretch flex-grow-1 bg-gray-200"
+      >
+        {isNoStructureSample
+          ? (
             <div>
               <h4>
                 (No-structure sample)
               </h4>
             </div>
-          </td>
-        )
-        : (
-          <td colSpan="2">
-            <div className="d-flex align-items-start gap-1">
+          )
+          : (
+            <div className="d-flex align-items-start flex-grow-1 gap-1">
               {showPreviews && svgPreview(sample)}
               <h4 className="flex-grow-1"><SampleName sample={sample} /></h4>
               <div className="d-flex align-items-center gap-1">
-                {sample.molecule.chem_repo && sample.molecule.chem_repo.id && <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />}
+                {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (
+                  <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
+                )}
                 <PubchemLabels element={sample} />
                 <ComputedPropLabel cprops={sample.molecule_computed_props} />
                 <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-                  <ChevronIcon direction={show ? 'down' : 'right'} color="primary"/>
+                  <ChevronIcon direction={show ? 'down' : 'right'} color="primary" />
                 </OverlayTrigger>
               </div>
             </div>
-          </td>
-        )}
-    </tr>
+          )}
+      </button>
+    </div>
   );
 }
 
@@ -220,7 +217,6 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   handleMoleculeToggle(moleculeName, showGroup) {
-
     const { moleculeGroupsShown } = this.props;
 
     let moleculeGroupsShownUpdated = [];
@@ -301,21 +297,26 @@ export default class ElementsTableSampleEntries extends Component {
 
     const sampleRows = samples.slice(0, numSamples).map((sample) => {
       const selected = this.isElementSelected(sample);
-      const applyHighlight = selected || keyboardSeletectedElementId === sample.id
+      const applyHighlight = selected || keyboardSeletectedElementId === sample.id;
 
       return (
-        <tr key={sample.id} className={classnames({ 'text-bg-primary': applyHighlight })}>
-          {dragColumn(sample, DragDropItemTypes.SAMPLE)}
-          <td width="30px">
-            <ElementCheckbox
-              element={sample}
-              key={sample.id}
-              checked={this.isElementChecked(sample)}
-            />
-          </td>
-          <td
+        <div
+          key={sample.id}
+          className={`d-flex align-itmes-stretch mb-1 ${applyHighlight ? 'text-bg-primary' : 'bg-gray-100'}`}
+        >
+          <ElementDragHandle
+            sourceType={DragDropItemTypes.SAMPLE}
+            element={sample}
+          />
+          <ElementCheckbox
+            element={sample}
+            key={sample.id}
+            checked={this.isElementChecked(sample)}
+          />
+          <button
             onClick={() => showDetails(sample.id)}
-            role="button"
+            type="button"
+            className="neutral-button flex-fill"
           >
             <div className="d-flex justify-content-between flex-wrap">
               {sample.title(selected)}
@@ -336,25 +337,22 @@ export default class ElementsTableSampleEntries extends Component {
                 <TopSecretIcon element={sample} />
               </div>
             </div>
-          </td>
-        </tr>
+          </button>
+        </div>
       );
     });
 
     if (numSamples < length) {
       const showMoreSamples = (
-        <tr key={`${index}_showMore`}>
-          <td colSpan="3" className="p-0">
-            <Button
-              variant="info"
-              onClick={() => this.showMoreSamples(index)}
-              className="w-100"
-            >
-              Show more samples
-            </Button>
-          </td>
-
-        </tr>
+        <div key={`${index}_showMore`} className="p-0">
+          <Button
+            variant="info"
+            onClick={() => this.showMoreSamples(index)}
+            className="w-100"
+          >
+            Show more samples
+          </Button>
+        </div>
       );
       sampleRows.push(showMoreSamples);
     }
@@ -370,7 +368,7 @@ export default class ElementsTableSampleEntries extends Component {
     const showGroup = moleculeGroupsShown.includes(moleculeName);
 
     return (
-      <tbody key={index} className="sheet">
+      <div key={`moleculeHeader-${moleculeGroup[0].id}`} className="mb-2">
         <MoleculeHeader
           sample={moleculeGroup[0]}
           show={showGroup}
@@ -378,20 +376,20 @@ export default class ElementsTableSampleEntries extends Component {
           onClick={() => this.handleMoleculeToggle(moleculeName, showGroup )}
         />
         {showGroup ? this.renderSamples(moleculeGroup, index) : null}
-      </tbody>
+      </div>
     );
   }
 
   render() {
     const { displayedMoleculeGroup } = this.state;
     return (
-      <Table className="elements" hover>
+      <div className="elements">
         {Object.keys(displayedMoleculeGroup).map((group, index) => {
           const moleculeGroup = displayedMoleculeGroup[group];
           const { numSamples } = displayedMoleculeGroup[group];
           return this.renderMoleculeGroup(moleculeGroup, index, numSamples);
         })}
-      </Table>
+      </div>
     );
   }
 }

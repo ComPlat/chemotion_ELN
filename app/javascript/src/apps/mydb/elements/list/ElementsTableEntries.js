@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
 import {
-  Tooltip, OverlayTrigger, Table, Badge
+  Tooltip, OverlayTrigger, Badge
 } from 'react-bootstrap';
 import classnames from 'classnames';
 
@@ -200,43 +200,37 @@ export default class ElementsTableEntries extends Component {
       research_plan: element.type === 'research_plan',
     });
 
-    const svgContainerStyle = {
-      verticalAlign: 'middle',
-      textAlign: 'center',
-      cursor: 'pointer'
-    };
-
     const { showPreviews } = UIStore.getState();
     if (showPreviews && (element.type === 'reaction')) {
       return (
-        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+        <button type="button" className="svg-container-button" onClick={() => showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath} />
-        </td>
+        </button>
       );
     }
     if (element.type === 'research_plan' || element.element_klass) {
       if (element.thumb_svg !== 'not available') {
         return (
-          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+          <button type="button" className="svg-container-button" onClick={() => showDetails(element)}>
             <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" role="button" />
-          </td>
+          </button>
         );
       }
       return (
-        <td
-          role="gridcell"
+        <button
+          type="button"
           aria-label="Element"
-          style={svgContainerStyle}
+          className="svg-container-button"
           onClick={() => showDetails(element)}
         />
       );
     }
 
     return (
-      <td
-        role="gridcell"
+      <button
+        type="button"
         aria-label="Element"
-        style={{ display: 'none', cursor: 'pointer' }}
+        className="neutral-button"
         onClick={() => showDetails(element)}
       />
     );
@@ -247,64 +241,54 @@ export default class ElementsTableEntries extends Component {
     const { keyboardElementIndex } = this.state;
 
     return (
-      <Table className="elements" hover>
-        <tbody className="sheet">
-          {elements.map((element, index) => {
-            let className = "";
-            if (this.isElementSelected(element)
-              || (keyboardElementIndex != null && keyboardElementIndex === index)) {
-              className = "text-bg-primary";
-            }
-
-            return (
-              <tr key={element.id} className={className}>
-                <td width="30px">
-                  <ElementDragHandle element={element} />
-                  <ElementCheckbox
-                    element={element}
-                    key={element.id}
-                    checked={this.isElementChecked(element)}
+      <div className="elements">
+        {elements.map((element, index) => {
+          const isSelected = this.isElementSelected(element)
+            || (keyboardElementIndex != null && keyboardElementIndex === index);
+          return (
+            <div className={classnames('d-flex', { 'text-bg-primary': isSelected })} key={element.id}>
+              <ElementDragHandle element={element} />
+              <ElementCheckbox
+                element={element}
+                key={element.id}
+                checked={this.isElementChecked(element)}
+              />
+              <button
+                type="button"
+                onClick={() => showDetails(element)}
+                className="neutral-button"
+                width={element.type === 'research_plan' ? '280px' : 'unset'}
+                data-cy={`researchPLanItem-${element.id}`}
+              >
+                <div>
+                  <SvgWithPopover
+                    hasPop={['reaction'].includes(element.type)}
+                    previewObject={{
+                      txtOnly: element.title(),
+                      isSVG: true,
+                      src: element.svgPath
+                    }}
+                    popObject={{
+                      title: (element.type === 'reaction' && element.short_label) || '',
+                      src: element.svgPath,
+                      height: '26vh',
+                      width: '52vw'
+                    }}
                   />
+                  {reactionStatus(element)}
+                  {reactionRole(element)}
+                  <ShowUserLabels element={element} />
+                  {reactionVariations(element)}
                   <br />
-                </td>
-                <td
-                  role="gridcell"
-                  onClick={() => showDetails(element)}
-                  style={{ cursor: 'pointer' }}
-                  width={element.type === 'research_plan' ? '280px' : 'unset'}
-                  data-cy={`researchPLanItem-${element.id}`}
-                >
-                  <div>
-                    <SvgWithPopover
-                      hasPop={['reaction'].includes(element.type)}
-                      previewObject={{
-                        txtOnly: element.title(),
-                        isSVG: true,
-                        src: element.svgPath
-                      }}
-                      popObject={{
-                        title: (element.type === 'reaction' && element.short_label) || '',
-                        src: element.svgPath,
-                        height: '26vh',
-                        width: '52vw'
-                      }}
-                    />
-                    {reactionStatus(element)}
-                    {' '}
-                    {reactionRole(element)}
-                    <ShowUserLabels element={element} />
-                    {reactionVariations(element)}
-                    <br />
-                    <CommentIcon commentCount={element.comment_count} />
-                    <ElementCollectionLabels element={element} key={element.id} />
-                  </div>
-                </td>
-                {this.previewColumn(element)}
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
+                  <CommentIcon commentCount={element.comment_count} />
+                  <ElementCollectionLabels element={element} key={element.id} />
+                </div>
+              </button>
+              {this.previewColumn(element)}
+            </div>
+          );
+        })}
+      </div>
     );
   }
 }

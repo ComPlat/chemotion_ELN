@@ -289,8 +289,8 @@ export default class ElementsTable extends React.Component {
         direction={collapseAll ? 'right' : 'down'}
         onClick={() => this.setState((prevState) => ({
           collapseAll: !prevState.collapseAll,
-         moleculeGroupsShown: !collapseAll ? [] : this.getMoleculeGroupsShownFromElement(elements, moleculeSort)
-         }))}
+          moleculeGroupsShown: !collapseAll ? [] : this.getMoleculeGroupsShownFromElement(elements, moleculeSort)
+        }))}
         color="primary"
         className="fs-5"
         role="button"
@@ -401,9 +401,8 @@ export default class ElementsTable extends React.Component {
         >
           <button
             type="button"
-            className="border-0"
+            className="neutral-button"
             onClick={this.toggleProductOnly}
-            role="button"
           >
             <i
               style={{ color }}
@@ -425,7 +424,7 @@ export default class ElementsTable extends React.Component {
       <OverlayTrigger placement="top" overlay={sortDirectionTooltip}>
         <button
           type="button"
-          style={{ border: 'none' }}
+          className="neutral-button"
           onClick={this.changeSortDirection}
         >
           <i className={`fa fa-fw ${sortDirectionIcon}`} />
@@ -464,7 +463,7 @@ export default class ElementsTable extends React.Component {
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
           type="button"
-          style={{ border: 'none' }}
+          className="neutral-button"
           onClick={this.changeElementsSort}
         >
           {sortIcon}
@@ -540,7 +539,7 @@ export default class ElementsTable extends React.Component {
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
           type="button"
-          style={{ border: 'none' }}
+          className="neutral-button"
           onClick={this.changeElementsSort}
         >
           {sortIcon}
@@ -605,7 +604,7 @@ export default class ElementsTable extends React.Component {
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
               type="button"
-              style={{ border: 'none' }}
+              className="neutral-button"
               onClick={this.changeDateFilter}
             >
               {filterIcon}

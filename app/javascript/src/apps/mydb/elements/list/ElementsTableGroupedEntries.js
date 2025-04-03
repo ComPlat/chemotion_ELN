@@ -1,6 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
-import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -19,12 +19,6 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import Aviator from 'aviator';
 
-const dragColumn = (element) => (
-  <td className="text-center align-middle">
-    <ElementDragHandle element={element} />
-  </td>
-);
-
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
 
 function ReactionsHeader({
@@ -33,13 +27,14 @@ function ReactionsHeader({
   const { showPreviews } = UIStore.getState();
 
   return (
-    <tr
-      onClick={onClick}
-      role="button"
-    >
-      {dragColumn(element)}
-      <td colSpan="2" className="position-relative">
-        {showPreviews && (
+    <div className="d-flex mb-1">
+      <ElementDragHandle element={element} />
+      <div
+        className="d-flex flex-grow-1 bg-gray-200"
+        onClick={onClick}
+        role="button"
+      >
+        <div className="flex-grow-1">
           <SvgWithPopover
             hasPop
             previewObject={{
@@ -55,14 +50,12 @@ function ReactionsHeader({
               width: '52vw',
             }}
           />
-        )}
-        <div className="position-absolute top-0 end-0 mt-2 me-2">
-          <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-            <ChevronIcon direction={show ? 'down' : 'right'} color="primary"/>
-          </OverlayTrigger>
         </div>
-      </td>
-    </tr>
+        <OverlayTrigger placement="bottom" overlay={overlayToggle}>
+          <ChevronIcon direction={show ? 'down' : 'right'} color="primary" />
+        </OverlayTrigger>
+      </div>
+    </div>
   );
 }
 
@@ -81,7 +74,7 @@ function GenericElementsHeader({
       onClick={onClick}
       role="button"
     >
-      {dragColumn(element)}
+      <ElementDragHandle element={element} />
       <td colSpan="2" className="position-relative">
         <div className="preview-table">
           {group}
@@ -267,11 +260,11 @@ export default class ElementsTableGroupedEntries extends Component {
 
     const rows = elements.map((element) => {
       const selected = this.isElementSelected(element);
-      const className = (selected || keyboardSelectedElementId === element.id) ?
-        "text-bg-primary" : "";
+      const className = (selected || keyboardSelectedElementId === element.id)
+        ? 'text-bg-primary' : '';
       return (
         <tr key={element.id} className={className}>
-          {dragColumn(element)}
+          <ElementDragHandle element={element} />
           <td width="30px">
             <ElementCheckbox
               element={element}
@@ -320,11 +313,11 @@ export default class ElementsTableGroupedEntries extends Component {
 
     const rows = elements.map((element) => {
       const selected = this.isElementSelected(element);
-      const className = (selected || keyboardSelectedElementId === element.id) ? "text-bg-primary" : "";
+      const className = (selected || keyboardSelectedElementId === element.id) ? 'text-bg-primary' : '';
 
       return (
         <tr key={element.id} className={className}>
-          {dragColumn(element)}
+          <ElementDragHandle element={element} />
           <td width="30px">
             <ElementCheckbox
               element={element}
@@ -384,10 +377,10 @@ export default class ElementsTableGroupedEntries extends Component {
     }
 
     return (
-      <tbody key={index} className="sheet">
+      <div key={index}>
         {groupHeader}
         {showGroup && groupedElements}
-      </tbody>
+      </div>
     );
   }
 
@@ -397,9 +390,9 @@ export default class ElementsTableGroupedEntries extends Component {
     );
 
     return (
-      <Table className="elements">
+      <div className="elements">
         {tableContent}
-      </Table>
+      </div>
     );
   }
 }
