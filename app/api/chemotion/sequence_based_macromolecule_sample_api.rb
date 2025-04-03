@@ -74,7 +74,9 @@ module Chemotion
           end
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified'}) do
             requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record'
+          end
 
+          given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
             requires(:protein_sequence_modification_attributes, type: Hash) do
               optional :modification_n_terminal, type: Boolean, default: false
               optional :modification_n_terminal_details, type: String
@@ -130,9 +132,7 @@ module Chemotion
               optional :other_modifications_enabled, type: Boolean, default: false
               optional :other_modifications_details, type: String, default: ''
             end
-          end
 
-          given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
             optional :own_identifier, type: String, desc: 'Freetext field for a internal identifier'
             optional :ec_numbers, type: Array[String]
             optional :full_name, type: String, as: :systematic_name # uniprot calls it fullName, but in our DB it's systematic_name
@@ -193,7 +193,9 @@ module Chemotion
           end
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified'}) do
             requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record'
+          end
 
+          given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
             requires(:protein_sequence_modification_attributes, type: Hash) do
               optional :modification_n_terminal, type: Boolean, default: false
               optional :modification_n_terminal_details, type: String
@@ -249,9 +251,7 @@ module Chemotion
               optional :other_modifications_enabled, type: Boolean, default: false
               optional :other_modifications_details, type: String, default: ''
             end
-          end
 
-          given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
             optional :own_identifier, type: String, desc: 'Freetext field for a internal identifier'
             optional :ec_numbers, type: Array[String]
             optional :full_name, type: String, as: :systematic_name # uniprot calls it fullName, but in our DB it's systematic_name
