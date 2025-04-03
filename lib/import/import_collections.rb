@@ -16,13 +16,13 @@ module Import
       @attachments = []
       @col_id = col_id
       @col_all = Collection.get_all_collection_for_user(current_user_id)
-      @images = {}
-      @svg_files = []
+      @tmp_dir = Dir.mktmpdir
     end
 
     def execute
       extract
       import
+    ensure
       cleanup
     end
 
@@ -38,12 +38,14 @@ module Import
           # do nothing for directory entry
           next if entry.ftype == :directory
 
-          data = entry.get_input_stream.read.force_encoding('UTF-8')
-          case entry.name
+          entry_name = entry.name
+          case entry_name
           when 'export.json'
+            data = entry.get_input_stream.read.force_encoding('UTF-8')
             @data = JSON.parse(data)
           when %r{attachments/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})}
-            file_name = entry.name.sub('attachments/', '')
+            data = entry.get_input_stream.read.force_encoding('UTF-8')
+            file_name = entry_name.sub('attachments/', '')
             attachment = Attachment.new(
               transferred: true,
               con_state: Labimotion::ConState::NONE,
@@ -68,10 +70,10 @@ module Import
               tmp.unlink # deletes the temp file
             end
           when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
-            tmp_file = Tempfile.new
-            tmp_file.write(data)
-            tmp_file.rewind
-            @images["#{Regexp.last_match(1)}/#{Regexp.last_match(2)}"] = tmp_file
+            # write data to tmp dir with the same path
+            path = File.join(@tmp_dir, entry_name)
+            FileUtils.mkdir_p(File.dirname(path))
+            entry.extract(path) { |src, dest| IO.copy_stream(src, dest) }
           end
         end
       end
@@ -124,10 +126,7 @@ module Import
     # desc: to destroy uploaded zip and sweep image tmp files
     def cleanup
       # @att.destroy!
-      @images.each_value do |tmp_file|
-        tmp_file.close
-        tmp_file.unlink
-      end
+      FileUtils.rm_rf(@tmp_dir)
     end
 
     private
@@ -277,14 +276,6 @@ module Import
               [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
           end
         end
-
-        # for same sample_svg_file case
-        s_svg_file = @svg_files.find { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }
-        if s_svg_file.nil?
-          @svg_files.push(sample_svg_file: fields.fetch('sample_svg_file'), svg_file: sample.sample_svg_file)
-        end
-
-        sample.sample_svg_file = s_svg_file[:svg_file] unless s_svg_file.nil?
 
         # keep orig eln info
         if @gt == true
@@ -658,18 +649,18 @@ module Import
       @instances.fetch(type, {}).fetch(parent_uuid, nil)
     end
 
-    def fetch_image(image_path, image_file_name)
-      begin
-        svg = nil
-        if image_file_name.present? && (tmp_file = @images["#{image_path}/#{image_file_name}"]) && (tmp_file && !tmp_file.closed?)
-          svg = tmp_file.read
-        end
-      rescue StandardError => e
-        Rails.logger.error e
-      ensure
-        tmp_file.close! if tmp_file && !tmp_file.closed?
-      end
-      svg || image_file_name
+    # read the image from the tmp dir/file
+    # @param [String] element_type: the image category (samples, reactions, molecules, research_plans)
+    # @param [String] image_file_name: the svg image file name
+    # @return [String, nil] the svg image content or nil if the image file does not exist or is not an svg
+    def fetch_image(element_type, image_file_name)
+      tmp_file = Pathname.new(@tmp_dir).join("images/#{element_type}/#{image_file_name}")
+      return nil unless File.exist?(tmp_file)
+
+      svg = File.read(tmp_file)
+      svg&.start_with?('<svg') ? svg : nil
+    rescue StandardError => e
+      Rails.logger.error e
     end
 
     def update_instances!(uuid, instance)
