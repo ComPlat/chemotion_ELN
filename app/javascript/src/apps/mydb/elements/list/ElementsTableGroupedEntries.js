@@ -118,11 +118,6 @@ export default class ElementsTableGroupedEntries extends Component {
 
   componentDidMount() {
     KeyboardStore.listen(this.reactionsOnKeyDown);
-    this.updateTargetType();
-  }
-
-  componentDidUpdate() {
-    this.updateTargetType();
   }
 
   componentWillUnmount() {
@@ -181,13 +176,6 @@ export default class ElementsTableGroupedEntries extends Component {
 
     return null;
   };
-
-  updateTargetType() {
-    const { currentElement } = ElementStore.getState();
-    const targetType = currentElement && currentElement.type;
-    // eslint-disable-next-line react/no-direct-mutation-state
-    this.state.targetType = targetType;
-  }
 
   showDetails(id) {
     const { currentCollection, isSync } = UIStore.getState();
@@ -357,7 +345,7 @@ export default class ElementsTableGroupedEntries extends Component {
 
   renderGroup(group, elements, index) {
     const { collapseAll, type } = this.props;
-    const { elementsShown, targetType } = this.state;
+    const { elementsShown } = this.state;
 
     const showGroup = !elementsShown.includes(group) && !collapseAll;
     let groupedElements;
@@ -371,7 +359,6 @@ export default class ElementsTableGroupedEntries extends Component {
           element={elements[0]}
           show={showGroup}
           onClick={() => this.handleGroupToggle(group)}
-          targetType={targetType}
         />
       );
     } else {
@@ -382,7 +369,6 @@ export default class ElementsTableGroupedEntries extends Component {
           element={elements[0]}
           show={showGroup}
           onClick={() => this.handleGroupToggle(group)}
-          targetType={targetType}
         />
       );
     }
