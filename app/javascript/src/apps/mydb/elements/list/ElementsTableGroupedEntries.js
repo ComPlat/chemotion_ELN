@@ -198,11 +198,6 @@ export default class ElementsTableGroupedEntries extends Component {
     return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
-  isElementSelected(element) {
-    const { currentElement } = this.props;
-    return (currentElement && currentElement.id === element.id);
-  }
-
   groupedElements() {
     const { elements, elementsGroup, type } = this.props;
 
@@ -251,9 +246,10 @@ export default class ElementsTableGroupedEntries extends Component {
 
   renderReactionElements(elements) {
     const { keyboardSelectedElementId } = this.state;
+    const { isElementSelected } = this.props;
 
     const rows = elements.map((element) => {
-      const selected = this.isElementSelected(element);
+      const selected = isElementSelected(element);
       const style = (selected || keyboardSelectedElementId === element.id) ? {
         color: '#fff', background: '#337ab7'
       } : {};
@@ -306,9 +302,10 @@ export default class ElementsTableGroupedEntries extends Component {
 
   renderGenericElements(elements) {
     const { keyboardSelectedElementId } = this.state;
+    const { isElementSelected } = this.props;
 
     const rows = elements.map((element) => {
-      const selected = this.isElementSelected(element);
+      const selected = isElementSelected(element);
       const style = (selected || keyboardSelectedElementId === element.id) ? {
         color: '#fff', background: '#337ab7'
       } : {};
@@ -395,7 +392,6 @@ export default class ElementsTableGroupedEntries extends Component {
 }
 
 ElementsTableGroupedEntries.defaultProps = {
-  currentElement: null,
   genericEl: null,
 };
 
@@ -403,7 +399,7 @@ ElementsTableGroupedEntries.propTypes = {
   onChangeCollapse: PropTypes.func.isRequired,
   collapseAll: PropTypes.bool.isRequired,
   elements: PropTypes.array.isRequired,
-  currentElement: PropTypes.object,
+  isElementSelected: PropTypes.func.isRequired,
   ui: PropTypes.object.isRequired,
   elementsGroup: PropTypes.string.isRequired,
   genericEl: PropTypes.object,

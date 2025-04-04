@@ -15,15 +15,11 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
+const DeviceDescriptionList = ({ elements, isElementSelected, ui }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
   const showAllGroups = deviceDescriptionsStore.show_all_groups;
   const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
-
-  const isElementSelected = (element) => {
-    return (currentElement && currentElement.id === element.id);
-  }
 
   const isElementChecked = (element) => {
     const { checkedIds, uncheckedIds, checkedAll } = ui;
@@ -187,7 +183,7 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
 
 DeviceDescriptionList.propTypes = {
   elements: PropTypes.array.isRequired,
-  currentElement: PropTypes.object.isRequired,
+  isElementSelected: PropTypes.func.isRequired,
   ui: PropTypes.object.isRequired,
 };
 
