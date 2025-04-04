@@ -37,8 +37,7 @@ module Chemotion
           babel_info = OpenBabelService.molecule_info_from_structure(smiles, 'smi')
           inchikey = babel_info[:inchikey]
           return {} if inchikey.blank?
-
-          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
+          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false, sum_formular: babel_info[:formula])
           unless molecule
             molfile = babel_info[:molfile] if babel_info
             begin
