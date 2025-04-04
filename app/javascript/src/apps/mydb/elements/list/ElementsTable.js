@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import React from 'react';
+import { Set } from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
@@ -27,7 +28,6 @@ import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineCont
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
-import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -38,8 +38,10 @@ export default class ElementsTable extends React.Component {
       elements: [],
       currentElement: null,
       ui: {},
-      collapseAll: false,
-      moleculeGroupsShown: [],
+      collapse: {
+        baseState: 'expanded',
+        except: new Set(),
+      },
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
@@ -90,6 +92,18 @@ export default class ElementsTable extends React.Component {
           sortDirection: newSortDirection,
         });
       }
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { type } = this.props;
+    if (prevProps.type !== type) {
+      this.setState({
+        collapse: {
+          baseState: 'expanded',
+          except: new Set(),
+        }
+      });
     }
   }
 
@@ -193,19 +207,16 @@ export default class ElementsTable extends React.Component {
     if (toDate !== date) UIActions.setToDate(date);
   }
 
-  changeCollapse = (collapseAll, childPropName, childPropValue) => {
-    this.setState({
-        collapseAll: !collapseAll,
-        ...(childPropName ? { [childPropName]: childPropValue } : {})
-    });
-  };
-
   changeSampleSort = () => {
     let { moleculeSort } = this.state;
     moleculeSort = !moleculeSort;
 
     this.setState({
-      moleculeSort
+      moleculeSort,
+      collapse: {
+        baseState: 'expanded',
+        except: new Set(),
+      },
     }, () => ElementActions.changeSorting(moleculeSort));
   };
 
@@ -238,6 +249,10 @@ export default class ElementsTable extends React.Component {
     this.setState({
       elementsGroup,
       elementsSort,
+      collapse: {
+        baseState: 'expanded',
+        except: new Set(),
+      },
     }, () => {
       this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
@@ -267,22 +282,60 @@ export default class ElementsTable extends React.Component {
     );
   };
 
-  getMoleculeGroupsShownFromElement = (elements, moleculeSort) => {
-    const displayedMoleculeGroup = getDisplayedMoleculeGroup(elements, moleculeSort);
-    const moleculeGroupsShown = getMoleculeGroupsShown(displayedMoleculeGroup);
-    return moleculeGroupsShown;
-  }
+  collapseAll = () => {
+    this.setState({
+      collapse: {
+        baseState: 'collapsed',
+        except: new Set(),
+      }
+    });
+  };
+
+  expandAll = () => {
+    this.setState({
+      collapse: {
+        baseState: 'expanded',
+        except: new Set(),
+      }
+    });
+  };
+
+  isGroupCollapsed = (groupId) => {
+    const { collapse: { baseState, except } } = this.state;
+
+    if (baseState === 'collapsed') {
+      return !except.has(groupId);
+    }
+
+    if (baseState === 'expanded') {
+      return except.has(groupId);
+    }
+
+    throw new Error(`Invalid collapse state: ${baseState}`);
+  };
+
+  toggleGroupCollapse = (groupId) => {
+    const { collapse: { baseState, except } } = this.state;
+
+    const newExcept = except.has(groupId)
+      ? except.delete(groupId)
+      : except.add(groupId);
+    this.setState({
+      collapse: {
+        baseState,
+        except: newExcept
+      }
+    });
+  };
 
   collapseButton = () => {
-    const { collapseAll, elements, moleculeSort} = this.state;
+    const { collapse: { baseState } } = this.state;
+    const isCollapsed = baseState === 'collapsed';
 
     return (
       <ChevronIcon
-        direction={collapseAll ? 'right' : 'down'}
-        onClick={() => this.setState((prevState) => ({
-          collapseAll: !prevState.collapseAll,
-         moleculeGroupsShown: !collapseAll ? [] : this.getMoleculeGroupsShownFromElement(elements, moleculeSort)
-         }))}
+        direction={isCollapsed ? 'right' : 'down'}
+        onClick={() => (isCollapsed ? this.expandAll() : this.collapseAll())}
         color="primary"
         className="fs-5"
         role="button"
@@ -633,10 +686,8 @@ export default class ElementsTable extends React.Component {
   renderEntries() {
     const {
       elements,
-      collapseAll,
       moleculeSort,
       elementsGroup,
-      moleculeGroupsShown
     } = this.state;
 
     const { type, genericEl } = this.props;
@@ -645,22 +696,21 @@ export default class ElementsTable extends React.Component {
     if (type === 'sample') {
       elementsTableEntries = (
         <ElementsTableSampleEntries
-          collapseAll={collapseAll}
           elements={elements}
           isElementSelected={this.isElementSelected}
           moleculeSort={moleculeSort}
-          onChangeCollapse={(collapseAll, childPropName, childPropValue) => this.changeCollapse(!collapseAll, childPropName, childPropValue)}
-          moleculeGroupsShown = {moleculeGroupsShown}
+          isGroupCollapsed={this.isGroupCollapsed}
+          toggleGroupCollapse={this.toggleGroupCollapse}
         />
       );
     } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
       elementsTableEntries = (
         <ElementsTableGroupedEntries
-          collapseAll={collapseAll}
           elements={elements}
           isElementSelected={this.isElementSelected}
           elementsGroup={elementsGroup}
-          onChangeCollapse={(checked) => this.changeCollapse(!checked)}
+          isGroupCollapsed={this.isGroupCollapsed}
+          toggleGroupCollapse={this.toggleGroupCollapse}
           genericEl={genericEl}
           type={type}
         />

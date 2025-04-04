@@ -26,14 +26,14 @@ import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ChevronIcon from 'src/components/common/ChevronIcon';
-import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
+import { getDisplayedMoleculeGroup } from 'src/utilities/SampleUtils';
 
-const buildFlattenSampleIds = (displayedMoleculeGroup) => {
+const buildFlattenSampleIds = (groups) => {
   let flatIndex = 0;
   const flattenSamplesId = [];
 
-  displayedMoleculeGroup.forEach((groupSample, index) => {
-    const length = displayedMoleculeGroup[index].numSamples;
+  groups.forEach((groupSample, index) => {
+    const length = groups[index].numSamples;
     for (let i = 0; i < length; i++) {
       flattenSamplesId[flatIndex + i] = groupSample[i].id;
     }
@@ -173,12 +173,15 @@ export default class ElementsTableSampleEntries extends Component {
     super(props);
 
     const { showPreviews } = UIStore.getState();
+    const { elements, moleculeSort } = props;
+    const groups = getDisplayedMoleculeGroup(elements, moleculeSort);
+
     this.state = {
-      displayedMoleculeGroup: [],
+      groups,
       showPreviews,
       flattenSamplesId: [],
       keyboardIndex: null,
-      keyboardSeletectedElementId: null,
+      keyboardSeletectedElementId: buildFlattenSampleIds(groups),
     };
 
     this.sampleOnKeyDown = this.sampleOnKeyDown.bind(this);
@@ -198,40 +201,19 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { elements, moleculeSort, collapseAll } = this.props;
-
-    if (elements === prevProps.elements && moleculeSort === prevProps.moleculeSort) {
-      return;
+    const { elements, moleculeSort } = this.props;
+    if (prevProps.elements !== elements || prevProps.moleculeSort !== moleculeSort) {
+      const displayedMoleculeGroup = getDisplayedMoleculeGroup(elements, moleculeSort);
+      this.setState({
+        groups: displayedMoleculeGroup,
+        flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup),
+      });
     }
-
-    const displayedMoleculeGroup = getDisplayedMoleculeGroup(elements, moleculeSort);
-    const moleculeGroupsShown = getMoleculeGroupsShown(displayedMoleculeGroup);
-
-    this.props.onChangeCollapse(collapseAll, 'moleculeGroupsShown', moleculeGroupsShown);
-
-    this.setState({
-      displayedMoleculeGroup,
-      flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup),
-    }, this.forceUpdate());
   }
 
   componentWillUnmount() {
     KeyboardStore.unlisten(this.sampleOnKeyDown);
     UIStore.unlisten(this.onUIStoreChange);
-  }
-
-  handleMoleculeToggle(moleculeName, showGroup) {
-
-    const { moleculeGroupsShown } = this.props;
-
-    let moleculeGroupsShownUpdated = [];
-    if (showGroup) {
-      moleculeGroupsShownUpdated = moleculeGroupsShown.filter((item) => item !== moleculeName);
-    }
-    else {
-      moleculeGroupsShownUpdated = moleculeGroupsShown.concat(moleculeName);
-    }
-    this.props.onChangeCollapse(false, 'moleculeGroupsShown', moleculeGroupsShownUpdated);
   }
 
   sampleOnKeyDown(state) {
@@ -271,25 +253,25 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   showMoreSamples(index) {
-    const { displayedMoleculeGroup } = this.state;
-    let length = displayedMoleculeGroup[index].numSamples;
+    const { groups } = this.state;
+    let length = groups[index].numSamples;
     length += 3;
-    if (displayedMoleculeGroup[index].length < length) {
-      length = displayedMoleculeGroup[index].length;
+    if (groups[index].length < length) {
+      length = groups[index].length;
     }
-    displayedMoleculeGroup[index].numSamples = length;
+    groups[index].numSamples = length;
 
     this.setState({
-      displayedMoleculeGroup,
-      flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup)
+      groups,
+      flattenSamplesId: buildFlattenSampleIds(groups)
     }, this.forceUpdate());
   }
 
   renderSamples(samples, index) {
-    const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
+    const { keyboardSeletectedElementId, groups } = this.state;
     const { isElementSelected } = this.props;
     const { length } = samples;
-    const { numSamples } = displayedMoleculeGroup[index];
+    const { numSamples } = groups[index];
 
     const sampleRows = samples.slice(0, numSamples).map((sample) => {
       const selected = isElementSelected(sample);
@@ -351,33 +333,33 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderMoleculeGroup(moleculeGroup, index) {
-    const { moleculeGroupsShown } = this.props;
+    const { toggleGroupCollapse, isGroupCollapsed } = this.props;
     const { showPreviews } = this.state;
-    const { molecule } = moleculeGroup[0];
-    const moleculeName = molecule.iupac_name || molecule.inchistring;
-    const showGroup = moleculeGroupsShown.includes(moleculeName);
+    const sample = moleculeGroup[0];
+    const groupKey = sample.getMoleculeId();
+    const showGroup = !isGroupCollapsed(groupKey);
 
     return (
       <tbody key={index}>
         <MoleculeHeader
-          sample={moleculeGroup[0]}
+          sample={sample}
           show={showGroup}
           showPreviews={showPreviews}
-          onClick={() => this.handleMoleculeToggle(moleculeName, showGroup )}
+          onClick={() => toggleGroupCollapse(groupKey)}
         />
-        {showGroup ? this.renderSamples(moleculeGroup, index) : null}
+        {showGroup && this.renderSamples(moleculeGroup, index)}
       </tbody>
     );
   }
 
   render() {
-    const { displayedMoleculeGroup } = this.state;
+    const { groups } = this.state;
+
     return (
       <Table className="sample-entries">
-        {Object.keys(displayedMoleculeGroup).map((group, index) => {
-          const moleculeGroup = displayedMoleculeGroup[group];
-          const { numSamples } = displayedMoleculeGroup[group];
-          return this.renderMoleculeGroup(moleculeGroup, index, numSamples);
+        {groups.map((group, index) => {
+          const { numSamples } = group;
+          return this.renderMoleculeGroup(group, index, numSamples);
         })}
       </Table>
     );
@@ -385,9 +367,10 @@ export default class ElementsTableSampleEntries extends Component {
 }
 
 ElementsTableSampleEntries.propTypes = {
-  onChangeCollapse: PropTypes.func,
-  collapseAll: PropTypes.bool,
-  elements: PropTypes.array,
+  // eslint-disable-next-line react/forbid-prop-types
+  elements: PropTypes.array.isRequired,
   isElementSelected: PropTypes.func.isRequired,
-  moleculeSort: PropTypes.bool,
+  isGroupCollapsed: PropTypes.func.isRequired,
+  toggleGroupCollapse: PropTypes.func.isRequired,
+  moleculeSort: PropTypes.bool.isRequired,
 };

@@ -5,7 +5,7 @@
  * @param {boolean} moleculeSort - Flag to determine if sorting and limiting should be applied.
  * @returns {Array} - Array of grouped molecule samples.
  */
-const getDisplayedMoleculeGroup = (elements, moleculeSort) => {
+export function getDisplayedMoleculeGroup(elements, moleculeSort) {
   const moleculeList = elements.reduce((acc, sample) => {
     const key = sample.getMoleculeId(sample);
     if (!acc[key]) {
@@ -23,22 +23,4 @@ const getDisplayedMoleculeGroup = (elements, moleculeSort) => {
   });
 
   return displayedMoleculeGroup;
-};
-
-/**
- * Extracts the IUPAC name or InChI string of the first molecule in each group.
- *
- * @param {Array} displayedMoleculeGroup - List of grouped molecules.
- * @returns {Array} - Array of IUPAC names or InChI strings.
- */
-const getMoleculeGroupsShown = (displayedMoleculeGroup) => displayedMoleculeGroup.map(
-  (moleculeGroup) => {
-    const { molecule } = moleculeGroup[0];
-    return molecule.iupac_name || molecule.inchistring;
-  }
-);
-
-export {
-  getDisplayedMoleculeGroup,
-  getMoleculeGroupsShown
-};
+}
