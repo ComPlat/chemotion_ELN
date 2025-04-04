@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import React from 'react';
-import { List } from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
@@ -38,11 +37,7 @@ export default class ElementsTable extends React.Component {
     this.state = {
       elements: [],
       currentElement: null,
-      ui: {
-        checkedAll: false,
-        checkedIds: List(),
-        uncheckedIds: List(),
-      },
+      ui: {},
       collapseAll: false,
       moleculeGroupsShown: [],
       moleculeSort: false,
@@ -128,7 +123,6 @@ export default class ElementsTable extends React.Component {
     if (typeof state[type] === 'undefined' || state[type] === null) {
       return;
     }
-    const { checkedIds, uncheckedIds, checkedAll } = state[type];
     const {
       filterCreatedAt, fromDate, toDate, userLabel, number_of_results, currentSearchByID, productOnly
     } = state;
@@ -141,7 +135,7 @@ export default class ElementsTable extends React.Component {
 
     const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
-      checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt
+      currentId || filterCreatedAt
       || fromDate || toDate || userLabel || productOnly !== currentStateProductOnly
       || isSearchResult !== searchResult
     );
@@ -151,9 +145,6 @@ export default class ElementsTable extends React.Component {
       this.setState({
         filterCreatedAt,
         ui: {
-          checkedIds,
-          uncheckedIds,
-          checkedAll,
           currentId,
           number_of_results,
           fromDate,
@@ -572,7 +563,7 @@ export default class ElementsTable extends React.Component {
   renderHeader = () => {
     const { filterCreatedAt, ui, elements } = this.state;
     const { type, genericEl } = this.props;
-    const { checkedAll, checkedIds, fromDate, toDate, userLabel } = ui;
+    const { fromDate, toDate, userLabel } = ui;
 
     let typeSpecificHeader = null;
     if (type === 'sample') {
@@ -598,11 +589,7 @@ export default class ElementsTable extends React.Component {
     return (
       <div className="elements-table-header">
         <div className="select-all">
-          <ElementAllCheckbox
-            type={type}
-            checkedAll={checkedAll}
-            checkedIds={checkedIds}
-          />
+          <ElementAllCheckbox type={type} />
         </div>
         <div
           className="header-right d-flex gap-1 align-items-center"
