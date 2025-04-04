@@ -11,5 +11,6 @@
 #
 
 class Chemical < ApplicationRecord
+  has_logidze
   belongs_to :sample
 end

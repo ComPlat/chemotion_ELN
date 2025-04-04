@@ -17,6 +17,8 @@ module Versioning
         case change['klass_name']
         when 'Attachment'
           Versioning::Reverters::AttachmentReverter.call(change)
+        when 'Chemical'
+          Versioning::Reverters::ChemicalReverter.call(change)
         when 'Container'
           Versioning::Reverters::ContainerReverter.call(change)
         when 'ElementalComposition'
