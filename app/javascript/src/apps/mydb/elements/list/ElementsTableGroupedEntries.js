@@ -109,7 +109,6 @@ export default class ElementsTableGroupedEntries extends Component {
     super();
 
     this.state = {
-      elementsShown: [],
       keyboardIndex: null,
       keyboardSelectedElementId: null,
       sortedElementIds: [],
@@ -124,18 +123,19 @@ export default class ElementsTableGroupedEntries extends Component {
     KeyboardStore.unlisten(this.reactionsOnKeyDown);
   }
 
-  handleGroupToggle(group) {
-    let { elementsShown } = this.state;
+  getReactionGroupKey(element) {
+    const { elementsGroup } = this.props;
+    return element[elementsGroup];
+  }
 
-    if (elementsShown.includes(group)) {
-      elementsShown = elementsShown.filter((item) => item !== group);
-    } else {
-      elementsShown = elementsShown.concat(group);
-    }
+  getGenericGroupKey(element) {
+    const { elementsGroup } = this.props;
+    const groupElements = elementsGroup.split('.');
+    const layer = groupElements[0];
+    const field = groupElements[1];
 
-    this.setState({ elementsShown });
-    const { onChangeCollapse } = this.props;
-    onChangeCollapse(false);
+    const { fields } = (element.properties.layers[layer] || { fields: [{ field, value: '' }] });
+    return fields.find((f) => f.field === field)?.value || '[empty]';
   }
 
   reactionsOnKeyDown = (state) => {
@@ -194,36 +194,23 @@ export default class ElementsTableGroupedEntries extends Component {
   }
 
   groupedElements() {
-    const { elements, elementsGroup, type } = this.props;
+    const { elements, type } = this.props;
 
     const groupedElements = {};
 
-    if (type === 'reaction') {
-      elements.forEach((element) => {
-        const key = element[elementsGroup];
+    const getKey = (type === 'reaction')
+      ? (element) => this.getReactionGroupKey(element)
+      : (element) => this.getGenericGroupKey(element);
 
-        if (!Object.prototype.hasOwnProperty.call(groupedElements, key)) {
-          groupedElements[key] = [];
-        }
+    elements.forEach((element) => {
+      const key = getKey(element);
 
-        groupedElements[key].push(element);
-      });
-    } else {
-      const groupElements = elementsGroup.split('.');
-      const layer = groupElements[0];
-      const field = groupElements[1];
+      if (!Object.prototype.hasOwnProperty.call(groupedElements, key)) {
+        groupedElements[key] = [];
+      }
 
-      elements.forEach((element) => {
-        const { fields } = (element.properties.layers[layer] || { fields: [{ field, value: '' }] });
-        const key = fields.find((f) => f.field === field)?.value || '[empty]';
-
-        if (!Object.prototype.hasOwnProperty.call(groupedElements, key)) {
-          groupedElements[key] = [];
-        }
-
-        groupedElements[key].push(element);
-      });
-    }
+      groupedElements[key].push(element);
+    });
 
     const sortedElementIds = [];
     Object.entries(groupedElements).forEach((entry) => {
@@ -328,10 +315,9 @@ export default class ElementsTableGroupedEntries extends Component {
   }
 
   renderGroup(group, elements, index) {
-    const { collapseAll, type } = this.props;
-    const { elementsShown } = this.state;
+    const { isGroupCollapsed, toggleGroupCollapse, type } = this.props;
+    const showGroup = !isGroupCollapsed(group);
 
-    const showGroup = !elementsShown.includes(group) && !collapseAll;
     let groupedElements;
     let groupHeader;
 
@@ -342,7 +328,7 @@ export default class ElementsTableGroupedEntries extends Component {
           group={group}
           element={elements[0]}
           show={showGroup}
-          onClick={() => this.handleGroupToggle(group)}
+          onClick={() => toggleGroupCollapse(group)}
         />
       );
     } else {
@@ -352,7 +338,7 @@ export default class ElementsTableGroupedEntries extends Component {
           group={group}
           element={elements[0]}
           show={showGroup}
-          onClick={() => this.handleGroupToggle(group)}
+          onClick={() => toggleGroupCollapse(group)}
         />
       );
     }
@@ -383,11 +369,11 @@ ElementsTableGroupedEntries.defaultProps = {
 };
 
 ElementsTableGroupedEntries.propTypes = {
-  onChangeCollapse: PropTypes.func.isRequired,
-  collapseAll: PropTypes.bool.isRequired,
   elements: PropTypes.array.isRequired,
   isElementSelected: PropTypes.func.isRequired,
   elementsGroup: PropTypes.string.isRequired,
+  isGroupCollapsed: PropTypes.func.isRequired,
+  toggleGroupCollapse: PropTypes.func.isRequired,
   genericEl: PropTypes.object,
   type: PropTypes.string.isRequired,
 };
