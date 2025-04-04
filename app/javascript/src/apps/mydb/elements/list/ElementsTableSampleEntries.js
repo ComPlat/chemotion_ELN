@@ -285,11 +285,6 @@ export default class ElementsTableSampleEntries extends Component {
     }, this.forceUpdate());
   }
 
-  isElementChecked(element) {
-    const { ui: { checkedIds = [], uncheckedIds = [], checkedAll } } = this.props;
-    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
-  }
-
   renderSamples(samples, index) {
     const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
     const { isElementSelected } = this.props;
@@ -303,11 +298,7 @@ export default class ElementsTableSampleEntries extends Component {
       return (
         <tr key={sample.id} className={classnames({ 'text-bg-primary': applyHighlight })}>
           <td width="30px">
-            <ElementCheckbox
-              element={sample}
-              key={sample.id}
-              checked={this.isElementChecked(sample)}
-            />
+            <ElementCheckbox element={sample} />
           </td>
           <td
             onClick={() => showDetails(sample.id)}
@@ -398,6 +389,5 @@ ElementsTableSampleEntries.propTypes = {
   collapseAll: PropTypes.bool,
   elements: PropTypes.array,
   isElementSelected: PropTypes.func.isRequired,
-  ui: PropTypes.object,
   moleculeSort: PropTypes.bool,
 };

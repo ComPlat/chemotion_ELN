@@ -5,7 +5,6 @@ import { Tooltip, OverlayTrigger, Collapse } from 'react-bootstrap';
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ArrayUtils from 'src/utilities/ArrayUtils';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import Aviator from 'aviator';
@@ -15,17 +14,11 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-const DeviceDescriptionList = ({ elements, isElementSelected, ui }) => {
+const DeviceDescriptionList = ({ elements, isElementSelected }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
   const showAllGroups = deviceDescriptionsStore.show_all_groups;
   const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
-
-  const isElementChecked = (element) => {
-    const { checkedIds, uncheckedIds, checkedAll } = ui;
-    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
-  }
 
   const showDetails = (element) => {
     const { currentCollection, isSync } = UIStore.getState();
@@ -157,10 +150,7 @@ const DeviceDescriptionList = ({ elements, isElementSelected, ui }) => {
         role="button"
       >
         <div className="d-flex gap-3">
-          <ElementCheckbox
-            element={element}
-            checked={isElementChecked(element)}
-          />
+          <ElementCheckbox element={element} />
           <div>{element.title()}</div>
         </div>
         <div className="d-flex gap-1">
@@ -184,7 +174,6 @@ const DeviceDescriptionList = ({ elements, isElementSelected, ui }) => {
 DeviceDescriptionList.propTypes = {
   elements: PropTypes.array.isRequired,
   isElementSelected: PropTypes.func.isRequired,
-  ui: PropTypes.object.isRequired,
 };
 
 export default observer(DeviceDescriptionList);
