@@ -29,8 +29,6 @@ module Usecases
 
         sbmm_sample.update!(sample_params.merge(sequence_based_macromolecule: sbmm))
         sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
-        # TODO: wie macht man sauber einen Collection Switch? soll das über diesen Endpunkt gehen?
-        # sbmm.collections << current_user.collections.find(params[:collection_id])
 
         sbmm_sample
       end
