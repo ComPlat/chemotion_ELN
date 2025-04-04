@@ -9,8 +9,9 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
-function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
+function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType }) {
   if (!solvent) {
     return null;
   }
@@ -25,7 +26,14 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
     onChangeSolvent(solvent);
   };
 
+  const changeVolume = (event) => {
+    solvent.amount_l = event.value;
+    onChangeSolvent(solvent);
+  };
+
   // onChangeRatio
+  const metricPrefixes = ['m', 'n', 'u'];
+  const metric = (solvent.metrics && solvent.metrics.length > 2 && metricPrefixes.indexOf(solvent.metrics[1]) > -1) ? solvent.metrics[1] : 'm';
   return (
     <tr>
       <td>
@@ -37,6 +45,18 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
           disabled
         />
       </td>
+      {sampleType && sampleType === 'Mixture' && (
+        <td className="align-bottom">
+          <NumeralInputWithUnitsCompo
+            value={solvent.amount_l}
+            unit="l"
+            metricPrefix={metric}
+            metricPrefixes={metricPrefixes}
+            precision={3}
+            onChange={changeVolume}
+          />
+        </td>
+      )}
       <td>
         <Form.Control
           type="number"
@@ -68,6 +88,7 @@ function SampleSolventGroup({
   materialGroup, sample, dropSample, deleteSolvent, onChangeSolvent
 }) {
   const sampleSolvents = sample.solvent ?? [];
+  const sampleType = sample.sample_type;
 
   const createDefaultSolvents = (event) => {
     const solvent = event.value;
@@ -115,6 +136,9 @@ function SampleSolventGroup({
             <thead>
               <tr>
                 <td>Label</td>
+                {sampleSolvents && sampleSolvents.length > 0 && sampleType === 'Mixture' && (
+                  <td>Volume</td>
+                )}
                 <td>Ratio</td>
                 <td>Action</td>
               </tr>
@@ -127,6 +151,7 @@ function SampleSolventGroup({
                   solvent={solv}
                   deleteSolvent={deleteSolvent}
                   onChangeSolvent={onChangeSolvent}
+                  sampleType={sampleType}
                 />
               ))}
             </tbody>

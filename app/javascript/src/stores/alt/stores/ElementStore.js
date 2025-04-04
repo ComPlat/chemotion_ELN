@@ -40,6 +40,8 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
+import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
+import Component from 'src/models/Component';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -684,12 +686,38 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.changeCurrentElement(result);
-    }
-  }
+   if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
+     if (result.sample_type && result.sample_type === 'Mixture') {
+       ComponentsFetcher.fetchComponentsBySampleId(result.id)
+         .then(async components => {
+            const sampleComponents = components.map(component => {
+              const { component_properties, ...rest } = component;
+              const sampleData = {
+                  ...rest,
+                  ...component_properties
+              };
+              return new Component(sampleData);
+          });
+          await result.initialComponents(sampleComponents);
+        })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+     }
+     this.changeCurrentElement(result);
+   }
+ }
 
-  handleCreateSample({ element, closeView }) {
+  handleCreateSample({ element, closeView, components }) {
+    if (element.sample_type && element.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(element, components)
+         .then(async () => {
+           await element.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     UserActions.fetchCurrentUser();
     fetchOls('sample');
     this.handleRefreshElements('sample');
@@ -698,8 +726,17 @@ class ElementStore {
     }
   }
 
-  handleCreateSampleForReaction({ newSample, reaction, materialGroup }) {
+  handleCreateSampleForReaction({ newSample, reaction, materialGroup, components }) {
     UserActions.fetchCurrentUser();
+    if (newSample.sample_type && newSample.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(newSample, components)
+         .then(async () => {
+           await newSample.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
     ElementActions.handleSvgReactionChange(reaction);
@@ -718,9 +755,18 @@ class ElementStore {
     this.changeCurrentElement(sample);
   }
 
-  handleUpdateSampleForReaction({ reaction, sample, closeView }) {
+  handleUpdateSampleForReaction({ reaction, sample, closeView, components }) {
     // UserActions.fetchCurrentUser();
     ElementActions.handleSvgReactionChange(reaction);
+    if (sample.sample_type && sample.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(sample, components)
+         .then(async () => {
+           await sample.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     if (closeView) {
       this.changeCurrentElement(reaction);
     } else {
@@ -732,7 +778,16 @@ class ElementStore {
     this.handleUpdateElement(sample);
   }
 
-  handleUpdateLinkedElement({ element, closeView }) {
+   handleUpdateLinkedElement({ element, closeView, components }) {
+    if (element.sample_type && element.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(element, components)
+         .then(() => {
+           element.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     if (closeView) {
       this.deleteCurrentElement(element);
     } else {
@@ -841,6 +896,24 @@ class ElementStore {
       }
       return { refreshCoefficient: updatedCoefficient };
     });
+
+    if (sample.sample_type && sample.sample_type === 'Mixture') {
+      ComponentsFetcher.fetchComponentsBySampleId(sample.id)
+        .then(async components => {
+           const sampleComponents = components.map(component => {
+             const { component_properties, ...rest } = component;
+             const sampleData = {
+                 ...rest,
+                 ...component_properties
+             };
+             return new Component(sampleData);
+         });
+         await sample.initialComponents(sampleComponents);
+       })
+        .catch((errorMessage) => {
+         console.log(errorMessage);
+        });
+    }
     this.changeCurrentElement(sample);
   }
 
