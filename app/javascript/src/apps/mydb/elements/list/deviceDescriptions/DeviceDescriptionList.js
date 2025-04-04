@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import PropTypes from 'prop-types';
 import { Tooltip, OverlayTrigger, Collapse } from 'react-bootstrap';
 
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
@@ -183,5 +184,11 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
     </div>
   );
 }
+
+DeviceDescriptionList.propTypes = {
+  elements: PropTypes.array.isRequired,
+  currentElement: PropTypes.object.isRequired,
+  ui: PropTypes.object.isRequired,
+};
 
 export default observer(DeviceDescriptionList);
