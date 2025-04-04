@@ -189,11 +189,6 @@ export default class ElementsTableEntries extends Component {
     return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
-  isElementSelected(element) {
-    const { currentElement } = this.props;
-    return (currentElement && currentElement.id === element.id);
-  }
-
   previewColumn(element) {
     const classNames = classnames({
       reaction: element.type === 'reaction',
@@ -243,7 +238,7 @@ export default class ElementsTableEntries extends Component {
   }
 
   render() {
-    const { elements } = this.props;
+    const { elements, isElementSelected } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -251,7 +246,7 @@ export default class ElementsTableEntries extends Component {
         <tbody>
           {elements.map((element, index) => {
             let style = {};
-            if (this.isElementSelected(element)
+            if (isElementSelected(element)
               || (keyboardElementIndex != null && keyboardElementIndex === index)) {
               style = {
                 color: '#000',
@@ -315,13 +310,9 @@ export default class ElementsTableEntries extends Component {
   }
 }
 
-ElementsTableEntries.defaultProps = {
-  currentElement: null
-};
-
 /* eslint-disable react/forbid-prop-types */
 ElementsTableEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
   ui: PropTypes.object.isRequired,
-  currentElement: PropTypes.object,
+  isElementSelected: PropTypes.func.isRequired,
 };

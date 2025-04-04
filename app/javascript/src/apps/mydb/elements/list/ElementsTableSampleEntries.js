@@ -290,18 +290,14 @@ export default class ElementsTableSampleEntries extends Component {
     return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
   }
 
-  isElementSelected(element) {
-    const { currentElement } = this.props;
-    return (currentElement && currentElement.id === element.id);
-  }
-
   renderSamples(samples, index) {
     const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
+    const { isElementSelected } = this.props;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
     const sampleRows = samples.slice(0, numSamples).map((sample) => {
-      const selected = this.isElementSelected(sample);
+      const selected = isElementSelected(sample);
       const applyHighlight = selected || keyboardSeletectedElementId === sample.id
 
       return (
@@ -401,7 +397,7 @@ ElementsTableSampleEntries.propTypes = {
   onChangeCollapse: PropTypes.func,
   collapseAll: PropTypes.bool,
   elements: PropTypes.array,
-  currentElement: PropTypes.object,
+  isElementSelected: PropTypes.func.isRequired,
   ui: PropTypes.object,
   moleculeSort: PropTypes.bool,
 };

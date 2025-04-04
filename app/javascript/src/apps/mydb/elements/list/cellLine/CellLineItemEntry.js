@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { Table } from 'react-bootstrap';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
@@ -7,7 +8,6 @@ import { elementShowOrNew } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class CellLineItemEntry extends Component {
   constructor(props) {
@@ -45,8 +45,8 @@ export default class CellLineItemEntry extends Component {
 
   render() {
     const { cellLineItem } = this.props;
-    const { currentElement } = ElementStore.getState();
-    const backgroundColorClass = currentElement?.id === cellLineItem.id ? 'text-bg-primary' : '';
+    const { isElementSelected } = this.props;
+    const backgroundColorClass = isElementSelected(cellLineItem) ? 'text-bg-primary' : '';
 
     return (
       <div className="group-entry">
@@ -92,5 +92,6 @@ export default class CellLineItemEntry extends Component {
 }
 
 CellLineItemEntry.propTypes = {
-  cellLineItem: CellLinePropTypeTableEntry.isRequired
+  cellLineItem: CellLinePropTypeTableEntry.isRequired,
+  isElementSelected: PropTypes.func.isRequired,
 };

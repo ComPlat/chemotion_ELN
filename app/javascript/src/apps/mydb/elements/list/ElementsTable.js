@@ -65,6 +65,8 @@ export default class ElementsTable extends React.Component {
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
     this.timer = null;
+
+    this.isElementSelected = this.isElementSelected.bind(this);
   }
 
   componentDidMount() {
@@ -324,6 +326,11 @@ export default class ElementsTable extends React.Component {
     this.timer = setTimeout(() => {
       ElementActions.refreshElements(type);
     }, 900);
+  }
+
+  isElementSelected(element) {
+    const { currentElement } = this.state;
+    return currentElement && currentElement.id === element.id;
   }
 
   renderNumberOfResultsInput() {
@@ -640,7 +647,6 @@ export default class ElementsTable extends React.Component {
     const {
       elements,
       ui,
-      currentElement,
       collapseAll,
       moleculeSort,
       elementsGroup,
@@ -655,7 +661,7 @@ export default class ElementsTable extends React.Component {
         <ElementsTableSampleEntries
           collapseAll={collapseAll}
           elements={elements}
-          currentElement={currentElement}
+          isElementSelected={this.isElementSelected}
           ui={ui}
           moleculeSort={moleculeSort}
           onChangeCollapse={(collapseAll, childPropName, childPropValue) => this.changeCollapse(!collapseAll, childPropName, childPropValue)}
@@ -667,7 +673,7 @@ export default class ElementsTable extends React.Component {
         <ElementsTableGroupedEntries
           collapseAll={collapseAll}
           elements={elements}
-          currentElement={currentElement}
+          isElementSelected={this.isElementSelected}
           ui={ui}
           elementsGroup={elementsGroup}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
@@ -679,13 +685,14 @@ export default class ElementsTable extends React.Component {
       elementsTableEntries = (
         <CellLineContainer
           cellLineGroups={CellLineGroup.buildFromElements(elements)}
+          isElementSelected={this.isElementSelected}
         />
       );
     } else if (type === 'device_description') {
       elementsTableEntries = (
         <DeviceDescriptionList
           elements={elements}
-          currentElement={currentElement}
+          isElementSelected={this.isElementSelected}
           ui={ui}
         />
       );
@@ -693,7 +700,7 @@ export default class ElementsTable extends React.Component {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}
-          currentElement={currentElement}
+          isElementSelected={this.isElementSelected}
           ui={ui}
         />
       );
