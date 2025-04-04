@@ -37,12 +37,6 @@ export default class CellLineItemEntry extends Component {
     elementShowOrNew(e);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  isElementChecked(element) {
-    const { checkedIds = [], uncheckedIds = [], checkedAll } = UIStore.getState().cell_line;
-    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
-  }
-
   render() {
     const { cellLineItem } = this.props;
     const { isElementSelected } = this.props;
@@ -54,10 +48,7 @@ export default class CellLineItemEntry extends Component {
           <tbody>
             <tr className={`${backgroundColorClass} border-top`}>
               <td className="select-checkBox">
-                <ElementCheckbox
-                  element={cellLineItem}
-                  checked={this.isElementChecked(cellLineItem)}
-                />
+                <ElementCheckbox element={cellLineItem} />
               </td>
               <td
                 className="short_label"
