@@ -169,15 +169,14 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, SequenceBasedMacromoleculeSample.find(params[:id])).destroy?
+          @sbmm_sample = SequenceBasedMacromoleculeSample.find(params[:id])
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @sbmm_sample).update?
         end
 
         put do
-          sbmm_sample = SequenceBasedMacromoleculeSample.find(params[:id])
+          Usecases::Sbmm::Sample.new(current_user: current_user).update(@sbmm_sample, declared(params, evaluate_given: true))
 
-          Usecases::Sbmm::Sample.new(current_user: current_user).update(sbmm_sample, declared(params, evaluate_given: true))
-
-          present sbmm_sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
+          present @sbmm_sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
         end
       end
 
