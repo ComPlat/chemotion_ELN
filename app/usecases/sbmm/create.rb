@@ -20,7 +20,7 @@ module Usecases
         primary_accession = params[:primary_accession]
         raise ArgumentError.new("'#{primary_accession}' is not a valid Uniprot accession") unless valid_accession?(primary_accession)
 
-        sbmm = SequenceBasedMacromolecule.find_by(primary_accession: primary_accession)
+        sbmm = SequenceBasedMacromolecule.find_by(uniprot_derivation: 'uniprot', primary_accession: primary_accession)
         if sbmm.nil?
           sbmm = Usecases::Sbmm::Finder.new.find_in_uniprot(primary_accession: primary_accession)
           sbmm.sbmm_type = params[:sbmm_type]

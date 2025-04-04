@@ -11,8 +11,9 @@ module Usecases
 
       def create(params)
         sbmm = ::Usecases::Sbmm::Create.new.find_or_create_by(params[:sequence_based_macromolecule_attributes])
-        sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes, :collection_id))
+        sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes, :collection_id, :container))
         sample.user = current_user
+        sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
         sample.sequence_based_macromolecule = sbmm
         target_collections(params).each do |collection|
           sample.collections << collection
@@ -23,10 +24,11 @@ module Usecases
       end
 
       def update(sbmm_sample, params)
-        sample_params = params.except(:sequence_based_macromolecule_attributes, :collection_id)
+        sample_params = params.except(:sequence_based_macromolecule_attributes, :collection_id, :container)
         sbmm = ::Usecases::Sbmm::Create.new.find_or_create_by(params[:sequence_based_macromolecule_attributes])
 
         sbmm_sample.update!(sample_params.merge(sequence_based_macromolecule: sbmm))
+        sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
         # TODO: wie macht man sauber einen Collection Switch? soll das über diesen Endpunkt gehen?
         # sbmm.collections << current_user.collections.find(params[:collection_id])
 
