@@ -5,16 +5,14 @@ import {
 } from 'react-bootstrap';
 import classnames from 'classnames';
 
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
+import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -220,54 +218,6 @@ export default class ElementsTableEntries extends Component {
     return (currentElement && currentElement.id === element.id);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  isCurrEleDropType(type) {
-    const { currentElement } = ElementStore.getState();
-    const targets = {
-      sample: ['reaction', 'wellplate'],
-      reaction: ['research_plan'],
-      wellplate: ['screen', 'research_plan'],
-      generalProcedure: ['reaction'],
-      research_plan: ['screen']
-    };
-    return type && currentElement && targets[type].includes(currentElement.type);
-  }
-
-  dragHandle(element) {
-    const sourceType = this.dropSourceType(element);
-    return (
-      <ElementContainer
-        key={element.id}
-        sourceType={sourceType}
-        element={element}
-      />
-    );
-  }
-
-  dropSourceType(el) {
-    let sourceType = '';
-    const isDropForSample = el.type === 'sample' && this.isCurrEleDropType('sample');
-    const isDropForWellPlate = el.type === 'wellplate' && this.isCurrEleDropType('wellplate');
-    const isDropForResearchPlan = el.type === 'reaction' && this.isCurrEleDropType('reaction');
-    const isDropForGP = el.type === 'reaction' && el.role === 'gp' && this.isCurrEleDropType('generalProcedure');
-    const isDropForScreen = el.type === 'research_plan' && this.isCurrEleDropType('research_plan');
-
-    if (isDropForSample) {
-      sourceType = DragDropItemTypes.SAMPLE;
-    } else if (isDropForWellPlate) {
-      sourceType = DragDropItemTypes.WELLPLATE;
-    } else if (isDropForResearchPlan) {
-      sourceType = DragDropItemTypes.REACTION;
-    } else if (isDropForGP) {
-      sourceType = DragDropItemTypes.GENERALPROCEDURE;
-    } else if (isDropForScreen) {
-      sourceType = DragDropItemTypes.RESEARCH_PLAN;
-    } else {
-      sourceType = DragDropItemTypes.ELEMENT;
-    }
-    return sourceType;
-  }
-
   previewColumn(element) {
     const classNames = classnames({
       molecule: element.type === 'sample',
@@ -319,27 +269,24 @@ export default class ElementsTableEntries extends Component {
   }
 
   render() {
-    const { elements, showDragColumn } = this.props;
+    const { elements } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
-      <Table className="elements" bordered hover style={{ borderTop: 0 }}>
-        <tbody>
+      <Table className="elements" hover>
+        <tbody className="sheet">
           {elements.map((element, index) => {
             const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name : '';
-            let style = {};
+            let className = "";
             if (this.isElementSelected(element)
               || (keyboardElementIndex != null && keyboardElementIndex === index)) {
-              style = {
-                color: '#000',
-                background: '#ddd',
-                border: '4px solid #337ab7'
-              };
+              className = "text-bg-primary";
             }
 
             return (
-              <tr key={element.id} style={style}>
+              <tr key={element.id} className={className}>
                 <td width="30px">
+                  <ElementDragHandle element={element} />
                   <ElementCheckbox
                     element={element}
                     key={element.id}
@@ -383,11 +330,6 @@ export default class ElementsTableEntries extends Component {
                   </div>
                 </td>
                 {this.previewColumn(element)}
-                {showDragColumn && (
-                  <td className="text-center align-middle">
-                    {this.dragHandle(element)}
-                  </td>
-                )}
               </tr>
             );
           })}
@@ -404,7 +346,6 @@ ElementsTableEntries.defaultProps = {
 /* eslint-disable react/forbid-prop-types */
 ElementsTableEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
-  showDragColumn: PropTypes.bool.isRequired,
   ui: PropTypes.object.isRequired,
   currentElement: PropTypes.object,
 };

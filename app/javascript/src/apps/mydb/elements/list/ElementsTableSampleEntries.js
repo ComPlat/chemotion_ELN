@@ -14,10 +14,9 @@ import GenericElementLabels from 'src/apps/mydb/elements/labels/GenericElementLa
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
+import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -51,33 +50,14 @@ const showDetails = (id) => {
   sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
 };
 
-const targets = {
-  sample: ['reaction', 'wellplate', 'device', 'research_plan'],
-  molecule: ['reaction'],
-};
-
-const isCurrEleDropType = (sourceType, targetType) => {
-  if (['molecule', 'sample'].includes(sourceType) && !['wellplate', 'device', 'research_plan'].includes(targetType)) {
-    return sourceType && targetType;
-  }
-  return sourceType && targetType && targets[sourceType].includes(targetType);
-};
-
-const dragColumn = (element, sourceType, targetType) => {
-  if (!targetType) {
-    targetType = ElementStore.getState()?.currentElement?.type || null;
-  }
-
-  return (
-    <td className="text-center align-middle">
-      <ElementContainer
-        key={element.id}
-        sourceType={isCurrEleDropType(sourceType, targetType) ? sourceType : ''}
-        element={element}
-      />
-    </td>
-  );
-};
+const dragColumn = (element, sourceType) => (
+  <td className="text-center align-middle">
+    <ElementDragHandle
+      sourceType={sourceType}
+      element={element}
+    />
+  </td>
+);
 
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
@@ -148,15 +128,15 @@ const svgPreview = (sample) => (
   />
 );
 
-function MoleculeHeader({ sample, show, showPreviews, showDragColumn, onClick, targetType }) {
+function MoleculeHeader({ sample, show, showPreviews, onClick }) {
   const isNoStructureSample = sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null;
 
   return (
     <tr
-      className="bg-gray-100"
       role="button"
       onClick={onClick}
     >
+      {!isNoStructureSample && dragColumn(sample, DragDropItemTypes.MOLECULE)}
       {isNoStructureSample
         ? (
           <td colSpan="3" className="position-relative">
@@ -183,9 +163,6 @@ function MoleculeHeader({ sample, show, showPreviews, showDragColumn, onClick, t
             </div>
           </td>
         )}
-      {!isNoStructureSample
-          && showDragColumn
-          && dragColumn(sample, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
 }
@@ -231,10 +208,8 @@ export default class ElementsTableSampleEntries extends Component {
 
     this.props.onChangeCollapse(collapseAll, 'moleculeGroupsShown', moleculeGroupsShown);
 
-    const { currentElement } = ElementStore.getState();
     this.setState({
       displayedMoleculeGroup,
-      targetType: currentElement && currentElement.type,
       flattenSamplesId: buildFlattenSampleIds(displayedMoleculeGroup),
     }, this.forceUpdate());
   }
@@ -320,8 +295,7 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderSamples(samples, index) {
-    const { targetType, keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
-    const { showDragColumn } = this.props;
+    const { keyboardSeletectedElementId, displayedMoleculeGroup } = this.state;
     const { length } = samples;
     const { numSamples } = displayedMoleculeGroup[index];
 
@@ -331,6 +305,7 @@ export default class ElementsTableSampleEntries extends Component {
 
       return (
         <tr key={sample.id} className={classnames({ 'text-bg-primary': applyHighlight })}>
+          {dragColumn(sample, DragDropItemTypes.SAMPLE)}
           <td width="30px">
             <ElementCheckbox
               element={sample}
@@ -362,7 +337,6 @@ export default class ElementsTableSampleEntries extends Component {
               </div>
             </div>
           </td>
-          {showDragColumn && dragColumn(sample, DragDropItemTypes.SAMPLE, targetType)}
         </tr>
       );
     });
@@ -389,21 +363,19 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderMoleculeGroup(moleculeGroup, index) {
-    const { showDragColumn, moleculeGroupsShown } = this.props;
-    const { showPreviews, targetType } = this.state;
+    const { moleculeGroupsShown } = this.props;
+    const { showPreviews } = this.state;
     const { molecule } = moleculeGroup[0];
     const moleculeName = molecule.iupac_name || molecule.inchistring;
     const showGroup = moleculeGroupsShown.includes(moleculeName);
 
     return (
-      <tbody key={index}>
+      <tbody key={index} className="sheet">
         <MoleculeHeader
           sample={moleculeGroup[0]}
           show={showGroup}
           showPreviews={showPreviews}
-          showDragColumn={showDragColumn}
           onClick={() => this.handleMoleculeToggle(moleculeName, showGroup )}
-          targetType={targetType}
         />
         {showGroup ? this.renderSamples(moleculeGroup, index) : null}
       </tbody>
@@ -413,7 +385,7 @@ export default class ElementsTableSampleEntries extends Component {
   render() {
     const { displayedMoleculeGroup } = this.state;
     return (
-      <Table className="sample-entries">
+      <Table className="elements" hover>
         {Object.keys(displayedMoleculeGroup).map((group, index) => {
           const moleculeGroup = displayedMoleculeGroup[group];
           const { numSamples } = displayedMoleculeGroup[group];
@@ -429,7 +401,6 @@ ElementsTableSampleEntries.propTypes = {
   collapseAll: PropTypes.bool,
   elements: PropTypes.array,
   currentElement: PropTypes.object,
-  showDragColumn: PropTypes.bool,
   ui: PropTypes.object,
   moleculeSort: PropTypes.bool,
 };

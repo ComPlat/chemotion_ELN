@@ -29,6 +29,7 @@ import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
 import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
+import Sheet from 'src/components/common/Sheet';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -362,7 +363,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return pages > 1 && (
-      <Pagination>
+      <Pagination className="m-0">
         <Pagination.First disabled={page === 1} onClick={() => this.handlePaginationSelect(1)} />
         <Pagination.Prev disabled={page === 1} onClick={() => this.handlePaginationSelect(page - 1)} />
         {items}
@@ -589,8 +590,8 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="elements-table-header">
-        <div className="select-all">
+      <Sheet className="elements-table-header">
+        <div className="d-flex gap-1 align-items-center">
           <ElementAllCheckbox
             type={type}
             checkedAll={checkedAll}
@@ -632,7 +633,7 @@ export default class ElementsTable extends React.Component {
           </div>
           {typeSpecificHeader}
         </div>
-      </div>
+      </Sheet>
     );
   };
 
@@ -647,7 +648,7 @@ export default class ElementsTable extends React.Component {
       moleculeGroupsShown
     } = this.state;
 
-    const { overview, type, genericEl } = this.props;
+    const { type, genericEl } = this.props;
     let elementsTableEntries;
 
     if (type === 'sample') {
@@ -656,7 +657,6 @@ export default class ElementsTable extends React.Component {
           collapseAll={collapseAll}
           elements={elements}
           currentElement={currentElement}
-          showDragColumn={!overview}
           ui={ui}
           moleculeSort={moleculeSort}
           onChangeCollapse={(collapseAll, childPropName, childPropValue) => this.changeCollapse(!collapseAll, childPropName, childPropValue)}
@@ -669,7 +669,6 @@ export default class ElementsTable extends React.Component {
           collapseAll={collapseAll}
           elements={elements}
           currentElement={currentElement}
-          showDragColumn={!overview}
           ui={ui}
           elementsGroup={elementsGroup}
           onChangeCollapse={(checked) => this.changeCollapse(!checked)}
@@ -696,28 +695,27 @@ export default class ElementsTable extends React.Component {
         <ElementsTableEntries
           elements={elements}
           currentElement={currentElement}
-          showDragColumn={!overview}
           ui={ui}
         />
       );
     }
 
     return (
-      <div ref={this.elementRef} className="elements-list">
+      <div ref={this.elementRef} className="elements-list flex-grow-1 h-0 overflow-y-auto pb-3">
         {elementsTableEntries}
+        <Sheet className="mt-2 d-flex justify-content-between">
+          {this.renderPagination()}
+          {this.renderNumberOfResultsInput()}
+        </Sheet>
       </div>
     );
   }
 
   render() {
     return (
-      <div className="list-container">
+      <div className="list-container d-flex flex-column h-100">
         {this.renderHeader()}
         {this.renderEntries()}
-        <div className="d-flex flex-row-reverse justify-content-between">
-          {this.renderNumberOfResultsInput()}
-          {this.renderPagination()}
-        </div>
       </div>
     );
   }
@@ -728,7 +726,6 @@ ElementsTable.defaultProps = {
 };
 
 ElementsTable.propTypes = {
-  overview: PropTypes.bool.isRequired,
   type: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   genericEl: PropTypes.object,

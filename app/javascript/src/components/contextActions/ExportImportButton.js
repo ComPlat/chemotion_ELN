@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ModalImport from 'src/components/contextActions/ModalImport';
-import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
-import ModalExport from 'src/components/contextActions/ModalExport';
-import ModalReactionExport from 'src/components/contextActions/ModalReactionExport';
-import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
-import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
-import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
+
+import ModalExport from 'src/components/contextActions/export/ModalExport';
+import ModalReactionExport from 'src/components/contextActions/export/ModalReactionExport';
+import ModalExportCollection from 'src/components/contextActions/export/ModalExportCollection';
+import ModalExportRadarCollection from 'src/components/contextActions/export/ModalExportRadarCollection';
+
+import ModalImport from 'src/components/contextActions/import/ModalImport';
+import ModalImportConfirm from 'src/components/contextActions/import/ModalImportConfirm';
+import ModalImportCollection from 'src/components/contextActions/import/ModalImportCollection';
+
 import { PermissionConst } from 'src/utilities/PermissionConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
