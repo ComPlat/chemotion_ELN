@@ -424,26 +424,32 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
                         <i className="fa fa-save" title="Save changes" />
                       </Button>
                       <Button
-                        variant="danger"
+                        variant="warning"
                         size="xxsm"
                         onClick={openModal}
                       >
-                        <i className="fa fa-trash" title="Delete instance" />
+                        <i className="fa fa-minus-square" title="Remove from current collection" />
                       </Button>
                     </div>
-                    <Modal show={showConfirm} onHide={closeModal} backdrop="static" centered>
-                      <Modal.Header closeButton>
-                        <Modal.Title>Confirm Deletion</Modal.Title>
-                      </Modal.Header>
+                    <Modal
+                      show={showConfirm}
+                      onHide={closeModal}
+                      backdropClassName="custom-backdrop"
+                      centered
+                    >
                       <Modal.Body>
-                        Are you sure you want to delete this vessel instance? This action cannot be undone.
+                        Remove selected vessel instance from this collection?
                       </Modal.Body>
                       <Modal.Footer>
                         <Button variant="secondary" onClick={closeModal} disabled={deleting}>
                           Cancel
                         </Button>
-                        <Button variant="danger" onClick={() => HandleDeleteInstance(instance.id, vesselTemplateId)} disabled={deleting}>
-                          {deleting ? 'Deleting…' : 'Delete'}
+                        <Button
+                          variant="danger"
+                          onClick={() => HandleDeleteInstance(instance.id, vesselTemplateId)}
+                          disabled={deleting}
+                        >
+                          {deleting ? 'Removing…' : 'Remove'}
                         </Button>
                       </Modal.Footer>
                     </Modal>
