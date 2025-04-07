@@ -118,6 +118,28 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           external_label: 'Testlabel',
           function_or_application: 'Testing',
           concentration_value: '0.5',
+          container: {
+            is_new: true,
+            containable_type: 'root',
+            extended_metadata: {
+              report: true
+            },
+            description: '',
+            is_deleted: false,
+            attachments: [],
+            name: 'root',
+            children: [{
+              name: 'new',
+              containable_type: 'analyses',
+              children: [],
+              attachments: [],
+              is_deleted: false,
+              description: '',
+              extended_metadata: {
+                report: true
+              }
+            }]
+          },
           sequence_based_macromolecule_attributes: {
             sbmm_type: 'protein',
             sbmm_subtype: 'unmodified',
@@ -128,24 +150,24 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       end
       it 'creates a SBMM-Sample record' do
         expect { 
-          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm
+          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm, as: :json
         }.to change(SequenceBasedMacromoleculeSample, :count).by(1)
       end
 
       it 'creates the SBMM record if necessary' do
         expect {
-          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm
+          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm, as: :json
         }.to change(SequenceBasedMacromolecule, :count).by(1)
       end
 
       it 'uses existing SBMM records if possible' do
         expect {
-          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm
+          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm, as: :json
         }.to change(SequenceBasedMacromolecule, :count).by(1)
          .and change(SequenceBasedMacromoleculeSample, :count).by(1)
 
         expect {
-          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm
+          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_uniprot_sbmm, as: :json
         }.to change(SequenceBasedMacromolecule, :count).by(0)
          .and change(SequenceBasedMacromoleculeSample, :count).by(1)
       end
@@ -158,6 +180,28 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           external_label: 'Testlabel',
           function_or_application: 'Testing',
           concentration_value: '0.5',
+          container: {
+            is_new: true,
+            containable_type: 'root',
+            extended_metadata: {
+              report: true
+            },
+            description: '',
+            is_deleted: false,
+            attachments: [],
+            name: 'root',
+            children: [{
+              name: 'new',
+              containable_type: 'analyses',
+              children: [],
+              attachments: [],
+              is_deleted: false,
+              description: '',
+              extended_metadata: {
+                report: true
+              }
+            }]
+          },
           sequence_based_macromolecule_attributes: {
             sbmm_type: 'protein',
             sbmm_subtype: 'unmodified',
@@ -186,7 +230,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         it 'fetches the uniprot SBMM and creates a record for it' do
           expect(SequenceBasedMacromolecule.find_by(primary_accession: 'P12345')).to be_nil
           expect do
-            post "/api/v1/sequence_based_macromolecule_samples", params: post_for_modified_sbmm
+            post "/api/v1/sequence_based_macromolecule_samples", params: post_for_modified_sbmm, as: :json
           end.to change(SequenceBasedMacromolecule, :count).by(2)
              .and change(SequenceBasedMacromoleculeSample, :count).by(1)
 
@@ -197,7 +241,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       it 'creates a new SBMM with reference to the parent SBMM' do
         create(:uniprot_sbmm)
 
-        post "/api/v1/sequence_based_macromolecule_samples", params: post_for_modified_sbmm
+        post "/api/v1/sequence_based_macromolecule_samples", params: post_for_modified_sbmm, as: :json
         expect(response.status).to eq 201
 
         result = parsed_json_response['sequence_based_macromolecule_sample']
@@ -209,7 +253,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       it 'creates a new sample under the new SBMM' do
         create(:uniprot_sbmm)
         expect do
-          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_modified_sbmm
+          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_modified_sbmm, as: :json
         end.to change(SequenceBasedMacromolecule, :count).by(1)
            .and change(SequenceBasedMacromoleculeSample, :count).by(1)
       end
@@ -223,6 +267,28 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           external_label: 'Testlabel',
           function_or_application: 'Testing',
           concentration_value: '0.5',
+          container: {
+            is_new: true,
+            containable_type: 'root',
+            extended_metadata: {
+              report: true
+            },
+            description: '',
+            is_deleted: false,
+            attachments: [],
+            name: 'root',
+            children: [{
+              name: 'new',
+              containable_type: 'analyses',
+              children: [],
+              attachments: [],
+              is_deleted: false,
+              description: '',
+              extended_metadata: {
+                report: true
+              }
+            }]
+          },
           sequence_based_macromolecule_attributes: {
             sbmm_type: 'protein',
             sbmm_subtype: 'unmodified',
@@ -245,7 +311,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       it 'creates a new SBMM with the provided data' do
         non_uniprot_sbmm # create this before, so it does not mess up our count
         expect {
-          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_child_of_non_uniprot_sbmm
+          post "/api/v1/sequence_based_macromolecule_samples", params: post_for_child_of_non_uniprot_sbmm, as: :json
         }.to change(SequenceBasedMacromolecule, :count).by(1)
          .and change(SequenceBasedMacromoleculeSample, :count).by(1)
 
@@ -327,14 +393,14 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
 
       it 'returns a 200 success' do
         log_red.call("=== STARTING PUT ===")
-        put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+        put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
         expect(response.status).to eq 200
       end
 
       it 'does not touch the SBMM' do
         expect do
           log_red.call("=== STARTING PUT ===")
-          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
           sbmm_sample.reload
         end.to change(sbmm_sample, :amount_as_used_mass_value).from(123).to(12345)
            .and not_change(sbmm, :updated_at)
@@ -375,22 +441,23 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         end
 
         it 'returns a 200 success' do
-          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
           expect(response.status).to eq 200
         end
 
         it 'switches the sample to the new SBMM' do
           expect do
             log_red.call("=== STARTING PUT ===")
-            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
             sbmm_sample.reload
           end.to change(sbmm_sample, :amount_as_used_mass_value).from(123).to(12345)
+             .and change(SequenceBasedMacromolecule, :count).by(0)
              .and change(sbmm_sample, :sequence_based_macromolecule_id).from(sbmm.id).to(other_sbmm.id)
         end
 
         it 'does not delete the old SBMM yet' do
           expect do
-            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
             sbmm_sample.reload
           end.not_to change(SequenceBasedMacromolecule, :count)
         end
