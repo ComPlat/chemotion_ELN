@@ -18,7 +18,7 @@ import { elementShowOrNew } from 'src/utilities/routesUtils';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
-import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
+import SampleGroupContainer from 'src/apps/mydb/elements/list/sample/SampleGroupContainer';
 import { SearchUserLabels } from 'src/components/UserLabels';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -718,13 +718,11 @@ export default class ElementsTable extends React.Component {
 
     if (type === 'sample') {
       elementsTableEntries = (
-        <ElementsTableSampleEntries
+        <SampleGroupContainer
           elements={elements}
-          isElementSelected={this.isElementSelected}
           moleculeSort={moleculeSort}
           isGroupCollapsed={this.isGroupCollapsed}
           toggleGroupCollapse={this.toggleGroupCollapse}
-          showDetails={this.showDetails}
         />
       );
     } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
