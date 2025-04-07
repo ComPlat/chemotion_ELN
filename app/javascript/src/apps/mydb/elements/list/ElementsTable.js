@@ -7,11 +7,13 @@ import {
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
+import Aviator from 'aviator';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
@@ -64,6 +66,7 @@ export default class ElementsTable extends React.Component {
     this.timer = null;
 
     this.isElementSelected = this.isElementSelected.bind(this);
+    this.showDetails = this.showDetails.bind(this);
   }
 
   componentDidMount() {
@@ -375,6 +378,26 @@ export default class ElementsTable extends React.Component {
   isElementSelected(element) {
     const { currentElement } = this.state;
     return currentElement && currentElement.id === element.id;
+  }
+
+  showDetails(element) {
+    const { id, type } = element;
+    const { currentCollection, isSync } = UIStore.getState();
+    const { genericEl } = this.props;
+
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+
+    elementShowOrNew({
+      type,
+      klassType: genericEl ? 'GenericEl' : undefined,
+      params: {
+        collectionID: currentCollection.id,
+        [`${type}ID`]: id,
+      },
+    });
   }
 
   renderNumberOfResultsInput() {
@@ -701,6 +724,7 @@ export default class ElementsTable extends React.Component {
           moleculeSort={moleculeSort}
           isGroupCollapsed={this.isGroupCollapsed}
           toggleGroupCollapse={this.toggleGroupCollapse}
+          showDetails={this.showDetails}
         />
       );
     } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
@@ -711,8 +735,8 @@ export default class ElementsTable extends React.Component {
           elementsGroup={elementsGroup}
           isGroupCollapsed={this.isGroupCollapsed}
           toggleGroupCollapse={this.toggleGroupCollapse}
-          genericEl={genericEl}
           type={type}
+          showDetails={this.showDetails}
         />
       );
     } else if (type === 'cell_line') {
@@ -720,6 +744,7 @@ export default class ElementsTable extends React.Component {
         <CellLineContainer
           cellLineGroups={CellLineGroup.buildFromElements(elements)}
           isElementSelected={this.isElementSelected}
+          showDetails={this.showDetails}
         />
       );
     } else if (type === 'device_description') {
@@ -727,6 +752,7 @@ export default class ElementsTable extends React.Component {
         <DeviceDescriptionList
           elements={elements}
           isElementSelected={this.isElementSelected}
+          showDetails={this.showDetails}
         />
       );
     } else {
@@ -734,6 +760,7 @@ export default class ElementsTable extends React.Component {
         <ElementsTableEntries
           elements={elements}
           isElementSelected={this.isElementSelected}
+          showDetails={this.showDetails}
         />
       );
     }

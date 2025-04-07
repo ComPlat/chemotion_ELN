@@ -7,32 +7,15 @@ import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ChevronIcon from 'src/components/common/ChevronIcon';
-import Aviator from 'aviator';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
-const DeviceDescriptionList = ({ elements, isElementSelected }) => {
+const DeviceDescriptionList = ({ elements, isElementSelected, showDetails }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
   const showAllGroups = deviceDescriptionsStore.show_all_groups;
   const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
-
-  const showDetails = (element) => {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { id, type } = element;
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/${id}`
-      : `/collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = id;
-    elementShowOrNew(e);
-
-    return null;
-  }
 
   const toggleShownGroup = (key, shownGroup) => {
     if (shownGroup === undefined) {
@@ -174,6 +157,7 @@ const DeviceDescriptionList = ({ elements, isElementSelected }) => {
 DeviceDescriptionList.propTypes = {
   elements: PropTypes.array.isRequired,
   isElementSelected: PropTypes.func.isRequired,
+  showDetails: PropTypes.func.isRequired,
 };
 
 export default observer(DeviceDescriptionList);

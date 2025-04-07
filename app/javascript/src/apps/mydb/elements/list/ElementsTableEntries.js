@@ -12,13 +12,10 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import UIStore from 'src/stores/alt/stores/UIStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import PropTypes from 'prop-types';
-import Aviator from 'aviator';
 
 export function reactionRole(element) {
   let tooltip = null;
@@ -58,26 +55,6 @@ function reactionVariations(element) {
       <Badge bg="info">{`${element.variations.length} variation(s)`}</Badge>
     );
   }
-  return null;
-}
-
-function showDetails(element) {
-  const { currentCollection, isSync } = UIStore.getState();
-  const { id, type } = element;
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/${type}/${id}`
-    : `/collection/${currentCollection.id}/${type}/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  const e = { type, params: { collectionID: currentCollection.id } };
-  e.params[`${type}ID`] = id;
-
-  const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
-  if (genericEls.find((el) => el.name === type)) {
-    e.klassType = 'GenericEl';
-  }
-
-  elementShowOrNew(e);
-
   return null;
 }
 
@@ -149,7 +126,7 @@ export default class ElementsTableEntries extends Component {
 
   entriesOnKeyDown(state) {
     const { context } = state;
-    const { elements } = this.props;
+    const { elements, showDetails } = this.props;
 
     if (elements[0] == null || context !== elements[0].type) return false;
 
@@ -185,6 +162,8 @@ export default class ElementsTableEntries extends Component {
   }
 
   previewColumn(element) {
+    const { showDetails } = this.props;
+
     const classNames = classnames({
       reaction: element.type === 'reaction',
       research_plan: element.type === 'research_plan',
@@ -233,7 +212,7 @@ export default class ElementsTableEntries extends Component {
   }
 
   render() {
-    const { elements, isElementSelected } = this.props;
+    const { elements, isElementSelected, showDetails } = this.props;
     const { keyboardElementIndex } = this.state;
 
     return (
@@ -303,5 +282,6 @@ export default class ElementsTableEntries extends Component {
 /* eslint-disable react/forbid-prop-types */
 ElementsTableEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
+  showDetails: PropTypes.func.isRequired,
   isElementSelected: PropTypes.func.isRequired,
 };
