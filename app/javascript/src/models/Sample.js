@@ -236,6 +236,10 @@ export default class Sample extends Element {
     }
   }
 
+  isNoStructureSample() {
+    return this.molecule?.inchikey === 'DUMMY' && this.molfile == null;
+  }
+
   getChildrenCount() {
     return parseInt(Sample.children_count[this.id] || this.children_count, 10);
   }
