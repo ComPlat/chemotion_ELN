@@ -729,12 +729,10 @@ export default class ElementsTable extends React.Component {
       elementsTableEntries = (
         <ElementsTableGroupedEntries
           elements={elements}
-          isElementSelected={this.isElementSelected}
           elementsGroup={elementsGroup}
           isGroupCollapsed={this.isGroupCollapsed}
           toggleGroupCollapse={this.toggleGroupCollapse}
           type={type}
-          showDetails={this.showDetails}
         />
       );
     } else if (type === 'cell_line') {
