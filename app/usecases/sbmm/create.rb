@@ -43,11 +43,12 @@ module Usecases
           parent = SequenceBasedMacromolecule.find(id)
         end
 
-        sbmm = Usecases::Sbmm::Finder.new.find_modified_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id))
+        sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id, uniprot_derivation: 'uniprot_modified'))
         if sbmm.nil?
           sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier, :protein_sequence_modification_attributes, :post_translational_modification_attributes))
 
           sbmm.parent = parent
+          # TODO: Was passiert wenn es zwar ein gültiger Accession Code wäre, aber kein SBMM gefunden wurde?
           sbmm.protein_sequence_modification = ProteinSequenceModification.find_or_initialize_by(params[:protein_sequence_modification_attributes])
           sbmm.post_translational_modification = PostTranslationalModification.find_or_initialize_by(params[:post_translational_modification_attributes])
         end
@@ -56,8 +57,10 @@ module Usecases
       end
 
       def find_or_create_unknown_protein(params)
-        sbmm = SequenceBasedMacromolecule.unknown.find_by(params)
+        sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id, uniprot_derivation: 'uniprot_unknown'))
         sbmm ||= SequenceBasedMacromolecule.create(params)
+        sbmm.protein_sequence_modification = ProteinSequenceModification.find_or_initialize_by(params[:protein_sequence_modification_attributes])
+        sbmm.post_translational_modification = PostTranslationalModification.find_or_initialize_by(params[:post_translational_modification_attributes])
         sbmm
       end
 
