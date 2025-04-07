@@ -9,14 +9,12 @@ import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
 import { reactionStatus, reactionRole } from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import ChevronIcon from 'src/components/common/ChevronIcon';
-import Aviator from 'aviator';
 
 const dragColumn = (element) => (
   <td className="text-center align-middle">
@@ -140,6 +138,7 @@ export default class ElementsTableGroupedEntries extends Component {
 
   reactionsOnKeyDown = (state) => {
     const { context } = state;
+    const { showDetails, type } = this.props;
     if (context !== 'reaction') { return false; }
 
     const { documentKeyDownCode } = state;
@@ -150,7 +149,7 @@ export default class ElementsTableGroupedEntries extends Component {
       case 13: // Enter
       case 39: // Right
         if (keyboardIndex != null && keyboardSelectedElementId != null) {
-          this.showDetails(keyboardSelectedElementId);
+          showDetails({ id: keyboardSelectedElementId, type });
         }
         break;
       case 38: // Up
@@ -176,22 +175,6 @@ export default class ElementsTableGroupedEntries extends Component {
 
     return null;
   };
-
-  showDetails(id) {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { type, genericEl } = this.props;
-
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = id;
-
-    if (genericEl) {
-      e.klassType = 'GenericEl';
-    }
-
-    elementShowOrNew(e);
-  }
 
   groupedElements() {
     const { elements, type } = this.props;
@@ -228,7 +211,7 @@ export default class ElementsTableGroupedEntries extends Component {
 
   renderReactionElements(elements) {
     const { keyboardSelectedElementId } = this.state;
-    const { isElementSelected } = this.props;
+    const { isElementSelected, showDetails } = this.props;
 
     const rows = elements.map((element) => {
       const selected = isElementSelected(element);
@@ -244,7 +227,7 @@ export default class ElementsTableGroupedEntries extends Component {
           <td
             role="gridcell"
             style={{ cursor: 'pointer' }}
-            onClick={() => this.showDetails(element.id)}
+            onClick={() => showDetails(element)}
           >
             <div className="d-flex gap-2">
               <SvgWithPopover
@@ -280,7 +263,7 @@ export default class ElementsTableGroupedEntries extends Component {
 
   renderGenericElements(elements) {
     const { keyboardSelectedElementId } = this.state;
-    const { isElementSelected } = this.props;
+    const { isElementSelected, showDetails } = this.props;
 
     const rows = elements.map((element) => {
       const selected = isElementSelected(element);
@@ -296,7 +279,7 @@ export default class ElementsTableGroupedEntries extends Component {
           <td
             role="gridcell"
             style={{ cursor: 'pointer' }}
-            onClick={() => this.showDetails(element.id)}
+            onClick={() => showDetails(element)}
           >
             <div className="d-flex gap-2">
               <div className="preview-table">
@@ -364,16 +347,12 @@ export default class ElementsTableGroupedEntries extends Component {
   }
 }
 
-ElementsTableGroupedEntries.defaultProps = {
-  genericEl: null,
-};
-
 ElementsTableGroupedEntries.propTypes = {
   elements: PropTypes.array.isRequired,
   isElementSelected: PropTypes.func.isRequired,
   elementsGroup: PropTypes.string.isRequired,
   isGroupCollapsed: PropTypes.func.isRequired,
   toggleGroupCollapse: PropTypes.func.isRequired,
-  genericEl: PropTypes.object,
   type: PropTypes.string.isRequired,
+  showDetails: PropTypes.func.isRequired,
 };

@@ -29,12 +29,13 @@ export default class CellLineEntry extends Component {
 
   renderItemEntries(cellLineItems) {
     const { showEntries } = this.state;
-    const { isElementSelected } = this.props;
+    const { isElementSelected, showDetails } = this.props;
     return showEntries ? cellLineItems.map((cellLineItem) => (
       <CellLineItemEntry
         key={cellLineItem.id}
         cellLineItem={cellLineItem}
         isElementSelected={isElementSelected}
+        showDetails={showDetails}
       />
     )) : [];
   }
@@ -179,4 +180,5 @@ CellLineEntry.propTypes = {
     CellLinePropTypeTableEntry
   ).isRequired,
   isElementSelected: PropTypes.func.isRequired,
+  showDetails: PropTypes.func.isRequired,
 };

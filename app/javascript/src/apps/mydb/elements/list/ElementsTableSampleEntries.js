@@ -21,7 +21,6 @@ import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import SampleName from 'src/components/common/SampleName';
-import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
@@ -41,13 +40,6 @@ const buildFlattenSampleIds = (groups) => {
   });
 
   return flattenSamplesId;
-};
-
-const showDetails = (id) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/sample/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
 };
 
 const dragColumn = (element, sourceType) => (
@@ -222,12 +214,13 @@ export default class ElementsTableSampleEntries extends Component {
 
     const { documentKeyDownCode } = state;
     let { keyboardIndex, keyboardSeletectedElementId, flattenSamplesId } = this.state;
+    const { showDetails } = this.props;
 
     switch (documentKeyDownCode) {
       case 13: // Enter
       case 39: // Right
         if (keyboardIndex != null && keyboardSeletectedElementId != null) {
-          showDetails(keyboardSeletectedElementId);
+          showDetails({ id: keyboardSeletectedElementId, type: 'sample' });
         }
         break;
       case 38: // Up
@@ -269,7 +262,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   renderSamples(samples, index) {
     const { keyboardSeletectedElementId, groups } = this.state;
-    const { isElementSelected } = this.props;
+    const { isElementSelected, showDetails } = this.props;
     const { length } = samples;
     const { numSamples } = groups[index];
 
@@ -283,7 +276,7 @@ export default class ElementsTableSampleEntries extends Component {
             <ElementCheckbox element={sample} />
           </td>
           <td
-            onClick={() => showDetails(sample.id)}
+            onClick={() => showDetails(sample)}
             role="button"
           >
             <div className="d-flex justify-content-between flex-wrap">
@@ -373,4 +366,5 @@ ElementsTableSampleEntries.propTypes = {
   isGroupCollapsed: PropTypes.func.isRequired,
   toggleGroupCollapse: PropTypes.func.isRequired,
   moleculeSort: PropTypes.bool.isRequired,
+  showDetails: PropTypes.func.isRequired,
 };

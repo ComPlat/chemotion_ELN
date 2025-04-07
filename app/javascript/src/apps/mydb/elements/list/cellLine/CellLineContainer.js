@@ -3,7 +3,7 @@ import CellLineEntry from 'src/apps/mydb/elements/list/cellLine/CellLineEntry';
 import PropTypes from 'prop-types';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 
-export default function CellLineContainer({ cellLineGroups, isElementSelected }) {
+export default function CellLineContainer({ cellLineGroups, isElementSelected, showDetails }) {
   return (
     <div className="list-container">
       {cellLineGroups.map(
@@ -12,6 +12,7 @@ export default function CellLineContainer({ cellLineGroups, isElementSelected })
             key={group.cellLineItems[0].id}
             cellLineItems={group.cellLineItems}
             isElementSelected={isElementSelected}
+            showDetails={showDetails}
           />
         )
       )}
@@ -26,4 +27,5 @@ CellLineContainer.propTypes = {
     })
   ).isRequired,
   isElementSelected: PropTypes.func.isRequired,
+  showDetails: PropTypes.func.isRequired,
 };
