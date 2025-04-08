@@ -1,0 +1,5 @@
+{
+  "0": {
+    "molfile": "\r\n  ChemDraw09212215502D\r\n\r\n  2  0  0  0  0  0  0  0  0  0999 V2000\r\n   -0.4111    0.0000    0.0000 Na  0  0  0  0  0  0  0  0  0  0  0  0\r\n    0.4111    0.0000    0.0000 B   0  0  0  0  0  0  0  0  0  0  0  0\r\nM  STY  1   1 SUP\r\nM  SLB  1   1   1\r\nM  SAL   1  2   1   2\r\nM  SMT   1 NaBH\\s4\r\nM  STY  1   2 DAT\r\nM  SLB  1   2   2\r\nM  SDT   2 Text                                                  \r\nM  SDD   2    11.1841  -11.0541    DA    ALL  1       5\r\nM  END\r\n"
+  }
+}
