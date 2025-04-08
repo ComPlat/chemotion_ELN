@@ -17,10 +17,6 @@
 #
 #  index_matrices_on_name  (name) UNIQUE
 #
-# Configuration settings for some features
-# - set visibility/activation of features globaly or for users and group
-#
-# @note: db/triggers/update_users_matrix_trg on update/insert to update user matrix
 class Matrice < ApplicationRecord
   include SequenceUtilities
 
