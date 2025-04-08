@@ -37,7 +37,6 @@ export default class ElementsTable extends React.Component {
 
     this.state = {
       elements: [],
-      currentElement: null,
       ui: {},
       collapse: {
         baseState: 'expanded',
@@ -64,7 +63,6 @@ export default class ElementsTable extends React.Component {
     this.setToDate = this.setToDate.bind(this);
     this.timer = null;
 
-    this.isElementSelected = this.isElementSelected.bind(this);
     this.showDetails = this.showDetails.bind(this);
   }
 
@@ -179,19 +177,14 @@ export default class ElementsTable extends React.Component {
     const elementsState = (state && state.elements && state.elements[`${type}s`]) || {};
     const { elements, page, pages } = elementsState;
 
-    let currentElement;
-    if (!state.currentElement || state.currentElement.type === type) {
-      const { currentElement: stateCurrentElement } = state;
-      currentElement = stateCurrentElement;
+    const { elements: stateElements } = this.state;
+    if (elements && !deepEqual(elements, stateElements)) {
+      this.setState({
+        page,
+        pages,
+        elements,
+      });
     }
-
-    const { elements: stateElements, currentElement: stateCurrentElement } = this.state;
-    const elementsDidChange = elements && !deepEqual(elements, stateElements);
-    const currentElementDidChange = !deepEqual(currentElement, stateCurrentElement);
-
-    const nextState = { page, pages, currentElement };
-    if (elementsDidChange) { nextState.elements = elements; }
-    if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
   }
 
   setUserLabel(label) {
@@ -372,11 +365,6 @@ export default class ElementsTable extends React.Component {
     this.timer = setTimeout(() => {
       ElementActions.refreshElements(type);
     }, 900);
-  }
-
-  isElementSelected(element) {
-    const { currentElement } = this.state;
-    return currentElement && currentElement.id === element.id;
   }
 
   showDetails(element) {
