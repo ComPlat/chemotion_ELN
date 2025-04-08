@@ -754,8 +754,6 @@ export default class ElementsTable extends React.Component {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}
-          isElementSelected={this.isElementSelected}
-          showDetails={this.showDetails}
         />
       );
     }
