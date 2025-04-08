@@ -12,79 +12,6 @@
     }
 }
 
-.cell-line-group{
-    .group-entry{
-        .elements{
-            margin-bottom: 0px;
-            border-left-width: 0px;
-            border-right-width: 0px;
-            border-bottom-width: 0px;
-            border-top-width: 0px;
-        }
-        .select-checkBox{
-            border-left-width: 0px;
-            border-right-width: 0px;
-            border-bottom-width: 0px;
-            border-top-width: 1px;
-            padding-top: 13px;
-            width:30px;
-        }
-        .short_label{
-            border-left-width: 0px;
-            border-right-width: 0px;
-            border-bottom-width: 0px;
-            border-top-width: 1px;
-            padding-top: 13px;
-            width:120px;
-            cursor: pointer;
-        }
-        .arrow{
-            border-left-width: 0px;
-            border-right-width: 0px;
-            border-bottom-width: 0px;
-            margin-top: -1px;
-            border-top-width: 1px;
-            float:right;
-        }
-        .item-text{
-            border-left-width: 0px;
-            border-right-width: 0px;
-            border-bottom-width: 0px;
-            border-top-width: 1px;
-            cursor: pointer;
-           
-        }
-        .item-property-name{
-            margin-left:20px;
-            width:60px;
-        }
-        .starting{
-            margin-left: 25px;
-        }
-        .item-property-value{
-            width:200px;
-        }
-        .item-name-header{
-            font-weight: bold;
-        }
-        .item-properties{
-            font-size: 90%;
-        }
-        .item-colon{
-            width:15px;
-        }
-        td{
-            border-width: 0px;
-        }
-    }
-
-    .title-panel{
-        border-top: 1px solid #ddd;
-        background: rgb(245, 245, 245);
-        min-height: 50px;
-    }
-}
-
 .cell-line-name{
     input{
         font-size: 14px !important;
@@ -150,43 +77,9 @@
     }
 }
 
-.cell-line-group-bottom-border {
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
-    border-color: #bdbdbd;
-}
-
 #cell-line-details-tab{
     .tab-content{
         margin-top: 20px;
-    }
-}
-
-.floating{
-    float:left;
-}
-
-.floating-right{
-    float:right;
-}
-
-.cell-line-group-header-name{
-    font-size: large;
-    margin-left: 30px;
-    margin-top: 13px;
-    font-weight: bold;
-}
-.cell-line-group-header-property{
-    margin-left: 35px;
-
-    .property-key{
-        width: 170px;
-    }
-    .property-key-minus{
-        width: 20px;
-    }
-    .property-value{
-        width: 500px;
     }
 }
 
