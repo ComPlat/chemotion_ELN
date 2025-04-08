@@ -1,21 +1,17 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
 import {
-  Tooltip, OverlayTrigger, Table, Badge
+  Tooltip, OverlayTrigger, Badge
 } from 'react-bootstrap';
-import classnames from 'classnames';
-
-import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
-import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
+import ElementListRenderer from 'src/apps/mydb/elements/list/renderers/ElementListRenderer';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import PropTypes from 'prop-types';
+import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 
 export function reactionRole(element) {
   let tooltip = null;
@@ -110,64 +106,26 @@ export default class ElementsTableEntries extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      keyboardElementIndex: null
+      showPreviews: UIStore.getState().showPreviews,
     };
-
-    this.entriesOnKeyDown = this.entriesOnKeyDown.bind(this);
   }
 
   componentDidMount() {
-    KeyboardStore.listen(this.entriesOnKeyDown);
+    UIStore.listen(this.onUiStoreChange);
   }
 
   componentWillUnmount() {
-    KeyboardStore.unlisten(this.entriesOnKeyDown);
+    UIStore.unlisten(this.onUiStoreChange);
   }
 
-  entriesOnKeyDown(state) {
-    const { context } = state;
-    const { elements, showDetails } = this.props;
-
-    if (elements[0] == null || context !== elements[0].type) return false;
-
-    const { documentKeyDownCode } = state;
-    let { keyboardElementIndex } = this.state;
-
-    switch (documentKeyDownCode) {
-      case 13: // Enter
-      case 39: // Right
-        if (keyboardElementIndex && elements[keyboardElementIndex]) {
-          showDetails(elements[keyboardElementIndex]);
-        }
-        break;
-      case 38: // Up
-        if (keyboardElementIndex > 0) {
-          keyboardElementIndex -= 1;
-        } else {
-          keyboardElementIndex = 0;
-        }
-        break;
-      case 40: // Down
-        if (keyboardElementIndex == null) {
-          keyboardElementIndex = 0;
-        } else if (keyboardElementIndex < elements.length - 1) {
-          keyboardElementIndex += 1;
-        }
-        break;
-      default:
-    }
-    this.setState({ keyboardElementIndex });
-
-    return null;
-  }
-
-  previewColumn(element) {
-    const { showDetails } = this.props;
-
-    const classNames = classnames({
-      reaction: element.type === 'reaction',
-      research_plan: element.type === 'research_plan',
+  onUiStoreChange = (uiState) => {
+    this.setState({
+      showPreviews: uiState.showPreviews
     });
+  };
+
+  previewColumn(element, showDetails) {
+    const { showPreviews } = this.state;
 
     const svgContainerStyle = {
       verticalAlign: 'middle',
@@ -175,106 +133,80 @@ export default class ElementsTableEntries extends Component {
       cursor: 'pointer'
     };
 
-    const { showPreviews } = UIStore.getState();
     if (showPreviews && (element.type === 'reaction')) {
       return (
-        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
-          <SVG src={element.svgPath} className={classNames} key={element.svgPath} />
-        </td>
+        <div
+          className="flex-grow-1"
+          style={svgContainerStyle}
+          onClick={showDetails}
+        >
+          <SVG src={element.svgPath} className="reaction" key={element.svgPath} />
+        </div>
       );
     }
     if (element.type === 'research_plan' || element.element_klass) {
       if (element.thumb_svg !== 'not available') {
         return (
-          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+          <div
+            className="flex-grow-1"
+            style={svgContainerStyle}
+            onClick={showDetails}
+          >
             <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" role="button" />
-          </td>
+          </div>
         );
       }
-      return (
-        <td
-          role="gridcell"
-          aria-label="Element"
-          style={svgContainerStyle}
-          onClick={() => showDetails(element)}
-        />
-      );
     }
 
+    return null;
+  }
+
+  renderElement(element, showDetails) {
     return (
-      <td
-        role="gridcell"
-        aria-label="Element"
-        style={{ display: 'none', cursor: 'pointer' }}
-        onClick={() => showDetails(element)}
-      />
+      <div className="d-flex align-items-start">
+        <div
+          role="button"
+          onClick={showDetails}
+          style={{ cursor: 'pointer' }}
+          width={element.type === 'research_plan' ? '280px' : 'unset'}
+          data-cy={`researchPLanItem-${element.id}`}
+          className="flex-grow-1"
+        >
+          <SvgWithPopover
+            hasPop={['reaction'].includes(element.type)}
+            previewObject={{
+              txtOnly: element.title(),
+              isSVG: true,
+              src: element.svgPath
+            }}
+            popObject={{
+              title: (element.type === 'reaction' && element.short_label) || '',
+              src: element.svgPath,
+              height: '26vh',
+              width: '52vw'
+            }}
+          />
+          {reactionStatus(element)}
+          {reactionRole(element)}
+          <ShowUserLabels element={element} />
+          {reactionVariations(element)}
+          <br />
+          <CommentIcon commentCount={element.comment_count} />
+          <ElementCollectionLabels element={element} key={element.id} />
+        </div>
+        {this.previewColumn(element, showDetails)}
+      </div>
     );
   }
 
   render() {
-    const { elements, isElementSelected, showDetails } = this.props;
-    const { keyboardElementIndex } = this.state;
+    const { elements } = this.props;
 
     return (
-      <Table className="elements" bordered hover style={{ borderTop: 0 }}>
-        <tbody>
-          {elements.map((element, index) => {
-            let style = {};
-            if (isElementSelected(element)
-              || (keyboardElementIndex != null && keyboardElementIndex === index)) {
-              style = {
-                color: '#000',
-                background: '#ddd',
-                border: '4px solid #337ab7'
-              };
-            }
-
-            return (
-              <tr key={element.id} style={style}>
-                <td width="30px">
-                  <ElementCheckbox element={element} />
-                </td>
-                <td
-                  role="gridcell"
-                  onClick={() => showDetails(element)}
-                  style={{ cursor: 'pointer' }}
-                  width={element.type === 'research_plan' ? '280px' : 'unset'}
-                  data-cy={`researchPLanItem-${element.id}`}
-                >
-                  <div>
-                    <SvgWithPopover
-                      hasPop={['reaction'].includes(element.type)}
-                      previewObject={{
-                        txtOnly: element.title(),
-                        isSVG: true,
-                        src: element.svgPath
-                      }}
-                      popObject={{
-                        title: (element.type === 'reaction' && element.short_label) || '',
-                        src: element.svgPath,
-                        height: '26vh',
-                        width: '52vw'
-                      }}
-                    />
-                    {reactionStatus(element)}
-                    {' '}
-                    {reactionRole(element)}
-                    <ShowUserLabels element={element} />
-                    {reactionVariations(element)}
-                    <br />
-                    <CommentIcon commentCount={element.comment_count} />
-                    <ElementCollectionLabels element={element} key={element.id} />
-                  </div>
-                </td>
-                {this.previewColumn(element)}
-                <td className="text-center align-middle">
-                  <ElementDragHandle element={element} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
+      <ElementListRenderer
+        elements={elements}
+        renderItem={(element, showDetails) => this.renderElement(element, showDetails)}
+      />
     );
   }
 }
@@ -282,6 +214,4 @@ export default class ElementsTableEntries extends Component {
 /* eslint-disable react/forbid-prop-types */
 ElementsTableEntries.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.object).isRequired,
-  showDetails: PropTypes.func.isRequired,
-  isElementSelected: PropTypes.func.isRequired,
 };
