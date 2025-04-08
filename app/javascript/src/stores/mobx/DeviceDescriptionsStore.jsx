@@ -59,9 +59,6 @@ export const DeviceDescriptionsStore = types
     segment_expand_all: types.optional(types.boolean, false),
     ontology_index_for_edit: types.optional(types.number, -1),
     list_grouped_by: types.optional(types.string, 'serial_number'),
-    show_all_groups: types.optional(types.boolean, true),
-    all_groups: types.optional(types.array(types.string), []),
-    shown_groups: types.optional(types.array(types.string), []),
     select_is_open: types.optional(types.array(types.frozen({})), []),
     multi_row_fields: types.optional(types.array(types.string), multiRowFields),
   })
@@ -69,8 +66,8 @@ export const DeviceDescriptionsStore = types
     addDeviceDescriptionToOpen(device_description) {
       let openDeviceDescription = [...self.open_device_descriptions];
       const index = openDeviceDescription.findIndex(s => s.id === device_description.id);
-      
-      if (index === -1) { 
+
+      if (index === -1) {
         self.setDeviceDescription(device_description, true);
         openDeviceDescription.push(self.device_description);
         self.open_device_descriptions = openDeviceDescription;
@@ -267,36 +264,6 @@ export const DeviceDescriptionsStore = types
     setListGroupedBy(value) {
       self.list_grouped_by = value;
     },
-    toggleAllGroups() {
-      self.show_all_groups = !self.show_all_groups;
-
-      if (self.show_all_groups) {
-        self.removeAllGroupsFromShownGroups();
-      } else {
-        self.addAllGroupsToShownGroups();
-      }
-    },
-    addGroupToAllGroups(group_key) {
-      const index = self.all_groups.findIndex((g) => { return g == group_key });
-      if (index === -1) {
-        self.all_groups.push(group_key);
-      }
-    },
-    addAllGroupsToShownGroups() {
-      self.all_groups.map((group_key) => {
-        self.addGroupToShownGroups(group_key);
-      });
-    },
-    addGroupToShownGroups(group_key) {
-      self.shown_groups.push(group_key);
-    },
-    removeGroupFromShownGroups(group_key) {
-      const shownGroups = self.shown_groups.filter((g) => { return g !== group_key });
-      self.shown_groups = shownGroups;
-    },
-    removeAllGroupsFromShownGroups() {
-      self.shown_groups = [];
-    },
     setSelectIsOpen(field, value) {
       const index = self.select_is_open.findIndex((x) => { return x[field] !== undefined });
       const newValue = { [field]: value }
@@ -311,7 +278,6 @@ export const DeviceDescriptionsStore = types
   }))
   .views(self => ({
     get filteredAttachments() { return values(self.filtered_attachments) },
-    get shownGroups() { return values(self.shown_groups) },
     get selectIsOpen() { return values(self.select_is_open) },
     get multiRowFields() { return values(self.multi_row_fields) },
   }));

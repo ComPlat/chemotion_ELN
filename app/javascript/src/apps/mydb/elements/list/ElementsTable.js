@@ -646,7 +646,12 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'reaction') {
       typeSpecificHeader = this.renderReactionsHeader();
     } else if (type === 'device_description') {
-      typeSpecificHeader = <DeviceDescriptionListHeader elements={elements} />;
+      typeSpecificHeader = (
+        <>
+          <DeviceDescriptionListHeader />
+          {this.collapseButton()}
+        </>
+      );
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
     }
@@ -746,8 +751,8 @@ export default class ElementsTable extends React.Component {
       elementsTableEntries = (
         <DeviceDescriptionList
           elements={elements}
-          isElementSelected={this.isElementSelected}
-          showDetails={this.showDetails}
+          isGroupCollapsed={this.isGroupCollapsed}
+          toggleGroupCollapse={this.toggleGroupCollapse}
         />
       );
     } else {
