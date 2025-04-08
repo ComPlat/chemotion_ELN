@@ -25,7 +25,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
-import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
@@ -738,9 +737,9 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'cell_line') {
       elementsTableEntries = (
         <CellLineContainer
-          cellLineGroups={CellLineGroup.buildFromElements(elements)}
-          isElementSelected={this.isElementSelected}
-          showDetails={this.showDetails}
+          elements={elements}
+          isGroupCollapsed={this.isGroupCollapsed}
+          toggleGroupCollapse={this.toggleGroupCollapse}
         />
       );
     } else if (type === 'device_description') {
