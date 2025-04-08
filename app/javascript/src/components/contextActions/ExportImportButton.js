@@ -45,7 +45,8 @@ function ExportImportButton() {
       || (is_shared === true && permission_level < PermissionConst.ImportElements)
     );
 
-    setIsDisabled({ isDisabled: newIsDisabled });
+
+    setIsDisabled(newIsDisabled);
   };
 
   useEffect(() => {
