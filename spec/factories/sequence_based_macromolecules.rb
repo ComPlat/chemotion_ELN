@@ -11,7 +11,7 @@ FactoryBot.define do
     ec_numbers { [] }
     pdb_doi { }
     systematic_name { }
-    short_name { }
+    sequence(:short_name) { |n| "SBMM-#{n}" }
     molecular_weight { 12345 }
     add_attribute(:sequence) { "ABCDEFG" }
     link_uniprot { }
