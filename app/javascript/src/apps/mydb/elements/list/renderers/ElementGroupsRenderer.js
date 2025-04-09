@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { Set } from 'immutable';
 import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 import cs from 'classnames';
+
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
@@ -10,11 +14,10 @@ import ChevronIcon from 'src/components/common/ChevronIcon';
 import { useIsElementSelected, showDetails } from 'src/apps/mydb/elements/list/renderers/shared';
 
 function ElementGroupsRenderer({
+  type,
   getGroupKey,
   getItemKey,
   elements,
-  isGroupCollapsed,
-  toggleGroupCollapse,
   renderGroupHeader,
   renderGroupItem,
   getGroupHeaderDragType,
@@ -40,6 +43,31 @@ function ElementGroupsRenderer({
     return groupedElements;
   }, [elements, getGroupKey]);
 
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
+  useEffect(() => {
+    const updateCollapsedGroups = ({ groupCollapse }) => {
+      if (!groupCollapse[type]) {
+        setCollapsedGroups(new Set());
+        return;
+      }
+
+      const { baseState, except } = groupCollapse[type];
+      const isGroupCollapsed = (groupKey) => (
+        (baseState === 'collapsed')
+          ? !except.has(groupKey)
+          : except.has(groupKey)
+      );
+
+      setCollapsedGroups(Object.keys(groups).reduce(
+        (acc, groupKey) => (isGroupCollapsed(groupKey) ? acc.add(groupKey) : acc),
+        new Set(),
+      ));
+    };
+
+    UIStore.listen(updateCollapsedGroups);
+    return () => UIStore.unlisten(updateCollapsedGroups);
+  }, [groups, type]);
+
   const showMoreItems = (groupKey) => {
     setGroupLimits((prev) => ({
       ...prev,
@@ -62,7 +90,10 @@ function ElementGroupsRenderer({
       {Object.keys(groups).map((groupKey) => {
         const group = groups[groupKey];
         const groupLimit = getGroupLimit(groupKey);
-        const isCollapsed = isGroupCollapsed(groupKey);
+        const isCollapsed = collapsedGroups.has(groupKey);
+        const toggleGroupCollapse = () => {
+          UIActions.toggleGroupCollapse({ type, groupKey });
+        };
         const groupHeaderDragType = typeof getGroupHeaderDragType === 'function'
           ? getGroupHeaderDragType(group)
           : null;
@@ -71,7 +102,7 @@ function ElementGroupsRenderer({
           <div key={`element-group:${groupKey}`} className="element-group">
             <div className="element-group-header">
               <div className="element-group-header-content">
-                {renderGroupHeader(group)}
+                {renderGroupHeader(group, toggleGroupCollapse)}
               </div>
               <div className="element-group-header-collapse">
                 <OverlayTrigger
@@ -85,7 +116,7 @@ function ElementGroupsRenderer({
                   <ChevronIcon
                     direction={isCollapsed ? 'right' : 'down'}
                     color="primary"
-                    onClick={() => toggleGroupCollapse(groupKey)}
+                    onClick={toggleGroupCollapse}
                   />
                 </OverlayTrigger>
               </div>
@@ -146,6 +177,7 @@ function ElementGroupsRenderer({
 }
 
 ElementGroupsRenderer.propTypes = {
+  type: PropTypes.string.isRequired,
   getGroupKey: PropTypes.func.isRequired,
   getItemKey: PropTypes.func,
   elements: PropTypes.arrayOf(
@@ -156,8 +188,6 @@ ElementGroupsRenderer.propTypes = {
       ]).isRequired,
     }),
   ).isRequired,
-  isGroupCollapsed: PropTypes.func.isRequired,
-  toggleGroupCollapse: PropTypes.func.isRequired,
   renderGroupHeader: PropTypes.func.isRequired,
   renderGroupItem: PropTypes.func.isRequired,
   getGroupHeaderDragType: PropTypes.func,

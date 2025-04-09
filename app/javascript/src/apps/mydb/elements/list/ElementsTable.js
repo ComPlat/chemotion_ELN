@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import React from 'react';
-import { Set } from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
@@ -35,13 +34,13 @@ export default class ElementsTable extends React.Component {
     super(props);
     this.elementRef = React.createRef();
 
+    const { type } = props;
+    const { groupCollapse } = UIStore.getState();
+
     this.state = {
       elements: [],
       ui: {},
-      collapse: {
-        baseState: 'expanded',
-        except: new Set(),
-      },
+      isGroupBaseCollapsed: groupCollapse[type]?.baseState === 'collapsed',
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
@@ -93,18 +92,6 @@ export default class ElementsTable extends React.Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    const { type } = this.props;
-    if (prevProps.type !== type) {
-      this.setState({
-        collapse: {
-          baseState: 'expanded',
-          except: new Set(),
-        }
-      });
-    }
-  }
-
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange);
     UIStore.unlisten(this.onChangeUI);
@@ -136,7 +123,14 @@ export default class ElementsTable extends React.Component {
       return;
     }
     const {
-      filterCreatedAt, fromDate, toDate, userLabel, number_of_results, currentSearchByID, productOnly
+      filterCreatedAt,
+      fromDate,
+      toDate,
+      userLabel,
+      number_of_results,
+      currentSearchByID,
+      productOnly,
+      groupCollapse,
     } = state;
 
     // check if element details of any type are open at the moment
@@ -163,6 +157,7 @@ export default class ElementsTable extends React.Component {
           toDate,
           userLabel,
         },
+        isGroupBaseCollapsed: groupCollapse[type]?.baseState === 'collapsed',
         productOnly,
         searchResult: isSearchResult,
         moleculeSort: moleculeSort
@@ -206,11 +201,10 @@ export default class ElementsTable extends React.Component {
 
     this.setState({
       moleculeSort,
-      collapse: {
-        baseState: 'expanded',
-        except: new Set(),
-      },
-    }, () => ElementActions.changeSorting(moleculeSort));
+    }, () => {
+      ElementActions.changeSorting(moleculeSort);
+      UIActions.resetGroupCollapse({ type: 'sample' });
+    });
   };
 
   updateFilterAndUserProfile = (elementsSort, sortDirection, elementsGroup) => {
@@ -237,21 +231,20 @@ export default class ElementsTable extends React.Component {
   };
 
   changeElementsGroup = ({ value: elementsGroup }) => {
+    const { type } = this.props;
     const { elementsSort, sortDirection } = this.state;
 
     this.setState({
       elementsGroup,
       elementsSort,
-      collapse: {
-        baseState: 'expanded',
-        except: new Set(),
-      },
     }, () => {
+      UIActions.resetGroupCollapse({ type });
       this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
   };
 
   changeElementsSort = () => {
+    const { type } = this.props;
     const { elementsGroup, sortDirection } = this.state;
     let { elementsSort } = this.state;
     elementsSort = !elementsSort;
@@ -259,76 +252,37 @@ export default class ElementsTable extends React.Component {
     this.setState({
       elementsSort
     }, () => {
+      UIActions.resetGroupCollapse({ type });
       this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
   };
 
   changeSortDirection = () => {
+    const { type } = this.props;
     const { elementsGroup, elementsSort, sortDirection } = this.state;
     const newSortDirection = sortDirection === 'DESC' ? 'ASC' : 'DESC';
 
     this.setState(
       { sortDirection: newSortDirection },
       () => {
+        UIActions.resetGroupCollapse({ type });
         this.updateFilterAndUserProfile(elementsSort, newSortDirection, elementsGroup);
       }
     );
   };
 
-  collapseAll = () => {
-    this.setState({
-      collapse: {
-        baseState: 'collapsed',
-        except: new Set(),
-      }
-    });
-  };
-
-  expandAll = () => {
-    this.setState({
-      collapse: {
-        baseState: 'expanded',
-        except: new Set(),
-      }
-    });
-  };
-
-  isGroupCollapsed = (groupId) => {
-    const { collapse: { baseState, except } } = this.state;
-
-    if (baseState === 'collapsed') {
-      return !except.has(groupId);
-    }
-
-    if (baseState === 'expanded') {
-      return except.has(groupId);
-    }
-
-    throw new Error(`Invalid collapse state: ${baseState}`);
-  };
-
-  toggleGroupCollapse = (groupId) => {
-    const { collapse: { baseState, except } } = this.state;
-
-    const newExcept = except.has(groupId)
-      ? except.delete(groupId)
-      : except.add(groupId);
-    this.setState({
-      collapse: {
-        baseState,
-        except: newExcept
-      }
-    });
-  };
-
   collapseButton = () => {
-    const { collapse: { baseState } } = this.state;
-    const isCollapsed = baseState === 'collapsed';
+    const { isGroupBaseCollapsed } = this.state;
+    const { type } = this.props;
+
+    const onClick = isGroupBaseCollapsed
+      ? () => UIActions.expandAllGroups({ type })
+      : () => UIActions.collapseAllGroups({ type });
 
     return (
       <ChevronIcon
-        direction={isCollapsed ? 'right' : 'down'}
-        onClick={() => (isCollapsed ? this.expandAll() : this.collapseAll())}
+        direction={isGroupBaseCollapsed ? 'right' : 'down'}
+        onClick={onClick}
         color="primary"
         className="fs-5"
         role="button"
@@ -691,8 +645,6 @@ export default class ElementsTable extends React.Component {
         <SampleGroupContainer
           elements={elements}
           moleculeSort={moleculeSort}
-          isGroupCollapsed={this.isGroupCollapsed}
-          toggleGroupCollapse={this.toggleGroupCollapse}
         />
       );
     } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
@@ -700,8 +652,6 @@ export default class ElementsTable extends React.Component {
         <ElementsTableGroupedEntries
           elements={elements}
           elementsGroup={elementsGroup}
-          isGroupCollapsed={this.isGroupCollapsed}
-          toggleGroupCollapse={this.toggleGroupCollapse}
           type={type}
         />
       );
@@ -709,16 +659,12 @@ export default class ElementsTable extends React.Component {
       elementsTableEntries = (
         <CellLineContainer
           elements={elements}
-          isGroupCollapsed={this.isGroupCollapsed}
-          toggleGroupCollapse={this.toggleGroupCollapse}
         />
       );
     } else if (type === 'device_description') {
       elementsTableEntries = (
         <DeviceDescriptionList
           elements={elements}
-          isGroupCollapsed={this.isGroupCollapsed}
-          toggleGroupCollapse={this.toggleGroupCollapse}
         />
       );
     } else {

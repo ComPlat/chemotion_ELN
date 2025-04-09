@@ -10,27 +10,24 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 function SampleGroupContainer({
   elements,
-  isGroupCollapsed,
-  toggleGroupCollapse,
   moleculeSort,
 }) {
   const getGroupKey = useCallback((sample) => sample.getMoleculeId(), []);
 
   return (
     <ElementGroupsRenderer
+      type="sample"
       elements={elements}
       getGroupKey={getGroupKey}
-      isGroupCollapsed={isGroupCollapsed}
-      toggleGroupCollapse={toggleGroupCollapse}
       getGroupHeaderDragType={([sample]) => (
         !sample.isNoStructureSample()
           ? DragDropItemTypes.MOLECULE
           : null
       )}
-      renderGroupHeader={([sample]) => (
+      renderGroupHeader={([sample], toggleGroupCollapse) => (
         <SampleGroupMoleculeHeader
           sample={sample}
-          onClick={() => toggleGroupCollapse(getGroupKey(sample))}
+          onClick={() => toggleGroupCollapse()}
         />
       )}
       renderGroupItem={(item, showDetails) => (
@@ -43,8 +40,6 @@ function SampleGroupContainer({
 
 SampleGroupContainer.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.instanceOf(Sample)).isRequired,
-  isGroupCollapsed: PropTypes.func.isRequired,
-  toggleGroupCollapse: PropTypes.func.isRequired,
   moleculeSort: PropTypes.bool.isRequired,
 };
 

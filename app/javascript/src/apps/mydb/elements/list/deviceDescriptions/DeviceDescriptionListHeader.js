@@ -1,6 +1,8 @@
 import React, { useContext } from 'react';
 import { Select } from 'src/components/common/Select';
 
+import UIActions from 'src/stores/alt/actions/UIActions';
+
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -18,6 +20,7 @@ function DeviceDescriptionListHeader() {
   const selectedValue = options.find((o) => o.value === groupedByValue);
 
   const handleGroupSelect = (event) => {
+    UIActions.resetGroupCollapse({ type: 'device_description' });
     deviceDescriptionsStore.setListGroupedBy(event.value);
   };
 
