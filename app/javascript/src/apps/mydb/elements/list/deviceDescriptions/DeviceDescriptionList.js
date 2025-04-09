@@ -26,7 +26,7 @@ function ListItemHeader({
 
   return (
     <div
-      onClick={() => toggleGroupCollapse(groupKey)}
+      onClick={() => toggleGroupCollapse()}
       role="button"
     >
       <div className="fw-bold fs-5">{groupName}</div>
@@ -66,8 +66,6 @@ ListItem.propTypes = {
 
 function DeviceDescriptionList({
   elements,
-  isGroupCollapsed,
-  toggleGroupCollapse
 }) {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
@@ -93,11 +91,10 @@ function DeviceDescriptionList({
 
   return (
     <ElementGroupsRenderer
+      type="device_description"
       elements={elements}
       getGroupKey={getGroupKey}
-      isGroupCollapsed={isGroupCollapsed}
-      toggleGroupCollapse={toggleGroupCollapse}
-      renderGroupHeader={(group) => (
+      renderGroupHeader={(group, toggleGroupCollapse) => (
         <ListItemHeader
           group={group}
           getGroupKey={getGroupKey}
@@ -117,8 +114,6 @@ function DeviceDescriptionList({
 
 DeviceDescriptionList.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.instanceOf(DeviceDescription)).isRequired,
-  isGroupCollapsed: PropTypes.func.isRequired,
-  toggleGroupCollapse: PropTypes.func.isRequired,
 };
 
 export default observer(DeviceDescriptionList);

@@ -7,11 +7,7 @@ import CellLine from 'src/models/cellLine/CellLine';
 
 import ElementGroupsRenderer from 'src/apps/mydb/elements/list/renderers/ElementGroupsRenderer';
 
-function CellLineContainer({
-  elements,
-  isGroupCollapsed,
-  toggleGroupCollapse,
-}) {
+function CellLineContainer({ elements }) {
   const getGroupKey = useCallback(
     (element) => `${element.cellLineName}:${element.source}`,
     []
@@ -19,10 +15,9 @@ function CellLineContainer({
 
   return (
     <ElementGroupsRenderer
+      type="cell_line"
       elements={elements}
       getGroupKey={getGroupKey}
-      isGroupCollapsed={isGroupCollapsed}
-      toggleGroupCollapse={toggleGroupCollapse}
       renderGroupHeader={(group) => (
         <CellLineGroupHeader cellLineItems={group} />
       )}
@@ -38,8 +33,6 @@ function CellLineContainer({
 
 CellLineContainer.propTypes = {
   elements: PropTypes.arrayOf(PropTypes.instanceOf(CellLine)).isRequired,
-  isGroupCollapsed: PropTypes.func.isRequired,
-  toggleGroupCollapse: PropTypes.func.isRequired,
 };
 
 export default CellLineContainer;

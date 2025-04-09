@@ -134,27 +134,21 @@ export default class ElementsTableGroupedEntries extends Component {
   }
 
   render() {
-    const {
-      elements,
-      type,
-      isGroupCollapsed,
-      toggleGroupCollapse
-    } = this.props;
+    const { elements, type } = this.props;
 
     if (type === 'reaction') {
       return (
         <ElementGroupsRenderer
+          type="reaction"
           elements={elements}
           getGroupKey={(element) => this.getReactionGroupKey(element)}
-          isGroupCollapsed={isGroupCollapsed}
-          toggleGroupCollapse={toggleGroupCollapse}
-          renderGroupHeader={(group) => {
+          renderGroupHeader={(group, toggleGroupCollapse) => {
             const groupKey = this.getReactionGroupKey(group[0]);
             return (
               <ReactionsHeader
                 group={groupKey}
                 element={group[0]}
-                onClick={() => toggleGroupCollapse(groupKey)}
+                onClick={() => toggleGroupCollapse()}
               />
             );
           }}
@@ -165,16 +159,15 @@ export default class ElementsTableGroupedEntries extends Component {
 
     return (
       <ElementGroupsRenderer
+        type={type}
         elements={elements}
         getGroupKey={(element) => this.getGenericGroupKey(element)}
-        isGroupCollapsed={isGroupCollapsed}
-        toggleGroupCollapse={toggleGroupCollapse}
-        renderGroupHeader={(group) => {
+        renderGroupHeader={(group, toggleGroupCollapse) => {
           const groupKey = this.getGenericGroupKey(group[0]);
           return (
             <GenericElementsHeader
               group={groupKey}
-              onClick={() => toggleGroupCollapse(groupKey)}
+              onClick={() => toggleGroupCollapse()}
             />
           );
         }}
@@ -187,7 +180,5 @@ export default class ElementsTableGroupedEntries extends Component {
 ElementsTableGroupedEntries.propTypes = {
   elements: PropTypes.array.isRequired,
   elementsGroup: PropTypes.string.isRequired,
-  isGroupCollapsed: PropTypes.func.isRequired,
-  toggleGroupCollapse: PropTypes.func.isRequired,
   type: PropTypes.string.isRequired,
 };
