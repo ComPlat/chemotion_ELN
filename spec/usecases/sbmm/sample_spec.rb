@@ -18,6 +18,28 @@ describe Usecases::Sbmm::Sample do
         function_or_application: 'Testing',
         concentration_value: '0.5',
         concentration_unit: 'ng/L',
+        container: {
+          is_new: true,
+          containable_type: 'root',
+          extended_metadata: {
+            report: true
+          },
+          description: '',
+          is_deleted: false,
+          attachments: [],
+          name: 'root',
+          children: [{
+            name: 'new',
+            containable_type: 'analyses',
+            children: [],
+            attachments: [],
+            is_deleted: false,
+            description: '',
+            extended_metadata: {
+              report: true
+            }
+          }]
+        },
         sequence_based_macromolecule_attributes: {
           sbmm_type: 'protein',
           sbmm_subtype: 'unmodified',

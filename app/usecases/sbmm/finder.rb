@@ -18,7 +18,7 @@ module Usecases
           joins << :post_translational_modification
         end
 
-        SequenceBasedMacromolecule.modified.joins(*joins).find_by(params)
+        SequenceBasedMacromolecule.non_uniprot.joins(*joins).find_by(params)
       end
 
       # returns an instance of SequenceBasedMacromolecule
