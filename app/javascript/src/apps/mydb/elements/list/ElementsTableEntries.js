@@ -1,8 +1,5 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
-import {
-  Tooltip, OverlayTrigger, Badge
-} from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 
@@ -13,94 +10,9 @@ import CommentIcon from 'src/components/comments/CommentIcon';
 import PropTypes from 'prop-types';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 
-export function reactionRole(element) {
-  let tooltip = null;
-  if (element.type === 'reaction') {
-    switch (element.role) {
-      case 'gp':
-        tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
-        return (
-          <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-home c-bs-primary me-1" />
-          </OverlayTrigger>
-        );
-      case 'parts':
-        tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
-        return (
-          <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-bookmark c-bs-success me-1" />
-          </OverlayTrigger>
-        );
-      case 'single':
-        tooltip = <Tooltip id="roleTp">Single</Tooltip>;
-        return (
-          <OverlayTrigger placement="top" overlay={tooltip}>
-            <i className="fa fa-asterisk c-bs-danger me-1" />
-          </OverlayTrigger>
-        );
-      default:
-    }
-  }
-
-  return null;
-}
-
-function reactionVariations(element) {
-  if (element.type === 'reaction' && element.variations && element.variations.length) {
-    return (
-      <Badge bg="info">{`${element.variations.length} variation(s)`}</Badge>
-    );
-  }
-  return null;
-}
-
-export function reactionStatus(element) {
-  if (element.type === 'reaction' && element.status) {
-    const tooltip = (
-      <Tooltip id={`reaction_${element.status}`}>
-        {element.status}
-        &nbsp;
-        Reaction
-      </Tooltip>
-    );
-
-    const overlay = (_icons) => (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        {_icons}
-      </OverlayTrigger>
-    );
-
-    switch (element.status) {
-      case 'Planned':
-        return overlay(<i className="fa fa-clock-o c-bs-warning" />);
-      case 'Running': {
-        const icon = (
-          <span
-            style={{ width: '12px', height: '14px', lineHeight: '14px' }}
-            className="fa fa-stack"
-          >
-            <i className="fa fa-stack-1x fa-hourglass-1 running-1 c-bs-warning" />
-            <i className="fa fa-stack-1x fa-hourglass-2 running-2 c-bs-warning" />
-            <i className="fa fa-stack-1x fa-hourglass-3 running-3 c-bs-warning" />
-          </span>
-        );
-        return overlay(icon);
-      }
-      case 'Done':
-        return overlay(<i className="fa fa-hourglass-3 c-bs-primary" />);
-      case 'Analyses Pending':
-        return overlay(<i className="fa fa-ellipsis-h c-bs-primary" />);
-      case 'Successful':
-        return overlay(<i className="fa fa-check-circle-o c-bs-success" />);
-      case 'Not Successful':
-        return overlay(<i className="fa fa-times-circle-o c-bs-danger" />);
-      default:
-        return null;
-    }
-  }
-
-  return null;
-}
+import ReactionRole from 'src/apps/mydb/elements/list/reaction/ReactionRole';
+import ReactionVariations from 'src/apps/mydb/elements/list/reaction/ReactionVariations';
+import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -186,10 +98,10 @@ export default class ElementsTableEntries extends Component {
               width: '52vw'
             }}
           />
-          {reactionStatus(element)}
-          {reactionRole(element)}
+          <ReactionStatus element={element} />
+          <ReactionRole element={element} />
           <ShowUserLabels element={element} />
-          {reactionVariations(element)}
+          <ReactionVariations element={element} />
           <br />
           <CommentIcon commentCount={element.comment_count} />
           <ElementCollectionLabels element={element} key={element.id} />
