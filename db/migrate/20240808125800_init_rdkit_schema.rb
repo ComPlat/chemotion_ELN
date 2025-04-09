@@ -5,7 +5,7 @@ class InitRdkitSchema < ActiveRecord::Migration[6.1]
     return unless Chemotion::Application.config.pg_cartridge == 'rdkit'
 
     enable_extension 'rdkit' unless extension_enabled?('rdkit')
-    create_schema 'rdkit'
+    create_schema 'rdkit' unless schema_exists? 'rdkit'
   end
 
   def down
