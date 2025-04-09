@@ -1371,7 +1371,7 @@ class ElementStore {
   }
 
   handleUpdateElement(updatedElement) {
-    switch (updatedElement.type) {
+    switch (updatedElement?.type) {
       case 'sample':
         fetchOls('sample');
         this.handleRefreshElements('sample');
@@ -1409,7 +1409,9 @@ class ElementStore {
         break;
       default:
         this.changeCurrentElement(updatedElement);
-        this.handleRefreshElements(updatedElement.type);
+        if (updatedElement && updatedElement.type) {
+          this.handleRefreshElements(updatedElement.type);
+        }
         break;
     }
 

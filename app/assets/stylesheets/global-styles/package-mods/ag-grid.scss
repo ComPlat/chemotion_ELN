@@ -5,4 +5,21 @@
 .ag-theme-reaction-variations .ag-body-horizontal-scroll {
     position: absolute !important;
 }
-  
+
+.ag-theme-alpine .ag-layout-auto-height .ag-center-cols-viewport,
+.ag-theme-alpine .ag-layout-auto-height .ag-center-cols-container,
+.ag-theme-alpine .ag-layout-print .ag-center-cols-viewport, 
+.ag-theme-alpine .ag-layout-print .ag-center-cols-container {
+  min-height: 40px !important;
+}
+
+.ag-theme-alpine .ag-overlay-no-rows-wrapper.ag-layout-auto-height {
+  padding-top: 49px !important;
+}
+
+.editable-cell .ag-cell-value:not(:empty) {
+  @extend .border;
+  @extend .ps-2;
+  @extend .mt-2;
+  @extend .bg-white;
+}
