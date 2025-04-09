@@ -74,7 +74,7 @@ function PhaseSeparatedSupportSolidDivided() {
         rx="5"
         ry="5"
         stroke="#000"
-        strokeWidth="10"
+        strokeWidth="3"
         fill="ActivePhaseFullCoating"
       />
     </svg>
@@ -82,26 +82,6 @@ function PhaseSeparatedSupportSolidDivided() {
 }
 
 function PorousHatched() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="50"
-      height="50"
-      viewBox="0 0 300 300"
-    >
-      <rect
-        width="300"
-        height="150"
-        y="80"
-        stroke="#ba8c00"
-        strokeWidth="10"
-        fill="#fff"
-      />
-    </svg>
-  );
-}
-
-function Promotors() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -160,28 +140,114 @@ function ActivePhaseFullCoating() {
   );
 }
 
-function BodySolid() {
+function Support() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="50"
-      height="50"
-      viewBox="0 0 350 350"
+      height="30"
+      viewBox="0 0 120 100"
     >
       <rect
-        width="350"
-        height="120"
-        y="120"
-        rx="20"
-        ry="20"
-        stroke="#000"
-        strokeWidth="10"
-        fill="ActivePhaseFullCoating"
+        width="120"
+        height="40"
+        y="35"
+        rx="1"
+        ry="1"
+        stroke="#4472c4"
+        strokeWidth="3"
+        fill="#d8e2f3"
+        strokeDasharray="10,7"
       />
     </svg>
   );
 }
 
+function SupportSinglePhase() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="30"
+      viewBox="0 0 120 100"
+    >
+      <rect
+        width="112"
+        height="40"
+        y="37"
+        x="2"
+        stroke="#ba8c00"
+        fill="#ffc000"
+        strokeWidth="4"
+      />
+    </svg>
+  );
+}
+
+function SupportSinglePhaseWhite() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="30"
+      viewBox="0 0 120 100"
+    >
+      <rect
+        width="112"
+        height="40"
+        y="37"
+        x="2"
+        stroke="#ba8c00"
+        fill="#fff"
+        strokeWidth="4"
+      />
+    </svg>
+  );
+}
+
+function BodySolid() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="30"
+      viewBox="0 0 120 100"
+    >
+      <rect
+        width="112"
+        height="40"
+        y="37"
+        x="2"
+        stroke="#000"
+        fill="#757070"
+        strokeWidth="4"
+      />
+    </svg>
+  );
+}
+
+function BodySolidWhite() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="30"
+      viewBox="0 0 120 100"
+    >
+      <rect
+        width="112"
+        height="40"
+        y="37"
+        x="2"
+        rx="5"
+        ry="5"
+        stroke="#000"
+        fill="#fff"
+        strokeWidth="4"
+      />
+    </svg>
+  );
+}
 const PolymerShapes = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <!-- Square with border -->
   <rect x="4" y="4" width="8" height="8" stroke="black" stroke-width="2" fill="none" />
@@ -206,6 +272,10 @@ export {
   BodySolid,
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
+  Support,
+  SupportSinglePhase,
+  SupportSinglePhaseWhite,
+  BodySolidWhite,
   PolymerShapes,
   RescaleCanvas
 };

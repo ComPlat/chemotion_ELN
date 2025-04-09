@@ -62,6 +62,7 @@ import {
   deepCompareContent,
   removeImageTemplateAtom,
   handleOnDeleteAtom,
+  trimSVGWhitespace
 } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 import {
   PolymerListIconKetcherToolbarButton,
@@ -791,12 +792,13 @@ const KetcherEditor = forwardRef((props, ref) => {
         await fetchKetcherData(editor);
         await centerPositionCanvas(editor);
         const canvasDataMol = await editor.structureDef.editor.getMolfile();
-        const svgElement = await reArrangeImagesOnCanvas(iframeRef); // svg display
+        await reArrangeImagesOnCanvas(iframeRef); // svg display
         const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
         const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
         if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
         ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
         resetStore();
+        const svgElement = trimSVGWhitespace(iframeRef);
         return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
       } catch (e) {
         console.error('onSaveFileK2SC', e);
@@ -851,7 +853,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         },
       ]
     };
-    console.log(latestData);
 
     saveMoveCanvas(editor, latestData, true, true, false);
     await buttonClickForRectangleSelection(iframeRef);

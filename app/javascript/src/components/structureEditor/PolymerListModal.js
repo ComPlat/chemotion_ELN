@@ -15,7 +15,11 @@ import {
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
   BodySolid,
-  RescaleCanvas
+  RescaleCanvas,
+  Support,
+  SupportSinglePhase,
+  SupportSinglePhaseWhite,
+  BodySolidWhite
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
 
 const iconMap = {
@@ -27,7 +31,11 @@ const iconMap = {
   ActivePhasePromotors,
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
-  BodySolid
+  BodySolid,
+  Support,
+  SupportSinglePhase,
+  SupportSinglePhaseWhite,
+  BodySolidWhite
 };
 
 function PolymerListModal({
@@ -92,11 +100,9 @@ function PolymerListModal({
                                   key={shape.template_id}
                                   variant="normal"
                                   onClick={async () => {
-                                    if (shape.template_id && shape.template_id < 6) {
+                                    if (shape.template_id) {
                                       onShapeSelection(shape.template_id);
-                                      return;
                                     }
-                                    alert('Shape not allowed to use for now');
                                   }}
                                 >
                                   <PolymerIcon />
