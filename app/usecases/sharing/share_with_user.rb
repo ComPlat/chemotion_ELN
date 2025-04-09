@@ -20,6 +20,7 @@ module Usecases
           element_ids = @params.fetch(:element_ids, [])
           cell_line_ids = @params.fetch(:cell_line_ids, [])
           device_description_ids = @params.fetch(:device_description_ids, [])
+          sequence_based_macromolecule_sample_ids = @params.fetch(:sequence_based_macromolecule_sample_ids, [])
 
           # Reactions and Wellplates have associated Samples
           associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(@current_user_id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(@current_user_id, wellplate_ids).map(&:id)
