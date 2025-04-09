@@ -11,7 +11,6 @@ import LoadingModal from 'src/components/common/LoadingModal';
 import ProgressModal from 'src/components/common/ProgressModal';
 import Notifications from 'src/components/Notifications';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
-import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -26,7 +25,6 @@ class App extends Component {
       showCollectionTree: true,
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this);
-    this.documentKeyDown = this.documentKeyDown.bind(this);
     this.toggleCollectionTree = this.toggleCollectionTree.bind(this);
   }
 
@@ -47,7 +45,6 @@ class App extends Component {
     UIActions.initialize.defer();
     this.patchExternalLibraries();
 
-    document.addEventListener('keydown', this.documentKeyDown);
     window.addEventListener('storage', this.handleStorageChange);
 
     // user templates
@@ -57,7 +54,6 @@ class App extends Component {
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUiStoreChange);
-    document.removeEventListener('keydown', this.documentKeyDown);
     this.removeLocalStorageEventListener();
   }
 
@@ -76,14 +72,6 @@ class App extends Component {
   handleUiStoreChange(state) {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
-    }
-  }
-
-  documentKeyDown(event) {
-    // Only trigger arrow and Enter keys ON BODY
-    // Ignore on other element
-    if (event.target.tagName.toUpperCase() === 'BODY' && [13, 38, 39, 40].includes(event.keyCode)) {
-      KeyboardActions.documentKeyDown(event.keyCode);
     }
   }
 
