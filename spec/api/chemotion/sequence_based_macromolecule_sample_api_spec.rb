@@ -209,6 +209,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             molecular_weight: 123,
             parent_identifier: 'P12345',
             sequence: 'MODIFIEDSEQUENCE',
+            short_name: 'FooBar',
             protein_sequence_modification_attributes: {
               modification_n_terminal: true,
               modification_n_terminal_details: 'Some details'
@@ -296,6 +297,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             molecular_weight: 123,
             parent_identifier: non_uniprot_sbmm.id,
             sequence: 'MODIFIEDSEQUENCE',
+            short_name: 'FooBar',
             protein_sequence_modification_attributes: {
               modification_n_terminal: true,
               modification_n_terminal_details: 'Some details'
@@ -375,6 +377,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             parent_identifier: sbmm.parent_id,
             molecular_weight: sbmm.molecular_weight,
             sequence: sbmm.sequence,
+            short_name: sbmm.short_name,
             # the following parameters are only there so grape's format validation does not complain about missing
             # ptm/psm attributes
             protein_sequence_modification_attributes: {

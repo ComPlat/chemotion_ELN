@@ -46,6 +46,7 @@ describe Usecases::Sbmm::Create do
           uniprot_derivation: 'uniprot_modified',
           parent_identifier: 'P12345',
           sequence: 'ABC12345',
+          short_name: 'FooBar',
           post_translational_modification_attributes: {
             phosphorylation_enabled: true,
             phosphorylation_ser_enabled: true,
@@ -97,6 +98,12 @@ describe Usecases::Sbmm::Create do
           sbmm_subtype: 'unmodified', # no idea if thats semantically true
           uniprot_derivation: 'uniprot_unknown',
           sequence: 'ABC12345',
+          short_name: 'FooBar',
+          post_translational_modification_attributes: {
+            phosphorylation_enabled: true,
+            phosphorylation_ser_enabled: true,
+            phosphorylation_ser_details: 'Something something'
+          }
         }
       end
       it 'creates a new protein based on user input' do
