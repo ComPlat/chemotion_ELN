@@ -144,7 +144,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     autoHeaderHeight: true,
     autoHeight: true,
     sortable: false,
-    resizable: true,
+    resizable: false,
     suppressMovable: true,
     cellClass: ["border-end", "px-2"],
     headerClass: ["border-end", "px-2"]
