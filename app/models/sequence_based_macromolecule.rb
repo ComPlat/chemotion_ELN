@@ -63,6 +63,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
   scope :uniprot, -> { where(uniprot_derivation: 'uniprot') }
   scope :modified, -> { where(uniprot_derivation: 'uniprot_modified') }
   scope :unknown, -> { where(uniprot_derivation: 'uniprot_unknown') }
+  scope :non_uniprot, -> { where(uniprot_derivation: %w[uniprot_modified uniprot_unknown]) }
   scope :with_ec_number, ->(ec_number) { ec_number ? where('ec_numbers @> ARRAY[?]::varchar[]', [ec_number&.strip]) : none }
   scope :with_accession, ->(accession) { accession ? where('accessions @> ARRAY[?]::varchar[]', [accession&.strip]) : none }
   scope :search_in_name, ->(text) { text ? where("systematic_name LIKE '%#{text}%' OR short_name LIKE '%#{text}%'") : none }
