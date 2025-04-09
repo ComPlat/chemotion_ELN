@@ -6,7 +6,8 @@ import ElementGroupsRenderer from 'src/apps/mydb/elements/list/renderers/Element
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-import { reactionStatus, reactionRole } from 'src/apps/mydb/elements/list/ElementsTableEntries';
+import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
+import ReactionRole from 'src/apps/mydb/elements/list/reaction/ReactionRole';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
@@ -106,8 +107,8 @@ export default class ElementsTableGroupedEntries extends Component {
             }}
           />
           <div className="d-flex gap-1 align-items-center">
-            {reactionStatus(element)}
-            {reactionRole(element)}
+            <ReactionStatus element={element} />
+            <ReactionRole element={element} />
             <ShowUserLabels element={element} />
           </div>
           <CommentIcon commentCount={element.comment_count} />
