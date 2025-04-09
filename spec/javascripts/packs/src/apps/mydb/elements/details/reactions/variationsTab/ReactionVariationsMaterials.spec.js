@@ -78,7 +78,7 @@ describe('ReactionVariationsMaterials', () => {
     updatedMaterials.reactants[0].gas_type = 'catalyst';
     updatedMaterials.products[0].gas_type = 'off';
 
-    const updatedVariations = updateVariationsGasTypes(reaction.variations, updatedMaterials, false);
+    const updatedVariations = updateVariationsGasTypes(reaction.variations, updatedMaterials, false, null);
 
     const variationsRow = reaction.variations[0];
     const updatedVariationsRow = updatedVariations[0];

@@ -192,7 +192,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     const updatedReactionVariations = updateVariationsGasTypes(
       reactionVariations,
       updatedReactionMaterials,
-      updatedGasMode
+      updatedGasMode,
+      vesselVolume
     );
     setReactionVariations(updatedReactionVariations);
 
