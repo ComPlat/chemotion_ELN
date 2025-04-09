@@ -155,7 +155,8 @@ class Attachment < ApplicationRecord
   #  "Attachment.new.root_element" #=> "nil"
   def root_element
     case attachable_type
-    when 'Sample', 'Reaction', 'ResearchPlan', 'Wellplate', 'Screen', 'CelllineSample' # *Model::ELEMENTS
+    when 'Sample', 'Reaction', 'ResearchPlan', 'Wellplate', 'Screen', 'CelllineSample', 'DeviceDescription',
+         'SequenceBasedMacromoleculeSample' # *Model::ELEMENTS
       attachable
     when 'Container'
       attachable&.root_element

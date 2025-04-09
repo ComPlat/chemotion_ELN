@@ -39,7 +39,8 @@ module CollectionHelpers
       :wellplate_detail_level, :screen_detail_level,
       :researchplan_detail_level, :element_detail_level,
       :celllinesample_detail_level,
-      :devicedescription_detail_level
+      :devicedescription_detail_level,
+      :sequencebasedmacromoleculesample_detail_level
     )&.symbolize_keys
     {
       permission_level: 0,
