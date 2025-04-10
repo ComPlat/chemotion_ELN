@@ -572,6 +572,8 @@ export default class ElementsTable extends React.Component {
           {this.collapseButton()}
         </>
       );
+    } else if (type === 'cell_line') {
+      typeSpecificHeader = this.collapseButton();
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
     }
