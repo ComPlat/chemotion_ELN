@@ -47,10 +47,14 @@ const VesselItem = types
     changed: false,
     instances: types.optional(types.array(VesselInstance), []),
     is_new: types.optional(types.boolean, false),
+    isDuplicateName: types.optional(types.boolean, false),
   })
   .actions((self) => ({
     markChanged(newChanged) {
       self.changed = newChanged;
+    },
+    setIsDuplicate(flag) {
+      self.isDuplicateName = flag;
     },
   }));
 
@@ -157,6 +161,12 @@ export const VesselDetailsStore = types
       self.vessels.get(id).changed = true;
       self.vessels.get(id).qrCode = newQrCode;
     },
+    setNameDuplicateFlag(id, isDuplicate) {
+      const vessel = self.vessels.get(id);
+      if (vessel) {
+        vessel.setIsDuplicate(isDuplicate);
+      }
+    },
     convertJsModelToMobxModel(container) {
       return VesselContainer.create({
         id: container.id,
@@ -217,5 +227,9 @@ export const VesselDetailsStore = types
   .views((self) => ({
     getVessel(id) {
       return self.vessels.get(id);
+    },
+    isNameDuplicate(id) {
+      const vessel = self.vessels.get(id);
+      return vessel ? vessel.isDuplicateName : false;
     },
   }));
