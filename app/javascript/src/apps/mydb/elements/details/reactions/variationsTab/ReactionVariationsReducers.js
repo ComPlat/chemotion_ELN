@@ -8,6 +8,9 @@ import {
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
+    case 'set_column_definitions': {
+      return action.columnDefinitions;
+    }
     case 'remove_obsolete_materials': {
       return removeObsoleteColumnDefinitions(
         columnDefinitions,

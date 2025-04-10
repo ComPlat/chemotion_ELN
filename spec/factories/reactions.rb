@@ -96,6 +96,7 @@ FactoryBot.define do
 
           {
             id: i.to_s,
+            segmentData: [],
             metadata: {
               analyses: [],
               notes: '',
