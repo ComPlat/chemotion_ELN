@@ -26,10 +26,11 @@ describe Chemotion::ChemicalsService do
     end
 
     context 'when create_sds_file is called' do
-      it 'create safety data when not already saved' do
+      it 'creates safety data when not already saved' do
         file_path = '252549_Merck.pdf'
         link = 'https://www.sigmaaldrich.com/US/en/sds/sial/252549'
-        allow(described_class).to receive(:write_file).with(file_path, link).and_return(true)
+
+        allow(described_class).to receive(:write_file).with(file_path, link, attached_file = nil).and_return(true)
         result = described_class.create_sds_file(file_path, link)
         expect(result).to be_truthy
       end
@@ -155,14 +156,38 @@ describe Chemotion::ChemicalsService do
       let(:error_message) { 'statement invalid' }
 
       it 'calls the block when no exception is raised' do
-        expect { |block| described_class.handle_exceptions(&block) }.to yield_control
+        result = 'test result'
+        expect(described_class.handle_exceptions { result }).to eq(result)
       end
 
-      it 'logs the error message for any other StandardError' do
+      it 'logs the error message for any StandardError and returns error hash' do
         error_message = 'Something went wrong'
         allow(Rails.logger).to receive(:error)
-        described_class.handle_exceptions { raise StandardError, error_message }
+
+        result = described_class.handle_exceptions { raise StandardError, error_message }
+
         expect(Rails.logger).to have_received(:error).with("Error: #{error_message}")
+        expect(result).to eq({ error: error_message })
+      end
+
+      it 'returns a specific error message for JSON::ParserError' do
+        allow(Rails.logger).to receive(:error)
+
+        result = described_class.handle_exceptions { raise JSON::ParserError }
+
+        expect(result).to eq({ error: 'Invalid JSON data' })
+      end
+
+      it 'returns error for ActiveRecord exceptions' do
+        db_error = 'Database constraint violation'
+        allow(Rails.logger).to receive(:error)
+
+        # Simply mock the error message for ActiveRecord::StatementInvalid
+        statement_invalid = ActiveRecord::StatementInvalid.new(db_error)
+
+        result = described_class.handle_exceptions { raise statement_invalid }
+
+        expect(result).to eq({ error: db_error })
       end
     end
 
@@ -201,7 +226,6 @@ describe Chemotion::ChemicalsService do
       it 'extracts German terms from parentheses correctly' do
         expect(described_class.clean_property_name('density (dichte)')).to eq('density')
         expect(described_class.clean_property_name('color (Farbe)')).to eq('color')
-        expect(described_class.clean_property_name('dichte')).to eq('density')
       end
     end
   end

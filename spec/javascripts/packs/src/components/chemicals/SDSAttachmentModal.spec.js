@@ -1,5 +1,5 @@
 import { Button } from 'react-bootstrap';
-import SDSAttachmentModel from '../../../../../../app/javascript/src/components/chemicals/SDSAttachmentModel';
+import SDSAttachmentModal from '../../../../../../app/javascript/src/components/chemicals/SDSAttachmentModal';
 
 const React = require('react');
 const { Modal, Form } = require('react-bootstrap');
@@ -19,7 +19,7 @@ describe('SDSAttachmentModal', () => {
 
   beforeEach(() => {
     wrapper = shallow(
-      React.createElement(SDSAttachmentModel, {
+      React.createElement(SDSAttachmentModal, {
         show: true,
         onHide: mockOnHide,
         onSubmit: mockOnSubmit
