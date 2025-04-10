@@ -94,7 +94,12 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
         placement="bottom"
         overlay={<Tooltip>{toolTipMessage}</Tooltip>}
       >
-        <Button disabled={disabled} variant="warning" size="xxsm" onClick={action}>
+        <Button
+          disabled={disabled}
+          variant="warning"
+          size="xxsm"
+          onClick={action}
+        >
           {icons}
         </Button>
       </OverlayTrigger>
@@ -114,7 +119,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const renderSubmitButton = () => {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
-    const disabled = false;
+    const disabled = !mobXItem || mobXItem.isDuplicateName || !mobXItem.changed;
     const buttonText = vesselItem.is_new ? 'Create' : 'Save';
 
     return (
