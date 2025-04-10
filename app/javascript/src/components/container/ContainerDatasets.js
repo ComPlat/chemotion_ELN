@@ -6,6 +6,10 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -17,7 +21,9 @@ export default class ContainerDatasets extends Component {
         show: false,
         datasetContainer: null,
       },
+      datasetIndex: null
     };
+    this.updateContainerUpload = this.updateContainerUpload.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -41,7 +47,9 @@ export default class ContainerDatasets extends Component {
     datasetContainer.container_type = 'dataset';
 
     container.children.push(datasetContainer);
-
+    this.setState({
+      datasetIndex: container.children.length - 1
+    });
     this.handleModalOpen(datasetContainer);
     this.props.onChange(container);
   }
@@ -83,7 +91,7 @@ export default class ContainerDatasets extends Component {
         container.children[datasetId] = datasetContainer;
       }
     });
-
+    this.updateContainerUpload(container);
     this.props.onChange(container);
   }
 
@@ -98,6 +106,7 @@ export default class ContainerDatasets extends Component {
 
   addButton() {
     const { readOnly, disabled } = this.props;
+    
     if (!readOnly && !disabled) {
       return (
         <div className="d-flex justify-content-end mt-2 mb-0">
@@ -110,9 +119,47 @@ export default class ContainerDatasets extends Component {
     return null;
   }
 
+  updateContainerUpload(container) {
+    console.log('Logging Reference: ', this.constructor.name, this.state.datasetIndex);
+    // ?.maps(a => console.log(a.is_pending));
+    const reactionFiles = AttachmentFetcher.getFileListfrom(container);
+    if (reactionFiles.length > 0) {
+      const tasks = [];
+      reactionFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      Promise.all(tasks).then(() => {
+        fetch('/api/v1/containers/container/me', {
+          method: 'Put',
+          credentials: 'same-origin',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            container
+          })
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log('Container updated successfully:', data);
+            const { children } = container;
+            console.log("Data here: ", this.state.datasetIndex)
+            const cont = children[this.state.datasetIndex]?.attachments.map((a) => ({
+              ...a,
+              ...(a.hasOwnProperty('is_pending') && { is_pending: false }),
+            }));
+            container.children[this.state.datasetIndex].attachments = cont;
+            this.setState({ container });
+          })
+          .catch((error) => {
+            console.error('Error updating container:', error);
+          });
+      });
+    }
+  }
+
   render() {
     const { container, modal } = this.state;
-    const { disabled,readOnly } = this.props;
+    const { disabled, readOnly } = this.props;
 
     if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
@@ -121,20 +168,24 @@ export default class ContainerDatasets extends Component {
           <div className="border rounded p-2 mb-2">
             <div className="list-group">
               {container.children.map((datasetContainer, key) => (
-                <div key={key} className="list-group-item" >
+                <div key={key} className="list-group-item">
                   <ContainerDatasetField
                     kind={kind}
                     datasetContainer={datasetContainer}
                     onChange={() => this.handleChange(datasetContainer)}
                     handleRemove={() => this.handleRemove(datasetContainer)}
                     handleUndo={() => this.handleUndo(datasetContainer)}
-                    handleModalOpen={() => this.handleModalOpen(datasetContainer)}
+                    handleModalOpen={() => {
+                      console.log({ key });
+                      this.handleModalOpen(datasetContainer),
+                        this.setState({ datasetIndex: key });
+                    }}
                     disabled={disabled}
                     readOnly={readOnly}
                   />
                 </div>
               ))}
-              <div key="attachmentdropzone" className="list-group-item" >
+              <div key="attachmentdropzone" className="list-group-item">
                 <AttachmentDropzone
                   handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
                 />
@@ -143,22 +194,22 @@ export default class ContainerDatasets extends Component {
             {this.addButton()}
           </div>
           {modal.show && modal.datasetContainer && (
-          <ContainerDatasetModal
-            onHide={() => this.handleModalHide()}
-            onChange={(datasetContainer) => this.handleChange(datasetContainer)}
-            kind={kind}
-            show={modal.show}
-            readOnly={this.props.readOnly}
-            datasetContainer={modal.datasetContainer}
-            analysisContainer={modal.analysisContainer}
-            disabled={disabled}
-          />
+            <ContainerDatasetModal
+              onHide={() => this.handleModalHide()}
+              onChange={(datasetContainer) => this.handleChange(datasetContainer)}
+              kind={kind}
+              show={modal.show}
+              readOnly={this.props.readOnly}
+              datasetContainer={modal.datasetContainer}
+              analysisContainer={modal.analysisContainer}
+              disabled={disabled}
+            />
           )}
         </div>
       );
     }
     return (
-      <div className='bg-gray-200'>
+      <div className="bg-gray-200">
         <div className="border rounded p-2 mb-2">
           <p>There are currently no Datasets.</p>
           <div className="list-group">
@@ -177,6 +228,7 @@ export default class ContainerDatasets extends Component {
 
 ContainerDatasets.propTypes = {
   container: PropTypes.object.isRequired,
+  reaction: PropTypes.object,
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
@@ -185,4 +237,5 @@ ContainerDatasets.propTypes = {
 ContainerDatasets.defaultProps = {
   readOnly: false,
   disabled: false,
+  reaction: null
 };

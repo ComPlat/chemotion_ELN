@@ -1,9 +1,27 @@
 module Chemotion
   class ContainerAPI < Grape::API
+    helpers ContainerHelpers
 
     resource :containers do
+      desc 'Update only the container by ID'
+      params do
+        requires :container, type: Hash, desc: 'Container data to update'
+      end
+      put '/container/me' do
+        container_data = params[:container]
+        container = Container.find_by(id: container_data[:id])
+        error!('Container not found', 404) unless container
 
-      desc "Remove container id of unseletced attachemnts(the attachemnts not in Inbox)"
+        update_datamodel(params[:container])
+
+        present(
+          container,
+          with: Entities::ContainerEntity,
+          root: :container,
+        )
+      end
+
+      desc 'Remove container id of unseletced attachemnts(the attachemnts not in Inbox)'
       params do
         requires :container_id, type: Integer, desc: 'Container id'
         requires :attachments, type: Array, desc: 'Inbox attachments, the selected attachments from the UI'
@@ -25,16 +43,16 @@ module Chemotion
               # Keep the linkage (container_id) between the container and the attachment
             end
           else
-            begin
-              # Remove the linkage (container_id) between the container and the attachment
-              attachment.update!(attachable_id: nil)
-            end
+
+            # Remove the linkage (container_id) between the container and the attachment
+            attachment.update!(attachable_id: nil)
+
           end
         end
         status 200
       end
 
-      desc "Delete Container"
+      desc 'Delete Container'
 
       after_validation do
         @container = Container.find_by id: params[:container_id]
@@ -44,8 +62,8 @@ module Chemotion
 
       delete ':container_id' do
         error!('401 Unauthorized', 401) unless current_user && current_user.container
-          # NB: attachments are destroy through container (DJ in production)
-          # NB: attachments are not paranoidized so cannot be restored)
+        # NB: attachments are destroy through container (DJ in production)
+        # NB: attachments are not paranoidized so cannot be restored)
         @container.self_and_descendants.each(&:destroy)
         status 204
       end
