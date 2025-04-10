@@ -25,6 +25,7 @@ async function setUpReaction() {
   const materialIDs = getReactionMaterialsIDs(materials);
 
   const variations = [];
+  // eslint-disable-next-line no-plusplus
   for (let id = 0; id < 3; id++) {
     variations.push(createVariationsRow(
       {
