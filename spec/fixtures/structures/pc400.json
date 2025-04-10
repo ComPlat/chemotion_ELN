@@ -1,0 +1,254 @@
+{
+  "0576cd1a-ecb9-438f-92b0-497e38982a34": {
+    "cano_smiles": "[H]1[BH2][H][BH2]1",
+    "inchistring": "InChI=1S/B2H6/c1-3-2-4-1/h1-2H2",
+    "inchikey": "KLDBIFITUCWVCC-UHFFFAOYSA-N",
+    "sum_formular": "B2H8"
+  },
+  "ad1539ba-e4f8-4ec2-954f-b6a5136adf91": {
+    "cano_smiles": "c1ccc(cc1)[P](c1ccccc1)(c1ccccc1)[Cu+][P](c1ccccc1)(c1ccccc1)c1ccccc1.[B+3]",
+    "inchistring": "InChI=1S/2C18H15P.BH4.Cu/c2*1-4-10-16(11-5-1)19(17-12-6-2-7-13-17)18-14-8-3-9-15-18;;/h2*1-15H;1H4;/q;;-1;+1",
+    "inchikey": "YVXRFTLDBYUBGJ-UHFFFAOYSA-N",
+    "sum_formular": "C36H34BCuP2"
+  },
+  "6f56a315-0620-421b-a34a-f6bc084555c3": {
+    "cano_smiles": "[ClH]=CCCN/C(=N\\C(=O)OC(C)(C)C)/NC(=O)OC(C)(C)C",
+    "inchistring": "InChI=1S/C14H26ClN3O4/c1-13(2,3)21-11(19)17-10(16-9-7-8-15)18-12(20)22-14(4,5)6/h8,15H,7,9H2,1-6H3,(H2,16,17,18,19,20)",
+    "inchikey": "UIZXVRHWWWSPIX-UHFFFAOYSA-N",
+    "sum_formular": "C14H26ClN3O4"
+  },
+  "21dc1402-5e84-4b9b-9899-d1f98c6f624b": {
+    "cano_smiles": "CC(=C)C[C]1(CC(=C)C)(CC(=C)C)CC(=C)c2c1cccc2",
+    "inchistring": "InChI=1S/C22H29/c1-16(2)12-22(13-17(3)4,14-18(5)6)15-19(7)20-10-8-9-11-21(20)22/h8-11H,1,3,5,7,12-15H2,2,4,6H3",
+    "inchikey": "KXLVAOFACLZONF-UHFFFAOYSA-N",
+    "sum_formular": "C22H29"
+  },
+  "858efee9-56bb-47bf-a218-fd313e69e71c": {
+    "cano_smiles": "Brc1ccc2c(c1)[nH]cc2/C=[N]/1\\CC(=O)N(C(C1=O)CCCN/C(=N/C(=O)OC(C)(C)C)/NC(=O)OC(C)(C)C)C(=O)OC(C)(C)C",
+    "inchistring": "InChI=1S/C32H44BrN6O8/c1-30(2,3)45-27(42)36-26(37-28(43)46-31(4,5)6)34-14-10-11-23-25(41)38(18-24(40)39(23)29(44)47-32(7,8)9)17-19-16-35-22-15-20(33)12-13-21(19)22/h12-13,15-17,23,35H,10-11,14,18H2,1-9H3,(H2,34,36,37,42,43)/b38-17+",
+    "inchikey": "YTWAUVMXCBQCSB-OAQMXIGCSA-N",
+    "sum_formular": "C32H44BrN6O8"
+  },
+  "c8d3fcac-f86d-406c-b5dc-61cefcf0fd39": {
+    "cano_smiles": "O=C1NC(N[C@H]1C(C)(C)C)(C)c1ccc2c(c1)Nc1c([H]2)cccc1",
+    "inchistring": "InChI=1S/C20H24N3O/c1-19(2,3)17-18(24)23-20(4,22-17)12-9-10-16-14(11-12)21-13-7-5-6-8-15(13)25-16/h5-11,17,21-22H,1-4H3,(H,23,24)/t17-,20?/m1/s1",
+    "inchikey": "FIZOEJWTUAEUQG-DIAVIDTQSA-N",
+    "sum_formular": "C20H25N3O"
+  },
+  "8e684c76-5176-457b-917d-77d04ddfb125": {
+    "cano_smiles": "C1=CC=[N]2C(=C1)C1=[N](C=CC=C1)O[Mn]13(O2)(O[N]2=CC=CC=C2C2=[N](O3)C=CC=C2)O[N]2=CC=CC=C2C2=[N](O1)C=CC=C2.[O][Cl](=O)(=O)OO[Cl](=O)(=O)=O",
+    "inchistring": "InChI=1S/3C10H8N2O2.Cl2O8.Mn/c3*13-11-7-3-1-5-9(11)10-6-2-4-8-12(10)14;3-1(4,5)9-10-2(6,7)8;/h3*1-8H;;/q3*-2;;+6",
+    "inchikey": "URJZWOGCKUIGOG-UHFFFAOYSA-N",
+    "sum_formular": "C30H24Cl2MnN6O14"
+  },
+  "c7af35a2-f19e-4c88-897a-98e0957c06dc": {
+    "cano_smiles": "O=[Na]C(=O)O",
+    "inchistring": "InChI=1S/CHO2.Na.O/c2-1-3;;/h(H,2,3);;",
+    "inchikey": "KIPYIUOBXJABHN-UHFFFAOYSA-N",
+    "sum_formular": "CHNaO3"
+  },
+  "e1e369b7-87ae-4eef-aa54-d4c5bcde5d84": {
+    "cano_smiles": "Fc1cc2nc3c(nc2cc1c1ccc(cc1)N(c1ccccc1)c1ccccc1)C(=O)N(C3=O)c1ccc(cc1)[C](=C)(C)C",
+    "inchistring": "InChI=1S/C38H28FN4O2/c1-38(2,3)25-16-20-29(21-17-25)43-36(44)34-35(37(43)45)41-33-23-31(39)30(22-32(33)40-34)24-14-18-28(19-15-24)42(26-10-6-4-7-11-26)27-12-8-5-9-13-27/h4-23H,1H2,2-3H3",
+    "inchikey": "AMAZINABIKAFRW-UHFFFAOYSA-N",
+    "sum_formular": "C38H28FN4O2"
+  },
+  "a5eb8920-b189-4ca0-8746-8eaef717fa12": {
+    "cano_smiles": "Cl[Fe]([Cl](=O)(=O)=O)[Cl](=O)(=O)=O",
+    "inchistring": "InChI=1S/2ClO3.ClH.Fe/c2*2-1(3)4;;/h;;1H;/q;;;+1/p-1",
+    "inchikey": "ACHNSBGZXWSJKS-UHFFFAOYSA-M",
+    "sum_formular": "Cl3FeO6"
+  },
+  "1b9b58f0-1b52-4615-b8c3-c4d20b7d7c7c": {
+    "cano_smiles": "N#[C-][Fe+3]([C-]#N)([C-]#N)([C-]#N)([C-]#N)[C-]#N.[K+]",
+    "inchistring": "InChI=1S/6CN.Fe.K/c6*1-2;;/q6*-1;+3;+1",
+    "inchikey": "VSWXXALZSAWSKS-UHFFFAOYSA-N",
+    "sum_formular": "C6FeKN6--"
+  },
+  "97e77883-a4f8-4894-b7e0-63764e679257": {
+    "cano_smiles": "[O-]/C(=C\\C(=O)C)/C.[O-]/C(=C\\C(=[OH])C)/C.[O-2].[V+4]",
+    "inchistring": "InChI=1S/C5H9O2.C5H8O2.O.V/c2*1-4(6)3-5(2)7;;/h3,6-7H,1-2H3;3,6H,1-2H3;;/q;;-2;+4/p-2/b2*4-3-;;",
+    "inchikey": "NGUKELMQQGJITR-SUKNRPLKSA-L",
+    "sum_formular": "C10H15O5V"
+  },
+  "b228a268-85d6-4c13-8fcc-af681b6e97ef": {
+    "cano_smiles": "C=CC1=C2C=C3C(=C(C4=[N]3[Fe+3]35([N-]2C(=C1C)C=C1[N]5=C(C(=C1C)CCC(=O)[O-])C=C1[N-]3C(=C4)C(=C1CCC(=O)[O-])C)[Cl-])C=C)C.[H+]",
+    "inchistring": "InChI=1S/C34H34N4O4.ClH.Fe/c1-7-21-17(3)25-13-26-19(5)23(9-11-33(39)40)31(37-26)16-32-24(10-12-34(41)42)20(6)28(38-32)15-30-22(8-2)18(4)27(36-30)14-29(21)35-25;;/h7-8,13-16H,1-2,9-12H2,3-6H3,(H4,35,36,37,38,39,40,41,42);1H;/q;;+3/p-4/b25-13-,26-13-,27-14-,28-15-,29-14-,30-15-,31-16-,32-16-;;",
+    "inchikey": "BTIJJDXEELBZFS-HXFTUNQESA-J",
+    "sum_formular": "C34H30ClFeN4O4-"
+  },
+  "29ed9e08-828e-4771-840e-fbaeb4d73794": {
+    "cano_smiles": "C1CC=CCCC=C1.CC([C@@H]1N[P@](C)(C(C)(C)C)[Ir+]([N]2=C1OC[C@H]2C(C)C)(C)C)C.[Ar][BH+].[FH-]",
+    "inchistring": "InChI=1S/C15H31N2OP.C8H12.2CH3.ArBH.FH.Ir/c1-10(2)12-9-18-14(16-12)13(11(3)4)17-19(8)15(5,6)7;1-2-4-6-8-7-5-3-1;;;1-2;;/h10-13,17H,9H2,1-8H3;1-2,7-8H,3-6H2;2*1H3;2H;1H;/q;;;;+1;-1;+1/b;2-1-,8-7-;;;;;/t12-,13-,19+;;;;;;/m0....../s1",
+    "inchikey": "BSUXGQFQPUNOOY-PLEMAXKISA-N",
+    "sum_formular": "C25H51ArBFIrN2OP+"
+  },
+  "d172c38d-e04c-484d-9d55-54224a6f5cc1": {
+    "cano_smiles": "C1CC=CCCC=C1.F[B]([Ar])(F)(F)F.CC([C@@H]1NP(C)(C(C)(C)C)[Ir+]([N]2=C1OC[C@H]2C(C)C)(C)C)C",
+    "inchistring": "InChI=1S/C15H31N2OP.C8H12.2CH3.ArBF4.Ir/c1-10(2)12-9-18-14(16-12)13(11(3)4)17-19(8)15(5,6)7;1-2-4-6-8-7-5-3-1;;;1-2(3,4,5)6;/h10-13,17H,9H2,1-8H3;1-2,7-8H,3-6H2;2*1H3;;/p+1/b;2-1-,8-7-;;;;/t12-,13-,19?;;;;;/m0...../s1",
+    "inchikey": "ITGFUFTZPVYGEC-XRVDXCNGSA-O",
+    "sum_formular": "C25H50ArBF4IrN2OP+"
+  },
+  "b029a446-8970-4f65-9a4d-4396235a61f7": {
+    "cano_smiles": "C1CC=CCCC=C1.CC([C@@H]1NP(C)(C(C)(C)C)[Ir+]([N]2=C1OC[C@H]2C(C)C)(C)C)C.F[B+](F)F.[F-].[Ar]",
+    "inchistring": "InChI=1S/C15H31N2OP.C8H12.2CH3.Ar.BF3.FH.Ir/c1-10(2)12-9-18-14(16-12)13(11(3)4)17-19(8)15(5,6)7;1-2-4-6-8-7-5-3-1;;;;2-1(3)4;;/h10-13,17H,9H2,1-8H3;1-2,7-8H,3-6H2;2*1H3;;;1H;/q;;;;;+1;;/b;2-1-,8-7-;;;;;;/t12-,13-,19?;;;;;;;/m0......./s1",
+    "inchikey": "FGCLGQHNSRMCDX-NKBHAMQASA-N",
+    "sum_formular": "C25H50ArBF4IrN2OP+"
+  },
+  "fdf075fa-8da0-47b9-9081-a059e67a22e5": {
+    "cano_smiles": "[Cl-][Au+3]([Cl-])([Cl-])[Cl-].[H+].O",
+    "inchistring": "InChI=1S/Au.4ClH.H2O/h;4*1H;1H2/q+3;;;;;/p-3",
+    "inchikey": "OVJUDSKPNIBLOO-UHFFFAOYSA-K",
+    "sum_formular": "AuCl4H2O"
+  },
+  "4aed4ff5-7978-49ca-8255-f2533e856c5b": {
+    "cano_smiles": "[Cl-][Au+3]([Cl-])([Cl-])[Cl-].[H+]",
+    "inchistring": "InChI=1S/Au.4ClH/h;4*1H/q+3;;;;/p-3",
+    "inchikey": "VDLSFRRYNGEBEJ-UHFFFAOYSA-K",
+    "sum_formular": "AuCl4"
+  },
+  "1bf2fda0-da28-4fd8-95b0-eacb4f068034": {
+    "cano_smiles": "Cc1cc(C)c(c(c1)C)N1CCN([C-2]1=[Ru+6](=[CH-2]c1ccccc1)([P](C1CCCCC1)(C1CCCCC1)C1CCCCC1)([Cl-])[Cl-])c1c(C)cc(cc1C)C",
+    "inchistring": "InChI=1S/C21H26N2.C18H33P.C7H6.2ClH.Ru/c1-14-9-16(3)20(17(4)10-14)22-7-8-23(13-22)21-18(5)11-15(2)12-19(21)6;1-4-10-16(11-5-1)19(17-12-6-2-7-13-17)18-14-8-3-9-15-18;1-7-5-3-2-4-6-7;;;/h9-12H,7-8H2,1-6H3;16-18H,1-15H2;1-6H;2*1H;/q-2;;-2;;;+6/p-2",
+    "inchikey": "GZGCHIYGMIQZMK-UHFFFAOYSA-L",
+    "sum_formular": "C46H65Cl2N2PRu"
+  },
+  "0febeb4c-1123-4c93-b408-5f373ebbd2b4": {
+    "cano_smiles": "C[S]([B+3])C",
+    "inchistring": "InChI=1S/C2H9BS/c1-4(2)3/h1-3H3",
+    "inchikey": "IRTZFNXVGJHNHS-UHFFFAOYSA-N",
+    "sum_formular": "C2H9BS"
+  },
+  "2aa93b28-78eb-4625-b356-c937091fd429": {
+    "cano_smiles": "CCC1=C(C)C2=C(C)c3n([B]([N]2=C1C)(F)F)cc(c3)CCB1Nc2cccc3c2c(N1)ccc3",
+    "inchistring": "InChI=1S/C26H28B2F2N4/c1-5-21-16(2)26-17(3)24-14-19(15-33(24)28(29,30)34(26)18(21)4)12-13-27-31-22-10-6-8-20-9-7-11-23(32-27)25(20)22/h6-11,14-15,31-32H,5,12-13H2,1-4H3",
+    "inchikey": "ZWLLZRMEXGSMED-UHFFFAOYSA-N",
+    "sum_formular": "C26H28B2F2N4"
+  },
+  "d987f409-3428-460e-a003-d396979edf34": {
+    "cano_smiles": "CCC1=C(C)C2=C(C)c3n([B]([N]2=C1C)(F)F)cc(c3)/C=C\\B1Nc2cccc3c2c(N1)ccc3",
+    "inchistring": "InChI=1S/C26H26B2F2N4/c1-5-21-16(2)26-17(3)24-14-19(15-33(24)28(29,30)34(26)18(21)4)12-13-27-31-22-10-6-8-20-9-7-11-23(32-27)25(20)22/h6-15,31-32H,5H2,1-4H3/b13-12+",
+    "inchikey": "GKKQIDVLCPSVKV-OUKQBFOZSA-N",
+    "sum_formular": "C26H26B2F2N4"
+  },
+  "9577e1bc-062a-4d27-8c25-8f811838cc31": {
+    "cano_smiles": "O=[C-2]1[Co+2]2([Co+2]1([C-2]2=O)(C#[O])(C#[O])C#[O])(C#[O])(C#[O])C#[O]",
+    "inchistring": "InChI=1S/8CO.2Co/c8*1-2;;/q;;;;;;2*-2;2*+2",
+    "inchikey": "DNSOBZYUKVUICX-UHFFFAOYSA-N",
+    "sum_formular": "C8Co2O8"
+  },
+  "45c4b0dd-ccc5-4473-aa02-6bb506fd4807": {
+    "cano_smiles": "[B+3][O]1CCCC1",
+    "inchistring": "InChI=1S/C4H11BO/c5-6-3-1-2-4-6/h1-4H2,5H3",
+    "inchikey": "NPKJJCLQKCPGEZ-UHFFFAOYSA-N",
+    "sum_formular": "C4H11BO"
+  },
+  "5a22b343-eea3-4b7e-a7de-0ffbf736d91e": {
+    "cano_smiles": "Cc1cc(C)c(c(c1)C)N1CCN([C-2]1=[Ru+6]1(=[CH-2]c2c([O]1C(C)C)cccc2)([Cl-])[Cl-])c1c(C)cc(cc1C)C",
+    "inchistring": "InChI=1S/C21H26N2.C10H12O.2ClH.Ru/c1-14-9-16(3)20(17(4)10-14)22-7-8-23(13-22)21-18(5)11-15(2)12-19(21)6;1-8(2)11-10-7-5-4-6-9(10)3;;;/h9-12H,7-8H2,1-6H3;3-8H,1-2H3;2*1H;/q2*-2;;;+6/p-2",
+    "inchikey": "LNZKORSBJYPKDX-UHFFFAOYSA-L",
+    "sum_formular": "C31H38Cl2N2ORu"
+  },
+  "66edc71e-4e8f-4067-814e-640d3a1972c1": {
+    "cano_smiles": "COc1cccc(c1c1ccccc1[P]([Pd+2]1([NH2]c2ccccc2C2=CC=CC=[C-]12)[O-]S(=O)(=O)C)(C1CCCCC1)C1CCCCC1)OC",
+    "inchistring": "InChI=1S/C26H35O2P.C12H10N.CH4O3S.Pd/c1-27-23-17-11-18-24(28-2)26(23)22-16-9-10-19-25(22)29(20-12-5-3-6-13-20)21-14-7-4-8-15-21;13-12-9-5-4-8-11(12)10-6-2-1-3-7-10;1-5(2,3)4;/h9-11,16-21H,3-8,12-15H2,1-2H3;1-6,8-9H,13H2;1H3,(H,2,3,4);/q;-1;;+2/p-1",
+    "inchikey": "AGPKJDBFYITZDC-UHFFFAOYSA-M",
+    "sum_formular": "C39H48NO5PPdS"
+  },
+  "fd255e81-39fb-4bb6-9cb0-f6f627999038": {
+    "cano_smiles": "[O][SH-](=O)(=O)[O].CCCC[N+](CCCC)(CCCC)CCCC",
+    "inchistring": "InChI=1S/C16H36N.HO4S/c1-5-9-13-17(14-10-6-2,15-11-7-3)16-12-8-4;1-5(2,3)4/h5-16H2,1-4H3;5H/q+1;-1",
+    "inchikey": "XEZHHRVBVNCMBZ-UHFFFAOYSA-N",
+    "sum_formular": "C16H37NO4S"
+  },
+  "9248df7e-26e8-45e2-82bf-abd202edded5": {
+    "cano_smiles": "C[O]([B](F)(F)F)C",
+    "inchistring": "InChI=1S/C2H6BF3O/c1-7(2)3(4,5)6/h1-2H3",
+    "inchikey": "FOWZWMGLMYVYDH-UHFFFAOYSA-N",
+    "sum_formular": "C2H6BF3O"
+  },
+  "314f20e7-4d14-44c8-b195-93d086f4b4ae": {
+    "cano_smiles": "[N-]=[N+]=Nc1ccc(cc1)C1=C2C(C)CC(=[N]2[B](n2c1c(C)cc2C)(F)F)C",
+    "inchistring": "InChI=1S/C19H20BF2N5/c1-11-9-13(3)26-18(11)17(15-5-7-16(8-6-15)24-25-23)19-12(2)10-14(4)27(19)20(26,21)22/h5-9,12H,10H2,1-4H3",
+    "inchikey": "PUTRCLDYMJYRBG-UHFFFAOYSA-N",
+    "sum_formular": "C19H20BF2N5"
+  },
+  "16b44369-219f-40a9-8d20-f67eb5d3c82a": {
+    "cano_smiles": "C1CC[C]2(=CC=CC=C2)CC1",
+    "inchistring": "InChI=1S/C11H15/c1-3-7-11(8-4-1)9-5-2-6-10-11/h1,3-4,7-8H,2,5-6,9-10H2",
+    "inchikey": "RDOJVHMYIHYGBM-UHFFFAOYSA-N",
+    "sum_formular": "C11H15"
+  },
+  "bc3a396a-6eda-4ae0-a25d-16dd6d1e8990": {
+    "cano_smiles": "[Cl-][Au+3]([Cl-])([Cl-])[Cl-].[K+]",
+    "inchistring": "InChI=1S/Au.4ClH.K/h;4*1H;/q+3;;;;;+1/p-4",
+    "inchikey": "JMONCQYBAMKVQQ-UHFFFAOYSA-J",
+    "sum_formular": "AuCl4K"
+  },
+  "d6209c17-4148-49d8-804d-dd1181bc99d4": {
+    "cano_smiles": "F[P-](F)(F)(F)(F)F.C/[N-](=C(/n1n[n+](c2c1ccc[nH+]2)[O-])\\N(C)C)/C",
+    "inchistring": "InChI=1S/C10H15N6O.F6P/c1-13(2)10(14(3)4)15-8-6-5-7-11-9(8)16(17)12-15;1-7(2,3,4,5)6/h5-7H,1-4H3;/q2*-1/p+1",
+    "inchikey": "LVSSEICYQHWTES-UHFFFAOYSA-O",
+    "sum_formular": "C10H16F6N6OP-"
+  },
+  "a3aac36f-f18a-4c98-ae92-ad76ff005f93": {
+    "cano_smiles": "OC(=O)[C]123C[C]3(C1)(C2)C(=O)O",
+    "inchistring": "InChI=1S/C7H8O4/c8-4(9)6-1-7(6,2-6,3-6)5(10)11/h1-3H2,(H,8,9)(H,10,11)",
+    "inchikey": "WUZWKYYJNLVAAT-UHFFFAOYSA-N",
+    "sum_formular": "C7H8O4"
+  },
+  "2094fcd8-1ac2-4d9f-b990-30be91493a20": {
+    "cano_smiles": "CCN(C(=O)[C]123C[C]3(C1)(C2)C(=O)N(CC)CC)CC",
+    "inchistring": "InChI=1S/C15H26N2O2/c1-5-16(6-2)12(18)14-9-15(14,10-14,11-14)13(19)17(7-3)8-4/h5-11H2,1-4H3",
+    "inchikey": "LEONBCVIRBIMBR-UHFFFAOYSA-N",
+    "sum_formular": "C15H26N2O2"
+  },
+  "c02cde47-8f7a-43d1-ba6b-9899227f3131": {
+    "cano_smiles": "CC1=C[O]=[C](=O)C=C1",
+    "inchistring": "InChI=1S/C6H6O2/c1-5-2-3-6(7)8-4-5/h2-4H,1H3",
+    "inchikey": "TVJVIYLWQZECEQ-UHFFFAOYSA-N",
+    "sum_formular": "C6H6O2"
+  },
+  "7ed65586-ef3a-4c72-9b28-f96d7fe2860a": {
+    "cano_smiles": "CC(P([B](F)(F)(F)F)(C(C)(C)C)C(C)(C)C)(C)C",
+    "inchistring": "InChI=1S/C12H28BF4P/c1-10(2,3)18(11(4,5)6,12(7,8)9)13(14,15,16)17/h18H,1-9H3",
+    "inchikey": "RRFHICYPJITYGU-UHFFFAOYSA-N",
+    "sum_formular": "C12H28BF4P"
+  },
+  "cb3475fc-7e19-4058-b925-f98a8e4b4645": {
+    "cano_smiles": "C1=CC2=C3[C]4(=C5C=CC=[C]67=CC=CC8=C7[C](=C56)(C5=C4[C]3(=CC=C2)=CC=C5)CC=C8)C1",
+    "inchistring": "InChI=1S/C30H20/c1-7-19-9-3-17-29-22-12-6-16-28-14-2-8-20-10-4-18-30(24(20)28,26(22)28)21-11-5-15-27(13-1,23(19)29)25(21)29/h1-16H,17-18H2",
+    "inchikey": "QPKPBRWFZDHNPY-UHFFFAOYSA-N",
+    "sum_formular": "C30H20"
+  },
+  "804c6f0d-c567-49ba-aced-cd500933a7bf": {
+    "cano_smiles": "IC1=CC[C]2[C@]1(C)CC[C@H]1[C@H]2CC[C@@H]2[C@]1(C)CC[CH]C2",
+    "inchistring": "InChI=1S/C19H27I/c1-18-11-4-3-5-13(18)6-7-14-15-8-9-17(20)19(15,2)12-10-16(14)18/h3,9,13-14,16H,4-8,10-12H2,1-2H3/t13-,14+,16+,18+,19+/m1/s1",
+    "inchikey": "LDPZHVQAKYVMCS-BPAWZDJUSA-N",
+    "sum_formular": "C19H27I"
+  },
+  "ca8cfee5-ca9e-4549-845f-1a6d54c716ab": {
+    "cano_smiles": "N#C[Fe]1(C#N)(C#N)(C#N)[C](#[C]1#N)#N.N#C[Fe]1(C#N)(C#N)(C#N)[C](#[C]1#N)#N.N#C[Fe]1(C#N)(C#N)(C#N)[C](#[C]1#N)#N",
+    "inchistring": "InChI=1S/3C2N2.12CN.3Fe/c3*3-1-2-4;12*1-2;;;",
+    "inchikey": "SSQWTPJBZREJEQ-UHFFFAOYSA-N",
+    "sum_formular": "C18Fe3N18"
+  },
+  "e4019d9a-10c8-49d7-9874-db31d7c0a7c3": {
+    "cano_smiles": "[Na].[BH4]",
+    "inchistring": "InChI=1S/BH4.Na/h1H4;",
+    "inchikey": "QWERFEKYAOERTH-UHFFFAOYSA-N",
+    "sum_formular": "BNa"
+  },
+  "1725e766-2f98-41af-a85c-e79befe2ff7f": {
+    "cano_smiles": "[F-][P](F)(F)(F)(F)F.CN([C+](N(C)C)On1nnc2c1cccn2)C",
+    "inchistring": "InChI=1S/C10H15N6O.F6P/c1-14(2)10(15(3)4)17-16-8-6-5-7-11-9(8)12-13-16;1-7(2,3,4,5)6/h5-7H,1-4H3;/q+1;-1",
+    "inchikey": "RJTWPYLEDFQYIM-UHFFFAOYSA-N",
+    "sum_formular": "C10H15F6N6OP"
+  },
+  "13928c2b-bc51-46fc-a5cc-02ef58813683": {
+    "cano_smiles": "CN1C(=C2[C](C1=O)N(C=N2)C)C",
+    "inchistring": "InChI=1S/C8H10N3O/c1-5-6-7(8(12)11(5)3)10(2)4-9-6/h4H,1-3H3",
+    "inchikey": "VLAVBCIRFGSSFB-UHFFFAOYSA-N",
+    "sum_formular": "C8H10N3O"
+  }
+}
