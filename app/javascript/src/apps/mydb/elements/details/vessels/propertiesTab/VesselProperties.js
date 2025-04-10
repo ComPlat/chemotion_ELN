@@ -10,8 +10,11 @@ import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/prop
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
   const vesselId = item.id;
-  const vesselFromStore = vesselDetailsStore.getVessel(vesselId);
-  const vesselItem = vesselFromStore ? JSON.parse(JSON.stringify(vesselFromStore)) : {};
+  const vesselItem = vesselDetailsStore.getVessel(vesselId);
+  const [templateData, setTemplateData] = useState(null);
+  const [isMismatch, setIsMismatch] = useState(false);
+  const [readyToCompare, setReadyToCompare] = useState(false);
+
   const isCreateMode = vesselItem?.is_new || false;
   const [activeKey, setActiveKey] = useState(isCreateMode ? 'common-properties' : null);
 
@@ -34,6 +37,44 @@ const VesselProperties = ({ item, readOnly }) => {
       setActiveKey('instance-0');
     }
   }, [isCreateMode]);
+
+  useEffect(() => {
+    if (!templateData) return;
+
+    const matches = templateData.vessel_type === vesselItem?.vesselType
+      && templateData.material_type === vesselItem?.materialType
+      && templateData.volume_amount === vesselItem?.volumeAmount
+      && templateData.volume_unit === vesselItem?.volumeUnit;
+
+    if (matches) {
+      setReadyToCompare(true);
+    }
+  }, [
+    vesselItem?.vesselType,
+    vesselItem?.materialType,
+    vesselItem?.volumeAmount,
+    vesselItem?.volumeUnit,
+    templateData,
+  ]);
+
+  useEffect(() => {
+    if (!templateData || !readyToCompare) return;
+
+    const mismatch = templateData.vessel_type !== vesselItem?.vesselType
+      || templateData.material_type !== vesselItem?.materialType
+      || templateData.volume_amount !== vesselItem?.volumeAmount
+      || templateData.volume_unit !== vesselItem?.volumeUnit;
+
+    setIsMismatch(mismatch);
+    vesselDetailsStore.setNameDuplicateFlag(vesselId, mismatch);
+  }, [
+    templateData,
+    readyToCompare,
+    vesselItem?.vesselType,
+    vesselItem?.materialType,
+    vesselItem?.volumeAmount,
+    vesselItem?.volumeUnit,
+  ]);
 
   const handleVolumeChange = (e) => {
     const value = parseFloat(e.target.value);
@@ -68,9 +109,14 @@ const VesselProperties = ({ item, readOnly }) => {
             id={vesselId}
             label="Vessel name"
             field="vessel_name"
-            value={vesselItem?.vesselName || ''}
+            value={vesselItem?.vesselName}
             readOnly={!isCreateMode}
-            storeUpdater={vesselDetailsStore.changeVesselName}
+            storeUpdater={(id, value) => vesselDetailsStore.changeVesselName(id, value)}
+            onTemplateSelect={(vesselData) => {
+              setTemplateData(vesselData);
+              setReadyToCompare(false);
+            }}
+            isMismatch={isMismatch}
           />
           <VesselSuggestProperties
             id={vesselId}
@@ -84,7 +130,7 @@ const VesselProperties = ({ item, readOnly }) => {
             id={vesselId}
             label="Material Type"
             field="material_type"
-            value={vesselItem?.materialType || ''}
+            value={vesselItem?.materialType}
             readOnly={!isCreateMode}
             storeUpdater={vesselDetailsStore.changeMaterialType}
           />
