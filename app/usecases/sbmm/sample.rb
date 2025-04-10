@@ -28,7 +28,7 @@ module Usecases
         sbmm = ::Usecases::Sbmm::Create.new.find_or_create_by(params[:sequence_based_macromolecule_attributes])
 
         sbmm_sample.update!(sample_params.merge(sequence_based_macromolecule: sbmm))
-        sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
+        sbmm_sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
 
         sbmm_sample
       end
