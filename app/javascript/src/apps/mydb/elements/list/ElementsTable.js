@@ -62,8 +62,6 @@ export default class ElementsTable extends React.Component {
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
     this.timer = null;
-
-    this.showDetails = this.showDetails.bind(this);
   }
 
   componentDidMount() {
@@ -365,26 +363,6 @@ export default class ElementsTable extends React.Component {
     this.timer = setTimeout(() => {
       ElementActions.refreshElements(type);
     }, 900);
-  }
-
-  showDetails(element) {
-    const { id, type } = element;
-    const { currentCollection, isSync } = UIStore.getState();
-    const { genericEl } = this.props;
-
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/${id}`
-      : `/collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-
-    elementShowOrNew({
-      type,
-      klassType: genericEl ? 'GenericEl' : undefined,
-      params: {
-        collectionID: currentCollection.id,
-        [`${type}ID`]: id,
-      },
-    });
   }
 
   renderNumberOfResultsInput() {
