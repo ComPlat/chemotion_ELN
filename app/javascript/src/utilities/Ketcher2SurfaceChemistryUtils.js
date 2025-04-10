@@ -104,14 +104,31 @@ const hasTextNodes = async (molfile) => {
   }
 };
 
+const findTemplateById = (id) => {
+  for (const category of allTemplates) {
+    for (const subTab of category.subTabs) {
+      for (const shape of subTab.shapes) {
+        if (shape.template_id === id) {
+          return shape;
+        }
+      }
+    }
+  }
+  return null;
+};
+
 // Helper to determine template type based on polymer value
 const getTemplateType = (polymerValue) => {
   const hasSurface = polymerValue.includes('s');
+  const binaryTemplates = hasSurface ? KET_TAGS.templateSurface : KET_TAGS.templateBead;
   const templateSplits = polymerValue.split('/');
+  if (templateSplits.length === 1) {
+    const template = findTemplateById(binaryTemplates);
+    return { type: binaryTemplates, size: `${template.height}-${template.width}` };
+  }
   if (!hasSurface) {
     return { type: templateSplits[1], size: templateSplits[2] };
   }
-  const binaryTemplates = hasSurface ? KET_TAGS.templateSurface : KET_TAGS.templateBead;
   return { type: binaryTemplates, size: templateSplits[1] };
 };
 
@@ -137,40 +154,39 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
 
 // helper function to process ketcher-rails files and adding image to ketcher2 canvas
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
-  try {
-    const polymerList = railsPolymersList.split(' '); // e.g., ["10", "11s", "12", "13s"]
-    let visitedAtoms = 0;
-    const collectedImages = [];
-    await initializeKetcherData(data);
+  // try {
+  const polymerList = railsPolymersList.split(' '); // e.g., ["10", "11s", "12", "13s"]
+  let visitedAtoms = 0;
+  const collectedImages = [];
+  await initializeKetcherData(data);
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const molName of mols) {
-      const molecule = data[molName];
-      for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
-        const atom = molecule.atoms[atomIndex];
-        const polymerItem = polymerList[visitedAtoms];
-        const polymerItemLength = polymerItem?.split('/')?.length >= 2;
-        const aliasPass = (atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.label));
-        if (polymerItem && polymerItemLength && aliasPass) {
-          // counters
-          imageUsedCounterSetter(imageNodeCounter + 1);
-          visitedAtoms += 1;
-          // step 1: get template type
-          const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
-          // step 2: update atom with alias
-          data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
-          // step 3: sync bounding box with atom location
-          const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
-          // step 4: add to the list
-          collectedImages.push(newTemplate);
-        }
+  // eslint-disable-next-line no-restricted-syntax
+  for (const molName of mols) {
+    const molecule = data[molName];
+    for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
+      const atom = molecule.atoms[atomIndex];
+      const polymerItem = polymerList[visitedAtoms];
+      const aliasPass = (atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.alias));
+      if (polymerItem && aliasPass) {
+        // counters
+        imageUsedCounterSetter(imageNodeCounter + 1);
+        visitedAtoms += 1;
+        // step 1: get template type
+        const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
+        // step 2: update atom with alias
+        data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
+        // step 3: sync bounding box with atom location
+        const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
+        // step 4: add to the list
+        collectedImages.push(newTemplate);
       }
     }
-    return { c_images: collectedImages, molfileData: data };
-  } catch (err) {
-    console.error({ err: err.message });
-    return null;
   }
+  return { c_images: collectedImages, molfileData: data };
+  // } catch (err) {
+  //   console.error({ err: err.message });
+  //   return { c_images: [], molfileData: data };
+  // }
 };
 
 // helper function to fetch list of all surface chemistry shape/image list
@@ -495,17 +511,19 @@ const deepCompareNumbers = async (oldArray, newArray) => {
 
 // generating images for ket2 format from molfile polymers list
 const addPolymerTags = async (polymerTag, data) => {
-  const collectedImages = [];
-  if (polymerTag && polymerTag.length) {
-    const processedResponse = await addingPolymersToKetcher(polymerTag, data, imageNodeCounter);
-    // imageUsedCounterSetter(processedResponse.image_counter);
-    processedResponse.molfileData?.root?.nodes.push(...processedResponse.c_images);
-    return {
-      collected_images: processedResponse.c_images,
-      molfileData: processedResponse.molfileData
-    };
+  try {
+    if (polymerTag && polymerTag.length) {
+      const processedResponse = await addingPolymersToKetcher(polymerTag, data, imageNodeCounter);
+      processedResponse.molfileData?.root?.nodes.push(...processedResponse.c_images);
+      return {
+        collected_images: processedResponse.c_images,
+        molfileData: processedResponse.molfileData
+      };
+    }
+  } catch (err) {
+    console.log('addPolymerTags', err);
+    return { collectedImages: [], molfileData: data };
   }
-  return { collectedImages, molfileData: data };
 };
 
 // for text component
@@ -615,9 +633,9 @@ const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
 };
 
 /* attaching polymers list is ketcher rails standards to a molfile
-  s => S means its a surface polymers
-  final output is expected a string:  "11 12s 13"
-*/
+    s => S means its a surface polymers
+    final output is expected a string:  "11 12s 13"
+  */
 const reAttachPolymerList = async ({
   lines, atomsCount, additionalDataStart, additionalDataEnd
 }) => {
@@ -970,6 +988,7 @@ const trimSVGWhitespace = (iframeRef) => {
   }
   return null;
 };
+
 // process text nodes into for formula
 const assembleTextDescriptionFormula = async (ket2Lines) => {
   const startAtoms = 3;
