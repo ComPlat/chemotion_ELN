@@ -136,15 +136,12 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  if (e.params.new_cellLine || (e.params.new_cellLine === undefined && e.params.cell_lineID === "new")) {
+  if (e.params.cell_lineID === 'new') {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
   } else {
-    if (e.params.cellLineID) {
-      e.params.cellLineId = e.params.cellLineID
-    }
-    ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
+    ElementActions.tryFetchCellLineElById.defer(e.params.cell_lineID);
   }
-}
+};
 
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;

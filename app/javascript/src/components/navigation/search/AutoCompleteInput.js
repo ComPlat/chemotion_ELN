@@ -6,9 +6,6 @@ import { Form, InputGroup, Overlay, ListGroup }
 import debounce from 'es6-promise-debounce';
 import { isString } from 'lodash';
 
-import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
-import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
-
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
@@ -27,7 +24,6 @@ export default class AutoCompleteInput extends React.Component {
       inputWidth: 0,
       inputDisabled: false,
       timeoutReference: null,
-      keyboardContext: ''
     };
 
     this.onUIChange = this.onUIChange.bind(this);
@@ -171,19 +167,6 @@ export default class AutoCompleteInput extends React.Component {
         }, this.timeout)
       });
     }
-  }
-
-  handleFocus() {
-    let keyboardState = KeyboardStore.getState();
-    this.setState({
-      keyboardContext: keyboardState.context
-    });
-
-    KeyboardActions.contextChange("search");
-  }
-
-  handleBlur() {
-    KeyboardActions.contextChange(this.state.keyboardContext);
   }
 
   handleKeyDown(event) {
@@ -373,8 +356,6 @@ export default class AutoCompleteInput extends React.Component {
               value={this.props.defaultSearchValue || value || ''}
               autoComplete="off"
               ref="input"
-              onFocus={() => this.handleFocus()}
-              onBlur={() => this.handleBlur()}
               onChange={event => this.handleValueChange(event, this.doneTyping)}
               onKeyDown={event => this.handleKeyDown(event)}
             />
