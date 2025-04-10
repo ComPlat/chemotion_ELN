@@ -52,14 +52,20 @@ function SDSAttachmentModal({ show, onHide, onSubmit }) {
     }
 
     // If all validations pass, proceed with submission
-    onSubmit({ productNumber, vendorName, attachedFile, productLink, safetySheetLink });
+    onSubmit({
+      productNumber,
+      vendorName,
+      attachedFile,
+      productLink,
+      safetySheetLink
+    });
     // Reset fields after submission
     setProductNumber('');
     setVendorName('');
     setAttachedFile(null);
-    setProductLink(''); // Reset product link
-    setSafetySheetLink(''); // Reset safety sheet link
-    setError(''); // Clear any previous errors
+    setProductLink('');
+    setSafetySheetLink('');
+    setError('');
   };
 
   // enable submit button only with valid values
