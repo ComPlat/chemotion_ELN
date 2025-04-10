@@ -7598,7 +7598,7 @@ gauge@^4.0.3:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
-generic-ui-core@1.5.2:
+generic-ui-core@1.5.2, generic-ui-core@^1.5.2:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.5.2.tgz#d5b01974196808083d7d2c65f3dd84126b0cbc9c"
   integrity sha512-zzA/I2m2Lo4POIeCBV44vmOt9lVAgd3BvNWpwjOIaXlnXlA5/a7zfnNgNwZcU62QQPxO+cRjm84hvDPCDKg76A==

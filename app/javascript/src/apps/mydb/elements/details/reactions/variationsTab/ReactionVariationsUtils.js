@@ -4,15 +4,16 @@ import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
-  getMaterialData, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
+  getMaterialData, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
+  AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer
+  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const temperatureUnits = ['°C', 'K', '°F'];
@@ -22,11 +23,25 @@ const volumeUnits = ['l', 'ml', 'μl'];
 const amountUnits = ['mol', 'mmol'];
 const concentrationUnits = ['ppm'];
 const materialTypes = {
-  startingMaterials: { label: 'Starting materials', reactionAttributeName: 'starting_materials' },
-  reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
-  products: { label: 'Products', reactionAttributeName: 'products' },
-  solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
+  startingMaterials: {
+    label: 'Starting materials',
+    reactionAttributeName: 'starting_materials',
+  },
+  reactants: {
+    label: 'Reactants',
+    reactionAttributeName: 'reactants',
+  },
+  products: {
+    label: 'Products',
+    reactionAttributeName: 'products',
+  },
+  solvents: {
+    label: 'Solvents',
+    reactionAttributeName: 'solvents',
+  },
 };
+
+let segmentsForVariations = null;
 
 function convertUnit(value, fromUnit, toUnit) {
   if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
@@ -46,15 +61,26 @@ function convertUnit(value, fromUnit, toUnit) {
     return convertDuration(value, fromUnit, toUnit);
   }
   if (massUnits.includes(fromUnit) && massUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { g: 'n', mg: 'm', μg: 'u' };
+    const amountUnitPrefixes = {
+      g: 'n',
+      mg: 'm',
+      μg: 'u',
+    };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
   if (volumeUnits.includes(fromUnit) && volumeUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { l: 'n', ml: 'm', μl: 'u' };
+    const amountUnitPrefixes = {
+      l: 'n',
+      ml: 'm',
+      μl: 'u',
+    };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
   if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { mol: 'n', mmol: 'm' };
+    const amountUnitPrefixes = {
+      mol: 'n',
+      mmol: 'm',
+    };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
 
@@ -125,11 +151,17 @@ function getStandardValue(entry, material) {
     case 'equivalent':
       return (material.reference ?? false) ? 1 : 0;
     case 'temperature': {
-      const { value = null, unit = null } = material.gas_phase_data?.temperature ?? {};
+      const {
+        value = null,
+        unit = null,
+      } = material.gas_phase_data?.temperature ?? {};
       return convertUnit(value, unit, getStandardUnits('temperature')[0]);
     }
     case 'duration': {
-      const { value = null, unit = null } = material.gas_phase_data?.time ?? {};
+      const {
+        value = null,
+        unit = null,
+      } = material.gas_phase_data?.time ?? {};
       return convertUnit(value, getInternalUnit(unit), getStandardUnits('duration')[0]);
     }
     case 'concentration':
@@ -186,7 +218,7 @@ function getPropertyData(propertyType, durationValue, durationUnit, temperatureV
     case 'temperature':
       return {
         value: convertUnit(temperatureValue, temperatureUnit, getStandardUnits('temperature')[0]),
-        unit: getStandardUnits('temperature')[0]
+        unit: getStandardUnits('temperature')[0],
       };
     case 'duration':
       return {
@@ -194,8 +226,17 @@ function getPropertyData(propertyType, durationValue, durationUnit, temperatureV
         unit: getStandardUnits('duration')[0],
       };
     default:
-      return { value: null, unit: null };
+      return {
+        value: null,
+        unit: null,
+      };
   }
+}
+
+function getSegmentData() {
+  return {
+    value: 0,
+  };
 }
 
 function getMetaData(metadataType) {
@@ -219,7 +260,7 @@ function createVariationsRow({
   temperatureValue = null,
   temperatureUnit = 'None',
   gasMode = false,
-  vesselVolume = null
+  vesselVolume = null,
 }) {
   const row = {
     id: getSequentialId(variations),
@@ -229,20 +270,24 @@ function createVariationsRow({
         durationValue,
         durationUnit,
         temperatureValue,
-        temperatureUnit
-      )])
+        temperatureUnit,
+      )]),
     ),
     metadata: Object.fromEntries(
-      selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)])
+      selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)]),
+    ),
+    segmentData: Object.fromEntries(
+      selectedColumns.segmentData.map((metadataType) => [metadataType, '0']),
     ),
   };
-  Object.keys(materialTypes).forEach((materialType) => {
-    row[materialType] = {};
-    selectedColumns[materialType].forEach((materialID) => {
-      const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
-      row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
+  Object.keys(materialTypes)
+    .forEach((materialType) => {
+      row[materialType] = {};
+      selectedColumns[materialType].forEach((materialID) => {
+        const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
+        row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
+      });
     });
-  });
 
   // Compute dependent values that aren't supplied by initial data.
   return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
@@ -297,37 +342,45 @@ function addMissingColumnsToVariations({
   temperatureValue = null,
   temperatureUnit = 'None',
   gasMode = false,
-  vesselVolume = null
+  vesselVolume = null,
 }) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
-    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-      columnGroupChildIDs.forEach((childID) => {
-        if (row[columnGroupID][childID]) { return; }
+    Object.entries(selectedColumns)
+      .forEach(([columnGroupID, columnGroupChildIDs]) => {
+        columnGroupChildIDs.forEach((childID) => {
+          if (row[columnGroupID][childID]) {
+            return;
+          }
 
-        if (Object.keys(materialTypes).includes(columnGroupID)) {
-          const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
-          row[columnGroupID][childID] = getMaterialData(
-            material,
-            columnGroupID,
-            gasMode,
-            vesselVolume
-          );
-        }
-        if (columnGroupID === 'properties') {
-          row.properties[childID] = getPropertyData(
-            childID,
-            durationValue,
-            durationUnit,
-            temperatureValue,
-            temperatureUnit
-          );
-        }
-        if (columnGroupID === 'metadata') {
-          row.metadata[childID] = getMetaData(childID);
-        }
+          if (Object.keys(materialTypes)
+            .includes(columnGroupID)) {
+            const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
+            row[columnGroupID][childID] = getMaterialData(
+              material,
+              columnGroupID,
+              gasMode,
+              vesselVolume,
+            );
+          }
+          if (columnGroupID === 'properties') {
+            row.properties[childID] = getPropertyData(
+              childID,
+              durationValue,
+              durationUnit,
+              temperatureValue,
+              temperatureUnit,
+            );
+          }
+          if (columnGroupID === 'segmentData') {
+            row.segmentData[childID] = getSegmentData();
+          }
+
+          if (columnGroupID === 'metadata') {
+            row.metadata[childID] = getMetaData(childID);
+          }
+        });
       });
-    });
     return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
   });
 
@@ -337,14 +390,32 @@ function addMissingColumnsToVariations({
 function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
-    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-      row[columnGroupID] = Object.fromEntries(
-        Object.entries(row[columnGroupID]).filter(([key, value]) => columnGroupChildIDs.includes(key))
-      );
-    });
+    Object.entries(selectedColumns)
+      .forEach(([columnGroupID, columnGroupChildIDs]) => {
+        row[columnGroupID] = Object.fromEntries(
+          Object.entries(row[columnGroupID])
+            .filter(([key, value]) => columnGroupChildIDs.includes(key)),
+        );
+      });
   });
 
   return updatedVariations;
+}
+
+function getSegmentColumnGroupChild(propertyType) {
+  if (!segmentsForVariations) {
+    return {};
+  }
+
+  const label = segmentsForVariations.find((item) => item.key === propertyType)?.label;
+  return {
+    field: `segmentData.${propertyType}`,
+    cellDataType: 'segmentData',
+    headerComponent: MenuHeader,
+    headerComponentParams: {
+      names: [label],
+    },
+  };
 }
 
 function getPropertyColumnGroupChild(propertyType, gasMode) {
@@ -356,12 +427,12 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
         entryDefs: {
           currentEntry: 'temperature',
           displayUnit: getStandardUnits('temperature')[0],
-          availableEntries: ['temperature']
+          availableEntries: ['temperature'],
         },
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['T'],
-        }
+        },
       };
     case 'duration':
       return {
@@ -371,12 +442,12 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
         entryDefs: {
           currentEntry: 'duration',
           displayUnit: getStandardUnits('duration')[0],
-          availableEntries: ['duration']
+          availableEntries: ['duration'],
         },
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['t'],
-        }
+        },
       };
     default:
       return {};
@@ -413,27 +484,32 @@ function getMetadataColumnGroupChild(metadataType) {
 function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-    const columnGroup = updatedColumnDefinitions.find(
-      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
-    );
-    columnGroupChildIDs.forEach((childID) => {
-      if (columnGroup.children.some((child) => child.field === `${columnGroupID}.${childID}`)) {
-        return;
-      }
+  Object.entries(selectedColumns)
+    .forEach(([columnGroupID, columnGroupChildIDs]) => {
+      const columnGroup = updatedColumnDefinitions.find(
+        (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID,
+      );
+      columnGroupChildIDs.forEach((childID) => {
+        if (columnGroup.children.some((child) => child.field === `${columnGroupID}.${childID}`)) {
+          return;
+        }
 
-      if (Object.keys(materialTypes).includes(columnGroupID)) {
-        const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
-        columnGroup.children.push(getMaterialColumnGroupChild(material, columnGroupID, gasMode));
-      }
-      if (columnGroupID === 'properties') {
-        columnGroup.children.push(getPropertyColumnGroupChild(childID, gasMode));
-      }
-      if (columnGroupID === 'metadata') {
-        columnGroup.children.push(getMetadataColumnGroupChild(childID));
-      }
+        if (Object.keys(materialTypes)
+          .includes(columnGroupID)) {
+          const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
+          columnGroup.children.push(getMaterialColumnGroupChild(material, columnGroupID, gasMode));
+        }
+        if (columnGroupID === 'properties') {
+          columnGroup.children.push(getPropertyColumnGroupChild(childID, gasMode));
+        }
+        if (columnGroupID === 'metadata') {
+          columnGroup.children.push(getMetadataColumnGroupChild(childID));
+        }
+        if (columnGroupID === 'segmentData') {
+          columnGroup.children.push(getSegmentColumnGroupChild(childID));
+        }
+      });
     });
-  });
 
   return updatedColumnDefinitions;
 }
@@ -441,16 +517,19 @@ function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materia
 function removeObsoleteColumnDefinitions(columnDefinitions, selectedColumns) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-    const columnGroup = updatedColumnDefinitions.find(
-      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
-    );
+  Object.entries(selectedColumns)
+    .forEach(([columnGroupID, columnGroupChildIDs]) => {
+      const columnGroup = updatedColumnDefinitions.find(
+        (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID,
+      );
 
-    columnGroup.children = columnGroup.children.filter((child) => {
-      const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
-      return columnGroupChildIDs.includes(childID);
+      columnGroup.children = columnGroup.children.filter((child) => {
+        const childID = child.field.split('.')
+          .splice(1)
+          .join('.'); // Ensure that IDs that contain "." are handled correctly.
+        return columnGroupChildIDs.includes(childID);
+      });
     });
-  });
 
   return updatedColumnDefinitions;
 }
@@ -494,13 +573,19 @@ function getColumnDefinitions(selectedColumns, materials, gasMode) {
       headerName: 'Metadata',
       groupId: 'metadata',
       marryChildren: true,
-      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
+      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry)),
     },
     {
       headerName: 'Properties',
       groupId: 'properties',
       marryChildren: true,
-      children: selectedColumns.properties.map((entry) => getPropertyColumnGroupChild(entry, gasMode))
+      children: selectedColumns.properties.map((entry) => getPropertyColumnGroupChild(entry, gasMode)),
+    },
+    {
+      headerName: 'Segments',
+      groupId: 'segmentData',
+      marryChildren: true,
+      children: selectedColumns.segmentData.map((entry) => getSegmentColumnGroupChild(entry)),
     },
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({
@@ -513,24 +598,72 @@ function getColumnDefinitions(selectedColumns, materials, gasMode) {
         (materialID) => getMaterialColumnGroupChild(
           materials[materialType].find((material) => material.id.toString() === materialID),
           materialType,
-          gasMode
-        )
-      )
-    }))
+          gasMode,
+        ),
+      ),
+    })),
   );
 }
 
 function getVariationsColumns(variations) {
   const variationsRow = variations[0];
-  const materialColumns = Object.entries(materialTypes).reduce((materialsByType, [materialType]) => {
-    materialsByType[materialType] = Object.keys(variationsRow ? variationsRow[materialType] : []);
-    return materialsByType;
-  }, {});
+  const materialColumns = Object.entries(materialTypes)
+    .reduce((materialsByType, [materialType]) => ({
+      ...materialsByType,
+      [materialType]: Object.keys(variationsRow ? variationsRow[materialType] : []),
+    }), {});
   const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
   const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});
+  const segmentDataColumns = Object.keys(variationsRow ? variationsRow.segmentData ?? {} : {});
 
-  return { ...materialColumns, properties: propertyColumns, metadata: metadataColumns };
+  return {
+    ...materialColumns,
+    properties: propertyColumns,
+    metadata: metadataColumns,
+    segmentData: segmentDataColumns,
+  };
 }
+
+const processSegmentsForVariations = (segments, reaction) => {
+  const result = [];
+  segments.forEach((seg) => {
+    const key = seg.label;
+    const inRea = reaction.segments.find((x) => x.klass_label === seg.label);
+    const layers = inRea ? inRea.properties.layers ?? [] : seg.properties_release.layers ?? [];
+
+    Object.values(layers)
+      .forEach((layer) => {
+        layer.fields.forEach((field) => {
+          if (['integer', 'system-defined'].includes(field.type)) {
+            result.push({
+              key: `${key}___${layer.key}___${field.field}`,
+              label: `${layer.label}: ${field.label}`,
+              group: key,
+              layer,
+              field,
+            });
+          }
+        });
+      });
+  });
+  return result;
+};
+
+const getSegmentsForVariations = (reaction) => {
+  // Fetch data only once when component mounts
+  const fetchData = async () => {
+    try {
+      const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
+      const reactionsSegs = res.klass.filter((k) => k.element_klass.id === 3 && k.is_active);
+      segmentsForVariations = processSegmentsForVariations(reactionsSegs, reaction);
+    } catch (error) {
+      console.error('Error fetching segments:', error);
+    }
+    return segmentsForVariations;
+  };
+
+  return fetchData();
+};
 
 function getGridStateId(id) {
   const { currentUser } = UserStore.getState();
@@ -571,10 +704,11 @@ export {
   addMissingColumnsToVariations,
   removeObsoleteColumnsFromVariations,
   addMissingColumnDefinitions,
+  getSegmentsForVariations,
   removeObsoleteColumnDefinitions,
   getMetadataColumnGroupChild,
   getPropertyColumnGroupChild,
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
-  persistGridState
+  persistGridState,
 };

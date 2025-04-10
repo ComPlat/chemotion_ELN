@@ -5,6 +5,9 @@ import {
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
+    case 'set_column_definitions': {
+      return action.columnDefinitions;
+    }
     case 'apply_column_selection': {
       let updatedColumnDefinitions = addMissingColumnDefinitions(
         columnDefinitions,
