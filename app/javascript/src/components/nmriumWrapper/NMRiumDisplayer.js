@@ -150,7 +150,7 @@ export default class NMRiumDisplayer extends React.Component {
     contentWindow.postMessage({ type: 'nmr-wrapper:action-request', data: dataToBeSent }, '*');
   }
 
-  sendJcampDataToNMRDisplayer() {
+  async sendJcampDataToNMRDisplayer() {
     LoadingActions.start.defer();
     const { fetchedFiles, isIframeLoaded, spcInfos } = this.state;
     if (isIframeLoaded && fetchedFiles && fetchedFiles.files && fetchedFiles.files.length > 0) {
@@ -160,7 +160,7 @@ export default class NMRiumDisplayer extends React.Component {
       if (this.iframeRef.current
         && listFileContents.length > 0
         && listFileContents.length === spcInfos.length) {
-        const dataToBeSent = this.buildDataToBeSent(listFileContents, spcInfos);
+        const dataToBeSent = await this.buildDataToBeSent(listFileContents, spcInfos);
         const { contentWindow } = this.iframeRef.current;
         if (contentWindow) {
           contentWindow.postMessage({ type: 'nmr-wrapper:load', data: dataToBeSent }, '*');
@@ -171,23 +171,22 @@ export default class NMRiumDisplayer extends React.Component {
     }
   }
 
-  buildDataToBeSent(files, spectraInfos) {
+  async buildDataToBeSent(files, spectraInfos) {
     const { sample } = this.props;
-    const nmriumData = this.readNMRiumData(files, spectraInfos);
+    const nmriumData = await this.readNMRiumData(files, spectraInfos);
     if (nmriumData) {
-      const data = { data: nmriumData, type: 'nmrium' };
-      return data;
+      return { data: nmriumData, type: 'nmrium' };
     }
 
     const data = { data: [], type: 'file' };
     for (let index = 0; index < files.length; index += 1) {
-      const fileToBeShowed = files[index].file;
-      const bufferData = parseBase64ToArrayBuffer(fileToBeShowed);
-      const spcInfo = spectraInfos[index];
-      const fileName = spcInfo.label;
-      const blobToBeSent = new Blob([bufferData]);
-      const dataItem = new File([blobToBeSent], fileName);
-      data.data.push(dataItem);
+      if (files[index] !== null) {
+        const fileBlob = files[index].file;
+        const spcInfo = spectraInfos[index];
+        const fileName = spcInfo.label;
+        const dataItem = new File([fileBlob], fileName);
+        data.data.push(dataItem);
+      }
     }
     if (sample) {
       const { molfile } = sample;
@@ -201,7 +200,7 @@ export default class NMRiumDisplayer extends React.Component {
     return data;
   }
 
-  readNMRiumData(files, spectraInfos) {
+  async readNMRiumData(files, spectraInfos) {
     const arrNMRiumSpecs = spectraInfos.filter((spc) => spc.label.includes('.nmrium'));
     if (!arrNMRiumSpecs || arrNMRiumSpecs.length === 0) {
       return false;
@@ -215,9 +214,29 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     const nmriumDataEncoded = arrNMRiumFiles[0].file;
-    const decodedData = base64.decode(nmriumDataEncoded);
-    const nmriumData = JSON.parse(decodedData);
-    return nmriumData;
+      let raw = null;
+  
+      if (nmriumDataEncoded instanceof Blob) {
+        const text = await nmriumDataEncoded.text();
+  
+        const arrayLike = JSON.parse(text);
+  
+        if (
+          Array.isArray(arrayLike) &&
+          arrayLike.length === 3 &&
+          Array.isArray(arrayLike[2])
+        ) {
+          raw = arrayLike[2].join('');
+        } else {
+          raw = text;
+        }
+      } else if (typeof nmriumDataEncoded === 'string') {
+        raw = base64.decode(nmriumDataEncoded);
+      }
+  
+      const parsed = JSON.parse(raw);
+  
+    return parsed;
   }
 
   savingNMRiumWrapperData(imageBlobData = false) {

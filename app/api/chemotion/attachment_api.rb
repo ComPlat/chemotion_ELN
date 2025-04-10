@@ -81,6 +81,7 @@ module Chemotion
         @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
+        @attachment = Attachment.find_by(id: params[:id]) if @attachment.nil? && params[:id]
 
         # rubocop:disable Performance/StringInclude
         case request.env['REQUEST_METHOD']
@@ -109,8 +110,13 @@ module Chemotion
               can_dwnld = can_read &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
+          elsif /files\/\d+/.match?(request.url)
+            if @attachment
+              element = @attachment.container&.root&.containable
+              can_read = ElementPolicy.new(current_user, element).read?
+              can_dwnld = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+            end
           elsif @attachment
-
             can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
 
             if !can_dwnld && (element = @attachment.container&.root&.containable || @attachment.attachable)
@@ -420,6 +426,38 @@ module Chemotion
         { thumbnails: thumbnails }
       end
 
+      get 'files/:id' do
+        attachment = Attachment.find(params[:id]) or error!('404 Not Found', 404)
+      
+        element = attachment.container&.root&.containable
+        user_ids = [current_user.id]
+        can_read  = ElementPolicy.new(current_user, element).read?
+        can_dwnld = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+        error!('401 Unauthorized', 401) unless can_dwnld
+      
+        file = attachment.attachment_attacher.file
+        file.open unless file.respond_to?(:read)
+      
+        headers = {
+          'Content-Type' => attachment.content_type || 'application/octet-stream',
+          'Content-Disposition' => "inline; filename=\"#{attachment.filename}\"",
+          'Transfer-Encoding' => 'chunked'
+        }
+        headers.delete('Content-Length')
+      
+        enumerator = Enumerator.new do |yielder|
+          begin
+            buffer_size = 64 * 1024
+            while (chunk = file.read(buffer_size))
+              yielder << chunk
+            end
+          ensure
+            file.close if file.respond_to?(:close)
+          end
+        end
+        Rack::Response.new(enumerator, 200, headers).finish
+      end
+      
       desc 'Return Base64 encoded files'
       params do
         requires :ids, type: Array[Integer]

@@ -110,20 +110,29 @@ class SpectraActions {
   }
 
   LoadSpectraForNMRDisplayer(spcInfos) {
-    const idxs = spcInfos && spcInfos.map(si => si.idx);
+    const idxs = spcInfos?.map((si) => si.idx) || [];
+  
     if (idxs.length === 0) {
       return null;
     }
+  
+    return async (dispatch) => {
+      let fetchedFiles = null;
 
-    return (dispatch) => {
-      AttachmentFetcher.fetchFiles(idxs)
-        .then((fetchedFiles) => {
-          dispatch({ fetchedFiles, spcInfos });
-        }).catch((errorMessage) => {
-          console.log(errorMessage); // eslint-disable-line
-        });
+      if (idxs.length === 1) {
+        const file = await AttachmentFetcher.fetchFiles(idxs[0]);
+        fetchedFiles = [{ file, id: idxs[0] }];
+      } else {
+        const files = await AttachmentFetcher.fetchFiles(idxs);
+        fetchedFiles = files.map((file, i) => ({
+          file,
+          id: idxs[i],
+        }));
+      }
+
+      dispatch({ fetchedFiles: { files: fetchedFiles }, spcInfos });
     };
-  }
+  }  
 }
 
 export default alt.createActions(SpectraActions);

@@ -165,40 +165,46 @@ export default class AttachmentFetcher {
     });
   }  
 
-  static fetchFiles(ids) {
-    const cacheKey = `files-${JSON.stringify(ids.sort())}`;
-    // Attempt to retrieve cached files by ids
+  static async fetchFiles(fileId, onChunkReceived) {
+    const cacheKey = `files-${JSON.stringify(fileId)}`;
     return getFileFromDB(cacheKey).then(cachedData => {
       if (cachedData) {
-        // Return cached files if found
         return cachedData.data;
-      } else {
-        // Fetch files from server if not cached
-        return fetch('/api/v1/attachments/files/', {
-          credentials: 'same-origin',
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ ids })
-        })
-        .then(response => response.json())
-        .then(json => {
-          // Store fetched files in cache
-          const fileToStore = {
-            id: cacheKey,
-            data: json,
-            filename: "",
-            contentType: "application/json",
-            timestamp: Date.now()
-          };
-          return storeFile(fileToStore).then(() => json);
-        })
-        .catch(errorMessage => {
-          console.log(errorMessage);
-        });
       }
+
+      async function fetchSingleFile(id) {
+        const response = await fetch(`/api/v1/attachments/files/${id}`, {
+          method: 'GET',
+          credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error retrieving file ${id}: ${response.statusText}`);
+        }
+
+        const reader = response.body.getReader();
+        const chunks = [];
+        let receivedLength = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          receivedLength += value.length;
+
+          if (onChunkReceived) {
+            onChunkReceived(value, receivedLength);
+          }
+        }
+
+        return new Blob(chunks);
+      }
+
+      if (Array.isArray(fileId)) {
+        return Promise.all(fileId.map(id => fetchSingleFile(id)));
+      }
+
+      return fetchSingleFile(fileId);
     });
   }
 
@@ -818,5 +824,35 @@ export default class AttachmentFetcher {
       });
 
     return promise;
+  }
+
+  static async getFromCache(cacheKey) {
+    try {
+      const cachedData = await getFileFromDB(cacheKey);
+      if (cachedData) {
+        return cachedData.data;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error getting from cache: ${error}`);
+      return null;
+    }
+  }
+
+  static async storeInCache(cacheKey, data) {
+    try {
+      const fileToStore = {
+        id: cacheKey,
+        data: data,
+        filename: "",
+        contentType: "application/json",
+        timestamp: Date.now()
+      };
+      await storeFile(fileToStore);
+      return true;
+    } catch (error) {
+      console.error(`Error storing in cache: ${error}`);
+      return false;
+    }
   }
 }
