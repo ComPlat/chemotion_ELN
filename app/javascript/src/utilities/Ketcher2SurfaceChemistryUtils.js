@@ -948,16 +948,48 @@ const prepareSvg = async (editor) => {
   await fetchKetcherData(editor);
   const regex = /source-\d+/;
   const moves = [];
+  const parser = new DOMParser();
+  const matchingGlyphs = [];
+  const A_PATH_ONE = 'M 2.9375 -7.140625 C 3.820312 -7.140625 4.476562 -6.96875 4.90625 -6.625 C 5.332031 -6.289062 5.546875 -5.785156 5.546875 -5.109375 C 5.546875 -4.734375 5.472656 -4.414062 5.328125 -4.15625 C 5.191406 -3.90625 5.015625 -3.703125 4.796875 -3.546875 C 4.578125 -3.398438 4.347656 -3.285156 4.109375 -3.203125 L 6.0625 0 L 5.015625 0 L 3.296875 -2.953125 L 1.875 -2.953125 L 1.875 0 L 0.96875 0 L 0.96875 -7.140625 Z M 2.890625 -6.359375 L 1.875 -6.359375 L 1.875 -3.703125 L 2.9375 -3.703125 C 3.519531 -3.703125 3.941406 -3.816406 4.203125 -4.046875 C 4.472656 -4.285156 4.609375 -4.625 4.609375 -5.0625 C 4.609375 -5.53125 4.46875 -5.863281 4.1875 -6.0625 C 3.90625 -6.257812 3.472656 -6.359375 2.890625 -6.359375 Z M 2.890625 -6.359375 ';
+  const A_PATH_TWO = 'M 0.546875 -3.046875 C 0.546875 -3.554688 0.585938 -4.0625 0.671875 -4.5625 C 0.765625 -5.0625 0.929688 -5.507812 1.171875 -5.90625 C 1.410156 -6.3125 1.742188 -6.632812 2.171875 -6.875 C 2.597656 -7.113281 3.144531 -7.234375 3.8125 -7.234375 C 3.957031 -7.234375 4.113281 -7.226562 4.28125 -7.21875 C 4.457031 -7.207031 4.597656 -7.1875 4.703125 -7.15625 L 4.703125 -6.40625 C 4.578125 -6.4375 4.4375 -6.460938 4.28125 -6.484375 C 4.132812 -6.503906 3.988281 -6.515625 3.84375 -6.515625 C 3.382812 -6.515625 3 -6.4375 2.6875 -6.28125 C 2.382812 -6.132812 2.144531 -5.925781 1.96875 -5.65625 C 1.789062 -5.394531 1.660156 -5.085938 1.578125 -4.734375 C 1.492188 -4.390625 1.445312 -4.019531 1.4375 -3.625 L 1.484375 -3.625 C 1.640625 -3.863281 1.851562 -4.0625 2.125 -4.21875 C 2.40625 -4.382812 2.757812 -4.46875 3.1875 -4.46875 C 3.800781 -4.46875 4.296875 -4.28125 4.671875 -3.90625 C 5.054688 -3.53125 5.25 -2.992188 5.25 -2.296875 C 5.25 -1.554688 5.039062 -0.972656 4.625 -0.546875 C 4.21875 -0.117188 3.671875 0.09375 2.984375 0.09375 C 2.523438 0.09375 2.113281 -0.015625 1.75 -0.234375 C 1.382812 -0.460938 1.09375 -0.8125 0.875 -1.28125 C 0.65625 -1.75 0.546875 -2.335938 0.546875 -3.046875 Z M 2.96875 -0.640625 C 3.382812 -0.640625 3.722656 -0.773438 3.984375 -1.046875 C 4.242188 -1.316406 4.375 -1.734375 4.375 -2.296875 C 4.375 -2.753906 4.257812 -3.113281 4.03125 -3.375 C 3.800781 -3.644531 3.457031 -3.78125 3 -3.78125 C 2.6875 -3.78125 2.410156 -3.710938 2.171875 -3.578125 C 1.941406 -3.453125 1.757812 -3.289062 1.625 -3.09375 C 1.5 -2.894531 1.4375 -2.6875 1.4375 -2.46875 C 1.4375 -2.1875 1.492188 -1.898438 1.609375 -1.609375 C 1.722656 -1.328125 1.890625 -1.09375 2.109375 -0.90625 C 2.335938 -0.726562 2.625 -0.640625 2.96875 -0.640625 Z M 2.96875 -0.640625 ';
+
   const dataAlias = await replaceAliasWithRG({ ...latestData });
   const generateImageParams = { outputFormat: 'svg' };
   const data = JSON.stringify(dataAlias);
   const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
   const svgString = await new Response(svgBlob).text();
-  const parser = new DOMParser();
   const doc = parser.parseFromString(svgString, 'image/svg+xml');
   const svgElement = doc.querySelector('svg');
-
   const uses = doc.querySelectorAll('*');
+  const glyphs = doc.querySelectorAll("g[id^='glyph-']");
+
+  glyphs.forEach((glyph) => {
+    const path = glyph.querySelector('path');
+    if (!path) return;
+
+    const d = path.getAttribute('d').trim();
+    if (d.includes(A_PATH_ONE.trim()) || d.includes(A_PATH_TWO.trim())) {
+      matchingGlyphs.push(glyph.getAttribute('id'));
+    }
+  });
+
+  const groups = doc.querySelectorAll('g');
+  groups.forEach((group) => {
+    const usesList = group.querySelectorAll('*');
+    if (usesList.length === 2) {
+      const isGroupMatching = [];
+      usesList.forEach((use) => {
+        const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href').replace('#', '');
+        isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
+      });
+      const allTrue = isGroupMatching.every(Boolean); // returns true if all are true
+      if (allTrue) {
+        usesList.forEach((use) => {
+          use.style.fill = 'white';
+        });
+      }
+    }
+  });
 
   uses.forEach((useElement) => {
     const xlinkHref = useElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
