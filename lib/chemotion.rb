@@ -8,4 +8,4 @@ require 'chemotion/chemicals_service'
 require 'chemotion/manual_sds_service'
 
 module Chemotion
-end 
+end
