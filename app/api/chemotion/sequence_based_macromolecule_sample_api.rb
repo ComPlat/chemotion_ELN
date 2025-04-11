@@ -29,7 +29,7 @@ module Chemotion
         optional :amount_as_used_mass_unit, type: String, values: %w[g kg µg mg], default: 'g'
         optional :activity_value, type: Float
         optional :activity_unit, type: String, values: %w[U mU kat mkat µkat nkat], default: 'U'
-        requires :container, type: Hash
+        optional :container, type: Hash
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna]

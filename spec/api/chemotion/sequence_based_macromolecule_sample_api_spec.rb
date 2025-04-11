@@ -415,32 +415,44 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         # sbmm and other_sbmm should only be different on sequence
         let(:other_sbmm) do
           log_red.call("=== Creating other_sbmm ===")
-          other_sbmm = create(:modified_uniprot_sbmm, sequence: 'FooBar')
+          other_sbmm = create(
+            :modified_uniprot_sbmm,
+            sequence: 'FooBar',
+            parent: sbmm.parent,
+            protein_sequence_modification: sbmm.protein_sequence_modification,
+            post_translational_modification: sbmm.post_translational_modification
+          )
           log_red.call("=== created other_sbmm with id #{other_sbmm.id}")
           other_sbmm
         end
+        let(:sbmm_sample_serialized_for_use_as_put_data) do
+          data = Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample).serializable_hash
+          data[:sequence_based_macromolecule].transform_keys! do |key|
+            case key
+            when :protein_sequence_modifications
+              :protein_sequence_modification_attributes
+            when :post_translational_modifications
+              :post_translational_modification_attributes
+            else
+              key
+            end
+          end
+          data.transform_keys! { |key| key == :sequence_based_macromolecule ? :sequence_based_macromolecule_attributes : key }
+          parent_identifier = data[:sequence_based_macromolecule_attributes][:parent][:id]
+          data[:sequence_based_macromolecule_attributes][:parent_identifier] = parent_identifier
+          data[:sequence_based_macromolecule_attributes].delete(:parent)
+          data
+        end
         let(:put_data) do
-          {
-            amount_as_used_mass_value: 12345,
-            amount_as_used_mass_unit: 'mg',
-            name: sbmm_sample.name,
-            sequence_based_macromolecule_attributes: {
-              sbmm_type: sbmm.sbmm_type,
-              sbmm_subtype: sbmm.sbmm_subtype,
-              uniprot_derivation: sbmm.uniprot_derivation,
-              parent_identifier: sbmm.parent_id,
-              molecular_weight: sbmm.molecular_weight,
-              sequence: other_sbmm.sequence,
-              # the following parameters are only there so grape's format validation does not complain about missing
-              # ptm/psm attributes
-              protein_sequence_modification_attributes: sbmm.protein_sequence_modification.attributes,
-              post_translational_modification_attributes: sbmm.protein_sequence_modification.attributes
-            }
-          }
+          put_data = sbmm_sample_serialized_for_use_as_put_data
+          put_data[:sequence_based_macromolecule_attributes][:sequence] = other_sbmm.sequence
+          put_data[:amount_as_used_mass_value] = 12345 # some changes to the sbmm-sample
+          put_data[:sequence_based_macromolecule_attributes][:short_name] = other_sbmm.short_name # this sucks!!!
+          put_data
         end
 
         before do
-          other_sbmm
+          other_sbmm # this has to exist before the test or it will be created in the expect block and thus mislead the counter
         end
 
         it 'returns a 200 success' do
