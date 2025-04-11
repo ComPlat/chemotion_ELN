@@ -83,9 +83,9 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   def auto_assign_short_label
     return if short_label && !short_label_changed?
     return if /solvents?|reactants?/.match?(short_label)
-    return unless user && user.counters['samples']
+    return unless user
 
-    abbr = creator.name_abbreviation
-    self.short_label = "#{abbr}-#{creator.counters['samples'].to_i.succ}"
+    abbr = user.name_abbreviation
+    self.short_label = "#{abbr}-#{user.counters['sequence_based_macromolecule_samples'].to_i.succ}"
   end
 end
