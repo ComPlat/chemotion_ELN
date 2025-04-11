@@ -52,6 +52,7 @@
 #
 class SequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid
+
   include ElementUIStateScopes
   include Collectable
   include ElementCodes
@@ -80,8 +81,11 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   end
 
   def auto_assign_short_label
-    return if short_label
+    return if short_label && !short_label_changed?
+    return if /solvents?|reactants?/.match?(short_label)
+    return unless user && user.counters['samples']
 
-    self.short_label = "SBMM-Sample-#{Random.uuid}"
+    abbr = creator.name_abbreviation
+    self.short_label = "#{abbr}-#{creator.counters['samples'].to_i.succ}"
   end
 end
