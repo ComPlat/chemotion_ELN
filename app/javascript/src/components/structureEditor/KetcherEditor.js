@@ -805,6 +805,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         let textNodesFormula = '';
         await fetchKetcherData(editor);
         await centerPositionCanvas(editor);
+        const svg = await prepareSvg(editor);
         const canvasDataMol = await editor.structureDef.editor.getMolfile();
         await reArrangeImagesOnCanvas(iframeRef); // svg display
         const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
@@ -812,7 +813,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
         ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
         resetStore();
-        const svg = await prepareSvg(editor);
         return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement: svg, textNodesFormula };
       } catch (e) {
         console.error('onSaveFileK2SC', e);

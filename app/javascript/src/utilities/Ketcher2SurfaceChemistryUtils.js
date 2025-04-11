@@ -945,7 +945,6 @@ const replaceAliasWithRG = async (data) => {
 
 // prepare svg
 const prepareSvg = async (editor) => {
-  await fetchKetcherData(editor);
   const regex = /source-\d+/;
   const moves = [];
   const parser = new DOMParser();
@@ -985,7 +984,7 @@ const prepareSvg = async (editor) => {
       const allTrue = isGroupMatching.every(Boolean); // returns true if all are true
       if (allTrue) {
         usesList.forEach((use) => {
-          use.style.fill = 'white';
+          use.style.fill = 'transparent';
         });
       }
     }
@@ -994,12 +993,12 @@ const prepareSvg = async (editor) => {
   uses.forEach((useElement) => {
     const xlinkHref = useElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
     if (regex.test(xlinkHref)) {
-      useElement.remove();
+      // useElement.remove();
       moves.push(useElement);
     }
   });
   moves.forEach((moveElement) => {
-    svgElement.appendChild(moveElement);
+    // svgElement.appendChild(moveElement);
   });
   const updatedSVGString = new XMLSerializer().serializeToString(doc);
   return updatedSVGString;
