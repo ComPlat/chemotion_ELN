@@ -132,7 +132,13 @@ describe Chemotion::ChemicalAPI do
             'User-Agent' => 'Google Chrome',
           })
           .to_return(status: 200, body: '', headers: {})
-        get "/api/v1/chemicals/fetch_safetysheet/#{chemical.sample_id}?data[vendor]=#{params[:vendor]}&data[option]=#{params[:option]}&data[language]=#{params[:language]}", params: params
+        get(
+          "/api/v1/chemicals/fetch_safetysheet/#{chemical.sample_id}?" \
+          "data[vendor]=#{params[:vendor]}&" \
+          "data[option]=#{params[:option]}&" \
+          "data[language]=#{params[:language]}",
+          params: params,
+        )
       end
 
       it 'fetches the response from merck/thermofischer api' do
