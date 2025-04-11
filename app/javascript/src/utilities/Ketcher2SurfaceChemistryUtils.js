@@ -923,70 +923,54 @@ const arrangeTextNodes = async (ket2Molfile) => {
   ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
   return ket2Molfile;
 };
-const trimSVGWhitespace = (iframeRef) => {
-  const iframeDocument = iframeRef?.current?.contentWindow?.document;
-  const svg = iframeDocument.querySelector('svg');
-  const svgElement = svg; // Get the <svg> element from the parsed document
 
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  // Loop over each child element of the SVG to find the bounding box
-  Array.from(svgElement.children).forEach((el) => {
-    if (typeof el.getBBox === 'function') {
-      const bbox = el.getBBox();
-      if (bbox.width > 0 && bbox.height > 0) {
-        minX = Math.min(minX, bbox.x);
-        minY = Math.min(minY, bbox.y);
-        maxX = Math.max(maxX, bbox.x + bbox.width);
-        maxY = Math.max(maxY, bbox.y + bbox.height);
+// make all special atom to rg-labels6 temp
+const replaceAliasWithRG = async (data) => {
+  for (const molName of mols) {
+    const molecule = data[molName];
+    for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
+      const atom = molecule.atoms[atomIndex];
+      if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
+        delete atom.label;
+        delete atom.alias;
+        atom.type = 'rg-label';
+        atom.$refs = [
+          'rg-6'
+        ];
       }
     }
-  });
-
-  // If a valid bounding box was found, adjust the viewBox
-  if (minX !== Infinity && minY !== Infinity && maxX !== -Infinity && maxY !== -Infinity) {
-    const width = maxX - minX;
-    const height = maxY - minY;
-
-    // Set the fixed viewBox dimensions to match your desired viewport
-    const parentWidth = 3000; // Fixed width (3000px)
-    const parentHeight = 1200; // Fixed height (1200px)
-
-    // Create a new parent SVG element to wrap the original SVG
-    const parentSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    parentSVG.setAttribute('width', parentWidth);
-    parentSVG.setAttribute('height', parentHeight);
-
-    // Set the new viewBox for the parent SVG (this will ensure the content scales properly)
-    const parentViewBox = `0 0 ${parentWidth} ${parentHeight}`;
-    parentSVG.setAttribute('viewBox', parentViewBox);
-
-    // Apply scaling (scale to fit within the fixed parent width and height)
-    const scaleX = parentWidth / width; // Scale factor for width
-    const scaleY = parentHeight / height; // Scale factor for height
-
-    // Ensure the content fits within the viewBox without clipping
-    const scale = Math.min(scaleX, scaleY); // Use the smaller scale to preserve aspect ratio
-
-    // Apply both scaling and translation to center the content
-    const translateX = (parentWidth - width * scale) / 2 - minX * scale;
-    const translateY = (parentHeight - height * scale) / 2 - minY * scale;
-
-    // Set the transform on the child SVG
-    const transform = `translate(${translateX}, ${translateY}) scale(${scale})`;
-    svgElement.setAttribute('transform', transform);
-
-    // Append the original (child) SVG to the new parent SVG
-    parentSVG.appendChild(svgElement);
-
-    // Return the updated parent SVG as a string
-    const updatedSVG = new XMLSerializer().serializeToString(parentSVG);
-    return updatedSVG;
   }
-  return null;
+  return data;
+};
+
+// prepare svg
+const prepareSvg = async (editor) => {
+  await fetchKetcherData(editor);
+  const regex = /source-\d+/;
+  const moves = [];
+  const dataAlias = await replaceAliasWithRG({ ...latestData });
+  const generateImageParams = { outputFormat: 'svg' };
+  const data = JSON.stringify(dataAlias);
+  const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
+  const svgString = await new Response(svgBlob).text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svgElement = doc.querySelector('svg');
+
+  const uses = doc.querySelectorAll('*');
+
+  uses.forEach((useElement) => {
+    const xlinkHref = useElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+    if (regex.test(xlinkHref)) {
+      useElement.remove();
+      moves.push(useElement);
+    }
+  });
+  moves.forEach((moveElement) => {
+    svgElement.appendChild(moveElement);
+  });
+  const updatedSVGString = new XMLSerializer().serializeToString(doc);
+  return updatedSVGString;
 };
 
 // process text nodes into for formula
@@ -1178,7 +1162,7 @@ export {
   deepCompareNumbers,
   deepCompareContent,
   handleOnDeleteAtom,
-  trimSVGWhitespace,
+  prepareSvg,
   // DOM Methods
   disableButton,
   attachListenerForTitle,

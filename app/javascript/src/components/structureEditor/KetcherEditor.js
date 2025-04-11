@@ -62,7 +62,8 @@ import {
   deepCompareContent,
   removeImageTemplateAtom,
   handleOnDeleteAtom,
-  trimSVGWhitespace
+  trimSVGWhitespace,
+  prepareSvg
 } from 'src/utilities/Ketcher2SurfaceChemistryUtils';
 import {
   PolymerListIconKetcherToolbarButton,
@@ -612,11 +613,24 @@ const KetcherEditor = forwardRef((props, ref) => {
         const fileContent = JSON.parse(ketFile.struct);
 
         // process polymers
-        const { molfileData } = await addPolymerTags(polymerTag, fileContent);
-        const textNodeList = await addTextNodes(textNodes, molfileData);
-        if (textNodeList.length) molfileData.root.nodes.push(...textNodeList);
-        const toRecenter = !polymerTag?.length;
-        saveMoveCanvas(editor, molfileData, true, true, !!toRecenter);
+        let molfileContent = fileContent;
+
+        if (polymerTag) {
+          try {
+            const { molfileData } = await addPolymerTags(polymerTag, fileContent);
+            molfileContent = molfileData;
+
+            // Add text nodes if available
+            const textNodeList = await addTextNodes(textNodes, molfileContent);
+            if (textNodeList.length) {
+              molfileContent.root.nodes.push(...textNodeList);
+            }
+          } catch (error) {
+            console.error('Error processing polymer tag:', error);
+          }
+        }
+        const toRecenter = !polymerTag || !polymerTag.length;
+        saveMoveCanvas(editor, molfileContent, true, true, toRecenter);
         setTimeout(async () => {
           await centerPositionCanvas(editor);
         }, 10);
@@ -798,8 +812,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
         ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
         resetStore();
-        const svgElement = trimSVGWhitespace(iframeRef);
-        return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
+        const svg = await prepareSvg(editor);
+        return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement: svg, textNodesFormula };
       } catch (e) {
         console.error('onSaveFileK2SC', e);
         return e.message;
