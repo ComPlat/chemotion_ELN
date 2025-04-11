@@ -89,6 +89,47 @@ function EquivalentParser({
   };
 }
 
+function SegmentFormatter({
+                              value: cellData,
+                              colDef,
+                          }) {
+    const { cellEditorParams } = colDef;
+    const { fieldType } = cellEditorParams;
+    let newValue = cellData;
+    if (typeof cellData === 'object') {
+        newValue = cellData?.value ?? '';
+    }
+    if (fieldType === 'integer') {
+        return parseInt(newValue, 10);
+    }
+    if (fieldType === 'select') {
+        if (cellEditorParams.values.includes(newValue)) {
+            return newValue;
+        }
+        return '';
+    }
+    if (fieldType === 'system-defined') {
+        return parseFloat(Number(newValue).toPrecision(4));
+    }
+    return `${newValue}`;
+}
+
+function SegmentParser({
+                           oldValue: cellData,
+                           newValue,
+                           colDef,
+                       }) {
+    const value = SegmentFormatter({
+        value: newValue,
+        colDef,
+    });
+
+    return {
+        ...cellData,
+        value,
+    };
+}
+
 function PropertyFormatter({
   value: cellData,
   colDef,
@@ -638,7 +679,7 @@ function MenuHeader({
         onTouchEnd={(event) => onSortRequested('asc', event)}
         className={`customSortDownLabel ${ascendingSort}`}
       >
-        <i className="fa fa-chevron-up fa-fw"/>
+        <i className="fa fa-chevron-up fa-fw" />
       </Button>
       <Button
         variant="link"
@@ -646,7 +687,7 @@ function MenuHeader({
         onTouchEnd={(event) => onSortRequested('desc', event)}
         className={`customSortUpLabel ${descendingSort}`}
       >
-        <i className="fa fa-chevron-down fa-fw"/>
+        <i className="fa fa-chevron-down fa-fw" />
       </Button>
       <Button
         variant="link"
@@ -654,7 +695,7 @@ function MenuHeader({
         onTouchEnd={(event) => onSortRequested('', event)}
         className={`customSortRemoveLabel ${noSort}`}
       >
-        <i className="fa fa-times fa-fw"/>
+        <i className="fa fa-times fa-fw" />
       </Button>
     </div>
   );
@@ -698,7 +739,6 @@ const toUpperCase = (str) => str.charAt(0)
   .toUpperCase() + str.slice(1);
 
 const formatGroupLabel = (data) => {
-
   const groupStyles = {
     display: 'flex',
     alignItems: 'center',

@@ -283,6 +283,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         createVariationsRow(
           {
             materials: reactionMaterials,
+            processedSegs,
             selectedColumns,
             variations: reactionVariations,
             reactionHasPolymers,
@@ -326,6 +327,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       materials: reactionMaterials,
       selectedColumns: columns,
       variations: reactionVariations,
+      processedSegs,
       reactionHasPolymers,
       durationValue,
       durationUnit,
@@ -365,7 +367,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     return (
       <>
         <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
-          <i className="fa fa-trash me-1"/>
+          <i className="fa fa-trash me-1" />
           {' '}
           Remove all variations
         </Button>
@@ -410,7 +412,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       overlay={(
         <Tooltip>
           Add row with current data from &quot;Scheme&quot; tab.
-          <br/>
+          <br />
           Changes in &quot;Scheme&quot; tab are not applied to
           {' '}
           <i>existing</i>
@@ -420,7 +422,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       )}
     >
       <Button size="sm" variant="success" onClick={addRow} className="mb-2">
-        <i className="fa fa-plus me-1"/>
+        <i className="fa fa-plus me-1" />
         {' '}
         Add variation
       </Button>
