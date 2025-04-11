@@ -15,15 +15,6 @@ FactoryBot.define do
     end
     password { 'testtest' }
     password_confirmation { 'testtest' }
-    counters do
-      {
-        samples: 0,
-        reactions: 0,
-        wellplates: 0,
-        celllines: 0,
-        device_descriptions: 0,
-      }
-    end
 
     callback(:after_create) do |user|
       profile = user.profile
