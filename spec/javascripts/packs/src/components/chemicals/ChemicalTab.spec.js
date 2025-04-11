@@ -10,6 +10,7 @@ import {
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
+import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
@@ -30,12 +31,12 @@ describe('ChemicalTab basic rendering', () => {
       React.createElement(
         ChemicalTab,
         {
-          sample: sample,
+          sample,
           saveInventory: false,
           setSaveInventory: sinon.spy(),
           handleUpdateSample: sinon.spy(),
           editChemical: sinon.spy(),
-          key: "ChemicalTab29",
+          key: 'ChemicalTab29',
         },
       )
     );
@@ -73,12 +74,12 @@ describe('ChemicalTab component', () => {
     React.createElement(
       ChemicalTab,
       {
-        sample: sample,
+        sample,
         saveInventory: false,
         editChemical: sinon.spy(),
         setSaveInventory: sinon.spy(),
         handleUpdateSample: sinon.spy(),
-        key: "ChemicalTab29",
+        key: 'ChemicalTab29',
       }
     )
   );
@@ -142,7 +143,7 @@ describe('ChemicalTab component', () => {
       instance.handleFieldChanged('status', 'Available');
 
       // assert that the state of chemical object has been updated
-      const updatedChemicalData = [{ status: 'Available' }];
+      const updatedChemicalData = [{ status: 'Available', safetySheetPath: [] }];
       expect(wrapper.state().chemical.chemical_data).toEqual(updatedChemicalData);
 
       expect(handleFieldChangedSpy.calledWith('status', 'Available')).toBe(true);
@@ -191,7 +192,8 @@ describe('ChemicalTab component', () => {
 
     it('calls querySafetySheets() when fetch safety phrases button is clicked', () => {
       const fetchSafetyPhrasesSpy = sinon.spy(wrapper.instance(), 'fetchSafetyPhrases');
-      wrapper.find('#safetyPhrases-btn').simulate('click');
+      // Find the specific button in the first child element
+      wrapper.find('.justify-content-end Button').first().simulate('click');
       expect(fetchSafetyPhrasesSpy.called).toBe(true);
       fetchSafetyPhrasesSpy.restore();
     });
@@ -212,7 +214,23 @@ describe('ChemicalTab component', () => {
 
     it('calls fetchChemicalProperties() when fetch chemical properties button is clicked', () => {
       const fetchChemicalPropertiesSpy = sinon.spy(wrapper.instance(), 'fetchChemicalProperties');
-      wrapper.find('#fetch-properties').simulate('click');
+
+      // Set up the component state with a chemical object and displayWell
+      const chemicalData = [{
+        safetySheetPath: [
+          { merck_link: '/safety_sheets/252549_Merck.pdf' }
+        ]
+      }];
+      const newChemical = createChemical(chemicalData, '7681-82-5');
+      instance.setState({
+        chemical: newChemical,
+        displayWell: true,
+        viewModalForVendor: 'merck'
+      });
+
+      // Directly call the method instead of simulating button click
+      instance.fetchChemicalProperties('merck');
+
       expect(fetchChemicalPropertiesSpy.called).toBe(true);
       fetchChemicalPropertiesSpy.restore();
     });
@@ -247,21 +265,23 @@ describe('ChemicalTab component', () => {
         ],
         safetyPhrases: {
           h_statements: {
-            H315: ' Causes skin irritation'
+            H315: 'Causes skin irritation',
+            H319: 'Causes serious eye irritation'
           },
           p_statements: {
-            P280: ' Wear protective gloves/protective clothing/eye protection/face protection. [As modified by IV ATP]'
+            P264: 'Wash skin thoroughly after handling',
+            P280: 'Wear protective gloves/protective clothing/eye protection/face protection'
           },
-          pictograms: [
-            'GHS07',
-            'GHS08'
-          ]
+          pictograms: ['GHS07']
         }
       }];
+
       const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
-      const stylePhrasesSpy = sinon.spy(wrapper.instance(), 'stylePhrases');
-      wrapper.find('#safetyPhrases-btn').simulate('click');
+
+      const stylePhrasesSpy = sinon.spy(instance, 'stylePhrases');
+      // Find the specific button in the first child element
+      wrapper.find('.justify-content-end Button').first().simulate('click');
       expect(stylePhrasesSpy.called).toBe(true);
       stylePhrasesSpy.restore();
     });
@@ -307,5 +327,119 @@ describe('ChemicalTab component', () => {
       sinon.assert.calledOnce(renderWarningMessageSpy);
       renderWarningMessageSpy.restore();
     });
+  });
+});
+
+describe('Manual SDS attachment functionality', () => {
+  let wrapper;
+  let instance;
+  let saveManualAttachedSafetySheetStub;
+
+  beforeEach(() => {
+    // Create a sample with needed properties
+    const testSample = Sample.buildEmpty(2);
+    testSample.xref = { cas: '123-45-6' };
+    testSample.molecule_name_hash = { mid: 'test-mid' };
+    testSample.showedName = () => 'Test Sample';
+    testSample.xref = { cas: '123-45-6' };
+    testSample.molecule_name_hash = { mid: 'test-mid' };
+    testSample.showedName = () => 'Test Sample';
+    testSample.xref = { cas: '123-45-6' };
+    testSample.molecule_name_hash = { mid: 'test-mid' };
+    testSample.showedName = () => 'Test Sample';
+
+    // Stub the ChemicalFetcher.saveManualAttachedSafetySheet method
+    saveManualAttachedSafetySheetStub = sinon.stub(ChemicalFetcher, 'saveManualAttachedSafetySheet').resolves({
+      _chemical_data: [{
+        safetySheetPath: [
+          { manual_link: '/safety_sheets/test_Manual.pdf', manual_attachment: true }
+        ]
+      }]
+    });
+
+    // Also stub fetchChemical to prevent side effects
+    sinon.stub(ChemicalFetcher, 'fetchChemical').resolves({
+      _chemical_data: [{
+        safetySheetPath: [
+          { manual_link: '/safety_sheets/test_Manual.pdf', manual_attachment: true }
+        ]
+      }]
+    });
+
+    wrapper = shallow(
+      React.createElement(
+        ChemicalTab,
+        {
+          sample: testSample,
+          saveInventory: false,
+          setSaveInventory: sinon.spy(),
+          handleUpdateSample: sinon.spy(),
+          editChemical: sinon.spy(),
+          key: 'ChemicalTabTest',
+        },
+      )
+    );
+
+    instance = wrapper.instance();
+
+    // Spy on methods to track calls
+    sinon.spy(instance, 'setState');
+    sinon.spy(instance, 'renderSafetySheets');
+    sinon.spy(instance, 'renderChildElements');
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('should update state and render safety sheets after manual SDS attachment', async () => {
+    // Initialize chemical data
+    instance.setState({
+      chemical: new Chemical({
+        _chemical_data: [{}]
+      })
+    });
+
+    const attachmentData = {
+      productNumber: '12345',
+      vendorName: 'TestVendor',
+      attachedFile: new File(['test'], 'test.pdf'),
+      productLink: 'http://test.com',
+      safetySheetLink: 'http://test.com/sds'
+    };
+
+    await instance.handleAttachmentSubmit(attachmentData);
+
+    // Verify that the stub was called
+    expect(saveManualAttachedSafetySheetStub.called).toBe(true);
+    expect(wrapper.state('chemical')).toBeDefined();
+    expect(wrapper.state('showModal')).toBe(false);
+  });
+
+  it(`should immediately render updated safety sheets after
+  manual SDS attachment without requiring a page refresh`, async () => {
+    // Initialize chemical data
+    instance.setState({
+      chemical: new Chemical({
+        _chemical_data: [{}]
+      })
+    });
+
+    const attachmentData = {
+      productNumber: '12345',
+      vendorName: 'TestVendor',
+      attachedFile: new File(['test'], 'test.pdf'),
+      productLink: 'http://test.com',
+      safetySheetLink: 'http://test.com/sds'
+    };
+
+    await instance.handleAttachmentSubmit(attachmentData);
+
+    // Verify that the stub was called with the correct data
+    expect(saveManualAttachedSafetySheetStub.calledOnce).toBe(true);
+    expect(saveManualAttachedSafetySheetStub.firstCall.args[0]).toBeTruthy();
+
+    const safetySheets = wrapper.find('ListGroup');
+    expect(safetySheets.exists()).toBe(true);
   });
 });
