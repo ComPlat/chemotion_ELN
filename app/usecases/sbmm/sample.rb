@@ -13,7 +13,7 @@ module Usecases
         sbmm = ::Usecases::Sbmm::Create.new.find_or_create_by(params[:sequence_based_macromolecule_attributes])
         sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes, :collection_id, :container))
         sample.user = current_user
-        sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
+        sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
         sample.sequence_based_macromolecule = sbmm
         target_collections(params).each do |collection|
           sample.collections << collection
@@ -28,7 +28,7 @@ module Usecases
         sbmm = ::Usecases::Sbmm::Create.new.find_or_create_by(params[:sequence_based_macromolecule_attributes])
 
         sbmm_sample.update!(sample_params.merge(sequence_based_macromolecule: sbmm))
-        sbmm_sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
+        sbmm_sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
 
         sbmm_sample
       end
