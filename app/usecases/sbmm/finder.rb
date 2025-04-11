@@ -8,17 +8,17 @@ module Usecases
       end
 
       def find_non_uniprot_protein_by(params)
+        my_params = params.dup # prevent manipulating params that are still in use from the outside
         joins = []
-        if params.key?(:protein_sequence_modification_attributes)
-          params[:protein_sequence_modification] ||= params.delete(:protein_sequence_modification_attributes)
+        if my_params.key?(:protein_sequence_modification_attributes)
+          my_params[:protein_sequence_modification] ||= my_params.delete(:protein_sequence_modification_attributes)
           joins << :protein_sequence_modification
         end
-        if params.key?(:post_translational_modification_attributes)
-          params[:post_translational_modification] ||= params.delete(:post_translational_modification_attributes)
+        if my_params.key?(:post_translational_modification_attributes)
+          my_params[:post_translational_modification] ||= my_params.delete(:post_translational_modification_attributes)
           joins << :post_translational_modification
         end
-
-        SequenceBasedMacromolecule.non_uniprot.joins(*joins).find_by(params)
+        SequenceBasedMacromolecule.non_uniprot.joins(*joins).find_by(my_params)
       end
 
       # returns an instance of SequenceBasedMacromolecule
