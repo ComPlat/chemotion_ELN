@@ -30,7 +30,7 @@ describe Chemotion::ChemicalsService do
         file_path = '252549_Merck.pdf'
         link = 'https://www.sigmaaldrich.com/US/en/sds/sial/252549'
 
-        allow(described_class).to receive(:write_file).with(file_path, link, attached_file = nil).and_return(true)
+        allow(described_class).to receive(:write_file).with(file_path, link, nil).and_return(true)
         result = described_class.create_sds_file(file_path, link)
         expect(result).to be_truthy
       end
