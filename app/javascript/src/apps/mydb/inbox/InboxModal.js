@@ -384,9 +384,9 @@ export default class InboxModal extends React.Component {
             left: '10px'
           }}
         >
-          <Card className="detail-card cursor">
+          <Card className="cursor">
             <Card.Header
-              className="cursor handle draggable"
+              className="cursor handle draggable text-bg-primary"
               id="draggableInbox"
               onMouseDown={this.handleMouseDown}
             >

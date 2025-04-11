@@ -11,17 +11,8 @@ class UIActions {
     };
   }
 
-  showCollectionManagement() {
-    return null;
-  }
-
-  toggleCollectionManagement() {
-    return null;
-  }
-
-  showElements() {
-    return null;
-  }
+  expandSidebar = () => null;
+  toggleSidebar = () => null;
 
   showDeviceManagement() {
     return null
@@ -85,6 +76,22 @@ class UIActions {
 
   deselectAllElements() {
     return null;
+  }
+
+  resetGroupCollapse({ type }) {
+    return { type };
+  }
+
+  expandAllGroups({ type }) {
+    return { type };
+  }
+
+  collapseAllGroups({ type }) {
+    return { type };
+  }
+
+  toggleGroupCollapse({ type, groupKey }) {
+    return { type, groupKey };
   }
 
   setPagination(pagination) {
