@@ -27,7 +27,7 @@ module Uniprot
     end
 
     def short_name
-      dig('proteinDescription', 'recommendedName', 'shortNames', 0, 'value')
+      dig('proteinDescription', 'recommendedName', 'shortNames', 0, 'value') || full_name # fallback required as short_name is a mandatory db field
     end
 
     def ec_numbers
