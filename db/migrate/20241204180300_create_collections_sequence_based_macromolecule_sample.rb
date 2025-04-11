@@ -5,7 +5,6 @@ class CreateCollectionsSequenceBasedMacromoleculeSample < ActiveRecord::Migratio
       t.belongs_to :collection, foreign_key: true, index: { name: "#{index_prefix}_collection" }
       t.belongs_to :sequence_based_macromolecule_sample, foreign_key: true, index: { name: "#{index_prefix}_sample" }
       t.datetime :deleted_at, null: true, index: { name: "#{index_prefix}_deleted_at" }
-      t.timestamps
     end
     add_index(
       :collections_sequence_based_macromolecule_samples,
