@@ -2,9 +2,9 @@ class InitSbmmProfileDefinition < ActiveRecord::Migration[6.1]
   def up
     Profile.all.find_each do |profile|
       next unless profile.data['layout']
-      next if profile.data['layout']['sequence_based_macromolecule']
+      next if profile.data['layout']['sequence_based_macromolecule_sample']
 
-      profile.data['layout']['sequence_based_macromolecule'] = -1200
+      profile.data['layout']['sequence_based_macromolecule_sample'] = -1200
       profile.save
     end
   end
@@ -12,9 +12,9 @@ class InitSbmmProfileDefinition < ActiveRecord::Migration[6.1]
   def down
     Profile.all.find_each do |profile|
       next unless profile.data['layout']
-      next unless profile.data['layout']['sequence_based_macromolecule']
+      next unless profile.data['layout']['sequence_based_macromolecule_sample']
 
-      profile.data['layout'].delete('sequence_based_macromolecule')
+      profile.data['layout'].delete('sequence_based_macromolecule_sample')
       profile.save
     end
   end
