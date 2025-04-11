@@ -223,7 +223,7 @@ export default function ReactionVariations({
   }
 
   /*
-  Update the materials's gas types according to  the "Scheme" tab.
+  Update the material's gas types according to  the "Scheme" tab.
   */
   if (
     updatedGasMode && !isEqual(
@@ -303,6 +303,7 @@ export default function ReactionVariations({
         createVariationsRow(
           {
             materials: reactionMaterials,
+            processedSegs,
             selectedColumns,
             variations: reactionVariations,
             reactionHasPolymers,
@@ -346,6 +347,7 @@ export default function ReactionVariations({
       materials: reactionMaterials,
       selectedColumns: columns,
       variations: reactionVariations,
+      processedSegs,
       reactionHasPolymers,
       durationValue,
       durationUnit,
@@ -385,7 +387,7 @@ export default function ReactionVariations({
     return (
       <>
         <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
-          <i className="fa fa-trash me-1"/>
+          <i className="fa fa-trash me-1" />
           {' '}
           Remove all variations
         </Button>
@@ -430,7 +432,7 @@ export default function ReactionVariations({
       overlay={(
         <Tooltip>
           Add row with current data from &quot;Scheme&quot; tab.
-          <br/>
+          <br />
           Changes in &quot;Scheme&quot; tab are not applied to
           {' '}
           <i>existing</i>
@@ -440,7 +442,7 @@ export default function ReactionVariations({
       )}
     >
       <Button size="sm" variant="success" onClick={addRow} className="mb-2">
-        <i className="fa fa-plus me-1"/>
+        <i className="fa fa-plus me-1" />
         {' '}
         Add variation
       </Button>
