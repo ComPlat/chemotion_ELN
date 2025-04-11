@@ -85,7 +85,8 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
     return if /solvents?|reactants?/.match?(short_label)
     return unless user
 
+    prefix = "SBMMS"
     abbr = user.name_abbreviation
-    self.short_label = "#{abbr}-#{user.counters['sequence_based_macromolecule_samples'].to_i.succ}"
+    self.short_label = "#{abbr}-#{prefix}#{user.counters['sequence_based_macromolecule_samples'].to_i.succ}"
   end
 end
