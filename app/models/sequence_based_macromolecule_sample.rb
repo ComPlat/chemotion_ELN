@@ -88,13 +88,6 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
     prefix = "SBMMS"
     abbr = user.name_abbreviation
     self.short_label = "#{abbr}-#{prefix}#{user.counters['sequence_based_macromolecule_samples'].to_i.succ}"
-  end
-
-  def update_counter
-    return if short_label.match?(/solvents?|reactants?/)
-    return unless saved_change_to_short_label?
-    return unless short_label.match?(/^#{usser.name_abbreviation}-\d+$/)
-
     user.increment_counter 'sequence_based_macromolecule_samples'
   end
 end
