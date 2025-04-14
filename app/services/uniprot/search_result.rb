@@ -26,7 +26,8 @@ module Uniprot
     end
 
     def full_name
-      dig('proteinDescription', 'recommendedName', 'fullName', 'value')
+      dig('proteinDescription', 'recommendedName', 'fullName', 'value') ||
+        dig('proteinDescription', 'submissionNames', 0, 'fullName', 'value')
     end
 
     def short_name
@@ -38,7 +39,9 @@ module Uniprot
     end
 
     def ec_numbers
-      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |ecNumber| ecNumber['value'] } || []
+      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |ecNumber| ecNumber['value'] } ||
+        dig('proteinDescription', 'submissionNames', 0, 'ecNumbers')&.map { |ecNumber| ecNumber['value'] } ||
+        []
     end
 
     def taxon_id
