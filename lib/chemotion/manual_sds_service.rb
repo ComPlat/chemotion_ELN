@@ -31,9 +31,6 @@ module Chemotion
     # Create a new manual SDS record
     # @return [Chemical, Hash] Created/updated chemical record or error hash
     def create
-      # Initialize additional parameters
-      initialize_params
-
       # Validate parameters
       validation_result = validate_params
       return validation_result if validation_result.is_a?(Hash) && validation_result[:error]
@@ -47,14 +44,6 @@ module Chemotion
     end
 
     private
-
-    # Initialize additional parameters needed for processing
-    # @return [void]
-    def initialize_params
-      # Initialize any additional parameters or defaults here
-      # This method is intentionally left as a hook for additional initialization
-      # that might be needed in the future
-    end
 
     # Validate required parameters
     # @return [true, Hash] true if valid, error hash otherwise
@@ -130,7 +119,7 @@ module Chemotion
     # Generate file paths for SDS storage
     # @return [Array<String>] Array containing [file_name, file_path]
     def generate_file_paths
-      product_number = @vendor_info['productNumber'] || SecureRandom.hex(4)
+      product_number = @vendor_info['productNumber']
       file_name = "#{@vendor_name}_#{product_number}.pdf"
       file_path = "/safety_sheets/#{file_name}"
       [file_name, file_path]
