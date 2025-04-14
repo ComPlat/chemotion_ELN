@@ -23,7 +23,8 @@ module Uniprot
     end
 
     def full_name
-      dig('proteinDescription', 'recommendedName', 'fullName', 'value')
+      dig('proteinDescription', 'recommendedName', 'fullName', 'value') ||
+        dig('proteinDescription', 'submissionNames', 0, 'fullName', 'value')
     end
 
     def short_name
@@ -31,7 +32,9 @@ module Uniprot
     end
 
     def ec_numbers
-      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |entry| entry['value'] } || []
+      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |entry| entry['value'] } ||
+        dig('proteinDescription', 'submissionNames', 0, 'ecNumbers')&.map { |entry| entry['value'] } ||
+        []
     end
 
     def sequence
