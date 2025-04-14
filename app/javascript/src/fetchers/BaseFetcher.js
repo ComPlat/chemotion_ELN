@@ -60,9 +60,8 @@ export default class BaseFetcher {
     if (isSync) getParams.sync_collection_id = id;
     if (!isSync) getParams.collection_id = id;
     if (queryParams.fromDate) getParams.from_date = `${dateToUnixTimestamp(queryParams.fromDate)}`;
-    if (queryParams.toDate)  getParams.to_date = `${dateToUnixTimestamp(queryParams.toDate)}`;
+    if (queryParams.toDate) getParams.to_date = `${dateToUnixTimestamp(queryParams.toDate)}`;
     if (queryParams.userLabel) getParams.user_label = `${queryParams.userLabel}`;
-
 
     // override some params based on what elements are being fetched
     if (type == 'samples') {
@@ -104,9 +103,20 @@ export default class BaseFetcher {
     }
 
     // build string from object
-    const paramsString = Object.entries(getParams)
-                               .map(([key, value]) => { return `${key}=${value}` })
-                               .join("&")
+    let paramsString = Object.entries(getParams)
+      .map(([key, value]) => { return `${key}=${value}` })
+      .join("&")
+
+    if (type == 'sequence_based_macromolecule_samples') {
+      paramsString += '&filter[timestamp_field]=' + (queryParams.filterCreatedAt ? 'created_at' : 'updated_at');
+      if (queryParams.fromDate) {
+        paramsString += '&filter[after_timestamp]=' + dateToUnixTimestamp(queryParams.fromDate);
+      }
+      if (queryParams.toDate) {
+        paramsString += '&filter[before_timestamp]=' + dateToUnixTimestamp(queryParams.toDate);
+      }
+    }
+
     const apiURL = `/api/v1/${type}.json?`.concat(paramsString)
 
     return fetch(apiURL, {

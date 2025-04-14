@@ -29,6 +29,10 @@ function inferElementSourceType(element) {
       return DragDropItemTypes.DEVICE_DESCRIPTION;
     case 'cell_line':
       return DragDropItemTypes.CELL_LINE;
+    case 'sequence_based_macromolecule': 
+      return DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE;
+    case 'sequence_based_macromolecule_sample':
+      return DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE;
     default:
       return null;
   }
@@ -119,6 +123,10 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
         return currentElementType === 'reaction';
       case DragDropItemTypes.DEVICE_DESCRIPTION:
         return currentElementType === 'device_description';
+      case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
+        return currentElementType === 'sequence_based_macromolecule';
+      case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
+        return currentElementType === 'sequence_based_macromolecule_sample';
       default:
         return false;
     }

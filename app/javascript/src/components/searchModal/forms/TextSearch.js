@@ -76,7 +76,7 @@ const TextSearch = () => {
         }
         let tooltip = (
           <Tooltip id="_tooltip_history" className="left_tooltip">
-            {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace('_', ' ')}
+            {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace(/_/g, ' ')}
           </Tooltip>
         );
 

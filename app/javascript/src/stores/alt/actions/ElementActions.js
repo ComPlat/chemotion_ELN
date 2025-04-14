@@ -22,6 +22,7 @@ import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
+import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBasedMacromoleculeSamplesFetcher';
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
@@ -38,6 +39,7 @@ import Graph from 'src/models/Graph';
 import ComputeTask from 'src/models/ComputeTask';
 import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -342,6 +344,7 @@ class ElementActions {
         });
     };
   }
+
   fetchCellLinesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
       CellLinesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
@@ -367,6 +370,17 @@ class ElementActions {
   fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
       VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchSequenceBasedMacromoleculeSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -506,9 +520,9 @@ class ElementActions {
     return cellLineSample;
   }
 
-  copyCellLineFromId(id,collectionId ) {
+  copyCellLineFromId(id, collectionId) {
     return (dispatch) => {
-      CellLinesFetcher.copyCellLine(id,collectionId)
+      CellLinesFetcher.copyCellLine(id, collectionId)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -717,19 +731,19 @@ class ElementActions {
     };
   }
 
-    splitAsSubCellLines(ui_state) {
-      return (dispatch) => {
-        const ids = ui_state["cell_line"].checkedIds.toArray();
-        const collection_id = ui_state.currentCollection.id;
+  splitAsSubCellLines(ui_state) {
+    return (dispatch) => {
+      const ids = ui_state["cell_line"].checkedIds.toArray();
+      const collection_id = ui_state.currentCollection.id;
 
-        CellLinesFetcher.splitAsSubCellLines(ids,collection_id)
-          .then((result) => {
-            dispatch(ui_state);
-          }).catch((errorMessage) => {
-            console.log(errorMessage);
-          });
-      };
-    }
+      CellLinesFetcher.splitAsSubCellLines(ids, collection_id)
+        .then((result) => {
+          dispatch(ui_state);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
 
   bulkCreateWellplatesFromSamples(params) {
     let { collection_id, samples, wellplateCount } = params;
@@ -1115,6 +1129,61 @@ class ElementActions {
       VesselsFetcher.updateVesselTemplate(params)
         .then((result) => {
           dispatch(result);
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  // -- Sequence Based Macromolecule Samples --
+
+  fetchSequenceBasedMacromoleculeSampleById(id) {
+    return (dispatch) => {
+      SequenceBasedMacromoleculeSamplesFetcher.fetchById(id)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  updateSequenceBasedMacromoleculeSample(params) {
+    return (dispatch) => {
+      SequenceBasedMacromoleculeSamplesFetcher.updateSequenceBasedMacromoleculeSample(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  generateEmptySequenceBasedMacromoleculeSample(collection_id) {
+    return SequenceBasedMacromoleculeSample.buildEmpty(collection_id);
+  }
+
+  createSequenceBasedMacromoleculeSample(params) {
+    return (dispatch) => {
+      SequenceBasedMacromoleculeSamplesFetcher.createSequenceBasedMacromoleculeSample(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  copySequenceBasedMacromoleculeSampleFromClipboard(collection_id) {
+    return collection_id;
+  }
+
+  splitAsSubSequenceBasedMacromoleculeSample(ui_state) {
+    return (dispatch) => {
+      SequenceBasedMacromoleculeSamplesFetcher.splitAsSubSequenceBasedMacromoleculeSample(ui_state)
+        .then((result) => {
+          dispatch(ui_state.ui_state);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

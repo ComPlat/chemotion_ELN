@@ -75,7 +75,7 @@ class Comment < ApplicationRecord
 
   enum sequence_based_macromolecule_sample_section: {
     properties: 'sequence_based_macromolecule_sample_properties',
-    analyses: 'sequence_based_macromolecule_sample_properties',
+    analyses: 'sequence_based_macromolecule_sample_analyses',
     attachments: 'sequence_based_macromolecule_sample_attachments',
     references: 'sequence_based_macromolecule_sample_references',
     metadata: 'sequence_based_macromolecule_sample_metadata',

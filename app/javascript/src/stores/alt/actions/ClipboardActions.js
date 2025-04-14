@@ -6,6 +6,8 @@ import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import DeviceDescription from 'src/models/DeviceDescription';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
+import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBasedMacromoleculeSamplesFetcher';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 /**
  * Fetches components for a sample (if mixture) and adds them to the sample instance.
@@ -84,8 +86,21 @@ class ClipboardActions {
     };
   }
 
-  fetchElementAndBuildCopy(sample, collectionId, action) {
-    sample.collection_id = collectionId;
+  fetchSequenceBasedMacromoleculeSamplesByUIState(params, action) {
+    return (dispatch) => {
+      SequenceBasedMacromoleculeSamplesFetcher.fetchSequenceBasedMacromoleculeSamplesByUIStateAndLimit(params)
+        .then((result) => {
+          dispatch(
+            { sequence_based_macromolecule_samples: result, collection_id: params.ui_state.collection_id, action: action }
+          );
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchElementAndBuildCopy(sample, collection_id, action) {
+    sample.collection_id = collection_id;
     return (
       { samples: [sample], collection_id: collectionId, action }
     );
@@ -95,6 +110,14 @@ class ClipboardActions {
     const newDeviceDescription = new DeviceDescription(deviceDescription);
     newDeviceDescription.collection_id = collectionId;
     return { device_descriptions: [newDeviceDescription], collection_id: collectionId, action };
+  }
+
+  fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(sequence_based_macromolecule_sample, collection_id, action) {
+    const newSequenceBasedMacromoleculeSample = new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample);
+    newSequenceBasedMacromoleculeSample.collection_id = collection_id;
+    return (
+      { sequence_based_macromolecule_samples: [newSequenceBasedMacromoleculeSample], collection_id: collection_id, action: action }
+    )
   }
 }
 

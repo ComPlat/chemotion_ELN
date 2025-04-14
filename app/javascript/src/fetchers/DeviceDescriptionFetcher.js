@@ -9,7 +9,7 @@ export default class DeviceDescriptionFetcher {
   }
 
   static fetchDeviceDescriptionsByUIStateAndLimit(params) {
-    const limit = params.limit ? limit : null;
+    const limit = params.limit ? params.limit : null;
 
     return fetch('/api/v1/device_descriptions/ui_state/',
       {

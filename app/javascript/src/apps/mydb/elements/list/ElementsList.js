@@ -11,6 +11,8 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { allElnElements } from 'src/apps/generic/Utils';
+import { capitalizeWords } from 'src/utilities/textHelper';
 
 function getVisibleAndHiddenFromLayout(layout) {
   const visible = [], hidden = [];
@@ -108,11 +110,8 @@ export default class ElementsList extends React.Component {
       const { klasses } = UIStore.getState();
       genericKlasses = klasses;
     }
-    const elNames = [
-      'sample', 'reaction', 'screen',
-      'wellplate', 'research_plan',
-      'cell_line', 'device_description',
-      'vessel'].concat(genericKlasses);
+
+    const elNames = allElnElements.concat(genericKlasses);
 
     const newTotalCheckedElements = {};
     let needsUpdate = false;
@@ -148,7 +147,7 @@ export default class ElementsList extends React.Component {
 
     // TODO sollte in tab action handler
     const uiState = UIStore.getState();
-    const type = this.state.visible.get(tab);
+    let type = this.state.visible.get(tab);
 
     if (!uiState[type] || !uiState[type].page) { return; }
 
@@ -162,21 +161,12 @@ export default class ElementsList extends React.Component {
       visible, hidden, totalCheckedElements, totalElements, currentTab
     } = this.state;
 
-    const constEls = Immutable.Set([
-      'sample',
-      'reaction',
-      'screen',
-      'wellplate',
-      'research_plan',
-      'cell_line',
-      'device_description',
-      'vessel'
-    ]);
+    const constEls = Immutable.Set(allElnElements);
     const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;
       let ttl = (
         <Tooltip>
-          {value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()))}
+          {value && (capitalizeWords(value))}
         </Tooltip>
       );
 
@@ -237,7 +227,6 @@ export default class ElementsList extends React.Component {
             visible={visible}
             hidden={hidden}
           />
-
           <Tabs
             id="tabList"
             activeKey={currentTab}

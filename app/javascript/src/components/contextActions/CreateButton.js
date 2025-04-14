@@ -5,33 +5,13 @@ import {
 import Aviator from 'aviator';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { allElnElements, allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-
-const elementList = () => {
-  const elements = [
-    { name: 'sample', label: 'Sample' },
-    { name: 'reaction', label: 'Reaction' },
-    { name: 'wellplate', label: 'Wellplate' },
-    { name: 'screen', label: 'Screen' },
-    { name: 'research_plan', label: 'Research Plan' },
-    { name: 'cell_line', label: 'Cell Line' },
-    { name: 'device_description', label: 'Device Description' },
-    { name: 'vessel', label: 'Vessel' }
-  ];
-  let genericEls = [];
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-
-  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-    genericEls = UserStore.getState().genericEls || [];
-  }
-
-  return { elements, genericEls };
-};
 
 export default class CreateButton extends React.Component {
   constructor(props) {
@@ -169,6 +149,27 @@ export default class CreateButton extends React.Component {
     ClipboardActions.fetchDeviceDescriptionsByUIState(params, 'copy_device_description');
   }
 
+  getSequenceBasedMacromoleculeSampleFilter() {
+    let uiState = UIStore.getState();
+    return this.filterParamsFromUIStateByElementType(uiState, "sequence_based_macromolecule_sample");
+  }
+
+  isCopySequenceBasedMacromoleculeSampleDisabled() {
+    let sequenceBasedMacromoleculeSampleFilter = this.getSequenceBasedMacromoleculeSampleFilter();
+    return !sequenceBasedMacromoleculeSampleFilter.all && sequenceBasedMacromoleculeSampleFilter.included_ids.size == 0;
+  }
+
+  copySequenceBasedMacromoleculeSample() {
+    let sequenceBasedMacromoleculeSampleFilter = this.getSequenceBasedMacromoleculeSampleFilter();
+    // Set limit to 1 because we are only interested in one device description
+    let params = {
+      ui_state: sequenceBasedMacromoleculeSampleFilter,
+      limit: 1,
+    }
+
+    ClipboardActions.fetchSequenceBasedMacromoleculeSamplesByUIState(params, 'copy_sequence_based_macromolecule_sample');
+  }
+
   createWellplateFromSamples() {
     let uiState = UIStore.getState();
     let sampleFilter = this.filterParamsFromUIStateByElementType(uiState, "sample");
@@ -275,7 +276,7 @@ export default class CreateButton extends React.Component {
       ? `/scollection/${currentCollection.id}/${type}/new`
       : `/collection/${currentCollection.id}/${type}/new`;
     Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id } };
+    const e = { type: type, params: { collectionID: currentCollection.id } };
     e.params[`${type}ID`] = 'new'
     const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
     if (genericEls.find(el => el.name == type)) {
@@ -287,8 +288,7 @@ export default class CreateButton extends React.Component {
   createBtn(type) {
     let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description', 'vessel'];
-    if (!constEls.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
+    if (!allElnElements.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
       const genericEl = (genericEls && genericEls.find(el => el.name == type)) || {};
       iconClass = `${genericEl.icon_name}`;
     }
@@ -327,23 +327,24 @@ export default class CreateButton extends React.Component {
   render() {
     const { isDisabled, layout } = this.state;
     const type = UserStore.getState().currentType;
-    const { elements, genericEls } = elementList();
-    const itemTables = [];
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 
-    sortedLayout?.forEach(([sl]) => {
-      const el = elements.concat(genericEls).find((ael) => ael.name === sl);
-      if (el) itemTables.push(
-        <Dropdown.Item
-          id={`create-${el.name}-button`}
-          key={el.name}
-          onClick={() => this.createElementOfType(`${el.name}`)}
-        >
-          Create {el.label}
-        </Dropdown.Item>);
+    const sortedGenericEls = [];
+    sortedLayout.forEach(([sl]) => {
+      const el = allElnElmentsWithLabel.concat(allGenericElements()).find((ael) => ael.name === sl);
+      if (typeof el !== 'undefined') {
+        sortedGenericEls.push(el);
+      }
     });
+
+    // <Dropdown.Item
+    //   onClick={() => this.copySequenceBasedMacromoleculeSample()}
+    //   disabled={this.isCopySequenceBasedMacromoleculeSampleDisabled()}
+    // >
+    //   Copy Sequence Based Macromolecule
+    // </Dropdown.Item>
 
     return (
       <SplitButton

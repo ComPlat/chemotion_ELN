@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Tabs, Tab, Button, Badge
+  Tabs, Tab, Button
 } from 'react-bootstrap';
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -23,6 +23,7 @@ import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDe
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
 import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
+import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
 
 const tabInfoHash = {
   metadata: {
@@ -179,6 +180,8 @@ export default class ElementDetails extends Component {
           return <VesselTemplateDetails vessels={el} />;
         }
         return null;
+      case 'sequence_based_macromolecule_sample':
+        return <SequenceBasedMacromoleculeSampleDetails />;
       default:
         return (
           <div className="text-center">

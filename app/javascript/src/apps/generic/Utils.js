@@ -30,6 +30,33 @@ export const ALL_TYPES = [
   Constants.GENERIC_TYPES.DATASET,
 ];
 
+export const allElnElements = [
+  'sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'vessel',
+  'cell_line', 'device_description', 'sequence_based_macromolecule_sample',
+];
+
+export const allElnElmentsWithLabel = [
+  { name: 'sample', label: 'Sample' },
+  { name: 'reaction', label: 'Reaction' },
+  { name: 'wellplate', label: 'Wellplate' },
+  { name: 'screen', label: 'Screen' },
+  { name: 'research_plan', label: 'Research Plan' },
+  { name: 'cell_line', label: 'Cell Line' },
+  { name: 'device_description', label: 'Device Description' },
+  { name: 'vessel', label: 'Vessel' },
+  { name: 'sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample' },
+];
+
+export const allGenericElements = () => {
+  let genericElements = [];
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+
+  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+    genericElements = UserStore.getState().genericEls || [];
+  }
+  return genericElements;
+}
+
 export const notification = props =>
   NotificationActions.add({
     title: props.title,
@@ -93,7 +120,7 @@ export const segmentsByKlass = name => {
 
 export const elementNames = async (all = true, generics = null) => {
   const elnElements = all
-    ? ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description', 'vessel']
+    ? allElnElements
     : [];
   try {
     if (generics?.length > 0) return elnElements.concat(generics?.map((el) => el.name));
