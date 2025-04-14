@@ -18,6 +18,14 @@ export default class ConfirmClose extends Component {
     this.onClickButton = this.onClickButton.bind(this);
   }
 
+  closeElement(e) {
+    const { el } = this.props;
+    if (el && el.type == 'sequence_based_macromolecule_sample') {
+      this.context.sequenceBasedMacromoleculeSamples.removeFromOpenSequenceBasedMacromoleculeSamples(el);
+    }
+    DetailActions.confirmDelete(e);
+  }
+
   onClickButton(el) {
     this.setState(
       prevState => ({ ...prevState, showTooltip: !prevState.showTooltip }),

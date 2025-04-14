@@ -7,6 +7,7 @@ import {
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { capitalizeWords } from 'src/utilities/textHelper';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -161,7 +162,7 @@ function SearchResult({ handleClear }) {
 
     const elnElements = ['cell_line', 'sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let iconClass = `icon-${list.key}`;
-    let tooltipText = list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()));
+    let tooltipText = list.key && capitalizeWords(list.key);
 
     if (!elnElements.includes(list.key)) {
       const genericElement = (genericElements && genericElements.find((el) => el.name === list.key)) || {};
