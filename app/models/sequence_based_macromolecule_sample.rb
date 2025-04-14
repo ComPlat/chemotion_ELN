@@ -82,7 +82,6 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
 
   def auto_assign_short_label
     return if short_label && !short_label_changed?
-    return if short_label.match?(/solvents?|reactants?/)
     return unless user
 
     prefix = "SBMMS"
