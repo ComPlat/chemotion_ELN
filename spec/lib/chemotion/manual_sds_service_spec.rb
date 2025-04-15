@@ -12,9 +12,11 @@ RSpec.describe Chemotion::ManualSdsService do
     )
   end
 
+  let(:sample) { build_stubbed(:valid_sample, id: 1) }
+
   let(:valid_params) do
     {
-      sample_id: 1,
+      sample_id: sample.id,
       cas: '123-45-6',
       vendor_info: '{"productNumber": "ABC123"}',
       vendor_name: 'Test Vendor',
@@ -24,15 +26,7 @@ RSpec.describe Chemotion::ManualSdsService do
     }
   end
 
-  let(:chemical) do
-    instance_double(
-      Chemical,
-      id: 1,
-      sample_id: 1,
-      cas: '123-45-6',
-      chemical_data: [{ 'safetySheetPath' => [] }],
-    )
-  end
+  let(:factory_chemical) { build_stubbed(:chemical, :for_manual_sds_testing) }
 
   let(:file_paths) { ['Test Vendor_ABC123.pdf', '/safety_sheets/Test Vendor_ABC123.pdf'] }
 
@@ -41,12 +35,12 @@ RSpec.describe Chemotion::ManualSdsService do
 
     before do
       allow(described_class).to receive(:new).with(valid_params).and_return(service_instance)
-      allow(service_instance).to receive(:create).and_return(chemical)
+      allow(service_instance).to receive(:create).and_return(factory_chemical)
     end
 
     it 'delegates to an instance of the service' do
       result = described_class.create_manual_sds(valid_params)
-      expect(result).to eq(chemical)
+      expect(result).to eq(factory_chemical)
       expect(described_class).to have_received(:new).with(valid_params)
       expect(service_instance).to have_received(:create)
     end
@@ -122,8 +116,8 @@ RSpec.describe Chemotion::ManualSdsService do
       before do
         # Use class_double to avoid stubbing the subject
         allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
-        allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(chemical)
-        allow(chemical).to receive(:update!).and_return(true)
+        allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(factory_chemical)
+        allow(factory_chemical).to receive(:update!).and_return(true)
 
         # Mock the private methods without stubbing the subject
         original_method = service.method(:generate_file_paths)
@@ -145,7 +139,7 @@ RSpec.describe Chemotion::ManualSdsService do
       end
 
       it 'processes the file and returns the updated chemical' do
-        expect(service.create).to eq(chemical)
+        expect(service.create).to eq(factory_chemical)
       end
     end
 
@@ -185,7 +179,7 @@ RSpec.describe Chemotion::ManualSdsService do
 
     let(:sds_params) do
       {
-        sample_id: 1,
+        sample_id: sample.id,
         cas: '123-45-6',
         vendor_info: { 'productNumber' => 'ABC123' },
         vendor_product: 'testVendorProductInfo',
@@ -197,20 +191,20 @@ RSpec.describe Chemotion::ManualSdsService do
 
     context 'when updating existing chemical' do
       before do
-        allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(chemical)
-        allow(chemical).to receive(:update!).and_return(true)
+        allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(factory_chemical)
+        allow(factory_chemical).to receive(:update!).and_return(true)
       end
 
       it 'returns the chemical when it exists' do
         # Create a test double for the service to avoid subject stubbing
         test_service = instance_double(described_class)
-        allow(test_service).to receive(:handle_chemical_update_or_create).with(sds_params).and_return(chemical)
+        allow(test_service).to receive(:handle_chemical_update_or_create).with(sds_params).and_return(factory_chemical)
 
         # Use class stub instead of subject stub
-        allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(chemical)
+        allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(factory_chemical)
 
         result = service.send(:handle_chemical_update_or_create, sds_params)
-        expect(result).to eq(chemical)
+        expect(result).to eq(factory_chemical)
       end
 
       it 'initializes chemical_data when nil' do
@@ -239,10 +233,10 @@ RSpec.describe Chemotion::ManualSdsService do
       end
 
       it 'handles update errors' do
-        allow(chemical).to receive(:update!).and_raise(StandardError, 'Update error')
+        allow(factory_chemical).to receive(:update!).and_raise(StandardError, 'Update error')
         allow(Rails.logger).to receive(:error)
 
-        result = service.send(:save_chemical, chemical)
+        result = service.send(:save_chemical, factory_chemical)
         expect(result).to include(error: 'Error updating chemical: Update error')
       end
     end
@@ -355,6 +349,207 @@ RSpec.describe Chemotion::ManualSdsService do
                                           { 'vendor2_link' => '/new-path2.pdf' },
                                         ])
       end
+    end
+
+    describe '#update_chemical_data tests' do
+      let(:service) { described_class.new(valid_params) }
+      let(:chemical) do
+        instance_double(
+          Chemical,
+          chemical_data: [{ 'safetySheetPath' => [{ 'existing_vendor' => '/path/to/file.pdf' }] }],
+        )
+      end
+      let(:vendor_product) { 'testVendorProductInfo' }
+      let(:vendor_info) { { 'productNumber' => 'ABC123' } }
+
+      it 'preserves safety sheet path with standard data' do
+        service.send(:update_chemical_data, chemical, { 'newKey' => 'newValue' }, vendor_product, vendor_info)
+        expect(chemical.chemical_data[0]['safetySheetPath']).to eq([{ 'existing_vendor' => '/path/to/file.pdf' }])
+      end
+
+      it 'updates with new data (standard format)' do
+        service.send(:update_chemical_data, chemical, { 'newKey' => 'newValue' }, vendor_product, vendor_info)
+        expect(chemical.chemical_data[0]['newKey']).to eq('newValue')
+      end
+
+      it 'adds vendor product info (standard format)' do
+        service.send(:update_chemical_data, chemical, { 'newKey' => 'newValue' }, vendor_product, vendor_info)
+        expect(chemical.chemical_data[0][vendor_product]).to eq(vendor_info)
+      end
+
+      it 'preserves safety sheet path with array data' do
+        service.send(:update_chemical_data, chemical, [{ 'newKey' => 'newValue' }], vendor_product, vendor_info)
+        expect(chemical.chemical_data[0]['safetySheetPath']).to eq([{ 'existing_vendor' => '/path/to/file.pdf' }])
+      end
+
+      it 'updates with new data (array format)' do
+        service.send(:update_chemical_data, chemical, [{ 'newKey' => 'newValue' }], vendor_product, vendor_info)
+        expect(chemical.chemical_data[0]['newKey']).to eq('newValue')
+      end
+
+      it 'adds vendor product info (array format)' do
+        service.send(:update_chemical_data, chemical, [{ 'newKey' => 'newValue' }], vendor_product, vendor_info)
+        expect(chemical.chemical_data[0][vendor_product]).to eq(vendor_info)
+      end
+
+      it 'returns true when successful' do
+        result = service.send(:update_chemical_data, chemical, { 'newKey' => 'newValue' }, vendor_product, vendor_info)
+        expect(result).to be(true)
+      end
+
+      it 'handles errors gracefully' do
+        # Create a new chemical double that will raise an error when modifying chemical_data
+        error_chemical = instance_double(Chemical)
+        allow(error_chemical).to receive(:chemical_data).and_return([{}])
+
+        # Make the hash key access raise an error
+        allow(error_chemical.chemical_data[0]).to receive(:[])
+          .with('safetySheetPath')
+          .and_raise(StandardError, 'Test error')
+        allow(Rails.logger).to receive(:error)
+
+        result = service.send(
+          :update_chemical_data,
+          error_chemical,
+          { 'newKey' => 'newValue' },
+          vendor_product,
+          vendor_info,
+        )
+
+        expect(result).to eq({ error: 'chemical_data is invalid' })
+        expect(Rails.logger).to have_received(:error).with(/Error processing chemical_data: Test error/)
+      end
+    end
+
+    describe '#process_existing_chemical_data tests' do
+      let(:service) { described_class.new(valid_params) }
+      let(:chem_data_params) do
+        {
+          vendor_info: { 'productNumber' => 'ABC123' },
+          vendor_product: 'testVendorProductInfo',
+          vendor_name_key: 'test_vendor_link',
+          file_path: '/safety_sheets/test.pdf',
+        }
+      end
+
+      it 'returns array data structure' do
+        chemical_data = { 'safetySheetPath' => [] }
+        result = service.send(
+          :process_existing_chemical_data,
+          chemical_data,
+          chem_data_params[:vendor_info],
+          chem_data_params[:vendor_product],
+          chem_data_params[:vendor_name_key],
+          chem_data_params[:file_path],
+        )
+
+        expect(result).to be_an(Array)
+      end
+
+      it 'adds safety sheet path' do
+        chemical_data = { 'safetySheetPath' => [] }
+        result = service.send(
+          :process_existing_chemical_data,
+          chemical_data,
+          chem_data_params[:vendor_info],
+          chem_data_params[:vendor_product],
+          chem_data_params[:vendor_name_key],
+          chem_data_params[:file_path],
+        )
+
+        path_key = chem_data_params[:vendor_name_key]
+        path_val = chem_data_params[:file_path]
+        expect(result[0]['safetySheetPath']).to contain_exactly({ path_key => path_val })
+      end
+
+      it 'adds vendor product info' do
+        chemical_data = { 'safetySheetPath' => [] }
+        result = service.send(
+          :process_existing_chemical_data,
+          chemical_data,
+          chem_data_params[:vendor_info],
+          chem_data_params[:vendor_product],
+          chem_data_params[:vendor_name_key],
+          chem_data_params[:file_path],
+        )
+
+        expect(result[0][chem_data_params[:vendor_product]]).to eq(chem_data_params[:vendor_info])
+      end
+
+      it 'processes array-format chemical_data correctly' do
+        array_chemical_data = [{ 'safetySheetPath' => [] }]
+        result = service.send(
+          :process_existing_chemical_data,
+          array_chemical_data,
+          chem_data_params[:vendor_info],
+          chem_data_params[:vendor_product],
+          chem_data_params[:vendor_name_key],
+          chem_data_params[:file_path],
+        )
+
+        expect(result).to be_an(Array)
+        path_key = chem_data_params[:vendor_name_key]
+        path_val = chem_data_params[:file_path]
+        expect(result[0]['safetySheetPath']).to contain_exactly({ path_key => path_val })
+      end
+
+      it 'initializes safetySheetPath when nil' do
+        nil_path_data = [{ 'other_key' => 'value' }]
+        result = service.send(
+          :process_existing_chemical_data,
+          nil_path_data,
+          chem_data_params[:vendor_info],
+          chem_data_params[:vendor_product],
+          chem_data_params[:vendor_name_key],
+          chem_data_params[:file_path],
+        )
+
+        path_key = chem_data_params[:vendor_name_key]
+        path_val = chem_data_params[:file_path]
+        expect(result[0]['safetySheetPath']).to contain_exactly({ path_key => path_val })
+      end
+
+      it 'handles errors gracefully' do
+        chemical_data = { 'safetySheetPath' => [] }
+        allow(service).to receive(:update_safety_sheet_entry).and_raise(StandardError, 'Test error')
+        allow(Rails.logger).to receive(:error)
+
+        result = service.send(
+          :process_existing_chemical_data,
+          chemical_data,
+          chem_data_params[:vendor_info],
+          chem_data_params[:vendor_product],
+          chem_data_params[:vendor_name_key],
+          chem_data_params[:file_path],
+        )
+
+        expect(result).to eq({ error: 'chemical_data is invalid' })
+        expect(Rails.logger).to have_received(:error).with(/Error processing chemical_data: Test error/)
+      end
+    end
+  end
+
+  describe 'using factory traits' do
+    let(:factory_service) { described_class.new(valid_params) }
+
+    it 'properly uses factory chemical for testing' do
+      factory_chem = build_stubbed(:chemical, :for_manual_sds_testing)
+
+      # Setup expectations
+      allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(factory_chem)
+      allow(factory_chem).to receive(:update!).and_return(true)
+
+      # Mock necessary methods to focus on factory usage
+      allow(factory_service).to receive_messages(generate_file_paths: file_paths, save_sds_file: true)
+      allow(factory_service).to receive(:update_safety_sheet_path)
+      allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
+
+      # Execute and verify
+      result = factory_service.create
+
+      expect(result).to eq(factory_chem)
+      expect(Chemical).to have_received(:find_by).with(sample_id: 1)
+      expect(factory_chem).to have_received(:update!)
     end
   end
 end
