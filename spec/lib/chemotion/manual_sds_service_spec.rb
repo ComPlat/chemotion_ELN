@@ -552,4 +552,188 @@ RSpec.describe Chemotion::ManualSdsService do
       expect(factory_chem).to have_received(:update!)
     end
   end
+
+  # Integration tests
+  describe 'database integration', :integration do
+    def integration_setup
+      # Create test directories if they don't exist
+      FileUtils.mkdir_p(Rails.root.join('tmp/test/'))
+
+      # Setup test data
+      {
+        sample: FactoryBot.create(:sample),
+        test_file_path: Rails.root.join('tmp/test/test.pdf'),
+        vendor_info_hash: { 'productNumber' => 'ABC123', 'vendorCode' => 'TEST' },
+        safety_sheet_file_path: Rails.root.join('tmp/test/safety_sheet_123.pdf'),
+      }
+    end
+
+    def build_params(setup_data)
+      {
+        sample_id: setup_data[:sample].id,
+        attached_file: { path: setup_data[:test_file_path] },
+        vendor_name: 'TestVendor',
+        vendor_product: 'TestProductInfo',
+        cas: '123-45-6',
+        vendor_info: setup_data[:vendor_info_hash].to_json,
+        chemical_data: { 'cas' => '123-45-6' }.to_json,
+      }
+    end
+
+    after do
+      # Clean up test files
+      FileUtils.rm_f(Rails.root.join('tmp/test/test.pdf'))
+      FileUtils.rm_f(Rails.root.join('tmp/test/safety_sheet_123.pdf'))
+    end
+
+    context 'when creating a new chemical record' do
+      it 'creates a non-nil chemical object' do
+        setup_data = integration_setup
+        # Create a test PDF file
+        File.write(setup_data[:test_file_path], 'test content')
+
+        # Create a new chemical instance for the test
+        new_chemical = Chemical.new(sample_id: setup_data[:sample].id, cas: '123-45-6')
+
+        # Initialize the service and create a chemical
+        service = described_class.new(build_params(setup_data))
+
+        # Mock necessary methods to avoid file system operations
+        allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
+        allow(Chemical).to receive_messages(find_by: nil, create!: new_chemical)
+        allow(new_chemical).to receive(:update!).and_return(true)
+
+        chemical = service.create
+
+        # Verify the chemical was created
+        expect(chemical).not_to be_nil
+        expect(chemical).not_to be_a(Hash), "Expected a Chemical object but got #{chemical.inspect}"
+      end
+
+      it 'creates chemical with correct attributes' do
+        setup_data = integration_setup
+        # Create a test PDF file
+        File.write(setup_data[:test_file_path], 'test content')
+
+        new_chemical = Chemical.new(sample_id: setup_data[:sample].id, cas: '123-45-6')
+
+        # Initialize the service and mock dependencies
+        service = described_class.new(build_params(setup_data))
+        allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
+        allow(Chemical).to receive_messages(find_by: nil, create!: new_chemical)
+        allow(new_chemical).to receive(:update!).and_return(true)
+
+        # Call the method and verify attributes
+        chemical = service.create
+        expect(chemical.sample_id).to eq(setup_data[:sample].id)
+        expect(chemical.cas).to eq('123-45-6')
+      end
+    end
+
+    context 'when updating an existing chemical record' do
+      it 'updates the safety sheet path' do
+        setup_data = integration_setup
+        # Create a test PDF file
+        File.write(setup_data[:test_file_path], 'test content')
+
+        # Create a chemical first
+        allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
+
+        # Create a chemical record directly and stub it
+        chemical = Chemical.new(sample_id: setup_data[:sample].id, cas: '123-45-6')
+        chemical.chemical_data = [{ 'safetySheetPath' => [] }]
+        allow(Chemical).to receive(:find_by).and_return(chemical)
+        allow(chemical).to receive(:update!).and_return(true)
+
+        # Initialize the service
+        service = described_class.new(build_params(setup_data))
+
+        # Update via create method instead of calling private method directly
+        result = service.create
+
+        # Verify the safety sheet path was updated (indirectly)
+        expect(result).to eq(chemical)
+        expect(chemical.chemical_data[0]).to have_key('safetySheetPath')
+      end
+
+      it 'preserves existing safety sheet entries' do
+        setup_data = integration_setup
+        # Create a test PDF file
+        File.write(setup_data[:test_file_path], 'test content')
+
+        # Mock ChemicalsService to avoid file system operations
+        allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
+
+        # Create a chemical record directly and stub it
+        chemical = Chemical.new(
+          sample_id: setup_data[:sample].id,
+          cas: '123-45-6',
+        )
+        chemical.chemical_data = [{
+          'safetySheetPath' => [{ 'existing_vendor_link' => '/path/to/existing.pdf' }],
+          'existing_key' => 'existing_value',
+          'TestProductInfo' => { 'previous_value' => 'should be replaced' },
+        }]
+
+        allow(Chemical).to receive(:find_by).and_return(chemical)
+        allow(chemical).to receive(:update!).and_return(true)
+
+        # Initialize the service and create
+        service = described_class.new(build_params(setup_data))
+        result = service.create
+
+        # Verify that safety sheet path entries are preserved
+        expect(result).to eq(chemical)
+        expect(chemical.chemical_data[0]['safetySheetPath']).to include(
+          { 'existing_vendor_link' => '/path/to/existing.pdf' },
+        )
+      end
+
+      it 'updates vendor product info' do
+        setup_data = integration_setup
+        # Create a test PDF file
+        File.write(setup_data[:test_file_path], 'test content')
+
+        # Create a chemical record and stub dependencies
+        chemical = Chemical.new(sample_id: setup_data[:sample].id, cas: '123-45-6')
+        chemical.chemical_data = [{
+          'safetySheetPath' => [],
+          'TestProductInfo' => { 'previous_value' => 'should be replaced' },
+        }]
+
+        # Set up mocks
+        allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
+        allow(Chemical).to receive(:find_by).and_return(chemical)
+        allow(chemical).to receive(:update!).and_return(true)
+
+        # Call the service
+        service = described_class.new(build_params(setup_data))
+        service.create
+
+        # Verify vendor product info was updated
+        expect(chemical.chemical_data[0]).to have_key('TestProductInfo')
+        expect(chemical.chemical_data[0]['TestProductInfo']).to include('productNumber' => 'ABC123')
+      end
+
+      it 'preserves the CAS attribute' do
+        setup_data = integration_setup
+
+        # Create a chemical record with initial CAS
+        chemical = Chemical.new(sample_id: setup_data[:sample].id, cas: '123-45-6')
+        chemical.chemical_data = [{ 'safetySheetPath' => [] }]
+
+        # Set up mocks
+        allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(true)
+        allow(Chemical).to receive(:find_by).and_return(chemical)
+        allow(chemical).to receive(:update!).and_return(true)
+
+        # Call the service
+        service = described_class.new(build_params(setup_data))
+        service.create
+
+        # Verify CAS is preserved
+        expect(chemical.cas).to eq('123-45-6')
+      end
+    end
+  end
 end
