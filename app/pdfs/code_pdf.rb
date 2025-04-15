@@ -185,8 +185,11 @@ class CodePdf < Prawn::Document
   # @param elements [Array] The elements to get the data from.
   # @return [Array<String, String, String>] An array containing the width, height and URL of the SVG image.
   def image_data_getter
+    dummy_file = 'images/wild_card/no_image_180.svg' # Dummy file path
     element = elements.first
     full_svg_path = element.send(:full_svg_path)
+    full_svg_path = Rails.public_path.join(dummy_file).to_s if full_svg_path.nil? || !File.exist?(full_svg_path)
+
     doc = Nokogiri::XML(File.read(full_svg_path))
     # Extract the width and height attributes from the SVG element
     svg_width = doc.at_css('svg')['width']
