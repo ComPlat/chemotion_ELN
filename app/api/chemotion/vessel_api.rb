@@ -155,8 +155,8 @@ module Chemotion
             created_vessels << vessel
           end
         end
-      
-        present created_vessels, with: Entities::VesselInstanceEntity
+        #Reload to avoid occasional null barcode values on creation
+        present created_vessels.map(&:reload), with: Entities::VesselInstanceEntity
       end
 
       desc 'Create multiple vessel instances'
