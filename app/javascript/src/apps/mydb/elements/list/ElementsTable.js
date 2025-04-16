@@ -24,7 +24,7 @@ import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import VesselContainer from 'src/apps/mydb/elements/list/vessel/VesselContainer';
-import VesselGroup from 'src/models/vessel/VesselGroup';
+import { groupVesselsByTemplateId } from 'src/models/vessel/VesselGroup';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
@@ -672,10 +672,10 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'vessel') {
       elementsTableEntries = (
         <VesselContainer
-          vesselGroups={VesselGroup.buildVesselGroups(elements)}
+          vesselGroups={groupVesselsByTemplateId(elements)}
         />
       );
-    }  else {
+    } else {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}
