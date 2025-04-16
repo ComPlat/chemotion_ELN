@@ -9,6 +9,7 @@ export default function VesselContainer({ vesselGroups }) {
           <VesselEntry
             key={group.vesselItems[0].id}
             vesselItems={group.vesselItems}
+            vesselTemplate={group.vesselTemplate}
           />
         )
       )}
