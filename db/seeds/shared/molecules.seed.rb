@@ -56,5 +56,4 @@ class MoleculesSeed
       zip_file.extract(entry, pub_path) unless File.exist?(pub_path)
     end
   end
-
 end
