@@ -33,6 +33,7 @@ const extractUpdateVesselApiParameter = (vessel) => {
     vessel_template_id: vessel.vesselTemplateId,
     collection_id: vessel.collectionId,
     template_name: vessel.vesselName,
+    vessel_name: vessel.vesselInstanceName,
     material_details: vessel.materialDetails,
     material_type: vessel.materialType,
     vessel_type: vessel.vesselType,
@@ -45,14 +46,6 @@ const extractUpdateVesselApiParameter = (vessel) => {
     details: vessel.details,
     short_label: vessel.short_label,
     container: vessel.container,
-    // instances: vessel.instances.map((instance) => ({
-    //   vessel_name: instance.vesselInstanceName,
-    //   description: instance.vesselInstanceDescription,
-    //   bar_code: instance.barCode,
-    //   qr_code: instance.qrCode,
-    //   weight_amount: vessel.weightAmount,
-    //   weight_unit: vessel.weightUnit,
-    // })),
   };
 
   return baseParams;

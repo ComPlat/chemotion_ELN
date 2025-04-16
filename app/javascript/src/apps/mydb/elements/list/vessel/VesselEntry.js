@@ -10,7 +10,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
-function VesselEntry({ vesselItems }) {
+function VesselEntry({ vesselItems, vesselTemplate }) {
   const { currentCollection } = UIStore.getState();
   const [showEntries, setShowEntries] = useState(true);
 
@@ -18,11 +18,12 @@ function VesselEntry({ vesselItems }) {
     ? 'list-container title-panel p-3'
     : 'list-container title-panel p-3 cell-line-group-bottom-border');
 
-  const renderItemEntries = () => (showEntries
-    ? vesselItems.map((vesselItem) => (
-      <VesselItemEntry key={vesselItem.id} vesselItem={vesselItem} />
-    ))
-    : []);
+  const renderItemEntries = () => (
+    showEntries
+      ? vesselItems.map((vesselItem) => (
+        <VesselItemEntry key={vesselItem.id} vesselItem={vesselItem} />
+      ))
+      : []);
 
   const navigateToTemplate = (template) => {
     if (!template.id) {
@@ -74,9 +75,9 @@ function VesselEntry({ vesselItems }) {
           <div
             className="fs-5"
             style={{ cursor: 'pointer' }}
-            onClick={() => navigateToTemplate(firstVesselItem.vessel_template)}
+            onClick={() => navigateToTemplate(vesselTemplate)}
           >
-            {firstVesselItem.vessel_template.name}
+            {vesselTemplate.name}
           </div>
         </OverlayTrigger>
         <div className="ms-auto" onClick={(e) => { e.stopPropagation(); setShowEntries((prev) => !prev); }}>
@@ -102,16 +103,19 @@ VesselEntry.propTypes = {
   vesselItems: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
-      vessel_template: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-        details: PropTypes.string,
-        vessel_type: PropTypes.string,
-        material_type: PropTypes.string,
-        volume_amount: PropTypes.number,
-        volume_unit: PropTypes.string,
-      }).isRequired,
+      container: PropTypes.object,
+      vesselInstanceName: PropTypes.string,
+      vesselInstanceDescription: PropTypes.string,
+      barCode: PropTypes.string,
+      qrCode: PropTypes.string,
+      weightAmount: PropTypes.number,
+      weightUnit: PropTypes.string,
     })
   ).isRequired,
+  vesselTemplate: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default VesselEntry;
