@@ -430,6 +430,10 @@ class User < ApplicationRecord
     Matrice.extra_rules || {}
   end
 
+  def self.default_admin
+    find_by(type: 'Admin', name_abbreviation: 'ADM').presence || where(type: 'Admin').order(:created_at).first
+  end
+
   def self.default_disk_space=(value)
     value = value.to_i
     return true if value == default_disk_space
@@ -437,13 +441,13 @@ class User < ApplicationRecord
     find_each do |user|
       user.update(allocated_space: [user.allocated_space, value].max)
     end
-    Admin.first&.update(allocated_space: value)
+    default_admin&.update(allocated_space: value)
   end
 
   def self.default_disk_space
-    return 0 if Admin.first.nil?
+    return 0 if default_admin.nil?
 
-    Admin.first.allocated_space
+    default_admin.allocated_space
   end
 
   private
