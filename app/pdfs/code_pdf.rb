@@ -11,6 +11,7 @@ require 'prawn/measurement_extensions'
 require 'open-uri'
 require 'net/http'
 
+# rubocop:disable Metrics/ClassLength
 class CodePdf < Prawn::Document
   CODE_IMAGE_SIZE_LIMIT_RIGHT = 0.3
   SAMPLE_SVG_OFFSET = 20
@@ -183,19 +184,33 @@ class CodePdf < Prawn::Document
 
   # Returns the width, height and URL of the SVG image associated with the first element.
   # @param elements [Array] The elements to get the data from.
-  # @return [Array<String, String, String>] An array containing the width, height and URL of the SVG image.
+  # @return [Array<String, String, [String, Pathname]>] An array containing the width, height and URL of the SVG image.
+  # @note returns a dummy image if the SVG file does not exist or if an error occurs.
   def image_data_getter
-    dummy_file = 'images/wild_card/no_image_180.svg' # Dummy file path
     element = elements.first
-    full_svg_path = element.send(:full_svg_path)
-    full_svg_path = Rails.public_path.join(dummy_file).to_s if full_svg_path.nil? || !File.exist?(full_svg_path)
+    full_svg_path = element.respond_to?(:full_svg_path, true) ? element.send(:full_svg_path) : nil
+    return dummy_image if full_svg_path.nil? || !File.exist?(full_svg_path)
 
-    doc = Nokogiri::XML(File.read(full_svg_path))
     # Extract the width and height attributes from the SVG element
-    svg_width = doc.at_css('svg')['width']
-    svg_height = doc.at_css('svg')['height']
+    extract_svg_size(full_svg_path)
+  end
 
-    [svg_width, svg_height, full_svg_path]
+  # Extracts the width and height of the SVG image from the given path.
+  # @param svg_path [String, Pathname] The path to the SVG file.
+  # @return [Array<String, String, [String, Pathname]>] An array containing
+  #   the width and height of the SVG image and the path.
+  # @note This method rescues any StandardError that occurs during the extraction process
+  #  and returns a dummy image if an error occurs.
+  def extract_svg_size(svg_path)
+    doc = Nokogiri::XML(File.read(svg_path))
+    [doc.at_css('svg')['width'], doc.at_css('svg')['height'], svg_path]
+  rescue StandardError => error
+    Rails.logger.error("Error reading SVG file: #{error.message}")
+    dummy_image
+  end
+
+  def dummy_image
+    @dummy_image ||= ['180', '180', Rails.public_path.join('images/wild_card/no_image_180.svg')]
   end
 
   # ratio use to scale the text on the PDF based on the width of the page
@@ -342,3 +357,4 @@ class CodePdf < Prawn::Document
     Barby::SvgOutputter.new(code)
   end
 end
+# rubocop:enable Metrics/ClassLength
