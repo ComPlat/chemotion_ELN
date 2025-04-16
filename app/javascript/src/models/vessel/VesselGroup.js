@@ -20,11 +20,31 @@ const addVesselToGroup = (vessel, vesselGroups) => {
 };
 
 const findMatchingGroup = (vesselGroups, vessel) => vesselGroups.find((group) =>
-  group.vesselItems.some((item) => item.vessel_template.name === vessel.vessel_template.name)
+  group.vesselItems.some((item) => item.vessel_template.id === vessel.vessel_template.id)
 );
 
 const createNewGroup = (vessel) => ({
   vesselItems: [vessel],
 });
 
-export default { buildVesselGroups };
+export const groupVesselsByTemplateId = (vessels = []) => {
+  const grouped = {};
+
+  vessels.forEach((vessel) => {
+    const templateId = vessel?.vessel_template?.id?.toString()?.trim();
+    if (!templateId) return;
+
+    if (!grouped[templateId]) {
+      grouped[templateId] = {
+        vesselTemplate: vessel.vessel_template,
+        vesselItems: [],
+      };
+    }
+
+    grouped[templateId].vesselItems.push(vessel);
+  });
+
+  return Object.values(grouped);
+};
+
+export default { buildVesselGroups, groupVesselsByTemplateId };
