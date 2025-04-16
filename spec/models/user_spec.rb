@@ -111,6 +111,28 @@ RSpec.describe User do
     end
   end
 
+  describe '.default_admin' do
+    let(:user) { create(:person, name_abbreviation: 'ADM') }
+    let(:admins) { create_list(:admin, 2) }
+    let(:admin) { create(:admin, name_abbreviation: 'ADM') }
+
+    it 'returns the default admin - first admin' do
+      user
+      admins
+      expect(described_class.default_admin).to eq admins.first
+    end
+
+    it 'returns the default admin - ADM' do
+      admins
+      admin
+      expect(described_class.default_admin).to eq admin
+    end
+
+    it 'returns nil if no admin' do
+      expect(described_class.default_admin).to be_nil
+    end
+  end
+
   describe '#increment_counter' do
     let(:described_method) { :increment_counter }
     let(:element) { described_class::COUNTER_KEYS.sample }
