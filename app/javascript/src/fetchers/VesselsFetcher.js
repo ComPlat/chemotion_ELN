@@ -88,7 +88,6 @@ export default class VesselsFetcher {
 
   static create(vessel, user) {
     const params = extractCreateVesselApiParameter(vessel);
-    console.log(params);
     return VesselsFetcher.uploadAttachments(vessel)
       .then(() => fetch('/api/v1/vessels', {
         credentials: 'same-origin',

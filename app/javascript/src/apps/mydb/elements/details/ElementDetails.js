@@ -170,13 +170,13 @@ export default class ElementDetails extends Component {
       case 'vessel_template':
         return (
           <VesselTemplateDetails
-            vessels={el}
+            vessels={el.group}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
       default:
         return (
-          <div style={{ textAlign: 'center' }}>
+          <div className="text-center">
             <br />
             <h1>{el.id.substring(el.id.indexOf('error:') + 6)}</h1>
             <h3><i className="fa fa-eye-slash fa-5x" /></h3>
@@ -194,9 +194,14 @@ export default class ElementDetails extends Component {
   tabTitle(el) {
 
     if (Array.isArray(el)) {
-      el.type = 'vessel_template';
-      el.title = el[0]?.vesselName;
+      return {
+        id: el[0].vesselTemplateId,
+        type: 'vessel_template',
+        group: el,
+        title: el[0]?.vesselName,
+      };
     }
+
     const tab = tabInfoHash[el.type] ?? {};
     const title = el.type === 'vessel_template' ? el.title : tab.title ?? el.title();
 
@@ -214,11 +219,28 @@ export default class ElementDetails extends Component {
   render() {
     const { selecteds, activeKey } = this.state;
 
+    const keyForTemplateGroup = (group) => `vessel_template-${group.map(v => v.id).sort().join('_')}`;
+
     const selectedElements = selecteds
       .filter((el) => !!el)
+      .map((el, i) => {
+        if (Array.isArray(el) && el.length > 0) {
+          return {
+            id: el[0].vesselTemplateId,
+            type: 'vessel_template',
+            title: el[0]?.vesselName,
+            group: el,
+          };
+        }
+        return el;
+      })
       .map((el, i) => (
         <Tab
-          key={`${el.type}-${el.id}`}
+          key={
+            Array.isArray(el) && el[0]?.type === 'vessel_template'
+              ? keyForTemplateGroup(el)
+              : `${el.type}-${el.id}`
+          }
           eventKey={i}
           unmountOnExit
           title={this.tabTitle(el)}

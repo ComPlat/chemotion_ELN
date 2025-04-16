@@ -12,7 +12,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
-function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
+function VesselTemplateDetails({ vessels, toggleFullScreen }) {
   const closeBtnRef = useRef(null);
   const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
@@ -53,29 +53,46 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
     </Button>
   );
 
+  const getInstancesToRemoveFromStore = () => {
+    const allOpenTabs = ElementStore.getState().selecteds;
+
+    return vessels.filter((vessel) => {
+      if (vessel.id === templateId) return true;
+
+      const openIndividually = allOpenTabs.some((el) => {
+        if (Array.isArray(el)) {
+          const sameTemplate = el[0]?.vesselTemplateId === vessel.vesselTemplateId;
+          return !sameTemplate && el.some((v) => v.id === vessel.id);
+        }
+        return el.id === vessel.id && el.type === 'vessel';
+      });
+
+      return !openIndividually;
+    });
+  };
+
   const handleClose = () => {
     const mobXItem = vesselDetailsStore.getVessel(templateId);
-  
+
     if (!mobXItem.changed) {
-      vesselDetailsStore.removeVesselFromStore(templateId);
-      DetailActions.close(mobXItem, true);
+      getInstancesToRemoveFromStore().forEach(v => vesselDetailsStore.removeVesselFromStore(v.id));
+      DetailActions.close(vessels, true);
       return;
     }
-  
-    // Otherwise, trigger popover
+
     setShowConfirmPopover(true);
   };
-  
+
   const confirmClose = () => {
-    vesselDetailsStore.removeVesselFromStore(templateId);
-    DetailActions.close(templateStoreItem, true);
+    getInstancesToRemoveFromStore().forEach(v => vesselDetailsStore.removeVesselFromStore(v.id));
+    DetailActions.close(vessels, true);
     setShowConfirmPopover(false);
   };
-  
+
   const cancelClose = () => {
     setShowConfirmPopover(false);
   };
-  
+
   const renderCloseHeaderButton = () => (
     <OverlayTrigger
       trigger="click"
@@ -159,8 +176,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
   };
 
   const handleCreateNewInstance = (instance, index) => {
-
-    console.log(instance);
     const baseVessel = vessels[0];
     const { vesselTemplateId } = baseVessel;
     const collectionId = currentCollection.id;
@@ -175,7 +190,7 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
       volumeUnit: baseVessel.volumeUnit,
       details: baseVessel.details,
       short_label: baseVessel.short_label,
-      // container: baseVessel.container,
+      container: baseVessel.container,
       instances: [
         {
           vesselInstanceName: instance.vesselInstanceName,
@@ -273,7 +288,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
     if (instanceActions[field]) {
       instanceActions[field](vesselId, value);
     }
-
   };
 
   const updateInstance = (vesselId) => {
@@ -283,9 +297,9 @@ function VesselTemplateDetails({ vessels, toggleFullScreen, onClose }) {
     vesselToUpdate.adoptPropsFromMobXModel(updatedVessel);
 
     VesselsFetcher.update(vesselToUpdate)
-    .then(() => {
-      ElementActions.refreshElements('vessel');
-    });
+      .then(() => {
+        ElementActions.refreshElements('vessel');
+      });
   };
 
   return (

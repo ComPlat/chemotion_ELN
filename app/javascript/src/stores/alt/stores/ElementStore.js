@@ -1368,12 +1368,44 @@ class ElementStore {
   handleClose({ deleteEl, force }) {
     // Currently ignore report "isPendingToSave"
     const deletableTyps = ['report', 'prediction'];
+
+    if (deleteEl?.type === 'vessel_template' && deleteEl?.group?.length > 0) {
+      this.deleteGroupElement(deleteEl.group);
+      return;
+    }
+
     const isDeletableTyps = deletableTyps.indexOf(deleteEl.type) >= 0;
     if (force || isDeletableTyps || this.isDeletable(deleteEl)) {
       this.deleteCurrentElement(deleteEl);
     } else {
       this.setState({ deletingElement: deleteEl });
     }
+  }
+
+  // To manage closing of vessel template tabs
+  deleteGroupElement(group) {
+    const openTabs = this.state.selecteds;
+
+    const groupIds = group.map((v) => v.id);
+
+    const newSelecteds = openTabs.filter((el) => {
+      if (Array.isArray(el) && el[0]?.type === 'vessel_template') {
+        const elIds = el.map((v) => v.id);
+        const isSameGroup = elIds.length === groupIds.length &&
+          elIds.every((id) => groupIds.includes(id));
+        return !isSameGroup;
+      }
+
+      return true;
+    });
+
+    let newActiveKey = this.state.activeKey;
+    if (newActiveKey >= newSelecteds.length) {
+      newActiveKey = Math.max(0, newSelecteds.length - 1);
+    }
+
+    this.setState({ selecteds: newSelecteds, activeKey: newActiveKey });
+    this.resetCurrentElement(newActiveKey, newSelecteds);
   }
 
   handleConfirmDelete(confirm) {
@@ -1391,7 +1423,17 @@ class ElementStore {
 
     if (index === -1) {
       this.state.activeKey = selecteds.length;
-      this.state.selecteds = this.addElement(nextEl);
+      if (Array.isArray(nextEl) && nextEl[0]?.type === 'vessel_template') {
+        const groupWrapper = {
+          id: nextEl[0].id,
+          type: 'vessel_template',
+          group: nextEl,
+          title: nextEl[0]?.vesselName,
+        };
+        this.state.selecteds = this.addElement(groupWrapper);
+      } else if (nextEl) {
+        this.state.selecteds = this.addElement(nextEl);
+      }
     } else {
       this.state.activeKey = index;
       this.state.selecteds = this.updateElement(nextEl, index);
@@ -1604,13 +1646,15 @@ class ElementStore {
   }
 
   elementIndex(selecteds, newSelected) {
-    let index = -1;
-    if (newSelected) {
-      selecteds.forEach((s, i) => {
-        if (SameEleTypId(s, newSelected)) { index = i; }
-      });
+    if (Array.isArray(newSelected)) {
+      return selecteds.findIndex((el) => Array.isArray(el)
+        && el[0].type === 'vessel_template'
+        && el[0].vesselTemplateId === newSelected[0].vesselTemplateId
+        && el.length === newSelected.length
+        && el.every((v, i) => v.id === newSelected[i].id));
     }
-    return index;
+
+    return selecteds.findIndex((el) => SameEleTypId(el, newSelected));
   }
 
   resetCurrentElement(newKey, newSelecteds) {
