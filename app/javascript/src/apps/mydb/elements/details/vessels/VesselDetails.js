@@ -73,7 +73,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const renderSaveButton = (closeAfterClick = false) => {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
-    const disabled = false;
+    const disabled = !mobXItem || mobXItem.isDuplicateName || !mobXItem.changed;
 
     const action = closeAfterClick
       ? () => { handleSubmit(vesselItem); DetailActions.close(vesselItem, true); }
