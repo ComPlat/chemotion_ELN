@@ -52,7 +52,7 @@ export default class SvgWithPopover extends Component {
   }
 
   render() {
-    const { hasPop } = this.props;
+    const { hasPop, placement } = this.props;
 
     if (!hasPop) {
       return this.renderPreview();
@@ -62,7 +62,7 @@ export default class SvgWithPopover extends Component {
       <div>
         <OverlayTrigger
           trigger={['hover', 'focus']}
-          placement="right"
+          placement={placement}
           rootClose
           onHide={null}
           overlay={this.popHover()}
@@ -88,4 +88,8 @@ SvgWithPopover.propTypes = {
     height: PropTypes.string,
     width: PropTypes.string,
   }).isRequired,
+  placement: PropTypes.string,
+};
+SvgWithPopover.defaultProps = {
+  placement: 'right',
 };

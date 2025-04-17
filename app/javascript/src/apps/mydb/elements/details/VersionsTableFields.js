@@ -74,11 +74,11 @@ function VersionsTableFields(props) {
 
   const image = (input, title) => (input ? (
     <SvgWithPopover
-      placement="left"
+      placement="top"
       hasPop
       previewObject={{
         txtOnly: '',
-        isSVG: false,
+        isSVG: true,
         src: input,
         className: 'image-with-full-width',
       }}
