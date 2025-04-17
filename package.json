@@ -13,7 +13,7 @@
     "@babel/runtime": "7",
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.3.5",
-    "@complat/chemotion-converter-client": "~0.13.0",
+    "@complat/chemotion-converter-client": "~0.13.2",
     "@complat/react-spectra-editor": "1.3.5",
     "@novnc/novnc": "~1.5.0",
     "@rails/ujs": "^6.1.3-1",
