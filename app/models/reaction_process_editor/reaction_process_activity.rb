@@ -49,8 +49,20 @@ module ReactionProcessEditor
       %w[ADD TRANSFER].include?(activity_name) && compound
     end
 
-    def removes_compound?
-      %w[REMOVE].include?(activity_name)
+    def carries_no_compound?
+      %w[REMOVE EVAPORATION DISCARD].include?(activity_name)
+    end
+
+    def carries_compound?
+      !carries_no_compound?
+    end
+
+    def halts_automation?
+      %w[HALT AUTOMATION_RESPONDED HALT_RESOLVED_NEEDS_CONFIRMATION].include?(workup['AUTOMATION_STATUS'])
+    end
+
+    def automation_completed?
+      workup['AUTOMATION_STATUS'] == 'COMPLETED'
     end
 
     def compound
@@ -70,11 +82,11 @@ module ReactionProcessEditor
     end
 
     def acts_as_sample?
-      !removes_compound? && !acts_as_medium?
+      carries_compound? && !acts_as_medium?
     end
 
     def acts_as_medium?
-      !removes_compound? &&
+      carries_compound? &&
         %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as'])
     end
 

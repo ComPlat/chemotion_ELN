@@ -10,7 +10,7 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessVessels::CreateOr
   let!(:vessel) { create(:vessel) }
 
   let(:reaction_process_vessel_params) do
-    { vesselable_id: vessel.id, vesselable_type: 'Vessel', preparations: ['DRIED'] }
+    { vesselable_id: vessel.id, vesselable_type: 'Vessel', preparations: ['DRIED'] }.deep_stringify_keys
   end
 
   it 'creates ReactionProcessVessel' do

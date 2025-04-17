@@ -34,6 +34,10 @@ module Entities
         object.class.to_s
       end
 
+      def details
+        is_vessel_template ? object.details : object.description
+      end
+
       def description
         is_vessel_template ? object.details : object.description
       end
