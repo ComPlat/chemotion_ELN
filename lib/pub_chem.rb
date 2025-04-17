@@ -117,9 +117,9 @@ module PubChem
   #   However, only the last cid will be used
   # @return [Array<String>] the cas number(s) of the cid
   def self.get_cas_from_cid(cid)
-    return [] unless cid
-    cid = cid.split(/\s+|,/).reject(&:blank?).last
+    return [] if cid.blank?
 
+    cid = cid.split(/\s+|,/).compact_blank.last
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/XML?heading=CAS"
     resp = HTTParty.get(page, options)
