@@ -11,7 +11,6 @@ module OrdKit
             save_sample: ReactionProcessAction::ActionSaveSample.new(
               sample: OrdKit::Exporter::Compounds::SaveCompoundExporter.new(@action).to_ord,
               molecular_entities: molecular_entities,
-              vessel: Vessels::ReactionProcessVesselExporter.new(workup['reaction_process_vessel']).to_ord,
               sample_origin_type: sample_origin_type,
               purification_origin: purification_origin,
             ),
