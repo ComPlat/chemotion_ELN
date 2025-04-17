@@ -90,7 +90,7 @@ M  END"
       let(:m) { create(:molecule) }
 
       it 'returns molecule_names hash' do
-        get "/api/v1/molecules/names?inchikey=#{m.inchikey}"
+        get "/api/v1/molecules/names?id=#{m.id}"
         mns = JSON.parse(response.body)['molecules'].map { |m| m['label'] }
         expect(mns).to include(m.sum_formular)
       end
