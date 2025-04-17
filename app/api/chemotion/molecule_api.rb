@@ -219,14 +219,14 @@ module Chemotion
 
       desc 'return names of the molecule'
       params do
-        requires :inchikey, type: String, desc: 'Molecule inchikey'
+        requires :id, type: String, desc: 'Molecule id'
         optional :new_name, type: String, desc: 'New molecule_name'
       end
       get :names do
-        inchikey = params[:inchikey]
+        id = params[:id]
         new_name = params[:new_name]
 
-        mol = Molecule.find_by(inchikey: inchikey)
+        mol = Molecule.find_by(id: id)
         return [] if mol.blank?
 
         user_id = current_user.id
