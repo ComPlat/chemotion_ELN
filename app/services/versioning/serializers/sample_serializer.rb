@@ -189,7 +189,7 @@ module Versioning
             ids << v.changes['molecule_id'] if v.changes.key?('molecule_id')
           end
 
-          Molecule.with_deleted.where(id: ids).to_h { |u| [u.id, u.inchikey] }
+          Molecule.with_deleted.where(id: ids).to_h { |u| [u.id, "#{u.inchikey} (#{u.sum_formular})"] }
         end
       end
 
