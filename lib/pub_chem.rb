@@ -117,12 +117,20 @@ module PubChem
     end
   end
 
+  # @param cid [String] the cid to be converted
+  # @note cid can be a multiple line string with each line containing a cid
+  #   However, only the last cid will be used
+  # @return [Array<String>] the cas number(s) of the cid
   def self.get_cas_from_cid(cid)
-    return [] unless cid
+    return [] if cid.blank?
 
+    cid = cid.split(/\s+|,/).compact_blank.last
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/XML?heading=CAS"
-    resp_xml = HTTParty.get(page, options).body
+    resp = HTTParty.get(page, options)
+    return [] unless resp.success?
+
+    resp_xml = resp.body
     resp_doc = Nokogiri::XML(resp_xml)
     cas_values = resp_doc.css('Value').css('StringWithMarkup').css('String').map(&:text).flatten
     cas = most_occurance(cas_values)

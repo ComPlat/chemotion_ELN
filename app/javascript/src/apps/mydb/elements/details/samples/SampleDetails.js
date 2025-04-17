@@ -825,11 +825,13 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref?.cas ?? '';
-    let casArr = [];
-    casArr = molecule?.cas?.filter((element) => element !== null);
-    casArr = cas && casArr && cas !== '' && !casArr.includes(cas) ? [...casArr, cas] : casArr;
+    let casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
+    if (cas && !casArr.includes(cas)) {
+      casArr.push(cas);
+    }
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
-    const options = casArr?.map((element) => ({ label: element, value: element }));
+    const options = casArr.map((element) => ({ label: element, value: element }));
+
     return (
       <div className="my-4">
         <InputGroup className="z-4">
@@ -840,7 +842,7 @@ export default class SampleDetails extends React.Component {
             onChange={(e) => this.updateCas(e)}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
-            value={options.find(({ value }) => value === cas)}
+            value={options.find(({ value }) => value === cas) || null}
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"
