@@ -204,8 +204,8 @@ class CodePdf < Prawn::Document
   def extract_svg_size(svg_path)
     doc = Nokogiri::XML(File.read(svg_path))
     [doc.at_css('svg')['width'], doc.at_css('svg')['height'], svg_path]
-  rescue StandardError => error
-    Rails.logger.error("Error reading SVG file: #{error.message}")
+  rescue StandardError => e
+    Rails.logger.error("Error reading SVG file: #{e.message}")
     dummy_image
   end
 
