@@ -590,19 +590,48 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return serialized;
   }
 
+  serializeForCopy() {
+    const serialized = {
+      collection_id: this.collection_id,
+      type: 'sequence_based_macromolecule_sample',
+      name: this.name,
+      short_label: this.short_label,
+      activity_value: this.activity_value,
+      activity_unit: this.activity_unit,
+      amount_as_used_mol_value: this.amount_as_used_mol_value,
+      amount_as_used_mol_unit: this.amount_as_used_mol_unit,
+      amount_as_used_mass_value: this.amount_as_used_mass_value,
+      amount_as_used_mass_unit: this.amount_as_used_mass_unit,
+      concentration_value: this.concentration_value,
+      concentration_unit: this.concentration_unit,
+      container: this.container,
+      function_or_application: this.function_or_application,
+      molarity_value: this.molarity_value,
+      molarity_unit: this.molarity_unit,
+      activity_per_mass_value: this.activity_per_mass_value,
+      activity_per_mass_unit: this.activity_per_mass_unit,
+      activity_per_volume_value: this.activity_per_volume_value,
+      activity_per_volume_unit: this.activity_per_volume_unit,
+      volume_as_used_value: this.volume_as_used_value,
+      volume_as_used_unit: this.volume_as_used_unit,
+      sequence_based_macromolecule: this.sequence_based_macromolecule,
+    };
+    return serialized;
+  }
+
   static buildNewShortLabel() {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return 'NEW SEQUENCE BASED MACROMOLECULE'; }
-    return `${currentUser.initials}-SBMM${currentUser.macromolecules_count + 1}`;
+    return `${currentUser.initials}-SBMMS${currentUser.sequence_based_macromolecule_samples_count + 1}`;
   }
 
-  // static copyFromSequenceBasedMacromoleculeSampleAndCollectionId(sequence_based_macromolecule_sample, collection_id) {
-  //   const newSequenceBasedMacromoleculeSample = sequence_based_macromolecule_sample.buildCopy();
-  //   newSequenceBasedMacromoleculeSample.collection_id = collection_id;
-  //   if (sequence_based_macromolecule_sample.name) { newSequenceBasedMacromoleculeSample.name = sequence_based_macromolecule_sample.name; }
+  static copyFromSequenceBasedMacromoleculeSampleAndCollectionId(sequence_based_macromolecule_sample, collection_id) {
+    const newSequenceBasedMacromoleculeSample = sequence_based_macromolecule_sample.buildCopy();
+    newSequenceBasedMacromoleculeSample.collection_id = collection_id;
+    if (sequence_based_macromolecule_sample.name) { newSequenceBasedMacromoleculeSample.name = sequence_based_macromolecule_sample.name; }
 
-  //   return new SequenceBasedMacromoleculeSample;
-  // }
+    return newSequenceBasedMacromoleculeSample;
+  }
 
   title() {
     const short_label = this.short_label ? this.short_label : '';
@@ -619,12 +648,16 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       .filter((attachment) => attachment.identifier === identifier)[0];
   }
 
-  // buildCopy() {
-  //   const sequenceBasedMacromoleculeSample = super.buildCopy();
-  //   sequenceBasedMacromoleculeSample.short_label = SequenceBasedMacromoleculeSample.buildNewShortLabel();
-  //   sequenceBasedMacromoleculeSample.container = Container.init();
-  //   sequenceBasedMacromoleculeSample.can_copy = false;
-  //   sequenceBasedMacromoleculeSample.attachments = []
-  //   return sequenceBasedMacromoleculeSample;
-  // }
+  buildCopy() {
+    const sequenceBasedMacromoleculeSample = super.buildCopy();
+    sequenceBasedMacromoleculeSample.short_label = SequenceBasedMacromoleculeSample.buildNewShortLabel();
+    sequenceBasedMacromoleculeSample.container = Container.init();
+    sequenceBasedMacromoleculeSample.can_copy = false;
+    sequenceBasedMacromoleculeSample.attachments = [];
+    if (sequenceBasedMacromoleculeSample.sequence_based_macromolecule.uniprot_derivation == 'uniprot_modified') {
+      sequenceBasedMacromoleculeSample.sequence_based_macromolecule.parent_identifier =
+        sequenceBasedMacromoleculeSample.sequence_based_macromolecule.parent.id;
+    }
+    return sequenceBasedMacromoleculeSample;
+  }
 }

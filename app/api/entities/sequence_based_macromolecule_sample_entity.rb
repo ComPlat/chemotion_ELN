@@ -3,6 +3,9 @@
 module Entities
   class SequenceBasedMacromoleculeSampleEntity < ApplicationEntity
     expose! :id
+    expose! :can_copy
+    expose! :can_publish
+    expose! :can_update
     expose! :name
     expose! :external_label
     expose! :short_label
@@ -46,6 +49,14 @@ module Entities
     # The UI needs this field to track changes
     def changed
       false
+    end
+
+    def can_update
+      options[:policy].try(:update?) || false
+    end
+
+    def can_publish
+      options[:policy].try(:destroy?) || false
     end
   end
 end

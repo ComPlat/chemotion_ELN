@@ -64,12 +64,10 @@ export default class SplitElementButton extends React.Component {
       this.setState({ currentCollection: newCurrentCollection });
     }
 
-    // const splitableElements = [
-    //   'sample', 'wellplate', 'device_description', 'sequence_based_macromolecule_sample',
-    //   ...genericEls.map((el) => el.name)
-    // ];
-
-    const splitableElements = ['sample', 'wellplate', 'device_description', ...genericEls.map((el) => el.name)];
+    const splitableElements = [
+      'sample', 'wellplate', 'device_description', 'sequence_based_macromolecule_sample',
+      ...genericEls.map((el) => el.name)
+    ];
 
     const newSelectedElements = splitableElements.reduce(
       (acc, el) => {
@@ -157,13 +155,6 @@ export default class SplitElementButton extends React.Component {
       });
     }
 
-    // <Dropdown.Item
-    //   onClick={() => this.splitSelectionAsSubSequenceBasedMacromoleculeSample()}
-    //   disabled={this.noSelected('sequence_based_macromolecule_sample') || this.isAllCollection()}
-    // >
-    //   Split Sequence Based Macromolecule Sample
-    // </Dropdown.Item>
-
     const isDisabled = this.isAllCollection()
       || Object.values(selectedElements).every((v) => !v);
 
@@ -197,6 +188,12 @@ export default class SplitElementButton extends React.Component {
           disabled={this.noSelected('device_description') || this.isAllCollection()}
         >
           Split Device Description
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => this.splitSelectionAsSubSequenceBasedMacromoleculeSample()}
+          disabled={this.noSelected('sequence_based_macromolecule_sample') || this.isAllCollection()}
+        >
+          Split Sequence Based Macromolecule Sample
         </Dropdown.Item>
         {sortedGenericEls.map((el) => (
           <Dropdown.Item

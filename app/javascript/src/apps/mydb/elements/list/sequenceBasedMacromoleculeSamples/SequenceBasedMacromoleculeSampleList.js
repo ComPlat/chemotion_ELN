@@ -79,8 +79,8 @@ const SequenceBasedMacromoleculeSampleList = ({ elements, currentElement, ui }) 
     let group = {};
 
     elements.forEach((element) => {
-      const key = element.sequence_based_macromolecule.id;
-      sbmmStore.addGroupToAllGroups(`${key}`);
+      const key = `sbmm-${element.sequence_based_macromolecule.id}`;
+      sbmmStore.addGroupToAllGroups(key);
  
       if (!Object.prototype.hasOwnProperty.call(group, key)) {
         group[key] = [];

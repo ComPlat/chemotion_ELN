@@ -26,16 +26,14 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
   }
 
   static splitAsSubSequenceBasedMacromoleculeSample(params) {
-    return [];
-
-    // return fetch('/api/v1/sequence_based_macromolecule_samples/sub_sequence_based_macromolecule_samples/', 
-    //   {
-    //     ...this._httpOptions('POST'),
-    //     body: JSON.stringify(params)
-    //   }
-    // ).then(response => response.json())
-    //   .then((json) => json)
-    //   .catch(errorMessage => console.log(errorMessage));
+    return fetch('/api/v1/sequence_based_macromolecule_samples/sub_sequence_based_macromolecule_samples/', 
+      {
+        ...this._httpOptions('POST'),
+        body: JSON.stringify(params)
+      }
+    ).then(response => response.json())
+      .then((json) => json)
+      .catch(errorMessage => console.log(errorMessage));
   }
 
   static fetchById(sequenceBasedMacromoleculeSampleId) {
