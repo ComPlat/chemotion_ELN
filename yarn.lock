@@ -1271,10 +1271,10 @@
     redux-form "^8.3.7"
     redux-saga "^1.1.3"
 
-"@complat/chemotion-converter-client@~0.13.0":
-  version "0.13.0"
-  resolved "https://registry.yarnpkg.com/@complat/chemotion-converter-client/-/chemotion-converter-client-0.13.0.tgz#e2d0c3ca7a9907549a8b2f74de3beb78bf63a724"
-  integrity sha512-q0AzietvLb0wI3r01Koy1m9qKZCJcHmQMuCD07fqvaj6YEe8AqiBrN+Bdj8cC68Krzdm6cDDFSevMTJeiBvzyQ==
+"@complat/chemotion-converter-client@~0.13.2":
+  version "0.13.2"
+  resolved "https://registry.yarnpkg.com/@complat/chemotion-converter-client/-/chemotion-converter-client-0.13.2.tgz#ebd6c97150d839b27a6844e4efcb438f69d47cd0"
+  integrity sha512-2r6yvAK0LkV5jwmGv5w033E11V8GouYMXT8iHgMrPBnMAyM6q5KQcpn7SvKW/1qf0AE9QJK94w177tcGpMi8JQ==
   dependencies:
     bootstrap "^5.3.3"
     lodash "^4.17.21"
