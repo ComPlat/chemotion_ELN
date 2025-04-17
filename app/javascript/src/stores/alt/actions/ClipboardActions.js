@@ -112,11 +112,12 @@ class ClipboardActions {
     return { device_descriptions: [newDeviceDescription], collection_id: collectionId, action };
   }
 
-  fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(sequence_based_macromolecule_sample, collection_id, action) {
-    const newSequenceBasedMacromoleculeSample = new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample);
+  fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(sequence_based_macromolecule_sample, collection_id) {
+    const newSequenceBasedMacromoleculeSample =
+      new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample.serializeForCopy());
     newSequenceBasedMacromoleculeSample.collection_id = collection_id;
     return (
-      { sequence_based_macromolecule_samples: [newSequenceBasedMacromoleculeSample], collection_id: collection_id, action: action }
+      { sequence_based_macromolecule_samples: [newSequenceBasedMacromoleculeSample], collection_id: collection_id }
     )
   }
 }

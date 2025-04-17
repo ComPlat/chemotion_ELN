@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module Chemotion
   class SequenceBasedMacromoleculeSampleAPI < Grape::API
     include Grape::Kaminari
@@ -34,14 +35,15 @@ module Chemotion
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna]
           requires :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein]
-          requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown]
+          requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot',
+                                        values: %w[uniprot uniprot_modified uniprot_unknown]
 
           optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier'
 
-          given(uniprot_derivation: ->(derivation) { derivation == 'uniprot'} ) do
+          given(uniprot_derivation: ->(derivation) { derivation == 'uniprot' }) do
             requires :primary_accession, type: String, desc: 'Uniprot accession code'
           end
-          given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified'}) do
+          given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified' }) do
             requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record'
           end
 
@@ -103,8 +105,9 @@ module Chemotion
             end
 
             optional :own_identifier, type: String, desc: 'Freetext field for a internal identifier'
-            optional :ec_numbers, type: Array[String]
-            optional :full_name, type: String, as: :systematic_name # uniprot calls it fullName, but in our DB it's systematic_name
+            optional :ec_numbers, type: [String]
+            # uniprot calls it fullName, but in our DB it's systematic_name
+            optional :full_name, type: String, as: :systematic_name
             optional :short_name, type: String
             requires :molecular_weight, type: Float
             requires :sequence, type: String
@@ -137,11 +140,10 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
         sample_scope = Usecases::Sbmm::Samples.new(current_user: current_user).list(params)
-        sbmm_samples = []
         reset_pagination_page(sample_scope) # prevent fetching pages without results
 
-        paginate(sample_scope).each do |sbmm_sample|
-          sbmm_samples << Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample)
+        sbmm_samples = paginate(sample_scope).map do |sbmm_sample|
+          Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample)
         end
 
         { sequence_based_macromolecule_samples: sbmm_samples }
@@ -149,10 +151,16 @@ module Chemotion
 
       desc 'Fetch a SBMM sample by id'
       get ':id' do
-        sample = SequenceBasedMacromoleculeSample.find(params[:id])
-        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, sample).read?
+        sbmm_sample = SequenceBasedMacromoleculeSample.find(params[:id])
+        policy = ElementPolicy.new(current_user, sbmm_sample)
+        error!('401 Unauthorized', 401) unless policy.read?
 
-        present sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
+        present(
+          sbmm_sample,
+          with: Entities::SequenceBasedMacromoleculeSampleEntity,
+          policy: policy,
+          root: :sequence_based_macromolecule_sample,
+        )
       end
 
       desc 'Create SBMM sample'
@@ -160,9 +168,11 @@ module Chemotion
         use :sbmm_sample_params
       end
       post do
-        sbmm_sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(declared(params, evaluate_given: true))
+        sbmm_sample = Usecases::Sbmm::Sample.new(current_user: current_user).create(declared(params,
+                                                                                             evaluate_given: true))
 
-        present sbmm_sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
+        present sbmm_sample, with: Entities::SequenceBasedMacromoleculeSampleEntity,
+                             root: :sequence_based_macromolecule_sample
       end
 
       desc 'Update SBMM sample by id'
@@ -172,16 +182,22 @@ module Chemotion
       route_param :id do
         before do
           @sbmm_sample = SequenceBasedMacromoleculeSample.find(params[:id])
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @sbmm_sample).update?
+          @policy = ElementPolicy.new(current_user, @sbmm_sample)
+          error!('401 Unauthorized', 401) unless @policy.update?
         end
 
         put do
-          Usecases::Sbmm::Sample.new(current_user: current_user).update(@sbmm_sample, declared(params, evaluate_given: true))
+          Usecases::Sbmm::Sample.new(current_user: current_user).update(@sbmm_sample,
+                                                                        declared(params, evaluate_given: true))
 
-          present @sbmm_sample, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_sample
+          present(
+            @sbmm_sample,
+            with: Entities::SequenceBasedMacromoleculeSampleEntity,
+            policy: @policy,
+            root: :sequence_based_macromolecule_sample,
+          )
         end
       end
-
 
       desc 'Delete a SBMM sample by id'
       params do
@@ -189,7 +205,9 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, SequenceBasedMacromoleculeSample.find(params[:id])).destroy?
+          unless ElementPolicy.new(current_user, SequenceBasedMacromoleculeSample.find(params[:id])).destroy?
+            error!('401 Unauthorized', 401)
+          end
         end
 
         delete do
@@ -215,7 +233,8 @@ module Chemotion
 
         before do
           cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
-          @sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          @sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(cid).by_ui_state(params[:ui_state])
+                                                          .for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @sbmm_samples).read?
         end
 
@@ -223,9 +242,42 @@ module Chemotion
         post do
           @sbmm_samples = @sbmm_samples.limit(params[:limit]) if params[:limit]
 
-          present @sbmm_samples, with: Entities::SequenceBasedMacromoleculeSampleEntity, root: :sequence_based_macromolecule_samples
+          present @sbmm_samples, with: Entities::SequenceBasedMacromoleculeSampleEntity,
+                                 root: :sequence_based_macromolecule_samples
+        end
+      end
+
+      namespace :sub_sequence_based_macromolecule_samples do
+        desc 'Split SBMM Samples into Subsample'
+        params do
+          requires :ui_state, type: Hash, desc: 'Selected SBMM samples from the UI' do
+            requires :sequence_based_macromolecule_sample, type: Hash do
+              optional :all, type: Boolean, default: false
+              optional :included_ids, type: Array
+              optional :excluded_ids, type: Array
+            end
+            requires :currentCollectionId, type: Integer
+            optional :isSync, type: Boolean, default: false
+          end
+        end
+        post do
+          ui_state = params[:ui_state]
+          collection_id = ui_state[:currentCollectionId]
+          sbmm_sample_ids =
+            SequenceBasedMacromoleculeSample.for_user(current_user.id)
+                                            .for_ui_state_with_collection(
+                                              ui_state[:sequence_based_macromolecule_sample],
+                                              CollectionsSequenceBasedMacromoleculeSample,
+                                              collection_id,
+                                            )
+          SequenceBasedMacromoleculeSample.where(id: sbmm_sample_ids).find_each do |sbmm_sample|
+            sbmm_sample.create_sub_sequence_based_macromolecule_sample(current_user, collection_id)
+          end
+
+          {} # JS layer does not use the reply
         end
       end
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
