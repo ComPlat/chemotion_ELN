@@ -25,7 +25,7 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         revert: %i[temperature],
       },
       reaction_svg_file: {
-        label: 'Structural formula',
+        label: 'Reaction scheme',
         kind: :image,
         formatter: svg_path_formatter('reactions'),
       },

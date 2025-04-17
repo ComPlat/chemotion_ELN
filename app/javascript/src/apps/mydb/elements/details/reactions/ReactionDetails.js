@@ -586,10 +586,10 @@ export default class ReactionDetails extends Component {
           />
         </Tab>
       ),
-      versions: (
+      history: (
         <Tab
-          eventKey="versioning"
-          title="Versions"
+          eventKey="history"
+          title="History"
           key={`Versions_Reaction_${reaction.id.toString()}`}
         >
           <VersionsTable
