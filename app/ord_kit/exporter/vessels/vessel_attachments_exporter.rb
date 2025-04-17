@@ -6,7 +6,8 @@ module OrdKit
       class VesselAttachmentsExporter < OrdKit::Exporter::Base
         def to_ord
           []
-          # TODO:  Vessel Attachments. Not yet implemented
+
+          # TODO:  Vessel Attachments Not yet implemented.  Depends on upcoming enhancements in ELN Vessel code.
           # model.attachments.map do |attachment|
           #   OrdKit::VesselAttachment.new(
           #     type: attachment_type(attachment),
@@ -15,17 +16,17 @@ module OrdKit
           # end
         end
 
-        private
-
-        def attachments
-          Array(model.attachments)
-        end
-
-        def attachment_type(attachment)
-          OrdKit::VesselPreparation::VesselAttachmentType.const_get(attachment)
-        rescue StandardError
-          OrdKit::VesselPreparation::VesselAttachmentType.UNSPECIFIED
-        end
+        # private
+        #
+        # def attachments
+        # Array(model.attachments)
+        # end
+        #
+        # def attachment_type(attachment)
+        # OrdKit::VesselPreparation::VesselAttachmentType.const_get(attachment)
+        # rescue StandardError
+        # OrdKit::VesselPreparation::VesselAttachmentType.UNSPECIFIED
+        # end
       end
     end
   end

@@ -3,7 +3,7 @@
 module Entities
   module ReactionProcessEditor
     class ReactionProcessActivityEntity < Grape::Entity
-      expose(:id, :step_id, :activity_name, :position, :workup)
+      expose(:id, :step_id, :activity_name, :position, :workup, :automation_response)
 
       expose :sample, using: 'Entities::ReactionProcessEditor::SampleEntity'
       expose :medium, using: 'Entities::ReactionProcessEditor::MediumEntity'

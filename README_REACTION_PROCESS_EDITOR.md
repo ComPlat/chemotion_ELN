@@ -80,10 +80,10 @@ It requires the hostname of the ELN backend along with some other configs to be 
 
 ### Data model
 
-[note: `action` and `ReactionProcessAction` are used synonymously within this section]
+[note: `Activity` and `ReactionProcessActivity` are used synonymously within this section]
 
 The basic structure both in frontend and backend is:
-Reaction <-1:1-> ReactionProcess <-1:n-> ReactionProcessStep <-1:n-> ReactionProcessAction>
+Reaction <-1:1-> ReactionProcess <-1:n-> ReactionProcessStep <-1:n-> ReactionProcessActivity>
 
 #### The ReactionProcess
 
@@ -97,32 +97,35 @@ A ReactionProcess typically consists of several ReactionProcessSteps. They conta
 process, idealized "everything that happens within one and the same vessel". Consequently a ReactionProcessSteps
 can be assigned a vessel.
 
-#### The ReactionProcessAction
+#### The ReactionProcessActivity
 
-Each ReactionProcessStep consist of a multitude of ReactionProcessActions. This is where the core of the the reaction
-process data lies.  It has the relevant attributes:
+Each ReactionProcessStep consist of a multitude of ReactionProcessActivities. This is where the core of the the reaction process data lies.
 
-* `action_name`: defines the type of the action, which can basically be any arbitrary string value describing the action. A set of are implemented  and used for the required funcionalities: "ADD", "REMOVE", "MOTION", "PURIFICATION", "ANALYSIS", "SAVE", "TRANSFER", "WAIT", "CONDITION".
-
-* `position`: The order of the action within the associated reaction_process_step.
-
-* `workup`: This is were the actual action data is stored. It is a hash to store the parameters of the action  where (by convention) the stored data semantically "matches" the functionality provided by the respective action. Most of this has been thoroughly
-discussed with NJung and is subject to further enhancements. Basically we use self-defined arbitraty key-value pairs describing
-the parameters and details of the respective action, e.g.
-`action_name: "ADD", workup: { acts_as:'SOLVENT', sample_id:'1', amount: { value: '100', unit; 'ml'} }`
-
-As they fulfill no external schema it is a bit hard to validate and keep track of them. In fact they are provided mostly
-by the the respective input fields in the frontend RPE which set them when filled out and sent as part of the request.
-The only actual validation (2023-12-11) is on `"ADD"` actions validating that `workup[:sample_id]` is set.
-This again makes it very easy to handle and store arbitrary data and later transform them into ORDKit.
-
-There are two basic types of ReactionProcessActions.
+There are two basic types of ReactionProcessActivities
 
 1. The standard "ACTION" (Add, Remove, Purification, Wait, …) These define everything that "can be done".
 2. The "CONDITION". These define the changes in environment conditions, i.e. Temperature, Pressure, PH. Beyond, Motion and Equipment
 are also considered environment conditions in this model.
 
 Technically both are treated equally in defining the "Activities" within a process step (i.e. in the ReactionProcessStep has_many :reaction_process_activities association, ordered by their `position`), which can each be either an `Àction` or a `Condition`.
+
+
+An ReactionProcessActivity has the relevant attributes:
+
+* `action_name`: defines the type of the Activity, which can basically be any arbitrary string value describing the Activity. A set of are implemented and used for the required funcionalities: "ADD", "REMOVE", "MOTION", "PURIFICATION", "ANALYSIS", "SAVE", "TRANSFER", "WAIT", "DISCARD", "EVAPORATE", "CONDITION".
+
+* `position`: The order of the action within the associated reaction_process_step.
+
+* `workup`: This is were the actual Activity data is stored. It is a hash to store the parameters of the Activity  where (by convention) the stored data semantically "matches" the functionality provided by the respective Activity. Most of this has been thoroughly
+discussed with NJung and is subject to further enhancements. Basically we use self-defined arbitraty key-value pairs describing
+the parameters and details of the respective Activity, e.g.
+`action_name: "ADD", workup: { acts_as:'SOLVENT', sample_id:'1', amount: { value: '100', unit; 'ml'} }`
+
+As they fulfill no external schema it is a bit hard to validate and keep track of them. In fact they are provided mostly
+by the the respective input fields in the frontend RPE which set them when filled out and sent as part of the request.
+The only actual validation (2023-12-11) is on `"ADD"` Activities validating that `workup[:sample_id]` is set.
+This again makes it very easy to handle and store arbitrary data and later transform them into ORDKit.
+
 
 ### API endpoints
 
@@ -147,7 +150,7 @@ The RPE provides functions to assign a Vessel to a ReactionProcessStep and to ce
 
 * The reaction data is initially fetched from the "/reactions/:id" Endpoint, which will implicitly (and idempotently) create a ReactionProcess for the given reaction when non-existant.
 
-## Frontend
+## ReactionProcessEditor Frontend
 
 ### Action Forms
 
@@ -162,3 +165,49 @@ It is included from APP.js with "reaction" as the only prop.
 
 The ReactionProcessEditor stores the associated ReactionProcess as state,
 and (re)fetches the ReactionProcess from the backend by it's id whenever relevant changes occur.
+
+## Automation
+
+The ReactionProcessEditor and the ORD export output file is tailored to serve the automation as required in the KIT automation lab.
+
+### Automation API endpoints
+
+There are currently 2 API endpoints serving for automation lab feedback.
+
+* PUT /api/v1/reaction_process_editor/reaction_process_activities/{id}/automation_response
+  * This endpoints serves the automation feedback which is currenty required in Chromatography Activities only. It accepts the parameter "response_json" with a json file containinfg the results of the automation in a specific JSON format describing the vial-plates and vials returning from the automation.
+* PUT /api/v1/reaction_process_editor/reaction_process_activities/{id}/automation_status
+  * This endpoint serves to update the automation status, particularly to report the completion of a ReactionProcessActivity. It accepts the parameter "automation_status" and  "COMPLETED" as only accepted value.
+
+### Automation status model
+
+The automation status model handles the synchronization of the Editor with the actual Reaction Process in the automation lab particularly for ReactionProcessActivities that need user feedback after having run.
+
+Each ReactionProcessActivity can be in one of the following states.
+
+* RUN
+  * The activity can run unrestrictedly.
+* HALT
+  * The process halts after running this activity and feedback will be provided by the automation lab.
+* AUTOMATION_RESPONDED
+  * The automation feedback has been received through the api and user interaction is required (most commonly applies in Chromatography activities).
+* HALT_RESOLVED_NEEDS_CONFIRMATION
+  * User feedback has been provided (e.g. selecting vials for pooling groups). The user needs to confirm the resolve manually in a separate step for better handling.
+* HALT_RESOLVED
+  * The HALT has been resolved and confirmed. the
+* COMPLETED
+  * The ReactionProcessActivity has completed successfully
+
+The ReactionProcessSteps subsequently show their own status
+
+* STEP_CAN_RUN
+  * The ReactionProcessStep can run unrestrictedly.
+* STEP_COMPLETED
+  * All of the ReactionProcessStep's ReactionProcessActivities have been completed and thus the ReactionProcessStep itself.
+* STEP_HALT_BY_PRECEDING
+  * There is a ReactionProcessActivity in some prior ReactionProcessStep that HALTS the automation process (i.e. in status "HALT", "AUTOMATION_RESPONDED", "HALT_RESOLVED_NEEDS_CONFIRMATION" ). This is required to stop later ReactionProcessSteps from running while there might still be a dependency.
+* STEP_MANUAL_PROCEED
+  * A STEP_HALT_BY_PRECEDING status has been overridden by the user to allow a ReactionProcessStep to run in parallel.
+
+The ReactionProcessSteps status is evaluated mostly automatically; STEP_CAN_RUN, STEP_COMPLETED simply denote that a Step can run unrestrictedly or has been completed, respectively. ReactionProcessStep status evaluates to STEP_HALT_BY_PRECEDING when there is a ReactionProcessActivity in a prior ReactionProcessStep that requires halting the Automation.
+This can be overriden by the user to STEP_MANUAL_PROCEED when a ReactionProcessStep can be performed in parallel without any actual dependencies to the ReactionProcess being halted. STEP_MANUAL_PROCEED will only apply when status evaluates to STEP_HALT_BY_PRECEDING.
