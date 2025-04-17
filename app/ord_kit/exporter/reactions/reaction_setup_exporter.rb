@@ -9,7 +9,7 @@ module OrdKit
           return unless model
 
           OrdKit::ReactionSetup.new(
-            vessel: Vessels::ReactionProcessVesselExporter.new(model.reaction_process_vessel).to_ord,
+            vessel_template: Vessels::ReactionProcessVesselableExporter.new(model.reaction_process_vessel).to_ord,
           )
         end
       end
