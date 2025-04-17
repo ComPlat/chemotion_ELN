@@ -54,8 +54,9 @@ class Molecule < ApplicationRecord
   after_create :create_molecule_names
   after_create :get_lcss
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
+  before_destroy :deindex_inchikey
 
-  validates_uniqueness_of :inchikey, scope: :is_partial
+  # validates_uniqueness_of :inchikey, scope: :is_partial
 
   # scope for suggestions
   scope :by_iupac_name, -> (query) {
@@ -86,23 +87,27 @@ class Molecule < ApplicationRecord
     molecule = Molecule.find_or_create_by(inchikey: 'DUMMY')
   end
 
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
   def self.find_or_create_by_molfile(molfile, **babel_info)
     unless babel_info && babel_info[:inchikey]
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     end
     inchikey = babel_info[:inchikey]
-    return unless inchikey.present?
+    return if inchikey.blank?
+
     is_partial = babel_info[:is_partial]
     partial_molfile = babel_info[:molfile]
-    molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
+    formula = babel_info[:formula]
+    molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
+    molecule ||= Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
       pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-      molecule.molfile = is_partial && partial_molfile || molfile
-      molecule.assign_molecule_data(babel_info, pubchem_info)
+      mol.molfile = (is_partial && partial_molfile) || molfile
+      mol.assign_molecule_data(babel_info, pubchem_info)
     end
-
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
   def self.find_or_create_by_cano_smiles(cano_smiles)
     molfile = Chemotion::OpenBabelService.molfile_from_cano_smiles(cano_smiles)
@@ -272,7 +277,14 @@ class Molecule < ApplicationRecord
     file_path&.file? ? file_path : nil
   end
 
-private
+  private
+
+  # This frees the inchikey value from the index
+  def deindex_inchikey
+    return if inchikey.starts_with?("#{id}_")
+
+    update_columns(inchikey: "#{id}_#{inchikey}") # rubocop:disable Rails/SkipsModelValidations
+  end
 
   # TODO: check that molecules are OK and remove this method. fix is in editor
   def sanitize_molfile
