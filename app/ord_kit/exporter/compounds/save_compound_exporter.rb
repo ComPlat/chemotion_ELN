@@ -25,8 +25,12 @@ module OrdKit
         end
 
         def reaction_role
-          type = ReactionsSample.find_by(reaction: reaction, sample: sample)&.intermediate_type
-          type ? OrdKit::ReactionRole::ReactionRoleType.const_get(type) : OrdKit::ReactionRole::ReactionRoleType::UNSPECIFIED
+          intermediate_type = ReactionsSample.find_by(reaction: reaction, sample: sample)&.intermediate_type
+          if intermediate_type
+            OrdKit::ReactionRole::ReactionRoleType.const_get(intermediate_type)
+          else
+            OrdKit::ReactionRole::ReactionRoleType::UNSPECIFIED
+          end
         rescue NameError
           OrdKit::ReactionRole::ReactionRoleType::UNSPECIFIED
         end
@@ -36,7 +40,7 @@ module OrdKit
         end
 
         def preparations
-          nil # n/a. Action SAVE has no preparations.
+          nil # n/a. Action SAVE has no sample preparations.
         end
       end
     end

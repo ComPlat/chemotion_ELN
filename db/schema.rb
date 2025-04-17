@@ -1057,6 +1057,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
     t.uuid "reaction_process_vessel_id"
+    t.jsonb "automation_response"
   end
 
   create_table "reaction_process_defaults", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1075,6 +1076,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
+    t.string "automation_status"
   end
 
   create_table "reaction_process_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
