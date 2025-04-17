@@ -11,10 +11,17 @@ module OrdKit
           duration: duration,
           setup: setup,
           actions: reaction_process_activities,
+          step_automation_status: step_automation_status,
         )
       end
 
       private
+
+      def step_automation_status
+        OrdKit::StepAutomationStatus.const_get model.step_automation_status.to_s
+      rescue NameError
+        OrdKit::StepAutomationStatus::STEP_STATUS_UNSPECIFIED
+      end
 
       def setup
         Reactions::ReactionSetupExporter.new(model).to_ord
