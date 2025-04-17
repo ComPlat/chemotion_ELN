@@ -30,13 +30,6 @@ module Entities
                { value: 'PROD', label: 'Prod' },
                { value: 'NONE', label: 'No' }]
             end
-
-            # TODO: Combine this with Ontologie solvents??
-            # def solvent_options
-            #   sample_minimal_options(Medium::Modifier.all,
-            #                          'MODIFIER') + sample_minimal_options(Medium::DiverseSolvent.all,
-            #                          'DIVERSE_SOLVENT')
-            # end
           end
         end
       end

@@ -23,12 +23,14 @@ module Entities
             ADD: SelectOptions::Forms::Add.new.select_options,
             ANALYSIS: SelectOptions::Forms::Analysis.new.select_options,
             CONDITION: SelectOptions::Forms::Condition.new.select_options,
+            EVAPORATION: SelectOptions::Forms::Evaporation.new.select_options,
             MOTION: SelectOptions::Forms::Motion.new.select_options,
             PURIFICATION: SelectOptions::Forms::Purification.new.select_options_for(reaction_process: reaction_process),
             REMOVE: SelectOptions::Forms::Remove.new.select_options,
             SAVE: SelectOptions::Forms::SaveSample.new.select_options,
             TRANSFER: SelectOptions::Forms::Transfer.new.select_options,
             WAIT: SelectOptions::Forms::Wait.new.select_options,
+            POOLING_GROUP: SelectOptions::Forms::PoolingGroups.new.select_options,
           }
         end
 

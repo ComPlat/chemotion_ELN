@@ -71,6 +71,8 @@ message ReactionStep {
   ReactionSetup setup = 5;
   // The indivdual actions defining the ReactionStep.
   repeated ReactionProcessAction actions = 6;
+
+  StepAutomationStatus step_automation_status = 7;
 }
 
 /**
@@ -147,6 +149,24 @@ message ReactionInput {
   ReactionConditions conditions = 9;
 }
 
+enum AutomationStatus {
+  UNSPECIFIED = 0;
+  RUN = 1;
+  HALT = 2;
+  AUTOMATION_RESPONDED = 3;
+  HALT_RESOLVED_NEEDS_CONFIRMATION = 4;
+  HALT_RESOLVED = 5;
+  COMPLETED = 6;
+}
+
+enum StepAutomationStatus {
+  STEP_STATUS_UNSPECIFIED = 0;
+  STEP_CAN_RUN = 1;
+  STEP_HALT_BY_PRECEDING = 2;
+  STEP_MANUAL_PROCEED = 3;
+  STEP_COMPLETED = 4;
+}
+
 /**
  * An individual Action defining the reaction workflow.
  * It is usually referenced within a ReactionStep.
@@ -159,7 +179,7 @@ message ReactionProcessAction {
   TimeSpan start_time = 4;
   TimeSpan duration = 5;
   repeated Equipment equipment = 6;
-  optional Vessel vessel = 7;
+  optional VesselTemplate vessel_template = 7;
   oneof action {
     ActionAdd addition = 8;
     ActionRemove removal = 9;
@@ -169,7 +189,11 @@ message ReactionProcessAction {
     ActionTransfer transfer = 13;
     ActionWait wait = 14;
     ActionSaveSample save_sample = 15;
+    ActionDiscard discard = 16;
+    ActionEvaporation evaporation = 17;
   }
+  optional AutomationStatus automation_status = 18;
+  repeated string vials = 19;
 
   message ActionAdd {
     ReactionRole.ReactionRoleType reaction_role = 1;
@@ -321,7 +345,7 @@ message ReactionProcessAction {
     oneof type {
       ActionSpectroscopy spectroscopy = 1;
       ActionSpectrometry spectrometry = 2;
-      ActionPurificationChromatography chromatography = 3; // for now identical, AnalysisChr. might diverge soon.
+      ActionPurificationChromatography chromatography = 3; // for now identical, ActionAnalysisChr. might diverge soon.
     }
   }
 
@@ -334,6 +358,8 @@ message ReactionProcessAction {
     Percentage percentage = 6;
   }
 
+  message ActionDiscard { repeated string vials = 1; }
+  message ActionEvaporation { repeated string vials = 1; }
   message ActionWait { TimeSpan duration = 1; }
 
   message ActionSaveSample {
@@ -354,7 +380,6 @@ message ReactionProcessAction {
 
     Compound sample = 1;
     repeated Compound molecular_entities = 2;
-    Vessel vessel = 3;
     OriginType sample_origin_type = 4;
     optional PurificationOrigin purification_origin = 5;
   }
@@ -522,11 +547,11 @@ message CompoundIdentifier {
 }
 
 /**
- * The Vessel defines the primary container within which the reaction was
+ * The VesVesselTemplatesel defines the primary container within which the reaction was
  * performed, including the type of vessel, its primary material, any
  * preparation steps or vessel attachments, and its volume.
  */
-message Vessel {
+message VesselTemplate {
   enum VesselType {
     UNSPECIFIED = 0;
     CUSTOM = 1;
@@ -551,25 +576,30 @@ message Vessel {
   }
   string id = 1;
   string name = 2;
-  string label = 3;
-  string description = 4;
-  string details = 5;
-  string bar_code = 6;
-  string qr_code = 7;
 
-  VesselType type = 8;
+  string details = 3;
+
+  VesselType type = 4;
   // Vessel material (glass, plastic, etc.).
-  Material material = 9;
+  Material material = 5;
   // Size (volume) of the vessel.
-  Volume volume = 10;
+  Volume volume = 6;
   // Weight (mass) of the vessel.
-  Mass weight = 11;
   // How the vessel was prepared for the reaction.
-  repeated VesselPreparation preparations = 12;
+  repeated VesselPreparation preparations = 7;
   // Vessel attachments (septum, cap, gas adapter, etc.).
-  repeated VesselAttachment attachments = 13;
-  // Identifier number for a microtiter plate or parallel reactor run.
-  string vessel_class = 14;
+  repeated VesselAttachment attachments = 8;
+
+  optional Vessel vessel = 9;
+}
+
+message Vessel {
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  string bar_code = 4;
+  string qr_code = 5;
+  Mass weight = 6;
 }
 
 message Material {
@@ -697,7 +727,7 @@ message VesselPreparation {
 }
 
 message ReactionSetup {
-  Vessel vessel = 1;
+  optional VesselTemplate vessel_template = 1;
 
   message ReactionEnvironment {
     enum ReactionEnvironmentType {

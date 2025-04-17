@@ -30,6 +30,10 @@ module ReactionProcessEditor
       reaction_process.reaction_process_steps.order(:position)
     end
 
+    def predecessors
+      siblings.where(position: 0...position)
+    end
+
     def duration
       reaction_process_activities.reduce(0) { |sum, activity| sum + activity.workup['duration'].to_i }
     end
@@ -42,6 +46,19 @@ module ReactionProcessEditor
       position + 1
     end
 
+    def halts_automation?
+      reaction_process_activities.any?(&:halts_automation?)
+    end
+
+    def step_automation_status
+      # step_automation_status mostly determined by external conditions
+      # can be set to "STEP_MANUAL_PROCEED" / "STEP_HALT_BY_PRECEDING" as fallback if no other condition fullfilled.
+      return 'STEP_COMPLETED' if reaction_process_activities.all?(&:automation_completed?)
+      return 'STEP_CAN_RUN' if predecessors.none?(&:halts_automation?)
+
+      automation_status || 'STEP_HALT_BY_PRECEDING'
+    end
+
     # We assemble an Array of activity_preconditions which the ReactionActionEntity then indexes by its position.
     def activity_preconditions
       @activity_preconditions ||= [reaction_process.initial_conditions] + calculate_activity_post_conditions
@@ -52,10 +69,6 @@ module ReactionProcessEditor
     end
 
     def added_materials(material_type)
-      # material_ids = reaction_process.reaction_process_steps.where(position: ..position).map do |process_step|
-      #   process_step.added_material_ids(material_type)
-      # end.flatten.uniq
-
       case material_type
       when 'ADDITIVE'
         Medium::Additive.find added_material_ids(material_type)

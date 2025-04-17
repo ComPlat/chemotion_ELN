@@ -8,10 +8,10 @@ module Usecases
           ActiveRecord::Base.transaction do
             activity.workup = activity_params['workup']
 
-            activity.reaction_process_vessel = ReactionProcessVessels::CreateOrUpdate.execute!(
-              reaction_process_id: activity.reaction_process.id,
-              reaction_process_vessel_params: activity_params['reaction_process_vessel'],
-            )
+            activity.reaction_process_vessel =
+              Usecases::ReactionProcessEditor::ReactionProcessVessels::CreateOrUpdate
+              .execute!(reaction_process_id: activity.reaction_process.id,
+                        reaction_process_vessel_params: activity_params['reaction_process_vessel'])
 
             SaveIntermediate.execute!(activity: activity, workup: activity_params['workup']) if activity.saves_sample?
 

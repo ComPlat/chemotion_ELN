@@ -26,7 +26,6 @@ module OrdKit
 
           OrdKit::Pressure.new(
             value: workup['value'].to_f,
-            precision: nil, # TODO:
             unit: OrdKit::Pressure::PressureUnit.const_get(workup['unit']),
           )
         end

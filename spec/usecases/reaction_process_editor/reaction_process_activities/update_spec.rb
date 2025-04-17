@@ -41,10 +41,11 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessActivities::Updat
 
       update_activity
 
-      expect(Usecases::ReactionProcessEditor::ReactionProcessVessels::CreateOrUpdate).to have_received(:execute!).with(
-        reaction_process_id: reaction_process.id,
-        reaction_process_vessel_params: { vessel_id: vessel.id }.deep_stringify_keys,
-      )
+      expect(Usecases::ReactionProcessEditor::ReactionProcessVessels::CreateOrUpdate)
+        .to have_received(:execute!).with(
+          reaction_process_id: reaction_process.id,
+          reaction_process_vessel_params: { vessel_id: vessel.id }.deep_stringify_keys,
+        )
     end
 
     it 'triggers ReactionProcessVessel::SweepUnused' do

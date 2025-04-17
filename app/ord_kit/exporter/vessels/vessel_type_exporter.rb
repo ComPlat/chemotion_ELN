@@ -5,9 +5,9 @@ module OrdKit
     module Vessels
       class VesselTypeExporter < OrdKit::Exporter::Base
         def to_ord
-          OrdKit::Vessel::VesselType.const_get model.vessel_type.upcase.to_s
+          OrdKit::VesselTemplate::VesselType.const_get model.vessel_type.upcase.to_s
         rescue NameError
-          OrdKit::Vessel::VesselType::UNSPECIFIED
+          OrdKit::VesselTemplate::VesselType::UNSPECIFIED
         end
       end
     end

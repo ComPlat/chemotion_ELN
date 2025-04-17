@@ -4,8 +4,9 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       module Forms
-        class Analysis
-          class Chromatography < SelectOptions::Forms::Purification::Chromatography
+        class Evaporation < Base
+          def select_options
+            {}
           end
         end
       end

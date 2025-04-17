@@ -36,6 +36,14 @@ RSpec.describe ReactionProcessEditor::ReactionProcessActivity do
     expect(process_activity.condition?).to be true
   end
 
+  it '#halts_automation?' do
+    expect(process_activity.halts_automation?).to be false
+    process_activity.workup['AUTOMATION_STATUS'] = 'HALT'
+    expect(process_activity.halts_automation?).to be true
+    process_activity.workup['AUTOMATION_STATUS'] = 'RESOLVED'
+    expect(process_activity.halts_automation?).to be false
+  end
+
   describe '#adds_compound?' do
     subject(:process_activity) do
       create(:reaction_process_activity,
