@@ -439,7 +439,7 @@ describe('Manual SDS attachment functionality', () => {
     expect(saveManualAttachedSafetySheetStub.calledOnce).toBe(true);
     expect(saveManualAttachedSafetySheetStub.firstCall.args[0]).toBeTruthy();
 
-    const safetySheets = wrapper.find('ListGroup');
+    const safetySheets = wrapper.find('.list-group-numbered');
     expect(safetySheets.exists()).toBe(true);
   });
 });
