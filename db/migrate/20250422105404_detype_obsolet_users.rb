@@ -7,6 +7,6 @@ class DetypeObsoletUsers < ActiveRecord::Migration[6.1]
   # Operating on soft-deleted records causes issues if those with type `Device`
   # since Device < User has been deprecated and refactor to its own table.
   def up
-    User.where(type: 'Device').update_all(type:  'DeviceDeprecated') }
+    User.where(type: 'Device').update_all(type:  'DeviceDeprecated')
   end
 end
