@@ -593,10 +593,10 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanMetadata researchPlan={researchPlan} />
         </Tab>
       ),
-      versions: (
+      history: (
         <Tab
-          eventKey="versioning"
-          title="Versions"
+          eventKey="history"
+          title="History"
           key={`Versions_ResearchPlan_${researchPlan.id.toString()}`}
         >
           <VersionsTable

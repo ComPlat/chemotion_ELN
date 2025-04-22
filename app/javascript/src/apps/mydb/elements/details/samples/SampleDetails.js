@@ -593,8 +593,8 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab
         eventKey={index}
-        title="Versions"
-        key={`Versions_Sample_${sample.id.toString()}`}
+        title="History"
+        key={`History_Sample_${sample.id.toString()}`}
       >
         <ListGroupItem>
           <VersionsTable
@@ -1335,7 +1335,7 @@ export default class SampleDetails extends React.Component {
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
       measurements: this.measurementsTab('measurements'),
-      versioning: this.versioningTable('versioning')
+      history: this.versioningTable('history')
     };
 
     if (this.enableComputedProps) {

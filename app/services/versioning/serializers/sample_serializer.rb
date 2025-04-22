@@ -28,7 +28,7 @@ module Versioning
             formatter: user_formatter,
           },
           sample_svg_file: {
-            label: 'Structural formula',
+            label: 'Structure',
             kind: :image,
             formatter: svg_path_formatter('samples'),
             revertible_value_formatter: default_formatter,
@@ -152,13 +152,14 @@ module Versioning
             revert: %i[solvent],
           },
           molecule_name_id: {
-            label: 'Molecule',
+            label: 'Molecule name',
             formatter: ->(_key, value) { molecule_names_lookup[value] },
             revert: %i[molecule_name_id],
             revertible_value_formatter: default_formatter,
           },
           molecule_id: {
-            kind: :hidden,
+            label: 'Molecule Inchikey',
+            formatter: ->(_key, value) { get_molecule_inchikey[value] },
           },
           fingerprint_id: {
             kind: :hidden,
@@ -177,6 +178,18 @@ module Versioning
           end
 
           MoleculeName.with_deleted.where(id: ids).to_h { |u| [u.id, u.name] }
+        end
+      end
+
+      def get_molecule_inchikey
+        @get_molecule_inchikey ||= begin
+          ids = Set.new
+
+          record.log_data.versions.each do |v|
+            ids << v.changes['molecule_id'] if v.changes.key?('molecule_id')
+          end
+
+          Molecule.with_deleted.where(id: ids).to_h { |u| [u.id, "#{u.inchikey} (#{u.sum_formular})"] }
         end
       end
 
