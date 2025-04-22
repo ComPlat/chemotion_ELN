@@ -992,7 +992,7 @@ export default class ChemicalTab extends React.Component {
   addAttachment() {
     const { chemical } = this.state;
     const savedSds = chemical?._chemical_data?.[0]?.safetySheetPath || [];
-    const hasMaxAttachments = savedSds.length >= 3;
+    const hasMaxAttachments = savedSds.length >= 10;
 
     const button = (
       <Button
@@ -1103,6 +1103,12 @@ export default class ChemicalTab extends React.Component {
   }
 
   renderChildElements = (document, index) => {
+    // First check if document is valid
+    if (!document) {
+      return null;
+    }
+
+    // Find any key that ends with "_link" to determine vendor
     const linkKey = Object.keys(document).find((key) => key.endsWith('_link'));
     const vendorLink = linkKey ? document[linkKey] : null;
     const vendorName = linkKey ? linkKey.replace('_link', '') : 'uploaded source';
@@ -1206,8 +1212,8 @@ export default class ChemicalTab extends React.Component {
       const searchResultsSection = hasSearchResults && (
         <>
           <h6 className="mt-5 text-primary">Search Results:</h6>
-          <div className="overflow-auto mb-4 p-2" style={{ maxHeight: '300px' }}>
-            <ListGroup>
+          <div className="overflow-auto" style={{ maxHeight: '300px' }}>
+            <ol className="list-group list-group-numbered">
               {searchResults.map((document, index) => {
                 if (!document) {
                   return null;
@@ -1218,24 +1224,20 @@ export default class ChemicalTab extends React.Component {
                   && document !== 'Could not find safety data sheet from Merck';
 
                 return (
-                  <div className="mt-2 w-100" key={key}>
+                  <li className="list-group-item border-0 d-flex align-items-center" key={key}>
                     {isValidDocument ? (
-                      <ListGroupItem key={`${key}-file`} className="p-3 border-0 safety-sheet-width">
+                      <div className="ms-2 me-auto w-100 safety-sheet-width">
                         {this.renderChildElements(document, index)}
-                      </ListGroupItem>
+                      </div>
                     ) : (
-                      <ListGroupItem key={`${key}-no-document`} className="border-0">
-                        <div>
-                          <p className="pt-2">
-                            {document}
-                          </p>
-                        </div>
-                      </ListGroupItem>
+                      <div className="ms-2 me-auto">
+                        <p className="mb-0">{document}</p>
+                      </div>
                     )}
-                  </div>
+                  </li>
                 );
               })}
-            </ListGroup>
+            </ol>
           </div>
         </>
       );
@@ -1244,8 +1246,8 @@ export default class ChemicalTab extends React.Component {
       const savedSdsSection = hasSavedSds && (
         <>
           <h6 className="mt-5 text-success">Safety Sheets saved in the database:</h6>
-          <div className="overflow-auto mb-4 p-2" style={{ maxHeight: '300px' }}>
-            <ListGroup>
+          <div className="overflow-auto" style={{ maxHeight: '300px' }}>
+            <ol className="list-group list-group-numbered">
               {savedSds.map((document, index) => {
                 if (!document) {
                   return null;
@@ -1256,14 +1258,14 @@ export default class ChemicalTab extends React.Component {
                 const key = vendorLinkKey ? `saved-${vendorLinkKey}-${index}` : `saved-${index}`;
 
                 return (
-                  <div className="mt-2 w-100" key={key}>
-                    <ListGroupItem className="p-3 border-0 safety-sheet-width">
+                  <li className="list-group-item border-0 d-flex align-items-center" key={key}>
+                    <div className="ms-2 me-auto w-100 safety-sheet-width">
                       {this.renderChildElements(document, index)}
-                    </ListGroupItem>
-                  </div>
+                    </div>
+                  </li>
                 );
               })}
-            </ListGroup>
+            </ol>
           </div>
         </>
       );
@@ -1485,42 +1487,47 @@ export default class ChemicalTab extends React.Component {
 
   updateDisplayWell() {
     const { chemical } = this.state;
-    let savedSds;
-    if (chemical) {
-      if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-        savedSds = chemical._chemical_data[0].safetySheetPath;
-        if (savedSds && savedSds.length !== 0) {
-          this.setState({ displayWell: true });
+    if (!chemical) {
+      return;
+    }
 
-          // Initialize dynamic check marks from existing safety sheets
-          const dynamicCheckMarks = {};
+    // Check if chemical data exists and has safety sheet paths
+    if (chemical._chemical_data
+      && chemical._chemical_data.length !== 0
+      && chemical._chemical_data[0].safetySheetPath
+      && chemical._chemical_data[0].safetySheetPath.length !== 0) {
+      this.setState({ displayWell: true });
 
-          // Process each saved safety sheet
-          savedSds.forEach((sheet) => {
-            // Find any key that ends with "_link"
-            const vendorLinkKey = Object.keys(sheet).find((key) => key.endsWith('_link') && sheet[key]);
+      // Initialize dynamic check marks from existing safety sheets
+      const dynamicCheckMarks = {};
 
-            if (vendorLinkKey) {
-              // Extract vendor name from the link key (e.g., 'merck' from 'merck_link')
-              const vendorName = vendorLinkKey.replace('_link', '');
-              const normalizedVendorName = vendorName.toLowerCase();
+      // Process each saved safety sheet
+      chemical._chemical_data[0].safetySheetPath.forEach((sheet) => {
+        // Find any key that ends with "_link", but make sure we check it exists first
+        if (sheet && typeof sheet === 'object') {
+          // Get all keys that end with "_link"
+          const linkKeys = Object.keys(sheet).filter((key) => key.endsWith('_link') && sheet[key]);
+          // For each found link key, update the check marks
+          linkKeys.forEach((vendorLinkKey) => {
+            // Extract vendor name from the link key (e.g., 'merck' from 'merck_link')
+            const vendorName = vendorLinkKey.replace('_link', '');
+            const normalizedVendorName = vendorName.toLowerCase();
 
-              // Set check mark to true for this vendor
-              dynamicCheckMarks[normalizedVendorName] = true;
+            // Set check mark to true for this vendor
+            dynamicCheckMarks[normalizedVendorName] = true;
 
-              // Also set specific state variables for backward compatibility
-              if (normalizedVendorName === 'thermofischer' || normalizedVendorName === 'alfa') {
-                this.setState({ checkSaveIconThermofischer: true });
-              } else if (normalizedVendorName === 'merck') {
-                this.setState({ checkSaveIconMerck: true });
-              }
+            // Also set specific state variables for backward compatibility
+            if (normalizedVendorName === 'thermofischer' || normalizedVendorName === 'alfa') {
+              this.setState({ checkSaveIconThermofischer: true });
+            } else if (normalizedVendorName === 'merck') {
+              this.setState({ checkSaveIconMerck: true });
             }
           });
-
-          // Update the dynamicCheckMarks state
-          this.setState({ dynamicCheckMarks });
         }
-      }
+      });
+
+      // Update the dynamicCheckMarks state
+      this.setState({ dynamicCheckMarks });
     }
   }
 
