@@ -78,9 +78,9 @@ function VersionsTableFields(props) {
       hasPop
       previewObject={{
         txtOnly: '',
-        isSVG: true,
+        isSVG: input.endsWith('.svg'),
         src: input,
-        className: 'image-with-full-width',
+        className: input.endsWith('.svg') ? 'molecule ' : 'image-with-full-width',
       }}
       popObject={{
         title,

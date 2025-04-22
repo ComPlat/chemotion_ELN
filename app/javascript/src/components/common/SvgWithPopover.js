@@ -17,7 +17,7 @@ export default class SvgWithPopover extends Component {
         {
           popObject.title && <Popover.Header as="h3">{popObject.title}</Popover.Header>
         }
-        <Popover.Body>
+        <Popover.Body className="svg-file-zoom-pan-container">
           {
             previewObject.isSVG
             ? 
@@ -40,7 +40,7 @@ export default class SvgWithPopover extends Component {
       previewObj = (
         previewObject.isSVG
           ? <SVG src={previewObject.src} className={previewObject.className || 'molecule'} key={previewObject.src} />
-          : <img src={previewObject.src} alt="" />
+          : <img src={previewObject.src} className={previewObject.className} alt="" />
       );
     }
 
