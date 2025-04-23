@@ -107,31 +107,6 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  infoMessage = () => (
-    <Tooltip id="assignButton">
-      Information mirrored to the reaction table describing the content of pure
-      compound or amount of pure compound in a given solution
-    </Tooltip>
-  );
-
-  // Input components of sample details should be disabled if detail level
-  // does not allow to read their content
-  topSecretCheckbox(sample) {
-    if (sample.can_update) {
-      return (
-        <Checkbox
-          inputRef={(ref) => { this.topSecretInput = ref; }}
-          checked={sample.is_top_secret}
-          onChange={(e) => this.handleFieldChanged('is_top_secret', e.target.checked)}
-        >
-          Top secret
-        </Checkbox>
-      );
-    }
-
-    return (<span />);
-  }
-
   drySolventCheckbox(sample) {
     if (sample.can_update) {
       return (
@@ -171,7 +146,7 @@ export default class SampleForm extends React.Component {
 
   addMolName(moleculeName) {
     this.setState({ isMolNameLoading: true });
-    DetailActions.updateMoleculeNames(this.props.sample, moleculeName.label);
+    DetailActions.updateMoleculeNames(this.props.sample, moleculeName);
   }
 
   updateMolName(e) {
@@ -269,7 +244,6 @@ export default class SampleForm extends React.Component {
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
-
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
@@ -281,9 +255,9 @@ export default class SampleForm extends React.Component {
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
             isLoading={this.state.isMolNameLoading}
-            value={!newMolecule && mno}
-            onNewOptionClick={this.addMolName}
-            clearable={false}
+            value={moleculeNames.find(({ value }) => value === mno?.value)}
+            onCreateOption={this.addMolName}
+            className="flex-grow-1"
           />
           {this.structureEditorButton(!sample.can_update)}
         </InputGroup>
@@ -307,7 +281,7 @@ export default class SampleForm extends React.Component {
 
   fetchNextInventoryLabel() {
     const { currentCollection } = UIStore.getState();
-    if (this.matchSelectedCollection(currentCollection)) {
+    if(this.matchSelectedCollection(currentCollection)) {
       InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
         .then((result) => {
           if (result && result.prefix && result.counter !== undefined) {
@@ -530,22 +504,6 @@ export default class SampleForm extends React.Component {
         unit={unit}
         numericValue={value}
         label={label}
-      />
-    );
-  }
-
-  sampleSolvent(sample) {
-    return (
-      <Select
-        ref={(input) => { this.solventInput = input; }}
-        id="solventInput"
-        name="solvents"
-        style={{ marginBottom: '15px' }}
-        multi={false}
-        options={solventOptions}
-        value={sample.solvent}
-        disabled={!sample.can_update}
-        onChange={(e) => this.handleFieldChanged('solvent', e)}
       />
     );
   }
