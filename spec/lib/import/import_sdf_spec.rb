@@ -24,7 +24,7 @@ RSpec.describe Import::ImportSdf do
       },
       rows: [{
         'inchikey' => 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-        'molfile' => Rails.root.join('spec/fixtures/mf_with_data_01.sdf').read,
+        'molfile' => build(:molfile, type: 'mf_with_data_01'),
         'short_label' => 'C9H12ClNO2',
         'target_amount' => '10 g /  g',
         'real_amount' => '15mg/mg',

@@ -259,9 +259,7 @@ describe Chemotion::ReportAPI do
         )
       end
 
-      let!(:mf) do
-        IO.read(Rails.root.join('spec', 'fixtures', 'test_2.mol'))
-      end
+      let!(:mf) { build(:molfile, type: 'test_2') }
 
       let!(:s0) do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
