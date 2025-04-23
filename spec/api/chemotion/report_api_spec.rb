@@ -2,10 +2,17 @@
 
 require 'rails_helper'
 
-# rubocop:disable Rspec/MultipleMemoizedHelpers
+# rubocop:disable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
 describe Chemotion::ReportAPI do
-  context 'authorized user logged in' do
-    let(:user) { create(:user) }
+  let(:user) { create(:user) }
+  let(:warden_authentication_instance) { instance_double(WardenAuthentication) }
+
+  before do
+    allow(WardenAuthentication).to receive(:new).and_return(warden_authentication_instance)
+    allow(warden_authentication_instance).to receive(:current_user).and_return(user)
+  end
+
+  context 'with an authorized user logged in' do
     let(:other) { create(:user) }
     let(:docx_mime_type) do
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -16,15 +23,6 @@ describe Chemotion::ReportAPI do
     let!(:rp1) { create(:report, :downloadable, user: user, file_name: 'ELN_Report_1') }
     let!(:rp2) { create(:report, :undownloadable, user: user) }
     let!(:rp3) { create(:report, :downloadable, user: user) }
-    let!(:att1) do
-      create(
-        :attachment,
-        filename: "#{rp1.file_name}.#{ext}",
-        attachable_id: rp1.id,
-        attachable_type: 'Report',
-        content_type: docx_mime_type,
-      )
-    end
 
     let!(:rp_others) { create(:report, user: other) }
     let!(:s1) { create(:sample) }
@@ -34,7 +32,6 @@ describe Chemotion::ReportAPI do
     let!(:c)  { create(:collection, user_id: user.id) }
 
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
       CollectionsSample.create!(sample: s1, collection: c)
       CollectionsSample.create!(sample: s2, collection: c)
       CollectionsReaction.create!(reaction: r1, collection: c)
@@ -131,18 +128,18 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'POST /api/v1/reports/export_samples_from_selections' do
-      let(:c)        { create(:collection, user_id: user.id) }
-      let(:sample_1) { create(:sample) }
-      let(:sample_2) { create(:sample) }
+      let(:c) { create(:collection, user_id: user.id) }
+      let(:sample1) { create(:sample) }
+      let(:sample2) { create(:sample) }
 
       it 'returns a header with excel-type' do
-        CollectionsSample.create!(sample: sample_1, collection: c)
-        CollectionsSample.create!(sample: sample_2, collection: c)
+        CollectionsSample.create!(sample: sample1, collection: c)
+        CollectionsSample.create!(sample: sample2, collection: c)
         params = {
           exportType: 1,
           uiState: {
             sample: {
-              checkedIds: [sample_1.id],
+              checkedIds: [sample1.id],
               uncheckedIds: [],
               checkedAll: false,
             },
@@ -214,11 +211,11 @@ describe Chemotion::ReportAPI do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
       end
 
-      let(:smi_0) { s0.molecule.cano_smiles }
-      let(:smi_1) { s1.molecule.cano_smiles }
-      let(:smi_2) { s2.molecule.cano_smiles }
-      let(:smi_3) { s3.molecule.cano_smiles }
-      let(:smi_4) { s4.molecule.cano_smiles }
+      let(:smi0) { s0.molecule.cano_smiles }
+      let(:smi1) { s1.molecule.cano_smiles }
+      let(:smi2) { s2.molecule.cano_smiles }
+      let(:smi3) { s3.molecule.cano_smiles }
+      let(:smi4) { s4.molecule.cano_smiles }
       let!(:rxn) do
         build(:valid_reaction,
               name: 'Reaction 0',
@@ -285,48 +282,46 @@ describe Chemotion::ReportAPI do
       describe 'ReportHelpers' do
         it 'concats the smiles SM>>P' do
           expect(subj.r_smiles_0(result.first.second)).to eq(
-            [smi_0, smi_1].join('.') + '>>' + smi_4,
+            "#{[smi0, smi1].join('.')}>>#{smi4}",
           )
         end
 
         it 'concats the smiles SM.R>>P' do
           expect(subj.r_smiles_1(result.first.second)).to eq(
-            [smi_0, smi_1, smi_2].join('.') + '>>' + smi_4,
+            "#{[smi0, smi1, smi2].join('.')}>>#{smi4}",
           )
         end
 
         it 'concats the smiles SM.R.S>>P' do
           expect(subj.r_smiles_2(result.first.second)).to eq(
-            [smi_0, smi_1, smi_2, smi_3].join('.') + '>>' + smi_4,
+            "#{[smi0, smi1, smi2, smi3].join('.')}>>#{smi4}",
           )
         end
 
         it 'concats the smiles SM>R>P' do
           expect(subj.r_smiles_3(result.first.second)).to eq(
-            [smi_0, smi_1].join('.') + '>' + smi_2 \
-            + '>' + smi_4,
+            "#{[smi0, smi1].join('.')}>#{smi2}>#{smi4}",
           )
         end
 
         it 'concats the smiles SM>R.S>P' do
           expect(subj.r_smiles_4(result.first.second)).to eq(
-            [smi_0, smi_1].join('.') + '>' + [smi_2, smi_3].join('.') \
-            + '>' + smi_4,
+            "#{[smi0, smi1].join('.')}>#{[smi2, smi3].join('.')}>#{smi4}",
           )
         end
 
-        context 'user owned reaction,' do
+        context 'with user owned reaction,' do
           it 'queries the cano_smiles from reaction associated samples' do
             expect(result.fetch(rxn.id.to_s)).to eq(
-              '0' => [smi_0, smi_1],
-              '1' => [smi_2],
-              '2' => [smi_3],
-              '3' => [smi_4],
+              '0' => [smi0, smi1],
+              '1' => [smi2],
+              '2' => [smi3],
+              '3' => [smi4],
             )
           end
         end
 
-        context 'shared reaction,' do
+        context 'with shared reaction,' do
           it 'returns * as smiles for hidden structure' do
             expect(result_for_shared.fetch(rxn.id.to_s)).to eq(
               '0' => ['*', '*'],
@@ -347,7 +342,7 @@ describe Chemotion::ReportAPI do
       it 'return all reports of the user' do
         archives = JSON.parse(response.body)['archives']
         expect(archives.count).to eq(3)
-        expect(archives.map { |a| a['id'] }).to include(rp1.id, rp2.id, rp3.id)
+        expect(archives.pluck('id')).to include(rp1.id, rp2.id, rp3.id)
       end
     end
 
@@ -394,7 +389,7 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'POST /api/v1/reports' do
-      let(:fileName) { 'ELN' }
+      let(:filename) { 'ELN' }
       let(:params) do
         {
           objTags: [
@@ -418,7 +413,7 @@ describe Chemotion::ReportAPI do
             { text: 'whole_diagram', checked: true },
           ],
           imgFormat: 'png',
-          fileName: fileName,
+          fileName: filename,
           molSerials: [
             { mol: { id: 1, svgPath: '1a.svg', sumFormula: 'C6H6', iupacName: 'benzene' }, value: '1a' },
           ],
@@ -452,22 +447,33 @@ describe Chemotion::ReportAPI do
         params[:template] = 'standard'
         post '/api/v1/reports', params: params, as: :json
 
-        expect(response.body).to include(fileName)
+        expect(response.body).to include(filename)
       end
 
       it 'returns a created -supporting_information- report' do
         params[:template] = 'supporting_information'
         post '/api/v1/reports', params: params, as: :json
-        expect(response.body).to include(fileName)
+        expect(response.body).to include(filename)
       end
     end
 
     describe 'GET /api/v1/download_report/file' do
+      let!(:report) do
+        create(
+          :attachment,
+          filename: "#{rp1.file_name}.#{ext}",
+          attachable_id: rp1.id,
+          attachable_type: 'Report',
+          content_type: docx_mime_type,
+        )
+        rp1
+      end
+
       it 'returns a header with ext' do
-        get '/api/v1/download_report/file', params: { id: rp1.id, ext: ext }
-        expect(response['Content-Disposition']).to include("#{rp1.file_name}.#{ext}")
+        get '/api/v1/download_report/file', params: { id: report.id, ext: ext }
+        expect(response['Content-Disposition']).to include("#{report.file_name}.#{ext}")
       end
     end
   end
 end
-# rubocop:enable Rspec/MultipleMemoizedHelpers
+# rubocop:enable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
