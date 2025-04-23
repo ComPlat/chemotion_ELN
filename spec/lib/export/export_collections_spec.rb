@@ -21,7 +21,7 @@ RSpec.describe 'ExportCollection' do
   let(:collection) { create(:collection, user_id: user.id, label: 'Awesome Collection') }
   let(:file_path) { File.join('public', 'zip', "#{job_id}.zip") }
 
-  let(:molfile) { Rails.root.join('spec/fixtures/test_2.mol').read }
+  let(:molfile) { build(:molfile, type: 'test_2') }
   let(:svg) { Rails.root.join('spec/fixtures/images/molecule.svg').read }
   let(:sample) do
     create(:sample, created_by: user.id, name: 'Sample zero', molfile: molfile, collections: [collection])
