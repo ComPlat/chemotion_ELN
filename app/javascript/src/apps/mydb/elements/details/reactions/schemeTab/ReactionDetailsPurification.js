@@ -137,7 +137,7 @@ export default class ReactionDetailsPurification extends Component {
         <Row className="mb-3">
           <Col md={12}>
             <Form.Label>Additional information for publication and purification details</Form.Label>
-            <div className="quill-resize">
+            <div>
               {
                 permitOn(reaction) ? (
                   <QuillEditor

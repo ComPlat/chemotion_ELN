@@ -1287,7 +1287,7 @@ export default class ReactionDetailsScheme extends Component {
         <Row>
           <Form.Group>
             <Form.Label>Description</Form.Label>
-            <div className="quill-resize d-flex flex-column min-h-200">
+            <div>
               {
                 permitOn(reaction)
                   ? (

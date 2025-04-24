@@ -225,7 +225,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label>Stereo Rel</Form.Label>
+        <Form.Label>Stereo rel</Form.Label>
         <Select
           name="stereoRel"
           isDisabled={!sample.can_update}
@@ -747,6 +747,8 @@ export default class SampleForm extends React.Component {
       <Form>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
+        </Row>
+        <Row>
           <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
           <Col>{this.stereoAbsInput()}</Col>
           <Col>{this.stereoRelInput()}</Col>
