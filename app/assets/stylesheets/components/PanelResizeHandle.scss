@@ -1,5 +1,5 @@
 .panel-resize-handle {
-  @extend .text-bg-paper;
+  background-color: map-get($carbon-shades, l1);
   @extend .d-flex;
   @extend .flex-column;
   @extend .justify-content-evenly;
@@ -12,7 +12,7 @@
     top: calc(50% - 42px);
     background-image: radial-gradient(
       circle at 4px 4px,
-      $chemstrap-interaction-grey4 2px,
+      map-get($carbon-shades, l4) 2px,
       transparent 0
     );
     background-size: 5px 5px;
@@ -21,7 +21,7 @@
   &:hover:before {
     background-image: radial-gradient(
       circle at 4px 4px,
-      $chemstrap-interaction-grey5 2px,
+      map-get($carbon-shades, l5) 2px,
       transparent 0
     );
   }

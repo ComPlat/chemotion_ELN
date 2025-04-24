@@ -1,8 +1,6 @@
 .tree-view {
   @extend .d-flex;
   @extend .flex-column;
-  padding-top: 1px;
-  gap: 1px;
   &_frame {
     min-height: 0;
   }
@@ -13,18 +11,17 @@
   &_item {
     @extend .d-flex;
     @extend .align-items-baseline;
-    @extend .gap-1;
     cursor: pointer;
-    background: $chemstrap-paper;
+    background-color: map-get($silicon-shades, l3);
     font-size: 14px;
     @extend .py-2;
     @extend .pe-3;
     &:hover {
-      background-color: $chemstrap-interaction-grey1;
+      background-color: $chemstrap-blue-light;
     }
 
     &--selected {
-      @extend .text-bg-primary;
+      background-color: map-get($silicon-shades, l4);
       &:hover {
         background-color: $chemstrap-blue-light !important;
       }
