@@ -66,16 +66,14 @@ const handleProductClick = (product) => {
 
 const productLink = (product) => (
   <span>
-    Analysis: &nbsp;
+    Analysis:
     <span
       aria-hidden="true"
       className="pseudo-link"
       onClick={() => handleProductClick(product)}
-      style={{ cursor: 'pointer' }}
       title="Open sample window"
     >
-      <i className="icon-sample" />
-      &nbsp;
+      <i className="icon-sample mx-1" />
       {product.title()}
     </span>
   </span>
@@ -618,7 +616,7 @@ export default class ReactionDetails extends Component {
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
 
-    const currentActiveTab = (activeTab !== 0 && activeTab) || visible[0];
+    const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
       <Card className={`detail-card${reaction.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
@@ -637,7 +635,7 @@ export default class ReactionDetails extends Component {
           <div className="tabs-container--with-borders">
             <Tabs
               mountOnEnter
-              activeKey={currentActiveTab}
+              activeKey={currentTab}
               onSelect={this.handleSelect}
               id="reaction-detail-tab"
               unmountOnExit

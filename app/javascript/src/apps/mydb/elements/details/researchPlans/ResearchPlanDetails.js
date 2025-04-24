@@ -266,13 +266,6 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ visible });
   }
 
-  toggleFullScreen() {
-    this.props.toggleFullScreen();
-
-    // toogle update prop to notify react data grid for view change
-    this.setState((prevState) => ({ update: !prevState.update }));
-  }
-
   dropWellplate(wellplate) {
     const { researchPlan } = this.state;
     researchPlan.changed = true;
