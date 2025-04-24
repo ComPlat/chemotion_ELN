@@ -20,7 +20,6 @@ export default class ReactionDetailsPurification extends Component {
     this.handlePurificationChange = this.handlePurificationChange.bind(this);
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
-    this.handlePSolventChange = this.handlePSolventChange.bind(this);
     this.deletePSolvent = this.deletePSolvent.bind(this);
     this.dropPSolvent = this.dropPSolvent.bind(this);
   }
@@ -55,14 +54,6 @@ export default class ReactionDetailsPurification extends Component {
     } else {
       this.handleMultiselectChange('purification', selected);
     }
-  }
-
-  handlePSolventChange(changeEvent) {
-    const { sampleID, amount } = changeEvent;
-    const { reaction, onReactionChange } = this.props;
-    const updatedSample = reaction.sampleById(sampleID);
-    updatedSample.setAmount(amount);
-    onReactionChange(reaction);
   }
 
   deletePSolvent(material) {
@@ -100,7 +91,12 @@ export default class ReactionDetailsPurification extends Component {
   }
 
   render() {
-    const { reaction, onInputChange, additionQuillRef } = this.props;
+    const {
+      reaction,
+      onInputChange,
+      additionQuillRef,
+      onChange
+    } = this.props;
     return (
       <>
         <Row className="mb-3">
@@ -113,7 +109,7 @@ export default class ReactionDetailsPurification extends Component {
                 isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
                 options={purificationOptions}
                 onChange={this.handlePurificationChange}
-                value={purificationOptions.filter(({value}) => reaction.purification.includes(value))}
+                value={purificationOptions.filter(({ value }) => reaction.purification.includes(value))}
               />
             </Form.Group>
           </Col>
@@ -129,7 +125,7 @@ export default class ReactionDetailsPurification extends Component {
               deleteMaterial={this.deletePSolvent}
               dropSample={this.dropPSolvent}
               showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={this.handlePSolventChange}
+              onChange={onChange}
               headIndex={0}
             />
           </Col>
@@ -162,12 +158,14 @@ ReactionDetailsPurification.propTypes = {
   reaction: PropTypes.object,
   onReactionChange: PropTypes.func,
   onInputChange: PropTypes.func,
-  additionQuillRef: PropTypes.object
+  additionQuillRef: PropTypes.object,
+  onChange: PropTypes.func,
 };
 
 ReactionDetailsPurification.defaultProps = {
   reaction: {},
   onReactionChange: () => {},
   onInputChange: () => {},
+  onChange: () => {},
   additionQuillRef: {}
 };
