@@ -305,9 +305,9 @@ function SolventsMaterialGroup({
         <col style={{ width: '22%' }} />
         <col style={{ width: '2%' }} />
         <col style={{ width: '2%' }} />
-        <col style={{ width: '15%' }} />
-        <col style={{ width: '15%' }} />
-        <col />
+        <col style={{ width: '22%' }} />
+        <col style={{ width: '14%' }} />
+        <col style={{ width: '14%' }} />
         <col style={{ width: '2%' }} />
       </colgroup>
       <thead>
