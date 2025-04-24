@@ -25,7 +25,7 @@ class MessageIncomingDataJob < ApplicationJob
     when User
       arg.id
     when Device
-      arg.groups.any? ? arg.groups.first.id : User.default_admin.id
+      arg.groups.any? ? arg.groups.first.id : Admin.default_admin.id
     when Integer
       arg
     else
