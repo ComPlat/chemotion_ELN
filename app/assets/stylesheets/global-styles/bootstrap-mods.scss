@@ -7,30 +7,31 @@ $button-variant-colors: (
     "bg-active": $chemstrap-blue-dark,
     "text-active": $white,
   ),
-  "secondary": (
-    "bg-default": $chemstrap-interaction-grey1,
-    "text-default": $chemstrap-grey4,
-    "bg-hover": $chemstrap-interaction-grey2,
-    "text-hover": $chemstrap-grey4,
-    "bg-active": $chemstrap-interaction-grey3,
+  /*   "secondary": (
+    "bg-default": $chemstrap-charcoal1,
+    "text-default": $chemstrap-charcoal4,
+    "bg-hover": $chemstrap-charcoal2,
+    "text-hover": $chemstrap-charcoal4,
+    "bg-active": $chemstrap-charcoal3,
     "text-active": $white,
   ),
-  "paper": (
-    "bg-default": $chemstrap-paper,
-    "text-default": $chemstrap-ink,
-    "bg-hover": $chemstrap-interaction-grey1,
-    "text-hover": $chemstrap-ink,
-    "bg-active": $chemstrap-interaction-grey2,
-    "text-active": $chemstrap-ink,
-  ),
+    "paper":
+    (
+      "bg-default": $chemstrap-paper,
+      "text-default": $chemstrap-ink,
+      "bg-hover": $chemstrap-charcoal1,
+      "text-hover": $chemstrap-ink,
+      "bg-active": $chemstrap-charcoal2,
+      "text-active": $chemstrap-ink,
+    ),
   "knock-out": (
     "bg-default": transparent,
-    "text-default": $chemstrap-grey4,
+    "text-default": $chemstrap-charcoal4,
     "bg-hover": transparent,
     "text-hover": $black,
     "bg-active": transparent,
     "text-active": $chemstrap-blue-dark,
-  ),
+  ), */
 );
 
 h1,

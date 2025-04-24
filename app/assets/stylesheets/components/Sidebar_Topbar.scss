@@ -6,15 +6,12 @@ $sidebar-logo-height: 72px;
 
 .sidebar {
   @extend .d-flex;
-  @extend .text-bg-paper;
   @extend .flex-shrink-0;
   @extend .position-relative;
+  background-color: map-get($silicon-shades, l2);
   width: 300px;
   &-button-frame {
     @extend .d-flex;
-    background-color: $chemstrap-grey1;
-    gap: 1px;
-    padding: 1px;
   }
   &.sidebar--collapsed {
     width: 78px;
@@ -49,7 +46,7 @@ $sidebar-logo-height: 72px;
     padding-left: 8px;
     padding-right: 8px;
     &.btn-light {
-      background-color: $chemstrap-paper;
+      background-color: map-get($silicon-shades, l4);
     }
     font-size: 16px;
     i {
