@@ -37,7 +37,8 @@
 #  account_active         :boolean
 #  matrix                 :integer          default(0)
 #  providers              :jsonb
-#  inventory_labels       :jsonb
+#  used_space             :bigint           default(0)
+#  allocated_space        :bigint           default(0)
 #
 # Indexes
 #
