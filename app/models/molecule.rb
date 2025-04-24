@@ -27,8 +27,8 @@
 #
 # Indexes
 #
-#  index_molecules_on_deleted_at               (deleted_at)
-#  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
+#  index_molecules_on_deleted_at                           (deleted_at)
+#  index_molecules_on_formula_and_inchikey_and_is_partial  (inchikey,sum_formular,is_partial) UNIQUE
 #
 
 # rubocop:disable Metrics/ClassLength
