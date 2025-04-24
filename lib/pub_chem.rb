@@ -124,7 +124,7 @@ module PubChem
   def self.get_cas_from_cid(cid)
     return [] if cid.blank?
 
-    cid = cid.split(/\s+|,/).compact_blank.last
+    cid = cid.to_s.split(/\s+|,/).compact_blank.last
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/XML?heading=CAS"
     resp = HTTParty.get(page, options)
