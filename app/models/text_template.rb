@@ -86,7 +86,7 @@ class PredefinedTextTemplate < TextTemplate
         type: 'PredefinedTextTemplate',
         name: template_name,
         data: template,
-        user_id: Admin.first&.id,
+        user_id: Admin.default_admin&.id,
       )
     end
   end
