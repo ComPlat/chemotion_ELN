@@ -103,7 +103,7 @@ export default class ReactionDetailsPurification extends Component {
     const { reaction, onInputChange, additionQuillRef } = this.props;
     return (
       <>
-        <Row className='mb-2'>
+        <Row className="mb-3">
           <Col sm={12}>
             <Form.Group>
               <Form.Label>Purification</Form.Label>
@@ -118,7 +118,7 @@ export default class ReactionDetailsPurification extends Component {
             </Form.Group>
           </Col>
         </Row>
-        <Row className='mb-2'>
+        <Row className="mb-2">
           <Col sm={12}>
             <Form.Label>Purification solvents</Form.Label>
             <MaterialGroupContainer
@@ -134,19 +134,20 @@ export default class ReactionDetailsPurification extends Component {
             />
           </Col>
         </Row>
-        <Row className='mb-3'>
+        <Row className="mb-3">
           <Col md={12}>
             <Form.Label>Additional information for publication and purification details</Form.Label>
             <div className="quill-resize">
               {
-                permitOn(reaction) ?
+                permitOn(reaction) ? (
                   <QuillEditor
                     ref={additionQuillRef}
                     value={reaction.observation}
                     height="100%"
                     disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
-                    onChange={event => onInputChange('observation', event)}
-                  /> : <QuillViewer value={reaction.observation} />
+                    onChange={(event) => onInputChange('observation', event)}
+                  />
+                ) : <QuillViewer value={reaction.observation} />
               }
             </div>
             <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />

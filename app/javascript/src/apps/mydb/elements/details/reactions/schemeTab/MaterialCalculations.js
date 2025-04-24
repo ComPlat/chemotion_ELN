@@ -57,60 +57,62 @@ export default class MaterialCalculations extends Component {
       paddingLeft: 2,
     };
 
-    return <tr>
-      <td className='pt-4 px-1'></td>
-      <td className='pt-4 px-1'></td>
-      <td className='pt-4 px-1'></td>
-      <td className='pt-4 px-1'><label>Adjusted: </label></td>
-      <td className='pt-4 px-1'>
-        <NumeralInputWithUnitsCompo
-          key={material.id}
-          value={material.adjusted_amount_g}
-          unit='g'
-          metricPrefix={metric}
-          metricPrefixes={metricPrefixes}
-          precision={5}
-          disabled
-          readOnly
-        />
-      </td>
+    return (
+      <tr>
+        <td className="pt-4 px-1" />
+        <td className="pt-4 px-1" />
+        <td className="pt-4 px-1" />
+        <td className="pt-4 px-1"><label>Adjusted: </label></td>
+        <td className="pt-4 px-1">
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            value={material.adjusted_amount_g}
+            unit='g'
+            metricPrefix={metric}
+            metricPrefixes={metricPrefixes}
+            precision={5}
+            disabled
+            readOnly
+          />
+        </td>
 
-      {this.materialVolume(material, inputsStyle)}
+        {this.materialVolume(material, inputsStyle)}
 
-      <td className='pt-4 px-1'>
-        <NumeralInputWithUnitsCompo
-          key={'adjusted_amount_mol' + material.id.toString()}
-          value={material.adjusted_amount_mol}
-          unit='mol'
-          metricPrefix={metricMol}
-          metricPrefixes={metricPrefixesMol}
-          precision={4}
-          disabled
-          readOnly
-        />
-      </td>
+        <td className="pt-4 px-1">
+          <NumeralInputWithUnitsCompo
+            key={'adjusted_amount_mol' + material.id.toString()}
+            value={material.adjusted_amount_mol}
+            unit="mol"
+            metricPrefix={metricMol}
+            metricPrefixes={metricPrefixesMol}
+            precision={4}
+            disabled
+            readOnly
+          />
+        </td>
 
-      <td className='pt-4 px-1'>
-        <NumeralInputWithUnitsCompo
-          key={'adjusted_loading' + material.id.toString()}
-          value={material.adjusted_loading}
-          unit='mmol/g'
-          metricPrefix='n'
-          metricPrefixes={['n']}
-          precision={3}
-          disabled
-          readOnly
-        />
-      </td>
+        <td className="pt-4 px-1">
+          <NumeralInputWithUnitsCompo
+            key={'adjusted_loading' + material.id.toString()}
+            value={material.adjusted_loading}
+            unit="mmol/g"
+            metricPrefix="n"
+            metricPrefixes={['n']}
+            precision={3}
+            disabled
+            readOnly
+          />
+        </td>
 
-      <td className='pt-4 px-1'>
-        <Form.Control
-          type="text"
-          value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
-          disabled
-        />
-      </td>
-      <td></td>
-    </tr>
+        <td className="pt-4 px-1">
+          <Form.Control
+            type="text"
+            value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
+            disabled
+          />
+        </td>
+        <td />
+      </tr>
+    );
   }
 }

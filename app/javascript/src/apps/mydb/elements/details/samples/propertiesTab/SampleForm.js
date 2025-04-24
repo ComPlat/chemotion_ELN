@@ -239,6 +239,7 @@ export default class SampleForm extends React.Component {
 
   moleculeInput() {
     const { sample } = this.props;
+    const { isMolNameLoading } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
@@ -746,8 +747,6 @@ export default class SampleForm extends React.Component {
       <Form>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
-        </Row>
-        <Row className="align-items-end mb-4">
           <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
           <Col>{this.stereoAbsInput()}</Col>
           <Col>{this.stereoRelInput()}</Col>

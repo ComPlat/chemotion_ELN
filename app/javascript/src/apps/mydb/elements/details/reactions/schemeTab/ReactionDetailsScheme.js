@@ -1284,10 +1284,10 @@ export default class ReactionDetailsScheme extends Component {
             {this.reactionVesselSize()}
           </Col>
         </Row>
-        <Row className="mb-3">
+        <Row>
           <Form.Group>
             <Form.Label>Description</Form.Label>
-            <div className="quill-resize">
+            <div className="quill-resize d-flex flex-column min-h-200">
               {
                 permitOn(reaction)
                   ? (
