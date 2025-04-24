@@ -1571,6 +1571,8 @@ ActiveRecord::Schema.define(version: 2025_03_28_123030) do
     t.datetime "deleted_at"
     t.string "bar_code"
     t.string "qr_code"
+    t.float "weight_amount"
+    t.string "weight_unit"
     t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
     t.index ["user_id"], name: "index_vessels_on_user_id"
     t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
