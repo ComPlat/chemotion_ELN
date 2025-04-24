@@ -784,7 +784,7 @@ export default class SampleForm extends React.Component {
         )}
 
         <Row className="align-items-center g-2 mb-4">
-          <Col xs={6} className="d-flex align-items-end gap-2">
+          <Col xs={7} className="d-flex align-items-end gap-2">
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>
