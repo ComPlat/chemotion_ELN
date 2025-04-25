@@ -97,6 +97,22 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
 };
 
 export default class Reaction extends Element {
+  // reaction material types
+  static STARTING_MATERIALS = 'starting_materials';
+  static REACTANTS = 'reactants';
+  static PRODUCTS = 'products';
+  static SOLVENTS = 'solvents';
+  static PURIFICATION_SOLVENTS = 'purification_solvents';
+
+  // material group
+  static materialGroups = [
+    Reaction.PRODUCTS,
+    Reaction.REACTANTS,
+    Reaction.STARTING_MATERIALS,
+    Reaction.SOLVENTS,
+    Reaction.PURIFICATION_SOLVENTS
+  ];
+
   static buildEmpty(collection_id) {
     const reaction = new Reaction({
       collection_id,
@@ -875,6 +891,79 @@ export default class Reaction extends Element {
       materials.map(m => solventVolume += m.amount_l);
       return solventVolume;
     }
+
+  /**
+  * Calculates the volume ratio (as a percentage) of a material within a given material group.
+  *
+  * This method is useful for determining how much a material contributes to the total volume
+  * of its group (e.g., solvents or purification solvents).
+  *
+  * @param {number} amountLiters - The volume of the material in liters.
+  * @param {number} totalVolume - The total volume of the material group in liters.
+  * @returns {string} The volume ratio as a percentage string (e.g., "25.0%"), or `'n.d.'` if
+  * the total volume is invalid or the calculation results in a non-numeric value.
+  */
+  calculateVolumeRatio(amountLiters, totalVolume) {
+    if (!totalVolume || totalVolume === 0) return 'n.d.';
+    const concn = ((amountLiters / totalVolume) * 100).toFixed(1);
+    if (isNaN(concn) || !isFinite(concn)) return 'n.d.';
+    return `${concn}%`;
+  }
+
+  /**
+   * Searches for a material by its ID within the defined material groups.
+   *
+   * Iterates through each group in `materialGroups` (e.g., starting materials, products, etc.)
+   * and returns the material if found, along with its corresponding group type.
+   *
+   * @param {string} id - The unique identifier of the material to search for.
+   * @returns {{ type: string|null, material: Object|null }} An object containing the material group type and the material itself,
+   * or `{ type: null, material: null }` if not found.
+   */
+  findMaterialById(id) {
+    for (const key of Reaction.materialGroups) {
+      const list = this[key];
+      if (Array.isArray(list)) {
+        const found = list.find(sample => sample?.id === id);
+        if (found) {
+          return { type: key, material: found };
+        }
+      }
+    }
+    return { type: null, material: null };
+  }
+
+  /**
+   * Calculates the volume ratio (as a percentage) for a given material group.
+   *
+   * @param {string} materialGroup - The material group to calculate the volume for (e.g., 'solvents', 'purification_solvents').
+   * @param {number} amountLiters - The volume of the material in liters.
+   * @returns {string} The volume ratio as a percentage string (e.g., "25.0%"), or `'n.d.'` if the total volume is invalid or calculation is not possible.
+   */
+  totalVolumeForMaterialGroup(materialGroup, amountLiters) {
+    let totalVolume = 0;
+    if (Array.isArray(this[materialGroup])) {
+      totalVolume = this[materialGroup].reduce((sum, m) => sum + (m.amount_l || 0), 0);
+    }
+    if (!totalVolume || totalVolume === 0) return 'n.d.';
+    const value = ((amountLiters / totalVolume) * 100).toFixed(1);
+    return `${value}%`;
+  }
+
+  /**
+   * Calculates the volume ratio (as a percentage) of a specific material by its ID
+   * relative to the total volume of its material group (e.g., solvents or purification solvents).
+   *
+   * @param {number|string} id - The unique identifier of the material to calculate the ratio for.
+   * @returns {string} The volume ratio as a percentage string (e.g., '25.0%') or 'n.d.' if not determinable.
+   */
+  volumeRatioByMaterialId(id) {
+    const { type, material } = this.findMaterialById(id);
+    if (!type || !material) return 'n.d.';
+    const amountLiters = material.amount_l;
+    if (isNaN(amountLiters) || amountLiters < 0) return 'n.d.'; // Ensure amount_l is valid
+    return this.totalVolumeForMaterialGroup(type, amountLiters);
+  }
 
     // overwrite isPendingToSave method in models/Element.js
     get isPendingToSave() {

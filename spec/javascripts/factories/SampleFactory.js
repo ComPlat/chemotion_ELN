@@ -30,6 +30,19 @@ export default class SampleFactory {
 
         return sample;
       });
-
+      
+      this.factory.define("reactionConcentrations.water_100g", Sample, async () => {
+        const sample = Sample.buildEmpty(0);
+        sample.amount_value = 2;
+        sample.molecule = new Molecule();
+        sample.molecule.exact_molecular_weight = 18.010564684;
+        sample.molecule.molecular_weight = 18.010564684;
+        sample.amountType = "target";
+        sample.amount_unit = "l"; // <-- 'l' for liters here
+        sample.coefficient = 1;
+        sample.is_new = false;
+  
+        return sample;
+      });
     }
   }
