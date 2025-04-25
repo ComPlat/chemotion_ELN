@@ -1017,7 +1017,7 @@ export default class SampleForm extends React.Component {
     reaction._products.map((s) => {
       if (s.id === sample.id) {
         // eslint-disable-next-line no-param-reassign
-        sample.amountType = 'real';
+       //  sample.amountType = 'real';
       }
       return sample;
     });
@@ -1083,7 +1083,7 @@ export default class SampleForm extends React.Component {
 
     if (sample.belongTo !== undefined && sample.belongTo !== null) {
       // assign amount type for product samples of reaction to real
-      this.assignAmountType(sample.belongTo, sample);
+      // this.assignAmountType(sample.belongTo, sample);
     }
 
     return (
