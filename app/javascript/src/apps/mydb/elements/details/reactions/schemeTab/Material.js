@@ -855,9 +855,10 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
-    if (this.props.materialGroup !== 'products') {
+/*     if (this.props.materialGroup !== 'products') {
       this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
-    }
+    } */
+    this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
   }
 
   solventMaterial(props, className) {
@@ -1119,7 +1120,7 @@ class Material extends Component {
     }
 
     if (this.props.materialGroup === 'products') {
-      material.amountType = 'real'; // always take real amount for product
+      // material.amountType = 'real'; // always take real amount for product
     }
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     const component = sp ?
