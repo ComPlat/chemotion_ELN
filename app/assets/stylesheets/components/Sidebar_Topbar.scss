@@ -2,34 +2,36 @@ $sidebar-logo-height: 72px;
 
 .topbar {
   min-height: $sidebar-logo-height;
+  background-color: map-get($silicon-shades, l2);
 }
 
 .sidebar {
   @extend .d-flex;
   @extend .flex-shrink-0;
-  @extend .position-relative;
   background-color: map-get($silicon-shades, l2);
-  width: 300px;
+  width: 260px;
   &-button-frame {
     @extend .d-flex;
   }
   &.sidebar--collapsed {
-    width: 78px;
+    width: 44px;
+    .sidebar-logo {
+      @extend .justify-content-center;
+      @extend .ms-0;
+    }
   }
   &-logo {
-    @extend .position-absolute;
-    @extend .top-0;
-    @extend .start-0;
+    height: $sidebar-logo-height;
+    margin-left: 0.75rem;
+    @extend .d-flex;
+    @extend .align-items-center;
   }
   &-content {
     @extend .h-100;
     @extend .d-flex;
     @extend .flex-column;
-    @extend .gap-4;
     @extend .flex-grow-1;
     @extend .pb-4;
-    padding-left: 16px;
-    padding-top: $sidebar-logo-height; //logo height
   }
   &-collapse-button-container {
     margin-top: $sidebar-logo-height; //hack to compensate header height

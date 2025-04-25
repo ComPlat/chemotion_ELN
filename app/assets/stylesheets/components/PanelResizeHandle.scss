@@ -1,10 +1,10 @@
 .panel-resize-handle {
-  background-color: map-get($carbon-shades, l1);
+  background-color: map-get($silicon-shades, l2);
   @extend .d-flex;
   @extend .flex-column;
   @extend .justify-content-evenly;
-  @extend .border-start;
-  @extend .border-end;
+  width: 16px;
+  margin-left: 2px;
   &:after,
   &:before {
     content: "";

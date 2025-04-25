@@ -28,7 +28,7 @@ export default function Sidebar() {
         <a href="/mydb" title="Link to mydb index page" className="sidebar-logo">
           <ChemotionLogo collapsed={isCollapsed} />
         </a>
-        <div className="flex-grow-1 h-0">
+        <div className="flex-grow-1 h-0 pb-4">
           <CollectionTree
             isCollapsed={isCollapsed}
             expandSidebar={UIActions.expandSidebar}

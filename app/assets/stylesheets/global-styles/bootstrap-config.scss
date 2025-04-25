@@ -21,6 +21,8 @@ $chemstrap-theme-colors: (
   "active": $chemstrap-blue-dark,
   "paper": $chemstrap-paper,
   "draggable": $chemstrap-blue-dull,
+  "tertiary": map-get($silicon-shades, l2),
+  "tertiary-active": map-get($silicon-shades, l5),
 );
 
 @import "bootstrap/functions";

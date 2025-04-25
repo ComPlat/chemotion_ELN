@@ -411,11 +411,11 @@ export default class NoticeButton extends React.Component {
 
   render() {
     const noticeNum = Object.keys(this.state.dbNotices).length;
-    let btnStyle = 'paper';
+    let btnVariant = 'tertiary';
     let btnIcon = 'fa-bell-o';
 
     if (noticeNum > 0) {
-      btnStyle = 'warning';
+      btnVariant = 'warning';
       btnIcon = 'fa-bell';
     }
 
@@ -423,7 +423,7 @@ export default class NoticeButton extends React.Component {
       <>
         <SidebarButton
           label="Notifications"
-          variant={btnStyle}
+          variant={btnVariant}
           icon={btnIcon}
           onClick={this.handleShow}
         />

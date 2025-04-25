@@ -7,23 +7,24 @@
   &_container {
     @extend .tree-view;
     @extend .overflow-y-auto;
+    background-color: map-get($silicon-shades, l3);
   }
   &_item {
     @extend .d-flex;
     @extend .align-items-baseline;
     cursor: pointer;
-    background-color: map-get($silicon-shades, l3);
     font-size: 14px;
     @extend .py-2;
     @extend .pe-3;
+    @extend .gap-2;
     &:hover {
-      background-color: $chemstrap-blue-light;
+      background-color: map-get($silicon-shades, l5);
     }
 
     &--selected {
-      background-color: map-get($silicon-shades, l4);
+      background-color: map-get($silicon-shades, l5);
       &:hover {
-        background-color: $chemstrap-blue-light !important;
+        background-color: $chemstrap-silicon !important;
       }
     }
 
