@@ -255,7 +255,7 @@ export default class SampleForm extends React.Component {
             options={moleculeNames}
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
-            isLoading={this.state.isMolNameLoading}
+            isLoading={isMolNameLoading}
             value={moleculeNames.find(({ value }) => value === mno?.value)}
             onCreateOption={this.addMolName}
             className="flex-grow-1"
