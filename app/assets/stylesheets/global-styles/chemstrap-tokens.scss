@@ -34,7 +34,7 @@ $chemstrap-red: #ff5555; //danger
 $chemstrap-green: #6dce4d; //success
 $chemstrap-yellow: #ffb155; //warning
 /* Gray tones */
-$chemstrap-silicon: #839aa5;
+$chemstrap-silicon: #c4cfd4;
 $chemstrap-carbon: #1c1b1e;
 $shades: 6;
 
@@ -43,22 +43,12 @@ $shades: 6;
 
   $step: 100 / $shades;
 
-  // lighten and darken
   @for $i from 1 through $shades - 1 {
     $colors: map-merge(
       $colors,
       (l#{$shades - $i}: mix(white, $value, $step * $i))
     );
   }
-
-  // base color
-  $colors: map-merge(
-    $colors,
-    (
-      base: $value,
-    )
-  );
-
   @return $colors;
 }
 

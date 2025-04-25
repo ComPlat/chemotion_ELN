@@ -123,7 +123,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
                 appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
                   <GatePushButton collectionId={chemotionRepository.id} />
                 ) : null}
-                variant={isActive ? 'primary' : 'paper'}
+                variant={isActive ? 'tertiary-active' : 'tertiary'}
               />
               {isActive && !isCollapsed && roots !== undefined && (
                 <div className="tree-view_container">

@@ -79,7 +79,7 @@ function Elements() {
       {showDetailView && (
         <>
           <PanelResizeHandle className="panel-resize-handle">
-            <PanelCollapseButton isCollapsed={isCollapsed} onClick={toggleListView} />
+            <PanelCollapseButton indented={isCollapsed} isCollapsed={isCollapsed} onClick={toggleListView} />
           </PanelResizeHandle>
           <Panel
             id="elements-detail-view"
