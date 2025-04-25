@@ -1,9 +1,13 @@
 module Reporter
+  # Delta class to convert Quill delta format to HTML
   class Delta
     attr_reader :delta, :html
 
-    def initialize(d, font_family = nil)
-      @delta = d
+    # Initialize the Delta class with a delta and optional font font_family
+    # @param delta_input [Hash, Nil] The delta to be converted
+    # @param font_family [String, Nil] The font family to be used in the HTML
+    def initialize(delta_input, font_family = nil)
+      @delta = delta_input.presence || {}
       @font_family = font_family
     end
 
