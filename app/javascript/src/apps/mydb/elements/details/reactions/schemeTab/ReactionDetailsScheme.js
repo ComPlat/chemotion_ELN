@@ -1287,7 +1287,7 @@ export default class ReactionDetailsScheme extends Component {
         <Row className="mb-3">
           <Form.Group>
             <Form.Label>Description</Form.Label>
-            <div className="quill-resize">
+            <div>
               {
                 permitOn(reaction)
                   ? (
@@ -1309,6 +1309,7 @@ export default class ReactionDetailsScheme extends Component {
           onReactionChange={(r) => this.onReactionChange(r)}
           onInputChange={(type, event) => this.props.onInputChange(type, event)}
           additionQuillRef={this.additionQuillRef}
+          onChange={(event) => this.handleMaterialsChange(event)}
         />
       </>
     );

@@ -225,7 +225,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label>Stereo Rel</Form.Label>
+        <Form.Label>Stereo rel</Form.Label>
         <Select
           name="stereoRel"
           isDisabled={!sample.can_update}
@@ -239,6 +239,7 @@ export default class SampleForm extends React.Component {
 
   moleculeInput() {
     const { sample } = this.props;
+    const { isMolNameLoading } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
@@ -254,7 +255,7 @@ export default class SampleForm extends React.Component {
             options={moleculeNames}
             onMenuOpen={() => this.openMolName(sample)}
             onChange={this.updateMolName}
-            isLoading={this.state.isMolNameLoading}
+            isLoading={isMolNameLoading}
             value={moleculeNames.find(({ value }) => value === mno?.value)}
             onCreateOption={this.addMolName}
             className="flex-grow-1"
@@ -783,7 +784,7 @@ export default class SampleForm extends React.Component {
         )}
 
         <Row className="align-items-center g-2 mb-4">
-          <Col xs={6} className="d-flex align-items-end gap-2">
+          <Col xs={7} className="d-flex align-items-end gap-2">
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>

@@ -965,7 +965,7 @@ export default class SampleDetails extends React.Component {
       <Form.Check
         type="checkbox"
         id="sample-inventory-header"
-        className="mx-3 sample-inventory-header"
+        className="mx-2 sample-inventory-header"
         checked={sample.inventory_sample}
         onChange={(e) => this.handleInventorySample(e)}
         label="Inventory"
@@ -976,7 +976,7 @@ export default class SampleDetails extends React.Component {
       <Form.Check
         type="checkbox"
         id="sample-header-decouple"
-        className="mx-3 sample-header-decouple"
+        className="mx-2 sample-header-decouple"
         checked={sample.decoupled}
         onChange={(e) => this.decoupleChanged(e)}
         label="Decoupled"
@@ -986,8 +986,8 @@ export default class SampleDetails extends React.Component {
     const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
     return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center flex-wrap gap-2">
+      <div className="d-flex align-items-center flex-wrap">
+        <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span className="flex-shrink-0">
               <i className="icon-sample me-1" />
@@ -1002,7 +1002,7 @@ export default class SampleDetails extends React.Component {
           <HeaderCommentSection element={sample} />
           {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
         </div>
-        <div className="d-flex align-items-center gap-1">
+        <div className="d-flex align-items-center gap-2">
           {decoupleCb}
           {inventorySample}
           {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}

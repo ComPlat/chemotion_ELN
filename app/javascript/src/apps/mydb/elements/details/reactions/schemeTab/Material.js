@@ -847,7 +847,7 @@ class Material extends Component {
 
   solventMaterial(props, className) {
     const { material, deleteMaterial, connectDragSource,
-      connectDropTarget, reaction } = props;
+      connectDropTarget, reaction, materialGroup } = props;
     const isTarget = material.amountType === 'target';
     const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
@@ -889,18 +889,18 @@ class Material extends Component {
                 size="sm"
                 value={material.external_label}
                 placeholder={material.molecule.iupac_name}
-                onChange={event => this.handleExternalLabelChange(event)}
+                onChange={(event) => this.handleExternalLabelChange(event)}
               />
             </OverlayTrigger>
             <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
-                <Button
-                  disabled={!permitOn(reaction)}
-                  active
-                  onClick={e => this.handleExternalLabelCompleted(e)}
-                  size="sm"
-                >
-                  <i className="fa fa-refresh" />
-                </Button>
+              <Button
+                disabled={materialGroup === 'purification_solvents' || !permitOn(reaction)}
+                active
+                onClick={(e) => this.handleExternalLabelCompleted(e)}
+                size="sm"
+              >
+                <i className="fa fa-refresh" />
+              </Button>
             </OverlayTrigger>
           </InputGroup>
         </td>

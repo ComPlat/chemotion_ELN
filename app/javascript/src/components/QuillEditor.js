@@ -348,6 +348,7 @@ export default class QuillEditor extends React.Component {
         <div
           ref={this.id}
           style={{ height: this.height }}
+          className="quill-resize"
         />
       </div>
     );
