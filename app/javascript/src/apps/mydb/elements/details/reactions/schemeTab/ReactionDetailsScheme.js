@@ -1284,7 +1284,7 @@ export default class ReactionDetailsScheme extends Component {
             {this.reactionVesselSize()}
           </Col>
         </Row>
-        <Row>
+        <Row className="mb-3">
           <Form.Group>
             <Form.Label>Description</Form.Label>
             <div>
