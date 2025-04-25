@@ -14,14 +14,14 @@ export default function CollectionManagementButton({ isCollapsed }) {
         onHide={() => setShowModal(false)}
       />
       <Button
-        className={`collection-management-button w-100${isCollapsed ? '' : ' text-end'}`}
-        variant="secondary"
+        className={`collection-management-button w-100 text-body-secondary${isCollapsed ? '' : ' text-start'}`}
+        variant="tertiary"
         onClick={() => setShowModal(true)}
       >
+        <i className={`fa fa-cog ${isCollapsed ? 'mx-auto' : 'ms-1 me-2'}`} />
         {!isCollapsed && (
           <span>Manage Collections</span>
         )}
-        <i className={`fa fa-cog ${isCollapsed ? 'mx-auto' : 'ms-2'}`} />
       </Button>
     </>
   );
