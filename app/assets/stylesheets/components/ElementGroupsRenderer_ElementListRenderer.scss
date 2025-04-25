@@ -1,12 +1,12 @@
 .element-groups-renderer .element-group-header {
-  @extend .bg-gray-100;
+  background-color: map-get($silicon-shades, l1);
 }
 
 .element-list-renderer .element-list-item,
 .element-groups-renderer .element-list-item {
   &:not(&--selected) {
     &:hover {
-      @extend .bg-gray-200;
+      background-color: map-get($silicon-shades, l2);
     }
   }
 

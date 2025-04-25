@@ -23,7 +23,6 @@ export default function SidebarButton({
           <Badge
             pill
             bg="warning"
-            text={variant}
             className="position-absolute top-100 start-50 translate-middle"
           >
             {badgeCount}
@@ -60,7 +59,7 @@ SidebarButton.propTypes = {
 
 SidebarButton.defaultProps = {
   isCollapsed: true,
-  variant: 'paper',
+  variant: 'tertiary',
   badgeCount: null,
   appendComponent: null,
 };
