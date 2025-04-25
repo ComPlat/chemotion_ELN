@@ -761,9 +761,10 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
-    if (this.props.materialGroup !== 'products') {
+/*     if (this.props.materialGroup !== 'products') {
       this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
-    }
+    } */
+    this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
   }
 
   solventMaterial() {
