@@ -69,7 +69,7 @@ function Elements() {
         defaultSize={showDetailView ? defaultLayout[0] : 100}
         className="w-0"
       >
-        <div className="h-100 pt-3 px-3 overflow-x-auto">
+        <div className="h-100 pt-4 px-4 overflow-x-auto">
           <div className="h-100" style={{ minWidth: '600px' }}>
             <ElementsList overview={!showDetailView} />
           </div>
@@ -87,7 +87,7 @@ function Elements() {
             defaultSize={defaultLayout[1]}
             className="w-0"
           >
-            <div className="h-100 pt-3 px-3 overflow-x-auto">
+            <div className="h-100 pt-4 px-4 overflow-x-auto">
               <div className="h-100" style={{ minWidth: '680px' }}>
                 <ElementDetails />
               </div>
