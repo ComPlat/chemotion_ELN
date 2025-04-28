@@ -1,21 +1,30 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class Vessel extends Element {
-  static buildEmpty(collectionId, shortLabelIn, typeIn = '') {
+  static buildEmpty(collectionId, shortLabelIn = '', typeIn = '') {
     if (collectionId === undefined || !Number.isInteger(Number(collectionId))) {
       throw new Error(`collection id is not valid: ${collectionId}`);
     }
+
+    const shortLabel = shortLabelIn || Vessel.buildNewShortLabel();
+
     const vessel = new Vessel({
       container: Container.init(),
       collectionId: Number(collectionId),
       type: typeIn === 'vessel_template' ? 'vessel_template' : 'vessel',
-      short_label: shortLabelIn,
-      // is_new: typeIn !== 'vessel_template',
+      short_label: shortLabel,
       is_new: true,
     });
 
     return vessel;
+  }
+
+  static buildNewShortLabel() {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) return 'NEW VESSEL';
+    return `${currentUser.initials}-V${currentUser.vessels_count + 1}`;
   }
 
   title() {
