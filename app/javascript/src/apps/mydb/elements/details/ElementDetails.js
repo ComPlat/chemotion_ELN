@@ -218,7 +218,7 @@ export default class ElementDetails extends Component {
           id="elements-tabs"
           activeKey={activeKey}
           onSelect={DetailActions.select}
-          className="sheet-tabs"
+          className="surface-tabs"
         >
           {selectedElements}
         </Tabs>

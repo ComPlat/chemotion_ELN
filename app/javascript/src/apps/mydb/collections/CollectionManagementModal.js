@@ -22,7 +22,7 @@ function CollectionManagementModal({ show, onHide }) {
         Collection Management
       </Modal.Header>
       <Modal.Body>
-        <Tabs defaultActiveKey={0} id="collection-management-tab" className="sheet-tabs">
+        <Tabs defaultActiveKey={0} id="collection-management-tab" className="surface-tabs">
           <Tab eventKey={0} title="My Collections">
             <MyCollections />
           </Tab>

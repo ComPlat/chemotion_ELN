@@ -1,20 +1,19 @@
-.nav-tabs.sheet-tabs {
-  @extend .mb-1;
+.nav-tabs.surface-tabs {
   @extend .border-bottom-0;
   @extend .gap-1;
 }
-.nav-tabs.sheet-tabs .nav-link,
-.sheet-tab {
+.nav-tabs.surface-tabs .nav-link,
+.surface-tab {
+  @extend .mb-0;
   @extend .text-body;
   @extend .state-border;
-  --bs-bg-opacity: 0.3;
-  --bs-border-opacity: 0.5;
-  @extend .text-bg-paper;
+  --bs-border-opacity: 0.7;
+  @extend .text-bg-surface2;
   padding: 0.25rem 0.75rem !important;
   &.active {
     @extend .border-active;
+    @extend .text-bg-surface3;
     --bs-border-opacity: 1;
-    --bs-bg-opacity: 1;
     i {
       @extend .text-active;
     }
@@ -23,4 +22,8 @@
     @extend .border-warning;
     --bs-border-opacity: 1;
   }
+}
+.surface-tab__header {
+  @extend .text-bg-surface3;
+  @extend .mb-2;
 }
