@@ -3,10 +3,11 @@
   @extend .h-100;
 
   > .card-header {
-    @extend .text-bg-primary;
+    @extend .surface-tab__header;
   }
 
   > .card-body {
+    @extend .p-0;
     @extend .h-0;
     overflow-x: hidden;
     overflow-y: scroll;
