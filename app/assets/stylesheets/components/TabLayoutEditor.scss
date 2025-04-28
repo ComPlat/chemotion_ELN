@@ -6,7 +6,7 @@
     background-color: $body-bg;
     &-item {
       @extend .mb-2;
-      @extend .sheet-tab;
+      @extend .surface-tab;
       font-size: $font-size-root !important;
       border-top-left-radius: $nav-tabs-border-radius !important;
       border-top-right-radius: $nav-tabs-border-radius !important;

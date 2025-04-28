@@ -1,4 +1,4 @@
-$white: $chemstrap-paper;
+$white: $chemstrap-white;
 $primary: $chemstrap-blue;
 $secondary: $chemstrap-silicon;
 $success: $chemstrap-green;
@@ -19,7 +19,12 @@ $zindex-levels: (
 
 $chemstrap-theme-colors: (
   "active": $chemstrap-blue-dark,
-  "paper": $chemstrap-paper,
+  "surface": $chemstrap-white,
+  "surface1": map-get($silicon-shades, l1),
+  "surface2": map-get($silicon-shades, l2),
+  "surface3": map-get($silicon-shades, l3),
+  "surface4": map-get($silicon-shades, l4),
+  "surface5": map-get($silicon-shades, l5),
   "draggable": $chemstrap-blue-dull,
   "tertiary": map-get($silicon-shades, l2),
   "tertiary-active": map-get($silicon-shades, l5),
@@ -29,7 +34,7 @@ $chemstrap-theme-colors: (
 @import "bootstrap/variables";
 @import "bootstrap/mixins";
 
-$body-bg: $chemstrap-paper;
+$body-bg: $chemstrap-white;
 $body-color: $chemstrap-ink;
 $font-family-sans-serif: "Roboto", sans-serif;
 $font-size-root: 14px;
@@ -46,18 +51,18 @@ $input-btn-padding-y: 0.3rem;
 $enable-negative-margins: true;
 
 $table-bg: transparent;
-$card-bg: $chemstrap-paper;
-$accordion-bg: $chemstrap-paper;
-$modal-content-bg: $chemstrap-paper;
-$list-group-bg: $chemstrap-paper;
+$card-bg: $chemstrap-white;
+$accordion-bg: $chemstrap-white;
+$modal-content-bg: $chemstrap-white;
+$list-group-bg: $chemstrap-white;
 $list-group-color: $chemstrap-ink;
 
-$popover-bg: $chemstrap-paper;
+$popover-bg: $chemstrap-white;
 $popover-body-color: $chemstrap-ink;
 $popover-max-width: 50vw;
 $popover-body-padding-y: 0.5rem;
 
-$input-bg: $chemstrap-paper;
+$input-bg: $chemstrap-white;
 $form-select-bg: $input-bg;
 $form-check-input-bg: $input-bg;
 $form-label-font-weight: $font-weight-bold;

@@ -104,7 +104,7 @@ function Styleguide() {
   return (
     <Container className="my-3">
       <h1>ChemStrap Styleguide</h1>
-      <Tabs defaultActiveKey={0} id="collection-management-tab" className="sheet-tabs">
+      <Tabs defaultActiveKey={0} id="collection-management-tab" className="surface-tabs">
         <Tab eventKey={0} title="Typography">{renderTypography()}</Tab>
         <Tab eventKey={1} title="Buttons">{renderButtons()}</Tab>
         <Tab eventKey={2} title="Forms">{renderForms()}</Tab>
