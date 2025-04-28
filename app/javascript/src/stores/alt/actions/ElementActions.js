@@ -1046,7 +1046,8 @@ class ElementActions {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return; }
 
-    const vesselInstance = Vessel.buildEmpty(collectionId, `${currentUser.initials}-V${currentUser.vessels_count}`);
+    const vesselInstance = Vessel.buildEmpty(collectionId);
+
     if (template) {
       vesselInstance.copyMaterialFrom(template);
     }
