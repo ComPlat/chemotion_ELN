@@ -1,6 +1,6 @@
 .drag-handle {
   cursor: move;
-  min-width: 16px;
+  min-width: 15px;
   @extend .d-flex;
   @extend .align-items-center;
   @extend .bg-draggable;
