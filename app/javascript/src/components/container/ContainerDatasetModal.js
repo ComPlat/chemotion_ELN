@@ -32,12 +32,10 @@ export default class ContainerDatasetModal extends Component {
   }
 
   handleSave() {
-    this.datasetInput.current.handleSave();
-    this.props.onChange({
-      ...this.props.datasetContainer,
-      ...this.datasetInput.current.state.datasetContainer,
-      name: this.state.localName
-    });
+    if (this.datasetInput.current) {
+      this.datasetInput.current.setLocalName(this.state.localName);
+      this.datasetInput.current.handleSave();
+    }
   }
 
   handleNameChange(newName) {
@@ -185,7 +183,7 @@ export default class ContainerDatasetModal extends Component {
               className="align-self-center ms-auto"
               onClick={this.handleSave}
             >
-              Keep Changes
+              Save Changes
             </Button>
           </Modal.Footer>
         </Modal>

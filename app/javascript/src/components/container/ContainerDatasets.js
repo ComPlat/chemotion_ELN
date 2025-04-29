@@ -43,7 +43,7 @@ export default class ContainerDatasets extends Component {
     container.children.push(datasetContainer);
 
     this.handleModalOpen(datasetContainer);
-    this.props.onChange(container);
+    // this.props.onChange(container);
   }
 
   handleAddWithAttachments(attachments) {

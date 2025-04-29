@@ -115,6 +115,15 @@ export class ContainerDatasetModalContent extends Component {
     }
   }
 
+  setLocalName(localName) {
+    this.setState((prevState) => ({
+      datasetContainer: {
+        ...prevState.datasetContainer,
+        name: localName,
+      }
+    }));
+  }
+
   // eslint-disable-next-line react/sort-comp
   updateAttachmentsFromContext = () => {
     const { datasetContainer } = this.props;

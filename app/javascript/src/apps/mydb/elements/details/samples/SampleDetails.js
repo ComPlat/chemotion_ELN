@@ -203,8 +203,8 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-       && (typeof (sample.molfile) === 'undefined'
-        || (sample.molfile || '').length === 0)
+        && (typeof (sample.molfile) === 'undefined'
+          || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -234,9 +234,15 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSampleChanged(sample, cb) {
+    console.log('handleSampleChanged', sample);
     this.setState({
       sample,
-    }, cb);
+    }, () => {
+      if (typeof cb === 'function') {
+        cb();
+      }
+      this.handleSubmit();
+    });
   }
 
   handleAmountChanged(amount) {
@@ -348,7 +354,6 @@ export default class SampleDetails extends React.Component {
 
   handleSubmit(closeView = false) {
     const { currentCollection } = UIStore.getState();
-    LoadingActions.start.defer();
     const { sample, validCas } = this.state;
     if (this.matchSelectedCollection(currentCollection) && sample.inventory_label !== undefined) {
       sample.collection_id = currentCollection.id;
@@ -360,6 +365,7 @@ export default class SampleDetails extends React.Component {
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
+    LoadingActions.start.defer();
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;
@@ -846,7 +852,7 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref?.cas ?? '';
-    let casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
+    const casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
     if (cas && !casArr.includes(cas)) {
       casArr.push(cas);
     }
@@ -929,38 +935,38 @@ export default class SampleDetails extends React.Component {
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (saveBtnDisplay
       && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveCloseSample">
-            {`Save and Close ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
-      </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id="saveCloseSample">
+              {`Save and Close ${elementToSave}`}
+            </Tooltip>
+          )}
+        >
+          {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
+        </OverlayTrigger>
       )
     );
     const save = (saveBtnDisplay
       && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveSample">
-            {`Save ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag)}
-      </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id="saveSample">
+              {`Save ${elementToSave}`}
+            </Tooltip>
+          )}
+        >
+          {this.saveButton(sampleUpdateCondition, floppyTag)}
+        </OverlayTrigger>
       )
     );
 
     const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
     return (
       <>
-        { isChemicalTab ? saveForChemical : save}
-        { isChemicalTab ? null : saveAndClose }
+        {isChemicalTab ? saveForChemical : save}
+        {isChemicalTab ? null : saveAndClose}
         <ConfirmClose el={sample} />
       </>
     );
@@ -1479,6 +1485,31 @@ export default class SampleDetails extends React.Component {
         stb.push(klass.label);
       }
     });
+
+    const { pageMessage } = this.state;
+    const messageBlock = (pageMessage
+      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
+      <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <strong>Structure Alert</strong>
+        <Button
+          size="sm"
+          variant="warning"
+          onClick={() => this.setState({ pageMessage: null })}
+        >
+          Close Alert
+        </Button>
+        {
+          pageMessage.error.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        {
+          pageMessage.warning.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+      </Alert>
+    ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
