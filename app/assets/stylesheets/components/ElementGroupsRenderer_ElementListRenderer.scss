@@ -12,7 +12,6 @@
   }
   .element-group-header-content,
   .element-list-item-content {
-    @extend .d-flex;
     @extend .flex-grow-1;
     @extend .p-2;
   }
