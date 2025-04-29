@@ -232,6 +232,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "tabs_segment", default: {}
     t.bigint "inventory_id"
     t.boolean "shared", default: false, null: false
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -2778,7 +2779,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
       $function$
   SQL
 
-
+  create_trigger :logidze_on_collections, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_collections BEFORE INSERT OR UPDATE ON public.collections FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
