@@ -926,6 +926,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.jsonb "refs"
     t.string "doi"
     t.string "isbn"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
@@ -2778,8 +2779,9 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
       END;
       $function$
   SQL
-
-
+  create_trigger :logidze_on_literatures, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_literatures BEFORE INSERT OR UPDATE ON public.literatures FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
