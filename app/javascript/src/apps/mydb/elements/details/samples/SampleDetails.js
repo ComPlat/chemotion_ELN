@@ -221,15 +221,9 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSampleChanged(sample, cb) {
-    console.log('handleSampleChanged', sample);
     this.setState({
       sample,
-    }, () => {
-      if (typeof cb === 'function') {
-        cb();
-      }
-      this.handleSubmit();
-    });
+    }, cb);
   }
 
   handleAmountChanged(amount) {
