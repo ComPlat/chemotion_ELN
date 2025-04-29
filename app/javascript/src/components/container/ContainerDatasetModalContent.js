@@ -120,6 +120,15 @@ export class ContainerDatasetModalContent extends Component {
     }
   }
 
+  setLocalName(localName) {
+    this.setState((prevState) => ({
+      datasetContainer: {
+        ...prevState.datasetContainer,
+        name: localName,
+      }
+    }));
+  }
+
   // eslint-disable-next-line react/sort-comp
   updateAttachmentsFromContext = () => {
     const { datasetContainer } = this.props;
@@ -321,7 +330,7 @@ export class ContainerDatasetModalContent extends Component {
       if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
         groups.BagitZip.push(attachment);
       } else if (attachment.aasm_state === 'image'
-          && (attachment.filename.includes('.combined')
+        && (attachment.filename.includes('.combined')
           || attachment.filename.includes('.new_combined'))) {
         groups.Combined.push(attachment);
       } else if (attachment.filename.includes('bagit')) {
@@ -560,9 +569,9 @@ export class ContainerDatasetModalContent extends Component {
                   extension,
                   attachmentEditor,
                   attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                    < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                   !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                    || attachment.is_new || this.documentType(attachment.filename) === null,
+                  || attachment.is_new || this.documentType(attachment.filename) === null,
                   this.handleEdit
                 )}
                 {annotateButton(attachment, () => {
@@ -792,7 +801,7 @@ ContainerDatasetModalContent.defaultProps = {
   readOnly: false,
   attachments: [],
   kind: null,
-  onInstrumentChange: () => {},
+  onInstrumentChange: () => { },
 };
 
 export default observer(ContainerDatasetModalContent);
