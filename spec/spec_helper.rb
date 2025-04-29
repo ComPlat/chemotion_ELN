@@ -102,7 +102,7 @@ RSpec.configure do |config|
           body: File.read(
             Rails.root + "spec/fixtures/body_#{target}.json"
           ),
-          headers: { 'Content-Type' => 'application/json' }
+          headers: { 'Content-Type' => 'application/json' },
         )
     end
 
@@ -150,8 +150,9 @@ RSpec.configure do |config|
       .to_return(
         status: 200,
         body: File.read(Rails.root + 'spec/fixtures/body_two_compounds.json'),
-        headers: { 'Content-Type' => 'application/json' }
+        headers: { 'Content-Type' => 'application/json' },
       )
+
     stub_request(:get, %r{http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/\S+/xrefs/RN/JSON})
       .with(headers: { 'Content-Type' => 'text/json' })
       .to_return { |_request| { body: xref_from_inchikey } }
@@ -167,11 +168,10 @@ RSpec.configure do |config|
       .to_return(
         status: 200,
         body: File.read(Rails.root + 'spec/fixtures/body_123456789_CAS.xml'),
-        headers: { 'Content-Type' => 'application/xml' }
+        headers: { 'Content-Type' => 'application/xml' },
       )
-    stub_request(:get, %r{http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/\S+/cids/TXT}).
-      # with(:headers => {'Content-Type'=>'text/json'}).
-      to_return(status: 200, body: '123456789', headers: {})
+    stub_request(:get, %r{http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/\S+/cids/TXT})
+      .to_return(status: 200, body: '123456789', headers: {})
 
     # page = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
     stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/643785/JSON?heading=GHS%20Classification')
@@ -181,6 +181,72 @@ RSpec.configure do |config|
         body: File.read(Rails.root + 'spec/fixtures/body_643785_LCSS.json'),
         headers: { 'Content-Type' => 'application/json' }
       )
+
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XLYOFNOQVPJJNP-UHFFFAOYSA-1/cids/TXT')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/plain',
+          'User-Agent' => 'Ruby',
+        },
+      )
+      .to_return(status: 200, body: '', headers: {})
+
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XLYOFNOQVPJJNP-UHFFFAOYSA-2/cids/TXT')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/plain',
+          'User-Agent' => 'Ruby',
+        },
+      )
+      .to_return(status: 200, body: '', headers: {})
+
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XLYOFNOQVPJJNP-UHFFFAOYSA-3/cids/TXT')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/plain',
+          'User-Agent' => 'Ruby',
+        },
+      )
+      .to_return(status: 200, body: '', headers: {})
+
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XLYOFNOQVPJJNP-UHFFFAOYSA-4/cids/TXT')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/plain',
+          'User-Agent' => 'Ruby',
+        },
+      )
+      .to_return(status: 200, body: '', headers: {})
+
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/YJTKZCDBKVTVBY-UHFFFAOYSA-N/record/JSON')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/json',
+          'User-Agent' => 'Ruby',
+        },
+      )
+      .to_return(status: 200, body: '', headers: {})
+
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/YJTKZCDBKVTVBY-UHFFFAOYSA-N/cids/TXT')
+      .with(
+        headers: {
+          'Accept' => '*/*',
+          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Content-Type' => 'text/plain',
+          'User-Agent' => 'Ruby',
+        },
+      )
+      .to_return(status: 200, body: '', headers: {})
   end
 
   config.expect_with :rspec do |expectations|
