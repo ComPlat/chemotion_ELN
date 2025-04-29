@@ -207,7 +207,8 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
-    t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
+    t.jsonb "log_data"
+    t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
     t.index ["user_id"], name: "index_collections_on_user_id"
@@ -2566,7 +2567,9 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
       $function$
   SQL
 
-
+  create_trigger :logidze_on_collections, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_collections BEFORE INSERT OR UPDATE ON public.collections FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
