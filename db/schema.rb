@@ -824,6 +824,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.jsonb "refs"
     t.string "doi"
     t.string "isbn"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
@@ -2566,7 +2567,6 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
       $function$
   SQL
 
-
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
@@ -2578,6 +2578,9 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
   SQL
   create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_literatures, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_literatures BEFORE INSERT OR UPDATE ON public.literatures FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_screens, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
