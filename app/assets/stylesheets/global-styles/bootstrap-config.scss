@@ -34,6 +34,7 @@ $chemstrap-theme-colors: (
 @import "bootstrap/variables";
 @import "bootstrap/mixins";
 
+$border-color: map-get($carbon-shades, l2);
 $body-bg: $chemstrap-white;
 $body-color: $chemstrap-ink;
 $font-family-sans-serif: "Roboto", sans-serif;
@@ -63,8 +64,11 @@ $popover-max-width: 50vw;
 $popover-body-padding-y: 0.5rem;
 
 $input-bg: $chemstrap-white;
+$input-border-color: $border-color;
 $form-select-bg: $input-bg;
 $form-check-input-bg: $input-bg;
+$form-check-input-border: 1px solid $input-border-color;
+$form-check-input-width: 1.125em;
 $form-label-font-weight: $font-weight-bold;
 
 $modal-xxxl: 90vw;
