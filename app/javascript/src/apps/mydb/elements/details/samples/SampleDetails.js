@@ -190,8 +190,8 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-        && (typeof (sample.molfile) === 'undefined'
-          || (sample.molfile || '').length === 0)
+       && (typeof (sample.molfile) === 'undefined'
+        || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -221,9 +221,15 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSampleChanged(sample, cb) {
+    console.log('handleSampleChanged', sample);
     this.setState({
       sample,
-    }, cb);
+    }, () => {
+      if (typeof cb === 'function') {
+        cb();
+      }
+      this.handleSubmit();
+    });
   }
 
   handleAmountChanged(amount) {
@@ -825,7 +831,7 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref?.cas ?? '';
-    const casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
+    let casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
     if (cas && !casArr.includes(cas)) {
       casArr.push(cas);
     }
@@ -907,38 +913,38 @@ export default class SampleDetails extends React.Component {
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (saveBtnDisplay
       && (
-        <OverlayTrigger
-          placement="bottom"
-          overlay={(
-            <Tooltip id="saveCloseSample">
-              {`Save and Close ${elementToSave}`}
-            </Tooltip>
-          )}
-        >
-          {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
-        </OverlayTrigger>
+      <OverlayTrigger
+        placement="bottom"
+        overlay={(
+          <Tooltip id="saveCloseSample">
+            {`Save and Close ${elementToSave}`}
+          </Tooltip>
+        )}
+      >
+        {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
+      </OverlayTrigger>
       )
     );
     const save = (saveBtnDisplay
       && (
-        <OverlayTrigger
-          placement="bottom"
-          overlay={(
-            <Tooltip id="saveSample">
-              {`Save ${elementToSave}`}
-            </Tooltip>
-          )}
-        >
-          {this.saveButton(sampleUpdateCondition, floppyTag)}
-        </OverlayTrigger>
+      <OverlayTrigger
+        placement="bottom"
+        overlay={(
+          <Tooltip id="saveSample">
+            {`Save ${elementToSave}`}
+          </Tooltip>
+        )}
+      >
+        {this.saveButton(sampleUpdateCondition, floppyTag)}
+      </OverlayTrigger>
       )
     );
 
     const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
     return (
       <>
-        {isChemicalTab ? saveForChemical : save}
-        {isChemicalTab ? null : saveAndClose}
+        { isChemicalTab ? saveForChemical : save}
+        { isChemicalTab ? null : saveAndClose }
         <ConfirmClose el={sample} />
       </>
     );
@@ -1383,27 +1389,27 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-      <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-        <strong>Structure Alert</strong>
-        <Button
-          size="sm"
-          variant="warning"
-          onClick={() => this.setState({ pageMessage: null })}
-        >
-          Close Alert
-        </Button>
-        {
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-        {
+          {
           pageMessage.warning.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-      </Alert>
-    ) : null;
+        </Alert>
+      ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
