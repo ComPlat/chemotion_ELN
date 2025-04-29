@@ -203,6 +203,7 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -1857,8 +1858,8 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -1976,7 +1977,7 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-          
+
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
@@ -2408,8 +2409,90 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
       END;
       $function$
   SQL
+  create_function :jsonb_diff, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.jsonb_diff(old jsonb, new jsonb)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+      DECLARE
+        result jsonb := '{}'::jsonb;
+        v RECORD;
+        nested_diff jsonb;
+        new_length int;
+        old_length int;
+      BEGIN
+        -- If old is NULL, return the new object as the full difference
+        IF old IS NULL OR jsonb_typeof(old) = 'null' THEN
+          RETURN new;
+        END IF;
+
+        -- If new is NULL, return an empty JSON
+        IF new IS NULL OR jsonb_typeof(new) = 'null' THEN
+          RETURN '{}'::jsonb;
+        END IF;
+
+        -- Handle top-level arrays
+        IF jsonb_typeof(old) = 'array' AND jsonb_typeof(new) = 'array' THEN
+          IF result = '{}' THEN
+            result := '[]';
+          END IF;
+
+          -- If arrays are equal, return an empty JSON
+          IF old = new THEN
+            RETURN '[]'::jsonb;
+          ELSE
+            -- Return the new array as the diff
+            -- Get array lengths
+            new_length := JSONB_ARRAY_LENGTH(new);
+            old_length := JSONB_ARRAY_LENGTH(old);
+
+            -- Loop through the array using an index
+            FOR i IN 0..new_length-1 LOOP
+              IF i <= old_length THEN
+                IF jsonb_typeof(new[i]) IN ('object','array') AND jsonb_typeof(old[i]) IN ('object','array') THEN
+                  nested_diff := jsonb_diff(old[i], new[i]);
+                  IF nested_diff <> '{}'::jsonb THEN
+                    result := result || nested_diff;
+                  END IF;
+                ELSIF new[i] IS DISTINCT FROM old[i] THEN
+                  result := result || new[i];
+                END IF;
+              ELSE
+                RETURN new[i];
+              END IF;
+            END LOOP;
+            RETURN result;
+          END IF;
+        END IF;
+
+        -- If types differ (object vs. array), return the full new value
+        IF jsonb_typeof(old) <> jsonb_typeof(new) THEN
+          RETURN new;
+        END IF;
+
+        -- Iterate through each key-value pair in new
+        FOR v IN SELECT * FROM jsonb_each(new) LOOP
+          -- If the key is an object in both old and new, recurse
+          IF jsonb_typeof(old -> v.key) = 'object' AND jsonb_typeof(new -> v.key) = 'object' THEN
+            nested_diff := jsonb_diff(old -> v.key, new -> v.key);
+            IF nested_diff <> '{}'::jsonb THEN
+              result := result || jsonb_build_object(v.key, nested_diff);
+            END IF;
+          -- If values are different, add to the result
+          ELSIF (old -> v.key) IS DISTINCT FROM v.value THEN
+            result := result || jsonb_build_object(v.key, v.value);
+          END IF;
+        END LOOP;
+
+        RETURN result;
+      END;
+      $function$
+  SQL
 
 
+  create_trigger :logidze_on_collections, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_collections BEFORE INSERT OR UPDATE ON public.collections FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
