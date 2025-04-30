@@ -2,55 +2,78 @@ import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import { beforeEach, describe, it } from 'mocha';
 import SampleFactory from 'factories/SampleFactory';
+import Reaction from 'src/models/Reaction';
+
+function randFloat(min, max, precision) {
+  return Number.parseFloat((Math.random() * (max - min) + min).toFixed(precision));
+}
+
+function randFromArray(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function randMaterialGroup() {
+  return randFromArray(Reaction.materialGroups);
+}
 
 describe('Reaction', () => {
   let reaction;
-  let materials;
-  beforeEach(async () => {
+  let material, materials;
+  beforeEach(async() => {
     reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
-    materials = await SampleFactory.build('reactionConcentrations.water_100g');
+    material = await SampleFactory.build('reactionConcentrations.water_100g');
+    materials = await SampleFactory.buildMany('Ethanol_5ml', 5);
   });
-
-  describe('solvent and purification concentrations', () => {
-    it('should calculate solvent concentration correctly', () => {
-      reaction.solvents = [materials];
-      const amountLiters = 2;
-      const result = reaction.totalVolumeForMaterialGroup('solvents', amountLiters);
-      expect(result).toBe('100.0%');
-    });
-
-    it('should calculate purification solvent concentration correctly', () => {
-      reaction.purification_solvents = [materials];
-      const amountLiters = 2;
-      const result = reaction.totalVolumeForMaterialGroup('purification_solvents', amountLiters);
-      expect(result).toBe('100.0%');
-    });
-
-    it('should calculate purification solvent concentration correctly with 3 solvents', () => {
-      reaction.purification_solvents = [materials, materials, materials];
-      const amountLiters = 2;
-      const result = reaction.totalVolumeForMaterialGroup('purification_solvents', amountLiters);
-      expect(result).toBe('33.3%');
-    });
-
-    it('should calculate purification solvent concentration correctly with 2 solvents', () => {
-      reaction.purification_solvents = [materials, materials];
-      const amountLiters = 2;
-      const result = reaction.totalVolumeForMaterialGroup('purification_solvents', amountLiters);
-      expect(result).toBe('50.0%');
-    });
-
-    it('should return "n.d." if solvent volume is 0', () => {
-      reaction.solvents = [];
-      const amountLiters = 20;
-      const result = reaction.totalVolumeForMaterialGroup('solvents', amountLiters);
+  describe('.calculateVolumeRatio', () => {
+    it('returns nd if denominator is 0', () => {
+      const result = reaction.calculateVolumeRatio(1, 0);
       expect(result).toBe('n.d.');
     });
+    it('returns 0.0% if numerator is 0', () => {
+      const result = reaction.calculateVolumeRatio(0, 1);
+      expect(result).toBe('0.0%');
+    });
+    it('calculates the ratio correctly', () => {
+      const result = reaction.calculateVolumeRatio(1, 2);
+      expect(result).toBe('50.0%');
+    });
+  });
 
-    it('should return "n.d." if purification solvent volume is 0', () => {
-      reaction.purification_solvents = [];
-      const amountLiters = 20;
-      const result = reaction.totalVolumeForMaterialGroup('purification_solvents', amountLiters);
+  describe('.findMaterialById', () => {
+    it('returns the correct material', () => {
+      const materialGroup = randMaterialGroup();
+      reaction[materialGroup] = [...materials, material];
+      const result = reaction.findMaterialById(material.id);
+      expect(result).toEqual({ type: materialGroup, material });
+    });
+  });
+
+  describe('.totalVolumeForMaterialGroup', () => {
+    it('calculates the total volume for a material group correctly', () => {
+      const materialGroup = randMaterialGroup();
+      const amount1 = randFloat(1, 100, 5);
+      const amount2 = randFloat(1, 100, 5);
+      materials[1].real_amount_value = amount1;
+      materials[2].real_amount_value = amount2;
+      reaction[materialGroup] = [materials[1], materials[2]];
+      const result = reaction.totalVolumeForMaterialGroup(materialGroup);
+      expect(result).toBe(amount1 + amount2);
+    });
+  });
+
+  describe('.volumeRatioByMaterialId', () => {
+    it('calculate purification solvent and solvent ratios correctly', () => {
+      materials[2].real_amount_value = 10;
+      materials[4].real_amount_value = 995;
+      reaction.solvents = [materials[3], materials[4]];
+      reaction.purification_solvents = [materials[0], materials[1], materials[2]];
+
+      expect(reaction.volumeRatioByMaterialId(materials[1].id)).toBe('25.0%');
+      expect(reaction.volumeRatioByMaterialId(materials[3].id)).toBe('0.5%');
+    });
+
+    it('should return "n.d." if the material cannot be found', () => {
+      const result = reaction.volumeRatioByMaterialId(0);
       expect(result).toBe('n.d.');
     });
   });

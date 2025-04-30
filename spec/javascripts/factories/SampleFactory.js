@@ -16,6 +16,8 @@ export default class SampleFactory {
   
     constructor() {
       this.factory = factory;
+
+      this.factory.define('empty', Sample, async () => Sample.buildEmpty(0));
   
       this.factory.define("SampleFactory.water_100g", Sample, async () => {
         const sample = Sample.buildEmpty(0);
@@ -44,5 +46,26 @@ export default class SampleFactory {
   
         return sample;
       });
+
+      this.factory.extend('empty', 'Ethanol_5ml', {
+        target_amount_value: 5,
+        real_amount_value: 5,
+        molecule: { 
+          molecular_weight: 46.0688,
+        },
+        target_amount_unit: "l", // <-- 'ml' for milliliters here
+        real_amount_unit: "l",
+        metrics: 'mmmm',// <-- 'ml' for milliliters here
+        coefficient: 1,
+        is_new: false, 
+        density: 0.789, // Ethanol density in g/ml
+      });
     }
+    
+  static buildMany(...args) {
+    if (SampleFactory.instance === undefined) {
+      SampleFactory.instance = new SampleFactory();
+    }
+    return this.instance.factory.buildMany(...args);
   }
+}

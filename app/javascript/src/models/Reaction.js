@@ -878,19 +878,13 @@ export default class Reaction extends Element {
       return totalVolume;
     }
 
-    get purificationSolventVolume() {
-      let purificationSolventVolume = 0.0;
-      const materials = [...this.purification_solvents];
-      materials.map(m => purificationSolventVolume += m.amount_l);
-      return purificationSolventVolume;
-    }
+  get purificationSolventVolume() {
+    return this.totalVolumeForMaterialGroup(Reaction.PURIFICATION_SOLVENTS);
+  }
 
-    get solventVolume() {
-      let solventVolume = 0.0;
-      const materials = [...this.solvents];
-      materials.map(m => solventVolume += m.amount_l);
-      return solventVolume;
-    }
+  get solventVolume() {
+    return this.totalVolumeForMaterialGroup(Reaction.SOLVENTS);
+  }
 
   /**
   * Calculates the volume ratio (as a percentage) of a material within a given material group.
@@ -905,9 +899,9 @@ export default class Reaction extends Element {
   */
   calculateVolumeRatio(amountLiters, totalVolume) {
     if (!totalVolume || totalVolume === 0) return 'n.d.';
-    const concn = ((amountLiters / totalVolume) * 100).toFixed(1);
-    if (isNaN(concn) || !isFinite(concn)) return 'n.d.';
-    return `${concn}%`;
+    const concn = ((amountLiters / totalVolume) * 100);
+    if (Number.isNaN(concn) || !Number.isFinite(concn)) return 'n.d.';
+    return `${concn.toFixed(1)}%`;
   }
 
   /**
@@ -921,33 +915,26 @@ export default class Reaction extends Element {
    * or `{ type: null, material: null }` if not found.
    */
   findMaterialById(id) {
-    for (const key of Reaction.materialGroups) {
-      const list = this[key];
-      if (Array.isArray(list)) {
-        const found = list.find(sample => sample?.id === id);
-        if (found) {
-          return { type: key, material: found };
-        }
-      }
-    }
-    return { type: null, material: null };
+    let material = null;
+    const type = Reaction.materialGroups.find((materialGroup) => {
+      const list = this[materialGroup];
+      material = list.find((sample) => sample?.id === id);
+      return material;
+    });
+    return { type, material };
   }
 
   /**
-   * Calculates the volume ratio (as a percentage) for a given material group.
+   * Calculates the total volume (L) for a given material group.
    *
    * @param {string} materialGroup - The material group to calculate the volume for (e.g., 'solvents', 'purification_solvents').
-   * @param {number} amountLiters - The volume of the material in liters.
-   * @returns {string} The volume ratio as a percentage string (e.g., "25.0%"), or `'n.d.'` if the total volume is invalid or calculation is not possible.
+   * @returns {number} The volume.
    */
-  totalVolumeForMaterialGroup(materialGroup, amountLiters) {
-    let totalVolume = 0;
+  totalVolumeForMaterialGroup(materialGroup) {
     if (Array.isArray(this[materialGroup])) {
-      totalVolume = this[materialGroup].reduce((sum, m) => sum + (m.amount_l || 0), 0);
+      return this[materialGroup].reduce((sum, m) => sum + (m.amount_l || 0), 0);
     }
-    if (!totalVolume || totalVolume === 0) return 'n.d.';
-    const value = ((amountLiters / totalVolume) * 100).toFixed(1);
-    return `${value}%`;
+    return 'n.d';
   }
 
   /**
@@ -961,8 +948,9 @@ export default class Reaction extends Element {
     const { type, material } = this.findMaterialById(id);
     if (!type || !material) return 'n.d.';
     const amountLiters = material.amount_l;
-    if (isNaN(amountLiters) || amountLiters < 0) return 'n.d.'; // Ensure amount_l is valid
-    return this.totalVolumeForMaterialGroup(type, amountLiters);
+    const totalVolume = this.totalVolumeForMaterialGroup(type);
+    if (Number.isNaN(amountLiters) || Number.isNaN(totalVolume) || totalVolume < 0 || amountLiters < 0) return 'n.d.'; // Ensure amount_l is valid
+    return this.calculateVolumeRatio(amountLiters, totalVolume);
   }
 
     // overwrite isPendingToSave method in models/Element.js
