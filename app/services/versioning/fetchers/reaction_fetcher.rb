@@ -22,7 +22,8 @@ class Versioning::Fetchers::ReactionFetcher
       versions += Versioning::Serializers::ReactionsSampleSerializer.call(reactions_sample,
                                                                           ["#{sample_type}: #{sample_name}"])
       versions += Versioning::Serializers::SampleSerializer.call(sample,
-                                                                 ["#{sample_type}: #{sample_name}", 'Sample Properties'])
+                                                                 ["#{sample_type}: #{sample_name}",
+                                                                  'Sample Properties'])
 
       versions += sample.residues.with_log_data.flat_map do |residue|
         Versioning::Serializers::ResidueSerializer.call(residue, ["#{sample_type}: #{sample_name} Polymer section"])
@@ -52,6 +53,11 @@ class Versioning::Fetchers::ReactionFetcher
           end
         end
       end
+    end
+
+    reaction.literals.each do |literal|
+      versions += Versioning::Serializers::LiteratureSerializer
+                  .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
     end
 
     versions

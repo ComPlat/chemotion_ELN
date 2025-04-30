@@ -35,6 +35,11 @@ class Versioning::Fetchers::SampleFetcher
       end
     end
 
+    sample.literals.each do |literal|
+      versions += Versioning::Serializers::LiteratureSerializer
+                  .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
+    end
+
     versions
   end
 end
