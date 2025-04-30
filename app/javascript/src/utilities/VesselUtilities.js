@@ -60,10 +60,22 @@ const clearLatestVesselIds = () => {
 
 const getLatestVesselIds = () => latestVesselIds;
 
+const getNextVesselIndex = (vessels, initials) => {
+  const prefix = `${initials}-V`;
+  const usedNumbers = vessels
+    .map(v => v.short_label)
+    .filter(label => label?.startsWith(prefix))
+    .map(label => parseInt(label.replace(prefix, ''), 10))
+    .filter(n => !isNaN(n));
+
+  return usedNumbers.length ? Math.max(...usedNumbers) + 1 : 1;
+};
+
 export {
   extractCreateVesselApiParameter,
   extractUpdateVesselApiParameter,
   storeLatestVesselIds,
   getLatestVesselIds,
-  clearLatestVesselIds
+  clearLatestVesselIds,
+  getNextVesselIndex
 };
