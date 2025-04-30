@@ -15,7 +15,3 @@
   .custom-context-item-last{
     padding: 5px 25px;
   }
-
-  .react-datepicker-popper {
-    z-index: 500 !important;
-  }
