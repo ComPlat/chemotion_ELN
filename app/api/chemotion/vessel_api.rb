@@ -159,7 +159,7 @@ module Chemotion
         present created_vessels.map(&:reload), with: Entities::VesselInstanceEntity
       end
 
-      desc 'Create multiple vessel instances'
+      desc 'Create batch of vessel instances'
       params do
         requires :template_name, type: String, desc: 'Name of the vessel template'
         requires :collection_id, type: Integer, desc: 'Collection ID for the vessels'
@@ -170,6 +170,7 @@ module Chemotion
         optional :volume_amount, type: Float, desc: 'Volume amount'
         optional :volume_unit, type: String, desc: 'Volume unit'
         optional :container, type: Hash, desc: 'Root container of the vessels'
+        optional :short_labels, type: Array[String], desc: 'Short labels for each vessel', documentation: { is_array: true }
       end
       post 'bulk_create' do
         error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
@@ -183,16 +184,22 @@ module Chemotion
           volume_unit: params[:volume_unit],
         )
       
+        short_labels = params[:short_labels] || []
+      
         created_vessels = []
       
         ActiveRecord::Base.transaction do
           params[:count].times do |i|
+            short_label = short_labels[i] || "#{current_user.initials}-V#{current_user.vessels_count + i + 1}"
+      
             vessel = Vessel.create!(
               vessel_template: vessel_template,
               name: "instance#{i + 1}",
               user_id: current_user.id,
-              short_label: "instance#{i + 1}",
+              short_label: short_label,
             )
+      
+            vessel.create_code_log
       
             if params[:collection_id]
               collection = current_user.collections.find_by(id: params[:collection_id])
@@ -212,8 +219,9 @@ module Chemotion
           end
         end
       
-        present created_vessels, with: Entities::VesselInstanceEntity
+        present created_vessels.map(&:reload), with: Entities::VesselInstanceEntity
       end
+      
             
       desc 'Update a vessel instance or associated vessel template'
       params do
