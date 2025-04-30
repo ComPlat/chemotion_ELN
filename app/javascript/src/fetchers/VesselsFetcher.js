@@ -15,6 +15,15 @@ const successfullyCreatedParameter = {
   position: 'tr'
 };
 
+const successfullyCreatedBulkParameter = (count) => ({
+  title: 'Element created',
+  message: `${count} vessel instance${count > 1 ? 's' : ''} successfully added`,
+  level: 'info',
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr'
+});
+
 const successfullyUpdatedParameter = {
   title: 'Element updated',
   message: 'Vessel instance successfully updated',
@@ -270,6 +279,62 @@ export default class VesselsFetcher {
       .catch((error) => {
         console.error('Error deleting vessel instance:', error);
         NotificationActions.add(errorMessageParameter);
+      });
+  }
+
+  static bulkCreateInstances({
+    templateName,
+    collectionId,
+    count,
+    details,
+    materialType,
+    vesselType,
+    volumeAmount,
+    volumeUnit,
+    shortLabels,
+    user,
+  }) {
+    const body = {
+      template_name: templateName,
+      collection_id: collectionId,
+      count,
+      details,
+      material_type: materialType,
+      vessel_type: vesselType,
+      volume_amount: volumeAmount,
+      volume_unit: volumeUnit,
+      short_labels: shortLabels,
+    };
+
+    return fetch('/api/v1/vessels/bulk_create', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+      .then((res) => {
+        if (res.status < 200 || res.status >= 300) {
+          throw new Error(`Bulk creation failed with status ${res.status}`);
+        }
+      })
+      .then((json) => {
+        const vessels = Array.isArray(json)
+          ? json.map((item) => Vessel.createFromRestResponse(collectionId, item))
+          : [];
+        NotificationActions.add(successfullyCreatedBulkParameter(count));
+        if (user) {
+          user.vessels_count += vessels.length;
+        }
+        ElementActions.refreshElements('vessel');
+        return vessels;
+      })
+      .catch((err) => {
+        console.error('Bulk vessel creation failed:', err);
+        NotificationActions.add(errorMessageParameter);
+        return [];
       });
   }
 
