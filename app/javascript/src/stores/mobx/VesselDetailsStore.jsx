@@ -167,6 +167,20 @@ export const VesselDetailsStore = types
         vessel.setIsDuplicate(isDuplicate);
       }
     },
+    replaceInstances(vesselId, instancesFromApi) {
+      const vessel = self.vessels.get(vesselId);
+      if (!vessel) return;
+
+      vessel.instances = instancesFromApi.map((inst) => ({
+        vesselInstanceName: inst.name,
+        vesselInstanceDescription: inst.description || '',
+        barCode: inst.bar_code || '',
+        qrCode: inst.qr_code || '',
+        weightAmount: inst.weight_amount || '',
+        weightUnit: inst.weight_unit || 'g',
+      }));
+      vessel.changed = true;
+    },
     convertJsModelToMobxModel(container) {
       return VesselContainer.create({
         id: container.id,
