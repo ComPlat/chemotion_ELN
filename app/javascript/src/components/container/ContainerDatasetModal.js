@@ -54,7 +54,7 @@ export default class ContainerDatasetModal extends Component {
 
   render() {
     const {
-      show, onHide, onChange, readOnly, disabled, kind, datasetContainer
+      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, handleContainerSubmit
     } = this.props;
 
     const { mode, instrumentIsEmpty } = this.state;
@@ -168,6 +168,7 @@ export default class ContainerDatasetModal extends Component {
               onModalHide={() => onHide()}
               onChange={onChange}
               mode={mode}
+              handleContainerSubmit={handleContainerSubmit}
             />
           </Modal.Body>
           <Modal.Footer
@@ -203,6 +204,7 @@ ContainerDatasetModal.propTypes = {
   }).isRequired,
   onHide: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
+  handleContainerSubmit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string,
