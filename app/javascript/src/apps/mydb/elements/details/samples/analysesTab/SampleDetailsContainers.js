@@ -172,7 +172,7 @@ export default class SampleDetailsContainers extends Component {
   render() {
     const { activeAnalysis, mode } = this.state;
     const {
-      readOnly, sample, handleSubmit, handleSampleChanged,
+      readOnly, sample, handleSubmit, handleSampleChanged, handleContainerSubmit
     } = this.props;
     const isDisabled = !sample.can_update;
 
@@ -201,6 +201,7 @@ export default class SampleDetailsContainers extends Component {
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
+            handleContainerSubmit={handleContainerSubmit}
           />
           <ViewSpectra
             sample={sample}
@@ -228,6 +229,7 @@ SampleDetailsContainers.propTypes = {
   readOnly: PropTypes.bool,
   sample: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
+  handleContainerSubmit: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
 };
 

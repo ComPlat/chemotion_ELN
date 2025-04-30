@@ -42,6 +42,7 @@ function ReactionsDisplay({
   activeAnalysis,
   handleChange,
   handleCommentTextChange,
+  handleContainerSubmit,
 }) {
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
 
@@ -101,6 +102,7 @@ function ReactionsDisplay({
                         container={container}
                         disabled={isDisabled}
                         onChange={handleChange}
+                        handleContainerSubmit={handleContainerSubmit}
                       />
                     </Card.Body>
                   </Accordion.Collapse>

@@ -74,6 +74,7 @@ import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import ContainerActions from '../../../../../stores/alt/actions/ContainerActions';
 
 const MWPrecision = 6;
 
@@ -159,6 +160,7 @@ export default class SampleDetails extends React.Component {
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
     this.handleAmountChanged = this.handleAmountChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleContainerSubmit = this.handleContainerSubmit.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.toggleInchi = this.toggleInchi.bind(this);
     this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
@@ -203,8 +205,8 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-       && (typeof (sample.molfile) === 'undefined'
-        || (sample.molfile || '').length === 0)
+        && (typeof (sample.molfile) === 'undefined'
+          || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -241,7 +243,6 @@ export default class SampleDetails extends React.Component {
       if (typeof cb === 'function') {
         cb();
       }
-      this.handleSubmit();
     });
   }
 
@@ -390,6 +391,18 @@ export default class SampleDetails extends React.Component {
     }
     sample.updateChecksum();
     this.setState({ validCas: true, trackMolfile: sample.molfile });
+  }
+
+  handleContainerSubmit() {
+    const { sample } = this.state;
+    ContainerActions.updateContainerWithFiles(sample.container, sample?.isNew, "Sample")
+      .then((updatedContainer) => {
+        sample.container = updatedContainer;
+        this.setState({ sample });
+      })
+      .catch((err) => {
+        console.warn('Container update failed:', err.message);
+      });
   }
 
   handleSegmentsChange(se) {
@@ -542,6 +555,7 @@ export default class SampleDetails extends React.Component {
             setState={(newSample) => { this.setState(newSample); }}
             handleSampleChanged={this.handleSampleChanged}
             handleSubmit={this.handleSubmit}
+            handleContainerSubmit={this.handleContainerSubmit}
             fromSample
           />
         </ListGroupItem>

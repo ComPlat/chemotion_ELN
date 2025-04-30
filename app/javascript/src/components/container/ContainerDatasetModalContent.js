@@ -215,9 +215,10 @@ export class ContainerDatasetModalContent extends Component {
   // eslint-disable-next-line react/no-unused-class-component-methods
   handleSave() {
     const { datasetContainer } = this.state;
-    const { onChange, onModalHide } = this.props;
+    const { onChange, onModalHide, handleContainerSubmit } = this.props;
     this.context.attachmentNotificationStore.clearMessages();
     onChange(datasetContainer);
+    handleContainerSubmit();
     onModalHide();
   }
 
@@ -695,6 +696,7 @@ ContainerDatasetModalContent.propTypes = {
     })),
   }).isRequired,
   onChange: PropTypes.func.isRequired,
+  handleContainerSubmit: PropTypes.func.isRequired,
   onInstrumentChange: PropTypes.func,
   onModalHide: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,

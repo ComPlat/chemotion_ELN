@@ -39,11 +39,8 @@ export default class ContainerDatasets extends Component {
     const { container } = this.state;
     const datasetContainer = Container.buildEmpty();
     datasetContainer.container_type = 'dataset';
-
     container.children.push(datasetContainer);
-
     this.handleModalOpen(datasetContainer);
-    // this.props.onChange(container);
   }
 
   handleAddWithAttachments(attachments) {
@@ -112,7 +109,7 @@ export default class ContainerDatasets extends Component {
 
   render() {
     const { container, modal } = this.state;
-    const { disabled,readOnly } = this.props;
+    const { disabled,readOnly,handleContainerSubmit } = this.props;
 
     if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
@@ -152,6 +149,7 @@ export default class ContainerDatasets extends Component {
             datasetContainer={modal.datasetContainer}
             analysisContainer={modal.analysisContainer}
             disabled={disabled}
+            handleContainerSubmit={handleContainerSubmit}
           />
           )}
         </div>
@@ -180,6 +178,7 @@ ContainerDatasets.propTypes = {
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
+  handleContainerSubmit: PropTypes.func.isRequired,
 };
 
 ContainerDatasets.defaultProps = {
