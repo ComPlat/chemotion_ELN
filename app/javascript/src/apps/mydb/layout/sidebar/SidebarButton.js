@@ -6,24 +6,26 @@ import {
 
 export default function SidebarButton({
   isCollapsed, onClick, label, icon, variant,
-  badgeCount, appendComponent,
+  badgeCount, appendComponent, active
 }) {
+  const hasBadge = badgeCount !== null && badgeCount > 0;
   return isCollapsed ? (
     <OverlayTrigger
       placement="right"
       overlay={<Tooltip>{label}</Tooltip>}
     >
       <Button
-        className="sidebar-button text-start position-relative"
+        className={`sidebar-button text-start position-relative${hasBadge ? ' sidebar-button--has-badge' : ''}`}
         variant={variant}
         onClick={onClick}
+        active={active}
       >
         <i className={`fa fa-fw ${icon}`} />
-        {badgeCount !== null && badgeCount > 0 && (
+        {hasBadge && (
           <Badge
             pill
             bg="warning"
-            className="position-absolute top-100 start-50 translate-middle"
+            className="sidebar-button__badge"
           >
             {badgeCount}
           </Badge>
@@ -35,6 +37,7 @@ export default function SidebarButton({
       className="sidebar-button text-start gap-2"
       variant={variant}
       onClick={onClick}
+      active={active}
     >
       <span className="d-flex gap-2 align-items-center flex-grow-1">
         <i className={`fa-fw ${icon}`} />
@@ -55,11 +58,13 @@ SidebarButton.propTypes = {
   variant: PropTypes.string,
   badgeCount: PropTypes.number,
   appendComponent: PropTypes.node,
+  active: PropTypes.bool
 };
 
 SidebarButton.defaultProps = {
   isCollapsed: true,
-  variant: 'tertiary',
+  variant: 'sidebar',
   badgeCount: null,
   appendComponent: null,
+  active: false
 };

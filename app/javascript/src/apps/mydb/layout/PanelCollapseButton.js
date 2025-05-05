@@ -7,7 +7,7 @@ export default function PanelCollapseButton({ indented, isCollapsed, onClick }) 
     <Button
       className={`panel-collapse-button${indented ? ' panel-collapse-button--indented' : ''}`}
       onClick={onClick}
-      variant="tertiary"
+      variant="sidebar"
     >
       <i className={`text-primary fa fa-angle-double-${isCollapsed ? 'right' : 'left'}`} />
     </Button>

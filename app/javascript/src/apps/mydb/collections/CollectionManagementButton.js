@@ -15,7 +15,7 @@ export default function CollectionManagementButton({ isCollapsed }) {
       />
       <Button
         className={`collection-management-button w-100 text-body-secondary${isCollapsed ? '' : ' text-start'}`}
-        variant="tertiary"
+        variant="sidebar"
         onClick={() => setShowModal(true)}
       >
         <i className={`fa fa-cog ${isCollapsed ? 'mx-auto' : 'ms-1 me-2'}`} />

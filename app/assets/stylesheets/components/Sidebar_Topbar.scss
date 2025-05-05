@@ -10,9 +10,6 @@ $sidebar-logo-height: 72px;
   @extend .flex-shrink-0;
   background-color: map-get($silicon-shades, l2);
   width: 260px;
-  &-button-frame {
-    @extend .d-flex;
-  }
   &.sidebar--collapsed {
     width: 44px;
     .sidebar-logo {
@@ -39,7 +36,12 @@ $sidebar-logo-height: 72px;
     @extend .flex-column;
     @extend .justify-content-center;
   }
+  &-button-frame {
+    @extend .d-flex;
+    @extend .column-gap-1;
+  }
   &-button {
+    @extend .mt-1;
     @extend .d-flex;
     @extend .align-items-center;
     @extend .rounded-0;
@@ -47,17 +49,45 @@ $sidebar-logo-height: 72px;
     min-width: 44px;
     padding-left: 8px;
     padding-right: 8px;
-    &.btn-light {
-      background-color: map-get($silicon-shades, l4);
-    }
     font-size: 16px;
     i {
       font-size: 18px;
     }
-    .badge {
+    &__badge {
       font-size: 10px;
       z-index: 2;
+      top: 40px !important;
+      @extend .position-absolute;
+      @extend .start-50;
+      @extend .translate-middle;
     }
+  }
+}
+
+.btn-sidebar {
+  @include button-variant(
+    map-get($silicon-shades, l2),
+    map-get($silicon-shades, l2),
+    $chemstrap-carbon,
+    map-get($silicon-shades, l4),
+    map-get($silicon-shades, l4),
+    $chemstrap-carbon,
+    map-get($silicon-shades, l5),
+    map-get($silicon-shades, l5),
+    $chemstrap-carbon
+  );
+  &.sidebar-button--has-badge {
+    @include button-variant(
+      mix(map-get($silicon-shades, l2), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, l2), shade-color($warning, 20), 85),
+      $chemstrap-carbon,
+      mix(map-get($silicon-shades, l4), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, l4), shade-color($warning, 20), 85),
+      $chemstrap-carbon,
+      mix(map-get($silicon-shades, l5), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, l5), shade-color($warning, 20), 85),
+      $chemstrap-carbon
+    );
   }
 }
 
