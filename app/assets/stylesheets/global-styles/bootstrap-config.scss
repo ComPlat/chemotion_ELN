@@ -3,7 +3,7 @@ $primary: $chemstrap-blue;
 $secondary: $chemstrap-silicon;
 $success: $chemstrap-green;
 $info: #5bc0de; // to be removed application wide
-$warning: $chemstrap-yellow;
+$warning: $chemstrap-orange;
 $danger: $chemstrap-red;
 $black: $chemstrap-ink;
 
@@ -26,15 +26,13 @@ $chemstrap-theme-colors: (
   "surface4": map-get($silicon-shades, l4),
   "surface5": map-get($silicon-shades, l5),
   "draggable": $chemstrap-blue-dull,
-  "tertiary": map-get($silicon-shades, l2),
-  "tertiary-active": map-get($silicon-shades, l5),
 );
 
 @import "bootstrap/functions";
 @import "bootstrap/variables";
 @import "bootstrap/mixins";
 
-$border-color: map-get($carbon-shades, l2);
+$border-color: map-get($carbon-shades, l3);
 $body-bg: $chemstrap-white;
 $body-color: $chemstrap-ink;
 $font-family-sans-serif: "Roboto", sans-serif;
@@ -48,7 +46,6 @@ $h4-font-size: $font-size-base * 1.25;
 $h5-font-size: $font-size-base * 1.125;
 $h6-font-size: $font-size-base;
 $enable-negative-margins: true;
-$input-btn-padding-y: 0.3rem;
 $enable-negative-margins: true;
 
 $table-bg: transparent;
@@ -63,6 +60,7 @@ $popover-body-color: $chemstrap-ink;
 $popover-max-width: 50vw;
 $popover-body-padding-y: 0.5rem;
 
+$input-btn-padding-y: 0.3rem;
 $input-bg: $chemstrap-white;
 $input-border-color: $border-color;
 $form-select-bg: $input-bg;
