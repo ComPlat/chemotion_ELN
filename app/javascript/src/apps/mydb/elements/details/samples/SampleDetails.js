@@ -155,7 +155,6 @@ export default class SampleDetails extends React.Component {
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
     this.handleAmountChanged = this.handleAmountChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleContainerSubmit = this.handleContainerSubmit.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.toggleInchi = this.toggleInchi.bind(this);
     this.fetchQcWhenNeeded = this.fetchQcWhenNeeded.bind(this);
@@ -379,18 +378,6 @@ export default class SampleDetails extends React.Component {
     this.setState({ validCas: true, trackMolfile: sample.molfile });
   }
 
-  handleContainerSubmit() {
-    const { sample } = this.state;
-    ContainerActions.updateContainerWithFiles(sample.container, sample?.isNew, "Sample")
-      .then((updatedContainer) => {
-        sample.container = updatedContainer;
-        this.setState({ sample });
-      })
-      .catch((err) => {
-        console.warn('Container update failed:', err.message);
-      });
-  }
-
   handleSegmentsChange(se) {
     const { sample } = this.state;
     const { segments } = sample;
@@ -540,7 +527,6 @@ export default class SampleDetails extends React.Component {
             setState={(newSample) => { this.setState(newSample); }}
             handleSampleChanged={this.handleSampleChanged}
             handleSubmit={this.handleSubmit}
-            handleContainerSubmit={this.handleContainerSubmit}
             fromSample
           />
         </ListGroupItem>
