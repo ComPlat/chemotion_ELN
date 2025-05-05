@@ -96,7 +96,13 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
           if (!imageCoordinates) {
             throw new ('Invalid alias')();
           }
-          const boundingBox = adjustImageCoordinatesAtomDependent(imageCoordinates, atom.location, aliasSplits[1]);
+          const boundingBox = {
+            x: atom.location[0] - imageCoordinates.width / 2,
+            y: atom.location[1] + imageCoordinates.width / 2,
+            z: atom.location[2],
+            width: imageCoordinates.width,
+            height: imageCoordinates.height
+          };
           imageListParam[aliasSplits[2]].boundingBox = boundingBox;
         }
       });

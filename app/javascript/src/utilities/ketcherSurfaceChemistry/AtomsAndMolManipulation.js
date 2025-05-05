@@ -4,7 +4,8 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-param-reassign */
 import {
-  getTemplateType, initializeKetcherData, templateWithBoundingBox
+  getTemplateType, initializeKetcherData, templateWithBoundingBox,
+  fetchKetcherData
 } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   imageNodeCounter, imageUsedCounterSetter,
@@ -19,10 +20,18 @@ import {
   textNodeStructSetter,
   imagesList,
   allAtoms,
-  deletedAtomsSetter
+  deletedAtomsSetter,
+  allTemplates
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
-import { isAliasConsistent } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
-import { prepareImageFromTemplateList } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
+import {
+  isAliasConsistent,
+  deepCompare,
+  deepCompareNumbers,
+} from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import {
+  prepareImageFromTemplateList,
+  findTemplateByPayload
+} from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 
 // Helper to update an atom with K2SC labels and aliases
 const updateAtom = (atomLocation, templateType, imageCounter) => ({
@@ -78,16 +87,23 @@ const removeImagesFromData = (data) => data.root.nodes.filter((node) => node.typ
 const removeTextFromData = (data) => data.root.nodes.filter((node) => node.type !== 'text');
 
 // helper function to remove bonds by atom id
-const updateBondList = async (indexToMatch, bondList) => {
-  // Update bonds to reflect the removal of the atom
-  const list = [];
-  for (const ba of bondList) {
-    if (!ba.atoms.includes(indexToMatch)) {
-      const adjustedAtoms = ba.atoms.map((j) => (j > indexToMatch ? j - 1 : j));
-      list.push({ ...ba, atoms: adjustedAtoms });
+const updateBondList = async (indexList, bondList, atomList) => {
+  console.log(indexList, 'indexList');
+  const removedIndices = [...indexList].sort((a, b) => a - b);
+  const atomCount = atomList.length;
+  const result = [];
+
+  for (const bond of bondList) {
+    if (bond.atoms.some((i) => removedIndices.includes(i))) continue;
+    const adjustedAtoms = bond.atoms.map((atom) => {
+      const shift = removedIndices.filter((removed) => removed < atom).length;
+      return atom - shift;
+    });
+    if (adjustedAtoms.every((i) => i >= 0 && i < atomCount)) {
+      result.push({ ...bond, atoms: adjustedAtoms });
     }
   }
-  return list;
+  return result;
 };
 
 // helper function to remove template by atom with alias
@@ -140,38 +156,8 @@ const handleOnDeleteAtom = async (missingNumbers, data, imageL) => {
   }
 };
 
-const removeInvalidAliases = async (data, missingAliasSplit) => {
-  try {
-    const removeAliases = [];
-    for (let i = 0; i < mols.length; i++) {
-      if (!data[mols[i]]) continue;
-      const { atoms } = data[mols[i]];
-      for (let j = 0; j < atoms.length; j++) {
-        if (ALIAS_PATTERNS.threeParts.test(atoms[j]?.alias)) {
-          const split = atoms[j]?.alias.split('_')[2];
-          if (missingAliasSplit.indexOf(parseInt(split)) !== -1) {
-            removeAliases.push(parseInt(split));
-            atoms.splice(j, 1);
-            data[mols[i]].bonds = await updateBondList(j, data[mols[i]].bonds);
-          }
-        }
-      }
-      if (!data[mols[i]].atoms.length && data[mols[i]]) {
-        data[mols[i]].atoms = data[mols[i]].atoms.filter((atom) => atom !== undefined);
-        data.root.nodes = removeMoleculeFromData(data, mols[i]);
-        delete data[mols[i]];
-        data.root.nodes = data.root.nodes.filter((node) => node?.$ref !== mols[i]);
-      }
-    }
-    return data;
-  } catch (err) {
-    console.error('removeInvalidAliases', err.message);
-    return data;
-  }
-};
-
 // remove atoms from the template-list with alias,
-const removeImageTemplateAtom = async (data, aliasToBeRemoved) => {
+const removeAtomFromData = async (data, aliasToBeRemoved) => {
   try {
     for (const molKey of mols) {
       const molecule = data[molKey];
@@ -179,14 +165,14 @@ const removeImageTemplateAtom = async (data, aliasToBeRemoved) => {
         const atomList = molecule?.atoms || [];
         const atomListCopy = molecule?.atoms || [];
         const bondList = molecule?.bonds || [];
-        let removeIndex = -1;
+        const removeIndexList = [];
 
         for (let i = 0; i < atomListCopy.length; i++) {
           if (ALIAS_PATTERNS.threeParts.test(atomListCopy[i].alias)) {
             const split = parseInt(atomListCopy[i].alias.split('_')[2]);
             if (aliasToBeRemoved.indexOf(split) !== -1) {
               atomList.splice(i, 1);
-              removeIndex = i;
+              removeIndexList.push(i);
             }
             if (!atomList?.length) {
               data.root.nodes = removeMoleculeFromData(data, molKey);
@@ -195,8 +181,8 @@ const removeImageTemplateAtom = async (data, aliasToBeRemoved) => {
           }
         }
 
-        if (removeIndex !== -1 && bondList.length) {
-          data[molKey].bonds = await updateBondList(removeIndex, bondList);
+        if (removeIndexList.length && bondList.length) {
+          data[molKey].bonds = await updateBondList(removeIndexList, bondList, atomList);
         }
         if (atomList.length) data[molKey].atoms = atomList;
       }
@@ -352,6 +338,64 @@ export const eventCollectDeletedAtoms = (eventItem) => {
   deletedAtomsSetter([...deletedAtomsList]);
 };
 
+const deepCompareContentImages = async (oldArray, newArray) => {
+  if (!oldArray.length && !newArray.length) return [];
+  const missingIndexes = [];
+  for (let i = 0; i < oldArray.length; i++) {
+    const oldItem = oldArray[i];
+    let found = false;
+    for (let j = 0; j < newArray.length; j++) {
+      const newItem = newArray[j];
+      const isMatch = oldItem.data === newItem.data
+      && oldItem.boundingBox?.x === newItem.boundingBox?.x
+      && oldItem.boundingBox?.y === newItem.boundingBox?.y;
+      if (isMatch) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      missingIndexes.push(i);
+      console.log('Missing index:', i);
+    }
+  }
+
+  return missingIndexes;
+};
+
+const analyzeAliasAndImageDifferences = async (editor, oldImagePack) => {
+  const listOfAliasesBefore = await collectMissingAliases();
+  await fetchKetcherData(editor);
+  console.log({ oldImagePack, imagesList });
+
+  // 1st collect difference between old and new data to know what's removed
+  const listOfAliasesAfter = await collectMissingAliases();
+  const aliasDifferences = await deepCompareNumbers(listOfAliasesBefore, listOfAliasesAfter);
+  const hasImageDifferences = await deepCompare(oldImagePack, imagesList);
+  const imageDifferences = await deepCompareContentImages(oldImagePack, imagesList);
+
+  return {
+    aliasDifferences,
+    hasImageDifferences,
+    imageDifferences
+  };
+};
+
+const filterImagesByDifferences = async (aliasDifferences) => {
+  const filteredImages = [];
+  for (let i = 0; i < imagesList.length; i++) {
+    if (aliasDifferences.indexOf(i) !== -1) {
+      const templateId = await findTemplateByPayload(allTemplates, imagesList[i].data);
+      if (templateId == null) {
+        filteredImages.push(imagesList[i]);
+      }
+    } else {
+      filteredImages.push(imagesList[i]);
+    }
+  }
+  return filteredImages;
+};
+
 export {
   updateAtom,
   addingPolymersToKetcher,
@@ -360,9 +404,10 @@ export {
   removeTextFromData,
   updateBondList,
   handleOnDeleteAtom,
-  removeImageTemplateAtom,
+  removeAtomFromData,
   findAtomByImageIndex,
   collectMissingAliases,
   adjustAtomCoordinates,
-  removeInvalidAliases
+  analyzeAliasAndImageDifferences,
+  filterImagesByDifferences
 };

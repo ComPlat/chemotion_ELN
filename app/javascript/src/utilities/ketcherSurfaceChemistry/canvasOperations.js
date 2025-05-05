@@ -42,7 +42,8 @@ import {
   placeTextOnAtoms,
   reArrangeImagesOnCanvas,
   fetchSurfaceChemistryImageData,
-  placeAtomOnImage
+  placeAtomOnImage,
+  placeImageOnAtoms
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 
 // canvas actions
@@ -281,7 +282,6 @@ const prepareSvg = async (editor) => {
     if (!path) return;
 
     const d = path.getAttribute('d').trim();
-    console.log(d);
     if (d.includes(A_PATH_ONE.trim()) || d.includes(A_PATH_TWO.trim())) {
       matchingGlyphs.push(glyph.getAttribute('id'));
     }
@@ -297,7 +297,6 @@ const prepareSvg = async (editor) => {
         isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
       });
       const allTrue = isGroupMatching.every(Boolean); // returns true if all are true
-      console.log(isGroupMatching);
       usesList.forEach((use) => {
         use.style.fill = 'transparent';
       });
@@ -320,7 +319,14 @@ const prepareSvg = async (editor) => {
 
 /* istanbul ignore next */
 // save molfile with source, should_fetch, should_move
-export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
+export const saveMoveCanvas = async (
+  editor,
+  data,
+  isFetchRequired,
+  isMoveRequired,
+  recenter = false,
+  placemenType = 'image-placement'
+) => {
   const dataCopy = data || latestData;
   if (editor) {
     // dataCopy = await applySelectedStruct(editor, dataCopy);
@@ -335,7 +341,7 @@ export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequir
     }
 
     if (isMoveRequired) {
-      onTemplateMove(editor, recenter);
+      onTemplateMove(editor,recenter);
     }
   } else {
     console.error('Editor is undefined');
@@ -372,8 +378,13 @@ const onTemplateMove = async (editor, recenter = false) => {
   // second fetch save and place
   await fetchKetcherData(editor);
 
-  // const imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
-  const imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
+  let imageNodes = [];
+  // if (placemenType === 'atom-placement') {
+  //   imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
+  // } else {
+  //   imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
+  // }
+  imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
   latestData.root.nodes = imageNodes;
   const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
   latestData.root.nodes = textNodes;

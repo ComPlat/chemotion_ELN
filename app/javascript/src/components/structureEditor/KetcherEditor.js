@@ -23,13 +23,13 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   handleOnDeleteAtom,
-  removeImageTemplateAtom,
-  collectMissingAliases,
-  removeInvalidAliases
+  removeAtomFromData,
+  analyzeAliasAndImageDifferences,
+  filterImagesByDifferences
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { LAYERING_FLAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import {
-  deepCompare, deepCompareContent, deepCompareNumbers,
+  deepCompareContent,
   filterTextList
 } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
@@ -39,6 +39,7 @@ import {
   redoKetcher,
   attachClickListeners,
   imageNodeForTextNodeSetter,
+  selectedImageForTextNode
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -47,13 +48,13 @@ import {
   onTemplateMove,
   saveMoveCanvas,
   onFinalCanvasSave,
-  onPasteNewShapes
+  onPasteNewShapes,
+  onAddText
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
 import {
   ImagesToBeUpdated,
   ImagesToBeUpdatedSetter,
-  imagesListSetter,
   imagesList,
   resetKetcherStore,
   reloadCanvas,
@@ -62,7 +63,8 @@ import {
   fetchAndReplace,
   eventUpsertImageSetter,
   upsertImageCalled,
-  allTemplates
+  allTemplates,
+  imagesListSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -97,51 +99,33 @@ export const imageUsedCounterSetter = async (count) => {
 const onAtomDelete = async (editor) => {
   try {
     if (!editor || !editor.structureDef) return;
-    const listOfAliasesBefore = await collectMissingAliases();
-    await fetchKetcherData(editor);
-    // 1st collect difference between old and new data to know whats removed
-    const listOfAliasesAfter = await collectMissingAliases();
-    const aliasDifferences = await deepCompareNumbers(listOfAliasesBefore, listOfAliasesAfter);
-    let hasImageDifferences = await deepCompare(oldImagePack, imagesList);
-    let imageDifferences = await deepCompareContent(oldImagePack, imagesList);
+    const {
+      aliasDifferences,
+      hasImageDifferences,
+      imageDifferences
+    } = await analyzeAliasAndImageDifferences(editor, oldImagePack);
+    let imagesDifferencesContainer = imageDifferences;
     let dataRes = latestData;
 
-    if ((hasImageDifferences && !aliasDifferences.length) || aliasDifferences.length) {
-      // 2nd remove images if not removed
-      if (hasImageDifferences && !aliasDifferences.length) { // image delete
-        // console.warn('image has to be deleted');
-        hasImageDifferences = true;
-        aliasDifferences.push(...imageDifferences);
-        dataRes = await removeImageTemplateAtom(dataRes, imageDifferences);
-        imageNodeCounter = imagesList.length - 1;
-      } else if (!hasImageDifferences) { // atom delete with not image diff
-        // console.warn('when image is not deleted?');
-        const filteredImages = [];
-        for (let i = 0; i < imagesList.length; i++) {
-          if (aliasDifferences.indexOf(i) !== -1) {
-            const templateId = await findTemplateByPayload(allTemplates, imagesList[i].data);
-            if (templateId == null) {
-              filteredImages.push(imagesList[i]);
-            }
-          } else {
-            filteredImages.push(imagesList[i]);
-          }
-        }
-        imageDifferences = await deepCompareContent(imagesList, filteredImages);
-        imagesListSetter(filteredImages);
-        imageNodeCounter = imagesList.length - 1;
-      } else if (hasImageDifferences) { // a187325
-        // to removed selected
-        // console.warn('image difference & missing numbers called');
-        imageNodeCounter = imagesList.length - 1;
-      }
-
-      // 3rd resettle aliases in inspired atom alias A
-      const filteredData = await removeInvalidAliases(dataRes, aliasDifferences);
-      dataRes = await handleOnDeleteAtom(imageDifferences, filteredData, imagesList);
-      dataRes.root.nodes = await filterTextList(aliasDifferences, dataRes); // remove text nodes
+    let removeFrom = 'atom-removal';
+    // 2nd remove images if not removed
+    if (hasImageDifferences) { // image delete
+      aliasDifferences.push(...imagesDifferencesContainer);
+      removeFrom = 'image-removal';
+    } else if (!hasImageDifferences) { // atom delete with not image diff
+      const filteredImages = await filterImagesByDifferences(aliasDifferences);
+      imagesDifferencesContainer = await deepCompareContent(imagesList, filteredImages);
+      imagesListSetter(filteredImages);
+      removeFrom = 'atom-removal';
     }
-    await saveMoveCanvas(editor, dataRes, false, true, false);
+    const missingList = removeFrom === 'image-removal' ? imagesDifferencesContainer : aliasDifferences;
+    dataRes = await removeAtomFromData(dataRes, missingList);
+
+    imageNodeCounter = imagesList.length - 1;
+    // 3rd resettle aliases in inspired atom alias A
+    dataRes = await handleOnDeleteAtom(imagesDifferencesContainer, dataRes, imagesList);
+    dataRes.root.nodes = await filterTextList(aliasDifferences, dataRes); // remove text nodes
+    await saveMoveCanvas(editor, dataRes, false, true, false, 'atom-placement');
     deletedAtomsSetter([]);
     oldImagePack = [];
   } catch (err) {
@@ -151,7 +135,7 @@ const onAtomDelete = async (editor) => {
 
 export const eventLoadCanvas = async (editor) => {
   if (editor && editor.structureDef) {
-    if (reloadCanvas) onTemplateMove(editor, true);
+    if (reloadCanvas) onTemplateMove(editor, null, true);
     ImagesToBeUpdatedSetter(true);
   }
 };
@@ -172,7 +156,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     'Move image': async () => onTemplateMove(editor),
     'Move atom': async () => {
       oldImagePack = [...imagesList];
-      await onTemplateMove(editor, false);
+      await onTemplateMove(editor, null, false);
     },
     'Add atom': async () => onAddAtom(editor),
     'Delete atom': async () => {
@@ -181,8 +165,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       canvasSelectionsSetter(null);
     },
     'Add text': async () => {
-      console.log('Add Text!');
-      // await onAddText(editor, selectedImageForTextNode);
+      await onAddText(editor, selectedImageForTextNode);
       await buttonClickForRectangleSelection(iframeRef);
       imageNodeForTextNodeSetter(null);
     },

@@ -28,17 +28,17 @@ const addEventToFILOStack = (event) => {
   // }
 
   if (event === 'Delete text' && FILOStack.includes('Delete image')) {
-    console.log('Cannot add "Delete image" after "Delete text" event.');
+    // console.log('Cannot add "Delete image" after "Delete text" event.');
     return;
   }
 
   if (event === 'Delete text' && FILOStack.includes('Delete atom')) {
-    console.log('Cannot add "Delete atom" after "Delete text" event.');
+    // console.log('Cannot add "Delete atom" after "Delete text" event.');
     return;
   }
 
   if (event === 'Upsert image' && FILOStack.includes('Add atom')) {
-    console.log('Cannot add "Upsert image" after "Add atom" event.');
+    // console.log('Cannot add "Upsert image" after "Add atom" event.');
     return;
   }
 
@@ -60,32 +60,23 @@ const eventOperationHandlers = {
     await eventLoadCanvas();
   },
   'Move image': async () => {
-    console.log('Move image');
     addEventToFILOStack('Move image');
   },
-  'Add atom': async (eventItem) => {
-    console.log('atom added?');
-    if (eventItem.label === KET_TAGS.inspiredLabel) {
-      console.log('atom added', eventItem.data.atom);
-      addEventToFILOStack('Add atom');
-    }
+  'Add atom': async () => {
+    addEventToFILOStack('Add atom');
   },
-  'Upsert image': async (eventItem) => {
-    console.log('Upsert image', eventItem);
+  'Upsert image': async () => {
     eventUpsertImageDecrement();
     addEventToFILOStack('Upsert image');
   },
   'Move atom': async () => {
-    console.log('Move atom');
     allowProcessingSetter(true);
     addEventToFILOStack('Move atom');
   },
   'Delete image': async () => {
-    console.log('Delete image as atom');
     addEventToFILOStack('Delete atom');
   },
   'Delete atom': async (eventItem) => {
-    console.log('delete atom');
     await eventCollectDeletedAtoms(eventItem);
     addEventToFILOStack('Delete atom');
   },
