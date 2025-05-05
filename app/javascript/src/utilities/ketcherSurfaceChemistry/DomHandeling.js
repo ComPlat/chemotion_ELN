@@ -140,7 +140,7 @@ const redoKetcher = (editor) => {
     setTimeout(async () => {
       await fetchKetcherData(editor);
       const data = await handleAddAtom(); // rebase atom aliases
-      await saveMoveCanvas(editor, data, false, true);
+      await saveMoveCanvas(editor, data, false, true, false);
     }, [500]);
   } catch (error) {
     console.error({ redo: error });
