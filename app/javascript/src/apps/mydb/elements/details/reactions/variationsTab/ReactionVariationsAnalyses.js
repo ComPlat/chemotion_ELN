@@ -21,14 +21,15 @@ function updateAnalyses(variations, allReactionAnalyses) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     // eslint-disable-next-line no-param-reassign
-    row.metadata.analyses = row.metadata.analyses.filter((id) => analysesIDs.includes(id));
+    const analyses = row.metadata.analyses || [];
+    row.metadata.analyses = analyses.filter((id) => analysesIDs.includes(id));
   });
 
   return updatedVariations;
 }
 
 function getAnalysesOverlay({ data: row, context }) {
-  const { analyses: analysesIDs } = row;
+  const { analyses: analysesIDs = [] } = row.metadata;
   const { allReactionAnalyses } = context;
 
   return allReactionAnalyses.filter((analysis) => analysesIDs.includes(analysis.id));
@@ -61,7 +62,9 @@ AnalysisOverlay.propTypes = {
 
 function AnalysisVariationLink({ reaction, analysisID }) {
   const { variations } = cloneDeep(reaction);
-  const linkedVariations = variations.filter((row) => row.metadata.analyses.includes(analysisID)) ?? [];
+  const linkedVariations = variations.filter(
+    (row) => row.metadata.analyses && row.metadata.analyses.includes(analysisID)
+  ) ?? [];
 
   if (linkedVariations.length === 0) {
     return null;
