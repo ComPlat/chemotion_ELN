@@ -18,13 +18,13 @@
     @extend .pe-3;
     @extend .gap-2;
     &:hover {
-      background-color: map-get($silicon-shades, l5);
+      background-color: map-get($silicon-shades, l4);
     }
 
     &--selected {
       background-color: map-get($silicon-shades, l5);
       &:hover {
-        background-color: $chemstrap-silicon !important;
+        background-color: map-get($silicon-shades, l4) !important;
       }
     }
 

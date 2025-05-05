@@ -27,26 +27,26 @@ $font-styles: normal, italic;
 $chemstrap-white: #ffffff;
 $chemstrap-ink: #3c474d; //text color
 $chemstrap-blue: #2495cf; //primary
-$chemstrap-blue-light: #18a6ed; //primary-hover
 $chemstrap-blue-dark: #015c8e; //primary-active
-$chemstrap-blue-dull: #a2cfe7; //draggable-surfaces
+$chemstrap-blue-dull: #84c0e0; //draggable-surfaces
 $chemstrap-red: #ff5555; //danger
-$chemstrap-green: #6dce4d; //success
-$chemstrap-yellow: #ffb155; //warning
+$chemstrap-green: #62c242; //success
+$chemstrap-orange: #f19224; //warning
 /* Gray tones */
-$chemstrap-silicon: #c4cfd4;
+$chemstrap-silicon: #899da7;
 $chemstrap-carbon: #1c1b1e;
 $shades: 6;
 
 @function mapShades($value, $shades) {
   $colors: ();
 
-  $step: 100 / $shades;
+  $fibonacci: (3, 5, 8, 13, 21, 34, 55, 89, 144);
+  $multiplier: 100 / nth($fibonacci, $shades);
 
   @for $i from 1 through $shades - 1 {
     $colors: map-merge(
       $colors,
-      (l#{$shades - $i}: mix(white, $value, $step * $i))
+      (l#{$i}: mix($value, white, nth($fibonacci, $i) * $multiplier))
     );
   }
   @return $colors;

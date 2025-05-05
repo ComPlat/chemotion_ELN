@@ -51,26 +51,43 @@ function Styleguide() {
     </div>
   );
 
+  const buttonVariants = [
+    'primary',
+    'secondary',
+    'success',
+    'danger',
+    'warning',
+    'light',
+    'paper',
+    'knock-out'
+  ];
+
   const renderButtons = () => (
     <div>
       <h2>Buttons</h2>
       <p className="styleguide-label">Default state</p>
       <div className="d-flex mb-3 gap-3">
-        <Button variant="primary">primary Button</Button>
-        <Button variant="secondary">secondary Button</Button>
-        <Button variant="knock-out">knock-out Button</Button>
+        {buttonVariants.map((variant) => (
+          <Button key={variant} variant={variant}>
+            {`${variant} Button`}
+          </Button>
+        ))}
       </div>
       <p className="styleguide-label">Active state</p>
       <div className="d-flex mb-3 gap-3">
-        <Button variant="primary" active>primary Button</Button>
-        <Button variant="secondary" active>secondary Button</Button>
-        <Button variant="knock-out" active>knock-out Button</Button>
+        {buttonVariants.map((variant) => (
+          <Button key={variant} variant={variant} active>
+            {`${variant} Button`}
+          </Button>
+        ))}
       </div>
       <p className="styleguide-label">Disabled state</p>
       <div className="d-flex mb-3 gap-3">
-        <Button variant="primary" disabled>primary Button</Button>
-        <Button variant="secondary" disabled>secondary Button</Button>
-        <Button variant="knock-out" disabled>knock-out Button</Button>
+        {buttonVariants.map((variant) => (
+          <Button key={variant} variant={variant} disabled>
+            {`${variant} Button`}
+          </Button>
+        ))}
       </div>
     </div>
   );
