@@ -89,7 +89,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         </div>
       );
     } else {
-      content = <p>Drop Files, or Click to Select.</p>;
+      content = <p>Drop File, or Click to Select.</p>;
     }
     return (
       <div>
