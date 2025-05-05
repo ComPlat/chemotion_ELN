@@ -5,6 +5,7 @@ import {
   Modal, OverlayTrigger, Tooltip, Button
 } from 'react-bootstrap';
 import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
+import ContainerActions from 'src/stores/alt/actions/ContainerActions';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -21,6 +22,8 @@ export default class ContainerDatasetModal extends Component {
     this.handleSave = this.handleSave.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
+
+    this.onHandleContainerSubmit = this.onHandleContainerSubmit.bind(this);
   }
 
   handleModalClose(event) {
@@ -52,15 +55,27 @@ export default class ContainerDatasetModal extends Component {
     }));
   };
 
+  onHandleContainerSubmit = () => {
+    const { updateContainerState, rootContainer } = this.props;
+    ContainerActions.updateContainerWithFiles(rootContainer)
+      .then((updatedContainer) => {
+        updateContainerState(updatedContainer);
+      })
+      .catch((err) => {
+        console.warn('Container update failed:', err.message);
+      });
+  };
+
   render() {
     const {
-      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, handleContainerSubmit
+      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, rootContainer
     } = this.props;
 
     const { mode, instrumentIsEmpty } = this.state;
 
     const attachmentTooltip = (<Tooltip id="attachment-tooltip">Click to view Attachments</Tooltip>);
     const metadataTooltip = (<Tooltip id="metadata-tooltip">Click to view Metadata</Tooltip>);
+    const isNew = !Number.isInteger(rootContainer.id);
 
     const AttachmentsButton = (
       <Button
@@ -136,21 +151,21 @@ export default class ContainerDatasetModal extends Component {
                 <div className="d-flex flex-grow-1">
                   <span className="me-2">{this.state.localName}</span>
                   {!readOnly && (
-                  <i
-                    className="fa fa-pencil text-primary mt-1"
-                    aria-hidden="true"
-                    onClick={this.toggleNameEditing}
-                    role="button"
-                  />
+                    <i
+                      className="fa fa-pencil text-primary mt-1"
+                      aria-hidden="true"
+                      onClick={this.toggleNameEditing}
+                      role="button"
+                    />
                   )}
                   <div className="d-flex align-items-center ms-auto">
                     {mode === 'attachments' && instrumentIsEmpty && (
-                    <div className="d-flex align-items-center text-danger me-3">
-                      <i className="fa fa-exclamation-triangle me-1" />
-                      <span className="fw-bold">
-                        Instrument missing, switch to Metadata.
-                      </span>
-                    </div>
+                      <div className="d-flex align-items-center text-danger me-3">
+                        <i className="fa fa-exclamation-triangle me-1" />
+                        <span className="fw-bold">
+                          Instrument missing, switch to Metadata.
+                        </span>
+                      </div>
                     )}
                     {btnMode}
                   </div>
@@ -168,7 +183,8 @@ export default class ContainerDatasetModal extends Component {
               onModalHide={() => onHide()}
               onChange={onChange}
               mode={mode}
-              handleContainerSubmit={handleContainerSubmit}
+              isNew={isNew}
+              handleContainerSubmit={this.onHandleContainerSubmit}
             />
           </Modal.Body>
           <Modal.Footer
@@ -184,7 +200,9 @@ export default class ContainerDatasetModal extends Component {
               className="align-self-center ms-auto"
               onClick={this.handleSave}
             >
-              Save Changes
+              {isNew ? 'Keep' : 'Save'}
+              {' '}
+              Changes
             </Button>
           </Modal.Footer>
         </Modal>
@@ -204,10 +222,13 @@ ContainerDatasetModal.propTypes = {
   }).isRequired,
   onHide: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
-  handleContainerSubmit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string,
+  updateContainerState: PropTypes.func.isRequired,
+  rootContainer: PropTypes.shape({
+    id: PropTypes.number,
+  }).isRequired,
 };
 
 ContainerDatasetModal.defaultProps = {

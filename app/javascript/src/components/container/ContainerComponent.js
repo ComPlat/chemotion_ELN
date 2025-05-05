@@ -132,7 +132,7 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate } = this.state;
-    const { readOnly, disabled, onChange, handleContainerSubmit } = this.props;
+    const { readOnly, disabled, onChange, rootContainer,index  } = this.props;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -212,7 +212,8 @@ export default class ContainerComponent extends Component {
             readOnly={readOnly}
             disabled={disabled}
             onChange={onChange}
-            handleContainerSubmit={handleContainerSubmit}
+            rootContainer={rootContainer}
+            index={index}
           />
         </Col>
         <Col sm={12}>
@@ -234,7 +235,6 @@ ContainerComponent.propTypes = {
   analysisMethodTitle: PropTypes.string,
   templateType: PropTypes.string,
   onChange: PropTypes.func.isRequired,
-  handleContainerSubmit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   container: PropTypes.object

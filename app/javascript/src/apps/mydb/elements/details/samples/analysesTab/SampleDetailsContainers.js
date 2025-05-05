@@ -166,13 +166,13 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleToggleMode(mode) {
-    this.setState({mode: mode});
+    this.setState({ mode: mode });
   }
 
   render() {
     const { activeAnalysis, mode } = this.state;
     const {
-      readOnly, sample, handleSubmit, handleSampleChanged, handleContainerSubmit
+      readOnly, sample, handleSubmit, handleSampleChanged,
     } = this.props;
     const isDisabled = !sample.can_update;
 
@@ -188,6 +188,7 @@ export default class SampleDetailsContainers extends Component {
             sample={sample}
             mode={mode}
             orderContainers={orderContainers}
+            rootContainer={sample.container}
             readOnly={readOnly}
             isDisabled={isDisabled}
             addButton={this.addButton}
@@ -201,7 +202,6 @@ export default class SampleDetailsContainers extends Component {
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
-            handleContainerSubmit={handleContainerSubmit}
           />
           <ViewSpectra
             sample={sample}
@@ -229,7 +229,6 @@ SampleDetailsContainers.propTypes = {
   readOnly: PropTypes.bool,
   sample: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
-  handleContainerSubmit: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
 };
 
