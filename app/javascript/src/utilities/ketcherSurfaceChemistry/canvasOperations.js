@@ -176,7 +176,7 @@ const onAddAtom = async (editor) => {
       console.error('Generated aliases are inconsistent. Please try reopening the canvas again.');
       return null;
     }
-    await saveMoveCanvas(editor, d, true, true);
+    await saveMoveCanvas(editor, d, true, true, false);
     ImagesToBeUpdatedSetter(true);
   }
   return null;
@@ -325,7 +325,6 @@ export const saveMoveCanvas = async (
   isFetchRequired,
   isMoveRequired,
   recenter = false,
-  placemenType = 'image-placement'
 ) => {
   const dataCopy = data || latestData;
   if (editor) {
@@ -341,7 +340,7 @@ export const saveMoveCanvas = async (
     }
 
     if (isMoveRequired) {
-      onTemplateMove(editor,recenter);
+      onTemplateMove(editor, recenter);
     }
   } else {
     console.error('Editor is undefined');
@@ -350,10 +349,12 @@ export const saveMoveCanvas = async (
 
 const centerPositionCanvas = async (editor) => {
   try {
-    // await fetchKetcherData(editor);
-    // await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
-    // await fetchKetcherData(editor);
-    // saveMoveCanvas(editor, latestData, true, true, false);
+    if (!textList.length) {
+      await fetchKetcherData(editor);
+      await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
+      await fetchKetcherData(editor);
+      saveMoveCanvas(editor, latestData, true, true, false);
+    }
     await fetchKetcherData(editor);
   } catch (err) {
     console.log('centerPositionCanvas', err.message);

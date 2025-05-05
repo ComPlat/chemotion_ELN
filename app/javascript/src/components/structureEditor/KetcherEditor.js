@@ -125,7 +125,7 @@ const onAtomDelete = async (editor) => {
     // 3rd resettle aliases in inspired atom alias A
     dataRes = await handleOnDeleteAtom(imagesDifferencesContainer, dataRes, imagesList);
     dataRes.root.nodes = await filterTextList(aliasDifferences, dataRes); // remove text nodes
-    await saveMoveCanvas(editor, dataRes, false, true, false, 'atom-placement');
+    await saveMoveCanvas(editor, dataRes, false, true, false);
     deletedAtomsSetter([]);
     oldImagePack = [];
   } catch (err) {
