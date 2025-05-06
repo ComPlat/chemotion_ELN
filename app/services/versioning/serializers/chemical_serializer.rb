@@ -3,7 +3,7 @@
 module Versioning
   module Serializers
     class ChemicalSerializer < Versioning::Serializers::BaseSerializer
-      def self.call(record, name = ['Properties'])
+      def self.call(record, name = ['Inventory'])
         new(record: record, name: name).call
       end
 
