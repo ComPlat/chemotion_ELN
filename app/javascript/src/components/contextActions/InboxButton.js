@@ -24,6 +24,8 @@ export default function InboxButton({ isCollapsed }) {
       icon="fa-inbox"
       onClick={InboxActions.toggleInboxModal}
       badgeCount={badgeCount}
+      isCollapsed={isCollapsed}
+      showLabel={false}
     />
   );
 }

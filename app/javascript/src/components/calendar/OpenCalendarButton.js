@@ -13,7 +13,7 @@ function getDefaultDateTimeRange() {
   return { start: new Date(weekStart), end: new Date(weekEnd) };
 }
 
-function OpenCalendarButton({ eventableType, eventableId, isPanelHeader }) {
+function OpenCalendarButton({ eventableType, eventableId, isPanelHeader, isCollapsed }) {
   const { calendar } = useContext(StoreContext);
 
   const onClick = useCallback(() => {
@@ -52,6 +52,8 @@ function OpenCalendarButton({ eventableType, eventableId, isPanelHeader }) {
       onClick={onClick}
       label="Calendar"
       icon="fa-calendar"
+      isCollapsed={isCollapsed}
+      showLabel={false}
     />
   );
 }

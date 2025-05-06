@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
 
 import CollectionManagementModal from 'src/apps/mydb/collections/CollectionManagementModal';
 
 export default function CollectionManagementButton({ isCollapsed }) {
   const [showModal, setShowModal] = useState(false);
+  const label = 'Manage Collections';
 
   return (
     <>
@@ -13,16 +14,29 @@ export default function CollectionManagementButton({ isCollapsed }) {
         show={showModal}
         onHide={() => setShowModal(false)}
       />
-      <Button
-        className={`collection-management-button w-100 text-body-secondary${isCollapsed ? '' : ' text-start'}`}
-        variant="sidebar"
-        onClick={() => setShowModal(true)}
-      >
-        <i className={`fa fa-cog ${isCollapsed ? 'mx-auto' : 'ms-1 me-2'}`} />
-        {!isCollapsed && (
-          <span>Manage Collections</span>
-        )}
-      </Button>
+      {isCollapsed ? (
+        <OverlayTrigger
+          placement="right"
+          overlay={<Tooltip>{label}</Tooltip>}
+        >
+          <Button
+            className="collection-management-button w-100 text-body-secondary"
+            variant="sidebar"
+            onClick={() => setShowModal(true)}
+          >
+            <i className="fa fa-cog mx-auto" />
+          </Button>
+        </OverlayTrigger>
+      ) : (
+        <Button
+          className="collection-management-button w-100 text-body-secondary text-start"
+          variant="sidebar"
+          onClick={() => setShowModal(true)}
+        >
+          <i className="fa fa-cog me-2" />
+          <span>{label}</span>
+        </Button>
+      )}
     </>
   );
 }
