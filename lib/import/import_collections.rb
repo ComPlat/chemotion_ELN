@@ -17,6 +17,7 @@ module Import
       @col_id = col_id
       @col_all = Collection.get_all_collection_for_user(current_user_id)
       @tmp_dir = Dir.mktmpdir
+      @discarded_attachments = []
     end
 
     def execute
@@ -129,6 +130,19 @@ module Import
       FileUtils.rm_rf(@tmp_dir)
     end
 
+    def discarded_attachments_info
+      return nil if @discarded_attachments.empty?
+
+      filename = generate_import_report.to_s
+      root_url = Rails.application.config.root_url
+      url = filename.start_with?('/') ? "#{root_url}#{filename}" : "#{root_url}/#{filename}"
+
+      {
+        count: @discarded_attachments.length,
+        report_path: url,
+      }
+    end
+
     private
 
     def import_annotation(zip_file, entry, attachment)
@@ -165,7 +179,7 @@ module Import
     def gate_collection
       collection = Collection.find(@col_id)
       @uuid = nil
-      @data.fetch('Collection', {}).each do |uuid, _fields|
+      @data.fetch('Collection', {}).each_key do |uuid|
         @uuid = uuid
       end
       update_instances!(@uuid, collection)
@@ -185,7 +199,7 @@ module Import
     end
 
     def import_chemicals
-      @data.fetch('Chemical', {}).each do |_uuid, fields|
+      @data.fetch('Chemical', {}).each_value do |fields|
         sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
         next unless sample
 
@@ -680,7 +694,7 @@ module Import
     # Follows a has_many relation to `foreign_type` through `association_type`
     def fetch_many(foreign_type, association_type, local_field, foreign_field, local_id)
       associations = []
-      @data.fetch(association_type, {}).each do |_uuid, fields|
+      @data.fetch(association_type, {}).each_value do |fields|
         next unless fields.fetch(local_field) == local_id
 
         foreign_id = fields.fetch(foreign_field)
@@ -691,14 +705,60 @@ module Import
     end
 
     def update_researchplan_body(attachments)
-      @data['ResearchPlan']&.each do |_attr_name, attr_value|
-        image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
-        image_fields.each do |field|
-          new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
-          field['value']['public_name'] = new_att['identifier']
-          field['value']['file_name'] = new_att['filename']
+      @data['ResearchPlan']&.each_value do |attr_value|
+        # Filter out image fields where attachment is not found
+        attr_value['body'] = attr_value['body'].reject do |field|
+          if field['type'] == 'image'
+            public_name = field.dig('value', 'public_name')
+            new_att = attachments.find { |att| att['filename'].include?(public_name.to_s) }
+
+            if new_att.present?
+              field['value']['public_name'] = new_att['identifier']
+              field['value']['file_name'] = new_att['filename']
+              false # Keep this field
+            else
+              # Track discarded attachment
+              track_discarded_attachment(attr_value['name'], field)
+              true # Remove this field
+            end
+          else
+            false # Keep non-image fields
+          end
         end
       end
+    end
+
+    def track_discarded_attachment(research_plan_name, field)
+      @discarded_attachments << {
+        research_plan_name: research_plan_name,
+        file_name: field.dig('value', 'file_name'),
+      }
+    end
+
+    def generate_import_report
+      return if @discarded_attachments.empty?
+
+      report_content = "Import Report - Discarded Attachments\n"
+      report_content += "===================================\n\n"
+      report_content += "The following attachments were discarded during import:\n\n"
+
+      @discarded_attachments.each do |attachment|
+        report_content += "Research Plan: #{attachment[:research_plan_name]}\n"
+        report_content += "Attachment: #{attachment[:file_name]}\n"
+        report_content += "Reason: Associated attachment not found in import package\n\n"
+      end
+
+      # Create reports directory if it doesn't exist
+      reports_dir = Rails.public_path.join('failed_reports')
+      FileUtils.mkdir_p(reports_dir)
+
+      # Generate unique filename with timestamp
+      filename = "import_report_#{Time.now.to_i}.txt"
+      report_path = reports_dir.join(filename)
+      File.write(report_path, report_content)
+
+      # Return relative path for URL generation
+      "failed_reports/#{filename}"
     end
   end
 end
