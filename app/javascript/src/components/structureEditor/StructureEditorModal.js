@@ -23,6 +23,7 @@ import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
+import transformSvgIdsAndReferences from 'src/utilities/SvgUtils';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -34,8 +35,6 @@ const notifyError = (message) => {
     autoDismiss: 10,
   });
 };
-
-const key = 'ketcher-tmpls';
 
 const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
@@ -89,7 +88,6 @@ const createEditors = (_state = {}) => {
 
   return editors;
 };
-
 function Editor({
   type, editor, molfile, iframeHeight, iframeStyle, fnCb
 }) {
@@ -264,28 +262,46 @@ export default class StructureEditorModal extends React.Component {
           this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
-    } else if (editor.id === 'ketcher2') {
-      structure.editor.getMolfile().then((molfile) => {
-        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
-          imgfile.text().then((text) => {
-            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
-          });
-        });
-      });
-    } else {
+    } else if (editor.id === 'ketcher2') this.handleSaveStructureKet2(structure, editor);
+    else {
       try {
         const { molfile, info } = structure;
         if (!molfile) throw new Error('No molfile');
         structure.fetchSVG().then((svg) => {
-          this.setState({
-            showModal: false,
-            showWarning: this.props.hasChildren || this.props.hasParent
-          }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
+          this.handleStructureSave(molfile, svg, editor.id, info);
         });
       } catch (e) {
         notifyError(`The drawing is not supported! ${e}`);
       }
     }
+  }
+
+  async handleSaveStructureKet2(structure, editor) {
+    try {
+      const molfile = await structure.editor.getMolfile();
+      const imgfile = await structure.editor.generateImage(molfile, { outputFormat: 'svg' });
+      const text = await imgfile.text();
+      const updatedSvg = await transformSvgIdsAndReferences(text);
+      this.handleStructureSave(molfile, updatedSvg, editor.id);
+    } catch (error) {
+      console.error('Error saving structure:', error);
+    }
+  }
+
+  handleStructureSave(molfile, svg, editorId, info = null) {
+    const { hasChildren, hasParent, onSave } = this.props;
+
+    this.setState(
+      {
+        showModal: false,
+        showWarning: hasChildren || hasParent,
+      },
+      () => {
+        if (onSave) {
+          onSave(molfile, svg, info, editorId);
+        }
+      }
+    );
   }
 
   initializeEditor() {
