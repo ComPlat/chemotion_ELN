@@ -55,15 +55,21 @@ module Reporter
       def variations
         obj.variations.map do |var|
           {
-            'temperature' => "#{var[:properties][:temperature][:value]} #{var[:properties][:temperature][:unit]}",
-            'duration' => "#{var[:properties][:duration][:value]} #{var[:properties][:duration][:unit]}",
+            'temperature' => variation_property(var, :temperature),
+            'duration' => variation_property(var, :duration),
             'startingMaterials' => variation_materials(var, :startingMaterials),
             'reactants' => variation_materials(var, :reactants),
             'solvents' => variation_materials(var, :solvents),
             'products' => variation_materials(var, :products),
-            'notes' => var[:notes],
-          }
+            'notes' => var[:metadata]&.dig(:notes),
+          }.compact
         end
+      end
+
+      def variation_property(var, property)
+        value = var[:properties]&.dig(property, :value)
+        unit = var[:properties]&.dig(property, :unit)
+        "#{value} #{unit}" if value && unit
       end
 
       def variation_materials(variation, type)
