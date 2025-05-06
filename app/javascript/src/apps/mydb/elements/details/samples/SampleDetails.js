@@ -74,7 +74,6 @@ import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
-import ContainerActions from '../../../../../stores/alt/actions/ContainerActions';
 
 const MWPrecision = 6;
 
@@ -235,7 +234,6 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSampleChanged(sample, cb) {
-    console.log('handleSampleChanged', sample);
     this.setState({
       sample,
     }, () => {
@@ -354,6 +352,7 @@ export default class SampleDetails extends React.Component {
 
   handleSubmit(closeView = false) {
     const { currentCollection } = UIStore.getState();
+    LoadingActions.start.defer();
     const { sample, validCas } = this.state;
     if (this.matchSelectedCollection(currentCollection) && sample.inventory_label !== undefined) {
       sample.collection_id = currentCollection.id;
@@ -365,7 +364,6 @@ export default class SampleDetails extends React.Component {
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
-    LoadingActions.start.defer();
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;

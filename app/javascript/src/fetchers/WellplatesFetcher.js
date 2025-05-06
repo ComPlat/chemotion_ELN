@@ -44,7 +44,6 @@ export default class WellplatesFetcher {
   }
 
   static update(wellplate) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(wellplate.container);
     const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
 
@@ -67,17 +66,10 @@ export default class WellplatesFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-
-    if (containerFiles.length > 0) {
-      const tasks = [];
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container).then(() => promise());
   }
 
   static create(wellplate) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(wellplate.container);
     const files = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
 
     const promise = () => fetch('/api/v1/wellplates/', {
@@ -100,12 +92,7 @@ export default class WellplatesFetcher {
         console.log(errorMessage);
       });
 
-    if (containerFiles.length > 0) {
-      const tasks = [];
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container).then(() => promise());
   }
 
   static fetchWellplatesByUIState(params) {

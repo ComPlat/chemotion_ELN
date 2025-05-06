@@ -213,6 +213,8 @@ export default class WellplateDetailsContainers extends Component {
                           readOnly={readOnly}
                           container={container}
                           onChange={container => this.handleChange(container)}
+                          rootContainer={wellplate.container}
+                          index={key}
                         />
                       </Card.Body>
                     </Accordion.Collapse>

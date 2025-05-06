@@ -59,6 +59,7 @@ export default class ContainerDatasetModal extends Component {
     const { updateContainerState, rootContainer } = this.props;
     ContainerActions.updateContainerWithFiles(rootContainer)
       .then((updatedContainer) => {
+        console.log('Container updated successfully:', { updatedContainer });
         updateContainerState(updatedContainer);
       })
       .catch((err) => {
@@ -136,6 +137,7 @@ export default class ContainerDatasetModal extends Component {
                 <div className="d-flex flex-grow-1 align-items-center">
                   <input
                     type="text"
+                    autoFocus={true}
                     value={this.state.localName}
                     onBlur={this.toggleNameEditing}
                     onKeyPress={(event) => {

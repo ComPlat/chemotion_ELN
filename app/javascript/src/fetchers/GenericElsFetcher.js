@@ -143,7 +143,6 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
   }
 
   static updateOrCreate(genericEl, action = 'create') {
-    const files = AttachmentFetcher.getFileListfrom(genericEl.container);
     const method = action === 'create' ? 'post' : 'put';
     const api = action === 'create'
       ? '/api/v1/generic_elements/'
@@ -168,13 +167,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-
-    if (files.length > 0) {
-      const tasks = [];
-      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(genericEl.container).then(() => promise());
   }
 
   static update(genericEl) {
@@ -249,9 +242,9 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
 
   static shouldUploadAttachments(hasAttach, element) {
     return hasAttach === true
-    && element.attachments
-    && element.attachments.length > 0
-    && element.type !== 'research_plan';
+      && element.attachments
+      && element.attachments.length > 0
+      && element.type !== 'research_plan';
   }
 
   static uploadKlass(params) {

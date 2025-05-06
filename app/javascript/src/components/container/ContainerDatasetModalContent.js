@@ -115,13 +115,12 @@ export class ContainerDatasetModalContent extends Component {
     }
   }
 
+  // This function is being called from ContainerDatasetModal.js
+  // eslint-disable-next-line react/no-unused-class-component-methods
   setLocalName(localName) {
-    this.setState((prevState) => ({
-      datasetContainer: {
-        ...prevState.datasetContainer,
-        name: localName,
-      }
-    }));
+    const { datasetContainer } = this.state;
+    datasetContainer.name = localName;
+    this.setState({ datasetContainer });
   }
 
   // eslint-disable-next-line react/sort-comp
