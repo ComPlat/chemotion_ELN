@@ -1,22 +1,23 @@
 .panel-collapse-button {
   @extend .btn-sm;
   @extend .p-0;
-  @extend .rounded-start-0;
   height: 48px;
   width: 16px;
   margin-right: -16px;
   z-index: 1;
   cursor: pointer !important;
-  * {
-    cursor: pointer !important;
-  }
   &--indented {
     margin-left: 16px;
   }
+  * {
+    cursor: pointer !important;
+  }
+  font-size: 1rem;
 }
 .panel-collapse-button--indented,
 .sidebar .panel-collapse-button {
   @extend .border-2;
   @extend .border-start-0;
   @extend .border-surface;
+  @extend .rounded-start-0;
 }

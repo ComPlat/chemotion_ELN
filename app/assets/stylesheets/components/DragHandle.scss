@@ -15,6 +15,7 @@
     background-image: radial-gradient($chemstrap-white 1px, transparent 2px);
     background-position: 0.5px 0;
     background-size: 4px 4px;
+    background-repeat: round;
   }
   &.drag-handle--disabled {
     cursor: not-allowed;
