@@ -204,10 +204,8 @@ export default class ScreenDetails extends Component {
         </div>
         <div className="d-flex align-items-center gap-1">
           <PrintCodeButton element={screen} />
-          {screen.isNew
-            ? null
-            : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
-
+          {!screen.isNew
+            && <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
           <OverlayTrigger
             placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
