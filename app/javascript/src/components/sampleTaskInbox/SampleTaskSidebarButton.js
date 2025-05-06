@@ -5,7 +5,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
-function SampleTaskNavigationElement() {
+function SampleTaskNavigationElement({ isCollapsed }) {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
   useEffect(() => sampleTasksStore.load(), []);
 
@@ -15,6 +15,8 @@ function SampleTaskNavigationElement() {
       icon="fa-image"
       onClick={sampleTasksStore.showSampleTaskInbox}
       badgeCount={sampleTasksStore.openSampleTaskCount}
+      showLabel={false}
+      isCollapsed={isCollapsed}
     />
   );
 }

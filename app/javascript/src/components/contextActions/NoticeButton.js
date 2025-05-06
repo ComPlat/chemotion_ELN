@@ -426,6 +426,8 @@ export default class NoticeButton extends React.Component {
           variant={btnVariant}
           icon={btnIcon}
           onClick={this.handleShow}
+          isCollapsed={this.props.isCollapsed}
+          showLabel={false}
         />
         {this.renderModal()}
       </>
