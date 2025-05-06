@@ -16,6 +16,7 @@ export default class ContainerDatasets extends Component {
       modal: {
         show: false,
         datasetContainer: null,
+        selectedIndex: null,
       },
     };
   }
@@ -28,22 +29,22 @@ export default class ContainerDatasets extends Component {
     }
   }
 
-  handleModalOpen(datasetContainer) {
+  handleModalOpen(datasetContainer, index) {
     const { modal } = this.state;
     modal.datasetContainer = datasetContainer || {};
     modal.show = true;
+    modal.selectedIndex = index;
     this.setState({ modal });
   }
 
   handleAdd() {
-    const { container } = this.state;
+    const { container, modal } = this.state;
     const datasetContainer = Container.buildEmpty();
     datasetContainer.container_type = 'dataset';
 
     container.children.push(datasetContainer);
-
-    this.handleModalOpen(datasetContainer);
-    this.props.onChange(container);
+    let index = container.children.length - 1;
+    this.handleModalOpen(datasetContainer, index);
   }
 
   handleAddWithAttachments(attachments) {
@@ -91,6 +92,7 @@ export default class ContainerDatasets extends Component {
     const { modal } = this.state;
     modal.show = false;
     modal.datasetContainer = null;
+    // modal.selectedIndex = null;
     this.setState({ modal });
     // https://github.com/react-bootstrap/react-bootstrap/issues/1137
     document.body.className = document.body.className.replace('modal-open', '');
@@ -110,9 +112,25 @@ export default class ContainerDatasets extends Component {
     return null;
   }
 
+  updateContainerState(updatedContainer) {
+    const { rootContainer, index } = this.props;
+    const { modal, container } = this.state;
+    console.log("container before update: ",
+      modal.selectedIndex,
+      updatedContainer.children[0],
+      index,
+      updatedContainer.children[0].children[index],
+      updatedContainer.children[0].children[index].children[modal.selectedIndex]
+    );
+    if (updatedContainer.children[0].children[index]?.children[modal.selectedIndex]) {
+      container.children[modal.selectedIndex] = updatedContainer.children[0].children[index]?.children[modal.selectedIndex];
+      this.setState({ container });
+    }
+  }
+
   render() {
     const { container, modal } = this.state;
-    const { disabled,readOnly } = this.props;
+    const { disabled, readOnly, rootContainer, } = this.props;
 
     if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
@@ -128,7 +146,7 @@ export default class ContainerDatasets extends Component {
                     onChange={() => this.handleChange(datasetContainer)}
                     handleRemove={() => this.handleRemove(datasetContainer)}
                     handleUndo={() => this.handleUndo(datasetContainer)}
-                    handleModalOpen={() => this.handleModalOpen(datasetContainer)}
+                    handleModalOpen={() => this.handleModalOpen(datasetContainer, key)}
                     disabled={disabled}
                     readOnly={readOnly}
                   />
@@ -143,16 +161,18 @@ export default class ContainerDatasets extends Component {
             {this.addButton()}
           </div>
           {modal.show && modal.datasetContainer && (
-          <ContainerDatasetModal
-            onHide={() => this.handleModalHide()}
-            onChange={(datasetContainer) => this.handleChange(datasetContainer)}
-            kind={kind}
-            show={modal.show}
-            readOnly={this.props.readOnly}
-            datasetContainer={modal.datasetContainer}
-            analysisContainer={modal.analysisContainer}
-            disabled={disabled}
-          />
+            <ContainerDatasetModal
+              onHide={() => this.handleModalHide()}
+              onChange={(datasetContainer) => this.handleChange(datasetContainer)}
+              kind={kind}
+              show={modal.show}
+              readOnly={this.props.readOnly}
+              datasetContainer={modal.datasetContainer}
+              analysisContainer={modal.analysisContainer}
+              disabled={disabled}
+              rootContainer={rootContainer}
+              updateContainerState={(cont) => this.updateContainerState(cont)}
+            />
           )}
         </div>
       );
