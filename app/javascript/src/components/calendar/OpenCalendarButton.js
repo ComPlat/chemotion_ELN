@@ -1,6 +1,7 @@
-import React, { Component } from 'react';
+import React, { useContext, useCallback } from 'react';
 import { Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
@@ -12,16 +13,11 @@ function getDefaultDateTimeRange() {
   return { start: new Date(weekStart), end: new Date(weekEnd) };
 }
 
-export default class OpenCalendarButton extends Component {
-  static contextType = StoreContext;
+function OpenCalendarButton({ eventableType, eventableId, isPanelHeader }) {
+  const { calendar } = useContext(StoreContext);
 
-  constructor(props) {
-    super(props);
-    this.onClick = this.onClick.bind(this);
-  }
-
-  onClick() {
-    const { start, end, show_shared_collection_entries } = this.context.calendar;
+  const onClick = useCallback(() => {
+    const { start, end, show_shared_collection_entries } = calendar;
     const params = {};
     if (!start || !end) {
       const range = getDefaultDateTimeRange();
@@ -31,43 +27,39 @@ export default class OpenCalendarButton extends Component {
       params.start = start;
       params.end = end;
     }
-    const { eventableType, eventableId } = this.props;
     params.eventable_type = eventableType;
     params.eventable_id = eventableId;
     params.showSharedCollectionEntries = show_shared_collection_entries;
 
-    this.context.calendar.showCalendar();
-    this.context.calendar.setViewParams(params);
-  }
+    calendar.showCalendar();
+    calendar.setViewParams(params);
+  }, [calendar, eventableType, eventableId]);
 
-  render() {
-    const { isPanelHeader } = this.props;
-    if (isPanelHeader) {
-      return (
-        <Button
-          size="xxsm"
-          variant="light"
-          onClick={this.onClick}
-        >
-          <i className="fa fa-calendar" />
-        </Button>
-      );
-    }
-
+  if (isPanelHeader) {
     return (
-      <SidebarButton
-        onClick={this.onClick}
-        label="Calendar"
-        icon="fa-calendar"
-      />
+      <Button
+        size="xxsm"
+        variant="light"
+        onClick={onClick}
+      >
+        <i className="fa fa-calendar" />
+      </Button>
     );
   }
+
+  return (
+    <SidebarButton
+      onClick={onClick}
+      label="Calendar"
+      icon="fa-calendar"
+    />
+  );
 }
 
 OpenCalendarButton.defaultProps = {
   eventableType: undefined,
   eventableId: undefined,
-  isPanelHeader: undefined,
+  isPanelHeader: false,
   isCollapsed: false,
 };
 
@@ -77,3 +69,5 @@ OpenCalendarButton.propTypes = {
   isPanelHeader: PropTypes.bool,
   isCollapsed: PropTypes.bool,
 };
+
+export default observer(OpenCalendarButton);
