@@ -101,9 +101,9 @@ function ReactionsDisplay({
                         readOnly={readOnly}
                         container={container}
                         rootContainer={rootContainer}
+                        index={i}
                         disabled={isDisabled}
                         onChange={handleChange}
-                        index={i}
                       />
                     </Card.Body>
                   </Accordion.Collapse>

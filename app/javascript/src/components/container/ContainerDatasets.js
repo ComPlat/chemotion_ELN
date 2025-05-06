@@ -31,7 +31,6 @@ export default class ContainerDatasets extends Component {
 
   handleModalOpen(datasetContainer, index) {
     const { modal } = this.state;
-    console.log("datasetContainer ModalOpen: ", index, datasetContainer,);
     modal.datasetContainer = datasetContainer || {};
     modal.show = true;
     modal.selectedIndex = index;
@@ -118,14 +117,15 @@ export default class ContainerDatasets extends Component {
     const { modal, container } = this.state;
     console.log("container before update: ",
       modal.selectedIndex,
-      container.children[modal.selectedIndex],
+      updatedContainer.children[0],
       index,
+      updatedContainer.children[0].children[index],
       updatedContainer.children[0].children[index].children[modal.selectedIndex]
-      // container.children[modal.selectedIndex],
-      //  updatedContainer.children[0].children[index].children[modal.selectedIndex]
     );
-    container.children[modal.selectedIndex] = updatedContainer.children[0].children[index].children[modal.selectedIndex];
-    this.setState({ container });
+    if (updatedContainer.children[0].children[index]?.children[modal.selectedIndex]) {
+      container.children[modal.selectedIndex] = updatedContainer.children[0].children[index]?.children[modal.selectedIndex];
+      this.setState({ container });
+    }
   }
 
   render() {
