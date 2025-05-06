@@ -105,11 +105,6 @@ const refreshSvgTooltip = <Tooltip id="refresh_svg_tooltip">Refresh reaction dia
 
 const AddtoDescToolTip = <Tooltip id="tp-spl-code" className="left_tooltip">Add to description or additional information for publication and purification details</Tooltip>;
 
-const solvConcentration = (material, solventVolume) => {
-  const concn = ((material.amount_l / solventVolume) * 100).toFixed(1);
-  if (isNaN(concn) || !isFinite(concn)) { return 'n.d.'; }
-  return `${concn}%`;
-};
 
 class Material extends Component {
   constructor(props) {
@@ -910,7 +905,7 @@ class Material extends Component {
           <Form.Control
             type="text"
             size="sm"
-            value={solvConcentration(material, props.reaction.purificationSolventVolume)}
+            value={reaction.volumeRatioByMaterialId(material.id)}
             disabled
           />
         </td>
