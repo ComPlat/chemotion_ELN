@@ -48,12 +48,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
+  const reactionMaterials = getReactionMaterials(reaction);
+  const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
   const [gasMode, setGasMode] = useState(reaction.gaseous);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
-  const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
@@ -122,7 +123,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   https://react.dev/reference/react/useState#storing-information-from-previous-renders.
   It would be preferable to refactor this to a more declarative approach, using a store for example.
   */
-  const updatedReactionMaterials = getReactionMaterials(reaction);
   const updatedGasMode = reaction.gaseous;
   const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
 
@@ -134,11 +134,11 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   if (
     !isEqual(
       getReactionMaterialsIDs(reactionMaterials),
-      getReactionMaterialsIDs(updatedReactionMaterials)
+      getReactionMaterialsIDs(previousReactionMaterials)
     )
   ) {
     const updatedSelectedColumns = removeObsoleteMaterialColumns(
-      updatedReactionMaterials,
+      reactionMaterials,
       selectedColumns
     );
     setSelectedColumns(updatedSelectedColumns);
@@ -156,7 +156,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       }
     );
 
-    setReactionMaterials(updatedReactionMaterials);
+    setPreviousReactionMaterials(reactionMaterials);
   }
 
   /*
@@ -186,12 +186,12 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   if (
     updatedGasMode && !isEqual(
       getReactionMaterialsGasTypes(reactionMaterials),
-      getReactionMaterialsGasTypes(updatedReactionMaterials)
+      getReactionMaterialsGasTypes(previousReactionMaterials)
     )
   ) {
     const updatedReactionVariations = updateVariationsGasTypes(
       reactionVariations,
-      updatedReactionMaterials,
+      reactionMaterials,
       updatedGasMode,
       vesselVolume
     );
@@ -201,12 +201,12 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       {
         type: 'update_gas_type',
         selectedColumns,
-        materials: updatedReactionMaterials,
+        materials: reactionMaterials,
         gasMode: updatedGasMode,
       }
     );
 
-    setReactionMaterials(updatedReactionMaterials);
+    setPreviousReactionMaterials(reactionMaterials);
   }
 
   /*
