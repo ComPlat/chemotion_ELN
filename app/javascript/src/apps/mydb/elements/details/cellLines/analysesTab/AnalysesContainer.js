@@ -122,13 +122,15 @@ class AnalysesContainer extends Component {
     const { readOnly } = this.props;
 
     const containers = currentElement.container.children[0].children;
-    const analysisRows = containers.map((container) => (
+    const analysisRows = containers.map((container,i) => (
       <EditModeRow
         key={container.id}
         handleChange={this.handleChange}
         element={currentElement}
         container={container}
         readOnly={readOnly}
+        rootContainer={currentElement.container}
+        index={i}
       />
     ));
 
