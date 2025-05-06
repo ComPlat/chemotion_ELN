@@ -1,5 +1,5 @@
 .panel-resize-handle {
-  background-color: map-get($silicon-shades, l2);
+  @extend .bg-surface2;
   @extend .d-flex;
   @extend .flex-column;
   @extend .justify-content-evenly;
@@ -7,22 +7,18 @@
   margin-left: 2px;
   &:after,
   &:before {
+    @extend .bg-draggable;
+    @extend .border-draggable;
+    border-width: 0.5rem 0.25rem;
+    border-style: solid;
     content: "";
     height: 42px;
     top: calc(50% - 42px);
-    background-image: radial-gradient(
-      circle at 4px 4px,
-      map-get($carbon-shades, l4) 2px,
-      transparent 0
-    );
-    background-size: 5px 5px;
+    background-image: radial-gradient($chemstrap-white 1px, transparent 2px);
+    background-size: 4px 4px;
+    background-repeat: round;
   }
-  &:hover:after,
-  &:hover:before {
-    background-image: radial-gradient(
-      circle at 4px 4px,
-      map-get($carbon-shades, l5) 2px,
-      transparent 0
-    );
+  &:hover {
+    @extend .bg-surface3;
   }
 }
