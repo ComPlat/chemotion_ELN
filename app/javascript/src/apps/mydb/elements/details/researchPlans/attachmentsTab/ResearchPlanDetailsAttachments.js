@@ -13,7 +13,6 @@ import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlan
 import { Button, ButtonToolbar, Alert } from 'react-bootstrap';
 import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
   downloadButton,
@@ -117,22 +116,32 @@ class ResearchPlanDetailsAttachments extends Component {
     this.setState({ sortBy: e.target.value }, this.filterAndSortAttachments);
   };
 
+  getDeleteButtonTooltip(attachment) {
+    if (this.props.readOnly) {
+      return 'Research plan is in read-only mode';
+    }
+    if (this.isAttachmentInBody(attachment)) {
+      return 'This attachment is used in the research plan body';
+    }
+    return 'Delete attachment';
+  }
+
   toggleSortDirection = () => {
     this.setState((prevState) => ({
       sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
     }), this.filterAndSortAttachments);
   };
 
+  isAttachmentInBody(attachment) {
+    return this.props.researchPlan.body.some(
+      (field) => field.type === 'image' && field.value.public_name === attachment.identifier
+    );
+  }
+
   filterAndSortAttachments() {
     const { filterText, sortBy } = this.state;
 
-    const filter = new ImageAttachmentFilter();
-    let filteredAttachments = filter.filterAttachmentsWhichAreInBody(
-      this.props.researchPlan.body,
-      this.props.attachments
-    );
-
-    filteredAttachments = filteredAttachments.filter(
+    const filteredAttachments = this.props.attachments.filter(
       (attachment) => attachment.filename.toLowerCase().includes(filterText.toLowerCase())
     );
 
@@ -246,8 +255,6 @@ class ResearchPlanDetailsAttachments extends Component {
     const { researchPlan } = this.props;
     const { currentUser } = UserStore.getState();
 
-    // Ugly temporary hack to avoid tests failling because the context is not accessable in tests with the enzyme framework
-
     let combinedAttachments = filteredAttachments;
     if (this.context.attachmentNotificationStore) {
       combinedAttachments = this.context.attachmentNotificationStore
@@ -345,7 +352,12 @@ class ResearchPlanDetailsAttachments extends Component {
                         )}
                       </ButtonToolbar>
                       <div className="ms-2">
-                        {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
+                        {removeButton(
+                          attachment,
+                          this.props.onDelete,
+                          this.props.readOnly || this.isAttachmentInBody(attachment),
+                          this.getDeleteButtonTooltip(attachment)
+                        )}
                       </div>
                     </>
                   )}
